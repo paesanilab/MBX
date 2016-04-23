@@ -2,15 +2,15 @@
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I../../include
-LIBS = -lnetcdf -lgsl -lgslcblas
+#LIBS = -lnetcdf -lgsl -lgslcblas
 
 AR = /usr/bin/ar
 OBJDIR = ../obj
 BBLOCK_OBJ = system.o molecule.o monomer.o
 
-all: bblock.a
+all: libbblock.a
 
-bblock.a: $(addprefix $(OBJDIR)/, $(BBLOCK_OBJ))
+libbblock.a: $(addprefix $(OBJDIR)/, $(BBLOCK_OBJ))
 	$(AR) cru bblock.a $(addprefix $(OBJDIR)/, $(BBLOCK_OBJ))
 
 #$(OBJDIR)/%.o: %.cpp %.h $(OBJDIR)/.sentinel
@@ -22,5 +22,5 @@ $(OBJDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf *.o *.a
+	rm -rf $(OBJDIR) *.a
 
