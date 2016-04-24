@@ -11,9 +11,11 @@
 #include "molecule.h"
 #include "monomer.h"
 
+//TODO remember to use getline for everything.
+
 namespace tools {
 
-size_t read_nrg(const char * filename, std::vector<bblock::system> systems ) {
+void read_nrg(const char * filename, std::vector<bblock::system> systems ) {
   
   assert(filename);
 
@@ -30,14 +32,13 @@ size_t read_nrg(const char * filename, std::vector<bblock::system> systems ) {
 
     if (sys.get_n_mol() > 0) {
       systems.push_back(sys);
-      ++sysno
     }
   }
 
-  return sysno;
+  return;
 }
 
-size_t read_system(size_t lineno, std::istream ifs, bblock::system sys) {
+void read_system(size_t lineno, std::istream ifs, bblock::system sys) {
   assert(ifs);
 
   if (ifs.eof())
@@ -45,18 +46,25 @@ size_t read_system(size_t lineno, std::istream ifs, bblock::system sys) {
 
   std::string line;
   std::getline(ifs, line);
+  lineno++;
 
   std::string word;
-  {
-    istringstream iss(ifs);
-    iss >> word;
+  std::istringstream iss(line);
+  iss >> word;
+  
+  if (iss.fail()) {
+    std::ostringstream oss;
+    oss << "unexpected text at line " << lineno
+        << " of the NRG file:" << std::endl << iss.str() << std::endl;
+    throw std::runtime_error(oss.str());
   }
 
   std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+
   if (word != "system") {
     std::ostringstream oss;
     oss << "No SYSTEM in line  " << lineno
-        << " of the NRG file:" << std::endl; 
+        << " of the NRG file:" << std::endl << iss.str() << std::endl; 
     throw std::runtime_error(oss.str());
   }
 
@@ -70,17 +78,20 @@ size_t read_system(size_t lineno, std::istream ifs, bblock::system sys) {
       sys.add_molecule(molec);
       molno++;
     }
-    {
-      istringstream iss(ifs);
-      iss >> word;
-    }
+
+    iss.clear();
+    std::getline(ifs, line);
+    lineno++;
+    iss.str(line);
+    iss >> word;
+    std::transform(word.begin(), word.end(), word.begin(), ::tolower);
   }
 
   
-  return molno;
+  return;
 }
 
-size_t read_molecule(size_t lineno, std::istream ifs, bblock::molecule molec) {
+void read_molecule(size_t lineno, std::istream ifs, bblock::molecule molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -88,11 +99,17 @@ size_t read_molecule(size_t lineno, std::istream ifs, bblock::molecule molec) {
 
   std::string line;
   std::getline(ifs, line);
+  lineno++;
 
   std::string word;
-  {
-    istringstream iss(ifs);
-    iss >> word;
+  std::istringstream iss(line);
+  iss >> word;
+  
+  if (iss.fail()) {
+    std::ostringstream oss;
+    oss << "unexpected text at line " << lineno
+        << " of the NRG file:" << std::endl << iss.str() << std::endl;
+    throw std::runtime_error(oss.str());
   }
 
   std::transform(word.begin(), word.end(), word.begin(), ::tolower);
@@ -103,18 +120,14 @@ size_t read_molecule(size_t lineno, std::istream ifs, bblock::molecule molec) {
     throw std::runtime_error(oss.str());
   }
   
-  size_t monno(0),monno_read(0);
-
   read_monomers(lineno, ifs, molec);
 
-  }
 
-
-  return monno;
+  return;
 
 }
 
-size_t read_monomers(size_t lineno, std::istream ifs, bblock::molecule molec) {
+void read_monomers(size_t lineno, std::istream ifs, bblock::molecule molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -122,11 +135,17 @@ size_t read_monomers(size_t lineno, std::istream ifs, bblock::molecule molec) {
 
   std::string line;
   std::getline(ifs, line);
+  lineno++;
 
   std::string word;
-  {
-    istringstream iss(ifs);
-    iss >> word;
+  std::istringstream iss(line);
+  iss >> word;
+
+  if (iss.fail()) {
+    std::ostringstream oss;
+    oss << "unexpected text at line " << lineno
+        << " of the NRG file:" << std::endl << iss.str() << std::endl;
+    throw std::runtime_error(oss.str());
   }
 
   std::transform(word.begin(), word.end(), word.begin(), ::tolower);
@@ -137,22 +156,18 @@ size_t read_monomers(size_t lineno, std::istream ifs, bblock::molecule molec) {
     throw std::runtime_error(oss.str());
   }
 
-  size_t siteno(0),siteno_read(0);
+  std::string mon_name;
+  iss.clear();
+  iss.str(line);
+  iss >> word >> mon_name;
+  std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
   while (word != "endmol") {
-    std::getline(ifs, line);
   
-    std::string mon_name;
-    {
-      istringstream iss(ifs);
-      iss >> word >> mon_name;
-    }
-  
-    std::transform(word.begin(), word.end(), word.begin(), ::tolower);
-    if (word != "monomer" || ! mon_name.empty() ) {
+    if (word != "monomer" || mon_name.empty() ) {
       std::ostringstream oss;
       oss << "No MONOMER in line  " << lineno
-          << " of the NRG file:" << std::endl;
+          << " of the NRG file:" << std::endl << iss.str() << std::endl;
       throw std::runtime_error(oss.str());
     }
     
@@ -161,28 +176,45 @@ size_t read_monomers(size_t lineno, std::istream ifs, bblock::molecule molec) {
     std::vector<std::string> names;
     double xyz[1000];
     size_t i(0);
+    
+    std::getline(ifs, line);
+    lineno++;
+    iss.clear();
+    iss.str(line);
+ 
     while (word != "endmon") {
 
       std::string name;
       double x,y,z;
       
-      ifs >> name >> x >> y >> z;
+      iss >> name >> x >> y >> z;
       names.push_back(name);
       xyz[i++] = x;
       xyz[i++] = y;
       xyz[i++] = z;
 
-      {
-        istringstream iss(ifs);
-        iss >> word ;
-      }
+      std::getline(ifs, line);
+      lineno++;
+      iss.clear();
+      iss.str(line);
+
+      iss >> word;
+      std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+      iss.clear();
+      iss.str(line);
     }
 
     molec.add_monomer(mon_name, xyz, names);
 
+    iss.clear();
+    std::getline(ifs, line);
+    lineno++;
+    iss.str(line);
+    iss >> word;
+    std::transform(word.begin(), word.end(), word.begin(), ::tolower);
   }
   
-  return monno;
+  return;
 }
 
 
