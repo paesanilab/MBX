@@ -10,9 +10,12 @@ molecule::molecule() {
   n_mon=0;
 }
 
+molecule::~molecule() {
+}
 
 void molecule::add_monomer(std::string mon_name, double * xyz, std::vector<std::string> names){
   int i = 1;
+  i++;
   return;
 }
 

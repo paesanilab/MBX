@@ -14,6 +14,9 @@
 #include "read-nrg.h"
 
 #include "system.h"
+#include "molecule.h"
+#include "monomer.h"
+
 
 #define PRINT_GRADS
 //#define CHECK_GRADS

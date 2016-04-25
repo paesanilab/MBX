@@ -10,6 +10,9 @@ system::system() {
   n_mol=0;
 }
 
+system::~system() {
+}
+
 
 void system::add_molecule(molecule molec){
   molecules.push_back(molec);
