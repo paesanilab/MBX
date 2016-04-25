@@ -1,21 +1,8 @@
-#include <stdexcept>
-#include <cassert>
-#include <sstream>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <algorithm>
-
 #include "read-nrg.h" 
-#include "system.h"
-#include "molecule.h"
-#include "monomer.h"
-
-//TODO remember to use getline for everything.
 
 namespace tools {
 
-void read_nrg(const char * filename, std::vector<bblock::system> systems ) {
+void read_nrg(char * filename, std::vector<bblock::system> systems ) {
   
   assert(filename);
 
@@ -30,15 +17,15 @@ void read_nrg(const char * filename, std::vector<bblock::system> systems ) {
     bblock::system sys;
     read_system(lineno, ifs, sys);
 
-    if (sys.get_n_mol() > 0) {
+//    if (sys.get_n_mol() > 0) {
       systems.push_back(sys);
-    }
+//    }
   }
 
   return;
 }
 
-void read_system(size_t lineno, std::istream ifs, bblock::system sys) {
+void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
   assert(ifs);
 
   if (ifs.eof())
@@ -91,7 +78,7 @@ void read_system(size_t lineno, std::istream ifs, bblock::system sys) {
   return;
 }
 
-void read_molecule(size_t lineno, std::istream ifs, bblock::molecule molec) {
+void read_molecule(size_t& lineno, std::istream& ifs, bblock::molecule& molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -127,7 +114,7 @@ void read_molecule(size_t lineno, std::istream ifs, bblock::molecule molec) {
 
 }
 
-void read_monomers(size_t lineno, std::istream ifs, bblock::molecule molec) {
+void read_monomers(size_t& lineno, std::istream& ifs, bblock::molecule& molec) {
   assert(ifs);
 
   if (ifs.eof())
