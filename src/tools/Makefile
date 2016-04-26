@@ -1,10 +1,10 @@
 
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
-INCLUDE = -I../../include
+INCLUDE = -I../../include/bblock \
+					-I../../include/tools
 #LIBS = -lnetcdf -lgsl -lgslcblas
 LIBDIR = ../../lib 
-#LIBS = ../bblock/libbblock.a
 LIBS = -l bblock
 
 AR = /usr/bin/ar
