@@ -2,7 +2,7 @@
 
 namespace tools {
 
-void read_nrg(char * filename, std::vector<bblock::system> systems ) {
+void read_nrg(char * filename, std::vector<bblock::system> & systems ) {
   
   assert(filename);
 
@@ -21,6 +21,14 @@ void read_nrg(char * filename, std::vector<bblock::system> systems ) {
       systems.push_back(sys);
 //    }
   }
+
+  return;
+}
+
+void read_foo(char * filename, double * systems ) {
+  
+  assert(filename);
+  assert(systems);
 
   return;
 }
@@ -61,10 +69,10 @@ void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
     bblock::molecule molec;
     read_molecule(lineno, ifs, molec);
 
-    if (molec.get_n_mon() > 0) {
-      sys.add_molecule(molec);
-      molno++;
-    }
+//    if (molec.get_n_mon() > 0) {
+//      sys.add_molecule(molec);
+//      molno++;
+//    }
 
     iss.clear();
     std::getline(ifs, line);

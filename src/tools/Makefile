@@ -20,7 +20,7 @@ libtools.a: $(addprefix $(OBJDIR)/, $(TOOLS_OBJ))
 
 #$(OBJDIR)/%.o: %.cpp %.h $(OBJDIR)/.sentinel
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.sentinel
-	$(CXX) $(CXXFLAGS) $(INCLUDE) -L $(LIBDIR) -c $< $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -L$(LIBDIR) -c $< $(LIBS) -o $@
 
 $(OBJDIR)/.sentinel:
 	mkdir -p $(OBJDIR)

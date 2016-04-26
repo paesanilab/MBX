@@ -3,9 +3,9 @@ CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I../../include
 #LIBS = -lnetcdf -lgsl -lgslcblas
-LIBDIR = ../../lib 
+LIBDIR = -L../../lib 
 #LIBS = ../bblock/libbblock.a
-LIBS = -l bblock -l tools
+LIBS = -lbblock -ltools
 
 BINDIR = ../../bin
 
@@ -17,13 +17,13 @@ all: energy
 
 #energy: $(addprefix $(OBJDIR)/, $(ENERGY_OBJ))
 energy: energy.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDE) -L $(LIBDIR) $(LIBS) $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBDIR) $< $(LIBS) -o $@
 	mkdir -p $(BINDIR)
 	mv energy $(BINDIR)
 
 #$(OBJDIR)/%.o: %.cpp %.h $(OBJDIR)/.sentinel
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.sentinel
-	$(CXX) $(CXXFLAGS) $(INCLUDE) -L $(LIBDIR) -c $< $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBDIR) -c $< $(LIBS) -o $@
 
 $(OBJDIR)/.sentinel:
 	mkdir -p $(OBJDIR)

@@ -31,7 +31,8 @@ static std::vector<bblock::system> systems;
 int main(int argc, char** argv)
 {
 
-    if (argc != 2) {
+  //    std::vector<bblock::system> systems;
+  if (argc != 2) {
         std::cerr << "usage: test-mbnrg h2o_ion.nrg"
                   << std::endl;
         return 0;

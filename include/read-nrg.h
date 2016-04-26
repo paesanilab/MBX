@@ -18,7 +18,9 @@
 namespace tools {
 
 // returns number of systems loaded
-void read_nrg(char*, std::vector<bblock::system> );
+void read_nrg(char* filename, std::vector<bblock::system> & systems);
+
+void read_foo(char* filename, double * foo);
 
 void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys);
 
