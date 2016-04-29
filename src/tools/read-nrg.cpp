@@ -13,13 +13,26 @@ void read_nrg(char * filename, std::vector<bblock::system> & systems ) {
   size_t lineno(0);
   size_t sysno(0);
 
-  while (!ifs.eof()) {
+  while (true) {
     bblock::system sys;
     read_system(lineno, ifs, sys);
+    
 
 //    if (sys.get_n_mol() > 0) {
       systems.push_back(sys);
 //    }
+
+    std::streampos oldpos = ifs.tellg();
+    std::string line;
+    std::getline(ifs, line);
+    if (ifs.eof() or line.empty()) {
+      break;
+    } else {
+      ifs.seekg(oldpos);
+    }
+  
+
+    
   }
 
   return;
@@ -73,13 +86,20 @@ void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
 //      sys.add_molecule(molec);
 //      molno++;
 //    }
-
     iss.clear();
+
+    std::streampos oldpos = ifs.tellg();
+
     std::getline(ifs, line);
     lineno++;
     iss.str(line);
     iss >> word;
     std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+
+    if (word == "molecule") {
+      ifs.seekg(oldpos);
+      lineno--;
+    }
   }
 
   
