@@ -7,7 +7,7 @@ INCLUDE = -I../../include/bblock
 AR = /usr/bin/ar
 OBJDIR = ../obj
 LIBDIR = ../../lib
-BBLOCK_OBJ = system.o molecule.o monomer.o
+BBLOCK_OBJ = system.o molecule.o monomer.o mon_h2o.o
 
 all: libbblock.a
 

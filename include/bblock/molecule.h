@@ -3,8 +3,11 @@
 
 #include <vector>
 #include <string>
+#include <sstream>
+#include <stdexcept>
 
 #include "monomer.h"
+#include "monomers.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -27,7 +30,7 @@ class molecule {
 
   private:
     int n_mon;
-    std::vector<monomer> monomers;
+    std::vector< monomer * > monomers;
     
     
 };

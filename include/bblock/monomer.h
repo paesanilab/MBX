@@ -1,7 +1,11 @@
 #ifndef MONOMER_H
 #define MONOMER_H
 
-//typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
+#include <set>
+#include <string>
+#include <vector>
+
+typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -14,29 +18,24 @@ class monomer {
   public:
     monomer();
     ~monomer();
-    void clear();
     
     int get_n_sites();
 
-//    double * get_xyz();
-//    double * get_charge();
-//    double * get_polarizabilityi();
-//    double * get_polfac();
+    double * get_xyz();
 
-//    char * get_id();
+    virtual void set_xyz(double * coords) = 0;
 
-  private:
+  protected:
+    int n_real_sites;
+    int n_virt_sites;
     int n_sites;
 
-//    double * xyz;
-//    double * charge;
-//    double * polarizability;
-//    double * polfac;
+    double * xyz;
 
-//    char * id;
+    std::string mon_id;
+    std::vector<std::string> at_names;
+    
 
-//    excluded_set_type excluded12;
-//    excluded_set_type excluded13;
 //    excluded_set_type excluded14;
 
     
