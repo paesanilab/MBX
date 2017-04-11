@@ -17,7 +17,7 @@ class monomer {
 
   public:
     monomer();
-    ~monomer();
+    virtual ~monomer();
     
     int get_n_sites();
 

@@ -20,6 +20,7 @@ void read_nrg(char * filename, std::vector<bblock::system> & systems ) {
 
 //    if (sys.get_n_mol() > 0) {
       systems.push_back(sys);
+      sysno++;
 //    }
 
     std::streampos oldpos = ifs.tellg();
@@ -76,16 +77,16 @@ void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
     throw std::runtime_error(oss.str());
   }
 
-  size_t molno(0),molno_read(0);
+  size_t molno(0);
 
   while (word != "endsys") {
-    bblock::molecule molec;
+    bblock::molecule * molec = new bblock::molecule;
     read_molecule(lineno, ifs, molec);
 
-//    if (molec.get_n_mon() > 0) {
-//      sys.add_molecule(molec);
-//      molno++;
-//    }
+    if (molec->get_n_mon() > 0) {
+      sys.add_molecule(molec);
+      molno++;
+    }
     iss.clear();
 
     std::streampos oldpos = ifs.tellg();
@@ -102,11 +103,11 @@ void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
     }
   }
 
-  
+  sys.set_n_mol(molno);
   return;
 }
 
-void read_molecule(size_t& lineno, std::istream& ifs, bblock::molecule& molec) {
+void read_molecule(size_t& lineno, std::istream& ifs, bblock::molecule * molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -142,7 +143,7 @@ void read_molecule(size_t& lineno, std::istream& ifs, bblock::molecule& molec) {
 
 }
 
-void read_monomers(size_t& lineno, std::istream& ifs, bblock::molecule& molec) {
+void read_monomers(size_t& lineno, std::istream& ifs, bblock::molecule * molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -176,6 +177,8 @@ void read_monomers(size_t& lineno, std::istream& ifs, bblock::molecule& molec) {
   iss.str(line);
   iss >> word >> mon_name;
   std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+
+  size_t monno(0);
 
   while (word != "endmol") {
   
@@ -219,7 +222,8 @@ void read_monomers(size_t& lineno, std::istream& ifs, bblock::molecule& molec) {
       iss.str(line);
     }
 
-    molec.add_monomer(mon_name, xyz, names);
+    molec->add_monomer(mon_name, xyz, names);
+    monno++;
 
     iss.clear();
     std::getline(ifs, line);
@@ -229,6 +233,8 @@ void read_monomers(size_t& lineno, std::istream& ifs, bblock::molecule& molec) {
     std::transform(word.begin(), word.end(), word.begin(), ::tolower);
   }
   
+  molec->set_n_mon(monno);
+
   return;
 }
 

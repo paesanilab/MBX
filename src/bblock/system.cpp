@@ -11,12 +11,25 @@ system::system() {
 }
 
 system::~system() {
+  for (size_t i = 0; i < n_mol; i++) 
+    delete molecules[i];
 }
 
-
-void system::add_molecule(molecule molec){
+void system::add_molecule(molecule * molec){
   molecules.push_back(molec);
   return;
+}
+
+molecule * system::get_molecule(size_t n) {
+  return molecules[n];
+}
+
+size_t system::get_n_mol() {
+  return n_mol;
+}
+
+void system::set_n_mol(size_t n) {
+  n_mol = n;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

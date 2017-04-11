@@ -12,6 +12,7 @@
 #include <stdexcept>
 
 #include "read-nrg.h"
+#include "write-nrg.h"
 
 #include "system.h"
 
@@ -31,23 +32,27 @@ int main(int argc, char** argv)
 
   //    std::vector<bblock::system> systems;
   if (argc != 2) {
-        std::cerr << "usage: test-mbnrg h2o_ion.nrg"
-                  << std::endl;
-        return 0;
+    std::cerr << "usage: energy h2o_ion.nrg"
+              << std::endl;
+    return 0;
+  }
+
+  try {
+    std::ifstream ifs(argv[1]);
+
+    if (!ifs){
+      throw std::runtime_error("could not open the NRG file");
     }
 
-    try {
-        std::ifstream ifs(argv[1]);
+    tools::read_nrg(argv[1], systems);
+  } catch (const std::exception& e) {
+    std::cerr << " ** Error ** : " << e.what() << std::endl;
+    return 1;
+  }
 
-        if (!ifs){
-            throw std::runtime_error("could not open the NRG file");
-        }
+  //tools::write_nrg("test",systems);
 
-        tools::read_nrg(argv[1], systems);
-    } catch (const std::exception& e) {
-        std::cerr << " ** Error ** : " << e.what() << std::endl;
-        return 1;
-    }
+  
 
 //    size_t nw = (molec[0].natm - 1)/3;
 //

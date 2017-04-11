@@ -9,7 +9,7 @@ LIBS = -l bblock
 
 AR = /usr/bin/ar
 OBJDIR = ../obj
-TOOLS_OBJ = read-nrg.o
+TOOLS_OBJ = read-nrg.o write-nrg.o
 
 all: libtools.a
 
@@ -27,5 +27,5 @@ $(OBJDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf $(OBJDIR) *.a
+	rm -rf $(addprefix $(OBJDIR)/, $(TOOLS_OBJ)) *.a
 

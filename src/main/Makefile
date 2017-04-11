@@ -31,5 +31,5 @@ $(OBJDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf $(OBJDIR) *.a
+	rm -rf $(addprefix $(OBJDIR)/, $(ENERGY_OBJ)) *.a
 

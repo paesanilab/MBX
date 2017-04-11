@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
 
 #include "monomer.h"
 #include "monomers.h"
@@ -22,14 +23,15 @@ class molecule {
     ~molecule();
     void clear();
     
-    int get_n_mon();
+    size_t get_n_mon();
+    void set_n_mon(size_t n);
     void add_monomer(std::string mon_name, double * xyz,
           std::vector<std::string> names);
 //    monomer * get_monomer(size_t n);
 //    monomer * get_monomer();
 
   private:
-    int n_mon;
+    size_t n_mon;
     std::vector< monomer * > monomers;
     
     
