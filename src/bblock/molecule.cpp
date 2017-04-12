@@ -11,8 +11,8 @@ molecule::molecule() {
 }
 
 molecule::~molecule() {
-  for (size_t i = 0; i < n_mon; i++) 
-    delete monomers[i];
+//  for (size_t i = 0; i < n_mon; i++) 
+//    delete monomers[i];
 }
 
 void molecule::add_monomer(std::string mon_name, double * xyz, std::vector<std::string> names){
