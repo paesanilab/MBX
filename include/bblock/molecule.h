@@ -32,7 +32,7 @@ class molecule {
 
   private:
     size_t n_mon;
-    std::vector< monomer * > monomers;
+    std::vector<std::shared_ptr<monomer> > monomers;
     
     
 };

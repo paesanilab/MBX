@@ -15,7 +15,7 @@ h2o::h2o(double * coords, std::vector<std::string> names) {
 
   n_sites = n_real_sites + n_virt_sites;
 
-  xyz = new double[n_sites * 3];
+  xyz = std::shared_ptr<double> (new double[n_sites * 3]);
   
   at_names.clear();
   
@@ -27,12 +27,11 @@ h2o::h2o(double * coords, std::vector<std::string> names) {
     at_names.push_back("virtual");
   }
 
-  std::copy(coords, coords + n_real_sites * 3, xyz );
+  std::copy(coords, coords + n_real_sites * 3, xyz.get() );
   std::fill(coords + n_real_sites * 3 , coords + n_sites * 3 , 0.0);
 }
 
 h2o::~h2o() {
-  delete[] xyz;
 }
 
 

@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <memory>
 
 typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
@@ -21,7 +22,7 @@ class monomer {
     
     int get_n_sites();
 
-    double * get_xyz();
+    std::shared_ptr<double> get_xyz();
 
     virtual void set_xyz(double * coords) = 0;
 
@@ -30,7 +31,7 @@ class monomer {
     int n_virt_sites;
     int n_sites;
 
-    double * xyz;
+    std::shared_ptr<double>  xyz;
 
     std::string mon_id;
     std::vector<std::string> at_names;

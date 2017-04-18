@@ -11,8 +11,6 @@ system::system() {
 }
 
 system::~system() {
-  for (size_t i = 0; i < n_mol; i++) 
-    delete molecules[i];
 }
 
 void system::add_molecule(molecule * molec){
@@ -20,7 +18,7 @@ void system::add_molecule(molecule * molec){
   return;
 }
 
-molecule * system::get_molecule(size_t n) {
+std::shared_ptr<molecule>  system::get_molecule(size_t n) {
   return molecules[n];
 }
 
