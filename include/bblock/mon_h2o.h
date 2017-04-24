@@ -13,17 +13,12 @@ namespace bblock { // Building Block :: h2o
 ////////////////////////////////////////////////////////////////////////////////
 
 class H2O : public Monomer {
-
-  public:
-    H2O();
-    H2O(double * coords, std::vector<std::string> names);
-    ~H2O();
-    
-//  private:
-
-    
+ public:
+  H2O();
+  H2O(double * coords, std::vector<std::string> names);
+  ~H2O();
+// private:
 };
-
 } // namespace bblock
 
 ////////////////////////////////////////////////////////////////////////////////

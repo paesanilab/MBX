@@ -7,8 +7,8 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "read-nrg.h"
-#include "write-nrg.h"
+#include "read_nrg.h"
+#include "write_nrg.h"
 
 #include "system.h"
 

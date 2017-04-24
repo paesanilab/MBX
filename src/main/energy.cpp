@@ -1,7 +1,3 @@
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif // HAVE_CONFIG_H
-
 #include <cmath>
 #include <cassert>
 
@@ -11,8 +7,8 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "read-nrg.h"
-#include "write-nrg.h"
+#include "read_nrg.h"
+#include "write_nrg.h"
 
 #include "system.h"
 

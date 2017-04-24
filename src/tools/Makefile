@@ -1,4 +1,3 @@
-
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I$(CU_HOME)/include/bblock \
@@ -9,7 +8,7 @@ LIBS = -lbblock
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj
-TOOLS_OBJ = read-nrg.o write-nrg.o 
+TOOLS_OBJ = read_nrg.o write_nrg.o 
 
 all: libtools.a
 

@@ -16,40 +16,24 @@ namespace bblock { // Building Block :: monomer
 ////////////////////////////////////////////////////////////////////////////////
 
 class Monomer {
-
-  public:
-    Monomer();
-    virtual ~Monomer();
-    
-    size_t GetNumSites();
-    size_t GetNumRealSites();
-    size_t GetNumVirtSites();
-
-    std::shared_ptr<double> GetXyz();
-
-    void SetXyz(double * coords);
-    void GetRealSitesXyz(double * coords);
-    std::vector<std::string> GetAtomNames();
-
-    std::string GetMonomerId();
-
-  protected:
-    size_t n_real_sites;
-    size_t n_virt_sites;
-    size_t n_sites;
-
-    std::shared_ptr<double>  xyz;
-
-    std::string mon_id;
-    std::vector<std::string> at_names;
-    
-
-//    excluded_set_type excluded14;
-
-    
-    
-        
-    
+ public:
+  Monomer();
+  virtual ~Monomer();
+  size_t GetNumSites();
+  size_t GetNumRealSites();
+  size_t GetNumVirtSites();
+  std::shared_ptr<double> GetXyz();
+  void SetXyz(double * coords);
+  void GetRealSitesXyz(double * coords);
+  std::vector<std::string> GetAtomNames();
+  std::string GetMonomerId();
+ protected:
+  size_t n_real_sites;
+  size_t n_virt_sites;
+  size_t n_sites;
+  std::shared_ptr<double>  xyz;
+  std::string mon_id;
+  std::vector<std::string> at_names;
 };
 
 } // namespace bblock
