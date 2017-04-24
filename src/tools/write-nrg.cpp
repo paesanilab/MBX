@@ -2,7 +2,7 @@
 
 namespace tools {
 
-void write_nrg(char * filename, std::vector<bblock::system> systems ) {
+void write_nrg(const char * filename, std::vector<bblock::system> systems ) {
   
   assert(filename);
 
@@ -24,6 +24,21 @@ void save_nrg(std::ostream & os, std::vector<bblock::system> systems ) {
       for (size_t k = 0; k < m->get_n_mon(); k++) {
         os << "MONOMER " << std::endl;
         // TODO: Finish properly the writting function
+        std::shared_ptr<bblock::monomer> mon = m->get_monomer(k);
+        size_t ns = mon->get_n_realsites();
+        double xyz[3*ns];
+        std::vector<std::string> an = mon->get_atom_names();
+        mon->get_real_xyz(xyz);
+        for (size_t n = 0 ; n < ns ; n++) {
+          os << std::scientific;
+          os << std::setprecision(8);
+          os << std::setw(5) << std::left << an[n]
+             << std::setw(20) << std::right << xyz[3*n]
+             << std::setw(20) << std::right << xyz[3*n + 1]
+             << std::setw(20) << std::right << xyz[3*n + 2]
+             << std::endl;
+        }
+        
         os << "ENDMON " << std::endl;
       }
       os << "ENDMOL " << std::endl;

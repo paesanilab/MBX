@@ -19,8 +19,6 @@ class h2o : public monomer {
     h2o(double * coords, std::vector<std::string> names);
     ~h2o();
     
-    void set_xyz(double * coords);
-
 //  private:
 
     

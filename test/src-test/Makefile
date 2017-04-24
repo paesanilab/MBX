@@ -9,19 +9,19 @@ LIBDIR = -L$(CU_HOME)/lib
 #LIBS = ../bblock/libbblock.a
 LIBS = -ltools -lbblock -lerrors
 
-BINDIR = $(CU_HOME)/bin
+BINDIR = $(CU_HOME)/test/bin-test
 
 AR = /usr/bin/ar
-OBJDIR = $(CU_HOME)/obj
-ENERGY_OBJ = energy
+OBJDIR = $(CU_HOME)/test/obj-test
+#ENERGY_OBJ = 
 
-all: $(ENERGY_OBJ)
+all: io-test
 
 #energy: $(addprefix $(OBJDIR)/, $(ENERGY_OBJ))
-energy: energy.cpp
+io-test: io-test.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBDIR) $< $(LIBS) -o $@
 	mkdir -p $(BINDIR)
-	mv energy $(BINDIR)
+	mv io-test $(BINDIR)
 
 #$(OBJDIR)/%.o: %.cpp %.h $(OBJDIR)/.sentinel
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.sentinel
@@ -32,5 +32,5 @@ $(OBJDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf $(addprefix $(BINDIR)/, $(ENERGY_OBJ)) 
+	rm -rf $(addprefix $(OBJDIR)/, $(ENERGY_OBJ)) 
 

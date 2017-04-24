@@ -27,7 +27,7 @@ class molecule {
     void set_n_mon(size_t n);
     void add_monomer(std::string mon_name, double * xyz,
           std::vector<std::string> names);
-//    monomer * get_monomer(size_t n);
+    std::shared_ptr<monomer> get_monomer(size_t n);
 //    monomer * get_monomer();
 
   private:

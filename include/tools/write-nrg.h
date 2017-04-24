@@ -1,5 +1,5 @@
-#ifndef READ_NRG_H
-#define READ_NRG_H
+#ifndef WRITE_NRG_H
+#define WRITE_NRG_H
 
 #include <vector>
 #include <string>
@@ -17,10 +17,10 @@
 
 namespace tools {
 
-void write_nrg(char * filename, std::vector<bblock::system> systems );
+void write_nrg(const char * filename, std::vector<bblock::system> systems );
 void save_nrg(std::ostream & os, std::vector<bblock::system> systems );
 
 
 } // namespace tools
 
-#endif // READ_NRG_H
+#endif // WRITE_NRG_H

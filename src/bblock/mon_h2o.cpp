@@ -20,12 +20,12 @@ h2o::h2o(double * coords, std::vector<std::string> names) {
   
   at_names.clear();
   
-  for (int i = 0; i < n_real_sites; i++) {
+  for (size_t i = 0; i < n_real_sites; i++) {
     at_names.push_back(names[i]);
   }
 
-  for (int i = n_real_sites; i < n_sites; i++) {
-    at_names.push_back("virtual");
+  for (size_t i = n_real_sites; i < n_sites; i++) {
+    at_names.push_back("virt");
   }
 
   std::copy(coords, coords + n_real_sites * 3, xyz.get() );
@@ -34,11 +34,6 @@ h2o::h2o(double * coords, std::vector<std::string> names) {
 
 h2o::~h2o() {
 }
-
-
-void h2o::set_xyz(double * coords) {
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 

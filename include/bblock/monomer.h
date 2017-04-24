@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <iostream>
+
+#include "errorcodes.h"
 
 typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
@@ -20,16 +23,20 @@ class monomer {
     monomer();
     virtual ~monomer();
     
-    int get_n_sites();
+    size_t get_n_sites();
+    size_t get_n_realsites();
+    size_t get_n_virtsites();
 
     std::shared_ptr<double> get_xyz();
 
-    virtual void set_xyz(double * coords) = 0;
+    void set_xyz(double * coords);
+    void get_real_xyz(double * coords);
+    std::vector<std::string> get_atom_names();
 
   protected:
-    int n_real_sites;
-    int n_virt_sites;
-    int n_sites;
+    size_t n_real_sites;
+    size_t n_virt_sites;
+    size_t n_sites;
 
     std::shared_ptr<double>  xyz;
 

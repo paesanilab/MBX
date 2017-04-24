@@ -34,6 +34,10 @@ void molecule::add_monomer(std::string mon_name, double * xyz, std::vector<std::
   return;
 }
 
+std::shared_ptr<monomer> molecule::get_monomer(size_t n) {
+  return monomers[n];
+}
+
 size_t molecule::get_n_mon() {
   return n_mon;
 }

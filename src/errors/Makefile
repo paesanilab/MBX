@@ -5,28 +5,27 @@ INCLUDE = -I$(CU_HOME)/include/bblock \
           -I$(CU_HOME)/include/tools \
           -I$(CU_HOME)/include/errors 
 #LIBS = -lnetcdf -lgsl -lgslcblas
-LIBDIR = $(CU_HOME)/lib
-LIBS = -lerrors  
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj
-BBLOCK_OBJ = system.o molecule.o monomer.o mon_h2o.o
+LIBDIR = $(CU_HOME)/lib
+ERR_OBJ = errorcodes.o
 
-all: libbblock.a
+all: liberrors.a
 
-libbblock.a: $(addprefix $(OBJDIR)/, $(BBLOCK_OBJ))
-	$(AR) cru libbblock.a $(addprefix $(OBJDIR)/, $(BBLOCK_OBJ))
+liberrors.a: $(addprefix $(OBJDIR)/, $(ERR_OBJ))
+	$(AR) cru liberrors.a $(addprefix $(OBJDIR)/, $(ERR_OBJ))
 	mkdir -p $(LIBDIR)
-	mv libbblock.a $(LIBDIR)
+	mv liberrors.a $(LIBDIR)
 
 #$(OBJDIR)/%.o: %.cpp %.h $(OBJDIR)/.sentinel
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.sentinel
-	$(CXX) $(CXXFLAGS) $(INCLUDE) -L$(LIBDIR) -c $< $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -o $@
 
 $(OBJDIR)/.sentinel:
 	mkdir -p $(OBJDIR)
 	touch $@
 
 clean:
-	rm -rf $(addprefix $(OBJDIR)/, $(BBLOCK_OBJ))
+	rm -rf $(addprefix $(OBJDIR)/, $(ERR_OBJ))
 
