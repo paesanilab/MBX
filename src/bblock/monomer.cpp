@@ -27,13 +27,6 @@ std::string monomer::get_monomer_id(){
 
 void monomer::get_real_xyz(double * coords) {
 
-  // Check if coords has the proper size
-  size_t ncoords = sizeof( coords );
-  std::cerr << ncoords << std::endl;
-  if (ncoords < n_real_sites) {
-    errors::print_error(1,__func__);
-  }
-
   // Set coordinates
   std::copy(xyz.get(), xyz.get() + 3*n_real_sites, coords);
 }
