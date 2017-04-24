@@ -80,7 +80,8 @@ void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
   size_t molno(0);
 
   while (word != "endsys") {
-    bblock::molecule * molec = new bblock::molecule;
+    std::shared_ptr<bblock::molecule> molec = 
+        std::shared_ptr<bblock::molecule> (new bblock::molecule);
     read_molecule(lineno, ifs, molec);
 
     if (molec->get_n_mon() > 0) {
@@ -107,7 +108,7 @@ void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
   return;
 }
 
-void read_molecule(size_t& lineno, std::istream& ifs, bblock::molecule * molec) {
+void read_molecule(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::molecule> molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -143,7 +144,7 @@ void read_molecule(size_t& lineno, std::istream& ifs, bblock::molecule * molec) 
 
 }
 
-void read_monomers(size_t& lineno, std::istream& ifs, bblock::molecule * molec) {
+void read_monomers(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::molecule> molec) {
   assert(ifs);
 
   if (ifs.eof())

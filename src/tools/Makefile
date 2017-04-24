@@ -27,5 +27,5 @@ $(OBJDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf $(addprefix $(OBJDIR)/, $(TOOLS_OBJ)) *.a
+	rm -rf $(addprefix $(OBJDIR)/, $(TOOLS_OBJ)) 
 

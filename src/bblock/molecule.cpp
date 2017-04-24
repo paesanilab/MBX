@@ -19,7 +19,8 @@ void molecule::add_monomer(std::string mon_name, double * xyz, std::vector<std::
 
   // Add corresponding monomer
   if (mon_name == "h2o") {
-    std::shared_ptr<bblock::monomer>  mon = std::shared_ptr<bblock::monomer> (new bblock::h2o(xyz, names));
+    std::shared_ptr<bblock::monomer>  mon = 
+         std::shared_ptr<bblock::h2o> (new bblock::h2o(xyz, names));
     monomers.push_back(mon);
 
   // If monomer not defined:

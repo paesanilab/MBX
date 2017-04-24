@@ -24,9 +24,11 @@ void read_foo(char* filename, double * foo);
 
 void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys);
 
-void read_molecule(size_t& lineno, std::istream& ifs, bblock::molecule * molec);
+void read_molecule(size_t& lineno, std::istream& ifs, 
+                   std::shared_ptr<bblock::molecule> molec);
 
-void read_monomers(size_t& lineno, std::istream& ifs, bblock::molecule * molec);
+void read_monomers(size_t& lineno, std::istream& ifs, 
+                   std::shared_ptr<bblock::molecule> molec);
 
 
 } // namespace tools

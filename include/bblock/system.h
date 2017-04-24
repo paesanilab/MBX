@@ -28,7 +28,7 @@ class system {
     std::shared_ptr<molecule> get_molecule(size_t n);
 //    molecule  get_molecule();
     
-    void add_molecule(molecule molec);
+    void add_molecule(std::shared_ptr<bblock::molecule> molec);
 
   private:
     size_t n_mol;

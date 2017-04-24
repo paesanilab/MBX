@@ -13,7 +13,7 @@ system::system() {
 system::~system() {
 }
 
-void system::add_molecule(molecule * molec){
+void system::add_molecule(std::shared_ptr<bblock::molecule> molec){
   molecules.push_back(molec);
   return;
 }

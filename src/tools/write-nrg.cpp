@@ -20,7 +20,7 @@ void save_nrg(std::ostream & os, std::vector<bblock::system> systems ) {
     for (size_t j = 0; j < systems[i].get_n_mol(); j++) {
       // TODO: Put here the connectivity after molecule
       os << "MOLECULE " << i << "." << j << std::endl;
-      bblock::molecule * m = systems[i].get_molecule(i);
+      std::shared_ptr<bblock::molecule> m = systems[i].get_molecule(i);
       for (size_t k = 0; k < m->get_n_mon(); k++) {
         os << "MONOMER " << std::endl;
         // TODO: Finish properly the writting function

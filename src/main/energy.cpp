@@ -30,7 +30,6 @@ static std::vector<bblock::system> systems;
 int main(int argc, char** argv)
 {
 
-  //    std::vector<bblock::system> systems;
   if (argc != 2) {
     std::cerr << "usage: energy h2o_ion.nrg"
               << std::endl;

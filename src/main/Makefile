@@ -6,7 +6,7 @@ INCLUDE = -I../../include/bblock \
 #LIBS = -lnetcdf -lgsl -lgslcblas
 LIBDIR = -L../../lib 
 #LIBS = ../bblock/libbblock.a
-LIBS = -lbblock -ltools
+LIBS = -ltools -lbblock
 
 BINDIR = ../../bin
 
@@ -31,5 +31,5 @@ $(OBJDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf $(addprefix $(OBJDIR)/, $(ENERGY_OBJ)) *.a
+	rm -rf $(addprefix $(OBJDIR)/, $(ENERGY_OBJ)) 
 
