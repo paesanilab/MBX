@@ -2,10 +2,7 @@
 
 source include/install/config.sh
 
-cd src/errors
-make clean
-make
-cd ../bblock
+cd src/bblock
 make clean
 make
 cd ../tools

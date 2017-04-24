@@ -3,10 +3,9 @@ CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I$(CU_HOME)/include/bblock \
           -I$(CU_HOME)/include/tools \
-          -I$(CU_HOME)/include/errors 
 #LIBS = -lnetcdf -lgsl -lgslcblas
 LIBDIR = $(CU_HOME)/lib
-LIBS = -lerrors  
+LIBS =   
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj

@@ -2,7 +2,7 @@
 
 namespace tools {
 
-void read_nrg(char * filename, std::vector<bblock::system> & systems ) {
+void ReadNrg(char * filename, std::vector<bblock::System> & systems ) {
   
   assert(filename);
 
@@ -14,14 +14,11 @@ void read_nrg(char * filename, std::vector<bblock::system> & systems ) {
   size_t sysno(0);
 
   while (true) {
-    bblock::system sys;
-    read_system(lineno, ifs, sys);
+    bblock::System sys;
+    ReadSystem(lineno, ifs, sys);
     
-
-//    if (sys.get_n_mol() > 0) {
-      systems.push_back(sys);
-      sysno++;
-//    }
+    systems.push_back(sys);
+    sysno++;
 
     std::streampos oldpos = ifs.tellg();
     std::string line;
@@ -31,23 +28,12 @@ void read_nrg(char * filename, std::vector<bblock::system> & systems ) {
     } else {
       ifs.seekg(oldpos);
     }
-  
-
-    
   }
 
   return;
 }
 
-void read_foo(char * filename, double * systems ) {
-  
-  assert(filename);
-  assert(systems);
-
-  return;
-}
-
-void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
+void ReadSystem(size_t& lineno, std::istream& ifs, bblock::System& sys) {
   assert(ifs);
 
   if (ifs.eof())
@@ -80,12 +66,12 @@ void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
   size_t molno(0);
 
   while (word != "endsys") {
-    std::shared_ptr<bblock::molecule> molec = 
-        std::shared_ptr<bblock::molecule> (new bblock::molecule);
-    read_molecule(lineno, ifs, molec);
+    std::shared_ptr<bblock::Molecule> molec = 
+        std::shared_ptr<bblock::Molecule> (new bblock::Molecule);
+    ReadMolecule(lineno, ifs, molec);
 
-    if (molec->get_n_mon() > 0) {
-      sys.add_molecule(molec);
+    if (molec->GetNumMon() > 0) {
+      sys.AddMolecule(molec);
       molno++;
     }
     iss.clear();
@@ -104,11 +90,11 @@ void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys) {
     }
   }
 
-  sys.set_n_mol(molno);
+  sys.SetNumMol(molno);
   return;
 }
 
-void read_molecule(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::molecule> molec) {
+void ReadMolecule(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::Molecule> molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -137,14 +123,13 @@ void read_molecule(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::mo
     throw std::runtime_error(oss.str());
   }
   
-  read_monomers(lineno, ifs, molec);
-
+  ReadMonomers(lineno, ifs, molec);
 
   return;
 
 }
 
-void read_monomers(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::molecule> molec) {
+void ReadMonomers(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::Molecule> molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -193,7 +178,7 @@ void read_monomers(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::mo
     std::transform(mon_name.begin(), mon_name.end(), mon_name.begin(), ::tolower);
 
     std::vector<std::string> names;
-    double xyz[1000];
+    double xyz[10000];
     size_t i(0);
     
     std::getline(ifs, line);
@@ -223,7 +208,7 @@ void read_monomers(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::mo
       iss.str(line);
     }
 
-    molec->add_monomer(mon_name, xyz, names);
+    molec->AddMonomer(mon_name, xyz, names);
     monno++;
 
     iss.clear();
@@ -234,7 +219,7 @@ void read_monomers(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::mo
     std::transform(word.begin(), word.end(), word.begin(), ::tolower);
   }
   
-  molec->set_n_mon(monno);
+  molec->SetNumMon(monno);
 
   return;
 }

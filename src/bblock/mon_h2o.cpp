@@ -6,10 +6,10 @@ namespace bblock { // Building Block :: System
 
 ////////////////////////////////////////////////////////////////////////////////
 
-h2o::h2o() {
+H2O::H2O() {
 }
 
-h2o::h2o(double * coords, std::vector<std::string> names) {
+H2O::H2O(double * coords, std::vector<std::string> names) {
   n_real_sites = 3;
   n_virt_sites = 1;
 
@@ -34,7 +34,7 @@ h2o::h2o(double * coords, std::vector<std::string> names) {
   std::fill(coords + n_real_sites * 3 , coords + n_sites * 3 , 0.0);
 }
 
-h2o::~h2o() {
+H2O::~H2O() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////

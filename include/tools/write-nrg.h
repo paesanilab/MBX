@@ -1,5 +1,5 @@
-#ifndef WRITE_NRG_H
-#define WRITE_NRG_H
+#ifndef CU_INCLUDE_TOOLS_WRITENRG_H
+#define CU_INCLUDE_TOOLS_WRITENRG_H
 
 #include <vector>
 #include <string>
@@ -17,10 +17,10 @@
 
 namespace tools {
 
-void write_nrg(const char * filename, std::vector<bblock::system> systems );
-void save_nrg(std::ostream & os, std::vector<bblock::system> systems );
+void WriteNrg(const char * filename, std::vector<bblock::System> systems );
+void SaveNrg(std::ostream & os, std::vector<bblock::System> systems );
 
 
 } // namespace tools
 
-#endif // WRITE_NRG_H
+#endif // CU_INCLUDE_TOOLS_WRITENRG_H

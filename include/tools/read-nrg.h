@@ -1,5 +1,5 @@
-#ifndef READ_NRG_H
-#define READ_NRG_H
+#ifndef CU_INCLUDE_TOOLS_READNRG_H
+#define CU_INCLUDE_TOOLS_READNRG_H
 
 #include <vector>
 #include <string>
@@ -18,19 +18,17 @@
 namespace tools {
 
 // returns number of systems loaded
-void read_nrg(char* filename, std::vector<bblock::system> & systems);
+void ReadNrg(char* filename, std::vector<bblock::System> & systems);
 
-void read_foo(char* filename, double * foo);
+void ReadSystem(size_t& lineno, std::istream& ifs, bblock::System& sys);
 
-void read_system(size_t& lineno, std::istream& ifs, bblock::system& sys);
+void ReadMolecule(size_t& lineno, std::istream& ifs, 
+                   std::shared_ptr<bblock::Molecule> molec);
 
-void read_molecule(size_t& lineno, std::istream& ifs, 
-                   std::shared_ptr<bblock::molecule> molec);
-
-void read_monomers(size_t& lineno, std::istream& ifs, 
-                   std::shared_ptr<bblock::molecule> molec);
+void ReadMonomers(size_t& lineno, std::istream& ifs, 
+                   std::shared_ptr<bblock::Molecule> molec);
 
 
 } // namespace tools
 
-#endif // READ_NRG_H
+#endif // CU_INCLUDE_TOOLS_READNRG_H

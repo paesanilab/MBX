@@ -1,5 +1,5 @@
-#ifndef SYSTEM_H
-#define SYSTEM_H
+#ifndef CU_INCLUDE_BBLOCK_SYSTEM_H
+#define CU_INCLUDE_BBLOCK_SYSTEM_H
 
 #include <vector>
 #include <string>
@@ -16,23 +16,23 @@ namespace bblock { // Building Block :: System
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class system {
+class System {
 
   public:
-    system();
-    ~system();
+    System();
+    ~System();
     void clear();
     
-    size_t get_n_mol();
-    void set_n_mol(size_t n);
-    std::shared_ptr<molecule> get_molecule(size_t n);
+    size_t GetNumMol();
+    void SetNumMol(size_t n);
+    std::shared_ptr<Molecule> GetMolecule(size_t n);
 //    molecule  get_molecule();
     
-    void add_molecule(std::shared_ptr<bblock::molecule> molec);
+    void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 
   private:
     size_t n_mol;
-    std::vector<std::shared_ptr<molecule>> molecules;
+    std::vector<std::shared_ptr<Molecule>> molecules;
     
     
 };
@@ -41,4 +41,4 @@ class system {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // SYSTEM_H
+#endif // CU_INCLUDE_BBLOCK_SYSTEM_H

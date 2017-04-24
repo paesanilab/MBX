@@ -6,32 +6,32 @@ namespace bblock { // Building Block :: Monomer
 
 ////////////////////////////////////////////////////////////////////////////////
 
-monomer::monomer() {
+Monomer::Monomer() {
 }
 
-monomer::~monomer() {
+Monomer::~Monomer() {
 }
 
 
-size_t monomer::get_n_sites(){
+size_t Monomer::GetNumSites(){
   return n_sites;
 }
 
-size_t monomer::get_n_realsites(){
+size_t Monomer::GetNumRealSites(){
   return n_real_sites;
 }
 
-std::string monomer::get_monomer_id(){
+std::string Monomer::GetMonomerId(){
   return mon_id;
 }
 
-void monomer::get_real_xyz(double * coords) {
+void Monomer::GetRealSitesXyz(double * coords) {
 
   // Set coordinates
   std::copy(xyz.get(), xyz.get() + 3*n_real_sites, coords);
 }
 
-std::vector<std::string> monomer::get_atom_names() {
+std::vector<std::string> Monomer::GetAtomNames() {
   return at_names;
 }
 

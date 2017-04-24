@@ -6,27 +6,27 @@ namespace bblock { // Building Block :: System
 
 ////////////////////////////////////////////////////////////////////////////////
 
-system::system() {
+System::System() {
   n_mol=0;
 }
 
-system::~system() {
+System::~System() {
 }
 
-void system::add_molecule(std::shared_ptr<bblock::molecule> molec){
+void System::AddMolecule(std::shared_ptr<bblock::Molecule> molec){
   molecules.push_back(molec);
   return;
 }
 
-std::shared_ptr<molecule>  system::get_molecule(size_t n) {
+std::shared_ptr<Molecule> System::GetMolecule(size_t n) {
   return molecules[n];
 }
 
-size_t system::get_n_mol() {
+size_t System::GetNumMol() {
   return n_mol;
 }
 
-void system::set_n_mol(size_t n) {
+void System::SetNumMol(size_t n) {
   n_mol = n;
 }
 

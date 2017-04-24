@@ -1,5 +1,5 @@
-#ifndef MOLECULE_H
-#define MOLECULE_H
+#ifndef CU_INCLUDE_BBLOCK_MOLECULE_H
+#define CU_INCLUDE_BBLOCK_MOLECULE_H
 
 #include <vector>
 #include <string>
@@ -16,23 +16,23 @@ namespace bblock { // Building Block :: molecule
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class molecule {
+// Molecule class
+class Molecule {
 
   public:
-    molecule();
-    ~molecule();
+    Molecule();
+    ~Molecule();
     void clear();
     
-    size_t get_n_mon();
-    void set_n_mon(size_t n);
-    void add_monomer(std::string mon_name, double * xyz,
+    size_t GetNumMon();
+    void SetNumMon(size_t n);
+    void AddMonomer(std::string mon_name, double * xyz,
           std::vector<std::string> names);
-    std::shared_ptr<monomer> get_monomer(size_t n);
-//    monomer * get_monomer();
+    std::shared_ptr<Monomer> GetMonomer(size_t n);
 
   private:
     size_t n_mon;
-    std::vector<std::shared_ptr<monomer> > monomers;
+    std::vector<std::shared_ptr<Monomer> > monomers;
     
     
 };
@@ -41,4 +41,4 @@ class molecule {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // MOLECULE_H
+#endif // CU_INCLUDE_BBLOCK_MOLECULE_H

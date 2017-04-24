@@ -1,5 +1,5 @@
-#ifndef MON_H2O_H
-#define MON_H2O_H
+#ifndef CU_INCLUDE_BBLOCK_MONH2O_H
+#define CU_INCLUDE_BBLOCK_MONH2O_H
 
 #include "monomer.h"
 
@@ -12,12 +12,12 @@ namespace bblock { // Building Block :: h2o
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class h2o : public monomer {
+class H2O : public Monomer {
 
   public:
-    h2o();
-    h2o(double * coords, std::vector<std::string> names);
-    ~h2o();
+    H2O();
+    H2O(double * coords, std::vector<std::string> names);
+    ~H2O();
     
 //  private:
 
@@ -28,4 +28,4 @@ class h2o : public monomer {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // MON_H2O_H
+#endif // CU_INCLUDE_BBLOCK_MONH2O_H
