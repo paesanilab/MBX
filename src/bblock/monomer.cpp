@@ -21,6 +21,10 @@ size_t monomer::get_n_realsites(){
   return n_real_sites;
 }
 
+std::string monomer::get_monomer_id(){
+  return mon_id;
+}
+
 void monomer::get_real_xyz(double * coords) {
 
   // Check if coords has the proper size

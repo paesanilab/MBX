@@ -13,9 +13,10 @@ BINDIR = $(CU_HOME)/test/bin-test
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/test/obj-test
+EXES = io-test
 #ENERGY_OBJ = 
 
-all: io-test
+all: $(EXES)
 
 #energy: $(addprefix $(OBJDIR)/, $(ENERGY_OBJ))
 io-test: io-test.cpp
@@ -32,5 +33,5 @@ $(OBJDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf $(addprefix $(OBJDIR)/, $(ENERGY_OBJ)) 
+	rm -rf $(addprefix $(BINDIR)/, $(EXES)) 
 

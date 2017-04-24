@@ -33,6 +33,8 @@ class monomer {
     void get_real_xyz(double * coords);
     std::vector<std::string> get_atom_names();
 
+    std::string get_monomer_id();
+
   protected:
     size_t n_real_sites;
     size_t n_virt_sites;

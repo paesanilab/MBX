@@ -28,6 +28,8 @@ h2o::h2o(double * coords, std::vector<std::string> names) {
     at_names.push_back("virt");
   }
 
+  mon_id = "h2o";
+
   std::copy(coords, coords + n_real_sites * 3, xyz.get() );
   std::fill(coords + n_real_sites * 3 , coords + n_sites * 3 , 0.0);
 }
