@@ -6,28 +6,29 @@
 
 #include "molecule.h"
 
-//Debugging
-#include <iostream>
-
-
 ////////////////////////////////////////////////////////////////////////////////
-
 namespace bblock { // Building Block :: System
-
 ////////////////////////////////////////////////////////////////////////////////
 
+// System Class
+// @author: Marc Riera
+// @email:  mrierari@ucsd.edu
+// This class contains a whole chemical system, which is made of molecules,
+// which are made of monomers.
 class System {
  public:
   System();
   ~System();
-  void clear();
+  // Getters
   size_t GetNumMol();
-  void SetNumMol(size_t n);
+  // Returns a pointer to the nth molecule in the system
   std::shared_ptr<Molecule> GetMolecule(size_t n);
+  // Modifiers
+  void SetNumMol(size_t n);
   void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
  private:
-  size_t n_mol;
-  std::vector<std::shared_ptr<Molecule>> molecules;
+  size_t n_mol;                                       // Number of molecules
+  std::vector<std::shared_ptr<Molecule>> molecules;   // Vector with all molecs
 };
 
 } // namespace bblock

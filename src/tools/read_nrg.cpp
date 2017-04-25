@@ -3,10 +3,9 @@
 namespace tools {
 
 void ReadNrg(char * filename, std::vector<bblock::System> & systems ) {
-  
   assert(filename);
-
   std::ifstream ifs(filename);
+
   if (!ifs)
     throw std::runtime_error("could not open NRG file for reading");
   
@@ -29,7 +28,6 @@ void ReadNrg(char * filename, std::vector<bblock::System> & systems ) {
       ifs.seekg(oldpos);
     }
   }
-
   return;
 }
 

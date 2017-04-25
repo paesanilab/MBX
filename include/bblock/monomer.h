@@ -10,32 +10,41 @@
 typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
 ////////////////////////////////////////////////////////////////////////////////
-
-namespace bblock { // Building Block :: monomer
-
+namespace bblock { // Building Block :: Monomer
 ////////////////////////////////////////////////////////////////////////////////
 
+// Monomer Class
+// @author: Marc Riera
+// @email:  mrierari@ucsd.edu
+// This class describes an individual monomer. This is the general class.
+// Depending on the identity of the monomer, it will be initialized with the 
+// appropriate identity.
 class Monomer {
  public:
   Monomer();
+  // Virtual destructor. Since the monomer identity is in the derived
+  // classes of monomer, the destructor must be called from there first.
   virtual ~Monomer();
+  // Getters
   size_t GetNumSites();
   size_t GetNumRealSites();
   size_t GetNumVirtSites();
-  std::shared_ptr<double> GetXyz();
-  void SetXyz(double * coords);
+  // Copies in coords the coordinates of the real sites
   void GetRealSitesXyz(double * coords);
+  // Returns a shared_ptr to the coordinates of the monomer
+  std::shared_ptr<double> GetXyz();
   std::vector<std::string> GetAtomNames();
   std::string GetMonomerId();
+  // Setters
+  void SetXyz(double * coords);
  protected:
-  size_t n_real_sites;
-  size_t n_virt_sites;
-  size_t n_sites;
-  std::shared_ptr<double>  xyz;
-  std::string mon_id;
-  std::vector<std::string> at_names;
+  size_t n_real_sites;                            // Number of real sites
+  size_t n_virt_sites;                            // Number of virtual sites
+  size_t n_sites;                                 // Total number of sites
+  std::shared_ptr<double>  xyz;                   // Coordinates of all sites
+  std::string mon_id;                             // Identity of the monomer
+  std::vector<std::string> at_names;              // Vector with the atom names
 };
-
 } // namespace bblock
 
 ////////////////////////////////////////////////////////////////////////////////

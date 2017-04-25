@@ -11,25 +11,28 @@
 #include "monomers.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-
-namespace bblock { // Building Block :: molecule
-
+namespace bblock { // Building Block :: Molecule
 ////////////////////////////////////////////////////////////////////////////////
 
-// Molecule class
+// Molecule Class
+// @author: Marc Riera
+// @email:  mrierari@ucsd.edu
+// This class describes an individual molecule. This molecule is made of
+// monomers, contained in the monomers vector.
 class Molecule {
  public:
   Molecule();
   ~Molecule();
-  void clear();
+  // Accessing Functions:
   size_t GetNumMon();
+  std::shared_ptr<Monomer> GetMonomer(size_t n);
+  // Modifier Functions
   void SetNumMon(size_t n);
   void AddMonomer(std::string mon_name, double * xyz,
         std::vector<std::string> names);
-  std::shared_ptr<Monomer> GetMonomer(size_t n);
  private:
-  size_t n_mon;
-  std::vector<std::shared_ptr<Monomer> > monomers;
+  size_t n_mon;                                     // Number of Monomers
+  std::vector<std::shared_ptr<Monomer>> monomers;  // Vector with all monomers
 };
 
 } // namespace bblock
