@@ -45,5 +45,13 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  for (size_t i = 0; i < systems.size(); i++) {
+    double energy = systems[i].Energy();
+    std::cout << std::setprecision(8)
+              << "system["  
+              << std::setw(5) << i << "]= "
+              << std::setw(20) << std::right << energy << std::endl;          
+  }
+
   return 0;
 }

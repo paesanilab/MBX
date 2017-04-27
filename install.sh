@@ -2,7 +2,11 @@
 
 source include/install/config.sh
 
-cd src/bblock
+cd src/potential/1b
+make clean
+make
+
+cd ../../bblock
 make clean
 make
 cd ../tools

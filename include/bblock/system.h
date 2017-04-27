@@ -26,6 +26,8 @@ class System {
   // Modifiers
   void SetNumMol(size_t n);
   void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
+  // Energy Functions
+  double Energy();
  private:
   size_t n_mol;                                       // Number of molecules
   std::vector<std::shared_ptr<Molecule>> molecules;   // Vector with all molecs

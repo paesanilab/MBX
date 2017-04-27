@@ -6,6 +6,9 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <cstdlib>
+
+#include <string.h>
 
 typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
@@ -37,6 +40,9 @@ class Monomer {
   std::string GetMonomerId();
   // Setters
   void SetXyz(double * coords);
+  // Other 
+  virtual double Calc1BEnergy() = 0; 
+//  virtual double Calc1BEnergy() { return 0;} 
  protected:
   size_t n_real_sites;                            // Number of real sites
   size_t n_virt_sites;                            // Number of virtual sites

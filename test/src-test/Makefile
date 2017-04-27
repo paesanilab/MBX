@@ -3,10 +3,11 @@ CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I$(CU_HOME)/include/bblock \
           -I$(CU_HOME)/include/tools \
+          -I$(CU_HOME)/include/potential/1b
 #LIBS = -lnetcdf -lgsl -lgslcblas
 LIBDIR = -L$(CU_HOME)/lib 
 #LIBS = ../bblock/libbblock.a
-LIBS = -ltools -lbblock 
+LIBS = -ltools -lbblock -lpot
 
 BINDIR = $(CU_HOME)/test/bin-test
 
