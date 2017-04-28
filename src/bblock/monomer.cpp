@@ -26,9 +26,19 @@ std::string Monomer::GetMonomerId(){
 }
 
 void Monomer::GetRealSitesXyz(double * coords) {
-
-  // Set coordinates
   std::copy(xyz.get(), xyz.get() + 3*n_real_sites, coords);
+}
+
+void Monomer::GetXyz(double * coords) {
+  std::copy(xyz.get(), xyz.get() + 3*n_sites, coords);
+}
+
+void Monomer::SetXyz(double * coords) {
+  std::copy(coords, coords + n_sites * 3, xyz.get() );
+}
+
+void Monomer::GetGrads(double * grads) {
+  std::copy(grd.get(),grd.get() + n_sites, grads);
 }
 
 std::vector<std::string> Monomer::GetAtomNames() {

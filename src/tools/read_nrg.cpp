@@ -89,6 +89,7 @@ void ReadSystem(size_t& lineno, std::istream& ifs, bblock::System& sys) {
   }
 
   sys.SetNumMol(molno);
+  sys.Initialize();
   return;
 }
 
