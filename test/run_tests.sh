@@ -41,11 +41,21 @@ echo "Running 1b Energy tests..."
 cd ../energies
 # Test 4
 ../bin-test/energy-test 1sys1so4.nrg > energy_grads.log
-diff energy_grads.log expected_outputs/energy_grads_output.log
+diff energy_grads.log expected_outputs/1sys1so4_output.log
 if [ $? -ne 0 ]; then
   echo "TEST ../bin-test/energy-test 1sys1so4.nrg FAILED"
   exit
 else
   echo "TEST ../bin-test/energy-test 1sys1so4.nrg PASSED"
+fi
+rm energy_grads.log
+# Test 5
+../bin-test/energy-test 1sys1h2o.nrg > energy_grads.log
+diff energy_grads.log expected_outputs/1sys1h2o_output.log
+if [ $? -ne 0 ]; then
+  echo "TEST ../bin-test/energy-test 1sys1h2o.nrg FAILED"
+  exit
+else
+  echo "TEST ../bin-test/energy-test 1sys1h2o.nrg PASSED"
 fi
 rm energy_grads.log

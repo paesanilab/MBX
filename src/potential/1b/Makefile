@@ -1,7 +1,8 @@
 
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
-INCLUDE = -I$(CU_HOME)/include/potential/1b
+INCLUDE = -I$(CU_HOME)/include/potential/1b \
+          -I$(CU_HOME)/include/tools
 
 #LIBS = -lnetcdf -lgsl -lgslcblas
 LIBDIR = $(CU_HOME)/lib
@@ -9,7 +10,8 @@ LIBS =
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj
-POT_OBJ = poly_1b_nogrd_A1B4_3deg.o poly_1b_A1B4_3deg.o  x1b_A1B4_deg3.o
+POT_OBJ = poly_1b_nogrd_A1B4_3deg.o poly_1b_A1B4_3deg.o  x1b_A1B4_deg3.o \
+          ps.o
 
 all: libpot.a
 
