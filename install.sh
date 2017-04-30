@@ -6,10 +6,13 @@ cd src/potential/1b
 make clean
 make
 
+#cd ../../tools
+#make clean
+#make
 cd ../../bblock
 make clean
 make
-cd ../tools
+cd ../io_tools
 make clean
 make
 cd ../main

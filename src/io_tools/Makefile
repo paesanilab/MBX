@@ -10,14 +10,14 @@ LIBS = -lbblock -lpot
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj
-TOOLS_OBJ = 
+TOOLS_OBJ = read_nrg.o write_nrg.o 
 
-all: libtools.a
+all: libiotools.a
 
-libtools.a: $(addprefix $(OBJDIR)/, $(TOOLS_OBJ))
-	$(AR) cru libtools.a $(addprefix $(OBJDIR)/, $(TOOLS_OBJ))
+libiotools.a: $(addprefix $(OBJDIR)/, $(TOOLS_OBJ))
+	$(AR) cru libiotools.a $(addprefix $(OBJDIR)/, $(TOOLS_OBJ))
 	mkdir -p $(LIBDIR)
-	mv libtools.a $(LIBDIR)
+	mv libiotools.a $(LIBDIR)
 
 #$(OBJDIR)/%.o: %.cpp %.h $(OBJDIR)/.sentinel
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.sentinel
