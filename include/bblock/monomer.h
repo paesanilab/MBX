@@ -32,9 +32,11 @@ class Monomer {
   size_t GetNumSites();
   size_t GetNumRealSites();
   size_t GetNumVirtSites();
+  size_t GetFirstIndex();
   // Copies in coords the coordinates of the real sites
   void GetRealSitesXyz(double * coords);
   void GetXyz(double * coords);
+  void GetXyzInSys(double * syscoords, double * coords);
   void GetGrads(double * grads);
   // Returns a shared_ptr to the coordinates of the monomer
   std::shared_ptr<double> GetXyz();
@@ -42,19 +44,24 @@ class Monomer {
   std::string GetMonomerId();
   // Setters
   void SetXyz(double * coords);
+  void SetFirstIndex(size_t n);
   // Other 
-  virtual double Calc1BEnergy() = 0; 
-  virtual double Calc1BEnergy(double * grad) = 0; 
+  virtual double Calc1BEnergy(double * syscoords) = 0; 
+  virtual double Calc1BEnergy(double * syscoords, double * grad) = 0; 
  protected:
   size_t n_real_sites;                            // Number of real sites
   size_t n_virt_sites;                            // Number of virtual sites
   size_t n_sites;                                 // Total number of sites
+  size_t first_index;                             // Position of 1st atom in sys
   double shift_1b_energy;
   std::shared_ptr<double>  xyz;                   // Coordinates of all sites
   std::shared_ptr<double>  grd;                   // Gradients of all sites
   std::string mon_id;                             // Identity of the monomer
   std::vector<std::string> at_names;              // Vector with the atom names
-  
+  std::vector<excluded_set_type> excluded12;      // 1-2 distance excluded pairs
+  std::vector<excluded_set_type> excluded13;      // 1-3 distance excluded pairs
+  std::vector<excluded_set_type> excluded14;      // 1-4 distance excluded pairs
+ 
 };
 } // namespace bblock
 

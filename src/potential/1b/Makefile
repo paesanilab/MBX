@@ -10,7 +10,8 @@ LIBS =
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj
-POT_OBJ = poly_1b_nogrd_A1B4_3deg.o poly_1b_A1B4_3deg.o  x1b_A1B4_deg3.o \
+POT_OBJ = poly_1b_nogrd_A1B4_deg3.o poly_1b_A1B4_deg3.o  x1b_A1B4_deg3.o \
+          poly_1b_nogrd_A1B2_deg4.o poly_1b_A1B2_deg4.o  x1b_A1B2_deg4.o \
           ps.o
 
 all: libpot.a

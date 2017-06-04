@@ -37,7 +37,7 @@ double System::Energy() {
     for (size_t j = 0; j < n_mon; j++) {
       std::shared_ptr<Monomer> mon = 
           molecules[i]->GetMonomer(j); 
-      energy1b += mon->Calc1BEnergy();
+      energy1b += mon->Calc1BEnergy(xyz.get());
     }
   }
   return energy1b + energy2b + energy3b + energy_elec;    
@@ -60,7 +60,7 @@ double System::Energy(double * grd) {
     for (size_t j = 0; j < n_mon; j++) {
       std::shared_ptr<Monomer> mon =
           molecules[i]->GetMonomer(j);
-      energy1b += mon->Calc1BEnergy(grd + icount);
+      energy1b += mon->Calc1BEnergy(xyz.get(), grd + icount);
       icount += 3*(mon->GetNumSites());
     }
   }
@@ -99,6 +99,7 @@ void System::Initialize() {
       mon->GetXyz(xyzmon);
       std::copy(xyzmon,xyzmon + 3 * mon->GetNumSites(),
                 xyz.get() + 3 * n);
+      mon->SetFirstIndex(n);
       n += mon->GetNumSites();
     }
   }
@@ -108,37 +109,27 @@ void System::Initialize() {
 }
 
 void System::GetXyz(double * coords) {
-  size_t n = 0;
-  for (size_t i = 0; i < n_mol ; i++) {
-    size_t n_mon = molecules[i]->GetNumMon();
-    for (size_t j = 0; j < n_mon; j++) {
-      std::shared_ptr<Monomer> mon =
-          molecules[i]->GetMonomer(j);
-      double xyzmon[3 * (mon->GetNumSites())];
-      mon->GetXyz(xyzmon);
-      std::copy(xyzmon,xyzmon + 3 * mon->GetNumSites(), 
-                xyz.get() + 3 * n); 
-      n += mon->GetNumSites();
-    }
-  }
   std::copy(xyz.get(), xyz.get() + 3 * n_sites, coords);
 }
 
 void System::SetXyz(double * coords) {
-  size_t n = 0;
-  for (size_t i = 0; i < n_mol ; i++) {
-    size_t n_mon = molecules[i]->GetNumMon();
-    for (size_t j = 0; j < n_mon; j++) {
-      std::shared_ptr<Monomer> mon =
-          molecules[i]->GetMonomer(j);
-      std::copy(coords + 3 * n,
-                coords + 3 * (n + mon->GetNumSites()), 
-                xyz.get() + n);
-      mon->SetXyz(xyz.get() + n);
-      n += mon->GetNumSites();
-    }
-  }
+  std::copy(coords, coords + 3 * n_sites, xyz.get());
 }
+//void System::SetXyz(double * coords) {
+//  size_t n = 0;
+//  for (size_t i = 0; i < n_mol ; i++) {
+//    size_t n_mon = molecules[i]->GetNumMon();
+//    for (size_t j = 0; j < n_mon; j++) {
+//      std::shared_ptr<Monomer> mon =
+//          molecules[i]->GetMonomer(j);
+//      std::copy(coords + 3 * n,
+//                coords + 3 * (n + mon->GetNumSites()), 
+//                xyz.get() + n);
+//      mon->SetXyz(xyz.get() + n);
+//      n += mon->GetNumSites();
+//    }
+//  }
+//}
 
 ////////////////////////////////////////////////////////////////////////////////
 
