@@ -26,6 +26,10 @@ void Molecule::AddMonomer(std::string mon_name, double * xyz, std::vector<std::s
     std::shared_ptr<bblock::Monomer>  mon =
          std::shared_ptr<bblock::SO4> (new bblock::SO4(xyz, names));
     monomers.push_back(mon);
+  } else if (mon_name == "co2") {
+    std::shared_ptr<bblock::Monomer>  mon =
+         std::shared_ptr<bblock::CO2> (new bblock::CO2(xyz, names));
+    monomers.push_back(mon);
   // If monomer not defined:
   } else {
     std::ostringstream oss;

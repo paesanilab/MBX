@@ -1,5 +1,5 @@
-#ifndef POLY_1B_V1X_H
-#define POLY_1B_V1X_H
+#ifndef POLY_1B_A1B2_DEG4_H
+#define POLY_1B_A1B2_DEG4_H
 
 namespace A1B2 {
 
@@ -24,4 +24,4 @@ public:
 
 } // namespace A1B2
 
-#endif // POLY_1B_V1X_H
+#endif // POLY_1B_A1B4_DEG3_H

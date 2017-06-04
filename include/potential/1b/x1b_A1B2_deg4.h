@@ -1,5 +1,5 @@
-#ifndef X1B_V1X_H
-#define X1B_V1X_H
+#ifndef X1B_A1B2_DEG4_H
+#define X1B_A1B2_DEG4_H
 
 #include "poly_1b_A1B2_deg4.h"
 
@@ -38,4 +38,4 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // X3B_V2X_H
+#endif // X1B_A1B2_DEG4_H

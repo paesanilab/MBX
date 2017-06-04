@@ -2,6 +2,9 @@
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I$(CU_HOME)/include/bblock \
+          -I$(CU_HOME)/include/bblock/monomers \
+          -I$(CU_HOME)/include/bblock/dimers \
+          -I$(CU_HOME)/include/bblock/trimers \
           -I$(CU_HOME)/include/tools \
           -I$(CU_HOME)/include/io_tools \
           -I$(CU_HOME)/include/potential/1b

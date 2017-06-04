@@ -2,6 +2,9 @@
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I$(CU_HOME)/include/bblock \
+          -I$(CU_HOME)/include/bblock/monomers \
+          -I$(CU_HOME)/include/bblock/dimers \
+          -I$(CU_HOME)/include/bblock/trimers \
           -I$(CU_HOME)/include/tools \
           -I$(CU_HOME)/include/io_tools \
           -I$(CU_HOME)/include/potential/1b
@@ -11,7 +14,11 @@ LIBS = -lpot
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj
-BBLOCK_OBJ = system.o molecule.o monomer.o mon_h2o.o mon_so4.o
+MON_OBJ = mon_h2o.o mon_so4.o mon_co2.o
+DIM_OBJ = 
+TRI_OBJ = 
+BBLOCK_OBJ = system.o molecule.o monomer.o \
+             $(MON_OBJ) $(DIM_OBJ) $(TRI_OBJ)
 
 all: libbblock.a
 
@@ -29,5 +36,5 @@ $(OBJDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf $(addprefix $(OBJDIR)/, $(BBLOCK_OBJ))
+	rm -rf $(addprefix $(OBJDIR)/, $(BBLOCK_OBJ)) 
 
