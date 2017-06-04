@@ -37,7 +37,7 @@ double System::Energy() {
     for (size_t j = 0; j < n_mon; j++) {
       std::shared_ptr<Monomer> mon = 
           molecules[i]->GetMonomer(j); 
-      energy1b += mon->Calc1BEnergy(xyz.get());
+      energy1b += mon->Calc1BEnergy();
     }
   }
   return energy1b + energy2b + energy3b + energy_elec;    
@@ -60,7 +60,7 @@ double System::Energy(double * grd) {
     for (size_t j = 0; j < n_mon; j++) {
       std::shared_ptr<Monomer> mon =
           molecules[i]->GetMonomer(j);
-      energy1b += mon->Calc1BEnergy(xyz.get(), grd + icount);
+      energy1b += mon->Calc1BEnergy(grd + icount);
       icount += 3*(mon->GetNumSites());
     }
   }
@@ -93,13 +93,17 @@ void System::Initialize() {
   for (size_t i = 0; i < n_mol ; i++) {
     size_t n_mon = molecules[i]->GetNumMon();
     for (size_t j = 0; j < n_mon; j++) {
+      // Copy initial coordinates of mon to system
       std::shared_ptr<Monomer> mon =
           molecules[i]->GetMonomer(j);
       double xyzmon[3 * (mon->GetNumSites())];
-      mon->GetXyz(xyzmon);
+      mon->GetCrd(xyzmon);
       std::copy(xyzmon,xyzmon + 3 * mon->GetNumSites(),
                 xyz.get() + 3 * n);
+      // Set position of monomer in sys
       mon->SetFirstIndex(n);
+      // Make xyz from mon point to the proper place in sys
+      mon->SetXyz(xyz.get());
       n += mon->GetNumSites();
     }
   }

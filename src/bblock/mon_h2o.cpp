@@ -30,7 +30,7 @@ H2O::H2O(double * coords, std::vector<std::string> names) {
   //////////////////////////////////////////////////////////////////////////////
 
   // Initialize in the heap the coordinates
-  xyz = std::shared_ptr<double> (new double[n_sites * 3],
+  crd = std::shared_ptr<double> (new double[n_sites * 3],
            []( double *p ) { delete[] p; });
   // Initialize in the heap the gradients
   grd = std::shared_ptr<double> (new double[n_sites * 3],
@@ -45,7 +45,7 @@ H2O::H2O(double * coords, std::vector<std::string> names) {
     at_names.push_back("virt");
 
   // Copy the coordinates of real sites and set to 0 the virtual site ones
-  std::copy(coords, coords + n_real_sites * 3, xyz.get() );
+  std::copy(coords, coords + n_real_sites * 3, crd.get() );
   if (n_virt_sites > 0) {
     std::fill(coords + n_real_sites * 3 , coords + n_sites * 3 , 0.0);
   }
@@ -56,17 +56,11 @@ H2O::H2O(double * coords, std::vector<std::string> names) {
 H2O::~H2O() {
 }
 
-double H2O::Calc1BEnergy(double * syscoords) {
-  // TODO: Update not necessary. We can check it later
-  std::copy(syscoords + 3 * first_index,
-            syscoords + 3 * (first_index + n_sites),  xyz.get()); 
-  return ps::pot_nasa(xyz.get(),0);
+double H2O::Calc1BEnergy() {
+  return ps::pot_nasa(xyz,0);
 }
-double H2O::Calc1BEnergy(double * syscoords, double * grad) {
-  // TODO: Update not necessary. We can check it later
-  std::copy(syscoords + 3 * first_index, 
-            syscoords + 3 * (first_index + n_sites),  xyz.get());
-  double energy = ps::pot_nasa(xyz.get(),grd.get());
+double H2O::Calc1BEnergy(double * grad) {
+  double energy = ps::pot_nasa(xyz,grd.get());
   for (size_t i = 0; i < 3*n_real_sites; i++)
     grad[i] +=  grd.get()[i];
   return energy;

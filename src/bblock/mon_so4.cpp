@@ -35,7 +35,7 @@ SO4::SO4(double * coords, std::vector<std::string> names) {
   //////////////////////////////////////////////////////////////////////////////
 
   // Initialize in the heap the coordinates
-  xyz = std::shared_ptr<double> (new double[n_sites * 3],
+  crd = std::shared_ptr<double> (new double[n_sites * 3],
            []( double *p ) { delete[] p; });
   // Initialize in the heap the gradients
   grd = std::shared_ptr<double> (new double[n_sites * 3],
@@ -49,9 +49,9 @@ SO4::SO4(double * coords, std::vector<std::string> names) {
     at_names.push_back("virt");
 
   // Copy the coordinates of real sites and set to 0 the virtual site ones
-  std::copy(coords, coords + n_real_sites * 3, xyz.get() );
+  std::copy(coords, coords + n_real_sites * 3, crd.get() );
   if (n_virt_sites > 0) {
-    std::fill(xyz.get() + n_real_sites * 3 , xyz.get() + n_sites * 3 , 0.0);
+    std::fill(crd.get() + n_real_sites * 3 , crd.get() + n_sites * 3 , 0.0);
   }
   // Initialize gradients to 0
   std::fill(grd.get() , grd.get() + n_sites * 3 , 0.0);
@@ -75,19 +75,12 @@ SO4::SO4(double * coords, std::vector<std::string> names) {
 SO4::~SO4() {
 }
 
-double SO4::Calc1BEnergy(double * syscoords) {
-  // TODO: Update not necessary. We can check it later
-  std::copy(syscoords + 3 * first_index, 
-            syscoords + 3 * (first_index + n_sites),  xyz.get());
-  double energy = pot_1b(xyz.get());
-  return energy;
+double SO4::Calc1BEnergy() {
+  return pot_1b(xyz);
 }
 
-double SO4::Calc1BEnergy(double * syscoords, double * grad) {
-  // TODO: Update not necessary. We can check it later
-  std::copy(syscoords + 3 * first_index, 
-            syscoords + 3 * (first_index + n_sites),  xyz.get());
-  double energy = pot_1b(xyz.get(),grd.get());
+double SO4::Calc1BEnergy(double * grad) {
+  double energy = pot_1b(xyz,grd.get());
   for (size_t i = 0; i < 3*n_sites; i++)
     grad[i] +=  grd.get()[i];
   return energy;

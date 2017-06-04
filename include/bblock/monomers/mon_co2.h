@@ -13,8 +13,8 @@ class CO2 : public Monomer {
   CO2();
   CO2(double * coords, std::vector<std::string> names);
   ~CO2();
-  double Calc1BEnergy(double * syscoords);
-  double Calc1BEnergy(double * syscoords, double * grad);
+  double Calc1BEnergy();
+  double Calc1BEnergy(double * grad);
  private:
   A1B2::x1b_v1x pot_1b;
 };

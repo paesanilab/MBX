@@ -13,8 +13,8 @@ class H2O : public Monomer {
   H2O();
   H2O(double * coords, std::vector<std::string> names);
   ~H2O();
-  double Calc1BEnergy(double * syscoords);
-  double Calc1BEnergy(double * syscoords, double * grad);
+  double Calc1BEnergy();
+  double Calc1BEnergy(double * grad);
 // private:
 };
 } // namespace bblock

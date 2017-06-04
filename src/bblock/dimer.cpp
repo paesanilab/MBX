@@ -12,8 +12,8 @@ Dimer::Dimer() {
 
 Dimer::Dimer(std::shared_ptr<Monomer> mon1, 
              std::shared_ptr<Monomer> mon2) {  
-  n_mon = 0;
-  n_sites = 0;
+  n_mon = 2;
+  n_sites = mon1->GetNumRealSites() + mon2->GetNumRealSites();
   monomers.clear();
   monomers.push_back(mon1);
   monomers.push_back(mon2);
@@ -22,8 +22,8 @@ Dimer::Dimer(std::shared_ptr<Monomer> mon1,
 Dimer::~Dimer() {
 }
 
-double * Dimer::GetRealXyzSys(double * sys_coords) {
-  std::copy(syscoords + 3 * monomers[0]->GetFirstIndex(),
+double * Dimer::GetRealXyzSys() {
+  std::copy(monomers[0]->GetFirstIndex(),
             syscoords + 3 * monomers[0]->GetFirstIndex()
             + 3 * monomers[0]->GetNumRealSites(),
             real_xyz.get()) 

@@ -6,8 +6,10 @@
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
+#include <cmath>
 
 #include "molecule.h"
+#include "tang-toennies.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace bblock { // Building Block :: Dimer
@@ -24,12 +26,12 @@ class Dimer : public Molecule {
   Dimer(std::shared_ptr<Monomer> mon1, std::shared_ptr<Monomer> mon2);
   ~Dimer();
   // Getters
-  double * GetRealXyzSys();
+  double * GetRealXyzSys(double * sys_coords);
   // Virtual Functions
-  virtual GetDispersion() = 0;
-  virtual GetShortRange() = 0;
-  virtual GetDispersion(double * grd) = 0;
-  virtual GetShortRange(double * grd) = 0;
+  virtual double GetDispersion() = 0;
+  virtual double GetShortRange() = 0;
+  virtual double GetDispersion(double * grd) = 0;
+  virtual double GetShortRange(double * grd) = 0;
  private:
   size_t n_mon;                         // Number of Monomers
   size_t n_sites;                       // Number of sites in the dimer

@@ -13,8 +13,8 @@ class SO4 : public Monomer {
   SO4();
   SO4(double * coords, std::vector<std::string> names);
   ~SO4();
-  double Calc1BEnergy(double * syscoords);
-  double Calc1BEnergy(double * syscoords, double * grad);
+  double Calc1BEnergy();
+  double Calc1BEnergy(double * grad);
  private:
   A1B4::x1b_v1x pot_1b;
 };
