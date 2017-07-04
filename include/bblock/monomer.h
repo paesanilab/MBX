@@ -34,7 +34,7 @@ class Monomer {
   size_t GetNumVirtSites();
   size_t GetFirstIndex();
   // Copies in coords the coordinates of the real sites
-  void GetRealSitesXyz(double * coords);
+  double * GetRealSitesXyz();
   void GetCrd(double * coords);
   void GetGrads(double * grads);
   // Returns a shared_ptr to the coordinates of the monomer

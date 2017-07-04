@@ -23,14 +23,12 @@ Dimer::~Dimer() {
 }
 
 double * Dimer::GetRealXyzSys() {
-  std::copy(monomers[0]->GetFirstIndex(),
-            syscoords + 3 * monomers[0]->GetFirstIndex()
-            + 3 * monomers[0]->GetNumRealSites(),
+  std::copy(monomers[0]->GetXyz(),
+            monomers[0]->GetXyz() + 3 * monomers[0]->GetNumRealSites()
             real_xyz.get()) 
-  std::copy(syscoords + 3 * monomers[1]->GetFirstIndex(),
-            syscoords + 3 * monomers[1]->GetFirstIndex() 
-            + 3 * monomers[1]->GetNumRealSites(),
-            real_xyz.get() + 3 * monomers[0]->GetFirstIndex())
+  std::copy(monomers[1]->GetXyz(),
+            monomers[1]->GetXyz() + 3 * monomers[1]->GetNumRealSites()
+            real_xyz.get() + 3 * monomers[0]->GetNumRealSites()) 
   return real_xyz.get();
 }
 

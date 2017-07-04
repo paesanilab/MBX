@@ -26,7 +26,7 @@ class Dimer : public Molecule {
   Dimer(std::shared_ptr<Monomer> mon1, std::shared_ptr<Monomer> mon2);
   ~Dimer();
   // Getters
-  double * GetRealXyzSys(double * sys_coords);
+  double * GetRealXyz();
   // Virtual Functions
   virtual double GetDispersion() = 0;
   virtual double GetShortRange() = 0;
