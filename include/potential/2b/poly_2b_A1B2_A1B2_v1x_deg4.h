@@ -1,20 +1,20 @@
-#ifndef POLY_2B_A1B2_A1B2_V1X_DEG3_H
-#define POLY_2B_A1B2_A1B2_V1X_DEG3_H
+#ifndef POLY_MODEL_H
+#define POLY_MODEL_H
 
 namespace mb_system {
 
 struct poly_model {
     static const unsigned n_vars = 15;
-    static const unsigned size = 134;
+    static const unsigned size = 597;
 
-    static double eval(const double a[134],
+    static double eval(const double a[597],
                        const double x[15]);
 
-    static double eval(const double a[134],
+    static double eval(const double a[597],
                        const double x[15],
                              double g[15]);
 
-    static double eval_direct(const double a[134],
+    static double eval_direct(const double a[597],
                               const double x[15]);
 
 public:
@@ -24,4 +24,4 @@ public:
 
 } // namespace mb_system
 
-#endif // POLY_2B_A1B2_A1B2_V1X_DEG3_H
+#endif // POLY_MODEL_H
