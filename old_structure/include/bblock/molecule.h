@@ -30,7 +30,7 @@ class Molecule {
   void SetNumMon(size_t n);
   void AddMonomer(std::string mon_name, double * xyz,
         std::vector<std::string> names);
- private:
+ protected:
   size_t n_mon;                                     // Number of Monomers
   std::vector<std::shared_ptr<Monomer>> monomers;  // Vector with all monomers
 };
