@@ -4,8 +4,6 @@
 #include <vector>
 #include <string>
 
-#include "molecule.h"
-
 ////////////////////////////////////////////////////////////////////////////////
 namespace bblock { // Building Block :: System
 ////////////////////////////////////////////////////////////////////////////////
@@ -20,28 +18,31 @@ class System {
   System();
   ~System();
   // Getters
-  size_t GetNumMol();
-  size_t GetNumSites();
-  std::vector<std::string> GetAtomNames();
-  void GetXyz(double * coords);
+//  size_t GetNumMol();
+//  size_t GetNumSites();
+//  std::vector<std::string> GetAtomNames();
+//  void GetXyz(double * coords);
   // Returns a pointer to the nth molecule in the system
-  std::shared_ptr<Molecule> GetMolecule(size_t n);
+//  std::shared_ptr<Molecule> GetMolecule(size_t n);
   // Modifiers
+  void AddMonomer(std::vector<double> xyz, 
+             std::vector<std::string> atoms, std::string id);
   void Initialize();
-  void SetNumMol(size_t n);
-  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
-  void SetXyz(double * coords);
+//  void SetNumMol(size_t n);
+//  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
+//  void SetXyz(double * coords);
   // Energy Functions
-  double Energy();
-  double Energy(double * grd);
+//  double Energy();
+//  double Energy(double * grd);
  private:
-  size_t n_mol;                                       // Number of molecules
-  size_t n_sites;                                     // Number of sites in sys
-  bool initialized;                                   // Systes is initialized?
-  std::shared_ptr<double> grd;                        // Gradients of all sites
-  std::shared_ptr<double> xyz;                        // Coords of all sites
-  std::vector<std::shared_ptr<Molecule>> molecules;   // Vector with all molecs
-  std::vector<std::string> at_names;
+  size_t n_mol_;                                       // Number of molecules
+  size_t n_sites_;                                     // Number of sites in sys
+  bool initialized_;                                   // Systes is initialized?
+  std::vector<double> grd_;                        // Gradients of all sites
+  std::vector<double> xyz_;                        // Coords of all sites
+  std::vector<double> chg_;                        // Coords of all sites
+  std::vector<std::string> monomers_;              // Monomer ids
+  std::vector<std::string> atoms_;
 };
 
 } // namespace bblock

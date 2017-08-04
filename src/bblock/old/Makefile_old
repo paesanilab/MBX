@@ -11,11 +11,10 @@ LIBS = -lpot
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj
-#MON_OBJ = mon_h2o.o mon_so4.o mon_co2.o
-MON_OBJ = 
+MON_OBJ = mon_h2o.o mon_so4.o mon_co2.o
 DIM_OBJ = 
 TRI_OBJ = 
-BBLOCK_OBJ = monomer.o system.o \
+BBLOCK_OBJ = system.o molecule.o monomer.o \
              $(MON_OBJ) $(DIM_OBJ) $(TRI_OBJ)
 
 all: libbblock.a

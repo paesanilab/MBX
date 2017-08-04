@@ -61,9 +61,17 @@ void ReadSystem(size_t& lineno, std::istream& ifs, bblock::System& sys) {
     throw std::runtime_error(oss.str());
   }
 
-  while (word != "endsys") {
-    ReadMolecule(lineno, ifs, sys);
+  size_t molno(0);
 
+  while (word != "endsys") {
+    std::shared_ptr<bblock::Molecule> molec = 
+        std::shared_ptr<bblock::Molecule> (new bblock::Molecule);
+    ReadMolecule(lineno, ifs, molec);
+
+    if (molec->GetNumMon() > 0) {
+      sys.AddMolecule(molec);
+      molno++;
+    }
     iss.clear();
 
     std::streampos oldpos = ifs.tellg();
@@ -80,11 +88,12 @@ void ReadSystem(size_t& lineno, std::istream& ifs, bblock::System& sys) {
     }
   }
 
+  sys.SetNumMol(molno);
   sys.Initialize();
   return;
 }
 
-void ReadMolecule(size_t& lineno, std::istream& ifs, bblock::System& sys) {
+void ReadMolecule(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::Molecule> molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -113,13 +122,13 @@ void ReadMolecule(size_t& lineno, std::istream& ifs, bblock::System& sys) {
     throw std::runtime_error(oss.str());
   }
   
-  ReadMonomers(lineno, ifs, sys);
+  ReadMonomers(lineno, ifs, molec);
 
   return;
 
 }
 
-void ReadMonomers(size_t& lineno, std::istream& ifs, bblock::System& sys) {
+void ReadMonomers(size_t& lineno, std::istream& ifs, std::shared_ptr<bblock::Molecule> molec) {
   assert(ifs);
 
   if (ifs.eof())
@@ -154,6 +163,8 @@ void ReadMonomers(size_t& lineno, std::istream& ifs, bblock::System& sys) {
   iss >> word >> mon_name;
   std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
+  size_t monno(0);
+
   while (word != "endmol") {
   
     if (word != "monomer" || mon_name.empty() ) {
@@ -166,7 +177,8 @@ void ReadMonomers(size_t& lineno, std::istream& ifs, bblock::System& sys) {
     std::transform(mon_name.begin(), mon_name.end(), mon_name.begin(), ::tolower);
 
     std::vector<std::string> names;
-    std::vector<double> xyz;
+    double xyz[10000];
+    size_t i(0);
     
     std::getline(ifs, line);
     lineno++;
@@ -180,9 +192,9 @@ void ReadMonomers(size_t& lineno, std::istream& ifs, bblock::System& sys) {
       
       iss >> name >> x >> y >> z;
       names.push_back(name);
-      xyz.push_back(x);
-      xyz.push_back(y);
-      xyz.push_back(z);
+      xyz[i++] = x;
+      xyz[i++] = y;
+      xyz[i++] = z;
 
       std::getline(ifs, line);
       lineno++;
@@ -193,16 +205,10 @@ void ReadMonomers(size_t& lineno, std::istream& ifs, bblock::System& sys) {
       std::transform(word.begin(), word.end(), word.begin(), ::tolower);
       iss.clear();
       iss.str(line);
-      if (iss.eof()) {
-        std::ostringstream oss;
-        oss << "No ENDMON found after monomer" << mon_name
-            << std::endl << iss.str() << std::endl;
-        throw std::runtime_error(oss.str());
-      }
- 
     }
 
-    sys.AddMonomer(xyz, names, mon_name);
+    molec->AddMonomer(mon_name, xyz, names);
+    monno++;
 
     iss.clear();
     std::getline(ifs, line);
@@ -212,6 +218,8 @@ void ReadMonomers(size_t& lineno, std::istream& ifs, bblock::System& sys) {
     std::transform(word.begin(), word.end(), word.begin(), ::tolower);
   }
   
+  molec->SetNumMon(monno);
+
   return;
 }
 
