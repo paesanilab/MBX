@@ -18,8 +18,10 @@ namespace tools {
 ////////////////////////////////////////////////////////////////////////////////
 void ReadNrg(char* filename, std::vector<bblock::System> & systems);
 void ReadSystem(size_t& lineno, std::istream& ifs, bblock::System& sys);
-void ReadMolecule(size_t& lineno, std::istream& ifs, bblock::System& sys);
-void ReadMonomers(size_t& lineno, std::istream& ifs, bblock::System& sys);
+void ReadMolecule(size_t& lineno, std::istream& ifs, 
+                  bblock::System& sys, size_t& mon_count);
+void ReadMonomers(size_t& lineno, std::istream& ifs, 
+                  bblock::System& sys, size_t& mon_count);
 ////////////////////////////////////////////////////////////////////////////////
 } // namespace tools
 ////////////////////////////////////////////////////////////////////////////////

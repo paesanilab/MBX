@@ -27,6 +27,7 @@ class System {
   // Modifiers
   void AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id);
+  void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
 //  void SetNumMol(size_t n);
@@ -50,6 +51,7 @@ class System {
   std::vector<double> polfac_;                    // Coords of all sites
   std::vector<std::string> monomers_;          // Monomer ids
   std::vector<std::string> atoms_;
+  std::vector<std::vector<size_t>> molecules_;
 };
 
 } // namespace bblock

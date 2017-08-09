@@ -7,6 +7,7 @@ namespace bblock { // Building Block :: System
 ////////////////////////////////////////////////////////////////////////////////
 
 System::System() {
+  initialized_ = false;
 }
 
 System::~System() {
@@ -24,8 +25,16 @@ void System::AddMonomer(std::vector<double> xyz,
   monomers_.push_back(id);
 }
 
+void System::AddMolecule(std::vector<size_t> molec) {
+  molecules_.push_back(molec);
+}
+
 void System::Initialize() {
+  if (initialized_) return;
+
   AddMonomerInfo();
+  
+  // TODO Here should go the order and rearrengement stuff
 }
 
 void System::AddMonomerInfo() {
@@ -87,26 +96,26 @@ void System::AddMonomerInfo() {
       polfac_.push_back(0.0);
       polfac_.push_back(0.0);
     } else if (monomers_[i] == "co2") {
-        // Site Info
-        sites_.push_back(3);
-        nat_.push_back(3);
-        first_index_.push_back(count);
-        count += sites_[i];
+      // Site Info
+      sites_.push_back(3);
+      nat_.push_back(3);
+      first_index_.push_back(count);
+      count += sites_[i];
 
-        // Charge info
-        chg_.push_back(0.454467);
-        chg_.push_back(-0.227224);
-        chg_.push_back(-0.227224);
+      // Charge info
+      chg_.push_back(0.454467);
+      chg_.push_back(-0.227224);
+      chg_.push_back(-0.227224);
 
-        // Pol info
-        pol_.push_back(1.43039);
-        pol_.push_back(0.771519);
-        pol_.push_back(0.771519);
+      // Pol info
+      pol_.push_back(1.43039);
+      pol_.push_back(0.771519);
+      pol_.push_back(0.771519);
 
-        // Polfac info
-        polfac_.push_back(1.43039);
-        polfac_.push_back(0.771519);
-        polfac_.push_back(0.771519);
+      // Polfac info
+      polfac_.push_back(1.43039);
+      polfac_.push_back(0.771519);
+      polfac_.push_back(0.771519);
     } else {
       //std::cerr << "No data in the dataset for monomer: "
       //          << monomers_[i] << std::endl;
