@@ -12,8 +12,6 @@
 #include <algorithm>
 
 #include "system.h"
-//#include "molecule.h"
-//#include "monomer.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace tools {

@@ -15,7 +15,7 @@ OBJDIR = $(CU_HOME)/obj
 MON_OBJ = 
 DIM_OBJ = 
 TRI_OBJ = 
-BBLOCK_OBJ = monomer.o system.o \
+BBLOCK_OBJ = system.o \
              $(MON_OBJ) $(DIM_OBJ) $(TRI_OBJ)
 
 all: libbblock.a

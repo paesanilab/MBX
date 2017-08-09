@@ -28,6 +28,7 @@ class System {
   void AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id);
   void Initialize();
+  void AddMonomerInfo();
 //  void SetNumMol(size_t n);
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
@@ -35,13 +36,19 @@ class System {
 //  double Energy();
 //  double Energy(double * grd);
  private:
-  size_t n_mol_;                                       // Number of molecules
-  size_t n_sites_;                                     // Number of sites in sys
-  bool initialized_;                                   // Systes is initialized?
-  std::vector<double> grd_;                        // Gradients of all sites
-  std::vector<double> xyz_;                        // Coords of all sites
-  std::vector<double> chg_;                        // Coords of all sites
-  std::vector<std::string> monomers_;              // Monomer ids
+  size_t nmol_;                                // Number of molecules
+  size_t nsites_;                              // Number of sites in sys
+  bool initialized_;                           // Systes is initialized?
+  std::vector<size_t> sites_;                  // Number of sites of each mo
+  std::vector<size_t> nat_;                    // Number of atoms of each mo
+  std::vector<size_t> initial_order_;          // Number of atoms of each mo
+  std::vector<size_t> first_index_;            // Number of atoms of each mo
+  std::vector<double> grd_;                    // Gradients of all sites
+  std::vector<double> xyz_;                    // Coords of all sites
+  std::vector<double> chg_;                    // Coords of all sites
+  std::vector<double> pol_;                    // Coords of all sites
+  std::vector<double> polfac_;                    // Coords of all sites
+  std::vector<std::string> monomers_;          // Monomer ids
   std::vector<std::string> atoms_;
 };
 
