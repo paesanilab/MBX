@@ -1,23 +1,21 @@
 
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
-INCLUDE = -I$(CU_HOME)/include/bblock \
-          -I$(CU_HOME)/include/bblock/monomers \
-          -I$(CU_HOME)/include/bblock/dimers \
-          -I$(CU_HOME)/include/bblock/trimers \
-          -I$(CU_HOME)/include/tools \
-          -I$(CU_HOME)/include/io_tools \
-          -I$(CU_HOME)/include/potential/1b
+INCLUDE = -I$(CU_HOME)/src/bblock \
+          -I$(CU_HOME)/src/tools \
+          -I$(CU_HOME)/src/io_tools 
 #LIBS = -lnetcdf -lgsl -lgslcblas
 LIBDIR = -L$(CU_HOME)/lib 
 #LIBS = ../bblock/libbblock.a
-LIBS = -liotools -lbblock -lpot
+LIBS = -liotools -lbblock 
+#LIBS = -liotools -lbblock -lpot
 
 BINDIR = $(CU_HOME)/test/bin-test
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/test/obj-test
-EXES = io-test energy-test
+EXES = io-test 
+#EXES = io-test energy-test
 #ENERGY_OBJ = 
 
 all: $(EXES)

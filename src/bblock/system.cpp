@@ -13,6 +13,34 @@ System::System() {
 System::~System() {
 }
 
+size_t System::GetNumMol() {
+  return nmol_;
+}
+
+std::vector<size_t> System::GetMolecule(size_t n) {
+  return molecules_[n];
+}
+
+std::string System::GetMonId(size_t n) {
+  return monomers_[n];
+}
+
+size_t System::GetMonNat(size_t n) {
+  return nat_[n];
+}
+
+size_t System::GetFirstInd(size_t n) {
+  return first_index_[n];
+}
+
+std::vector<std::string> System::GetSysAtNames() {
+  return atoms_;
+}
+
+std::vector<double> System::GetSysXyz() {
+  return xyz_;
+}
+
 void System::AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id){
   // Adding coordinates
@@ -34,6 +62,7 @@ void System::Initialize() {
 
   AddMonomerInfo();
   
+  nmol_ = molecules_.size();
   // TODO Here should go the order and rearrengement stuff
 }
 
@@ -133,9 +162,9 @@ void System::AddMonomerInfo() {
     xyz_.push_back(0.0);
   for (size_t i = 0; i < monomers_.size(); i++) {
     //size_t k = initial_order_[i];
-    std::copy(xyz.begin() + count,
-              xyz.begin() + 3 * nat_[i] + count,
-              xyz_.begin() + first_index_[i]);
+    std::copy(xyz.begin() + 3 * count,
+              xyz.begin() + 3 * (nat_[i] + count),
+              xyz_.begin() + 3 * first_index_[i]);
   }
   
 

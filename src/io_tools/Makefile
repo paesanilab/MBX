@@ -7,8 +7,7 @@ LIBS = -lbblock
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/obj
-TOOLS_OBJ = read_nrg.o 
-#TOOLS_OBJ = read_nrg.o write_nrg.o 
+TOOLS_OBJ = read_nrg.o write_nrg.o 
 
 all: libiotools.a
 

@@ -18,12 +18,14 @@ class System {
   System();
   ~System();
   // Getters
-//  size_t GetNumMol();
+  size_t GetNumMol();
 //  size_t GetNumSites();
-//  std::vector<std::string> GetAtomNames();
-//  void GetXyz(double * coords);
-  // Returns a pointer to the nth molecule in the system
-//  std::shared_ptr<Molecule> GetMolecule(size_t n);
+  std::vector<std::string> GetSysAtNames();
+  std::vector<double> GetSysXyz();
+  std::vector<size_t> GetMolecule(size_t n);
+  std::string GetMonId(size_t n);
+  size_t GetMonNat(size_t n);
+  size_t GetFirstInd(size_t n);
   // Modifiers
   void AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id);
