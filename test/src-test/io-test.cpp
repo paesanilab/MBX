@@ -7,6 +7,8 @@
 #include <cstring>
 #include <stdexcept>
 
+#include "spdlog/spdlog.h"
+
 #include "read_nrg.h"
 #include "write_nrg.h"
 
@@ -30,10 +32,12 @@ int main(int argc, char** argv)
     return 0;
   }
 
+  auto mylg = spdlog::basic_logger_mt("IoTestMain", "CU.log");
   try {
     std::ifstream ifs(argv[1]);
 
     if (!ifs){
+      mylg->error("could not open the NRG file");
       throw std::runtime_error("could not open the NRG file");
     }
 
