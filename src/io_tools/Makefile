@@ -1,6 +1,7 @@
 CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I$(CU_HOME)/src/bblock \
+          -I$(CU_HOME)/src/tools
 #LIBS = -lnetcdf -lgsl -lgslcblas
 LIBDIR = $(CU_HOME)/lib 
 LIBS = -lbblock 

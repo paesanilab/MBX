@@ -1,23 +1,19 @@
 #!/bin/bash
 
-source include/install/config.sh
+source src/install/config.sh
 
-cd src/potential/1b
+cd src/tools
 make clean
 make
-
-#cd ../../tools
-#make clean
-#make
-cd ../../bblock
+cd ../bblock
 make clean
 make
 cd ../io_tools
 make clean
 make
-cd ../main
-make clean
-make
+#cd ../main
+#make clean
+#make
 cd ../../test/src-test
 make clean
 make

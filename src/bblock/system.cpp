@@ -43,6 +43,7 @@ void System::AddMolecule(std::vector<size_t> molec) {
 void System::Initialize() {
   if (initialized_) return;
 
+  cutoff_ = 10.0;
   AddMonomerInfo();
   
   nmol_ = molecules_.size();
