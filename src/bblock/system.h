@@ -5,6 +5,7 @@
 #include <string>
 
 #include "nanoflann.hpp"
+#include "kdtree_utils.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace bblock { // Building Block :: System
