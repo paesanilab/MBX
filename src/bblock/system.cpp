@@ -6,40 +6,23 @@ namespace bblock { // Building Block :: System
 
 ////////////////////////////////////////////////////////////////////////////////
 
-System::System() {
-  initialized_ = false;
-}
+System::System() {initialized_ = false;}
 
-System::~System() {
-}
+System::~System() {}
 
-size_t System::GetNumMol() {
-  return nmol_;
-}
+size_t System::GetNumMol() {return nmol_;}
 
-std::vector<size_t> System::GetMolecule(size_t n) {
-  return molecules_[n];
-}
+std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 
-std::string System::GetMonId(size_t n) {
-  return monomers_[n];
-}
+std::string System::GetMonId(size_t n) {return monomers_[n];}
 
-size_t System::GetMonNat(size_t n) {
-  return nat_[n];
-}
+size_t System::GetMonNat(size_t n) {return nat_[n];}
 
-size_t System::GetFirstInd(size_t n) {
-  return first_index_[n];
-}
+size_t System::GetFirstInd(size_t n) {return first_index_[n];}
 
-std::vector<std::string> System::GetSysAtNames() {
-  return atoms_;
-}
+std::vector<std::string> System::GetSysAtNames() {return atoms_;}
 
-std::vector<double> System::GetSysXyz() {
-  return xyz_;
-}
+std::vector<double> System::GetSysXyz() {return xyz_;}
 
 void System::AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id){
@@ -167,7 +150,54 @@ void System::AddMonomerInfo() {
               xyz_.begin() + 3 * first_index_[i]);
   }
   
+  AddDimers();
 
+}
+
+void System::AddDimers() {
+  // Obtain xyz vector with the positions of first atom of each monomer
+  std::vector<double> xyz;
+  for (size_t i = 0; i < monomers_.size(); i++) {
+    xyz.push_back(xyz_[3*first_index_[i]]);
+    xyz.push_back(xyz_[3*first_index_[i]] + 1);
+    xyz.push_back(xyz_[3*first_index_[i]] + 2);
+  }
+
+  // Obtain the data in the structure needed by the kd-tree
+  kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz);
+
+  // Build the tree
+  typedef nanoflann::KDTreeSingleIndexAdaptor<
+    nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+    kdtutils::PointCloud<double>, 3 /* dim */> my_kd_tree_t;
+  my_kd_tree_t index(3 /*dim*/, ptc, 
+    nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
+  index.buildIndex();
+
+  // Perform a radial search within the cutoff
+  dimers_.clear();
+  for (size_t i = 0; i < monomers_.size(); i++) {
+    // Define the query point
+    double point[3];
+    point[0] = ptc.pts[i].x;
+    point[1] = ptc.pts[i].y;
+    point[2] = ptc.pts[i].z;
+    
+    // Perform the search
+    std::vector<std::pair<size_t, double>> ret_matches;
+    nanoflann::SearchParams params;
+    const size_t nMatches = index.radiusSearch(&point[0],
+      cutoff_, ret_matches, params);
+
+    // Add the pairs that are not in the dimer vector
+    for (size_t j = 0; j < nMatches; j++) {
+      if (ret_matches[j].first > i) {
+        dimers_.push_back(i);
+        dimers_.push_back(ret_matches[j].second);
+      }
+    }
+  }
+  
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -175,3 +205,9 @@ void System::AddMonomerInfo() {
 } // Building Block :: System
 
 ////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+

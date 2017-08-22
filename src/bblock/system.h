@@ -35,6 +35,7 @@ class System {
   void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
+  void AddDimers();
 //  void SetNumMol(size_t n);
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
@@ -44,11 +45,13 @@ class System {
  private:
   size_t nmol_;                                // Number of molecules
   size_t nsites_;                              // Number of sites in sys
+  double cutoff_;
   bool initialized_;                           // Systes is initialized?
   std::vector<size_t> sites_;                  // Number of sites of each mo
   std::vector<size_t> nat_;                    // Number of atoms of each mo
-  std::vector<size_t> initial_order_;          // Number of atoms of each mo
-  std::vector<size_t> first_index_;            // Number of atoms of each mo
+  std::vector<size_t> initial_order_;          // Input order of monomers
+  std::vector<size_t> first_index_;            // First index of mon in sys
+  std::vector<size_t> dimers_;                 // Dimers of the molecule
   std::vector<double> grd_;                    // Gradients of all sites
   std::vector<double> xyz_;                    // Coords of all sites
   std::vector<double> chg_;                    // Coords of all sites

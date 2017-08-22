@@ -50,11 +50,11 @@ template <typename T>
 PointCloud<T> XyzToCloud(std::vector<T> xyz) 
 {
   PointCloud<T> ptc;
-  ptc.resize(xyz.size() / 3);
+  ptc.pts.resize(xyz.size() / 3);
   for (size_t i = 0; i < xyz.size() / 3; i++) {
-    ptc.points[i].x = xyz[3*i];
-    ptc.points[i].y = xyz[3*i + 1];
-    ptc.points[i].z = xyz[3*i + 2];
+    ptc.pts[i].x = xyz[3*i];
+    ptc.pts[i].y = xyz[3*i + 1];
+    ptc.pts[i].z = xyz[3*i + 2];
   }
   return ptc;
 }
