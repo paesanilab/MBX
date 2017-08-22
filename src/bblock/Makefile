@@ -3,8 +3,7 @@ CXX = g++
 CXXFLAGS = -O0 -g -std=c++11 -Wall 
 INCLUDE = -I$(CU_HOME)/src/bblock \
           -I$(CU_HOME)/src/tools \
-          -I$(CU_HOME)/src/io_tools \
-          -I$(CU_HOME)/src/potential/1b
+          -I$(CU_HOME)/src/io_tools 
 #LIBS = -lnetcdf -lgsl -lgslcblas
 LIBDIR = $(CU_HOME)/lib
 LIBS = -lpot  
