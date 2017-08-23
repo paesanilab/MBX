@@ -14,7 +14,7 @@ BINDIR = $(CU_HOME)/test/bin-test
 
 AR = /usr/bin/ar
 OBJDIR = $(CU_HOME)/test/obj-test
-EXES = io-test 
+EXES = io-test dimers-test
 #EXES = io-test energy-test
 #ENERGY_OBJ = 
 
@@ -30,6 +30,11 @@ io-test: io-test.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBDIR) $< $(LIBS) -o $@
 	mkdir -p $(BINDIR)
 	mv io-test $(BINDIR)
+
+dimers-test: dimers-test.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDE) $(LIBDIR) $< $(LIBS) -o $@
+	mkdir -p $(BINDIR)
+	mv dimers-test $(BINDIR)
 
 #$(OBJDIR)/%.o: %.cpp %.h $(OBJDIR)/.sentinel
 $(OBJDIR)/%.o: %.cpp $(OBJDIR)/.sentinel

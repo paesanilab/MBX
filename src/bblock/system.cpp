@@ -12,6 +12,12 @@ System::~System() {}
 
 size_t System::GetNumMol() {return nmol_;}
 
+std::vector<size_t> System::GetDimers() {return dimers_;}
+
+std::vector<std::string> System::GetSysAtNames() {return atoms_;}
+
+std::vector<double> System::GetSysXyz() {return xyz_;}
+
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 
 std::string System::GetMonId(size_t n) {return monomers_[n];}
@@ -19,10 +25,6 @@ std::string System::GetMonId(size_t n) {return monomers_[n];}
 size_t System::GetMonNat(size_t n) {return nat_[n];}
 
 size_t System::GetFirstInd(size_t n) {return first_index_[n];}
-
-std::vector<std::string> System::GetSysAtNames() {return atoms_;}
-
-std::vector<double> System::GetSysXyz() {return xyz_;}
 
 void System::AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id){
@@ -44,9 +46,10 @@ void System::Initialize() {
   if (initialized_) return;
 
   cutoff_ = 10.0;
-  AddMonomerInfo();
   
+  AddMonomerInfo();
   nmol_ = molecules_.size();
+  AddDimers();
   // TODO Here should go the order and rearrengement stuff
 }
 
@@ -151,7 +154,6 @@ void System::AddMonomerInfo() {
               xyz_.begin() + 3 * first_index_[i]);
   }
   
-  AddDimers();
 
 }
 
@@ -194,7 +196,7 @@ void System::AddDimers() {
     for (size_t j = 0; j < nMatches; j++) {
       if (ret_matches[j].first > i) {
         dimers_.push_back(i);
-        dimers_.push_back(ret_matches[j].second);
+        dimers_.push_back(ret_matches[j].first);
       }
     }
   }

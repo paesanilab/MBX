@@ -22,6 +22,7 @@ class System {
   ~System();
   // Getters
   size_t GetNumMol();
+  std::vector<size_t> GetDimers();
 //  size_t GetNumSites();
   std::vector<std::string> GetSysAtNames();
   std::vector<double> GetSysXyz();
