@@ -37,7 +37,7 @@ class System {
   void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
-  void AddDimersAndTrimers();
+  void AddClusters(size_t nmax);
 //  void SetNumMol(size_t n);
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
