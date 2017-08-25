@@ -16,6 +16,8 @@ size_t System::GetNumMol() {return nmol_;}
 
 std::vector<size_t> System::GetDimers() {return dimers_;}
 
+std::vector<size_t> System::GetTrimers() {return trimers_;}
+
 std::vector<std::string> System::GetSysAtNames() {return atoms_;}
 
 std::vector<double> System::GetSysXyz() {return xyz_;}
@@ -51,7 +53,7 @@ void System::Initialize() {
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
-  AddDimers();
+  AddDimersAndTrimers();
   // TODO Here should go the order and rearrengement stuff
 }
 
@@ -148,7 +150,7 @@ void System::AddMonomerInfo() {
 
 }
 
-void System::AddDimers() {
+void System::AddDimersAndTrimers() {
   // Obtain xyz vector with the positions of first atom of each monomer
   std::vector<double> xyz;
   for (size_t i = 0; i < monomers_.size(); i++) {
@@ -170,6 +172,7 @@ void System::AddDimers() {
 
   // Perform a radial search within the cutoff
   dimers_.clear();
+  trimers_.clear();
   for (size_t i = 0; i < monomers_.size(); i++) {
     // Define the query point
     double point[3];
@@ -188,7 +191,28 @@ void System::AddDimers() {
       if (ret_matches[j].first > i) {
         dimers_.push_back(i);
         dimers_.push_back(ret_matches[j].first);
-
+      
+     
+        // Add trimers
+        // Define query point, which is each of the points 'j' inside the 
+        // radius of 'i' 
+        double point2[3];
+        point[0] = ptc.pts[ret_matches[j].first].x;
+        point[1] = ptc.pts[ret_matches[j].first].y;
+        point[2] = ptc.pts[ret_matches[j].first].z;
+        std::vector<std::pair<size_t, double>> ret_matches2;
+        nanoflann::SearchParams params2;
+        const size_t nMatches2 = index.radiusSearch(point2,
+          cutoff_ * cutoff_, ret_matches2, params2);
+ 
+        // Add the trimers that fulfil i > j > k, to avoid double counting
+        for (size_t k = 0; k < nMatches2; k++) {
+          if (ret_matches2[k].first > ret_matches[j].first) {
+            trimers_.push_back(i);
+            trimers_.push_back(ret_matches[j].first);
+            trimers_.push_back(ret_matches2[k].first);
+          }
+        }
       }
     }
   }
