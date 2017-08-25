@@ -1,5 +1,7 @@
 #include "system.h"
 
+#include <iostream>
+
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace bblock { // Building Block :: System
@@ -58,6 +60,9 @@ void System::AddMonomerInfo() {
   std::vector<double> xyz = xyz_;
   xyz_.clear();
 
+  std::vector<std::string> atoms = atoms_;
+  atoms_.clear();
+
   // TODO Improve the sorting. Later on this will do also domain decomposition
   //std::vector<std::string> monomers;
   //for (size_t i = 0; i < monomers_.size() - 1; i++) {
@@ -111,27 +116,6 @@ void System::AddMonomerInfo() {
       polfac_.push_back(0.0);
       polfac_.push_back(0.0);
       polfac_.push_back(0.0);
-    } else if (monomers_[i] == "co2") {
-      // Site Info
-      sites_.push_back(3);
-      nat_.push_back(3);
-      first_index_.push_back(count);
-      count += sites_[i];
-
-      // Charge info
-      chg_.push_back(0.454467);
-      chg_.push_back(-0.227224);
-      chg_.push_back(-0.227224);
-
-      // Pol info
-      pol_.push_back(1.43039);
-      pol_.push_back(0.771519);
-      pol_.push_back(0.771519);
-
-      // Polfac info
-      polfac_.push_back(1.43039);
-      polfac_.push_back(0.771519);
-      polfac_.push_back(0.771519);
     } else {
       //std::cerr << "No data in the dataset for monomer: "
       //          << monomers_[i] << std::endl;
@@ -147,11 +131,18 @@ void System::AddMonomerInfo() {
   count = 0;
   for (size_t i = 0; i < 3*nsites_; i++) 
     xyz_.push_back(0.0);
+  for (size_t i = 0; i < nsites_; i++)
+    atoms_.push_back("virt");
+    
   for (size_t i = 0; i < monomers_.size(); i++) {
     //size_t k = initial_order_[i];
     std::copy(xyz.begin() + 3 * count,
               xyz.begin() + 3 * (nat_[i] + count),
               xyz_.begin() + 3 * first_index_[i]);
+    std::copy(atoms.begin() + count,
+              atoms.begin() + nat_[i] + count,
+              atoms_.begin() + first_index_[i]);
+    count += nat_[i];
   }
   
 
@@ -162,8 +153,8 @@ void System::AddDimers() {
   std::vector<double> xyz;
   for (size_t i = 0; i < monomers_.size(); i++) {
     xyz.push_back(xyz_[3*first_index_[i]]);
-    xyz.push_back(xyz_[3*first_index_[i]] + 1);
-    xyz.push_back(xyz_[3*first_index_[i]] + 2);
+    xyz.push_back(xyz_[3*first_index_[i] + 1]);
+    xyz.push_back(xyz_[3*first_index_[i] + 2]);
   }
 
   // Obtain the data in the structure needed by the kd-tree
@@ -189,14 +180,15 @@ void System::AddDimers() {
     // Perform the search
     std::vector<std::pair<size_t, double>> ret_matches;
     nanoflann::SearchParams params;
-    const size_t nMatches = index.radiusSearch(&point[0],
-      cutoff_, ret_matches, params);
+    const size_t nMatches = index.radiusSearch(point,
+      cutoff_ * cutoff_, ret_matches, params);
 
     // Add the pairs that are not in the dimer vector
     for (size_t j = 0; j < nMatches; j++) {
       if (ret_matches[j].first > i) {
         dimers_.push_back(i);
         dimers_.push_back(ret_matches[j].first);
+
       }
     }
   }
