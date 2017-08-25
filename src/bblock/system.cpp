@@ -206,6 +206,8 @@ void System::AddDimersAndTrimers() {
           cutoff_ * cutoff_, ret_matches2, params2);
  
         // Add the trimers that fulfil i > j > k, to avoid double counting
+        // We will add all trimers that fulfill the condition:
+        // At least 2 of the three distances must be smaller than the cutoff 
         for (size_t k = 0; k < nMatches2; k++) {
           if (ret_matches2[k].first > ret_matches[j].first) {
             trimers_.push_back(i);
