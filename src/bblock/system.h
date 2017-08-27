@@ -23,6 +23,7 @@ class System {
   // Getters
   size_t GetNumMol();
   std::vector<size_t> GetDimers();
+  std::vector<size_t> GetTrimers();
 //  size_t GetNumSites();
   std::vector<std::string> GetSysAtNames();
   std::vector<double> GetSysXyz();
@@ -36,7 +37,7 @@ class System {
   void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
-  void AddDimers();
+  void AddClusters(size_t nmax);
 //  void SetNumMol(size_t n);
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
@@ -53,6 +54,7 @@ class System {
   std::vector<size_t> initial_order_;          // Input order of monomers
   std::vector<size_t> first_index_;            // First index of mon in sys
   std::vector<size_t> dimers_;                 // Dimers of the molecule
+  std::vector<size_t> trimers_;                // Trimers of the molecule
   std::vector<double> grd_;                    // Gradients of all sites
   std::vector<double> xyz_;                    // Coords of all sites
   std::vector<double> chg_;                    // Coords of all sites

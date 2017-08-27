@@ -47,14 +47,29 @@ int main(int argc, char** argv)
   }
 
   for (size_t i = 0; i < systems.size(); i++) {
+    // Retrieve dimers
     std::vector<size_t> dimers = systems[i].GetDimers();
     size_t ndimers = dimers.size() / 2;
+    // Print all dimers
     for (size_t j = 0; j < ndimers; j++) {
       std::cout << "Dimer[" << std::setw(10) << std::right 
                 << j << "] -> " << std::setw(8) << std::right
                 << dimers[2*j] << std::setw(8) << std::right
                 << dimers[2*j + 1] << std::endl;
     }
+    
+    // retrieve Trimers
+    std::vector<size_t> trimers = systems[i].GetTrimers();
+    size_t ntrimers = trimers.size() / 3;
+    //Print all trimers
+    for (size_t j = 0; j < ntrimers; j++) {
+      std::cout << "Trimer[" << std::setw(10) << std::right
+                << j << "] -> " << std::setw(8) << std::right
+                << trimers[3*j] << std::setw(8) << std::right
+                << trimers[3*j + 1] << std::setw(8) << std::right
+                << trimers[3*j + 2] << std::endl;
+    }
+    
   }
   
   return 0;
