@@ -11,10 +11,10 @@ make
 cd ../io_tools
 make clean
 make
-#cd ../main
-#make clean
-#make
-cd ../../test/src-test
+cd ../potential/1b
+make clean
+make
+cd ../../../test/src-test
 make clean
 make
 cd ../../
