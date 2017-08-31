@@ -7,7 +7,11 @@ set(CMAKE_BUILD_TYPE Release)
 add_definitions(-O0 -g -std=c++11 -Wall)
 
 # Include Directories
-set(INCLUDES src/bblock src/io_tools src/main src/potential src/tools)
+set(INCLUDES src/bblock 
+             src/io_tools 
+             src/main 
+             src/potential 
+             src/tools)
 include_directories(${INCLUDES})
 
 # Set sources for libraries
@@ -20,6 +24,15 @@ add_library(bblock    STATIC ${SOURCES_BBLOCK})
 add_library(iotools   STATIC ${SOURCES_IOTOOLS})
 add_library(pot1b     STATIC ${SOURCES_POT_1B})
 
-#Set library location
+# Set library location
 set(LIBS bblock iotools pot1b)
-install(TARGETS ${LIBS} DESTINATION "${CMAKE_SOURCE_DIR}/lib")
+install(TARGETS ${LIBS} 
+        DESTINATION "${CMAKE_SOURCE_DIR}/lib")
+
+# Install the tests
+set(SRC_TEST test/src-test)
+add_executable(combinations-test ${SRC_TEST}/combinations-test.cpp)
+add_executable(io-test ${SRC_TEST}/io-test.cpp)
+target_link_libraries(combinations-test ${LIBS})
+target_link_libraries(io-test ${LIBS})
+set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/test/bin-test")
