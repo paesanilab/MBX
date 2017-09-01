@@ -10,7 +10,7 @@ add_definitions(-O0 -g -std=c++11 -Wall)
 set(INCLUDES src/bblock 
              src/io_tools 
              src/main 
-             src/potential 
+             src/potential/1b 
              src/tools)
 include_directories(${INCLUDES})
 
@@ -33,6 +33,8 @@ install(TARGETS ${LIBS}
 set(SRC_TEST test/src-test)
 add_executable(combinations-test ${SRC_TEST}/combinations-test.cpp)
 add_executable(io-test ${SRC_TEST}/io-test.cpp)
+add_executable(energy-test ${SRC_TEST}/energy-test.cpp)
 target_link_libraries(combinations-test ${LIBS})
 target_link_libraries(io-test ${LIBS})
+target_link_libraries(energy-test ${LIBS})
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/test/bin-test")

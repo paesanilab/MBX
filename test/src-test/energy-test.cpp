@@ -13,7 +13,7 @@
 #include "system.h"
 
 
-#define PRINT_GRADS
+//#define PRINT_GRADS
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
                 << std::setw(20) << std::right << std::fabs(grd[j] - gfd)
                 << std::endl;
     }  
-# endif
   }
+# endif
   return 0;
 }
