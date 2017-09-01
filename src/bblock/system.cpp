@@ -9,26 +9,25 @@ namespace bblock { // Building Block :: System
 ////////////////////////////////////////////////////////////////////////////////
 
 System::System() {initialized_ = false;}
-
 System::~System() {}
 
 size_t System::GetNumMol() {return nmol_;}
+size_t System::GetNumSites() {return nsites_;}
+size_t System::GetMonNat(size_t n) {return nat_[n];}
+size_t System::GetFirstInd(size_t n) {return first_index_[n];}
 
 std::vector<size_t> System::GetDimers() {return dimers_;}
-
 std::vector<size_t> System::GetTrimers() {return trimers_;}
-
-std::vector<std::string> System::GetSysAtNames() {return atoms_;}
-
-std::vector<double> System::GetSysXyz() {return xyz_;}
-
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
+std::vector<std::string> System::GetSysAtNames() {return atoms_;}
+std::vector<double> System::GetSysXyz() {return xyz_;}
 
 std::string System::GetMonId(size_t n) {return monomers_[n];}
 
-size_t System::GetMonNat(size_t n) {return nat_[n];}
-
-size_t System::GetFirstInd(size_t n) {return first_index_[n];}
+void System::SetSysXyz(std::vector<double> xyz) {
+  // TODO Check that sizes are the same
+  std::copy(xyz.begin(), xyz.end(), xyz_.begin());
+}
 
 void System::AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id){
@@ -53,6 +52,7 @@ void System::Initialize() {
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
+  nmon_ = monomers_.size();
   AddClusters(3);
   // TODO Here should go the order and rearrengement stuff
 }
@@ -65,7 +65,7 @@ void System::AddMonomerInfo() {
   std::vector<std::string> atoms = atoms_;
   atoms_.clear();
 
-  // TODO Improve the sorting. Later on this will do also domain decomposition
+  // TODO Sort the monomers and put them together by type
   //std::vector<std::string> monomers;
   //for (size_t i = 0; i < monomers_.size() - 1; i++) {
   //  std::string min_mon = monomers_[0];
@@ -146,6 +146,11 @@ void System::AddMonomerInfo() {
               atoms_.begin() + first_index_[i]);
     count += nat_[i];
   }
+
+  // Setting Gradients to 0
+  grd_.reserve(3*nsites_);
+  for (size_t i = 0; i < 3*nsites_; i++)
+    grd_.push_back(0.0);
   
 
 }
@@ -223,6 +228,32 @@ void System::AddClusters(size_t n_max) {
   
 }
 
+double System::Energy() {
+  // Loop overall the monomers and get their energy
+  // TODO: This should getthe chunks of monomers and pass them vectorized.
+  energy_ = 0.0;
+  for (size_t i = 0; i < nmon_; i++) {
+    if (monomers_[i] == "h2o") {
+      double * grd = 0;
+      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, grd);
+    }
+  }
+  return energy_;
+}
+
+double System::Energy(double * grd) {
+  // Loop overall the monomers and get their energy
+  // TODO: This should getthe chunks of monomers and pass them vectorized.
+  energy_ = 0.0;
+  for (size_t i = 0; i < nmon_; i++) {
+    if (monomers_[i] == "h2o") {
+      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, 
+                              grd_.data() + first_index_[i]*3);
+    }
+  }
+  std::copy(grd_.begin(), grd_.end(), grd);
+  return energy_;
+} 
 ////////////////////////////////////////////////////////////////////////////////
 
 } // Building Block :: System
