@@ -29,3 +29,6 @@
 
 # Build dirs
 build*
+
+# General linux files
+*.swp

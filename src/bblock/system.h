@@ -5,8 +5,8 @@
 #include <string>
 
 // Tools
-#include <nanoflann.hpp>
-#include <kdtree_utils.h>
+#include "nanoflann.hpp"
+#include "kdtree_utils.h"
 
 // Potential
 #include "ps.h"
