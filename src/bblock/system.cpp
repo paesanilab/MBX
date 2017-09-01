@@ -53,6 +53,7 @@ void System::Initialize() {
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
+  nmon_ = monomers_.size();
   AddClusters(3);
   // TODO Here should go the order and rearrengement stuff
 }
@@ -65,7 +66,7 @@ void System::AddMonomerInfo() {
   std::vector<std::string> atoms = atoms_;
   atoms_.clear();
 
-  // TODO Improve the sorting. Later on this will do also domain decomposition
+  // TODO Sort the monomers and put them together by type
   //std::vector<std::string> monomers;
   //for (size_t i = 0; i < monomers_.size() - 1; i++) {
   //  std::string min_mon = monomers_[0];
@@ -221,6 +222,19 @@ void System::AddClusters(size_t n_max) {
     }
   }
   
+}
+
+double System::Energy() {
+  // Loop overall the monomers and get their energy
+  // TODO: This should getthe chunks of monomers and pass them vectorized.
+  energy_ = 0.0;
+  for (size_t i = 0; i < nmon_; i++) {
+    if (monomers_[i] == "h2o") {
+      double * grd = 0;
+      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, grd);
+    }
+  }
+  return energy_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
