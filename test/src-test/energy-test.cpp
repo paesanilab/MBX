@@ -13,7 +13,7 @@
 #include "system.h"
 
 
-#define PRINT_GRADS
+//#define PRINT_GRADS
 namespace {
 
 static std::vector<bblock::System> systems;
