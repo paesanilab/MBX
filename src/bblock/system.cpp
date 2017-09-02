@@ -84,53 +84,15 @@ void System::AddMonomerInfo() {
   //monomers_ = monomers;
 
   // At this point, the monomers are sorted by name.
-  // Filling the numer of sites and atoms, chg, pols and polfacs
   // TODO maybe use a swich would be better than if else
   // TODO maybe we should try to find out number of sites first and reserve
   // memory, rather than pushing back?
-  size_t count = 0;
-  for (size_t i = 0; i < monomers_.size(); i++) {
-    if (monomers_[i] == "h2o") {
-      // Filling things for water.
-      // TODO: WARNING. For water, charges, and position of the M-site
-      // depends on the 3 atom coordinate.  
-
-      // Site Info
-      sites_.push_back(4);
-      nat_.push_back(3);
-      first_index_.push_back(count);
-      count += sites_[i];
-      
-      // Charge info
-      chg_.push_back(0.0);
-      chg_.push_back(0.0);
-      chg_.push_back(0.0);
-      chg_.push_back(0.0);
-
-      // Pol info
-      pol_.push_back(0.0);
-      pol_.push_back(0.0);
-      pol_.push_back(0.0);
-      pol_.push_back(0.0);
-
-      // Polfac info
-      polfac_.push_back(0.0);
-      polfac_.push_back(0.0);
-      polfac_.push_back(0.0);
-      polfac_.push_back(0.0);
-    } else {
-      //std::cerr << "No data in the dataset for monomer: "
-      //          << monomers_[i] << std::endl;
-      // Exit program
-    }
-  }
+  systools::SetUpMonomers(monomers_, sites_, nat_, first_index_,
+                          chg_, pol_, polfac_);
   
-  // Setting total number of sites
-  nsites_ = count;
-
   // Rearranging coordinates to account for virt sites
   xyz_.reserve(3*nsites_);
-  count = 0;
+  size_t count = 0;
   for (size_t i = 0; i < 3*nsites_; i++) 
     xyz_.push_back(0.0);
   for (size_t i = 0; i < nsites_; i++)
