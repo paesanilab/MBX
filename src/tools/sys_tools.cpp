@@ -4,6 +4,21 @@ namespace systools {
 
 void OrderMonomers(std::vector<std::string> &mon, 
                    std::vector<size_t> &original_order) {
+  std::vector<std::string> monomers = mon;
+  mon.clear();
+  while (monomers.size() > 0) {
+    std::string min_mon = monomers[0];
+    size_t index_min = 0;
+    for (size_t j = 1; j < monomers.size()) {
+      if (monomers[j] < min_mon) {
+        min_mon = monomers_[j];
+        index_min = j;
+      }
+    }
+    mon.push_back(min_mon);
+    original_order.push_back(index_min);
+    monomers.erase(monomers.begin() + index_min);
+  }
 
 }
 
