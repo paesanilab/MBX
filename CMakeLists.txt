@@ -30,7 +30,7 @@ install(TARGETS ${LIBS}
         DESTINATION "${CMAKE_SOURCE_DIR}/lib")
 
 # Install the tests
-set(SRC_TEST test/src-test)
+set(SRC_TEST tests/src-test)
 add_executable(combinations-test ${SRC_TEST}/combinations-test.cpp)
 add_executable(io-test ${SRC_TEST}/io-test.cpp)
 add_executable(energy-test ${SRC_TEST}/energy-test.cpp)
