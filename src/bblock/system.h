@@ -9,7 +9,7 @@
 #include "kdtree_utils.h"
 
 // Potential
-#include "ps.h"
+#include "potential/1b/ps.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace bblock { // Building Block :: System
