@@ -7,13 +7,13 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "read_nrg.h"
-#include "write_nrg.h"
+#include "io_tools/read_nrg.h"
+#include "io_tools/write_nrg.h"
 
-#include "system.h"
+#include "bblock/system.h"
 
 
-#define PRINT_GRADS
+// #define PRINT_GRADS
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
                 << std::setw(20) << std::right << std::fabs(grd[j] - gfd)
                 << std::endl;
     }  
-# endif
   }
+# endif
   return 0;
 }
