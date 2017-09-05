@@ -54,6 +54,7 @@ install:
 - cd build
 - make -j2
 
-# script:
-# - Run test script
+script:
+- cd tests
+- ./main_test.sh
 
