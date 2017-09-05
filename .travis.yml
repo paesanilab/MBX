@@ -41,7 +41,11 @@ matrix:
             - llvm-toolchain-precise-3.6
           packages:
             - clang-3.6
-      env: COMPILER=clang++-3.6
+# MRR - 20170905
+#      env: COMPILER=clang++-3.6
+      env:
+        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
+# END MRR
 
     - compiler: clang
       addons:
@@ -51,7 +55,10 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
-      env: COMPILER=clang++-3.7
+# MRR - 20170905
+#      env: COMPILER=clang++-3.7
+      env:
+        - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
 
 before_install:
   - uname -a
