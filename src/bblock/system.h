@@ -7,6 +7,7 @@
 // Tools
 #include "nanoflann.hpp"
 #include "kdtree_utils.h"
+#include "sys_tools.h"
 
 // Potential
 #include "potential/1b/ps.h"
@@ -50,26 +51,26 @@ class System {
   double Energy();
   double Energy(double * grd);
  private:
-  size_t nmol_;                                // Number of molecules
-  size_t nmon_;                                // Number of monomers
-  size_t nsites_;                              // Number of sites in sys
-  double cutoff_;
-  double energy_;
-  bool initialized_;                           // Systes is initialized?
-  std::vector<size_t> sites_;                  // Number of sites of each mo
-  std::vector<size_t> nat_;                    // Number of atoms of each mo
-  std::vector<size_t> initial_order_;          // Input order of monomers
-  std::vector<size_t> first_index_;            // First index of mon in sys
-  std::vector<size_t> dimers_;                 // Dimers of the molecule
-  std::vector<size_t> trimers_;                // Trimers of the molecule
-  std::vector<double> grd_;                    // Gradients of all sites
-  std::vector<double> xyz_;                    // Coords of all sites
-  std::vector<double> chg_;                    // Coords of all sites
-  std::vector<double> pol_;                    // Coords of all sites
-  std::vector<double> polfac_;                    // Coords of all sites
-  std::vector<std::string> monomers_;          // Monomer ids
-  std::vector<std::string> atoms_;
-  std::vector<std::vector<size_t>> molecules_;
+  size_t nmol_;                              // Number of molecules
+  size_t nmon_;                              // Number of monomers
+  size_t nsites_;                            // Number of sites in sys
+  double cutoff_;                            // Cutoff for dim and trim search 
+  double energy_;                            // Energy of the system
+  bool initialized_;                         // Systes is initialized?
+  std::vector<size_t> sites_;                // Number of sites of each mo
+  std::vector<size_t> nat_;                  // Number of atoms of each mo
+  std::vector<size_t> initial_order_;        // Input order of monomers
+  std::vector<size_t> first_index_;          // First index of mon in sys
+  std::vector<size_t> dimers_;               // Dimers of the molecule
+  std::vector<size_t> trimers_;              // Trimers of the molecule
+  std::vector<double> grd_;                  // Gradients of all sites
+  std::vector<double> xyz_;                  // Coords of all sites
+  std::vector<double> chg_;                  // Charges of all sites
+  std::vector<double> pol_;                  // Polarizabilities of all sites
+  std::vector<double> polfac_;               // Polfacs of all sites
+  std::vector<std::string> monomers_;        // Monomer ids
+  std::vector<std::string> atoms_;           // Atom names of sys
+  std::vector<std::vector<size_t>> molecules_;  // Molecules of system
 };
 
 } // namespace bblock
