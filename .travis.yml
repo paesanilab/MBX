@@ -14,7 +14,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.9
-      env: COMPILER=g++-4.9
+# MRR - 20170904
+#      env: COMPILER=g++-4.9 commented
+      env:
+        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+# END MRR
 
     - compiler: gcc
       addons:
@@ -23,7 +27,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-5
-      env: COMPILER=g++-5
+# MRR - 20170904
+#      env: COMPILER=g++-5
+      env:
+        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+# END MRR
 
     - compiler: clang
       addons:
@@ -50,6 +58,9 @@ before_install:
   - free -m
   - df -h
   - ulimit -a
+# MRR - 20170904
+  - eval "${MATRIX_EVAL}"
+# END MRR
 
 install:
 # MRR - 20170904
