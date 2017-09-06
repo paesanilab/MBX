@@ -3,7 +3,7 @@
 filename=$(basename "$0")
 filename="${filename%.*}"
 
-$CU_HOME/test/bin-test/energy-test inputs/${filename}.nrg > output
+../../bin/energy_wograd-test inputs/${filename}.nrg > output
 
 if diff expected/${filename}.out output &> /dev/null ; then
   echo "TEST $filename PASSED" 
