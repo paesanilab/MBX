@@ -93,6 +93,7 @@ install:
   - cmake -H. -Bbuild
   - cd build
   - make -j2
+  - cd ../
 
 # MRR - 20170904
 script:
