@@ -7,10 +7,10 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "io_tools/read_nrg.h"
-#include "io_tools/write_nrg.h"
+#include "read_nrg.h"
+#include "write_nrg.h"
 
-#include "bblock/system.h"
+#include "system.h"
 
 
 // #define PRINT_GRADS
