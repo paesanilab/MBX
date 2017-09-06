@@ -16,6 +16,7 @@ void OrderMonomers(std::vector<std::string> &mon,
       }
     }
     mon.push_back(min_mon);
+    // TODO Fix this bc it doesnt keep the original order
     original_order.push_back(index_min);
     monomers.erase(monomers.begin() + index_min);
   }

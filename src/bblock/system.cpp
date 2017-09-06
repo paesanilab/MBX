@@ -87,7 +87,8 @@ void System::AddMonomerInfo() {
   // TODO maybe use a swich would be better than if else
   // TODO maybe we should try to find out number of sites first and reserve
   // memory, rather than pushing back?
-  systools::SetUpMonomers(monomers_, sites_, nat_, first_index_,
+  
+  nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, first_index_,
                           chg_, pol_, polfac_);
   
   // Rearranging coordinates to account for virt sites
