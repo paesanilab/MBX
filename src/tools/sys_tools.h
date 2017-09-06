@@ -15,7 +15,7 @@ void OrderMonomers(std::vector<std::string> &mon,
 
 // Function that sets up initial charges, pols, polfacs, number of sites
 // number of atoms and first index. Returns the total number of sites
-size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites
+size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
                      std::vector<size_t> &nat, std::vector<size_t> &fstind,
                      std::vector<double> &chg, std::vector<double> &pol,
                      std::vector<double> &polfac);

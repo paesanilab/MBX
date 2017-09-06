@@ -9,9 +9,9 @@ void OrderMonomers(std::vector<std::string> &mon,
   while (monomers.size() > 0) {
     std::string min_mon = monomers[0];
     size_t index_min = 0;
-    for (size_t j = 1; j < monomers.size()) {
+    for (size_t j = 1; j < monomers.size(); j++) {
       if (monomers[j] < min_mon) {
-        min_mon = monomers_[j];
+        min_mon = monomers[j];
         index_min = j;
       }
     }
@@ -22,7 +22,7 @@ void OrderMonomers(std::vector<std::string> &mon,
 
 }
 
-size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites
+size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
                      std::vector<size_t> &nat, std::vector<size_t> &fstind,
                      std::vector<double> &chg, std::vector<double> &pol,
                      std::vector<double> &polfac) {
