@@ -490,12 +490,12 @@ namespace ps {
 
 std::vector<double> pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, size_t nw) {
     // Declare vectors with the distances, and grads
-    double[3*nw] ROH1, ROH2, RHH;
-    double[nw] dROH1, dROH2, dRHH;
+    double ROH1[3*nw], ROH2[3*nw], RHH[3*nw];
+    double dROH1[nw], dROH2[nw], dRHH[nw];
 
     // Vector with 3 times the water molec number and 9
-    double[nw] nw3;
-    double[nw] nw9;
+    size_t nw3[nw];
+    size_t nw9[nw];
 
     // Initiallize to 0 the dXX vectors
     // Loop to fill vectors
@@ -527,11 +527,11 @@ std::vector<double> pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, siz
     }
 
     // Declaring, reserving and filling costh 
-    double[nw] costh;
+    double costh[nw];
     for (size_t nv = 0; nv < nw; nv++) {
-        costh[nv] = (ROH1[nv3[nv]]*ROH2[nv3[nv]] 
-                     + ROH1[nv3[nv] + 1]*ROH2[nv3[nv] + 1] 
-                     + ROH1[nv3[nv] + 2]*ROH2[nv3[nv] + 2]) 
+        costh[nv] = (ROH1[nw3[nv]]*ROH2[nw3[nv]] 
+                     + ROH1[nw3[nv] + 1]*ROH2[nw3[nv] + 1] 
+                     + ROH1[nw3[nv] + 2]*ROH2[nw3[nv] + 2]) 
                      / (dROH1[nv] * dROH2[nv]);
     }
 
@@ -549,7 +549,8 @@ std::vector<double> pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, siz
     const double costhe = -.24780227221366464506;
 
     // Variables that depend on the distances
-    double[nw] exp1, exp2, Va, Vb, dVa1, dVa2, dVb, x1, x2, x3;
+    double exp1[nw], exp2[nw], Va[nw], Vb[nw], 
+           dVa1[nw], dVa2[nw], dVb[nw], x1[nw], x2[nw], x3[nw];
     
     for (size_t nv = 0; nv < nw; nv++) {
         exp1[nv] = std::exp(-alphaoh*(dROH1[nv] - roh));
@@ -594,7 +595,7 @@ std::vector<double> pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, siz
                                     + std::pow((dROH2[nv] - reoh), 2)));
     }
     
-    double[nw] sum0, sum1, sum2, sum3;
+    double sum0[nw], sum1[nw], sum2[nw], sum3[nw];
     for (size_t nv = 0; nv < nw; nv++) {
         sum0[nv] = 0.0;
         sum1[nv] = 0.0;
@@ -624,7 +625,7 @@ std::vector<double> pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, siz
     }
 
     // energy
-    double[nw] Vc;    
+    double Vc[nw];    
     std::vector<double> e1;
     for (size_t nv     = 0; nv < nw; nv++) {
         Vc[nv] = 2    *c5z[0] + efac[nv]*sum0[nv];
@@ -642,10 +643,10 @@ std::vector<double> pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, siz
             dVcdr1[nv] = (-2*b1*efac[nv]*(dROH1[nv] - reoh)*sum0[nv] 
                           + efac[nv]*sum1[nv]/reoh)/dROH1[nv];
 
-            dVcdr2 = (-2*b1*efac[nv]*(dROH2[nv] - reoh)*sum0[nv] 
+            dVcdr2[nv] = (-2*b1*efac[nv]*(dROH2[nv] - reoh)*sum0[nv] 
                       + efac[nv]*sum2[nv]/reoh)/dROH2[nv];
 
-            dVcdcth = efac[nv]*sum3[nv];
+            dVcdcth[nv] = efac[nv]*sum3[nv];
         }
 
         for (size_t i = 0; i < 3; ++i) {
