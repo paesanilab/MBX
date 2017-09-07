@@ -488,6 +488,197 @@ static double c5z[245];
 
 namespace ps {
 
+double pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, size_t nw) {
+    // Declare vectors with the distances, and grads
+    double[3*nw] ROH1, ROH2, RHH;
+    double[nw] dROH1, dROH2, dRHH;
+
+    // Vector with 3 times the water molec number and 9
+    double[nw] nw3;
+    double[nw] nw9;
+
+    // Initiallize to 0 the dXX vectors
+    // Loop to fill vectors
+    for (size_t nv = 0; nv < nw; nv++) {
+        nw3[nv] = (3 * nv);
+        nw9[nv] = (9 * nv);
+        dROH1[nv] = (0.0);
+        dROH2[nv] = (0.0);
+        dRHH[nv] = (0.0);
+    }
+    
+    // TODO How to define the step for nv?
+    for (size_t i = 0; i < 3; ++i) {
+        for (size_t nv = 0; nv < nw; nv++) {
+            ROH1[i + nw3[nv]] = rr[nw9[nv] + 3 + i] - rr[nw9[nv] + i]; // H1 - O
+            ROH2[i + nw3[nv]] = rr[nw9[nv] + 6 + i] - rr[nw9[nv] + i]; // H2 - O
+            RHH[i + nw3[nv]] = rr[nw9[nv] + 3 + i] - rr[nw9[nv] + 6 + i]; // H1 - H2
+    
+            dROH1[nv] += ROH1[i + nw3[nv]]*ROH1[i + nw3[nv]];
+            dROH2[nv] += ROH2[i + nw3[nv]]*ROH2[i + nw3[nv]];
+            dRHH[nv] += RHH[i + nw3[nv]]*RHH[i + nw3[nv]];
+        }
+    }
+
+    for (size_t nv = 0; nv < nw; nv++) {
+        dROH1[nv] = std::sqrt(dROH1[nv]);
+        dROH2[nv] = std::sqrt(dROH2[nv]);
+        dRHH[nv] = std::sqrt(dRHH[nv]);
+    }
+
+    // Declaring, reserving and filling costh 
+    double[nw] costh;
+    for (size_t nv = 0; nv < nw; nv++) {
+        costh[nv] = (ROH1[nv3[nv]]*ROH2[nv3[nv]] 
+                     + ROH1[nv3[nv] + 1]*ROH2[nv3[nv] + 1] 
+                     + ROH1[nv3[nv] + 2]*ROH2[nv3[nv] + 2]) 
+                     / (dROH1[nv] * dROH2[nv]);
+    }
+
+    // Untouched
+    if (!c5z_ready) {
+        for (size_t i = 0; i < 245; ++i)
+            c5z[i] = f5z*c5zA[i] + fbasis*cbasis[i]
+                   + fcore*ccore[i] + frest*crest[i];
+        c5z_ready = true;
+    }
+
+    const double deoh = f5z*deohA;
+    const double phh1 = f5z*phh1A*std::exp(phh2);
+
+    const double costhe = -.24780227221366464506;
+
+    // Variables that depend on the distances
+    double[nw] exp1, exp2, Va, Vb, dVa1, dVa2, dVb, x1, x2, x3;
+    
+    for (size_t nv = 0; nv < nw; nv++) {
+        exp1[nv] = std::exp(-alphaoh*(dROH1[nv] - roh));
+        exp2[nv] = std::exp(-alphaoh*(dROH2[nv] - roh));
+    
+        Va[nv] = deoh*(exp1[nv]*(exp1[nv] - 2.0) 
+                 + exp2[nv]*(exp2[nv] - 2.0));
+        Vb[nv] = phh1*std::exp(-phh2*dRHH[nv]);
+    
+        dVa1[nv] = 2.0 * alphaoh*deoh*exp1[nv] 
+                       * (1.0 - exp1[nv])/dROH1[nv];
+        dVa2[nv] = 2.0 * alphaoh*deoh*exp2[nv] 
+                       * (1.0 - exp2[nv])/dROH2[nv];
+        dVb[nv] = -phh2*Vb[nv] / dRHH[nv];
+    
+        x1[nv] = (dROH1[nv] - reoh)/reoh;
+        x2[nv] = (dROH2[nv] - reoh)/reoh;
+        x3[nv] = costh[nv] - costhe;
+    }
+    
+    // fmat for nw
+    double fmat[3][16][nw];
+    
+    for (size_t i = 0; i < 3; ++i) {
+        for (size_t nv = 0; nv < nw; nv++) {
+          fmat[i][0][nv] = 0.0;
+          fmat[i][1][nv] = 1.0;
+        }
+    }
+
+    for (size_t j = 2; j < 16; ++j) {
+        for (size_t nv = 0; nv < nw; nv++) {
+            fmat[0][j][nv] = fmat[0][j - 1][nv]*x1[nv];
+            fmat[1][j][nv] = fmat[1][j - 1][nv]*x2[nv];
+            fmat[2][j][nv] = fmat[2][j - 1][nv]*x3[nv];
+        }
+    }
+
+    double efac[nw];
+    for (size_t nv = 0; nv < nw; nv++) {
+        efac[nv] = std::exp(-b1*(std::pow((dROH1[nv] - reoh), 2)
+                                    + std::pow((dROH2[nv] - reoh), 2)));
+    }
+    
+    double[nw] sum0, sum1, sum2, sum3;
+    for (size_t nv = 0; nv < nw; nv++) {
+        sum0[nv] = 0.0;
+        sum1[nv] = 0.0;
+        sum2[nv] = 0.0;
+        sum3[nv] = 0.0;
+    }
+
+    for (size_t j = 1; j < 245; ++j) {
+        const size_t inI = idx1[j];
+        const size_t inJ = idx2[j];
+        const size_t inK = idx3[j];
+
+        for (size_t nv = 0; nv < nw; nv++) {
+    
+            sum0[nv] += c5z[j]*(fmat[0][inI][nv]*fmat[1][inJ][nv]
+                          + fmat[0][inJ][nv]*fmat[1][inI][nv])*fmat[2][inK][nv];
+    
+            sum1[nv] += c5z[j]*((inI - 1)*fmat[0][inI - 1][nv]*fmat[1][inJ][nv]
+                          + (inJ - 1)*fmat[0][inJ - 1][nv]*fmat[1][inI][nv])*fmat[2][inK][nv];
+    
+            sum2[nv] += c5z[j]*((inJ - 1)*fmat[0][inI][nv]*fmat[1][inJ - 1][nv]
+                          + (inI - 1)*fmat[0][inJ][nv]*fmat[1][inI - 1][nv])*fmat[2][inK][nv];
+    
+            sum3[nv] += c5z[j]*(fmat[0][inI][nv]*fmat[1][inJ][nv] + fmat[0][inJ][nv]*fmat[1][inI][nv])
+                          *(inK - 1)*fmat[2][inK - 1][nv];
+        }
+    }
+
+    // energy
+    double[nw] Vc;    
+    std::vector<double> e1;
+    for (size_t nv     = 0; nv < nw; nv++) {
+        Vc[nv] = 2    *c5z[0] + efac[nv]*sum0[nv];
+        e1[nv] = Va[nv] + Vb[nv] + Vc[nv];
+
+        e1[nv] += 0.44739574026257; // correction
+        e1[nv] *= constants::cm1_kcalmol; // cm-1 --> Kcal/mol
+    }
+
+
+    if (dr) {
+        // derivatives
+        double dVcdr1[nw], dVcdr2[nw], dVcdcth[nw];
+        for (size_t nv = 0; nv < nw; nv++) {
+            dVcdr1[nv] = (-2*b1*efac[nv]*(dROH1[nv] - reoh)*sum0[nv] 
+                          + efac[nv]*sum1[nv]/reoh)/dROH1[nv];
+
+            dVcdr2 = (-2*b1*efac[nv]*(dROH2[nv] - reoh)*sum0[nv] 
+                      + efac[nv]*sum2[nv]/reoh)/dROH2[nv];
+
+            dVcdcth = efac[nv]*sum3[nv];
+        }
+
+        for (size_t i = 0; i < 3; ++i) {
+            for (size_t nv = 0; nv < nw; nv++) {
+                // H1
+                dr[nw9[nv] + 3 + i] = dVa1[nv]*ROH1[nw3[nv] + i] 
+                                    + dVb[nv]*RHH[nw3[nv] + i] 
+                                    + dVcdr1[nv]*ROH1[nw3[nv] + i]
+                                    + dVcdcth[nv]*(ROH2[nw3[nv] + i]
+                                    / (dROH1[nv]*dROH2[nv]) 
+                                    - costh[nv]*ROH1[nw3[nv] + i]
+                                    / (dROH1[nv]*dROH1[nv]));
+                // H2
+                dr[nw9[nv] + 6 + i] = dVa2[nv]*ROH2[nw3[nv] + i] 
+                                    - dVb[nv]*RHH[nw3[nv] + i] 
+                                    + dVcdr2[nv]*ROH2[nw3[nv] + i]
+                                    + dVcdcth[nv]*(ROH1[nw3[nv] + i]
+                                    / (dROH1[nv]*dROH2[nv]) 
+                                    - costh[nv]*ROH2[nw3[nv] + i]
+                                    / (dROH2[nv]*dROH2[nv]));
+                // O
+                dr[nw9[nv] + 0 + i] = - (dr[nw9[nv] + 3 + i] 
+                                      + dr[nw9[nv] + 6 + i]);
+            }
+        }
+
+        for (size_t i = 0; i < 9*nw; ++i)
+            dr[i] *= constants::cm1_kcalmol; // cm-1 --> Kcal/mol
+    } // dr
+
+    return e1;
+}
+
 double pot_nasa(const double* RESTRICT rr, double* RESTRICT dr)
 {
     double ROH1[3], ROH2[3], RHH[3], dROH1(0), dROH2(0), dRHH(0);
