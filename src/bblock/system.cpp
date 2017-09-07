@@ -194,27 +194,57 @@ void System::AddClusters(size_t n_max) {
 double System::Energy() {
   // Loop overall the monomers and get their energy
   // TODO: This should getthe chunks of monomers and pass them vectorized.
+// FIXME commented
+//  energy_ = 0.0;
+//  for (size_t i = 0; i < nmon_; i++) {
+//    if (monomers_[i] == "h2o") {
+//      double * grd = 0;
+//      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, grd);
+//    }
+//  }
+// FIXME end uncomment
+  // FIXME Assuming all water molecules for testing
+  std::vector<double> energy;
+  double xyz[3*3*nmon_];
+  for (size_t i = 0; i < nmon_; i++)
+    std::copy(xyz_.begin() + 12*i, xyz_.begin() + 12*i + 9, xyz + 9*i);
+  double * grd = 0;
+  energy = ps::pot_nasa(xyz, grd, nmon_);
+  
   energy_ = 0.0;
-  for (size_t i = 0; i < nmon_; i++) {
-    if (monomers_[i] == "h2o") {
-      double * grd = 0;
-      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, grd);
-    }
-  }
+  for (size_t i = 0; i < nmon_; i++) 
+    energy_ += energy[i];
   return energy_;
 }
 
 double System::Energy(double * grd) {
   // Loop overall the monomers and get their energy
   // TODO: This should getthe chunks of monomers and pass them vectorized.
+// FIXME commented
+//  energy_ = 0.0;
+//  for (size_t i = 0; i < nmon_; i++) {
+//    if (monomers_[i] == "h2o") {
+//      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, 
+//                              grd_.data() + first_index_[i]*3);
+//    }
+//  }
+//  std::copy(grd_.begin(), grd_.end(), grd);
+// FIXME end commented
+  std::vector<double> energy;
+  double xyz[3*3*nmon_];
+  std::fill(grd_.begin(), grd_.begin() + 12*nmon_, 0.0);
+  for (size_t i = 0; i < nmon_; i++)
+    std::copy(xyz_.begin() + 12*i, xyz_.begin() + 12*i + 9, xyz + 9*i);
+  
+  energy = ps::pot_nasa(xyz, grd, nmon_);
+  
+  for (size_t i = 0; i < nmon_; i++)
+    std::copy(grd + 9*i, grd + 9*i + 9, grd_.begin() + 12*i);
+
   energy_ = 0.0;
-  for (size_t i = 0; i < nmon_; i++) {
-    if (monomers_[i] == "h2o") {
-      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, 
-                              grd_.data() + first_index_[i]*3);
-    }
-  }
-  std::copy(grd_.begin(), grd_.end(), grd);
+  for (size_t i = 0; i < nmon_; i++) 
+    energy_ += energy[i];
+
   return energy_;
 } 
 ////////////////////////////////////////////////////////////////////////////////

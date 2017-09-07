@@ -627,6 +627,9 @@ std::vector<double> pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, siz
     // energy
     double Vc[nw];    
     std::vector<double> e1;
+    for (size_t nv     = 0; nv < nw; nv++) 
+        e1.push_back(0.0);
+
     for (size_t nv     = 0; nv < nw; nv++) {
         Vc[nv] = 2    *c5z[0] + efac[nv]*sum0[nv];
         e1[nv] = Va[nv] + Vb[nv] + Vc[nv];
