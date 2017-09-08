@@ -2,8 +2,9 @@
 
 namespace systools {
 
-void OrderMonomers(std::vector<std::string> &mon, 
-                   std::vector<size_t> &original_order) {
+std::vector<std::pair<std::string,size_t>> OrderMonomers
+                   (std::vector<std::string> &mon, 
+                    std::vector<size_t> &original_order) {
   std::vector<std::string> monomers = mon;
   mon.clear();
   while (monomers.size() > 0) {
@@ -20,6 +21,22 @@ void OrderMonomers(std::vector<std::string> &mon,
     original_order.push_back(index_min);
     monomers.erase(monomers.begin() + index_min);
   }
+
+  std::vector<std::pair<std::string,size_t>> mon_types_count;
+  mon_types_count.push_back(std::make_pair(mon[0],1);
+  size_t count = 0;
+  std::string prev_mon = mon[0];
+  for (size_t i = 1; i < mon.size(); i++) {
+    if (mon[i] == prev) {
+      mon_types_count[count].second += 1;
+    } else {
+      prev = mon[i];
+      mon_types_count.push_back(std::make_pair(mon[i],1);
+      count += 1;
+    } 
+  }
+
+  return mon_types_count;
 
 }
 
