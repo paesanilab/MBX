@@ -7,8 +7,11 @@ filename="${filename%.*}"
 
 if diff expected/${filename}.out output.nrg &> /dev/null ; then
   echo "TEST $filename PASSED" 
+  rm -f CU.log input.nrg output.nrg
+  exit 0
 else
   echo "TEST $filename FAILED"
+  rm -f CU.log input.nrg output.nrg
+  exit 1
 fi
 
-rm -f CU.log input.nrg output.nrg 
