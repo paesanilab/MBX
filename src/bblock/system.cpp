@@ -66,22 +66,7 @@ void System::AddMonomerInfo() {
   atoms_.clear();
 
   // TODO Sort the monomers and put them together by type
-  //std::vector<std::string> monomers;
-  //for (size_t i = 0; i < monomers_.size() - 1; i++) {
-  //  std::string min_mon = monomers_[0];
-  //  size_t index_min = 0;
-  //  for (size_t j = i + 1; j < monomers_.size()) {
-  //    if (monomers_[j] < min_mon) {
-  //      min_mon = monomers_[j];
-  //      index_min = j;
-  //    }
-  //  }
-  //  monomers.push_back(min_mon);
-  //  initial_order_.push_back(index_min);
-  //}
-
-  //monomers_.clear();
-  //monomers_ = monomers;
+  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
 
   // At this point, the monomers are sorted by name.
   // TODO maybe use a swich would be better than if else
@@ -192,58 +177,102 @@ void System::AddClusters(size_t n_max) {
 }
 
 double System::Energy() {
+
+  // 1B ENERGY
   // Loop overall the monomers and get their energy
-  // TODO: This should getthe chunks of monomers and pass them vectorized.
-// FIXME commented
-//  energy_ = 0.0;
-//  for (size_t i = 0; i < nmon_; i++) {
-//    if (monomers_[i] == "h2o") {
-//      double * grd = 0;
-//      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, grd);
-//    }
-//  }
-// FIXME end uncomment
-  // FIXME Assuming all water molecules for testing
-  std::vector<double> energy;
-  double xyz[3*3*nmon_];
-  for (size_t i = 0; i < nmon_; i++)
-    std::copy(xyz_.begin() + 12*i, xyz_.begin() + 12*i + 9, xyz + 9*i);
-  double * grd = 0;
-  energy = ps::pot_nasa(xyz, grd, nmon_);
-  
+  size_t cmt = 0;
+  size_t ccrd = 0;
   energy_ = 0.0;
-  for (size_t i = 0; i < nmon_; i++) 
-    energy_ += energy[i];
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    // Useful variables
+    std::vector<double> energy;
+    size_t ncoord = 3 * nat_[cmt] * mon_type_count_[k].second;
+    // XYZ with real sites
+    double xyz[ncoord];
+    
+    // Set up real coordinates
+    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
+      std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
+                xyz_.begin() + ccrd + 3 * (i+1) * sites_[cmt],
+                xyz + 3 * i * nat_[cmt]);
+    }
+
+    // Get energy of the chunk as function of monomer
+    if (mon_type_count_[k].first == "h2o") {
+      energy = ps::pot_nasa(xyz, 0, mon_type_count_[k].second);
+    } else {
+      std::fill(energy.begin(), energy.end(),0.0);
+    }
+
+    // Add energy to energy_
+    for (size_t i = 0; i < mon_type_count_[k].second; i++) 
+      energy_ += energy[i];
+
+    // Update ccrd and cmt
+    ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
+    cmt += mon_type_count_[k].second;
+  }
+
+  // 2B ENERGY
+
+  // 3B ENERGY
+
   return energy_;
 }
 
 double System::Energy(double * grd) {
+  // 1B ENERGY
   // Loop overall the monomers and get their energy
-  // TODO: This should getthe chunks of monomers and pass them vectorized.
-// FIXME commented
-//  energy_ = 0.0;
-//  for (size_t i = 0; i < nmon_; i++) {
-//    if (monomers_[i] == "h2o") {
-//      energy_ += ps::pot_nasa(xyz_.data() + first_index_[i]*3, 
-//                              grd_.data() + first_index_[i]*3);
-//    }
-//  }
-//  std::copy(grd_.begin(), grd_.end(), grd);
-// FIXME end commented
-  std::vector<double> energy;
-  double xyz[3*3*nmon_];
-  std::fill(grd_.begin(), grd_.begin() + 12*nmon_, 0.0);
-  for (size_t i = 0; i < nmon_; i++)
-    std::copy(xyz_.begin() + 12*i, xyz_.begin() + 12*i + 9, xyz + 9*i);
-  
-  energy = ps::pot_nasa(xyz, grd, nmon_);
-  
-  for (size_t i = 0; i < nmon_; i++)
-    std::copy(grd + 9*i, grd + 9*i + 9, grd_.begin() + 12*i);
-
+  size_t cmt = 0;
+  size_t ccrd = 0;
   energy_ = 0.0;
-  for (size_t i = 0; i < nmon_; i++) 
-    energy_ += energy[i];
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    // Useful variables
+    std::vector<double> energy;
+    size_t ncoord = 3 * nat_[cmt] * mon_type_count_[k].second;
+    // XYZ with real sites
+    double xyz[ncoord];
+    
+    // Set up real coordinates
+    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
+      std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
+                xyz_.begin() + ccrd + 3 * (i+1) * sites_[cmt],
+                xyz + 3 * i * nat_[cmt]);
+    }
+
+    // Get energy of the chunk as function of monomer
+    double grd2[ncoord];
+    std::fill(grd2, grd2 + ncoord, 0.0);
+    if (mon_type_count_[k].first == "h2o") {
+      energy = ps::pot_nasa(xyz, grd2, mon_type_count_[k].second);
+    } else {
+      std::fill(energy.begin(), energy.end(),0.0);
+    }
+
+    // Add energy to energy_
+    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
+      energy_ += energy[i];
+
+      // Reorganize gradients
+      for (size_t j = 0; j < 3*nat_[cmt]; j++) {
+        grd_[ccrd + i*sites_[cmt] + j] += grd2[i*nat_[cmt] + j];
+      }
+    }
+    
+    // Update ccrd and cmt
+    ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
+    cmt += mon_type_count_[k].second;
+  }
+
+  // 2B ENERGY
+
+  // 3B ENERGY
+
+
+  // Putting gradients back to argument. All grads will be put there
+  for (size_t i = 0; i < nmon_; i++) {
+    std::copy(grd_.begin(), grd_.end(), grd); 
+  }
 
   return energy_;
 } 

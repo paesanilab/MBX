@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 
 // Tools
 #include "nanoflann.hpp"
@@ -48,7 +49,12 @@ class System {
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
   // Energy Functions
+  // Energy without computing gradients
+  // Returns the total energy
   double Energy();
+  // Energy computing gradients. The new gradients of ALL sites 
+  // are returned in grd. 
+  // TODO Discuss this
   double Energy(double * grd);
  private:
   size_t nmol_;                              // Number of molecules
@@ -70,7 +76,10 @@ class System {
   std::vector<double> polfac_;               // Polfacs of all sites
   std::vector<std::string> monomers_;        // Monomer ids
   std::vector<std::string> atoms_;           // Atom names of sys
-  std::vector<std::vector<size_t>> molecules_;  // Molecules of system
+  // Molecules of system
+  std::vector<std::vector<size_t>> molecules_; 
+  // Mon type and # mon of each
+  std::vector<std::pair<std::string,size_t>> mon_type_count_;   
 };
 
 } // namespace bblock
