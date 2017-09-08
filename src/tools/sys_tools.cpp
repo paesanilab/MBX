@@ -23,15 +23,15 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
   }
 
   std::vector<std::pair<std::string,size_t>> mon_types_count;
-  mon_types_count.push_back(std::make_pair(mon[0],1);
+  mon_types_count.push_back(std::make_pair(mon[0],1));
   size_t count = 0;
   std::string prev_mon = mon[0];
   for (size_t i = 1; i < mon.size(); i++) {
-    if (mon[i] == prev) {
+    if (mon[i] == prev_mon) {
       mon_types_count[count].second += 1;
     } else {
-      prev = mon[i];
-      mon_types_count.push_back(std::make_pair(mon[i],1);
+      prev_mon = mon[i];
+      mon_types_count.push_back(std::make_pair(mon[i],1));
       count += 1;
     } 
   }
