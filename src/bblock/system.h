@@ -8,7 +8,7 @@
 // Tools
 #include "nanoflann.hpp"
 #include "kdtree_utils.h"
-#include "sys_tools.h"
+#include "tools/sys_tools.h"
 
 // Potential
 #include "potential/1b/ps.h"
