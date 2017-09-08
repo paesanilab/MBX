@@ -76,8 +76,7 @@ ExternalProject_Add(clusters_ultimate-core
 # <<<  Install  >>>
 
 install(DIRECTORY ${STAGED_INSTALL_PREFIX}/
-        DESTINATION ${CMAKE_INSTALL_PREFIX}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/
         USE_SOURCE_PERMISSIONS
         PATTERN "*.pyc" EXCLUDE)
-
 

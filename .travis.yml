@@ -1,7 +1,9 @@
 sudo: required
 dist: trusty
+os: linux #MRR 20170904
 
 language: cpp
+
 
 matrix:
   include:
@@ -12,7 +14,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.9
-      env: COMPILER=g++-4.9
+# MRR - 20170904
+#      env: COMPILER=g++-4.9 commented
+      env:
+        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+# END MRR
 
     - compiler: gcc
       addons:
@@ -21,7 +27,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-5
-      env: COMPILER=g++-5
+# MRR - 20170904
+#      env: COMPILER=g++-5
+      env:
+        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+# END MRR
 
     - compiler: clang
       addons:
@@ -31,7 +41,11 @@ matrix:
             - llvm-toolchain-precise-3.6
           packages:
             - clang-3.6
-      env: COMPILER=clang++-3.6
+# MRR - 20170905
+#      env: COMPILER=clang++-3.6
+      env:
+        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
+# END MRR
 
     - compiler: clang
       addons:
@@ -41,19 +55,53 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
-      env: COMPILER=clang++-3.7
+# MRR - 20170905
+#      env: COMPILER=clang++-3.7
+      env:
+        - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
 
 before_install:
   - uname -a
   - free -m
   - df -h
   - ulimit -a
+# MRR - 20170904
+  - eval "${MATRIX_EVAL}"
+# END MRR
 
 install:
-- cmake -H. -Bbuild
-- cd build
-- make -j2
+# MRR - 20170904
+# From https://github.com/ldionne/mpl11/blob/master/.travis.yml
+  ############################################################################
+  # All the dependencies are installed in ${TRAVIS_BUILD_DIR}/deps/
+  ############################################################################
+  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+  - mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
 
-# script:
-# - Run test script
+  ############################################################################
+  # Install a recent CMake
+  ############################################################################
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      CMAKE_URL="http://www.cmake.org/files/v3.3/cmake-3.3.2-Linux-x86_64.tar.gz"
+      mkdir cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
+      export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+    fi
+  - cd ${TRAVIS_BUILD_DIR}
+  
+# END MRR 
+  - cmake -H. -Bbuild
+  - cd build
+  - make -j2
+  - cd ../
 
+# MRR - 20170904
+script:
+  - cd tests/tests
+  - ./test_001_io.sh
+  - ./test_002_io.sh
+  - ./test_003_io.sh
+  - ./test_004_pairs.sh
+  - ./test_005_energy_grad.sh
+  - ./test_006_energy_nograd.sh
+# END MRR
