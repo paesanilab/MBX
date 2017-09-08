@@ -3,7 +3,7 @@
 filename=$(basename "$0")
 filename="${filename%.*}"
 
-../../bin/io-test inputs/${filename}.nrg
+../../build/stage/usr/local/clusters_ultimate/bin/io-test inputs/${filename}.nrg
 
 if diff expected/${filename}.out output.nrg &> /dev/null ; then
   echo "TEST $filename PASSED" 

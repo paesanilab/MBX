@@ -3,7 +3,7 @@
 filename=$(basename "$0")
 filename="${filename%.*}"
 
-../../bin/energy_wgrad-test inputs/${filename}.nrg > output
+../../build/stage/usr/local/clusters_ultimate/bin/energy_wgrad-test inputs/${filename}.nrg > output
 
 if diff expected/${filename}.out output &> /dev/null ; then
   echo "TEST $filename PASSED" 
