@@ -72,6 +72,7 @@ int main(int argc, char** argv)
               << std::setw(20) << std::right << "GradientZ"
               << std::endl;
     for (size_t j = 0; j < n_sites; j++) {
+      if (atn[j] == "virt") continue;
       std::cout << std::setprecision(10) << std::scientific
                 << std::setw(6) << std::left << atn[j]
                 << std::setw(20) << std::right << grd[3*j]
@@ -89,6 +90,7 @@ int main(int argc, char** argv)
     xyz = systems[i].GetSysXyz();
     const double eps = 1.0e-6;
     for (size_t j = 0; j < n_sites * 3; j++) {
+      if (atn[j/3] == "virt") continue;
       const double x_orig = xyz[j];
       xyz[j] = x_orig + eps;
       systems[i].SetSysXyz(xyz);
