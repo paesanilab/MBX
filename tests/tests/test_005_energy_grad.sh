@@ -11,6 +11,11 @@ if diff expected/${filename}.out output &> /dev/null ; then
   exit 0
 else
   echo "TEST $filename FAILED"
+  echo "OUTPUT..."
+  cat output.out
+  echo
+  echo "EXPECTED"
+  cat expected/${filename}.out
   rm -f CU.log input.nrg output*
   exit 1
 fi
