@@ -12,7 +12,7 @@ if diff expected/${filename}.out output &> /dev/null ; then
 else
   echo "TEST $filename FAILED"
   echo "OUTPUT..."
-  cat output.out
+  cat output
   echo
   echo "EXPECTED"
   cat expected/${filename}.out
