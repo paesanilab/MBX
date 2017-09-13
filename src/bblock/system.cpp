@@ -270,9 +270,9 @@ double System::Energy(double * grd) {
 
 
   // Putting gradients back to argument. All grads will be put there
-  for (size_t i = 0; i < nmon_; i++) {
-    std::copy(grd_.begin(), grd_.end(), grd); 
-  }
+  // Including Virtual Electrostatic sites
+  // TODO Maybe change this
+  std::copy(grd_.begin(), grd_.end(), grd); 
 
   return energy_;
 } 
