@@ -56,7 +56,8 @@ int main(int argc, char** argv)
   std::cout << "Energies with gradients:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
     size_t n_sites = systems[i].GetNumSites();
-    double grd[n_sites * 3];
+    std::vector<double> grd;
+    
     double energy = systems[i].Energy(grd);
     std::cout << std::setprecision(10) << std::scientific
               << "system["  << std::setfill('.')
@@ -115,6 +116,7 @@ int main(int argc, char** argv)
                 << std::endl;
     }  
   }
+  
 # endif
   return 0;
 }

@@ -55,7 +55,7 @@ class System {
   // Energy computing gradients. The new gradients of ALL sites 
   // are returned in grd. 
   // TODO Discuss this
-  double Energy(double * grd);
+  double Energy(std::vector<double> &grd);
  private:
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers

@@ -207,6 +207,8 @@ double System::Energy() {
     // Add energy to energy_
     for (size_t i = 0; i < mon_type_count_[k].second; i++) 
       energy_ += energy[i];
+    
+    energy.clear();
 
     // Update ccrd and cmt
     ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
@@ -220,13 +222,16 @@ double System::Energy() {
   return energy_;
 }
 
-double System::Energy(double * grd) {
+double System::Energy(std::vector<double> &grd) {
   // 1B ENERGY
   // Loop overall the monomers and get their energy
   size_t cmt = 0;
   size_t ccrd = 0;
   energy_ = 0.0;
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::cerr << mon_type_count_.size() << std::endl;
+    std::cerr << mon_type_count_[k].first << std::endl;
+    std::cerr << mon_type_count_[k].second << std::endl;
     // Useful variables
     std::vector<double> energy;
     size_t ncoord = 3 * nat_[cmt] * mon_type_count_[k].second;
@@ -255,14 +260,18 @@ double System::Energy(double * grd) {
 
       // Reorganize gradients
       for (size_t j = 0; j < 3*nat_[cmt]; j++) {
-        grd_[ccrd + i*sites_[cmt] + j] += grd2[i*nat_[cmt] + j];
+        grd_[ccrd + 3*i*sites_[cmt] + j] += grd2[3*i*nat_[cmt] + j];
       }
     }
+
+    energy.clear();
     
     // Update ccrd and cmt
     ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
     cmt += mon_type_count_[k].second;
+    std::cerr << "End of loop -- inside " << mon_type_count_.size() << std::endl;
   }
+  std::cerr << "End of loop -- outside" << std::endl;
 
   // 2B ENERGY
 
@@ -272,8 +281,11 @@ double System::Energy(double * grd) {
   // Putting gradients back to argument. All grads will be put there
   // Including Virtual Electrostatic sites
   // TODO Maybe change this
-  std::copy(grd_.begin(), grd_.end(), grd); 
+  grd.clear();
+  for (auto i = grd_.begin(); i != grd_.end(); i++)
+    grd.push_back(*i);
 
+  std::cerr << "Only return left" << std::endl;
   return energy_;
 } 
 ////////////////////////////////////////////////////////////////////////////////
