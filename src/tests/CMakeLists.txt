@@ -7,7 +7,7 @@ foreach(t combinations-test energy_wograd-test energy_wgrad-test io-test)
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR}/../external/kdtree)
 
-set(LIBS bblock io_tools tools 1b)
+set(LIBS bblock io_tools tools 1b 2b)
 
 target_link_libraries(${t} ${LIBS})
 

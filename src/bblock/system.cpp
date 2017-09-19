@@ -216,6 +216,22 @@ double System::Energy() {
   }
 
   // 2B ENERGY
+  bool do_calc = false;
+  size_t ni = 0;
+  size_t nj = 0;
+  double e2b = 0;
+  
+  // Dimers are ordered
+  // TODO put this in chunk so can be vectorized
+  // TODO Maybe initialize here all possible dimer structs?
+  for (size_t i = 0; i < dimers_.size()/2; i++) {
+    if (monomers_[dimers_[2*i]] == "h2o" and 
+        monomers_[dimers_[2*i + 1]] == "h2o") {
+      x2o::x2b_v9x pot;
+      e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[2*i]],
+                      xyz_.data() + 3*first_index_[dimers_[2*i + 1]]);
+    }
+  }
 
   // 3B ENERGY
 

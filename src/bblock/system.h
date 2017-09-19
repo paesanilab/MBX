@@ -11,7 +11,12 @@
 #include "tools/sys_tools.h"
 
 // Potential
+// 1B
 #include "potential/1b/ps.h"
+// 2B
+#include "potential/2b/x2b-v9x.h"
+#include "potential/2b/poly-2b-v6x.h"
+// 3B
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace bblock { // Building Block :: System

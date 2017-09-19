@@ -1,8 +1,8 @@
 #include <cmath>
 #include <algorithm>
 
-#include "x2b-v9x.h"
-#include "poly-2b-v6x.h"
+#include "potential/2b/x2b-v9x.h"
+#include "potential/2b/poly-2b-v6x.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 

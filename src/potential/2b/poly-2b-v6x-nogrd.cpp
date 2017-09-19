@@ -1,4 +1,4 @@
-#include "poly-2b-v6x.h"
+#include "potential/2b/poly-2b-v6x.h"
 
 namespace x2o {
 
