@@ -224,16 +224,34 @@ double System::Energy() {
   // Dimers are ordered
   // TODO put this in chunk so can be vectorized
   // TODO Maybe initialize here all possible dimer structs?
-  for (size_t i = 0; i < dimers_.size()/2; i++) {
-    if (monomers_[dimers_[2*i]] == "h2o" and 
-        monomers_[dimers_[2*i + 1]] == "h2o") {
+  for (size_t i = 0; i < dimers_.size(); i+=2) {
+    if (monomers_[dimers_[i]] == "h2o" and 
+        monomers_[dimers_[i + 1]] == "h2o") {
       x2o::x2b_v9x pot;
-      e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[2*i]],
-                      xyz_.data() + 3*first_index_[dimers_[2*i + 1]]);
+      e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
+                      xyz_.data() + 3*first_index_[dimers_[i + 1]]);
     }
   }
 
+  energy_ += e2b;
+
   // 3B ENERGY
+  double e3b = 0;
+  // trimers are ordered
+  // TODO put this in chunk so can be vectorized
+  // TODO Maybe initialize here all possible trimer structs?
+  for (size_t i = 0; i < trimers_.size(); i+=3) {
+    if (monomers_[trimers_[i]] == "h2o" and
+        monomers_[trimers_[i + 1]] == "h2o" and
+        monomers_[trimers_[i + 2]] == "h2o") {
+      x2o::x3b_v2x pot;
+      e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
+                      xyz_.data() + 3*first_index_[trimers_[i + 1]],
+                      xyz_.data() + 3*first_index_[trimers_[i + 2]]);
+    }
+  }
+
+  energy_ += e3b;
 
   return energy_;
 }

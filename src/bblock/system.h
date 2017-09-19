@@ -17,6 +17,9 @@
 #include "potential/2b/x2b-v9x.h"
 #include "potential/2b/poly-2b-v6x.h"
 // 3B
+#include "potential/3b/x3b-v2x.h"
+#include "potential/3b/poly-3b-v2x.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace bblock { // Building Block :: System

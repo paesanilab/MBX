@@ -7,6 +7,7 @@ target_link_libraries(clusters_ultimate io_tools)
 target_link_libraries(clusters_ultimate tools)
 target_link_libraries(clusters_ultimate 1b)
 target_link_libraries(clusters_ultimate 2b)
+target_link_libraries(clusters_ultimate 3b)
 
 install(TARGETS clusters_ultimate
         RUNTIME DESTINATION bin
