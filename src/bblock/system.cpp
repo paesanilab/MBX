@@ -100,7 +100,6 @@ void System::AddMonomerInfo() {
 
 void System::AddClusters(size_t n_max) {
   // Obtain xyz vector with the positions of first atom of each monomer
-  if (monomers_.size() < 2) return;
   std::vector<double> xyz;
   for (size_t i = 0; i < monomers_.size(); i++) {
     xyz.push_back(xyz_[3*first_index_[i]]);
