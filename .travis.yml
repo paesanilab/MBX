@@ -102,6 +102,5 @@ script:
   - ./test_002_io.sh
   - ./test_003_io.sh
   - ./test_004_pairs.sh
-  - ./test_005_energy_grad.sh
-  - ./test_006_energy_nograd.sh
+  - ./test_005_energy_1w.sh
 # END MRR
