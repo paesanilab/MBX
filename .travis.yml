@@ -69,7 +69,7 @@ before_install:
   - eval "${MATRIX_EVAL}"
 # END MRR
 
-install:
+install: travis_wait 30 mvn install
 # MRR - 20170904
 # From https://github.com/ldionne/mpl11/blob/master/.travis.yml
   ############################################################################
