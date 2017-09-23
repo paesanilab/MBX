@@ -13,6 +13,7 @@
 #include "bblock/system.h"
 
 #define PRINT_GRADS
+//#define NUM_GRADS
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -55,7 +56,6 @@ int main(int argc, char** argv)
 # ifdef PRINT_GRADS
   std::cout << "Energies with gradients:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    size_t n_sites = systems[i].GetNumSites();
     std::vector<double> grd;
     
     double energy = systems[i].Energy(grd);
@@ -66,6 +66,8 @@ int main(int argc, char** argv)
               << std::setw(12) << std::right << " kcal/mol" 
               << std::endl << std::endl;
     std::vector<std::string> atn = systems[i].GetSysAtNames();
+
+    size_t n_sites = systems[i].GetNumSites();
 
     std::cout << std::setw(6)  << std::left << "Atom"
               << std::setw(20) << std::right << "GradientX"
@@ -81,6 +83,7 @@ int main(int argc, char** argv)
                 << std::setw(20) << std::right << grd[3*j + 2]
                 << std::endl;
     }
+#ifdef NUM_GRADS
     std::cout << std::endl << std::setw(6)  << std::left << "Atom"
               << std::setw(20) << std::right << "Analytical"
               << std::setw(20) << std::right << "Numerical"
@@ -115,8 +118,8 @@ int main(int argc, char** argv)
                 << std::setw(20) << std::right << std::fabs(grd[j] - gfd)
                 << std::endl;
     }  
+# endif
   }
-  
 # endif
   return 0;
 }
