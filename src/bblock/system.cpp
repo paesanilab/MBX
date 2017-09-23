@@ -77,12 +77,9 @@ void System::AddMonomerInfo() {
                           chg_, pol_, polfac_);
   
   // Rearranging coordinates to account for virt sites
-  xyz_.reserve(3*nsites_);
+  xyz_ = std::vector<double> (3*nsites_, 0.0);
+  atoms_ = std::vector<std::string> (nsites_, "virt");
   size_t count = 0;
-  for (size_t i = 0; i < 3*nsites_; i++) 
-    xyz_.push_back(0.0);
-  for (size_t i = 0; i < nsites_; i++)
-    atoms_.push_back("virt");
     
   for (size_t i = 0; i < monomers_.size(); i++) {
     //size_t k = initial_order_[i];
@@ -96,9 +93,7 @@ void System::AddMonomerInfo() {
   }
 
   // Setting Gradients to 0
-  grd_.reserve(3*nsites_);
-  for (size_t i = 0; i < 3*nsites_; i++)
-    grd_.push_back(0.0);
+  grd_ = std::vector<double> (3*nsites_, 0.0);
   
 
 }
@@ -185,21 +180,23 @@ double System::Energy() {
   energy_ = 0.0;
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
     // Useful variables
-    std::vector<double> energy;
+    std::vector<double> energy = std::vector<double>
+                                 (mon_type_count_[k].second, 0.0);
     size_t ncoord = 3 * nat_[cmt] * mon_type_count_[k].second;
     // XYZ with real sites
-    double xyz[ncoord];
+    std::vector<double> xyz = std::vector<double> (ncoord,0.0);
     
     // Set up real coordinates
     for (size_t i = 0; i < mon_type_count_[k].second; i++) {
       std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
-                xyz_.begin() + ccrd + 3 * (i+1) * sites_[cmt],
-                xyz + 3 * i * nat_[cmt]);
+                xyz_.begin() + ccrd + 3 * (i+1) * nat_[cmt],
+                xyz.begin() + 3 * i * nat_[cmt]);
     }
 
     // Get energy of the chunk as function of monomer
     if (mon_type_count_[k].first == "h2o") {
-      energy = ps::pot_nasa(xyz, 0, mon_type_count_[k].second);
+      energy.clear();
+      energy = ps::pot_nasa(xyz.data(), 0, mon_type_count_[k].second);
     } else {
       std::fill(energy.begin(), energy.end(),0.0);
     }
@@ -208,8 +205,6 @@ double System::Energy() {
     for (size_t i = 0; i < mon_type_count_[k].second; i++) 
       energy_ += energy[i];
     
-    energy.clear();
-
     // Update ccrd and cmt
     ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
     cmt += mon_type_count_[k].second;
@@ -321,7 +316,7 @@ double System::Energy(std::vector<double> &grd) {
     // Set up real coordinates
     for (size_t i = 0; i < mon_type_count_[k].second; i++) {
       std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
-                xyz_.begin() + ccrd + 3 * (i+1) * sites_[cmt],
+                xyz_.begin() + ccrd + 3 * (i+1) * nat_[cmt],
                 xyz + 3 * i * nat_[cmt]);
     }
 
@@ -481,8 +476,7 @@ double System::Energy(std::vector<double> &grd) {
   // Including Virtual Electrostatic sites
   // TODO Maybe change this
   grd.clear();
-  for (auto i = grd_.begin(); i != grd_.end(); i++)
-    grd.push_back(*i);
+  grd = grd_;
 
   std::cerr << "Only return left" << std::endl;
   return energy_;
