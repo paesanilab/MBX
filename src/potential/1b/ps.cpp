@@ -488,7 +488,7 @@ static double c5z[245];
 
 namespace ps {
 
-std::vector<double> pot_nasa(const double* RESTRICT rr, double* RESTRICT dr, size_t nw) {
+std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw) {
     // Declare vectors with the distances, and grads
     double ROH1[3*nw], ROH2[3*nw], RHH[3*nw];
     double dROH1[nw], dROH2[nw], dRHH[nw];

@@ -13,14 +13,14 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
     std::string min_mon = monomers[0];
     size_t index_min = 0;
     for (size_t j = 1; j < monomers.size(); j++) {
-      if (monomers[j] < min_mon && monomers[j] != "") {
+      if (monomers[j] < min_mon && monomers[j] != "~") {
         min_mon = monomers[j];
         index_min = j;
       }
     }
     mon.push_back(min_mon);
     original_order.push_back(index_min);
-    monomers[index_min] = "";
+    monomers[index_min] = "~";
     n--;
   }
 
