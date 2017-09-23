@@ -171,13 +171,14 @@ void System::AddClusters(size_t n_max) {
   
 }
 
-double System::Energy() {
+double System::Energy(std::vector<double> &grd, bool do_grads) {
 
   // 1B ENERGY
   // Loop overall the monomers and get their energy
   size_t cmt = 0;
   size_t ccrd = 0;
   energy_ = 0.0;
+  std::fill(grd.begin(), grd.end(), 0.0);
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
     // Useful variables
     std::vector<double> energy = std::vector<double>
@@ -193,17 +194,30 @@ double System::Energy() {
                 xyz.begin() + 3 * i * nat_[cmt]);
     }
 
+    double grd2[ncoord];
+    std::fill(grd2, grd2 + ncoord, 0.0);
     // Get energy of the chunk as function of monomer
     if (mon_type_count_[k].first == "h2o") {
-      energy.clear();
-      energy = ps::pot_nasa(xyz.data(), 0, mon_type_count_[k].second);
+      if (do_grads)  {
+        energy = ps::pot_nasa(xyz.data(), grd2, mon_type_count_[k].second);
+      } else {
+        energy = ps::pot_nasa(xyz.data(), 0, mon_type_count_[k].second);
+      }
     } else {
       std::fill(energy.begin(), energy.end(),0.0);
     }
 
     // Add energy to energy_
-    for (size_t i = 0; i < mon_type_count_[k].second; i++) 
+    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
       energy_ += energy[i];
+
+      if (do_grads) {
+        // Reorganize gradients
+        for (size_t j = 0; j < 3*nat_[cmt]; j++) {
+          grd_[ccrd + 3*i*sites_[cmt] + j] += grd2[3*i*nat_[cmt] + j];
+        }
+      }
+    }
     
     // Update ccrd and cmt
     ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
@@ -217,14 +231,25 @@ double System::Energy() {
   // TODO put this in chunk so can be vectorized
   // TODO Maybe initialize here all possible dimer structs?
   for (size_t i = 0; i < dimers_.size(); i+=2) {
-    if (monomers_[dimers_[i]] == "h2o" and 
+    if (monomers_[dimers_[i]] == "h2o" and
         monomers_[dimers_[i + 1]] == "h2o") {
       x2o::x2b_v9x pot;
-      e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
-                      xyz_.data() + 3*first_index_[dimers_[i + 1]]);
+      if (do_grads) {
+        double grdx[18];
+        std::fill(grdx, grdx + 18, 0.0);
+        e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
+                        xyz_.data() + 3*first_index_[dimers_[i + 1]],
+                        grdx, grdx + 9);
+        for (size_t j = 0; j < 9; j++) {
+          grd_[3*first_index_[dimers_[i]] + j] += grdx[j];
+          grd_[3*first_index_[dimers_[i + 1]] + j] += grdx[j + 9];
+        }
+      } else {
+        e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
+                        xyz_.data() + 3*first_index_[dimers_[i + 1]]);
+      }
     }
   }
-
   // Vectorizable part
   // TODO UNCOMMENT
 //  size_t nd = 0;
@@ -286,87 +311,104 @@ double System::Energy() {
         monomers_[trimers_[i + 1]] == "h2o" and
         monomers_[trimers_[i + 2]] == "h2o") {
       x2o::x3b_v2x pot;
-      e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
-                      xyz_.data() + 3*first_index_[trimers_[i + 1]],
-                      xyz_.data() + 3*first_index_[trimers_[i + 2]]);
+      if (do_grads) {
+        double grdx[27];
+        std::fill(grdx, grdx + 27, 0.0);
+        e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
+                        xyz_.data() + 3*first_index_[trimers_[i + 1]],
+                        xyz_.data() + 3*first_index_[trimers_[i + 2]],
+                        grdx, grdx + 9, grdx + 18);
+        for (size_t j = 0; j < 9; j++) {
+          grd_[3*first_index_[trimers_[i]] + j] += grdx[j];
+          grd_[3*first_index_[trimers_[i + 1]] + j] += grdx[j + 9];
+          grd_[3*first_index_[trimers_[i + 2]] + j] += grdx[j + 18];
+        }
+      } else {
+        e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
+                        xyz_.data() + 3*first_index_[trimers_[i + 1]],
+                        xyz_.data() + 3*first_index_[trimers_[i + 2]]);
+      }
     }
   }
 
   energy_ += e3b;
 
+  grd.clear();
+  grd = grd_;
+
   return energy_;
 }
 
-double System::Energy(std::vector<double> &grd) {
-  // 1B ENERGY
-  // Loop overall the monomers and get their energy
-  size_t cmt = 0;
-  size_t ccrd = 0;
-  energy_ = 0.0;
-  for (size_t k = 0; k < mon_type_count_.size(); k++) {
-    // Useful variables
-    std::vector<double> energy;
-    size_t ncoord = 3 * nat_[cmt] * mon_type_count_[k].second;
-    // XYZ with real sites
-    double xyz[ncoord];
-    
-    // Set up real coordinates
-    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
-      std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
-                xyz_.begin() + ccrd + 3 * (i+1) * nat_[cmt],
-                xyz + 3 * i * nat_[cmt]);
-    }
-
-    // Get energy of the chunk as function of monomer
-    double grd2[ncoord];
-    std::fill(grd2, grd2 + ncoord, 0.0);
-    if (mon_type_count_[k].first == "h2o") {
-      energy = ps::pot_nasa(xyz, grd2, mon_type_count_[k].second);
-    } else {
-      std::fill(energy.begin(), energy.end(),0.0);
-    }
-
-    // Add energy to energy_
-    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
-      energy_ += energy[i];
-
-      // Reorganize gradients
-      for (size_t j = 0; j < 3*nat_[cmt]; j++) {
-        grd_[ccrd + 3*i*sites_[cmt] + j] += grd2[3*i*nat_[cmt] + j];
-      }
-    }
-
-    energy.clear();
-    
-    // Update ccrd and cmt
-    ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
-    cmt += mon_type_count_[k].second;
-  }
-
-  // 2B ENERGY
-  bool do_calc = false;
-  size_t ni = 0;
-  size_t nj = 0;
-  double e2b = 0;
-
-  // Dimers are ordered
-  // TODO put this in chunk so can be vectorized
-  // TODO Maybe initialize here all possible dimer structs?
-  for (size_t i = 0; i < dimers_.size(); i+=2) {
-    if (monomers_[dimers_[i]] == "h2o" and
-        monomers_[dimers_[i + 1]] == "h2o") {
-      double grdx[18];
-      std::fill(grdx, grdx + 18, 0.0);
-      x2o::x2b_v9x pot;
-      e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
-                      xyz_.data() + 3*first_index_[dimers_[i + 1]],
-                      grdx, grdx + 9);
-      for (size_t j = 0; j < 9; j++) {
-        grd_[3*first_index_[dimers_[i]] + j] += grdx[j];
-        grd_[3*first_index_[dimers_[i + 1]] + j] += grdx[j + 9];
-      }
-    }
-  }
+//double System::Energy(std::vector<double> &grd) {
+//  // 1B ENERGY
+//  // Loop overall the monomers and get their energy
+//  size_t cmt = 0;
+//  size_t ccrd = 0;
+//  energy_ = 0.0;
+//  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+//    // Useful variables
+//    std::vector<double> energy;
+//    size_t ncoord = 3 * nat_[cmt] * mon_type_count_[k].second;
+//    // XYZ with real sites
+//    double xyz[ncoord];
+//    
+//    // Set up real coordinates
+//    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
+//      std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
+//                xyz_.begin() + ccrd + 3 * (i+1) * nat_[cmt],
+//                xyz + 3 * i * nat_[cmt]);
+//    }
+//
+//    // Get energy of the chunk as function of monomer
+//    double grd2[ncoord];
+//    std::fill(grd2, grd2 + ncoord, 0.0);
+//    if (mon_type_count_[k].first == "h2o") {
+//      energy = ps::pot_nasa(xyz, grd2, mon_type_count_[k].second);
+//    } else {
+//      std::fill(energy.begin(), energy.end(),0.0);
+//    }
+//
+//    // Add energy to energy_
+//    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
+//      energy_ += energy[i];
+//
+//      // Reorganize gradients
+//      for (size_t j = 0; j < 3*nat_[cmt]; j++) {
+//        grd_[ccrd + 3*i*sites_[cmt] + j] += grd2[3*i*nat_[cmt] + j];
+//      }
+//    }
+//
+//    energy.clear();
+//    
+//    // Update ccrd and cmt
+//    ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
+//    cmt += mon_type_count_[k].second;
+//  }
+//
+//  // 2B ENERGY
+//  bool do_calc = false;
+//  size_t ni = 0;
+//  size_t nj = 0;
+//  double e2b = 0;
+//
+//  // Dimers are ordered
+//  // TODO put this in chunk so can be vectorized
+//  // TODO Maybe initialize here all possible dimer structs?
+//  for (size_t i = 0; i < dimers_.size(); i+=2) {
+//    if (monomers_[dimers_[i]] == "h2o" and
+//        monomers_[dimers_[i + 1]] == "h2o") {
+//      double grdx[18];
+//      std::fill(grdx, grdx + 18, 0.0);
+//      x2o::x2b_v9x pot;
+//      e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
+//                      xyz_.data() + 3*first_index_[dimers_[i + 1]],
+//                      grdx, grdx + 9);
+//      for (size_t j = 0; j < 9; j++) {
+//        grd_[3*first_index_[dimers_[i]] + j] += grdx[j];
+//        grd_[3*first_index_[dimers_[i + 1]] + j] += grdx[j + 9];
+//      }
+//    }
+//  }
 
   // Vectorizable part
   // TODO UNCOMMENT
@@ -437,44 +479,44 @@ double System::Energy(std::vector<double> &grd) {
 //  xyz2.clear();
 //  grd1.clear();
 //  grd2.clear();
-
-  energy_ += e2b;
-
-  // 3B ENERGY
-  double e3b = 0;
-  // trimers are ordered
-  // TODO put this in chunk so can be vectorized
-  // TODO Maybe initialize here all possible trimer structs?
-  for (size_t i = 0; i < trimers_.size(); i+=3) {
-    if (monomers_[trimers_[i]] == "h2o" and
-        monomers_[trimers_[i + 1]] == "h2o" and
-        monomers_[trimers_[i + 2]] == "h2o") {
-      double grdx[27];
-      std::fill(grdx, grdx + 27, 0.0);
-      x2o::x3b_v2x pot;
-      e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
-                      xyz_.data() + 3*first_index_[trimers_[i + 1]],
-                      xyz_.data() + 3*first_index_[trimers_[i + 2]], 
-                      grdx, grdx + 9, grdx + 18);
-      for (size_t j = 0; j < 9; j++) {
-        grd_[3*first_index_[trimers_[i]] + j] += grdx[j];
-        grd_[3*first_index_[trimers_[i + 1]] + j] += grdx[j + 9];
-        grd_[3*first_index_[trimers_[i + 2]] + j] += grdx[j + 18];
-      }
-    }
-  }
-
-  energy_ += e3b;
-
-
-  // Putting gradients back to argument. All grads will be put there
-  // Including Virtual Electrostatic sites
-  // TODO Maybe change this
-  grd.clear();
-  grd = grd_;
-
-  return energy_;
-} 
+//
+//  energy_ += e2b;
+//
+//  // 3B ENERGY
+//  double e3b = 0;
+//  // trimers are ordered
+//  // TODO put this in chunk so can be vectorized
+//  // TODO Maybe initialize here all possible trimer structs?
+//  for (size_t i = 0; i < trimers_.size(); i+=3) {
+//    if (monomers_[trimers_[i]] == "h2o" and
+//        monomers_[trimers_[i + 1]] == "h2o" and
+//        monomers_[trimers_[i + 2]] == "h2o") {
+//      double grdx[27];
+//      std::fill(grdx, grdx + 27, 0.0);
+//      x2o::x3b_v2x pot;
+//      e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
+//                      xyz_.data() + 3*first_index_[trimers_[i + 1]],
+//                      xyz_.data() + 3*first_index_[trimers_[i + 2]], 
+//                      grdx, grdx + 9, grdx + 18);
+//      for (size_t j = 0; j < 9; j++) {
+//        grd_[3*first_index_[trimers_[i]] + j] += grdx[j];
+//        grd_[3*first_index_[trimers_[i + 1]] + j] += grdx[j + 9];
+//        grd_[3*first_index_[trimers_[i + 2]] + j] += grdx[j + 18];
+//      }
+//    }
+//  }
+//
+//  energy_ += e3b;
+//
+//
+//  // Putting gradients back to argument. All grads will be put there
+//  // Including Virtual Electrostatic sites
+//  // TODO Maybe change this
+//  grd.clear();
+//  grd = grd_;
+//
+//  return energy_;
+//} 
 ////////////////////////////////////////////////////////////////////////////////
 
 } // Building Block :: System

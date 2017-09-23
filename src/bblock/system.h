@@ -57,13 +57,9 @@ class System {
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
   // Energy Functions
-  // Energy without computing gradients
-  // Returns the total energy
-  double Energy();
   // Energy computing gradients. The new gradients of ALL sites 
   // are returned in grd. 
-  // TODO Discuss this
-  double Energy(std::vector<double> &grd);
+  double Energy(std::vector<double> &grd, bool do_grads);
  private:
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers
