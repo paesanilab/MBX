@@ -304,9 +304,6 @@ double System::Energy(std::vector<double> &grd) {
   size_t ccrd = 0;
   energy_ = 0.0;
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
-    std::cerr << mon_type_count_.size() << std::endl;
-    std::cerr << mon_type_count_[k].first << std::endl;
-    std::cerr << mon_type_count_[k].second << std::endl;
     // Useful variables
     std::vector<double> energy;
     size_t ncoord = 3 * nat_[cmt] * mon_type_count_[k].second;
@@ -344,9 +341,7 @@ double System::Energy(std::vector<double> &grd) {
     // Update ccrd and cmt
     ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
     cmt += mon_type_count_[k].second;
-    std::cerr << "End of loop -- inside " << mon_type_count_.size() << std::endl;
   }
-  std::cerr << "End of loop -- outside" << std::endl;
 
   // 2B ENERGY
   bool do_calc = false;
@@ -478,7 +473,6 @@ double System::Energy(std::vector<double> &grd) {
   grd.clear();
   grd = grd_;
 
-  std::cerr << "Only return left" << std::endl;
   return energy_;
 } 
 ////////////////////////////////////////////////////////////////////////////////
