@@ -190,7 +190,7 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
     // Set up real coordinates
     for (size_t i = 0; i < mon_type_count_[k].second; i++) {
       std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
-                xyz_.begin() + ccrd + 3 * (i+1) * nat_[cmt],
+                xyz_.begin() + ccrd + 3 * (i * sites_[cmt] + nat_[cmt]),
                 xyz.begin() + 3 * i * nat_[cmt]);
     }
 
