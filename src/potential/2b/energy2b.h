@@ -14,7 +14,7 @@ namespace e2b {
 double get_2b_energy(std::string m1, std::string m2, size_t nm,
                      std::vector<double> xyz1, std::vector<double> xyz2);
 double get_2b_energy(std::string m1, std::string m2,size_t nm, 
-                     std::vector<double> xyz1, std::vector<double> xyz2
+                     std::vector<double> xyz1, std::vector<double> xyz2,
                      std::vector<double> &grd1, std::vector<double> &grd2);
 
 } // namespace e2b

@@ -1,6 +1,12 @@
 #ifndef X2B_V9X_H
 #define X2B_V9X_H
 
+#include <vector>
+#include <cmath>
+#include <algorithm>
+
+#include "potential/2b/poly-2b-v6x.h"
+
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace x2o {
@@ -14,12 +20,12 @@ namespace x2o {
 //----------------------------------------------------------------------------//
 
 struct x2b_v9x {
-    static std::vector<double> eval(const double* w1, 
-                                    const double* w2, const size_t nd);
+    static double eval(const double* w1, 
+                       const double* w2, const size_t nd);
 
-    static std::vector<double> eval(const double* w1, const double* w2,
-                                          double* g1,       double* g2, 
-                                    const size_t nd);
+    static double eval(const double* w1, const double* w2,
+                             double* g1,       double* g2, 
+                       const size_t nd);
 
     static const double k_HH_intra;
     static const double k_OH_intra;

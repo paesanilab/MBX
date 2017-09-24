@@ -276,7 +276,7 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
     // type exist. Thus, do calculation, update m? and clear xyz
     if (monomers_[3*first_index_[dimers_[i]]] != m1 ||
         monomers_[3*first_index_[dimers_[i + 1]]] != m2) {
-      e2b += get_2b_energy(m1, m2, nd, xyz1, xyz2)
+      e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
       nd = 0;
       xyz1.clear();
       xyz2.clear();
@@ -294,7 +294,7 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   }
 
   // Last Iteration is not done
-  e2b += get_2b_energy(m1, m2, nd, xyz1, xyz2);
+  e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
   nd = 0;
   xyz1.clear();
   xyz2.clear();

@@ -20,7 +20,7 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm,
 
 
 double get_2b_energy(std::string m1, std::string m2,size_t nm, 
-                     std::vector<double> xyz1, std::vector<double> xyz2
+                     std::vector<double> xyz1, std::vector<double> xyz2,
                      std::vector<double> &grd1, std::vector<double> &grd2) {
   if (m2 < m1) {
     std::string tmp = m1;
