@@ -1363,21 +1363,34 @@ double x2b_v9x::f_switch(const double& r, double& g)
 
 //----------------------------------------------------------------------------//
 
-double x2b_v9x::eval(const double* w1, const double* w2)
+std::vector<double> x2b_v9x::eval(const double* w1, 
+                                  const double* w2, const size_t nd)
 {
     // the switch
+  size_t n = nd;
+  std::vector<size_t> dimers_todo;
+  std::vector<double> energy (nd,0.0);
+  double rOOsq[nd];
+  double rOO[nd];
+  for (size_t i = 0; i < nd; i++) {
+    const double dOO[3] = {w1[9*i+0] - w2[9*i+0],
+                           w1[9*i+1] - w2[9*i+1],
+                           w1[9*i+2] - w2[9*i+2]};
 
-    const double dOO[3] = {w1[0] - w2[0],
-                           w1[1] - w2[1],
-                           w1[2] - w2[2]};
+    rOOsq[i] = dOO[0]*dOO[0] + dOO[1]*dOO[1] + dOO[2]*dOO[2];
+    rOO[i] = std::sqrt(rOOsq[i]);
 
-    const double rOOsq = dOO[0]*dOO[0] + dOO[1]*dOO[1] + dOO[2]*dOO[2];
-    const double rOO = std::sqrt(rOOsq);
+    if (rOO[i] > r2f) 
+        continue;
+    
+    dimers_todo.push_back(i);
+  }
+  double vv[31 * dimers_todo.size()];
 
-    if (rOO > r2f)
-        return 0.0;
-
+  for (size_t i = 0; i < dimers_todo.size(); i++) {
     // offsets
+    size_t sh = dimers_todo[i];
+    size_t sh9 = 9 * sh;
 
     const int Oa  = 0;
     const int Ha1 = 3;
@@ -1395,8 +1408,8 @@ double x2b_v9x::eval(const double* w1, const double* w2)
 
     double xcrd[30]; // coordinates including extra-points
 
-    std::copy(w1, w1 + 9, xcrd);
-    std::copy(w2, w2 + 9, xcrd + 9);
+    std::copy(w1 + sh9, w1 + sh9 + 9, xcrd);
+    std::copy(w2 + sh9, w2 + sh9 + 9, xcrd + 9);
 
     // the extra-points
 
@@ -1458,34 +1471,59 @@ double x2b_v9x::eval(const double* w1, const double* w2)
     v[29] = ctxt[29].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb1);
     v[30] = ctxt[30].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb2);
 
-    const double E_poly = poly_2b_v6x::eval(thefit, v);
+    for (size_t j = 0; j < 31; j++) {
+      vv[j*31 + i] = v[j];
+    }
+  }
 
+  std::vector<double> e2b = poly_2b_v6x::eval(thefit, vv, dimers_todo.size());
+
+  for (size_t i = 0; i < dimers_todo.size(); i++) {
+    energy[dimers_todo[i]] = e2b[i];
+  }
     // the switch
-
+  for (size_t i = 0; i < nd; i++) {
     double gsw;
-    const double sw = f_switch(rOO, gsw);
+    const double sw = f_switch(rOO[i], gsw);
 
-    return sw*E_poly;
+    energy[i] = sw*energy[i];
+  }
+
+  return energy;
 }
 
 //----------------------------------------------------------------------------//
 
-double x2b_v9x::eval
-    (const double* w1, const double* w2, double* g1, double* g2)
+std::vector<double> x2b_v9x::eval(const double* w1, const double* w2, 
+                                  double* g1, double* g2, const size_t nd)
 {
     // the switch
 
-    const double dOO[3] = {w1[0] - w2[0],
-                           w1[1] - w2[1],
-                           w1[2] - w2[2]};
+  size_t n = nd;
+  std::vector<size_t> dimers_todo;
+  std::vector<double> energy (nd,0.0);
+  double rOOsq[nd];
+  double rOO[nd];
+  for (size_t i = 0; i < nd; i++) {
+    const double dOO[3] = {w1[9*i+0] - w2[9*i+0],
+                           w1[9*i+1] - w2[9*i+1],
+                           w1[9*i+2] - w2[9*i+2]};
 
-    const double rOOsq = dOO[0]*dOO[0] + dOO[1]*dOO[1] + dOO[2]*dOO[2];
-    const double rOO = std::sqrt(rOOsq);
+    rOOsq[i] = dOO[0]*dOO[0] + dOO[1]*dOO[1] + dOO[2]*dOO[2];
+    rOO[i] = std::sqrt(rOOsq[i]);
 
-    if (rOO > r2f)
-        return 0.0;
+    if (rOO[i] > r2f) 
+        continue;
+    
+    dimers_todo.push_back(i);
+  } 
+  double vv[31 * dimers_todo.size()];
+  double gg[31 * dimers_todo.size()];
 
-    // offsets
+  for (size_t i = 0; i < dimers_todo.size(); i++) {
+    // offsets 
+    size_t sh = dimers_todo[i];
+    size_t sh9 = 9 * sh;
 
     const int Oa  = 0;
     const int Ha1 = 3;
@@ -1503,8 +1541,8 @@ double x2b_v9x::eval
 
     double xcrd[30]; // coordinates including extra-points
 
-    std::copy(w1, w1 + 9, xcrd);
-    std::copy(w2, w2 + 9, xcrd + 9);
+    std::copy(w1 + sh9, w1 + sh9 + 9, xcrd);
+    std::copy(w2 + sh9, w2 + sh9 + 9, xcrd + 9);
 
     // the extra-points
 
@@ -1565,51 +1603,75 @@ double x2b_v9x::eval
     v[28] = ctxt[28].v_exp(d0_inter, k_XX_main, xcrd, Xa1, Xb2);
     v[29] = ctxt[29].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb1);
     v[30] = ctxt[30].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb2);
+    
+    for (size_t j = 0; j < 31; j++) {
+      vv[j*30 + i] = v[j];
+    }
+  }
 
-    double g[31];
-    const double E_poly = poly_2b_v6x::eval(thefit, v, g);
+  std::vector<double> e2b = 
+                  poly_2b_v6x::eval(thefit, vv, gg, dimers_todo.size());
+
+  for (size_t i = 0; i < dimers_todo.size(); i++) {
+    // offsets 
+    size_t sh = dimers_todo[i];
+    size_t sh9 = 9 * sh;
+
+    const int Oa  = 0;
+    const int Ha1 = 3;
+    const int Ha2 = 6;
+
+    const int Ob  = 9;
+    const int Hb1 = 12;
+    const int Hb2 = 15;
+
+    const int Xa1 = 18;
+    const int Xa2 = 21;
+
+    const int Xb1 = 24;
+    const int Xb2 = 27;
 
     double xgrd[30];
     std::fill(xgrd, xgrd + 30, 0.0);
 
-    ctxt[0].grads(g[0], xgrd, Ha1, Ha2);
-    ctxt[1].grads(g[1], xgrd, Hb1, Hb2);
+    ctxt[0].grads(gg[0*dimers_todo.size() + i], xgrd, Ha1, Ha2);
+    ctxt[1].grads(gg[1*dimers_todo.size() + i], xgrd, Hb1, Hb2);
 
-    ctxt[2].grads(g[2], xgrd, Oa, Ha1);
-    ctxt[3].grads(g[3], xgrd, Oa, Ha2);
-    ctxt[4].grads(g[4], xgrd, Ob, Hb1);
-    ctxt[5].grads(g[5], xgrd, Ob, Hb2);
+    ctxt[2].grads(gg[2*dimers_todo.size() + i], xgrd, Oa, Ha1);
+    ctxt[3].grads(gg[3*dimers_todo.size() + i], xgrd, Oa, Ha2);
+    ctxt[4].grads(gg[4*dimers_todo.size() + i], xgrd, Ob, Hb1);
+    ctxt[5].grads(gg[5*dimers_todo.size() + i], xgrd, Ob, Hb2);
 
-    ctxt[6].grads(g[6], xgrd, Ha1, Hb1);
-    ctxt[7].grads(g[7], xgrd, Ha1, Hb2);
-    ctxt[8].grads(g[8], xgrd, Ha2, Hb1);
-    ctxt[9].grads(g[9], xgrd, Ha2, Hb2);
+    ctxt[6].grads(gg[6*dimers_todo.size() + i], xgrd, Ha1, Hb1);
+    ctxt[7].grads(gg[7*dimers_todo.size() + i], xgrd, Ha1, Hb2);
+    ctxt[8].grads(gg[8*dimers_todo.size() + i], xgrd, Ha2, Hb1);
+    ctxt[9].grads(gg[9*dimers_todo.size() + i], xgrd, Ha2, Hb2);
 
-    ctxt[10].grads(g[10], xgrd, Oa, Hb1);
-    ctxt[11].grads(g[11], xgrd, Oa, Hb2);
-    ctxt[12].grads(g[12], xgrd, Ob, Ha1);
-    ctxt[13].grads(g[13], xgrd, Ob, Ha2);
+    ctxt[10].grads(gg[10*dimers_todo.size() + i], xgrd, Oa, Hb1);
+    ctxt[11].grads(gg[11*dimers_todo.size() + i], xgrd, Oa, Hb2);
+    ctxt[12].grads(gg[12*dimers_todo.size() + i], xgrd, Ob, Ha1);
+    ctxt[13].grads(gg[13*dimers_todo.size() + i], xgrd, Ob, Ha2);
 
-    ctxt[14].grads(g[14], xgrd, Oa, Ob);
+    ctxt[14].grads(gg[14*dimers_todo.size() + i], xgrd, Oa, Ob);
 
-    ctxt[15].grads(g[15], xgrd, Xa1, Hb1);
-    ctxt[16].grads(g[16], xgrd, Xa1, Hb2);
-    ctxt[17].grads(g[17], xgrd, Xa2, Hb1);
-    ctxt[18].grads(g[18], xgrd, Xa2, Hb2);
-    ctxt[19].grads(g[19], xgrd, Xb1, Ha1);
-    ctxt[20].grads(g[20], xgrd, Xb1, Ha2);
-    ctxt[21].grads(g[21], xgrd, Xb2, Ha1);
-    ctxt[22].grads(g[22], xgrd, Xb2, Ha2);
+    ctxt[15].grads(gg[15*dimers_todo.size() + i], xgrd, Xa1, Hb1);
+    ctxt[16].grads(gg[16*dimers_todo.size() + i], xgrd, Xa1, Hb2);
+    ctxt[17].grads(gg[17*dimers_todo.size() + i], xgrd, Xa2, Hb1);
+    ctxt[18].grads(gg[18*dimers_todo.size() + i], xgrd, Xa2, Hb2);
+    ctxt[19].grads(gg[19*dimers_todo.size() + i], xgrd, Xb1, Ha1);
+    ctxt[20].grads(gg[20*dimers_todo.size() + i], xgrd, Xb1, Ha2);
+    ctxt[21].grads(gg[21*dimers_todo.size() + i], xgrd, Xb2, Ha1);
+    ctxt[22].grads(gg[22*dimers_todo.size() + i], xgrd, Xb2, Ha2);
 
-    ctxt[23].grads(g[23], xgrd, Oa, Xb1);
-    ctxt[24].grads(g[24], xgrd, Oa, Xb2);
-    ctxt[25].grads(g[25], xgrd, Ob, Xa1);
-    ctxt[26].grads(g[26], xgrd, Ob, Xa2);
+    ctxt[23].grads(gg[23*dimers_todo.size() + i], xgrd, Oa, Xb1);
+    ctxt[24].grads(gg[24*dimers_todo.size() + i], xgrd, Oa, Xb2);
+    ctxt[25].grads(gg[25*dimers_todo.size() + i], xgrd, Ob, Xa1);
+    ctxt[26].grads(gg[26*dimers_todo.size() + i], xgrd, Ob, Xa2);
 
-    ctxt[27].grads(g[27], xgrd, Xa1, Xb1);
-    ctxt[28].grads(g[28], xgrd, Xa1, Xb2);
-    ctxt[29].grads(g[29], xgrd, Xa2, Xb1);
-    ctxt[30].grads(g[30], xgrd, Xa2, Xb2);
+    ctxt[27].grads(gg[27*dimers_todo.size() + i], xgrd, Xa1, Xb1);
+    ctxt[28].grads(gg[28*dimers_todo.size() + i], xgrd, Xa1, Xb2);
+    ctxt[29].grads(gg[29*dimers_todo.size() + i], xgrd, Xa2, Xb1);
+    ctxt[30].grads(gg[30*dimers_todo.size() + i], xgrd, Xa2, Xb2);
 
     // distribute gradients w.r.t. the X-points
 
@@ -1619,28 +1681,31 @@ double x2b_v9x::eval
 
     mb.grads(xgrd + Xb1, xgrd + Xb2,
              in_plane_gamma, out_of_plane_gamma,
-             xgrd + Ob);
+             xgrd + Ob);    
 
     // the switch
 
     double gsw;
-    const double sw = f_switch(rOO, gsw);
+    const double sw = f_switch(rOO[sh], gsw);
 
-    for (int i = 0; i < 9; ++i) {
-        g1[i] += sw*xgrd[i];
-        g2[i] += sw*xgrd[i + 9];
+    for (int j = 0; j < 9; ++j) {
+        g1[j + sh9] += sw*xgrd[j];
+        g2[j + sh9] += sw*xgrd[j + 9];
     }
 
     // gradient of the switch
 
-    gsw *= E_poly/rOO;
-    for (int i = 0; i < 3; ++i) {
+    gsw *= e2b[i]/rOO[sh];
+    for (int j = 0; j < 3; ++j) {
         const double d = gsw*dOO[i];
-        g1[i] += d;
-        g2[i] -= d;
+        g1[i + sh9] += d;
+        g2[i + sh9] -= d;
     }
 
-    return sw*E_poly;
+    energy[sh] = sw*energy[sh];
+  }
+
+  return energy;
 }
 
 //----------------------------------------------------------------------------//

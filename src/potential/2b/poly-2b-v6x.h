@@ -12,12 +12,14 @@ struct poly_2b_v6x {
     static const unsigned n_vars = 31;
     static const unsigned size = 1153;
 
-    static double eval(const double a[1153],
-                       const double x[31]);
+    static double eval(const size_t nd,
+                       const double * a,
+                       const double * x);
 
-    static double eval(const double a[1153],
-                       const double x[31],
-                             double g[31]);
+    static double eval(const size_t nd,
+                       const double * a,
+                       const double * x,
+                             double * g);
 };
 
 } // namespace x2o

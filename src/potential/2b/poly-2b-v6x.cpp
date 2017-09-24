@@ -2,21 +2,24 @@
 
 namespace x2o {
 
-double poly_2b_v6x::eval(const double a[1153],
-                         const double x[31],
-                               double g[31])
+std::vector<double> poly_2b_v6x::eval(const size_t nd,
+                                      const double * a,
+                                      const double * x,
+                                            double * g)
 {
+  std::vector<double> energy(nd,0.0);
+  for (size_t nv = 0; nv < nd; nv++) {
     double df[4138];
 
     const double t1 = a[3];
     const double t2 = a[57];
     const double t3 = a[474];
-    const double t5 = x[30];
+    const double t5 = x[nv + nd*30];
     const double t4 = t3*t5;
     const double t6 = (t2+t4)*t5;
     const double t7 = a[465];
     const double t8 = t7*t5;
-    const double t20 = x[29];
+    const double t20 = x[nv + nd*29];
     const double t9 = t3*t20;
     const double t12 = a[48];
     const double t13 = a[454];
@@ -24,12 +27,12 @@ double poly_2b_v6x::eval(const double a[1153],
     const double t15 = a[226];
     const double t16 = t15*t5;
     const double t17 = a[314];
-    const double t26 = x[28];
+    const double t26 = x[nv + nd*28];
     const double t18 = t17*t26;
     const double t21 = a[236];
     const double t23 = t13*t5;
     const double t24 = t15*t20;
-    const double t37 = x[27];
+    const double t37 = x[nv + nd*27];
     const double t25 = t17*t37;
     const double t28 = a[466];
     const double t29 = t28*t5;
@@ -38,7 +41,7 @@ double poly_2b_v6x::eval(const double a[1153],
     const double t32 = t28*t26;
     const double t33 = t28*t37;
     const double t34 = a[487];
-    const double t50 = x[26];
+    const double t50 = x[nv + nd*26];
     const double t35 = t34*t50;
     const double t38 = a[449];
     const double t39 = t38*t5;
@@ -57,16 +60,16 @@ double poly_2b_v6x::eval(const double a[1153],
     const double t57 = t54*t37;
     const double t58 = a[250];
     const double t59 = t58*t50;
-    const double t67 = x[25];
+    const double t67 = x[nv + nd*25];
     const double t60 = t58*t67;
     const double t61 = a[333];
-    const double t72 = x[24];
+    const double t72 = x[nv + nd*24];
     const double t62 = t61*t72;
     const double t63 = a[189];
-    const double t73 = x[23];
+    const double t73 = x[nv + nd*23];
     const double t64 = t63*t73;
     const double t65 = a[203];
-    const double t77 = x[22];
+    const double t77 = x[nv + nd*22];
     const double t10 = t65*t77;
     const double t68 = (t51+t53+t55+t56+t57+t59+t60+t62+t64+t10)*t77;
     const double t69 = a[5];
@@ -91,13 +94,13 @@ double poly_2b_v6x::eval(const double a[1153],
     const double t91 = a[119];
     const double t92 = t91*t77;
     const double t93 = a[361];
-    const double t126 = x[21];
+    const double t126 = x[nv + nd*21];
     const double t94 = t93*t126;
-    const double t132 = x[20];
+    const double t132 = x[nv + nd*20];
     const double t95 = t91*t132;
-    const double t136 = x[19];
+    const double t136 = x[nv + nd*19];
     const double t96 = t93*t136;
-    const double t139 = x[18];
+    const double t139 = x[nv + nd*18];
     const double t97 = t65*t139;
     const double t98 = t51+t53+t85+t86+t57+t87+t88+t89+t90+t92+t94+t95+t96+t97;
     const double t46 = t80*t5;
@@ -118,35 +121,35 @@ double poly_2b_v6x::eval(const double a[1153],
     const double t116 = t115*t72;
     const double t117 = t115*t73;
     const double t118 = a[402];
-    const double t143 = x[9];
+    const double t143 = x[nv + nd*9];
     const double t119 = t118*t143;
     const double t120 = a[219];
     const double t121 = t120*t139;
-    const double t145 = x[17];
+    const double t145 = x[nv + nd*17];
     const double t122 = t120*t145;
     const double t123 = t107+t108+t109+t110+t111+t113+t114+t116+t117+t119+t121+t122;
-    const double t146 = x[16];
+    const double t146 = x[nv + nd*16];
     const double t124 = t120*t146;
-    const double t155 = x[15];
+    const double t155 = x[nv + nd*15];
     const double t125 = t120*t155;
     const double t66 = a[479];
-    const double t179 = x[14];
+    const double t179 = x[nv + nd*14];
     const double t127 = t66*t179;
     const double t128 = a[310];
-    const double t212 = x[11];
+    const double t212 = x[nv + nd*11];
     const double t129 = t128*t212;
-    const double t215 = x[10];
+    const double t215 = x[nv + nd*10];
     const double t130 = t128*t215;
     const double t131 = a[192];
     const double t133 = a[401];
     const double t135 = a[244];
     const double t137 = a[506];
     const double t141 = a[494];
-    const double t240 = x[7];
+    const double t240 = x[nv + nd*7];
     const double t142 = t141*t240;
-    const double t254 = x[12];
-    const double t275 = x[13];
-    const double t309 = x[8];
+    const double t254 = x[nv + nd*12];
+    const double t275 = x[nv + nd*13];
+    const double t309 = x[nv + nd*8];
     const double t144 = t124+t125+t127+t129+t130+t131*t126+t133*t254+t135*t275+t137*t132+
 t131*t136+t118*t309+t142+t137*t77;
     const double t147 = a[135];
@@ -337,7 +340,7 @@ t274*t136;
     const double t340 = t336*t73;
     const double t341 = a[82];
     const double t342 = t341*t139;
-    const double t475 = x[6];
+    const double t475 = x[nv + nd*6];
     const double t343 = t325*t475+t328+t330+t331+t332+t333+t334+t335+t337+t338+t339+t340+
 t342;
     const double t344 = a[185];
@@ -2132,9 +2135,9 @@ t136+t2384*t155+t2388+t2397*t126+t2402;
     const double t2130 = t1477+t1499;
     const double t2158 = t1736+t1843;
     const double t2176 = t1942+t1944+t1945+t1946+t1947+t1949+t1950+t1952+t1953+t1955+t1975;
-    const double t2341 = x[2];
+    const double t2341 = x[nv + nd*2];
     const double t2202 = (t2227+t2403)*t2341;
-    const double t2404 = x[3];
+    const double t2404 = x[nv + nd*3];
     const double t2406 = (t1423+t1424+t1426+t1427+t1428+t1430+t1431+t1433+t1435+t2109)*t77+
 t1458*t126+t2130*t309+t2158*t2404+t1850+t1862*t132+t1877+t1884+t1896*t136+t1924
 *t146+t1930+t1941+t2176*t212+t2202;
@@ -2851,8 +2854,8 @@ t3135*t126+t3133*t132+t3135*t136+t3140+t3141+t3142+t3143+t3145+t3146*t275;
     const double t2929 = t2831+t2992;
     const double t2937 = t3014+t3016;
     const double t2944 = t3050+t3118;
-    const double t3116 = x[4];
-    const double t3120 = x[5];
+    const double t3116 = x[nv + nd*4];
+    const double t3120 = x[nv + nd*5];
     const double t3150 = t2414*t139+t2421*t155+t2838*t143+t2459*t179+t2463*t145+t2852*t215+
 t2884*t240+t2525+t2534+t2564*t254+t2929*t3116+t3003+t2937*t475+t2944*t3120+
 t3148*t275;
@@ -3764,7 +3767,7 @@ t3282+t3283+t4184*t139+t4186*t145+t3286*t146;
     const double t4002 = t3162*t50;
     const double t4019 = t3786+t3798;
     const double t4049 = t3803+t3805;
-    const double t4135 = x[1];
+    const double t4135 = x[nv + nd*1];
     const double t4073 = (t3995+t4149)*t4135;
     const double t4191 = (t3153+t3155+t3156+t3158+t3159+t3968+t3976)*t67+t3193*t275+t3982*
 t475+t3263*t136+t3288*t145+t3987*t2404+(t3719+t3720+t3722+t3723+t3724+t3726+
@@ -6518,7 +6521,7 @@ t7657*t136+t7192+t7302*t240+t7668*t254+t7241+t7672*t132+t7674*t146;
     const double t7360 = t4192+t4748+t4749*t20+t4717*t26+t4752;
     const double t7364 = t3730*t50;
     const double t7381 = t6852+t6856;
-    const double t7493 = x[0];
+    const double t7493 = x[nv + nd*0];
     const double t7387 = (t6968+t7040)*t7493;
     const double t7388 = t7043+t7044;
     const double t7391 = t7047+t7054;
@@ -13805,41 +13808,43 @@ t15170+t15200+t15228+t15257+t15290+t15322+t15346;
     const double t15373 = t15377+t15407+t15441+t15474+t15505+t15538+t15572+t15608+t15642+
 t15668+t15702+t15734+t15765+t15803+t15835+t15863;
 
-    g[0] = t6837+t7679+t7387;
-    g[1] = t7493*t6585+t4191+t4882+t4073;
-    g[2] = t7493*t7442+t2406+t3150+t4135*t4774+t2202;
-    g[3] = t5234+t5409+t7493*t7411+t5339+t4135*t3987+t2341*t2158;
-    g[4] = t6079+t6389+t7493*t7436+t6181+t2404*t5321+t4135*t4739+t2341*
+    g[nv + nd*0] = t6837+t7679+t7387;
+    g[nv + nd*1] = t7493*t6585+t4191+t4882+t4073;
+    g[nv + nd*2] = t7493*t7442+t2406+t3150+t4135*t4774+t2202;
+    g[nv + nd*3] = t5234+t5409+t7493*t7411+t5339+t4135*t3987+t2341*t2158;
+    g[nv + nd*4] = t6079+t6389+t7493*t7436+t6181+t2404*t5321+t4135*t4739+t2341*
 t2929;
-    g[5] = t5720+t6016+t7493*t7419+t3116*t6167+t5702+t2404*t5127+t4135*
+    g[nv + nd*5] = t5720+t6016+t7493*t7419+t3116*t6167+t5702+t2404*t5127+t4135*
 t4746+t2341*t2944;
-    g[6] = t8718+t8733+t8751+t8765;
-    g[7] = t8786+t8806+t8831+t8856;
-    g[8] = t15280+t15297;
-    g[9] = t15326+t15351;
-    g[10] = t9124+t9140+t9157+t9175+t9194+t9210+t9228+t9242;
-    g[11] = t9259+t9279+t9301+t9324+t9348+t9370+t9395+t9409;
-    g[12] = t9431+t9455+t9477+t9498+t9520+t9539+t9561+t9579;
-    g[13] = t9602+t9627+t9655+t9679+t9707+t9734+t9762+t9786;
-    g[14] = t9801+t9815+t9832+t9852+t9875+t9896+t9916+t9936;
-    g[15] = t15358;
-    g[16] = t15359;
-    g[17] = t15360;
-    g[18] = t15361;
-    g[19] = t15362;
-    g[20] = t15363;
-    g[21] = t15364;
-    g[22] = t15365;
-    g[23] = t15366;
-    g[24] = t15367;
-    g[25] = t15368;
-    g[26] = t15369;
-    g[27] = t15370;
-    g[28] = t15371;
-    g[29] = t15372;
-    g[30] = t15373;
+    g[nv + nd*6] = t8718+t8733+t8751+t8765;
+    g[nv + nd*7] = t8786+t8806+t8831+t8856;
+    g[nv + nd*8] = t15280+t15297;
+    g[nv + nd*9] = t15326+t15351;
+    g[nv + nd*10] = t9124+t9140+t9157+t9175+t9194+t9210+t9228+t9242;
+    g[nv + nd*11] = t9259+t9279+t9301+t9324+t9348+t9370+t9395+t9409;
+    g[nv + nd*12] = t9431+t9455+t9477+t9498+t9520+t9539+t9561+t9579;
+    g[nv + nd*13] = t9602+t9627+t9655+t9679+t9707+t9734+t9762+t9786;
+    g[nv + nd*14] = t9801+t9815+t9832+t9852+t9875+t9896+t9916+t9936;
+    g[nv + nd*15] = t15358;
+    g[nv + nd*16] = t15359;
+    g[nv + nd*17] = t15360;
+    g[nv + nd*18] = t15361;
+    g[nv + nd*19] = t15362;
+    g[nv + nd*20] = t15363;
+    g[nv + nd*21] = t15364;
+    g[nv + nd*22] = t15365;
+    g[nv + nd*23] = t15366;
+    g[nv + nd*24] = t15367;
+    g[nv + nd*25] = t15368;
+    g[nv + nd*26] = t15369;
+    g[nv + nd*27] = t15370;
+    g[nv + nd*28] = t15371;
+    g[nv + nd*29] = t15372;
+    g[nv + nd*30] = t15373;
 
-    return t4988+t7682;
+    energy[nv] = t4988+t7682;
+  }
+  return energy;
 }
 
 } // namespace x2o

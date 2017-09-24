@@ -14,10 +14,12 @@ namespace x2o {
 //----------------------------------------------------------------------------//
 
 struct x2b_v9x {
-    static double eval(const double* w1, const double* w2);
+    static std::vector<double> eval(const double* w1, 
+                                    const double* w2, const size_t nd);
 
-    static double eval(const double* w1, const double* w2,
-                             double* g1,       double* g2);
+    static std::vector<double> eval(const double* w1, const double* w2,
+                                          double* g1,       double* g2, 
+                                    const size_t nd);
 
     static const double k_HH_intra;
     static const double k_OH_intra;

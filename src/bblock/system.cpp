@@ -230,74 +230,74 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   // Dimers are ordered
   // TODO put this in chunk so can be vectorized
   // TODO Maybe initialize here all possible dimer structs?
-  for (size_t i = 0; i < dimers_.size(); i+=2) {
-    if (monomers_[dimers_[i]] == "h2o" and
-        monomers_[dimers_[i + 1]] == "h2o") {
-      x2o::x2b_v9x pot;
-      if (do_grads) {
-        double grdx[18];
-        std::fill(grdx, grdx + 18, 0.0);
-        e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
-                        xyz_.data() + 3*first_index_[dimers_[i + 1]],
-                        grdx, grdx + 9);
-        for (size_t j = 0; j < 9; j++) {
-          grd_[3*first_index_[dimers_[i]] + j] += grdx[j];
-          grd_[3*first_index_[dimers_[i + 1]] + j] += grdx[j + 9];
-        }
-      } else {
-        e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
-                        xyz_.data() + 3*first_index_[dimers_[i + 1]]);
-      }
-    }
-  }
+//  for (size_t i = 0; i < dimers_.size(); i+=2) {
+//    if (monomers_[dimers_[i]] == "h2o" and
+//        monomers_[dimers_[i + 1]] == "h2o") {
+//      x2o::x2b_v9x pot;
+//      if (do_grads) {
+//        double grdx[18];
+//        std::fill(grdx, grdx + 18, 0.0);
+//        e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
+//                        xyz_.data() + 3*first_index_[dimers_[i + 1]],
+//                        grdx, grdx + 9);
+//        for (size_t j = 0; j < 9; j++) {
+//          grd_[3*first_index_[dimers_[i]] + j] += grdx[j];
+//          grd_[3*first_index_[dimers_[i + 1]] + j] += grdx[j + 9];
+//        }
+//      } else {
+//        e2b += pot.eval(xyz_.data() + 3*first_index_[dimers_[i]],
+//                        xyz_.data() + 3*first_index_[dimers_[i + 1]]);
+//      }
+//    }
+//  }
   // Vectorizable part
   // TODO UNCOMMENT
-//  size_t nd = 0;
-//  std::vector<double> xyz1;
-//  std::vector<double> xyz2;
-//  std::string m1;
-//  std::string m2;
-//  
-//  // First dimer if it exists
-//  if (dimers_.size() > 0) {
-//    for (size_t j = 0; j < nat_[3*first_index_[dimers_[0]]]; j++)
-//      xyz1.push_back(xyz_[3*first_index_[dimers_[0]] + j]);
-//    for (size_t j = 0; j < nat_[3*first_index_[dimers_[1]]]; j++)
-//      xyz1.push_back(xyz_[3*first_index_[dimers_[1]] + j]);
-//    m1 = monomers_[3*first_index_[dimers_[0]]];
-//    m2 = monomers_[3*first_index_[dimers_[1]]];
-//    nd++;
-//  }
-//
-//  // Rest of dimers
-//  for (size_t i = 2; i < dimers_.size(); i+=2) {
-//    // If one of the monomers is different as the previous one
-//    // since dimers are also ordered, means that no more dimers of that
-//    // type exist. Thus, do calculation, update m? and clear xyz
-//    if (monomers_[3*first_index_[dimers_[i]]] != m1 ||
-//        monomers_[3*first_index_[dimers_[i + 1]]] != m2) {
-//      e2b += get_2b_energy(m1, m2, nd, xyz1, xyz2)
-//      nd = 0;
-//      xyz1.clear();
-//      xyz2.clear();
-//      m1 = monomers_[3*first_index_[dimers_[i]]];
-//      m2 = monomers_[3*first_index_[dimers_[i + 1]]];
-//    }
-//
-//    // Push the coordinates
-//    for (size_t j = 0; j < nat_[3*first_index_[dimers_[i]]]; j++)
-//      xyz1.push_back(xyz_[3*first_index_[dimers_[i]] + j]);
-//    for (size_t j = 0; j < nat_[3*first_index_[dimers_[i+1]]]; j++)
-//      xyz1.push_back(xyz_[3*first_index_[dimers_[i+1]] + j]);
-//    
-//    nd++;
-//  }
-//
-//  // Last Iteration is not done
-//  e2b += get_2b_energy(m1, m2, nd, xyz1, xyz2);
-//  nd = 0;
-//  xyz1.clear();
-//  xyz2.clear();
+  size_t nd = 0;
+  std::vector<double> xyz1;
+  std::vector<double> xyz2;
+  std::string m1;
+  std::string m2;
+  
+  // First dimer if it exists
+  if (dimers_.size() > 0) {
+    for (size_t j = 0; j < nat_[3*first_index_[dimers_[0]]]; j++)
+      xyz1.push_back(xyz_[3*first_index_[dimers_[0]] + j]);
+    for (size_t j = 0; j < nat_[3*first_index_[dimers_[1]]]; j++)
+      xyz1.push_back(xyz_[3*first_index_[dimers_[1]] + j]);
+    m1 = monomers_[3*first_index_[dimers_[0]]];
+    m2 = monomers_[3*first_index_[dimers_[1]]];
+    nd++;
+  }
+
+  // Rest of dimers
+  for (size_t i = 2; i < dimers_.size(); i+=2) {
+    // If one of the monomers is different as the previous one
+    // since dimers are also ordered, means that no more dimers of that
+    // type exist. Thus, do calculation, update m? and clear xyz
+    if (monomers_[3*first_index_[dimers_[i]]] != m1 ||
+        monomers_[3*first_index_[dimers_[i + 1]]] != m2) {
+      e2b += get_2b_energy(m1, m2, nd, xyz1, xyz2)
+      nd = 0;
+      xyz1.clear();
+      xyz2.clear();
+      m1 = monomers_[3*first_index_[dimers_[i]]];
+      m2 = monomers_[3*first_index_[dimers_[i + 1]]];
+    }
+
+    // Push the coordinates
+    for (size_t j = 0; j < nat_[3*first_index_[dimers_[i]]]; j++)
+      xyz1.push_back(xyz_[3*first_index_[dimers_[i]] + j]);
+    for (size_t j = 0; j < nat_[3*first_index_[dimers_[i+1]]]; j++)
+      xyz1.push_back(xyz_[3*first_index_[dimers_[i+1]] + j]);
+    
+    nd++;
+  }
+
+  // Last Iteration is not done
+  e2b += get_2b_energy(m1, m2, nd, xyz1, xyz2);
+  nd = 0;
+  xyz1.clear();
+  xyz2.clear();
 
   energy_ += e2b;
 
