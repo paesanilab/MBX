@@ -104,5 +104,6 @@ script:
   - ./test_004_pairs.sh
   - ./test_005_energy_1w.sh
   - ./test_006_energy_2w.sh
+  - ./test_007_energy_3w.sh
 # END MRR
 
