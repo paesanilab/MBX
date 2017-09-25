@@ -284,10 +284,16 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
         monomers_[dimers_[i + 1]] != m2) {
       if (do_grads) {
         e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
-        for (size_t j = 0; j < 3*nat_[dimers_[i]]; j++) 
-          grd_[3*first_index_[dimers_[i]] + j] += grd1[j];
-        for (size_t j = 0; j < 3*nat_[dimers_[i+1]]; j++)
-          grd_[3*first_index_[dimers_[i + 1]] + j] += grd2[j];
+        for (size_t k = 0; k < nd ; k++) {
+          for (size_t j = 0; j < 3*nat_[dimers_[i - 2*k]]; j++) {
+            grd_[3*first_index_[dimers_[i - 2*k]] + j] 
+                += grd1[(nd - k - 1)*3*nat_[dimers_[i - 2*k]] + j];
+          }
+          for (size_t j = 0; j < 3*nat_[dimers_[i- 2*k +1]]; j++) {
+            grd_[3*first_index_[dimers_[i -2*k + 1]] + j] 
+                += grd2[(nd - k - 1)*3*nat_[dimers_[i - 2*k + 1]] + j];
+          }
+        }
       } else {
         e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
       }
@@ -301,12 +307,12 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
     }
 
     // Push the coordinates
-    for (size_t j = 0; j < 3*nat_[dimers_[0]]; j++) {
-      xyz1.push_back(xyz_[3*first_index_[dimers_[0]] + j]);
+    for (size_t j = 0; j < 3*nat_[dimers_[i]]; j++) {
+      xyz1.push_back(xyz_[3*first_index_[dimers_[i]] + j]);
       grd1.push_back(0.0);
     }
-    for (size_t j = 0; j < 3*nat_[dimers_[1]]; j++) {
-      xyz2.push_back(xyz_[3*first_index_[dimers_[1]] + j]);
+    for (size_t j = 0; j < 3*nat_[dimers_[i+1]]; j++) {
+      xyz2.push_back(xyz_[3*first_index_[dimers_[i+1]] + j]);
       grd2.push_back(0.0);
     }
     
@@ -317,10 +323,18 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   if (dimers_.size() > 0) {
     if (do_grads) {
       e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
-      for (size_t j = 0; j < 3*nat_[dimers_[dimers_.size() -2]]; j++) 
-        grd_[3*first_index_[dimers_[dimers_.size() -2]] + j] += grd1[j];
-      for (size_t j = 0; j < 3*nat_[dimers_[dimers_.size()-1]]; j++)
-        grd_[3*first_index_[dimers_[dimers_.size()-1]] + j] += grd2[j];
+      for (size_t k = 0; k < nd ; k++) {
+        for (size_t j = 0; j < 3*nat_[dimers_[dimers_.size()-2*k-2]]; j++) {
+          grd_[3*first_index_[dimers_[dimers_.size()-2*k-2]]+j] 
+              += grd1[(nd - k - 1)*3*nat_[dimers_[dimers_.size()
+                 - 2*k - 2]] + j];
+        }
+        for (size_t j = 0; j < 3*nat_[dimers_[dimers_.size()-2*k-1]]; j++) {
+          grd_[3*first_index_[dimers_[dimers_.size()-2*k-1]]+j] 
+              += grd2[(nd - k - 1)*3*nat_[dimers_[dimers_.size() 
+                 - 2*k - 1]] + j];
+        }
+      }
     } else {
       e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
     }
