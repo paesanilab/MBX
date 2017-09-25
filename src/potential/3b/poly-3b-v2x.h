@@ -17,6 +17,12 @@ struct poly_3b_v2x {
     static double eval(const double a[1163],
                        const double x[36],
                              double g[36]);
+
+    static void poly1(const double a[1163],
+                       const double x[36], double t[]);
+
+    static void poly2(const double a[1163],
+                       const double x[36], double t[]);
 };
 
 } // namespace x2o
