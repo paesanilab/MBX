@@ -255,17 +255,23 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   size_t nd = 0;
   std::vector<double> xyz1;
   std::vector<double> xyz2;
+  std::vector<double> grd1;
+  std::vector<double> grd2;
   std::string m1;
   std::string m2;
   
   // First dimer if it exists
   if (dimers_.size() > 0) {
-    for (size_t j = 0; j < nat_[3*first_index_[dimers_[0]]]; j++)
+    for (size_t j = 0; j < 3*nat_[dimers_[0]]; j++) {
       xyz1.push_back(xyz_[3*first_index_[dimers_[0]] + j]);
-    for (size_t j = 0; j < nat_[3*first_index_[dimers_[1]]]; j++)
-      xyz1.push_back(xyz_[3*first_index_[dimers_[1]] + j]);
-    m1 = monomers_[3*first_index_[dimers_[0]]];
-    m2 = monomers_[3*first_index_[dimers_[1]]];
+      grd1.push_back(0.0);
+    }
+    for (size_t j = 0; j < 3*nat_[dimers_[1]]; j++) {
+      xyz2.push_back(xyz_[3*first_index_[dimers_[1]] + j]);
+      grd2.push_back(0.0);
+    }
+    m1 = monomers_[dimers_[0]];
+    m2 = monomers_[dimers_[1]];
     nd++;
   }
 
@@ -274,30 +280,55 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
     // If one of the monomers is different as the previous one
     // since dimers are also ordered, means that no more dimers of that
     // type exist. Thus, do calculation, update m? and clear xyz
-    if (monomers_[3*first_index_[dimers_[i]]] != m1 ||
-        monomers_[3*first_index_[dimers_[i + 1]]] != m2) {
-      e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
+    if (monomers_[dimers_[i]] != m1 ||
+        monomers_[dimers_[i + 1]] != m2) {
+      if (do_grads) {
+        e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+        for (size_t j = 0; j < 3*nat_[dimers_[i]]; j++) 
+          grd_[3*first_index_[dimers_[i]] + j] += grd1[j];
+        for (size_t j = 0; j < 3*nat_[dimers_[i+1]]; j++)
+          grd_[3*first_index_[dimers_[i + 1]] + j] += grd2[j];
+      } else {
+        e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
+      }
       nd = 0;
       xyz1.clear();
       xyz2.clear();
-      m1 = monomers_[3*first_index_[dimers_[i]]];
-      m2 = monomers_[3*first_index_[dimers_[i + 1]]];
+      grd1.clear();
+      grd2.clear();
+      m1 = monomers_[dimers_[i]];
+      m2 = monomers_[dimers_[i + 1]];
     }
 
     // Push the coordinates
-    for (size_t j = 0; j < nat_[3*first_index_[dimers_[i]]]; j++)
-      xyz1.push_back(xyz_[3*first_index_[dimers_[i]] + j]);
-    for (size_t j = 0; j < nat_[3*first_index_[dimers_[i+1]]]; j++)
-      xyz1.push_back(xyz_[3*first_index_[dimers_[i+1]] + j]);
+    for (size_t j = 0; j < 3*nat_[dimers_[0]]; j++) {
+      xyz1.push_back(xyz_[3*first_index_[dimers_[0]] + j]);
+      grd1.push_back(0.0);
+    }
+    for (size_t j = 0; j < 3*nat_[dimers_[1]]; j++) {
+      xyz2.push_back(xyz_[3*first_index_[dimers_[1]] + j]);
+      grd2.push_back(0.0);
+    }
     
     nd++;
   }
 
   // Last Iteration is not done
-  e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
-  nd = 0;
-  xyz1.clear();
-  xyz2.clear();
+  if (dimers_.size() > 0) {
+    if (do_grads) {
+      e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+      for (size_t j = 0; j < 3*nat_[dimers_[dimers_.size() -2]]; j++) 
+        grd_[3*first_index_[dimers_[dimers_.size() -2]] + j] += grd1[j];
+      for (size_t j = 0; j < 3*nat_[dimers_[dimers_.size()-1]]; j++)
+        grd_[3*first_index_[dimers_[dimers_.size()-1]] + j] += grd2[j];
+    } else {
+      e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
+    }
+    xyz1.clear();
+    xyz2.clear();
+    grd1.clear();
+    grd2.clear();
+  }
 
   energy_ += e2b;
 

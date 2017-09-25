@@ -1470,7 +1470,7 @@ double x2b_v9x::eval(const double* w1,
     v[30] = ctxt[30].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb2);
 
     for (size_t j = 0; j < 31; j++) {
-      vv[j*31 + i] = v[j];
+      vv[j*dimers_todo.size() + i] = v[j];
     }
   }
 
@@ -1567,53 +1567,52 @@ double x2b_v9x::eval(const double* w1, const double* w2,
     double v[31]; // stored separately (gets passed to poly::eval)
 
 
-    v[0] = ctxt[i*ndtd+0].v_exp(d0_intra, k_HH_intra, xcrd, Ha1, Ha2);
-    v[1] = ctxt[i*ndtd+1].v_exp(d0_intra, k_HH_intra, xcrd, Hb1, Hb2);
+    v[0] = ctxt[i*31+0].v_exp(d0_intra, k_HH_intra, xcrd, Ha1, Ha2);
+    v[1] = ctxt[i*31+1].v_exp(d0_intra, k_HH_intra, xcrd, Hb1, Hb2);
 
-    v[2] = ctxt[i*ndtd+2].v_exp(d0_intra, k_OH_intra, xcrd, Oa, Ha1);
-    v[3] = ctxt[i*ndtd+3].v_exp(d0_intra, k_OH_intra, xcrd, Oa, Ha2);
-    v[4] = ctxt[i*ndtd+4].v_exp(d0_intra, k_OH_intra, xcrd, Ob, Hb1);
-    v[5] = ctxt[i*ndtd+5].v_exp(d0_intra, k_OH_intra, xcrd, Ob, Hb2);
+    v[2] = ctxt[i*31+2].v_exp(d0_intra, k_OH_intra, xcrd, Oa, Ha1);
+    v[3] = ctxt[i*31+3].v_exp(d0_intra, k_OH_intra, xcrd, Oa, Ha2);
+    v[4] = ctxt[i*31+4].v_exp(d0_intra, k_OH_intra, xcrd, Ob, Hb1);
+    v[5] = ctxt[i*31+5].v_exp(d0_intra, k_OH_intra, xcrd, Ob, Hb2);
 
-    v[6] = ctxt[i*ndtd+6].v_coul(d0_inter, k_HH_coul, xcrd, Ha1, Hb1);
-    v[7] = ctxt[i*ndtd+7].v_coul(d0_inter, k_HH_coul, xcrd, Ha1, Hb2);
-    v[8] = ctxt[i*ndtd+8].v_coul(d0_inter, k_HH_coul, xcrd, Ha2, Hb1);
-    v[9] = ctxt[i*ndtd+9].v_coul(d0_inter, k_HH_coul, xcrd, Ha2, Hb2);
+    v[6] = ctxt[i*31+6].v_coul(d0_inter, k_HH_coul, xcrd, Ha1, Hb1);
+    v[7] = ctxt[i*31+7].v_coul(d0_inter, k_HH_coul, xcrd, Ha1, Hb2);
+    v[8] = ctxt[i*31+8].v_coul(d0_inter, k_HH_coul, xcrd, Ha2, Hb1);
+    v[9] = ctxt[i*31+9].v_coul(d0_inter, k_HH_coul, xcrd, Ha2, Hb2);
 
-    v[10] = ctxt[i*ndtd+10].v_coul(d0_inter, k_OH_coul, xcrd, Oa, Hb1);
-    v[11] = ctxt[i*ndtd+11].v_coul(d0_inter, k_OH_coul, xcrd, Oa, Hb2);
-    v[12] = ctxt[i*ndtd+12].v_coul(d0_inter, k_OH_coul, xcrd, Ob, Ha1);
-    v[13] = ctxt[i*ndtd+13].v_coul(d0_inter, k_OH_coul, xcrd, Ob, Ha2);
+    v[10] = ctxt[i*31+10].v_coul(d0_inter, k_OH_coul, xcrd, Oa, Hb1);
+    v[11] = ctxt[i*31+11].v_coul(d0_inter, k_OH_coul, xcrd, Oa, Hb2);
+    v[12] = ctxt[i*31+12].v_coul(d0_inter, k_OH_coul, xcrd, Ob, Ha1);
+    v[13] = ctxt[i*31+13].v_coul(d0_inter, k_OH_coul, xcrd, Ob, Ha2);
 
-    v[14] = ctxt[i*ndtd+14].v_coul(d0_inter, k_OO_coul, xcrd, Oa, Ob);
+    v[14] = ctxt[i*31+14].v_coul(d0_inter, k_OO_coul, xcrd, Oa, Ob);
 
-    v[15] = ctxt[i*ndtd+15].v_exp(d0_inter, k_XH_main, xcrd, Xa1, Hb1);
-    v[16] = ctxt[i*ndtd+16].v_exp(d0_inter, k_XH_main, xcrd, Xa1, Hb2);
-    v[17] = ctxt[i*ndtd+17].v_exp(d0_inter, k_XH_main, xcrd, Xa2, Hb1);
-    v[18] = ctxt[i*ndtd+18].v_exp(d0_inter, k_XH_main, xcrd, Xa2, Hb2);
-    v[19] = ctxt[i*ndtd+19].v_exp(d0_inter, k_XH_main, xcrd, Xb1, Ha1);
-    v[20] = ctxt[i*ndtd+20].v_exp(d0_inter, k_XH_main, xcrd, Xb1, Ha2);
-    v[21] = ctxt[i*ndtd+21].v_exp(d0_inter, k_XH_main, xcrd, Xb2, Ha1);
-    v[22] = ctxt[i*ndtd+22].v_exp(d0_inter, k_XH_main, xcrd, Xb2, Ha2);
+    v[15] = ctxt[i*31+15].v_exp(d0_inter, k_XH_main, xcrd, Xa1, Hb1);
+    v[16] = ctxt[i*31+16].v_exp(d0_inter, k_XH_main, xcrd, Xa1, Hb2);
+    v[17] = ctxt[i*31+17].v_exp(d0_inter, k_XH_main, xcrd, Xa2, Hb1);
+    v[18] = ctxt[i*31+18].v_exp(d0_inter, k_XH_main, xcrd, Xa2, Hb2);
+    v[19] = ctxt[i*31+19].v_exp(d0_inter, k_XH_main, xcrd, Xb1, Ha1);
+    v[20] = ctxt[i*31+20].v_exp(d0_inter, k_XH_main, xcrd, Xb1, Ha2);
+    v[21] = ctxt[i*31+21].v_exp(d0_inter, k_XH_main, xcrd, Xb2, Ha1);
+    v[22] = ctxt[i*31+22].v_exp(d0_inter, k_XH_main, xcrd, Xb2, Ha2);
 
-    v[23] = ctxt[i*ndtd+23].v_exp(d0_inter, k_XO_main, xcrd, Oa, Xb1);
-    v[24] = ctxt[i*ndtd+24].v_exp(d0_inter, k_XO_main, xcrd, Oa, Xb2);
-    v[25] = ctxt[i*ndtd+25].v_exp(d0_inter, k_XO_main, xcrd, Ob, Xa1);
-    v[26] = ctxt[i*ndtd+26].v_exp(d0_inter, k_XO_main, xcrd, Ob, Xa2);
+    v[23] = ctxt[i*31+23].v_exp(d0_inter, k_XO_main, xcrd, Oa, Xb1);
+    v[24] = ctxt[i*31+24].v_exp(d0_inter, k_XO_main, xcrd, Oa, Xb2);
+    v[25] = ctxt[i*31+25].v_exp(d0_inter, k_XO_main, xcrd, Ob, Xa1);
+    v[26] = ctxt[i*31+26].v_exp(d0_inter, k_XO_main, xcrd, Ob, Xa2);
 
-    v[27] = ctxt[i*ndtd+27].v_exp(d0_inter, k_XX_main, xcrd, Xa1, Xb1);
-    v[28] = ctxt[i*ndtd+28].v_exp(d0_inter, k_XX_main, xcrd, Xa1, Xb2);
-    v[29] = ctxt[i*ndtd+29].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb1);
-    v[30] = ctxt[i*ndtd+30].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb2);
+    v[27] = ctxt[i*31+27].v_exp(d0_inter, k_XX_main, xcrd, Xa1, Xb1);
+    v[28] = ctxt[i*31+28].v_exp(d0_inter, k_XX_main, xcrd, Xa1, Xb2);
+    v[29] = ctxt[i*31+29].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb1);
+    v[30] = ctxt[i*31+30].v_exp(d0_inter, k_XX_main, xcrd, Xa2, Xb2);
     
     for (size_t j = 0; j < 31; j++) {
-      vv[j*30 + i] = v[j];
+      vv[j*ndtd + i] = v[j];
     }
   }
 
   double e = 0.0;
-  std::vector<double> e2b = 
-                  poly_2b_v6x::eval(dimers_todo.size(), thefit, vv, gg);
+  std::vector<double> e2b = poly_2b_v6x::eval(ndtd, thefit, vv, gg);
 
   for (size_t i = 0; i < ndtd; i++) {
     // offsets 
@@ -1637,44 +1636,44 @@ double x2b_v9x::eval(const double* w1, const double* w2,
     double xgrd[30];
     std::fill(xgrd, xgrd + 30, 0.0);
 
-    ctxt[i*ndtd+0].grads(gg[0*ndtd + i], xgrd, Ha1, Ha2);
-    ctxt[i*ndtd+1].grads(gg[1*ndtd + i], xgrd, Hb1, Hb2);
+    ctxt[i*31+0].grads(gg[0*ndtd + i], xgrd, Ha1, Ha2);
+    ctxt[i*31+1].grads(gg[1*ndtd + i], xgrd, Hb1, Hb2);
 
-    ctxt[i*ndtd+2].grads(gg[2*ndtd + i], xgrd, Oa, Ha1);
-    ctxt[i*ndtd+3].grads(gg[3*ndtd + i], xgrd, Oa, Ha2);
-    ctxt[i*ndtd+4].grads(gg[4*ndtd + i], xgrd, Ob, Hb1);
-    ctxt[i*ndtd+5].grads(gg[5*ndtd + i], xgrd, Ob, Hb2);
+    ctxt[i*31+2].grads(gg[2*ndtd + i], xgrd, Oa, Ha1);
+    ctxt[i*31+3].grads(gg[3*ndtd + i], xgrd, Oa, Ha2);
+    ctxt[i*31+4].grads(gg[4*ndtd + i], xgrd, Ob, Hb1);
+    ctxt[i*31+5].grads(gg[5*ndtd + i], xgrd, Ob, Hb2);
 
-    ctxt[i*ndtd+6].grads(gg[6*ndtd + i], xgrd, Ha1, Hb1);
-    ctxt[i*ndtd+7].grads(gg[7*ndtd + i], xgrd, Ha1, Hb2);
-    ctxt[i*ndtd+8].grads(gg[8*ndtd + i], xgrd, Ha2, Hb1);
-    ctxt[i*ndtd+9].grads(gg[9*ndtd + i], xgrd, Ha2, Hb2);
+    ctxt[i*31+6].grads(gg[6*ndtd + i], xgrd, Ha1, Hb1);
+    ctxt[i*31+7].grads(gg[7*ndtd + i], xgrd, Ha1, Hb2);
+    ctxt[i*31+8].grads(gg[8*ndtd + i], xgrd, Ha2, Hb1);
+    ctxt[i*31+9].grads(gg[9*ndtd + i], xgrd, Ha2, Hb2);
 
-    ctxt[i*ndtd+10].grads(gg[10*ndtd + i], xgrd, Oa, Hb1);
-    ctxt[i*ndtd+11].grads(gg[11*ndtd + i], xgrd, Oa, Hb2);
-    ctxt[i*ndtd+12].grads(gg[12*ndtd + i], xgrd, Ob, Ha1);
-    ctxt[i*ndtd+13].grads(gg[13*ndtd + i], xgrd, Ob, Ha2);
+    ctxt[i*31+10].grads(gg[10*ndtd + i], xgrd, Oa, Hb1);
+    ctxt[i*31+11].grads(gg[11*ndtd + i], xgrd, Oa, Hb2);
+    ctxt[i*31+12].grads(gg[12*ndtd + i], xgrd, Ob, Ha1);
+    ctxt[i*31+13].grads(gg[13*ndtd + i], xgrd, Ob, Ha2);
 
-    ctxt[i*ndtd+14].grads(gg[14*ndtd + i], xgrd, Oa, Ob);
+    ctxt[i*31+14].grads(gg[14*ndtd + i], xgrd, Oa, Ob);
 
-    ctxt[i*ndtd+15].grads(gg[15*ndtd + i], xgrd, Xa1, Hb1);
-    ctxt[i*ndtd+16].grads(gg[16*ndtd + i], xgrd, Xa1, Hb2);
-    ctxt[i*ndtd+17].grads(gg[17*ndtd + i], xgrd, Xa2, Hb1);
-    ctxt[i*ndtd+18].grads(gg[18*ndtd + i], xgrd, Xa2, Hb2);
-    ctxt[i*ndtd+19].grads(gg[19*ndtd + i], xgrd, Xb1, Ha1);
-    ctxt[i*ndtd+20].grads(gg[20*ndtd + i], xgrd, Xb1, Ha2);
-    ctxt[i*ndtd+21].grads(gg[21*ndtd + i], xgrd, Xb2, Ha1);
-    ctxt[i*ndtd+22].grads(gg[22*ndtd + i], xgrd, Xb2, Ha2);
+    ctxt[i*31+15].grads(gg[15*ndtd + i], xgrd, Xa1, Hb1);
+    ctxt[i*31+16].grads(gg[16*ndtd + i], xgrd, Xa1, Hb2);
+    ctxt[i*31+17].grads(gg[17*ndtd + i], xgrd, Xa2, Hb1);
+    ctxt[i*31+18].grads(gg[18*ndtd + i], xgrd, Xa2, Hb2);
+    ctxt[i*31+19].grads(gg[19*ndtd + i], xgrd, Xb1, Ha1);
+    ctxt[i*31+20].grads(gg[20*ndtd + i], xgrd, Xb1, Ha2);
+    ctxt[i*31+21].grads(gg[21*ndtd + i], xgrd, Xb2, Ha1);
+    ctxt[i*31+22].grads(gg[22*ndtd + i], xgrd, Xb2, Ha2);
 
-    ctxt[i*ndtd+23].grads(gg[23*ndtd + i], xgrd, Oa, Xb1);
-    ctxt[i*ndtd+24].grads(gg[24*ndtd + i], xgrd, Oa, Xb2);
-    ctxt[i*ndtd+25].grads(gg[25*ndtd + i], xgrd, Ob, Xa1);
-    ctxt[i*ndtd+26].grads(gg[26*ndtd + i], xgrd, Ob, Xa2);
+    ctxt[i*31+23].grads(gg[23*ndtd + i], xgrd, Oa, Xb1);
+    ctxt[i*31+24].grads(gg[24*ndtd + i], xgrd, Oa, Xb2);
+    ctxt[i*31+25].grads(gg[25*ndtd + i], xgrd, Ob, Xa1);
+    ctxt[i*31+26].grads(gg[26*ndtd + i], xgrd, Ob, Xa2);
 
-    ctxt[i*ndtd+27].grads(gg[27*ndtd + i], xgrd, Xa1, Xb1);
-    ctxt[i*ndtd+28].grads(gg[28*ndtd + i], xgrd, Xa1, Xb2);
-    ctxt[i*ndtd+29].grads(gg[29*ndtd + i], xgrd, Xa2, Xb1);
-    ctxt[i*ndtd+30].grads(gg[30*ndtd + i], xgrd, Xa2, Xb2);
+    ctxt[i*31+27].grads(gg[27*ndtd + i], xgrd, Xa1, Xb1);
+    ctxt[i*31+28].grads(gg[28*ndtd + i], xgrd, Xa1, Xb2);
+    ctxt[i*31+29].grads(gg[29*ndtd + i], xgrd, Xa2, Xb1);
+    ctxt[i*31+30].grads(gg[30*ndtd + i], xgrd, Xa2, Xb2);
 
     // distribute gradients w.r.t. the X-points
 
@@ -1701,11 +1700,11 @@ double x2b_v9x::eval(const double* w1, const double* w2,
     gsw *= e2b[i]/rOO[sh];
     for (int j = 0; j < 3; ++j) {
         const double d = gsw*dOO[3*sh + j];
-        g1[i + sh9] += d;
-        g2[i + sh9] -= d;
+        g1[j + sh9] += d;
+        g2[j + sh9] -= d;
     }
 
-    e += sw*energy[sh];
+    e += sw*e2b[i];
   }
 
   return e;
