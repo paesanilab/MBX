@@ -77,7 +77,7 @@ int main(int argc, char** argv)
               << std::endl;
     for (size_t j = 0; j < n_sites; j++) {
       if (atn[j] == "virt") continue;
-      std::cout << std::setprecision(10) << std::scientific
+      std::cout << std::setprecision(5) << std::scientific
                 << std::setw(6) << std::left << atn[j]
                 << std::setw(20) << std::right << grd[3*j]
                 << std::setw(20) << std::right << grd[3*j + 1]
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
       const double gfd = (8*(Ep - Em) - (Epp - Emm))/(12*eps);
       xyz[j] = x_orig;
       systems[i].SetSysXyz(xyz);
-      std::cout << std::setprecision(4) << std::scientific
+      std::cout << std::setprecision(5) << std::scientific
                 << std::setw(6) << std::left << atn[j/3]
                 << std::setw(20) << std::right << grd[j]
                 << std::setw(20) << std::right << gfd
