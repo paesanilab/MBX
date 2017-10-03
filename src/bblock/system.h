@@ -20,6 +20,8 @@
 // 3B
 #include "potential/3b/x3b-v2x.h"
 #include "potential/3b/poly-3b-v2x.h"
+// DISPERSION
+#include "potential/dispersion/dispersion2b.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////

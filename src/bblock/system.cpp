@@ -253,6 +253,7 @@ double System::Get2B(bool do_grads) {
 
   // 2B ENERGY
   double e2b = 0;
+  double edisp = 0.0;
 
   // Vectorizable part
   size_t nd = 0;
@@ -287,7 +288,11 @@ double System::Get2B(bool do_grads) {
         monomers_[dimers_[i + 1]] != m2 ||
         i == dimers_.size() - 2) {
       if (do_grads) {
+        // POLYNOMIALS
         e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+        // DISPERSION
+        edisp += disp::GetDispersion(m1, m2, nd, do_grads,
+                                   xyz1, xyz2, grd1, grd2);
         for (size_t k = 0; k < nd ; k++) {
           for (size_t j = 0; j < 3*nat_[dimers_[i - 2*k]]; j++) {
             grd_[3*first_index_[dimers_[i - 2*k]] + j]
@@ -299,7 +304,11 @@ double System::Get2B(bool do_grads) {
           }
         }
       } else {
+        // POLYNOMIALS
         e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
+        // DISPERSION
+        edisp += disp::GetDispersion(m1, m2, nd, do_grads,
+                                   xyz1, xyz2, grd1, grd2);
       }
       nd = 0;
       xyz1.clear();
@@ -312,8 +321,9 @@ double System::Get2B(bool do_grads) {
     }
     i+=2;
   } 
+  //std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
 
-  return e2b;
+  return e2b + edisp;
 }
 
 double System::Get3B(bool do_grads) {
