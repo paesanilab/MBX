@@ -9,9 +9,7 @@
 
 namespace disp {
 
-double GetDispersion(std::string m1, std::string m2, size_t nm,
-                     std::vector<double> xyz1, std::vector<double> xyz2);
-double GetDispersion(std::string m1, std::string m2,size_t nm, 
+double GetDispersion(std::string m1, std::string m2,size_t nm, bool do_grads, 
                      std::vector<double> xyz1, std::vector<double> xyz2,
                      std::vector<double> &grd1, std::vector<double> &grd2);
 

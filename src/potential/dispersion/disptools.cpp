@@ -206,6 +206,7 @@ namespace disp {
     size_t n2 = 2*n;
     double disp = 0.0;
     double g1[3*n], g2[3*n];
+    #pragma simd
     for (size_t nv = 0; nv < n; nv++) {
       const double dx = p1[nv] - p2[nv];
       const double dy = p1[nv + n] - p2[nv + n];
