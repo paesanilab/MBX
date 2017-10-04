@@ -129,7 +129,7 @@ namespace disp {
     // Main loop
     size_t n2 = 2*n;
     double disp = 0.0;
-    #pragma simd
+//    #pragma simd
     for (size_t nv = 0; nv < n; nv++) {
       const double dx = p1[nv] - p2[nv];
       const double dy = p1[nv + n] - p2[nv + n];
@@ -208,7 +208,7 @@ namespace disp {
     double g1[3*n], g2[3*n];
     std::fill(g1, g1 + 3*n, 0.0);
     std::fill(g2, g2 + 3*n, 0.0);
-    #pragma simd
+//    #pragma simd
     for (size_t nv = 0; nv < n; nv++) {
       const double dx = p1[nv] - p2[nv];
       const double dy = p1[nv + n] - p2[nv + n];
