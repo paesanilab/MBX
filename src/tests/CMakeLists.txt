@@ -2,8 +2,9 @@ add_executable(combinations-test combinations-test.cpp)
 add_executable(energy_wograd-test energy_wograd-test.cpp)
 add_executable(energy_wgrad-test energy_wgrad-test.cpp)
 add_executable(io-test io-test.cpp)
+add_executable(timing timing.cpp)
 
-foreach(t combinations-test energy_wograd-test energy_wgrad-test io-test)
+foreach(t combinations-test energy_wograd-test energy_wgrad-test io-test timing)
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR}/../external/kdtree)
 
