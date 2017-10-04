@@ -70,17 +70,29 @@ int main(int argc, char** argv)
     
     auto t5 = std::chrono::high_resolution_clock::now();
     dummy = systems[i].Get1B(false);
+
     auto t6 = std::chrono::high_resolution_clock::now();
     dummy = systems[i].Get1B(true);
+
     auto t7 = std::chrono::high_resolution_clock::now();
     dummy = systems[i].Get2B(false);
+
     auto t8 = std::chrono::high_resolution_clock::now();
     dummy = systems[i].Get2B(true);
+
     auto t9 = std::chrono::high_resolution_clock::now();
     dummy = systems[i].Get3B(false);
+
     auto t10 = std::chrono::high_resolution_clock::now();
     dummy = systems[i].Get3B(true);
+
     auto t11 = std::chrono::high_resolution_clock::now();
+    systems[i].AddClusters(2,15.0);
+
+    auto t12 = std::chrono::high_resolution_clock::now();
+    systems[i].AddClusters(3,5.0);
+
+    auto t13 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Energy:(nograd) "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
@@ -105,6 +117,12 @@ int main(int argc, char** argv)
       << " milliseconds\n";
     std::cout << "3B:(grad) "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t11 - t10).count()
+      << " milliseconds\n";
+    std::cout << "Get and set 2b clusters: "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count()
+      << " milliseconds\n";
+    std::cout << "Get and set 3b clusters: "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t13 - t12).count()
       << " milliseconds\n";
     
   }
