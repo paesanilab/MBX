@@ -48,12 +48,14 @@ void System::AddMolecule(std::vector<size_t> molec) {
 void System::Initialize() {
   if (initialized_) return;
 
-  cutoff_ = 100.0;
+  cutoff2b_ = 15.0;
+  cutoff3b_ =  5.0;
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
   nmon_ = monomers_.size();
-  AddClusters(3);
+  AddClusters(3, cutoff3b_);
+  AddClusters(2, cutoff2b_);
   // TODO Here should go the order and rearrengement stuff
 }
 
@@ -98,7 +100,7 @@ void System::AddMonomerInfo() {
 
 }
 
-void System::AddClusters(size_t n_max) {
+void System::AddClusters(size_t n_max, double cutoff) {
   // Obtain xyz vector with the positions of first atom of each monomer
   std::vector<double> xyz;
   for (size_t i = 0; i < monomers_.size(); i++) {
@@ -120,7 +122,8 @@ void System::AddClusters(size_t n_max) {
 
   // Perform a radial search within the cutoff
   dimers_.clear();
-  trimers_.clear();
+  if (n_max > 2) 
+    trimers_.clear();
   for (size_t i = 0; i < monomers_.size(); i++) {
     // Define the query point
     double point[3];
@@ -132,7 +135,7 @@ void System::AddClusters(size_t n_max) {
     std::vector<std::pair<size_t, double>> ret_matches;
     nanoflann::SearchParams params;
     const size_t nMatches = index.radiusSearch(point,
-      cutoff_ * cutoff_, ret_matches, params);
+      cutoff * cutoff, ret_matches, params);
 
     // Add the pairs that are not in the dimer vector
     for (size_t j = 0; j < nMatches; j++) {
@@ -152,7 +155,7 @@ void System::AddClusters(size_t n_max) {
           std::vector<std::pair<size_t, double>> ret_matches2;
           nanoflann::SearchParams params2;
           const size_t nMatches2 = index.radiusSearch(point2,
-            cutoff_ * cutoff_, ret_matches2, params2);
+            cutoff * cutoff, ret_matches2, params2);
  
           // Add the trimers that fulfil i > j > k, to avoid double counting
           // We will add all trimers that fulfill the condition:

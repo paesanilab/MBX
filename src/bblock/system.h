@@ -55,7 +55,7 @@ class System {
   void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
-  void AddClusters(size_t nmax);
+  void AddClusters(size_t nmax, double cutoff);
 //  void SetNumMol(size_t n);
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
@@ -70,7 +70,8 @@ class System {
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers
   size_t nsites_;                            // Number of sites in sys
-  double cutoff_;                            // Cutoff for dim and trim search 
+  double cutoff2b_;                          // Cutoff for dim and trim search 
+  double cutoff3b_;                          // Cutoff for dim and trim search 
   double energy_;                            // Energy of the system
   bool initialized_;                         // Systes is initialized?
   std::vector<size_t> sites_;                // Number of sites of each mo
