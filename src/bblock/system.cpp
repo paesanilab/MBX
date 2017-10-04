@@ -48,7 +48,7 @@ void System::AddMolecule(std::vector<size_t> molec) {
 void System::Initialize() {
   if (initialized_) return;
 
-  cutoff_ = 10.0;
+  cutoff_ = 100.0;
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
@@ -286,7 +286,8 @@ double System::Get2B(bool do_grads) {
     // type exist. Thus, do calculation, update m? and clear xyz
     if (monomers_[dimers_[i]] != m1 ||
         monomers_[dimers_[i + 1]] != m2 ||
-        i == dimers_.size() - 2) {
+        i == dimers_.size() - 2 || nd == 1024) {
+      //std::cerr << "i = " << i << " / " << dimers_.size() - 1 << std::endl;
       if (do_grads) {
         // POLYNOMIALS
         e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
@@ -323,6 +324,7 @@ double System::Get2B(bool do_grads) {
   } 
   //std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
 
+  //std::cerr << "dimers done: " << e2b + edisp << std::endl;
   return e2b + edisp;
 }
 
@@ -355,6 +357,7 @@ double System::Get3B(bool do_grads) {
                         xyz_.data() + 3*first_index_[trimers_[i + 2]]);
       }
     }
+    //if ((i +3)%3072 == 0 ) std::cerr << i << " / " << trimers_.size() << std::endl;
   }
 
   return e3b;
