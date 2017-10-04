@@ -8,7 +8,6 @@ std::vector<double> poly_2b_v6x::eval(const size_t nd, const double * a,
                          const double * x)
 {
   std::vector<double> energy(nd,0.0);
-#pragma vector always
   for (size_t nv = 0; nv < nd; nv++) {
     const double t1 = a[510];
     const double t20 = x[nv + nd*30];
