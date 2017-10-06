@@ -480,9 +480,9 @@ const double c2 = 0.0892e0;
 static bool c5z_ready = false;
 static double c5z[245];
 
-#ifdef _OPENMP
-#  pragma omp threadprivate(c5z_ready,c5z)
-#endif
+//#ifdef _OPENMP
+//#  pragma omp threadprivate(c5z_ready,c5z)
+//#endif
 
 } // namespace
 
