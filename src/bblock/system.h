@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <algorithm>
 
 // Tools
 #include "nanoflann.hpp"
@@ -38,6 +39,7 @@ class System {
   System();
   ~System();
   // Getters
+  size_t GetNumMon();
   size_t GetNumMol();
   size_t GetNumSites();
   size_t GetMonNat(size_t n);
@@ -55,7 +57,7 @@ class System {
   void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
-  void AddClusters(size_t nmax, double cutoff);
+  void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
 //  void SetNumMol(size_t n);
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
@@ -70,6 +72,8 @@ class System {
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers
   size_t nsites_;                            // Number of sites in sys
+  size_t maxNDimEval_;                       // Max number of dimers to be eval
+  size_t maxNTriEval_;                       // Max number of trimers to be eval
   double cutoff2b_;                          // Cutoff for dim and trim search 
   double cutoff3b_;                          // Cutoff for dim and trim search 
   double energy_;                            // Energy of the system

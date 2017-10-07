@@ -48,6 +48,7 @@ int main(int argc, char** argv)
 
   for (size_t i = 0; i < systems.size(); i++) {
     // Retrieve dimers
+    systems[i].AddClusters(2,15.0,0,systems[i].GetNumMon());
     std::vector<size_t> dimers = systems[i].GetDimers();
     size_t ndimers = dimers.size() / 2;
     // Print all dimers
@@ -59,6 +60,7 @@ int main(int argc, char** argv)
     }
     
     // retrieve Trimers
+    systems[i].AddClusters(3,5.0,0,systems[i].GetNumMon());
     std::vector<size_t> trimers = systems[i].GetTrimers();
     size_t ntrimers = trimers.size() / 3;
     //Print all trimers

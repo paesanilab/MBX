@@ -87,10 +87,10 @@ int main(int argc, char** argv)
     dummy = systems[i].Get3B(true);
 
     auto t11 = std::chrono::high_resolution_clock::now();
-    systems[i].AddClusters(2,15.0);
+    systems[i].AddClusters(2,15.0,0,systems[i].GetNumMon());
 
     auto t12 = std::chrono::high_resolution_clock::now();
-    systems[i].AddClusters(3,5.0);
+    systems[i].AddClusters(3,5.0,0,systems[i].GetNumMon());
 
     auto t13 = std::chrono::high_resolution_clock::now();
 

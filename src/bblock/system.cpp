@@ -12,6 +12,7 @@ System::System() {initialized_ = false;}
 System::~System() {}
 
 size_t System::GetNumMol() {return nmol_;}
+size_t System::GetNumMon() {return nmon_;}
 size_t System::GetNumSites() {return nsites_;}
 size_t System::GetMonNat(size_t n) {return nat_[n];}
 size_t System::GetFirstInd(size_t n) {return first_index_[n];}
@@ -50,12 +51,14 @@ void System::Initialize() {
 
   cutoff2b_ = 15.0;
   cutoff3b_ =  5.0;
+  maxNDimEval_ = 1024;
+  maxNTriEval_ = 1024;
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
   nmon_ = monomers_.size();
-  AddClusters(3, cutoff3b_);
-  AddClusters(2, cutoff2b_);
+  //AddClusters(3, cutoff3b_);
+  //AddClusters(2, cutoff2b_);
   // TODO Here should go the order and rearrengement stuff
 }
 
@@ -100,10 +103,15 @@ void System::AddMonomerInfo() {
 
 }
 
-void System::AddClusters(size_t n_max, double cutoff) {
+void System::AddClusters(size_t n_max, double cutoff, 
+                         size_t istart, size_t iend) {
+  // istart is the monomer position for which we will look all dimers and 
+  // trimers that contain it. iend is the last monomer position.
+  // This means, if istart is 0 and iend is 2, we will look for all dimers
+  // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
   // Obtain xyz vector with the positions of first atom of each monomer
   std::vector<double> xyz;
-  for (size_t i = 0; i < monomers_.size(); i++) {
+  for (size_t i = istart; i < monomers_.size(); i++) {
     xyz.push_back(xyz_[3*first_index_[i]]);
     xyz.push_back(xyz_[3*first_index_[i] + 1]);
     xyz.push_back(xyz_[3*first_index_[i] + 2]);
@@ -124,7 +132,7 @@ void System::AddClusters(size_t n_max, double cutoff) {
   dimers_.clear();
   if (n_max > 2) 
     trimers_.clear();
-  for (size_t i = 0; i < monomers_.size(); i++) {
+  for (size_t i = 0; i < iend - istart; i++) {
     // Define the query point
     double point[3];
     point[0] = ptc.pts[i].x;
@@ -140,8 +148,8 @@ void System::AddClusters(size_t n_max, double cutoff) {
     // Add the pairs that are not in the dimer vector
     for (size_t j = 0; j < nMatches; j++) {
       if (ret_matches[j].first > i) {
-        dimers_.push_back(i);
-        dimers_.push_back(ret_matches[j].first);
+        dimers_.push_back(i + istart);
+        dimers_.push_back(ret_matches[j].first + istart);
       
         
         // Add trimers if requested
@@ -162,9 +170,9 @@ void System::AddClusters(size_t n_max, double cutoff) {
           // At least 2 of the three distances must be smaller than the cutoff 
           for (size_t k = 0; k < nMatches2; k++) {
             if (ret_matches2[k].first > ret_matches[j].first) {
-              trimers_.push_back(i);
-              trimers_.push_back(ret_matches[j].first);
-              trimers_.push_back(ret_matches2[k].first);
+              trimers_.push_back(i + istart);
+              trimers_.push_back(ret_matches[j].first + istart);
+              trimers_.push_back(ret_matches2[k].first + istart);
             }
           }
         }
@@ -252,79 +260,98 @@ double System::Get1B(bool do_grads) {
 
 double System::Get2B(bool do_grads) {
   // No dimers makes the function return 0.
-  if (dimers_.size() < 2) return 0.0;
 
   // 2B ENERGY
   double e2b = 0;
   double edisp = 0.0;
 
   // Vectorizable part
-  size_t nd = 0;
-  std::vector<double> xyz1;
-  std::vector<double> xyz2;
-  std::vector<double> grd1;
-  std::vector<double> grd2;
-  std::string m1 = monomers_[dimers_[0]];
-  std::string m2 = monomers_[dimers_[1]];
-  size_t i = 0;
+  size_t istart = 0;
+  size_t iend = 0;
+  size_t step = 4096;
 
-  while (i < dimers_.size()) {
-    if (monomers_[dimers_[i]] == m1 && 
-        monomers_[dimers_[i + 1]] == m2) {
-      // Push the coordinates
-      for (size_t j = 0; j < 3*nat_[dimers_[i]]; j++) {
-        xyz1.push_back(xyz_[3*first_index_[dimers_[i]] + j]);
-        grd1.push_back(0.0);
-      }
-      for (size_t j = 0; j < 3*nat_[dimers_[i+1]]; j++) {
-        xyz2.push_back(xyz_[3*first_index_[dimers_[i+1]] + j]);
-        grd2.push_back(0.0);
-      }
-      nd++;
+  while (istart < nmon_) {
+//    if (nmon_ < maxNDimEval_) {
+//      iend = nmon_;
+//    } else {
+//      // TODO the step is arbitrary. Set to one for now
+      iend = std::min(istart + step, nmon_);
+//    }
+
+    // Adding corresponding clusters      
+    AddClusters(2,cutoff2b_,istart,iend);
+    if (dimers_.size() < 2) {
+      istart = iend;
+      continue;
     }
-    
 
-    // If one of the monomers is different as the previous one
-    // since dimers are also ordered, means that no more dimers of that
-    // type exist. Thus, do calculation, update m? and clear xyz
-    if (monomers_[dimers_[i]] != m1 ||
-        monomers_[dimers_[i + 1]] != m2 ||
-        i == dimers_.size() - 2 || nd == 1024) {
-      //std::cerr << "i = " << i << " / " << dimers_.size() - 1 << std::endl;
-      if (do_grads) {
-        // POLYNOMIALS
-        e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
-        // DISPERSION
-        edisp += disp::GetDispersion(m1, m2, nd, do_grads,
-                                   xyz1, xyz2, grd1, grd2);
-        for (size_t k = 0; k < nd ; k++) {
-          for (size_t j = 0; j < 3*nat_[dimers_[i - 2*k]]; j++) {
-            grd_[3*first_index_[dimers_[i - 2*k]] + j]
-                += grd1[(nd - k - 1)*3*nat_[dimers_[i - 2*k]] + j];
-          }
-          for (size_t j = 0; j < 3*nat_[dimers_[i- 2*k +1]]; j++) {
-            grd_[3*first_index_[dimers_[i -2*k + 1]] + j]
-                += grd2[(nd - k - 1)*3*nat_[dimers_[i - 2*k + 1]] + j];
-          }
+    std::vector<double> xyz1;
+    std::vector<double> xyz2;
+    std::vector<double> grd1;
+    std::vector<double> grd2;
+    std::string m1 = monomers_[dimers_[0]];
+    std::string m2 = monomers_[dimers_[1]];
+    size_t i = 0;
+    size_t nd = 0;
+    while (i < dimers_.size()) {
+      if (monomers_[dimers_[i]] == m1 && 
+          monomers_[dimers_[i + 1]] == m2) {
+        // Push the coordinates
+        for (size_t j = 0; j < 3*nat_[dimers_[i]]; j++) {
+          xyz1.push_back(xyz_[3*first_index_[dimers_[i]] + j]);
+          grd1.push_back(0.0);
         }
-      } else {
-        // POLYNOMIALS
-        e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
-        // DISPERSION
-        edisp += disp::GetDispersion(m1, m2, nd, do_grads,
-                                   xyz1, xyz2, grd1, grd2);
+        for (size_t j = 0; j < 3*nat_[dimers_[i+1]]; j++) {
+          xyz2.push_back(xyz_[3*first_index_[dimers_[i+1]] + j]);
+          grd2.push_back(0.0);
+        }
+        nd++;
       }
-      nd = 0;
-      xyz1.clear();
-      xyz2.clear();
-      grd1.clear();
-      grd2.clear();
-      m1 = monomers_[dimers_[i]];
-      m2 = monomers_[dimers_[i + 1]];
-      if (i != dimers_.size() - 2) i-=2;
-    }
-    i+=2;
-  } 
+      
+  
+      // If one of the monomers is different as the previous one
+      // since dimers are also ordered, means that no more dimers of that
+      // type exist. Thus, do calculation, update m? and clear xyz
+      if (monomers_[dimers_[i]] != m1 ||
+          monomers_[dimers_[i + 1]] != m2 ||
+          i == dimers_.size() - 2 || nd == maxNDimEval_) {
+        //std::cerr << "i = " << i << " / " << dimers_.size() - 1 << std::endl;
+        if (do_grads) {
+          // POLYNOMIALS
+          e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+          // DISPERSION
+          edisp += disp::GetDispersion(m1, m2, nd, do_grads,
+                                     xyz1, xyz2, grd1, grd2);
+          for (size_t k = 0; k < nd ; k++) {
+            for (size_t j = 0; j < 3*nat_[dimers_[i - 2*k]]; j++) {
+              grd_[3*first_index_[dimers_[i - 2*k]] + j]
+                  += grd1[(nd - k - 1)*3*nat_[dimers_[i - 2*k]] + j];
+            }
+            for (size_t j = 0; j < 3*nat_[dimers_[i- 2*k +1]]; j++) {
+              grd_[3*first_index_[dimers_[i -2*k + 1]] + j]
+                  += grd2[(nd - k - 1)*3*nat_[dimers_[i - 2*k + 1]] + j];
+            }
+          }
+        } else {
+          // POLYNOMIALS
+          e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
+          // DISPERSION
+          edisp += disp::GetDispersion(m1, m2, nd, do_grads,
+                                     xyz1, xyz2, grd1, grd2);
+        }
+        nd = 0;
+        xyz1.clear();
+        xyz2.clear();
+        grd1.clear();
+        grd2.clear();
+        m1 = monomers_[dimers_[i]];
+        m2 = monomers_[dimers_[i + 1]];
+        if (i != dimers_.size() - 2) i-=2;
+      }
+      i+=2;
+    } 
+    istart = iend;
+  }
   //std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
 
   //std::cerr << "dimers done: " << e2b + edisp << std::endl;
@@ -337,29 +364,50 @@ double System::Get3B(bool do_grads) {
   // trimers are ordered
   // TODO put this in chunk so can be vectorized
   // TODO Maybe initialize here all possible trimer structs?
-  for (size_t i = 0; i < trimers_.size(); i+=3) {
-    if (monomers_[trimers_[i]] == "h2o" and
-        monomers_[trimers_[i + 1]] == "h2o" and
-        monomers_[trimers_[i + 2]] == "h2o") {
-      x2o::x3b_v2x pot;
-      if (do_grads) {
-        double grdx[27];
-        std::fill(grdx, grdx + 27, 0.0);
-        e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
-                        xyz_.data() + 3*first_index_[trimers_[i + 1]],
-                        xyz_.data() + 3*first_index_[trimers_[i + 2]],
-                        grdx, grdx + 9, grdx + 18);
-        for (size_t j = 0; j < 9; j++) {
-          grd_[3*first_index_[trimers_[i]] + j] += grdx[j];
-          grd_[3*first_index_[trimers_[i + 1]] + j] += grdx[j + 9];
-          grd_[3*first_index_[trimers_[i + 2]] + j] += grdx[j + 18];
+  size_t istart = 0;
+  size_t iend = 0;
+  size_t step = 4096;
+
+  while (istart < nmon_) {
+//    if (nmon_ < maxNTriEval_) {
+//      iend = nmon_;
+//    } else {
+//      // TODO the step is arbitrary. Set to one for now
+      iend = std::min(istart + step, nmon_);
+//    }
+
+    // Adding corresponding clusters      
+    AddClusters(3,cutoff3b_,istart,iend);
+    if (trimers_.size() < 3) {
+      istart = iend;
+      continue;
+    }
+
+    for (size_t i = 0; i < trimers_.size(); i+=3) {
+      if (monomers_[trimers_[i]] == "h2o" and
+          monomers_[trimers_[i + 1]] == "h2o" and
+          monomers_[trimers_[i + 2]] == "h2o") {
+        x2o::x3b_v2x pot;
+        if (do_grads) {
+          double grdx[27];
+          std::fill(grdx, grdx + 27, 0.0);
+          e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
+                          xyz_.data() + 3*first_index_[trimers_[i + 1]],
+                          xyz_.data() + 3*first_index_[trimers_[i + 2]],
+                          grdx, grdx + 9, grdx + 18);
+          for (size_t j = 0; j < 9; j++) {
+            grd_[3*first_index_[trimers_[i]] + j] += grdx[j];
+            grd_[3*first_index_[trimers_[i + 1]] + j] += grdx[j + 9];
+            grd_[3*first_index_[trimers_[i + 2]] + j] += grdx[j + 18];
+          }
+        } else {
+          e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
+                          xyz_.data() + 3*first_index_[trimers_[i + 1]],
+                          xyz_.data() + 3*first_index_[trimers_[i + 2]]);
         }
-      } else {
-        e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
-                        xyz_.data() + 3*first_index_[trimers_[i + 1]],
-                        xyz_.data() + 3*first_index_[trimers_[i + 2]]);
       }
     }
+    istart = iend;
     //if ((i +3)%3072 == 0 ) std::cerr << i << " / " << trimers_.size() << std::endl;
   }
 
