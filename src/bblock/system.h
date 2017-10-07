@@ -72,6 +72,7 @@ class System {
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers
   size_t nsites_;                            // Number of sites in sys
+  size_t maxNMonEval_;                       // Max number of mons to be eval
   size_t maxNDimEval_;                       // Max number of dimers to be eval
   size_t maxNTriEval_;                       // Max number of trimers to be eval
   double cutoff2b_;                          // Cutoff for dim and trim search 

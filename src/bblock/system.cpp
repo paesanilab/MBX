@@ -51,6 +51,7 @@ void System::Initialize() {
 
   cutoff2b_ = 15.0;
   cutoff3b_ =  5.0;
+  maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
   maxNTriEval_ = 1024;
   
@@ -209,44 +210,53 @@ double System::Get1B(bool do_grads) {
   size_t cmt = 0;
   size_t ccrd = 0;
   double e1b = 0.0;
+
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
     // Useful variables
-    std::vector<double> energy = std::vector<double>
-                                 (mon_type_count_[k].second, 0.0);
-    size_t ncoord = 3 * nat_[cmt] * mon_type_count_[k].second;
-    // XYZ with real sites
-    std::vector<double> xyz = std::vector<double> (ncoord,0.0);
+    size_t istart = 0;
+    size_t iend = 0;
+    while (istart < mon_type_count_[k].second) {
+      iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
+      size_t length = iend - istart;
 
-    // Set up real coordinates
-    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
-      std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
-                xyz_.begin() + ccrd + 3 * (i * sites_[cmt] + nat_[cmt]),
-                xyz.begin() + 3 * i * nat_[cmt]);
-    }
 
-    double grd2[ncoord];
-    std::fill(grd2, grd2 + ncoord, 0.0);
-    // Get energy of the chunk as function of monomer
-    if (mon_type_count_[k].first == "h2o") {
-      if (do_grads)  {
-        energy = ps::pot_nasa(xyz.data(), grd2, mon_type_count_[k].second);
-      } else {
-        energy = ps::pot_nasa(xyz.data(), 0, mon_type_count_[k].second);
+      std::vector<double> energy = std::vector<double>(length, 0.0);
+      size_t ncoord = 3 * nat_[cmt] * length;
+      // XYZ with real sites
+      std::vector<double> xyz = std::vector<double> (ncoord,0.0);
+
+      // Set up real coordinates
+      for (size_t i = istart; i < iend; i++) {
+        std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
+                  xyz_.begin() + ccrd + 3 * (i * sites_[cmt] + nat_[cmt]),
+                  xyz.begin() + 3 * (i - istart) * nat_[cmt]);
       }
-    } else {
-      std::fill(energy.begin(), energy.end(),0.0);
-    }
 
-    // Add energy to energy_
-    for (size_t i = 0; i < mon_type_count_[k].second; i++) {
-      e1b += energy[i];
+      double grd2[ncoord];
+      std::fill(grd2, grd2 + ncoord, 0.0);
+      // Get energy of the chunk as function of monomer
+      if (mon_type_count_[k].first == "h2o") {
+        if (do_grads)  {
+          energy = ps::pot_nasa(xyz.data(), grd2, length);
+        } else {
+          energy = ps::pot_nasa(xyz.data(), 0, length);
+        }
+      } else {
+        std::fill(energy.begin(), energy.end(),0.0);
+      }
+      // Add energy to energy_
+      for (size_t i = 0; i < length; i++) {
+        e1b += energy[i];
 
-      if (do_grads) {
-        // Reorganize gradients
-        for (size_t j = 0; j < 3*nat_[cmt]; j++) {
-          grd_[ccrd + 3*i*sites_[cmt] + j] += grd2[3*i*nat_[cmt] + j];
+        if (do_grads) {
+          // Reorganize gradients
+          for (size_t j = 0; j < 3*nat_[cmt]; j++) {
+            grd_[ccrd + 3*(i + istart)*sites_[cmt] + j] 
+                += grd2[3*i*nat_[cmt] + j];
+          }
         }
       }
+      istart = iend;
     }
 
     // Update ccrd and cmt
@@ -268,7 +278,7 @@ double System::Get2B(bool do_grads) {
   // Vectorizable part
   size_t istart = 0;
   size_t iend = 0;
-  size_t step = 4096;
+  size_t step = 1024;
 
   while (istart < nmon_) {
 //    if (nmon_ < maxNDimEval_) {
@@ -366,7 +376,7 @@ double System::Get3B(bool do_grads) {
   // TODO Maybe initialize here all possible trimer structs?
   size_t istart = 0;
   size_t iend = 0;
-  size_t step = 4096;
+  size_t step = 1024;
 
   while (istart < nmon_) {
 //    if (nmon_ < maxNTriEval_) {
