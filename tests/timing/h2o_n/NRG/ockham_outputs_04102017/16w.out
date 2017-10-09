@@ -2,11 +2,11 @@ Energies without gradients:
 system[....0]=     1.1339327668e+02    kcal/mol
 Energies with gradients:
 system[....0]=     1.1339327668e+02    kcal/mol
-Energy:(nograd) 16 milliseconds
+Energy:(nograd) 17 milliseconds
 Energy:(grad) 32 milliseconds
 1B:(nograd) 0 milliseconds
 1B:(grad) 0 milliseconds
-2B:(nograd) 1 milliseconds
+2B:(nograd) 2 milliseconds
 2B:(grad) 4 milliseconds
 3B:(nograd) 11 milliseconds
 3B:(grad) 22 milliseconds
