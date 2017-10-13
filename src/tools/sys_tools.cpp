@@ -7,19 +7,21 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
                     std::vector<size_t> &original_order) {
   std::vector<std::string> monomers = mon;
   mon.clear();
-  while (monomers.size() > 0) {
+  original_order.clear();
+  size_t n = monomers.size();
+  while (n > 0) {
     std::string min_mon = monomers[0];
     size_t index_min = 0;
     for (size_t j = 1; j < monomers.size(); j++) {
-      if (monomers[j] < min_mon) {
+      if (monomers[j] < min_mon && monomers[j] != "~") {
         min_mon = monomers[j];
         index_min = j;
       }
     }
     mon.push_back(min_mon);
-    // TODO Fix this bc it doesnt keep the original order
     original_order.push_back(index_min);
-    monomers.erase(monomers.begin() + index_min);
+    monomers[index_min] = "~";
+    n--;
   }
 
   std::vector<std::pair<std::string,size_t>> mon_types_count;

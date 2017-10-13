@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <algorithm>
 
 // Tools
 #include "nanoflann.hpp"
@@ -11,7 +12,18 @@
 #include "tools/sys_tools.h"
 
 // Potential
+// 1B
 #include "potential/1b/ps.h"
+// 2B
+#include "potential/2b/energy2b.h"
+#include "potential/2b/x2b-v9x.h"
+#include "potential/2b/poly-2b-v6x.h"
+// 3B
+#include "potential/3b/x3b-v2x.h"
+#include "potential/3b/poly-3b-v2x.h"
+// DISPERSION
+#include "potential/dispersion/dispersion2b.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace bblock { // Building Block :: System
@@ -27,6 +39,7 @@ class System {
   System();
   ~System();
   // Getters
+  size_t GetNumMon();
   size_t GetNumMol();
   size_t GetNumSites();
   size_t GetMonNat(size_t n);
@@ -44,23 +57,26 @@ class System {
   void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
-  void AddClusters(size_t nmax);
+  void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
 //  void SetNumMol(size_t n);
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
   // Energy Functions
-  // Energy without computing gradients
-  // Returns the total energy
-  double Energy();
   // Energy computing gradients. The new gradients of ALL sites 
   // are returned in grd. 
-  // TODO Discuss this
-  double Energy(double * grd);
+  double Energy(std::vector<double> &grd, bool do_grads);
+  double Get1B(bool do_grads);
+  double Get2B(bool do_grads);
+  double Get3B(bool do_grads);
  private:
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers
   size_t nsites_;                            // Number of sites in sys
-  double cutoff_;                            // Cutoff for dim and trim search 
+  size_t maxNMonEval_;                       // Max number of mons to be eval
+  size_t maxNDimEval_;                       // Max number of dimers to be eval
+  size_t maxNTriEval_;                       // Max number of trimers to be eval
+  double cutoff2b_;                          // Cutoff for dim and trim search 
+  double cutoff3b_;                          // Cutoff for dim and trim search 
   double energy_;                            // Energy of the system
   bool initialized_;                         // Systes is initialized?
   std::vector<size_t> sites_;                // Number of sites of each mo

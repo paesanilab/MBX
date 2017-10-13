@@ -1,0 +1,14 @@
+Energies without gradients:
+system[....0]=     7.0465408486e+50    kcal/mol
+Energies with gradients:
+system[....0]=     7.0465408486e+50    kcal/mol
+Energy:(nograd) 6763 milliseconds
+Energy:(grad) 12884 milliseconds
+1B:(nograd) 3 milliseconds
+1B:(grad) 3 milliseconds
+2B:(nograd) 711 milliseconds
+2B:(grad) 1335 milliseconds
+3B:(nograd) 5797 milliseconds
+3B:(grad) 11530 milliseconds
+Get and set 2b clusters: 55 milliseconds
+Get and set 3b clusters: 41 milliseconds
