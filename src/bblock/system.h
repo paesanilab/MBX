@@ -10,6 +10,7 @@
 #include "nanoflann.hpp"
 #include "kdtree_utils.h"
 #include "tools/sys_tools.h"
+#include "tools/definitions.h"
 
 // Potential
 // 1B
@@ -96,6 +97,10 @@ class System {
   std::vector<std::vector<size_t>> molecules_; 
   // Mon type and # mon of each
   std::vector<std::pair<std::string,size_t>> mon_type_count_;   
+  // Excluded pairs 12, 13 and 14
+  excluded_set_type excluded12;
+  excluded_set_type excluded13;
+  excluded_set_type excluded14;
 };
 
 } // namespace bblock
