@@ -466,4 +466,3 @@ double System::Get3B(bool do_grads) {
 
 
 
-

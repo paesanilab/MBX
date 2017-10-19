@@ -24,6 +24,8 @@
 #include "potential/3b/poly-3b-v2x.h"
 // DISPERSION
 #include "potential/dispersion/dispersion2b.h"
+// ELECTROSTATICS
+#include "potential/electrostatics/electrostatics.h"
 
 
 ////////////////////////////////////////////////////////////////////////////////
