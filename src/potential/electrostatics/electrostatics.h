@@ -5,9 +5,14 @@
 #include <cstdlib>
 #include <string>
 #include <cmath>
+#include <iostream>
 
 #include "tools/definitions.h"
 #include "potential/electrostatics/gammq.h"
+
+namespace {
+  size_t maxit = 1000;
+}
 
 namespace elec {
   double electrostatics(const std::vector<double> chg,
