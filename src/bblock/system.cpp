@@ -1,7 +1,5 @@
 #include "system.h"
 
-#include <iostream>
-
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace bblock { // Building Block :: System
@@ -110,7 +108,8 @@ void System::AddClusters(size_t n_max, double cutoff,
   // trimers that contain it. iend is the last monomer position.
   // This means, if istart is 0 and iend is 2, we will look for all dimers
   // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
-  systools::AddClusters(n_max, cutoff, istart, iend, monomers_, xyz_,
+  size_t nmon = monomers_.size();
+  systools::AddClusters(n_max, cutoff, istart, iend, nmon, xyz_,
                         first_index_, dimers_, trimers_);
   
 }

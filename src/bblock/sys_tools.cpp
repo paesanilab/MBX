@@ -97,7 +97,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
 }
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, 
-                 std::vector<std::string> mons, 
+                 size_t nmon, 
                  std::vector<double> xyz_orig,
                  std::vector<size_t> first_index, 
                  std::vector<size_t> &dimers, 
@@ -107,9 +107,16 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
   // trimers that contain it. iend is the last monomer position.
   // This means, if istart is 0 and iend is 2, we will look for all dimers
   // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
+
+  // nmon is the number of monomers in xyz
+  // xyz_orig is a double vector with positions of all atoms
+  // first_index is a size_t vector with the first index of the site 'i'
+  // in in the monomer vector
+  // dimers and trimers will be filled with the dimers and trimers found
+
   // Obtain xyz vector with the positions of first atom of each monomer
   std::vector<double> xyz;
-  for (size_t i = istart; i < mons.size(); i++) {
+  for (size_t i = istart; i < nmon; i++) {
     xyz.push_back(xyz_orig[3*first_index[i]]);
     xyz.push_back(xyz_orig[3*first_index[i] + 1]);
     xyz.push_back(xyz_orig[3*first_index[i] + 2]);

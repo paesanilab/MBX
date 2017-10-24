@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <algorithm>
+#include <iostream>
 
 // Tools
 #include "nanoflann.hpp"

@@ -26,8 +26,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
                      std::vector<double> &polfac);
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
-                 std::vector<std::string> mons,
-                 std::vector<double> xyz, 
+                 size_t nmon,
+                 std::vector<double> xyz_orig, 
                  std::vector<size_t> first_index,
                  std::vector<size_t> &dimers, 
                  std::vector<size_t> &trimers); 
