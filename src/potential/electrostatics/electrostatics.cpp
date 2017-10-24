@@ -325,6 +325,7 @@ namespace elec {
       iter++;
      
       
+      std::fill(Efd.begin(), Efd.end(), 0.0);
       
       // Recalculate Electric field due to dipoles
       // Sites on the same monomer
@@ -515,8 +516,8 @@ namespace elec {
                   // TODO check indexes efd. Doesnt seem right
                   // Probably need to add fi_sites
                   Efd[shifti] += Efdcp0[m2] * mu[shiftj]
-                                  +  Efdcp1[m2] * mu[shiftj + 1]
-                                  +  Efdcp2[m2] * mu[shiftj + 2];
+                              +  Efdcp1[m2] * mu[shiftj + 1]
+                              +  Efdcp2[m2] * mu[shiftj + 2];
                   Efd[shifti + 1] += Efdcp3[m2] * mu[shiftj]
                                   +  Efdcp4[m2] * mu[shiftj + 1]
                                   +  Efdcp5[m2] * mu[shiftj + 2];
@@ -540,8 +541,24 @@ namespace elec {
 
     }
 
+    // Dipoles are computed. Now we need the electrostatic energy.
+    // Permanent electrostatics
+    double Eqq = 0.0;
+    for (size_t i = 0; i < nsites; i++)
+      Eqq += phi[i] * charge[i];
+    Eqq *= 0.5;
 
-    return 0.0;
+    // Induced Electrostatic energy (chg-dip, dip-dip, pol)
+    double Eind = 0.0;
+    for (size_t i = 0; i < nsites; i++) 
+      Eind -= mu[i] * Efq[i];
+    Eind *= 0.5;
+
+#ifdef DEBUG
+    std::cerr << "Eelec = " << Eelec << "   Eind = " << Eind << std::endl;
+#endif
+
+    return Eelec + Eind;
   
   } 
 
