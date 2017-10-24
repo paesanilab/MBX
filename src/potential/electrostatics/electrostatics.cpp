@@ -545,7 +545,7 @@ namespace elec {
     // Permanent electrostatics
     double Eqq = 0.0;
     for (size_t i = 0; i < nsites; i++)
-      Eqq += phi[i] * charge[i];
+      Eqq += phi[i] * chg[i];
     Eqq *= 0.5;
 
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
@@ -555,10 +555,10 @@ namespace elec {
     Eind *= 0.5;
 
 #ifdef DEBUG
-    std::cerr << "Eelec = " << Eelec << "   Eind = " << Eind << std::endl;
+    std::cerr << "Eelec = " << Eqq << "   Eind = " << Eind << std::endl;
 #endif
 
-    return Eelec + Eind;
+    return Eqq + Eind;
   
   } 
 

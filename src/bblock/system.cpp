@@ -110,76 +110,8 @@ void System::AddClusters(size_t n_max, double cutoff,
   // trimers that contain it. iend is the last monomer position.
   // This means, if istart is 0 and iend is 2, we will look for all dimers
   // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
-  // Obtain xyz vector with the positions of first atom of each monomer
-  std::vector<double> xyz;
-  for (size_t i = istart; i < monomers_.size(); i++) {
-    xyz.push_back(xyz_[3*first_index_[i]]);
-    xyz.push_back(xyz_[3*first_index_[i] + 1]);
-    xyz.push_back(xyz_[3*first_index_[i] + 2]);
-  }
-
-  // Obtain the data in the structure needed by the kd-tree
-  kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz);
-
-  // Build the tree
-  typedef nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-    kdtutils::PointCloud<double>, 3 /* dim */> my_kd_tree_t;
-  my_kd_tree_t index(3 /*dim*/, ptc, 
-    nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
-  index.buildIndex();
-
-  // Perform a radial search within the cutoff
-  dimers_.clear();
-  if (n_max > 2) 
-    trimers_.clear();
-  for (size_t i = 0; i < iend - istart; i++) {
-    // Define the query point
-    double point[3];
-    point[0] = ptc.pts[i].x;
-    point[1] = ptc.pts[i].y;
-    point[2] = ptc.pts[i].z;
-    
-    // Perform the search
-    std::vector<std::pair<size_t, double>> ret_matches;
-    nanoflann::SearchParams params;
-    const size_t nMatches = index.radiusSearch(point,
-      cutoff * cutoff, ret_matches, params);
-
-    // Add the pairs that are not in the dimer vector
-    for (size_t j = 0; j < nMatches; j++) {
-      if (ret_matches[j].first > i) {
-        dimers_.push_back(i + istart);
-        dimers_.push_back(ret_matches[j].first + istart);
-      
-        
-        // Add trimers if requested
-        if (n_max > 2) {
-          // Define query point, which is each of the points 'j' inside the 
-          // radius of 'i' 
-          double point2[3];
-          point2[0] = ptc.pts[ret_matches[j].first].x;
-          point2[1] = ptc.pts[ret_matches[j].first].y;
-          point2[2] = ptc.pts[ret_matches[j].first].z;
-          std::vector<std::pair<size_t, double>> ret_matches2;
-          nanoflann::SearchParams params2;
-          const size_t nMatches2 = index.radiusSearch(point2,
-            cutoff * cutoff, ret_matches2, params2);
- 
-          // Add the trimers that fulfil i > j > k, to avoid double counting
-          // We will add all trimers that fulfill the condition:
-          // At least 2 of the three distances must be smaller than the cutoff 
-          for (size_t k = 0; k < nMatches2; k++) {
-            if (ret_matches2[k].first > ret_matches[j].first) {
-              trimers_.push_back(i + istart);
-              trimers_.push_back(ret_matches[j].first + istart);
-              trimers_.push_back(ret_matches2[k].first + istart);
-            }
-          }
-        }
-      }
-    }
-  }
+  systools::AddClusters(n_max, cutoff, istart, iend, monomers_, xyz_,
+                        first_index_, dimers_, trimers_);
   
 }
 
