@@ -92,7 +92,7 @@ install:
 # END MRR 
   - cmake -H. -Bbuild
   - cd build
-  - travis_wait 40 make
+  - travis_wait 60 make
   - cd ../
 
 # MRR - 20170904
