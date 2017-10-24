@@ -9,6 +9,7 @@
 
 #include "nanoflann.hpp"
 #include "kdtree_utils.h"
+#include "tools/definitions.h"
 
 namespace systools {
 
@@ -25,12 +26,23 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
                      std::vector<double> &chg, std::vector<double> &pol,
                      std::vector<double> &polfac);
 
+// Given ifnormation of the system, this subroutine fills up the dimers and 
+// trimers of the system.
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
                  size_t nmon,
                  std::vector<double> xyz_orig, 
                  std::vector<size_t> first_index,
                  std::vector<size_t> &dimers, 
                  std::vector<size_t> &trimers); 
+
+// Fills up the excluded set pairs for a given monomer
+void GetExcluded(std::string mon, 
+                 excluded_set_type &exc12,
+                 excluded_set_type &exc13,
+                 excluded_set_type &exc14);
+
+// Returns if a pair a,b (or b,a) is in the excluded set exc
+bool is_excluded(excluded_set_type exc, size_t a, size_t b);
 
 } // systools
 #endif // SYS_TOOLS_H

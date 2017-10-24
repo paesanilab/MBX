@@ -187,6 +187,40 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
 
 }
 
+void GetExcluded(std::string mon, 
+                 excluded_set_type &exc12,
+                 excluded_set_type &exc13,
+                 excluded_set_type &exc14) {
+
+  // Clearing excluded pairs just in case
+  exc12.clear();
+  exc13.clear();
+  exc14.clear();
+
+  if (mon == "h2o") {
+    // 12 distances
+    exc12.insert(std::make_pair(0,1));
+    exc12.insert(std::make_pair(0,2));
+    exc12.insert(std::make_pair(0,3));
+    // 13 distances
+    exc13.insert(std::make_pair(1,2));
+    exc13.insert(std::make_pair(1,3));
+    exc13.insert(std::make_pair(2,3));
+  }
+}
+
+bool is_excluded(excluded_set_type exc, size_t a, size_t b) {
+  return ((exc.find(std::make_pair(a, b)) != exc.end()) ||
+          (exc.find(std::make_pair(b, a)) != exc.end()));
+}
+
+
+
+
+
+
+
+
 
 
 } //systools

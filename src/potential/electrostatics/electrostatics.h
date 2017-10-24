@@ -7,7 +7,9 @@
 #include <cmath>
 #include <iostream>
 
+#include "bblock/sys_tools.h"
 #include "tools/definitions.h"
+#include "tools/constants.h"
 #include "potential/electrostatics/gammq.h"
 
 namespace {
