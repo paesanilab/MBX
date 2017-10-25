@@ -61,6 +61,11 @@ void System::Initialize() {
   AddMonomerInfo();
   nmol_ = molecules_.size();
   nmon_ = monomers_.size();
+
+  SetVSites();
+  SetCharges();
+  SetPols();
+  SetPolfacs();
  
   // TODO Here should go the order and rearrengement stuff
 }
@@ -375,19 +380,57 @@ double System::Get3B(bool do_grads) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetCharges() {
-  std::fill(chg_.begin(), chg_.end(), 0.0);
+  size_t fi_mon = 0;
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::string mon = mon_type_count_[k].first;
+    size_t nmon = mon_type_count_[k].second;
+    size_t nsites = sites_[fi_mon];
+    
+    systools::SetCharges(xyz_, chg_, mon, nmon, nsites, first_index_[fi_mon]);
+    fi_mon += nmon;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetPols() {
-  std::fill(pol_.begin(), pol_.end(), 0.0);
+  size_t fi_mon = 0;
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::string mon = mon_type_count_[k].first;
+    size_t nmon = mon_type_count_[k].second;
+    size_t nsites = sites_[fi_mon];
+    
+    systools::SetPol(pol_, polfac_, mon, nmon, nsites, first_index_[fi_mon]);
+    fi_mon += nmon;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetPolfacs() {
-  std::fill(polfac_.begin(), polfac_.end(), 0.0);
+  size_t fi_mon = 0;
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::string mon = mon_type_count_[k].first;
+    size_t nmon = mon_type_count_[k].second;
+    size_t nsites = sites_[fi_mon];
+
+    systools::SetPolfac(polfac_, mon, nmon, nsites, first_index_[fi_mon]);
+    fi_mon += nmon;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetVSites() {
+  size_t fi_mon = 0;
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::string mon = mon_type_count_[k].first;
+    size_t nmon = mon_type_count_[k].second;
+    size_t nsites = sites_[fi_mon];
+
+    systools::SetVSites(xyz_, mon, nmon, nsites, first_index_[fi_mon]);
+    fi_mon += nmon;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

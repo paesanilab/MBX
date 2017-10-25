@@ -68,6 +68,7 @@ class System {
   void SetCharges();
   void SetPols();
   void SetPolfacs();
+  void SetVSites();
   // Energy Functions
   // Energy computing gradients. The new gradients of ALL sites 
   // are returned in grd. 

@@ -277,6 +277,7 @@ void SetVSites (std::vector<double> &xyz, std::string mon_id,
   }
 }
 
+// FIXME XYZ should not be passed by ref
 void SetCharges (std::vector<double> &xyz, std::vector<double> &charges,
     std::string mon_id, size_t n_mon, size_t nsites,
     size_t fst_ind) {
@@ -286,6 +287,7 @@ void SetCharges (std::vector<double> &xyz, std::vector<double> &charges,
     std::vector<double> chgtmp;
 
     // Calculate individual monomer's charges TODO deal with fst_ind
+    // FIXME fst_ind is for sites, not MON
     for (size_t nv = fst_ind; nv < n_mon+fst_ind; nv++) {
       size_t ns3 = nsites*3;
       std::vector<double>::const_iterator first = xyz.begin()+(nv*ns3)+fst_ind;
