@@ -83,6 +83,7 @@ class System {
   size_t maxNMonEval_;                       // Max number of mons to be eval
   size_t maxNDimEval_;                       // Max number of dimers to be eval
   size_t maxNTriEval_;                       // Max number of trimers to be eval
+  size_t maxItDip_;
   double cutoff2b_;                          // Cutoff for dim and trim search 
   double cutoff3b_;                          // Cutoff for dim and trim search 
   double diptol_;

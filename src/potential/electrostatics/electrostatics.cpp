@@ -2,7 +2,7 @@
 
 namespace elec {
 
-  double electrostatics(const std::vector<double> chg,               
+  double Electrostatics(const std::vector<double> chg,               
     const std::vector<double> polfac, 
     const std::vector<double> pol, 
     const std::vector<double> orig_xyz, 
@@ -10,7 +10,7 @@ namespace elec {
     const std::vector<size_t> sites, 
     const std::vector<size_t> first_ind,
     const std::vector<std::pair<std::string,size_t>> mon_type_count, 
-    const double tolerance, const bool do_grads, 
+    const double tolerance, const size_t maxit, const bool do_grads, 
     std::vector<double> &grad) {
 
     // Damping declarations

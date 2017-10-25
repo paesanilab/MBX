@@ -56,6 +56,7 @@ void System::Initialize() {
   maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
   maxNTriEval_ = 1024;
+  maxItDip_ = 1000;
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
@@ -392,8 +393,8 @@ void System::SetPolfacs() {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-  double elec = elec::electrostatics(chg_, polfac_, pol_, xyz_, monomers_, 
-    sites_, first_index_, mon_type_count_, diptol_, do_grads, grd_);
+  double elec = elec::Electrostatics(chg_, polfac_, pol_, xyz_, monomers_, 
+    sites_, first_index_, mon_type_count_, diptol_, maxItDip_, do_grads, grd_);
   return elec;
 }
 

@@ -209,7 +209,7 @@ void GetExcluded(std::string mon,
   }
 }
 
-bool is_excluded(excluded_set_type exc, size_t a, size_t b) {
+bool IsExcluded(excluded_set_type exc, size_t a, size_t b) {
   return ((exc.find(std::make_pair(a, b)) != exc.end()) ||
           (exc.find(std::make_pair(b, a)) != exc.end()));
 }
