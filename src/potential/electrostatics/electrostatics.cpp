@@ -9,16 +9,13 @@ namespace elec {
     const std::vector<std::string> mon_id, 
     const std::vector<size_t> sites, 
     const std::vector<size_t> first_ind,
-    const excluded_set_type& excluded12, 
-    const excluded_set_type& excluded13, 
-    const excluded_set_type& excluded14, 
     const std::vector<std::pair<std::string,size_t>> mon_type_count, 
     const double tolerance, const bool do_grads, 
     std::vector<double> &grad) {
 
     // Damping declarations
     const double aCC = 0.4;
-    const double aCD = 0.4;
+    //const double aCD = 0.4;
     double aDD = 0.055;
 
     // Constants that will be used later
@@ -48,7 +45,7 @@ namespace elec {
     // Organize xyz so we have x1_1 x1_2 ... y1_1 y1_2...
     // where xN_M is read as coordinate x of site N of monomer M
     // for the first monomer type. Then follows the second, and so on.
-    std::vector<double> xyz(nsites,0.0);
+    std::vector<double> xyz(3*nsites,0.0);
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
@@ -149,7 +146,6 @@ namespace elec {
 
               // Update the field
               const size_t shift = first_ind[fi_mon + m];
-              const size_t shift3 = 3*shift;
               const size_t spi = shift + i;
               const size_t spj = shift + j;
         
@@ -180,7 +176,6 @@ namespace elec {
 
               // Update the field
               const size_t shift = first_ind[fi_mon + m];
-              const size_t shift3 = 3*shift;
               const size_t spi = shift + i;
               const size_t spj = shift + j;
 
@@ -235,6 +230,8 @@ namespace elec {
         size_t ns2 = sites[fi_mon2];
         size_t nmon2 = mon_type_count[mt2].second;
         size_t nmon22 = nmon2*2;
+        double same = false;
+        if (mt1 == mt2) same = true;
         // TODO add neighbour list here
         for (size_t i = 0; i < ns1; i++) {
           size_t inmon1  = i*nmon1;
@@ -261,7 +258,8 @@ namespace elec {
               double Ai = 1/A;
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
-                for (size_t m2 = 0; m2 < nmon2; m2++) {
+                size_t m2init = same ? m1 + 1 : 0;
+                for (size_t m2 = m2init; m2 < nmon2; m2++) {
                   //  Distances and values that will be reused
                   const double rijx = xyz[fi_crd1 + inmon13 + m1] 
                                     - xyz[fi_crd2 + jnmon23 + m2];
@@ -293,8 +291,6 @@ namespace elec {
                   // Update the field
                   const size_t shift1 = first_ind[fi_mon1 + m1];
                   const size_t shift2 = first_ind[fi_mon2 + m2];
-                  const size_t shift13 = 3*shift1;
-                  const size_t shift23 = 3*shift2;
                   const size_t spi = shift1 + i;
                   const size_t spj = shift2 + j;
     
@@ -310,11 +306,11 @@ namespace elec {
                   Efqjz[m2] = s1r3 * chg[spi] * rijz;
                 }
                 
-                for (size_t m2 = 0; m2 < nmon2; m2++) {
+                for (size_t m2 = m2init; m2 < nmon2; m2++) {
                   const size_t shift1 = first_ind[fi_mon1 + m1];
                   const size_t shift2 = first_ind[fi_mon2 + m2];
-                  const size_t shift13 = 3*shift1;
-                  const size_t shift23 = 3*shift2;
+                  const size_t shift13 = shift1 * 3;
+                  const size_t shift23 = shift2 * 3;
                   phi[i + fi_sites1] += phii[m2];
                   phi[j + fi_sites2] += phij[m2];
                   Efq[shift13 + i3] += Efqix[m2];
@@ -327,7 +323,8 @@ namespace elec {
               }
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
-                for (size_t m2 = 0; m2 < nmon2; m2++) {
+                size_t m2init = same ? m1 + 1 : 0;
+                for (size_t m2 = m2init; m2 < nmon2; m2++) {
                   //  Distances and values that will be reused
                   const double rijx = xyz[fi_crd1 + inmon13 + m1]
                                     - xyz[fi_crd2 + jnmon23 + m2];
@@ -343,8 +340,6 @@ namespace elec {
                   // Update the field
                   const size_t shift1 = first_ind[fi_mon1 + m1];
                   const size_t shift2 = first_ind[fi_mon2 + m2];
-                  const size_t shift13 = 3*shift1;
-                  const size_t shift23 = 3*shift2;
                   const size_t spi = shift1 + i;
                   const size_t spj = shift2 + j;
 
@@ -360,7 +355,7 @@ namespace elec {
                   Efqjz[m2] = ri * risq * chg[spi] * rijz;
                 }
 
-                for (size_t m2 = 0; m2 < nmon2; m2++) {
+                for (size_t m2 = m2init; m2 < nmon2; m2++) {
                   const size_t shift1 = first_ind[fi_mon1 + m1];
                   const size_t shift2 = first_ind[fi_mon2 + m2];
                   const size_t shift13 = 3*shift1;
@@ -470,7 +465,6 @@ namespace elec {
             // Get proper aDD
             double A = polfac[fi_sites + i] * polfac[fi_sites + j];
             if (A > constants::EPS) {
-              double Ai = 1/A;
               double Asqsq = A*A*A*A;
               for (size_t m = 0; m < nmon; m++) {
                 //  Distances and values that will be reused
@@ -490,8 +484,6 @@ namespace elec {
                 const double arA4 = aDD*rA4;
                 // TODO look at the exponential function intel vec
                 const double exp1 = std::exp(-arA4);
-                const double a_mrt = std::pow(aCC, 1.0/4.0);
-                //const double a4 = aCC * 4.0;
   
                 // Get screening functions
                 const double s1r = ri - exp1*ri;
@@ -585,6 +577,8 @@ namespace elec {
           size_t ns2 = sites[fi_mon2];
           size_t nmon2 = mon_type_count[mt2].second;
           size_t nmon22 = nmon2*2;
+          double same = false;
+          if (mt1 == mt2) same = true;
           // TODO add neighbour list here
           for (size_t i = 0; i < ns1; i++) {
             size_t inmon1  = i*nmon1;
@@ -610,10 +604,10 @@ namespace elec {
               double A = polfac[fi_sites + i] * polfac[fi_sites + j];
               if (A > constants::EPS) {
                 A = std::pow(A,1.0/6.0);
-                double Ai = 1/A;
                 double Asqsq = A*A*A*A;
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  for (size_t m2 = 0; m2 < nmon2; m2++) {
+                  size_t m2init = same ? m1 + 1 : 0;
+                  for (size_t m2 = m2init; m2 < nmon2; m2++) {
                     //  Distances and values that will be reused
                     const double rijx = xyz[fi_crd1 + inmon13 + m1]
                                       - xyz[fi_crd2 + jnmon23 + m2];
@@ -632,8 +626,6 @@ namespace elec {
                     const double arA4 = aDD*rA4;
                     // TODO look at the exponential function intel vec
                     const double exp1 = std::exp(-arA4);
-                    const double a_mrt = std::pow(aCC, 1.0/4.0);
-                    //const double a4 = aCC * 4.0;
     
                     // Get screening functions
                     const double s1r = ri - exp1*ri;
@@ -654,9 +646,9 @@ namespace elec {
                     Efdcp8[m2] = ts2z * rijz - s1r3; // alpha = z, beta = z
                   }
                   // TODO sign ok?
-                  size_t shifti = fi_crd1 + ns1*m1 + 3*i;
+                  size_t shifti = fi_crd1 + ns1*m1 + i3;
                   for (size_t m2 = 0; m2 < nmon2; m2++) {
-                    size_t shiftj = fi_crd2 + ns2*m2 + 3*j;
+                    size_t shiftj = fi_crd2 + ns2*m2 + j3;
                     // TODO check indexes efd. Doesnt seem right
                     // Probably need to add fi_sites
                     Efd[shifti] += Efdcp0[m2] * mu[shiftj]
@@ -672,7 +664,8 @@ namespace elec {
                 }
               } else {
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  for (size_t m2 = 0; m2 < nmon2; m2++) {
+                  size_t m2init = same ? m1 + 1 : 0;
+                  for (size_t m2 = m2init; m2 < nmon2; m2++) {
                     //  Distances and values that will be reused
                     const double rijx = xyz[fi_crd1 + inmon13 + m1]
                                       - xyz[fi_crd2 + jnmon23 + m2];
@@ -703,9 +696,9 @@ namespace elec {
                     Efdcp7[m2] = ts2z * rijy;        // alpha = z, beta = y
                     Efdcp8[m2] = ts2z * rijz - s1r3; // alpha = z, beta = z
                   }
-                  size_t shifti = fi_crd1 + ns1*m1 + 3*i;
+                  size_t shifti = fi_crd1 + ns1*m1 + i3;
                   for (size_t m2 = 0; m2 < nmon2; m2++) {
-                    size_t shiftj = fi_crd2 + ns2*m2 + 3*j;
+                    size_t shiftj = fi_crd2 + ns2*m2 + j3;
                     // TODO check indexes efd. Doesnt seem right
                     // Probably need to add fi_sites
                     Efd[shifti] += Efdcp0[m2] * mu[shiftj]

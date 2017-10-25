@@ -24,11 +24,8 @@ namespace elec {
     const std::vector<std::string> mon_id,
     const std::vector<size_t> sites,
     const std::vector<size_t> first_ind,
-    const excluded_set_type& excluded12,
-    const excluded_set_type& excluded13,
-    const excluded_set_type& excluded14,
     const std::vector<std::pair<std::string,size_t>> mon_type_count,
-    const bool do_grads,
+    const double tolerance, const bool do_grads,
     std::vector<double> &grad);
 } //namespace elec
 
