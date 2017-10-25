@@ -47,5 +47,14 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
 // Returns the proper aDD value for the electrostatics
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
 
+void SetVSites(std::vector<double> &xyz, std::string mon_id,
+               size_t n_mon, size_t nsites, size_t fst_ind);
+void SetCharges(std::vector<double> &xyz, std::vector<double> &charges,
+                std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
+void SetPolfac (std::vector<double> &polfac, std::string mon_id,
+                size_t n_mon, size_t nsites, size_t fst_ind);
+void SetPol (std::vector<double> &atmpolar, std::vector<double> &polfac,
+             std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
+
 } // systools
 #endif // SYS_TOOLS_H

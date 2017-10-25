@@ -745,8 +745,16 @@ namespace elec {
     std::cerr << "Eelec = " << Eqq << "   Eind = " << Eind << std::endl;
 #endif
 
-    return Eqq + Eind;
+    // If no gradients, nothing else to do
+    if (!do_grads) return Eqq + Eind;
   
+    // Chg-Chg interactions
+    for (size_t i = 0; i < nsites; i++)
+      for (size_t j = 0; j < 3; j++) 
+        grad[3*i + j] -= chg[i]*Efq[3*i + j];
+
+    // Chg-dip and dip-dip
+    
   } 
 
 } // namespace elec
