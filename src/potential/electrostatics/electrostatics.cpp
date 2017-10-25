@@ -754,6 +754,8 @@ namespace elec {
         grad[3*i + j] -= chg[i]*Efq[3*i + j];
 
     // Chg-dip and dip-dip
+
+    return 0.0;
     
   } 
 
