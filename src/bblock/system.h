@@ -52,6 +52,9 @@ class System {
   std::vector<size_t> GetTrimers();
   std::vector<size_t> GetMolecule(size_t n);
   std::vector<double> GetSysXyz();
+  std::vector<double> GetCharges();
+  std::vector<double> GetPols();
+  std::vector<double> GetPolfacs();
   std::vector<std::string> GetSysAtNames();
   std::string GetMonId(size_t n);
   // Modifiers
@@ -65,9 +68,6 @@ class System {
   void SetCharges();
   void SetPols();
   void SetPolfacs();
-//  void SetNumMol(size_t n);
-//  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
-//  void SetXyz(double * coords);
   // Energy Functions
   // Energy computing gradients. The new gradients of ALL sites 
   // are returned in grd. 
@@ -85,6 +85,7 @@ class System {
   size_t maxNTriEval_;                       // Max number of trimers to be eval
   double cutoff2b_;                          // Cutoff for dim and trim search 
   double cutoff3b_;                          // Cutoff for dim and trim search 
+  double diptol_;
   double energy_;                            // Energy of the system
   bool initialized_;                         // Systes is initialized?
   std::vector<size_t> sites_;                // Number of sites of each mo
@@ -104,10 +105,6 @@ class System {
   std::vector<std::vector<size_t>> molecules_; 
   // Mon type and # mon of each
   std::vector<std::pair<std::string,size_t>> mon_type_count_;   
-  // Excluded pairs 12, 13 and 14
-  excluded_set_type excluded12;
-  excluded_set_type excluded13;
-  excluded_set_type excluded14;
 };
 
 } // namespace bblock

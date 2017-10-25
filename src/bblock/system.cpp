@@ -20,6 +20,9 @@ std::vector<size_t> System::GetTrimers() {return trimers_;}
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 std::vector<std::string> System::GetSysAtNames() {return atoms_;}
 std::vector<double> System::GetSysXyz() {return xyz_;}
+std::vector<double> System::GetCharges() {return chg_;}
+std::vector<double> System::GetPols() {return pol_;}
+std::vector<double> System::GetPolfacs() {return polfac_;}
 
 std::string System::GetMonId(size_t n) {return monomers_[n];}
 
@@ -49,6 +52,7 @@ void System::Initialize() {
 
   cutoff2b_ = 15.0;
   cutoff3b_ =  5.0;
+  diptol_ = 1E-06;
   maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
   maxNTriEval_ = 1024;
@@ -97,6 +101,10 @@ void System::AddMonomerInfo() {
 
   // Setting Gradients to 0
   grd_ = std::vector<double> (3*nsites_, 0.0);
+  chg_ = std::vector<double> (nsites_, 0.0);
+  pol_ = std::vector<double> (nsites_, 0.0);
+  polfac_ = std::vector<double> (nsites_, 0.0);
+  
   
 
 }
@@ -127,7 +135,7 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   // Note: Pols and Polfacs are constant
   SetCharges();
   SetPols();
-  SetPolfacs()
+  SetPolfacs();
 
   // Electrostatic energy
   double Eelec = GetElectrostatics(do_grads);
@@ -365,26 +373,28 @@ double System::Get3B(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void SetCharges() {
-
+void System::SetCharges() {
+  std::fill(chg_.begin(), chg_.end(), 0.0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void SetPols() {
-
+void System::SetPols() {
+  std::fill(pol_.begin(), pol_.end(), 0.0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void SetPolfacs() {
-
+void System::SetPolfacs() {
+  std::fill(polfac_.begin(), polfac_.end(), 0.0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double GetElectrostatics(bool do_grads) {
-
+double System::GetElectrostatics(bool do_grads) {
+  double elec = elec::electrostatics(chg_, polfac_, pol_, xyz_, monomers_, 
+    sites_, first_index_, mon_type_count_, diptol_, do_grads, grd_);
+  return elec;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
