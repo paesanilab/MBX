@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     systems[i].AddClusters(3,5.0,0,systems[i].GetNumMon());
 
     auto t13 = std::chrono::high_resolution_clock::now();
-    systems[i].Electrostatics(false);
+    systems[i].GetElectrostatics(false);
 
     auto t14 = std::chrono::high_resolution_clock::now();
 

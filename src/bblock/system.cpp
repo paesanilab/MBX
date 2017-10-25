@@ -400,7 +400,7 @@ void System::SetPols() {
     size_t nmon = mon_type_count_[k].second;
     size_t nsites = sites_[fi_mon];
     
-    systools::SetPol(pol_, polfac_, mon, nmon, nsites, first_index_[fi_mon]);
+    systools::SetPol(pol_, mon, nmon, nsites, first_index_[fi_mon]);
     fi_mon += nmon;
   }
 }
