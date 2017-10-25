@@ -62,6 +62,9 @@ class System {
   void Initialize();
   void AddMonomerInfo();
   void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
+  void SetCharges();
+  void SetPols();
+  void SetPolfacs();
 //  void SetNumMol(size_t n);
 //  void AddMolecule(std::shared_ptr<bblock::Molecule> molec);
 //  void SetXyz(double * coords);
@@ -72,6 +75,7 @@ class System {
   double Get1B(bool do_grads);
   double Get2B(bool do_grads);
   double Get3B(bool do_grads);
+  double GetElectrostatics(bool do_grads);
  private:
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers

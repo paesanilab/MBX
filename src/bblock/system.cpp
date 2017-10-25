@@ -56,8 +56,7 @@ void System::Initialize() {
   AddMonomerInfo();
   nmol_ = molecules_.size();
   nmon_ = monomers_.size();
-  //AddClusters(3, cutoff3b_);
-  //AddClusters(2, cutoff2b_);
+ 
   // TODO Here should go the order and rearrengement stuff
 }
 
@@ -124,8 +123,17 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   double e2b = Get2B(do_grads);
   double e3b = Get3B(do_grads);
 
+  // Set charges, polarizabilities and polfacs
+  // Note: Pols and Polfacs are constant
+  SetCharges();
+  SetPols();
+  SetPolfacs()
+
+  // Electrostatic energy
+  double Eelec = GetElectrostatics(do_grads);
+
   // Set up energy with the new value
-  energy_ = e1b + e2b + e3b;
+  energy_ = e1b + e2b + e3b + Eelec;
 
   // Copy gradients to output grd
   grd.clear();
@@ -354,38 +362,30 @@ double System::Get3B(bool do_grads) {
 
   return e3b;
 }
-//  // 3B ENERGY
-//  double e3b = 0;
-//  // trimers are ordered
-//  // TODO put this in chunk so can be vectorized
-//  // TODO Maybe initialize here all possible trimer structs?
-//  for (size_t i = 0; i < trimers_.size(); i+=3) {
-//    if (monomers_[trimers_[i]] == "h2o" and
-//        monomers_[trimers_[i + 1]] == "h2o" and
-//        monomers_[trimers_[i + 2]] == "h2o") {
-//      double grdx[27];
-//      std::fill(grdx, grdx + 27, 0.0);
-//      x2o::x3b_v2x pot;
-//      e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
-//                      xyz_.data() + 3*first_index_[trimers_[i + 1]],
-//                      xyz_.data() + 3*first_index_[trimers_[i + 2]], 
-//                      grdx, grdx + 9, grdx + 18);
-//      for (size_t j = 0; j < 9; j++) {
-//        grd_[3*first_index_[trimers_[i]] + j] += grdx[j];
-//        grd_[3*first_index_[trimers_[i + 1]] + j] += grdx[j + 9];
-//        grd_[3*first_index_[trimers_[i + 2]] + j] += grdx[j + 18];
-//      }
-//    }
-//  }
-//
-//  energy_ += e3b;
-//
-//
-//  // Putting gradients back to argument. All grads will be put there
-//  // Including Virtual Electrostatic sites
-//  // TODO Maybe change this
-//  grd.clear();
-//  grd = grd_;
+
+////////////////////////////////////////////////////////////////////////////////
+
+void SetCharges() {
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void SetPols() {
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void SetPolfacs() {
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double GetElectrostatics(bool do_grads) {
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
