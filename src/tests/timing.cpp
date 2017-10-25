@@ -13,8 +13,6 @@
 
 #include "bblock/system.h"
 
-#define PRINT_GRADS
-//#define NUM_GRADS
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -93,6 +91,9 @@ int main(int argc, char** argv)
     systems[i].AddClusters(3,5.0,0,systems[i].GetNumMon());
 
     auto t13 = std::chrono::high_resolution_clock::now();
+    systems[i].Electrostatics(false);
+
+    auto t14 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Energy:(nograd) "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
@@ -123,6 +124,9 @@ int main(int argc, char** argv)
       << " milliseconds\n";
     std::cout << "Get and set 3b clusters: "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t13 - t12).count()
+      << " milliseconds\n";
+    std::cout << "Electrostatics:(nograd) "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t14 - t13).count()
       << " milliseconds\n";
     
   }
