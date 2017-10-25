@@ -42,7 +42,10 @@ void GetExcluded(std::string mon,
                  excluded_set_type &exc14);
 
 // Returns if a pair a,b (or b,a) is in the excluded set exc
-bool is_excluded(excluded_set_type exc, size_t a, size_t b);
+bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
+
+// Returns the proper aDD value for the electrostatics
+double GetAdd(bool is12, bool is13, bool is14, std::string mon);
 
 } // systools
 #endif // SYS_TOOLS_H

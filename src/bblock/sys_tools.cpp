@@ -214,6 +214,19 @@ bool is_excluded(excluded_set_type exc, size_t a, size_t b) {
           (exc.find(std::make_pair(b, a)) != exc.end()));
 }
 
+double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
+  size_t aDD = 0.055;
+  if (mon == "h2o") {
+    if (is12) aDD = 0.626;
+    else aDD = 0.055;
+  } else {
+    if (is12 || is13) aDD = 0.3;
+    else aDD = 0.055;
+  }
+  
+  return aDD;
+}
+
 
 
 
