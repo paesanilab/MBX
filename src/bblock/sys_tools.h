@@ -50,15 +50,19 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
 // Returns the proper aDD value for the electrostatics
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
 
-// FIXME Add comments on what do these functions do
+// Calculates the coordinates of the virtual site of a monomer when
+// given the coordinates of the other sites
 void SetVSites(std::vector<double> &xyz, std::string mon_id,
                size_t n_mon, size_t nsites, size_t fst_ind);
-void SetCharges(std::vector<double> &xyz, std::vector<double> &charges,
+
+// Calculates the charges of all the sites in a monomer using its xyz
+// coordinates
+void SetCharges(std::vector<double> xyz, std::vector<double> &charges,
                 std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 void SetPolfac (std::vector<double> &polfac, std::string mon_id,
                 size_t n_mon, size_t nsites, size_t fst_ind);
 // FIXME polfac here should not be necessary (we are only setting pols
-void SetPol (std::vector<double> &atmpolar, std::vector<double> &polfac,
+void SetPol (std::vector<double> &pol, 
              std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
 } // systools

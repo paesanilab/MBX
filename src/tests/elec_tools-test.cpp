@@ -43,17 +43,37 @@ int main(int argc, char** argv)
   }
 
 
-
-
-  std::cout << "Charges:" << std::endl;
+  std::cout << "\nCharges:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> chg = system[i].GetCharges();
-    std::vector<std::string> at = system[i].GetSysAtNames();
-    for (size_t j = 0; j < system[i].GetNumSites(); j++) {
+    std::vector<double> chg = systems[i].GetCharges();
+    std::vector<std::string> at = systems[i].GetSysAtNames();
+    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
                 << std::setw(8)  << at[j] 
                 << std::setw(12) << chg[j] << std::endl;      
     }    
+  }
+  
+  std::cout << "\nPolfac: " << std::endl;
+  for (size_t i = 0; i < systems.size(); i++) {
+    std::vector<double> plfcs = systems[i].GetPolfacs();
+    std::vector<std::string> at = systems[i].GetSysAtNames();
+    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
+      std::cout << std::setprecision(5) << std::scientific
+                << std::setw(8)  << at[j]
+                << std::setw(12) << plfcs[j] << std::endl;
+    }
+  }
+
+  std::cout << "\nPols: " << std::endl;
+  for (size_t i = 0; i < systems.size(); i++) {
+    std::vector<double> pols = systems[i].GetPols();
+    std::vector<std::string> at = systems[i].GetSysAtNames();
+    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
+      std::cout << std::setprecision(5) << std::scientific
+                << std::setw(8)  << at[j]
+                << std::setw(12) << pols[j] << std::endl;
+    }
   }
   
 
