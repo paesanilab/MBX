@@ -356,19 +356,17 @@ void SetPol (std::vector<double> &atmpolar, std::vector<double> &polfac,
   if (mon_id == "h2o") {
     SetPolfac (polfac, mon_id, n_mon, nsites, fst_ind);
     for (size_t i = fst_ind; i < n_mon + fst_ind; i++) {
-      atmpolar[i] = polfac[i];
+      for (size_t ns = 0; ns < nsites; ns++) {
+        atmpolar[(i*nsites)+ns] = polfac[(i*nsites)+ns];
+      }
     }
 
-    // M using O polfac. Seen in set_pol of ttm4
+    // M using O polfac.
     for (size_t nv = 0; nv < n_mon; nv++) {
-      polfac[fst_ind + (nv*nsites) + 3] = polfac[fst_ind + nv*nsites];
+      atmpolar[(nv*nsites) + 3] = polfac[nv*nsites];
     }
   }
 }
-
-
-
-
 
 
 
