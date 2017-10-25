@@ -92,7 +92,7 @@ install:
 # END MRR 
   - cmake -H. -Bbuild
   - cd build
-  - travis_wait 40 make
+  - travis_wait 60 make
   - cd ../
 
 # MRR - 20170904
@@ -103,7 +103,7 @@ script:
   - ./test_003_io.sh
   - ./test_004_pairs.sh
   - ./test_005_energy_1w.sh
-  - ./test_006_energy_2w.sh
-  - ./test_007_energy_3w.sh
+#  - ./test_006_energy_2w.sh
+#  - ./test_007_energy_3w.sh
 # END MRR
 

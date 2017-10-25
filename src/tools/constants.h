@@ -2,6 +2,7 @@
 #define CONSTANTS_H
 
 #include <cmath>
+#include <limits>
 
 namespace constants {
 
@@ -29,6 +30,9 @@ const double kB = 1.3806488e-23; // JK-1 CODATA 2010
 
 const double DEBYE = 1.0/0.20822678;
 const double au2debye = Bohr_A/0.20822678;
+
+// Numeric limits
+const double EPS = std::numeric_limits<double>::epsilon();
 
 namespace details {
 
