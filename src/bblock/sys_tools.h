@@ -11,6 +11,9 @@
 #include "kdtree_utils.h"
 #include "tools/definitions.h"
 
+#include "potential/1b/ps.h"
+#include "tools/constants.h"
+
 namespace systools {
 
 // Function that given the monomers, modifies the ordered monomer list
