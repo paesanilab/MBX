@@ -1,5 +1,7 @@
 #include "potential/electrostatics/electrostatics.h"
 
+#define DEBUG
+
 namespace elec {
 
   double Electrostatics(const std::vector<double> chg,               
@@ -462,7 +464,6 @@ namespace elec {
             std::vector<double> Efdcp7(nmon,0.0);
             std::vector<double> Efdcp8(nmon,0.0);
             // TODO COntinue only if i and j are not bonded
-            // Get proper aDD
             double A = polfac[fi_sites + i] * polfac[fi_sites + j];
             if (A > constants::EPS) {
               double Asqsq = A*A*A*A;
@@ -647,7 +648,7 @@ namespace elec {
                   }
                   // TODO sign ok?
                   size_t shifti = fi_crd1 + ns1*m1 + i3;
-                  for (size_t m2 = 0; m2 < nmon2; m2++) {
+                  for (size_t m2 = m2init; m2 < nmon2; m2++) {
                     size_t shiftj = fi_crd2 + ns2*m2 + j3;
                     // TODO check indexes efd. Doesnt seem right
                     // Probably need to add fi_sites
