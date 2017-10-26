@@ -52,11 +52,11 @@ void System::Initialize() {
 
   cutoff2b_ = 15.0;
   cutoff3b_ =  5.0;
-  diptol_ = 1E-06;
+  diptol_ = 1E-12;
   maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
   maxNTriEval_ = 1024;
-  maxItDip_ = 1000;
+  maxItDip_ = 100;
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
