@@ -42,6 +42,21 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  std::cout << "M-sites:" << std::endl;
+  std::cout << "	X		Y			Z" << std::endl;
+  for (size_t i = 0; i < systems.size(); i++) {
+    std::vector<double> xyz = systems[i].GetSysXyz();
+    std::vector<std::string> at = systems[i].GetSysAtNames();
+    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
+      std::cout << std::setprecision(5) << std::scientific
+                << std::setw(8)  << at[j]
+                << std::setw(12);
+      for (size_t k = 0; k < 3; k++) {
+        std::cout << xyz[3*j + i*3*systems[i].GetNumSites()+k] << "	";
+      }
+      std::cout << std::endl;
+    }
+  }
 
   std::cout << "\nCharges:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
