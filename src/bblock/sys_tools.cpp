@@ -246,6 +246,7 @@ void SetVSites (std::vector<double> &xyz, std::string mon_id,
     size_t nmns2 = nmns*2;
     size_t nmns3 = nmns*3;
 
+    // TODO Not vectorized
     // Reorganize data so is contigious
     std::vector<double> xyz2(nmns*nsites,0.0);
     for (size_t nv = 0; nv < n_mon; nv++) {
@@ -269,6 +270,7 @@ void SetVSites (std::vector<double> &xyz, std::string mon_id,
       }
     }
 
+    // TODO Not vectorized
     // Return the M-site coordinates to the original xyz vector
     for (size_t nv = 0; nv < n_mon; nv++) {
       size_t nvns3 = nv*nsites*3;
@@ -284,10 +286,14 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
     size_t fst_ind) {
 
   if (mon_id == "h2o") {
-    // chgtmp = M, H1, H2 according to ttm4.
+
+    // chgtmp = M, H1, H2 according to ttm4.cpp
     std::vector<double> chgtmp;
     size_t fstind_3 = 3*fst_ind;
 
+    // TODO NOT VECTORIZED because of creation of vector objects within loop
+    // However vector objects currently needed because dms_nasa can only
+    // calculate charge for 1 atom at a time
     // Calculate individual monomer's charges
     for (size_t nv = 0; nv < n_mon; nv++) {
 
@@ -300,17 +306,21 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
       std::vector<double> atomcoords(first, end);
       std::vector<double> chgtmpnv((nsites-1));
 
+      // Calculating charge
       ps::dms_nasa (0.0, 0.0, 0.0, atomcoords.data(), chgtmpnv.data(), 0, false);
       // Inserting the found charges into chgtmp vector before calculating
       // new charge values
       chgtmp.insert (chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
     }
 
+    // Constant that calculates charge
     const double CHARGECON = constants::CHARGECON;
 
-    // Reorganize 
+    // Creating vector with contiguous data
     std::vector<double> chg2(n_mon*nsites,0.0);
-    // looping over number of monomers
+
+    // TODO Multiversioning
+    // Reorganizing sites
     for (size_t nv = 0; nv < n_mon; nv++) {
       // looping over sites -- H1 and H2
       for (size_t i = 1; i < nsites - 1; i++) {
@@ -329,13 +339,17 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
       size_t hy2 = 2*n_mon + nv;
       size_t msite = 3*n_mon + nv;
 
+      // Hydrogen1
       chg2[hy1] = CHARGECON*(chg2temp[hy1] + 
                              gamma21*(chg2temp[hy1]+chg2temp[hy2]));
+      // Hydrogen2
       chg2[hy2] = CHARGECON*(chg2temp[hy2] +
                              gamma21*(chg2temp[hy1]+chg2temp[hy2]));
+      // M
       chg2[msite] = CHARGECON*(chg2temp[msite]/(1.0-gammaM));
     }
 
+    // TODO multiversioning
     // Return all coordinates to the original vector
     for (size_t nv = 0; nv < n_mon; nv++) {
       for (size_t j = 0; j < nsites; j++) {
@@ -349,12 +363,32 @@ void SetPolfac (std::vector<double> &polfac, std::string mon_id,
     size_t n_mon, size_t nsites, size_t fst_ind){
 
   if (mon_id == "h2o") {
-    // edit
+    /* old loop -- not vectorized
     for (size_t nv = 0; nv < n_mon; nv++) {
       polfac[fst_ind + nv*nsites] = 1.310;
       polfac[fst_ind + (nv*nsites)+1] = 0.294;
       polfac[fst_ind + (nv*nsites)+2] = 0.294;
       polfac[fst_ind + (nv*nsites)+3] = 0.0;
+    }*/
+    
+    // Creating vector with contiguous data
+    std::vector<double> polfac2(n_mon*nsites,0.0);
+    for (size_t nv = 0; nv < n_mon; nv++) {
+      // Oxygen
+      polfac2[nv] = 1.310;
+
+      // looping over sites -- H1 and H2
+      for (size_t i = 1; i < nsites - 1; i++) {
+        polfac2[nv + i*n_mon] = 0.294;
+      }
+    }
+    
+    // TODO Multiversioning
+    // Return all polfacs to the original vector
+    for (size_t nv = 0; nv < n_mon; nv++) {
+      for (size_t j = 0; j < nsites; j++) {
+        polfac[nv*nsites + j + fst_ind] = polfac2[nv + n_mon*j];
+      }
     }
   }
 }
@@ -363,13 +397,35 @@ void SetPol (std::vector<double> &pol,
     std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind){
 
   if (mon_id == "h2o") {
+    /* Old loop -- not vectorized
     for (size_t nv = 0; nv < n_mon; nv++) {
       pol[fst_ind + nv*nsites] = 1.310;
       pol[fst_ind + (nv*nsites)+1] = 0.294;
       pol[fst_ind + (nv*nsites)+2] = 0.294;
       pol[fst_ind + (nv*nsites)+3] = 1.310;
-    }
+    }*/
 
+    // Creating vector with contiguous data
+    std::vector<double> pol2(n_mon*nsites,0.0);
+    for (size_t nv = 0; nv < n_mon; nv++) {
+      // Oxygen
+      pol2[nv] = 1.310;
+
+      // looping over sites -- H1 and H2
+      for (size_t i = 1; i < nsites - 1; i++) {
+        pol2[nv + i*n_mon] = 0.294;
+      }
+      // M site
+      pol2[nv + n_mon*3] = 1.310;
+    }
+   
+    // TODO Multiversioning 
+    // Return all pols to the original vector
+    for (size_t nv = 0; nv < n_mon; nv++) {
+      for (size_t j = 0; j < nsites; j++) {
+        pol[nv*nsites + j + fst_ind] = pol2[nv + n_mon*j];
+      }
+    }
   }
 }
 
