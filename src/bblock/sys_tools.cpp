@@ -208,6 +208,8 @@ void GetExcluded(std::string mon,
     exc12.insert(std::make_pair(0,1));
     exc12.insert(std::make_pair(0,2));
     exc12.insert(std::make_pair(0,3));
+//    exc12.insert(std::make_pair(1,3));
+//    exc12.insert(std::make_pair(2,3));
     // 13 distances
     exc13.insert(std::make_pair(1,2));
     exc13.insert(std::make_pair(1,3));
@@ -221,13 +223,19 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b) {
 }
 
 double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
-  size_t aDD = 0.055;
+  double aDD = 0.055;
   if (mon == "h2o") {
-    if (is12) aDD = 0.626;
-    else aDD = 0.055;
+    if (is12) {
+      aDD = 0.626;
+    } else {
+      aDD = 0.055;
+    }
   } else {
-    if (is12 || is13) aDD = 0.3;
-    else aDD = 0.055;
+    if (is12 || is13) {
+      aDD = 0.3;
+    } else {
+      aDD = 0.055;
+    }
   }
   
   return aDD;
@@ -368,7 +376,7 @@ void SetPolfac (std::vector<double> &polfac, std::string mon_id,
       polfac[fst_ind + nv*nsites] = 1.310;
       polfac[fst_ind + (nv*nsites)+1] = 0.294;
       polfac[fst_ind + (nv*nsites)+2] = 0.294;
-      polfac[fst_ind + (nv*nsites)+3] = 0.0;
+      polfac[fst_ind + (nv*nsites)+3] = 1.310;
     }*/
     
     // Creating vector with contiguous data
@@ -381,6 +389,8 @@ void SetPolfac (std::vector<double> &polfac, std::string mon_id,
       for (size_t i = 1; i < nsites - 1; i++) {
         polfac2[nv + i*n_mon] = 0.294;
       }
+      // M site
+      pol2[nv + n_mon*3] = 0.0;
     }
     
     // TODO Multiversioning
@@ -402,8 +412,9 @@ void SetPol (std::vector<double> &pol,
       pol[fst_ind + nv*nsites] = 1.310;
       pol[fst_ind + (nv*nsites)+1] = 0.294;
       pol[fst_ind + (nv*nsites)+2] = 0.294;
-      pol[fst_ind + (nv*nsites)+3] = 1.310;
-    }*/
+      pol[fst_ind + (nv*nsites)+3] = 0.0;
+    }
+    */
 
     // Creating vector with contiguous data
     std::vector<double> pol2(n_mon*nsites,0.0);
@@ -415,8 +426,6 @@ void SetPol (std::vector<double> &pol,
       for (size_t i = 1; i < nsites - 1; i++) {
         pol2[nv + i*n_mon] = 0.294;
       }
-      // M site
-      pol2[nv + n_mon*3] = 1.310;
     }
    
     // TODO Multiversioning 
