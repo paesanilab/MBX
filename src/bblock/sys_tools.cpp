@@ -390,7 +390,7 @@ void SetPolfac (std::vector<double> &polfac, std::string mon_id,
         polfac2[nv + i*n_mon] = 0.294;
       }
       // M site
-      pol2[nv + n_mon*3] = 0.0;
+      polfac2[nv + n_mon*3] = 1.310;
     }
     
     // TODO Multiversioning
