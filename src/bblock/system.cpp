@@ -50,9 +50,9 @@ void System::AddMolecule(std::vector<size_t> molec) {
 void System::Initialize() {
   if (initialized_) return;
 
-  cutoff2b_ = 15.0;
+  cutoff2b_ = 100.0;
   cutoff3b_ =  5.0;
-  diptol_ = 1E-12;
+  diptol_ = 1E-16;
   maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
   maxNTriEval_ = 1024;
@@ -148,6 +148,10 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
 
   // Set up energy with the new value
   energy_ = e1b + e2b + e3b + Eelec;
+  std::cerr << "1B = " << e1b << std::endl
+            << "2B = " << e2b << std::endl
+            << "3B = " << e3b << std::endl
+            << "Elec = " << Eelec << std::endl;
 
   // Copy gradients to output grd
   grd.clear();
@@ -231,7 +235,7 @@ double System::Get2B(bool do_grads) {
   // Vectorizable part
   size_t istart = 0;
   size_t iend = 0;
-  size_t step = 1024;
+  size_t step = 1;
 
   while (istart < nmon_) {
 //    if (nmon_ < maxNDimEval_) {
@@ -315,7 +319,7 @@ double System::Get2B(bool do_grads) {
     } 
     istart = iend;
   }
-  //std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
+  std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
 
   //std::cerr << "dimers done: " << e2b + edisp << std::endl;
   return e2b + edisp;

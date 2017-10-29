@@ -102,6 +102,10 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
   return count;
 }
 
+bool compare_pair (std::pair<size_t,double> a, std::pair<size_t,double> b) {
+  return a.first < b.first;
+}
+
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, 
                  size_t nmon, 
                  std::vector<double> xyz_orig,
@@ -143,6 +147,8 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
   dimers.clear();
   if (n_max > 2)
     trimers.clear();
+
+  std::vector<size_t> idone;
   for (size_t i = 0; i < iend - istart; i++) {
     // Define the query point
     double point[3];
@@ -156,15 +162,26 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
     const size_t nMatches = index.radiusSearch(point,
       cutoff * cutoff, ret_matches, params);
 
+    std::sort(ret_matches.begin(), ret_matches.end(), compare_pair);
+    std::set<std::pair<size_t, size_t>> donek;
+
     // Add the pairs that are not in the dimer vector
     for (size_t j = 0; j < nMatches; j++) {
       if (ret_matches[j].first > i) {
         dimers.push_back(i + istart);
         dimers.push_back(ret_matches[j].first + istart);
 
-
         // Add trimers if requested
         if (n_max > 2) {
+          for (size_t k = 0; k < nMatches; k++) {
+            if (ret_matches[k].first > ret_matches[j].first) {
+              trimers.push_back(i + istart);
+              trimers.push_back(ret_matches[j].first + istart);
+              trimers.push_back(ret_matches[k].first + istart); 
+              donek.insert(std::make_pair(ret_matches[j].first,
+                                          ret_matches[k].first));
+            } 
+          }
           // Define query point, which is each of the points 'j' inside the 
           // radius of 'i' 
           double point2[3];
@@ -175,15 +192,27 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
           nanoflann::SearchParams params2;
           const size_t nMatches2 = index.radiusSearch(point2,
             cutoff * cutoff, ret_matches2, params2);
+          
+          std::sort(ret_matches2.begin(), ret_matches2.end(), compare_pair);
 
           // Add the trimers that fulfil i > j > k, to avoid double counting
           // We will add all trimers that fulfill the condition:
           // At least 2 of the three distances must be smaller than the cutoff 
+          std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> ret;
           for (size_t k = 0; k < nMatches2; k++) {
-            if (ret_matches2[k].first > ret_matches[j].first) {
-              trimers.push_back(i + istart);
-              trimers.push_back(ret_matches[j].first + istart);
-              trimers.push_back(ret_matches2[k].first + istart);
+            if (ret_matches2[k].first > i) {
+              size_t jel = ret_matches[j].first;
+              size_t kel = ret_matches2[k].first;
+              if (ret_matches[j].first > ret_matches2[k].first) {
+                jel = ret_matches2[k].first;
+                kel = ret_matches[j].first;
+              }
+              ret = donek.insert(std::make_pair(jel,kel));
+              if (ret.second && kel > jel) {
+                trimers.push_back(i + istart);
+                trimers.push_back(jel + istart);
+                trimers.push_back(kel + istart);
+              }
             }
           }
         }
