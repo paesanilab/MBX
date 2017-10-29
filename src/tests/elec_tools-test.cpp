@@ -42,6 +42,21 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  std::cout << "M-sites:" << std::endl;
+  std::cout << "	X		Y			Z" << std::endl;
+  for (size_t i = 0; i < systems.size(); i++) {
+    std::vector<double> xyz = systems[i].GetSysXyz();
+    std::vector<std::string> at = systems[i].GetSysAtNames();
+    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
+      std::cout << std::setprecision(5) << std::scientific
+                << std::setw(8)  << at[j]
+                << std::setw(12);
+      for (size_t k = 0; k < 3; k++) {
+        std::cout << xyz[3*j + i*3*systems[i].GetNumSites()+k] << "	";
+      }
+      std::cout << std::endl;
+    }
+  }
 
   std::cout << "\nCharges:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
@@ -54,9 +69,9 @@ int main(int argc, char** argv)
     }    
   }
   
-  std::cout << "\nPolfac: " << std::endl;
+  std::cout << "\nPols: " << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> plfcs = systems[i].GetPolfacs();
+    std::vector<double> plfcs = systems[i].GetPols();
     std::vector<std::string> at = systems[i].GetSysAtNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
@@ -65,9 +80,9 @@ int main(int argc, char** argv)
     }
   }
 
-  std::cout << "\nPols: " << std::endl;
+  std::cout << "\nPolfacs: " << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> pols = systems[i].GetPols();
+    std::vector<double> pols = systems[i].GetPolfacs();
     std::vector<std::string> at = systems[i].GetSysAtNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
