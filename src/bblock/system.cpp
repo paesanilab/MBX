@@ -148,10 +148,13 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
 
   // Set up energy with the new value
   energy_ = e1b + e2b + e3b + Eelec;
+
+# ifdef DEBUG
   std::cerr << "1B = " << e1b << std::endl
             << "2B = " << e2b << std::endl
             << "3B = " << e3b << std::endl
             << "Elec = " << Eelec << std::endl;
+# endif
 
   // Copy gradients to output grd
   grd.clear();
@@ -282,7 +285,6 @@ double System::Get2B(bool do_grads) {
       if (monomers_[dimers_[i]] != m1 ||
           monomers_[dimers_[i + 1]] != m2 ||
           i == dimers_.size() - 2 || nd == maxNDimEval_) {
-        //std::cerr << "i = " << i << " / " << dimers_.size() - 1 << std::endl;
         if (do_grads) {
           // POLYNOMIALS
           e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
@@ -319,9 +321,11 @@ double System::Get2B(bool do_grads) {
     } 
     istart = iend;
   }
-  std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
 
-  //std::cerr << "dimers done: " << e2b + edisp << std::endl;
+# ifdef DEBUG
+  std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
+# endif
+
   return e2b + edisp;
 }
 
@@ -375,7 +379,6 @@ double System::Get3B(bool do_grads) {
       }
     }
     istart = iend;
-    //if ((i +3)%3072 == 0 ) std::cerr << i << " / " << trimers_.size() << std::endl;
   }
 
   return e3b;
