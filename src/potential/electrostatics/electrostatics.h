@@ -14,6 +14,7 @@
 
 namespace elec {
   double Electrostatics(const std::vector<double> chg,
+    const std::vector<double> chg_grd,
     const std::vector<double> polfac,
     const std::vector<double> pol,
     const std::vector<double> orig_xyz,
