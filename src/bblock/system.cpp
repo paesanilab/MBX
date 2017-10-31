@@ -66,7 +66,7 @@ void System::Initialize() {
   SetCharges();
   SetPols();
   SetPolfacs();
- 
+
   // TODO Here should go the order and rearrengement stuff
 }
 
@@ -139,6 +139,7 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
 
   // Set charges, polarizabilities and polfacs
   // Note: Pols and Polfacs are constant
+  SetVSites();
   SetCharges();
   SetPols();
   SetPolfacs();
@@ -393,7 +394,8 @@ void System::SetCharges() {
     size_t nmon = mon_type_count_[k].second;
     size_t nsites = sites_[fi_mon];
     
-    systools::SetCharges(xyz_, chg_, mon, nmon, nsites, first_index_[fi_mon]);
+    systools::SetCharges(xyz_, chg_, mon, nmon, nsites, 
+                first_index_[fi_mon], chggrd_);
     fi_mon += nmon;
   }
 }
@@ -443,8 +445,9 @@ void System::SetVSites() {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-  double elec = elec::Electrostatics(chg_, polfac_, pol_, xyz_, monomers_, 
-    sites_, first_index_, mon_type_count_, diptol_, maxItDip_, do_grads, grd_);
+  double elec = elec::Electrostatics(chg_, chggrd_, polfac_, 
+                pol_, xyz_, monomers_, sites_, first_index_, 
+                mon_type_count_, diptol_, maxItDip_, do_grads, grd_);
   return elec;
 }
 

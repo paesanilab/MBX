@@ -319,14 +319,17 @@ void SetVSites (std::vector<double> &xyz, std::string mon_id,
 }
 
 void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
-    std::string mon_id, size_t n_mon, size_t nsites,
-    size_t fst_ind) {
+         std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind, 
+         std::vector<double> &chg_der) {
 
+  // Note, for now, assuming only water has site dependant charges
   if (mon_id == "h2o") {
 
     // chgtmp = M, H1, H2 according to ttm4.cpp
     std::vector<double> chgtmp;
     size_t fstind_3 = 3*fst_ind;
+    
+    chg_der = std::vector<double>(27*n_mon, 0.0);
 
     // TODO NOT VECTORIZED because of creation of vector objects within loop
     // However vector objects currently needed because dms_nasa can only
@@ -335,6 +338,7 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
     for (size_t nv = 0; nv < n_mon; nv++) {
 
       size_t ns3 = nsites*3;
+      size_t shift = 27*nv;
       
       // Getting front and end of xyz vector of 1 monomer in system
       std::vector<double>::const_iterator first = xyz.begin()+(nv*ns3)+fstind_3;
@@ -344,7 +348,8 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
       std::vector<double> chgtmpnv((nsites-1));
 
       // Calculating charge
-      ps::dms_nasa (0.0, 0.0, 0.0, atomcoords.data(), chgtmpnv.data(), 0, false);
+      ps::dms_nasa (0.0, 0.0, 0.0, atomcoords.data(), 
+                    chgtmpnv.data(), chg_der.data() + shift, false);
       // Inserting the found charges into chgtmp vector before calculating
       // new charge values
       chgtmp.insert (chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
@@ -467,8 +472,76 @@ void SetPol (std::vector<double> &pol,
   }
 }
 
+// Assuming for now xyzxyzxyz...
+void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon,
+        const size_t fi_crd, std::vector<double> &grd) {
 
+  if (mon == "h2o") {
+    for (size_t i = 0; i < nmon; i++) {
+      const size_t shift = fi_crd + i*4*3;
+      for (size_t k = 0; k < 3; ++k) {
+        grd[shift + k] += gamma1*grd[shift + 9 + k]; // O
+        grd[shift + 3 + k] += gamma2*grd[shift + 9 + k]; // H
+        grd[shift + 6 + k] += gamma2*grd[shift + 9 + k]; // H
+        grd[shift + 9 + k] = 0.0; // M
+      }
+    }
+  }
+}
 
+void ChargeDerivativeForce(const std::string mon, const size_t nmon,
+        const size_t fi_crd, const size_t fi_sites, 
+        const std::vector<double> phi, std::vector<double> &grd,
+        const std::vector<double> chg_grd) {
+  if (mon == "h2o") {
+    for (size_t mm = 0; mm < nmon; mm++) {
+      const size_t shift = fi_crd + 12*mm;
+      const size_t sphi = fi_sites + 4*mm;
+      double grdq[27];
+      std::fill(grdq, grdq + 27, 0.0);
+      double chgdev[27];
+      std::copy(chg_grd.begin() + 27*mm, 
+                chg_grd.begin() + 27*(mm + 1), chgdev);
 
+      #define DQ3(l,m,k) chgdev[k + 3*(m + 3*l)]
+      #define GRDQ(l,m,k) grdq[k + 3*(m + 3*l)]
+
+      for (size_t k = 0; k < 3; ++k) {
+          GRDQ(0, 0, k) = DQ3(0, 0, k) + gamma21*(DQ3(0, 0, k) + DQ3(0, 1, k));
+          GRDQ(1, 0, k) = DQ3(1, 0, k) + gamma21*(DQ3(1, 0, k) + DQ3(1, 1, k));
+          GRDQ(2, 0, k) = DQ3(2, 0, k) + gamma21*(DQ3(2, 0, k) + DQ3(2, 1, k));
+
+          GRDQ(0, 1, k) = DQ3(0, 1, k) + gamma21*(DQ3(0, 1, k) + DQ3(0, 0, k));
+          GRDQ(1, 1, k) = DQ3(1, 1, k) + gamma21*(DQ3(1, 1, k) + DQ3(1, 0, k));
+          GRDQ(2, 1, k) = DQ3(2, 1, k) + gamma21*(DQ3(2, 1, k) + DQ3(2, 0, k));
+
+          GRDQ(0, 2, k) = DQ3(0, 2, k) - 2*gamma21*(DQ3(0, 0, k) + DQ3(0, 1, k));
+          GRDQ(1, 2, k) = DQ3(1, 2, k) - 2*gamma21*(DQ3(1, 0, k) + DQ3(1, 1, k));
+          GRDQ(2, 2, k) = DQ3(2, 2, k) - 2*gamma21*(DQ3(2, 0, k) + DQ3(2, 1, k));
+      }
+
+      for(size_t i = 0; i < 27; ++i)
+          grdq[i] *= constants::CHARGECON;
+
+      const size_t io  = shift;
+      const size_t ih1 = shift + 3;
+      const size_t ih2 = shift + 6;
+
+      for (size_t k = 0; k < 3; ++k) {
+          grd[ih1 + k] += GRDQ(0, 0, k)*phi[sphi + 1]  // phi(h1)
+                         + GRDQ(0, 1, k)*phi[sphi + 2]  // phi(h2)
+                         + GRDQ(0, 2, k)*phi[sphi + 3]; // phi(M)
+
+          grd[ih2 + k] += GRDQ(1, 0, k)*phi[sphi + 1]  // phi(h1)
+                         + GRDQ(1, 1, k)*phi[sphi + 2]  // phi(h2)
+                         + GRDQ(1, 2, k)*phi[sphi + 3]; // phi(M)
+
+          grd[ io + k] += GRDQ(2, 0, k)*phi[sphi + 1]  // phi(h1)
+                         + GRDQ(2, 1, k)*phi[sphi + 2]  // phi(h2)
+                         + GRDQ(2, 2, k)*phi[sphi + 3]; // phi(M)
+      }
+    }
+  }
+}
 
 } //systools

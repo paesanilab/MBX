@@ -97,6 +97,7 @@ class System {
   std::vector<size_t> dimers_;               // Dimers of the molecule
   std::vector<size_t> trimers_;              // Trimers of the molecule
   std::vector<double> grd_;                  // Gradients of all sites
+  std::vector<double> chggrd_;                  // Gradients of pos dep chg
   std::vector<double> xyz_;                  // Coords of all sites
   std::vector<double> chg_;                  // Charges of all sites
   std::vector<double> pol_;                  // Polarizabilities of all sites
