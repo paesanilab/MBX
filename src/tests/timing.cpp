@@ -94,6 +94,9 @@ int main(int argc, char** argv)
     systems[i].GetElectrostatics(false);
 
     auto t14 = std::chrono::high_resolution_clock::now();
+    systems[i].GetElectrostatics(true);
+
+    auto t15 = std::chrono::high_resolution_clock::now();
 
     std::cout << "Energy:(nograd) "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
@@ -127,6 +130,9 @@ int main(int argc, char** argv)
       << " milliseconds\n";
     std::cout << "Electrostatics:(nograd) "
       << std::chrono::duration_cast<std::chrono::milliseconds>(t14 - t13).count()
+      << " milliseconds\n";
+    std::cout << "Electrostatics:(grad) "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t15 - t14).count()
       << " milliseconds\n";
     
   }
