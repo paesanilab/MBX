@@ -103,8 +103,8 @@ script:
   - ./test_003_io.sh
   - ./test_004_pairs.sh
   - ./test_005_energy_1w.sh
-#  - ./test_006_energy_2w.sh
-#  - ./test_007_energy_3w.sh
+  - ./test_006_energy_2w.sh
+  - ./test_007_energy_3w.sh
   - ./test_008_elec_tools.sh
 # END MRR
 
