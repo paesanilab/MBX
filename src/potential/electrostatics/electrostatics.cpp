@@ -1,10 +1,10 @@
 #include "potential/electrostatics/electrostatics.h"
 
-#define DEBUG
+//#define DEBUG
 
 namespace elec {
 
-  double Electrostatics(const std::vector<double> chg,               
+  double Electrostatics(const std::vector<double> orig_chg,               
     const std::vector<double> chg_grd, 
     const std::vector<double> polfac, 
     const std::vector<double> pol, 
@@ -18,16 +18,16 @@ namespace elec {
 
     // Damping declarations
     const double aCC = 0.4;
+    const double aCC1_4 = std::pow(aCC,0.25);
     const double aCD = 0.4;
-    //const double aCD = 0.4;
     double aDD = 0.055;
 
+
     // Constants that will be used later
-    const double g34 = std::exp(gammln(3.0/4.0));
+    const double g34 = std::exp(gammln(0.75));
 
     // System properties and sizes
-    const size_t nsites = chg.size();
-    std::vector<double> sqrtpol(3*nsites, 0.0);
+    const size_t nsites = orig_chg.size();
 
     // Electric fields and potential
     std::vector<double> Efq(3*nsites,0.0);
@@ -36,39 +36,42 @@ namespace elec {
 
     // Dipole vector
     std::vector<double> mu(3*nsites,0.0);
-    
-    // Squareroot all pols
-    for (size_t j = 0; j < nsites; j++) {
-      const size_t j3 = 3*j;
-      const double sq = std::sqrt(pol[j]);
-      for (size_t i = 0; i < 3; i++) {
-        sqrtpol[j3 + i] = sq;
-      }
-    }
+
+    // Max number of monomers
+    // TODO this will be the last one of mon_type_count
+    size_t maxnmon = mon_type_count.back().second;
+    Field f(maxnmon);
 
     // Organize xyz so we have x1_1 x1_2 ... y1_1 y1_2...
     // where xN_M is read as coordinate x of site N of monomer M
     // for the first monomer type. Then follows the second, and so on.
     std::vector<double> xyz(3*nsites,0.0);
+    std::vector<double> chg(nsites,0.0);
     size_t fi_mon = 0;
     size_t fi_crd = 0;
+    size_t fi_sites = 0;
     for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
       size_t ns = sites[fi_mon];
       size_t nmon = mon_type_count[mt].second;
       size_t nmon2 = nmon*2;
       for (size_t m = 0; m < nmon; m++) {
-        size_t mns3 = m*ns*3;
+        size_t mns = m*ns;
+        size_t mns3 = mns*3;
         for (size_t i = 0; i < ns; i++) {
-          size_t inmon3 = 3*i*nmon;
+          size_t inmon = i*nmon;
+          size_t inmon3 = 3*inmon;
           xyz[inmon3 + m + fi_crd] = 
                  orig_xyz[fi_crd + mns3 + 3*i];
           xyz[inmon3 + m + fi_crd + nmon] = 
                  orig_xyz[fi_crd + mns3 + 3*i + 1];
           xyz[inmon3 + m + fi_crd + nmon2] = 
                  orig_xyz[fi_crd + mns3 + 3*i + 2];
+          chg[fi_sites + m + inmon] = 
+                 orig_chg[fi_sites + mns + i];
         }
       }
       fi_mon += nmon;
+      fi_sites += nmon*ns;
       fi_crd += nmon*ns*3;
     }
 
@@ -76,7 +79,7 @@ namespace elec {
     // Sites on the same monomer
     fi_mon = 0;
     fi_crd = 0;
-    size_t fi_sites = 0;
+    fi_sites = 0;
 
     // Excluded sets
     excluded_set_type exc12;
@@ -86,16 +89,9 @@ namespace elec {
     for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
       size_t ns = sites[fi_mon];
       size_t nmon = mon_type_count[mt].second;
-      size_t nmon2 = nmon*2;
       systools::GetExcluded(mon_id[fi_mon], exc12, exc13, exc14);
       for (size_t i = 0; i < ns -1; i++) {
-        size_t inmon  = i*nmon;
-        size_t inmon3  = 3*inmon;
-        size_t i3 = 3*i;
         for (size_t j = i + 1; j < ns; j++) {
-          size_t jnmon  = j*nmon;
-          size_t jnmon3  = 3*jnmon;
-          size_t j3 = 3*j;
 
           // Continue only if i and j are not bonded
           bool is12 = systools::IsExcluded(exc12, i, j);
@@ -106,106 +102,21 @@ namespace elec {
           // Get a1a2 and check if is not 0.
           double A = polfac[fi_sites + i] * polfac[fi_sites + j];
 
-          std::vector<double> phii(nmon,0.0);
-          std::vector<double> phij(nmon,0.0);
-          std::vector<double> Efqix(nmon,0.0);
-          std::vector<double> Efqjx(nmon,0.0);
-          std::vector<double> Efqiy(nmon,0.0);
-          std::vector<double> Efqjy(nmon,0.0);
-          std::vector<double> Efqiz(nmon,0.0);
-          std::vector<double> Efqjz(nmon,0.0);
-
           if (A > constants::EPS) {
             A = std::pow(A,1.0/6.0);
             double Ai = 1/A;
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
-              //  Distances and values that will be reused
-              const double rijx = xyz[fi_crd + inmon3 + m] 
-                                - xyz[fi_crd + jnmon3 + m];
-              const double rijy = xyz[fi_crd + inmon3 + m + nmon] 
-                                - xyz[fi_crd + jnmon3 + m + nmon];
-              const double rijz = xyz[fi_crd + inmon3 + m + nmon2] 
-                                - xyz[fi_crd + jnmon3 + m + nmon2];
-              const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-              const double r = std::sqrt(rsq);
-              const double ri = 1.0/r;
-              const double risq = ri*ri;
-              const double rsqsq = rsq * rsq;
-
-              // Some values that will be used in the screening functions
-              const double rA4 = rsqsq/Asqsq;
-              const double arA4 = aCC*rA4;
-              // TODO look at the exponential function intel vec
-              const double exp1 = std::exp(-arA4);
-              const double gq = gammq(3.0/4.0, arA4);
-              //const double gq = 1.0;
-              const double a_mrt = std::pow(aCC, 1.0/4.0);
-              //const double a4 = aCC * 4.0;
-
-              // Get screening functions
-              const double s1r = ri - exp1*ri;
-              const double s0r = s1r + a_mrt * Ai * g34 * gq;
-              const double s1r3 = s1r * risq;
-
-              // Update the field
-              const size_t shift = first_ind[fi_mon + m];
-              const size_t spi = shift + i;
-              const size_t spj = shift + j;
-        
-              phii[m] = s0r *chg[spj];
-              phij[m] = s0r *chg[spi];
-     
-              // Update Electric field
-              Efqix[m] = s1r3 * chg[spj] * rijx;
-              Efqjx[m] = s1r3 * chg[spi] * rijx;
-              Efqiy[m] = s1r3 * chg[spj] * rijy;
-              Efqjy[m] = s1r3 * chg[spi] * rijy;
-              Efqiz[m] = s1r3 * chg[spj] * rijz;
-              Efqjz[m] = s1r3 * chg[spi] * rijz;
+              f.DoEfqWA(xyz, chg, m, m, m+1, fi_crd, fi_crd,
+                        fi_sites, fi_sites, nmon, nmon, i, j, Ai, Asqsq,
+                        aCC, aCC1_4, g34, phi, Efq);
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              //  Distances and values that will be reused
-              const double rijx = xyz[fi_crd + inmon3 + m]
-                                - xyz[fi_crd + jnmon3 + m];
-              const double rijy = xyz[fi_crd + inmon3 + m + nmon]
-                                - xyz[fi_crd + jnmon3 + m + nmon];
-              const double rijz = xyz[fi_crd + inmon3 + m + nmon2]
-                                - xyz[fi_crd + jnmon3 + m + nmon2];
-              const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-              const double r = std::sqrt(rsq);
-              const double ri = 1.0/r;
-              const double risq = ri*ri;
-
-              // Update the field
-              const size_t shift = first_ind[fi_mon + m];
-              const size_t spi = shift + i;
-              const size_t spj = shift + j;
-
-              phii[m] = ri * chg[spj];
-              phij[m] = ri * chg[spi];
-
-              // Update Electric field
-              Efqix[m] = ri * risq * chg[spj] * rijx;
-              Efqjx[m] = ri * risq * chg[spi] * rijx;
-              Efqiy[m] = ri * risq * chg[spj] * rijy;
-              Efqjy[m] = ri * risq * chg[spi] * rijy;
-              Efqiz[m] = ri * risq * chg[spj] * rijz;
-              Efqjz[m] = ri * risq * chg[spi] * rijz;            
+              f.DoEfqWA(xyz, chg, m, m+1, nmon, fi_crd, fi_crd,
+                        fi_sites, fi_sites, nmon, nmon, i, j, 0.0, 0.0,
+                        aCC, aCC1_4, g34, phi, Efq);
             }
-          }
-          for (size_t m = 0; m < nmon; m++) {
-            const size_t shift = first_ind[fi_mon + m];
-            const size_t shift3 = 3*shift;
-            phi[i + shift] += phii[m];
-            phi[j + shift] += phij[m];
-            Efq[shift3 + i3] += Efqix[m];
-            Efq[shift3 + j3] -= Efqjx[m];
-            Efq[shift3 + i3 + 1] += Efqiy[m];
-            Efq[shift3 + j3 + 1] -= Efqjy[m];
-            Efq[shift3 + i3 + 2] += Efqiz[m];
-            Efq[shift3 + j3 + 2] -= Efqjz[m];
           }
         }
       }
@@ -226,160 +137,34 @@ namespace elec {
     for (size_t mt1 = 0; mt1 < mon_type_count.size(); mt1++) {
       size_t ns1 = sites[fi_mon1];
       size_t nmon1 = mon_type_count[mt1].second;
-      size_t nmon12 = nmon1*2;
       fi_mon2 = fi_mon1;
       fi_sites2 = fi_sites1;
       fi_crd2 = fi_crd1;
       for (size_t mt2 = mt1; mt2 < mon_type_count.size(); mt2++) {
         size_t ns2 = sites[fi_mon2];
         size_t nmon2 = mon_type_count[mt2].second;
-        size_t nmon22 = nmon2*2;
         double same = false;
         if (mt1 == mt2) same = true;
         // TODO add neighbour list here
         for (size_t i = 0; i < ns1; i++) {
-          size_t inmon1  = i*nmon1;
-          size_t inmon13  = 3*inmon1;
-          size_t i3 = 3*i;
           for (size_t j = 0; j < ns2; j++) {
-            size_t jnmon2  = j*nmon2;
-            size_t jnmon23  = 3*jnmon2;
-            size_t j3 = 3*j;
-
             double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
-           
             if (A > constants::EPS) {
               A = std::pow(A,1.0/6.0);
               double Ai = 1/A;
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
-                std::vector<double> phii(nmon2,0.0);
-                std::vector<double> phij(nmon2,0.0);
-                std::vector<double> Efqix(nmon2,0.0);
-                std::vector<double> Efqjx(nmon2,0.0);
-                std::vector<double> Efqiy(nmon2,0.0);
-                std::vector<double> Efqjy(nmon2,0.0);
-                std::vector<double> Efqiz(nmon2,0.0);
-                std::vector<double> Efqjz(nmon2,0.0);
                 size_t m2init = same ? m1 + 1 : 0;
-                for (size_t m2 = m2init; m2 < nmon2; m2++) {
-                  //  Distances and values that will be reused
-                  const double rijx = xyz[fi_crd1 + inmon13 + m1] 
-                                    - xyz[fi_crd2 + jnmon23 + m2];
-                  const double rijy = xyz[fi_crd1 + inmon13 + m1 + nmon1] 
-                                    - xyz[fi_crd2 + jnmon23 + m2 + nmon2];
-                  const double rijz = xyz[fi_crd1 + inmon13 + m1 + nmon12] 
-                                    - xyz[fi_crd2 + jnmon23 + m2 + nmon22];
-                  const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                  const double r = std::sqrt(rsq);
-                  const double ri = 1.0/r;
-                  const double risq = ri*ri;
-                  const double rsqsq = rsq * rsq;
-    
-                  // Some values that will be used in the screening functions
-                  const double rA4 = rsqsq/Asqsq;
-                  const double arA4 = aCC*rA4;
-                  // TODO look at the exponential function intel vec
-                  const double exp1 = std::exp(-arA4);
-                  const double gq = gammq(3.0/4.0, arA4);
-                  //const double gq = 1.0;
-                  const double a_mrt = std::pow(aCC, 1.0/4.0);
-                  //const double a4 = aCC * 4.0;
-    
-                  // Get screening functions
-                  const double s1r = ri - exp1*ri;
-                  const double s0r = s1r + a_mrt * Ai * g34 * gq;
-                  const double s1r3 = s1r * risq;
-    
-                  // Update the field
-                  const size_t shift1 = first_ind[fi_mon1 + m1];
-                  const size_t shift2 = first_ind[fi_mon2 + m2];
-                  const size_t spi = shift1 + i;
-                  const size_t spj = shift2 + j;
-    
-                  phii[m2] = s0r *chg[spj];
-                  phij[m2] = s0r *chg[spi];
-    
-                  // Update Electric field
-                  Efqix[m2] = s1r3 * chg[spj] * rijx;
-                  Efqjx[m2] = s1r3 * chg[spi] * rijx;
-                  Efqiy[m2] = s1r3 * chg[spj] * rijy;
-                  Efqjy[m2] = s1r3 * chg[spi] * rijy;
-                  Efqiz[m2] = s1r3 * chg[spj] * rijz;
-                  Efqjz[m2] = s1r3 * chg[spi] * rijz;
-                }
-                
-                for (size_t m2 = m2init; m2 < nmon2; m2++) {
-                  const size_t shift1 = first_ind[fi_mon1 + m1];
-                  const size_t shift2 = first_ind[fi_mon2 + m2];
-                  const size_t shift13 = shift1 * 3;
-                  const size_t shift23 = shift2 * 3;
-                  phi[i + shift1] += phii[m2];
-                  phi[j + shift2] += phij[m2];
-                  Efq[shift13 + i3] += Efqix[m2];
-                  Efq[shift23 + j3] -= Efqjx[m2];
-                  Efq[shift13 + i3 + 1] += Efqiy[m2];
-                  Efq[shift23 + j3 + 1] -= Efqjy[m2];
-                  Efq[shift13 + i3 + 2] += Efqiz[m2];
-                  Efq[shift23 + j3 + 2] -= Efqjz[m2];
-                }
+                f.DoEfqWA(xyz, chg, m1, m2init, nmon2, fi_crd1, fi_crd2,
+                          fi_sites1, fi_sites2, nmon1, nmon2, i, j, Ai, Asqsq,
+                          aCC, aCC1_4, g34, phi, Efq);
               }
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
-                std::vector<double> phii(nmon2,0.0);
-                std::vector<double> phij(nmon2,0.0);
-                std::vector<double> Efqix(nmon2,0.0);
-                std::vector<double> Efqjx(nmon2,0.0);
-                std::vector<double> Efqiy(nmon2,0.0);
-                std::vector<double> Efqjy(nmon2,0.0);
-                std::vector<double> Efqiz(nmon2,0.0);
-                std::vector<double> Efqjz(nmon2,0.0);
                 size_t m2init = same ? m1 + 1 : 0;
-                for (size_t m2 = m2init; m2 < nmon2; m2++) {
-                  //  Distances and values that will be reused
-                  const double rijx = xyz[fi_crd1 + inmon13 + m1]
-                                    - xyz[fi_crd2 + jnmon23 + m2];
-                  const double rijy = xyz[fi_crd1 + inmon13 + m1 + nmon1]
-                                    - xyz[fi_crd2 + jnmon23 + m2 + nmon2];
-                  const double rijz = xyz[fi_crd1 + inmon13 + m1 + nmon12]
-                                    - xyz[fi_crd2 + jnmon23 + m2 + nmon22];
-                  const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                  const double r = std::sqrt(rsq);
-                  const double ri = 1.0/r;
-                  const double risq = ri*ri;
-                  
-                  // Update the field
-                  const size_t shift1 = first_ind[fi_mon1 + m1];
-                  const size_t shift2 = first_ind[fi_mon2 + m2];
-                  const size_t spi = shift1 + i;
-                  const size_t spj = shift2 + j;
-
-                  phii[m2] = ri *chg[spj];
-                  phij[m2] = ri *chg[spi];
-
-                  // Update Electric field
-                  Efqix[m2] = ri * risq * chg[spj] * rijx;
-                  Efqjx[m2] = ri * risq * chg[spi] * rijx;
-                  Efqiy[m2] = ri * risq * chg[spj] * rijy;
-                  Efqjy[m2] = ri * risq * chg[spi] * rijy;
-                  Efqiz[m2] = ri * risq * chg[spj] * rijz;
-                  Efqjz[m2] = ri * risq * chg[spi] * rijz;
-                }
-
-                for (size_t m2 = m2init; m2 < nmon2; m2++) {
-                  const size_t shift1 = first_ind[fi_mon1 + m1];
-                  const size_t shift2 = first_ind[fi_mon2 + m2];
-                  const size_t shift13 = 3*shift1;
-                  const size_t shift23 = 3*shift2;
-                  phi[shift1 + i] += phii[m2];
-                  phi[shift2 + j] += phij[m2];
-                  Efq[shift13 + i3] += Efqix[m2];
-                  Efq[shift23 + j3] -= Efqjx[m2];
-                  Efq[shift13 + i3 + 1] += Efqiy[m2];
-                  Efq[shift23 + j3 + 1] -= Efqjy[m2];
-                  Efq[shift13 + i3 + 2] += Efqiz[m2];
-                  Efq[shift23 + j3 + 2] -= Efqjz[m2];
-                }
+                f.DoEfqWoA(xyz, chg, m1, m2init, nmon2, fi_crd1, fi_crd2,
+                           fi_sites1, fi_sites2, nmon1, nmon2, i, j, 0.0, 0.0,
+                           aCC, aCC1_4, g34, phi, Efq);
               }
             }
           } 
@@ -393,6 +178,45 @@ namespace elec {
       fi_sites1 += nmon1 * ns1;
       fi_crd1 += nmon1 * ns1 * 3;
     }
+
+    // Reorganize field and potential to initial order
+    std::vector<double> tmp1(3*nsites,0.0);
+    std::vector<double> tmp2(nsites,0.0);
+    fi_mon = 0;
+    fi_crd = 0;
+    fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
+      size_t ns = sites[fi_mon];
+      size_t nmon = mon_type_count[mt].second;
+      size_t nmon2 = nmon*2;
+      for (size_t m = 0; m < nmon; m++) {
+        size_t mns = m*ns;
+        size_t mns3 = mns*3;
+        for (size_t i = 0; i < ns; i++) {
+          size_t inmon = i*nmon;
+          size_t inmon3 = 3*inmon;
+          tmp1[fi_crd + mns3 + 3*i] = Efq[inmon3 + m + fi_crd];
+          tmp1[fi_crd + mns3 + 3*i + 1] = Efq[inmon3 + m + fi_crd + nmon];
+          tmp1[fi_crd + mns3 + 3*i + 2] = Efq[inmon3 + m + fi_crd + nmon2];
+          tmp2[fi_sites + mns + i] = phi[fi_sites + m + inmon];
+          #ifdef DEBUG
+          std::cerr << "phi[" << fi_sites + mns + i << "] = " 
+                    << tmp2[fi_sites + mns + i] << std::endl;
+          std::cerr << "E[" << fi_sites + mns + i << "] = " 
+                    << tmp1[fi_crd + mns3 + 3*i] << " "
+                    << tmp1[fi_crd + mns3 + 3*i + 1] << " "
+                    << tmp1[fi_crd + mns3 + 3*i + 2] << " " << std::endl;
+                    
+          #endif 
+        }
+      }
+      fi_mon += nmon;
+      fi_sites += nmon*ns;
+      fi_crd += nmon*ns*3;
+    }
+    Efq = tmp1;
+    chg = orig_chg;
+    phi = tmp2;
 
     // Permanent electric field is computed
     // Now start computation of dipole through iteration

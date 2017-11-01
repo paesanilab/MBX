@@ -11,6 +11,7 @@
 #include "tools/definitions.h"
 #include "tools/constants.h"
 #include "potential/electrostatics/gammq.h"
+#include "potential/electrostatics/fields.h"
 
 namespace elec {
   double Electrostatics(const std::vector<double> chg,
