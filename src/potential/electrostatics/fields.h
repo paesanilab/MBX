@@ -52,13 +52,13 @@ class Field {
 
   void DoEfdWA(
     double * xyz1, double * xyz2,
-    double * mu2,
+    double * mu1, double * mu2,
     size_t m1,
     size_t m2in, size_t m2fi,
     size_t nmon1, size_t nmon2,
     size_t i, size_t j,
     double Asqsq,
-    double aDD,
+    double aDD, double * Efd2,
     double &Efdx, double &Efdy, double &Efdz);
 
 ////////////////////////////////////////////////////////////////////////////////

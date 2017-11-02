@@ -177,13 +177,13 @@ void Field::DoEfqWoA(std::vector<double> xyz,
 }
 
 void Field::DoEfdWA( double * xyz1, double * xyz2,
-                     double * mu2,
+                     double * mu1, double * mu2,
                      size_t m1,
                      size_t m2in, size_t m2fi,
                      size_t nmon1, size_t nmon2,
                      size_t i, size_t j,
                      double Asqsq,
-                     double aDD,
+                     double aDD, double * Efd2,
                      double &Efdx, double &Efdy, double &Efdz) {
 
   size_t nmon12 = nmon1 * 2;
@@ -244,6 +244,22 @@ void Field::DoEfdWA( double * xyz1, double * xyz2,
               ( ts2z * rijx * mu2[jnmon23 + m] +
                 ts2z * rijy * mu2[jnmon23 + nmon2 + m] +
                (ts2z * rijz - s1r3) * mu2[jnmon23 + nmon22 + m]);
+
+    Efd2[jnmon23 + m] +=
+              ((ts2x * rijx - s1r3) * mu1[inmon13 + m1] +
+               ts2x * rijy * mu1[inmon13 + nmon1 + m1] +
+               ts2x * rijz * mu1[inmon13 + nmon12 + m1]);
+
+    Efd2[jnmon23 + nmon2 + m] +=
+              ((ts2y * rijx) * mu1[inmon13 + m1] +
+               (ts2y * rijy - s1r3) * mu1[inmon13 + nmon1 + m1] +
+               ts2y * rijz * mu1[inmon13 + nmon12 + m1]);
+
+    Efd2[jnmon23 + nmon22 + m] +=
+              ((ts2z * rijx) * mu1[inmon13 + m1] +
+               ts2z * rijy * mu1[inmon13 + nmon1 + m1] +
+               (ts2z * rijz - s1r3) * mu1[inmon13 + nmon12 + m1]);
+
   }
 
   // Setting the values to the output

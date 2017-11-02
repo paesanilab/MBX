@@ -28,14 +28,14 @@ namespace elec {
 
     // System properties and sizes
     const size_t nsites = orig_chg.size();
-
+    const size_t nsites3 = 3*nsites;
     // Electric fields and potential
-    std::vector<double> Efq(3*nsites,0.0);
-    std::vector<double> Efd(3*nsites,0.0);
+    std::vector<double> Efq(nsites3,0.0);
+    std::vector<double> Efd(nsites3,0.0);
     std::vector<double> phi(nsites,0.0);
 
     // Dipole vector
-    std::vector<double> mu(3*nsites,0.0);
+    std::vector<double> mu(nsites3,0.0);
 
     // Max number of monomers
     // TODO this will be the last one of mon_type_count
@@ -45,7 +45,7 @@ namespace elec {
     // Organize xyz so we have x1_1 x1_2 ... y1_1 y1_2...
     // where xN_M is read as coordinate x of site N of monomer M
     // for the first monomer type. Then follows the second, and so on.
-    std::vector<double> xyz(3*nsites,0.0);
+    std::vector<double> xyz(nsites3,0.0);
     std::vector<double> chg(nsites,0.0);
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -261,6 +261,7 @@ namespace elec {
         std::exit(EXIT_FAILURE);
       }
       iter++;
+      //std::cout << iter << std::endl;
       
       std::fill(Efd.begin(), Efd.end(), 0.0);
       
@@ -296,9 +297,9 @@ namespace elec {
               double Asqsq = A*A*A*A;
               for (size_t m = 0; m < nmon; m++) {
                 f.DoEfdWA(xyz.data() + fi_sites, xyz.data() + fi_sites, 
-                          mu.data() + fi_sites, m, m, m + 1,
+                          mu.data() + fi_sites, mu.data() + fi_sites, m, m, m + 1,
                           nmon, nmon, i, j, Asqsq,
-                          aDD, ex, ey, ez);
+                          aDD, Efd.data() + fi_crd, ex, ey, ez);
                 Efd[fi_crd + inmon3 + m] += ex;
                 Efd[fi_crd + inmon3 + nmon + m] += ey;
                 Efd[fi_crd + inmon3 + nmon2 + m] += ez;
@@ -320,6 +321,8 @@ namespace elec {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
       }
+      for (size_t i = 0; i < nsites3; i++)
+        Efd[i] *= 0.5;
 
       fi_mon1 = 0;
       fi_sites1 = 0;
@@ -352,26 +355,27 @@ namespace elec {
                 double Asqsq = A*A*A*A;
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
                   if (same) {
-                    f.DoEfdWA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
-                          mu.data() + fi_sites2, m1, 0, m1,
+                    
+                    //f.DoEfdWA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
+                    //      mu.data() + fi_sites1, mu.data() + fi_sites2, m1, 0, m1,
+                    //      nmon1, nmon2, i, j, Asqsq,
+                    //      aDD, Efd.data() + fi_crd2, ex, ey, ez);
+                    //Efd[fi_crd1 + inmon13 + m1] += ex;
+                    //Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                    //Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
+                    f.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                          mu.data() + fi_crd1, mu.data() + fi_crd2, m1, m1 + 1, nmon2,
                           nmon1, nmon2, i, j, Asqsq,
-                          aDD, ex, ey, ez);
-                    Efd[fi_crd1 + inmon13 + m1] += ex;
-                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                    f.DoEfdWA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
-                          mu.data() + fi_sites2, m1, m1 + 1, nmon2,
-                          nmon1, nmon2, i, j, Asqsq,
-                          aDD, ex, ey, ez);
+                          aDD, Efd.data() + fi_crd2, ex, ey, ez);
                     Efd[fi_crd1 + inmon13 + m1] += ex;
                     Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
                     Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
 
                   } else {
-                    f.DoEfdWA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
-                          mu.data() + fi_sites2, m1, 0, nmon2,
+                    f.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                          mu.data() + fi_crd1, mu.data() + fi_crd2, m1, 0, nmon2,
                           nmon1, nmon2, i, j, Asqsq,
-                          aDD, ex, ey, ez);
+                          aDD, Efd.data() + fi_crd2, ex, ey, ez);
                     Efd[fi_crd1 + inmon13 + m1] += ex;
                     Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
                     Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
