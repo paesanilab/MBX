@@ -113,9 +113,9 @@ namespace elec {
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              f.DoEfqWA(xyz, chg, m, m+1, nmon, fi_crd, fi_crd,
-                        fi_sites, fi_sites, nmon, nmon, i, j, 0.0, 0.0,
-                        aCC, aCC1_4, g34, phi, Efq);
+              f.DoEfqWoA(xyz, chg, m, m+1, nmon, fi_crd, fi_crd,
+                         fi_sites, fi_sites, nmon, nmon, i, j,
+                         phi, Efq);
             }
           }
         }
@@ -163,8 +163,8 @@ namespace elec {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
                 f.DoEfqWoA(xyz, chg, m1, m2init, nmon2, fi_crd1, fi_crd2,
-                           fi_sites1, fi_sites2, nmon1, nmon2, i, j, 0.0, 0.0,
-                           aCC, aCC1_4, g34, phi, Efq);
+                           fi_sites1, fi_sites2, nmon1, nmon2, i, j,
+                           phi, Efq);
               }
             }
           } 
@@ -179,45 +179,6 @@ namespace elec {
       fi_crd1 += nmon1 * ns1 * 3;
     }
 
-    // Reorganize field and potential to initial order
-    std::vector<double> tmp1(3*nsites,0.0);
-    std::vector<double> tmp2(nsites,0.0);
-    fi_mon = 0;
-    fi_crd = 0;
-    fi_sites = 0;
-    for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
-      size_t ns = sites[fi_mon];
-      size_t nmon = mon_type_count[mt].second;
-      size_t nmon2 = nmon*2;
-      for (size_t m = 0; m < nmon; m++) {
-        size_t mns = m*ns;
-        size_t mns3 = mns*3;
-        for (size_t i = 0; i < ns; i++) {
-          size_t inmon = i*nmon;
-          size_t inmon3 = 3*inmon;
-          tmp1[fi_crd + mns3 + 3*i] = Efq[inmon3 + m + fi_crd];
-          tmp1[fi_crd + mns3 + 3*i + 1] = Efq[inmon3 + m + fi_crd + nmon];
-          tmp1[fi_crd + mns3 + 3*i + 2] = Efq[inmon3 + m + fi_crd + nmon2];
-          tmp2[fi_sites + mns + i] = phi[fi_sites + m + inmon];
-          #ifdef DEBUG
-          std::cerr << "phi[" << fi_sites + mns + i << "] = " 
-                    << tmp2[fi_sites + mns + i] << std::endl;
-          std::cerr << "E[" << fi_sites + mns + i << "] = " 
-                    << tmp1[fi_crd + mns3 + 3*i] << " "
-                    << tmp1[fi_crd + mns3 + 3*i + 1] << " "
-                    << tmp1[fi_crd + mns3 + 3*i + 2] << " " << std::endl;
-                    
-          #endif 
-        }
-      }
-      fi_mon += nmon;
-      fi_sites += nmon*ns;
-      fi_crd += nmon*ns*3;
-    }
-    Efq = tmp1;
-    chg = orig_chg;
-    phi = tmp2;
-
     // Permanent electric field is computed
     // Now start computation of dipole through iteration
     double eps = 1.0E+50;
@@ -227,21 +188,60 @@ namespace elec {
       // TODO Need to decide how we define eps
       double max_eps = 0.0;
       //  Get new dipoles and check max difference
-      for (size_t i = 0; i < nsites; i++) {
-        const size_t i3 = 3*i;
-        const double p = pol[i];
-        double epstmp = 0.0;
-        // Learning rate
-        double alpha = 0.8;
-        for (size_t j = 0; j < 3; j++) {
-          mu_old[i3 + j] = mu[i3 + j];
-          mu[i3 + j] = alpha * p * (Efq[i3 + j] + Efd[i3 + j])
-                       + (1-alpha) * mu_old[i3 + j];
-          epstmp += (mu_old[i3 + j] - mu[i3 + j]) 
-                    * (mu_old[i3 + j] - mu[i3 + j]);
-        }
-        if (epstmp > max_eps) max_eps = epstmp;
-      }
+      fi_mon = 0;
+      fi_crd = 0;
+      fi_sites = 0;
+      double alpha = 0.8;
+      for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
+        size_t ns = sites[fi_mon];
+        size_t nmon = mon_type_count[mt].second;
+        size_t nmon2 = nmon*2;
+        for (size_t i = 0; i < ns; i++) {
+          // TODO assuming pol not site dependant
+          double p = pol[fi_sites + i];
+          size_t inmon3 = 3*i*nmon;
+          for (size_t m = 0; m < nmon; m++) {
+            mu_old[fi_crd + inmon3 + m] = 
+                         mu[fi_crd + inmon3 + m];
+            mu_old[fi_crd + inmon3 + nmon + m] = 
+                         mu[fi_crd + inmon3 + nmon + m];
+            mu_old[fi_crd + inmon3 + nmon2 + m] = 
+                         mu[fi_crd + inmon3 + nmon2 + m];
+            mu[fi_crd + inmon3 + m] = alpha * p 
+                       * (Efq[fi_crd + inmon3 + m] 
+                       +  Efd[fi_crd + inmon3 + m]) 
+                       + (1 - alpha) * mu_old[fi_crd + inmon3 + m];  
+            mu[fi_crd + inmon3 + nmon + m] = alpha * p 
+                       * (Efq[fi_crd + inmon3 + nmon + m] 
+                       +  Efd[fi_crd + inmon3 + nmon + m]) 
+                       + (1 - alpha) * mu_old[fi_crd + inmon3 + nmon + m];
+            mu[fi_crd + inmon3 + nmon2 + m] = alpha * p 
+                       * (Efq[fi_crd + inmon3 + nmon2 + m] 
+                       +  Efd[fi_crd + inmon3 + nmon2 + m]) 
+                       + (1 - alpha) * mu_old[fi_crd + inmon3 + nmon2 + m];  
+          }
+          
+          // Check for max epsilon
+          for (size_t m = 0; m < nmon; m++) {
+            double tmpeps = (mu[fi_crd + inmon3 + m] 
+                           - mu_old[fi_crd + inmon3 + m])
+                           *(mu[fi_crd + inmon3 + m] 
+                           - mu_old[fi_crd + inmon3 + m])
+                           +(mu[fi_crd + inmon3 + nmon + m]
+                           - mu_old[fi_crd + inmon3 + nmon + m])
+                           *(mu[fi_crd + inmon3 + nmon + m] 
+                           - mu_old[fi_crd + inmon3 + nmon + m])
+                           +(mu[fi_crd + inmon3 + nmon2 + m]
+                           - mu_old[fi_crd + inmon3 + nmon2 + m])
+                           *(mu[fi_crd + inmon3 + nmon2 + m] 
+                           - mu_old[fi_crd + inmon3 + nmon2 + m]);
+            if (tmpeps > max_eps) max_eps = tmpeps;
+          }
+        }  
+        fi_mon += nmon;
+        fi_sites += nmon*ns;
+        fi_crd += nmon*ns*3;
+      }   
 
       // Check if convergence achieved
       if (max_eps < tolerance) 
@@ -261,7 +261,6 @@ namespace elec {
         std::exit(EXIT_FAILURE);
       }
       iter++;
-     
       
       std::fill(Efd.begin(), Efd.end(), 0.0);
       
@@ -270,125 +269,49 @@ namespace elec {
       fi_mon = 0;
       fi_sites = 0;
       fi_crd = 0;
+      double ex = 0.0;
+      double ey = 0.0;
+      double ez = 0.0;
       for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
         size_t ns = sites[fi_mon];
         size_t nmon = mon_type_count[mt].second;
-        size_t nmon2 = nmon*2;
+        size_t nmon2 = 2*nmon;
+        // Get excluded pairs for this monomer
         systools::GetExcluded(mon_id[fi_mon], exc12, exc13, exc14);
         for (size_t i = 0; i < ns ; i++) {
-          size_t inmon  = i*nmon;
-          size_t inmon3  = 3*inmon;
-          size_t i3 = 3*i;
+          size_t inmon3 = 3*i*nmon;
           for (size_t j = 0; j < ns; j++) {
+            // Continue only if i and j are not bonded
             if (i == j) continue;
-            size_t jnmon  = j*nmon;
-            size_t jnmon3  = 3*jnmon;
-            size_t j3 = 3*j;
 
             // Set the proper aDD
             bool is12 = systools::IsExcluded(exc12, i, j);
             bool is13 = systools::IsExcluded(exc13, i, j);
             bool is14 = systools::IsExcluded(exc14, i, j);
             aDD = systools::GetAdd(is12, is13, is14, mon_id[fi_mon]);
-            // This will contain the 9 components of T that then will be
-            // added to the field. Inner vector is the one that is contigious,
-            // so should not be a problem.
-            std::vector<double> Efdcp0(nmon,0.0);
-            std::vector<double> Efdcp1(nmon,0.0);
-            std::vector<double> Efdcp2(nmon,0.0);
-            std::vector<double> Efdcp3(nmon,0.0);
-            std::vector<double> Efdcp4(nmon,0.0);
-            std::vector<double> Efdcp5(nmon,0.0);
-            std::vector<double> Efdcp6(nmon,0.0);
-            std::vector<double> Efdcp7(nmon,0.0);
-            std::vector<double> Efdcp8(nmon,0.0);
-            // Continue only if i and j are not bonded
+
             double A = polfac[fi_sites + i] * polfac[fi_sites + j];
             if (A > constants::EPS) {
               A = std::pow(A, 1.0/6.0);
               double Asqsq = A*A*A*A;
               for (size_t m = 0; m < nmon; m++) {
-                //  Distances and values that will be reused
-                const double rijx = xyz[fi_crd + inmon3 + m] 
-                                  - xyz[fi_crd + jnmon3 + m];
-                const double rijy = xyz[fi_crd + inmon3 + m + nmon] 
-                                  - xyz[fi_crd + jnmon3 + m + nmon];
-                const double rijz = xyz[fi_crd + inmon3 + m + nmon2] 
-                                  - xyz[fi_crd + jnmon3 + m + nmon2];
-                const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                const double r = std::sqrt(rsq);
-                const double ri = 1.0/r;
-                const double risq = ri*ri;
-                const double rsqsq = rsq * rsq;
-                // Some values that will be used in the screening functions
-                const double rA4 = rsqsq/Asqsq;
-                const double arA4 = aDD*rA4;
-                // TODO look at the exponential function intel vec
-                const double exp1 = std::exp(-arA4);
-  
-                // Get screening functions
-                const double s1r = ri - exp1*ri;
-                const double s1r3 = s1r * risq;
-                const double s2r5_3 = (3.0*s1r3
-                                       -4.0*aDD*rA4*exp1*risq*ri)*risq;
-                const double ts2x = s2r5_3 * rijx; 
-                const double ts2y = s2r5_3 * rijy; 
-                const double ts2z = s2r5_3 * rijz; 
-                
-                Efdcp0[m] = ts2x * rijx - s1r3; // alpha = x, beta = x
-                Efdcp1[m] = ts2x * rijy;        // alpha = x, beta = y
-                Efdcp2[m] = ts2x * rijz;        // alpha = x, beta = z
-                Efdcp3[m] = ts2y * rijx;        // alpha = y, beta = x
-                Efdcp4[m] = ts2y * rijy - s1r3; // alpha = y, beta = y
-                Efdcp5[m] = ts2y * rijz;        // alpha = y, beta = z
-                Efdcp6[m] = ts2z * rijx;        // alpha = z, beta = x
-                Efdcp7[m] = ts2z * rijy;        // alpha = z, beta = y
-                Efdcp8[m] = ts2z * rijz - s1r3; // alpha = z, beta = z
+                f.DoEfdWA(xyz.data() + fi_sites, xyz.data() + fi_sites, 
+                          mu.data() + fi_sites, m, m, m + 1,
+                          nmon, nmon, i, j, Asqsq,
+                          aDD, ex, ey, ez);
+                Efd[fi_crd + inmon3 + m] += ex;
+                Efd[fi_crd + inmon3 + nmon + m] += ey;
+                Efd[fi_crd + inmon3 + nmon2 + m] += ez;
               }
             } else {
               for (size_t m = 0; m < nmon; m++) {
-                //  Distances and values that will be reused
-                const double rijx = xyz[fi_crd + inmon3 + m]
-                                  - xyz[fi_crd + jnmon3 + m];
-                const double rijy = xyz[fi_crd + inmon3 + m + nmon]
-                                  - xyz[fi_crd + jnmon3 + m + nmon];
-                const double rijz = xyz[fi_crd + inmon3 + m + nmon2]
-                                  - xyz[fi_crd + jnmon3 + m + nmon2];
-                const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                const double r = std::sqrt(rsq);
-                const double ri = 1.0/r;
-                const double risq = ri*ri;
-
-                // Get screening functions
-                const double s1r3 = ri * risq;
-                const double s2r5_3 = (3.0*s1r3) * risq;
-                const double ts2x = s2r5_3 * rijx;
-                const double ts2y = s2r5_3 * rijy;
-                const double ts2z = s2r5_3 * rijz;
-
-                Efdcp0[m] = ts2x * rijx - s1r3; // alpha = x, beta = x
-                Efdcp1[m] = ts2x * rijy;        // alpha = x, beta = y
-                Efdcp2[m] = ts2x * rijz;        // alpha = x, beta = z
-                Efdcp3[m] = ts2y * rijx;        // alpha = y, beta = x
-                Efdcp4[m] = ts2y * rijy - s1r3; // alpha = y, beta = y
-                Efdcp5[m] = ts2y * rijz;        // alpha = y, beta = z
-                Efdcp6[m] = ts2z * rijx;        // alpha = z, beta = x
-                Efdcp7[m] = ts2z * rijy;        // alpha = z, beta = y
-                Efdcp8[m] = ts2z * rijz - s1r3; // alpha = z, beta = z
+                f.DoEfdWoA(xyz.data() + fi_sites, xyz.data() + fi_sites,
+                          mu.data() + fi_sites, m, m, m + 1,
+                          nmon, nmon, i, j, ex, ey, ez);
+                Efd[fi_crd + inmon3 + m] += ex;
+                Efd[fi_crd + inmon3 + nmon + m] += ey;
+                Efd[fi_crd + inmon3 + nmon2 + m] += ez;
               }
-            }
-
-            for (size_t m = 0; m < nmon; m++) {
-              size_t shift = fi_crd + 3*ns*m;
-              Efd[shift + i3] += Efdcp0[m] * mu[shift + j3]
-                                       +  Efdcp1[m] * mu[shift + j3 + 1]
-                                       +  Efdcp2[m] * mu[shift + j3 + 2];
-              Efd[shift + i3 + 1] += Efdcp3[m] * mu[shift + j3]
-                                           +  Efdcp4[m] * mu[shift + j3 + 1]
-                                           +  Efdcp5[m] * mu[shift + j3 + 2];
-              Efd[shift + i3 + 2] += Efdcp6[m] * mu[shift + j3]
-                                           +  Efdcp7[m] * mu[shift + j3 + 1]
-                                           +  Efdcp8[m] * mu[shift + j3 + 2];
             }
           }
         }
@@ -409,300 +332,74 @@ namespace elec {
       for (size_t mt1 = 0; mt1 < mon_type_count.size(); mt1++) {
         size_t ns1 = sites[fi_mon1];
         size_t nmon1 = mon_type_count[mt1].second;
-        size_t nmon12 = nmon1*2;
+        size_t nmon12 = 2 * nmon1;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
         for (size_t mt2 = mt1; mt2 < mon_type_count.size(); mt2++) {
           size_t ns2 = sites[fi_mon2];
           size_t nmon2 = mon_type_count[mt2].second;
-          size_t nmon22 = nmon2*2;
           double same = false;
           if (mt1 == mt2) same = true;
           // TODO add neighbour list here
           for (size_t i = 0; i < ns1; i++) {
-            size_t inmon1  = i*nmon1;
-            size_t inmon13  = 3*inmon1;
-            size_t i3 = 3*i;
+            size_t inmon13 = 3 * nmon1 * i;
             for (size_t j = 0; j < ns2; j++) {
-              size_t jnmon2  = j*nmon2;
-              size_t jnmon23  = 3*jnmon2;
-              size_t j3 = 3*j;
 
               double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
               if (A > constants::EPS) {
                 A = std::pow(A,1.0/6.0);
                 double Asqsq = A*A*A*A;
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  // This will contain the 9 components of T that then will be
-                  // added to the field. Inner vector is the one that is contigious,
-                  // so should not be a problem.
-                  std::vector<double> Efdcp0(nmon2,0.0);
-                  std::vector<double> Efdcp1(nmon2,0.0);
-                  std::vector<double> Efdcp2(nmon2,0.0);
-                  std::vector<double> Efdcp3(nmon2,0.0);
-                  std::vector<double> Efdcp4(nmon2,0.0);
-                  std::vector<double> Efdcp5(nmon2,0.0);
-                  std::vector<double> Efdcp6(nmon2,0.0);
-                  std::vector<double> Efdcp7(nmon2,0.0);
-                  std::vector<double> Efdcp8(nmon2,0.0);
                   if (same) {
-                    for (size_t m2 = 0; m2 < m1; m2++) {
-                      //  Distances and values that will be reused
-                      const double rijx = xyz[fi_crd1 + inmon13 + m1]
-                                        - xyz[fi_crd2 + jnmon23 + m2];
-                      const double rijy = xyz[fi_crd1 + inmon13 + m1 + nmon1]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon2];
-                      const double rijz = xyz[fi_crd1 + inmon13 + m1 + nmon12]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon22];
+                    f.DoEfdWA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
+                          mu.data() + fi_sites2, m1, 0, m1,
+                          nmon1, nmon2, i, j, Asqsq,
+                          aDD, ex, ey, ez);
+                    Efd[fi_crd1 + inmon13 + m1] += ex;
+                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
+                    f.DoEfdWA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
+                          mu.data() + fi_sites2, m1, m1 + 1, nmon2,
+                          nmon1, nmon2, i, j, Asqsq,
+                          aDD, ex, ey, ez);
+                    Efd[fi_crd1 + inmon13 + m1] += ex;
+                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
 
-                      const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                      const double r = std::sqrt(rsq);
-                      const double ri = 1.0/r;
-                      const double risq = ri*ri;
-                      const double rsqsq = rsq * rsq;
-                      // Some values that will be used in the screening functions
-                      const double rA4 = rsqsq/Asqsq;
-                      const double arA4 = aDD*rA4;
-                      // TODO look at the exponential function intel vec
-                      const double exp1 = std::exp(-arA4);
-    
-                      // Get screening functions
-                      const double s1r = ri - exp1*ri;
-                      const double s1r3 = s1r * risq;
-                      const double s2r5_3 = (3.0*s1r3
-                                            -4.0*aDD*rA4*exp1*risq*ri)*risq;
-                      const double ts2x = s2r5_3 * rijx;
-                      const double ts2y = s2r5_3 * rijy;
-                      const double ts2z = s2r5_3 * rijz;
-
-                      Efdcp0[m2] = ts2x * rijx - s1r3; // alpha = x, beta = x
-                      Efdcp1[m2] = ts2x * rijy;        // alpha = x, beta = y
-                      Efdcp2[m2] = ts2x * rijz;        // alpha = x, beta = z
-                      Efdcp3[m2] = ts2y * rijx;        // alpha = y, beta = x
-                      Efdcp4[m2] = ts2y * rijy - s1r3; // alpha = y, beta = y
-                      Efdcp5[m2] = ts2y * rijz;        // alpha = y, beta = z
-                      Efdcp6[m2] = ts2z * rijx;        // alpha = z, beta = x
-                      Efdcp7[m2] = ts2z * rijy;        // alpha = z, beta = y
-                      Efdcp8[m2] = ts2z * rijz - s1r3; // alpha = z, beta = z
-                    }
-                    for (size_t m2 = m1 + 1; m2 < nmon2; m2++) {
-                      //  Distances and values that will be reused
-                      const double rijx = xyz[fi_crd1 + inmon13 + m1]
-                                        - xyz[fi_crd2 + jnmon23 + m2];
-                      const double rijy = xyz[fi_crd1 + inmon13 + m1 + nmon1]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon2];
-                      const double rijz = xyz[fi_crd1 + inmon13 + m1 + nmon12]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon22];
-
-                      const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                      const double r = std::sqrt(rsq);
-                      const double ri = 1.0/r;
-                      const double risq = ri*ri;
-                      const double rsqsq = rsq * rsq;
-                      // Some values that will be used in the screening functions
-                      const double rA4 = rsqsq/Asqsq;
-                      const double arA4 = aDD*rA4;
-                      // TODO look at the exponential function intel vec
-                      const double exp1 = std::exp(-arA4);
-    
-                      // Get screening functions
-                      const double s1r = ri - exp1*ri;
-                      const double s1r3 = s1r * risq;
-                      const double s2r5_3 = (3.0*s1r3
-                                            -4.0*aDD*rA4*exp1*risq*ri)*risq;
-                      const double ts2x = s2r5_3 * rijx;
-                      const double ts2y = s2r5_3 * rijy;
-                      const double ts2z = s2r5_3 * rijz;
-    
-                      Efdcp0[m2] = ts2x * rijx - s1r3; // alpha = x, beta = x
-                      Efdcp1[m2] = ts2x * rijy;        // alpha = x, beta = y
-                      Efdcp2[m2] = ts2x * rijz;        // alpha = x, beta = z
-                      Efdcp3[m2] = ts2y * rijx;        // alpha = y, beta = x
-                      Efdcp4[m2] = ts2y * rijy - s1r3; // alpha = y, beta = y
-                      Efdcp5[m2] = ts2y * rijz;        // alpha = y, beta = z
-                      Efdcp6[m2] = ts2z * rijx;        // alpha = z, beta = x
-                      Efdcp7[m2] = ts2z * rijy;        // alpha = z, beta = y
-                      Efdcp8[m2] = ts2z * rijz - s1r3; // alpha = z, beta = z
-                    }
                   } else {
-                    for (size_t m2 = 0; m2 < nmon2; m2++) {
-                      //  Distances and values that will be reused
-                      const double rijx = xyz[fi_crd1 + inmon13 + m1]
-                                        - xyz[fi_crd2 + jnmon23 + m2];
-                      const double rijy = xyz[fi_crd1 + inmon13 + m1 + nmon1]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon2];
-                      const double rijz = xyz[fi_crd1 + inmon13 + m1 + nmon12]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon22];
-
-                      const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                      const double r = std::sqrt(rsq);
-                      const double ri = 1.0/r;
-                      const double risq = ri*ri;
-                      const double rsqsq = rsq * rsq;
-                      // Some values that will be used in the screening functions
-                      const double rA4 = rsqsq/Asqsq;
-                      const double arA4 = aDD*rA4;
-                      // TODO look at the exponential function intel vec
-                      const double exp1 = std::exp(-arA4);
-    
-                      // Get screening functions
-                      const double s1r = ri - exp1*ri;
-                      const double s1r3 = s1r * risq;
-                      const double s2r5_3 = (3.0*s1r3
-                                            -4.0*aDD*rA4*exp1*risq*ri)*risq;
-                      const double ts2x = s2r5_3 * rijx;
-                      const double ts2y = s2r5_3 * rijy;
-                      const double ts2z = s2r5_3 * rijz;
-    
-                      Efdcp0[m2] = ts2x * rijx - s1r3; // alpha = x, beta = x
-                      Efdcp1[m2] = ts2x * rijy;        // alpha = x, beta = y
-                      Efdcp2[m2] = ts2x * rijz;        // alpha = x, beta = z
-                      Efdcp3[m2] = ts2y * rijx;        // alpha = y, beta = x
-                      Efdcp4[m2] = ts2y * rijy - s1r3; // alpha = y, beta = y
-                      Efdcp5[m2] = ts2y * rijz;        // alpha = y, beta = z
-                      Efdcp6[m2] = ts2z * rijx;        // alpha = z, beta = x
-                      Efdcp7[m2] = ts2z * rijy;        // alpha = z, beta = y
-                      Efdcp8[m2] = ts2z * rijz - s1r3; // alpha = z, beta = z
-                    }
+                    f.DoEfdWA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
+                          mu.data() + fi_sites2, m1, 0, nmon2,
+                          nmon1, nmon2, i, j, Asqsq,
+                          aDD, ex, ey, ez);
+                    Efd[fi_crd1 + inmon13 + m1] += ex;
+                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
                   }
 
-                  size_t shifti = fi_crd1 + 3*ns1*m1 + i3;
-                  for (size_t m2 = 0; m2 < nmon2; m2++) {
-                    size_t shiftj = fi_crd2 + 3*ns2*m2 + j3;
-                    Efd[shifti] += Efdcp0[m2] * mu[shiftj]
-                                +  Efdcp1[m2] * mu[shiftj + 1]
-                                +  Efdcp2[m2] * mu[shiftj + 2];
-                    Efd[shifti + 1] += Efdcp3[m2] * mu[shiftj]
-                                    +  Efdcp4[m2] * mu[shiftj + 1]
-                                    +  Efdcp5[m2] * mu[shiftj + 2];
-                    Efd[shifti + 2] += Efdcp6[m2] * mu[shiftj]
-                                    +  Efdcp7[m2] * mu[shiftj + 1]
-                                    +  Efdcp8[m2] * mu[shiftj + 2];
-                  }
                 }
               } else {
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  // This will contain the 9 components of T that then will be
-                  // added to the field. Inner vector is the one that is contigious,
-                  // so should not be a problem.
-                  std::vector<double> Efdcp0(nmon2,0.0);
-                  std::vector<double> Efdcp1(nmon2,0.0);
-                  std::vector<double> Efdcp2(nmon2,0.0);
-                  std::vector<double> Efdcp3(nmon2,0.0);
-                  std::vector<double> Efdcp4(nmon2,0.0);
-                  std::vector<double> Efdcp5(nmon2,0.0);
-                  std::vector<double> Efdcp6(nmon2,0.0);
-                  std::vector<double> Efdcp7(nmon2,0.0);
-                  std::vector<double> Efdcp8(nmon2,0.0);
                   if (same) {
-                    for (size_t m2 = 0; m2 < m1; m2++) {
-                      //  Distances and values that will be reused
-                      const double rijx = xyz[fi_crd1 + inmon13 + m1]
-                                        - xyz[fi_crd2 + jnmon23 + m2];
-                      const double rijy = xyz[fi_crd1 + inmon13 + m1 + nmon1]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon2];
-                      const double rijz = xyz[fi_crd1 + inmon13 + m1 + nmon12]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon22];
-
-                      const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                      const double r = std::sqrt(rsq);
-                      const double ri = 1.0/r;
-                      const double risq = ri*ri;
-
-                      // Get screening functions
-                      const double s1r3 = ri * risq;
-                      const double s2r5_3 = 3.0*s1r3*risq;
-                      const double ts2x = s2r5_3 * rijx;
-                      const double ts2y = s2r5_3 * rijy;
-                      const double ts2z = s2r5_3 * rijz;
-
-                      Efdcp0[m2] = ts2x * rijx - s1r3; // alpha = x, beta = x
-                      Efdcp1[m2] = ts2x * rijy;        // alpha = x, beta = y
-                      Efdcp2[m2] = ts2x * rijz;        // alpha = x, beta = z
-                      Efdcp3[m2] = ts2y * rijx;        // alpha = y, beta = x
-                      Efdcp4[m2] = ts2y * rijy - s1r3; // alpha = y, beta = y
-                      Efdcp5[m2] = ts2y * rijz;        // alpha = y, beta = z
-                      Efdcp6[m2] = ts2z * rijx;        // alpha = z, beta = x
-                      Efdcp7[m2] = ts2z * rijy;        // alpha = z, beta = y
-                      Efdcp8[m2] = ts2z * rijz - s1r3; // alpha = z, beta = z
-                    }
-                    for (size_t m2 = m1 + 1; m2 < nmon2; m2++) {
-                      //  Distances and values that will be reused
-                      const double rijx = xyz[fi_crd1 + inmon13 + m1]
-                                        - xyz[fi_crd2 + jnmon23 + m2];
-                      const double rijy = xyz[fi_crd1 + inmon13 + m1 + nmon1]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon2];
-                      const double rijz = xyz[fi_crd1 + inmon13 + m1 + nmon12]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon22];
-
-                      const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                      const double r = std::sqrt(rsq);
-                      const double ri = 1.0/r;
-                      const double risq = ri*ri;
-
-                      // Get screening functions
-                      const double s1r3 = ri * risq;
-                      const double s2r5_3 = 3.0*s1r3*risq;
-                      const double ts2x = s2r5_3 * rijx;
-                      const double ts2y = s2r5_3 * rijy;
-                      const double ts2z = s2r5_3 * rijz;
-
-                      Efdcp0[m2] = ts2x * rijx - s1r3; // alpha = x, beta = x
-                      Efdcp1[m2] = ts2x * rijy;        // alpha = x, beta = y
-                      Efdcp2[m2] = ts2x * rijz;        // alpha = x, beta = z
-                      Efdcp3[m2] = ts2y * rijx;        // alpha = y, beta = x
-                      Efdcp4[m2] = ts2y * rijy - s1r3; // alpha = y, beta = y
-                      Efdcp5[m2] = ts2y * rijz;        // alpha = y, beta = z
-                      Efdcp6[m2] = ts2z * rijx;        // alpha = z, beta = x
-                      Efdcp7[m2] = ts2z * rijy;        // alpha = z, beta = y
-                      Efdcp8[m2] = ts2z * rijz - s1r3; // alpha = z, beta = z
-                    }
+                    f.DoEfdWoA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
+                          mu.data() + fi_sites2, m1, 0, m1,
+                          nmon1, nmon2, i, j, ex, ey, ez);
+                    Efd[fi_crd1 + inmon13 + m1] += ex;
+                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
+                    f.DoEfdWoA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
+                          mu.data() + fi_sites2, m1, m1 + 1, nmon2,
+                          nmon1, nmon2, i, j, ex, ey, ez);
+                    Efd[fi_crd1 + inmon13 + m1] += ex;
+                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
                   } else {
-                    for (size_t m2 = 0; m2 < nmon2; m2++) {
-                      //  Distances and values that will be reused
-                      const double rijx = xyz[fi_crd1 + inmon13 + m1]
-                                        - xyz[fi_crd2 + jnmon23 + m2];
-                      const double rijy = xyz[fi_crd1 + inmon13 + m1 + nmon1]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon2];
-                      const double rijz = xyz[fi_crd1 + inmon13 + m1 + nmon12]
-                                        - xyz[fi_crd2 + jnmon23 + m2 + nmon22];
-
-                      const double rsq = rijx*rijx + rijy*rijy + rijz*rijz;
-                      const double r = std::sqrt(rsq);
-                      const double ri = 1.0/r;
-                      const double risq = ri*ri;
-
-                      // Get screening functions
-                      const double s1r3 = ri * risq;
-                      const double s2r5_3 = 3.0*s1r3*risq;
-                      const double ts2x = s2r5_3 * rijx;
-                      const double ts2y = s2r5_3 * rijy;
-                      const double ts2z = s2r5_3 * rijz;
-
-                      Efdcp0[m2] = ts2x * rijx - s1r3; // alpha = x, beta = x
-                      Efdcp1[m2] = ts2x * rijy;        // alpha = x, beta = y
-                      Efdcp2[m2] = ts2x * rijz;        // alpha = x, beta = z
-                      Efdcp3[m2] = ts2y * rijx;        // alpha = y, beta = x
-                      Efdcp4[m2] = ts2y * rijy - s1r3; // alpha = y, beta = y
-                      Efdcp5[m2] = ts2y * rijz;        // alpha = y, beta = z
-                      Efdcp6[m2] = ts2z * rijx;        // alpha = z, beta = x
-                      Efdcp7[m2] = ts2z * rijy;        // alpha = z, beta = y
-                      Efdcp8[m2] = ts2z * rijz - s1r3; // alpha = z, beta = z
-                    }
-                  }
-                  size_t shifti = fi_crd1 + 3*ns1*m1 + i3;
-                  for (size_t m2 = 0; m2 < nmon2; m2++) {
-                    size_t shiftj = fi_crd2 + 3*ns2*m2 + j3;
-                    Efd[shifti] += Efdcp0[m2] * mu[shiftj]
-                                +  Efdcp1[m2] * mu[shiftj + 1]
-                                +  Efdcp2[m2] * mu[shiftj + 2];
-                    Efd[shifti + 1] += Efdcp3[m2] * mu[shiftj]
-                                    +  Efdcp4[m2] * mu[shiftj + 1]
-                                    +  Efdcp5[m2] * mu[shiftj + 2];
-                    Efd[shifti + 2] += Efdcp6[m2] * mu[shiftj]
-                                    +  Efdcp7[m2] * mu[shiftj + 1]
-                                    +  Efdcp8[m2] * mu[shiftj + 2];
+                    f.DoEfdWoA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
+                          mu.data() + fi_sites2, m1, 0, nmon2,
+                          nmon1, nmon2, i, j, ex, ey, ez);
+                    Efd[fi_crd1 + inmon13 + m1] += ex;
+                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
                   }
                 }
               }
@@ -719,6 +416,59 @@ namespace elec {
         fi_crd1 += nmon1 * ns1 * 3;
       }
     }
+
+    // Reorganize field and potential to initial order
+    std::vector<double> tmp1(3*nsites,0.0);
+    std::vector<double> tmp2(nsites,0.0);
+    std::vector<double> tmp3(3*nsites,0.0);
+    std::vector<double> tmp4(3*nsites,0.0);
+    fi_mon = 0;
+    fi_crd = 0;
+    fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
+      size_t ns = sites[fi_mon];
+      size_t nmon = mon_type_count[mt].second;
+      size_t nmon2 = nmon*2;
+      for (size_t m = 0; m < nmon; m++) {
+        size_t mns = m*ns;
+        size_t mns3 = mns*3;
+        for (size_t i = 0; i < ns; i++) {
+          size_t inmon = i*nmon;
+          size_t inmon3 = 3*inmon;
+          tmp1[fi_crd + mns3 + 3*i] = Efq[inmon3 + m + fi_crd];
+          tmp1[fi_crd + mns3 + 3*i + 1] = Efq[inmon3 + m + fi_crd + nmon];
+          tmp1[fi_crd + mns3 + 3*i + 2] = Efq[inmon3 + m + fi_crd + nmon2];
+
+          tmp3[fi_crd + mns3 + 3*i] = Efd[inmon3 + m + fi_crd];
+          tmp3[fi_crd + mns3 + 3*i + 1] = Efd[inmon3 + m + fi_crd + nmon];
+          tmp3[fi_crd + mns3 + 3*i + 2] = Efd[inmon3 + m + fi_crd + nmon2];
+
+          tmp4[fi_crd + mns3 + 3*i] = mu[inmon3 + m + fi_crd];
+          tmp4[fi_crd + mns3 + 3*i + 1] = mu[inmon3 + m + fi_crd + nmon];
+          tmp4[fi_crd + mns3 + 3*i + 2] = mu[inmon3 + m + fi_crd + nmon2];
+
+          tmp2[fi_sites + mns + i] = phi[fi_sites + m + inmon];
+          #ifdef DEBUG
+          std::cerr << "phi[" << fi_sites + mns + i << "] = "
+                    << tmp2[fi_sites + mns + i] << std::endl;
+          std::cerr << "E[" << fi_sites + mns + i << "] = "
+                    << tmp1[fi_crd + mns3 + 3*i] << " "
+                    << tmp1[fi_crd + mns3 + 3*i + 1] << " "
+                    << tmp1[fi_crd + mns3 + 3*i + 2] << " " << std::endl;
+
+          #endif
+        }
+      }
+      fi_mon += nmon;
+      fi_sites += nmon*ns;
+      fi_crd += nmon*ns*3;
+    }
+    Efq = tmp1;
+    chg = orig_chg;
+    phi = tmp2;
+    mu = tmp4;
+    Efd = tmp3;
+
 
     // Dipoles are computed. Now we need the electrostatic energy.
     // Permanent electrostatics
