@@ -20,33 +20,33 @@ class Field {
 ////////////////////////////////////////////////////////////////////////////////
 
   void DoEfqWA(
-    std::vector<double> xyz,        // xyz all sites ordered
-    std::vector<double> chg,        // charges all sites ordered
+    double * xyz1, double * xyz2,   // xyz all sites ordered
+    double * chg1, double * chg2,   // charges all sites ordered
     size_t m1,                      // mon 1 index
     size_t m2in, size_t m2fi,       // initial and final index m2
-    size_t fincrd1, size_t fincrd2, // First index in xyz of m1/2
-    size_t finsts1, size_t finsts2, // First index in sites of m1/2
     size_t nmon1, size_t nmon2,     // Number of monomers 1 and 2
     size_t i, size_t j,             // Site i and site j
     double Ai, double Asqsq,
     double aCC, double aCC1_4,
     double g34,
-    std::vector<double> &phi,
-    std::vector<double> &Efq);
+    double &ex, double &ey,
+    double &ez, double &phi1,
+    double * phi2,
+    double * Efq2);
 
 ////////////////////////////////////////////////////////////////////////////////
 
-  void DoEfqWoA(
-    std::vector<double> xyz,
-    std::vector<double> chg, 
+  void DoEfqWA(
+    double * xyz1, double * xyz2,
+    double * chg1, double * chg2,
     size_t m1,
     size_t m2in, size_t m2fi,
-    size_t fincrd1, size_t fincrd2,
-    size_t finsts1, size_t finsts2,
     size_t nmon1, size_t nmon2,
     size_t i, size_t j,
-    std::vector<double> &phi,
-    std::vector<double> &Efq);
+    double &ex, double &ey,
+    double &ez, double &phi1,
+    double * phi2,
+    double * Efq2);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -65,11 +65,11 @@ class Field {
 
   void DoEfdWoA(
     double * xyz1, double * xyz2,
-    double * mu2,
+    double * mu1, double * mu2,
     size_t m1,
     size_t m2in, size_t m2fi,
     size_t nmon1, size_t nmon2,
-    size_t i, size_t j,
+    size_t i, size_t j, double * Efd2,
     double &Efdx, double &Efdy, double &Efdz);
 
 ////////////////////////////////////////////////////////////////////////////////

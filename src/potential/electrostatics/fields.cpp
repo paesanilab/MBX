@@ -22,19 +22,19 @@ Field::Field(size_t n) {
   v15_ = std::vector<double> (maxnmon);
 }
 
-void Field::DoEfqWA(std::vector<double> xyz, 
-                    std::vector<double> chg,
+void Field::DoEfqWA(double * xyz1, double * xyz2, 
+                    double * chg1, double * chg2,
                     size_t m1, 
                     size_t m2in, size_t m2fi,
-                    size_t fincrd1, size_t fincrd2, 
-                    size_t finsts1, size_t finsts2, 
                     size_t nmon1, size_t nmon2,
                     size_t i, size_t j,
                     double Ai, double Asqsq,
                     double aCC, double aCC1_4,
-                    double g34,
-                    std::vector<double> &phi,
-                    std::vector<double> &Efq) {
+                    double g34, 
+                    double &ex, double &ey, 
+                    double &ez, double &phi1,
+                    double * phi2,
+                    double * Efq2) {
              
   size_t nmon12 = nmon1 * 2;
   size_t nmon22 = nmon2 * 2;
@@ -59,12 +59,12 @@ void Field::DoEfqWA(std::vector<double> xyz,
 
   # pragma ivdep
   for (size_t m = m2in; m < m2fi; m++) {
-    v0_[m] = xyz[fincrd1 + inmon13 + m1]
-           - xyz[fincrd2 + jnmon23 + m];                     // rijx
-    v1_[m] = xyz[fincrd1 + inmon13 + nmon1 + m1]
-           - xyz[fincrd2 + jnmon23 + nmon2 + m];             // rijy
-    v2_[m] = xyz[fincrd1 + inmon13 + nmon12 + m1]
-           - xyz[fincrd2 + jnmon23 + nmon22 + m];            // rijz
+    v0_[m] = xyz1[inmon13 + m1]
+           - xyz2[jnmon23 + m];                     // rijx
+    v1_[m] = xyz1[inmon13 + nmon1 + m1]
+           - xyz2[jnmon23 + nmon2 + m];             // rijy
+    v2_[m] = xyz1[inmon13 + nmon12 + m1]
+           - xyz2[jnmon23 + nmon22 + m];            // rijz
   }
   for (size_t m = m2in; m < m2fi; m++) {
     v3_[m] = v0_[m]*v0_[m] + v1_[m]*v1_[m] + v2_[m]*v2_[m];  // rsq
@@ -86,40 +86,44 @@ void Field::DoEfqWA(std::vector<double> xyz,
 
     // Assuming phi will be at1m1 at1m2 at1m3 .. for same type of mons
     //phi[finsts1 + inmon1 + m1] += s0r *chg[finsts2 + jnmon2 + m];
-    v7_[m] = s0r *chg[finsts2 + jnmon2 + m];
-    phi[finsts2 + jnmon2 + m] += s0r *chg[finsts1 + inmon1 + m1];
+    v7_[m] = s0r *chg2[jnmon2 + m];
+    phi2[jnmon2 + m] += s0r *chg1[inmon1 + m1];
 
     // Field will be as xyz xxxxyyyyzzzzat1 xxxxxyyyyzzzz at2...
-    const double s1r3ci = s1r3 * chg[finsts1 + inmon1 + m1];
-    const double s1r3cj = s1r3 * chg[finsts2 + jnmon2 + m];
+    const double s1r3ci = s1r3 * chg1[inmon1 + m1];
+    const double s1r3cj = s1r3 * chg2[jnmon2 + m];
     //Efq[fincrd1 + inmon13 + m1] += s1r3cj * v0_[m];
     v8_[m] = s1r3cj * v0_[m];
-    Efq[fincrd2 + jnmon23 + m] -= s1r3ci * v0_[m];
+    Efq2[jnmon23 + m] -= s1r3ci * v0_[m];
     //Efq[fincrd1 + inmon13 + nmon1 + m1] += s1r3cj * v1_[m];
     v9_[m] = s1r3cj * v1_[m];
-    Efq[fincrd2 + jnmon23 + nmon2 + m] -= s1r3ci * v1_[m];
+    Efq2[jnmon23 + nmon2 + m] -= s1r3ci * v1_[m];
     //Efq[fincrd1 + inmon13 + nmon12 + m1] += s1r3cj * v2_[m];
     v10_[m] = s1r3cj * v2_[m];
-    Efq[fincrd2 + jnmon23 + nmon22 + m] -= s1r3ci * v2_[m];
+    Efq2[jnmon23 + nmon22 + m] -= s1r3ci * v2_[m];
   }
+  phi1 = 0.0;
+  ex = 0.0;
+  ey = 0.0;
+  ez = 0.0;
   for (size_t m = m2in; m < m2fi; m++) {
-    phi[finsts1 + inmon1 + m1] += v7_[m];
-    Efq[fincrd1 + inmon13 + m1] += v8_[m];
-    Efq[fincrd1 + inmon13 + nmon1 + m1] += v9_[m];
-    Efq[fincrd1 + inmon13 + nmon12 + m1] += v10_[m];
+    phi1 += v7_[m];
+    ex += v8_[m];
+    ey += v9_[m];
+    ez += v10_[m];
   }
 }
 
-void Field::DoEfqWoA(std::vector<double> xyz,
-                     std::vector<double> chg,
-                     size_t m1,
-                     size_t m2in, size_t m2fi,
-                     size_t fincrd1, size_t fincrd2,
-                     size_t finsts1, size_t finsts2,
-                     size_t nmon1, size_t nmon2,
-                     size_t i, size_t j,
-                     std::vector<double> &phi,
-                     std::vector<double> &Efq) {
+void Field::DoEfqWA(double * xyz1, double * xyz2,
+                    double * chg1, double * chg2,
+                    size_t m1,
+                    size_t m2in, size_t m2fi,
+                    size_t nmon1, size_t nmon2,
+                    size_t i, size_t j,
+                    double &ex, double &ey,
+                    double &ez, double &phi1,
+                    double * phi2,
+                    double * Efq2) {
 
   size_t nmon12 = nmon1 * 2;
   size_t nmon22 = nmon2 * 2;
@@ -137,12 +141,12 @@ void Field::DoEfqWoA(std::vector<double> xyz,
 
   #pragma ivdep
   for (size_t m = m2in; m < m2fi; m++) {
-    const double rijx  = xyz[fincrd1 + inmon13 + m1]
-                       - xyz[fincrd2 + jnmon23 + m];             // rijx
-    const double rijy  = xyz[fincrd1 + inmon13 + nmon1 + m1]
-                       - xyz[fincrd2 + jnmon23 + nmon2 + m];     // rijy
-    const double rijz  = xyz[fincrd1 + inmon13 + nmon12 + m1]
-                       - xyz[fincrd2 + jnmon23 + nmon22 + m];    // rijz
+    const double rijx  = xyz1[inmon13 + m1]
+                       - xyz2[jnmon23 + m];             // rijx
+    const double rijy  = xyz1[inmon13 + nmon1 + m1]
+                       - xyz2[jnmon23 + nmon2 + m];     // rijy
+    const double rijz  = xyz1[inmon13 + nmon12 + m1]
+                       - xyz2[jnmon23 + nmon22 + m];    // rijz
 
     const double risq = rijx * rijx + rijy * rijy + rijz * rijz;  // rsq
     const double ri = 1.0 / std::sqrt(risq);                      // 1/r
@@ -152,27 +156,31 @@ void Field::DoEfqWoA(std::vector<double> xyz,
 
     // Assuming phi will be at1m1 at1m2 at1m3 .. for same type of mons
     //phi[finsts1 + inmon1 + m1] += s0r *chg[finsts2 + jnmon2 + m];
-    v0_[m] = s0r *chg[finsts2 + jnmon2 + m];
-    phi[finsts2 + jnmon2 + m] += s0r *chg[finsts1 + inmon1 + m1];
+    v0_[m] = s0r *chg2[jnmon2 + m];
+    phi2[jnmon2 + m] += s0r *chg1[inmon1 + m1];
 
     // Field will be as xyz xxxxyyyyzzzzat1 xxxxxyyyyzzzz at2...
-    const double s1r3ci = s1r3 * chg[finsts1 + inmon1 + m1];
-    const double s1r3cj = s1r3 * chg[finsts2 + jnmon2 + m];
+    const double s1r3ci = s1r3 * chg1[inmon1 + m1];
+    const double s1r3cj = s1r3 * chg2[jnmon2 + m];
     //Efq[fincrd1 + inmon13 + m1] += s1r3cj * rijx;
     v1_[m] = s1r3cj * rijx;
-    Efq[fincrd2 + jnmon23 + m] -= s1r3ci * rijx;
+    Efq2[jnmon23 + m] -= s1r3ci * rijx;
     //Efq[fincrd1 + inmon13 + nmon1 + m1] += s1r3cj * rijy;
     v2_[m] = s1r3cj * rijy;
-    Efq[fincrd2 + jnmon23 + nmon2 + m] -= s1r3ci * rijy;
+    Efq2[jnmon23 + nmon2 + m] -= s1r3ci * rijy;
     //Efq[fincrd1 + inmon13 + nmon12 + m1] += s1r3cj * rijz;
     v3_[m] = s1r3cj * rijz;
-    Efq[fincrd2 + jnmon23 + nmon22 + m] -= s1r3ci * rijz;
+    Efq2[jnmon23 + nmon22 + m] -= s1r3ci * rijz;
   }
+  phi1 = 0.0;
+  ex = 0.0;
+  ey = 0.0;
+  ez = 0.0;
   for (size_t m = m2in; m < m2fi; m++) {
-    phi[finsts1 + inmon1 + m1] += v0_[m];
-    Efq[fincrd1 + inmon13 + m1] += v1_[m];
-    Efq[fincrd1 + inmon13 + nmon1 + m1] += v2_[m];
-    Efq[fincrd1 + inmon13 + nmon12 + m1] += v3_[m];
+    phi1 += v0_[m];
+    ex += v1_[m];
+    ey += v2_[m];
+    ez += v3_[m];
   }
 }
 
@@ -274,11 +282,11 @@ void Field::DoEfdWA( double * xyz1, double * xyz2,
 }
 
 void Field::DoEfdWoA(double * xyz1, double * xyz2,
-                     double * mu2,
+                     double * mu1, double * mu2,
                      size_t m1,
                      size_t m2in, size_t m2fi,
                      size_t nmon1, size_t nmon2,
-                     size_t i, size_t j,
+                     size_t i, size_t j, double * Efd2,
                      double &Efdx, double &Efdy, double &Efdz) {
 
   size_t nmon12 = nmon1 * 2;
@@ -334,6 +342,21 @@ void Field::DoEfdWoA(double * xyz1, double * xyz2,
               ( ts2z * rijx * mu2[jnmon23 + m] +
                 ts2z * rijy * mu2[jnmon23 + nmon2 + m] +
                (ts2z * rijz - s1r3) * mu2[jnmon23 + nmon22 + m]);
+    
+    Efd2[jnmon23 + m] +=
+              ((ts2x * rijx - s1r3) * mu1[inmon13 + m1] +
+               ts2x * rijy * mu1[inmon13 + nmon1 + m1] +
+               ts2x * rijz * mu1[inmon13 + nmon12 + m1]);
+
+    Efd2[jnmon23 + nmon2 + m] +=
+              ((ts2y * rijx) * mu1[inmon13 + m1] +
+               (ts2y * rijy - s1r3) * mu1[inmon13 + nmon1 + m1] +
+               ts2y * rijz * mu1[inmon13 + nmon12 + m1]);
+
+    Efd2[jnmon23 + nmon22 + m] +=
+              ((ts2z * rijx) * mu1[inmon13 + m1] +
+               ts2z * rijy * mu1[inmon13 + nmon1 + m1] +
+               (ts2z * rijz - s1r3) * mu1[inmon13 + nmon12 + m1]);
   }
 
   // Setting the values to the output

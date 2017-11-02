@@ -33,6 +33,10 @@ namespace elec {
     std::vector<double> Efq(nsites3,0.0);
     std::vector<double> Efd(nsites3,0.0);
     std::vector<double> phi(nsites,0.0);
+    double ex = 0.0;
+    double ey = 0.0;
+    double ez = 0.0;
+    double phi1 = 0.0;
 
     // Dipole vector
     std::vector<double> mu(nsites3,0.0);
@@ -89,8 +93,11 @@ namespace elec {
     for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
       size_t ns = sites[fi_mon];
       size_t nmon = mon_type_count[mt].second;
+      size_t nmon2 = 2*nmon;
       systools::GetExcluded(mon_id[fi_mon], exc12, exc13, exc14);
       for (size_t i = 0; i < ns -1; i++) {
+        size_t inmon = i * nmon;
+        size_t inmon3 = inmon * 3;
         for (size_t j = i + 1; j < ns; j++) {
 
           // Continue only if i and j are not bonded
@@ -107,15 +114,27 @@ namespace elec {
             double Ai = 1/A;
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
-              f.DoEfqWA(xyz, chg, m, m, m+1, fi_crd, fi_crd,
-                        fi_sites, fi_sites, nmon, nmon, i, j, Ai, Asqsq,
-                        aCC, aCC1_4, g34, phi, Efq);
+              f.DoEfqWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+                        chg.data() + fi_crd, chg.data() + fi_crd, 
+                        m, m, m+1, nmon, nmon, i, j, Ai, Asqsq,
+                        aCC, aCC1_4, g34, ex, ey, ez, phi1, 
+                        phi.data() + fi_sites, Efq.data() + fi_crd);
+              phi[fi_sites + inmon + m] += phi1;
+              Efq[fi_crd + inmon3 + m] += ex; 
+              Efq[fi_crd + inmon3 + nmon + m] += ey;
+              Efq[fi_crd + inmon3 + nmon2 + m] += ez; 
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              f.DoEfqWoA(xyz, chg, m, m+1, nmon, fi_crd, fi_crd,
-                         fi_sites, fi_sites, nmon, nmon, i, j,
-                         phi, Efq);
+              f.DoEfqWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+                        chg.data() + fi_crd, chg.data() + fi_crd,
+                        m, m, m+1, nmon, nmon, i, j,
+                        ex, ey, ez, phi1,
+                        phi.data() + fi_sites, Efq.data() + fi_crd);
+              phi[fi_sites + inmon + m] += phi1;
+              Efq[fi_crd + inmon3 + m] += ex;
+              Efq[fi_crd + inmon3 + nmon + m] += ey;
+              Efq[fi_crd + inmon3 + nmon2 + m] += ez;
             }
           }
         }
@@ -137,6 +156,7 @@ namespace elec {
     for (size_t mt1 = 0; mt1 < mon_type_count.size(); mt1++) {
       size_t ns1 = sites[fi_mon1];
       size_t nmon1 = mon_type_count[mt1].second;
+      size_t nmon12 = nmon1 * 2;
       fi_mon2 = fi_mon1;
       fi_sites2 = fi_sites1;
       fi_crd2 = fi_crd1;
@@ -147,6 +167,8 @@ namespace elec {
         if (mt1 == mt2) same = true;
         // TODO add neighbour list here
         for (size_t i = 0; i < ns1; i++) {
+          size_t inmon1 = i * nmon1;
+          size_t inmon13 = inmon1 * 3;
           for (size_t j = 0; j < ns2; j++) {
             double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
             if (A > constants::EPS) {
@@ -155,16 +177,28 @@ namespace elec {
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                f.DoEfqWA(xyz, chg, m1, m2init, nmon2, fi_crd1, fi_crd2,
-                          fi_sites1, fi_sites2, nmon1, nmon2, i, j, Ai, Asqsq,
-                          aCC, aCC1_4, g34, phi, Efq);
+                f.DoEfqWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                        chg.data() + fi_crd1, chg.data() + fi_crd2,
+                        m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsq,
+                        aCC, aCC1_4, g34, ex, ey, ez, phi1, 
+                        phi.data() + fi_sites2, Efq.data() + fi_crd2);
+                phi[fi_sites1 + inmon1 + m1] += phi1;
+                Efq[fi_crd1 + inmon13 + m1] += ex;       
+                Efq[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                Efq[fi_crd1 + inmon13 + nmon12 + m1] += ez;
               }
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                f.DoEfqWoA(xyz, chg, m1, m2init, nmon2, fi_crd1, fi_crd2,
-                           fi_sites1, fi_sites2, nmon1, nmon2, i, j,
-                           phi, Efq);
+                f.DoEfqWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                        chg.data() + fi_crd1, chg.data() + fi_crd2,
+                        m1, m2init, nmon2, nmon1, nmon2, i, j,
+                        ex, ey, ez, phi1,
+                        phi.data() + fi_sites2, Efq.data() + fi_crd2);
+                phi[fi_sites1 + inmon1 + m1] += phi1;
+                Efq[fi_crd1 + inmon13 + m1] += ex;
+                Efq[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                Efq[fi_crd1 + inmon13 + nmon12 + m1] += ez;
               }
             }
           } 
@@ -270,21 +304,15 @@ namespace elec {
       fi_mon = 0;
       fi_sites = 0;
       fi_crd = 0;
-      double ex = 0.0;
-      double ey = 0.0;
-      double ez = 0.0;
       for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
         size_t ns = sites[fi_mon];
         size_t nmon = mon_type_count[mt].second;
         size_t nmon2 = 2*nmon;
         // Get excluded pairs for this monomer
         systools::GetExcluded(mon_id[fi_mon], exc12, exc13, exc14);
-        for (size_t i = 0; i < ns ; i++) {
+        for (size_t i = 0; i < ns-1 ; i++) {
           size_t inmon3 = 3*i*nmon;
-          for (size_t j = 0; j < ns; j++) {
-            // Continue only if i and j are not bonded
-            if (i == j) continue;
-
+          for (size_t j = i+1; j < ns; j++) {
             // Set the proper aDD
             bool is12 = systools::IsExcluded(exc12, i, j);
             bool is13 = systools::IsExcluded(exc13, i, j);
@@ -296,8 +324,8 @@ namespace elec {
               A = std::pow(A, 1.0/6.0);
               double Asqsq = A*A*A*A;
               for (size_t m = 0; m < nmon; m++) {
-                f.DoEfdWA(xyz.data() + fi_sites, xyz.data() + fi_sites, 
-                          mu.data() + fi_sites, mu.data() + fi_sites, m, m, m + 1,
+                f.DoEfdWA(xyz.data() + fi_crd, xyz.data() + fi_crd, 
+                          mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
                           nmon, nmon, i, j, Asqsq,
                           aDD, Efd.data() + fi_crd, ex, ey, ez);
                 Efd[fi_crd + inmon3 + m] += ex;
@@ -306,9 +334,9 @@ namespace elec {
               }
             } else {
               for (size_t m = 0; m < nmon; m++) {
-                f.DoEfdWoA(xyz.data() + fi_sites, xyz.data() + fi_sites,
-                          mu.data() + fi_sites, m, m, m + 1,
-                          nmon, nmon, i, j, ex, ey, ez);
+                f.DoEfdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+                          mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
+                          nmon, nmon, i, j, Efd.data() + fi_crd, ex, ey, ez);
                 Efd[fi_crd + inmon3 + m] += ex;
                 Efd[fi_crd + inmon3 + nmon + m] += ey;
                 Efd[fi_crd + inmon3 + nmon2 + m] += ez;
@@ -321,8 +349,6 @@ namespace elec {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
       }
-      for (size_t i = 0; i < nsites3; i++)
-        Efd[i] *= 0.5;
 
       fi_mon1 = 0;
       fi_sites1 = 0;
@@ -348,63 +374,30 @@ namespace elec {
           for (size_t i = 0; i < ns1; i++) {
             size_t inmon13 = 3 * nmon1 * i;
             for (size_t j = 0; j < ns2; j++) {
-
               double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
               if (A > constants::EPS) {
                 A = std::pow(A,1.0/6.0);
                 double Asqsq = A*A*A*A;
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  if (same) {
-                    
-                    //f.DoEfdWA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
-                    //      mu.data() + fi_sites1, mu.data() + fi_sites2, m1, 0, m1,
-                    //      nmon1, nmon2, i, j, Asqsq,
-                    //      aDD, Efd.data() + fi_crd2, ex, ey, ez);
-                    //Efd[fi_crd1 + inmon13 + m1] += ex;
-                    //Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                    //Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                    f.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
-                          mu.data() + fi_crd1, mu.data() + fi_crd2, m1, m1 + 1, nmon2,
-                          nmon1, nmon2, i, j, Asqsq,
-                          aDD, Efd.data() + fi_crd2, ex, ey, ez);
-                    Efd[fi_crd1 + inmon13 + m1] += ex;
-                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-
-                  } else {
-                    f.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
-                          mu.data() + fi_crd1, mu.data() + fi_crd2, m1, 0, nmon2,
-                          nmon1, nmon2, i, j, Asqsq,
-                          aDD, Efd.data() + fi_crd2, ex, ey, ez);
-                    Efd[fi_crd1 + inmon13 + m1] += ex;
-                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                  }
-
+                  size_t m2init = same ? m1 + 1 : 0;
+                  f.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                        mu.data() + fi_crd1, mu.data() + fi_crd2, m1, m2init, nmon2,
+                        nmon1, nmon2, i, j, Asqsq,
+                        aDD, Efd.data() + fi_crd2, ex, ey, ez);
+                  Efd[fi_crd1 + inmon13 + m1] += ex;
+                  Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                  Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
                 }
               } else {
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  if (same) {
-                    f.DoEfdWoA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
-                          mu.data() + fi_sites2, m1, 0, m1,
-                          nmon1, nmon2, i, j, ex, ey, ez);
-                    Efd[fi_crd1 + inmon13 + m1] += ex;
-                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                    f.DoEfdWoA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
-                          mu.data() + fi_sites2, m1, m1 + 1, nmon2,
-                          nmon1, nmon2, i, j, ex, ey, ez);
-                    Efd[fi_crd1 + inmon13 + m1] += ex;
-                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                  } else {
-                    f.DoEfdWoA(xyz.data() + fi_sites1, xyz.data() + fi_sites2,
-                          mu.data() + fi_sites2, m1, 0, nmon2,
-                          nmon1, nmon2, i, j, ex, ey, ez);
-                    Efd[fi_crd1 + inmon13 + m1] += ex;
-                    Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                    Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                  }
+                  size_t m2init = same ? m1 + 1 : 0;
+                  f.DoEfdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                        mu.data() + fi_crd1, mu.data() + fi_crd2, 
+                        m1, m2init, nmon2, nmon1, nmon2, 
+                        i, j, Efd.data() + fi_crd2, ex, ey, ez);
+                  Efd[fi_crd1 + inmon13 + m1] += ex;
+                  Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
+                  Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
                 }
               }
             }
@@ -422,10 +415,10 @@ namespace elec {
     }
 
     // Reorganize field and potential to initial order
-    std::vector<double> tmp1(3*nsites,0.0);
+    std::vector<double> tmp1(nsites3,0.0);
     std::vector<double> tmp2(nsites,0.0);
-    std::vector<double> tmp3(3*nsites,0.0);
-    std::vector<double> tmp4(3*nsites,0.0);
+    std::vector<double> tmp3(nsites3,0.0);
+    std::vector<double> tmp4(nsites3,0.0);
     fi_mon = 0;
     fi_crd = 0;
     fi_sites = 0;
