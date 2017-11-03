@@ -36,7 +36,7 @@ class Field {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-  void DoEfqWA(
+  void DoEfqWoA(
     double * xyz1, double * xyz2,
     double * chg1, double * chg2,
     size_t m1,
@@ -74,6 +74,35 @@ class Field {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+  void DoGrdWA(
+    double * xyz1, double * xyz2,
+    double * chg1, double * chg2,
+    double * mu1, double * mu2,
+    size_t m1,
+    size_t m2in, size_t m2fi,
+    size_t nmon1, size_t nmon2,
+    size_t i, size_t j,
+    double aDD, double aCD, double Asqsq,
+    double &grdx, double &grdy, double &grdz,
+    double &phi1, double * phi2,
+    double * grd2);
+
+////////////////////////////////////////////////////////////////////////////////
+
+  void DoGrdWoA(
+    double * xyz1, double * xyz2,
+    double * chg1, double * chg2,
+    double * mu1, double * mu2,
+    size_t m1,
+    size_t m2in, size_t m2fi,
+    size_t nmon1, size_t nmon2,
+    size_t i, size_t j,
+    double &grdx, double &grdy, double &grdz,
+    double &phi1, double * phi2,
+    double * grd2);
+
+////////////////////////////////////////////////////////////////////////////////
+
  private:
   // Vectors that will be reused:
   size_t maxnmon;
@@ -88,11 +117,6 @@ class Field {
   std::vector<double> v8_;
   std::vector<double> v9_;
   std::vector<double> v10_;
-  std::vector<double> v11_;
-  std::vector<double> v12_;
-  std::vector<double> v13_;
-  std::vector<double> v14_;
-  std::vector<double> v15_;
 };
 
 } // namespace elec
