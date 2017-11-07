@@ -7,7 +7,7 @@
 
 // 2B
 #include "potential/2b/x2b-v9x.h"
-#include "potential/2b/poly-2b-v6x.h"
+#include "potential/2b/x2b-A1B2Z2_C-v1x.h"
 
 namespace e2b {
 
