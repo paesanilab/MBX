@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <utility>
+#include <algorithm>
 
 #include "nanoflann.hpp"
 #include "kdtree_utils.h"
@@ -25,9 +26,7 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
 // Function that sets up initial charges, pols, polfacs, number of sites
 // number of atoms and first index. Returns the total number of sites
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
-                     std::vector<size_t> &nat, std::vector<size_t> &fstind,
-                     std::vector<double> &chg, std::vector<double> &pol,
-                     std::vector<double> &polfac);
+                     std::vector<size_t> &nat, std::vector<size_t> &fi_at);
 
 // Given ifnormation of the system, this subroutine fills up the dimers and 
 // trimers of the system.
