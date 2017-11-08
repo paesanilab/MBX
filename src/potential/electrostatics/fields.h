@@ -20,17 +20,17 @@ class Field {
 ////////////////////////////////////////////////////////////////////////////////
 
   void DoEfqWA(
-    double * xyz1, double * xyz2,   // xyz all sites ordered
-    double * chg1, double * chg2,   // charges all sites ordered
-    size_t m1,                      // mon 1 index
-    size_t m2in, size_t m2fi,       // initial and final index m2
-    size_t nmon1, size_t nmon2,     // Number of monomers 1 and 2
-    size_t i, size_t j,             // Site i and site j
+    double * xyz1, double * xyz2,
+    double * chg1, double * chg2,
+    size_t mon1_index,
+    size_t mon2_index_start, size_t mon2_index_end,
+    size_t nmon1, size_t nmon2,
+    size_t site_i, size_t site_j,
     double Ai, double Asqsq,
     double aCC, double aCC1_4,
     double g34,
-    double &ex, double &ey,
-    double &ez, double &phi1,
+    double &Efqx_mon1, double &Efqy_mon1,
+    double &Efqz_mon1, double &phi1,
     double * phi2,
     double * Efq2);
 
@@ -39,12 +39,12 @@ class Field {
   void DoEfqWoA(
     double * xyz1, double * xyz2,
     double * chg1, double * chg2,
-    size_t m1,
-    size_t m2in, size_t m2fi,
+    size_t mon1_index,
+    size_t mon2_index_start, size_t mon2_index_end,
     size_t nmon1, size_t nmon2,
-    size_t i, size_t j,
-    double &ex, double &ey,
-    double &ez, double &phi1,
+    size_t site_i, size_t site_j,
+    double &Efqx_mon1, double &Efqy_mon1,
+    double &Efqz_mon1, double &phi1,
     double * phi2,
     double * Efq2);
 
@@ -53,24 +53,24 @@ class Field {
   void DoEfdWA(
     double * xyz1, double * xyz2,
     double * mu1, double * mu2,
-    size_t m1,
-    size_t m2in, size_t m2fi,
+    size_t mon1_index,
+    size_t mon2_index_start, size_t mon2_index_end,
     size_t nmon1, size_t nmon2,
-    size_t i, size_t j,
+    size_t site_i, size_t site_j,
     double Asqsq,
     double aDD, double * Efd2,
-    double &Efdx, double &Efdy, double &Efdz);
+    double &Efdx_mon1, double &Efdy_mon1, double &Efdz_mon1);
 
 ////////////////////////////////////////////////////////////////////////////////
 
   void DoEfdWoA(
     double * xyz1, double * xyz2,
     double * mu1, double * mu2,
-    size_t m1,
-    size_t m2in, size_t m2fi,
+    size_t mon1_index,
+    size_t mon2_index_start, size_t mon2_index_end,
     size_t nmon1, size_t nmon2,
-    size_t i, size_t j, double * Efd2,
-    double &Efdx, double &Efdy, double &Efdz);
+    size_t site_i, size_t site_j, double * Efd2,
+    double &Efdx_mon1, double &Efdy_mon1, double &Efdz_mon1);
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -78,10 +78,10 @@ class Field {
     double * xyz1, double * xyz2,
     double * chg1, double * chg2,
     double * mu1, double * mu2,
-    size_t m1,
-    size_t m2in, size_t m2fi,
+    size_t mon1_index,
+    size_t mon2_index_start, size_t mon2_index_end,
     size_t nmon1, size_t nmon2,
-    size_t i, size_t j,
+    size_t site_i, size_t site_j,
     double aDD, double aCD, double Asqsq,
     double &grdx, double &grdy, double &grdz,
     double &phi1, double * phi2,
@@ -93,10 +93,10 @@ class Field {
     double * xyz1, double * xyz2,
     double * chg1, double * chg2,
     double * mu1, double * mu2,
-    size_t m1,
-    size_t m2in, size_t m2fi,
+    size_t mon1_index,
+    size_t mon2_index_start, size_t mon2_index_end,
     size_t nmon1, size_t nmon2,
-    size_t i, size_t j,
+    size_t site_i, size_t site_j,
     double &grdx, double &grdy, double &grdz,
     double &phi1, double * phi2,
     double * grd2);
