@@ -6,6 +6,26 @@ gradients of both sites, returning by reference the values of site i from
 mon 1 and modifying in situ the corresponding ones for site 2. This enables 
 vectorization.
 
+!!! IMPORTANT. READ. REALLY, READ. !!!
+This functions assume that the data in all the pointers is already CONTIGIOUS
+The order assumed is the following:
+
+- XYZ, MU, EFQ, EFD, GRD
+[BLOCK1][BLOCK2]...[BLOCKN]
+where each block is one monomer type organized in the way:
+x.1.1 x.1.2 ... x.2.1. x.2.2 ... x.A.B ... y.1.1 y.1.2 ... z.1.1 ... z.A.B
+where x.1.2 will be read as coordinate x of site 1 of monomer 2, for B 
+monomers with A sites 
+
+- PHI, CHG
+[BLOCK1][BLOCK2]...[BLOCKN]
+where each block is one monomer type organized in the way:
+phi.1.1 phi.1.2 ... phi.2.1 ... phi.A.B 
+where phi.1.2 will be read as potential on site 1 of monomer 2, for B 
+monomers with A sites
+
+!!! END IMPORTANT !!!
+
 The equations are taken from the manuscript by Masia 
 dx.doi.org/10.1063/1.3511713 , J. Chem. Phys. 133, 234101 (2010)
 
