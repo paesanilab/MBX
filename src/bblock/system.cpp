@@ -1,5 +1,7 @@
 #include "system.h"
 
+//#define DEBUG
+
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace bblock { // Building Block :: System
@@ -78,32 +80,36 @@ void System::AddMonomerInfo() {
   std::vector<std::string> atoms = atoms_;
   atoms_.clear();
 
-  // TODO Sort the monomers and put them together by type
-  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
-
-  // At this point, the monomers are sorted by name.
-  // TODO maybe use a swich would be better than if else
-  // TODO maybe we should try to find out number of sites first and reserve
-  // memory, rather than pushing back?
   
-  nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, first_index_,
-                          chg_, pol_, polfac_);
+  std::vector<size_t> fi_at;
+  nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
+
+  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
   
   // Rearranging coordinates to account for virt sites
   xyz_ = std::vector<double> (3*nsites_, 0.0);
   atoms_ = std::vector<std::string> (nsites_, "virt");
+
   size_t count = 0;
-    
+  first_index_.clear();
+  std::vector<size_t> tmpsites;
+  std::vector<size_t> tmpnats;
   for (size_t i = 0; i < monomers_.size(); i++) {
-    //size_t k = initial_order_[i];
-    std::copy(xyz.begin() + 3 * count,
-              xyz.begin() + 3 * (nat_[i] + count),
-              xyz_.begin() + 3 * first_index_[i]);
-    std::copy(atoms.begin() + count,
-              atoms.begin() + nat_[i] + count,
-              atoms_.begin() + first_index_[i]);
-    count += nat_[i];
+    size_t k = initial_order_[i];
+    std::copy(xyz.begin() + 3 * fi_at[k],
+              xyz.begin() + 3 * (fi_at[k] + nat_[k]),
+              xyz_.begin() + 3 * count);
+    std::copy(atoms.begin() + fi_at[k],
+              atoms.begin() + fi_at[k] + nat_[k],
+              atoms_.begin() + count);
+    first_index_.push_back(count);
+    count += sites_[k];
+    tmpsites.push_back(sites_[k]);
+    tmpnats.push_back(nat_[k]);
   }
+
+  sites_ = tmpsites;
+  nat_ = tmpnats;
 
   // Setting Gradients to 0
   grd_ = std::vector<double> (3*nsites_, 0.0);
@@ -289,6 +295,7 @@ double System::Get2B(bool do_grads) {
         if (do_grads) {
           // POLYNOMIALS
           e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+
           // DISPERSION
           edisp += disp::GetDispersion(m1, m2, nd, do_grads,
                                      xyz1, xyz2, grd1, grd2);

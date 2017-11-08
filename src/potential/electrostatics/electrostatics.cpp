@@ -116,7 +116,7 @@ namespace elec {
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
               f.DoEfqWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
-                        chg.data() + fi_crd, chg.data() + fi_crd, 
+                        chg.data() + fi_sites, chg.data() + fi_sites, 
                         m, m, m+1, nmon, nmon, i, j, Ai, Asqsq,
                         aCC, aCC1_4, g34, ex, ey, ez, phi1, 
                         phi.data() + fi_sites, Efq.data() + fi_crd);
@@ -128,7 +128,7 @@ namespace elec {
           } else {
             for (size_t m = 0; m < nmon; m++) {
               f.DoEfqWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
-                        chg.data() + fi_crd, chg.data() + fi_crd,
+                        chg.data() + fi_sites, chg.data() + fi_sites,
                         m, m, m+1, nmon, nmon, i, j,
                         ex, ey, ez, phi1,
                         phi.data() + fi_sites, Efq.data() + fi_crd);
@@ -179,7 +179,7 @@ namespace elec {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
                 f.DoEfqWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
-                        chg.data() + fi_crd1, chg.data() + fi_crd2,
+                        chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsq,
                         aCC, aCC1_4, g34, ex, ey, ez, phi1, 
                         phi.data() + fi_sites2, Efq.data() + fi_crd2);
@@ -192,7 +192,7 @@ namespace elec {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
                 f.DoEfqWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
-                        chg.data() + fi_crd1, chg.data() + fi_crd2,
+                        chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j,
                         ex, ey, ez, phi1,
                         phi.data() + fi_sites2, Efq.data() + fi_crd2);
@@ -479,12 +479,13 @@ namespace elec {
           size_t jnmon  = j*nmon;
           size_t jnmon3  = 3*jnmon;
           size_t j3 = 3*j;
-// TODO TODO adapt to excluded pair. Chg-chg interactions will be taken into account if pair is not excluded. Need to modify functions. REMEMBER. DOUBLE CHECK GRAD SIGNS.
           // Set the proper aDD
           bool is12 = systools::IsExcluded(exc12, i, j);
           bool is13 = systools::IsExcluded(exc13, i, j);
           bool is14 = systools::IsExcluded(exc14, i, j);
           // Don't do charge-dipole and modify phi if pair is excluded
+          // TODO check this for distances more than 1-4
+          // TODO careful. YOu are not adding phi1
           double * phi_mod = (is12 || is13 || is14) ?
                               0 : phi.data() + fi_sites; 
           aDD = systools::GetAdd(is12, is13, is14, mon_id[fi_mon]);
@@ -663,7 +664,7 @@ namespace elec {
     for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
       size_t ns = sites[fi_mon];
       size_t nmon = mon_type_count[mt].second;
-      std::string id = mon_id[fi_sites];
+      std::string id = mon_id[fi_mon];
 
       // Redistribute gradients
       systools::RedistributeVirtGrads2Real(id, nmon, fi_crd, grad);
@@ -676,9 +677,6 @@ namespace elec {
       fi_sites += nmon * ns;
       fi_crd += nmon * ns * 3;
     }
-
-    
-      
 
     return Eqq + Eind;
     

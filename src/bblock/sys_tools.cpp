@@ -14,88 +14,77 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
   std::vector<std::string> monomers = mon;
   mon.clear();
   original_order.clear();
-  size_t n = monomers.size();
-  while (n > 0) {
-    std::string min_mon = monomers[0];
-    size_t index_min = 0;
-    for (size_t j = 1; j < monomers.size(); j++) {
-      if (monomers[j] < min_mon && monomers[j] != "~") {
-        min_mon = monomers[j];
-        index_min = j;
-      }
-    }
-    mon.push_back(min_mon);
-    original_order.push_back(index_min);
-    monomers[index_min] = "~";
-    n--;
+
+  std::vector<std::string> montypes;
+
+  // Look for number of monomers of each type
+  for (size_t i = 0; i < monomers.size(); i++) {
+    if (std::find(montypes.begin(), montypes.end(), monomers[i]) 
+        == montypes.end()) montypes.push_back(monomers[i]);
   }
 
   std::vector<std::pair<std::string,size_t>> mon_types_count;
-  mon_types_count.push_back(std::make_pair(mon[0],1));
-  size_t count = 0;
-  std::string prev_mon = mon[0];
-  for (size_t i = 1; i < mon.size(); i++) {
-    if (mon[i] == prev_mon) {
-      mon_types_count[count].second += 1;
-    } else {
-      prev_mon = mon[i];
-      mon_types_count.push_back(std::make_pair(mon[i],1));
-      count += 1;
-    } 
+  std::vector<std::pair<std::string,size_t>> montypetmp;
+  for (size_t i = 0; i < montypes.size(); i++) {
+    size_t nm = std::count(monomers.begin(), monomers.end(), montypes[i]);
+    montypetmp.push_back(std::make_pair(montypes[i],nm));
   }
 
+  // Add them from less mons to more mons
+  while (montypetmp.size() > 0) {
+    std::pair<std::string,size_t> minmon = montypetmp[0];
+    size_t min_ind = 0;
+    for (size_t i = 1; i < montypetmp.size(); i++) {
+      if (montypetmp[i].second < minmon.second) {
+        minmon = montypetmp[i];
+        min_ind = i;
+      }
+    }
+
+    mon_types_count.push_back(minmon);
+    std::string monid = montypetmp[min_ind].first;
+    for (size_t i = 0; i < monomers.size(); i++) {
+      if (monomers[i] == monid) {
+        original_order.push_back(i);
+        mon.push_back(monid);
+      }
+    }
+    
+    montypetmp.erase(montypetmp.begin() + min_ind,
+                     montypetmp.begin() + min_ind + 1);
+  }
+  
   return mon_types_count;
 
 }
 
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
-                     std::vector<size_t> &nat, std::vector<size_t> &fstind,
-                     std::vector<double> &chg, std::vector<double> &pol,
-                     std::vector<double> &polfac) {
+                     std::vector<size_t> &nat, std::vector<size_t> &fi_at) {
   // Clearing Vectors
   sites.clear();
   nat.clear();
-  fstind.clear();
-  chg.clear();
-  pol.clear();
-  polfac.clear();
   
   size_t count = 0;
+  size_t ats = 0;
   for (size_t i = 0; i < mon.size(); i++) {
     if (mon[i] == "h2o") {
       // Filling things for water.
-      // TODO: WARNING. For water, charges, and position of the M-site
-      // depends on the 3 atom coordinate.  
-
       // Site Info
       // TODO Maybe we can read this from a database
       sites.push_back(4);
       nat.push_back(3);
-      fstind.push_back(count);
-      count += sites[i];
-
-      // Charge info
-      chg.push_back(0.0);
-      chg.push_back(0.0);
-      chg.push_back(0.0);
-      chg.push_back(0.0);
-
-      // Pol info
-      pol.push_back(0.0);
-      pol.push_back(0.0);
-      pol.push_back(0.0);
-      pol.push_back(0.0);
-
-      // Polfac info
-      polfac.push_back(0.0);
-      polfac.push_back(0.0);
-      polfac.push_back(0.0);
-      polfac.push_back(0.0);
+    } else if (mon[i] == "f") {
+      sites.push_back(1);
+      nat.push_back(1);
     } else {
       std::cerr << "No data in the dataset for monomer: "
                 << mon[i] << std::endl;
       exit(EXIT_FAILURE);
     }
+
+    fi_at.push_back(ats);
+    ats += nat[i];
+    count += sites[i];
   }
 
   // Setting total number of sites
@@ -104,6 +93,10 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
 
 bool compare_pair (std::pair<size_t,double> a, std::pair<size_t,double> b) {
   return a.first < b.first;
+}
+bool compare_mon_type (std::pair<std::string,size_t> a, 
+                       std::pair<std::string,size_t> b) {
+  return a.second < b.second;
 }
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, 
@@ -322,8 +315,16 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
          std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind, 
          std::vector<double> &chg_der) {
 
+  // Constant that calculates charge
+  const double CHARGECON = constants::CHARGECON;
+
+  if (mon_id == "f") {
+    for (size_t nv = 0; nv < n_mon; nv++) {
+      charges[fst_ind + nv] = -1.0 * CHARGECON;
+    }
+      
   // Note, for now, assuming only water has site dependant charges
-  if (mon_id == "h2o") {
+  } else if (mon_id == "h2o") {
 
     // chgtmp = M, H1, H2 according to ttm4.cpp
     std::vector<double> chgtmp;
@@ -350,8 +351,6 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
       chgtmp.insert (chgtmp.end(), chgtmpnv_der.begin(), chgtmpnv_der.end());
 //    }
 
-    // Constant that calculates charge
-    const double CHARGECON = constants::CHARGECON;
 
     // Creating vector with contiguous data
     std::vector<double> chg2(n_mon*nsites,0.0);
@@ -399,7 +398,10 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
 void SetPolfac (std::vector<double> &polfac, std::string mon_id,
     size_t n_mon, size_t nsites, size_t fst_ind){
 
-  if (mon_id == "h2o") {
+  if (mon_id == "f") {
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 2.4669;
+  } else if (mon_id == "h2o") {
     /* old loop -- not vectorized
     for (size_t nv = 0; nv < n_mon; nv++) {
       polfac[fst_ind + nv*nsites] = 1.310;
@@ -435,7 +437,10 @@ void SetPolfac (std::vector<double> &polfac, std::string mon_id,
 void SetPol (std::vector<double> &pol, 
     std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind){
 
-  if (mon_id == "h2o") {
+  if (mon_id == "f") {
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 2.4669;
+  } else if (mon_id == "h2o") {
     /* Old loop -- not vectorized
     for (size_t nv = 0; nv < n_mon; nv++) {
       pol[fst_ind + nv*nsites] = 1.310;
