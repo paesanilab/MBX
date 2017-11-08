@@ -77,7 +77,7 @@ int main(int argc, char** argv)
               << std::endl;
     for (size_t j = 0; j < n_sites; j++) {
       if (atn[j] == "virt") continue;
-      std::cout << std::setprecision(5) << std::scientific
+      std::cout << std::setprecision(3) << std::scientific
                 << std::setw(6) << std::left << atn[j]
                 << std::setw(20) << std::right << grd[3*j]
                 << std::setw(20) << std::right << grd[3*j + 1]
