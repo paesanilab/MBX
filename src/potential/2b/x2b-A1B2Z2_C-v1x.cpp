@@ -792,18 +792,18 @@ double x2b_h2o_ion_v2x::eval(const double* w1, const double* x,
     // Get the polynomial monomials
     double v[8];
 
-    v[0] = ctxt[0].v_exp(d_HH_intra, k_HH_intra, xcrd, H1, H2);
+    v[0] = ctxt[i*8 + 0].v_exp(d_HH_intra, k_HH_intra, xcrd, H1, H2);
 
-    v[1] = ctxt[1].v_exp(d_OH_intra, k_OH_intra, xcrd, O, H1);
-    v[2] = ctxt[2].v_exp(d_OH_intra, k_OH_intra, xcrd, O, H2);
+    v[1] = ctxt[i*8 + 1].v_exp(d_OH_intra, k_OH_intra, xcrd, O, H1);
+    v[2] = ctxt[i*8 + 2].v_exp(d_OH_intra, k_OH_intra, xcrd, O, H2);
 
-    v[3] = ctxt[3].v_coul(d_XH_coul, k_XH_coul, xcrd, X, H1);
-    v[4] = ctxt[4].v_coul(d_XH_coul, k_XH_coul, xcrd, X, H2);
+    v[3] = ctxt[i*8 + 3].v_coul(d_XH_coul, k_XH_coul, xcrd, X, H1);
+    v[4] = ctxt[i*8 + 4].v_coul(d_XH_coul, k_XH_coul, xcrd, X, H2);
 
-    v[5] = ctxt[5].v_coul(d_XO_coul, k_XO_coul, xcrd, X, O);
+    v[5] = ctxt[i*8 + 5].v_coul(d_XO_coul, k_XO_coul, xcrd, X, O);
 
-    v[6] = ctxt[6].v_exp(d_xlp_main, k_xlp_main, xcrd, X, lp1);
-    v[7] = ctxt[7].v_exp(d_xlp_main, k_xlp_main, xcrd, X, lp2);
+    v[6] = ctxt[i*8 + 6].v_exp(d_xlp_main, k_xlp_main, xcrd, X, lp1);
+    v[7] = ctxt[i*8 + 7].v_exp(d_xlp_main, k_xlp_main, xcrd, X, lp2);
 
     for (size_t j = 0; j < 8; j++) {
       vv[j*dimers_todo.size() + i] = v[j];
@@ -828,8 +828,8 @@ double x2b_h2o_ion_v2x::eval(const double* w1, const double* x,
     const int lp1 = 12;
     const int lp2 = 15;
 
-    double xgrd[8];
-    std::fill(xgrd, xgrd + 8, 0.0);
+    double xgrd[18];
+    std::fill(xgrd, xgrd + 18, 0.0);
 
     ctxt[i*8 + 0].grads(gg[0*ndtd + i], xgrd, H1, H2);
 

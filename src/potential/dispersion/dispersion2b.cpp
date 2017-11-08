@@ -6,6 +6,7 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
                      std::vector<double> xyz1, std::vector<double> xyz2,
                      std::vector<double> &grd1, std::vector<double> &grd2) {
   // Order the two monomer names and corresponding xyz
+  bool swaped = false;
   if (m2 < m1) {
     std::string tmp = m1;
     m1 = m2;
@@ -16,6 +17,7 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     tmp2 = grd1;
     grd1 = grd2;
     grd2 = tmp2;
+    swaped = true;
   }
 
   size_t nat1 = 0;
@@ -24,7 +26,6 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
   std::vector<size_t> types1;
   std::vector<size_t> types2;
 
-  size_t nt1 = 0;
   size_t nt2 = 0;
 
   double disp = 0.0;
@@ -46,7 +47,6 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     types2.push_back(1);
 
     // Set the number of different types
-    nt1 = 2;
     nt2 = 2;
 
     // Fill in (in order) the C6 and d6 coefficients
@@ -73,7 +73,6 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     types2.push_back(1);
 
     // Set the number of different types
-    nt1 = 1;
     nt2 = 2;
 
     // Fill in (in order) the C6 and d6 coefficients
@@ -125,7 +124,7 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     }
   }
 
-  if (m2 < m1) {
+  if (swaped) {
     std::vector<double> tmp2 = xyz1;
     tmp2 = grd2;
     grd2 = grd1;

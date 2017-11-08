@@ -80,10 +80,11 @@ void System::AddMonomerInfo() {
   std::vector<std::string> atoms = atoms_;
   atoms_.clear();
 
-  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
   
   std::vector<size_t> fi_at;
   nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
+
+  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
   
   // Rearranging coordinates to account for virt sites
   xyz_ = std::vector<double> (3*nsites_, 0.0);
@@ -294,6 +295,7 @@ double System::Get2B(bool do_grads) {
         if (do_grads) {
           // POLYNOMIALS
           e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+
           // DISPERSION
           edisp += disp::GetDispersion(m1, m2, nd, do_grads,
                                      xyz1, xyz2, grd1, grd2);

@@ -33,6 +33,7 @@ double get_2b_energy(std::string m1, std::string m2,size_t nm,
                      std::vector<double> xyz1, std::vector<double> xyz2,
                      std::vector<double> &grd1, std::vector<double> &grd2) {
   // Order the two monomer names and corresponding xyz
+  bool swaped = false;
   if (m2 < m1) {
     std::string tmp = m1;
     m1 = m2;
@@ -43,6 +44,7 @@ double get_2b_energy(std::string m1, std::string m2,size_t nm,
     tmp2 = grd1;
     grd1 = grd2;
     grd2 = tmp2;
+    swaped = true;
   }
 
   double energy = 0.0;
@@ -59,7 +61,7 @@ double get_2b_energy(std::string m1, std::string m2,size_t nm,
     return 0.0;
   }
 
-  if (m2 < m1) {
+  if (swaped) {
     std::vector<double> tmp2 = xyz1;
     tmp2 = grd2;
     grd2 = grd1;

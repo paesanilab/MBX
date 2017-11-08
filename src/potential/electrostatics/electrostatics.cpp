@@ -484,6 +484,8 @@ namespace elec {
           bool is13 = systools::IsExcluded(exc13, i, j);
           bool is14 = systools::IsExcluded(exc14, i, j);
           // Don't do charge-dipole and modify phi if pair is excluded
+          // TODO check this for distances more than 1-4
+          // TODO careful. YOu are not adding phi1
           double * phi_mod = (is12 || is13 || is14) ?
                               0 : phi.data() + fi_sites; 
           aDD = systools::GetAdd(is12, is13, is14, mon_id[fi_mon]);
@@ -675,9 +677,6 @@ namespace elec {
       fi_sites += nmon * ns;
       fi_crd += nmon * ns * 3;
     }
-
-    
-      
 
     return Eqq + Eind;
     
