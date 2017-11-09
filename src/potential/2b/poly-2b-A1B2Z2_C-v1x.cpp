@@ -6,6 +6,7 @@ std::vector<double> poly_2b_h2o_ion_v1x::eval(const size_t nd,
                         const double a[429], 
                         const double * x, double * g) {
   std::vector<double> energy(nd,0.0);
+  #pragma omp simd
   for (size_t nv = 0; nv < nd; nv++) {
     const double t1 = a[2];
     const double t2 = a[5];
