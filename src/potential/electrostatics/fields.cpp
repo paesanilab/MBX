@@ -63,7 +63,7 @@ void Field::DoEfqWA(double * xyz1, double * xyz2,
             v10_.begin() + mon2_index_end, 0.0);
 
   // Store rijx, rijy and rijz in vectors
-  # pragma ivdep
+  # pragma omp simd
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
     v0_[m] = xyzmon1_x - xyz2[site_jnmon23 + m];                     // rijx
     v1_[m] = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];             // rijy
@@ -88,7 +88,7 @@ void Field::DoEfqWA(double * xyz1, double * xyz2,
   }
 
   // Finalize computation of electric field
-  #pragma ivdep
+  # pragma omp simd
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
     const double exp1 = std::exp(-v5_[m]);
 
@@ -173,7 +173,7 @@ void Field::DoEfqWoA(double * xyz1, double * xyz2,
   std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
   std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
 
-  #pragma ivdep
+  # pragma omp simd
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
     // Obtain distances in x, y and z between sites i and j from mon1 and mon2
     const double rijx  = xyzmon1_x - xyz2[site_jnmon23 + m];          // rijx
@@ -256,7 +256,7 @@ void Field::DoEfdWA( double * xyz1, double * xyz2,
   std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
   std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
 
-  #pragma ivdep
+  # pragma omp simd
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
     // Distances between sites i and j from mon1 and mon2
     const double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
@@ -368,7 +368,7 @@ void Field::DoEfdWoA(double * xyz1, double * xyz2,
   std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
   std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
 
-  #pragma ivdep
+  # pragma omp simd
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
     // Distances between sites i and j from mon1 and mon2
     const double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
@@ -483,7 +483,7 @@ void Field::DoGrdWA(double * xyz1, double * xyz2,
   std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
   std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
 
-  #pragma ivdep
+  # pragma omp simd
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
     // Distances between sites i and j from mon1 and mon2
     const double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
@@ -715,7 +715,7 @@ void Field::DoGrdWoA(double * xyz1, double * xyz2,
   std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
   std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
 
-  #pragma ivdep
+  # pragma omp simd
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
     // Distances between sites i and j from mon1 and mon2
     const double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
