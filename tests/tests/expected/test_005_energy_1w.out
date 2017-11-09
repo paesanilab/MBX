@@ -1,9 +1,0 @@
-Energies without gradients:
-system[....0]=     7.6144931941e-01    kcal/mol
-Energies with gradients:
-system[....0]=     7.6144931941e-01    kcal/mol
-
-Atom             GradientX           GradientY           GradientZ
-O             -3.90938e+01        -6.31525e+00         6.69562e-04
-H              3.34180e+01         4.87430e+00        -5.53522e-04
-H              5.67578e+00         1.44095e+00        -1.16040e-04

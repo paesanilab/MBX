@@ -1,6 +1,6 @@
 #include "system.h"
 
-#include <iostream>
+//#define DEBUG
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -22,6 +22,9 @@ std::vector<size_t> System::GetTrimers() {return trimers_;}
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 std::vector<std::string> System::GetSysAtNames() {return atoms_;}
 std::vector<double> System::GetSysXyz() {return xyz_;}
+std::vector<double> System::GetCharges() {return chg_;}
+std::vector<double> System::GetPols() {return pol_;}
+std::vector<double> System::GetPolfacs() {return polfac_;}
 
 std::string System::GetMonId(size_t n) {return monomers_[n];}
 
@@ -49,17 +52,23 @@ void System::AddMolecule(std::vector<size_t> molec) {
 void System::Initialize() {
   if (initialized_) return;
 
-  cutoff2b_ = 15.0;
+  cutoff2b_ = 100.0;
   cutoff3b_ =  5.0;
+  diptol_ = 1E-16;
   maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
   maxNTriEval_ = 1024;
+  maxItDip_ = 100;
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
   nmon_ = monomers_.size();
-  //AddClusters(3, cutoff3b_);
-  //AddClusters(2, cutoff2b_);
+
+  SetVSites();
+  SetCharges();
+  SetPols();
+  SetPolfacs();
+
   // TODO Here should go the order and rearrengement stuff
 }
 
@@ -71,35 +80,43 @@ void System::AddMonomerInfo() {
   std::vector<std::string> atoms = atoms_;
   atoms_.clear();
 
-  // TODO Sort the monomers and put them together by type
-  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
-
-  // At this point, the monomers are sorted by name.
-  // TODO maybe use a swich would be better than if else
-  // TODO maybe we should try to find out number of sites first and reserve
-  // memory, rather than pushing back?
   
-  nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, first_index_,
-                          chg_, pol_, polfac_);
+  std::vector<size_t> fi_at;
+  nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
+
+  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
   
   // Rearranging coordinates to account for virt sites
   xyz_ = std::vector<double> (3*nsites_, 0.0);
   atoms_ = std::vector<std::string> (nsites_, "virt");
+
   size_t count = 0;
-    
+  first_index_.clear();
+  std::vector<size_t> tmpsites;
+  std::vector<size_t> tmpnats;
   for (size_t i = 0; i < monomers_.size(); i++) {
-    //size_t k = initial_order_[i];
-    std::copy(xyz.begin() + 3 * count,
-              xyz.begin() + 3 * (nat_[i] + count),
-              xyz_.begin() + 3 * first_index_[i]);
-    std::copy(atoms.begin() + count,
-              atoms.begin() + nat_[i] + count,
-              atoms_.begin() + first_index_[i]);
-    count += nat_[i];
+    size_t k = initial_order_[i];
+    std::copy(xyz.begin() + 3 * fi_at[k],
+              xyz.begin() + 3 * (fi_at[k] + nat_[k]),
+              xyz_.begin() + 3 * count);
+    std::copy(atoms.begin() + fi_at[k],
+              atoms.begin() + fi_at[k] + nat_[k],
+              atoms_.begin() + count);
+    first_index_.push_back(count);
+    count += sites_[k];
+    tmpsites.push_back(sites_[k]);
+    tmpnats.push_back(nat_[k]);
   }
+
+  sites_ = tmpsites;
+  nat_ = tmpnats;
 
   // Setting Gradients to 0
   grd_ = std::vector<double> (3*nsites_, 0.0);
+  chg_ = std::vector<double> (nsites_, 0.0);
+  pol_ = std::vector<double> (nsites_, 0.0);
+  polfac_ = std::vector<double> (nsites_, 0.0);
+  
   
 
 }
@@ -110,76 +127,9 @@ void System::AddClusters(size_t n_max, double cutoff,
   // trimers that contain it. iend is the last monomer position.
   // This means, if istart is 0 and iend is 2, we will look for all dimers
   // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
-  // Obtain xyz vector with the positions of first atom of each monomer
-  std::vector<double> xyz;
-  for (size_t i = istart; i < monomers_.size(); i++) {
-    xyz.push_back(xyz_[3*first_index_[i]]);
-    xyz.push_back(xyz_[3*first_index_[i] + 1]);
-    xyz.push_back(xyz_[3*first_index_[i] + 2]);
-  }
-
-  // Obtain the data in the structure needed by the kd-tree
-  kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz);
-
-  // Build the tree
-  typedef nanoflann::KDTreeSingleIndexAdaptor<
-    nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-    kdtutils::PointCloud<double>, 3 /* dim */> my_kd_tree_t;
-  my_kd_tree_t index(3 /*dim*/, ptc, 
-    nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */) );
-  index.buildIndex();
-
-  // Perform a radial search within the cutoff
-  dimers_.clear();
-  if (n_max > 2) 
-    trimers_.clear();
-  for (size_t i = 0; i < iend - istart; i++) {
-    // Define the query point
-    double point[3];
-    point[0] = ptc.pts[i].x;
-    point[1] = ptc.pts[i].y;
-    point[2] = ptc.pts[i].z;
-    
-    // Perform the search
-    std::vector<std::pair<size_t, double>> ret_matches;
-    nanoflann::SearchParams params;
-    const size_t nMatches = index.radiusSearch(point,
-      cutoff * cutoff, ret_matches, params);
-
-    // Add the pairs that are not in the dimer vector
-    for (size_t j = 0; j < nMatches; j++) {
-      if (ret_matches[j].first > i) {
-        dimers_.push_back(i + istart);
-        dimers_.push_back(ret_matches[j].first + istart);
-      
-        
-        // Add trimers if requested
-        if (n_max > 2) {
-          // Define query point, which is each of the points 'j' inside the 
-          // radius of 'i' 
-          double point2[3];
-          point2[0] = ptc.pts[ret_matches[j].first].x;
-          point2[1] = ptc.pts[ret_matches[j].first].y;
-          point2[2] = ptc.pts[ret_matches[j].first].z;
-          std::vector<std::pair<size_t, double>> ret_matches2;
-          nanoflann::SearchParams params2;
-          const size_t nMatches2 = index.radiusSearch(point2,
-            cutoff * cutoff, ret_matches2, params2);
- 
-          // Add the trimers that fulfil i > j > k, to avoid double counting
-          // We will add all trimers that fulfill the condition:
-          // At least 2 of the three distances must be smaller than the cutoff 
-          for (size_t k = 0; k < nMatches2; k++) {
-            if (ret_matches2[k].first > ret_matches[j].first) {
-              trimers_.push_back(i + istart);
-              trimers_.push_back(ret_matches[j].first + istart);
-              trimers_.push_back(ret_matches2[k].first + istart);
-            }
-          }
-        }
-      }
-    }
-  }
+  size_t nmon = monomers_.size();
+  systools::AddClusters(n_max, cutoff, istart, iend, nmon, xyz_,
+                        first_index_, dimers_, trimers_);
   
 }
 
@@ -193,8 +143,25 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   double e2b = Get2B(do_grads);
   double e3b = Get3B(do_grads);
 
+  // Set charges, polarizabilities and polfacs
+  // Note: Pols and Polfacs are constant
+  SetVSites();
+  SetCharges();
+  SetPols();
+  SetPolfacs();
+
+  // Electrostatic energy
+  double Eelec = GetElectrostatics(do_grads);
+
   // Set up energy with the new value
-  energy_ = e1b + e2b + e3b;
+  energy_ = e1b + e2b + e3b + Eelec;
+
+# ifdef DEBUG
+  std::cerr << "1B = " << e1b << std::endl
+            << "2B = " << e2b << std::endl
+            << "3B = " << e3b << std::endl
+            << "Elec = " << Eelec << std::endl;
+# endif
 
   // Copy gradients to output grd
   grd.clear();
@@ -278,7 +245,7 @@ double System::Get2B(bool do_grads) {
   // Vectorizable part
   size_t istart = 0;
   size_t iend = 0;
-  size_t step = 1024;
+  size_t step = 1;
 
   while (istart < nmon_) {
 //    if (nmon_ < maxNDimEval_) {
@@ -325,10 +292,10 @@ double System::Get2B(bool do_grads) {
       if (monomers_[dimers_[i]] != m1 ||
           monomers_[dimers_[i + 1]] != m2 ||
           i == dimers_.size() - 2 || nd == maxNDimEval_) {
-        //std::cerr << "i = " << i << " / " << dimers_.size() - 1 << std::endl;
         if (do_grads) {
           // POLYNOMIALS
           e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+
           // DISPERSION
           edisp += disp::GetDispersion(m1, m2, nd, do_grads,
                                      xyz1, xyz2, grd1, grd2);
@@ -362,9 +329,11 @@ double System::Get2B(bool do_grads) {
     } 
     istart = iend;
   }
-  //std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
 
-  //std::cerr << "dimers done: " << e2b + edisp << std::endl;
+# ifdef DEBUG
+  std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
+# endif
+
   return e2b + edisp;
 }
 
@@ -418,50 +387,82 @@ double System::Get3B(bool do_grads) {
       }
     }
     istart = iend;
-    //if ((i +3)%3072 == 0 ) std::cerr << i << " / " << trimers_.size() << std::endl;
   }
 
   return e3b;
 }
-//  // 3B ENERGY
-//  double e3b = 0;
-//  // trimers are ordered
-//  // TODO put this in chunk so can be vectorized
-//  // TODO Maybe initialize here all possible trimer structs?
-//  for (size_t i = 0; i < trimers_.size(); i+=3) {
-//    if (monomers_[trimers_[i]] == "h2o" and
-//        monomers_[trimers_[i + 1]] == "h2o" and
-//        monomers_[trimers_[i + 2]] == "h2o") {
-//      double grdx[27];
-//      std::fill(grdx, grdx + 27, 0.0);
-//      x2o::x3b_v2x pot;
-//      e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
-//                      xyz_.data() + 3*first_index_[trimers_[i + 1]],
-//                      xyz_.data() + 3*first_index_[trimers_[i + 2]], 
-//                      grdx, grdx + 9, grdx + 18);
-//      for (size_t j = 0; j < 9; j++) {
-//        grd_[3*first_index_[trimers_[i]] + j] += grdx[j];
-//        grd_[3*first_index_[trimers_[i + 1]] + j] += grdx[j + 9];
-//        grd_[3*first_index_[trimers_[i + 2]] + j] += grdx[j + 18];
-//      }
-//    }
-//  }
-//
-//  energy_ += e3b;
-//
-//
-//  // Putting gradients back to argument. All grads will be put there
-//  // Including Virtual Electrostatic sites
-//  // TODO Maybe change this
-//  grd.clear();
-//  grd = grd_;
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetCharges() {
+  size_t fi_mon = 0;
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::string mon = mon_type_count_[k].first;
+    size_t nmon = mon_type_count_[k].second;
+    size_t nsites = sites_[fi_mon];
+    
+    systools::SetCharges(xyz_, chg_, mon, nmon, nsites, 
+                first_index_[fi_mon], chggrd_);
+    fi_mon += nmon;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetPols() {
+  size_t fi_mon = 0;
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::string mon = mon_type_count_[k].first;
+    size_t nmon = mon_type_count_[k].second;
+    size_t nsites = sites_[fi_mon];
+    
+    systools::SetPol(pol_, mon, nmon, nsites, first_index_[fi_mon]);
+    fi_mon += nmon;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetPolfacs() {
+  size_t fi_mon = 0;
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::string mon = mon_type_count_[k].first;
+    size_t nmon = mon_type_count_[k].second;
+    size_t nsites = sites_[fi_mon];
+
+    systools::SetPolfac(polfac_, mon, nmon, nsites, first_index_[fi_mon]);
+    fi_mon += nmon;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetVSites() {
+  size_t fi_mon = 0;
+  for (size_t k = 0; k < mon_type_count_.size(); k++) {
+    std::string mon = mon_type_count_[k].first;
+    size_t nmon = mon_type_count_[k].second;
+    size_t nsites = sites_[fi_mon];
+
+    systools::SetVSites(xyz_, mon, nmon, nsites, first_index_[fi_mon]);
+    fi_mon += nmon;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::GetElectrostatics(bool do_grads) {
+  double elec = elec::Electrostatics(chg_, chggrd_, polfac_, 
+                pol_, xyz_, monomers_, sites_, first_index_, 
+                mon_type_count_, diptol_, maxItDip_, do_grads, grd_);
+  return elec;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
 } // Building Block :: System
 
 ////////////////////////////////////////////////////////////////////////////////
-
 
 
 

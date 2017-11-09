@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     }
     
     // retrieve Trimers
-    systems[i].AddClusters(3,5.0,0,systems[i].GetNumMon());
+    systems[i].AddClusters(3,4.5,0,systems[i].GetNumMon());
     std::vector<size_t> trimers = systems[i].GetTrimers();
     size_t ntrimers = trimers.size() / 3;
     //Print all trimers
