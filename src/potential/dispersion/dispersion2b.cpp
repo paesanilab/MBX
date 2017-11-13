@@ -8,15 +8,15 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
   // Order the two monomer names and corresponding xyz
   bool swaped = false;
   if (m2 < m1) {
-    std::string tmp = m1;
-    m1 = m2;
-    m2 = tmp;
-    std::vector<double> tmp2 = xyz1;
-    xyz1 = xyz2;
-    xyz2 = tmp2;
-    tmp2 = grd1;
-    grd1 = grd2;
-    grd2 = tmp2;
+    std::string tmp = std::move(m1);
+    m1 = std::move(m2);
+    m2 = std::move(tmp);
+    std::vector<double> tmp2 = std::move(xyz1);
+    xyz1 = std::move(xyz2);
+    xyz2 = std::move(tmp2);
+    tmp2 = std::move(grd1);
+    grd1 = std::move(grd2);
+    grd2 = std::move(tmp2);
     swaped = true;
   }
 
@@ -125,10 +125,9 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
   }
 
   if (swaped) {
-    std::vector<double> tmp2 = xyz1;
-    tmp2 = grd2;
-    grd2 = grd1;
-    grd1 = tmp2;
+    std::vector<double> tmp2 = std::move(grd2);
+    grd2 = std::move(grd1);
+    grd1 = std::move(tmp2);
   }
   
   

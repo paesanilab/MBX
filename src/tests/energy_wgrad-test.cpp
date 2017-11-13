@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   std::cout << "Energies without gradients:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
     double energy = systems[i].Energy(g, false);
-    std::cout << std::setprecision(10) << std::scientific
+    std::cout << std::setprecision(5) << std::scientific
               << "system["  << std::setfill('.')
               << std::setw(5) << i << "]= " << std::setfill(' ')
               << std::setw(20) << std::right << energy 
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     std::vector<double> grd;
     
     double energy = systems[i].Energy(grd, true);
-    std::cout << std::setprecision(10) << std::scientific
+    std::cout << std::setprecision(5) << std::scientific
               << "system["  << std::setfill('.')
               << std::setw(5) << i << "]= " << std::setfill(' ')
               << std::setw(20) << std::right << energy

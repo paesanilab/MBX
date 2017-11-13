@@ -14,14 +14,14 @@ namespace elec {
     const std::vector<size_t> first_ind,
     const std::vector<std::pair<std::string,size_t>> mon_type_count, 
     const double tolerance, const size_t maxit, const bool do_grads, 
-    std::vector<double> &grad) {
+    std::vector<double> &orig_grd) {
 
-    // Damping declarations
+    // Thole damping declarations
+    // aCC and aCD are fixed for all systems, any site, to 0.4
     const double aCC = 0.4;
     const double aCC1_4 = std::pow(aCC,0.25);
     const double aCD = 0.4;
     double aDD = 0.055;
-
 
     // Constants that will be used later
     const double g34 = std::exp(gammln(0.75));
@@ -29,6 +29,7 @@ namespace elec {
     // System properties and sizes
     const size_t nsites = orig_chg.size();
     const size_t nsites3 = 3*nsites;
+
     // Electric fields and potential
     std::vector<double> Efq(nsites3,0.0);
     std::vector<double> Efd(nsites3,0.0);
@@ -42,9 +43,12 @@ namespace elec {
     std::vector<double> mu(nsites3,0.0);
 
     // Max number of monomers
-    // TODO this will be the last one of mon_type_count
     size_t maxnmon = mon_type_count.back().second;
-    Field f(maxnmon);
+    Field elec_field(maxnmon);
+
+////////////////////////////////////////////////////////////////////////////////
+// DATA ORGANIZATION ///////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
     // Organize xyz so we have x1_1 x1_2 ... y1_1 y1_2...
     // where xN_M is read as coordinate x of site N of monomer M
@@ -80,8 +84,12 @@ namespace elec {
       fi_crd += nmon*ns*3;
     }
 
-    // Obtain permanent electric field
-    // Sites on the same monomer
+////////////////////////////////////////////////////////////////////////////////
+// PERMANENT ELECTRIC FIELD ////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+    // This part looks at sites inside the same monomer
+    // Reset first indexes
     fi_mon = 0;
     fi_crd = 0;
     fi_sites = 0;
@@ -91,11 +99,16 @@ namespace elec {
     excluded_set_type exc13;
     excluded_set_type exc14;
 
+    // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
       size_t ns = sites[fi_mon];
       size_t nmon = mon_type_count[mt].second;
       size_t nmon2 = 2*nmon;
+ 
+      // Obtain excluded pairs for monomer type mt
       systools::GetExcluded(mon_id[fi_mon], exc12, exc13, exc14);
+
+      // Loop over each pair of sites
       for (size_t i = 0; i < ns -1; i++) {
         size_t inmon = i * nmon;
         size_t inmon3 = inmon * 3;
@@ -109,13 +122,12 @@ namespace elec {
           
           // Get a1a2 and check if is not 0.
           double A = polfac[fi_sites + i] * polfac[fi_sites + j];
-
           if (A > constants::EPS) {
             A = std::pow(A,1.0/6.0);
             double Ai = 1/A;
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
-              f.DoEfqWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.DoEfqWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
                         chg.data() + fi_sites, chg.data() + fi_sites, 
                         m, m, m+1, nmon, nmon, i, j, Ai, Asqsq,
                         aCC, aCC1_4, g34, ex, ey, ez, phi1, 
@@ -127,7 +139,7 @@ namespace elec {
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              f.DoEfqWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.DoEfqWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
                         chg.data() + fi_sites, chg.data() + fi_sites,
                         m, m, m+1, nmon, nmon, i, j,
                         ex, ey, ez, phi1,
@@ -148,12 +160,15 @@ namespace elec {
     }
 
     // Sites corresponding to different monomers
+    // Declaring first indexes
     size_t fi_mon1 = 0;
     size_t fi_sites1 = 0;
     size_t fi_mon2 = 0;
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
+    
+    // Loop over all monomer types
     for (size_t mt1 = 0; mt1 < mon_type_count.size(); mt1++) {
       size_t ns1 = sites[fi_mon1];
       size_t nmon1 = mon_type_count[mt1].second;
@@ -161,16 +176,27 @@ namespace elec {
       fi_mon2 = fi_mon1;
       fi_sites2 = fi_sites1;
       fi_crd2 = fi_crd1;
+      
+      // For each monomer type mt1, loop over all the other monomer types
+      // mt2 >= mt1 to avoid double counting
       for (size_t mt2 = mt1; mt2 < mon_type_count.size(); mt2++) {
         size_t ns2 = sites[fi_mon2];
         size_t nmon2 = mon_type_count[mt2].second;
+        
+        // Check if monomer types 1 and 2 are the same
+        // If so, same monomer won't be done, since it has been done in
+        // previous loop.
         double same = false;
         if (mt1 == mt2) same = true;
+
         // TODO add neighbour list here
+        // Loop over all pair of sites
         for (size_t i = 0; i < ns1; i++) {
           size_t inmon1 = i * nmon1;
           size_t inmon13 = inmon1 * 3;
           for (size_t j = 0; j < ns2; j++) {
+
+            // Check if A = 0 and call the proper field calculation
             double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
             if (A > constants::EPS) {
               A = std::pow(A,1.0/6.0);
@@ -178,7 +204,7 @@ namespace elec {
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                f.DoEfqWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.DoEfqWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsq,
                         aCC, aCC1_4, g34, ex, ey, ez, phi1, 
@@ -191,7 +217,7 @@ namespace elec {
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                f.DoEfqWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.DoEfqWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j,
                         ex, ey, ez, phi1,
@@ -209,10 +235,15 @@ namespace elec {
         fi_sites2 += nmon2 * ns2;   
         fi_crd2 += nmon2 * ns2 * 3;
       }
+      // Update first indexes
       fi_mon1 += nmon1;
       fi_sites1 += nmon1 * ns1;
       fi_crd1 += nmon1 * ns1 * 3;
     }
+
+////////////////////////////////////////////////////////////////////////////////
+// DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
     // Permanent electric field is computed
     // Now start computation of dipole through iteration
@@ -325,7 +356,7 @@ namespace elec {
               A = std::pow(A, 1.0/6.0);
               double Asqsq = A*A*A*A;
               for (size_t m = 0; m < nmon; m++) {
-                f.DoEfdWA(xyz.data() + fi_crd, xyz.data() + fi_crd, 
+                elec_field.DoEfdWA(xyz.data() + fi_crd, xyz.data() + fi_crd, 
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
                           nmon, nmon, i, j, Asqsq,
                           aDD, Efd.data() + fi_crd, ex, ey, ez);
@@ -335,7 +366,7 @@ namespace elec {
               }
             } else {
               for (size_t m = 0; m < nmon; m++) {
-                f.DoEfdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+                elec_field.DoEfdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
                           nmon, nmon, i, j, Efd.data() + fi_crd, ex, ey, ez);
                 Efd[fi_crd + inmon3 + m] += ex;
@@ -381,7 +412,7 @@ namespace elec {
                 double Asqsq = A*A*A*A;
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
                   size_t m2init = same ? m1 + 1 : 0;
-                  f.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                  elec_field.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2, m1, m2init, nmon2,
                         nmon1, nmon2, i, j, Asqsq,
                         aDD, Efd.data() + fi_crd2, ex, ey, ez);
@@ -392,7 +423,7 @@ namespace elec {
               } else {
                 for (size_t m1 = 0; m1 < nmon1; m1++) {
                   size_t m2init = same ? m1 + 1 : 0;
-                  f.DoEfdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                  elec_field.DoEfdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2, 
                         m1, m2init, nmon2, nmon1, nmon2, 
                         i, j, Efd.data() + fi_crd2, ex, ey, ez);
@@ -431,6 +462,10 @@ namespace elec {
     // If no gradients, nothing else to do
     if (!do_grads) return Eqq + Eind;
   
+////////////////////////////////////////////////////////////////////////////////
+// GRADIENTS ///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
     // Chg-Chg interactions
     fi_mon = 0;
     fi_sites = 0;
@@ -442,7 +477,6 @@ namespace elec {
       for (size_t i = 0; i < ns ; i++) {
         size_t inmon  = i*nmon;
         size_t inmon3  = 3*inmon;
-        size_t i3 = 3*i;
         for (size_t m = 0; m < nmon; m++) {
           grd[fi_crd + inmon3 + m] -= 
             chg[fi_sites + inmon + m]*Efq[fi_crd + inmon3 + m];
@@ -473,12 +507,7 @@ namespace elec {
       for (size_t i = 0; i < ns - 1 ; i++) {
         size_t inmon  = i*nmon;
         size_t inmon3  = 3*inmon;
-        size_t i3 = 3*i;
         for (size_t j = i + 1; j < ns; j++) {
-          if (i == j) continue;
-          size_t jnmon  = j*nmon;
-          size_t jnmon3  = 3*jnmon;
-          size_t j3 = 3*j;
           // Set the proper aDD
           bool is12 = systools::IsExcluded(exc12, i, j);
           bool is13 = systools::IsExcluded(exc13, i, j);
@@ -494,7 +523,7 @@ namespace elec {
             A = std::pow(A, 1.0/6.0);
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
-              f.DoGrdWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.DoGrdWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
                         zeros.data(), zeros.data(),
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, aDD, aCD, Asqsq,
@@ -506,7 +535,7 @@ namespace elec {
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              f.DoGrdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.DoGrdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
                         zeros.data(), zeros.data(),
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, 
@@ -543,26 +572,20 @@ namespace elec {
       for (size_t mt2 = mt1; mt2 < mon_type_count.size(); mt2++) {
         size_t ns2 = sites[fi_mon2];
         size_t nmon2 = mon_type_count[mt2].second;
-        size_t nmon22 = nmon2*2;
         double same = false;
         if (mt1 == mt2) same = true;
         // TODO add neighbour list here
         for (size_t i = 0; i < ns1; i++) {
           size_t inmon1  = i*nmon1;
           size_t inmon13  = 3*inmon1;
-          size_t i3 = 3*i;
           for (size_t j = 0; j < ns2; j++) {
-            size_t jnmon2  = j*nmon2;
-            size_t jnmon23  = 3*jnmon2;
-            size_t j3 = 3*j;
-
             double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
             if (A > constants::EPS) {
               A = std::pow(A,1.0/6.0);
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                f.DoGrdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.DoGrdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
@@ -577,7 +600,7 @@ namespace elec {
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                f.DoGrdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.DoGrdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
@@ -601,6 +624,10 @@ namespace elec {
       fi_sites1 += nmon1 * ns1;
       fi_crd1 += nmon1 * ns1 * 3;
     }
+
+////////////////////////////////////////////////////////////////////////////////
+// REVERT DATA ORGANIZATION ////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
     // Reorganize field and potential to initial order
     std::vector<double> tmp1(nsites3,0.0);
@@ -634,9 +661,9 @@ namespace elec {
 
           tmp2[fi_sites + mns + i] = phi[fi_sites + m + inmon];
 
-          grad[fi_crd + mns3 + 3*i] += grd[inmon3 + m + fi_crd];
-          grad[fi_crd + mns3 + 3*i + 1] += grd[inmon3 + m + fi_crd + nmon];
-          grad[fi_crd + mns3 + 3*i + 2] += grd[inmon3 + m + fi_crd + nmon2];
+          orig_grd[fi_crd + mns3 + 3*i] += grd[inmon3 + m + fi_crd];
+          orig_grd[fi_crd + mns3 + 3*i + 1] += grd[inmon3 + m + fi_crd + nmon];
+          orig_grd[fi_crd + mns3 + 3*i + 2] += grd[inmon3 + m + fi_crd + nmon2];
           #ifdef DEBUG
           std::cerr << "phi[" << fi_sites + mns + i << "] = "
                     << tmp2[fi_sites + mns + i] << std::endl;
@@ -658,6 +685,10 @@ namespace elec {
     mu = tmp4;
     Efd = tmp3;
 
+////////////////////////////////////////////////////////////////////////////////
+// REDISTRIBUTION OF THE GRADIENTS AND GRADIENTS DUE TO SITE-DEPENDENT CHARGES /
+////////////////////////////////////////////////////////////////////////////////
+
     fi_mon = 0;
     fi_sites = 0;
     fi_crd = 0;
@@ -667,11 +698,11 @@ namespace elec {
       std::string id = mon_id[fi_mon];
 
       // Redistribute gradients
-      systools::RedistributeVirtGrads2Real(id, nmon, fi_crd, grad);
+      systools::RedistributeVirtGrads2Real(id, nmon, fi_crd, orig_grd);
 
       // Gradients due to position dependant charges
       systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites,
-                               phi, grad, chg_grd);
+                               phi, orig_grd, chg_grd);
       // Update first indexes
       fi_mon += nmon;
       fi_sites += nmon * ns;
