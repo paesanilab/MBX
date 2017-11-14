@@ -330,11 +330,8 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
     std::vector<double> chgtmp;
     size_t fstind_3 = 3*fst_ind;
     
-    chg_der = std::vector<double>(27*n_mon, 0.0);
+    chg_der = std::vector <double> (27*n_mon, 0.0);
 
-    // TODO NOT VECTORIZED because of creation of vector objects within loop
-    // However vector objects currently needed because dms_nasa can only
-    // calculate charge for 1 atom at a time
     // Calculate individual monomer's charges
     for (size_t nv = 0; nv < n_mon; nv++) {
 
@@ -342,14 +339,11 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
       size_t shift = 27*nv;
       
       // Getting front and end of xyz vector of 1 monomer in system
-      std::vector<double>::const_iterator first = xyz.begin()+(nv*ns3)+fstind_3;
-      std::vector<double>::const_iterator end = 
-                                             xyz.begin()+((nv+1)*ns3)+fstind_3;
-      std::vector<double> atomcoords(first, end);
+      std::vector<double> atomcoords(xyz);
       std::vector<double> chgtmpnv((nsites-1));
 
       // Calculating charge
-      ps::dms_nasa (0.0, 0.0, 0.0, atomcoords.data(), 
+      ps::dms_nasa (0.0, 0.0, 0.0, atomcoords.data() + (nv*ns3)+fstind_3, 
                     chgtmpnv.data(), chg_der.data() + shift, false);
       // Inserting the found charges into chgtmp vector before calculating
       // new charge values
