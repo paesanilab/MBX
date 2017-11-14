@@ -330,26 +330,25 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
     std::vector<double> chgtmp;
     size_t fstind_3 = 3*fst_ind;
     
-    std::vector <double> chgtmpnv_der (3*n_mon + 27*n_mon, 0.0);
+    std::vector <double> chgtmpnv (27*n_mon, 0.0);
 
     // Calculate individual monomer's charges
-//    for (size_t nv = 0; nv < n_mon; nv++) {
+    for (size_t nv = 0; nv < n_mon; nv++) {
 
       size_t ns3 = nsites*3;
-//      size_t shift = 27*nv;
+      size_t shift = 27*nv;
       
       // Getting front and end of xyz vector of 1 monomer in system
       std::vector<double> atomcoords(xyz);
-//      std::vector<double> chgtmpnv((nsites-1));
+      std::vector<double> chgtmpnv((nsites-1));
 
       // Calculating charge
-      ps::dms_nasa (0.0, 0.0, 0.0, atomcoords.data(), // + (nv*ns3)+fstind_3, 
-                    chgtmpnv_der.data(), mon_id, n_mon, fst_ind, false);
-                    //, chg_der.data() + shift, false);
+      ps::dms_nasa (0.0, 0.0, 0.0, atomcoords.data() + (nv*ns3)+fstind_3, 
+                    chgtmpnv.data(), chg_der.data() + shift, false);
       // Inserting the found charges into chgtmp vector before calculating
       // new charge values
-      chgtmp.insert (chgtmp.end(), chgtmpnv_der.begin(), chgtmpnv_der.end());
-//    }
+      chgtmp.insert (chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
+    }
 
 
     // Creating vector with contiguous data
