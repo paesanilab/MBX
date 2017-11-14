@@ -10,9 +10,9 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm,
     std::string tmp = m1;
     m1 = m2;
     m2 = tmp;
-    std::vector<double> tmp2 = xyz1;
-    xyz1 = xyz2;
-    xyz2 = tmp2;
+    std::vector<double> tmp2 = std::move(xyz1);
+    xyz1 = std::move(xyz2);
+    xyz2 = std::move(tmp2);
   }
 
   if (m1 == "h2o" and m2 == "h2o") {
