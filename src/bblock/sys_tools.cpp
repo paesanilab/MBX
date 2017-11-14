@@ -330,7 +330,7 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
     std::vector<double> chgtmp;
     size_t fstind_3 = 3*fst_ind;
     
-    std::vector <double> chgtmpnv (27*n_mon, 0.0);
+    chg_der = std::vector <double> (27*n_mon, 0.0);
 
     // Calculate individual monomer's charges
     for (size_t nv = 0; nv < n_mon; nv++) {
