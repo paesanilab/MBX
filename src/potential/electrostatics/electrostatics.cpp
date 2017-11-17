@@ -356,6 +356,7 @@ namespace elec {
               A = std::pow(A, 1.0/6.0);
               double Asqsq = A*A*A*A;
               for (size_t m = 0; m < nmon; m++) {
+                // TODO. Slowest function
                 elec_field.DoEfdWA(xyz.data() + fi_crd, xyz.data() + fi_crd, 
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
                           nmon, nmon, i, j, Asqsq,
