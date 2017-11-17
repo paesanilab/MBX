@@ -73,7 +73,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
       // TODO Maybe we can read this from a database
       sites.push_back(4);
       nat.push_back(3);
-    } else if (mon[i] == "f") {
+    // Halides
+    } else if (mon[i] == "f" || mon[i] == "cl" || mon[i] == "br" || 
+               mon[i] == "i") {
       sites.push_back(1);
       nat.push_back(1);
     } else {
@@ -318,7 +320,8 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
   // Constant that calculates charge
   const double CHARGECON = constants::CHARGECON;
 
-  if (mon_id == "f") {
+  // Halide charges
+  if (mon_id == "f" || mon_id == "cl" || mon_id == "br" || mon_id == "i") {
     for (size_t nv = 0; nv < n_mon; nv++) {
       charges[fst_ind + nv] = -1.0 * CHARGECON;
     }
@@ -397,10 +400,22 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
 void SetPolfac (std::vector<double> &polfac, std::string mon_id,
     size_t n_mon, size_t nsites, size_t fst_ind){
 
-  if (mon_id == "f") {
+  // Halides
+  if (mon_id == "f") {          // Fluoride
     for (size_t nv = 0; nv < n_mon; nv++)
       polfac[fst_ind + nv] = 2.4669;
-  } else if (mon_id == "h2o") {
+  } else if (mon_id == "cl") {  // Chloride
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 5.3602;
+  } else if (mon_id == "br") {  // Bromide
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 7.1668;
+  } else if (mon_id == "i") {   // Iodide
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 10.1184;
+  } 
+
+  else if (mon_id == "h2o") {
     /* old loop -- not vectorized
     for (size_t nv = 0; nv < n_mon; nv++) {
       polfac[fst_ind + nv*nsites] = 1.310;
@@ -436,10 +451,22 @@ void SetPolfac (std::vector<double> &polfac, std::string mon_id,
 void SetPol (std::vector<double> &pol, 
     std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind){
 
-  if (mon_id == "f") {
+  // Halides
+  if (mon_id == "f") {          // Fluoride
     for (size_t nv = 0; nv < n_mon; nv++)
       pol[fst_ind + nv] = 2.4669;
-  } else if (mon_id == "h2o") {
+  } else if (mon_id == "cl") {  // Chloride
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 5.3602;
+  } else if (mon_id == "br") {  // Bromide
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 7.1668;
+  } else if (mon_id == "i") {   // Iodide
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 10.1184;
+  } 
+  
+  else if (mon_id == "h2o") {
     /* Old loop -- not vectorized
     for (size_t nv = 0; nv < n_mon; nv++) {
       pol[fst_ind + nv*nsites] = 1.310;
