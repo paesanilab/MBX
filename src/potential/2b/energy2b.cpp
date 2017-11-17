@@ -23,6 +23,11 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm,
     // First water and then ion
     h2o_ion::x2b_h2o_ion_v2x pot(m2, m1);
     return pot.eval(xyz2.data(), xyz1.data(), nm);
+  } else if (m1 == "cl" and m2 == "h2o") {
+    // The order is bc the poly were generated this way
+    // First water and then ion
+    h2o_ion::x2b_h2o_ion_v2x pot(m2, m1);
+    return pot.eval(xyz2.data(), xyz1.data(), nm);
   } else {
     return 0.0;
   }
@@ -53,6 +58,16 @@ double get_2b_energy(std::string m1, std::string m2,size_t nm,
     x2o::x2b_v9x pot;
     energy = pot.eval(xyz1.data(),xyz2.data(),grd1.data(),grd2.data(),nm);
   } else if (m1 == "f" and m2 == "h2o") {
+    // The order is bc the poly were generated this way
+    // First water and then ion
+    h2o_ion::x2b_h2o_ion_v2x pot(m2, m1);
+    energy = pot.eval(xyz2.data(),xyz1.data(),grd2.data(),grd1.data(),nm);
+  } else if (m1 == "cl" and m2 == "h2o") {
+    // The order is bc the poly were generated this way
+    // First water and then ion
+    h2o_ion::x2b_h2o_ion_v2x pot(m2, m1);
+    energy = pot.eval(xyz2.data(),xyz1.data(),grd2.data(),grd1.data(),nm);
+  } else if (m1 == "br" and m2 == "h2o") {
     // The order is bc the poly were generated this way
     // First water and then ion
     h2o_ion::x2b_h2o_ion_v2x pot(m2, m1);

@@ -81,6 +81,50 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
 
     d6.push_back(3.586190000000000e+00); // A^(-1)
     d6.push_back(2.697680000000000e+00); // A^(-1)
+  } else if (m1 == "cl" and m2 == "h2o") {
+    // Define number of atoms in each mon
+    nat1 = 1;
+    nat2 = 3;
+
+    // Define the type of atom in each mon
+    types1.push_back(0);
+
+    types2.push_back(0);
+    types2.push_back(1);
+    types2.push_back(1);
+
+    // Set the number of different types
+    nt2 = 2;
+
+    // Fill in (in order) the C6 and d6 coefficients
+    C6.push_back(7.461990000000000e+02); // kcal/mol * A^(-6) F -- O
+    C6.push_back(3.068900000000000e+02); // kcal/mol * A^(-6) F -- H
+
+
+    d6.push_back(3.275420000000000e+00); // A^(-1)
+    d6.push_back(2.782260000000000e+00); // A^(-1)
+  } else if (m1 == "br" and m2 == "h2o") {
+    // Define number of atoms in each mon
+    nat1 = 1;
+    nat2 = 3;
+
+    // Define the type of atom in each mon
+    types1.push_back(0);
+
+    types2.push_back(0);
+    types2.push_back(1);
+    types2.push_back(1);
+
+    // Set the number of different types
+    nt2 = 2;
+
+    // Fill in (in order) the C6 and d6 coefficients
+    C6.push_back(9.426500000000000e+02); // kcal/mol * A^(-6) F -- O
+    C6.push_back(3.941680000000000e+02); // kcal/mol * A^(-6) F -- H
+
+
+    d6.push_back(3.058250000000000e+00); // A^(-1)
+    d6.push_back(2.798040000000000e+00); // A^(-1)
   } else {
     return 0.0;
   }
