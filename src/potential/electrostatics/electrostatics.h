@@ -6,6 +6,7 @@
 #include <string>
 #include <cmath>
 #include <iostream>
+#include <omp.h>
 
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
