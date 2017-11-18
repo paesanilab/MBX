@@ -404,7 +404,7 @@ namespace elec {
           double same = false;
           if (mt1 == mt2) same = true;
           // TODO add neighbour list here
-#         pragma omp parallel for schedule(dynamic) num_threads(2)
+#         pragma omp parallel for schedule(dynamic) num_threads(1)
           for (size_t m1 = 0; m1 < nmon1; m1++) {
             size_t m2init = same ? m1 + 1 : 0;
             double ex_thread = 0.0;
