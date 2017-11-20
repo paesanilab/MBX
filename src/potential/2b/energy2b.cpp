@@ -72,6 +72,11 @@ double get_2b_energy(std::string m1, std::string m2,size_t nm,
     // First water and then ion
     h2o_ion::x2b_h2o_ion_v2x pot(m2, m1);
     energy = pot.eval(xyz2.data(),xyz1.data(),grd2.data(),grd1.data(),nm);
+  } else if (m1 == "h2o" and m2 == "i") {
+    // The order is bc the poly were generated this way
+    // First water and then ion
+    h2o_ion::x2b_h2o_ion_v2x pot(m1, m2);
+    energy = pot.eval(xyz2.data(),xyz1.data(),grd2.data(),grd1.data(),nm);
   } else {
     return 0.0;
   }
