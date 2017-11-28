@@ -73,9 +73,12 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
       // TODO Maybe we can read this from a database
       sites.push_back(4);
       nat.push_back(3);
-    // Halides
-    } else if (mon[i] == "f" || mon[i] == "cl" || mon[i] == "br" || 
-               mon[i] == "i") {
+    // Halides and alkalides
+    } else if (mon[i] == "f"  || mon[i] == "cl" ||  // Halides
+               mon[i] == "br" || mon[i] == "i"  ||
+               mon[i] == "li" || mon[i] == "na" ||  // Alkalides
+               mon[i] == "k"  || mon[i] == "rb" ||
+               mon[i] == "cs") {
       sites.push_back(1);
       nat.push_back(1);
     } else {
@@ -325,6 +328,14 @@ void SetCharges (std::vector<double> xyz, std::vector<double> &charges,
     for (size_t nv = 0; nv < n_mon; nv++) {
       charges[fst_ind + nv] = -1.0 * CHARGECON;
     }
+  }
+
+  // Alkalide charges
+  else if (mon_id == "li" || mon_id == "na" || mon_id == "k" ||
+           mon_id == "rb" || mon_id == "cs") {
+    for (size_t nv = 0; nv < n_mon; nv++) {
+      charges[fst_ind + nv] = 1.0 * CHARGECON;
+    }
       
   // Note, for now, assuming only water has site dependant charges
   } else if (mon_id == "h2o") {
@@ -413,7 +424,25 @@ void SetPolfac (std::vector<double> &polfac, std::string mon_id,
   } else if (mon_id == "i") {   // Iodide
     for (size_t nv = 0; nv < n_mon; nv++)
       polfac[fst_ind + nv] = 10.1184;
-  } 
+  }
+
+  // Alkalides
+  if (mon_id == "li") {         // Lithium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 0.0285;
+  } else if (mon_id == "na") {  // Sodium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 0.1476;
+  } else if (mon_id == "k") {   // Potassium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 0.8184;
+  } else if (mon_id == "rb") {  // Rubidium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 1.3614;
+  } else if (mon_id == "cs") {  // Cesium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      polfac[fst_ind + nv] = 2.3660;
+  }
 
   else if (mon_id == "h2o") {
     /* old loop -- not vectorized
@@ -466,6 +495,24 @@ void SetPol (std::vector<double> &pol,
       pol[fst_ind + nv] = 10.1184;
   } 
   
+  // Alkalides
+  if (mon_id == "li") {         // Lithium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 0.0285;
+  } else if (mon_id == "na") {  // Sodium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 0.1476;
+  } else if (mon_id == "k") {   // Potassium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 0.8184;
+  } else if (mon_id == "rb") {  // Rubidium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 1.3614;
+  } else if (mon_id == "cs") {  // Cesium
+    for (size_t nv = 0; nv < n_mon; nv++)
+      pol[fst_ind + nv] = 2.3660;
+  }
+
   else if (mon_id == "h2o") {
     /* Old loop -- not vectorized
     for (size_t nv = 0; nv < n_mon; nv++) {
