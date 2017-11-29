@@ -97,8 +97,8 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     nt2 = 2;
 
     // Fill in (in order) the C6 and d6 coefficients
-    C6.push_back(7.461990000000000e+02); // kcal/mol * A^(-6) F -- O
-    C6.push_back(3.068900000000000e+02); // kcal/mol * A^(-6) F -- H
+    C6.push_back(7.461990000000000e+02); // kcal/mol * A^(-6) Cl -- O
+    C6.push_back(3.068900000000000e+02); // kcal/mol * A^(-6) Cl -- H
 
 
     d6.push_back(3.275420000000000e+00); // A^(-1)
@@ -119,8 +119,8 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     nt2 = 2;
 
     // Fill in (in order) the C6 and d6 coefficients
-    C6.push_back(9.426500000000000e+02); // kcal/mol * A^(-6) F -- O
-    C6.push_back(3.941680000000000e+02); // kcal/mol * A^(-6) F -- H
+    C6.push_back(9.426500000000000e+02); // kcal/mol * A^(-6) Br -- O
+    C6.push_back(3.941680000000000e+02); // kcal/mol * A^(-6) Br -- H
 
 
     d6.push_back(3.058250000000000e+00); // A^(-1)
@@ -141,8 +141,8 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     nt2 = 1;
 
     // Fill in (in order) the C6 and d6 coefficients
-    C6.push_back(1.294680000000000e+03); // kcal/mol * A^(-6) F -- O
-    C6.push_back(5.681559999999999e+02); // kcal/mol * A^(-6) F -- H
+    C6.push_back(1.294680000000000e+03); // kcal/mol * A^(-6) I -- O
+    C6.push_back(5.681559999999999e+02); // kcal/mol * A^(-6) I -- H
 
 
     d6.push_back(2.723140000000000e+00); // A^(-1)
@@ -163,8 +163,8 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     nt2 = 1;
 
     // Fill in (in order) the C6 and d6 coefficients
-    C6.push_back(4.314700000000000e+01); // kcal/mol * A^(-6) F -- O
-    C6.push_back(1.871220000000000e+01); // kcal/mol * A^(-6) F -- H
+    C6.push_back(4.314700000000000e+01); // kcal/mol * A^(-6) Li -- O
+    C6.push_back(1.871220000000000e+01); // kcal/mol * A^(-6) Li -- H
 
 
     d6.push_back(4.023330000000000e+00); // A^(-1)
@@ -185,8 +185,8 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     nt2 = 1;
 
     // Fill in (in order) the C6 and d6 coefficients
-    C6.push_back(1.762550000000000e+02); // kcal/mol * A^(-6) F -- O
-    C6.push_back(8.578690000000000e+01); // kcal/mol * A^(-6) F -- H
+    C6.push_back(1.762550000000000e+02); // kcal/mol * A^(-6) Na -- O
+    C6.push_back(8.578690000000000e+01); // kcal/mol * A^(-6) Na -- H
 
     d6.push_back(3.769530000000000e+00); // A^(-1)
     d6.push_back(3.822550000000000e+00); // A^(-1)
@@ -206,8 +206,8 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     nt2 = 1;
 
     // Fill in (in order) the C6 and d6 coefficients
-    C6.push_back(4.095830000000000e+02); // kcal/mol * A^(-6) F -- O
-    C6.push_back(2.181920000000000e+02); // kcal/mol * A^(-6) F -- H
+    C6.push_back(4.095830000000000e+02); // kcal/mol * A^(-6) K -- O
+    C6.push_back(2.181920000000000e+02); // kcal/mol * A^(-6) K -- H
 
     d6.push_back(3.401250000000000e+00); // A^(-1)
     d6.push_back(3.321390000000000e+00); // A^(-1)
@@ -227,8 +227,8 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     nt2 = 1;
 
     // Fill in (in order) the C6 and d6 coefficients
-    C6.push_back(5.318040000000000e+02); // kcal/mol * A^(-6) F -- O
-    C6.push_back(2.861310000000000e+02); // kcal/mol * A^(-6) F -- H
+    C6.push_back(5.318040000000000e+02); // kcal/mol * A^(-6) Rb -- O
+    C6.push_back(2.861310000000000e+02); // kcal/mol * A^(-6) Rb -- H
 
 
     d6.push_back(3.236530000000000e+00); // A^(-1)
@@ -249,8 +249,8 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
     nt2 = 2;
 
     // Fill in (in order) the C6 and d6 coefficients
-    C6.push_back(7.045400000000000e+02); // kcal/mol * A^(-6) F -- O
-    C6.push_back(3.845670000000000e+02); // kcal/mol * A^(-6) F -- H
+    C6.push_back(7.045400000000000e+02); // kcal/mol * A^(-6) Cs -- O
+    C6.push_back(3.845670000000000e+02); // kcal/mol * A^(-6) Cs -- H
 
     d6.push_back(3.028640000000000e+00); // A^(-1)
     d6.push_back(3.271530000000000e+00); // A^(-1)
