@@ -15,7 +15,8 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 ############################  Options: Build How?  #############################
 #MRR
 find_package(OpenMP)
-if (OPENMP_FOUND)
+SET(USE_OPENMP TRUE CACHE BOOL "Use OpenMP")
+if (OPENMP_FOUND AND USE_OPENMP)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()

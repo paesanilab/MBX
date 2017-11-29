@@ -44,7 +44,10 @@ namespace elec {
 
     // Max number of monomers
     size_t maxnmon = mon_type_count.back().second;
-    Field elec_field(maxnmon);
+    ElectricFieldHolder elec_field(maxnmon);
+
+    // Parallelization
+    size_t nthreads = 1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // DATA ORGANIZATION ///////////////////////////////////////////////////////////
@@ -127,7 +130,8 @@ namespace elec {
             double Ai = 1/A;
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
-              elec_field.DoEfqWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.CalcPermanentElecFieldWithPolfacNonZero(
+                        xyz.data() + fi_crd, xyz.data() + fi_crd,
                         chg.data() + fi_sites, chg.data() + fi_sites, 
                         m, m, m+1, nmon, nmon, i, j, Ai, Asqsq,
                         aCC, aCC1_4, g34, ex, ey, ez, phi1, 
@@ -139,7 +143,8 @@ namespace elec {
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              elec_field.DoEfqWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.CalcPermanentElecFieldWithPolfacZero(
+                        xyz.data() + fi_crd, xyz.data() + fi_crd,
                         chg.data() + fi_sites, chg.data() + fi_sites,
                         m, m, m+1, nmon, nmon, i, j,
                         ex, ey, ez, phi1,
@@ -204,7 +209,8 @@ namespace elec {
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                elec_field.DoEfqWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.CalcPermanentElecFieldWithPolfacNonZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsq,
                         aCC, aCC1_4, g34, ex, ey, ez, phi1, 
@@ -217,7 +223,8 @@ namespace elec {
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                elec_field.DoEfqWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.CalcPermanentElecFieldWithPolfacZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j,
                         ex, ey, ez, phi1,
@@ -356,7 +363,9 @@ namespace elec {
               A = std::pow(A, 1.0/6.0);
               double Asqsq = A*A*A*A;
               for (size_t m = 0; m < nmon; m++) {
-                elec_field.DoEfdWA(xyz.data() + fi_crd, xyz.data() + fi_crd, 
+                // TODO. Slowest function
+                elec_field.CalcDipoleElecFieldWithPolfacNonZero(
+                          xyz.data() + fi_crd, xyz.data() + fi_crd, 
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
                           nmon, nmon, i, j, Asqsq,
                           aDD, Efd.data() + fi_crd, ex, ey, ez);
@@ -366,7 +375,8 @@ namespace elec {
               }
             } else {
               for (size_t m = 0; m < nmon; m++) {
-                elec_field.DoEfdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+                elec_field.CalcDipoleElecFieldWithPolfacZero(
+                          xyz.data() + fi_crd, xyz.data() + fi_crd,
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
                           nmon, nmon, i, j, Efd.data() + fi_crd, ex, ey, ez);
                 Efd[fi_crd + inmon3 + m] += ex;
@@ -403,35 +413,81 @@ namespace elec {
           double same = false;
           if (mt1 == mt2) same = true;
           // TODO add neighbour list here
-          for (size_t i = 0; i < ns1; i++) {
-            size_t inmon13 = 3 * nmon1 * i;
-            for (size_t j = 0; j < ns2; j++) {
-              double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
-              if (A > constants::EPS) {
-                A = std::pow(A,1.0/6.0);
-                double Asqsq = A*A*A*A;
-                for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  size_t m2init = same ? m1 + 1 : 0;
-                  elec_field.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
-                        mu.data() + fi_crd1, mu.data() + fi_crd2, m1, m2init, nmon2,
+          // Prepare for parallelization
+#         ifdef _OPENMP
+#           pragma omp parallel // omp_get_num_threads() needs to be inside 
+                                // parallel region to get number of threads
+            { 
+              if (omp_get_thread_num() == 0)
+                nthreads = omp_get_num_threads();
+            }
+#         endif
+          std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+          std::vector<std::vector<double>> Efd_1_pool;
+          std::vector<std::vector<double>> Efd_2_pool;
+          for (size_t i = 0; i < nthreads; i++) { 
+             field_pool.push_back(
+               std::make_shared<ElectricFieldHolder>(maxnmon));
+             Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+             Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+          }
+
+          // Parallel loop
+#         ifdef _OPENMP
+#           pragma omp parallel for schedule(dynamic)
+#         endif
+          for (size_t m1 = 0; m1 < nmon1; m1++) {
+            int rank = 0;
+#           ifdef _OPENMP
+              rank = omp_get_thread_num();
+#           endif
+            std::shared_ptr<ElectricFieldHolder> local_field 
+              = field_pool[rank];
+            size_t m2init = same ? m1 + 1 : 0;
+            double ex_thread = 0.0;
+            double ey_thread = 0.0;
+            double ez_thread = 0.0;
+            for (size_t i = 0; i < ns1; i++) {
+              size_t inmon13 = 3 * nmon1 * i;
+              for (size_t j = 0; j < ns2; j++) {
+                double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
+                if (A > constants::EPS) {
+                  A = std::pow(A,1.0/6.0);
+                  double Asqsq = A*A*A*A;
+                  local_field->CalcDipoleElecFieldWithPolfacNonZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                        mu.data() + fi_crd1, mu.data() + fi_crd2, 
+                        m1, m2init, nmon2,
                         nmon1, nmon2, i, j, Asqsq,
-                        aDD, Efd.data() + fi_crd2, ex, ey, ez);
-                  Efd[fi_crd1 + inmon13 + m1] += ex;
-                  Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                  Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                }
-              } else {
-                for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  size_t m2init = same ? m1 + 1 : 0;
-                  elec_field.DoEfdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                        aDD, Efd_2_pool[rank].data(), 
+                        ex_thread, ey_thread, ez_thread);
+                  Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                  Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                  Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                } else {
+                  local_field->CalcDipoleElecFieldWithPolfacZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2, 
                         m1, m2init, nmon2, nmon1, nmon2, 
-                        i, j, Efd.data() + fi_crd2, ex, ey, ez);
-                  Efd[fi_crd1 + inmon13 + m1] += ex;
-                  Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                  Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
+                        i, j, Efd_2_pool[rank].data(), 
+                        ex_thread, ey_thread, ez_thread);
+                  Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                  Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                  Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
                 }
               }
+            }
+          }
+          
+          // Compress data in Efd
+          for (size_t rank = 0; rank < nthreads; rank++) {
+            size_t kend1 = Efd_1_pool[rank].size();
+            size_t kend2 = Efd_2_pool[rank].size();
+            for (size_t k = 0; k < kend1; k++) {
+              Efd[fi_crd1 + k] += Efd_1_pool[rank][k];
+            }
+            for (size_t k = 0; k < kend2; k++) {
+              Efd[fi_crd2 + k] += Efd_2_pool[rank][k];
             }
           }
           // Update first indexes
@@ -523,7 +579,8 @@ namespace elec {
             A = std::pow(A, 1.0/6.0);
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
-              elec_field.DoGrdWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.CalcElecFieldGradsWithPolfacNonZero(
+                        xyz.data() + fi_crd, xyz.data() + fi_crd,
                         zeros.data(), zeros.data(),
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, aDD, aCD, Asqsq,
@@ -535,7 +592,8 @@ namespace elec {
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              elec_field.DoGrdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.CalcElecFieldGradsWithPolfacZero(
+                        xyz.data() + fi_crd, xyz.data() + fi_crd,
                         zeros.data(), zeros.data(),
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, 
@@ -585,7 +643,8 @@ namespace elec {
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                elec_field.DoGrdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.CalcElecFieldGradsWithPolfacNonZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
@@ -600,7 +659,8 @@ namespace elec {
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                elec_field.DoGrdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.CalcElecFieldGradsWithPolfacZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 

@@ -46,11 +46,11 @@ namespace elec {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Field {
+class ElectricFieldHolder {
  public:
-  Field() {maxnmon = 0;}
-  Field(size_t n);
-  ~Field() {}
+  ElectricFieldHolder() {maxnmon = 0;}
+  ElectricFieldHolder(size_t n);
+  ~ElectricFieldHolder() {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // PERMANENT ELECTRIC FIELD ////////////////////////////////////////////////////
@@ -59,7 +59,7 @@ class Field {
   // Computes the electric field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-  void DoEfqWA(
+  void CalcPermanentElecFieldWithPolfacNonZero(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * chg1, double * chg2,     // Charges of mon type 1 and 2
     size_t mon1_index,                // Mon 1 index
@@ -83,7 +83,7 @@ class Field {
   // Computes the electric field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] = 0
 
-  void DoEfqWoA(
+  void CalcPermanentElecFieldWithPolfacZero(
     double * xyz1, double * xyz2,
     double * chg1, double * chg2,
     size_t mon1_index,
@@ -102,7 +102,7 @@ class Field {
   // Computes the dipole field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-  void DoEfdWA(
+  void CalcDipoleElecFieldWithPolfacNonZero(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * mu1, double * mu2,       // Dipoles of mon type 1 and 2
     size_t mon1_index,                // Mon 1 index
@@ -122,7 +122,7 @@ class Field {
   // Computes the dipole field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] = 0
 
-  void DoEfdWoA(
+  void CalcDipoleElecFieldWithPolfacZero(
     double * xyz1, double * xyz2,
     double * mu1, double * mu2,
     size_t mon1_index,
@@ -140,7 +140,7 @@ class Field {
   // for a number of monomers # = mon2_index_end - mon2_index_start when
   // A=polfac[i] * polfac[j] > 0
 
-  void DoGrdWA(
+  void CalcElecFieldGradsWithPolfacNonZero(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * chg1, double * chg2,     // Charges of mon type 1 and 2
     double * mu1, double * mu2,       // Dipoles of mon type 1 and 2
@@ -165,7 +165,7 @@ class Field {
   // for a number of monomers # = mon2_index_end - mon2_index_start when
   // A=polfac[i] * polfac[j] = 0
 
-  void DoGrdWoA(
+  void CalcElecFieldGradsWithPolfacZero(
     double * xyz1, double * xyz2,
     double * chg1, double * chg2,
     double * mu1, double * mu2,
