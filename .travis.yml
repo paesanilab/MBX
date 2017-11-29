@@ -90,7 +90,7 @@ install:
   - cd ${TRAVIS_BUILD_DIR}
   
 # END MRR 
-  - cmake -H. -Bbuild
+  - cmake -H. -Bbuild -DUSE_OPENMP:BOOL=FALSE
   - cd build
   - travis_wait 60 make
   - cd ../
