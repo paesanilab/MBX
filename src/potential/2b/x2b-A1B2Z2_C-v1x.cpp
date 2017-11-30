@@ -3760,7 +3760,7 @@ x2b_h2o_ion_v2x::x2b_h2o_ion_v2x(std::string mon1, std::string mon2) {
   }
 
   // Cesium
-  if (mon1 == "cs" && mon2 == "h2o") {
+  if (mon1 == "h2o" && mon2 == "cs") {
     twobodyfit = std::vector<double> {
 -1.774422452872845e+02, // 0
 -9.485590806465954e+01, // 1
