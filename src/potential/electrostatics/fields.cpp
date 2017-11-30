@@ -29,8 +29,8 @@ void ElectricFieldHolder::CalcPermanentElecFieldWithPolfacNonZero
    double Ai, double Asqsq,
    double aCC, double aCC1_4,
    double g34, 
-   double &Efqx_mon1, double &Efqy_mon1, 
-   double &Efqz_mon1, double &phi1,
+   double *Efqx_mon1, double *Efqy_mon1, 
+   double *Efqz_mon1, double *phi1,
    double * phi2,
    double * Efq2) {
              
@@ -128,15 +128,15 @@ void ElectricFieldHolder::CalcPermanentElecFieldWithPolfacNonZero
   }
 
   // Add up the contributions to the mon1 site
-  phi1 = 0.0;
-  Efqx_mon1 = 0.0;
-  Efqy_mon1 = 0.0;
-  Efqz_mon1 = 0.0;
+  *phi1 = 0.0;
+  *Efqx_mon1 = 0.0;
+  *Efqy_mon1 = 0.0;
+  *Efqz_mon1 = 0.0;
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-    phi1 += v7_[m];
-    Efqx_mon1 += v8_[m];
-    Efqy_mon1 += v9_[m];
-    Efqz_mon1 += v10_[m];
+    *phi1 += v7_[m];
+    *Efqx_mon1 += v8_[m];
+    *Efqy_mon1 += v9_[m];
+    *Efqz_mon1 += v10_[m];
   }
 }
 
@@ -149,8 +149,8 @@ void ElectricFieldHolder::CalcPermanentElecFieldWithPolfacZero
    size_t mon2_index_start, size_t mon2_index_end,
    size_t nmon1, size_t nmon2,
    size_t site_i, size_t site_j,
-   double &Efqx_mon1, double &Efqy_mon1,
-   double &Efqz_mon1, double &phi1,
+   double *Efqx_mon1, double *Efqy_mon1,
+   double *Efqz_mon1, double *phi1,
    double * phi2,
    double * Efq2) {
 
@@ -216,15 +216,15 @@ void ElectricFieldHolder::CalcPermanentElecFieldWithPolfacZero
   }
 
   // Adding up the contributions to mon 1
-  phi1 = 0.0;
-  Efqx_mon1 = 0.0;
-  Efqy_mon1 = 0.0;
-  Efqz_mon1 = 0.0;
+  *phi1 = 0.0;
+  *Efqx_mon1 = 0.0;
+  *Efqy_mon1 = 0.0;
+  *Efqz_mon1 = 0.0;
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-    phi1 += v0_[m];
-    Efqx_mon1 += v1_[m];
-    Efqy_mon1 += v2_[m];
-    Efqz_mon1 += v3_[m];
+    *phi1 += v0_[m];
+    *Efqx_mon1 += v1_[m];
+    *Efqy_mon1 += v2_[m];
+    *Efqz_mon1 += v3_[m];
   }
 }
 
@@ -239,7 +239,7 @@ void ElectricFieldHolder::CalcDipoleElecFieldWithPolfacNonZero
    size_t site_i, size_t site_j,
    double Asqsq,
    double aDD, double * Efd2,
-   double &Efdx_mon1, double &Efdy_mon1, double &Efdz_mon1) {
+   double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1) {
 
   // Shifts that will be useful in the loops
   const size_t nmon12 = nmon1 * 2;
@@ -333,13 +333,13 @@ void ElectricFieldHolder::CalcDipoleElecFieldWithPolfacNonZero
   }
 
   // Setting the values to the output
-  Efdx_mon1 = 0.0;
-  Efdy_mon1 = 0.0;
-  Efdz_mon1 = 0.0;
+  *Efdx_mon1 = 0.0;
+  *Efdy_mon1 = 0.0;
+  *Efdz_mon1 = 0.0;
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-    Efdx_mon1 += v0_[m];
-    Efdy_mon1 += v1_[m];
-    Efdz_mon1 += v2_[m];
+    *Efdx_mon1 += v0_[m];
+    *Efdy_mon1 += v1_[m];
+    *Efdz_mon1 += v2_[m];
   }
 }
 
@@ -352,7 +352,7 @@ void ElectricFieldHolder::CalcDipoleElecFieldWithPolfacZero
    size_t mon2_index_start, size_t mon2_index_end,
    size_t nmon1, size_t nmon2,
    size_t site_i, size_t site_j, double * Efd2,
-   double &Efdx_mon1, double &Efdy_mon1, double &Efdz_mon1) {
+   double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1) {
 
   // Shifts that will be useful in the loops
   const size_t nmon12 = nmon1 * 2;
@@ -441,13 +441,13 @@ void ElectricFieldHolder::CalcDipoleElecFieldWithPolfacZero
   }
 
   // Setting the values to the output
-  Efdx_mon1 = 0.0;
-  Efdy_mon1 = 0.0;
-  Efdz_mon1 = 0.0;
+  *Efdx_mon1 = 0.0;
+  *Efdy_mon1 = 0.0;
+  *Efdz_mon1 = 0.0;
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-    Efdx_mon1 += v0_[m];
-    Efdy_mon1 += v1_[m];
-    Efdz_mon1 += v2_[m];
+    *Efdx_mon1 += v0_[m];
+    *Efdy_mon1 += v1_[m];
+    *Efdz_mon1 += v2_[m];
   }
   
 }
@@ -463,8 +463,8 @@ void ElectricFieldHolder::CalcElecFieldGradsWithPolfacNonZero
    size_t nmon1, size_t nmon2,
    size_t site_i, size_t site_j, 
    double aDD, double aCD, double Asqsq,
-   double &grdx, double &grdy, double &grdz,
-   double &phi1, double * phi2,
+   double *grdx, double *grdy, double *grdz,
+   double *phi1, double * phi2,
    double * grd2) {
 
   // Shifts that will be useful in the loops
@@ -674,15 +674,15 @@ void ElectricFieldHolder::CalcElecFieldGradsWithPolfacNonZero
   }
 
   // Compress vectors to double
-  grdx = 0.0;
-  grdy = 0.0;
-  grdz = 0.0;
-  phi1 = 0.0;
+  *grdx = 0.0;
+  *grdy = 0.0;
+  *grdz = 0.0;
+  *phi1 = 0.0;
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-    grdx += v0_[m];
-    grdy += v1_[m];
-    grdz += v2_[m];
-    phi1 += v3_[m];
+    *grdx += v0_[m];
+    *grdy += v1_[m];
+    *grdz += v2_[m];
+    *phi1 += v3_[m];
   }
 }
 
@@ -696,8 +696,8 @@ void ElectricFieldHolder::CalcElecFieldGradsWithPolfacZero
    size_t mon2_index_start, size_t mon2_index_end,
    size_t nmon1, size_t nmon2,
    size_t site_i, size_t site_j,
-   double &grdx, double &grdy, double &grdz,
-   double &phi1, double * phi2,
+   double *grdx, double *grdy, double *grdz,
+   double *phi1, double * phi2,
    double * grd2) {
 
   // Shifts that will be useful in the loops
@@ -891,15 +891,15 @@ void ElectricFieldHolder::CalcElecFieldGradsWithPolfacZero
   }
 
   // Compress vectors to double
-  grdx = 0.0;
-  grdy = 0.0;
-  grdz = 0.0;
-  phi1 = 0.0;
+  *grdx = 0.0;
+  *grdy = 0.0;
+  *grdz = 0.0;
+  *phi1 = 0.0;
   for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-    grdx += v0_[m];
-    grdy += v1_[m];
-    grdz += v2_[m];
-    phi1 += v3_[m];
+    *grdx += v0_[m];
+    *grdy += v1_[m];
+    *grdz += v2_[m];
+    *phi1 += v3_[m];
   }
 
 }

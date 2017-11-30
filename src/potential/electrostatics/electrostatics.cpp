@@ -134,7 +134,7 @@ namespace elec {
                         xyz.data() + fi_crd, xyz.data() + fi_crd,
                         chg.data() + fi_sites, chg.data() + fi_sites, 
                         m, m, m+1, nmon, nmon, i, j, Ai, Asqsq,
-                        aCC, aCC1_4, g34, ex, ey, ez, phi1, 
+                        aCC, aCC1_4, g34, &ex, &ey, &ez, &phi1, 
                         phi.data() + fi_sites, Efq.data() + fi_crd);
               phi[fi_sites + inmon + m] += phi1;
               Efq[fi_crd + inmon3 + m] += ex; 
@@ -147,7 +147,7 @@ namespace elec {
                         xyz.data() + fi_crd, xyz.data() + fi_crd,
                         chg.data() + fi_sites, chg.data() + fi_sites,
                         m, m, m+1, nmon, nmon, i, j,
-                        ex, ey, ez, phi1,
+                        &ex, &ey, &ez, &phi1,
                         phi.data() + fi_sites, Efq.data() + fi_crd);
               phi[fi_sites + inmon + m] += phi1;
               Efq[fi_crd + inmon3 + m] += ex;
@@ -213,7 +213,7 @@ namespace elec {
                         xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsq,
-                        aCC, aCC1_4, g34, ex, ey, ez, phi1, 
+                        aCC, aCC1_4, g34, &ex, &ey, &ez, &phi1, 
                         phi.data() + fi_sites2, Efq.data() + fi_crd2);
                 phi[fi_sites1 + inmon1 + m1] += phi1;
                 Efq[fi_crd1 + inmon13 + m1] += ex;       
@@ -227,7 +227,7 @@ namespace elec {
                         xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j,
-                        ex, ey, ez, phi1,
+                        &ex, &ey, &ez, &phi1,
                         phi.data() + fi_sites2, Efq.data() + fi_crd2);
                 phi[fi_sites1 + inmon1 + m1] += phi1;
                 Efq[fi_crd1 + inmon13 + m1] += ex;
@@ -368,7 +368,7 @@ namespace elec {
                           xyz.data() + fi_crd, xyz.data() + fi_crd, 
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
                           nmon, nmon, i, j, Asqsq,
-                          aDD, Efd.data() + fi_crd, ex, ey, ez);
+                          aDD, Efd.data() + fi_crd, &ex, &ey, &ez);
                 Efd[fi_crd + inmon3 + m] += ex;
                 Efd[fi_crd + inmon3 + nmon + m] += ey;
                 Efd[fi_crd + inmon3 + nmon2 + m] += ez;
@@ -378,7 +378,7 @@ namespace elec {
                 elec_field.CalcDipoleElecFieldWithPolfacZero(
                           xyz.data() + fi_crd, xyz.data() + fi_crd,
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
-                          nmon, nmon, i, j, Efd.data() + fi_crd, ex, ey, ez);
+                          nmon, nmon, i, j, Efd.data() + fi_crd, &ex, &ey, &ez);
                 Efd[fi_crd + inmon3 + m] += ex;
                 Efd[fi_crd + inmon3 + nmon + m] += ey;
                 Efd[fi_crd + inmon3 + nmon2 + m] += ez;
@@ -460,7 +460,7 @@ namespace elec {
                         m1, m2init, nmon2,
                         nmon1, nmon2, i, j, Asqsq,
                         aDD, Efd_2_pool[rank].data(), 
-                        ex_thread, ey_thread, ez_thread);
+                        &ex_thread, &ey_thread, &ez_thread);
                   Efd_1_pool[rank][inmon13 + m1] += ex_thread;
                   Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                   Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -470,7 +470,7 @@ namespace elec {
                         mu.data() + fi_crd1, mu.data() + fi_crd2, 
                         m1, m2init, nmon2, nmon1, nmon2, 
                         i, j, Efd_2_pool[rank].data(), 
-                        ex_thread, ey_thread, ez_thread);
+                        &ex_thread, &ey_thread, &ez_thread);
                   Efd_1_pool[rank][inmon13 + m1] += ex_thread;
                   Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                   Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -584,7 +584,7 @@ namespace elec {
                         zeros.data(), zeros.data(),
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, aDD, aCD, Asqsq,
-                        ex, ey, ez, phi1, phi_mod,
+                        &ex, &ey, &ez, &phi1, phi_mod,
                         grd.data() + fi_crd);
               grd[fi_crd + inmon3 + m] += ex;
               grd[fi_crd + inmon3 + nmon + m] += ey;
@@ -597,7 +597,7 @@ namespace elec {
                         zeros.data(), zeros.data(),
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, 
-                        ex, ey, ez, phi1, phi_mod,
+                        &ex, &ey, &ez, &phi1, phi_mod,
                         grd.data() + fi_crd);
               grd[fi_crd + inmon3 + m] += ex;
               grd[fi_crd + inmon3 + nmon + m] += ey;
@@ -649,7 +649,7 @@ namespace elec {
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
                         aDD, aCD, Asqsq,
-                        ex, ey, ez, phi1, phi.data() + fi_sites2,
+                        &ex, &ey, &ez, &phi1, phi.data() + fi_sites2,
                         grd.data() + fi_crd2);
                 grd[fi_crd1 + inmon13 + m1] += ex;
                 grd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
@@ -664,7 +664,7 @@ namespace elec {
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
-                        ex, ey, ez, phi1, phi.data() + fi_sites2,
+                        &ex, &ey, &ez, &phi1, phi.data() + fi_sites2,
                         grd.data() + fi_crd2);
                 grd[fi_crd1 + inmon13 + m1] += ex;
                 grd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
