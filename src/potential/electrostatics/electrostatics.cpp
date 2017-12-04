@@ -345,6 +345,7 @@ namespace elec {
       fi_crd = 0;
       for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
         size_t ns = sites[fi_mon];
+        if (ns == 1) continue;
         size_t nmon = mon_type_count[mt].second;
         size_t nmon2 = 2*nmon;
         // Get excluded pairs for this monomer
