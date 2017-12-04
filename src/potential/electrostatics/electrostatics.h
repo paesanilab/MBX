@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include <string>
 #include <cmath>
-#include <iostream>
 #include <memory>
 
 #ifdef _OPENMP

@@ -1,6 +1,14 @@
 #include "potential/electrostatics/electrostatics.h"
 
 //#define DEBUG
+//#define TIMING
+#ifdef DEBUG
+#  include <iostream>
+#endif
+#ifdef TIMING
+#  include <chrono>
+#  include <iostream>
+#endif
 
 namespace elec {
 
@@ -15,6 +23,10 @@ namespace elec {
     const std::vector<std::pair<std::string,size_t>> mon_type_count, 
     const double tolerance, const size_t maxit, const bool do_grads, 
     std::vector<double> &orig_grd) {
+
+#   ifdef TIMING
+    auto t1 = std::chrono::high_resolution_clock::now();
+#   endif
 
     // Thole damping declarations
     // aCC and aCD are fixed for all systems, any site, to 0.4
@@ -87,6 +99,9 @@ namespace elec {
       fi_crd += nmon*ns*3;
     }
 
+#   ifdef TIMING
+    auto t2 = std::chrono::high_resolution_clock::now();
+#   endif
 ////////////////////////////////////////////////////////////////////////////////
 // PERMANENT ELECTRIC FIELD ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,6 +116,10 @@ namespace elec {
     excluded_set_type exc12;
     excluded_set_type exc13;
     excluded_set_type exc14;
+
+#   ifdef TIMING
+    auto t3 = std::chrono::high_resolution_clock::now();
+#   endif
 
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
@@ -163,6 +182,10 @@ namespace elec {
       fi_sites += nmon * ns;
       fi_crd += nmon * ns * 3;
     }
+
+#   ifdef TIMING
+    auto t4 = std::chrono::high_resolution_clock::now();
+#   endif
 
     // Sites corresponding to different monomers
     // Declaring first indexes
@@ -248,6 +271,10 @@ namespace elec {
       fi_crd1 += nmon1 * ns1 * 3;
     }
 
+#   ifdef TIMING
+    auto t5 = std::chrono::high_resolution_clock::now();
+#   endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -257,7 +284,19 @@ namespace elec {
     double eps = 1.0E+50;
     std::vector<double> mu_old(3*nsites,0.0);
     size_t iter = 0;
+
+#   ifdef TIMING
+    std::vector<std::chrono::milliseconds> dipole_iteration_time_intra;
+    std::vector<std::chrono::milliseconds> dipole_iteration_time_inter;
+    std::vector<std::chrono::milliseconds> dipole_calculation;
+#   endif
+
     while (true) {   
+
+#     ifdef TIMING
+      auto t6 = std::chrono::high_resolution_clock::now();
+#     endif
+
       // TODO Need to decide how we define eps
       double max_eps = 0.0;
       //  Get new dipoles and check max difference
@@ -316,6 +355,12 @@ namespace elec {
         fi_crd += nmon*ns*3;
       }   
 
+#     ifdef TIMING
+      auto t7 = std::chrono::high_resolution_clock::now();
+      dipole_calculation.push_back
+        (std::chrono::duration_cast<std::chrono::milliseconds>(t7 - t6));
+#     endif
+
       // Check if convergence achieved
       if (max_eps < tolerance) 
         break;
@@ -343,6 +388,11 @@ namespace elec {
       fi_mon = 0;
       fi_sites = 0;
       fi_crd = 0;
+
+#     ifdef TIMING
+      auto t8 = std::chrono::high_resolution_clock::now();
+#     endif
+
       for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
         size_t ns = sites[fi_mon];
         if (ns == 1) continue;
@@ -392,6 +442,10 @@ namespace elec {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
       }
+
+#     ifdef TIMING
+      auto t9 = std::chrono::high_resolution_clock::now();
+#     endif
 
       fi_mon1 = 0;
       fi_sites1 = 0;
@@ -501,7 +555,31 @@ namespace elec {
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
       }
+
+#     ifdef TIMING
+      auto t10 = std::chrono::high_resolution_clock::now();
+      dipole_iteration_time_intra.push_back
+        (std::chrono::duration_cast<std::chrono::milliseconds>(t9 - t8));
+      dipole_iteration_time_inter.push_back
+        (std::chrono::duration_cast<std::chrono::milliseconds>(t10 - t9));
+#     endif
+
     }
+
+#   ifdef TIMING
+    std::chrono::milliseconds dp(0);
+    std::chrono::milliseconds intra(0);
+    std::chrono::milliseconds inter(0);
+    for (size_t i = 0; i < dipole_calculation.size(); i++)
+      dp += dipole_calculation[i];
+    for (size_t i = 0; i < dipole_iteration_time_intra.size(); i++)
+      intra += dipole_iteration_time_intra[i];
+    for (size_t i = 0; i < dipole_iteration_time_inter.size(); i++)
+      inter += dipole_iteration_time_inter[i];
+    double dp_d = (double)dp.count() / dipole_calculation.size();
+    double intra_d = (double)intra.count() / dipole_iteration_time_intra.size();
+    double inter_d = (double)inter.count() / dipole_iteration_time_inter.size();
+#   endif
 
     // Dipoles are computed. Now we need the electrostatic energy.
     // Permanent electrostatics
@@ -522,6 +600,10 @@ namespace elec {
 ////////////////////////////////////////////////////////////////////////////////
 // GRADIENTS ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+#   ifdef TIMING
+    auto t11 = std::chrono::high_resolution_clock::now();
+#   endif
 
     // Chg-Chg interactions
     fi_mon = 0;
@@ -686,6 +768,10 @@ namespace elec {
       fi_crd1 += nmon1 * ns1 * 3;
     }
 
+#   ifdef TIMING
+    auto t12 = std::chrono::high_resolution_clock::now();
+#   endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // REVERT DATA ORGANIZATION ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -746,6 +832,10 @@ namespace elec {
     mu = tmp4;
     Efd = tmp3;
 
+#   ifdef TIMING
+    auto t13 = std::chrono::high_resolution_clock::now();
+#   endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // REDISTRIBUTION OF THE GRADIENTS AND GRADIENTS DUE TO SITE-DEPENDENT CHARGES /
 ////////////////////////////////////////////////////////////////////////////////
@@ -769,6 +859,39 @@ namespace elec {
       fi_sites += nmon * ns;
       fi_crd += nmon * ns * 3;
     }
+
+#   ifdef TIMING
+    auto t14 = std::chrono::high_resolution_clock::now();
+    
+    // Outputting timings
+    std::cerr << "Electrostatics::setup " << 
+      std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::intra_monomer_permanent_elecField " << 
+      std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::inter_monomer_permanent_elecField " << 
+      std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::Induced_dipole_calculation "
+      << dp_d << " milliseconds / cycle over " 
+      << dipole_calculation.size() << " cycles\n";
+    std::cerr << "Electrostatics::Induced_dipole_intra_dipole_field "
+      << intra_d << " milliseconds / cycle over " 
+      << dipole_iteration_time_intra.size() << " cycles\n";
+    std::cerr << "Electrostatics::Induced_dipole_inter_dipole_field "
+      << inter_d << " milliseconds / cycle over " 
+      << dipole_iteration_time_inter.size() << " cycles\n";
+    std::cerr << "Electrostatics::gradients "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::data_reorganization "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t13 - t12).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::virtual_sites_grad_redistribution "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t14 - t13).count()
+      << " milliseconds\n";
+#   endif
 
     return Eqq + Eind;
     
