@@ -88,21 +88,41 @@ install:
       export PATH=${DEPS_DIR}/cmake/bin:${PATH}
     fi
   - cd ${TRAVIS_BUILD_DIR}
+
+# MRR
+# Commands obtained from Daniel Smith 
+# (https://github.com/dgasmith/gau2grid/blob/master/.travis.yml)
+    # Pull down a miniconda
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+
+    # Build out the environment
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n gg_env python=$TRAVIS_PYTHON_VERSION numpy mpmath pytest numexpr cmake pybind11 -c conda-forge
+  - source activate gg_env
+
+    # Install anything not in conda
+  - pip install codecov
+  - pip install pytest-cov
+  - conda list
+  - export
   
 # END MRR 
+
+before_script:
   - cmake -H. -Bbuild -DUSE_OPENMP:BOOL=FALSE
   - cd build
   - travis_wait 60 make
   - cd ../
+  
 
 # MRR - 20170904
 script:
-  - cd tests/tests
-  - ./test_001_io.sh
-  - ./test_002_io.sh
-  - ./test_003_io.sh
-  - ./test_004_pairs.sh
-  - ./test_005_energy.sh
-  - ./test_006_elec_tools.sh
+  - cd tests
+  - ./run_tests.sh
 # END MRR
 
