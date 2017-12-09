@@ -25,8 +25,8 @@ static std::vector<bblock::System> systems;
 int main(int argc, char** argv)
 {
 
-  if (argc != 2) {
-    std::cerr << "usage: energy h2o_ion.nrg"
+  if (argc != 3) {
+    std::cerr << "usage: " << argv[0] << " input.nrg output.nrg"
               << std::endl;
     return 0;
   }
@@ -46,8 +46,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  std::string outfile = "output.nrg";
-  const char* fname = outfile.c_str();
+  const char* fname = argv[2];
   tools::WriteNrg(fname,systems);
   
   return 0;
