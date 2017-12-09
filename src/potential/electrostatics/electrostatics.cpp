@@ -2,6 +2,8 @@
 
 //#define DEBUG
 //#define TIMING
+//#define PRINT_TERMS
+
 #ifdef DEBUG
 #  include <iostream>
 #endif
@@ -395,7 +397,8 @@ namespace elec {
 
       for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
         size_t ns = sites[fi_mon];
-        if (ns == 1) continue;
+//        TODO: Check why this makes shit fail
+//        if (ns == 1) continue;
         size_t nmon = mon_type_count[mt].second;
         size_t nmon2 = 2*nmon;
         // Get excluded pairs for this monomer
@@ -593,6 +596,10 @@ namespace elec {
     for (size_t i = 0; i < 3*nsites; i++) 
       Eind -= mu[i] * Efq[i];
     Eind *= 0.5;
+
+#   ifdef PRINT_TERMS
+    std::cerr << "E_ind = " << Eind << "   E_elec = " << Eqq << std::endl;
+#   endif
 
     // If no gradients, nothing else to do
     if (!do_grads) return Eqq + Eind;
