@@ -1,97 +1,72 @@
-sudo: required
-dist: trusty
-os: linux #MRR 20170904
+# After changing this file, check it on:
+#   http://lint.travis-ci.org/
+# Core file taken from @dgasmith 
+# https://github.com/dgasmith/gau2grid/blob/master/.travis.yml
 
-language: cpp
-
-
+language: c++
+sudo: false
 matrix:
+
   include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.9
-# MRR - 20170904
-#      env: COMPILER=g++-4.9 commented
-      env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
-# END MRR
 
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
-# MRR - 20170904
-#      env: COMPILER=g++-5
-      env:
-        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
-# END MRR
+  - os: linux
+    compiler: clang
+    addons: &1
+      apt:
+        sources:
+        - llvm-toolchain-precise-3.6
+        - ubuntu-toolchain-r-test
+        packages:
+        - clang-3.6
+    env:
+      - CXX_COMPILER='clang++-3.6'
+      - C_COMPILER='clang-3.6'
+      - PYTHON_VER='3.5'
+      - BUILD_TYPE='release'
+      - NAME='clang'
+      - VERSION='3.6'
 
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
-          packages:
-            - clang-3.6
-# MRR - 20170905
-#      env: COMPILER=clang++-3.6
-      env:
-        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
-# END MRR
+  - os: linux
+    compiler: gcc
+    addons: &3
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-4.9
+        - gcc-4.9
+    env:
+      - CXX_COMPILER='g++-4.9'
+      - C_COMPILER='gcc-4.9'
+      - PYTHON_VER='3.5'
+      - BUILD_TYPE='release'
+      - NAME='gcc'
+      - VERSION='4.9'
 
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-          packages:
-            - clang-3.7
-# MRR - 20170905
-#      env: COMPILER=clang++-3.7
-      env:
-        - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
+  - os: linux
+    compiler: gcc
+    addons: &4
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-6
+        - gcc-6
+    env:
+      - CXX_COMPILER='g++-6'
+      - C_COMPILER='gcc-6'
+      - PYTHON_VER='3.5'
+      - BUILD_TYPE='release'
+      - NAME='gcc'
+      - VERSION=6
 
 before_install:
   - uname -a
   - free -m
   - df -h
   - ulimit -a
-# MRR - 20170904
-  - eval "${MATRIX_EVAL}"
-# END MRR
 
 install:
-# MRR - 20170904
-# From https://github.com/ldionne/mpl11/blob/master/.travis.yml
-  ############################################################################
-  # All the dependencies are installed in ${TRAVIS_BUILD_DIR}/deps/
-  ############################################################################
-  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
-  - mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
-
-  ############################################################################
-  # Install a recent CMake
-  ############################################################################
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      CMAKE_URL="http://www.cmake.org/files/v3.3/cmake-3.3.2-Linux-x86_64.tar.gz"
-      mkdir cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
-      export PATH=${DEPS_DIR}/cmake/bin:${PATH}
-    fi
-  - cd ${TRAVIS_BUILD_DIR}
-
-# MRR
-# Commands obtained from Daniel Smith 
-# (https://github.com/dgasmith/gau2grid/blob/master/.travis.yml)
     # Pull down a miniconda
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -106,23 +81,39 @@ install:
   - source activate gg_env
 
     # Install anything not in conda
-  - pip install codecov
-  - pip install pytest-cov
-  - conda list
-  - export
-  
-# END MRR 
+#  - pip install codecov
+#  - pip install pytest-cov
+#  - conda list
+#  - export
 
 before_script:
-  - cmake -H. -Bbuild -DUSE_OPENMP:BOOL=FALSE
+#  - python -V
+#  - python -c 'import numpy; print(numpy.version.version)'
+#  - pip install -e .
+
+    # Setup CMake
+  - cmake -Bbuild -H.
+    -DMAX_AM=6
+    -DENABLE_PYTHON_BINDINGS=ON
+    -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
+    -DCMAKE_C_COMPILER=${C_COMPILER}
+    -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+    -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
+#    -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python
+#    -DBUILD_SHARED_LIBS=ON
+    -DUSE_OPENMP:BOOL=FALSE
+
+    # Build the program
   - cd build
   - travis_wait 60 make
-  - cd ../
-  
+  - cd .. 
 
-# MRR - 20170904
 script:
   - cd tests
   - ./run_tests.sh
-# END MRR
 
+notifications:
+  email: false
+
+#after_success:
+#  - codecov
