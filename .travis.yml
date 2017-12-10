@@ -3,7 +3,7 @@
 # Core file taken from @dgasmith 
 # https://github.com/dgasmith/gau2grid/blob/master/.travis.yml
 
-language: python
+language: C++
 sudo: false
 matrix:
 
@@ -27,21 +27,39 @@ matrix:
       - VERSION='3.6'
 
   - os: linux
+    compiler: clang
+    addons: &2
+      apt:
+        sources:
+        - llvm-toolchain-precise-3.7
+        - ubuntu-toolchain-r-test
+        packages:
+        - clang-3.7
+    env:
+      - CXX_COMPILER='clang++-3.7'
+      - C_COMPILER='clang-3.7'
+      - PYTHON_VER='3.5'
+      - BUILD_TYPE='release'
+      - NAME='clang'
+      - VERSION='3.7'
+
+  - os: linux
     compiler: gcc
     addons: &3
       apt:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-4.9
-        - gcc-4.9
+        - g++-4.9.4
+        - gcc-4.9.4
     env:
-      - CXX_COMPILER='g++-4.9'
-      - C_COMPILER='gcc-4.9'
+      - CXX_COMPILER='g++-4.9.4'
+      - C_COMPILER='gcc-4.9.4'
+      - CXX_FLAGS='-O0'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
       - NAME='gcc'
-      - VERSION='4.9'
+      - VERSION='4.9.4'
 
   - os: linux
     compiler: gcc
@@ -55,6 +73,7 @@ matrix:
     env:
       - CXX_COMPILER='g++-6'
       - C_COMPILER='gcc-6'
+      - CXX_FLAGS='-O0'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
       - NAME='gcc'
@@ -77,7 +96,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n gg_env python=$TRAVIS_PYTHON_VERSION numpy mpmath pytest numexpr cmake pybind11 -c conda-forge
+  - conda create -q -n gg_env python=${PYTHON_VER} numpy mpmath pytest numexpr cmake pybind11 -c conda-forge
   - source activate gg_env
 
     # Install anything not in conda
@@ -94,13 +113,12 @@ before_script:
     # Setup CMake
   - > 
     cmake -Bbuild -H.
-    -DMAX_AM=6
     -DENABLE_PYTHON_BINDINGS=ON
     -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
     -DCMAKE_C_COMPILER=${C_COMPILER}
     -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
-    -DCMAKE_CXX_FLAGS=-O0
+    -DCMAKE_CXX_FLAGS=${CXX_FLAGS}
     -DUSE_OPENMP:BOOL=FALSE
   - cd build
   - travis_wait 60 make
