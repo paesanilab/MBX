@@ -3,7 +3,7 @@
 # Core file taken from @dgasmith 
 # https://github.com/dgasmith/gau2grid/blob/master/.travis.yml
 
-language: C++
+language: c++
 sudo: false
 matrix:
 
@@ -50,16 +50,16 @@ matrix:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-4.9.4
-        - gcc-4.9.4
+        - g++-4.9
+        - gcc-4.9
     env:
-      - CXX_COMPILER='g++-4.9.4'
-      - C_COMPILER='gcc-4.9.4'
+      - CXX_COMPILER='g++-4.9'
+      - C_COMPILER='gcc-4.9'
       - CXX_FLAGS='-O0'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
       - NAME='gcc'
-      - VERSION='4.9.4'
+      - VERSION='4.9'
 
   - os: linux
     compiler: gcc
