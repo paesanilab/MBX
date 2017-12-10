@@ -100,6 +100,7 @@ before_script:
     -DCMAKE_C_COMPILER=${C_COMPILER}
     -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
+    -DCMAKE_CXX_FLAGS=-O0
     -DUSE_OPENMP:BOOL=FALSE
   - cd build
   - travis_wait 60 make
