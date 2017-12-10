@@ -55,7 +55,7 @@ matrix:
     env:
       - CXX_COMPILER='g++-4.9'
       - C_COMPILER='gcc-4.9'
-      - CXX_FLAGS='-O0'
+      - CXX_FLAGS='-Ofast'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
       - NAME='gcc'
@@ -73,7 +73,7 @@ matrix:
     env:
       - CXX_COMPILER='g++-6'
       - C_COMPILER='gcc-6'
-      - CXX_FLAGS='-O0'
+      - CXX_FLAGS='-Ofast'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
       - NAME='gcc'
@@ -121,7 +121,7 @@ before_script:
     -DCMAKE_CXX_FLAGS=${CXX_FLAGS}
     -DUSE_OPENMP:BOOL=FALSE
   - cd build
-  - travis_wait 60 make -j2
+  - travis_wait 60 make 
   - cd .. 
 
 script:
