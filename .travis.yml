@@ -92,7 +92,8 @@ before_script:
 #  - pip install -e .
 
     # Setup CMake
-  - > cmake -Bbuild -H.
+  - > 
+    cmake -Bbuild -H.
     -DMAX_AM=6
     -DENABLE_PYTHON_BINDINGS=ON
     -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
