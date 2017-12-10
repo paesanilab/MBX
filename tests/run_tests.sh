@@ -19,7 +19,7 @@ for i in `ls test_*.sh`; do
   fi  
 done
 
-exit($EXIT_CODE)
+exit $EXIT_CODE
 
 
 
