@@ -43,41 +43,41 @@ matrix:
       - NAME='clang'
       - VERSION='3.7'
 
-  - os: linux
-    compiler: gcc
-    addons: &3
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - g++-4.9
-        - gcc-4.9
-    env:
-      - CXX_COMPILER='g++-4.9'
-      - C_COMPILER='gcc-4.9'
-      - CXX_FLAGS='-Ofast'
-      - PYTHON_VER='3.5'
-      - BUILD_TYPE='release'
-      - NAME='gcc'
-      - VERSION='4.9'
-
-  - os: linux
-    compiler: gcc
-    addons: &4
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - g++-6
-        - gcc-6
-    env:
-      - CXX_COMPILER='g++-6'
-      - C_COMPILER='gcc-6'
-      - CXX_FLAGS='-Ofast'
-      - PYTHON_VER='3.5'
-      - BUILD_TYPE='release'
-      - NAME='gcc'
-      - VERSION=6
+#  - os: linux
+#    compiler: gcc
+#    addons: &3
+#      apt:
+#        sources:
+#        - ubuntu-toolchain-r-test
+#        packages:
+#        - g++-4.9
+#        - gcc-4.9
+#    env:
+#      - CXX_COMPILER='g++-4.9'
+#      - C_COMPILER='gcc-4.9'
+#      - CXX_FLAGS='-Ofast'
+#      - PYTHON_VER='3.5'
+#      - BUILD_TYPE='release'
+#      - NAME='gcc'
+#      - VERSION='4.9'
+#
+#  - os: linux
+#    compiler: gcc
+#    addons: &4
+#      apt:
+#        sources:
+#        - ubuntu-toolchain-r-test
+#        packages:
+#        - g++-6
+#        - gcc-6
+#    env:
+#      - CXX_COMPILER='g++-6'
+#      - C_COMPILER='gcc-6'
+#      - CXX_FLAGS='-Ofast'
+#      - PYTHON_VER='3.5'
+#      - BUILD_TYPE='release'
+#      - NAME='gcc'
+#      - VERSION=6
 
 before_install:
   - uname -a
