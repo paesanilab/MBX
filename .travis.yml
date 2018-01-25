@@ -18,8 +18,10 @@ matrix:
         - ubuntu-toolchain-r-test
         packages:
         - clang-3.6
+        - lcov
     env:
       - CXX_COMPILER='clang++-3.6'
+      - CXX_FLAGS='-coverage'
       - C_COMPILER='clang-3.6'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
@@ -35,8 +37,10 @@ matrix:
         - ubuntu-toolchain-r-test
         packages:
         - clang-3.7
+        - lcov
     env:
       - CXX_COMPILER='clang++-3.7'
+      - CXX_FLAGS='-coverage'
       - C_COMPILER='clang-3.7'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
