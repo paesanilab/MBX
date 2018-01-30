@@ -1,108 +1,145 @@
-sudo: required
-dist: trusty
-os: linux #MRR 20170904
+# After changing this file, check it on:
+#   http://lint.travis-ci.org/
+# Core file taken from @dgasmith 
+# https://github.com/dgasmith/gau2grid/blob/master/.travis.yml
 
-language: cpp
-
-
+language: c++
+sudo: false
 matrix:
+
   include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.9
-# MRR - 20170904
-#      env: COMPILER=g++-4.9 commented
-      env:
-        - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
-# END MRR
 
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-5
-# MRR - 20170904
-#      env: COMPILER=g++-5
-      env:
-        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
-# END MRR
+  - os: linux
+    compiler: clang
+    addons: &1
+      apt:
+        sources:
+        - llvm-toolchain-precise-3.6
+        - ubuntu-toolchain-r-test
+        packages:
+        - clang-3.6
+        - lcov
+    env:
+      - CXX_COMPILER='clang++-3.6'
+#      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
+      - C_COMPILER='clang-3.6'
+      - PYTHON_VER='3.5'
+      - BUILD_TYPE='release'
+      - NAME='clang'
+      - VERSION='3.6'
 
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.6
-          packages:
-            - clang-3.6
-# MRR - 20170905
-#      env: COMPILER=clang++-3.6
-      env:
-        - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
-# END MRR
+  - os: linux
+    compiler: clang
+    addons: &2
+      apt:
+        sources:
+        - llvm-toolchain-precise-3.7
+        - ubuntu-toolchain-r-test
+        packages:
+        - clang-3.7
+        - lcov
+    env:
+      - CXX_COMPILER='clang++-3.7'
+#      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
+      - C_COMPILER='clang-3.7'
+      - PYTHON_VER='3.5'
+      - BUILD_TYPE='release'
+      - NAME='clang'
+      - VERSION='3.7'
 
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-          packages:
-            - clang-3.7
-# MRR - 20170905
-#      env: COMPILER=clang++-3.7
-      env:
-        - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
+#  - os: linux
+#    compiler: gcc
+#    addons: &3
+#      apt:
+#        sources:
+#        - ubuntu-toolchain-r-test
+#        packages:
+#        - g++-4.9
+#        - gcc-4.9
+#    env:
+#      - CXX_COMPILER='g++-4.9'
+#      - C_COMPILER='gcc-4.9'
+#      - CXX_FLAGS='-Ofast'
+#      - PYTHON_VER='3.5'
+#      - BUILD_TYPE='release'
+#      - NAME='gcc'
+#      - VERSION='4.9'
+#
+#  - os: linux
+#    compiler: gcc
+#    addons: &4
+#      apt:
+#        sources:
+#        - ubuntu-toolchain-r-test
+#        packages:
+#        - g++-6
+#        - gcc-6
+#    env:
+#      - CXX_COMPILER='g++-6'
+#      - C_COMPILER='gcc-6'
+#      - CXX_FLAGS='-Ofast'
+#      - PYTHON_VER='3.5'
+#      - BUILD_TYPE='release'
+#      - NAME='gcc'
+#      - VERSION=6
 
 before_install:
   - uname -a
   - free -m
   - df -h
   - ulimit -a
-# MRR - 20170904
-  - eval "${MATRIX_EVAL}"
-# END MRR
 
 install:
-# MRR - 20170904
-# From https://github.com/ldionne/mpl11/blob/master/.travis.yml
-  ############################################################################
-  # All the dependencies are installed in ${TRAVIS_BUILD_DIR}/deps/
-  ############################################################################
-  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
-  - mkdir ${DEPS_DIR} && cd ${DEPS_DIR}
+    # Pull down a miniconda
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
 
-  ############################################################################
-  # Install a recent CMake
-  ############################################################################
-  - |
-    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-      CMAKE_URL="http://www.cmake.org/files/v3.3/cmake-3.3.2-Linux-x86_64.tar.gz"
-      mkdir cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
-      export PATH=${DEPS_DIR}/cmake/bin:${PATH}
-    fi
-  - cd ${TRAVIS_BUILD_DIR}
-  
-# END MRR 
-  - cmake -H. -Bbuild
+    # Build out the environment
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  - conda create -q -n gg_env python=${PYTHON_VER} numpy mpmath pytest numexpr cmake pybind11 -c conda-forge
+  - source activate gg_env
+
+    # Install anything not in conda
+#  - pip install codecov
+#  - pip install pytest-cov
+#  - conda list
+#  - export
+
+before_script:
+#  - python -V
+#  - python -c 'import numpy; print(numpy.version.version)'
+#  - pip install -e .
+
+    # Setup CMake
+  - > 
+    cmake -Bbuild -H.
+    -DENABLE_PYTHON_BINDINGS=ON
+    -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
+    -DCMAKE_C_COMPILER=${C_COMPILER}
+    -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+    -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
+    -DCMAKE_CXX_FLAGS=${CXX_FLAGS}
+    -DUSE_OPENMP:BOOL=FALSE
   - cd build
-  - travis_wait 60 make
-  - cd ../
+  - travis_wait 60 make 
+  - cd .. 
 
-# MRR - 20170904
 script:
-  - cd tests/tests
-  - ./test_001_io.sh
-  - ./test_002_io.sh
-  - ./test_003_io.sh
-  - ./test_004_pairs.sh
-  - ./test_005_energy.sh
-  - ./test_006_elec_tools.sh
-# END MRR
+  - cd tests
+  - ./run_tests.sh
 
+notifications:
+  email: false
+
+#after_success:
+#    # Creating report
+#  - cd ${TRAVIS_BUILD_DIR}
+#  - lcov --directory . --capture --output-file coverage.info # capture coverage info
+#  - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+#  - lcov --list coverage.info #debug info
+#  # Uploading report to CodeCov
+#  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"

@@ -5,7 +5,11 @@
 #include <cstdlib>
 #include <string>
 #include <cmath>
-#include <iostream>
+#include <memory>
+
+#ifdef _OPENMP
+# include <omp.h>
+#endif
 
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"

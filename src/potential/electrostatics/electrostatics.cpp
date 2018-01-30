@@ -1,6 +1,16 @@
 #include "potential/electrostatics/electrostatics.h"
 
 //#define DEBUG
+//#define TIMING
+//#define PRINT_TERMS
+
+#ifdef DEBUG
+#  include <iostream>
+#endif
+#ifdef TIMING
+#  include <chrono>
+#  include <iostream>
+#endif
 
 namespace elec {
 
@@ -15,6 +25,10 @@ namespace elec {
     const std::vector<std::pair<std::string,size_t>> mon_type_count, 
     const double tolerance, const size_t maxit, const bool do_grads, 
     std::vector<double> &orig_grd) {
+
+#   ifdef TIMING
+    auto t1 = std::chrono::high_resolution_clock::now();
+#   endif
 
     // Thole damping declarations
     // aCC and aCD are fixed for all systems, any site, to 0.4
@@ -44,7 +58,10 @@ namespace elec {
 
     // Max number of monomers
     size_t maxnmon = mon_type_count.back().second;
-    Field elec_field(maxnmon);
+    ElectricFieldHolder elec_field(maxnmon);
+
+    // Parallelization
+    size_t nthreads = 1;
 
 ////////////////////////////////////////////////////////////////////////////////
 // DATA ORGANIZATION ///////////////////////////////////////////////////////////
@@ -84,6 +101,9 @@ namespace elec {
       fi_crd += nmon*ns*3;
     }
 
+#   ifdef TIMING
+    auto t2 = std::chrono::high_resolution_clock::now();
+#   endif
 ////////////////////////////////////////////////////////////////////////////////
 // PERMANENT ELECTRIC FIELD ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -98,6 +118,10 @@ namespace elec {
     excluded_set_type exc12;
     excluded_set_type exc13;
     excluded_set_type exc14;
+
+#   ifdef TIMING
+    auto t3 = std::chrono::high_resolution_clock::now();
+#   endif
 
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
@@ -127,10 +151,11 @@ namespace elec {
             double Ai = 1/A;
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
-              elec_field.DoEfqWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.CalcPermanentElecFieldWithPolfacNonZero(
+                        xyz.data() + fi_crd, xyz.data() + fi_crd,
                         chg.data() + fi_sites, chg.data() + fi_sites, 
                         m, m, m+1, nmon, nmon, i, j, Ai, Asqsq,
-                        aCC, aCC1_4, g34, ex, ey, ez, phi1, 
+                        aCC, aCC1_4, g34, &ex, &ey, &ez, &phi1, 
                         phi.data() + fi_sites, Efq.data() + fi_crd);
               phi[fi_sites + inmon + m] += phi1;
               Efq[fi_crd + inmon3 + m] += ex; 
@@ -139,10 +164,11 @@ namespace elec {
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              elec_field.DoEfqWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.CalcPermanentElecFieldWithPolfacZero(
+                        xyz.data() + fi_crd, xyz.data() + fi_crd,
                         chg.data() + fi_sites, chg.data() + fi_sites,
                         m, m, m+1, nmon, nmon, i, j,
-                        ex, ey, ez, phi1,
+                        &ex, &ey, &ez, &phi1,
                         phi.data() + fi_sites, Efq.data() + fi_crd);
               phi[fi_sites + inmon + m] += phi1;
               Efq[fi_crd + inmon3 + m] += ex;
@@ -158,6 +184,10 @@ namespace elec {
       fi_sites += nmon * ns;
       fi_crd += nmon * ns * 3;
     }
+
+#   ifdef TIMING
+    auto t4 = std::chrono::high_resolution_clock::now();
+#   endif
 
     // Sites corresponding to different monomers
     // Declaring first indexes
@@ -204,10 +234,11 @@ namespace elec {
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                elec_field.DoEfqWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.CalcPermanentElecFieldWithPolfacNonZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsq,
-                        aCC, aCC1_4, g34, ex, ey, ez, phi1, 
+                        aCC, aCC1_4, g34, &ex, &ey, &ez, &phi1, 
                         phi.data() + fi_sites2, Efq.data() + fi_crd2);
                 phi[fi_sites1 + inmon1 + m1] += phi1;
                 Efq[fi_crd1 + inmon13 + m1] += ex;       
@@ -217,10 +248,11 @@ namespace elec {
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                elec_field.DoEfqWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.CalcPermanentElecFieldWithPolfacZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j,
-                        ex, ey, ez, phi1,
+                        &ex, &ey, &ez, &phi1,
                         phi.data() + fi_sites2, Efq.data() + fi_crd2);
                 phi[fi_sites1 + inmon1 + m1] += phi1;
                 Efq[fi_crd1 + inmon13 + m1] += ex;
@@ -241,6 +273,10 @@ namespace elec {
       fi_crd1 += nmon1 * ns1 * 3;
     }
 
+#   ifdef TIMING
+    auto t5 = std::chrono::high_resolution_clock::now();
+#   endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -250,7 +286,19 @@ namespace elec {
     double eps = 1.0E+50;
     std::vector<double> mu_old(3*nsites,0.0);
     size_t iter = 0;
+
+#   ifdef TIMING
+    std::vector<std::chrono::milliseconds> dipole_iteration_time_intra;
+    std::vector<std::chrono::milliseconds> dipole_iteration_time_inter;
+    std::vector<std::chrono::milliseconds> dipole_calculation;
+#   endif
+
     while (true) {   
+
+#     ifdef TIMING
+      auto t6 = std::chrono::high_resolution_clock::now();
+#     endif
+
       // TODO Need to decide how we define eps
       double max_eps = 0.0;
       //  Get new dipoles and check max difference
@@ -309,6 +357,12 @@ namespace elec {
         fi_crd += nmon*ns*3;
       }   
 
+#     ifdef TIMING
+      auto t7 = std::chrono::high_resolution_clock::now();
+      dipole_calculation.push_back
+        (std::chrono::duration_cast<std::chrono::milliseconds>(t7 - t6));
+#     endif
+
       // Check if convergence achieved
       if (max_eps < tolerance) 
         break;
@@ -336,8 +390,15 @@ namespace elec {
       fi_mon = 0;
       fi_sites = 0;
       fi_crd = 0;
+
+#     ifdef TIMING
+      auto t8 = std::chrono::high_resolution_clock::now();
+#     endif
+
       for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
         size_t ns = sites[fi_mon];
+//        TODO: Check why this makes shit fail
+//        if (ns == 1) continue;
         size_t nmon = mon_type_count[mt].second;
         size_t nmon2 = 2*nmon;
         // Get excluded pairs for this monomer
@@ -356,19 +417,22 @@ namespace elec {
               A = std::pow(A, 1.0/6.0);
               double Asqsq = A*A*A*A;
               for (size_t m = 0; m < nmon; m++) {
-                elec_field.DoEfdWA(xyz.data() + fi_crd, xyz.data() + fi_crd, 
+                // TODO. Slowest function
+                elec_field.CalcDipoleElecFieldWithPolfacNonZero(
+                          xyz.data() + fi_crd, xyz.data() + fi_crd, 
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
                           nmon, nmon, i, j, Asqsq,
-                          aDD, Efd.data() + fi_crd, ex, ey, ez);
+                          aDD, Efd.data() + fi_crd, &ex, &ey, &ez);
                 Efd[fi_crd + inmon3 + m] += ex;
                 Efd[fi_crd + inmon3 + nmon + m] += ey;
                 Efd[fi_crd + inmon3 + nmon2 + m] += ez;
               }
             } else {
               for (size_t m = 0; m < nmon; m++) {
-                elec_field.DoEfdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+                elec_field.CalcDipoleElecFieldWithPolfacZero(
+                          xyz.data() + fi_crd, xyz.data() + fi_crd,
                           mu.data() + fi_crd, mu.data() + fi_crd, m, m, m + 1,
-                          nmon, nmon, i, j, Efd.data() + fi_crd, ex, ey, ez);
+                          nmon, nmon, i, j, Efd.data() + fi_crd, &ex, &ey, &ez);
                 Efd[fi_crd + inmon3 + m] += ex;
                 Efd[fi_crd + inmon3 + nmon + m] += ey;
                 Efd[fi_crd + inmon3 + nmon2 + m] += ez;
@@ -381,6 +445,10 @@ namespace elec {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
       }
+
+#     ifdef TIMING
+      auto t9 = std::chrono::high_resolution_clock::now();
+#     endif
 
       fi_mon1 = 0;
       fi_sites1 = 0;
@@ -403,35 +471,81 @@ namespace elec {
           double same = false;
           if (mt1 == mt2) same = true;
           // TODO add neighbour list here
-          for (size_t i = 0; i < ns1; i++) {
-            size_t inmon13 = 3 * nmon1 * i;
-            for (size_t j = 0; j < ns2; j++) {
-              double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
-              if (A > constants::EPS) {
-                A = std::pow(A,1.0/6.0);
-                double Asqsq = A*A*A*A;
-                for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  size_t m2init = same ? m1 + 1 : 0;
-                  elec_field.DoEfdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
-                        mu.data() + fi_crd1, mu.data() + fi_crd2, m1, m2init, nmon2,
+          // Prepare for parallelization
+#         ifdef _OPENMP
+#           pragma omp parallel // omp_get_num_threads() needs to be inside 
+                                // parallel region to get number of threads
+            { 
+              if (omp_get_thread_num() == 0)
+                nthreads = omp_get_num_threads();
+            }
+#         endif
+          std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+          std::vector<std::vector<double>> Efd_1_pool;
+          std::vector<std::vector<double>> Efd_2_pool;
+          for (size_t i = 0; i < nthreads; i++) { 
+             field_pool.push_back(
+               std::make_shared<ElectricFieldHolder>(maxnmon));
+             Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+             Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+          }
+
+          // Parallel loop
+#         ifdef _OPENMP
+#           pragma omp parallel for schedule(dynamic)
+#         endif
+          for (size_t m1 = 0; m1 < nmon1; m1++) {
+            int rank = 0;
+#           ifdef _OPENMP
+              rank = omp_get_thread_num();
+#           endif
+            std::shared_ptr<ElectricFieldHolder> local_field 
+              = field_pool[rank];
+            size_t m2init = same ? m1 + 1 : 0;
+            double ex_thread = 0.0;
+            double ey_thread = 0.0;
+            double ez_thread = 0.0;
+            for (size_t i = 0; i < ns1; i++) {
+              size_t inmon13 = 3 * nmon1 * i;
+              for (size_t j = 0; j < ns2; j++) {
+                double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
+                if (A > constants::EPS) {
+                  A = std::pow(A,1.0/6.0);
+                  double Asqsq = A*A*A*A;
+                  local_field->CalcDipoleElecFieldWithPolfacNonZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                        mu.data() + fi_crd1, mu.data() + fi_crd2, 
+                        m1, m2init, nmon2,
                         nmon1, nmon2, i, j, Asqsq,
-                        aDD, Efd.data() + fi_crd2, ex, ey, ez);
-                  Efd[fi_crd1 + inmon13 + m1] += ex;
-                  Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                  Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                }
-              } else {
-                for (size_t m1 = 0; m1 < nmon1; m1++) {
-                  size_t m2init = same ? m1 + 1 : 0;
-                  elec_field.DoEfdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                        aDD, Efd_2_pool[rank].data(), 
+                        &ex_thread, &ey_thread, &ez_thread);
+                  Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                  Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                  Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                } else {
+                  local_field->CalcDipoleElecFieldWithPolfacZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2, 
                         m1, m2init, nmon2, nmon1, nmon2, 
-                        i, j, Efd.data() + fi_crd2, ex, ey, ez);
-                  Efd[fi_crd1 + inmon13 + m1] += ex;
-                  Efd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                  Efd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
+                        i, j, Efd_2_pool[rank].data(), 
+                        &ex_thread, &ey_thread, &ez_thread);
+                  Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                  Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                  Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
                 }
               }
+            }
+          }
+          
+          // Compress data in Efd
+          for (size_t rank = 0; rank < nthreads; rank++) {
+            size_t kend1 = Efd_1_pool[rank].size();
+            size_t kend2 = Efd_2_pool[rank].size();
+            for (size_t k = 0; k < kend1; k++) {
+              Efd[fi_crd1 + k] += Efd_1_pool[rank][k];
+            }
+            for (size_t k = 0; k < kend2; k++) {
+              Efd[fi_crd2 + k] += Efd_2_pool[rank][k];
             }
           }
           // Update first indexes
@@ -444,7 +558,31 @@ namespace elec {
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
       }
+
+#     ifdef TIMING
+      auto t10 = std::chrono::high_resolution_clock::now();
+      dipole_iteration_time_intra.push_back
+        (std::chrono::duration_cast<std::chrono::milliseconds>(t9 - t8));
+      dipole_iteration_time_inter.push_back
+        (std::chrono::duration_cast<std::chrono::milliseconds>(t10 - t9));
+#     endif
+
     }
+
+#   ifdef TIMING
+    std::chrono::milliseconds dp(0);
+    std::chrono::milliseconds intra(0);
+    std::chrono::milliseconds inter(0);
+    for (size_t i = 0; i < dipole_calculation.size(); i++)
+      dp += dipole_calculation[i];
+    for (size_t i = 0; i < dipole_iteration_time_intra.size(); i++)
+      intra += dipole_iteration_time_intra[i];
+    for (size_t i = 0; i < dipole_iteration_time_inter.size(); i++)
+      inter += dipole_iteration_time_inter[i];
+    double dp_d = (double)dp.count() / dipole_calculation.size();
+    double intra_d = (double)intra.count() / dipole_iteration_time_intra.size();
+    double inter_d = (double)inter.count() / dipole_iteration_time_inter.size();
+#   endif
 
     // Dipoles are computed. Now we need the electrostatic energy.
     // Permanent electrostatics
@@ -459,12 +597,20 @@ namespace elec {
       Eind -= mu[i] * Efq[i];
     Eind *= 0.5;
 
+#   ifdef PRINT_TERMS
+    std::cerr << "E_ind = " << Eind << "   E_elec = " << Eqq << std::endl;
+#   endif
+
     // If no gradients, nothing else to do
     if (!do_grads) return Eqq + Eind;
   
 ////////////////////////////////////////////////////////////////////////////////
 // GRADIENTS ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+#   ifdef TIMING
+    auto t11 = std::chrono::high_resolution_clock::now();
+#   endif
 
     // Chg-Chg interactions
     fi_mon = 0;
@@ -523,11 +669,12 @@ namespace elec {
             A = std::pow(A, 1.0/6.0);
             double Asqsq = A*A*A*A;
             for (size_t m = 0; m < nmon; m++) {
-              elec_field.DoGrdWA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.CalcElecFieldGradsWithPolfacNonZero(
+                        xyz.data() + fi_crd, xyz.data() + fi_crd,
                         zeros.data(), zeros.data(),
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, aDD, aCD, Asqsq,
-                        ex, ey, ez, phi1, phi_mod,
+                        &ex, &ey, &ez, &phi1, phi_mod,
                         grd.data() + fi_crd);
               grd[fi_crd + inmon3 + m] += ex;
               grd[fi_crd + inmon3 + nmon + m] += ey;
@@ -535,11 +682,12 @@ namespace elec {
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
-              elec_field.DoGrdWoA(xyz.data() + fi_crd, xyz.data() + fi_crd,
+              elec_field.CalcElecFieldGradsWithPolfacZero(
+                        xyz.data() + fi_crd, xyz.data() + fi_crd,
                         zeros.data(), zeros.data(),
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, 
-                        ex, ey, ez, phi1, phi_mod,
+                        &ex, &ey, &ez, &phi1, phi_mod,
                         grd.data() + fi_crd);
               grd[fi_crd + inmon3 + m] += ex;
               grd[fi_crd + inmon3 + nmon + m] += ey;
@@ -585,12 +733,13 @@ namespace elec {
               double Asqsq = A*A*A*A;
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                elec_field.DoGrdWA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.CalcElecFieldGradsWithPolfacNonZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
                         aDD, aCD, Asqsq,
-                        ex, ey, ez, phi1, phi.data() + fi_sites2,
+                        &ex, &ey, &ez, &phi1, phi.data() + fi_sites2,
                         grd.data() + fi_crd2);
                 grd[fi_crd1 + inmon13 + m1] += ex;
                 grd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
@@ -600,11 +749,12 @@ namespace elec {
             } else {
               for (size_t m1 = 0; m1 < nmon1; m1++) {
                 size_t m2init = same ? m1 + 1 : 0;
-                elec_field.DoGrdWoA(xyz.data() + fi_crd1, xyz.data() + fi_crd2,
+                elec_field.CalcElecFieldGradsWithPolfacZero(
+                        xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
-                        ex, ey, ez, phi1, phi.data() + fi_sites2,
+                        &ex, &ey, &ez, &phi1, phi.data() + fi_sites2,
                         grd.data() + fi_crd2);
                 grd[fi_crd1 + inmon13 + m1] += ex;
                 grd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
@@ -624,6 +774,10 @@ namespace elec {
       fi_sites1 += nmon1 * ns1;
       fi_crd1 += nmon1 * ns1 * 3;
     }
+
+#   ifdef TIMING
+    auto t12 = std::chrono::high_resolution_clock::now();
+#   endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // REVERT DATA ORGANIZATION ////////////////////////////////////////////////////
@@ -685,6 +839,10 @@ namespace elec {
     mu = tmp4;
     Efd = tmp3;
 
+#   ifdef TIMING
+    auto t13 = std::chrono::high_resolution_clock::now();
+#   endif
+
 ////////////////////////////////////////////////////////////////////////////////
 // REDISTRIBUTION OF THE GRADIENTS AND GRADIENTS DUE TO SITE-DEPENDENT CHARGES /
 ////////////////////////////////////////////////////////////////////////////////
@@ -708,6 +866,39 @@ namespace elec {
       fi_sites += nmon * ns;
       fi_crd += nmon * ns * 3;
     }
+
+#   ifdef TIMING
+    auto t14 = std::chrono::high_resolution_clock::now();
+    
+    // Outputting timings
+    std::cerr << "Electrostatics::setup " << 
+      std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::intra_monomer_permanent_elecField " << 
+      std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::inter_monomer_permanent_elecField " << 
+      std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::Induced_dipole_calculation "
+      << dp_d << " milliseconds / cycle over " 
+      << dipole_calculation.size() << " cycles\n";
+    std::cerr << "Electrostatics::Induced_dipole_intra_dipole_field "
+      << intra_d << " milliseconds / cycle over " 
+      << dipole_iteration_time_intra.size() << " cycles\n";
+    std::cerr << "Electrostatics::Induced_dipole_inter_dipole_field "
+      << inter_d << " milliseconds / cycle over " 
+      << dipole_iteration_time_inter.size() << " cycles\n";
+    std::cerr << "Electrostatics::gradients "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::data_reorganization "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t13 - t12).count()
+      << " milliseconds\n";
+    std::cerr << "Electrostatics::virtual_sites_grad_redistribution "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t14 - t13).count()
+      << " milliseconds\n";
+#   endif
 
     return Eqq + Eind;
     

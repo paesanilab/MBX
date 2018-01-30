@@ -46,11 +46,11 @@ namespace elec {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Field {
+class ElectricFieldHolder {
  public:
-  Field() {maxnmon = 0;}
-  Field(size_t n);
-  ~Field() {}
+  ElectricFieldHolder() {maxnmon = 0;}
+  ElectricFieldHolder(size_t n);
+  ~ElectricFieldHolder() {}
 
 ////////////////////////////////////////////////////////////////////////////////
 // PERMANENT ELECTRIC FIELD ////////////////////////////////////////////////////
@@ -59,7 +59,7 @@ class Field {
   // Computes the electric field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-  void DoEfqWA(
+  void CalcPermanentElecFieldWithPolfacNonZero(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * chg1, double * chg2,     // Charges of mon type 1 and 2
     size_t mon1_index,                // Mon 1 index
@@ -71,10 +71,10 @@ class Field {
     double Asqsq,                     // (polfac[i] * polfac[j])^4
     double aCC, double aCC1_4,        // Thole damping aCC and aCC^(0.25)
     double g34,                       // Gamma ln function. Is a constant.
-    double &Efqx_mon1,                // Output electric field on X for Mon 1
-    double &Efqy_mon1,                // Output electric field on Y for Mon 1
-    double &Efqz_mon1,                // Output electric field on Z for Mon 1
-    double &phi1,                     // Output potential for mon 1
+    double *Efqx_mon1,                // Output electric field on X for Mon 1
+    double *Efqy_mon1,                // Output electric field on Y for Mon 1
+    double *Efqz_mon1,                // Output electric field on Z for Mon 1
+    double *phi1,                     // Output potential for mon 1
     double * phi2,                    // Potential on Mon 2
     double * Efq2);                   // Electric field on Mon 2
 
@@ -83,15 +83,15 @@ class Field {
   // Computes the electric field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] = 0
 
-  void DoEfqWoA(
+  void CalcPermanentElecFieldWithPolfacZero(
     double * xyz1, double * xyz2,
     double * chg1, double * chg2,
     size_t mon1_index,
     size_t mon2_index_start, size_t mon2_index_end,
     size_t nmon1, size_t nmon2,
     size_t site_i, size_t site_j,
-    double &Efqx_mon1, double &Efqy_mon1,
-    double &Efqz_mon1, double &phi1,
+    double *Efqx_mon1, double *Efqy_mon1,
+    double *Efqz_mon1, double *phi1,
     double * phi2,
     double * Efq2);
 
@@ -102,7 +102,7 @@ class Field {
   // Computes the dipole field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-  void DoEfdWA(
+  void CalcDipoleElecFieldWithPolfacNonZero(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * mu1, double * mu2,       // Dipoles of mon type 1 and 2
     size_t mon1_index,                // Mon 1 index
@@ -113,23 +113,23 @@ class Field {
     double Asqsq,                     // (polfac[i] * polfac[j])^4
     double aDD,                       // Thole damping aDD (dipole - dipole)
     double * Efd2,                    // Electric field on Mon 2
-    double &Efdx_mon1,                // Output electric field on X for Mon 1
-    double &Efdy_mon1,                // Output electric field on Y for Mon 1
-    double &Efdz_mon1);               // Output electric field on Z for Mon 1
+    double *Efdx_mon1,                // Output electric field on X for Mon 1
+    double *Efdy_mon1,                // Output electric field on Y for Mon 1
+    double *Efdz_mon1);               // Output electric field on Z for Mon 1
 
 ////////////////////////////////////////////////////////////////////////////////
 
   // Computes the dipole field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] = 0
 
-  void DoEfdWoA(
+  void CalcDipoleElecFieldWithPolfacZero(
     double * xyz1, double * xyz2,
     double * mu1, double * mu2,
     size_t mon1_index,
     size_t mon2_index_start, size_t mon2_index_end,
     size_t nmon1, size_t nmon2,
     size_t site_i, size_t site_j, double * Efd2,
-    double &Efdx_mon1, double &Efdy_mon1, double &Efdz_mon1);
+    double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1);
 
 ////////////////////////////////////////////////////////////////////////////////
 // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////
@@ -140,7 +140,7 @@ class Field {
   // for a number of monomers # = mon2_index_end - mon2_index_start when
   // A=polfac[i] * polfac[j] > 0
 
-  void DoGrdWA(
+  void CalcElecFieldGradsWithPolfacNonZero(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * chg1, double * chg2,     // Charges of mon type 1 and 2
     double * mu1, double * mu2,       // Dipoles of mon type 1 and 2
@@ -151,10 +151,10 @@ class Field {
     size_t site_i, size_t site_j,     // Site # i of mon1 and # j of mon 2
     double aDD, double aCD,           // Thole damping aCC and aDD
     double Asqsq,                     // (polfac[i] * polfac[j])^4
-    double &grdx,                     // Output gradient of site i of mon1 in X
-    double &grdy,                     // Output gradient of site i of mon1 in Y
-    double &grdz,                     // Output gradient of site i of mon1 in Z
-    double &phi1,                     // Output field on site i of mon1
+    double *grdx,                     // Output gradient of site i of mon1 in X
+    double *grdy,                     // Output gradient of site i of mon1 in Y
+    double *grdz,                     // Output gradient of site i of mon1 in Z
+    double *phi1,                     // Output field on site i of mon1
     double * phi2,                    // Field on site j of mon2
     double * grd2);                   // Gradient on site j of mon2
 
@@ -165,7 +165,7 @@ class Field {
   // for a number of monomers # = mon2_index_end - mon2_index_start when
   // A=polfac[i] * polfac[j] = 0
 
-  void DoGrdWoA(
+  void CalcElecFieldGradsWithPolfacZero(
     double * xyz1, double * xyz2,
     double * chg1, double * chg2,
     double * mu1, double * mu2,
@@ -173,8 +173,8 @@ class Field {
     size_t mon2_index_start, size_t mon2_index_end,
     size_t nmon1, size_t nmon2,
     size_t site_i, size_t site_j,
-    double &grdx, double &grdy, double &grdz,
-    double &phi1, double * phi2,
+    double *grdx, double *grdy, double *grdz,
+    double *phi1, double * phi2,
     double * grd2);
 
 ////////////////////////////////////////////////////////////////////////////////
