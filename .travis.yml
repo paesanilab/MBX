@@ -21,7 +21,7 @@ matrix:
         - lcov
     env:
       - CXX_COMPILER='clang++-3.6'
-      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
+#      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
       - C_COMPILER='clang-3.6'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
@@ -40,7 +40,7 @@ matrix:
         - lcov
     env:
       - CXX_COMPILER='clang++-3.7'
-      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
+#      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
       - C_COMPILER='clang-3.7'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
@@ -135,11 +135,11 @@ script:
 notifications:
   email: false
 
-after_success:
-    # Creating report
-  - cd ${TRAVIS_BUILD_DIR}
-  - lcov --directory . --capture --output-file coverage.info # capture coverage info
-  - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-  - lcov --list coverage.info #debug info
-  # Uploading report to CodeCov
-  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+#after_success:
+#    # Creating report
+#  - cd ${TRAVIS_BUILD_DIR}
+#  - lcov --directory . --capture --output-file coverage.info # capture coverage info
+#  - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+#  - lcov --list coverage.info #debug info
+#  # Uploading report to CodeCov
+#  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
