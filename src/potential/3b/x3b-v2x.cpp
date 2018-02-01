@@ -1,5 +1,5 @@
 #include "potential/3b/x3b-v2x.h"
-#include <iostream>
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1365,7 +1365,6 @@ double x3b_v2x::eval(const double* w1,
 
   for (size_t i = 0; i < trimers_todo.size(); i++) {
     energy[trimers_todo[i]] = e3b[i];
-std::cerr << "e3b[" << i << "] = " << e3b[i] << std::endl;
   }
 
   double e = 0.0;
@@ -1496,7 +1495,6 @@ double x3b_v2x::eval(const double* w1,
 
   for (size_t i = 0; i < trimers_todo.size(); i++) {
     energy[trimers_todo[i]] = e3b[i];
-std::cerr << "e3b(g)[" << i << "] = " << e3b[i] << std::endl;
   }
 
   double e = 0.0;
