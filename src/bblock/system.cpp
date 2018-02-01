@@ -53,11 +53,12 @@ void System::Initialize() {
   if (initialized_) return;
 
   cutoff2b_ = 100.0;
-  cutoff3b_ =  5.0;
+  cutoff3b_ =  10.0;
   diptol_ = 1E-16;
   maxNMonEval_ = 1024;
-  maxNDimEval_ = 1024;
-  maxNTriEval_ = 1024;
+  maxNDimEval_ = 1;
+  maxNTriEval_ = 1;
+//  maxNTriEval_ = 1024;
   maxItDip_ = 100;
   
   AddMonomerInfo();
@@ -323,7 +324,8 @@ double System::Get2B(bool do_grads) {
         grd2.clear();
         m1 = monomers_[dimers_[i]];
         m2 = monomers_[dimers_[i + 1]];
-        if (i != dimers_.size() - 2) i-=2;
+// TODO problem if NMaxDimEval = 1
+//        if (i != dimers_.size() - 2) i-=2;
       }
       i+=2;
     } 
@@ -339,13 +341,13 @@ double System::Get2B(bool do_grads) {
 
 double System::Get3B(bool do_grads) {
   // 3B ENERGY
-  double e3b = 0;
+  double e3b = 0.0;
   // trimers are ordered
   // TODO put this in chunk so can be vectorized
   // TODO Maybe initialize here all possible trimer structs?
   size_t istart = 0;
   size_t iend = 0;
-  size_t step = 1024;
+  size_t step = 1;
 
   while (istart < nmon_) {
 //    if (nmon_ < maxNTriEval_) {
@@ -362,29 +364,82 @@ double System::Get3B(bool do_grads) {
       continue;
     }
 
-    for (size_t i = 0; i < trimers_.size(); i+=3) {
-      if (monomers_[trimers_[i]] == "h2o" and
-          monomers_[trimers_[i + 1]] == "h2o" and
-          monomers_[trimers_[i + 2]] == "h2o") {
-        x2o::x3b_v2x pot;
+    std::vector<double> xyz1;
+    std::vector<double> xyz2;
+    std::vector<double> xyz3;
+    std::vector<double> grd1;
+    std::vector<double> grd2;
+    std::vector<double> grd3;
+    std::string m1 = monomers_[trimers_[0]];
+    std::string m2 = monomers_[trimers_[1]];
+    std::string m3 = monomers_[trimers_[2]];
+
+    size_t i = 0;
+    size_t nt = 0;
+
+    while (i < trimers_.size()) {
+      if (monomers_[trimers_[i]] == m1 &&
+          monomers_[trimers_[i + 1]] == m2 && 
+          monomers_[trimers_[i + 2]] == m3)  {
+         // Push the coordinates
+        for (size_t j = 0; j < 3*nat_[trimers_[i]]; j++) {
+          xyz1.push_back(xyz_[3*first_index_[trimers_[i]] + j]);
+          grd1.push_back(0.0);
+        }
+        for (size_t j = 0; j < 3*nat_[trimers_[i + 1]]; j++) {
+          xyz2.push_back(xyz_[3*first_index_[trimers_[i + 1]] + j]);
+          grd2.push_back(0.0);
+        }
+        for (size_t j = 0; j < 3*nat_[trimers_[i + 2]]; j++) {
+          xyz3.push_back(xyz_[3*first_index_[trimers_[i + 2]] + j]);
+          grd3.push_back(0.0);
+        }
+        nt++;
+      }
+
+      // If one of the monomers is different as the previous one
+      // since trimers are also ordered, means that no more trimers of that
+      // type exist. Thus, do calculation, update m? and clear xyz
+      if (monomers_[trimers_[i]] != m1 ||
+          monomers_[trimers_[i + 1]] != m2 ||
+          monomers_[trimers_[i + 2]] != m3 ||
+          i == trimers_.size() - 3 || nt == maxNTriEval_) {
         if (do_grads) {
-          double grdx[27];
-          std::fill(grdx, grdx + 27, 0.0);
-          e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
-                          xyz_.data() + 3*first_index_[trimers_[i + 1]],
-                          xyz_.data() + 3*first_index_[trimers_[i + 2]],
-                          grdx, grdx + 9, grdx + 18);
-          for (size_t j = 0; j < 9; j++) {
-            grd_[3*first_index_[trimers_[i]] + j] += grdx[j];
-            grd_[3*first_index_[trimers_[i + 1]] + j] += grdx[j + 9];
-            grd_[3*first_index_[trimers_[i + 2]] + j] += grdx[j + 18];
+          // POLYNOMIALS
+          e3b += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grd1, grd2, grd3);
+
+          for (size_t k = 0; k < nt ; k++) {
+            for (size_t j = 0; j < 3*nat_[trimers_[i - 3*k]]; j++) {
+              grd_[3*first_index_[trimers_[i - 3*k]] + j]
+                  += grd1[(nt - k - 1)*3*nat_[trimers_[i - 3*k]] + j];
+            }
+            for (size_t j = 0; j < 3*nat_[trimers_[i - 3*k + 1]]; j++) {
+              grd_[3*first_index_[trimers_[i - 3*k + 1]] + j]
+                  += grd2[(nt - k - 1)*3*nat_[trimers_[i - 3*k + 1]] + j];
+            }
+            for (size_t j = 0; j < 3*nat_[trimers_[i - 3*k + 2]]; j++) {
+              grd_[3*first_index_[trimers_[i - 3*k + 2]] + j]
+                  += grd3[(nt - k - 1)*3*nat_[trimers_[i - 3*k + 2]] + j];
+            }
           }
         } else {
-          e3b += pot.eval(xyz_.data() + 3*first_index_[trimers_[i]],
-                          xyz_.data() + 3*first_index_[trimers_[i + 1]],
-                          xyz_.data() + 3*first_index_[trimers_[i + 2]]);
+          // POLYNOMIALS
+          e3b += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
         }
+        nt = 0;
+        xyz1.clear();
+        xyz2.clear();
+        xyz3.clear();
+        grd1.clear();
+        grd2.clear();
+        grd3.clear();
+        m1 = monomers_[trimers_[i]];
+        m2 = monomers_[trimers_[i + 1]];
+        m3 = monomers_[trimers_[i + 2]];
+// TODO Problem here when NMaxTriEval = 1
+        //if (i + 3 == trimers_.size()) break;
       }
+      i+=3;
     }
     istart = iend;
   }
