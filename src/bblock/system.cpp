@@ -56,8 +56,8 @@ void System::Initialize() {
   cutoff3b_ =  10.0;
   diptol_ = 1E-16;
   maxNMonEval_ = 1024;
-  maxNDimEval_ = 1;
-  maxNTriEval_ = 1;
+  maxNDimEval_ = 1024;
+  maxNTriEval_ = 1024;
 //  maxNTriEval_ = 1024;
   maxItDip_ = 100;
   
@@ -293,6 +293,16 @@ double System::Get2B(bool do_grads) {
       if (monomers_[dimers_[i]] != m1 ||
           monomers_[dimers_[i + 1]] != m2 ||
           i == dimers_.size() - 2 || nd == maxNDimEval_) {
+        if (nd == 0) {
+          xyz1.clear();
+          xyz2.clear();
+          grd1.clear();
+          grd2.clear();
+          m1 = monomers_[dimers_[i]];
+          m2 = monomers_[dimers_[i + 1]];
+          continue;
+        }
+
         if (do_grads) {
           // POLYNOMIALS
           e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
@@ -324,8 +334,6 @@ double System::Get2B(bool do_grads) {
         grd2.clear();
         m1 = monomers_[dimers_[i]];
         m2 = monomers_[dimers_[i + 1]];
-// TODO problem if NMaxDimEval = 1
-//        if (i != dimers_.size() - 2) i-=2;
       }
       i+=2;
     } 
@@ -333,7 +341,7 @@ double System::Get2B(bool do_grads) {
   }
 
 # ifdef DEBUG
-  std::cout << "disp = " << edisp << "    2b = " << e2b << std::endl;
+  std::cerr << "disp = " << edisp << "    2b = " << e2b << std::endl;
 # endif
 
   return e2b + edisp;
@@ -350,12 +358,7 @@ double System::Get3B(bool do_grads) {
   size_t step = 1;
 
   while (istart < nmon_) {
-//    if (nmon_ < maxNTriEval_) {
-//      iend = nmon_;
-//    } else {
-//      // TODO the step is arbitrary. Set to one for now
-      iend = std::min(istart + step, nmon_);
-//    }
+    iend = std::min(istart + step, nmon_);
 
     // Adding corresponding clusters      
     AddClusters(3,cutoff3b_,istart,iend);
@@ -364,12 +367,12 @@ double System::Get3B(bool do_grads) {
       continue;
     }
 
-    std::vector<double> xyz1;
-    std::vector<double> xyz2;
-    std::vector<double> xyz3;
-    std::vector<double> grd1;
-    std::vector<double> grd2;
-    std::vector<double> grd3;
+    std::vector<double> coord1;
+    std::vector<double> coord2;
+    std::vector<double> coord3;
+    //std::vector<double> grd1;
+    //std::vector<double> grd2;
+    //std::vector<double> grd3;
     std::string m1 = monomers_[trimers_[0]];
     std::string m2 = monomers_[trimers_[1]];
     std::string m3 = monomers_[trimers_[2]];
@@ -383,16 +386,13 @@ double System::Get3B(bool do_grads) {
           monomers_[trimers_[i + 2]] == m3)  {
          // Push the coordinates
         for (size_t j = 0; j < 3*nat_[trimers_[i]]; j++) {
-          xyz1.push_back(xyz_[3*first_index_[trimers_[i]] + j]);
-          grd1.push_back(0.0);
+          coord1.push_back(xyz_[3*first_index_[trimers_[i]] + j]);
         }
         for (size_t j = 0; j < 3*nat_[trimers_[i + 1]]; j++) {
-          xyz2.push_back(xyz_[3*first_index_[trimers_[i + 1]] + j]);
-          grd2.push_back(0.0);
+          coord2.push_back(xyz_[3*first_index_[trimers_[i + 1]] + j]);
         }
         for (size_t j = 0; j < 3*nat_[trimers_[i + 2]]; j++) {
-          xyz3.push_back(xyz_[3*first_index_[trimers_[i + 2]] + j]);
-          grd3.push_back(0.0);
+          coord3.push_back(xyz_[3*first_index_[trimers_[i + 2]] + j]);
         }
         nt++;
       }
@@ -404,7 +404,32 @@ double System::Get3B(bool do_grads) {
           monomers_[trimers_[i + 1]] != m2 ||
           monomers_[trimers_[i + 2]] != m3 ||
           i == trimers_.size() - 3 || nt == maxNTriEval_) {
+        if (nt == 0) {
+//          i+=3;
+          coord1.clear();
+          coord2.clear();
+          coord3.clear();
+          //grd1.clear();
+          //grd2.clear();
+          //grd3.clear();
+          m1 = monomers_[trimers_[i]];
+          m2 = monomers_[trimers_[i + 1]];
+          m3 = monomers_[trimers_[i + 2]];
+          continue;
+        }
+
+        std::vector<double> xyz1(coord1.size(),0.0);
+        std::vector<double> xyz2(coord2.size(),0.0);
+        std::vector<double> xyz3(coord3.size(),0.0);
+        std::copy(coord1.begin(),coord1.end(),xyz1.begin());
+        std::copy(coord2.begin(),coord2.end(),xyz2.begin());
+        std::copy(coord3.begin(),coord3.end(),xyz3.begin());
+
         if (do_grads) {
+          // POLYNOMIALS
+          std::vector<double> grd1(coord1.size(),0.0);
+          std::vector<double> grd2(coord2.size(),0.0);
+          std::vector<double> grd3(coord3.size(),0.0);
           // POLYNOMIALS
           e3b += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grd1, grd2, grd3);
 
@@ -427,17 +452,15 @@ double System::Get3B(bool do_grads) {
           e3b += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
         }
         nt = 0;
-        xyz1.clear();
-        xyz2.clear();
-        xyz3.clear();
-        grd1.clear();
-        grd2.clear();
-        grd3.clear();
+        coord1.clear();
+        coord2.clear();
+        coord3.clear();
+        //grd1.clear();
+        //grd2.clear();
+        //grd3.clear();
         m1 = monomers_[trimers_[i]];
         m2 = monomers_[trimers_[i + 1]];
         m3 = monomers_[trimers_[i + 2]];
-// TODO Problem here when NMaxTriEval = 1
-        //if (i + 3 == trimers_.size()) break;
       }
       i+=3;
     }
