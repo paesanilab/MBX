@@ -64,6 +64,8 @@ class System {
   void Initialize();
   void AddMonomerInfo();
   void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
+  std::vector<size_t> AddClustersParallel(size_t n_max, double cutoff,
+                                          size_t istart, size_t iend);
   void SetCharges();
   void SetPols();
   void SetPolfacs();

@@ -134,6 +134,19 @@ void System::AddClusters(size_t n_max, double cutoff,
   
 }
 
+std::vector<size_t> System::AddClustersParallel(size_t n_max, double cutoff,
+                         size_t istart, size_t iend) {
+  // Overloaded function to be compatible with omp
+  // Returns dimers if n_max == 2, or trimers if n_max == 3
+  size_t nmon = monomers_.size();
+  std::vector<size_t> dimers, trimers;
+  systools::AddClusters(n_max, cutoff, istart, iend, nmon, xyz_,
+                        first_index_, dimers, trimers);
+  if (n_max == 2)
+    return dimers;
+  return trimers;
+}
+
 double System::Energy(std::vector<double> &grd, bool do_grads) {
   // Reset energy and grads in system to 0
   energy_ = 0.0;
@@ -349,20 +362,50 @@ double System::Get2B(bool do_grads) {
 
 double System::Get3B(bool do_grads) {
   // 3B ENERGY
-  double e3b = 0.0;
+  double e3b_t = 0.0;
+
+  // Variables needed for OMP
+  size_t step = 1;
+  int num_threads = 1;
+  int thread_step = nmon_;
+  
+# ifdef _OPENMP
+# pragma omp parallel
+{
+  if (omp_get_thread_num() == 0)
+    num_threads = omp_get_num_threads();
+}
+  thread_step = nmon_ / num_threads;
+# endif // _OPENMP
+
   // trimers are ordered
-  // TODO put this in chunk so can be vectorized
-  // TODO Maybe initialize here all possible trimer structs?
   size_t istart = 0;
   size_t iend = 0;
-  size_t step = 1;
+  size_t last_mon = nmon_;
 
-  while (istart < nmon_) {
-    iend = std::min(istart + step, nmon_);
+# ifdef _OPENMP
+# pragma omp parallel private(istart,iend,last_mon)
+{
+  double e3b = 0.0;
+  istart = 0 + omp_get_thread_num() * thread_step;
+  last_mon = (omp_get_thread_num() + 1) * thread_step;
+  if (omp_get_thread_num() == num_threads - 1)
+    last_mon = nmon_;
+# endif // _OPENMP
+
+  while (istart < last_mon) {
+    iend = std::min(istart + step, last_mon);
 
     // Adding corresponding clusters      
+#   ifdef _OPENMP
+    std::vector<size_t> trimers = 
+                       AddClustersParallel(3,cutoff3b_,istart,iend);
+#   else 
     AddClusters(3,cutoff3b_,istart,iend);
-    if (trimers_.size() < 3) {
+    std::vector<size_t> trimers = trimers_;
+#   endif
+
+    if (trimers.size() < 3) {
       istart = iend;
       continue;
     }
@@ -373,26 +416,26 @@ double System::Get3B(bool do_grads) {
     //std::vector<double> grd1;
     //std::vector<double> grd2;
     //std::vector<double> grd3;
-    std::string m1 = monomers_[trimers_[0]];
-    std::string m2 = monomers_[trimers_[1]];
-    std::string m3 = monomers_[trimers_[2]];
+    std::string m1 = monomers_[trimers[0]];
+    std::string m2 = monomers_[trimers[1]];
+    std::string m3 = monomers_[trimers[2]];
 
     size_t i = 0;
     size_t nt = 0;
 
-    while (i < trimers_.size()) {
-      if (monomers_[trimers_[i]] == m1 &&
-          monomers_[trimers_[i + 1]] == m2 && 
-          monomers_[trimers_[i + 2]] == m3)  {
+    while (i < trimers.size()) {
+      if (monomers_[trimers[i]] == m1 &&
+          monomers_[trimers[i + 1]] == m2 && 
+          monomers_[trimers[i + 2]] == m3)  {
          // Push the coordinates
-        for (size_t j = 0; j < 3*nat_[trimers_[i]]; j++) {
-          coord1.push_back(xyz_[3*first_index_[trimers_[i]] + j]);
+        for (size_t j = 0; j < 3*nat_[trimers[i]]; j++) {
+          coord1.push_back(xyz_[3*first_index_[trimers[i]] + j]);
         }
-        for (size_t j = 0; j < 3*nat_[trimers_[i + 1]]; j++) {
-          coord2.push_back(xyz_[3*first_index_[trimers_[i + 1]] + j]);
+        for (size_t j = 0; j < 3*nat_[trimers[i + 1]]; j++) {
+          coord2.push_back(xyz_[3*first_index_[trimers[i + 1]] + j]);
         }
-        for (size_t j = 0; j < 3*nat_[trimers_[i + 2]]; j++) {
-          coord3.push_back(xyz_[3*first_index_[trimers_[i + 2]] + j]);
+        for (size_t j = 0; j < 3*nat_[trimers[i + 2]]; j++) {
+          coord3.push_back(xyz_[3*first_index_[trimers[i + 2]] + j]);
         }
         nt++;
       }
@@ -400,10 +443,10 @@ double System::Get3B(bool do_grads) {
       // If one of the monomers is different as the previous one
       // since trimers are also ordered, means that no more trimers of that
       // type exist. Thus, do calculation, update m? and clear xyz
-      if (monomers_[trimers_[i]] != m1 ||
-          monomers_[trimers_[i + 1]] != m2 ||
-          monomers_[trimers_[i + 2]] != m3 ||
-          i == trimers_.size() - 3 || nt == maxNTriEval_) {
+      if (monomers_[trimers[i]] != m1 ||
+          monomers_[trimers[i + 1]] != m2 ||
+          monomers_[trimers[i + 2]] != m3 ||
+          i == trimers.size() - 3 || nt == maxNTriEval_) {
         if (nt == 0) {
 //          i+=3;
           coord1.clear();
@@ -412,9 +455,9 @@ double System::Get3B(bool do_grads) {
           //grd1.clear();
           //grd2.clear();
           //grd3.clear();
-          m1 = monomers_[trimers_[i]];
-          m2 = monomers_[trimers_[i + 1]];
-          m3 = monomers_[trimers_[i + 2]];
+          m1 = monomers_[trimers[i]];
+          m2 = monomers_[trimers[i + 1]];
+          m3 = monomers_[trimers[i + 2]];
           continue;
         }
 
@@ -434,17 +477,20 @@ double System::Get3B(bool do_grads) {
           e3b += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grd1, grd2, grd3);
 
           for (size_t k = 0; k < nt ; k++) {
-            for (size_t j = 0; j < 3*nat_[trimers_[i - 3*k]]; j++) {
-              grd_[3*first_index_[trimers_[i - 3*k]] + j]
-                  += grd1[(nt - k - 1)*3*nat_[trimers_[i - 3*k]] + j];
+            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k]]; j++) {
+#             pragma omp atomic
+              grd_[3*first_index_[trimers[i - 3*k]] + j]
+                  += grd1[(nt - k - 1)*3*nat_[trimers[i - 3*k]] + j];
             }
-            for (size_t j = 0; j < 3*nat_[trimers_[i - 3*k + 1]]; j++) {
-              grd_[3*first_index_[trimers_[i - 3*k + 1]] + j]
-                  += grd2[(nt - k - 1)*3*nat_[trimers_[i - 3*k + 1]] + j];
+            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 1]]; j++) {
+#             pragma omp atomic
+              grd_[3*first_index_[trimers[i - 3*k + 1]] + j]
+                  += grd2[(nt - k - 1)*3*nat_[trimers[i - 3*k + 1]] + j];
             }
-            for (size_t j = 0; j < 3*nat_[trimers_[i - 3*k + 2]]; j++) {
-              grd_[3*first_index_[trimers_[i - 3*k + 2]] + j]
-                  += grd3[(nt - k - 1)*3*nat_[trimers_[i - 3*k + 2]] + j];
+            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 2]]; j++) {
+#             pragma omp atomic
+              grd_[3*first_index_[trimers[i - 3*k + 2]] + j]
+                  += grd3[(nt - k - 1)*3*nat_[trimers[i - 3*k + 2]] + j];
             }
           }
         } else {
@@ -458,16 +504,24 @@ double System::Get3B(bool do_grads) {
         //grd1.clear();
         //grd2.clear();
         //grd3.clear();
-        m1 = monomers_[trimers_[i]];
-        m2 = monomers_[trimers_[i + 1]];
-        m3 = monomers_[trimers_[i + 2]];
+        m1 = monomers_[trimers[i]];
+        m2 = monomers_[trimers[i + 1]];
+        m3 = monomers_[trimers[i + 2]];
       }
       i+=3;
     }
     istart = iend;
   }
 
-  return e3b;
+# ifdef _OPENMP
+# pragma omp atomic
+  e3b_t += e3b;
+} // parallel   
+# else
+  e3b_t += e3b;
+# endif
+
+  return e3b_t;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
