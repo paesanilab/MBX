@@ -382,11 +382,11 @@ double System::Get3B(bool do_grads) {
   size_t istart = 0;
   size_t iend = 0;
   size_t last_mon = nmon_;
+  double e3b_thd = 0.0;
 
 # ifdef _OPENMP
-# pragma omp parallel private(istart,iend,last_mon)
+# pragma omp parallel private(istart,iend,last_mon,e3b_thd)
 {
-  double e3b = 0.0;
   istart = 0 + omp_get_thread_num() * thread_step;
   last_mon = (omp_get_thread_num() + 1) * thread_step;
   if (omp_get_thread_num() == num_threads - 1)
@@ -474,7 +474,7 @@ double System::Get3B(bool do_grads) {
           std::vector<double> grd2(coord2.size(),0.0);
           std::vector<double> grd3(coord3.size(),0.0);
           // POLYNOMIALS
-          e3b += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grd1, grd2, grd3);
+          e3b_thd += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grd1, grd2, grd3);
 
           for (size_t k = 0; k < nt ; k++) {
             for (size_t j = 0; j < 3*nat_[trimers[i - 3*k]]; j++) {
@@ -495,7 +495,7 @@ double System::Get3B(bool do_grads) {
           }
         } else {
           // POLYNOMIALS
-          e3b += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+          e3b_thd += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
         }
         nt = 0;
         coord1.clear();
@@ -515,10 +515,10 @@ double System::Get3B(bool do_grads) {
 
 # ifdef _OPENMP
 # pragma omp atomic
-  e3b_t += e3b;
+  e3b_t += e3b_thd;
 } // parallel   
 # else
-  e3b_t += e3b;
+  e3b_t += e3b_thd;
 # endif
 
   return e3b_t;
