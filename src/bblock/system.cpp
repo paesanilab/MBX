@@ -212,16 +212,16 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
 # ifdef TIMING
   std::cerr << "System::1b(grad=" << do_grads << ") "
     << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
-    << "milliseconds\n";
+    << " milliseconds\n";
   std::cerr << "System::2b(grad=" << do_grads << ") "
     << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count()
-    << "milliseconds\n";
+    << " milliseconds\n";
   std::cerr << "System::3b(grad=" << do_grads << ") "
     << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count()
-    << "milliseconds\n";
+    << " milliseconds\n";
   std::cerr << "System::electrostatics(grad=" << do_grads << ") "
     << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5).count()
-    << "milliseconds\n";
+    << " milliseconds\n";
 # endif
 
   // Copy gradients to output grd
