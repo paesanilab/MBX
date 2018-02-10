@@ -1,7 +1,7 @@
 #include "system.h"
 
 //#define DEBUG
-#define TIMING
+//#define TIMING
 
 #ifdef TIMING
 #  include <chrono>
@@ -412,7 +412,7 @@ double System::Get3B(bool do_grads) {
   double e3b_t = 0.0;
 
   // Variables needed for OMP
-  size_t step = 1;
+  size_t step = 10;
   int num_threads = 1;
   int thread_step = nmon_;
   
@@ -429,19 +429,23 @@ double System::Get3B(bool do_grads) {
   size_t istart = 0;
   size_t iend = 0;
   size_t last_mon = nmon_;
-  double e3b_thd = 0.0;
+  int rank = 0;
+  std::vector<double> e3b_pool(num_threads,0.0);
+  std::vector<std::vector<double>> grad_pool(num_threads,std::vector<double>(3*nsites_,0.0));
 
 # ifdef _OPENMP
-# pragma omp parallel private(istart,iend,last_mon,e3b_thd)
+# pragma omp parallel private(istart,iend,last_mon,rank)
 {
-  istart = 0 + omp_get_thread_num() * thread_step;
-  last_mon = (omp_get_thread_num() + 1) * thread_step;
-  if (omp_get_thread_num() == num_threads - 1)
+  rank = omp_get_thread_num();
+  istart = 0 + rank * thread_step;
+  last_mon = (rank + 1) * thread_step;
+  if (rank == num_threads - 1)
     last_mon = nmon_;
 # endif // _OPENMP
 
   while (istart < last_mon) {
     iend = std::min(istart + step, last_mon);
+//    std::cerr << "Start = " << istart << "  End = " << iend << std::endl;
 
     // Adding corresponding clusters      
 #   ifdef _OPENMP
@@ -460,17 +464,18 @@ double System::Get3B(bool do_grads) {
     std::vector<double> coord1;
     std::vector<double> coord2;
     std::vector<double> coord3;
-    //std::vector<double> grd1;
-    //std::vector<double> grd2;
-    //std::vector<double> grd3;
     std::string m1 = monomers_[trimers[0]];
     std::string m2 = monomers_[trimers[1]];
     std::string m3 = monomers_[trimers[2]];
 
     size_t i = 0;
     size_t nt = 0;
+    size_t nt_tot = 0;
 
-    while (i < trimers.size()) {
+//    while (i < trimers.size()) {
+    while (3*nt_tot < trimers.size()) {
+//    std::cerr << "Checking trimer: " << trimers[i] << " " <<trimers[i+1] << " " <<trimers[i+2] << " " << std::endl;
+      i = (nt_tot + nt) * 3;
       if (monomers_[trimers[i]] == m1 &&
           monomers_[trimers[i + 1]] == m2 && 
           monomers_[trimers[i + 2]] == m3)  {
@@ -485,6 +490,7 @@ double System::Get3B(bool do_grads) {
           coord3.push_back(xyz_[3*first_index_[trimers[i + 2]] + j]);
         }
         nt++;
+//        std::cerr << "Adding trimer: " << trimers[i] << " " <<trimers[i+1] << " " <<trimers[i+2] << " " << std::endl;
       }
 
       // If one of the monomers is different as the previous one
@@ -499,9 +505,6 @@ double System::Get3B(bool do_grads) {
           coord1.clear();
           coord2.clear();
           coord3.clear();
-          //grd1.clear();
-          //grd2.clear();
-          //grd3.clear();
           m1 = monomers_[trimers[i]];
           m2 = monomers_[trimers[i + 1]];
           m3 = monomers_[trimers[i + 2]];
@@ -521,52 +524,63 @@ double System::Get3B(bool do_grads) {
           std::vector<double> grd2(coord2.size(),0.0);
           std::vector<double> grd3(coord3.size(),0.0);
           // POLYNOMIALS
-          e3b_thd += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grd1, grd2, grd3);
+          e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grd1, grd2, grd3);
 
+          size_t i0 = nt_tot * 3;
           for (size_t k = 0; k < nt ; k++) {
-            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k]]; j++) {
-#             pragma omp atomic
-              grd_[3*first_index_[trimers[i - 3*k]] + j]
-                  += grd1[(nt - k - 1)*3*nat_[trimers[i - 3*k]] + j];
+//            std::cerr << "Grads for trimer: " << trimers[i0 + 3*k] << " " <<trimers[i0 + 3*k +1] << " " <<trimers[i0 + 3*k + 2] << " " << std::endl;
+//            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k]]; j++) {
+//              grad_pool[rank][3*first_index_[trimers[i - 3*k]] + j]
+//                  += grd1[(nt - k - 1)*3*nat_[trimers[i - 3*k]] + j];
+//            }
+//            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 1]]; j++) {
+//              grad_pool[rank][3*first_index_[trimers[i - 3*k + 1]] + j]
+//                  += grd2[(nt - k - 1)*3*nat_[trimers[i - 3*k + 1]] + j];
+//            }
+//            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 2]]; j++) {
+//              grad_pool[rank][3*first_index_[trimers[i - 3*k + 2]] + j]
+//                  += grd3[(nt - k - 1)*3*nat_[trimers[i - 3*k + 2]] + j];
+//            }
+            for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k]]; j++) {
+              grad_pool[rank][3*first_index_[trimers[i0 + 3*k]] + j]
+                  += grd1[k*3*nat_[trimers[i0 + 3*k]] + j];
             }
-            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 1]]; j++) {
-#             pragma omp atomic
-              grd_[3*first_index_[trimers[i - 3*k + 1]] + j]
-                  += grd2[(nt - k - 1)*3*nat_[trimers[i - 3*k + 1]] + j];
+            for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k + 1]]; j++) {
+              grad_pool[rank][3*first_index_[trimers[i0 + 3*k + 1]] + j]
+                  += grd2[k*3*nat_[trimers[i0 + 3*k + 1]] + j];
             }
-            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 2]]; j++) {
-#             pragma omp atomic
-              grd_[3*first_index_[trimers[i - 3*k + 2]] + j]
-                  += grd3[(nt - k - 1)*3*nat_[trimers[i - 3*k + 2]] + j];
+            for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k + 2]]; j++) {
+              grad_pool[rank][3*first_index_[trimers[i0 + 3*k + 2]] + j]
+                  += grd3[k*3*nat_[trimers[i0 + 3*k + 2]] + j];
             }
           }
         } else {
           // POLYNOMIALS
-          e3b_thd += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+          e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
         }
+        nt_tot += nt;
         nt = 0;
         coord1.clear();
         coord2.clear();
         coord3.clear();
-        //grd1.clear();
-        //grd2.clear();
-        //grd3.clear();
         m1 = monomers_[trimers[i]];
         m2 = monomers_[trimers[i + 1]];
         m3 = monomers_[trimers[i + 2]];
       }
-      i+=3;
+//      i+=3;
     }
     istart = iend;
   }
 
 # ifdef _OPENMP
-# pragma omp atomic
-  e3b_t += e3b_thd;
 } // parallel   
-# else
-  e3b_t += e3b_thd;
 # endif
+  for (size_t i = 0; i < num_threads; i++) {
+    e3b_t += e3b_pool[i];
+    for (size_t j = 0; j < 3*nsites_; j++) {
+      grd_[j] += grad_pool[i][j];
+    }
+  }
 
   return e3b_t;
 }
