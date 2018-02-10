@@ -1,6 +1,12 @@
 #include "system.h"
 
 //#define DEBUG
+#define TIMING
+
+#ifdef TIMING
+#  include <chrono>
+#  include <iostream>
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -153,9 +159,28 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   std::fill(grd_.begin(), grd_.end(), 0.0);
 
   // Get the NB contributions
+
+# ifdef TIMING
+  auto t1 = std::chrono::high_resolution_clock::now();
+# endif
+
   double e1b = Get1B(do_grads);
+
+# ifdef TIMING
+  auto t2 = std::chrono::high_resolution_clock::now();
+# endif
+
   double e2b = Get2B(do_grads);
+
+# ifdef TIMING
+  auto t3 = std::chrono::high_resolution_clock::now();
+# endif
+
   double e3b = Get3B(do_grads);
+
+# ifdef TIMING
+  auto t4 = std::chrono::high_resolution_clock::now();
+# endif
 
   // Set charges, polarizabilities and polfacs
   // Note: Pols and Polfacs are constant
@@ -164,8 +189,16 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
   SetPols();
   SetPolfacs();
 
+# ifdef TIMING
+  auto t5 = std::chrono::high_resolution_clock::now();
+# endif
+
   // Electrostatic energy
   double Eelec = GetElectrostatics(do_grads);
+
+# ifdef TIMING
+  auto t6 = std::chrono::high_resolution_clock::now();
+# endif
 
   // Set up energy with the new value
   energy_ = e1b + e2b + e3b + Eelec;
@@ -175,6 +208,20 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
             << "2B = " << e2b << std::endl
             << "3B = " << e3b << std::endl
             << "Elec = " << Eelec << std::endl;
+# endif
+# ifdef TIMING
+  std::cerr << "System::1b(grad=" << do_grads << ") "
+    << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+    << "milliseconds\n";
+  std::cerr << "System::2b(grad=" << do_grads << ") "
+    << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count()
+    << "milliseconds\n";
+  std::cerr << "System::3b(grad=" << do_grads << ") "
+    << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count()
+    << "milliseconds\n";
+  std::cerr << "System::electrostatics(grad=" << do_grads << ") "
+    << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5).count()
+    << "milliseconds\n";
 # endif
 
   // Copy gradients to output grd
