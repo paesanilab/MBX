@@ -119,7 +119,7 @@ void System::AddMonomerInfo() {
   nat_ = tmpnats;
 
   // Setting Gradients to 0
-  grd_ = std::vector<double> (3*nsites_, 0.0);
+  grad_ = std::vector<double> (3*nsites_, 0.0);
   chg_ = std::vector<double> (nsites_, 0.0);
   pol_ = std::vector<double> (nsites_, 0.0);
   polfac_ = std::vector<double> (nsites_, 0.0);
@@ -153,10 +153,10 @@ std::vector<size_t> System::AddClustersParallel(size_t n_max, double cutoff,
   return trimers;
 }
 
-double System::Energy(std::vector<double> &grd, bool do_grads) {
+double System::Energy(std::vector<double> &grad, bool do_grads) {
   // Reset energy and grads in system to 0
   energy_ = 0.0;
-  std::fill(grd_.begin(), grd_.end(), 0.0);
+  std::fill(grad_.begin(), grad_.end(), 0.0);
 
   // Get the NB contributions
 
@@ -224,9 +224,9 @@ double System::Energy(std::vector<double> &grd, bool do_grads) {
     << " milliseconds\n";
 # endif
 
-  // Copy gradients to output grd
-  grd.clear();
-  grd = grd_;
+  // Copy gradients to output grad
+  grad.clear();
+  grad = grad_;
 
   return energy_;
 }
@@ -260,12 +260,12 @@ double System::Get1B(bool do_grads) {
                   xyz.begin() + 3 * (i - istart) * nat_[cmt]);
       }
 
-      double grd2[ncoord];
-      std::fill(grd2, grd2 + ncoord, 0.0);
+      double grad2[ncoord];
+      std::fill(grad2, grad2 + ncoord, 0.0);
       // Get energy of the chunk as function of monomer
       if (mon_type_count_[k].first == "h2o") {
         if (do_grads)  {
-          energy = ps::pot_nasa(xyz.data(), grd2, length);
+          energy = ps::pot_nasa(xyz.data(), grad2, length);
         } else {
           energy = ps::pot_nasa(xyz.data(), 0, length);
         }
@@ -279,8 +279,8 @@ double System::Get1B(bool do_grads) {
         if (do_grads) {
           // Reorganize gradients
           for (size_t j = 0; j < 3*nat_[cmt]; j++) {
-            grd_[ccrd + 3*(i + istart)*sites_[cmt] + j] 
-                += grd2[3*i*nat_[cmt] + j];
+            grad_[ccrd + 3*(i + istart)*sites_[cmt] + j] 
+                += grad2[3*i*nat_[cmt] + j];
           }
         }
       }
@@ -355,8 +355,8 @@ double System::Get2B(bool do_grads) {
 
     std::vector<double> xyz1;
     std::vector<double> xyz2;
-    std::vector<double> grd1;
-    std::vector<double> grd2;
+    std::vector<double> grad1;
+    std::vector<double> grad2;
     std::string m1 = monomers_[dimers[0]];
     std::string m2 = monomers_[dimers[1]];
 
@@ -371,11 +371,11 @@ double System::Get2B(bool do_grads) {
         // Push the coordinates
         for (size_t j = 0; j < 3*nat_[dimers[i]]; j++) {
           xyz1.push_back(xyz_[3*first_index_[dimers[i]] + j]);
-          grd1.push_back(0.0);
+          grad1.push_back(0.0);
         }
         for (size_t j = 0; j < 3*nat_[dimers[i+1]]; j++) {
           xyz2.push_back(xyz_[3*first_index_[dimers[i+1]] + j]);
-          grd2.push_back(0.0);
+          grad2.push_back(0.0);
         }
         nd++;
       }
@@ -390,8 +390,8 @@ double System::Get2B(bool do_grads) {
         if (nd == 0) {
           xyz1.clear();
           xyz2.clear();
-          grd1.clear();
-          grd2.clear();
+          grad1.clear();
+          grad2.clear();
           m1 = monomers_[dimers[i]];
           m2 = monomers_[dimers[i + 1]];
           continue;
@@ -399,20 +399,20 @@ double System::Get2B(bool do_grads) {
 
         if (do_grads) {
           // POLYNOMIALS
-          e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+          e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
 
           // DISPERSION
           edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
-                                     xyz1, xyz2, grd1, grd2);
+                                     xyz1, xyz2, grad1, grad2);
           size_t i0 = nd_tot * 2;
           for (size_t k = 0; k < nd ; k++) {
             for (size_t j = 0; j < 3*nat_[dimers[i0 + 2*k]]; j++) {
               grad_pool[rank][3*first_index_[dimers[i0 + 2*k]] + j]
-                  += grd1[k*3*nat_[dimers[i0 + 2*k]] + j];
+                  += grad1[k*3*nat_[dimers[i0 + 2*k]] + j];
             }
             for (size_t j = 0; j < 3*nat_[dimers[i0 + 2*k +1]]; j++) {
               grad_pool[rank][3*first_index_[dimers[i0 + 2*k + 1]] + j]
-                  += grd2[k*3*nat_[dimers[i0 + 2*k + 1]] + j];
+                  += grad2[k*3*nat_[dimers[i0 + 2*k + 1]] + j];
             }
           }
         } else {
@@ -420,14 +420,14 @@ double System::Get2B(bool do_grads) {
           e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
           // DISPERSION
           edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
-                                     xyz1, xyz2, grd1, grd2);
+                                     xyz1, xyz2, grad1, grad2);
         }
         nd_tot += nd;
         nd = 0;
         xyz1.clear();
         xyz2.clear();
-        grd1.clear();
-        grd2.clear();
+        grad1.clear();
+        grad2.clear();
         m1 = monomers_[dimers[i]];
         m2 = monomers_[dimers[i + 1]];
       }
@@ -443,7 +443,7 @@ double System::Get2B(bool do_grads) {
     e2b_t += e2b_pool[i];
     edisp_t += edisp_pool[i];
     for (size_t j = 0; j < 3*nsites_; j++) {
-      grd_[j] += grad_pool[i][j];
+      grad_[j] += grad_pool[i][j];
     }
   }
 
@@ -568,38 +568,38 @@ double System::Get3B(bool do_grads) {
 
         if (do_grads) {
           // POLYNOMIALS
-          std::vector<double> grd1(coord1.size(),0.0);
-          std::vector<double> grd2(coord2.size(),0.0);
-          std::vector<double> grd3(coord3.size(),0.0);
+          std::vector<double> grad1(coord1.size(),0.0);
+          std::vector<double> grad2(coord2.size(),0.0);
+          std::vector<double> grad3(coord3.size(),0.0);
           // POLYNOMIALS
-          e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grd1, grd2, grd3);
+          e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3);
 
           size_t i0 = nt_tot * 3;
           for (size_t k = 0; k < nt ; k++) {
 //            std::cerr << "Grads for trimer: " << trimers[i0 + 3*k] << " " <<trimers[i0 + 3*k +1] << " " <<trimers[i0 + 3*k + 2] << " " << std::endl;
 //            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k]]; j++) {
 //              grad_pool[rank][3*first_index_[trimers[i - 3*k]] + j]
-//                  += grd1[(nt - k - 1)*3*nat_[trimers[i - 3*k]] + j];
+//                  += grad1[(nt - k - 1)*3*nat_[trimers[i - 3*k]] + j];
 //            }
 //            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 1]]; j++) {
 //              grad_pool[rank][3*first_index_[trimers[i - 3*k + 1]] + j]
-//                  += grd2[(nt - k - 1)*3*nat_[trimers[i - 3*k + 1]] + j];
+//                  += grad2[(nt - k - 1)*3*nat_[trimers[i - 3*k + 1]] + j];
 //            }
 //            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 2]]; j++) {
 //              grad_pool[rank][3*first_index_[trimers[i - 3*k + 2]] + j]
-//                  += grd3[(nt - k - 1)*3*nat_[trimers[i - 3*k + 2]] + j];
+//                  += grad3[(nt - k - 1)*3*nat_[trimers[i - 3*k + 2]] + j];
 //            }
             for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k]]; j++) {
               grad_pool[rank][3*first_index_[trimers[i0 + 3*k]] + j]
-                  += grd1[k*3*nat_[trimers[i0 + 3*k]] + j];
+                  += grad1[k*3*nat_[trimers[i0 + 3*k]] + j];
             }
             for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k + 1]]; j++) {
               grad_pool[rank][3*first_index_[trimers[i0 + 3*k + 1]] + j]
-                  += grd2[k*3*nat_[trimers[i0 + 3*k + 1]] + j];
+                  += grad2[k*3*nat_[trimers[i0 + 3*k + 1]] + j];
             }
             for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k + 2]]; j++) {
               grad_pool[rank][3*first_index_[trimers[i0 + 3*k + 2]] + j]
-                  += grd3[k*3*nat_[trimers[i0 + 3*k + 2]] + j];
+                  += grad3[k*3*nat_[trimers[i0 + 3*k + 2]] + j];
             }
           }
         } else {
@@ -626,7 +626,7 @@ double System::Get3B(bool do_grads) {
   for (size_t i = 0; i < num_threads; i++) {
     e3b_t += e3b_pool[i];
     for (size_t j = 0; j < 3*nsites_; j++) {
-      grd_[j] += grad_pool[i][j];
+      grad_[j] += grad_pool[i][j];
     }
   }
 
@@ -643,7 +643,7 @@ void System::SetCharges() {
     size_t nsites = sites_[fi_mon];
     
     systools::SetCharges(xyz_, chg_, mon, nmon, nsites, 
-                first_index_[fi_mon], chggrd_);
+                first_index_[fi_mon], chggrad_);
     fi_mon += nmon;
   }
 }
@@ -693,9 +693,9 @@ void System::SetVSites() {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-  double elec = elec::Electrostatics(chg_, chggrd_, polfac_, 
+  double elec = elec::Electrostatics(chg_, chggrad_, polfac_, 
                 pol_, xyz_, monomers_, sites_, first_index_, 
-                mon_type_count_, diptol_, maxItDip_, do_grads, grd_);
+                mon_type_count_, diptol_, maxItDip_, do_grads, grad_);
   return elec;
 }
 
