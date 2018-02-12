@@ -300,25 +300,55 @@ double System::Get2B(bool do_grads) {
   // No dimers makes the function return 0.
 
   // 2B ENERGY
-  double e2b = 0;
-  double edisp = 0.0;
+  double e2b_t = 0.0;
+  double edisp_t = 0.0;
 
-  // Vectorizable part
+  // Variables needed for OMP
+  size_t step = 10;
+  int num_threads = 1;
+  int thread_step = nmon_;
+
+# ifdef _OPENMP
+# pragma omp parallel
+{
+  if (omp_get_thread_num() == 0)
+    num_threads = omp_get_num_threads();
+}
+  thread_step = nmon_ / num_threads;
+# endif // _OPENMP
+
+  // dimers are ordered
   size_t istart = 0;
   size_t iend = 0;
-  size_t step = 1;
+  size_t last_mon = nmon_;
+  int rank = 0;
+  std::vector<double> e2b_pool(num_threads,0.0);
+  std::vector<double> edisp_pool(num_threads,0.0);
+  std::vector<std::vector<double>> grad_pool(num_threads,std::vector<double>(3*nsites_,0.0));
 
-  while (istart < nmon_) {
-//    if (nmon_ < maxNDimEval_) {
-//      iend = nmon_;
-//    } else {
-//      // TODO the step is arbitrary. Set to one for now
-      iend = std::min(istart + step, nmon_);
-//    }
+# ifdef _OPENMP
+# pragma omp parallel private(istart,iend,last_mon,rank)
+{
+  rank = omp_get_thread_num();
+  istart = 0 + rank * thread_step;
+  last_mon = (rank + 1) * thread_step;
+  if (rank == num_threads - 1)
+    last_mon = nmon_;
+# endif // _OPENMP
+
+  while (istart < last_mon) {
+    iend = std::min(istart + step, last_mon);    
 
     // Adding corresponding clusters      
+#   ifdef _OPENMP
+    std::vector<size_t> dimers =
+                       AddClustersParallel(2,cutoff2b_,istart,iend);
+#   else
     AddClusters(2,cutoff2b_,istart,iend);
-    if (dimers_.size() < 2) {
+    std::vector<size_t> dimers = dimers_;
+#   endif
+
+    if (dimers.size() < 2) {
       istart = iend;
       continue;
     }
@@ -327,20 +357,24 @@ double System::Get2B(bool do_grads) {
     std::vector<double> xyz2;
     std::vector<double> grd1;
     std::vector<double> grd2;
-    std::string m1 = monomers_[dimers_[0]];
-    std::string m2 = monomers_[dimers_[1]];
+    std::string m1 = monomers_[dimers[0]];
+    std::string m2 = monomers_[dimers[1]];
+
     size_t i = 0;
     size_t nd = 0;
-    while (i < dimers_.size()) {
-      if (monomers_[dimers_[i]] == m1 && 
-          monomers_[dimers_[i + 1]] == m2) {
+    size_t nd_tot = 0;
+
+    while (2*nd_tot < dimers.size()) {
+      i = (nd_tot + nd) * 2;
+      if (monomers_[dimers[i]] == m1 && 
+          monomers_[dimers[i + 1]] == m2) {
         // Push the coordinates
-        for (size_t j = 0; j < 3*nat_[dimers_[i]]; j++) {
-          xyz1.push_back(xyz_[3*first_index_[dimers_[i]] + j]);
+        for (size_t j = 0; j < 3*nat_[dimers[i]]; j++) {
+          xyz1.push_back(xyz_[3*first_index_[dimers[i]] + j]);
           grd1.push_back(0.0);
         }
-        for (size_t j = 0; j < 3*nat_[dimers_[i+1]]; j++) {
-          xyz2.push_back(xyz_[3*first_index_[dimers_[i+1]] + j]);
+        for (size_t j = 0; j < 3*nat_[dimers[i+1]]; j++) {
+          xyz2.push_back(xyz_[3*first_index_[dimers[i+1]] + j]);
           grd2.push_back(0.0);
         }
         nd++;
@@ -350,61 +384,75 @@ double System::Get2B(bool do_grads) {
       // If one of the monomers is different as the previous one
       // since dimers are also ordered, means that no more dimers of that
       // type exist. Thus, do calculation, update m? and clear xyz
-      if (monomers_[dimers_[i]] != m1 ||
-          monomers_[dimers_[i + 1]] != m2 ||
-          i == dimers_.size() - 2 || nd == maxNDimEval_) {
+      if (monomers_[dimers[i]] != m1 ||
+          monomers_[dimers[i + 1]] != m2 ||
+          i == dimers.size() - 2 || nd == maxNDimEval_) {
         if (nd == 0) {
           xyz1.clear();
           xyz2.clear();
           grd1.clear();
           grd2.clear();
-          m1 = monomers_[dimers_[i]];
-          m2 = monomers_[dimers_[i + 1]];
+          m1 = monomers_[dimers[i]];
+          m2 = monomers_[dimers[i + 1]];
           continue;
         }
 
         if (do_grads) {
           // POLYNOMIALS
-          e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
+          e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grd1, grd2);
 
           // DISPERSION
-          edisp += disp::GetDispersion(m1, m2, nd, do_grads,
+          edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
                                      xyz1, xyz2, grd1, grd2);
+          size_t i0 = nd_tot * 2;
           for (size_t k = 0; k < nd ; k++) {
-            for (size_t j = 0; j < 3*nat_[dimers_[i - 2*k]]; j++) {
-              grd_[3*first_index_[dimers_[i - 2*k]] + j]
-                  += grd1[(nd - k - 1)*3*nat_[dimers_[i - 2*k]] + j];
+            for (size_t j = 0; j < 3*nat_[dimers[i0 + 2*k]]; j++) {
+              grad_pool[rank][3*first_index_[dimers[i0 + 2*k]] + j]
+                  += grd1[k*3*nat_[dimers[i0 + 2*k]] + j];
             }
-            for (size_t j = 0; j < 3*nat_[dimers_[i- 2*k +1]]; j++) {
-              grd_[3*first_index_[dimers_[i -2*k + 1]] + j]
-                  += grd2[(nd - k - 1)*3*nat_[dimers_[i - 2*k + 1]] + j];
+            for (size_t j = 0; j < 3*nat_[dimers[i0 + 2*k +1]]; j++) {
+              grad_pool[rank][3*first_index_[dimers[i0 + 2*k + 1]] + j]
+                  += grd2[k*3*nat_[dimers[i0 + 2*k + 1]] + j];
             }
           }
         } else {
           // POLYNOMIALS
-          e2b += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
+          e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
           // DISPERSION
-          edisp += disp::GetDispersion(m1, m2, nd, do_grads,
+          edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
                                      xyz1, xyz2, grd1, grd2);
         }
+        nd_tot += nd;
         nd = 0;
         xyz1.clear();
         xyz2.clear();
         grd1.clear();
         grd2.clear();
-        m1 = monomers_[dimers_[i]];
-        m2 = monomers_[dimers_[i + 1]];
+        m1 = monomers_[dimers[i]];
+        m2 = monomers_[dimers[i + 1]];
       }
-      i+=2;
     } 
     istart = iend;
   }
 
-# ifdef DEBUG
-  std::cerr << "disp = " << edisp << "    2b = " << e2b << std::endl;
+# ifdef _OPENMP
+} // parallel   
 # endif
 
-  return e2b + edisp;
+  for (size_t i = 0; i < num_threads; i++) {
+    e2b_t += e2b_pool[i];
+    edisp_t += edisp_pool[i];
+    for (size_t j = 0; j < 3*nsites_; j++) {
+      grd_[j] += grad_pool[i][j];
+    }
+  }
+
+
+# ifdef DEBUG
+  std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
+# endif
+
+  return e2b_t + edisp_t;
 }
 
 double System::Get3B(bool do_grads) {
