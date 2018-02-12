@@ -57,9 +57,9 @@ int main(int argc, char** argv)
 # ifdef PRINT_GRADS
   std::cout << "Energies with gradients:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> grd;
+    std::vector<double> grad;
     
-    double energy = systems[i].Energy(grd, true);
+    double energy = systems[i].Energy(grad, true);
     std::cout << std::setprecision(10) << std::scientific
               << "system["  << std::setfill('.')
               << std::setw(5) << i << "]= " << std::setfill(' ')
@@ -79,9 +79,9 @@ int main(int argc, char** argv)
       if (atn[j] == "virt") continue;
       std::cout << std::setprecision(10) << std::scientific
                 << std::setw(6) << std::left << atn[j]
-                << std::setw(20) << std::right << grd[3*j]
-                << std::setw(20) << std::right << grd[3*j + 1]
-                << std::setw(20) << std::right << grd[3*j + 2]
+                << std::setw(20) << std::right << grad[3*j]
+                << std::setw(20) << std::right << grad[3*j + 1]
+                << std::setw(20) << std::right << grad[3*j + 2]
                 << std::endl;
     }
 #ifdef NUM_GRADS
@@ -114,9 +114,9 @@ int main(int argc, char** argv)
       systems[i].SetSysXyz(xyz);
       std::cout << std::setprecision(4) << std::scientific
                 << std::setw(6) << std::left << atn[j/3]
-                << std::setw(20) << std::right << grd[j]
+                << std::setw(20) << std::right << grad[j]
                 << std::setw(20) << std::right << gfd
-                << std::setw(20) << std::right << std::fabs(grd[j] - gfd)
+                << std::setw(20) << std::right << std::fabs(grad[j] - gfd)
                 << std::endl;
     }  
 # endif
