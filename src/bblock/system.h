@@ -70,6 +70,18 @@ class System {
   void SetPols();
   void SetPolfacs();
   void SetVSites();
+  
+  void Set2bCutoff(double cutoff2b);
+  void Set3bCutoff(double cutoff3b);
+  void SetNMaxEval1b(size_t nmax);
+  void SetNMaxEval2b(size_t nmax);
+  void SetNMaxEval3b(size_t nmax);
+  void SetStepEval2b(size_t step);
+  void SetStepEval3b(size_t step);
+
+  void SetDipoleTol(double tol);
+  void SetDipoleMaxIt(double maxit);
+  
   // Energy Functions
   // Energy computing gradients. The new gradients of ALL sites 
   // are returned in grad. 
@@ -85,10 +97,14 @@ class System {
   size_t maxNMonEval_;                       // Max number of mons to be eval
   size_t maxNDimEval_;                       // Max number of dimers to be eval
   size_t maxNTriEval_;                       // Max number of trimers to be eval
-  size_t maxItDip_;
+  size_t stepEval2b_;                        // Number of monomers i to find all
+                                             // pairs i,j , with j>i
+  size_t stepEval3b_;                        // Number of monomers i to find all
+                                             // trimers i,j,k , with j,k > i
+  size_t maxItDip_;                          // Max number of it in induced dip
+  double diptol_;                            // Tolerance for (mu_i - mu_i+1)^2
   double cutoff2b_;                          // Cutoff for dim and trim search 
   double cutoff3b_;                          // Cutoff for dim and trim search 
-  double diptol_;
   double energy_;                            // Energy of the system
   bool initialized_;                         // Systes is initialized?
   std::vector<size_t> sites_;                // Number of sites of each mo

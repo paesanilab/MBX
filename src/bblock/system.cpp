@@ -34,6 +34,17 @@ std::vector<double> System::GetPolfacs() {return polfac_;}
 
 std::string System::GetMonId(size_t n) {return monomers_[n];}
 
+void System::Set2bCutoff(double cutoff2b) {cutoff2b_ = cutoff2b;} 
+void System::Set3bCutoff(double cutoff3b) {cutoff3b_ = cutoff3b;}
+void System::SetNMaxEval1b(size_t nmax) {maxNMonEval_ = nmax;} 
+void System::SetNMaxEval2b(size_t nmax) {maxNDimEval_ = nmax;}
+void System::SetNMaxEval3b(size_t nmax) {maxNTriEval_ = nmax;}
+void System::SetStepEval2b(size_t step) {stepEval2b_ = step;}
+void System::SetStepEval3b(size_t step) {stepEval3b_ = step;}
+
+void System::SetDipoleTol(double tol) {diptol_ = tol;}
+void System::SetDipoleMaxIt(double maxit) {maxItDip_ = maxit;}
+
 void System::SetSysXyz(std::vector<double> xyz) {
   // TODO Check that sizes are the same
   std::copy(xyz.begin(), xyz.end(), xyz_.begin());
@@ -76,7 +87,7 @@ void System::Initialize() {
   SetPols();
   SetPolfacs();
 
-  // TODO Here should go the order and rearrengement stuff
+  initialized_ = true;
 }
 
 void System::AddMonomerInfo() {
