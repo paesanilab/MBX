@@ -6,7 +6,7 @@ fi
 
 if [ "$1" == "gnu" ]; then
   rm -rf build bin
-  cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
+  cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS=" -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
   cd build
   make --no-print-directory CXX=g++ CC=gcc
   cd ../

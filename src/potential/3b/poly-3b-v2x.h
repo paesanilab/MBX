@@ -1,6 +1,9 @@
 #ifndef POLY_3B_V2X_H
 #define POLY_3B_V2X_H
 
+#include <stdlib.h>
+#include <vector>
+
 namespace x2o {
 
 //
@@ -11,18 +14,14 @@ struct poly_3b_v2x {
     static const unsigned n_vars = 36;
     static const unsigned size = 1163;
 
-    static double eval(const double a[1163],
-                       const double x[36]);
+    static std::vector<double> eval(const size_t nt,
+                       const double * a,
+                       const double * x);
 
-    static double eval(const double a[1163],
-                       const double x[36],
-                             double g[36]);
-
-    static void poly1(const double a[1163],
-                       const double x[36], double t[]);
-
-    static void poly2(const double a[1163],
-                       const double x[36], double t[]);
+    static std::vector<double> eval(const size_t nt,
+                       const double * a,
+                       const double * x,
+                             double * g);
 };
 
 } // namespace x2o

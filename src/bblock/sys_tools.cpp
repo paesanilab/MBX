@@ -532,16 +532,16 @@ void SetPol (std::vector<double> &pol,
 
 // Assuming for now xyzxyzxyz...
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon,
-        const size_t fi_crd, std::vector<double> &grd) {
+        const size_t fi_crd, std::vector<double> &grad) {
 
   if (mon == "h2o") {
     for (size_t i = 0; i < nmon; i++) {
       const size_t shift = fi_crd + i*4*3;
       for (size_t k = 0; k < 3; ++k) {
-        grd[shift + k] += gamma1*grd[shift + 9 + k]; // O
-        grd[shift + 3 + k] += gamma2*grd[shift + 9 + k]; // H
-        grd[shift + 6 + k] += gamma2*grd[shift + 9 + k]; // H
-        grd[shift + 9 + k] = 0.0; // M
+        grad[shift + k] += gamma1*grad[shift + 9 + k]; // O
+        grad[shift + 3 + k] += gamma2*grad[shift + 9 + k]; // H
+        grad[shift + 6 + k] += gamma2*grad[shift + 9 + k]; // H
+        grad[shift + 9 + k] = 0.0; // M
       }
     }
   }
@@ -549,54 +549,54 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon,
 
 void ChargeDerivativeForce(const std::string mon, const size_t nmon,
         const size_t fi_crd, const size_t fi_sites, 
-        const std::vector<double> phi, std::vector<double> &grd,
-        const std::vector<double> chg_grd) {
+        const std::vector<double> phi, std::vector<double> &grad,
+        const std::vector<double> chg_grad) {
   if (mon == "h2o") {
     for (size_t mm = 0; mm < nmon; mm++) {
       const size_t shift = fi_crd + 12*mm;
       const size_t sphi = fi_sites + 4*mm;
-      double grdq[27];
-      std::fill(grdq, grdq + 27, 0.0);
+      double gradq[27];
+      std::fill(gradq, gradq + 27, 0.0);
       double chgdev[27];
-      std::copy(chg_grd.begin() + 27*mm, 
-                chg_grd.begin() + 27*(mm + 1), chgdev);
+      std::copy(chg_grad.begin() + 27*mm, 
+                chg_grad.begin() + 27*(mm + 1), chgdev);
 
       #define DQ3(l,m,k) chgdev[k + 3*(m + 3*l)]
-      #define GRDQ(l,m,k) grdq[k + 3*(m + 3*l)]
+      #define GRADQ(l,m,k) gradq[k + 3*(m + 3*l)]
 
       for (size_t k = 0; k < 3; ++k) {
-          GRDQ(0, 0, k) = DQ3(0, 0, k) + gamma21*(DQ3(0, 0, k) + DQ3(0, 1, k));
-          GRDQ(1, 0, k) = DQ3(1, 0, k) + gamma21*(DQ3(1, 0, k) + DQ3(1, 1, k));
-          GRDQ(2, 0, k) = DQ3(2, 0, k) + gamma21*(DQ3(2, 0, k) + DQ3(2, 1, k));
+          GRADQ(0, 0, k) = DQ3(0, 0, k) + gamma21*(DQ3(0, 0, k) + DQ3(0, 1, k));
+          GRADQ(1, 0, k) = DQ3(1, 0, k) + gamma21*(DQ3(1, 0, k) + DQ3(1, 1, k));
+          GRADQ(2, 0, k) = DQ3(2, 0, k) + gamma21*(DQ3(2, 0, k) + DQ3(2, 1, k));
 
-          GRDQ(0, 1, k) = DQ3(0, 1, k) + gamma21*(DQ3(0, 1, k) + DQ3(0, 0, k));
-          GRDQ(1, 1, k) = DQ3(1, 1, k) + gamma21*(DQ3(1, 1, k) + DQ3(1, 0, k));
-          GRDQ(2, 1, k) = DQ3(2, 1, k) + gamma21*(DQ3(2, 1, k) + DQ3(2, 0, k));
+          GRADQ(0, 1, k) = DQ3(0, 1, k) + gamma21*(DQ3(0, 1, k) + DQ3(0, 0, k));
+          GRADQ(1, 1, k) = DQ3(1, 1, k) + gamma21*(DQ3(1, 1, k) + DQ3(1, 0, k));
+          GRADQ(2, 1, k) = DQ3(2, 1, k) + gamma21*(DQ3(2, 1, k) + DQ3(2, 0, k));
 
-          GRDQ(0, 2, k) = DQ3(0, 2, k) - 2*gamma21*(DQ3(0, 0, k) + DQ3(0, 1, k));
-          GRDQ(1, 2, k) = DQ3(1, 2, k) - 2*gamma21*(DQ3(1, 0, k) + DQ3(1, 1, k));
-          GRDQ(2, 2, k) = DQ3(2, 2, k) - 2*gamma21*(DQ3(2, 0, k) + DQ3(2, 1, k));
+          GRADQ(0, 2, k) = DQ3(0, 2, k) - 2*gamma21*(DQ3(0, 0, k) + DQ3(0, 1, k));
+          GRADQ(1, 2, k) = DQ3(1, 2, k) - 2*gamma21*(DQ3(1, 0, k) + DQ3(1, 1, k));
+          GRADQ(2, 2, k) = DQ3(2, 2, k) - 2*gamma21*(DQ3(2, 0, k) + DQ3(2, 1, k));
       }
 
       for(size_t i = 0; i < 27; ++i)
-          grdq[i] *= constants::CHARGECON;
+          gradq[i] *= constants::CHARGECON;
 
       const size_t io  = shift;
       const size_t ih1 = shift + 3;
       const size_t ih2 = shift + 6;
 
       for (size_t k = 0; k < 3; ++k) {
-          grd[ih1 + k] += GRDQ(0, 0, k)*phi[sphi + 1]  // phi(h1)
-                         + GRDQ(0, 1, k)*phi[sphi + 2]  // phi(h2)
-                         + GRDQ(0, 2, k)*phi[sphi + 3]; // phi(M)
+          grad[ih1 + k] += GRADQ(0, 0, k)*phi[sphi + 1]  // phi(h1)
+                         + GRADQ(0, 1, k)*phi[sphi + 2]  // phi(h2)
+                         + GRADQ(0, 2, k)*phi[sphi + 3]; // phi(M)
 
-          grd[ih2 + k] += GRDQ(1, 0, k)*phi[sphi + 1]  // phi(h1)
-                         + GRDQ(1, 1, k)*phi[sphi + 2]  // phi(h2)
-                         + GRDQ(1, 2, k)*phi[sphi + 3]; // phi(M)
+          grad[ih2 + k] += GRADQ(1, 0, k)*phi[sphi + 1]  // phi(h1)
+                         + GRADQ(1, 1, k)*phi[sphi + 2]  // phi(h2)
+                         + GRADQ(1, 2, k)*phi[sphi + 3]; // phi(M)
 
-          grd[ io + k] += GRDQ(2, 0, k)*phi[sphi + 1]  // phi(h1)
-                         + GRDQ(2, 1, k)*phi[sphi + 2]  // phi(h2)
-                         + GRDQ(2, 2, k)*phi[sphi + 3]; // phi(M)
+          grad[ io + k] += GRADQ(2, 0, k)*phi[sphi + 1]  // phi(h1)
+                         + GRADQ(2, 1, k)*phi[sphi + 2]  // phi(h2)
+                         + GRADQ(2, 2, k)*phi[sphi + 3]; // phi(M)
       }
     }
   }

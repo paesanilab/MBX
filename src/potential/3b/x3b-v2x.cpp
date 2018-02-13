@@ -1,12 +1,5 @@
-#ifdef HAVE_CONFIG_H
-#   include "config.h"
-#endif // HAVE_CONFIG_H
-
-#include <cmath>
-#include <cassert>
-
 #include "potential/3b/x3b-v2x.h"
-#include "potential/3b/poly-3b-v2x.h"
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -1268,19 +1261,60 @@ double x3b_v2x::f_switch(const double& r, double& g)
 
 double x3b_v2x::eval(const double* w1,
                      const double* w2,
-                     const double* w3)
+                     const double* w3, const size_t nt)
 {
-    const double* Oa  = w1;
-    const double* Ha1 = w1 + 3;
-    const double* Ha2 = w1 + 6;
+  std::vector<size_t> trimers_todo;
+  std::vector<double> energy (nt,0.0);
+  double rabsq[nt], racsq[nt], rbcsq[nt];
+  double rab[nt], rac[nt], rbc[nt];
+  double dab[3*nt], dac[3*nt], dbc[3*nt];
 
-    const double* Ob  = w2;
-    const double* Hb1 = w2 + 3;
-    const double* Hb2 = w2 + 6;
+  for (size_t i = 0; i < nt; i++) {
+    for (size_t j = 0; j < 3; j++) {
+      dab[3*i + j] = w1[9*i+j] - w2[9*i+j];
+      dac[3*i + j] = w1[9*i+j] - w3[9*i+j];
+      dbc[3*i + j] = w2[9*i+j] - w3[9*i+j];
+    }
 
-    const double* Oc  = w3;
-    const double* Hc1 = w3 + 3;
-    const double* Hc2 = w3 + 6;
+    rabsq[i] = 0.0;
+    racsq[i] = 0.0;
+    rbcsq[i] = 0.0;
+    for (size_t j = 0; j < 3; j++) {
+      rabsq[i] += dab[3*i + j]*dab[3*i + j];
+      racsq[i] += dac[3*i + j]*dac[3*i + j];
+      rbcsq[i] += dbc[3*i + j]*dbc[3*i + j];
+    }
+      
+    rab[i] = std::sqrt(rabsq[i]);
+    rac[i] = std::sqrt(racsq[i]);
+    rbc[i] = std::sqrt(rbcsq[i]);
+
+    bool skip = (rab[i] > r3f && rac[i] > r3f) || 
+                (rab[i] > r3f && rbc[i] > r3f) ||
+                (rac[i] > r3f && rbc[i] > r3f);
+    if (skip)
+        continue;
+
+    trimers_todo.push_back(i);
+  }
+
+  double vv[36 * trimers_todo.size()];
+  for (size_t i = 0; i < trimers_todo.size(); i++) {
+
+    size_t sh = trimers_todo[i];
+    size_t sh9 = 9 * sh;
+
+    const double* Oa  = w1 + sh9;
+    const double* Ha1 = w1 + sh9 + 3;
+    const double* Ha2 = w1 + sh9 + 6;
+
+    const double* Ob  = w2 + sh9;
+    const double* Hb1 = w2 + sh9 + 3;
+    const double* Hb2 = w2 + sh9 + 6;
+
+    const double* Oc  = w3 + sh9;
+    const double* Hc1 = w3 + sh9 + 3;
+    const double* Hc2 = w3 + sh9 + 6;
 
     double x[36];
 
@@ -1322,35 +1356,31 @@ double x3b_v2x::eval(const double* w1,
     x[34] = var(kOO, dOO,  Oa,  Oc);
     x[35] = var(kOO, dOO,  Ob,  Oc);
 
-    double retval = poly_3b_v2x::eval(thefit, x);
-
-    double rab[3], rac[3], rbc[3];
-    double drab(0), drac(0), drbc(0);
-
-    for (int n = 0; n < 3; ++n) {
-        rab[n] = Oa[n] - Ob[n];
-        drab += rab[n]*rab[n];
-
-        rac[n] = Oa[n] - Oc[n];
-        drac += rac[n]*rac[n];
-
-        rbc[n] = Ob[n] - Oc[n];
-        drbc += rbc[n]*rbc[n];
+    for (size_t j = 0; j < 36; j++) {
+      vv[j*trimers_todo.size() + i] = x[j];
     }
+  }
 
-    drab = std::sqrt(drab);
-    drac = std::sqrt(drac);
-    drbc = std::sqrt(drbc);
+  std::vector<double> e3b = poly_3b_v2x::eval(trimers_todo.size(), thefit, vv);
+
+  for (size_t i = 0; i < trimers_todo.size(); i++) {
+    energy[trimers_todo[i]] = e3b[i];
+  }
+
+  double e = 0.0;
+  for (size_t i = 0; i < nt; i++) {
 
     double gab, gac, gbc;
 
-    const double sab = f_switch(drab, gab);
-    const double sac = f_switch(drac, gac);
-    const double sbc = f_switch(drbc, gbc);
+    const double sab = f_switch(rab[i], gab);
+    const double sac = f_switch(rac[i], gac);
+    const double sbc = f_switch(rbc[i], gbc);
 
     const double s = sab*sac + sab*sbc + sac*sbc;
 
-    return s*retval;
+    e += s*energy[i];
+  }
+  return e;
 }
 
 //----------------------------------------------------------------------------//
@@ -1360,19 +1390,61 @@ double x3b_v2x::eval(const double* w1,
                      const double* w3,
                      double* g1,
                      double* g2,
-                     double* g3)
+                     double* g3, size_t nt)
 {
-    const double* Oa  = w1;
-    const double* Ha1 = w1 + 3;
-    const double* Ha2 = w1 + 6;
+  std::vector<size_t> trimers_todo;
+  std::vector<double> energy (nt,0.0);
+  double rabsq[nt], racsq[nt], rbcsq[nt];
+  double rab[nt], rac[nt], rbc[nt];
+  double dab[3*nt], dac[3*nt], dbc[3*nt];
 
-    const double* Ob  = w2;
-    const double* Hb1 = w2 + 3;
-    const double* Hb2 = w2 + 6;
+  for (size_t i = 0; i < nt; i++) {
+    for (size_t j = 0; j < 3; j++) {
+      dab[3*i + j] = w1[9*i+j] - w2[9*i+j];
+      dac[3*i + j] = w1[9*i+j] - w3[9*i+j];
+      dbc[3*i + j] = w2[9*i+j] - w3[9*i+j];
+    }
 
-    const double* Oc  = w3;
-    const double* Hc1 = w3 + 3;
-    const double* Hc2 = w3 + 6;
+    rabsq[i] = 0.0;
+    racsq[i] = 0.0;
+    rbcsq[i] = 0.0;
+    for (size_t j = 0; j < 3; j++) {
+      rabsq[i] += dab[3*i + j]*dab[3*i + j];
+      racsq[i] += dac[3*i + j]*dac[3*i + j];
+      rbcsq[i] += dbc[3*i + j]*dbc[3*i + j];
+    }
+
+    rab[i] = std::sqrt(rabsq[i]);
+    rac[i] = std::sqrt(racsq[i]);
+    rbc[i] = std::sqrt(rbcsq[i]);
+
+    bool skip = (rab[i] > r3f && rac[i] > r3f) ||
+                (rab[i] > r3f && rbc[i] > r3f) ||
+                (rac[i] > r3f && rbc[i] > r3f);
+    if (skip)
+        continue;
+
+    trimers_todo.push_back(i);
+  }
+
+  double vv[36 * trimers_todo.size()];
+  double gg[36 * trimers_todo.size()];
+  for (size_t i = 0; i < trimers_todo.size(); i++) {
+
+    size_t sh = trimers_todo[i];
+    size_t sh9 = 9 * sh;
+
+    const double* Oa  = w1 + sh9;
+    const double* Ha1 = w1 + sh9 + 3;
+    const double* Ha2 = w1 + sh9 + 6;
+
+    const double* Ob  = w2 + sh9;
+    const double* Hb1 = w2 + sh9 + 3;
+    const double* Hb2 = w2 + sh9 + 6;
+
+    const double* Oc  = w3 + sh9;
+    const double* Hc1 = w3 + sh9 + 3;
+    const double* Hc2 = w3 + sh9 + 6;
 
     double x[36];
 
@@ -1414,103 +1486,112 @@ double x3b_v2x::eval(const double* w1,
     x[34] = var(kOO, dOO,  Oa,  Oc);
     x[35] = var(kOO, dOO,  Ob,  Oc);
 
-    double g[36];
-    double retval = poly_3b_v2x::eval(thefit, x, g);
-
-    double rab[3], rac[3], rbc[3];
-    double drab(0), drac(0), drbc(0);
-
-    for (int n = 0; n < 3; ++n) {
-        rab[n] = Oa[n] - Ob[n];
-        drab += rab[n]*rab[n];
-
-        rac[n] = Oa[n] - Oc[n];
-        drac += rac[n]*rac[n];
-
-        rbc[n] = Ob[n] - Oc[n];
-        drbc += rbc[n]*rbc[n];
+    for (size_t j = 0; j < 36; j++) {
+      vv[j*trimers_todo.size() + i] = x[j];
     }
+  }
 
-    drab = std::sqrt(drab);
-    drac = std::sqrt(drac);
-    drbc = std::sqrt(drbc);
+  std::vector<double> e3b = poly_3b_v2x::eval(trimers_todo.size(), thefit, vv, gg);
+
+  for (size_t i = 0; i < trimers_todo.size(); i++) {
+    energy[trimers_todo[i]] = e3b[i];
+  }
+
+  double e = 0.0;
+  for (size_t i = 0; i < trimers_todo.size(); i++) {
+
+    size_t sh = trimers_todo[i];
+    size_t sh9 = 9 * sh;
 
     double gab, gac, gbc;
 
-    const double sab = f_switch(drab, gab);
-    const double sac = f_switch(drac, gac);
-    const double sbc = f_switch(drbc, gbc);
+    const double sab = f_switch(rab[sh], gab);
+    const double sac = f_switch(rac[sh], gac);
+    const double sbc = f_switch(rbc[sh], gbc);
 
     const double s = sab*sac + sab*sbc + sac*sbc;
 
-    for (int n = 0; n < 36; ++n)
-        g[n] *= s;
 
-    double* gOa  = g1;
-    double* gHa1 = g1 + 3;
-    double* gHa2 = g1 + 6;
-
-    double* gOb  = g2;
-    double* gHb1 = g2 + 3;
-    double* gHb2 = g2 + 6;
-
-    double* gOc  = g3;
-    double* gHc1 = g3 + 3;
-    double* gHc2 = g3 + 6;
-
-    g_var(g[0], kHH_intra, dHH_intra, Ha1, Ha2, gHa1, gHa2);
-    g_var(g[1], kHH_intra, dHH_intra, Hb1, Hb2, gHb1, gHb2);
-    g_var(g[2], kHH_intra, dHH_intra, Hc1, Hc2, gHc1, gHc2);
-    g_var(g[3], kOH_intra, dOH_intra,  Oa, Ha1,  gOa, gHa1);
-    g_var(g[4], kOH_intra, dOH_intra,  Oa, Ha2,  gOa, gHa2);
-    g_var(g[5], kOH_intra, dOH_intra,  Ob, Hb1,  gOb, gHb1);
-    g_var(g[6], kOH_intra, dOH_intra,  Ob, Hb2,  gOb, gHb2);
-    g_var(g[7], kOH_intra, dOH_intra,  Oc, Hc1,  gOc, gHc1);
-    g_var(g[8], kOH_intra, dOH_intra,  Oc, Hc2,  gOc, gHc2);
-
-    g_var(g[9],  kHH, dHH, Ha1, Hb1, gHa1, gHb1);
-    g_var(g[10], kHH, dHH, Ha1, Hb2, gHa1, gHb2);
-    g_var(g[11], kHH, dHH, Ha1, Hc1, gHa1, gHc1);
-    g_var(g[12], kHH, dHH, Ha1, Hc2, gHa1, gHc2);
-    g_var(g[13], kHH, dHH, Ha2, Hb1, gHa2, gHb1);
-    g_var(g[14], kHH, dHH, Ha2, Hb2, gHa2, gHb2);
-    g_var(g[15], kHH, dHH, Ha2, Hc1, gHa2, gHc1);
-    g_var(g[16], kHH, dHH, Ha2, Hc2, gHa2, gHc2);
-    g_var(g[17], kHH, dHH, Hb1, Hc1, gHb1, gHc1);
-    g_var(g[18], kHH, dHH, Hb1, Hc2, gHb1, gHc2);
-    g_var(g[19], kHH, dHH, Hb2, Hc1, gHb2, gHc1);
-    g_var(g[20], kHH, dHH, Hb2, Hc2, gHb2, gHc2);
-    g_var(g[21], kOH, dOH,  Oa, Hb1,  gOa, gHb1);
-    g_var(g[22], kOH, dOH,  Oa, Hb2,  gOa, gHb2);
-    g_var(g[23], kOH, dOH,  Oa, Hc1,  gOa, gHc1);
-    g_var(g[24], kOH, dOH,  Oa, Hc2,  gOa, gHc2);
-    g_var(g[25], kOH, dOH,  Ob, Ha1,  gOb, gHa1);
-    g_var(g[26], kOH, dOH,  Ob, Ha2,  gOb, gHa2);
-    g_var(g[27], kOH, dOH,  Ob, Hc1,  gOb, gHc1);
-    g_var(g[28], kOH, dOH,  Ob, Hc2,  gOb, gHc2);
-    g_var(g[29], kOH, dOH,  Oc, Ha1,  gOc, gHa1);
-    g_var(g[30], kOH, dOH,  Oc, Ha2,  gOc, gHa2);
-    g_var(g[31], kOH, dOH,  Oc, Hb1,  gOc, gHb1);
-    g_var(g[32], kOH, dOH,  Oc, Hb2,  gOc, gHb2);
-    g_var(g[33], kOO, dOO,  Oa,  Ob,  gOa,  gOb);
-    g_var(g[34], kOO, dOO,  Oa,  Oc,  gOa,  gOc);
-    g_var(g[35], kOO, dOO,  Ob,  Oc,  gOb,  gOc);
-
-    // gradients of the switching function
-
-    gab *= (sac + sbc)*retval/drab;
-    gac *= (sab + sbc)*retval/drac;
-    gbc *= (sab + sac)*retval/drbc;
-
-    retval *= s;
-
-    for (int n = 0; n < 3; ++n) {
-        gOa[n] += gab*rab[n] + gac*rac[n];
-        gOb[n] += gbc*rbc[n] - gab*rab[n];
-        gOc[n] -= gac*rac[n] + gbc*rbc[n];
+    for (size_t j = 0; j < 36; j++) {
+      gg[i + j*trimers_todo.size()] *= s;
     }
 
-    return retval;
+    const double* Oa  = w1 + sh9;
+    const double* Ha1 = w1 + sh9 + 3;
+    const double* Ha2 = w1 + sh9 + 6;
+
+    const double* Ob  = w2 + sh9;
+    const double* Hb1 = w2 + sh9 + 3;
+    const double* Hb2 = w2 + sh9 + 6;
+
+    const double* Oc  = w3 + sh9;
+    const double* Hc1 = w3 + sh9 + 3;
+    const double* Hc2 = w3 + sh9 + 6;
+
+    double* gOa  = g1 + sh9;
+    double* gHa1 = g1 + sh9 + 3;
+    double* gHa2 = g1 + sh9 + 6;
+
+    double* gOb  = g2 + sh9;
+    double* gHb1 = g2 + sh9 + 3;
+    double* gHb2 = g2 + sh9 + 6;
+
+    double* gOc  = g3 + sh9;
+    double* gHc1 = g3 + sh9 + 3;
+    double* gHc2 = g3 + sh9 + 6;
+
+    g_var(gg[i+trimers_todo.size()*0], kHH_intra, dHH_intra, Ha1, Ha2, gHa1, gHa2);
+    g_var(gg[i+trimers_todo.size()*1], kHH_intra, dHH_intra, Hb1, Hb2, gHb1, gHb2);
+    g_var(gg[i+trimers_todo.size()*2], kHH_intra, dHH_intra, Hc1, Hc2, gHc1, gHc2);
+    g_var(gg[i+trimers_todo.size()*3], kOH_intra, dOH_intra,  Oa, Ha1,  gOa, gHa1);
+    g_var(gg[i+trimers_todo.size()*4], kOH_intra, dOH_intra,  Oa, Ha2,  gOa, gHa2);
+    g_var(gg[i+trimers_todo.size()*5], kOH_intra, dOH_intra,  Ob, Hb1,  gOb, gHb1);
+    g_var(gg[i+trimers_todo.size()*6], kOH_intra, dOH_intra,  Ob, Hb2,  gOb, gHb2);
+    g_var(gg[i+trimers_todo.size()*7], kOH_intra, dOH_intra,  Oc, Hc1,  gOc, gHc1);
+    g_var(gg[i+trimers_todo.size()*8], kOH_intra, dOH_intra,  Oc, Hc2,  gOc, gHc2);
+
+    g_var(gg[i+trimers_todo.size()*9],  kHH, dHH, Ha1, Hb1, gHa1, gHb1);
+    g_var(gg[i+trimers_todo.size()*10], kHH, dHH, Ha1, Hb2, gHa1, gHb2);
+    g_var(gg[i+trimers_todo.size()*11], kHH, dHH, Ha1, Hc1, gHa1, gHc1);
+    g_var(gg[i+trimers_todo.size()*12], kHH, dHH, Ha1, Hc2, gHa1, gHc2);
+    g_var(gg[i+trimers_todo.size()*13], kHH, dHH, Ha2, Hb1, gHa2, gHb1);
+    g_var(gg[i+trimers_todo.size()*14], kHH, dHH, Ha2, Hb2, gHa2, gHb2);
+    g_var(gg[i+trimers_todo.size()*15], kHH, dHH, Ha2, Hc1, gHa2, gHc1);
+    g_var(gg[i+trimers_todo.size()*16], kHH, dHH, Ha2, Hc2, gHa2, gHc2);
+    g_var(gg[i+trimers_todo.size()*17], kHH, dHH, Hb1, Hc1, gHb1, gHc1);
+    g_var(gg[i+trimers_todo.size()*18], kHH, dHH, Hb1, Hc2, gHb1, gHc2);
+    g_var(gg[i+trimers_todo.size()*19], kHH, dHH, Hb2, Hc1, gHb2, gHc1);
+    g_var(gg[i+trimers_todo.size()*20], kHH, dHH, Hb2, Hc2, gHb2, gHc2);
+    g_var(gg[i+trimers_todo.size()*21], kOH, dOH,  Oa, Hb1,  gOa, gHb1);
+    g_var(gg[i+trimers_todo.size()*22], kOH, dOH,  Oa, Hb2,  gOa, gHb2);
+    g_var(gg[i+trimers_todo.size()*23], kOH, dOH,  Oa, Hc1,  gOa, gHc1);
+    g_var(gg[i+trimers_todo.size()*24], kOH, dOH,  Oa, Hc2,  gOa, gHc2);
+    g_var(gg[i+trimers_todo.size()*25], kOH, dOH,  Ob, Ha1,  gOb, gHa1);
+    g_var(gg[i+trimers_todo.size()*26], kOH, dOH,  Ob, Ha2,  gOb, gHa2);
+    g_var(gg[i+trimers_todo.size()*27], kOH, dOH,  Ob, Hc1,  gOb, gHc1);
+    g_var(gg[i+trimers_todo.size()*28], kOH, dOH,  Ob, Hc2,  gOb, gHc2);
+    g_var(gg[i+trimers_todo.size()*29], kOH, dOH,  Oc, Ha1,  gOc, gHa1);
+    g_var(gg[i+trimers_todo.size()*30], kOH, dOH,  Oc, Ha2,  gOc, gHa2);
+    g_var(gg[i+trimers_todo.size()*31], kOH, dOH,  Oc, Hb1,  gOc, gHb1);
+    g_var(gg[i+trimers_todo.size()*32], kOH, dOH,  Oc, Hb2,  gOc, gHb2);
+    g_var(gg[i+trimers_todo.size()*33], kOO, dOO,  Oa,  Ob,  gOa,  gOb);
+    g_var(gg[i+trimers_todo.size()*34], kOO, dOO,  Oa,  Oc,  gOa,  gOc);
+    g_var(gg[i+trimers_todo.size()*35], kOO, dOO,  Ob,  Oc,  gOb,  gOc);
+
+    
+    gab *= (sac + sbc)*energy[sh]/rab[sh];
+    gac *= (sab + sbc)*energy[sh]/rac[sh];
+    gbc *= (sab + sac)*energy[sh]/rbc[sh];
+
+    e += s*energy[sh];
+
+    for (int n = 0; n < 3; ++n) {
+        gOa[n] += gab*dab[3 * sh + n] + gac*dac[3 * sh + n];
+        gOb[n] += gbc*dbc[3 * sh + n] - gab*dab[3 * sh + n];
+        gOc[n] -= gac*dac[3 * sh + n] + gbc*dbc[3 * sh + n];
+    }
+  }
+  return e;
 }
 
 //----------------------------------------------------------------------------//

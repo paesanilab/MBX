@@ -66,12 +66,12 @@ void SetPol (std::vector<double> &pol,
              std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon,
-        const size_t fi_crd, std::vector<double> &grd);
+        const size_t fi_crd, std::vector<double> &grad);
 
 void ChargeDerivativeForce(const std::string mon, const size_t nmon,
         const size_t fi_crd, const size_t fi_sites,
-        const std::vector<double> phi, std::vector<double> &grd,
-        const std::vector<double> chg_grd); 
+        const std::vector<double> phi, std::vector<double> &grad,
+        const std::vector<double> chg_grad); 
 
 } // systools
 #endif // SYS_TOOLS_H

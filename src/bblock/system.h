@@ -19,9 +19,9 @@
 // 2B
 #include "potential/2b/energy2b.h"
 // 3B
-//#include "potential/3b/energy3b.h"
-#include "potential/3b/x3b-v2x.h"
-#include "potential/3b/poly-3b-v2x.h"
+#include "potential/3b/energy3b.h"
+//#include "potential/3b/x3b-v2x.h"
+//#include "potential/3b/poly-3b-v2x.h"
 // DISPERSION
 #include "potential/dispersion/dispersion2b.h"
 // ELECTROSTATICS
@@ -64,14 +64,16 @@ class System {
   void Initialize();
   void AddMonomerInfo();
   void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
+  std::vector<size_t> AddClustersParallel(size_t n_max, double cutoff,
+                                          size_t istart, size_t iend);
   void SetCharges();
   void SetPols();
   void SetPolfacs();
   void SetVSites();
   // Energy Functions
   // Energy computing gradients. The new gradients of ALL sites 
-  // are returned in grd. 
-  double Energy(std::vector<double> &grd, bool do_grads);
+  // are returned in grad. 
+  double Energy(std::vector<double> &grad, bool do_grads);
   double Get1B(bool do_grads);
   double Get2B(bool do_grads);
   double Get3B(bool do_grads);
@@ -95,8 +97,8 @@ class System {
   std::vector<size_t> first_index_;          // First index of mon in sys
   std::vector<size_t> dimers_;               // Dimers of the molecule
   std::vector<size_t> trimers_;              // Trimers of the molecule
-  std::vector<double> grd_;                  // Gradients of all sites
-  std::vector<double> chggrd_;                  // Gradients of pos dep chg
+  std::vector<double> grad_;                  // Gradients of all sites
+  std::vector<double> chggrad_;                  // Gradients of pos dep chg
   std::vector<double> xyz_;                  // Coords of all sites
   std::vector<double> chg_;                  // Charges of all sites
   std::vector<double> pol_;                  // Polarizabilities of all sites

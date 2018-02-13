@@ -47,23 +47,23 @@ matrix:
       - NAME='clang'
       - VERSION='3.7'
 
-#  - os: linux
-#    compiler: gcc
-#    addons: &3
-#      apt:
-#        sources:
-#        - ubuntu-toolchain-r-test
-#        packages:
-#        - g++-4.9
-#        - gcc-4.9
-#    env:
-#      - CXX_COMPILER='g++-4.9'
-#      - C_COMPILER='gcc-4.9'
-#      - CXX_FLAGS='-Ofast'
-#      - PYTHON_VER='3.5'
-#      - BUILD_TYPE='release'
-#      - NAME='gcc'
-#      - VERSION='4.9'
+  - os: linux
+    compiler: gcc
+    addons: &3
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-4.9
+        - gcc-4.9
+    env:
+      - CXX_COMPILER='g++-4.9'
+      - C_COMPILER='gcc-4.9'
+      - CXX_FLAGS='--coverage -O0'
+      - PYTHON_VER='3.5'
+      - BUILD_TYPE='release'
+      - NAME='gcc'
+      - VERSION='4.9'
 #
 #  - os: linux
 #    compiler: gcc
@@ -104,10 +104,10 @@ install:
   - source activate gg_env
 
     # Install anything not in conda
-#  - pip install codecov
-#  - pip install pytest-cov
-#  - conda list
-#  - export
+  - pip install codecov
+  - pip install pytest-cov
+  - conda list
+  - export
 
 before_script:
 #  - python -V
@@ -135,11 +135,11 @@ script:
 notifications:
   email: false
 
-#after_success:
-#    # Creating report
-#  - cd ${TRAVIS_BUILD_DIR}
-#  - lcov --directory . --capture --output-file coverage.info # capture coverage info
-#  - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-#  - lcov --list coverage.info #debug info
-#  # Uploading report to CodeCov
-#  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+after_success:
+    # Creating report
+  - cd ${TRAVIS_BUILD_DIR}
+  - lcov --directory . --capture --output-file coverage.info # capture coverage info
+  - lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+  - lcov --list coverage.info #debug info
+  # Uploading report to CodeCov
+  - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
