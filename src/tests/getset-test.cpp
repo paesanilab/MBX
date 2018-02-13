@@ -12,9 +12,7 @@
 
 #include "bblock/system.h"
 
-#define REL_TOL 1E-08
-//#define PRINT_GRADS
-//#define NUM_GRADS
+#define REL_TOL 1E-06
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -163,6 +161,17 @@ int main(int argc, char** argv)
   testcase = "Energies (wgrad) with different values for steps and NMaxEval";
   CompareEnergies(energy_grad, e_grad_test, testcase, exit_code);
   
+  // Try a smaller dipole tolerance, increasing the number of iterations
+  testcase = "Gradients with smaller dipole tolerance";
+  for (size_t i = 0; i < systems.size(); i++) {
+    systems[i].SetDipoleTol(1E-18);
+    systems[i].SetDipoleMaxIt(200);
+    e_grad_test[i] = systems[i].Energy(grad, true);
+    CompareGrads(grads[i], grad, testcase, i, exit_code);
+  }
+  testcase = "Energies (wgrad) with maller dipole tolerance";
+  CompareEnergies(energy_grad, e_grad_test, testcase, exit_code);
+
   if (exit_code == 0) {
     std::cout << "All tests passed!\n";
   }
