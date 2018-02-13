@@ -463,6 +463,7 @@ double System::Get3B(bool do_grads) {
   size_t step = 10;
   int num_threads = 1;
   int thread_step = nmon_;
+  int grad_step = 3*nsites_;
   
 # ifdef _OPENMP
 # pragma omp parallel
@@ -471,24 +472,33 @@ double System::Get3B(bool do_grads) {
     num_threads = omp_get_num_threads();
 }
   thread_step = nmon_ / num_threads;
+  grad_step = 3*nsites_ / num_threads;
 # endif // _OPENMP
 
   // trimers are ordered
   size_t istart = 0;
   size_t iend = 0;
   size_t last_mon = nmon_;
+  size_t first_grad = 0;
+  size_t last_grad = 3*nsites_;
   int rank = 0;
   std::vector<double> e3b_pool(num_threads,0.0);
   std::vector<std::vector<double>> grad_pool(num_threads,std::vector<double>(3*nsites_,0.0));
 
 # ifdef _OPENMP
-# pragma omp parallel private(istart,iend,last_mon,rank)
+# pragma omp parallel private(istart,iend,last_mon,first_grad,last_grad,rank)
 {
   rank = omp_get_thread_num();
+
   istart = 0 + rank * thread_step;
+  first_grad = 0 + rank * grad_step;
+
   last_mon = (rank + 1) * thread_step;
-  if (rank == num_threads - 1)
+  last_grad = (rank + 1) * grad_step;
+  if (rank == num_threads - 1) {
     last_mon = nmon_;
+    last_grad = 3*nsites_;
+  }
 # endif // _OPENMP
 
   while (istart < last_mon) {
@@ -621,13 +631,21 @@ double System::Get3B(bool do_grads) {
   }
 
 # ifdef _OPENMP
-} // parallel   
+# pragma omp barrier
 # endif
+
   for (size_t i = 0; i < num_threads; i++) {
-    e3b_t += e3b_pool[i];
-    for (size_t j = 0; j < 3*nsites_; j++) {
+    for (size_t j = first_grad; j < last_grad; j++) {
       grad_[j] += grad_pool[i][j];
     }
+  }
+
+# ifdef _OPENMP
+} // parallel   
+# endif
+
+  for (size_t i = 0; i < num_threads; i++) {
+    e3b_t += e3b_pool[i];
   }
 
   return e3b_t;
