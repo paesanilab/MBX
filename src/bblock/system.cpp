@@ -222,6 +222,9 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   std::cerr << "System::electrostatics(grad=" << do_grads << ") "
     << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5).count()
     << " milliseconds\n";
+  std::cerr << "TotalEnergy(grad=" << do_grads << ") "
+    << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t1).count()
+    << " milliseconds\n";
 # endif
 
   // Copy gradients to output grad
