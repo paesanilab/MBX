@@ -235,8 +235,8 @@ double System::Get1B(bool do_grads) {
 
   // 1B ENERGY
   // Loop overall the monomers and get their energy
-  size_t cmt = 0;
-  size_t ccrd = 0;
+  size_t curr_mon_type = 0;
+  size_t current_coord = 0;
   double e1b = 0.0;
 
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
@@ -245,51 +245,43 @@ double System::Get1B(bool do_grads) {
     size_t iend = 0;
     while (istart < mon_type_count_[k].second) {
       iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
-      size_t length = iend - istart;
+      size_t nmon = iend - istart;
+      size_t ncoord = 3 * nat_[curr_mon_type] * nmon;
+      std::string mon = mon_type_count_[k].first;
 
-
-      std::vector<double> energy = std::vector<double>(length, 0.0);
-      size_t ncoord = 3 * nat_[cmt] * length;
       // XYZ with real sites
-      std::vector<double> xyz = std::vector<double> (ncoord,0.0);
+      std::vector<double> xyz(ncoord,0.0);
+      std::vector<double> grad2(ncoord,0.0);
 
       // Set up real coordinates
       for (size_t i = istart; i < iend; i++) {
-        std::copy(xyz_.begin() + ccrd + 3 * i * sites_[cmt],
-                  xyz_.begin() + ccrd + 3 * (i * sites_[cmt] + nat_[cmt]),
-                  xyz.begin() + 3 * (i - istart) * nat_[cmt]);
+        std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
+                  xyz_.begin() + current_coord + 3 * (i * sites_[curr_mon_type] 
+                + nat_[curr_mon_type]),
+                  xyz.begin() + 3 * (i - istart) * nat_[curr_mon_type]);
       }
 
-      double grad2[ncoord];
-      std::fill(grad2, grad2 + ncoord, 0.0);
       // Get energy of the chunk as function of monomer
-      if (mon_type_count_[k].first == "h2o") {
-        if (do_grads)  {
-          energy = ps::pot_nasa(xyz.data(), grad2, length);
-        } else {
-          energy = ps::pot_nasa(xyz.data(), 0, length);
-        }
-      } else {
-        std::fill(energy.begin(), energy.end(),0.0);
-      }
-      // Add energy to energy_
-      for (size_t i = 0; i < length; i++) {
-        e1b += energy[i];
-
-        if (do_grads) {
-          // Reorganize gradients
-          for (size_t j = 0; j < 3*nat_[cmt]; j++) {
-            grad_[ccrd + 3*(i + istart)*sites_[cmt] + j] 
-                += grad2[3*i*nat_[cmt] + j];
+      if (do_grads)  {
+        e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2);
+        
+        // Reorganize gradients
+        for (size_t i = 0; i < nmon; i++) {
+          for (size_t j = 0; j < 3*nat_[curr_mon_type]; j++) {
+            grad_[current_coord + 3*(i + istart)*sites_[curr_mon_type] + j]
+                += grad2[3*i*nat_[curr_mon_type] + j];
           }
         }
+      } else {
+        e1b += e1b::get_1b_energy(mon, nmon, xyz);
       }
+
       istart = iend;
     }
 
-    // Update ccrd and cmt
-    ccrd += 3 * mon_type_count_[k].second * sites_[cmt];
-    cmt += mon_type_count_[k].second;
+    // Update current_coord and curr_mon_type
+    current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
+    curr_mon_type += mon_type_count_[k].second;
   }
 
   return e1b;
