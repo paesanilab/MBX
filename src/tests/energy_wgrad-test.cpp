@@ -54,7 +54,7 @@ int main(int argc, char** argv)
               << std::setw(20) << std::right << energy 
               << std::setw(12) << std::right << " kcal/mol" << std::endl;          
   }
-# ifdef PRINT_GRADS
+
   std::cout << "Energies with gradients:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
     std::vector<double> grd;
@@ -66,6 +66,8 @@ int main(int argc, char** argv)
               << std::setw(20) << std::right << energy
               << std::setw(12) << std::right << " kcal/mol" 
               << std::endl << std::endl;
+# ifdef PRINT_GRADS
+
     std::vector<std::string> atn = systems[i].GetSysAtNames();
 
     size_t n_sites = systems[i].GetNumSites();
@@ -119,8 +121,8 @@ int main(int argc, char** argv)
                 << std::setw(20) << std::right << std::fabs(grd[j] - gfd)
                 << std::endl;
     }  
-# endif
+# endif // NUM_GRADS
+# endif // PRINT_GRADS
   }
-# endif
   return 0;
 }
