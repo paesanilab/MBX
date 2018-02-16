@@ -15,13 +15,11 @@
 
 // Potential
 // 1B
-#include "potential/1b/ps.h"
+#include "potential/1b/energy1b.h"
 // 2B
 #include "potential/2b/energy2b.h"
 // 3B
 #include "potential/3b/energy3b.h"
-//#include "potential/3b/x3b-v2x.h"
-//#include "potential/3b/poly-3b-v2x.h"
 // DISPERSION
 #include "potential/dispersion/dispersion2b.h"
 // ELECTROSTATICS

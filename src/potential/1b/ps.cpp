@@ -488,7 +488,7 @@ static double c5z[245];
 
 namespace ps {
 
-std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw) {
+double pot_nasa(const double* rr, double* dr, size_t nw) {
     // Declare vectors with the distances, and grads
     double ROH1[3*nw], ROH2[3*nw], RHH[3*nw];
     double dROH1[nw], dROH2[nw], dRHH[nw];
@@ -650,9 +650,8 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw) {
 
     // energy
     double Vc[nw];    
-    std::vector<double> e1;
-    for (size_t nv     = 0; nv < nw; nv++) 
-        e1.push_back(0.0);
+    double e1[nw];
+    std::fill(e1, e1 + nw, 0.0);
 
     for (size_t nv     = 0; nv < nw; nv++) {
         Vc[nv] = 2    *c5z[0] + efac[nv]*sum0[nv];
@@ -721,7 +720,11 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw) {
         }
     } // dr
 
-    return e1;
+    double tot_e = 0.0;
+    for (size_t nv = 0; nv < nw; ++nv)
+        tot_e += e1[nv];
+
+    return tot_e;
 }
 
 double pot_nasa(const double* RESTRICT rr, double* RESTRICT dr)
