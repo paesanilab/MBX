@@ -299,7 +299,7 @@ double System::Get2B(bool do_grads) {
   double edisp_t = 0.0;
 
   // Variables needed for OMP
-  size_t step = 16;
+  size_t step = 1;
   int num_threads = 1;
   int grad_step = 3*nsites_;
 
@@ -310,7 +310,7 @@ double System::Get2B(bool do_grads) {
     num_threads = omp_get_num_threads();
 }
   grad_step = 3*nsites_ / num_threads;
-  step = std::max(size_t(1),std::min(nmon_/2/num_threads,step));
+  step = std::max(size_t(1),std::min(nmon_/num_threads,step));
 # endif // _OPENMP
 
   // dimers are ordered
@@ -467,7 +467,7 @@ double System::Get3B(bool do_grads) {
   double e3b_t = 0.0;
 
   // Variables needed for OMP
-  size_t step = 16;
+  size_t step = 1;
   int num_threads = 1;
   int grad_step = 3*nsites_;
   
@@ -478,7 +478,7 @@ double System::Get3B(bool do_grads) {
     num_threads = omp_get_num_threads();
 }
   grad_step = 3*nsites_ / num_threads;
-  step = std::max(size_t(1),std::min(nmon_/2/num_threads,step));
+  step = std::max(size_t(1),std::min(nmon_/num_threads,step));
 # endif // _OPENMP
 
   // trimers are ordered
