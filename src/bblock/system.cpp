@@ -299,9 +299,8 @@ double System::Get2B(bool do_grads) {
   double edisp_t = 0.0;
 
   // Variables needed for OMP
-  size_t step = 10;
+  size_t step = 16;
   int num_threads = 1;
-  int thread_step = nmon_;
   int grad_step = 3*nsites_;
 
 # ifdef _OPENMP
@@ -310,14 +309,11 @@ double System::Get2B(bool do_grads) {
   if (omp_get_thread_num() == 0)
     num_threads = omp_get_num_threads();
 }
-  thread_step = nmon_ / num_threads;
   grad_step = 3*nsites_ / num_threads;
+  step = std::max(size_t(1),std::min(nmon_/2/num_threads,step));
 # endif // _OPENMP
 
   // dimers are ordered
-  size_t istart = 0;
-  size_t iend = 0;
-  size_t last_mon = nmon_;
   size_t first_grad = 0;
   size_t last_grad = 3*nsites_;
   int rank = 0;
@@ -326,24 +322,11 @@ double System::Get2B(bool do_grads) {
   std::vector<std::vector<double>> grad_pool(num_threads,std::vector<double>(3*nsites_,0.0));
 
 # ifdef _OPENMP
-# pragma omp parallel private(istart,iend,last_mon,first_grad,last_grad,rank)
-{
-  rank = omp_get_thread_num();
-
-  istart = 0 + rank * thread_step;
-  first_grad = 0 + rank * grad_step;
-
-  last_mon = (rank + 1) * thread_step;
-  last_grad = (rank + 1) * grad_step;
-
-  if (rank == num_threads - 1) {
-    last_mon = nmon_;
-    last_grad = 3*nsites_;
-  }
+# pragma omp parallel for schedule(dynamic) private(rank)
 # endif // _OPENMP
-
-  while (istart < last_mon) {
-    iend = std::min(istart + step, last_mon);    
+  for (size_t istart = 0; istart < nmon_; istart += step) {
+    rank = omp_get_thread_num();
+    size_t iend = std::min(istart + step, nmon_);
 
     // Adding corresponding clusters      
 #   ifdef _OPENMP
@@ -355,7 +338,6 @@ double System::Get2B(bool do_grads) {
 #   endif
 
     if (dimers.size() < 2) {
-      istart = iend;
       continue;
     }
 
@@ -438,10 +420,20 @@ double System::Get2B(bool do_grads) {
         m2 = monomers_[dimers[i + 1]];
       }
     } 
-    istart = iend;
   }
 
 # ifdef _OPENMP
+# pragma omp parallel private(first_grad,last_grad,rank)
+{
+  rank = omp_get_thread_num();
+
+  first_grad = 0 + rank * grad_step;
+
+  last_grad = (rank + 1) * grad_step;
+
+  if (rank == num_threads - 1) {
+    last_grad = 3*nsites_;
+  }
 # pragma omp barrier
 # endif
 
@@ -473,9 +465,8 @@ double System::Get3B(bool do_grads) {
   double e3b_t = 0.0;
 
   // Variables needed for OMP
-  size_t step = 10;
+  size_t step = 16;
   int num_threads = 1;
-  int thread_step = nmon_;
   int grad_step = 3*nsites_;
   
 # ifdef _OPENMP
@@ -484,14 +475,11 @@ double System::Get3B(bool do_grads) {
   if (omp_get_thread_num() == 0)
     num_threads = omp_get_num_threads();
 }
-  thread_step = nmon_ / num_threads;
   grad_step = 3*nsites_ / num_threads;
+  step = std::max(size_t(1),std::min(nmon_/2/num_threads,step));
 # endif // _OPENMP
 
   // trimers are ordered
-  size_t istart = 0;
-  size_t iend = 0;
-  size_t last_mon = nmon_;
   size_t first_grad = 0;
   size_t last_grad = 3*nsites_;
   int rank = 0;
@@ -499,24 +487,11 @@ double System::Get3B(bool do_grads) {
   std::vector<std::vector<double>> grad_pool(num_threads,std::vector<double>(3*nsites_,0.0));
 
 # ifdef _OPENMP
-# pragma omp parallel private(istart,iend,last_mon,first_grad,last_grad,rank)
-{
-  rank = omp_get_thread_num();
-
-  istart = 0 + rank * thread_step;
-  first_grad = 0 + rank * grad_step;
-
-  last_mon = (rank + 1) * thread_step;
-  last_grad = (rank + 1) * grad_step;
-  if (rank == num_threads - 1) {
-    last_mon = nmon_;
-    last_grad = 3*nsites_;
-  }
+# pragma omp parallel for schedule(dynamic) private(rank)
 # endif // _OPENMP
-
-  while (istart < last_mon) {
-    iend = std::min(istart + step, last_mon);
-//    std::cerr << "Start = " << istart << "  End = " << iend << std::endl;
+  for (size_t istart = 0; istart < nmon_; istart += step) {
+    rank = omp_get_thread_num();
+    size_t iend = std::min(istart + step, nmon_);
 
     // Adding corresponding clusters      
 #   ifdef _OPENMP
@@ -528,7 +503,6 @@ double System::Get3B(bool do_grads) {
 #   endif
 
     if (trimers.size() < 3) {
-      istart = iend;
       continue;
     }
 
@@ -543,9 +517,7 @@ double System::Get3B(bool do_grads) {
     size_t nt = 0;
     size_t nt_tot = 0;
 
-//    while (i < trimers.size()) {
     while (3*nt_tot < trimers.size()) {
-//    std::cerr << "Checking trimer: " << trimers[i] << " " <<trimers[i+1] << " " <<trimers[i+2] << " " << std::endl;
       i = (nt_tot + nt) * 3;
       if (monomers_[trimers[i]] == m1 &&
           monomers_[trimers[i + 1]] == m2 && 
@@ -561,7 +533,6 @@ double System::Get3B(bool do_grads) {
           coord3.push_back(xyz_[3*first_index_[trimers[i + 2]] + j]);
         }
         nt++;
-//        std::cerr << "Adding trimer: " << trimers[i] << " " <<trimers[i+1] << " " <<trimers[i+2] << " " << std::endl;
       }
 
       // If one of the monomers is different as the previous one
@@ -572,7 +543,6 @@ double System::Get3B(bool do_grads) {
           monomers_[trimers[i + 2]] != m3 ||
           i == trimers.size() - 3 || nt == maxNTriEval_) {
         if (nt == 0) {
-//          i+=3;
           coord1.clear();
           coord2.clear();
           coord3.clear();
@@ -599,19 +569,6 @@ double System::Get3B(bool do_grads) {
 
           size_t i0 = nt_tot * 3;
           for (size_t k = 0; k < nt ; k++) {
-//            std::cerr << "Grads for trimer: " << trimers[i0 + 3*k] << " " <<trimers[i0 + 3*k +1] << " " <<trimers[i0 + 3*k + 2] << " " << std::endl;
-//            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k]]; j++) {
-//              grad_pool[rank][3*first_index_[trimers[i - 3*k]] + j]
-//                  += grad1[(nt - k - 1)*3*nat_[trimers[i - 3*k]] + j];
-//            }
-//            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 1]]; j++) {
-//              grad_pool[rank][3*first_index_[trimers[i - 3*k + 1]] + j]
-//                  += grad2[(nt - k - 1)*3*nat_[trimers[i - 3*k + 1]] + j];
-//            }
-//            for (size_t j = 0; j < 3*nat_[trimers[i - 3*k + 2]]; j++) {
-//              grad_pool[rank][3*first_index_[trimers[i - 3*k + 2]] + j]
-//                  += grad3[(nt - k - 1)*3*nat_[trimers[i - 3*k + 2]] + j];
-//            }
             for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k]]; j++) {
               grad_pool[rank][3*first_index_[trimers[i0 + 3*k]] + j]
                   += grad1[k*3*nat_[trimers[i0 + 3*k]] + j];
@@ -638,12 +595,20 @@ double System::Get3B(bool do_grads) {
         m2 = monomers_[trimers[i + 1]];
         m3 = monomers_[trimers[i + 2]];
       }
-//      i+=3;
     }
-    istart = iend;
   }
 
 # ifdef _OPENMP
+# pragma omp parallel private(first_grad,last_grad,rank)
+{
+  rank = omp_get_thread_num();
+
+  first_grad = 0 + rank * grad_step;
+
+  last_grad = (rank + 1) * grad_step;
+  if (rank == num_threads - 1) {
+    last_grad = 3*nsites_;
+  }
 # pragma omp barrier
 # endif
 
