@@ -325,7 +325,9 @@ double System::Get2B(bool do_grads) {
 # pragma omp parallel for schedule(dynamic) private(rank)
 # endif // _OPENMP
   for (size_t istart = 0; istart < nmon_; istart += step) {
+#   ifdef _OPENMP
     rank = omp_get_thread_num();
+#   endif // _OPENMP
     size_t iend = std::min(istart + step, nmon_);
 
     // Adding corresponding clusters      
@@ -490,7 +492,9 @@ double System::Get3B(bool do_grads) {
 # pragma omp parallel for schedule(dynamic) private(rank)
 # endif // _OPENMP
   for (size_t istart = 0; istart < nmon_; istart += step) {
+#   ifdef _OPENMP
     rank = omp_get_thread_num();
+#   endif
     size_t iend = std::min(istart + step, nmon_);
 
     // Adding corresponding clusters      
