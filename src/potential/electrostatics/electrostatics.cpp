@@ -15,7 +15,7 @@
 namespace elec {
 
   double Electrostatics(const std::vector<double> orig_chg,               
-    const std::vector<double> chg_grd, 
+    const std::vector<double> chg_grad, 
     const std::vector<double> polfac, 
     const std::vector<double> pol, 
     const std::vector<double> orig_xyz, 
@@ -24,7 +24,7 @@ namespace elec {
     const std::vector<size_t> first_ind,
     const std::vector<std::pair<std::string,size_t>> mon_type_count, 
     const double tolerance, const size_t maxit, const bool do_grads, 
-    std::vector<double> &orig_grd) {
+    std::vector<double> &orig_grad) {
 
 #   ifdef TIMING
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -62,6 +62,15 @@ namespace elec {
 
     // Parallelization
     size_t nthreads = 1;
+#   ifdef _OPENMP
+#     pragma omp parallel // omp_get_num_threads() needs to be inside 
+                          // parallel region to get number of threads
+      {
+        if (omp_get_thread_num() == 0)
+          nthreads = omp_get_num_threads();
+      }
+#   endif
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // DATA ORGANIZATION ///////////////////////////////////////////////////////////
@@ -71,7 +80,7 @@ namespace elec {
     // where xN_M is read as coordinate x of site N of monomer M
     // for the first monomer type. Then follows the second, and so on.
     std::vector<double> xyz(nsites3,0.0);
-    std::vector<double> grd(nsites3,0.0);
+    std::vector<double> grad(nsites3,0.0);
     std::vector<double> chg(nsites,0.0);
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -221,46 +230,90 @@ namespace elec {
 
         // TODO add neighbour list here
         // Loop over all pair of sites
-        for (size_t i = 0; i < ns1; i++) {
-          size_t inmon1 = i * nmon1;
-          size_t inmon13 = inmon1 * 3;
-          for (size_t j = 0; j < ns2; j++) {
 
-            // Check if A = 0 and call the proper field calculation
-            double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
-            if (A > constants::EPS) {
-              A = std::pow(A,1.0/6.0);
-              double Ai = 1/A;
-              double Asqsq = A*A*A*A;
-              for (size_t m1 = 0; m1 < nmon1; m1++) {
-                size_t m2init = same ? m1 + 1 : 0;
-                elec_field.CalcPermanentElecFieldWithPolfacNonZero(
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+        std::vector<std::vector<double>> Efq_1_pool;
+        std::vector<std::vector<double>> Efq_2_pool;
+        std::vector<std::vector<double>> phi_1_pool;
+        std::vector<std::vector<double>> phi_2_pool;
+        for (size_t i = 0; i < nthreads; i++) { 
+           field_pool.push_back(
+             std::make_shared<ElectricFieldHolder>(maxnmon));
+           Efq_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+           Efq_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+           phi_1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
+           phi_2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
+        }
+
+#       ifdef _OPENMP
+#         pragma omp parallel for schedule(dynamic)
+#       endif
+        for (size_t m1 = 0; m1 < nmon1; m1++) {
+          int rank = 0;
+#         ifdef _OPENMP
+            rank = omp_get_thread_num();
+#         endif          
+          std::shared_ptr<ElectricFieldHolder> local_field
+              = field_pool[rank];
+          size_t m2init = same ? m1 + 1 : 0;
+          double ex_thread = 0.0;
+          double ey_thread = 0.0;
+          double ez_thread = 0.0;
+          double phi1_thread = 0.0;
+          for (size_t i = 0; i < ns1; i++) {
+            size_t inmon1 = i * nmon1;
+            size_t inmon13 = inmon1 * 3;
+            for (size_t j = 0; j < ns2; j++) {
+
+              // Check if A = 0 and call the proper field calculation
+              double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
+              if (A > constants::EPS) {
+                A = std::pow(A,1.0/6.0);
+                double Ai = 1/A;
+                double Asqsq = A*A*A*A;
+                local_field->CalcPermanentElecFieldWithPolfacNonZero(
                         xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsq,
-                        aCC, aCC1_4, g34, &ex, &ey, &ez, &phi1, 
-                        phi.data() + fi_sites2, Efq.data() + fi_crd2);
-                phi[fi_sites1 + inmon1 + m1] += phi1;
-                Efq[fi_crd1 + inmon13 + m1] += ex;       
-                Efq[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                Efq[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-              }
-            } else {
-              for (size_t m1 = 0; m1 < nmon1; m1++) {
-                size_t m2init = same ? m1 + 1 : 0;
+                        aCC, aCC1_4, g34, &ex_thread, &ey_thread, &ez_thread, &phi1_thread, 
+                        phi_2_pool[rank].data(), Efq_2_pool[rank].data());
+                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+                Efq_1_pool[rank][inmon13 + m1] += ex_thread;       
+                Efq_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                Efq_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+              } else {
                 elec_field.CalcPermanentElecFieldWithPolfacZero(
                         xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j,
-                        &ex, &ey, &ez, &phi1,
-                        phi.data() + fi_sites2, Efq.data() + fi_crd2);
-                phi[fi_sites1 + inmon1 + m1] += phi1;
-                Efq[fi_crd1 + inmon13 + m1] += ex;
-                Efq[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                Efq[fi_crd1 + inmon13 + nmon12 + m1] += ez;
+                        &ex_thread, &ey_thread, &ez_thread, &phi1_thread,
+                        phi_2_pool[rank].data(), Efq_2_pool[rank].data());  
+                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+                Efq_1_pool[rank][inmon13 + m1] += ex_thread;
+                Efq_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                Efq_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
               }
             }
           } 
+        }
+        // Compress data in Efq and phi
+        for (size_t rank = 0; rank < nthreads; rank++) {
+          size_t kend1 = Efq_1_pool[rank].size();
+          size_t kend2 = Efq_2_pool[rank].size();
+          for (size_t k = 0; k < kend1; k++) {
+            Efq[fi_crd1 + k] += Efq_1_pool[rank][k];
+          }
+          for (size_t k = 0; k < kend2; k++) {
+            Efq[fi_crd2 + k] += Efq_2_pool[rank][k];
+          }
+          kend1 = phi_1_pool[rank].size();
+          kend2 = phi_2_pool[rank].size();
+          for (size_t k = 0; k < kend1; k++) {
+            phi[fi_sites1 + k] += phi_1_pool[rank][k];
+          }
+          for (size_t k = 0; k < kend2; k++) {
+            phi[fi_sites2 + k] += phi_2_pool[rank][k];
+          }
         }
         // Update first indexes
         fi_mon2 += nmon2;
@@ -472,14 +525,6 @@ namespace elec {
           if (mt1 == mt2) same = true;
           // TODO add neighbour list here
           // Prepare for parallelization
-#         ifdef _OPENMP
-#           pragma omp parallel // omp_get_num_threads() needs to be inside 
-                                // parallel region to get number of threads
-            { 
-              if (omp_get_thread_num() == 0)
-                nthreads = omp_get_num_threads();
-            }
-#         endif
           std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
           std::vector<std::vector<double>> Efd_1_pool;
           std::vector<std::vector<double>> Efd_2_pool;
@@ -624,11 +669,11 @@ namespace elec {
         size_t inmon  = i*nmon;
         size_t inmon3  = 3*inmon;
         for (size_t m = 0; m < nmon; m++) {
-          grd[fi_crd + inmon3 + m] -= 
+          grad[fi_crd + inmon3 + m] -= 
             chg[fi_sites + inmon + m]*Efq[fi_crd + inmon3 + m];
-          grd[fi_crd + inmon3 + nmon + m] -= 
+          grad[fi_crd + inmon3 + nmon + m] -= 
             chg[fi_sites + inmon + m]*Efq[fi_crd + inmon3 + nmon + m];
-          grd[fi_crd + inmon3 + nmon2 + m] -= 
+          grad[fi_crd + inmon3 + nmon2 + m] -= 
             chg[fi_sites + inmon + m]*Efq[fi_crd + inmon3 + nmon2 + m];
         }
       }
@@ -638,7 +683,7 @@ namespace elec {
       fi_crd += nmon * ns * 3;
     }
 
-    // This will only be used for intramonomer to not get chg-dip grd
+    // This will only be used for intramonomer to not get chg-dip grad
     std::vector<double> zeros(nsites,0.0);
 
     // Intramonomer dipole-dipole
@@ -675,10 +720,10 @@ namespace elec {
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, aDD, aCD, Asqsq,
                         &ex, &ey, &ez, &phi1, phi_mod,
-                        grd.data() + fi_crd);
-              grd[fi_crd + inmon3 + m] += ex;
-              grd[fi_crd + inmon3 + nmon + m] += ey;
-              grd[fi_crd + inmon3 + nmon2 + m] += ez;
+                        grad.data() + fi_crd);
+              grad[fi_crd + inmon3 + m] += ex;
+              grad[fi_crd + inmon3 + nmon + m] += ey;
+              grad[fi_crd + inmon3 + nmon2 + m] += ez;
             }
           } else {
             for (size_t m = 0; m < nmon; m++) {
@@ -688,10 +733,10 @@ namespace elec {
                         mu.data() + fi_crd, mu.data() + fi_crd,
                         m, m, m+1, nmon, nmon, i, j, 
                         &ex, &ey, &ez, &phi1, phi_mod,
-                        grd.data() + fi_crd);
-              grd[fi_crd + inmon3 + m] += ex;
-              grd[fi_crd + inmon3 + nmon + m] += ey;
-              grd[fi_crd + inmon3 + nmon2 + m] += ez;
+                        grad.data() + fi_crd);
+              grad[fi_crd + inmon3 + m] += ex;
+              grad[fi_crd + inmon3 + nmon + m] += ey;
+              grad[fi_crd + inmon3 + nmon2 + m] += ez;
             }
           }
         }
@@ -723,45 +768,87 @@ namespace elec {
         double same = false;
         if (mt1 == mt2) same = true;
         // TODO add neighbour list here
-        for (size_t i = 0; i < ns1; i++) {
-          size_t inmon1  = i*nmon1;
-          size_t inmon13  = 3*inmon1;
-          for (size_t j = 0; j < ns2; j++) {
-            double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
-            if (A > constants::EPS) {
-              A = std::pow(A,1.0/6.0);
-              double Asqsq = A*A*A*A;
-              for (size_t m1 = 0; m1 < nmon1; m1++) {
-                size_t m2init = same ? m1 + 1 : 0;
-                elec_field.CalcElecFieldGradsWithPolfacNonZero(
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+        std::vector<std::vector<double>> grad_1_pool;
+        std::vector<std::vector<double>> grad_2_pool;
+        std::vector<std::vector<double>> phi_1_pool;
+        std::vector<std::vector<double>> phi_2_pool;
+        for (size_t i = 0; i < nthreads; i++) { 
+           field_pool.push_back(
+             std::make_shared<ElectricFieldHolder>(maxnmon));
+           grad_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+           grad_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+           phi_1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
+           phi_2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
+        }
+#       ifdef _OPENMP
+#         pragma omp parallel for schedule(dynamic)
+#       endif
+        for (size_t m1 = 0; m1 < nmon1; m1++) {
+          int rank = 0;
+#         ifdef _OPENMP
+            rank = omp_get_thread_num();
+#         endif
+          std::shared_ptr<ElectricFieldHolder> local_field
+              = field_pool[rank];
+          size_t m2init = same ? m1 + 1 : 0;
+          double ex_thread = 0.0;
+          double ey_thread = 0.0;
+          double ez_thread = 0.0;
+          double phi1_thread = 0.0;
+          for (size_t i = 0; i < ns1; i++) {
+            size_t inmon1  = i*nmon1;
+            size_t inmon13  = 3*inmon1;
+            for (size_t j = 0; j < ns2; j++) {
+              double A = polfac[fi_sites1 + i] * polfac[fi_sites2 + j];
+              if (A > constants::EPS) {
+                A = std::pow(A,1.0/6.0);
+                double Asqsq = A*A*A*A;
+                local_field->CalcElecFieldGradsWithPolfacNonZero(
                         xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
                         aDD, aCD, Asqsq,
-                        &ex, &ey, &ez, &phi1, phi.data() + fi_sites2,
-                        grd.data() + fi_crd2);
-                grd[fi_crd1 + inmon13 + m1] += ex;
-                grd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                grd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                phi[fi_sites1 + inmon1 + m1] += phi1;
-              }
-            } else {
-              for (size_t m1 = 0; m1 < nmon1; m1++) {
-                size_t m2init = same ? m1 + 1 : 0;
-                elec_field.CalcElecFieldGradsWithPolfacZero(
+                        &ex_thread, &ey_thread, &ez_thread, &phi1_thread, 
+                        phi_2_pool[rank].data(), grad_2_pool[rank].data());
+                grad_1_pool[rank][inmon13 + m1] += ex_thread;
+                grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+              } else {
+                local_field->CalcElecFieldGradsWithPolfacZero(
                         xyz.data() + fi_crd1, xyz.data() + fi_crd2,
                         chg.data() + fi_sites1, chg.data() + fi_sites2,
                         mu.data() + fi_crd1, mu.data() + fi_crd2,
                         m1, m2init, nmon2, nmon1, nmon2, i, j, 
-                        &ex, &ey, &ez, &phi1, phi.data() + fi_sites2,
-                        grd.data() + fi_crd2);
-                grd[fi_crd1 + inmon13 + m1] += ex;
-                grd[fi_crd1 + inmon13 + nmon1 + m1] += ey;
-                grd[fi_crd1 + inmon13 + nmon12 + m1] += ez;
-                phi[fi_sites1 + inmon1 + m1] += phi1;
+                        &ex_thread, &ey_thread, &ez_thread, &phi1_thread, 
+                        phi_2_pool[rank].data(), grad_2_pool[rank].data());
+                grad_1_pool[rank][inmon13 + m1] += ex_thread;
+                grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
               }
             }
+          }
+        }
+        // Compress data in grad and phi
+        for (size_t rank = 0; rank < nthreads; rank++) {
+          size_t kend1 = grad_1_pool[rank].size();
+          size_t kend2 = grad_2_pool[rank].size();
+          for (size_t k = 0; k < kend1; k++) {
+            grad[fi_crd1 + k] += grad_1_pool[rank][k];
+          }
+          for (size_t k = 0; k < kend2; k++) {
+            grad[fi_crd2 + k] += grad_2_pool[rank][k];
+          }
+          kend1 = phi_1_pool[rank].size();
+          kend2 = phi_2_pool[rank].size();
+          for (size_t k = 0; k < kend1; k++) {
+            phi[fi_sites1 + k] += phi_1_pool[rank][k];
+          }
+          for (size_t k = 0; k < kend2; k++) {
+            phi[fi_sites2 + k] += phi_2_pool[rank][k];
           }
         }
         // Update first indexes
@@ -815,9 +902,9 @@ namespace elec {
 
           tmp2[fi_sites + mns + i] = phi[fi_sites + m + inmon];
 
-          orig_grd[fi_crd + mns3 + 3*i] += grd[inmon3 + m + fi_crd];
-          orig_grd[fi_crd + mns3 + 3*i + 1] += grd[inmon3 + m + fi_crd + nmon];
-          orig_grd[fi_crd + mns3 + 3*i + 2] += grd[inmon3 + m + fi_crd + nmon2];
+          orig_grad[fi_crd + mns3 + 3*i] += grad[inmon3 + m + fi_crd];
+          orig_grad[fi_crd + mns3 + 3*i + 1] += grad[inmon3 + m + fi_crd + nmon];
+          orig_grad[fi_crd + mns3 + 3*i + 2] += grad[inmon3 + m + fi_crd + nmon2];
           #ifdef DEBUG
           std::cerr << "phi[" << fi_sites + mns + i << "] = "
                     << tmp2[fi_sites + mns + i] << std::endl;
@@ -856,11 +943,11 @@ namespace elec {
       std::string id = mon_id[fi_mon];
 
       // Redistribute gradients
-      systools::RedistributeVirtGrads2Real(id, nmon, fi_crd, orig_grd);
+      systools::RedistributeVirtGrads2Real(id, nmon, fi_crd, orig_grad);
 
       // Gradients due to position dependant charges
       systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites,
-                               phi, orig_grd, chg_grd);
+                               phi, orig_grad, chg_grad);
       // Update first indexes
       fi_mon += nmon;
       fi_sites += nmon * ns;
