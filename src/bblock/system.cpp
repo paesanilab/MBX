@@ -70,7 +70,7 @@ void System::Initialize() {
   if (initialized_) return;
 
   cutoff2b_ = 100.0;
-  cutoff3b_ =  10.0;
+  cutoff3b_ =  5.0;
   diptol_ = 1E-16;
   maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
