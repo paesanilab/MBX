@@ -25,7 +25,9 @@ include(psi4OptionsTools)
 option_with_flags(ENABLE_XHOST "Enables processor-specific optimization" ON
                   "-xHost" "-march=native")
 option_with_default(CMAKE_BUILD_TYPE "Build type (Release or Debug)" Release)
-option_with_default(CMAKE_INSTALL_LIBDIR "Directory to which libraries installed" lib)
+option_with_default(CMAKE_INSTALL_LIBDIR "Directory to which libraries installed" "${PROJECT_SOURCE_DIR}/install/lib")
+option_with_default(CMAKE_INSTALL_OBJDIR "Directory to which objects are installed" "${PROJECT_SOURCE_DIR}/install/obj")
+option_with_default(CMAKE_INSTALL_INCLUDEDIR "Directory to which include files are installed" "${PROJECT_SOURCE_DIR}/install/include")
 option_with_default(PYMOD_INSTALL_LIBDIR "Location within CMAKE_INSTALL_LIBDIR to which python modules are installed" /)
 option_with_default(ENABLE_GENERIC "Enables mostly static linking of system libraries for shared library" OFF)
 option_with_default(clusters_ultimate_CXX_STANDARD "Specify C++ standard for core clusters_ultimate" 11)
@@ -36,7 +38,7 @@ include(autocmake_safeguards)
 include(custom_color_messages)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "/usr/local/clusters_ultimate" CACHE PATH "Install path" FORCE)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/install" CACHE PATH "Install path" FORCE)
 endif()
 message(STATUS "clusters_ultimate install: ${CMAKE_INSTALL_PREFIX}")
 
@@ -62,6 +64,7 @@ ExternalProject_Add(clusters_ultimate-core
               -DCMAKE_CXX_STANDARD_REQUIRED=ON
               -DCMAKE_CXX_EXTENSIONS=OFF
               -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
+              -DCMAKE_INSTALL_OBJDIR=${CMAKE_INSTALL_OBJDIR}
               -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
               -DCMAKE_INSTALL_DATADIR=${CMAKE_INSTALL_DATADIR}
               -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
@@ -78,6 +81,7 @@ ExternalProject_Add(clusters_ultimate-core
    INSTALL_COMMAND ${CMAKE_MAKE_PROGRAM} install
                    DESTDIR=${CMAKE_BINARY_DIR}/stage)
 
+add_subdirectory(external)
 #add_subdirectory(doc)
 #add_subdirectory(tests)
 
