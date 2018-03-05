@@ -120,9 +120,9 @@ class System {
   std::vector<std::string> monomers_;        // Monomer ids
   std::vector<std::string> atoms_;           // Atom names of sys
   // Molecules of system
-  std::vector<std::vector<size_t>> molecules_; 
+  std::vector<std::vector<size_t> > molecules_; 
   // Mon type and # mon of each
-  std::vector<std::pair<std::string,size_t>> mon_type_count_;   
+  std::vector<std::pair<std::string,size_t> > mon_type_count_;   
 };
 
 } // namespace bblock

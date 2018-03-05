@@ -39,7 +39,7 @@ namespace elec {
     const std::vector<size_t> first_ind,
     // Vector that contains all different monomer types and the number of
     // monomers of each type.
-    const std::vector<std::pair<std::string,size_t>> mon_type_count,
+    const std::vector<std::pair<std::string,size_t> > mon_type_count,
     // Tolerance in the iterative calculation of the dipoles
     // Tolerance refers to the maximum squared difference overall the dipoles
     const double tolerance,

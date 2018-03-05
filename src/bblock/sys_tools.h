@@ -19,7 +19,7 @@ namespace systools {
 
 // Function that given the monomers, modifies the ordered monomer list
 // in mon, and the original order in the vector original_order
-std::vector<std::pair<std::string,size_t>> OrderMonomers
+std::vector<std::pair<std::string,size_t> > OrderMonomers
                    (std::vector<std::string> &mon, 
                     std::vector<size_t> &original_order);
 
