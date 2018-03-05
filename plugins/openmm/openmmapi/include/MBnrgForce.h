@@ -34,6 +34,7 @@
 
 #include "openmm/Context.h"
 #include "openmm/Force.h"
+#include "bblock/system.h"
 #include <vector>
 #include "internal/windowsExportMBnrg.h"
 

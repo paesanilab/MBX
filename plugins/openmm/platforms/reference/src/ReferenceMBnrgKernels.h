@@ -34,6 +34,7 @@
 
 #include "MBnrgKernels.h"
 #include "openmm/Platform.h"
+#include "bblock/system.h"
 #include <vector>
 
 namespace MBnrgPlugin {
@@ -69,6 +70,11 @@ public:
      */
     void copyParametersToContext(OpenMM::ContextImpl& context, const MBnrgForce& force);
 private:
+
+    void mbnrg_initialize(std::vector<double> xyz);
+    bblock::System mbnrg_system;
+    bool mbsys_initialized;
+
     int numBonds;
     std::vector<int> particle1, particle2;
     std::vector<double> length, k;

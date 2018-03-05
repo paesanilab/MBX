@@ -7,9 +7,15 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 # We need to know where OpenMM is installed so we can access the headers and libraries.
 #SET(OPENMM_DIR "/usr/local/openmm" CACHE PATH "Where OpenMM is installed")
 SET(OPENMM_DIR "/home/mrierari/codes/anaconda3/pkgs/openmm-6.3-py34_0" CACHE PATH "Where OpenMM is installed")
+SET(MBNRG_DIR "/home/mrierari/codes/clusters_ultimate/install" CACHE PATH "Where MBnrg is installed")
 SET(CMAKE_INSTALL_PREFIX ${OPENMM_DIR})
-INCLUDE_DIRECTORIES("${OPENMM_DIR}/include")
-LINK_DIRECTORIES("${OPENMM_DIR}/lib" "${OPENMM_DIR}/lib/plugins")
+INCLUDE_DIRECTORIES("${OPENMM_DIR}/include" "${MBNRG_DIR}/include")
+LINK_DIRECTORIES("${OPENMM_DIR}/lib" "${OPENMM_DIR}/lib/plugins" "${MBNRG_DIR}/lib/static")
+
+# Setting some CMAKE arguments:
+#set(MBNRG_LINK_FLAGS "-Wl,--whole-archive"
+#                     mbnrg 
+#                     "-Wl,--no-whole-archive" )
 
 # set flags for linking on mac
 IF(APPLE)
@@ -25,6 +31,16 @@ IF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
         SET(CMAKE_INSTALL_PREFIX "/usr/local/openmm" CACHE PATH "Where to install the plugin" FORCE)
     ENDIF(WIN32)
 ENDIF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
+
+set(EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} ")
+#MRR
+find_package(OpenMP)
+SET(USE_OPENMP TRUE CACHE BOOL "Use OpenMP")
+if (OPENMP_FOUND AND USE_OPENMP)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
+# END MRR
 
 # The source is organized into subdirectories, but we handle them all from
 # this CMakeLists file rather than letting CMake visit them as SUBDIRS.
@@ -45,6 +61,9 @@ FOREACH(dir ${API_INCLUDE_DIRS})
     SET(API_INCLUDE_FILES ${API_INCLUDE_FILES} ${fullpaths})
 ENDFOREACH(dir)
 
+# Locate all .o files in installation
+file(GLOB_RECURSE mbnrg_obj_files "${MBNRG_DIR}/obj/*.o")
+
 # Collect up source files
 SET(SOURCE_FILES) # empty
 SET(SOURCE_INCLUDE_FILES)
@@ -61,11 +80,11 @@ ENDFOREACH(subdir)
 
 # Create the library.
 
-ADD_LIBRARY(${SHARED_MBNRG_TARGET} SHARED ${SOURCE_FILES} ${SOURCE_INCLUDE_FILES} ${API_INCLUDE_FILES})
+ADD_LIBRARY(${SHARED_MBNRG_TARGET} SHARED ${mbnrg_obj_files} ${SOURCE_FILES} ${SOURCE_INCLUDE_FILES} ${API_INCLUDE_FILES})
 SET_TARGET_PROPERTIES(${SHARED_MBNRG_TARGET}
-    PROPERTIES COMPILE_FLAGS "-DMBNRG_BUILDING_SHARED_LIBRARY ${EXTRA_COMPILE_FLAGS}"
+    PROPERTIES COMPILE_FLAGS "-DMBNRG_BUILDING_SHARED_LIBRARY ${EXTRA_COMPILE_FLAGS} ${MBNRG_COMPILE_FLAGS}"
     LINK_FLAGS "${EXTRA_COMPILE_FLAGS}")
-TARGET_LINK_LIBRARIES(${SHARED_MBNRG_TARGET} OpenMM)
+TARGET_LINK_LIBRARIES(${SHARED_MBNRG_TARGET} OpenMM ${MBNRG_LINK_FLAGS})
 INSTALL_TARGETS(/lib RUNTIME_DIRECTORY /lib ${SHARED_MBNRG_TARGET})
 
 # install headers

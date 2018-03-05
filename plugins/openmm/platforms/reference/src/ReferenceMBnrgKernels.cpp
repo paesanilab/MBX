@@ -51,39 +51,68 @@ static vector<RealVec>& extractForces(ContextImpl& context) {
 }
 
 void ReferenceCalcMBnrgForceKernel::initialize(const System& system, const MBnrgForce& force) {
-    // Initialize bond parameters.
-    
-    int numBonds = force.getNumBonds();
-    particle1.resize(numBonds);
-    particle2.resize(numBonds);
-    length.resize(numBonds);
-    k.resize(numBonds);
-    for (int i = 0; i < numBonds; i++)
-        force.getBondParameters(i, particle1[i], particle2[i], length[i], k[i]);
+
+    // Can do nothing here (MB-nrg)
+    mbsys_initialized = false;
+
+//    // Initialize bond parameters.
+//    int numBonds = force.getNumBonds();
+//    particle1.resize(numBonds);
+//    particle2.resize(numBonds);
+//    length.resize(numBonds);
+//    k.resize(numBonds);
+//    for (int i = 0; i < numBonds; i++)
+//        force.getBondParameters(i, particle1[i], particle2[i], length[i], k[i]);
 }
 
 double ReferenceCalcMBnrgForceKernel::execute(ContextImpl& context, bool includeForces, bool includeEnergy) {
     vector<RealVec>& pos = extractPositions(context);
     vector<RealVec>& force = extractForces(context);
-    int numBonds = particle1.size();
-    double energy = 0;
-    
-    // Compute the interactions.
-    
-    for (int i = 0; i < numBonds; i++) {
-        int p1 = particle1[i];
-        int p2 = particle2[i];
-        RealVec delta = pos[p1]-pos[p2];
-        RealOpenMM r2 = delta.dot(delta);
-        RealOpenMM r = sqrt(r2);
-        RealOpenMM dr = (r-length[i]);
-        RealOpenMM dr2 = dr*dr;
-        energy += k[i]*dr2*dr2;
-        RealOpenMM dEdR = 4*k[i]*dr2*dr;
-        dEdR = (r > 0) ? (dEdR/r) : 0;
-        force[p1] -= delta*dEdR;
-        force[p2] += delta*dEdR;
+
+    std::vector<double> xyz_context(3*pos.size());
+    for (size_t i = 0; i < pos.size(); i++) {
+      xyz_context[3*i + 0] = pos[i][0];
+      xyz_context[3*i + 1] = pos[i][1];
+      xyz_context[3*i + 2] = pos[i][2];
     }
+
+    if (!mbsys_initialized) {
+
+      mbnrg_initialize(xyz_context);
+      mbsys_initialized = true;
+    }
+
+    mbnrg_system.SetSysXyz(xyz_context);
+    
+    std::vector<double> grad(3*force.size(),0.0);
+    std::cout << "Grad size is " << grad.size() << std::endl; 
+    double energy = mbnrg_system.Energy(grad,true);
+    
+    for (size_t i = 0; i < force.size(); i++) {
+      force[i][0] = -grad[3*i + 0];
+      force[i][1] = -grad[3*i + 1];
+      force[i][2] = -grad[3*i + 2];
+    }
+
+//    int numBonds = particle1.size();
+//    double energy = 0;
+//    
+//    // Compute the interactions.
+//    
+//    for (int i = 0; i < numBonds; i++) {
+//        int p1 = particle1[i];
+//        int p2 = particle2[i];
+//        RealVec delta = pos[p1]-pos[p2];
+//        RealOpenMM r2 = delta.dot(delta);
+//        RealOpenMM r = sqrt(r2);
+//        RealOpenMM dr = (r-length[i]);
+//        RealOpenMM dr2 = dr*dr;
+//        energy += k[i]*dr2*dr2;
+//        RealOpenMM dEdR = 4*k[i]*dr2*dr;
+//        dEdR = (r > 0) ? (dEdR/r) : 0;
+//        force[p1] -= delta*dEdR;
+//        force[p2] += delta*dEdR;
+//    }
     return energy;
 }
 
@@ -96,4 +125,23 @@ void ReferenceCalcMBnrgForceKernel::copyParametersToContext(ContextImpl& context
         if (p1 != particle1[i] || p2 != particle2[i])
             throw OpenMMException("updateParametersInContext: A particle index has changed");
     }
+}
+
+void ReferenceCalcMBnrgForceKernel::mbnrg_initialize(std::vector<double> xyz) {
+    std::cout << "MB-nrg System Initialization" << std::endl;
+    // hardcoded for water
+    size_t nw = xyz.size() / 12;
+    for (size_t i = 0; i < nw; i++) {
+      std::string name = "h2o";
+      std::vector<std::string> at_names(3);
+      at_names[0] = "O";
+      at_names[1] = "H";
+      at_names[2] = "H";
+      std::vector<double> coords(9);
+      for (size_t j = 0; j < 9; j++) {
+        coords[j] = xyz[12*i + j];
+      }
+      mbnrg_system.AddMonomer(coords, at_names, name);
+    } 
+    mbnrg_system.Initialize();
 }
