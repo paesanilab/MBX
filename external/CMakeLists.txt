@@ -1,2 +1,6 @@
 add_subdirectory(kdtree)
-add_subdirectory(spdlog)
+
+install(DIRECTORY kdtree/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY kdtree/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.hpp")
