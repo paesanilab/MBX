@@ -117,14 +117,14 @@ double ReferenceCalcMBnrgForceKernel::execute(ContextImpl& context, bool include
 }
 
 void ReferenceCalcMBnrgForceKernel::copyParametersToContext(ContextImpl& context, const MBnrgForce& force) {
-    if (force.getNumBonds() != particle1.size())
-        throw OpenMMException("updateParametersInContext: The number of MBnrg bonds has changed");
-    for (int i = 0; i < force.getNumBonds(); i++) {
-        int p1, p2;
-        force.getBondParameters(i, p1, p2, length[i], k[i]);
-        if (p1 != particle1[i] || p2 != particle2[i])
-            throw OpenMMException("updateParametersInContext: A particle index has changed");
-    }
+//    if (force.getNumBonds() != particle1.size())
+//        throw OpenMMException("updateParametersInContext: The number of MBnrg bonds has changed");
+//    for (int i = 0; i < force.getNumBonds(); i++) {
+//        int p1, p2;
+//        force.getBondParameters(i, p1, p2, length[i], k[i]);
+//        if (p1 != particle1[i] || p2 != particle2[i])
+//            throw OpenMMException("updateParametersInContext: A particle index has changed");
+//    }
 }
 
 void ReferenceCalcMBnrgForceKernel::mbnrg_initialize(std::vector<double> xyz) {

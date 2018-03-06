@@ -68,15 +68,15 @@ std::vector<std::string> MBnrgForceImpl::getKernelNames() {
     return names;
 }
 
-vector<pair<int, int> > MBnrgForceImpl::getBondedParticles() const {
-    int numBonds = owner.getNumBonds();
-    vector<pair<int, int> > bonds(numBonds);
-    for (int i = 0; i < numBonds; i++) {
-        double length, k;
-        owner.getBondParameters(i, bonds[i].first, bonds[i].second, length, k);
-    }
-    return bonds;
-}
+//vector<pair<int, int> > MBnrgForceImpl::getBondedParticles() const {
+//    int numBonds = owner.getNumBonds();
+//    vector<pair<int, int> > bonds(numBonds);
+//    for (int i = 0; i < numBonds; i++) {
+//        double length, k;
+//        owner.getBondParameters(i, bonds[i].first, bonds[i].second, length, k);
+//    }
+//    return bonds;
+//}
 
 void MBnrgForceImpl::updateParametersInContext(ContextImpl& context) {
     kernel.getAs<CalcMBnrgForceKernel>().copyParametersToContext(context, owner);

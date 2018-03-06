@@ -75,9 +75,9 @@ private:
     bblock::System mbnrg_system;
     bool mbsys_initialized;
 
-    int numBonds;
-    std::vector<int> particle1, particle2;
-    std::vector<double> length, k;
+//    int numBonds;
+//    std::vector<int> particle1, particle2;
+//    std::vector<double> length, k;
 };
 
 } // namespace MBnrgPlugin

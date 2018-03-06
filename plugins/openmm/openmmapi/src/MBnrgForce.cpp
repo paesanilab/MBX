@@ -41,26 +41,26 @@ using namespace std;
 MBnrgForce::MBnrgForce() {
 }
 
-int MBnrgForce::addBond(int particle1, int particle2, double length, double k) {
-    bonds.push_back(BondInfo(particle1, particle2, length, k));
-    return bonds.size()-1;
-}
-
-void MBnrgForce::getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const {
-    ASSERT_VALID_INDEX(index, bonds);
-    particle1 = bonds[index].particle1;
-    particle2 = bonds[index].particle2;
-    length = bonds[index].length;
-    k = bonds[index].k;
-}
-
-void MBnrgForce::setBondParameters(int index, int particle1, int particle2, double length, double k) {
-    ASSERT_VALID_INDEX(index, bonds);
-    bonds[index].particle1 = particle1;
-    bonds[index].particle2 = particle2;
-    bonds[index].length = length;
-    bonds[index].k = k;
-}
+//int MBnrgForce::addBond(int particle1, int particle2, double length, double k) {
+//    bonds.push_back(BondInfo(particle1, particle2, length, k));
+//    return bonds.size()-1;
+//}
+//
+//void MBnrgForce::getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const {
+//    ASSERT_VALID_INDEX(index, bonds);
+//    particle1 = bonds[index].particle1;
+//    particle2 = bonds[index].particle2;
+//    length = bonds[index].length;
+//    k = bonds[index].k;
+//}
+//
+//void MBnrgForce::setBondParameters(int index, int particle1, int particle2, double length, double k) {
+//    ASSERT_VALID_INDEX(index, bonds);
+//    bonds[index].particle1 = particle1;
+//    bonds[index].particle2 = particle2;
+//    bonds[index].length = length;
+//    bonds[index].k = k;
+//}
 
 ForceImpl* MBnrgForce::createImpl() const {
     return new MBnrgForceImpl(*this);
