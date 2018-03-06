@@ -25,8 +25,9 @@ extension = Extension(name='_mbnrgplugin',
                       extra_link_args=extra_link_args
                      )
 
-setup(name='mbnrgplugin',
+setup(name='mbnrg',
       version='1.0',
-      py_modules=['mbnrgplugin'],
+      py_modules=['mbnrgplugin','mbnrg'],
       ext_modules=[extension],
+      data_files=[('',['mbnrg.xml'])],
      )

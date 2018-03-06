@@ -1,12 +1,12 @@
 <ForceField>
  <Info>
-  <Source></Source>
+  <Source>MBnrgPEFs</Source>
   <DateGenerated>2018-03-01</DateGenerated>
   <Reference></Reference>
  </Info>
  <AtomTypes>
-  <Type name="1" class="1" element="H" mass="1.008"/>
-  <Type name="2" class="2" element="O" mass="15.995"/>
+  <Type name="1" class="2" element="O" mass="15.995"/>
+  <Type name="2" class="1" element="H" mass="1.008"/>
   <Type name="3" class="3" mass="0.0"/>
  </AtomTypes>
  <Residues>

@@ -8,13 +8,13 @@ from simtk.openmm import app, System
 import simtk.openmm as mm
 from simtk import unit
 import sys
-from mbnrgplugin import MBnrgForce
+import mbnrg
+
 
 pdb = app.PDBFile("water3.pdb")
-
-forcefield = app.ForceField("/home/mrierari/codes/miniconda3/pkgs/openmm-7.2.0-py36_3/lib/python3.6/site-packages/simtk/openmm/app/data/mbnrg.xml")
-
 print(pdb.topology)
+
+forcefield = app.ForceField(mbnrg.__file__.replace('mbnrg.py','mbnrg.xml'))
 
 system = forcefield.createSystem(pdb.topology)
 force = MBnrgForce()
