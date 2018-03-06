@@ -126,6 +126,7 @@ before_script:
     -DUSE_OPENMP:BOOL=FALSE
   - cd build
   - travis_wait 60 make 
+  - make install
   - cd .. 
 
 script:
