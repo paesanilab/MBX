@@ -1,0 +1,23 @@
+<ForceField>
+ <Info>
+  <Source></Source>
+  <DateGenerated>2018-03-01</DateGenerated>
+  <Reference></Reference>
+ </Info>
+ <AtomTypes>
+  <Type name="1" class="1" element="H" mass="1.008"/>
+  <Type name="2" class="2" element="O" mass="15.995"/>
+  <Type name="3" class="3" mass="0.0"/>
+ </AtomTypes>
+ <Residues>
+  <Residue name="HOH">
+   <Atom name="O" type="1" />
+   <Atom name="H1" type="2" />
+   <Atom name="H2" type="2" />
+   <Atom name="M" type="3" />
+   <VirtualSite type="average3" index="3" atom1="0" atom2="1" atom3="2" weight1="0.573293118" weight2="0.213353441" weight3="0.213353441" />
+   <Bond from="0" to="2" />
+   <Bond from="1" to="2" />
+  </Residue>
+ </Residues>
+</ForceField>
