@@ -3,9 +3,9 @@ from simtk.openmm import app
 from simtk import unit
 
 ATOM_TYPES = {
-    "1" : 0,
-    "2" : 1,
-    "3" : 2,
+    "MBPol-O" : 0,
+    "MBPol-H" : 1,
+    "MBPol-M" : 2,
 }
 
 ## @private

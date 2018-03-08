@@ -22,6 +22,7 @@ set(MBNRGPLUGIN_LIBRARY_DIR "${CMAKE_BINARY_DIR}")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/setup.py ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mbnrg.py ${CMAKE_CURRENT_BINARY_DIR}/mbnrg.py COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mbnrg.xml ${CMAKE_CURRENT_BINARY_DIR}/mbnrg.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in ${CMAKE_CURRENT_BINARY_DIR}/MANIFEST.in COPYONLY)
 add_custom_command(TARGET PythonInstall
     COMMAND "${PYTHON_EXECUTABLE}" setup.py build
     COMMAND "${PYTHON_EXECUTABLE}" setup.py install

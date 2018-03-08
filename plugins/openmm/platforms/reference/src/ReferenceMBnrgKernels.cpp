@@ -69,11 +69,12 @@ double ReferenceCalcMBnrgForceKernel::execute(ContextImpl& context, bool include
     vector<RealVec>& pos = extractPositions(context);
     vector<RealVec>& force = extractForces(context);
 
+    double nmtoang = 10.0;
     std::vector<double> xyz_context(3*pos.size());
     for (size_t i = 0; i < pos.size(); i++) {
-      xyz_context[3*i + 0] = pos[i][0];
-      xyz_context[3*i + 1] = pos[i][1];
-      xyz_context[3*i + 2] = pos[i][2];
+      xyz_context[3*i + 0] = pos[i][0] * nmtoang;
+      xyz_context[3*i + 1] = pos[i][1] * nmtoang;
+      xyz_context[3*i + 2] = pos[i][2] * nmtoang;
     }
 
     if (!mbsys_initialized) {
@@ -84,14 +85,16 @@ double ReferenceCalcMBnrgForceKernel::execute(ContextImpl& context, bool include
 
     mbnrg_system.SetSysXyz(xyz_context);
     
+    double kcaltokj = 4.184;
+    double kcalperAngtokjpernm = kcaltokj*10;
     std::vector<double> grad(3*force.size(),0.0);
     std::cout << "Grad size is " << grad.size() << std::endl; 
-    double energy = mbnrg_system.Energy(grad,true);
+    double energy = mbnrg_system.Energy(grad,true) * kcaltokj;
     
     for (size_t i = 0; i < force.size(); i++) {
-      force[i][0] = -grad[3*i + 0];
-      force[i][1] = -grad[3*i + 1];
-      force[i][2] = -grad[3*i + 2];
+      force[i][0] = -grad[3*i + 0]*kcalperAngtokjpernm;
+      force[i][1] = -grad[3*i + 1]*kcalperAngtokjpernm;
+      force[i][2] = -grad[3*i + 2]*kcalperAngtokjpernm;
     }
 
 //    int numBonds = particle1.size();

@@ -14,13 +14,22 @@ import mbnrg
 pdb = app.PDBFile("water3.pdb")
 print(pdb.topology)
 
-forcefield = app.ForceField(mbnrg.__file__.replace('mbnrg.py','mbnrg.xml'))
+forcefield = app.ForceField('../python/mbnrg.xml')
 
 system = forcefield.createSystem(pdb.topology)
-force = MBnrgForce()
-system.addForce(force)
 
 integrator = mm.VerletIntegrator(0.00001*unit.femtoseconds)
 platform = mm.Platform.getPlatformByName('Reference')
 simulation = app.Simulation(pdb.topology, system, integrator, platform)
 simulation.context.setPositions(pdb.positions)
+
+state = simulation.context.getState(getForces=True, getEnergy=True)
+potential_energy = state.getPotentialEnergy()
+
+print("Energy:")
+print(potential_energy.in_units_of(unit.kilocalorie_per_mole))
+print("Gradients")
+kilocalorie_per_mole_per_angstrom = unit.kilocalorie_per_mole/unit.angstrom
+for f in state.getForces():
+    print(f.in_units_of(kilocalorie_per_mole_per_angstrom))
+
