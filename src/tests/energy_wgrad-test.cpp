@@ -68,7 +68,7 @@ int main(int argc, char** argv)
               << std::endl << std::endl;
 # ifdef PRINT_GRADS
 
-    std::vector<std::string> atn = systems[i].GetSysAtNames();
+    std::vector<std::string> atn = systems[i].GetOriginalOrderSysAtNames();
 
     size_t n_sites = systems[i].GetNumSites();
 
@@ -94,26 +94,26 @@ int main(int argc, char** argv)
               << std::endl;
     // Comparing analytical and numerical
     std::vector<double> xyz;
-    xyz = systems[i].GetSysXyz();
+    xyz = systems[i].GetOriginalOrderSysXyz();
     const double eps = 1.0e-6;
     for (size_t j = 0; j < n_sites * 3; j++) {
       if (atn[j/3] == "virt") continue;
       const double x_orig = xyz[j];
       xyz[j] = x_orig + eps;
-      systems[i].SetSysXyz(xyz);
+      systems[i].SetOriginalOrderSysXyz(xyz);
       const double Ep = systems[i].Energy(g,false);
       xyz[j] = x_orig + 2 * eps;
-      systems[i].SetSysXyz(xyz);
+      systems[i].SetOriginalOrderSysXyz(xyz);
       const double Epp = systems[i].Energy(g,false);
       xyz[j] = x_orig - eps;
-      systems[i].SetSysXyz(xyz);
+      systems[i].SetOriginalOrderSysXyz(xyz);
       const double Em = systems[i].Energy(g,false);
       xyz[j] = x_orig - 2 * eps;
-      systems[i].SetSysXyz(xyz);
+      systems[i].SetOriginalOrderSysXyz(xyz);
       const double Emm = systems[i].Energy(g,false);
       const double gfd = (8*(Ep - Em) - (Epp - Emm))/(12*eps);
       xyz[j] = x_orig;
-      systems[i].SetSysXyz(xyz);
+      systems[i].SetOriginalOrderSysXyz(xyz);
       std::cout << std::setprecision(5) << std::scientific
                 << std::setw(6) << std::left << atn[j/3]
                 << std::setw(20) << std::right << grd[j]
