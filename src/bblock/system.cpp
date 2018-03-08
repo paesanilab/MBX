@@ -27,7 +27,13 @@ std::vector<size_t> System::GetDimers() {return dimers_;}
 std::vector<size_t> System::GetTrimers() {return trimers_;}
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 std::vector<std::string> System::GetSysAtNames() {return atoms_;}
+std::vector<std::string> System::GetOriginalOrderSysAtNames() {
+  return systools::ResetOrder(atoms_, initial_order_, first_index_, sites_);
+}
 std::vector<double> System::GetSysXyz() {return xyz_;}
+std::vector<double> System::GetOriginalOrderSysXyz() {
+  return systools::ResetOrder(xyz_, initial_order_, first_index_, sites_);
+}
 std::vector<double> System::GetCharges() {return chg_;}
 std::vector<double> System::GetPols() {return pol_;}
 std::vector<double> System::GetPolfacs() {return polfac_;}
@@ -48,6 +54,17 @@ void System::SetDipoleMaxIt(double maxit) {maxItDip_ = maxit;}
 void System::SetSysXyz(std::vector<double> xyz) {
   // TODO Check that sizes are the same
   std::copy(xyz.begin(), xyz.end(), xyz_.begin());
+}
+
+void System::SetOriginalOrderSysXyz(std::vector<double> xyz) {
+  // TODO Check that sizes are the same
+  for (size_t i = 0; i < sites_.size(); i++) {
+    size_t ini = 3*initial_order_[i].second;
+    size_t fin = ini + 3*sites_[i];
+    size_t ini_new = 3*first_index_[i];
+    std::copy(xyz.begin() + ini, xyz.begin() + fin,
+              xyz_.begin() + ini_new);
+  } 
 }
 
 void System::AddMonomer(std::vector<double> xyz, 
@@ -102,7 +119,8 @@ void System::AddMonomerInfo() {
   std::vector<size_t> fi_at;
   nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
 
-  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
+  mon_type_count_ = systools::OrderMonomers
+                    (monomers_, sites_, initial_order_); 
   
   // Rearranging coordinates to account for virt sites
   xyz_ = std::vector<double> (3*nsites_, 0.0);
@@ -113,7 +131,7 @@ void System::AddMonomerInfo() {
   std::vector<size_t> tmpsites;
   std::vector<size_t> tmpnats;
   for (size_t i = 0; i < monomers_.size(); i++) {
-    size_t k = initial_order_[i];
+    size_t k = initial_order_[i].first;
     std::copy(xyz.begin() + 3 * fi_at[k],
               xyz.begin() + 3 * (fi_at[k] + nat_[k]),
               xyz_.begin() + 3 * count);
@@ -239,8 +257,7 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
 # endif
 
   // Copy gradients to output grad
-  grad.clear();
-  grad = grad_;
+  grad = systools::ResetOrder(grad_, initial_order_, first_index_, sites_);
 
   return energy_;
 }

@@ -49,13 +49,16 @@ class System {
   std::vector<size_t> GetTrimers();
   std::vector<size_t> GetMolecule(size_t n);
   std::vector<double> GetSysXyz();
+  std::vector<double> GetOriginalOrderSysXyz();
   std::vector<double> GetCharges();
   std::vector<double> GetPols();
   std::vector<double> GetPolfacs();
   std::vector<std::string> GetSysAtNames();
+  std::vector<std::string> GetOriginalOrderSysAtNames();
   std::string GetMonId(size_t n);
   // Modifiers
   void SetSysXyz(std::vector<double> xyz);
+  void SetOriginalOrderSysXyz(std::vector<double> xyz);
   void AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id);
   void AddMolecule(std::vector<size_t> molec);
@@ -107,7 +110,6 @@ class System {
   bool initialized_;                         // Systes is initialized?
   std::vector<size_t> sites_;                // Number of sites of each mo
   std::vector<size_t> nat_;                  // Number of atoms of each mo
-  std::vector<size_t> initial_order_;        // Input order of monomers
   std::vector<size_t> first_index_;          // First index of mon in sys
   std::vector<size_t> dimers_;               // Dimers of the molecule
   std::vector<size_t> trimers_;              // Trimers of the molecule
@@ -122,7 +124,9 @@ class System {
   // Molecules of system
   std::vector<std::vector<size_t> > molecules_; 
   // Mon type and # mon of each
-  std::vector<std::pair<std::string,size_t> > mon_type_count_;   
+  std::vector<std::pair<std::string,size_t> > mon_type_count_;  // Input order of monomers  
+  // Input order of monomers <monomer, site first index>
+  std::vector<std::pair<size_t,size_t> > initial_order_;       
 };
 
 } // namespace bblock
