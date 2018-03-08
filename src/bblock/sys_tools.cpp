@@ -9,8 +9,8 @@ const double gamma2 = gammaM/2;
 const double gamma21 = gamma2/gamma1;
 
 std::vector<std::pair<std::string,size_t>> OrderMonomers
-                   (std::vector<std::string> &mon, 
-                    std::vector<size_t> &original_order) {
+                   (std::vector<std::string> &mon, std::vector<size_t> sites,
+                    std::vector<std::pair<size_t,size_t> > &original_order) {
   std::vector<std::string> monomers = mon;
   mon.clear();
   original_order.clear();
@@ -43,11 +43,13 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
 
     mon_types_count.push_back(minmon);
     std::string monid = montypetmp[min_ind].first;
+    size_t site_pos = 0;
     for (size_t i = 0; i < monomers.size(); i++) {
       if (monomers[i] == monid) {
-        original_order.push_back(i);
+        original_order.push_back(std::make_pair(i,site_pos));
         mon.push_back(monid);
       }
+      site_pos += sites[i];
     }
     
     montypetmp.erase(montypetmp.begin() + min_ind,
@@ -268,6 +270,39 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
   return aDD;
 }
 
+std::vector<double> ResetOrder(std::vector<double> coords,
+    std::vector<std::pair<size_t,size_t> > original_order, 
+    std::vector<size_t> first_index,
+    std::vector<size_t> sites) {
+  
+  std::vector<double> new_coords(coords.size());
+  for (size_t i = 0; i < sites.size(); i++) {
+    size_t ini = 3*first_index[i];
+    size_t fin = ini + 3*sites[i];
+    size_t ini_orig = 3*original_order[i].second;
+    std::copy(coords.begin() + ini, coords.begin() + fin, 
+              new_coords.begin() + ini_orig);
+  }
+
+  return new_coords;
+}
+
+std::vector<std::string> ResetOrder(std::vector<std::string> at_names,
+    std::vector<std::pair<size_t,size_t> > original_order, 
+    std::vector<size_t> first_index,
+    std::vector<size_t> sites) {
+
+  std::vector<std::string> new_at_names(at_names.size());
+  for (size_t i = 0; i < sites.size(); i++) {
+    size_t ini = first_index[i];
+    size_t fin = ini + sites[i];
+    size_t ini_orig = original_order[i].second;
+    std::copy(at_names.begin() + ini, at_names.begin() + fin, 
+              new_at_names.begin() + ini_orig);
+  }
+
+  return new_at_names;
+}
 
 void SetVSites (std::vector<double> &xyz, std::string mon_id,
     size_t n_mon, size_t nsites, size_t fst_ind) {

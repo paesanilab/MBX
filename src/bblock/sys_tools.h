@@ -19,9 +19,9 @@ namespace systools {
 
 // Function that given the monomers, modifies the ordered monomer list
 // in mon, and the original order in the vector original_order
-std::vector<std::pair<std::string,size_t> > OrderMonomers
-                   (std::vector<std::string> &mon, 
-                    std::vector<size_t> &original_order);
+std::vector<std::pair<std::string,size_t>> OrderMonomers
+                   (std::vector<std::string> &mon, std::vector<size_t> sites,
+                    std::vector<std::pair<size_t,size_t> > &original_order);
 
 // Function that sets up initial charges, pols, polfacs, number of sites
 // number of atoms and first index. Returns the total number of sites
@@ -48,6 +48,18 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
 
 // Returns the proper aDD value for the electrostatics
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
+
+// Reorders the gradients or coordinates to the original order
+std::vector<double> ResetOrder(std::vector<double> coords,
+    std::vector<std::pair<size_t,size_t> > original_order, 
+    std::vector<size_t> first_index,
+    std::vector<size_t> sites);
+
+// Reorders the atom names to the original order
+std::vector<std::string> ResetOrder(std::vector<std::string> at_names,
+    std::vector<std::pair<size_t,size_t> > original_order, 
+    std::vector<size_t> first_index,
+    std::vector<size_t> sites);
 
 // Calculates the coordinates of the virtual site of a monomer when
 // given the coordinates of the other sites
