@@ -11,7 +11,7 @@ import sys
 import mbnrg
 
 
-pdb = app.PDBFile("water3.pdb")
+pdb = app.PDBFile("water3cl1.pdb")
 print(pdb.topology)
 
 forcefield = app.ForceField(mbnrg.__file__.replace('mbnrg.py', 'mbnrg.xml'))
