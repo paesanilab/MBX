@@ -6,6 +6,7 @@ ATOM_TYPES = {
     "MBPol-O" : 0,
     "MBPol-H" : 1,
     "MBPol-M" : 2,
+    "MBPol-Cl" : 3,
 }
 
 ## @private
@@ -62,6 +63,26 @@ class MBnrgForceGenerator:
 
 #        force.setNonbondedMethod(methodMap[nonbondedMethod])
 
+#       Add monomer information to python pair list
+        residue_index_pair = []
+        for i in data.atoms:
+            id_residue = i.residue.id
+            name_residue = i.residue.name
+            pair = [name_residue, id_residue]
+            
+            if not pair in residue_index_pair:
+                residue_index_pair.append([name_residue, id_residue])
+                print("Appending:")
+                print([name_residue, id_residue])
+
+#       Add the monomer order to the force
+        v = mbnrgplugin.vectorstring()
+        #v = mbnrgplugin.vectori()
+        for i in residue_index_pair:
+            v.push_back(i[0])
+            print(i[0])
+        force.addMonomerList(v)
+        
 # Here is where I will need to add the information of monomers
 # Then add it to the force class, so it knows everything it needs
 #        for i in range(len(data.angles)):
