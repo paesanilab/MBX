@@ -1,7 +1,8 @@
 %module mbnrgplugin
-
+/*
 %import(module="simtk.openmm") "swig/OpenMMSwigHeaders.i"
 %include "swig/typemaps.i"
+*/
 
 /*
  * The following lines are needed to handle std::vector.
@@ -9,11 +10,16 @@
  * for other STL types like maps.
  */
 
+%include "std_string.i"
 %include "std_vector.i"
 namespace std {
   %template(vectord) vector<double>;
   %template(vectori) vector<int>;
+  %template(vectorstring) vector<string>;
 };
+
+%import(module="simtk.openmm") "swig/OpenMMSwigHeaders.i"
+%include "swig/typemaps.i"
 
 %{
 #include "MBnrgForce.h"
@@ -36,6 +42,7 @@ public:
     MBnrgForce();
 
     void updateParametersInContext(OpenMM::Context& context);
+    int addMonomerList(std::vector<std::string> openmmMonomers);
 
     /*
      * The reference parameters to this function are output values.
