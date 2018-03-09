@@ -46,6 +46,34 @@ MBnrgForce::MBnrgForce() {
 //    return bonds.size()-1;
 //}
 //
+
+int MBnrgForce::addMonomerList(std::vector<std::string> openmmMonomers) {
+    mbnrg_monomer_names.clear();
+    atoms.clear();
+    sites.clear();
+    for (size_t i = 0; i < openmmMonomers.size(); i++) {
+        std::string mon = openmmMonomers[i];
+        std::transform(mon.begin(), mon.end(), mon.begin(), ::tolower);
+        if (mon == "hoh") {
+            mbnrg_monomer_names.push_back("h2o");
+            atoms.push_back(3);
+            sites.push_back(4);
+            std::vector<std::string> names(atoms.back());
+            names[0] = "O";
+            names[1] = "H";
+            names[2] = "H";
+            at_names.push_back(names);
+        } else if (mon == "cl") {
+            mbnrg_monomer_names.push_back("cl");
+            atoms.push_back(1);
+            sites.push_back(1);
+            std::vector<std::string> names(atoms.back());
+            names[0] = "Cl";
+            at_names.push_back(names);
+        }
+    }
+    return 0;
+}
 //void MBnrgForce::getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const {
 //    ASSERT_VALID_INDEX(index, bonds);
 //    particle1 = bonds[index].particle1;

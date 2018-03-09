@@ -8,6 +8,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 #SET(OPENMM_DIR "/usr/local/openmm" CACHE PATH "Where OpenMM is installed")
 SET(OPENMM_DIR "/home/mrierari/codes/miniconda3/pkgs/openmm-7.2.0-py36_3" CACHE PATH "Where OpenMM is installed")
 SET(MBNRG_DIR "/home/mrierari/codes/clusters_ultimate/install" CACHE PATH "Where MBnrg is installed")
+SET(PYTHON_EXECUTABLE "/home/mrierari/codes/miniconda3/bin/python3" CACHE PATH "Where the python3 executable is")
 SET(CMAKE_INSTALL_PREFIX ${OPENMM_DIR})
 INCLUDE_DIRECTORIES("${OPENMM_DIR}/include" "${MBNRG_DIR}/include")
 LINK_DIRECTORIES("${OPENMM_DIR}/lib" "${OPENMM_DIR}/lib/plugins" "${MBNRG_DIR}/lib/static")
@@ -31,6 +32,9 @@ IF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
         SET(CMAKE_INSTALL_PREFIX "${OPENMM_DIR}" CACHE PATH "Where to install the plugin" FORCE)
     ENDIF(WIN32)
 ENDIF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
+
+SET(OPENMM_MAJOR_VERSION 7 CACHE INTEGER "OpenMM major version, e.g. 7 in 7.2.0")
+SET(OPENMM_MINOR_VERSION 2 CACHE INTEGER "OpenMM minor version, e.g. 2 in 7.2.0")
 
 set(EXTRA_COMPILE_FLAGS "${EXTRA_COMPILE_FLAGS} ")
 #MRR
@@ -127,10 +131,10 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
 # Build the Python API
 
 #FIND_PROGRAM(PYTHON_EXECUTABLE python)
-execute_process(
-  COMMAND bash -c "which python"
-  OUTPUT_VARIABLE PYTHON_EXECUTABLE
-)
+#execute_process(
+#  COMMAND bash -c "which python"
+#  OUTPUT_VARIABLE PYTHON_EXECUTABLE
+#)
 string(STRIP ${PYTHON_EXECUTABLE} PYTHON_EXECUTABLE)
 FIND_PROGRAM(SWIG_EXECUTABLE swig)
 IF(PYTHON_EXECUTABLE AND SWIG_EXECUTABLE)

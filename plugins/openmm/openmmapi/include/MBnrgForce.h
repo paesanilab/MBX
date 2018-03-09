@@ -36,6 +36,9 @@
 #include "openmm/Force.h"
 #include "bblock/system.h"
 #include <vector>
+#include <string>
+#include <algorithm>
+#include <iostream>
 #include "internal/windowsExportMBnrg.h"
 
 namespace MBnrgPlugin {
@@ -77,6 +80,9 @@ public:
      * @param k         the harmonic force constant for the bond, measured in kJ/mol/nm^4
      */
 //    void getBondParameters(int index, int& particle1, int& particle2, double& length, double& k) const;
+
+    int addMonomerList(std::vector<std::string> openmmMonomers);
+
     /**
      * Set the force field parameters for a bond term.
      * 
@@ -105,6 +111,11 @@ public:
     bool usesPeriodicBoundaryConditions() const {
         return false;
     }
+
+    std::vector<std::string> mbnrg_monomer_names;
+    std::vector<int> sites;
+    std::vector<int> atoms;
+    std::vector<std::vector<std::string> > at_names;
 protected:
     OpenMM::ForceImpl* createImpl() const;
 private:
