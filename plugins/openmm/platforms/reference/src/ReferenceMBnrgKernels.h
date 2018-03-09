@@ -71,7 +71,7 @@ public:
     void copyParametersToContext(OpenMM::ContextImpl& context, const MBnrgForce& force);
 private:
 
-    void mbnrg_initialize(std::vector<double> xyz);
+    void mbnrg_initialize(const MBnrgForce& force);
     bblock::System mbnrg_system;
     bool mbsys_initialized;
 

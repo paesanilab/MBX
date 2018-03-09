@@ -53,7 +53,9 @@ static vector<RealVec>& extractForces(ContextImpl& context) {
 void ReferenceCalcMBnrgForceKernel::initialize(const System& system, const MBnrgForce& force) {
 
     // Can do nothing here (MB-nrg)
-    mbsys_initialized = false;
+
+    mbnrg_initialize(force);
+    mbsys_initialized = true;
 
 //    // Initialize bond parameters.
 //    int numBonds = force.getNumBonds();
@@ -75,15 +77,13 @@ double ReferenceCalcMBnrgForceKernel::execute(ContextImpl& context, bool include
       xyz_context[3*i + 0] = pos[i][0] * nmtoang;
       xyz_context[3*i + 1] = pos[i][1] * nmtoang;
       xyz_context[3*i + 2] = pos[i][2] * nmtoang;
+      std::cout << "Atom " << i << ": X Y Z = " << pos[i][0] * nmtoang
+                                         << " " << pos[i][1] * nmtoang
+                                         << " " << pos[i][2] * nmtoang << std::endl;
     }
 
-    if (!mbsys_initialized) {
 
-      mbnrg_initialize(xyz_context);
-      mbsys_initialized = true;
-    }
-
-    mbnrg_system.SetSysXyz(xyz_context);
+    mbnrg_system.SetOriginalOrderSysXyz(xyz_context);
     
     double kcaltokj = 4.184;
     double kcalperAngtokjpernm = kcaltokj*10;
@@ -130,21 +130,32 @@ void ReferenceCalcMBnrgForceKernel::copyParametersToContext(ContextImpl& context
 //    }
 }
 
-void ReferenceCalcMBnrgForceKernel::mbnrg_initialize(std::vector<double> xyz) {
+void ReferenceCalcMBnrgForceKernel::mbnrg_initialize(const MBnrgForce& force) {
     std::cout << "MB-nrg System Initialization" << std::endl;
-    // hardcoded for water
-    size_t nw = xyz.size() / 12;
-    for (size_t i = 0; i < nw; i++) {
-      std::string name = "h2o";
-      std::vector<std::string> at_names(3);
-      at_names[0] = "O";
-      at_names[1] = "H";
-      at_names[2] = "H";
-      std::vector<double> coords(9);
-      for (size_t j = 0; j < 9; j++) {
-        coords[j] = xyz[12*i + j];
-      }
-      mbnrg_system.AddMonomer(coords, at_names, name);
-    } 
+    
+    size_t pos = 0;
+    for (size_t i = 0; i < force.mbnrg_monomer_names.size(); i++) {
+      size_t num_coords = force.atoms[i]*3;
+      std::vector<double> coords(num_coords,0.0);
+//      std::copy(xyz.begin() + pos, xyz.begin() + pos + num_coords, coords.begin());
+      mbnrg_system.AddMonomer(coords, force.at_names[i], force.mbnrg_monomer_names[i]);
+      pos += force.sites[i]*3;
+    }
+    
+
+//    // hardcoded for water
+//    size_t nw = xyz.size() / 12;
+//    for (size_t i = 0; i < nw; i++) {
+//      std::string name = "h2o";
+//      std::vector<std::string> at_names(3);
+//      at_names[0] = "O";
+//      at_names[1] = "H";
+//      at_names[2] = "H";
+//      std::vector<double> coords(9);
+//      for (size_t j = 0; j < 9; j++) {
+//        coords[j] = xyz[12*i + j];
+//      }
+//      mbnrg_system.AddMonomer(coords, at_names, name);
+//    } 
     mbnrg_system.Initialize();
 }
