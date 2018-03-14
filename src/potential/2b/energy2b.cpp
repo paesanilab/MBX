@@ -16,8 +16,12 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm,
   }
 
   if (m1 == "h2o" and m2 == "h2o") {
+//    if (NNFlag == true) {
+//      call neural networks
+//     else
     x2o::x2b_v9x pot;
     return pot.eval(xyz1.data(),xyz2.data(),nm);
+// }
   } else if ((m1 == "f" or m1 == "cl" or m1 == "br" or m1 == "cs")
               and m2 == "h2o") {
     // The order is bc the poly were generated this way
