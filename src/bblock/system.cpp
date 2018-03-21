@@ -187,6 +187,12 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   energy_ = 0.0;
   std::fill(grad_.begin(), grad_.end(), 0.0);
 
+  // Reset the chargers, pols, polfacs and new Vsite
+  SetVSites();
+  SetCharges();
+  SetPols();
+  SetPolfacs();
+
   // Get the NB contributions
 
 # ifdef TIMING

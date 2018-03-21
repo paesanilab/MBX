@@ -13,7 +13,7 @@ if [ "$1" == "gnu" ]; then
 
 else
   rm -rf build install
-  cmake  -DCMAKE_CXX_FLAGS="-Wall -qopt-report " -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc -H. -Bbuild
+  cmake  -DCMAKE_CXX_FLAGS="-Wall -qopt-report -fPIC " -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc -H. -Bbuild
   cd build
   make CXX=icpc CC=icc 
   cd ../

@@ -72,15 +72,12 @@ class MBnrgForceGenerator:
             
             if not pair in residue_index_pair:
                 residue_index_pair.append([name_residue, id_residue])
-                print("Appending:")
-                print([name_residue, id_residue])
 
 #       Add the monomer order to the force
         v = mbnrgplugin.vectorstring()
         #v = mbnrgplugin.vectori()
         for i in residue_index_pair:
             v.push_back(i[0])
-            print(i[0])
         force.addMonomerList(v)
         
 # Here is where I will need to add the information of monomers

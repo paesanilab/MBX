@@ -33,3 +33,27 @@ kilocalorie_per_mole_per_angstrom = unit.kilocalorie_per_mole/unit.angstrom
 for f in state.getForces():
     print(f.in_units_of(kilocalorie_per_mole_per_angstrom))
 
+from simtk.openmm import LocalEnergyMinimizer
+
+LocalEnergyMinimizer.minimize(simulation.context, 1e-1)
+
+state = simulation.context.getState(getForces=True, getEnergy=True, getPositions=True)
+potential_energy = state.getPotentialEnergy()
+potential_energy.in_units_of(unit.kilocalorie_per_mole)
+
+simulation.context.setVelocitiesToTemperature(300*unit.kelvin)
+# Equilibrate
+simulation.step(10)
+
+simulation.reporters.append(app.StateDataReporter(sys.stdout, 10, step=True,
+    potentialEnergy=True, temperature=True, progress=True, remainingTime=True,
+    speed=True, totalSteps=110, separator='\t'))
+
+
+# Add a `PDBReporter` that writes molecules positions every 20 steps in a pdb file.
+
+# In[ ]:
+
+simulation.reporters.append(app.PDBReporter('trajectory.pdb', 20))
+
+simulation.step(100)
