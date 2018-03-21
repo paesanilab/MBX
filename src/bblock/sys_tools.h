@@ -31,7 +31,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
 // Given ifnormation of the system, this subroutine fills up the dimers and 
 // trimers of the system.
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
-                 size_t nmon,
+                 size_t nmon, bool use_pbc, 
+                 std::vector<double> box,
                  std::vector<double> xyz_orig, 
                  std::vector<size_t> first_index,
                  std::vector<size_t> &dimers, 

@@ -107,7 +107,8 @@ bool compare_mon_type (std::pair<std::string,size_t> a,
 }
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, 
-                 size_t nmon, 
+                 size_t nmon, bool use_pbc,
+                 std::vector<double> box,
                  std::vector<double> xyz_orig,
                  std::vector<size_t> first_index, 
                  std::vector<size_t> &dimers, 
@@ -133,7 +134,7 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
   }
 
   // Obtain the data in the structure needed by the kd-tree
-  kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz);
+  kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box);
 
   // Build the tree
   typedef nanoflann::KDTreeSingleIndexAdaptor<

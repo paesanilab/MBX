@@ -108,17 +108,19 @@ class System {
   double cutoff3b_;                          // Cutoff for dim and trim search 
   double energy_;                            // Energy of the system
   bool initialized_;                         // Systes is initialized?
+  bool use_pbc_;                             // Periodic boundary conditions?
   std::vector<size_t> sites_;                // Number of sites of each mo
   std::vector<size_t> nat_;                  // Number of atoms of each mo
   std::vector<size_t> first_index_;          // First index of mon in sys
   std::vector<size_t> dimers_;               // Dimers of the molecule
   std::vector<size_t> trimers_;              // Trimers of the molecule
-  std::vector<double> grad_;                  // Gradients of all sites
-  std::vector<double> chggrad_;                  // Gradients of pos dep chg
+  std::vector<double> grad_;                 // Gradients of all sites
+  std::vector<double> chggrad_;              // Gradients of pos dep chg
   std::vector<double> xyz_;                  // Coords of all sites
   std::vector<double> chg_;                  // Charges of all sites
   std::vector<double> pol_;                  // Polarizabilities of all sites
   std::vector<double> polfac_;               // Polfacs of all sites
+  std::vector<double> box_;                  // Box, in case we use PBC
   std::vector<std::string> monomers_;        // Monomer ids
   std::vector<std::string> atoms_;           // Atom names of sys
   // Molecules of system

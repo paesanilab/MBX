@@ -92,8 +92,10 @@ void System::Initialize() {
   maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
   maxNTriEval_ = 1024;
-//  maxNTriEval_ = 1024;
   maxItDip_ = 100;
+
+  box_ = std::vector<double>(3,0.0);
+  use_pbc_ = false;
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
@@ -164,7 +166,8 @@ void System::AddClusters(size_t n_max, double cutoff,
   // This means, if istart is 0 and iend is 2, we will look for all dimers
   // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
   size_t nmon = monomers_.size();
-  systools::AddClusters(n_max, cutoff, istart, iend, nmon, xyz_,
+  systools::AddClusters(n_max, cutoff, istart, iend, nmon, 
+                        use_pbc_, box_, xyz_,
                         first_index_, dimers_, trimers_);
   
 }
@@ -175,7 +178,8 @@ std::vector<size_t> System::AddClustersParallel(size_t n_max, double cutoff,
   // Returns dimers if n_max == 2, or trimers if n_max == 3
   size_t nmon = monomers_.size();
   std::vector<size_t> dimers, trimers;
-  systools::AddClusters(n_max, cutoff, istart, iend, nmon, xyz_,
+  systools::AddClusters(n_max, cutoff, istart, iend, nmon, 
+                        use_pbc_, box_, xyz_,
                         first_index_, dimers, trimers);
   if (n_max == 2)
     return dimers;
