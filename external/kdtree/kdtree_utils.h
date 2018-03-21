@@ -43,16 +43,38 @@ struct PointCloud
 
   std::vector<Point>  pts;
 
+  // Sets if PBC will be used
+  bool PBC = false;
+  
+  // Box. Assuming orthogonal box. 3 components in vector
+  std::vector<T> pbcbox;
+  
   // Must return the number of data points
   inline size_t kdtree_get_point_count() const { return pts.size(); }
 
+
   // Returns the distance between the vector "p1[0:size-1]" and the data point with index "idx_p2" stored in the class:
-  inline T kdtree_distance(const T *p1, const size_t idx_p2,size_t /*size*/) const
+  inline T kdtree_distance(const T *p1, const size_t idx_p2, size_t size) const
   {
-    const T d0=p1[0]-pts[idx_p2].x;
-    const T d1=p1[1]-pts[idx_p2].y;
-    const T d2=p1[2]-pts[idx_p2].z;
-    return d0*d0+d1*d1+d2*d2;
+    T tmp, d;
+    if (PBC) {
+      tmp = p1[0]-pts[idx_p2].x;
+      const T d0 = tmp >  pbcbox[0] * 0.5 ? tmp - pbcbox[0] * 0.5 :
+                   tmp <= pbcbox[0] * 0.5 ? tmp + pbcbox[0] * 0.5 : tmp;
+      tmp = p1[1]-pts[idx_p2].y;
+      const T d1 = tmp >  pbcbox[1] * 0.5 ? tmp - pbcbox[1] * 0.5 :
+                   tmp <= pbcbox[1] * 0.5 ? tmp + pbcbox[1] * 0.5 : tmp;
+      tmp = p1[2]-pts[idx_p2].z;
+      const T d2 = tmp >  pbcbox[2] * 0.5 ? tmp - pbcbox[2] * 0.5 :
+                   tmp <= pbcbox[2] * 0.5 ? tmp + pbcbox[2] * 0.5 : tmp;
+      d = d0*d0+d1*d1+d2*d2;
+    } else {
+      const T d0=p1[0]-pts[idx_p2].x;
+      const T d1=p1[1]-pts[idx_p2].y;
+      const T d2=p1[2]-pts[idx_p2].z;
+      d = d0*d0+d1*d1+d2*d2;
+    }
+    return d;
   }
 
   // Returns the dim'th component of the idx'th point in the class:
@@ -75,9 +97,11 @@ struct PointCloud
 
 // Gets a vector of XYZ and returns the point cloud
 template <typename T>
-PointCloud<T> XyzToCloud(std::vector<T> xyz) 
+PointCloud<T> XyzToCloud(std::vector<T> xyz, bool use_pbc, std::vector<T> box) 
 {
   PointCloud<T> ptc;
+  ptc.PBC = use_pbc;
+  ptc.pbcbox = box;
   ptc.pts.resize(xyz.size() / 3);
   for (size_t i = 0; i < xyz.size() / 3; i++) {
     ptc.pts[i].x = xyz[3*i];
