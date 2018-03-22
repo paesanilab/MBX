@@ -56,24 +56,24 @@ struct PointCloud
   // Returns the distance between the vector "p1[0:size-1]" and the data point with index "idx_p2" stored in the class:
   inline T kdtree_distance(const T *p1, const size_t idx_p2, size_t size) const
   {
-    T tmp, d;
-    if (PBC) {
-      tmp = p1[0]-pts[idx_p2].x;
-      const T d0 = tmp >  pbcbox[0] * 0.5 ? tmp - pbcbox[0] * 0.5 :
-                   tmp <= pbcbox[0] * 0.5 ? tmp + pbcbox[0] * 0.5 : tmp;
-      tmp = p1[1]-pts[idx_p2].y;
-      const T d1 = tmp >  pbcbox[1] * 0.5 ? tmp - pbcbox[1] * 0.5 :
-                   tmp <= pbcbox[1] * 0.5 ? tmp + pbcbox[1] * 0.5 : tmp;
-      tmp = p1[2]-pts[idx_p2].z;
-      const T d2 = tmp >  pbcbox[2] * 0.5 ? tmp - pbcbox[2] * 0.5 :
-                   tmp <= pbcbox[2] * 0.5 ? tmp + pbcbox[2] * 0.5 : tmp;
-      d = d0*d0+d1*d1+d2*d2;
-    } else {
+//    T tmp, d;
+//    if (PBC) {
+//      tmp = p1[0]-pts[idx_p2].x;
+//      const T d0 = tmp >  pbcbox[0] * 0.5 ? tmp - pbcbox[0] * 0.5 :
+//                   tmp <= -pbcbox[0] * 0.5 ? tmp + pbcbox[0] * 0.5 : tmp;
+//      tmp = p1[1]-pts[idx_p2].y;
+//      const T d1 = tmp >  pbcbox[1] * 0.5 ? tmp - pbcbox[1] * 0.5 :
+//                   tmp <= -pbcbox[1] * 0.5 ? tmp + pbcbox[1] * 0.5 : tmp;
+//      tmp = p1[2]-pts[idx_p2].z;
+//      const T d2 = tmp >  pbcbox[2] * 0.5 ? tmp - pbcbox[2] * 0.5 :
+//                   tmp <= -pbcbox[2] * 0.5 ? tmp + pbcbox[2] * 0.5 : tmp;
+//      d = d0*d0+d1*d1+d2*d2;
+//    } else {
       const T d0=p1[0]-pts[idx_p2].x;
       const T d1=p1[1]-pts[idx_p2].y;
       const T d2=p1[2]-pts[idx_p2].z;
-      d = d0*d0+d1*d1+d2*d2;
-    }
+      T d = d0*d0+d1*d1+d2*d2;
+//    }
     return d;
   }
 
@@ -102,11 +102,34 @@ PointCloud<T> XyzToCloud(std::vector<T> xyz, bool use_pbc, std::vector<T> box)
   PointCloud<T> ptc;
   ptc.PBC = use_pbc;
   ptc.pbcbox = box;
-  ptc.pts.resize(xyz.size() / 3);
-  for (size_t i = 0; i < xyz.size() / 3; i++) {
-    ptc.pts[i].x = xyz[3*i];
-    ptc.pts[i].y = xyz[3*i + 1];
-    ptc.pts[i].z = xyz[3*i + 2];
+
+  size_t np = xyz.size() / 3;
+  size_t size = np;
+  if (use_pbc) size *= 27;
+
+  ptc.pts.resize(size);
+
+  for (size_t i = 0; i < np; i++) {
+    size_t i3 = 3*i;
+    ptc.pts[i].x = xyz[i3];
+    ptc.pts[i].y = xyz[i3 + 1];
+    ptc.pts[i].z = xyz[i3 + 2];
+    if (use_pbc) {
+      for (size_t m = 0; m < 3; m++) {
+        for (size_t n = 0; n < 3; n++) {
+          for (size_t l = 0; l < 3; l++) {
+            if (m == 0 && n == 0 && l == 0) continue;
+            size_t shift = (9*m + 3*n + l) * np;
+            std::vector<double> shifti = {(double(m) - 1) * box[0],  
+                                          (double(n) - 1) * box[1],
+                                          (double(l) - 1) * box[2]};
+            ptc.pts[i + shift].x = xyz[i3] + shifti[0];
+            ptc.pts[i + shift].y = xyz[i3 + 1] + shifti[1];
+            ptc.pts[i + shift].z = xyz[i3 + 2] + shifti[2];
+          }
+        }
+      }
+    }
   }
   return ptc;
 }

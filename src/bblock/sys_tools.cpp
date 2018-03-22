@@ -150,6 +150,7 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
     trimers.clear();
 
   std::vector<size_t> idone;
+  std::set<std::pair<size_t, size_t>> donej;
   for (size_t i = 0; i < iend - istart; i++) {
     // Define the query point
     double point[3];
@@ -168,19 +169,29 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
 
     // Add the pairs that are not in the dimer vector
     for (size_t j = 0; j < nMatches; j++) {
-      if (ret_matches[j].first > i) {
-        dimers.push_back(i + istart);
-        dimers.push_back(ret_matches[j].first + istart);
+      size_t pos = ret_matches[j].first / nmon;
+      ret_matches[j].first -= nmon * pos;
+      std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> retdim;
+      if (ret_matches[j].first > i ) {
+        retdim = donej.insert(std::make_pair(i,ret_matches[j].first));
+        if (retdim.second) {
+          dimers.push_back(i + istart);
+          dimers.push_back(ret_matches[j].first + istart);
+        }
 
         // Add trimers if requested
         if (n_max > 2) {
+          std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> ret;
           for (size_t k = 0; k < nMatches; k++) {
-            if (ret_matches[k].first > ret_matches[j].first) {
+            pos = ret_matches[k].first / nmon;
+            ret_matches[k].first -= nmon * pos;
+            ret = donek.insert(std::make_pair(ret_matches[j].first,
+                                          ret_matches[k].first));
+            if (ret_matches[k].first > ret_matches[j].first
+                && ret.second) {
               trimers.push_back(i + istart);
               trimers.push_back(ret_matches[j].first + istart);
               trimers.push_back(ret_matches[k].first + istart); 
-              donek.insert(std::make_pair(ret_matches[j].first,
-                                          ret_matches[k].first));
             } 
           }
           // Define query point, which is each of the points 'j' inside the 
@@ -199,8 +210,9 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
           // Add the trimers that fulfil i > j > k, to avoid double counting
           // We will add all trimers that fulfill the condition:
           // At least 2 of the three distances must be smaller than the cutoff 
-          std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> ret;
           for (size_t k = 0; k < nMatches2; k++) {
+            size_t pos2 = ret_matches2[k].first / nmon;
+            ret_matches2[k].first -= nmon * pos2;
             if (ret_matches2[k].first > i) {
               size_t jel = ret_matches[j].first;
               size_t kel = ret_matches2[k].first;
