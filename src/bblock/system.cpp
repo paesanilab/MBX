@@ -55,6 +55,13 @@ void System::SetPBC(bool use_pbc,
                     std::vector<double> box = {1000.0,1000.0,1000.0}) {
   use_pbc_ = use_pbc;
   box_ = box;
+  if (use_pbc_) {
+    systools::FixMonomerCoordinates(xyz_,box_,nat_,first_index_);
+    SetVSites();
+    SetCharges();
+    SetPols();
+    SetPolfacs();
+  }
 }
 
 void System::SetSysXyz(std::vector<double> xyz) {
