@@ -28,6 +28,12 @@ std::vector<std::pair<std::string,size_t> > OrderMonomers
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
                      std::vector<size_t> &nat, std::vector<size_t> &fi_at);
 
+// Makes sure that all the atoms of the monomers are together in space
+void FixMonomerCoordinates(std::vector<double> &xyz,
+                           std::vector<double> box,
+                           std::vector<size_t> nat,
+                           std::vector<size_t> first_index);                           
+
 // Given ifnormation of the system, this subroutine fills up the dimers and 
 // trimers of the system.
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,

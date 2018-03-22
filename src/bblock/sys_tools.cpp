@@ -98,6 +98,46 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
   return count;
 }
 
+void FixMonomerCoordinates(std::vector<double> &xyz,
+                           std::vector<double> box,
+                           std::vector<size_t> nat,
+                           std::vector<size_t> first_index) {
+  size_t nmon = nat.size();
+
+  std::vector<double> box2 = box;
+  for (size_t i = 0; i < box.size(); i++)
+    box2[i] *= 0.5;
+
+  for (size_t i = 0; i < nmon; i++) {
+    size_t shift = 3*first_index[i];
+    
+    // Put central atom in main box
+    double first_at[3];
+    for (size_t j = 0; j < 3; j++) {
+      double xyzi = xyz[shift + j];
+      if (xyzi < 0) { 
+        xyz[shift + j] += box[j];
+      } else if (xyzi > box[j]) {
+        xyz[shift + j] -= box[j];
+      }
+      first_at[j] = xyz[shift + j];
+    }
+
+    // Put rest of molecule atoms next to central atom
+    for (size_t j = 1; j < nat[i]; j++) {
+      size_t j3 = j*3;
+      for (size_t k = 0; k < 3; k++) {
+        double di = xyz[shift + j3 + k] - first_at[k];
+        if (di > box2[k]) {
+          xyz[shift + j3 + k] -= box[k];
+        } else if (di <= -box2[k]) {
+          xyz[shift + j3 + k] += box[k];
+        }
+      }
+    }
+  }
+}
+
 bool compare_pair (std::pair<size_t,double> a, std::pair<size_t,double> b) {
   return a.first < b.first;
 }
