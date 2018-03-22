@@ -82,6 +82,8 @@ class System {
 
   void SetDipoleTol(double tol);
   void SetDipoleMaxIt(double maxit);
+
+  void SetPBC(bool use_pbc, std::vector<double> box);
   
   // Energy Functions
   // Energy computing gradients. The new gradients of ALL sites 

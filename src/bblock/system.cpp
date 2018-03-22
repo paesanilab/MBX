@@ -51,6 +51,12 @@ void System::SetStepEval3b(size_t step) {stepEval3b_ = step;}
 void System::SetDipoleTol(double tol) {diptol_ = tol;}
 void System::SetDipoleMaxIt(double maxit) {maxItDip_ = maxit;}
 
+void System::SetPBC(bool use_pbc, 
+                    std::vector<double> box = {1000.0,1000.0,1000.0}) {
+  use_pbc_ = use_pbc;
+  box_ = box;
+}
+
 void System::SetSysXyz(std::vector<double> xyz) {
   // TODO Check that sizes are the same
   std::copy(xyz.begin(), xyz.end(), xyz_.begin());
@@ -94,8 +100,7 @@ void System::Initialize() {
   maxNTriEval_ = 1024;
   maxItDip_ = 100;
 
-  box_ = std::vector<double>(3,0.0);
-  use_pbc_ = false;
+  SetPBC(false);
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
