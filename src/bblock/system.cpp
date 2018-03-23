@@ -206,10 +206,14 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   std::fill(grad_.begin(), grad_.end(), 0.0);
 
   // Reset the chargers, pols, polfacs and new Vsite
-  SetVSites();
-  SetCharges();
-  SetPols();
-  SetPolfacs();
+  if (use_pbc_) {
+    SetPBC(use_pbc_,box_);
+  } else {
+    SetVSites();
+    SetCharges();
+    SetPols();
+    SetPolfacs();
+  }
 
   // Get the NB contributions
 
@@ -437,6 +441,13 @@ double System::Get2B(bool do_grads) {
           m1 = monomers_[dimers[i]];
           m2 = monomers_[dimers[i + 1]];
           continue;
+        }
+
+        // Fix dimer positions if pbc
+        if (use_pbc_) {
+          systools::GetCloseDimerImage(box_, nat_[dimers[nd_tot * 2]],
+                             nat_[dimers[nd_tot * 2 + 1]],
+                             nd, xyz1.data(), xyz2.data());
         }
 
         if (do_grads) {

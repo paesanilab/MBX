@@ -123,6 +123,7 @@ class System {
   std::vector<double> pol_;                  // Polarizabilities of all sites
   std::vector<double> polfac_;               // Polfacs of all sites
   std::vector<double> box_;                  // Box, in case we use PBC
+                                             // Center of the box is origin of coordinates
   std::vector<std::string> monomers_;        // Monomer ids
   std::vector<std::string> atoms_;           // Atom names of sys
   // Molecules of system
