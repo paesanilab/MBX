@@ -136,11 +136,11 @@ void FixMonomerCoordinates(std::vector<double> &xyz,
     double first_at[3];
     for (size_t j = 0; j < 3; j++) {
       double xyzi = xyz[shift + j];
-      if (xyzi < 0) { 
+      if (xyzi < -box2[3*j +j]) { 
 // here
         xyz[shift + j] += box[3*j + j];
 // here
-      } else if (xyzi > box[3*j + j]) {
+      } else if (xyzi > box2[3*j + j]) {
 // here
         xyz[shift + j] -= box[3*j + j];
       }
@@ -164,6 +164,41 @@ void FixMonomerCoordinates(std::vector<double> &xyz,
       }
     }
   }
+}
+
+void GetCloseDimerImage(std::vector<double> box,
+                        size_t nat1, size_t nat2, size_t nd,
+                        double * xyz1, double * xyz2) {
+
+  size_t shift1 = 0;
+  size_t shift2 = 0;
+  size_t coords1 = 3*nat1;
+  size_t coords2 = 3*nat2;
+
+  std::vector<double> box2 = box;
+  for (size_t i = 0; i < box.size(); i++)
+    box2[i] *= 0.5;
+
+  for (size_t i = 0; i < nd; i++) {
+    for (size_t j = 0; j < nat2; j++) {
+      size_t j3 = j*3;
+      for (size_t k = 0; k < 3; k++) {
+        double di = xyz2[shift2 + j3 + k] - xyz1[shift1 + k];
+// here
+        if (di > box2[3*k + k]) {
+// here
+          xyz2[shift2 + j3 + k] -= box[3*k + k];
+// here
+        } else if (di <= -box2[3*k + k]) {
+// here
+          xyz2[shift2 + j3 + k] += box[3*k + k];
+        }
+      }
+    }
+    shift1 += coords1;
+    shift2 += coords2;
+  }
+
 }
 
 bool compare_pair (std::pair<size_t,double> a, std::pair<size_t,double> b) {
@@ -201,6 +236,8 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
     xyz.push_back(xyz_orig[3*first_index[i] + 2]);
   }
 
+  size_t nmon2 = nmon - istart;
+
   // Obtain the data in the structure needed by the kd-tree
   kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box);
 
@@ -234,8 +271,8 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
 
 
     for (size_t j = 0; j < nMatches; j++) {
-      size_t pos = ret_matches[j].first / nmon;
-      ret_matches[j].first -= nmon * pos;
+      size_t pos = ret_matches[j].first / nmon2;
+      ret_matches[j].first -= nmon2 * pos;
     }
 
 
@@ -244,8 +281,8 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
 
     // Add the pairs that are not in the dimer vector
     for (size_t j = 0; j < nMatches; j++) {
-      size_t pos = ret_matches[j].first / nmon;
-      ret_matches[j].first -= nmon * pos;
+  //    size_t pos = ret_matches[j].first / nmon;
+  //    ret_matches[j].first -= nmon * pos;
       std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> retdim;
       if (ret_matches[j].first > i ) {
         retdim = donej.insert(std::make_pair(i,ret_matches[j].first));
@@ -258,8 +295,8 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
         if (n_max > 2) {
           std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> ret;
           for (size_t k = 0; k < nMatches; k++) {
-            pos = ret_matches[k].first / nmon;
-            ret_matches[k].first -= nmon * pos;
+   //         size_t pos = ret_matches[k].first / nmon;
+   //         ret_matches[k].first -= nmon * pos;
              
             if (ret_matches[k].first > ret_matches[j].first) {
               ret = donek.insert(std::make_pair(ret_matches[j].first,
@@ -283,8 +320,8 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
             cutoff * cutoff, ret_matches2, params2);
           
           for (size_t k = 0; k < nMatches2; k++) {
-            size_t pos2 = ret_matches2[k].first / nmon;
-            ret_matches2[k].first -= nmon * pos2;
+            size_t pos2 = ret_matches2[k].first / nmon2;
+            ret_matches2[k].first -= nmon2 * pos2;
           }
 
 
@@ -295,8 +332,8 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
           // We will add all trimers that fulfill the condition:
           // At least 2 of the three distances must be smaller than the cutoff 
           for (size_t k = 0; k < nMatches2; k++) {
-            size_t pos2 = ret_matches2[k].first / nmon;
-            ret_matches2[k].first -= nmon * pos2;
+    //        size_t pos2 = ret_matches2[k].first / nmon;
+    //        ret_matches2[k].first -= nmon * pos2;
             if (ret_matches2[k].first > i) {
               size_t jel = ret_matches[j].first;
               size_t kel = ret_matches2[k].first;

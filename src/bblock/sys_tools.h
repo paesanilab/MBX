@@ -34,6 +34,11 @@ void FixMonomerCoordinates(std::vector<double> &xyz,
                            std::vector<size_t> nat,
                            std::vector<size_t> first_index);                           
 
+// Puts the two monomers of a dimer together for a given set of xyz
+void GetCloseDimerImage(std::vector<double> box,
+                        size_t nat1, size_t nat2, size_t nd,
+                        double * xyz1, double * xyz2);
+
 // Given ifnormation of the system, this subroutine fills up the dimers and 
 // trimers of the system.
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
