@@ -98,10 +98,31 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
   return count;
 }
 
+//std::vector<double> GetBoxParams(std::vector<double> box) {
+//  // 3 modules of vector 
+//  //+3 angles with XY plane
+//  std::vector<double> box_params(6,0.0);
+//  for (size_t i = 0; i < 3; i++) {
+//    for (size_t j = 0; j < 3; j++) {
+//      box_params[i] += box[3*i + j]*box[3*i + j];  
+//    }
+//    box_params[i] = std::sqrt(box_params[i]);
+//  }
+//
+//  box_params[3] = atan2(box[2], std::sqrt(box[0]*box[0] + box[1]*box[1]));
+//  box_params[4] = atan2(box[5], std::sqrt(box[3]*box[3] + box[4]*box[4]));
+//  box_params[5] = atan2(box[8], std::sqrt(box[6]*box[6] + box[7]*box[7]));
+//
+//
+//  return box_params;
+//}
+
 void FixMonomerCoordinates(std::vector<double> &xyz,
                            std::vector<double> box,
                            std::vector<size_t> nat,
                            std::vector<size_t> first_index) {
+  // NOTE, assuming for now orthorombic box:
+  // box = {a,0,0,0,b,0,0,0,c)
   size_t nmon = nat.size();
 
   std::vector<double> box2 = box;
@@ -116,9 +137,12 @@ void FixMonomerCoordinates(std::vector<double> &xyz,
     for (size_t j = 0; j < 3; j++) {
       double xyzi = xyz[shift + j];
       if (xyzi < 0) { 
-        xyz[shift + j] += box[j];
-      } else if (xyzi > box[j]) {
-        xyz[shift + j] -= box[j];
+// here
+        xyz[shift + j] += box[3*j + j];
+// here
+      } else if (xyzi > box[3*j + j]) {
+// here
+        xyz[shift + j] -= box[3*j + j];
       }
       first_at[j] = xyz[shift + j];
     }
@@ -128,10 +152,14 @@ void FixMonomerCoordinates(std::vector<double> &xyz,
       size_t j3 = j*3;
       for (size_t k = 0; k < 3; k++) {
         double di = xyz[shift + j3 + k] - first_at[k];
-        if (di > box2[k]) {
-          xyz[shift + j3 + k] -= box[k];
-        } else if (di <= -box2[k]) {
-          xyz[shift + j3 + k] += box[k];
+// here
+        if (di > box2[3*k + k]) {
+// here
+          xyz[shift + j3 + k] -= box[3*k + k];
+// here
+        } else if (di <= -box2[3*k + k]) {
+// here
+          xyz[shift + j3 + k] += box[3*k + k];
         }
       }
     }
@@ -204,6 +232,13 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
     const size_t nMatches = index.radiusSearch(point,
       cutoff * cutoff, ret_matches, params);
 
+
+    for (size_t j = 0; j < nMatches; j++) {
+      size_t pos = ret_matches[j].first / nmon;
+      ret_matches[j].first -= nmon * pos;
+    }
+
+
     std::sort(ret_matches.begin(), ret_matches.end(), compare_pair);
     std::set<std::pair<size_t, size_t>> donek;
 
@@ -225,13 +260,15 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
           for (size_t k = 0; k < nMatches; k++) {
             pos = ret_matches[k].first / nmon;
             ret_matches[k].first -= nmon * pos;
-            ret = donek.insert(std::make_pair(ret_matches[j].first,
-                                          ret_matches[k].first));
-            if (ret_matches[k].first > ret_matches[j].first
-                && ret.second) {
-              trimers.push_back(i + istart);
-              trimers.push_back(ret_matches[j].first + istart);
-              trimers.push_back(ret_matches[k].first + istart); 
+             
+            if (ret_matches[k].first > ret_matches[j].first) {
+              ret = donek.insert(std::make_pair(ret_matches[j].first,
+                                                ret_matches[k].first));
+              if (ret.second) {
+                trimers.push_back(i + istart);
+                trimers.push_back(ret_matches[j].first + istart);
+                trimers.push_back(ret_matches[k].first + istart); 
+              }
             } 
           }
           // Define query point, which is each of the points 'j' inside the 
@@ -245,6 +282,13 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
           const size_t nMatches2 = index.radiusSearch(point2,
             cutoff * cutoff, ret_matches2, params2);
           
+          for (size_t k = 0; k < nMatches2; k++) {
+            size_t pos2 = ret_matches2[k].first / nmon;
+            ret_matches2[k].first -= nmon * pos2;
+          }
+
+
+
           std::sort(ret_matches2.begin(), ret_matches2.end(), compare_pair);
 
           // Add the trimers that fulfil i > j > k, to avoid double counting

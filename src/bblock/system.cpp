@@ -52,7 +52,9 @@ void System::SetDipoleTol(double tol) {diptol_ = tol;}
 void System::SetDipoleMaxIt(double maxit) {maxItDip_ = maxit;}
 
 void System::SetPBC(bool use_pbc, 
-                    std::vector<double> box = {1000.0,1000.0,1000.0}) {
+                    std::vector<double> box = {1000.0,0.0,0.0,
+                                               0.0,1000.0,0.0,
+                                               0.0,0.0,1000.0}) {
   use_pbc_ = use_pbc;
   box_ = box;
   if (use_pbc_) {
