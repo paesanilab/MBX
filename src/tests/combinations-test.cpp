@@ -77,7 +77,10 @@ int main(int argc, char** argv)
     
     if (systems.size() > 1) {
       std::cout << "SYSTEM 1 (" << systems[1].GetNumMon() << " mons)\n";
-      std::vector<double> box(3,100.0);
+      std::vector<double> box(9,0.0);
+      box[0] = 100.0;
+      box[4] = 100.0;
+      box[8] = 100.0;
       systems[1].SetPBC(true, box);
       systems[1].AddClusters(2,15.0,0,systems[1].GetNumMon());
       std::vector<size_t> dimers = systems[1].GetDimers();

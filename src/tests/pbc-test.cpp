@@ -44,7 +44,10 @@ int main(int argc, char** argv)
   }
 
   std::vector<double> g;
-  std::vector<double> box(3,100.0);
+  std::vector<double> box(9,0.0);
+  box[0] = 100.0;
+  box[4] = 100.0;
+  box[8] = 100.0;
   std::vector<bblock::System> systems_copy = systems;
 
   // Compare energies
