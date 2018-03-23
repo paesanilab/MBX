@@ -109,20 +109,36 @@ PointCloud<T> XyzToCloud(std::vector<T> xyz, bool use_pbc, std::vector<T> box)
 
   ptc.pts.resize(size);
 
+  std::vector<int> indxs = {0,-1,1};
+
   for (size_t i = 0; i < np; i++) {
     size_t i3 = 3*i;
     ptc.pts[i].x = xyz[i3];
     ptc.pts[i].y = xyz[i3 + 1];
     ptc.pts[i].z = xyz[i3 + 2];
     if (use_pbc) {
-      for (size_t m = 0; m < 3; m++) {
-        for (size_t n = 0; n < 3; n++) {
-          for (size_t l = 0; l < 3; l++) {
-            if (m == 0 && n == 0 && l == 0) continue;
-            size_t shift = (9*m + 3*n + l) * np;
-            std::vector<double> shifti = {(double(m) - 1) * box[0],  
-                                          (double(n) - 1) * box[1],
-                                          (double(l) - 1) * box[2]};
+      for (size_t m2 = 0; m2 < 3; m2++) {
+        for (size_t n2 = 0; n2 < 3; n2++) {
+          for (size_t l2 = 0; l2 < 3; l2++) {
+            if (m2 == 0 && n2 == 0 && l2 == 0) continue;
+            int m = indxs[m2];
+            int n = indxs[n2];
+            int l = indxs[l2];
+            size_t shift = (9*m2 + 3*n2 + l2) * np;
+              std::vector<T> shifti =
+                {T(m) * box[0] 
+               + T(n) * box[3]
+               + T(l) * box[6],
+                 T(m) * box[1]
+               + T(n) * box[4]
+               + T(l) * box[7],
+                 T(m) * box[2]
+               + T(n) * box[5]
+               + T(l) * box[8]};
+
+//            std::vector<double> shifti = {(double(m) - 1) * box[0],  
+//                                          (double(n) - 1) * box[1],
+//                                          (double(l) - 1) * box[2]};
             ptc.pts[i + shift].x = xyz[i3] + shifti[0];
             ptc.pts[i + shift].y = xyz[i3 + 1] + shifti[1];
             ptc.pts[i + shift].z = xyz[i3 + 2] + shifti[2];
