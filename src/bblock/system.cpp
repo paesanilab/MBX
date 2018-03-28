@@ -619,6 +619,14 @@ double System::Get3B(bool do_grads) {
           continue;
         }
 
+        // Fix dimer positions if pbc
+        if (use_pbc_) {
+          systools::GetCloseTrimerImage(box_, nat_[trimers[nt_tot * 3]],
+                             nat_[trimers[nt_tot * 3 + 1]],
+                             nat_[trimers[nt_tot * 3 + 2]],
+                             nt, coord1.data(), coord2.data(), coord3.data());
+        }
+
         std::vector<double> xyz1(coord1.size(),0.0);
         std::vector<double> xyz2(coord2.size(),0.0);
         std::vector<double> xyz3(coord3.size(),0.0);

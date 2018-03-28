@@ -39,6 +39,11 @@ void GetCloseDimerImage(std::vector<double> box,
                         size_t nat1, size_t nat2, size_t nd,
                         double * xyz1, double * xyz2);
 
+// Puts the three monomers of a trimer together for a given set of xyz
+void GetCloseTrimerImage(std::vector<double> box,
+                        size_t nat1, size_t nat2, size_t nat3, size_t nt,
+                        double * xyz1, double * xyz2, double * xyz3);
+
 // Given ifnormation of the system, this subroutine fills up the dimers and 
 // trimers of the system.
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,

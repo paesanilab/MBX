@@ -201,6 +201,61 @@ void GetCloseDimerImage(std::vector<double> box,
 
 }
 
+void GetCloseTrimerImage(std::vector<double> box,
+                        size_t nat1, size_t nat2, size_t nat3, size_t nt,
+                        double * xyz1, double * xyz2, double * xyz3) {
+
+  size_t shift1 = 0;
+  size_t shift2 = 0;
+  size_t shift3 = 0;
+  size_t coords1 = 3*nat1;
+  size_t coords2 = 3*nat2;
+  size_t coords3 = 3*nat3;
+
+  std::vector<double> box2 = box;
+  for (size_t i = 0; i < box.size(); i++)
+    box2[i] *= 0.5;
+
+  for (size_t i = 0; i < nt; i++) {
+    // Moving (if necessary) monomer in xyz2
+    for (size_t j = 0; j < nat2; j++) {
+      size_t j3 = j*3;
+      for (size_t k = 0; k < 3; k++) {
+        double di = xyz2[shift2 + j3 + k] - xyz1[shift1 + k];
+// here
+        if (di > box2[3*k + k]) {
+// here
+          xyz2[shift2 + j3 + k] -= box[3*k + k];
+// here
+        } else if (di <= -box2[3*k + k]) {
+// here
+          xyz2[shift2 + j3 + k] += box[3*k + k];
+        }
+      }
+    }
+
+    // Moving (if necessary) monomer in xyz3
+    for (size_t j = 0; j < nat3; j++) {
+      size_t j3 = j*3;
+      for (size_t k = 0; k < 3; k++) {
+        double di = xyz3[shift3 + j3 + k] - xyz1[shift1 + k];
+// here
+        if (di > box2[3*k + k]) {
+// here
+          xyz3[shift3 + j3 + k] -= box[3*k + k];
+// here
+        } else if (di <= -box2[3*k + k]) {
+// here
+          xyz3[shift3 + j3 + k] += box[3*k + k];
+        }
+      }
+    }
+    shift1 += coords1;
+    shift2 += coords2;
+    shift3 += coords3;
+  }
+}
+
 bool compare_pair (std::pair<size_t,double> a, std::pair<size_t,double> b) {
   return a.first < b.first;
 }
