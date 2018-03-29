@@ -119,5 +119,77 @@ int main(int argc, char** argv)
 
     std::cout << std::endl;
   }
+
+  // Test for dispersion in pbc and no pbc for a I -- H2O dimer
+  double cutoff = 15.0;
+
+  // Create water coordinates
+  std::vector<double> xyz_w = { 0.0, 0.0, 0.0,
+                                0.3233977994, -0.399214478, -0.8241726072,
+                                0.5584555607, -0.454978538, 0.6418369734};
+  // Create iodide coordinates
+  std::vector<double> xyz_i = {0.0, 0.0, 0.0};
+
+  // Create gradient vectors
+  std::vector<double> grad_w(9,0.0);
+  std::vector<double> grad_i(3,0.0);
+  
+  double step = 0.05;
+  double d = cutoff - 2.0;
+  std::vector<double> disp_nocutoff;
+  std::vector<double> disp_cutoff;
+  while (d < cutoff + 1.0) {
+    xyz_i[2] = d;
+    double disp = disp::GetDispersion("h2o", "i", 1, false, xyz_w, xyz_i,
+                               grad_w, grad_i, cutoff, false);
+    disp_nocutoff.push_back(disp);
+   
+    disp = disp::GetDispersion("h2o", "i", 1, false, xyz_w, xyz_i,
+                               grad_w, grad_i, cutoff, true);
+    disp_cutoff.push_back(disp);
+    
+    d += step;
+  }
+
+  // Print results to compare
+  std::cout << "\n  No cutoff dispersion energy:\n";
+  for (size_t i = 0; i < disp_nocutoff.size(); i++) {
+    if (i%5 == 0)
+      std::cout << std::endl;
+
+    std::cout << std::setprecision(6) << std::scientific
+              << std::setw(15) << std::right << disp_nocutoff[i];
+  }
+    
+  std::cout << "\n\n  Cutoff dispersion energy:\n";
+  for (size_t i = 0; i < disp_cutoff.size(); i++) {
+    if (i%5 == 0)
+      std::cout << std::endl;
+
+    std::cout << std::setprecision(6) << std::scientific
+              << std::setw(15) << std::right << disp_cutoff[i];
+  }
+  std::cout << std::endl;
+
+  std::cout << "\n\n  Difference between cutoff and no cutoff dispersion energy:\n";
+  for (size_t i = 0; i < disp_cutoff.size(); i++) {
+    if (i%5 == 0)
+      std::cout << std::endl;
+
+    std::cout << std::setprecision(6) << std::scientific
+              << std::setw(15) << std::right << disp_cutoff[i] - disp_nocutoff[i];
+  }
+  std::cout << std::endl;
+
   return 0;
 }
+
+
+
+
+
+
+
+
+
+
