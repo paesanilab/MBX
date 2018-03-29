@@ -456,7 +456,7 @@ double System::Get2B(bool do_grads) {
 
           // DISPERSION
           edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
-                                     xyz1, xyz2, grad1, grad2);
+                                     xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
           size_t i0 = nd_tot * 2;
           for (size_t k = 0; k < nd ; k++) {
             for (size_t j = 0; j < 3*nat_[dimers[i0 + 2*k]]; j++) {
@@ -473,7 +473,7 @@ double System::Get2B(bool do_grads) {
           e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
           // DISPERSION
           edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
-                                     xyz1, xyz2, grad1, grad2);
+                                     xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
         }
         nd_tot += nd;
         nd = 0;

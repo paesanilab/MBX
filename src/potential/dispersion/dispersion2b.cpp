@@ -4,7 +4,8 @@ namespace disp {
 
 double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
                      std::vector<double> xyz1, std::vector<double> xyz2,
-                     std::vector<double> &grd1, std::vector<double> &grd2) {
+                     std::vector<double> &grd1, std::vector<double> &grd2,
+                     double cutoff, bool use_cutoff) {
   // Order the two monomer names and corresponding xyz
   bool swaped = false;
   if (m2 < m1) {
@@ -278,12 +279,12 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
         }
       }
       if (!do_grads) {
-        disp += disp6(C6[ti*nt2 +tj], d6[ti*nt2 +tj], c1, c2, nm);
+        disp += disp6(C6[ti*nt2 +tj], d6[ti*nt2 +tj], c1, c2, nm, cutoff, use_cutoff);
       } else {
         double g1[3*nm], g2[3*nm];
         std::fill(g1, g1 + 3*nm, 0.0);
         std::fill(g2, g2 + 3*nm, 0.0);
-        disp += disp6(C6[ti*nt2 +tj], d6[ti*nt2 +tj], c1, c2, g1, g2, nm);
+        disp += disp6(C6[ti*nt2 +tj], d6[ti*nt2 +tj], c1, c2, g1, g2, nm, cutoff, use_cutoff);
         for (size_t k = 0; k < nm; k++) {
           size_t k3 = 3*k;
           size_t nat1k3 = nat1*k3;
