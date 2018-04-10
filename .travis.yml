@@ -100,7 +100,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n gg_env python=${PYTHON_VER} numpy mpmath pytest numexpr cmake pybind11 -c conda-forge
+  - conda create -q -n gg_env python=${PYTHON_VER} numpy mpmath pytest numexpr cmake=3.9 pybind11 -c conda-forge
   - source activate gg_env
 
     # Install anything not in conda
