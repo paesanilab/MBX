@@ -6,12 +6,14 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 # We need to know where OpenMM is installed so we can access the headers and libraries.
 #SET(OPENMM_DIR "/usr/local/openmm" CACHE PATH "Where OpenMM is installed")
-SET(OPENMM_DIR "/home/mrierari/codes/miniconda3/pkgs/openmm-7.2.0-py36_3" CACHE PATH "Where OpenMM is installed")
+SET(OPENMM_DIR "/home/mrierari/codes/miniconda3/" CACHE PATH "Where OpenMM is installed")
 SET(MBNRG_DIR "/home/mrierari/codes/clusters_ultimate/install" CACHE PATH "Where MBnrg is installed")
 SET(PYTHON_EXECUTABLE "/home/mrierari/codes/miniconda3/bin/python3" CACHE PATH "Where the python3 executable is")
 SET(CMAKE_INSTALL_PREFIX ${OPENMM_DIR})
 INCLUDE_DIRECTORIES("${OPENMM_DIR}/include" "${MBNRG_DIR}/include")
 LINK_DIRECTORIES("${OPENMM_DIR}/lib" "${OPENMM_DIR}/lib/plugins" "${MBNRG_DIR}/lib/static")
+
+set(CMAKE_CXX_STANDARD 11)
 
 # Setting some CMAKE arguments:
 #set(MBNRG_LINK_FLAGS "-Wl,--whole-archive"
