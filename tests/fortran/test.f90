@@ -13,10 +13,25 @@ program test
 
   integer :: n_at,i,j,nmon
 
+  ! The two functions will give the same energy.
+  ! energyf90 won't compute gradients (and is faster)
+  ! energyf90g will compute and return gradients.
   external energyf90;
   external energyf90g;
 
-  ! need to define here the numebr of monomers, and number of atoms in each one)
+  ! need to define here the numebr of monomers, and number of atoms in each one
+  ! In the case of a water cluster of 256 molecules, the variables should be:
+  
+  ! nmon = 256
+  ! allocate(nats(nmon),monomers(nmon))
+
+  ! do i=1,nmon
+  !   nats(i) = 3
+  !   monomers(i) = "h2o"
+  ! enddo
+
+  ! This will work for the test case, which contains a lithium monomer
+  ! at the beggining, and then 6 water molecules
   nmon = 7
   allocate(nats(nmon),monomers(nmon))
 
@@ -52,7 +67,7 @@ program test
   ! Done reading. Closing file.
   close(55)
 
-  ! These functions need the coordinates in a single vector (x1,y1,z1,x2,y2,...), the atom names in a single vector, trimed and with a null character at the end, and the double in which you want the potential. MAKE SURE YOU HAVE LEN=5 IN THE CHAR ARRAY!!!!!!
+  ! MAKE SURE YOU HAVE LEN=5 IN THE CHAR ARRAY!!!!!!
 
   do i =1,n_at
     at_name(i)=trim(at_name(i))//CHAR(0)
@@ -61,6 +76,30 @@ program test
     monomers(i) = trim(monomers(i))//CHAR(0)
   enddo
     
+  ! energyf90:
+  ! @coord is a double 1D array with the coordinates of all atoms.
+  !        It needs xyzxyzxyzxyz... Basically reading an xyz file
+  !        and has length 3*n_at
+  ! @nats is an integer 1D array of length nmon with the number of atoms
+  !       in each monomer.
+  ! @at_name is a char 2D array. The second dimention needs to be 5. 
+  !          The first dimention needs to be of length of number of atoms
+  !          It contains the name of the atoms as they appear in the 
+  !          periodic table
+  ! @monomers is a char 2D array. The second dimention needs to be 5.
+  !           The first dimention needs to be of length of number of mons
+  !           It contains the names of the monomers (h2o for water,
+  !           li, na, k, rb, cs, f, cl, br, i for the alkali metal ions
+  !           and the halides)
+  ! @nmon is an integer with the total number of monomers 
+  ! @Vpot is an output double variable that will contain the energy 
+  !       after the call to the energy function
+
+  ! energyf90g:
+  ! Same inputs but also has:
+  ! @grads is an output double 1D array that will contain the gradients 
+  !        (XYZ) of each atom as gx1 gy1 gz1 gx2 gy2 gz2 ...
+ 
   call energyf90(coord, nats, at_name, monomers, nmon, Vpot)
   write(*,*) "Testing functions that use an array of the coordinates "
   write(*,*)
