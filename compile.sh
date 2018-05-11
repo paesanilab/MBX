@@ -9,6 +9,7 @@ if [ "$1" == "gnu" ]; then
   cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS=" -fPIC -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
   cd build
   make --no-print-directory CXX=g++ CC=gcc
+  make install
   cd ../
 
 else
@@ -16,6 +17,7 @@ else
   cmake  -DCMAKE_CXX_FLAGS="-Wall -qopt-report -fPIC " -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc -H. -Bbuild
   cd build
   make CXX=icpc CC=icc 
+  make install
   cd ../
 
 fi
