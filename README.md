@@ -30,6 +30,7 @@ If all tests are passing, you are good to go!
 ### Fortran90
 In tests/fortran there is an example on how to use the recently compiled libraries from fortran. Please see the file `test.f90` to see how the energy function must be called. In order to compile and run the fortran test:
 ```
+export LD_LIBRARY_PATH=$PWD/install/lib/:$LD_LIBRARY_PATH
 cd tests/fortran
 make
 ./test
