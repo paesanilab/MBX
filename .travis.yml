@@ -61,7 +61,7 @@ matrix:
     env:
       - CXX_COMPILER='g++-4.9'
       - C_COMPILER='gcc-4.9'
-      - CXX_FLAGS='--coverage -O0 -fPIC'
+      - CXX_FLAGS=" -fPIC --coverage -O0"
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
       - NAME='gcc'
