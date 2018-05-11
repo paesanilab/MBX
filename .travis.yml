@@ -61,7 +61,7 @@ matrix:
     env:
       - CXX_COMPILER='g++-4.9'
       - C_COMPILER='gcc-4.9'
-      - CXX_FLAGS=" -fPIC --coverage -O0"
+      - CXX_FLAGS="-fPIC --coverage -O0"
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
       - NAME='gcc'
@@ -124,7 +124,7 @@ before_script:
     -DCMAKE_C_COMPILER=${C_COMPILER}
     -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
-    -DCMAKE_CXX_FLAGS=${CXX_FLAGS}
+    -DCMAKE_CXX_FLAGS="${CXX_FLAGS}"
     -DUSE_OPENMP:BOOL=FALSE
   - cd build
   - travis_wait 60 make 
