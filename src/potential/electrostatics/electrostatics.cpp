@@ -358,7 +358,7 @@ namespace elec {
       fi_mon = 0;
       fi_crd = 0;
       fi_sites = 0;
-      double alpha = 0.8;
+      double alpha = 0.7;
       for (size_t mt = 0; mt < mon_type_count.size(); mt++) {
         size_t ns = sites[fi_mon];
         size_t nmon = mon_type_count[mt].second;
