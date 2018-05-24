@@ -111,6 +111,8 @@ class System {
   double energy_;                            // Energy of the system
   bool initialized_;                         // Systes is initialized?
   bool use_pbc_;                             // Periodic boundary conditions?
+  bool allMonGood_;                          // True if all monomers have low e1b 
+                                             // (<60.0kcal/mol)
   std::vector<size_t> sites_;                // Number of sites of each mo
   std::vector<size_t> nat_;                  // Number of atoms of each mo
   std::vector<size_t> first_index_;          // First index of mon in sys

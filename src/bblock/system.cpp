@@ -221,8 +221,10 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   auto t1 = std::chrono::high_resolution_clock::now();
 # endif
 
+  allMonGood_ = true;
   double e1b = Get1B(do_grads);
 
+  // If monomers are too distorted, skip 
 # ifdef TIMING
   auto t2 = std::chrono::high_resolution_clock::now();
 # endif
@@ -322,7 +324,7 @@ double System::Get1B(bool do_grads) {
 
       // Get energy of the chunk as function of monomer
       if (do_grads)  {
-        e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2);
+        e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, allMonGood_);
         
         // Reorganize gradients
         for (size_t i = 0; i < nmon; i++) {
@@ -332,7 +334,7 @@ double System::Get1B(bool do_grads) {
           }
         }
       } else {
-        e1b += e1b::get_1b_energy(mon, nmon, xyz);
+        e1b += e1b::get_1b_energy(mon, nmon, xyz, allMonGood_);
       }
 
       istart = iend;
