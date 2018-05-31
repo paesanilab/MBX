@@ -7,7 +7,8 @@ DO NOT CLONE. Currently under development. This code will be able to calculate t
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
 - CMake v3.9 or higher
-- g++/gcc v4.9 or higher
+- g++/gcc v4.9 or higher [and icpc/icc v2017 or higher - optional]
+- Read the entire README before doing anything
 
 In order to compile the code, do the following in the software home directory:
 ```
@@ -16,6 +17,11 @@ cd build
 make
 make install
 ```
+If you have intel compilers in your machine, it is highly recommended to replace g++/gcc by icpc/icc
+If you want to run the code in parallel, set the `-DUSE_OPENMP:BOOL=TRUE`, and it will compile it to use OpenMP parallelization. In that case, set the environment variable `OMP_NUM_THREADS=N`, where `N` is the number of threads you wanna use. At 05/11/2018:
+- Systems with less than 16 monomers should not use more than 2 threads
+- Systems with less than 64 monomers should not use more than 8 threads
+- Any system should use more than one node.
 At this point, a folder called `install` should have been created.
 
 ## Testing

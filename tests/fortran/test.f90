@@ -11,7 +11,7 @@ program test
   integer, allocatable :: nats(:)
   character :: atom
 
-  integer :: n_at,i,j,nmon
+  integer :: n_at,i,j,nmon,k
 
   ! The two functions will give the same energy.
   ! energyf90 won't compute gradients (and is faster)
@@ -32,12 +32,12 @@ program test
 
   ! This will work for the test case, which contains a lithium monomer
   ! at the beggining, and then 6 water molecules
-  nmon = 7
+  nmon = 3
   allocate(nats(nmon),monomers(nmon))
 
-  nats(1) = 1
-  monomers(1) = "li"
-  do i=2,nmon
+  nats(nmon) = 1
+  monomers(nmon) = "i"
+  do i=1,nmon-1
     nats(i) = 3
     monomers(i) = "h2o"
   enddo
@@ -45,7 +45,7 @@ program test
   ! Open file called input.xyz. 
   ! Contains the coordinates in XYZ format.
   ! Assumes halide at the end (because the C++ code does that)
-  xyz='input.xyz'
+  xyz='1.xyz'
   open(unit = 55, file = xyz, status = 'old', action = 'read')
 
   ! Number of atoms
@@ -100,6 +100,7 @@ program test
   ! @grads is an output double 1D array that will contain the gradients 
   !        (XYZ) of each atom as gx1 gy1 gz1 gx2 gy2 gz2 ...
  
+
   call energyf90(coord, nats, at_name, monomers, nmon, Vpot)
   write(*,*) "Testing functions that use an array of the coordinates "
   write(*,*)
