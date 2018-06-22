@@ -43,6 +43,7 @@ class System {
   size_t GetNumMon();
   size_t GetNumMol();
   size_t GetNumSites();
+  size_t GetNumRealSites();
   size_t GetMonNat(size_t n);
   size_t GetFirstInd(size_t n);
   std::vector<size_t> GetDimers();
@@ -55,10 +56,12 @@ class System {
   std::vector<double> GetPolfacs();
   std::vector<std::string> GetSysAtNames();
   std::vector<std::string> GetOriginalOrderSysAtNames();
+  std::vector<double> GetOriginalOrderRealGrads();
   std::string GetMonId(size_t n);
   // Modifiers
   void SetSysXyz(std::vector<double> xyz);
   void SetOriginalOrderSysXyz(std::vector<double> xyz);
+  void SetOriginalOrderRealSysXyz(std::vector<double> xyz);
   void AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id);
   void AddMolecule(std::vector<size_t> molec);
@@ -97,6 +100,7 @@ class System {
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers
   size_t nsites_;                            // Number of sites in sys
+  size_t numat_;                            // Number of sites in sys
   size_t maxNMonEval_;                       // Max number of mons to be eval
   size_t maxNDimEval_;                       // Max number of dimers to be eval
   size_t maxNTriEval_;                       // Max number of trimers to be eval
@@ -134,6 +138,8 @@ class System {
   std::vector<std::pair<std::string,size_t> > mon_type_count_;  // Input order of monomers  
   // Input order of monomers <monomer, site first index>
   std::vector<std::pair<size_t,size_t> > initial_order_;       
+  // Input order of monomers <monomer, site first index only Real sites>
+  std::vector<std::pair<size_t,size_t> > initial_order_realSites_;       
 };
 
 } // namespace bblock

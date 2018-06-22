@@ -9,11 +9,15 @@ const double gamma2 = gammaM/2;
 const double gamma21 = gamma2/gamma1;
 
 std::vector<std::pair<std::string,size_t>> OrderMonomers
-                   (std::vector<std::string> &mon, std::vector<size_t> sites,
-                    std::vector<std::pair<size_t,size_t> > &original_order) {
+                   (std::vector<std::string> &mon, 
+                    std::vector<size_t> sites,
+                    std::vector<size_t> nats,
+                    std::vector<std::pair<size_t,size_t> > &original_order,
+                    std::vector<std::pair<size_t,size_t> > &original_order_realSites) {
   std::vector<std::string> monomers = mon;
   mon.clear();
   original_order.clear();
+  original_order_realSites.clear();
 
   std::vector<std::string> montypes;
 
@@ -44,12 +48,15 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
     mon_types_count.push_back(minmon);
     std::string monid = montypetmp[min_ind].first;
     size_t site_pos = 0;
+    size_t nat_pos = 0;
     for (size_t i = 0; i < monomers.size(); i++) {
       if (monomers[i] == monid) {
         original_order.push_back(std::make_pair(i,site_pos));
+        original_order_realSites.push_back(std::make_pair(i,nat_pos));
         mon.push_back(monid);
       }
       site_pos += sites[i];
+      nat_pos += nats[i];
     }
     
     montypetmp.erase(montypetmp.begin() + min_ind,
@@ -470,6 +477,24 @@ std::vector<double> ResetOrder(std::vector<double> coords,
     size_t fin = ini + 3*sites[i];
     size_t ini_orig = 3*original_order[i].second;
     std::copy(coords.begin() + ini, coords.begin() + fin, 
+              new_coords.begin() + ini_orig);
+  }
+
+  return new_coords;
+}
+
+std::vector<double> ResetOrder(std::vector<double> coords,
+    std::vector<std::pair<size_t,size_t> > original_order,
+    size_t numats,
+    std::vector<size_t> first_index,
+    std::vector<size_t> nats) {
+
+  std::vector<double> new_coords(3*numats);
+  for (size_t i = 0; i < nats.size(); i++) {
+    size_t ini = 3*first_index[i];
+    size_t fin = ini + 3*nats[i];
+    size_t ini_orig = 3*original_order[i].second;
+    std::copy(coords.begin() + ini, coords.begin() + fin,
               new_coords.begin() + ini_orig);
   }
 

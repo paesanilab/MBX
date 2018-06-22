@@ -20,6 +20,7 @@ System::~System() {}
 size_t System::GetNumMol() {return nmol_;}
 size_t System::GetNumMon() {return nmon_;}
 size_t System::GetNumSites() {return nsites_;}
+size_t System::GetNumRealSites() {return numat_;}
 size_t System::GetMonNat(size_t n) {return nat_[n];}
 size_t System::GetFirstInd(size_t n) {return first_index_[n];}
 
@@ -33,6 +34,10 @@ std::vector<std::string> System::GetOriginalOrderSysAtNames() {
 std::vector<double> System::GetSysXyz() {return xyz_;}
 std::vector<double> System::GetOriginalOrderSysXyz() {
   return systools::ResetOrder(xyz_, initial_order_, first_index_, sites_);
+}
+std::vector<double> System::GetOriginalOrderRealGrads() {
+  return systools::ResetOrder(grad_, initial_order_realSites_, 
+                              numat_, first_index_, nat_);
 }
 std::vector<double> System::GetCharges() {return chg_;}
 std::vector<double> System::GetPols() {return pol_;}
@@ -80,6 +85,17 @@ void System::SetOriginalOrderSysXyz(std::vector<double> xyz) {
     std::copy(xyz.begin() + ini, xyz.begin() + fin,
               xyz_.begin() + ini_new);
   } 
+}
+
+void System::SetOriginalOrderRealSysXyz(std::vector<double> xyz) {
+  // TODO Check that sizes are the same
+  for (size_t i = 0; i < nat_.size(); i++) {
+    size_t ini = 3*initial_order_realSites_[i].second;
+    size_t fin = ini + 3*nat_[i];
+    size_t ini_new = 3*first_index_[i];
+    std::copy(xyz.begin() + ini, xyz.begin() + fin,
+              xyz_.begin() + ini_new);
+  }
 }
 
 void System::AddMonomer(std::vector<double> xyz, 
@@ -134,9 +150,14 @@ void System::AddMonomerInfo() {
   
   std::vector<size_t> fi_at;
   nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
+  
+  numat_ = 0;
+  for (size_t i = 0; i < nat_.size(); i++) {
+    numat_ += nat_[i];
+  }
 
-  mon_type_count_ = systools::OrderMonomers
-                    (monomers_, sites_, initial_order_); 
+  mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, 
+                              initial_order_, initial_order_realSites_); 
   
   // Rearranging coordinates to account for virt sites
   xyz_ = std::vector<double> (3*nsites_, 0.0);

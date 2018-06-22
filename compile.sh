@@ -6,7 +6,7 @@ fi
 
 if [ "$1" == "gnu" ]; then
   rm -rf build install
-  cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS=" -fPIC -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
+  cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_USE_OPENMP=False -DCMAKE_CXX_FLAGS=" -fPIC -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
   cd build
   make --no-print-directory CXX=g++ CC=gcc
   make install

@@ -19,9 +19,14 @@ namespace systools {
 
 // Function that given the monomers, modifies the ordered monomer list
 // in mon, and the original order in the vector original_order
-std::vector<std::pair<std::string,size_t> > OrderMonomers
-                   (std::vector<std::string> &mon, std::vector<size_t> sites,
-                    std::vector<std::pair<size_t,size_t> > &original_order);
+// taking sites into account, while original_order_realSites only takes
+// into account real sites
+std::vector<std::pair<std::string,size_t>> OrderMonomers
+         (std::vector<std::string> &mon,
+          std::vector<size_t> sites,
+          std::vector<size_t> nats,
+          std::vector<std::pair<size_t,size_t> > &original_order,
+          std::vector<std::pair<size_t,size_t> > &original_order_realSites);
 
 // Function that sets up initial charges, pols, polfacs, number of sites
 // number of atoms and first index. Returns the total number of sites
@@ -71,6 +76,14 @@ std::vector<double> ResetOrder(std::vector<double> coords,
     std::vector<std::pair<size_t,size_t> > original_order, 
     std::vector<size_t> first_index,
     std::vector<size_t> sites);
+
+// Reorders the gradients or coordinates to the original order
+// only taking into account real sites. 
+std::vector<double> ResetOrder(std::vector<double> coords,
+    std::vector<std::pair<size_t,size_t> > original_order,
+    size_t numats,
+    std::vector<size_t> first_index,
+    std::vector<size_t> nats);
 
 // Reorders the atom names to the original order
 std::vector<std::string> ResetOrder(std::vector<std::string> at_names,
