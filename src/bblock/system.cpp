@@ -787,10 +787,11 @@ void System::SetVSites() {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-  double elec = elec::Electrostatics(chg_, chggrad_, polfac_, 
+  elec::Electrostatics electrostaticE;
+  electrostaticE.Initialize(chg_, chggrad_, polfac_, 
                 pol_, xyz_, monomers_, sites_, first_index_, 
-                mon_type_count_, diptol_, maxItDip_, do_grads, grad_);
-  return elec;
+                mon_type_count_, do_grads, diptol_, maxItDip_);
+  return electrostaticE.GetElectrostatics(grad_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
