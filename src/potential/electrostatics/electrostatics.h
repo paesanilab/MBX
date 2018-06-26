@@ -35,15 +35,18 @@ namespace elec {
         std::vector<std::pair<std::string,size_t> > &mon_type_count,
         bool do_grads = true,
         double tolerance = 1E-16,
-        size_t maxit = 100);
+        size_t maxit = 100,
+        std::string dip_method = "iter");
       
       double GetElectrostatics(std::vector<double> &grad);
+
+    private:
       void CalculatePermanentElecField();
+      void CalculateDipolesIterative();
       void CalculateDipoles();
       void CalculateElecEnergy();
       void CalculateGradients(std::vector<double> &grad);
 
-    private:
       // Charges of each site. Order has to follow mon_type_count.
       std::vector<double> chg_;
       // Charges of each site. Order has to follow mon_type_count.
@@ -110,6 +113,8 @@ namespace elec {
       double Eperm_;
       // Induced electrostatics
       double Eind_;
+      // Method for dipoles (ITERative, Conjugate Gradient, ASPC, INVersion)
+      std::string dip_method_;
   };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -27,7 +27,8 @@ namespace elec {
         std::vector<std::pair<std::string,size_t> > &mon_type_count,
         bool do_grads,
         double tolerance,
-        size_t maxit) {
+        size_t maxit,
+        std::string dip_method) {
 
     // Copy System data in electrostatics
     sys_chg_ = chg;
@@ -42,6 +43,7 @@ namespace elec {
     do_grads_ = do_grads;
     tolerance_ = tolerance;
     maxit_ = maxit;
+    dip_method_ = dip_method;
 
     // Initialize other variables
     nsites_ = sys_chg_.size();
@@ -344,6 +346,10 @@ namespace elec {
 ////////////////////////////////////////////////////////////////////////////////
 
   void Electrostatics::CalculateDipoles() {
+    if (dip_method_ == "iter") CalculateDipolesIterative();
+  }
+
+  void Electrostatics::CalculateDipolesIterative() {
     // Permanent electric field is computed
     // Now start computation of dipole through iteration
     double eps = 1.0E+50;
