@@ -567,33 +567,18 @@ namespace elec {
 
     // Now the Matrix A is computed, but the diagonal polarizabilities are missing
     // Need to fill it:
-#   ifdef _OPENMP
-#     pragma omp parallel for schedule(static)
-#   endif
+//#   ifdef _OPENMP
+//#     pragma omp parallel for schedule(static)
+//#   endif
     for (size_t i = 0; i < nsites3; i++) {
-      // for debug
-//      size_t nspaces = 11*i;
-//      std::cerr << std::setw(nspaces) << "";
       for (size_t j = i; j < nsites3; j++) {
-//      for (size_t j = 0; j < nsites3; j++) {
         if (i == j) {
-//          if (pol_sqrt_[i] > std::numeric_limits<double>::epsilon()) {
           ts2[nsites3*i + j] = 1.0;
-//            ts2[nsites3*i + j] = 1.0/(pol_sqrt_[i]*pol_sqrt_[i]);
-//          } else {
-//            ts2[nsites3*i + j] = std::numeric_limits<double>::infinity();
-//          }
-//          std::cerr << std::scientific << std::setprecision(3) 
-//                    << std::setw(11) << ts2[nsites3*i + j]; 
           continue;
         }
-//        ts2[nsites3*i + j] = -ts2[nsites3*i + j];
         ts2[nsites3*i + j] *= -pol_sqrt_[i]*pol_sqrt_[j];
         ts2[nsites3*j + i] = ts2[nsites3*i + j];
-//        std::cerr << std::scientific << std::setprecision(3) 
-//                  << std::setw(11) << ts2[nsites3*i + j]; 
       }
-//      std::cerr << std::endl;
     }
 
     // The Matrix is completed. Now proceed to CG algorithm
@@ -601,10 +586,9 @@ namespace elec {
     // https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
     // Initialize for first iteration
-//    for (size_t i = 0; i < nsites3; i++) {
-//      mu_[i] *= pol_sqrt_[i];
-//      std::cerr << "pol_sqrt_[" << i << "] = " << pol_sqrt_[i] << std::endl;
-//    }
+    //for (size_t i = 0; i < nsites3; i++) {
+    //  mu_[i] *= pol_sqrt_[i];
+    //}
 
     std::vector<double> ts2mu(nsites3);
     MatrixTimesVector(ts2,mu_,ts2mu);
@@ -618,30 +602,26 @@ namespace elec {
 #   endif
     for (size_t i = 0; i < nsites3; i++) {
       rv[i] = pv[i] = Efq_[i]*pol_sqrt_[i] - ts2mu[i];
-//std::cerr << "Efq_[" << i << "]*pol = " << Efq_[i]*pol_sqrt_[i] << std::endl;
-//      rv[i] = pv[i] = Efq_[i] - ts2mu[i];
     }
   
     // Start iterations
     size_t iter = 0;
     double rvrv =  DotProduct(rv,rv);
+    double residual = 0.0;
     while (true) {
       MatrixTimesVector(ts2,pv,ts2pv);
       double pvts2pv = DotProduct(pv,ts2pv);
-      if (pvts2pv < tolerance_) break;
+      if (rvrv < tolerance_) break;
       double alphak = rvrv / pvts2pv;
-      double residual = 0.0;
+      residual = 0.0;
       for (size_t i = 0; i < nsites3; i++) {
         mu_[i] = mu_[i] + alphak * pv[i];
         r_new[i] = rv[i] - alphak*ts2pv[i];
-        double residual2 = r_new[i] * r_new[i];
-        if (residual2 > residual) {
-          residual = residual2;
-        }
+        residual += r_new[i] * r_new[i];
       }
 
-//std::cerr << "RESIDUAL = " << residual << std::endl;
-//std::cerr << "ALPHAk = " << alphak << std::endl;
+      double rvrv_new = residual;
+
       // Check if converged
       if (residual < tolerance_) break;
 
@@ -651,7 +631,6 @@ namespace elec {
         std::exit(EXIT_FAILURE);
       }
       
-      double rvrv_new = DotProduct(r_new,r_new);
       // Prepare next iteration
       double betak = rvrv_new / rvrv;
       for (size_t i = 0; i < nsites3; i++) {
