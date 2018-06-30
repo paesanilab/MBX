@@ -14,8 +14,10 @@
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
 #include "tools/constants.h"
+#include "tools/math_tools.h"
 #include "potential/electrostatics/gammq.h"
 #include "potential/electrostatics/fields.h"
+#include "potential/electrostatics/electrostatic_tensors.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -43,6 +45,7 @@ namespace elec {
     private:
       void CalculatePermanentElecField();
       void CalculateDipolesIterative();
+      void CalculateDipolesCG();
       void CalculateDipoles();
       void CalculateElecEnergy();
       void CalculateGradients(std::vector<double> &grad);
@@ -55,6 +58,8 @@ namespace elec {
       std::vector<double> sys_chg_grad_;
       // Polfacs of each site. For now assuming not site dependent.
       std::vector<double> polfac_;
+      // Square root of pol of each site. Size 3N (3 per atom, are the same)
+      std::vector<double> pol_sqrt_;
       // Polarizabilities of each site. For now assuming not site dependent.
       std::vector<double> pol_;
       // System xyz, not ordered XYZ. xyzxyz...(mon1)xyzxyz...(mon2) ...

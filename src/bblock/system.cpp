@@ -1,7 +1,7 @@
 #include "system.h"
 
 //#define DEBUG
-//#define TIMING
+#define TIMING
 
 #ifdef TIMING
 #  include <chrono>
@@ -790,7 +790,7 @@ double System::GetElectrostatics(bool do_grads) {
   elec::Electrostatics electrostaticE;
   electrostaticE.Initialize(chg_, chggrad_, polfac_, 
                 pol_, xyz_, monomers_, sites_, first_index_, 
-                mon_type_count_, do_grads, diptol_, maxItDip_);
+                mon_type_count_, do_grads, diptol_, maxItDip_, "iter");
   return electrostaticE.GetElectrostatics(grad_);
 }
 

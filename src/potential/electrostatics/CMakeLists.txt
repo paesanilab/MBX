@@ -1,4 +1,7 @@
-set (ELEC_SOURCES electrostatics.cpp fields.cpp gammq.cpp)
+set (ELEC_SOURCES electrostatic_tensors.cpp 
+                  electrostatics.cpp 
+                  fields.cpp 
+                  gammq.cpp)
 
 #add_library(electrostatics ${ELEC_SOURCES}) 
 #target_include_directories(electrostatics PRIVATE ${CMAKE_SOURCE_DIR}) 

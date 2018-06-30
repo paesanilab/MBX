@@ -1,4 +1,5 @@
 #include "potential/electrostatics/electrostatics.h"
+#include <iomanip>
 
 //#define DEBUG
 //#define TIMING
@@ -60,6 +61,7 @@ namespace elec {
     grad_ = std::vector<double>(nsites3,0.0);
     sys_grad_ = std::vector<double>(nsites3,0.0);
     chg_ = std::vector<double>(nsites_,0.0);
+    pol_sqrt_ = std::vector<double>(nsites3,0.0);
 
     aCC_ = 0.4;
     aCD_ = 0.4;
@@ -77,6 +79,8 @@ namespace elec {
     // CHG will be reorganized from cA1cB1cC1... for mon_type 1 then mon2...
     // to cA1cA2...cB1cB2... for mon_type 1, then 2, ...
     // where A,B are the different sites, and 1,2 are the monomer index
+    // POL_SQRT will be organized as charges, but three copies of each
+    // and square rooted
     
     // Organize xyz so we have x1_1 x1_2 ... y1_1 y1_2...
     // where xN_M is read as coordinate x of site N of monomer M
@@ -102,6 +106,9 @@ namespace elec {
                  sys_xyz_[fi_crd + mns3 + 3*i + 2];
           chg_[fi_sites + m + inmon] =
                  sys_chg_[fi_sites + mns + i];
+          pol_sqrt_[inmon3 + m + fi_crd] = sqrt(pol_[fi_sites + mns + i]);
+          pol_sqrt_[inmon3 + m + fi_crd + nmon] = sqrt(pol_[fi_sites + mns + i]);
+          pol_sqrt_[inmon3 + m + fi_crd + nmon2] = sqrt(pol_[fi_sites + mns + i]);
         }
       }
       fi_mon += nmon;
@@ -347,6 +354,322 @@ namespace elec {
 
   void Electrostatics::CalculateDipoles() {
     if (dip_method_ == "iter") CalculateDipolesIterative();
+    else if (dip_method_ == "cg") CalculateDipolesCG();
+  }
+
+  void Electrostatics::CalculateDipolesCG() {
+    ElectroTensor elec_tensor(maxnmon_);
+
+    // Parallelization
+    size_t nthreads = 1;
+#   ifdef _OPENMP
+#     pragma omp parallel // omp_get_num_threads() needs to be inside 
+                          // parallel region to get number of threads
+      {
+        if (omp_get_thread_num() == 0)
+          nthreads = omp_get_num_threads();
+      }
+#   endif
+
+    // Excluded sets
+    excluded_set_type exc12;
+    excluded_set_type exc13;
+    excluded_set_type exc14;
+
+    size_t nsites3 = nsites_*3;
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    // Permanent electric field is computed
+    // Now start computation of dipole through conjugate gradient
+    std::vector<double> mu_old(3*nsites_,0.0);
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+      size_t ns = sites_[fi_mon];
+      size_t nmon = mon_type_count_[mt].second;
+      size_t nmon2 = nmon*2;
+      for (size_t i = 0; i < ns; i++) {
+        // TODO assuming pol not site dependant
+        double p = pol_[fi_sites + i];
+        size_t inmon3 = 3*i*nmon;
+        for (size_t m = 0; m < nmon; m++) {
+          mu_[fi_crd + inmon3 + m] = p * Efq_[fi_crd + inmon3 + m];
+          mu_[fi_crd + inmon3 + nmon + m] = p * Efq_[fi_crd + inmon3 + nmon + m];
+          mu_[fi_crd + inmon3 + nmon2 + m] = p * Efq_[fi_crd + inmon3 + nmon2 + m];
+        }
+      }
+
+      fi_mon += nmon;
+      fi_sites += nmon*ns;
+      fi_crd += nmon*ns*3;
+    }
+
+    // Initial guess for dipoles is computed
+    // Proceeding to CG to obtain the converged dipoles
+    std::vector<double> ts1(3*nsites_*nsites_,0.0);
+    std::vector<double> ts2(9*nsites_*nsites_,0.0);
+
+    // Sites on the same monomer
+    fi_mon = 0;
+    fi_sites = 0;
+    fi_crd = 0;
+    size_t fi_ts1 = 0;
+
+    double aDD = 0.055;
+
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+      size_t ns = sites_[fi_mon];
+//      TODO: Check why this makes shit fail
+//      if (ns == 1) continue;
+      size_t nmon = mon_type_count_[mt].second;
+      size_t nmon3 = nmon * 3;
+      // Get excluded pairs for this monomer
+      systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+      for (size_t i = 0; i < ns-1 ; i++) {
+        size_t row_ts2 = i*nmon3 + fi_crd;
+        for (size_t j = i+1; j < ns; j++) {
+          size_t col_ts2 = j*nmon3 + fi_crd;
+          size_t fi_ts2 = nsites3*row_ts2 + col_ts2;
+          // Set the proper aDD
+          bool is12 = systools::IsExcluded(exc12, i, j);
+          bool is13 = systools::IsExcluded(exc13, i, j);
+          bool is14 = systools::IsExcluded(exc14, i, j);
+          aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
+
+          double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+          if (A > constants::EPS) {
+            A = std::pow(A, 1.0/6.0);
+            double Asqsq = A*A*A*A;
+            for (size_t m = 0; m < nmon; m++) {
+              // TODO. Slowest function
+              elec_tensor.CalcT1AndT2WithPolfacNonZero(
+                        xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
+                        m, m, m + 1, nmon, nmon, i, j, Asqsq, aDD, nsites_,
+                        ts1.data() + fi_ts1, ts1.data() + fi_ts1,
+                        ts2.data() + fi_ts2, ts2.data() + fi_ts2);
+            }
+          } else {
+            for (size_t m = 0; m < nmon; m++) {
+              elec_tensor.CalcT1AndT2WithPolfacZero(
+                        xyz_.data() + fi_crd, xyz_.data() + fi_crd,
+                        m, m, m + 1, nmon, nmon, i, j, nsites_,
+                        ts1.data() + fi_ts1, ts1.data() + fi_ts1,
+                        ts2.data() + fi_ts2, ts2.data() + fi_ts2);
+            }
+          }
+        }
+      }
+      // Update first indexes
+      fi_mon += nmon;
+      fi_sites += nmon * ns;
+      fi_crd += nmon * ns * 3;
+      fi_ts1 += nmon * ns * nmon * ns * 3;
+    }
+    
+    size_t fi_mon1 = 0;
+    size_t fi_sites1 = 0;
+    size_t fi_mon2 = 0;
+    size_t fi_sites2 = 0;
+    size_t fi_crd1 = 0;
+    size_t fi_crd2 = 0;
+    size_t fi_ts11 = 0;
+    size_t fi_ts12 = 0;
+    // aDD intermolecular is always 0.055
+    aDD = 0.055;
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+      size_t ns1 = sites_[fi_mon1];
+      size_t nmon1 = mon_type_count_[mt1].second;
+      size_t nmon13 = nmon1 * 3;
+      fi_mon2 = fi_mon1;
+      fi_sites2 = fi_sites1;
+      fi_crd2 = fi_crd1;
+      fi_ts12 = fi_ts11;
+      for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+        size_t ns2 = sites_[fi_mon2];
+        size_t nmon2 = mon_type_count_[mt2].second;
+        size_t nmon23 = nmon2 * 3;
+        bool same = (mt1 == mt2);
+        // TODO add neighbour list here
+        // Prepare for parallelization
+        std::vector<std::shared_ptr<ElectroTensor> > elec_tensor_pool;
+        for (size_t i = 0; i < nthreads; i++) { 
+           elec_tensor_pool.push_back(
+             std::make_shared<ElectroTensor>(maxnmon_));
+        }
+
+        // Parallel loop
+#       ifdef _OPENMP
+#         pragma omp parallel for schedule(dynamic) 
+#       endif
+        for (size_t m1 = 0; m1 < nmon1; m1++) {
+          int rank = 0;
+#         ifdef _OPENMP
+            rank = omp_get_thread_num();
+#         endif
+          std::shared_ptr<ElectroTensor> local_elec_tensor 
+            = elec_tensor_pool[rank];
+          size_t m2init = same ? m1 + 1 : 0;
+          for (size_t i = 0; i < ns1; i++) {
+            size_t j2init = same ? i : 0;
+//            size_t j2init = 0;
+            size_t row_ts2 = i*nmon13 + fi_crd1;
+            for (size_t j = j2init; j < ns2; j++) {
+              size_t col_ts2 = j*nmon23 + fi_crd2;
+              size_t fi_ts2 = nsites3*row_ts2 + col_ts2;
+//std::cout << "FI_TS2 = " << fi_ts2 << std::endl;
+              double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+              if (A > constants::EPS) {
+                A = std::pow(A,1.0/6.0);
+                double Asqsq = A*A*A*A;
+                if (same) {
+                  local_elec_tensor->CalcT1AndT2WithPolfacNonZero(
+                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                      m1, 0, m1,
+                      nmon1, nmon2, i, j, Asqsq, aDD, nsites_,
+                      ts1.data() + fi_ts11, ts1.data() + fi_ts12,
+                      ts2.data() + fi_ts2, ts2.data() + fi_ts2);
+                }
+                local_elec_tensor->CalcT1AndT2WithPolfacNonZero(
+                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                      m1, m2init, nmon2,
+                      nmon1, nmon2, i, j, Asqsq, aDD, nsites_,
+                      ts1.data() + fi_ts11, ts1.data() + fi_ts12,
+                      ts2.data() + fi_ts2, ts2.data() + fi_ts2);
+              } else {
+                if (same) {
+                  local_elec_tensor->CalcT1AndT2WithPolfacZero(
+                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                      m1, 0, m1, nmon1, nmon2, i, j, nsites_,
+                      ts1.data() + fi_ts11, ts1.data() + fi_ts12,
+                      ts2.data() + fi_ts2, ts2.data() + fi_ts2);
+                }
+                local_elec_tensor->CalcT1AndT2WithPolfacZero(
+                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                      m1, m2init, nmon2, nmon1, nmon2, i, j, nsites_,
+                      ts1.data() + fi_ts11, ts1.data() + fi_ts12,
+                      ts2.data() + fi_ts2, ts2.data() + fi_ts2);
+              }
+            }
+          }
+        }
+
+        // Update first indexes
+        fi_mon2 += nmon2;
+        fi_sites2 += nmon2 * ns2;
+        fi_crd2 += nmon2 * ns2 * 3;
+        fi_ts12 += nmon2 * ns2 * nmon2 * ns2 * 3;
+      }
+      // Update first indexes
+      fi_mon1 += nmon1;
+      fi_sites1 += nmon1 * ns1;
+      fi_crd1 += nmon1 * ns1 * 3;
+      fi_ts11 += nmon1 * ns1 * nmon1 * ns1 * 3;
+    }
+
+    // Now the Matrix A is computed, but the diagonal polarizabilities are missing
+    // Need to fill it:
+#   ifdef _OPENMP
+#     pragma omp parallel for schedule(static)
+#   endif
+    for (size_t i = 0; i < nsites3; i++) {
+      // for debug
+//      size_t nspaces = 11*i;
+//      std::cerr << std::setw(nspaces) << "";
+      for (size_t j = i; j < nsites3; j++) {
+//      for (size_t j = 0; j < nsites3; j++) {
+        if (i == j) {
+//          if (pol_sqrt_[i] > std::numeric_limits<double>::epsilon()) {
+          ts2[nsites3*i + j] = 1.0;
+//            ts2[nsites3*i + j] = 1.0/(pol_sqrt_[i]*pol_sqrt_[i]);
+//          } else {
+//            ts2[nsites3*i + j] = std::numeric_limits<double>::infinity();
+//          }
+//          std::cerr << std::scientific << std::setprecision(3) 
+//                    << std::setw(11) << ts2[nsites3*i + j]; 
+          continue;
+        }
+//        ts2[nsites3*i + j] = -ts2[nsites3*i + j];
+        ts2[nsites3*i + j] *= -pol_sqrt_[i]*pol_sqrt_[j];
+        ts2[nsites3*j + i] = ts2[nsites3*i + j];
+//        std::cerr << std::scientific << std::setprecision(3) 
+//                  << std::setw(11) << ts2[nsites3*i + j]; 
+      }
+//      std::cerr << std::endl;
+    }
+
+    // The Matrix is completed. Now proceed to CG algorithm
+    // Following algorithm from:
+    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
+
+    // Initialize for first iteration
+//    for (size_t i = 0; i < nsites3; i++) {
+//      mu_[i] *= pol_sqrt_[i];
+//      std::cerr << "pol_sqrt_[" << i << "] = " << pol_sqrt_[i] << std::endl;
+//    }
+
+    std::vector<double> ts2mu(nsites3);
+    MatrixTimesVector(ts2,mu_,ts2mu);
+    std::vector<double> rv(nsites3);
+    std::vector<double> pv(nsites3);
+    std::vector<double> ts2pv(nsites3);
+    std::vector<double> r_new(nsites3);
+
+#   ifdef _OPENMP
+#     pragma omp parallel for schedule(static)
+#   endif
+    for (size_t i = 0; i < nsites3; i++) {
+      rv[i] = pv[i] = Efq_[i]*pol_sqrt_[i] - ts2mu[i];
+//std::cerr << "Efq_[" << i << "]*pol = " << Efq_[i]*pol_sqrt_[i] << std::endl;
+//      rv[i] = pv[i] = Efq_[i] - ts2mu[i];
+    }
+  
+    // Start iterations
+    size_t iter = 0;
+    double rvrv =  DotProduct(rv,rv);
+    while (true) {
+      MatrixTimesVector(ts2,pv,ts2pv);
+      double pvts2pv = DotProduct(pv,ts2pv);
+      if (pvts2pv < tolerance_) break;
+      double alphak = rvrv / pvts2pv;
+      double residual = 0.0;
+      for (size_t i = 0; i < nsites3; i++) {
+        mu_[i] = mu_[i] + alphak * pv[i];
+        r_new[i] = rv[i] - alphak*ts2pv[i];
+        double residual2 = r_new[i] * r_new[i];
+        if (residual2 > residual) {
+          residual = residual2;
+        }
+      }
+
+//std::cerr << "RESIDUAL = " << residual << std::endl;
+//std::cerr << "ALPHAk = " << alphak << std::endl;
+      // Check if converged
+      if (residual < tolerance_) break;
+
+      if (iter > maxit_) {
+        // Exit with error
+        std::cerr << "Max number of iterations reached" << std::endl;
+        std::exit(EXIT_FAILURE);
+      }
+      
+      double rvrv_new = DotProduct(r_new,r_new);
+      // Prepare next iteration
+      double betak = rvrv_new / rvrv;
+      for (size_t i = 0; i < nsites3; i++) {
+        pv[i] = r_new[i] + betak * pv[i];
+      }
+      rvrv = rvrv_new;
+      rv = r_new;
+      iter++;
+    }
+
+    // Dipoles are computed
+    // Need to recalculate dipole and Efd due to the multiplication of polsqrt
+    for (size_t i = 0; i < nsites3; i++) {
+      mu_[i] *= pol_sqrt_[i];
+//std::cerr << "mu[" << i << "] = " << mu_[i] << std::endl;
+    }
+
+//    Efd = Efq - 1/pol 
   }
 
   void Electrostatics::CalculateDipolesIterative() {
