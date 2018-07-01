@@ -4,17 +4,13 @@ namespace elec {
 
 ElectroTensor::ElectroTensor(size_t n) {
   maxnmon = n;
-  v0_  = std::vector<double> (maxnmon);
-  v1_  = std::vector<double> (maxnmon);
-  v2_  = std::vector<double> (maxnmon);
-  v3_  = std::vector<double> (maxnmon);
-  v4_  = std::vector<double> (maxnmon);
-  v5_  = std::vector<double> (maxnmon);
-  v6_  = std::vector<double> (maxnmon);
-  v7_  = std::vector<double> (maxnmon);
-  v8_  = std::vector<double> (maxnmon);
-  v9_  = std::vector<double> (maxnmon);
-  v10_ = std::vector<double> (maxnmon);
+//  v0_  = std::vector<double> (maxnmon);
+//  v1_  = std::vector<double> (maxnmon);
+//  v2_  = std::vector<double> (maxnmon);
+//  v3_  = std::vector<double> (maxnmon);
+//  v4_  = std::vector<double> (maxnmon);
+//  v5_  = std::vector<double> (maxnmon);
+//  v6_  = std::vector<double> (maxnmon);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,13 +42,20 @@ void ElectroTensor::CalcT0AndT1WithPolfacNonZero
   const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
   // Fill vectors with zeros in the desired range
-  std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-  std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-  std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-  std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-  std::fill(v4_.begin() + mon2_index_start, v4_.begin() + mon2_index_end, 0.0);
-  std::fill(v5_.begin() + mon2_index_start, v5_.begin() + mon2_index_end, 0.0);
-  std::fill(v6_.begin() + mon2_index_start, v6_.begin() + mon2_index_end, 0.0);
+  double v0_[maxnmon]; 
+  double v1_[maxnmon]; 
+  double v2_[maxnmon]; 
+  double v3_[maxnmon]; 
+  double v4_[maxnmon]; 
+  double v5_[maxnmon]; 
+  double v6_[maxnmon]; 
+//  std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
+//  std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
+//  std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
+//  std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
+//  std::fill(v4_.begin() + mon2_index_start, v4_.begin() + mon2_index_end, 0.0);
+//  std::fill(v5_.begin() + mon2_index_start, v5_.begin() + mon2_index_end, 0.0);
+//  std::fill(v6_.begin() + mon2_index_start, v6_.begin() + mon2_index_end, 0.0);
 
   // Store rijx, rijy and rijz in vectors
 #ifdef _OPENMP
@@ -207,12 +210,12 @@ void ElectroTensor::CalcT1AndT2WithPolfacNonZero
   const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
   // Fill vectors with zeros in the desired range
-  std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-  std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-  std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-  std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-  std::fill(v4_.begin() + mon2_index_start, v4_.begin() + mon2_index_end, 0.0);
-  std::fill(v5_.begin() + mon2_index_start, v5_.begin() + mon2_index_end, 0.0);
+//  std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
+//  std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
+//  std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
+//  std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
+//  std::fill(v4_.begin() + mon2_index_start, v4_.begin() + mon2_index_end, 0.0);
+//  std::fill(v5_.begin() + mon2_index_start, v5_.begin() + mon2_index_end, 0.0);
 
 #ifdef _OPENMP
   # pragma omp simd
@@ -272,42 +275,53 @@ void ElectroTensor::CalcT1AndT2WithPolfacNonZero
 
     // Ts2
     // Order will be xx xy xz yx yy yz zx zy zz
+    ts2_mon2[mon1_index*nsites3 + m] = ts2xx;  // ts2xx
+    ts2_mon2[mon1_index*nsites3 + nmon2 + m] = ts2xy; // ts2xy
+    ts2_mon2[mon1_index*nsites3 + nmon22 + m] = ts2xz; // ts2xz
+
+    ts2_mon2[(mon1_index + nmon1)*nsites3 + m] = ts2xy; // ts2yx
+    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon2 + m] = ts2yy; // ts2yy
+    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon22 + m] = ts2yz; //ts2yz
+
+    ts2_mon2[(mon1_index + nmon12)*nsites3 + m] = ts2xz; // ts2zx
+    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon2 + m] = ts2yz; // ts2zy
+    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon22 + m] = ts2zz; // ts2zz
     
-    v0_[m] = ts2xx;
-
-    v1_[m] = ts2xy;
-
-    v2_[m] = ts2xz;
-
-    //_v3[m] = ts2yx;
-
-    v3_[m] = ts2yy;
-
-    v4_[m] = ts2yz;
-
-    //_v6[m] = ts2zx;
-
-    //_v7[m] = ts2zy;
-
-    v5_[m] = ts2zz;
+//    v0_[m] = ts2xx;
+//
+//    v1_[m] = ts2xy;
+//
+//    v2_[m] = ts2xz;
+//
+//    //_v3[m] = ts2yx;
+//
+//    v3_[m] = ts2yy;
+//
+//    v4_[m] = ts2yz;
+//
+//    //_v6[m] = ts2zx;
+//
+//    //_v7[m] = ts2zy;
+//
+//    v5_[m] = ts2zz;
   }
 
-  for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-    // Setting values of the upper diagonal of the subblocks Ts_alpha_beta
-    // with alpha,beta = x,y,z
-    // This corresponds to the monomer 2 major index (vectorizable)
-    ts2_mon2[mon1_index*nsites3 + m] = v0_[m];  // ts2xx
-    ts2_mon2[mon1_index*nsites3 + nmon2 + m] = v1_[m]; // ts2xy
-    ts2_mon2[mon1_index*nsites3 + nmon22 + m] = v2_[m]; // ts2xz
-    
-    ts2_mon2[(mon1_index + nmon1)*nsites3 + m] = v1_[m]; // ts2yx
-    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon2 + m] = v3_[m]; // ts2yy
-    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon22 + m] = v4_[m]; //ts2yz
-
-    ts2_mon2[(mon1_index + nmon12)*nsites3 + m] = v2_[m]; // ts2zx
-    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon2 + m] = v4_[m]; // ts2zy
-    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon22 + m] = v5_[m]; // ts2zz
-  }
+//  for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+//    // Setting values of the upper diagonal of the subblocks Ts_alpha_beta
+//    // with alpha,beta = x,y,z
+//    // This corresponds to the monomer 2 major index (vectorizable)
+//    ts2_mon2[mon1_index*nsites3 + m] = v0_[m];  // ts2xx
+//    ts2_mon2[mon1_index*nsites3 + nmon2 + m] = v1_[m]; // ts2xy
+//    ts2_mon2[mon1_index*nsites3 + nmon22 + m] = v2_[m]; // ts2xz
+//    
+//    ts2_mon2[(mon1_index + nmon1)*nsites3 + m] = v1_[m]; // ts2yx
+//    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon2 + m] = v3_[m]; // ts2yy
+//    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon22 + m] = v4_[m]; //ts2yz
+//
+//    ts2_mon2[(mon1_index + nmon12)*nsites3 + m] = v2_[m]; // ts2zx
+//    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon2 + m] = v4_[m]; // ts2zy
+//    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon22 + m] = v5_[m]; // ts2zz
+//  }
 
 //  for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
 //    // Setting values of the lower diagonal of the subblocks Ts_alpha_beta
@@ -355,12 +369,12 @@ void ElectroTensor::CalcT1AndT2WithPolfacZero
   const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
   // Fill vectors with zeros in the desired range
-  std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-  std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-  std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-  std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-  std::fill(v4_.begin() + mon2_index_start, v4_.begin() + mon2_index_end, 0.0);
-  std::fill(v5_.begin() + mon2_index_start, v5_.begin() + mon2_index_end, 0.0);
+//  std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
+//  std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
+//  std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
+//  std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
+//  std::fill(v4_.begin() + mon2_index_start, v4_.begin() + mon2_index_end, 0.0);
+//  std::fill(v5_.begin() + mon2_index_start, v5_.begin() + mon2_index_end, 0.0);
 
 #ifdef _OPENMP
   # pragma omp simd
@@ -414,42 +428,53 @@ void ElectroTensor::CalcT1AndT2WithPolfacZero
 
     // Ts2
     // Order will be xx xy xz yx yy yz zx zy zz
+    ts2_mon2[mon1_index*nsites3 + m] = ts2xx;  // ts2xx
+    ts2_mon2[mon1_index*nsites3 + nmon2 + m] = ts2xy; // ts2xy
+    ts2_mon2[mon1_index*nsites3 + nmon22 + m] = ts2xz; // ts2xz
 
-    v0_[m] = ts2xx;
+    ts2_mon2[(mon1_index + nmon1)*nsites3 + m] = ts2xy; // ts2yx
+    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon2 + m] = ts2yy; // ts2yy
+    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon22 + m] = ts2yz; //ts2yz
 
-    v1_[m] = ts2xy;
+    ts2_mon2[(mon1_index + nmon12)*nsites3 + m] = ts2xz; // ts2zx
+    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon2 + m] = ts2yz; // ts2zy
+    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon22 + m] = ts2zz; // ts2zz
 
-    v2_[m] = ts2xz;
-
-    //_v3[m] = ts2yx;
-
-    v3_[m] = ts2yy;
-
-    v4_[m] = ts2yz;
-
-    //_v6[m] = ts2zx;
-
-    //_v7[m] = ts2zy;
-
-    v5_[m] = ts2zz;
+//    v0_[m] = ts2xx;
+//
+//    v1_[m] = ts2xy;
+//
+//    v2_[m] = ts2xz;
+//
+//    //_v3[m] = ts2yx;
+//
+//    v3_[m] = ts2yy;
+//
+//    v4_[m] = ts2yz;
+//
+//    //_v6[m] = ts2zx;
+//
+//    //_v7[m] = ts2zy;
+//
+//    v5_[m] = ts2zz;
   }
 
-  for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-    // Setting values of the upper diagonal of the subblocks Ts_alpha_beta
-    // with alpha,beta = x,y,z
-    // This corresponds to the monomer 2 major index (vectorizable)
-    ts2_mon2[mon1_index*nsites3 + m] = v0_[m];  // ts2xx
-    ts2_mon2[mon1_index*nsites3 + nmon2 + m] = v1_[m]; // ts2xy
-    ts2_mon2[mon1_index*nsites3 + nmon22 + m] = v2_[m]; // ts2xz
-
-    ts2_mon2[(mon1_index + nmon1)*nsites3 + m] = v1_[m]; // ts2yx
-    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon2 + m] = v3_[m]; // ts2yy
-    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon22 + m] = v4_[m]; //ts2yz
-
-    ts2_mon2[(mon1_index + nmon12)*nsites3 + m] = v2_[m]; // ts2zx
-    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon2 + m] = v4_[m]; // ts2zy
-    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon22 + m] = v5_[m]; // ts2zz
-  }
+//  for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+//    // Setting values of the upper diagonal of the subblocks Ts_alpha_beta
+//    // with alpha,beta = x,y,z
+//    // This corresponds to the monomer 2 major index (vectorizable)
+//    ts2_mon2[mon1_index*nsites3 + m] = v0_[m];  // ts2xx
+//    ts2_mon2[mon1_index*nsites3 + nmon2 + m] = v1_[m]; // ts2xy
+//    ts2_mon2[mon1_index*nsites3 + nmon22 + m] = v2_[m]; // ts2xz
+//
+//    ts2_mon2[(mon1_index + nmon1)*nsites3 + m] = v1_[m]; // ts2yx
+//    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon2 + m] = v3_[m]; // ts2yy
+//    ts2_mon2[(mon1_index + nmon1)*nsites3 + nmon22 + m] = v4_[m]; //ts2yz
+//
+//    ts2_mon2[(mon1_index + nmon12)*nsites3 + m] = v2_[m]; // ts2zx
+//    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon2 + m] = v4_[m]; // ts2zy
+//    ts2_mon2[(mon1_index + nmon12)*nsites3 + nmon22 + m] = v5_[m]; // ts2zz
+//  }
 
 //  for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
 //    // Setting values of the lower diagonal of the subblocks Ts_alpha_beta

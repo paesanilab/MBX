@@ -567,9 +567,9 @@ namespace elec {
 
     // Now the Matrix A is computed, but the diagonal polarizabilities are missing
     // Need to fill it:
-//#   ifdef _OPENMP
-//#     pragma omp parallel for schedule(static)
-//#   endif
+#   ifdef _OPENMP
+#     pragma omp parallel for schedule(dynamic)
+#   endif
     for (size_t i = 0; i < nsites3; i++) {
       for (size_t j = i; j < nsites3; j++) {
         if (i == j) {

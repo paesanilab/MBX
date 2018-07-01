@@ -189,17 +189,17 @@ class ElectroTensor {
   size_t maxnmon; 
 
   // Vectors that will be reused:
-  std::vector<double> v0_;
-  std::vector<double> v1_;
-  std::vector<double> v2_;
-  std::vector<double> v3_;
-  std::vector<double> v4_;
-  std::vector<double> v5_;
-  std::vector<double> v6_;
-  std::vector<double> v7_;
-  std::vector<double> v8_;
-  std::vector<double> v9_;
-  std::vector<double> v10_;
+//  std::vector<double> v0_;
+//  std::vector<double> v1_;
+//  std::vector<double> v2_;
+//  std::vector<double> v3_;
+//  std::vector<double> v4_;
+//  std::vector<double> v5_;
+//  std::vector<double> v6_;
+//  std::vector<double> v7_;
+//  std::vector<double> v8_;
+//  std::vector<double> v9_;
+//  std::vector<double> v10_;
 };
 
 } // namespace elec
