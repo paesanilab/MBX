@@ -45,6 +45,7 @@ namespace elec {
     private:
       void CalculatePermanentElecField();
       void CalculateDipolesIterative();
+      void DipolesIterativeIteration();
       void CalculateDipolesCG();
       void CalculateDipoles();
       void CalculateElecEnergy();

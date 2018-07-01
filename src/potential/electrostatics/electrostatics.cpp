@@ -651,22 +651,7 @@ namespace elec {
 //    Efd = Efq - 1/pol 
   }
 
-  void Electrostatics::CalculateDipolesIterative() {
-    // Permanent electric field is computed
-    // Now start computation of dipole through iteration
-    double eps = 1.0E+50;
-    std::vector<double> mu_old(3*nsites_,0.0);
-    size_t iter = 0;
-
-    // Auxiliary variables
-    double ex = 0.0;
-    double ey = 0.0;
-    double ez = 0.0;
-
-    // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
-    ElectricFieldHolder elec_field(maxnmon);
-
+  void Electrostatics::DipolesIterativeIteration() {
     // Parallelization
     size_t nthreads = 1;
 #   ifdef _OPENMP
@@ -678,11 +663,194 @@ namespace elec {
       }
 #   endif
 
+    // Max number of monomers
+    size_t maxnmon = mon_type_count_.back().second;
+    ElectricFieldHolder elec_field(maxnmon);
+
+    std::fill(Efd_.begin(), Efd_.end(), 0.0);
+
+    double aDD = 0.0;
+
     // Excluded sets
     excluded_set_type exc12;
     excluded_set_type exc13;
     excluded_set_type exc14;
-  
+
+    // Auxiliary variables
+    double ex = 0.0;
+    double ey = 0.0;
+    double ez = 0.0;
+
+    // Recalculate Electric field due to dipoles
+    // Sites on the same monomer
+    size_t fi_mon = 0;
+    size_t fi_sites = 0;
+    size_t fi_crd = 0;
+
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+      size_t ns = sites_[fi_mon];
+//      TODO: Check why this makes shit fail
+//      if (ns == 1) continue;
+      size_t nmon = mon_type_count_[mt].second;
+      size_t nmon2 = 2*nmon;
+      // Get excluded pairs for this monomer
+      systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+      for (size_t i = 0; i < ns-1 ; i++) {
+        size_t inmon3 = 3*i*nmon;
+        for (size_t j = i+1; j < ns; j++) {
+          // Set the proper aDD
+          bool is12 = systools::IsExcluded(exc12, i, j);
+          bool is13 = systools::IsExcluded(exc13, i, j);
+          bool is14 = systools::IsExcluded(exc14, i, j);
+          aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
+
+          double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+          if (A > constants::EPS) {
+            A = std::pow(A, 1.0/6.0);
+            double Asqsq = A*A*A*A;
+            for (size_t m = 0; m < nmon; m++) {
+              // TODO. Slowest function
+              elec_field.CalcDipoleElecFieldWithPolfacNonZero(
+                        xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
+                        mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1,
+                        nmon, nmon, i, j, Asqsq,
+                        aDD, Efd_.data() + fi_crd, &ex, &ey, &ez);
+              Efd_[fi_crd + inmon3 + m] += ex;
+              Efd_[fi_crd + inmon3 + nmon + m] += ey;
+              Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
+            }
+          } else {
+            for (size_t m = 0; m < nmon; m++) {
+              elec_field.CalcDipoleElecFieldWithPolfacZero(
+                        xyz_.data() + fi_crd, xyz_.data() + fi_crd,
+                        mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1,
+                        nmon, nmon, i, j, Efd_.data() + fi_crd, &ex, &ey, &ez);
+              Efd_[fi_crd + inmon3 + m] += ex;
+              Efd_[fi_crd + inmon3 + nmon + m] += ey;
+              Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
+            }
+          }
+        }
+      }
+      // Update first indexes
+      fi_mon += nmon;
+      fi_sites += nmon * ns;
+      fi_crd += nmon * ns * 3;
+    }
+
+    size_t fi_mon1 = 0;
+    size_t fi_mon2 = 0;
+    size_t fi_sites1 = 0;
+    size_t fi_sites2 = 0;
+    size_t fi_crd1 = 0;
+    size_t fi_crd2 = 0;
+    // aDD intermolecular is always 0.055
+    aDD = 0.055;
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+      size_t ns1 = sites_[fi_mon1];
+      size_t nmon1 = mon_type_count_[mt1].second;
+      size_t nmon12 = 2 * nmon1;
+      fi_mon2 = fi_mon1;
+      fi_sites2 = fi_sites1;
+      fi_crd2 = fi_crd1;
+      for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+        size_t ns2 = sites_[fi_mon2];
+        size_t nmon2 = mon_type_count_[mt2].second;
+        bool same = (mt1 == mt2);
+        // TODO add neighbour list here
+        // Prepare for parallelization
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+        std::vector<std::vector<double>> Efd_1_pool;
+        std::vector<std::vector<double>> Efd_2_pool;
+        for (size_t i = 0; i < nthreads; i++) { 
+           field_pool.push_back(
+             std::make_shared<ElectricFieldHolder>(maxnmon));
+           Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+           Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+        }
+
+        // Parallel loop
+#       ifdef _OPENMP
+#         pragma omp parallel for schedule(dynamic)
+#       endif
+        for (size_t m1 = 0; m1 < nmon1; m1++) {
+          int rank = 0;
+#         ifdef _OPENMP
+            rank = omp_get_thread_num();
+#         endif
+          std::shared_ptr<ElectricFieldHolder> local_field 
+            = field_pool[rank];
+          size_t m2init = same ? m1 + 1 : 0;
+          double ex_thread = 0.0;
+          double ey_thread = 0.0;
+          double ez_thread = 0.0;
+          for (size_t i = 0; i < ns1; i++) {
+            size_t inmon13 = 3 * nmon1 * i;
+            for (size_t j = 0; j < ns2; j++) {
+              double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+              if (A > constants::EPS) {
+                A = std::pow(A,1.0/6.0);
+                double Asqsq = A*A*A*A;
+                local_field->CalcDipoleElecFieldWithPolfacNonZero(
+                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                      mu_.data() + fi_crd1, mu_.data() + fi_crd2, 
+                      m1, m2init, nmon2,
+                      nmon1, nmon2, i, j, Asqsq,
+                      aDD, Efd_2_pool[rank].data(), 
+                      &ex_thread, &ey_thread, &ez_thread);
+                Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+              } else {
+                local_field->CalcDipoleElecFieldWithPolfacZero(
+                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                      mu_.data() + fi_crd1, mu_.data() + fi_crd2, 
+                      m1, m2init, nmon2, nmon1, nmon2, 
+                      i, j, Efd_2_pool[rank].data(), 
+                      &ex_thread, &ey_thread, &ez_thread);
+                Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+              }
+            }
+          }
+        }
+        
+        // Compress data in Efd
+        for (size_t rank = 0; rank < nthreads; rank++) {
+          size_t kend1 = Efd_1_pool[rank].size();
+          size_t kend2 = Efd_2_pool[rank].size();
+          for (size_t k = 0; k < kend1; k++) {
+            Efd_[fi_crd1 + k] += Efd_1_pool[rank][k];
+          }
+          for (size_t k = 0; k < kend2; k++) {
+            Efd_[fi_crd2 + k] += Efd_2_pool[rank][k];
+          }
+        }
+        // Update first indexes
+        fi_mon2 += nmon2;
+        fi_sites2 += nmon2 * ns2;
+        fi_crd2 += nmon2 * ns2 * 3;
+      }
+      // Update first indexes
+      fi_mon1 += nmon1;
+      fi_sites1 += nmon1 * ns1;
+      fi_crd1 += nmon1 * ns1 * 3;
+    }
+    
+
+
+
+  }
+
+
+  void Electrostatics::CalculateDipolesIterative() {
+    // Permanent electric field is computed
+    // Now start computation of dipole through iteration
+    double eps = 1.0E+50;
+    std::vector<double> mu_old(3*nsites_,0.0);
+    size_t iter = 0;
+
     while (true) {
 
       double max_eps = 0.0;
@@ -762,166 +930,7 @@ namespace elec {
       iter++;
       //std::cout << iter << std::endl;
       
-      std::fill(Efd_.begin(), Efd_.end(), 0.0);
-
-      double aDD = 0.0;
-
-      // Recalculate Electric field due to dipoles
-      // Sites on the same monomer
-      fi_mon = 0;
-      fi_sites = 0;
-      fi_crd = 0;
-
-      for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-//        TODO: Check why this makes shit fail
-//        if (ns == 1) continue;
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2*nmon;
-        // Get excluded pairs for this monomer
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
-        for (size_t i = 0; i < ns-1 ; i++) {
-          size_t inmon3 = 3*i*nmon;
-          for (size_t j = i+1; j < ns; j++) {
-            // Set the proper aDD
-            bool is12 = systools::IsExcluded(exc12, i, j);
-            bool is13 = systools::IsExcluded(exc13, i, j);
-            bool is14 = systools::IsExcluded(exc14, i, j);
-            aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
-
-            double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
-            if (A > constants::EPS) {
-              A = std::pow(A, 1.0/6.0);
-              double Asqsq = A*A*A*A;
-              for (size_t m = 0; m < nmon; m++) {
-                // TODO. Slowest function
-                elec_field.CalcDipoleElecFieldWithPolfacNonZero(
-                          xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
-                          mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1,
-                          nmon, nmon, i, j, Asqsq,
-                          aDD, Efd_.data() + fi_crd, &ex, &ey, &ez);
-                Efd_[fi_crd + inmon3 + m] += ex;
-                Efd_[fi_crd + inmon3 + nmon + m] += ey;
-                Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
-              }
-            } else {
-              for (size_t m = 0; m < nmon; m++) {
-                elec_field.CalcDipoleElecFieldWithPolfacZero(
-                          xyz_.data() + fi_crd, xyz_.data() + fi_crd,
-                          mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1,
-                          nmon, nmon, i, j, Efd_.data() + fi_crd, &ex, &ey, &ez);
-                Efd_[fi_crd + inmon3 + m] += ex;
-                Efd_[fi_crd + inmon3 + nmon + m] += ey;
-                Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
-              }
-            }
-          }
-        }
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-      }
-
-      size_t fi_mon1 = 0;
-      size_t fi_sites1 = 0;
-      size_t fi_mon2 = 0;
-      size_t fi_sites2 = 0;
-      size_t fi_crd1 = 0;
-      size_t fi_crd2 = 0;
-      // aDD intermolecular is always 0.055
-      aDD = 0.055;
-      for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        size_t ns1 = sites_[fi_mon1];
-        size_t nmon1 = mon_type_count_[mt1].second;
-        size_t nmon12 = 2 * nmon1;
-        fi_mon2 = fi_mon1;
-        fi_sites2 = fi_sites1;
-        fi_crd2 = fi_crd1;
-        for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-          size_t ns2 = sites_[fi_mon2];
-          size_t nmon2 = mon_type_count_[mt2].second;
-          bool same = (mt1 == mt2);
-          // TODO add neighbour list here
-          // Prepare for parallelization
-          std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-          std::vector<std::vector<double>> Efd_1_pool;
-          std::vector<std::vector<double>> Efd_2_pool;
-          for (size_t i = 0; i < nthreads; i++) { 
-             field_pool.push_back(
-               std::make_shared<ElectricFieldHolder>(maxnmon));
-             Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-             Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
-          }
-
-          // Parallel loop
-#         ifdef _OPENMP
-#           pragma omp parallel for schedule(dynamic)
-#         endif
-          for (size_t m1 = 0; m1 < nmon1; m1++) {
-            int rank = 0;
-#           ifdef _OPENMP
-              rank = omp_get_thread_num();
-#           endif
-            std::shared_ptr<ElectricFieldHolder> local_field 
-              = field_pool[rank];
-            size_t m2init = same ? m1 + 1 : 0;
-            double ex_thread = 0.0;
-            double ey_thread = 0.0;
-            double ez_thread = 0.0;
-            for (size_t i = 0; i < ns1; i++) {
-              size_t inmon13 = 3 * nmon1 * i;
-              for (size_t j = 0; j < ns2; j++) {
-                double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
-                if (A > constants::EPS) {
-                  A = std::pow(A,1.0/6.0);
-                  double Asqsq = A*A*A*A;
-                  local_field->CalcDipoleElecFieldWithPolfacNonZero(
-                        xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                        mu_.data() + fi_crd1, mu_.data() + fi_crd2, 
-                        m1, m2init, nmon2,
-                        nmon1, nmon2, i, j, Asqsq,
-                        aDD, Efd_2_pool[rank].data(), 
-                        &ex_thread, &ey_thread, &ez_thread);
-                  Efd_1_pool[rank][inmon13 + m1] += ex_thread;
-                  Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
-                  Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
-                } else {
-                  local_field->CalcDipoleElecFieldWithPolfacZero(
-                        xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                        mu_.data() + fi_crd1, mu_.data() + fi_crd2, 
-                        m1, m2init, nmon2, nmon1, nmon2, 
-                        i, j, Efd_2_pool[rank].data(), 
-                        &ex_thread, &ey_thread, &ez_thread);
-                  Efd_1_pool[rank][inmon13 + m1] += ex_thread;
-                  Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
-                  Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
-                }
-              }
-            }
-          }
-          
-          // Compress data in Efd
-          for (size_t rank = 0; rank < nthreads; rank++) {
-            size_t kend1 = Efd_1_pool[rank].size();
-            size_t kend2 = Efd_2_pool[rank].size();
-            for (size_t k = 0; k < kend1; k++) {
-              Efd_[fi_crd1 + k] += Efd_1_pool[rank][k];
-            }
-            for (size_t k = 0; k < kend2; k++) {
-              Efd_[fi_crd2 + k] += Efd_2_pool[rank][k];
-            }
-          }
-          // Update first indexes
-          fi_mon2 += nmon2;
-          fi_sites2 += nmon2 * ns2;
-          fi_crd2 += nmon2 * ns2 * 3;
-        }
-        // Update first indexes
-        fi_mon1 += nmon1;
-        fi_sites1 += nmon1 * ns1;
-        fi_crd1 += nmon1 * ns1 * 3;
-      }
+      DipolesIterativeIteration();
     }
   }
 
