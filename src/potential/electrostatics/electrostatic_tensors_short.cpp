@@ -1,8 +1,8 @@
-#include "potential/electrostatics/electrostatic_tensors.h"
+#include "potential/electrostatics/electrostatic_tensors_short.h"
 
 namespace elec {
 
-ElectroTensor::ElectroTensor(size_t n) {
+ElectroTensorShort::ElectroTensorShort(size_t n) {
   maxnmon = n;
 //  v0_  = std::vector<double> (maxnmon);
 //  v1_  = std::vector<double> (maxnmon);
@@ -15,7 +15,7 @@ ElectroTensor::ElectroTensor(size_t n) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensor::CalcT0AndT1WithPolfacNonZero 
+void ElectroTensorShort::CalcT0AndT1WithPolfacNonZero 
   (double * xyz1, double * xyz2, 
    size_t mon1_index, 
    size_t mon2_index_start, size_t mon2_index_end,
@@ -112,7 +112,7 @@ void ElectroTensor::CalcT0AndT1WithPolfacNonZero
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensor::CalcT0AndT1WithPolfacZero
+void ElectroTensorShort::CalcT0AndT1WithPolfacZero
   (double * xyz1, double * xyz2,
    size_t mon1_index,
    size_t mon2_index_start, size_t mon2_index_end,
@@ -176,19 +176,24 @@ void ElectroTensor::CalcT0AndT1WithPolfacZero
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensor::CalcT1AndT2WithPolfacNonZero
+void ElectroTensorShort::CalcT1AndT2WithPolfacNonZero
   (double * xyz1, double * xyz2,
    size_t mon1_index,
    size_t mon2_index_start, size_t mon2_index_end,
    size_t nmon1, size_t nmon2,
    size_t site_i, size_t site_j,
    double Asqsq,double aDD, size_t nsites,
-   double * ts1_mon1, double * ts1_mon2,
-   double * ts2) {
+   double * ts1, double * ts2) {
 
   // Shifts that will be useful in the loops
   const size_t nmon12 = nmon1 * 2;
   const size_t nmon22 = nmon2 * 2;
+  const size_t nmon23 = nmon2 * 3;
+  const size_t nmon24 = nmon2 * 4;
+  const size_t nmon25 = nmon2 * 5;
+  const size_t nmon26 = nmon2 * 6;
+  const size_t nmon27 = nmon2 * 7;
+  const size_t nmon28 = nmon2 * 8;
 
   const size_t nsites3 = 3*nsites;
 
@@ -249,45 +254,49 @@ void ElectroTensor::CalcT1AndT2WithPolfacNonZero
 
     // Store the tensors in the pointers
     // Ts1
-    ts1_mon1[site_inmon13 + m] = ts1x;
-    ts1_mon2[site_jnmon23 + m] = -ts1x;
-
-    ts1_mon1[site_inmon13 + nmon1 + m] = ts1y;
-    ts1_mon2[site_jnmon23 + nmon2 + m] = -ts1y;
-
-    ts1_mon1[site_inmon13 + nmon12 + m] = ts1z;
-    ts1_mon2[site_jnmon23 + nmon22 + m] = -ts1z;
+    // The sign is due to how rij is calculated (mon1 - mon2)
+    // This will return for mon2, so mon1 will be -ts. of mon1
+    ts1[m] = -ts1x;
+    ts1[nmon2 + m] = -ts1y;
+    ts1[nmon22 + m] = -ts1z;
 
     // Ts2
     // Order will be xx xy xz yx yy yz zx zy zz
-    ts2[mon1_index*nsites3 + m] = ts2xx;  // ts2xx
-    ts2[mon1_index*nsites3 + nmon2 + m] = ts2xy; // ts2xy
-    ts2[mon1_index*nsites3 + nmon22 + m] = ts2xz; // ts2xz
+    // Will return all xx, then all xy, then all xz, then all yx ...
+    // Total size of vector is 9*nmon2
+    ts2[m] = ts2xx;  // ts2xx
+    ts2[nmon2 + m] = ts2xy; // ts2xy
+    ts2[nmon22 + m] = ts2xz; // ts2xz
 
-    ts2[(mon1_index + nmon1)*nsites3 + m] = ts2xy; // ts2yx
-    ts2[(mon1_index + nmon1)*nsites3 + nmon2 + m] = ts2yy; // ts2yy
-    ts2[(mon1_index + nmon1)*nsites3 + nmon22 + m] = ts2yz; //ts2yz
+    ts2[nmon23 + m] = ts2xy; // ts2yx
+    ts2[nmon24 + m] = ts2yy; // ts2yy
+    ts2[nmon25 + m] = ts2yz; //ts2yz
 
-    ts2[(mon1_index + nmon12)*nsites3 + m] = ts2xz; // ts2zx
-    ts2[(mon1_index + nmon12)*nsites3 + nmon2 + m] = ts2yz; // ts2zy
-    ts2[(mon1_index + nmon12)*nsites3 + nmon22 + m] = ts2zz; // ts2zz
+    ts2[nmon26 + m] = ts2xz; // ts2zx
+    ts2[nmon27 + m] = ts2yz; // ts2zy
+    ts2[nmon28 + m] = ts2zz; // ts2zz
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensor::CalcT1AndT2WithPolfacZero
+void ElectroTensorShort::CalcT1AndT2WithPolfacZero
   (double * xyz1, double * xyz2,
    size_t mon1_index,
    size_t mon2_index_start, size_t mon2_index_end,
    size_t nmon1, size_t nmon2,
    size_t site_i, size_t site_j,  size_t nsites,
-   double * ts1_mon1, double * ts1_mon2,
-   double * ts2) {
+   double * ts1, double * ts2) {
 
   // Shifts that will be useful in the loops
   const size_t nmon12 = nmon1 * 2;
   const size_t nmon22 = nmon2 * 2;
+  const size_t nmon23 = nmon2 * 3;
+  const size_t nmon24 = nmon2 * 4;
+  const size_t nmon25 = nmon2 * 5;
+  const size_t nmon26 = nmon2 * 6;
+  const size_t nmon27 = nmon2 * 7;
+  const size_t nmon28 = nmon2 * 8;
 
   const size_t nsites3 = 3*nsites;
 
@@ -340,31 +349,29 @@ void ElectroTensor::CalcT1AndT2WithPolfacZero
 
     const double ts2zz = ts2z * rijz - s1r3;
 
-        // Store the tensors in the pointers
+    // Store the tensors in the pointers
     // Ts1
-    ts1_mon1[site_inmon13 + m] = ts1x;
-    ts1_mon2[site_jnmon23 + m] = -ts1x;
-
-    ts1_mon1[site_inmon13 + nmon1 + m] = ts1y;
-    ts1_mon2[site_jnmon23 + nmon2 + m] = -ts1y;
-
-    ts1_mon1[site_inmon13 + nmon12 + m] = ts1z;
-    ts1_mon2[site_jnmon23 + nmon22 + m] = -ts1z;
+    // The sign is due to how rij is calculated (mon1 - mon2)
+    // This will return for mon2, so mon1 will be -ts. of mon1
+    ts1[m] = -ts1x;
+    ts1[nmon2 + m] = -ts1y;
+    ts1[nmon22 + m] = -ts1z;
 
     // Ts2
     // Order will be xx xy xz yx yy yz zx zy zz
-    ts2[mon1_index*nsites3 + m] = ts2xx;  // ts2xx
-    ts2[mon1_index*nsites3 + nmon2 + m] = ts2xy; // ts2xy
-    ts2[mon1_index*nsites3 + nmon22 + m] = ts2xz; // ts2xz
+    // Will return all xx, then all xy, then all xz, then all yx ...
+    // Total size of vector is 9*nmon2
+    ts2[m] = ts2xx;  // ts2xx
+    ts2[nmon2 + m] = ts2xy; // ts2xy
+    ts2[nmon22 + m] = ts2xz; // ts2xz
 
-    ts2[(mon1_index + nmon1)*nsites3 + m] = ts2xy; // ts2yx
-    ts2[(mon1_index + nmon1)*nsites3 + nmon2 + m] = ts2yy; // ts2yy
-    ts2[(mon1_index + nmon1)*nsites3 + nmon22 + m] = ts2yz; //ts2yz
+    ts2[nmon23 + m] = ts2xy; // ts2yx
+    ts2[nmon24 + m] = ts2yy; // ts2yy
+    ts2[nmon25 + m] = ts2yz; //ts2yz
 
-    ts2[(mon1_index + nmon12)*nsites3 + m] = ts2xz; // ts2zx
-    ts2[(mon1_index + nmon12)*nsites3 + nmon2 + m] = ts2yz; // ts2zy
-    ts2[(mon1_index + nmon12)*nsites3 + nmon22 + m] = ts2zz; // ts2zz
-
+    ts2[nmon26 + m] = ts2xz; // ts2zx
+    ts2[nmon27 + m] = ts2yz; // ts2zy
+    ts2[nmon28 + m] = ts2zz; // ts2zz
   }
 }
 

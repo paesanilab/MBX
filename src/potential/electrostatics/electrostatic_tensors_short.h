@@ -34,8 +34,8 @@ NOTE: The screening functions in this paper are for TTM3, while here we are
 using TTM4. The exponents change from 3 to 4 but everything can be trivially 
 derived.
 *******************************************************************************/
-#ifndef ELECTROSTATIC_TENSORS_H
-#define ELECTROSTATIC_TENSORS_H
+#ifndef ELECTROSTATIC_TENSORS_SHORT_H
+#define ELECTROSTATIC_TENSORS_SHORT_H
 
 #include <vector>
 #include <cmath>
@@ -47,11 +47,11 @@ namespace elec {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class ElectroTensor {
+class ElectroTensorShort {
  public:
-  ElectroTensor() {maxnmon = 0;}
-  ElectroTensor(size_t n);
-  ~ElectroTensor() {}
+  ElectroTensorShort() {maxnmon = 0;}
+  ElectroTensorShort(size_t n);
+  ~ElectroTensorShort() {};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Get tensor alpha ////////////////////////////////////////////////////////////
@@ -113,8 +113,7 @@ class ElectroTensor {
     size_t nsites,
     // The following pointers correspond to the same array, but they point to
     // the part of the array that contains information of mons 1 and 2
-    double * ts1_mon1,  // Size 3n*n  // Electrostatic tensor Tij_alpha for Mon 1
-    double * ts1_mon2,  // Size 3n*n  // Electrostatic tensor Tij_alpha for Mon 2
+    double * ts1,  // Size 3n*n  // Electrostatic tensor Tij_alpha for Mon 1
     double * ts2); // Size 3n*3n // Electrostatic tensor Tij_alpha_beta
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +128,7 @@ class ElectroTensor {
     size_t nmon1, size_t nmon2,
     size_t site_i, size_t site_j, 
     size_t nsites,
-    double * ts1_mon1, double * ts1_mon2, 
+    double * ts1,
     double * ts2);
 
 ////////////////////////////////////////////////////////////////////////////////

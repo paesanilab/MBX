@@ -1,4 +1,5 @@
 set (ELEC_SOURCES electrostatic_tensors.cpp 
+                  electrostatic_tensors_short.cpp
                   electrostatics.cpp 
                   fields.cpp 
                   gammq.cpp)

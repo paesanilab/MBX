@@ -18,6 +18,7 @@
 #include "potential/electrostatics/gammq.h"
 #include "potential/electrostatics/fields.h"
 #include "potential/electrostatics/electrostatic_tensors.h"
+#include "potential/electrostatics/electrostatic_tensors_short.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -47,6 +48,8 @@ namespace elec {
       void CalculateDipolesIterative();
       void DipolesIterativeIteration();
       void CalculateDipolesCG();
+      void DipolesCGIteration(std::vector<double> &in_v,
+                              std::vector<double> &out_v);
       void CalculateDipoles();
       void CalculateElecEnergy();
       void CalculateGradients(std::vector<double> &grad);
