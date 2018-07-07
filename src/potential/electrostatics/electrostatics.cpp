@@ -1,7 +1,7 @@
 #include "potential/electrostatics/electrostatics.h"
 #include <iomanip>
 
-//#define DEBUG
+#define DEBUG
 //#define TIMING
 //#define PRINT_TERMS
 
@@ -671,12 +671,6 @@ namespace elec {
           }
         }
 
-        // Condense pv_pool
-        for (size_t proc = 0; proc < nthreads; proc++) {
-          for (size_t i = 0; i < inv_size; i++) {
-            out_v[i] += pv_pool[inv_size*proc + i];
-          }
-        }
 
         // Update first indexes
         fi_mon2 += nmon2;
@@ -687,6 +681,13 @@ namespace elec {
       fi_mon1 += nmon1;
       fi_sites1 += nmon1 * ns1;
       fi_crd1 += nmon1 * ns1 * 3;
+    }
+
+    // Condense pv_pool
+    for (size_t proc = 0; proc < nthreads; proc++) {
+      for (size_t i = 0; i < inv_size; i++) {
+        out_v[i] += pv_pool[inv_size*proc + i];
+      }
     }
 
     // Diagonal elements must be taken into account
