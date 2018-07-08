@@ -1,7 +1,7 @@
 #include "potential/electrostatics/electrostatics.h"
 #include <iomanip>
 
-#define DEBUG
+//#define DEBUG
 //#define TIMING
 //#define PRINT_TERMS
 
@@ -371,7 +371,7 @@ namespace elec {
 #   endif
 
     size_t inv_size = in_v.size();
-    std::vector<double> pv_pool((nthreads)*inv_size, 0.0);
+    std::vector<std::vector<double> > pv_pool(nthreads,std::vector<double>(inv_size, 0.0));
 
 #   ifdef DEBUG
       std::vector<double> ts2_all(inv_size*inv_size,0.0);
@@ -443,18 +443,23 @@ namespace elec {
           // this is due to mon2
           for (size_t kk = 0; kk < 3; kk++) {
             size_t kknmon = kk * nmon;
+#           ifdef _OPENMP
+#             pragma omp simd
+#           endif
             for (size_t k = 0; k < nmon; k++) {
-              size_t row = fi_crd + inmon3 + k;
-              size_t col = fi_crd + jnmon3 + k;
+#             ifdef DEBUG
+                size_t row = fi_crd + inmon3 + k;
+                size_t col = fi_crd + jnmon3 + k;
+#             endif
 
-              out_v[row] -= pfipfj *
-                in_v[col + kknmon] * ts2[k + kknmon];
+              out_v[fi_crd + inmon3 + k] -= pfipfj *
+                in_v[fi_crd + jnmon3 + k + kknmon] * ts2[k + kknmon];
 
-              out_v[row + nmon] -= pfipfj *
-                in_v[col + kknmon] * ts2[k + kknmon + nmon3];
+              out_v[fi_crd + inmon3 + k + nmon] -= pfipfj *
+                in_v[fi_crd + jnmon3 + k + kknmon] * ts2[k + kknmon + nmon3];
 
-              out_v[row + nmon2] -= pfipfj *
-                in_v[col + kknmon] * ts2[k + kknmon + nmon32];
+              out_v[fi_crd + inmon3 + k + nmon2] -= pfipfj *
+                in_v[fi_crd + jnmon3 + k + kknmon] * ts2[k + kknmon + nmon32];
 
 #             ifdef DEBUG
                 ts2_all[row*inv_size + col + kknmon] = 
@@ -471,18 +476,23 @@ namespace elec {
           // This is due to mon 1
           for (size_t kk = 0; kk < 3; kk++) {
             size_t kknmon = kk * nmon;
+#           ifdef _OPENMP
+#             pragma omp simd
+#           endif
             for (size_t k = 0; k < nmon; k++) {
-              size_t row = fi_crd + jnmon3 + k;
-              size_t col = fi_crd + inmon3 + k;
+#             ifdef DEBUG
+                size_t row = fi_crd + jnmon3 + k;
+                size_t col = fi_crd + inmon3 + k;
+#             endif
 
-              out_v[row + kknmon] -= pfipfj *
-                in_v[col] * ts2[k + kknmon];
+              out_v[fi_crd + jnmon3 + k + kknmon] -= pfipfj *
+                in_v[fi_crd + inmon3 + k] * ts2[k + kknmon];
 
-              out_v[row + kknmon] -= pfipfj *
-                in_v[col + nmon] * ts2[k + kknmon + nmon3];
+              out_v[fi_crd + jnmon3 + k + kknmon] -= pfipfj *
+                in_v[fi_crd + inmon3 + k + nmon] * ts2[k + kknmon + nmon3];
 
-              out_v[row + kknmon] -= pfipfj *
-                in_v[col + nmon2] * ts2[k + kknmon + nmon32];
+              out_v[fi_crd + jnmon3 + k + kknmon] -= pfipfj *
+                in_v[fi_crd + inmon3 + k + nmon2] * ts2[k + kknmon + nmon32];
 
 #             ifdef DEBUG
                 ts2_all[(row+kknmon)*inv_size + col] = 
@@ -619,43 +629,49 @@ namespace elec {
 
               // ts2 for this monomer and pairs are calculated
               // this is due to mon2 (upper diagonal)
-              for (size_t k = 0; k < nmon23; k++) {
-                size_t row = fi_crd1 + inmon13 + m1;
-                size_t col = fi_crd2 + jnmon23 + k;
-
-                pv_pool[rank*inv_size + row] -= pfipfj *
-                     in_v[col] * ts2_pool[rank][k];
-
-                pv_pool[rank*inv_size + nmon1 + row] -= pfipfj * 
-                     in_v[col] * ts2_pool[rank][nmon23 + k];
-
-                pv_pool[rank*inv_size + nmon12 + row] -= pfipfj * 
-                     in_v[col] * ts2_pool[rank][nmon232 + k];
-
-#               ifdef DEBUG
-                  ts2_all[row*inv_size + col] += 
+//#             ifdef _OPENMP
+//#               pragma omp simd
+//#             endif
+#             ifdef DEBUG
+                for (size_t k = 0; k < nmon23; k++) {
+                  size_t row = fi_crd1 + inmon13 + m1;
+                  size_t col = fi_crd2 + jnmon23 + k;
+                  ts2_all[row*inv_size + col] +=
                          -pfipfj * ts2_pool[rank][k];
-                  ts2_all[(row+nmon1)*inv_size + col] += 
+                  ts2_all[(row+nmon1)*inv_size + col] +=
                          -pfipfj * ts2_pool[rank][nmon23 + k];
-                  ts2_all[(row+nmon12)*inv_size + col] += 
+                  ts2_all[(row+nmon12)*inv_size + col] +=
                          -pfipfj * ts2_pool[rank][nmon232 + k];
-#               endif
-
+                }
+#             endif
+              for (size_t k = 0; k < nmon23; k++) {
+                pv_pool[rank][fi_crd1 + inmon13 + m1] -= pfipfj *
+                     in_v[fi_crd2 + jnmon23 + k] * ts2_pool[rank][k];
+              }
+              for (size_t k = 0; k < nmon23; k++) {
+                pv_pool[rank][nmon1 + fi_crd1 + inmon13 + m1] -= pfipfj * 
+                     in_v[fi_crd2 + jnmon23 + k] * ts2_pool[rank][nmon23 + k];
+              }
+              for (size_t k = 0; k < nmon23; k++) {
+                pv_pool[rank][nmon12 + fi_crd1 + inmon13 + m1] -= pfipfj * 
+                     in_v[fi_crd2 + jnmon23 + k] * ts2_pool[rank][nmon232 + k];
               }
               // This is due to mon 1 (lower diagonal)
               if (!same || i != j) {
                 for (size_t k = 0; k < nmon23; k++) {
-                  size_t row = fi_crd2 + jnmon23 + k;
-                  size_t col = fi_crd1 + inmon13 + m1;
+#                 ifdef DEBUG
+                    size_t row = fi_crd2 + jnmon23 + k;
+                    size_t col = fi_crd1 + inmon13 + m1;
+#                 endif
+
+                  pv_pool[rank][fi_crd2 + jnmon23 + k] -= pfipfj *
+                       in_v[fi_crd1 + inmon13 + m1] * ts2_pool[rank][k];
   
-                  pv_pool[rank*inv_size + row] -= pfipfj *
-                       in_v[col] * ts2_pool[rank][k];
+                  pv_pool[rank][fi_crd2 + jnmon23 + k] -= pfipfj *
+                       in_v[fi_crd1 + inmon13 + m1 + nmon1] * ts2_pool[rank][nmon23 + k];
   
-                  pv_pool[rank*inv_size + row] -= pfipfj *
-                       in_v[col + nmon1] * ts2_pool[rank][nmon23 + k];
-  
-                  pv_pool[rank*inv_size + row] -= pfipfj *
-                       in_v[col + nmon12] * ts2_pool[rank][nmon232 + k];
+                  pv_pool[rank][fi_crd2 + jnmon23 + k] -= pfipfj *
+                       in_v[fi_crd1 + inmon13 + m1 + nmon12] * ts2_pool[rank][nmon232 + k];
 
 #                 ifdef DEBUG
                     ts2_all[row*inv_size + col] += 
@@ -686,7 +702,7 @@ namespace elec {
     // Condense pv_pool
     for (size_t proc = 0; proc < nthreads; proc++) {
       for (size_t i = 0; i < inv_size; i++) {
-        out_v[i] += pv_pool[inv_size*proc + i];
+        out_v[i] += pv_pool[proc][i];
       }
     }
 
@@ -737,6 +753,9 @@ namespace elec {
         // TODO assuming pol not site dependant
         double p = pol_[fi_sites + i];
         size_t inmon3 = 3*i*nmon;
+#       ifdef _OPENMP
+#         pragma omp simd
+#       endif
         for (size_t m = 0; m < nmon; m++) {
           mu_[fi_crd + inmon3 + m] = p * Efq_[fi_crd + inmon3 + m];
           mu_[fi_crd + inmon3 + nmon + m] = p * Efq_[fi_crd + inmon3 + nmon + m];
@@ -774,7 +793,10 @@ namespace elec {
 //#     pragma omp parallel for schedule(static)
 //#   endif
     for (size_t i = 0; i < nsites3; i++) {
-      rv[i] = pv[i] = Efq_[i]*pol_sqrt_[i] - ts2v[i];
+      pv[i] = Efq_[i]*pol_sqrt_[i] - ts2v[i];
+    }
+    for (size_t i = 0; i < nsites3; i++) {
+      rv[i] = pv[i];
     }
   
 #   ifdef DEBUG
@@ -803,7 +825,11 @@ namespace elec {
       residual = 0.0;
       for (size_t i = 0; i < nsites3; i++) {
         mu_[i] = mu_[i] + alphak * pv[i];
+      }
+      for (size_t i = 0; i < nsites3; i++) {
         r_new[i] = rv[i] - alphak*ts2v[i];
+      }
+      for (size_t i = 0; i < nsites3; i++) {
         residual += r_new[i] * r_new[i];
       }
 

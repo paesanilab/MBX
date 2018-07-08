@@ -14,11 +14,14 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ############################  Options: Build How?  #############################
 #MRR
-find_package(OpenMP)
-SET(USE_OPENMP TRUE CACHE BOOL "Use OpenMP")
-if (OPENMP_FOUND AND USE_OPENMP)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#SET(USE_OPENMP TRUE CACHE BOOL "Use OpenMP")
+OPTION(USE_OPENMP "Use OpenMP" TRUE)
+if (USE_OPENMP)
+    find_package(OpenMP)
+    if (OPENMP_FOUND)
+        set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    endif()
 endif()
 # END MRR
 include(psi4OptionsTools)
@@ -46,7 +49,9 @@ set(STAGED_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/stage${CMAKE_INSTALL_PREFIX})
 # add_subdirectory(external/upstream)
 
 # external projects manage their own OpenMP and c++YY flags, so only add to CXX_FLAGS for psi4-core
-include(autocmake_omp)
+if (USE_OPENMP)
+    include(autocmake_omp)
+endif()
 include(custom_cxxstandard)
 include(custom_static_library)
 
