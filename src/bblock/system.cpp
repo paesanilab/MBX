@@ -246,6 +246,11 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   double e1b = Get1B(do_grads);
 
   // If monomers are too distorted, skip 
+  if (!allMonGood_) {
+    grad = systools::ResetOrder(grad_, initial_order_, first_index_, sites_);
+    return e1b;
+  }
+
 # ifdef TIMING
   auto t2 = std::chrono::high_resolution_clock::now();
 # endif
@@ -790,7 +795,7 @@ double System::GetElectrostatics(bool do_grads) {
   elec::Electrostatics electrostaticE;
   electrostaticE.Initialize(chg_, chggrad_, polfac_, 
                 pol_, xyz_, monomers_, sites_, first_index_, 
-                mon_type_count_, do_grads, diptol_, maxItDip_, "iter");
+                mon_type_count_, do_grads, diptol_, maxItDip_, "cg");
   return electrostaticE.GetElectrostatics(grad_);
 }
 
