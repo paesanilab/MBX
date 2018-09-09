@@ -915,6 +915,10 @@ namespace elec {
 
   }
 
+  void Electrostatics::ResetAspcHistory() {
+    hist_num_aspc_ = 0;
+  }
+
   void Electrostatics::CalculateDipolesAspc() {
     if (hist_num_aspc_ < k_aspc_ + 2) {
       // TODO do we want to allow iteration?

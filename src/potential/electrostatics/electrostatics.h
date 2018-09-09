@@ -42,6 +42,7 @@ namespace elec {
         std::string dip_method = "iter");
       
       double GetElectrostatics(std::vector<double> &grad);
+      void ResetAspcHistory();
 
     private:
       void CalculatePermanentElecField();
