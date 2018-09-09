@@ -69,6 +69,12 @@ namespace elec {
     g34_ = std::exp(gammln(0.75));
     aCC1_4_ = std::pow(aCC_,0.25);
 
+    // ASPC parameters
+    hist_num_aspc_ = 0;
+    // TODO k is defaulted to 4 for now
+    SetAspcParameters(4);
+    mu_pred_ = std::vector<double>(nsites3, 0.0);
+
 ////////////////////////////////////////////////////////////////////////////////
 // DATA ORGANIZATION ///////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -355,6 +361,7 @@ namespace elec {
   void Electrostatics::CalculateDipoles() {
     if (dip_method_ == "iter") CalculateDipolesIterative();
     else if (dip_method_ == "cg") CalculateDipolesCG();
+    else if (dip_method_ == "aspc") CalculateDipolesAspc();
   }
 
   void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, 
@@ -864,6 +871,127 @@ namespace elec {
     }
 
 //    Efd = Efq - 1/pol 
+  }
+
+  void Electrostatics::SetAspcParameters(size_t k) {
+
+    k_aspc_ = k;
+    b_consts_aspc_ = std::vector<double>(k+2,0.0);
+    mu_hist_ = std::vector<double>(mu_.size() * k + 3,0.0);
+
+    if (k == 0) {
+      b_consts_aspc_[0] = 2.0;
+      b_consts_aspc_[1] = -1.0;
+      omega_aspc_ = 2.0/3.0;
+    } else if (k == 1) {
+      b_consts_aspc_[0] =  2.5;
+      b_consts_aspc_[1] = -2.0;
+      b_consts_aspc_[2] =  0.5;
+      omega_aspc_ = 0.6;
+    } else if (k == 2) {
+      b_consts_aspc_[0] =  2.8;
+      b_consts_aspc_[1] = -2.8;
+      b_consts_aspc_[2] =  1.2;
+      b_consts_aspc_[3] = -0.2;
+      omega_aspc_ = 4.0/7.0;
+    } else if (k == 3) {
+      b_consts_aspc_[0] =  3.0;
+      b_consts_aspc_[1] = -24.0/7.0;
+      b_consts_aspc_[2] =  27.0/14.0;
+      b_consts_aspc_[3] = -4.0/7.0;
+      b_consts_aspc_[4] =  1.0/14.0;
+      omega_aspc_ = 5.0/9.0;
+    } else if (k == 4) {
+      b_consts_aspc_[0] =  22.0/7.0;
+      b_consts_aspc_[1] = -55.0/14.0;
+      b_consts_aspc_[2] =  55.0/21.0;
+      b_consts_aspc_[3] = -22.0/21.0;
+      b_consts_aspc_[4] =  5.0/21.0;
+      b_consts_aspc_[5] = -1.0/42.0;
+      omega_aspc_ = 6.0/11.0;
+    } 
+
+    // TODO add exception if k < 0 or k > 4
+
+  }
+
+  void Electrostatics::CalculateDipolesAspc() {
+    if (hist_num_aspc_ < k_aspc_ + 2) {
+      // TODO do we want to allow iteration?
+      CalculateDipolesCG();
+      std::copy(mu_.begin(), mu_.end(),
+                mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
+      hist_num_aspc_++;
+    } else {
+      // If we have enough history of the dipoles, 
+      // we will use the predictor corrector step
+      
+      // First we get the predictor
+      std::fill(mu_pred_.begin(), mu_pred_.end(), 0.0);
+      for (size_t i = 0; i < b_consts_aspc_.size(); i++) {
+        size_t shift = 3*nsites_ * (b_consts_aspc_.size() - i + 1);
+        for (size_t j = 0; j < 3*nsites_; j++) {
+          mu_pred_[j] += b_consts_aspc_[i] * mu_hist_[shift + j];
+        }
+      }
+
+      // Now we get the corrector
+      // First we set the dipoles to the predictor
+      std::copy(mu_pred_.begin(),mu_pred_.end(),mu_.begin());
+
+      // Now we run a single iteration to get the new Efd
+      DipolesIterativeIteration();
+
+      // Now the Electric dipole field is computed, and we update 
+      // the dipoles to get the corrector 
+      size_t fi_mon = 0;
+      size_t fi_crd = 0;
+      size_t fi_sites = 0;
+
+      for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon*2;
+        for (size_t i = 0; i < ns; i++) {
+          // TODO assuming pol not site dependant
+          double p = pol_[fi_sites + i];
+          size_t inmon3 = 3*i*nmon;
+          for (size_t m = 0; m < nmon; m++) {
+            mu_[fi_crd + inmon3 + m] = p
+                       * (Efq_[fi_crd + inmon3 + m]
+                       +  Efd_[fi_crd + inmon3 + m]);
+            mu_[fi_crd + inmon3 + nmon + m] = p
+                       * (Efq_[fi_crd + inmon3 + nmon + m]
+                       +  Efd_[fi_crd + inmon3 + nmon + m]);
+            mu_[fi_crd + inmon3 + nmon2 + m] = p
+                       * (Efq_[fi_crd + inmon3 + nmon2 + m]
+                       +  Efd_[fi_crd + inmon3 + nmon2 + m]);
+          }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon*ns;
+        fi_crd += nmon*ns*3;
+      }
+
+      // Now we have the corrector in mu_
+      // We get the final dipole
+
+      for (size_t j = 0; j < 3*nsites_; j++) {
+        mu_[j] = omega_aspc_*mu_[j] + (1 - omega_aspc_) * mu_pred_[j];
+      }
+
+      // And we update the history
+
+      // Add the new dipole at the end
+      std::copy(mu_.begin(), mu_.end(),
+                mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
+      // Shift the dipoles one position in the history
+      std::copy(mu_hist_.begin() + nsites_ * 3, mu_hist_.end(),
+                mu_hist_.begin());
+
+      // hist_num_aspc_ must not be touched here, so we are done
+
+    } // end if (hist_num_aspc_ < k_aspc_ + 2) 
   }
 
   void Electrostatics::DipolesIterativeIteration() {

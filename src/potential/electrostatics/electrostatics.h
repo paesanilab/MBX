@@ -50,6 +50,8 @@ namespace elec {
       void CalculateDipolesCG();
       void DipolesCGIteration(std::vector<double> &in_v,
                               std::vector<double> &out_v);
+      void CalculateDipolesAspc();
+      void SetAspcParameters(size_t k);
       void CalculateDipoles();
       void CalculateElecEnergy();
       void CalculateGradients(std::vector<double> &grad);
@@ -107,6 +109,18 @@ namespace elec {
       std::vector<double> sys_mu_;
       // Dipoles
       std::vector<double> mu_;
+      // Dipole history for ASPC
+      std::vector<double> mu_hist_;
+      // Dipole predictor
+      std::vector<double> mu_pred_;
+      // B constants to use for ASPC
+      std::vector<double> b_consts_aspc_;
+      // omega used in ASPC
+      double omega_aspc_;
+      // Number of history steps stored
+      size_t hist_num_aspc_;
+      // Order of ASPC
+      size_t k_aspc_; 
       // Total number of electrostatic sites
       size_t nsites_;
       // Thole dampings
