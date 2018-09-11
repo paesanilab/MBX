@@ -46,10 +46,13 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  for (size_t i = 0; i < systems.size(); i++) {
+    // NO PBC TEST (SYSTEM 0)
+
     // Retrieve dimers
-    systems[i].AddClusters(2,15.0,0,systems[i].GetNumMon());
-    std::vector<size_t> dimers = systems[i].GetDimers();
+    std::cout << "SYSTEM 0\n";
+
+    systems[0].AddClusters(2,15.0,0,systems[0].GetNumMon());
+    std::vector<size_t> dimers = systems[0].GetDimers();
     size_t ndimers = dimers.size() / 2;
     // Print all dimers
     for (size_t j = 0; j < ndimers; j++) {
@@ -60,8 +63,8 @@ int main(int argc, char** argv)
     }
     
     // retrieve Trimers
-    systems[i].AddClusters(3,4.5,0,systems[i].GetNumMon());
-    std::vector<size_t> trimers = systems[i].GetTrimers();
+    systems[0].AddClusters(3,4.5,0,systems[0].GetNumMon());
+    std::vector<size_t> trimers = systems[0].GetTrimers();
     size_t ntrimers = trimers.size() / 3;
     //Print all trimers
     for (size_t j = 0; j < ntrimers; j++) {
@@ -72,7 +75,37 @@ int main(int argc, char** argv)
                 << trimers[3*j + 2] << std::endl;
     }
     
-  }
+    if (systems.size() > 1) {
+      std::cout << "SYSTEM 1 (" << systems[1].GetNumMon() << " mons)\n";
+      std::vector<double> box(9,0.0);
+      box[0] = 100.0;
+      box[4] = 100.0;
+      box[8] = 100.0;
+      systems[1].SetPBC(true, box);
+      systems[1].AddClusters(2,15.0,0,systems[1].GetNumMon());
+      std::vector<size_t> dimers = systems[1].GetDimers();
+      size_t ndimers = dimers.size() / 2;
+      // Print all dimers
+      for (size_t j = 0; j < ndimers; j++) {
+        std::cout << "Dimer[" << std::setw(10) << std::right
+                  << j << "] -> " << std::setw(8) << std::right
+                  << dimers[2*j] << std::setw(8) << std::right
+                  << dimers[2*j + 1] << std::endl;
+      }
+
+      // retrieve Trimers
+      systems[1].AddClusters(3,4.5,0,systems[1].GetNumMon());
+      std::vector<size_t> trimers = systems[1].GetTrimers();
+      size_t ntrimers = trimers.size() / 3;
+      //Print all trimers
+      for (size_t j = 0; j < ntrimers; j++) {
+        std::cout << "Trimer[" << std::setw(10) << std::right
+                  << j << "] -> " << std::setw(8) << std::right
+                  << trimers[3*j] << std::setw(8) << std::right
+                  << trimers[3*j + 1] << std::setw(8) << std::right
+                  << trimers[3*j + 2] << std::endl;
+      }
+    }
   
   return 0;
 }

@@ -10,10 +10,14 @@ const double gamma21 = gamma2/gamma1;
 
 std::vector<std::pair<std::string,size_t>> OrderMonomers
                    (std::vector<std::string> &mon, 
-                    std::vector<size_t> &original_order) {
+                    std::vector<size_t> sites,
+                    std::vector<size_t> nats,
+                    std::vector<std::pair<size_t,size_t> > &original_order,
+                    std::vector<std::pair<size_t,size_t> > &original_order_realSites) {
   std::vector<std::string> monomers = mon;
   mon.clear();
   original_order.clear();
+  original_order_realSites.clear();
 
   std::vector<std::string> montypes;
 
@@ -43,11 +47,16 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
 
     mon_types_count.push_back(minmon);
     std::string monid = montypetmp[min_ind].first;
+    size_t site_pos = 0;
+    size_t nat_pos = 0;
     for (size_t i = 0; i < monomers.size(); i++) {
       if (monomers[i] == monid) {
-        original_order.push_back(i);
+        original_order.push_back(std::make_pair(i,site_pos));
+        original_order_realSites.push_back(std::make_pair(i,nat_pos));
         mon.push_back(monid);
       }
+      site_pos += sites[i];
+      nat_pos += nats[i];
     }
     
     montypetmp.erase(montypetmp.begin() + min_ind,
@@ -96,6 +105,164 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
   return count;
 }
 
+//std::vector<double> GetBoxParams(std::vector<double> box) {
+//  // 3 modules of vector 
+//  //+3 angles with XY plane
+//  std::vector<double> box_params(6,0.0);
+//  for (size_t i = 0; i < 3; i++) {
+//    for (size_t j = 0; j < 3; j++) {
+//      box_params[i] += box[3*i + j]*box[3*i + j];  
+//    }
+//    box_params[i] = std::sqrt(box_params[i]);
+//  }
+//
+//  box_params[3] = atan2(box[2], std::sqrt(box[0]*box[0] + box[1]*box[1]));
+//  box_params[4] = atan2(box[5], std::sqrt(box[3]*box[3] + box[4]*box[4]));
+//  box_params[5] = atan2(box[8], std::sqrt(box[6]*box[6] + box[7]*box[7]));
+//
+//
+//  return box_params;
+//}
+
+void FixMonomerCoordinates(std::vector<double> &xyz,
+                           std::vector<double> box,
+                           std::vector<size_t> nat,
+                           std::vector<size_t> first_index) {
+  // NOTE, assuming for now orthorombic box:
+  // box = {a,0,0,0,b,0,0,0,c)
+  size_t nmon = nat.size();
+
+  std::vector<double> box2 = box;
+  for (size_t i = 0; i < box.size(); i++)
+    box2[i] *= 0.5;
+
+  for (size_t i = 0; i < nmon; i++) {
+    size_t shift = 3*first_index[i];
+    
+    // Put central atom in main box
+    double first_at[3];
+    for (size_t j = 0; j < 3; j++) {
+      double xyzi = xyz[shift + j];
+      if (xyzi < -box2[3*j +j]) { 
+// here
+        xyz[shift + j] += box[3*j + j];
+// here
+      } else if (xyzi > box2[3*j + j]) {
+// here
+        xyz[shift + j] -= box[3*j + j];
+      }
+      first_at[j] = xyz[shift + j];
+    }
+
+    // Put rest of molecule atoms next to central atom
+    for (size_t j = 1; j < nat[i]; j++) {
+      size_t j3 = j*3;
+      for (size_t k = 0; k < 3; k++) {
+        double di = xyz[shift + j3 + k] - first_at[k];
+// here
+        if (di > box2[3*k + k]) {
+// here
+          xyz[shift + j3 + k] -= box[3*k + k];
+// here
+        } else if (di <= -box2[3*k + k]) {
+// here
+          xyz[shift + j3 + k] += box[3*k + k];
+        }
+      }
+    }
+  }
+}
+
+void GetCloseDimerImage(std::vector<double> box,
+                        size_t nat1, size_t nat2, size_t nd,
+                        double * xyz1, double * xyz2) {
+
+  size_t shift1 = 0;
+  size_t shift2 = 0;
+  size_t coords1 = 3*nat1;
+  size_t coords2 = 3*nat2;
+
+  std::vector<double> box2 = box;
+  for (size_t i = 0; i < box.size(); i++)
+    box2[i] *= 0.5;
+
+  for (size_t i = 0; i < nd; i++) {
+    for (size_t j = 0; j < nat2; j++) {
+      size_t j3 = j*3;
+      for (size_t k = 0; k < 3; k++) {
+        double di = xyz2[shift2 + j3 + k] - xyz1[shift1 + k];
+// here
+        if (di > box2[3*k + k]) {
+// here
+          xyz2[shift2 + j3 + k] -= box[3*k + k];
+// here
+        } else if (di <= -box2[3*k + k]) {
+// here
+          xyz2[shift2 + j3 + k] += box[3*k + k];
+        }
+      }
+    }
+    shift1 += coords1;
+    shift2 += coords2;
+  }
+
+}
+
+void GetCloseTrimerImage(std::vector<double> box,
+                        size_t nat1, size_t nat2, size_t nat3, size_t nt,
+                        double * xyz1, double * xyz2, double * xyz3) {
+
+  size_t shift1 = 0;
+  size_t shift2 = 0;
+  size_t shift3 = 0;
+  size_t coords1 = 3*nat1;
+  size_t coords2 = 3*nat2;
+  size_t coords3 = 3*nat3;
+
+  std::vector<double> box2 = box;
+  for (size_t i = 0; i < box.size(); i++)
+    box2[i] *= 0.5;
+
+  for (size_t i = 0; i < nt; i++) {
+    // Moving (if necessary) monomer in xyz2
+    for (size_t j = 0; j < nat2; j++) {
+      size_t j3 = j*3;
+      for (size_t k = 0; k < 3; k++) {
+        double di = xyz2[shift2 + j3 + k] - xyz1[shift1 + k];
+// here
+        if (di > box2[3*k + k]) {
+// here
+          xyz2[shift2 + j3 + k] -= box[3*k + k];
+// here
+        } else if (di <= -box2[3*k + k]) {
+// here
+          xyz2[shift2 + j3 + k] += box[3*k + k];
+        }
+      }
+    }
+
+    // Moving (if necessary) monomer in xyz3
+    for (size_t j = 0; j < nat3; j++) {
+      size_t j3 = j*3;
+      for (size_t k = 0; k < 3; k++) {
+        double di = xyz3[shift3 + j3 + k] - xyz1[shift1 + k];
+// here
+        if (di > box2[3*k + k]) {
+// here
+          xyz3[shift3 + j3 + k] -= box[3*k + k];
+// here
+        } else if (di <= -box2[3*k + k]) {
+// here
+          xyz3[shift3 + j3 + k] += box[3*k + k];
+        }
+      }
+    }
+    shift1 += coords1;
+    shift2 += coords2;
+    shift3 += coords3;
+  }
+}
+
 bool compare_pair (std::pair<size_t,double> a, std::pair<size_t,double> b) {
   return a.first < b.first;
 }
@@ -105,7 +272,8 @@ bool compare_mon_type (std::pair<std::string,size_t> a,
 }
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, 
-                 size_t nmon, 
+                 size_t nmon, bool use_pbc,
+                 std::vector<double> box,
                  std::vector<double> xyz_orig,
                  std::vector<size_t> first_index, 
                  std::vector<size_t> &dimers, 
@@ -130,8 +298,10 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
     xyz.push_back(xyz_orig[3*first_index[i] + 2]);
   }
 
+  size_t nmon2 = nmon - istart;
+
   // Obtain the data in the structure needed by the kd-tree
-  kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz);
+  kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box);
 
   // Build the tree
   typedef nanoflann::KDTreeSingleIndexAdaptor<
@@ -147,6 +317,7 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
     trimers.clear();
 
   std::vector<size_t> idone;
+  std::set<std::pair<size_t, size_t>> donej;
   for (size_t i = 0; i < iend - istart; i++) {
     // Define the query point
     double point[3];
@@ -160,24 +331,43 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
     const size_t nMatches = index.radiusSearch(point,
       cutoff * cutoff, ret_matches, params);
 
+
+    for (size_t j = 0; j < nMatches; j++) {
+      size_t pos = ret_matches[j].first / nmon2;
+      ret_matches[j].first -= nmon2 * pos;
+    }
+
+
     std::sort(ret_matches.begin(), ret_matches.end(), compare_pair);
     std::set<std::pair<size_t, size_t>> donek;
 
     // Add the pairs that are not in the dimer vector
     for (size_t j = 0; j < nMatches; j++) {
-      if (ret_matches[j].first > i) {
-        dimers.push_back(i + istart);
-        dimers.push_back(ret_matches[j].first + istart);
+  //    size_t pos = ret_matches[j].first / nmon;
+  //    ret_matches[j].first -= nmon * pos;
+      std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> retdim;
+      if (ret_matches[j].first > i ) {
+        retdim = donej.insert(std::make_pair(i,ret_matches[j].first));
+        if (retdim.second) {
+          dimers.push_back(i + istart);
+          dimers.push_back(ret_matches[j].first + istart);
+        }
 
         // Add trimers if requested
         if (n_max > 2) {
+          std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> ret;
           for (size_t k = 0; k < nMatches; k++) {
+   //         size_t pos = ret_matches[k].first / nmon;
+   //         ret_matches[k].first -= nmon * pos;
+             
             if (ret_matches[k].first > ret_matches[j].first) {
-              trimers.push_back(i + istart);
-              trimers.push_back(ret_matches[j].first + istart);
-              trimers.push_back(ret_matches[k].first + istart); 
-              donek.insert(std::make_pair(ret_matches[j].first,
-                                          ret_matches[k].first));
+              ret = donek.insert(std::make_pair(ret_matches[j].first,
+                                                ret_matches[k].first));
+              if (ret.second) {
+                trimers.push_back(i + istart);
+                trimers.push_back(ret_matches[j].first + istart);
+                trimers.push_back(ret_matches[k].first + istart); 
+              }
             } 
           }
           // Define query point, which is each of the points 'j' inside the 
@@ -191,13 +381,21 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
           const size_t nMatches2 = index.radiusSearch(point2,
             cutoff * cutoff, ret_matches2, params2);
           
+          for (size_t k = 0; k < nMatches2; k++) {
+            size_t pos2 = ret_matches2[k].first / nmon2;
+            ret_matches2[k].first -= nmon2 * pos2;
+          }
+
+
+
           std::sort(ret_matches2.begin(), ret_matches2.end(), compare_pair);
 
           // Add the trimers that fulfil i > j > k, to avoid double counting
           // We will add all trimers that fulfill the condition:
           // At least 2 of the three distances must be smaller than the cutoff 
-          std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> ret;
           for (size_t k = 0; k < nMatches2; k++) {
+    //        size_t pos2 = ret_matches2[k].first / nmon;
+    //        ret_matches2[k].first -= nmon * pos2;
             if (ret_matches2[k].first > i) {
               size_t jel = ret_matches[j].first;
               size_t kel = ret_matches2[k].first;
@@ -268,6 +466,57 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
   return aDD;
 }
 
+std::vector<double> ResetOrder(std::vector<double> coords,
+    std::vector<std::pair<size_t,size_t> > original_order, 
+    std::vector<size_t> first_index,
+    std::vector<size_t> sites) {
+  
+  std::vector<double> new_coords(coords.size());
+  for (size_t i = 0; i < sites.size(); i++) {
+    size_t ini = 3*first_index[i];
+    size_t fin = ini + 3*sites[i];
+    size_t ini_orig = 3*original_order[i].second;
+    std::copy(coords.begin() + ini, coords.begin() + fin, 
+              new_coords.begin() + ini_orig);
+  }
+
+  return new_coords;
+}
+
+std::vector<double> ResetOrder(std::vector<double> coords,
+    std::vector<std::pair<size_t,size_t> > original_order,
+    size_t numats,
+    std::vector<size_t> first_index,
+    std::vector<size_t> nats) {
+
+  std::vector<double> new_coords(3*numats);
+  for (size_t i = 0; i < nats.size(); i++) {
+    size_t ini = 3*first_index[i];
+    size_t fin = ini + 3*nats[i];
+    size_t ini_orig = 3*original_order[i].second;
+    std::copy(coords.begin() + ini, coords.begin() + fin,
+              new_coords.begin() + ini_orig);
+  }
+
+  return new_coords;
+}
+
+std::vector<std::string> ResetOrder(std::vector<std::string> at_names,
+    std::vector<std::pair<size_t,size_t> > original_order, 
+    std::vector<size_t> first_index,
+    std::vector<size_t> sites) {
+
+  std::vector<std::string> new_at_names(at_names.size());
+  for (size_t i = 0; i < sites.size(); i++) {
+    size_t ini = first_index[i];
+    size_t fin = ini + sites[i];
+    size_t ini_orig = original_order[i].second;
+    std::copy(at_names.begin() + ini, at_names.begin() + fin, 
+              new_at_names.begin() + ini_orig);
+  }
+
+  return new_at_names;
+}
 
 void SetVSites (std::vector<double> &xyz, std::string mon_id,
     size_t n_mon, size_t nsites, size_t fst_ind) {

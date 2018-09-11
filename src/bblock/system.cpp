@@ -20,6 +20,7 @@ System::~System() {}
 size_t System::GetNumMol() {return nmol_;}
 size_t System::GetNumMon() {return nmon_;}
 size_t System::GetNumSites() {return nsites_;}
+size_t System::GetNumRealSites() {return numat_;}
 size_t System::GetMonNat(size_t n) {return nat_[n];}
 size_t System::GetFirstInd(size_t n) {return first_index_[n];}
 
@@ -27,7 +28,17 @@ std::vector<size_t> System::GetDimers() {return dimers_;}
 std::vector<size_t> System::GetTrimers() {return trimers_;}
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 std::vector<std::string> System::GetSysAtNames() {return atoms_;}
+std::vector<std::string> System::GetOriginalOrderSysAtNames() {
+  return systools::ResetOrder(atoms_, initial_order_, first_index_, sites_);
+}
 std::vector<double> System::GetSysXyz() {return xyz_;}
+std::vector<double> System::GetOriginalOrderSysXyz() {
+  return systools::ResetOrder(xyz_, initial_order_, first_index_, sites_);
+}
+std::vector<double> System::GetOriginalOrderRealGrads() {
+  return systools::ResetOrder(grad_, initial_order_realSites_, 
+                              numat_, first_index_, nat_);
+}
 std::vector<double> System::GetCharges() {return chg_;}
 std::vector<double> System::GetPols() {return pol_;}
 std::vector<double> System::GetPolfacs() {return polfac_;}
@@ -44,10 +55,48 @@ void System::SetStepEval3b(size_t step) {stepEval3b_ = step;}
 
 void System::SetDipoleTol(double tol) {diptol_ = tol;}
 void System::SetDipoleMaxIt(double maxit) {maxItDip_ = maxit;}
+void System::SetDipoleMethod(std::string method) {dipole_method_ = method;}
+
+void System::SetPBC(bool use_pbc, 
+                    std::vector<double> box = {1000.0,0.0,0.0,
+                                               0.0,1000.0,0.0,
+                                               0.0,0.0,1000.0}) {
+  use_pbc_ = use_pbc;
+  box_ = box;
+  if (use_pbc_) {
+    systools::FixMonomerCoordinates(xyz_,box_,nat_,first_index_);
+    SetVSites();
+    SetCharges();
+    SetPols();
+    SetPolfacs();
+  }
+}
 
 void System::SetSysXyz(std::vector<double> xyz) {
   // TODO Check that sizes are the same
   std::copy(xyz.begin(), xyz.end(), xyz_.begin());
+}
+
+void System::SetOriginalOrderSysXyz(std::vector<double> xyz) {
+  // TODO Check that sizes are the same
+  for (size_t i = 0; i < sites_.size(); i++) {
+    size_t ini = 3*initial_order_[i].second;
+    size_t fin = ini + 3*sites_[i];
+    size_t ini_new = 3*first_index_[i];
+    std::copy(xyz.begin() + ini, xyz.begin() + fin,
+              xyz_.begin() + ini_new);
+  } 
+}
+
+void System::SetOriginalOrderRealSysXyz(std::vector<double> xyz) {
+  // TODO Check that sizes are the same
+  for (size_t i = 0; i < nat_.size(); i++) {
+    size_t ini = 3*initial_order_realSites_[i].second;
+    size_t fin = ini + 3*nat_[i];
+    size_t ini_new = 3*first_index_[i];
+    std::copy(xyz.begin() + ini, xyz.begin() + fin,
+              xyz_.begin() + ini_new);
+  }
 }
 
 void System::AddMonomer(std::vector<double> xyz, 
@@ -75,8 +124,9 @@ void System::Initialize() {
   maxNMonEval_ = 1024;
   maxNDimEval_ = 1024;
   maxNTriEval_ = 1024;
-//  maxNTriEval_ = 1024;
   maxItDip_ = 100;
+
+  SetPBC(false);
   
   AddMonomerInfo();
   nmol_ = molecules_.size();
@@ -86,6 +136,13 @@ void System::Initialize() {
   SetCharges();
   SetPols();
   SetPolfacs();
+
+  dipole_method_ = "aspc";
+
+  // TODO: Do grads set to true for now. Needs to be fixed
+  electrostaticE_.Initialize(chg_, chggrad_, polfac_, 
+                pol_, xyz_, monomers_, sites_, first_index_, 
+                mon_type_count_, true, diptol_, maxItDip_, dipole_method_);
 
   initialized_ = true;
 }
@@ -101,8 +158,14 @@ void System::AddMonomerInfo() {
   
   std::vector<size_t> fi_at;
   nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
+  
+  numat_ = 0;
+  for (size_t i = 0; i < nat_.size(); i++) {
+    numat_ += nat_[i];
+  }
 
-  mon_type_count_ = systools::OrderMonomers(monomers_, initial_order_); 
+  mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, 
+                              initial_order_, initial_order_realSites_); 
   
   // Rearranging coordinates to account for virt sites
   xyz_ = std::vector<double> (3*nsites_, 0.0);
@@ -113,7 +176,7 @@ void System::AddMonomerInfo() {
   std::vector<size_t> tmpsites;
   std::vector<size_t> tmpnats;
   for (size_t i = 0; i < monomers_.size(); i++) {
-    size_t k = initial_order_[i];
+    size_t k = initial_order_[i].first;
     std::copy(xyz.begin() + 3 * fi_at[k],
               xyz.begin() + 3 * (fi_at[k] + nat_[k]),
               xyz_.begin() + 3 * count);
@@ -146,7 +209,8 @@ void System::AddClusters(size_t n_max, double cutoff,
   // This means, if istart is 0 and iend is 2, we will look for all dimers
   // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
   size_t nmon = monomers_.size();
-  systools::AddClusters(n_max, cutoff, istart, iend, nmon, xyz_,
+  systools::AddClusters(n_max, cutoff, istart, iend, nmon, 
+                        use_pbc_, box_, xyz_,
                         first_index_, dimers_, trimers_);
   
 }
@@ -157,7 +221,8 @@ std::vector<size_t> System::AddClustersParallel(size_t n_max, double cutoff,
   // Returns dimers if n_max == 2, or trimers if n_max == 3
   size_t nmon = monomers_.size();
   std::vector<size_t> dimers, trimers;
-  systools::AddClusters(n_max, cutoff, istart, iend, nmon, xyz_,
+  systools::AddClusters(n_max, cutoff, istart, iend, nmon, 
+                        use_pbc_, box_, xyz_,
                         first_index_, dimers, trimers);
   if (n_max == 2)
     return dimers;
@@ -169,13 +234,30 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   energy_ = 0.0;
   std::fill(grad_.begin(), grad_.end(), 0.0);
 
+  // Reset the chargers, pols, polfacs and new Vsite
+  if (use_pbc_) {
+    SetPBC(use_pbc_,box_);
+  } else {
+    SetVSites();
+    SetCharges();
+    SetPols();
+    SetPolfacs();
+  }
+
   // Get the NB contributions
 
 # ifdef TIMING
   auto t1 = std::chrono::high_resolution_clock::now();
 # endif
 
+  allMonGood_ = true;
   double e1b = Get1B(do_grads);
+
+  // If monomers are too distorted, skip 
+  if (!allMonGood_) {
+    grad = systools::ResetOrder(grad_, initial_order_, first_index_, sites_);
+    return e1b;
+  }
 
 # ifdef TIMING
   auto t2 = std::chrono::high_resolution_clock::now();
@@ -239,8 +321,7 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
 # endif
 
   // Copy gradients to output grad
-  grad.clear();
-  grad = grad_;
+  grad = systools::ResetOrder(grad_, initial_order_, first_index_, sites_);
 
   return energy_;
 }
@@ -277,7 +358,7 @@ double System::Get1B(bool do_grads) {
 
       // Get energy of the chunk as function of monomer
       if (do_grads)  {
-        e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2);
+        e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, allMonGood_);
         
         // Reorganize gradients
         for (size_t i = 0; i < nmon; i++) {
@@ -287,7 +368,7 @@ double System::Get1B(bool do_grads) {
           }
         }
       } else {
-        e1b += e1b::get_1b_energy(mon, nmon, xyz);
+        e1b += e1b::get_1b_energy(mon, nmon, xyz, allMonGood_);
       }
 
       istart = iend;
@@ -398,13 +479,20 @@ double System::Get2B(bool do_grads) {
           continue;
         }
 
+        // Fix dimer positions if pbc
+        if (use_pbc_) {
+          systools::GetCloseDimerImage(box_, nat_[dimers[nd_tot * 2]],
+                             nat_[dimers[nd_tot * 2 + 1]],
+                             nd, xyz1.data(), xyz2.data());
+        }
+
         if (do_grads) {
           // POLYNOMIALS
           e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
 
           // DISPERSION
           edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
-                                     xyz1, xyz2, grad1, grad2);
+                                     xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
           size_t i0 = nd_tot * 2;
           for (size_t k = 0; k < nd ; k++) {
             for (size_t j = 0; j < 3*nat_[dimers[i0 + 2*k]]; j++) {
@@ -421,7 +509,7 @@ double System::Get2B(bool do_grads) {
           e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
           // DISPERSION
           edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
-                                     xyz1, xyz2, grad1, grad2);
+                                     xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
         }
         nd_tot += nd;
         nd = 0;
@@ -567,6 +655,14 @@ double System::Get3B(bool do_grads) {
           continue;
         }
 
+        // Fix dimer positions if pbc
+        if (use_pbc_) {
+          systools::GetCloseTrimerImage(box_, nat_[trimers[nt_tot * 3]],
+                             nat_[trimers[nt_tot * 3 + 1]],
+                             nat_[trimers[nt_tot * 3 + 2]],
+                             nt, coord1.data(), coord2.data(), coord3.data());
+        }
+
         std::vector<double> xyz1(coord1.size(),0.0);
         std::vector<double> xyz2(coord2.size(),0.0);
         std::vector<double> xyz3(coord3.size(),0.0);
@@ -704,10 +800,15 @@ void System::SetVSites() {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-  double elec = elec::Electrostatics(chg_, chggrad_, polfac_, 
-                pol_, xyz_, monomers_, sites_, first_index_, 
-                mon_type_count_, diptol_, maxItDip_, do_grads, grad_);
-  return elec;
+  electrostaticE_.SetXyzChgPolPolfac(xyz_, chg_, chggrad_, 
+                                     pol_, polfac_, dipole_method_, do_grads);
+  return electrostaticE_.GetElectrostatics(grad_);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::ResetDipoleHistory() {
+  electrostaticE_.ResetAspcHistory();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

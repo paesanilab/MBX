@@ -19,19 +19,41 @@ namespace systools {
 
 // Function that given the monomers, modifies the ordered monomer list
 // in mon, and the original order in the vector original_order
+// taking sites into account, while original_order_realSites only takes
+// into account real sites
 std::vector<std::pair<std::string,size_t>> OrderMonomers
-                   (std::vector<std::string> &mon, 
-                    std::vector<size_t> &original_order);
+         (std::vector<std::string> &mon,
+          std::vector<size_t> sites,
+          std::vector<size_t> nats,
+          std::vector<std::pair<size_t,size_t> > &original_order,
+          std::vector<std::pair<size_t,size_t> > &original_order_realSites);
 
 // Function that sets up initial charges, pols, polfacs, number of sites
 // number of atoms and first index. Returns the total number of sites
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
                      std::vector<size_t> &nat, std::vector<size_t> &fi_at);
 
+// Makes sure that all the atoms of the monomers are together in space
+void FixMonomerCoordinates(std::vector<double> &xyz,
+                           std::vector<double> box,
+                           std::vector<size_t> nat,
+                           std::vector<size_t> first_index);                           
+
+// Puts the two monomers of a dimer together for a given set of xyz
+void GetCloseDimerImage(std::vector<double> box,
+                        size_t nat1, size_t nat2, size_t nd,
+                        double * xyz1, double * xyz2);
+
+// Puts the three monomers of a trimer together for a given set of xyz
+void GetCloseTrimerImage(std::vector<double> box,
+                        size_t nat1, size_t nat2, size_t nat3, size_t nt,
+                        double * xyz1, double * xyz2, double * xyz3);
+
 // Given ifnormation of the system, this subroutine fills up the dimers and 
 // trimers of the system.
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
-                 size_t nmon,
+                 size_t nmon, bool use_pbc, 
+                 std::vector<double> box,
                  std::vector<double> xyz_orig, 
                  std::vector<size_t> first_index,
                  std::vector<size_t> &dimers, 
@@ -48,6 +70,26 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
 
 // Returns the proper aDD value for the electrostatics
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
+
+// Reorders the gradients or coordinates to the original order
+std::vector<double> ResetOrder(std::vector<double> coords,
+    std::vector<std::pair<size_t,size_t> > original_order, 
+    std::vector<size_t> first_index,
+    std::vector<size_t> sites);
+
+// Reorders the gradients or coordinates to the original order
+// only taking into account real sites. 
+std::vector<double> ResetOrder(std::vector<double> coords,
+    std::vector<std::pair<size_t,size_t> > original_order,
+    size_t numats,
+    std::vector<size_t> first_index,
+    std::vector<size_t> nats);
+
+// Reorders the atom names to the original order
+std::vector<std::string> ResetOrder(std::vector<std::string> at_names,
+    std::vector<std::pair<size_t,size_t> > original_order, 
+    std::vector<size_t> first_index,
+    std::vector<size_t> sites);
 
 // Calculates the coordinates of the virtual site of a monomer when
 // given the coordinates of the other sites

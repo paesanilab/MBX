@@ -111,7 +111,8 @@ namespace disp {
   //----------------------------------------------------------------------------//
   
   double disp6(const double& C6, const double& d6,
-               const double* p1a, const double* p2a, size_t n) {
+               const double* p1a, const double* p2a, size_t n,
+               const double cutoff, const bool use_cutoff) {
   
     // p1a and p2a are an array of coordinates of the atoms involved xyzxyzxyz...
     // rearrange them in xxxx...yyyy...zzzz...
@@ -126,9 +127,22 @@ namespace disp {
       p2[i + 2*n] = p2a[3*i + 2];
     }
 
+    // Get dispersion at the cutoff distance if requested
+    double disp_min = 0.0;
+    if (use_cutoff) {
+      const double r = cutoff;
+      const double rsq = r*r;
+      const double tt6 = disp::tang_toennies(6, d6*r);
+
+      const double inv_rsq = 1.0/rsq;
+      const double inv_r6 = inv_rsq*inv_rsq*inv_rsq;
+      disp_min = C6*tt6*inv_r6;
+    }
+
     // Main loop
     size_t n2 = 2*n;
     double disp = 0.0;
+    size_t disp_count = 0;
 //    #pragma simd
     for (size_t nv = 0; nv < n; nv++) {
       const double dx = p1[nv] - p2[nv];
@@ -137,14 +151,22 @@ namespace disp {
   
       const double rsq = dx*dx + dy*dy + dz*dz;
       const double r = std::sqrt(rsq);
+
+      // If using cutoff, check for distances and get proper dispersion
+      if (!use_cutoff || r <= cutoff) {      
+
+        const double tt6 = disp::tang_toennies(6, d6*r);
   
-      const double tt6 = disp::tang_toennies(6, d6*r);
-  
-      const double inv_rsq = 1.0/rsq;
-      const double inv_r6 = inv_rsq*inv_rsq*inv_rsq;
-      disp += C6*tt6*inv_r6;
+        const double inv_rsq = 1.0/rsq;
+        const double inv_r6 = inv_rsq*inv_rsq*inv_rsq;
+        disp += C6*tt6*inv_r6;
+        disp_count++;
+      }
     }
-  
+
+    // Multiplying that value by the number of equivalent pairs "n"
+    disp_min *= double(disp_count);
+    disp -= disp_min;
     return -disp;
 
     // TODO shift values
@@ -191,7 +213,8 @@ namespace disp {
   
   double disp6(const double& C6, const double& d6,
                const double* p1a, const double* p2a,
-                     double* g1a,       double* g2a, size_t n) {
+                     double* g1a,       double* g2a, size_t n,
+               const double cutoff, const bool use_cutoff) {
     double p1[3*n], p2[3*n];
     for (size_t i = 0; i < n; i++) {
       p1[i] = p1a[3*i];
@@ -203,7 +226,20 @@ namespace disp {
       p2[i + 2*n] = p2a[3*i + 2];
     }
     
+    // Get dispersion at the cutoff distance if requested
+    double disp_min = 0.0;
+    if (use_cutoff) {
+      const double r = cutoff;
+      const double rsq = r*r;
+      const double tt6 = disp::tang_toennies(6, d6*r);
+
+      const double inv_rsq = 1.0/rsq;
+      const double inv_r6 = inv_rsq*inv_rsq*inv_rsq;
+      disp_min = -C6*tt6*inv_r6;
+    }
+
     size_t n2 = 2*n;
+    size_t disp_count = 0;
     double disp = 0.0;
     double g1[3*n], g2[3*n];
     std::fill(g1, g1 + 3*n, 0.0);
@@ -216,27 +252,33 @@ namespace disp {
  
       const double rsq = dx*dx + dy*dy + dz*dz;
       const double r = std::sqrt(rsq);
+
+      // If using cutoff, check for distances and get proper dispersion
+      if (!use_cutoff || r <= cutoff) {
     
-      const double d6r = d6*r;
-      const double tt6 = disp::tang_toennies(6, d6r);
+        const double d6r = d6*r;
+        const double tt6 = disp::tang_toennies(6, d6r);
     
-      const double inv_rsq = 1.0/rsq;
-      const double inv_r6 = inv_rsq*inv_rsq*inv_rsq;
+        const double inv_rsq = 1.0/rsq;
+        const double inv_r6 = inv_rsq*inv_rsq*inv_rsq;
     
-      const double e6 = C6*tt6*inv_r6;
+        const double e6 = C6*tt6*inv_r6;
     
-      const double grd = 6*e6*inv_rsq - C6*std::pow(d6, 7)*if6*std::exp(-d6r)/r;
+        const double grd = 6*e6*inv_rsq - C6*std::pow(d6, 7)*if6*std::exp(-d6r)/r;
     
-      g1[nv] += dx*grd;
-      g2[nv] -= dx*grd;
+        g1[nv] += dx*grd;
+        g2[nv] -= dx*grd;
     
-      g1[nv + n] += dy*grd;
-      g2[nv + n] -= dy*grd;
+        g1[nv + n] += dy*grd;
+        g2[nv + n] -= dy*grd;
     
-      g1[nv + n2] += dz*grd;
-      g2[nv + n2] -= dz*grd;
+        g1[nv + n2] += dz*grd;
+        g2[nv + n2] -= dz*grd;
+
+        disp_count++;
     
-      disp -= e6;
+        disp -= e6;
+      }
     }
 
     for (size_t i = 0; i < n; i++) {
@@ -248,6 +290,10 @@ namespace disp {
       g2a[3*i + 1] += g2[i + n];
       g2a[3*i + 2] += g2[i + n2];
     }
+    
+    disp_min *= double(disp_count);
+    disp -= disp_min;
+
     return disp;
   }
 } // namespace disp

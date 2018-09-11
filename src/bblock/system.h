@@ -6,6 +6,7 @@
 #include <utility>
 #include <algorithm>
 #include <iostream>
+#include <memory>
 
 // Tools
 #include "nanoflann.hpp"
@@ -43,19 +44,25 @@ class System {
   size_t GetNumMon();
   size_t GetNumMol();
   size_t GetNumSites();
+  size_t GetNumRealSites();
   size_t GetMonNat(size_t n);
   size_t GetFirstInd(size_t n);
   std::vector<size_t> GetDimers();
   std::vector<size_t> GetTrimers();
   std::vector<size_t> GetMolecule(size_t n);
   std::vector<double> GetSysXyz();
+  std::vector<double> GetOriginalOrderSysXyz();
   std::vector<double> GetCharges();
   std::vector<double> GetPols();
   std::vector<double> GetPolfacs();
   std::vector<std::string> GetSysAtNames();
+  std::vector<std::string> GetOriginalOrderSysAtNames();
+  std::vector<double> GetOriginalOrderRealGrads();
   std::string GetMonId(size_t n);
   // Modifiers
   void SetSysXyz(std::vector<double> xyz);
+  void SetOriginalOrderSysXyz(std::vector<double> xyz);
+  void SetOriginalOrderRealSysXyz(std::vector<double> xyz);
   void AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id);
   void AddMolecule(std::vector<size_t> molec);
@@ -79,6 +86,11 @@ class System {
 
   void SetDipoleTol(double tol);
   void SetDipoleMaxIt(double maxit);
+  void SetDipoleMethod(std::string method);
+
+  void ResetDipoleHistory();
+
+  void SetPBC(bool use_pbc, std::vector<double> box);
   
   // Energy Functions
   // Energy computing gradients. The new gradients of ALL sites 
@@ -92,6 +104,7 @@ class System {
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers
   size_t nsites_;                            // Number of sites in sys
+  size_t numat_;                            // Number of sites in sys
   size_t maxNMonEval_;                       // Max number of mons to be eval
   size_t maxNDimEval_;                       // Max number of dimers to be eval
   size_t maxNTriEval_;                       // Max number of trimers to be eval
@@ -105,24 +118,36 @@ class System {
   double cutoff3b_;                          // Cutoff for dim and trim search 
   double energy_;                            // Energy of the system
   bool initialized_;                         // Systes is initialized?
+  bool use_pbc_;                             // Periodic boundary conditions?
+  bool allMonGood_;                          // True if all monomers have low e1b 
+                                             // (<60.0kcal/mol)
+  // Electrostatics class
+  elec::Electrostatics electrostaticE_;
+  std::string dipole_method_;
+
   std::vector<size_t> sites_;                // Number of sites of each mo
   std::vector<size_t> nat_;                  // Number of atoms of each mo
-  std::vector<size_t> initial_order_;        // Input order of monomers
   std::vector<size_t> first_index_;          // First index of mon in sys
   std::vector<size_t> dimers_;               // Dimers of the molecule
   std::vector<size_t> trimers_;              // Trimers of the molecule
-  std::vector<double> grad_;                  // Gradients of all sites
-  std::vector<double> chggrad_;                  // Gradients of pos dep chg
+  std::vector<double> grad_;                 // Gradients of all sites
+  std::vector<double> chggrad_;              // Gradients of pos dep chg
   std::vector<double> xyz_;                  // Coords of all sites
   std::vector<double> chg_;                  // Charges of all sites
   std::vector<double> pol_;                  // Polarizabilities of all sites
   std::vector<double> polfac_;               // Polfacs of all sites
+  std::vector<double> box_;                  // Box, in case we use PBC
+                                             // Center of the box is origin of coordinates
   std::vector<std::string> monomers_;        // Monomer ids
   std::vector<std::string> atoms_;           // Atom names of sys
   // Molecules of system
-  std::vector<std::vector<size_t>> molecules_; 
+  std::vector<std::vector<size_t> > molecules_; 
   // Mon type and # mon of each
-  std::vector<std::pair<std::string,size_t>> mon_type_count_;   
+  std::vector<std::pair<std::string,size_t> > mon_type_count_;  // Input order of monomers  
+  // Input order of monomers <monomer, site first index>
+  std::vector<std::pair<size_t,size_t> > initial_order_;       
+  // Input order of monomers <monomer, site first index only Real sites>
+  std::vector<std::pair<size_t,size_t> > initial_order_realSites_;       
 };
 
 } // namespace bblock

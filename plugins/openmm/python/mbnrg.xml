@@ -1,0 +1,29 @@
+<ForceField>
+ <Info>
+  <Source>MBnrgPEFs</Source>
+  <DateGenerated>2018-03-01</DateGenerated>
+  <Reference></Reference>
+ </Info>
+ <AtomTypes>
+        <Type name="MBPol-O" class="O" element="O" mass="15.99943"/>
+        <Type name="MBPol-H" class="H" element="H" mass="1.007947"/>
+        <Type name="MBPol-M" class="M" mass="0"/>
+        <Type name="MBPol-Cl" class="CL" element="CL" mass="35.453200"/>
+ </AtomTypes>
+ <Residues>
+  <Residue name="HOH">
+      <Atom name="O" type="MBPol-O" />
+      <Atom name="H1" type="MBPol-H" />
+      <Atom name="H2" type="MBPol-H" />
+      <Atom name="M" type="MBPol-M" />
+      <VirtualSite type="average3" index="3" atom1="0" atom2="1" atom3="2" weight1="0.573293118" weight2="0.213353441" weight3="0.213353441" />
+      <Bond from="0" to="1" />
+      <Bond from="0" to="2" />
+  </Residue>
+  <Residue name="CL">
+      <Atom name="CL" type="MBPol-Cl" />
+  </Residue>
+ </Residues>
+ <MBnrgForce>
+ </MBnrgForce>
+</ForceField>

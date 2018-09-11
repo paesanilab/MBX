@@ -1,0 +1,3 @@
+main function of NN
+get_2b(double * xyz1, double * xyz2, double * grd1, double * gr2, size_t num_dimers)
+get_3b()

@@ -38,10 +38,12 @@ namespace disp {
                 const double* p1, const double* p2);
   
   double disp6(const double& C6, const double& d6,
-               const double* p1a, const double* p2a, size_t n);
+               const double* p1a, const double* p2a, size_t n,
+               const double cutoff, const bool use_cutoff);
   double disp6(const double& C6, const double& d6,
                const double* p1a, const double* p2a,
-                     double* g1a,       double* g2a, size_t n);
+                     double* g1a,       double* g2a, size_t n,
+               const double cutoff, const bool use_cutoff);
 } // namespace disp
 
 //----------------------------------------------------------------------------//

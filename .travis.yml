@@ -21,6 +21,7 @@ matrix:
         - lcov
     env:
       - CXX_COMPILER='clang++-3.6'
+      - CXX_FLAGS="-fPIC"
 #      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
       - C_COMPILER='clang-3.6'
       - PYTHON_VER='3.5'
@@ -40,6 +41,7 @@ matrix:
         - lcov
     env:
       - CXX_COMPILER='clang++-3.7'
+      - CXX_FLAGS="-fPIC"
 #      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
       - C_COMPILER='clang-3.7'
       - PYTHON_VER='3.5'
@@ -59,7 +61,7 @@ matrix:
     env:
       - CXX_COMPILER='g++-4.9'
       - C_COMPILER='gcc-4.9'
-      - CXX_FLAGS='--coverage -O0'
+      - CXX_FLAGS="-fPIC --coverage -O0"
       - PYTHON_VER='3.5'
       - BUILD_TYPE='release'
       - NAME='gcc'
@@ -100,7 +102,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - conda create -q -n gg_env python=${PYTHON_VER} numpy mpmath pytest numexpr cmake pybind11 -c conda-forge
+  - conda create -q -n gg_env python=${PYTHON_VER} numpy mpmath pytest numexpr cmake=3.9 pybind11 -c conda-forge
   - source activate gg_env
 
     # Install anything not in conda
@@ -122,10 +124,11 @@ before_script:
     -DCMAKE_C_COMPILER=${C_COMPILER}
     -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
-    -DCMAKE_CXX_FLAGS=${CXX_FLAGS}
+    -DCMAKE_CXX_FLAGS="${CXX_FLAGS}"
     -DUSE_OPENMP:BOOL=FALSE
   - cd build
   - travis_wait 60 make 
+  - make install
   - cd .. 
 
 script:
