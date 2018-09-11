@@ -10,14 +10,9 @@ BINDIR = ../../bin
 
 all: driver
 
-#SOCKETS = ../external/sockets.o
-
 driver: driver.cpp $(BINDIR)/.sentinel
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) driver.cpp $(LIBS) -o $@
-	mv driver $(BINDIR)
-#driver: driver.cpp $(SOCKETS) $(BINDIR)/.sentinel
-#	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) driver.cpp $(LIBS) -o $@ $(SOCKETS)
-#	mv driver $(BINDIR)
+	mv driver $(BINDIR)/driver
 
 $(BINDIR)/.sentinel:
 	mkdir -p $(BINDIR)

@@ -137,7 +137,7 @@ void System::Initialize() {
   SetPols();
   SetPolfacs();
 
-  dipole_method_ = "cg";
+  dipole_method_ = "aspc";
 
   // TODO: Do grads set to true for now. Needs to be fixed
   electrostaticE_.Initialize(chg_, chggrad_, polfac_, 

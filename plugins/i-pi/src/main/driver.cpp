@@ -32,6 +32,7 @@ const std::string READY      = "READY       ";
 const std::string GETFORCE   = "GETFORCE    ";
 const std::string POSDATA    = "POSDATA     ";
 const std::string FORCEREADY = "FORCEREADY  ";
+const std::string INIT       = "INIT        ";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -73,9 +74,15 @@ int main(int argc, char** argv)
   std::vector<double> boxi = {100, 0, 0, 0, 100, 0, 0, 0, 100};
   std::vector<double> virial = {0, 0, 0, 0, 0, 0, 0, 0, 0};
   int rid;
+  int rid_old = 0;
+  int cbuf;
   int buffl = LENMSG;
   bool isinit = false;
   bool hasdata = false;
+
+  // Set method to aspc (by default) for now
+  systems[0].SetDipoleMethod("aspc");
+//  systems[0].SetDipoleMethod("cg");
 
   int nat = int(systems[0].GetNumRealSites());
   double energy = 0.0;
@@ -96,7 +103,16 @@ int main(int argc, char** argv)
         }
   
         if (strncmp(header,STATUS.data(),STATUS.length()) == 0) {
-          writebuffer(socket,READY.data(),READY.length());
+          if (!isinit) {
+            writebuffer(socket,NEEDINIT.data(),NEEDINIT.length());
+          } else {
+            writebuffer(socket,READY.data(),READY.length());
+          }
+        } else if (strncmp(header,INIT.data(),INIT.length()) == 0) {
+          readbuffer(socket, (char*) &rid, sizeof(int));
+          readbuffer(socket, (char*) &cbuf, sizeof(int));
+          readbuffer(socket,init_buffer,cbuf);
+          isinit = true;
         } else {
           break;
         }
@@ -124,6 +140,12 @@ int main(int argc, char** argv)
       for (size_t i = 0; i < buffer.size(); i++) {
         buffer[i] /= 1.8897259886;
       }
+
+      if (rid != rid_old) {
+        systems[0].ResetDipoleHistory();
+      }
+      
+      rid_old = rid;
       systems[0].SetOriginalOrderRealSysXyz(buffer);
       energy = systems[0].Energy(buffer, true) / 627.509;
       buffer = systems[0].GetOriginalOrderRealGrads();
@@ -166,6 +188,7 @@ int main(int argc, char** argv)
       }
       
       hasdata = false;
+      isinit = false;
       
     }
 

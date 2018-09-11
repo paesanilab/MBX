@@ -97,6 +97,7 @@ int main(int argc, char** argv)
   
   // No gradient energy. Save energies in vector
   for (size_t i = 0; i < systems.size(); i++) {
+    systems[i].SetDipoleMethod("cg");
     energy_nograd[i] = systems[i].Energy(grad, false);
   }
 
@@ -171,6 +172,18 @@ int main(int argc, char** argv)
   }
   testcase = "Energies (wgrad) with maller dipole tolerance";
   CompareEnergies(energy_grad, e_grad_test, testcase, exit_code);
+
+  testcase = "ASPC energy for 10 iterations";
+  for (size_t i = 0; i < systems.size(); i++) {
+    systems[i].SetDipoleMethod("aspc");
+    double energy_aspc = systems[i].Energy(grad, false);
+    std::vector<double> evec(10,energy_aspc);
+    std::vector<double> evec_test(10);
+    for (size_t j = 0; j < 10; j++) {
+       evec_test[j] = systems[i].Energy(grad, false);
+    }
+    CompareEnergies(evec, evec_test, testcase, exit_code);
+  }
 
   if (exit_code == 0) {
     std::cout << "All tests passed!\n";

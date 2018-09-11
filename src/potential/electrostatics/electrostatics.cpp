@@ -96,18 +96,18 @@ namespace elec {
 
     size_t nsites3 = nsites_ * 3;
 
-    sys_phi_ = std::vector<double>(nsites_,0.0);
-    phi_ = std::vector<double>(nsites_,0.0);
-    sys_Efq_ = std::vector<double>(nsites3, 0.0);
-    sys_Efd_ = std::vector<double>(nsites3, 0.0);
-    Efq_ = std::vector<double>(nsites3, 0.0);
-    Efd_ = std::vector<double>(nsites3, 0.0);
-    sys_mu_ = std::vector<double>(nsites3, 0.0);
-    mu_ = std::vector<double>(nsites3, 0.0);
-    grad_ = std::vector<double>(nsites3,0.0);
-    sys_grad_ = std::vector<double>(nsites3,0.0);
+    std::fill(sys_phi_.begin(),sys_phi_.end(),0.0);
+    std::fill(phi_.begin(),phi_.end(),0.0);
+    std::fill(sys_Efq_.begin(),sys_Efq_.end(), 0.0);
+    std::fill(sys_Efd_.begin(),sys_Efd_.end(), 0.0);
+    std::fill(Efq_.begin(),Efq_.end(), 0.0);
+    std::fill(Efd_.begin(),Efd_.end(), 0.0);
+    std::fill(sys_mu_.begin(),sys_mu_.end(), 0.0);
+    std::fill(mu_.begin(),mu_.end(), 0.0);
+    std::fill(grad_.begin(),grad_.end(),0.0);
+    std::fill(sys_grad_.begin(),sys_grad_.end(),0.0);
 
-    mu_pred_ = std::vector<double>(nsites3, 0.0);
+    std::fill(mu_pred_.begin(),mu_pred_.end(), 0.0);
 
     ReorderData();
   }
@@ -915,7 +915,7 @@ namespace elec {
 
     k_aspc_ = k;
     b_consts_aspc_ = std::vector<double>(k+2,0.0);
-    mu_hist_ = std::vector<double>(mu_.size() * k + 3,0.0);
+    mu_hist_ = std::vector<double>(mu_.size() * (k + 3),0.0);
 
     if (k == 0) {
       b_consts_aspc_[0] = 2.0;
@@ -971,7 +971,7 @@ namespace elec {
       // First we get the predictor
       std::fill(mu_pred_.begin(), mu_pred_.end(), 0.0);
       for (size_t i = 0; i < b_consts_aspc_.size(); i++) {
-        size_t shift = 3*nsites_ * (b_consts_aspc_.size() - i + 1);
+        size_t shift = 3*nsites_ * (b_consts_aspc_.size() - i - 1);
         for (size_t j = 0; j < 3*nsites_; j++) {
           mu_pred_[j] += b_consts_aspc_[i] * mu_hist_[shift + j];
         }
