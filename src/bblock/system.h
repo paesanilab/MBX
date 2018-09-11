@@ -6,6 +6,7 @@
 #include <utility>
 #include <algorithm>
 #include <iostream>
+#include <memory>
 
 // Tools
 #include "nanoflann.hpp"
@@ -85,6 +86,9 @@ class System {
 
   void SetDipoleTol(double tol);
   void SetDipoleMaxIt(double maxit);
+  void SetDipoleMethod(std::string method);
+
+  void ResetDipoleHistory();
 
   void SetPBC(bool use_pbc, std::vector<double> box);
   
@@ -117,6 +121,10 @@ class System {
   bool use_pbc_;                             // Periodic boundary conditions?
   bool allMonGood_;                          // True if all monomers have low e1b 
                                              // (<60.0kcal/mol)
+  // Electrostatics class
+  elec::Electrostatics electrostaticE_;
+  std::string dipole_method_;
+
   std::vector<size_t> sites_;                // Number of sites of each mo
   std::vector<size_t> nat_;                  // Number of atoms of each mo
   std::vector<size_t> first_index_;          // First index of mon in sys

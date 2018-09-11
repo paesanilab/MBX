@@ -32,6 +32,7 @@ namespace elec {
         std::string dip_method) {
 
     // Copy System data in electrostatics
+    //sys_chg_ = std::vector<double>(chg.begin(),chg.end());
     sys_chg_ = chg;
     sys_chg_grad_ = chg_grad;
     polfac_ = polfac;
@@ -74,7 +75,44 @@ namespace elec {
     // TODO k is defaulted to 4 for now
     SetAspcParameters(4);
     mu_pred_ = std::vector<double>(nsites3, 0.0);
+    
+    ReorderData();
+  }
 
+  void Electrostatics::SetXyzChgPolPolfac(std::vector<double> &xyz,
+                                          std::vector<double> &chg,
+                                          std::vector<double> &chggrad,
+                                          std::vector<double> &pol,
+                                          std::vector<double> &polfac,
+                                          std::string dip_method,
+                                          bool do_grads) {
+    sys_chg_ = chg;
+    sys_chg_grad_ = chggrad;
+    polfac_ = polfac;
+    pol_ = pol;
+    sys_xyz_ = xyz;
+    do_grads_ = do_grads;
+    dip_method_ = dip_method;
+
+    size_t nsites3 = nsites_ * 3;
+
+    sys_phi_ = std::vector<double>(nsites_,0.0);
+    phi_ = std::vector<double>(nsites_,0.0);
+    sys_Efq_ = std::vector<double>(nsites3, 0.0);
+    sys_Efd_ = std::vector<double>(nsites3, 0.0);
+    Efq_ = std::vector<double>(nsites3, 0.0);
+    Efd_ = std::vector<double>(nsites3, 0.0);
+    sys_mu_ = std::vector<double>(nsites3, 0.0);
+    mu_ = std::vector<double>(nsites3, 0.0);
+    grad_ = std::vector<double>(nsites3,0.0);
+    sys_grad_ = std::vector<double>(nsites3,0.0);
+
+    mu_pred_ = std::vector<double>(nsites3, 0.0);
+
+    ReorderData();
+  }
+
+  void Electrostatics::ReorderData() {
 ////////////////////////////////////////////////////////////////////////////////
 // DATA ORGANIZATION ///////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

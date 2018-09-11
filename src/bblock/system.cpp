@@ -1,7 +1,7 @@
 #include "system.h"
 
 //#define DEBUG
-#define TIMING
+//#define TIMING
 
 #ifdef TIMING
 #  include <chrono>
@@ -55,6 +55,7 @@ void System::SetStepEval3b(size_t step) {stepEval3b_ = step;}
 
 void System::SetDipoleTol(double tol) {diptol_ = tol;}
 void System::SetDipoleMaxIt(double maxit) {maxItDip_ = maxit;}
+void System::SetDipoleMethod(std::string method) {dipole_method_ = method;}
 
 void System::SetPBC(bool use_pbc, 
                     std::vector<double> box = {1000.0,0.0,0.0,
@@ -135,6 +136,13 @@ void System::Initialize() {
   SetCharges();
   SetPols();
   SetPolfacs();
+
+  dipole_method_ = "cg";
+
+  // TODO: Do grads set to true for now. Needs to be fixed
+  electrostaticE_.Initialize(chg_, chggrad_, polfac_, 
+                pol_, xyz_, monomers_, sites_, first_index_, 
+                mon_type_count_, true, diptol_, maxItDip_, dipole_method_);
 
   initialized_ = true;
 }
@@ -792,11 +800,15 @@ void System::SetVSites() {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-  elec::Electrostatics electrostaticE;
-  electrostaticE.Initialize(chg_, chggrad_, polfac_, 
-                pol_, xyz_, monomers_, sites_, first_index_, 
-                mon_type_count_, do_grads, diptol_, maxItDip_, "cg");
-  return electrostaticE.GetElectrostatics(grad_);
+  electrostaticE_.SetXyzChgPolPolfac(xyz_, chg_, chggrad_, 
+                                     pol_, polfac_, dipole_method_, do_grads);
+  return electrostaticE_.GetElectrostatics(grad_);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::ResetDipoleHistory() {
+  electrostaticE_.ResetAspcHistory();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

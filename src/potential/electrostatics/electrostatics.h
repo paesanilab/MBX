@@ -42,7 +42,15 @@ namespace elec {
         std::string dip_method = "iter");
       
       double GetElectrostatics(std::vector<double> &grad);
+
       void ResetAspcHistory();
+      void SetXyzChgPolPolfac(std::vector<double> &xyz,
+                              std::vector<double> &chg,
+                              std::vector<double> &chggrad,
+                              std::vector<double> &pol,
+                              std::vector<double> &polfac,
+                              std::string dip_method,
+                              bool do_grads);
 
     private:
       void CalculatePermanentElecField();
@@ -56,6 +64,8 @@ namespace elec {
       void CalculateDipoles();
       void CalculateElecEnergy();
       void CalculateGradients(std::vector<double> &grad);
+
+      void ReorderData();
 
       // Charges of each site. Order has to follow mon_type_count.
       std::vector<double> chg_;
