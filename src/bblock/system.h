@@ -31,21 +31,56 @@
 namespace bblock { // Building Block :: System
 ////////////////////////////////////////////////////////////////////////////////
 
-// System Class
-// @author: Marc Riera
-// @email:  mrierari@ucsd.edu
-// This class contains a whole chemical system, which is made of molecules,
-// which are made of monomers.
+/**
+ * The System class is the core class of the whole software. 
+ * It contains the calls to the enegy functions
+ * More stuff to come.
+ */
+
 class System {
  public:
-  System();
+  /** 
+   * Default constructor. Creates a System class.
+   */
+  System(); 
+
+  /** 
+   * Default Destructor. Destroys the System class.
+   */
   ~System();
-  // Getters
+
+  /**
+   * Gets the total number of monomers in the system.
+   * @return Number of monomers in the system
+   */
   size_t GetNumMon();
+
+  /**
+   * Gets the total number of molecules in the system.
+   * @return Number of molecules in the system
+   * @warning This function should not be used for now
+   */
   size_t GetNumMol();
+
+  /**
+   * Gets the total number of sites.
+   * (real + electrostatic sites such as M-sites)
+   * @return Total number of sites (real + electrostatic)
+   */
   size_t GetNumSites();
+
+  /**
+   * Gets the total number of REAL sites, i.e., number of atoms.
+   * @return Number of real sites
+   */
   size_t GetNumRealSites();
-  size_t GetMonNat(size_t n);
+
+  /** 
+   * Gets the numer of atoms the n-th monomer
+   * @param[in] n Index of the monomer in the monomer list
+   * @return Number of atoms of the n-th monomer
+   */
+  size_t GetMonNumAt(size_t n);
   size_t GetFirstInd(size_t n);
   std::vector<size_t> GetDimers();
   std::vector<size_t> GetTrimers();
