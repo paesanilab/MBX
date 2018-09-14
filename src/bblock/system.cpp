@@ -21,7 +21,7 @@ size_t System::GetNumMol() {return nmol_;}
 size_t System::GetNumMon() {return nmon_;}
 size_t System::GetNumSites() {return nsites_;}
 size_t System::GetNumRealSites() {return numat_;}
-size_t System::GetMonNat(size_t n) {return nat_[n];}
+size_t System::GetMonNumAt(size_t n) {return nat_[n];}
 size_t System::GetFirstInd(size_t n) {return first_index_[n];}
 
 std::vector<size_t> System::GetDimers() {return dimers_;}
