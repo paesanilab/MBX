@@ -12,14 +12,17 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
                    (std::vector<std::string> &mon, 
                     std::vector<size_t> sites,
                     std::vector<size_t> nats,
+                    std::vector<size_t> &original2current_order,
                     std::vector<std::pair<size_t,size_t> > &original_order,
                     std::vector<std::pair<size_t,size_t> > &original_order_realSites) {
   std::vector<std::string> monomers = mon;
+  original2current_order.clear();
   mon.clear();
   original_order.clear();
   original_order_realSites.clear();
 
   std::vector<std::string> montypes;
+  original2current_order = std::vector<size_t>(monomers.size(),0);
 
   // Look for number of monomers of each type
   for (size_t i = 0; i < monomers.size(); i++) {
@@ -54,6 +57,7 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
         original_order.push_back(std::make_pair(i,site_pos));
         original_order_realSites.push_back(std::make_pair(i,nat_pos));
         mon.push_back(monid);
+        original2current_order[i] = mon.size() - 1;
       }
       site_pos += sites[i];
       nat_pos += nats[i];

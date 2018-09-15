@@ -81,9 +81,32 @@ class System {
    * @return Number of atoms of the n-th monomer
    */
   size_t GetMonNumAt(size_t n);
+
+  /** 
+   * Gets the position of the first site of monomer n in the atoms vector
+   * @param[in] n Index of the monomer in the monomer list
+   * @return First index of monomer n
+   */
   size_t GetFirstInd(size_t n);
-  std::vector<size_t> GetDimers();
-  std::vector<size_t> GetTrimers();
+
+  /**
+   * Gets the pairs involving, as the first index, the monomers specified.
+   * It will return dimers or trimers depending on nmax. 
+   * @param[in] nmax Maximum order of the pairs. 2 will calculate dimers. 
+   * 3 will calculate trimers. nmax > 3 not implemented.
+   * @param[in] cutoff Maximum distance conidered to pair monomers
+   * @param[in] istart Index of the first monomer to take into account
+   * @param[in] iend Index of the last monomer to take into account.
+   * This one will NOT be included
+   * @return size_t vector with dimention nmax * n-mers. If nmax = 2,
+   * it will return a single vector where v[n], n = 0,2,4... is the index
+   * first monomer of the dimer, and v[n + 1] is the second one.
+   */
+  std::vector<size_t> GetPairList(size_t nmax, double cutoff, 
+                                  size_t istart, size_t iend);
+
+
+
   std::vector<size_t> GetMolecule(size_t n);
   std::vector<double> GetSysXyz();
   std::vector<double> GetOriginalOrderSysXyz();
@@ -103,9 +126,6 @@ class System {
   void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
-  void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
-  std::vector<size_t> AddClustersParallel(size_t n_max, double cutoff,
-                                          size_t istart, size_t iend);
   void SetCharges();
   void SetPols();
   void SetPolfacs();
@@ -135,6 +155,13 @@ class System {
   double Get2B(bool do_grads);
   double Get3B(bool do_grads);
   double GetElectrostatics(bool do_grads);
+
+ private:
+  void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
+  std::vector<size_t> AddClustersParallel(size_t n_max, double cutoff,
+                                          size_t istart, size_t iend);
+
+
  private:
   size_t nmol_;                              // Number of molecules
   size_t nmon_;                              // Number of monomers
@@ -178,7 +205,10 @@ class System {
   // Molecules of system
   std::vector<std::vector<size_t> > molecules_; 
   // Mon type and # mon of each
-  std::vector<std::pair<std::string,size_t> > mon_type_count_;  // Input order of monomers  
+  std::vector<std::pair<std::string,size_t> > mon_type_count_;  
+  // The position i of this vector contains the position in the current
+  // monomer vector of the ith initial monomer
+  std::vector<size_t> original2current_order_;       
   // Input order of monomers <monomer, site first index>
   std::vector<std::pair<size_t,size_t> > initial_order_;       
   // Input order of monomers <monomer, site first index only Real sites>

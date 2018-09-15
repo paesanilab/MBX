@@ -25,6 +25,7 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
          (std::vector<std::string> &mon,
           std::vector<size_t> sites,
           std::vector<size_t> nats,
+          std::vector<size_t> &original2current_order,
           std::vector<std::pair<size_t,size_t> > &original_order,
           std::vector<std::pair<size_t,size_t> > &original_order_realSites);
 

@@ -21,11 +21,37 @@ size_t System::GetNumMol() {return nmol_;}
 size_t System::GetNumMon() {return nmon_;}
 size_t System::GetNumSites() {return nsites_;}
 size_t System::GetNumRealSites() {return numat_;}
-size_t System::GetMonNumAt(size_t n) {return nat_[n];}
-size_t System::GetFirstInd(size_t n) {return first_index_[n];}
 
-std::vector<size_t> System::GetDimers() {return dimers_;}
-std::vector<size_t> System::GetTrimers() {return trimers_;}
+size_t System::GetMonNumAt(size_t n) {
+  return nat_[original2current_order_[n]];
+}
+
+size_t System::GetFirstInd(size_t n) {
+  // Obtain position in system of monomer in position 
+  // 'n' in the original order
+  size_t current_pos = original2current_order_[n];
+
+  // Get the first index that this monomer had in the input order
+  return initial_order_[current_pos].second;
+}
+
+std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
+                                        size_t istart, size_t iend) {
+  // Call the add clusters function 
+  AddClusters(nmax, cutoff, istart, iend);
+
+  // Change the monomer indexes of dimers_ or trimers_ 
+  // to match the input order
+  
+  std::vector<size_t> pair_list(dimers_.size(),0);
+
+  for (size_t i = 0; i < dimers_.size(); i++) {
+    pair_list[i] = initial_order_[i].first;
+  }
+
+  return pair_list;
+}
+
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 std::vector<std::string> System::GetSysAtNames() {return atoms_;}
 std::vector<std::string> System::GetOriginalOrderSysAtNames() {
@@ -165,7 +191,7 @@ void System::AddMonomerInfo() {
   }
 
   mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, 
-                              initial_order_, initial_order_realSites_); 
+            original2current_order_,initial_order_, initial_order_realSites_); 
   
   // Rearranging coordinates to account for virt sites
   xyz_ = std::vector<double> (3*nsites_, 0.0);
