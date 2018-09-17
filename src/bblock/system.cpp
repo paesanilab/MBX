@@ -51,8 +51,8 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
     for (size_t i = 0; i < dimers_.size(); i+=nmax) {
       size_t mon1 = initial_order_[dimers_[i]].first;
       size_t mon2 = initial_order_[dimers_[i+1]].first;
-      if (mon1 >= istart && mon1 < iend || 
-          mon2 >= istart && mon2 < iend) {
+      if ((mon1 >= istart && mon1 < iend) || 
+          (mon2 >= istart && mon2 < iend)) {
         pair_list.push_back(mon1);
         pair_list.push_back(mon2);
       }
@@ -62,9 +62,9 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
       size_t mon1 = initial_order_[trimers_[i]].first;
       size_t mon2 = initial_order_[trimers_[i+1]].first;
       size_t mon3 = initial_order_[trimers_[i+2]].first;
-      if (mon1 >= istart && mon1 < iend || 
-          mon2 >= istart && mon2 < iend ||
-          mon3 >= istart && mon3 < iend) {
+      if ((mon1 >= istart && mon1 < iend) || 
+          (mon2 >= istart && mon2 < iend) ||
+          (mon3 >= istart && mon3 < iend)) {
         pair_list.push_back(mon1);
         pair_list.push_back(mon2);
         pair_list.push_back(mon3);
@@ -79,28 +79,37 @@ std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 std::vector<std::string> System::GetSysAtNames() {return atoms_;}
 
 std::vector<std::string> System::GetOriginalOrderSysAtNames() {
-  return systools::ResetOrder(atoms_, initial_order_, first_index_, sites_);
+  return systools::ResetOrderN(atoms_, initial_order_, first_index_, sites_);
 }
 
 std::vector<double> System::GetXyz() {
-  return systools::ResetOrder(xyz_, initial_order_, first_index_, sites_);
+  return systools::ResetOrder3N(xyz_, initial_order_, first_index_, sites_);
 }
 
 std::vector<double> System::GetRealXyz() {
-  return systools::ResetOrder(xyz_, initial_order_realSites_, 
+  return systools::ResetOrderReal3N(xyz_, initial_order_realSites_, 
                               numat_, first_index_, nat_);
 }
 
 std::vector<double> System::GetGrads() {
-  return systools::ResetOrder(grad_, initial_order_, first_index_, sites_);
+  return systools::ResetOrder3N(grad_, initial_order_, first_index_, sites_);
 }
 
 std::vector<double> System::GetRealGrads() {
-  return systools::ResetOrder(grad_, initial_order_realSites_, 
+  return systools::ResetOrderReal3N(grad_, initial_order_realSites_, 
                               numat_, first_index_, nat_);
 }
 
-std::vector<double> System::GetCharges() {return chg_;}
+std::vector<double> System::GetCharges() {
+  return systools::ResetOrderN(chg_, initial_order_, first_index_, sites_);
+}
+
+std::vector<double> System::GetRealCharges() {
+  return systools::ResetOrderRealN(chg_, initial_order_, 
+                              numat_, first_index_, nat_);
+}
+
+
 std::vector<double> System::GetPols() {return pol_;}
 std::vector<double> System::GetPolfacs() {return polfac_;}
 
@@ -316,7 +325,7 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
 
   // If monomers are too distorted, skip 
   if (!allMonGood_) {
-    grad = systools::ResetOrder(grad_, initial_order_, first_index_, sites_);
+    grad = systools::ResetOrder3N(grad_, initial_order_, first_index_, sites_);
     return e1b;
   }
 
@@ -382,7 +391,7 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
 # endif
 
   // Copy gradients to output grad
-  grad = systools::ResetOrder(grad_, initial_order_, first_index_, sites_);
+  grad = systools::ResetOrder3N(grad_, initial_order_, first_index_, sites_);
 
   return energy_;
 }

@@ -73,24 +73,57 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
 
 // Reorders the gradients or coordinates to the original order
-std::vector<double> ResetOrder(std::vector<double> coords,
+std::vector<double> ResetOrder3N(std::vector<double> coords,
     std::vector<std::pair<size_t,size_t> > original_order, 
     std::vector<size_t> first_index,
     std::vector<size_t> sites);
 
 // Reorders the gradients or coordinates to the original order
 // only taking into account real sites. 
-std::vector<double> ResetOrder(std::vector<double> coords,
+std::vector<double> ResetOrderReal3N(std::vector<double> coords,
     std::vector<std::pair<size_t,size_t> > original_order,
     size_t numats,
     std::vector<size_t> first_index,
     std::vector<size_t> nats);
 
-// Reorders the atom names to the original order
-std::vector<std::string> ResetOrder(std::vector<std::string> at_names,
-    std::vector<std::pair<size_t,size_t> > original_order, 
+// Reorders all the atom names to the original order
+template <typename T>
+std::vector<T> ResetOrderN(std::vector<T> vector_T,
+    std::vector<std::pair<size_t,size_t> > original_order,
     std::vector<size_t> first_index,
-    std::vector<size_t> sites);
+    std::vector<size_t> sites) {
+
+  std::vector<T> new_vector_T(vector_T.size());
+  for (size_t i = 0; i < sites.size(); i++) {
+    size_t ini = first_index[i];
+    size_t fin = ini + sites[i];
+    size_t ini_orig = original_order[i].second;
+    std::copy(vector_T.begin() + ini, vector_T.begin() + fin,
+              new_vector_T.begin() + ini_orig);
+  }
+
+  return new_vector_T;
+}
+
+// Reorders the real atom names to the original order
+template <typename T>
+std::vector<T> ResetOrderRealN(std::vector<T> vector_T,
+    std::vector<std::pair<size_t,size_t> > original_order,
+    size_t numats,
+    std::vector<size_t> first_index,
+    std::vector<size_t> nats) {
+
+  std::vector<T> new_vector_T(numats);
+  for (size_t i = 0; i < nats.size(); i++) {
+    size_t ini = first_index[i];
+    size_t fin = ini + nats[i];
+    size_t ini_orig = original_order[i].second;
+    std::copy(vector_T.begin() + ini, vector_T.begin() + fin,
+              new_vector_T.begin() + ini_orig);
+  }
+
+  return new_vector_T;
+}
 
 // Calculates the coordinates of the virtual site of a monomer when
 // given the coordinates of the other sites

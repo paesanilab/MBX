@@ -98,7 +98,7 @@ class System {
    * @param[in] istart Index of the first monomer to take into account
    * @param[in] iend Index of the last monomer to take into account.
    * This one will NOT be included
-   * @return size_t vector with dimention nmax * n-mers. If nmax = 2,
+   * @return size_t vector with dimension nmax * n-mers. If nmax = 2,
    * it will return a single vector where v[n], n = 0,2,4... is the index
    * first monomer of the dimer, and v[n + 1] is the second one.
    */
@@ -145,11 +145,23 @@ class System {
    */
   std::vector<double> GetRealGrads();
 
-
-
-
-
+  /**
+   * Gets the charges of the system. It includes the charges of ALL sites, 
+   * including the virtual sites such as the M-sites
+   * @return A vector of doubles with the charges of all sites
+   */
   std::vector<double> GetCharges();
+
+  /**
+   * Gets the charges of the system. It includes the charges of only real
+   * sites
+   * @return A vector of doubles with the charges of all real sites
+   */
+  std::vector<double> GetRealCharges();
+
+
+
+
   std::vector<double> GetPols();
   std::vector<double> GetPolfacs();
   std::vector<std::string> GetSysAtNames();
