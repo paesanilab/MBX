@@ -106,16 +106,54 @@ class System {
                                   size_t istart, size_t iend);
 
 
-
+  /** 
+   * Gets a vector with the indexes that form a molecule.
+   * @param[in] n Index of the molecule in the molecule list
+   * @return Vecotr of size_t with the indexes of the monomer that
+   * compoise the n-th molecule.
+   * @warning Should not be used for now
+   */
   std::vector<size_t> GetMolecule(size_t n);
-  std::vector<double> GetSysXyz();
-  std::vector<double> GetOriginalOrderSysXyz();
+
+  /** 
+   * Gets the coordinates of the system in the input order.
+   * It will return the coordinates of all sites, including the
+   * electrostatic virtual sites.
+   * @return A vector of doubles with the xyz in the same order as the input
+   */
+  std::vector<double> GetXyz();
+
+  /** 
+   * Gets the coordinates of the system in the input order.
+   * It will return the coordinates of only real sites.
+   * @return A vector of doubles with the xyz in the same order as the input
+   */
+  std::vector<double> GetRealXyz();
+
+  /** 
+   * Gets the gradients of the system in the input order.
+   * It will return the gradients of all sites, including the
+   * electrostatic virtual sites.
+   * @return A vector of doubles with the gradients in the same order as the input
+   */
+  std::vector<double> GetGrads();
+
+  /** 
+   * Gets the gradients of the system in the input order.
+   * It will return the gradients of only real sites.
+   * @return A vector of doubles with the gradients in the same order as the input
+   */
+  std::vector<double> GetRealGrads();
+
+
+
+
+
   std::vector<double> GetCharges();
   std::vector<double> GetPols();
   std::vector<double> GetPolfacs();
   std::vector<std::string> GetSysAtNames();
   std::vector<std::string> GetOriginalOrderSysAtNames();
-  std::vector<double> GetOriginalOrderRealGrads();
   std::string GetMonId(size_t n);
   // Modifiers
   void SetSysXyz(std::vector<double> xyz);
@@ -126,10 +164,6 @@ class System {
   void AddMolecule(std::vector<size_t> molec);
   void Initialize();
   void AddMonomerInfo();
-  void SetCharges();
-  void SetPols();
-  void SetPolfacs();
-  void SetVSites();
   
   void Set2bCutoff(double cutoff2b);
   void Set3bCutoff(double cutoff3b);
@@ -151,15 +185,23 @@ class System {
   // Energy computing gradients. The new gradients of ALL sites 
   // are returned in grad. 
   double Energy(std::vector<double> &grad, bool do_grads);
-  double Get1B(bool do_grads);
-  double Get2B(bool do_grads);
-  double Get3B(bool do_grads);
-  double GetElectrostatics(bool do_grads);
+  double OneBodyEnergy(bool do_grads);
+  double TwoBodyEnergy(bool do_grads);
+  double ThreeBodyEnergy(bool do_grads);
 
  private:
   void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
   std::vector<size_t> AddClustersParallel(size_t n_max, double cutoff,
                                           size_t istart, size_t iend);
+  void SetCharges();
+  void SetPols();
+  void SetPolfacs();
+  void SetVSites();
+
+  double Get1B(bool do_grads);
+  double Get2B(bool do_grads);
+  double Get3B(bool do_grads);
+  double GetElectrostatics(bool do_grads);
 
 
  private:

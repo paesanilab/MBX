@@ -37,16 +37,39 @@ size_t System::GetFirstInd(size_t n) {
 
 std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
                                         size_t istart, size_t iend) {
-  // Call the add clusters function 
-  AddClusters(nmax, cutoff, istart, iend);
+
+  // Call the add clusters function to get all the pairs
+  AddClusters(nmax, cutoff, 0, monomers_.size());
 
   // Change the monomer indexes of dimers_ or trimers_ 
   // to match the input order
+  // Select also the pairs that we are interested on
   
-  std::vector<size_t> pair_list(dimers_.size(),0);
+  std::vector<size_t> pair_list;
 
-  for (size_t i = 0; i < dimers_.size(); i++) {
-    pair_list[i] = initial_order_[i].first;
+  if (nmax == 2) {
+    for (size_t i = 0; i < dimers_.size(); i+=nmax) {
+      size_t mon1 = initial_order_[dimers_[i]].first;
+      size_t mon2 = initial_order_[dimers_[i+1]].first;
+      if (mon1 >= istart && mon1 < iend || 
+          mon2 >= istart && mon2 < iend) {
+        pair_list.push_back(mon1);
+        pair_list.push_back(mon2);
+      }
+    }
+  } else if (nmax == 3) {
+    for (size_t i = 0; i < trimers_.size(); i+=nmax) {
+      size_t mon1 = initial_order_[trimers_[i]].first;
+      size_t mon2 = initial_order_[trimers_[i+1]].first;
+      size_t mon3 = initial_order_[trimers_[i+2]].first;
+      if (mon1 >= istart && mon1 < iend || 
+          mon2 >= istart && mon2 < iend ||
+          mon3 >= istart && mon3 < iend) {
+        pair_list.push_back(mon1);
+        pair_list.push_back(mon2);
+        pair_list.push_back(mon3);
+      }
+    }
   }
 
   return pair_list;
@@ -54,17 +77,29 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
 
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
 std::vector<std::string> System::GetSysAtNames() {return atoms_;}
+
 std::vector<std::string> System::GetOriginalOrderSysAtNames() {
   return systools::ResetOrder(atoms_, initial_order_, first_index_, sites_);
 }
-std::vector<double> System::GetSysXyz() {return xyz_;}
-std::vector<double> System::GetOriginalOrderSysXyz() {
+
+std::vector<double> System::GetXyz() {
   return systools::ResetOrder(xyz_, initial_order_, first_index_, sites_);
 }
-std::vector<double> System::GetOriginalOrderRealGrads() {
+
+std::vector<double> System::GetRealXyz() {
+  return systools::ResetOrder(xyz_, initial_order_realSites_, 
+                              numat_, first_index_, nat_);
+}
+
+std::vector<double> System::GetGrads() {
+  return systools::ResetOrder(grad_, initial_order_, first_index_, sites_);
+}
+
+std::vector<double> System::GetRealGrads() {
   return systools::ResetOrder(grad_, initial_order_realSites_, 
                               numat_, first_index_, nat_);
 }
+
 std::vector<double> System::GetCharges() {return chg_;}
 std::vector<double> System::GetPols() {return pol_;}
 std::vector<double> System::GetPolfacs() {return polfac_;}
@@ -352,6 +387,15 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   return energy_;
 }
 
+double System::OneBodyEnergy(bool do_grads) {
+  energy_ = 0.0;
+  std::fill(grad_.begin(), grad_.end(), 0.0);
+  
+  energy_ = Get1B(do_grads);
+
+  return energy_;
+}
+
 double System::Get1B(bool do_grads) {
 
   // 1B ENERGY
@@ -408,6 +452,14 @@ double System::Get1B(bool do_grads) {
   return e1b;
 }
 
+double System::TwoBodyEnergy(bool do_grads) {
+  energy_ = 0.0;
+  std::fill(grad_.begin(), grad_.end(), 0.0);
+
+  energy_ = Get2B(do_grads);
+
+  return energy_;
+}
 
 double System::Get2B(bool do_grads) {
   // No dimers makes the function return 0.
@@ -585,6 +637,15 @@ double System::Get2B(bool do_grads) {
 # endif
 
   return e2b_t + edisp_t;
+}
+
+double System::ThreeBodyEnergy(bool do_grads) {
+  energy_ = 0.0;
+  std::fill(grad_.begin(), grad_.end(), 0.0);
+
+  energy_ = Get3B(do_grads);
+
+  return energy_;
 }
 
 double System::Get3B(bool do_grads) {

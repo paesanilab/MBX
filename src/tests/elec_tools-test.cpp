@@ -45,7 +45,7 @@ int main(int argc, char** argv)
   std::cout << "M-sites:" << std::endl;
   std::cout << "	X		Y			Z" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> xyz = systems[i].GetSysXyz();
+    std::vector<double> xyz = systems[i].GetXyz();
     std::vector<std::string> at = systems[i].GetSysAtNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific

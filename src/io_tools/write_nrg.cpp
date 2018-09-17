@@ -17,7 +17,7 @@ void WriteNrg(const char * filename, std::vector<bblock::System> systems ) {
 void SaveNrg(std::ostream & os, std::vector<bblock::System> systems ) {
   for (size_t i = 0; i < systems.size(); i++) {
     // Getting system props
-    std::vector<double> xyz = systems[i].GetSysXyz();
+    std::vector<double> xyz = systems[i].GetXyz();
     std::vector<std::string> an = systems[i].GetSysAtNames();
     os << "SYSTEM " << i << std::endl;
     for (size_t j = 0; j < systems[i].GetNumMol(); j++) {

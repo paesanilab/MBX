@@ -17,7 +17,7 @@
 namespace {
 
 static std::vector<bblock::System> systems;
-static double tol = 1E-06;
+//static double tol = 1E-06;
 
 } // namespace
 
@@ -56,18 +56,18 @@ int main(int argc, char** argv)
   for (size_t i = 0; i < systems.size(); i++) {
     // Get NB energy for no_pbc and for pbc
     // First no PBC
-    std::vector<double> xyz = systems[i].GetOriginalOrderSysXyz();
+    std::vector<double> xyz = systems[i].GetRealXyz();
     std::vector<std::string> ats = systems[i].GetOriginalOrderSysAtNames();
-    double e1b = systems[i].Get1B(false);
-    double e2b = systems[i].Get2B(false);
-    double e3b = systems[i].Get3B(false);
+    double e1b = systems[i].OneBodyEnergy(false);
+    double e2b = systems[i].TwoBodyEnergy(false);
+    double e3b = systems[i].ThreeBodyEnergy(false);
 
     // Then PBC
     systems[i].SetPBC(true,box);
-    std::vector<double> xyz_pbc = systems[i].GetOriginalOrderSysXyz();
-    double e1b_pbc = systems[i].Get1B(false);
-    double e2b_pbc = systems[i].Get2B(false);
-    double e3b_pbc = systems[i].Get3B(false);
+    std::vector<double> xyz_pbc = systems[i].GetRealXyz();
+    double e1b_pbc = systems[i].OneBodyEnergy(false);
+    double e2b_pbc = systems[i].TwoBodyEnergy(false);
+    double e3b_pbc = systems[i].ThreeBodyEnergy(false);
 
     // Print output and differences
     std::cout << std::setprecision(6) << std::scientific
