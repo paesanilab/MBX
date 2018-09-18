@@ -383,6 +383,27 @@ int main(int argc, char** argv)
 
   //////////////////////////////////////////////////////////////////////////////
 
+  // Test GetMonId(n)
+  
+  test = "GetMonId(n)";
+
+  for (size_t i =0; i < monomers_ref.size(); i++) {
+    std::string mon_manual = system_ref.GetMonId(i);
+    std::string mon_read = systems[0].GetMonId(i);
+
+    if (mon_manual != monomers_ref[i]) {
+      PrintError(test, exitcode);
+      PrintDifference(mon_manual, header_manual,
+                      monomers_ref[i], header_ref);
+    }
+
+    if (mon_read != monomers_ref[i]) {
+      PrintError(test, exitcode);
+      PrintDifference(mon_read, header_read,
+                      monomers_ref[i], header_ref);
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////
 
   if (exitcode == 0) {
