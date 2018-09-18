@@ -92,26 +92,44 @@ std::vector<double> System::GetRealXyz() {
 }
 
 std::vector<double> System::GetGrads() {
-  return systools::ResetOrder3N(grad_, initial_order_, first_index_, sites_);
+  return systools::ResetOrder3N(grad_, initial_order_, 
+                                first_index_, sites_);
 }
 
 std::vector<double> System::GetRealGrads() {
   return systools::ResetOrderReal3N(grad_, initial_order_realSites_, 
-                              numat_, first_index_, nat_);
+                                    numat_, first_index_, nat_);
 }
 
 std::vector<double> System::GetCharges() {
-  return systools::ResetOrderN(chg_, initial_order_, first_index_, sites_);
+  return systools::ResetOrderN(chg_, initial_order_, 
+                               first_index_, sites_);
 }
 
 std::vector<double> System::GetRealCharges() {
   return systools::ResetOrderRealN(chg_, initial_order_, 
-                              numat_, first_index_, nat_);
+                                   numat_, first_index_, nat_);
 }
 
+std::vector<double> System::GetPolarizabilities() {
+  return systools::ResetOrderN(pol_, initial_order_, 
+                               first_index_, sites_);
+}
 
-std::vector<double> System::GetPols() {return pol_;}
-std::vector<double> System::GetPolfacs() {return polfac_;}
+std::vector<double> System::GetRealPolarizabilities() {
+  return systools::ResetOrderRealN(pol_, initial_order_,
+                                   numat_, first_index_, nat_);
+}
+
+std::vector<double> System::GetPolarizabilityFactors() {
+  return systools::ResetOrderN(polfac_, initial_order_,
+                               first_index_, sites_);
+}
+
+std::vector<double> System::GetRealPolarizabilityFactors() {
+  return systools::ResetOrderRealN(pol_, initial_order_,
+                                   numat_, first_index_, nat_);
+}
 
 std::string System::GetMonId(size_t n) {return monomers_[n];}
 

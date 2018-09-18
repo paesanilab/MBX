@@ -159,11 +159,40 @@ class System {
    */
   std::vector<double> GetRealCharges();
 
+  /**
+   * Gets the polarizabilities of the system. 
+   * It includes the charges of ALL sites, 
+   * including the virtual sites such as the M-sites
+   * @return A vector of doubles with the polarizabilities of all sites
+   */
+  std::vector<double> GetPolarizabilities();
+
+  /**
+   * Gets the polarizabilities of the system. 
+   * It includes the charges of only real sites
+   * @return A vector of doubles with the polarizabilities of all real sites
+   */
+  std::vector<double> GetRealPolarizabilities();
+
+  /**
+   * Gets the polarizability factors of the system. 
+   * It includes the charges of ALL sites, 
+   * including the virtual sites such as the M-sites
+   * @return A vector of doubles with the polarizability factors of all sites
+   */
+  std::vector<double> GetPolarizabilityFactors();
+
+  /**
+   * Gets the polarizability factors of the system. 
+   * It includes the charges of only real sites
+   * @return A vector of doubles with the polarizability factors of all real sites
+   */
+  std::vector<double> GetRealPolarizabilityFactors();
 
 
 
-  std::vector<double> GetPols();
-  std::vector<double> GetPolfacs();
+
+
   std::vector<std::string> GetSysAtNames();
   std::vector<std::string> GetOriginalOrderSysAtNames();
   std::string GetMonId(size_t n);

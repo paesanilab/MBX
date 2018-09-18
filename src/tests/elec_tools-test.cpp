@@ -71,7 +71,7 @@ int main(int argc, char** argv)
   
   std::cout << "\nPols: " << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> plfcs = systems[i].GetPols();
+    std::vector<double> plfcs = systems[i].GetPolarizabilities();
     std::vector<std::string> at = systems[i].GetSysAtNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 
   std::cout << "\nPolfacs: " << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> pols = systems[i].GetPolfacs();
+    std::vector<double> pols = systems[i].GetPolarizabilityFactors();
     std::vector<std::string> at = systems[i].GetSysAtNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
