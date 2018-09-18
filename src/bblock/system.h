@@ -207,9 +207,13 @@ class System {
    */
   std::vector<std::string> GetRealAtomNames();
 
-
-
+  /** 
+   * Gets the id string of the n-th monomer
+   * @param[in] n The index of the monomer which ID is wanted
+   * @return A string with the ID of the n-th monomer
+   */
   std::string GetMonId(size_t n);
+
   // Modifiers
   void SetSysXyz(std::vector<double> xyz);
   void SetOriginalOrderSysXyz(std::vector<double> xyz);

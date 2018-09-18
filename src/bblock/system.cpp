@@ -135,7 +135,10 @@ std::vector<double> System::GetRealPolarizabilityFactors() {
                                    numat_, first_index_, nat_);
 }
 
-std::string System::GetMonId(size_t n) {return monomers_[n];}
+std::string System::GetMonId(size_t n) {
+  size_t current_pos = original2current_order_[n];
+  return monomers_[current_pos];
+}
 
 void System::Set2bCutoff(double cutoff2b) {cutoff2b_ = cutoff2b;} 
 void System::Set3bCutoff(double cutoff3b) {cutoff3b_ = cutoff3b;}
