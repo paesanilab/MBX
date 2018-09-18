@@ -111,7 +111,7 @@ std::vector<double> System::GetCharges() {
 }
 
 std::vector<double> System::GetRealCharges() {
-  return systools::ResetOrderRealN(chg_, initial_order_, 
+  return systools::ResetOrderRealN(chg_, initial_order_realSites_, 
                                    numat_, first_index_, nat_);
 }
 
@@ -121,7 +121,7 @@ std::vector<double> System::GetPolarizabilities() {
 }
 
 std::vector<double> System::GetRealPolarizabilities() {
-  return systools::ResetOrderRealN(pol_, initial_order_,
+  return systools::ResetOrderRealN(pol_, initial_order_realSites_,
                                    numat_, first_index_, nat_);
 }
 
@@ -131,7 +131,7 @@ std::vector<double> System::GetPolarizabilityFactors() {
 }
 
 std::vector<double> System::GetRealPolarizabilityFactors() {
-  return systools::ResetOrderRealN(pol_, initial_order_,
+  return systools::ResetOrderRealN(pol_, initial_order_realSites_,
                                    numat_, first_index_, nat_);
 }
 

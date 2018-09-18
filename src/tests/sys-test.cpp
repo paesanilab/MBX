@@ -289,6 +289,99 @@ int main(int argc, char** argv)
   CompareVector(xyz_ref, xyz_manual, header_manual + "::" + test, exitcode);
   CompareVector(xyz_ref, xyz_read, header_read + "::" + test, exitcode);
   
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test GetRealXyz()
+  test = "GetRealXyz()";
+
+  xyz_manual = system_ref.GetRealXyz();
+  xyz_read = systems[0].GetRealXyz();
+
+  CompareVector(xyz_ref, xyz_manual, header_manual + "::" + test, exitcode);
+  CompareVector(xyz_ref, xyz_read, header_read + "::" + test, exitcode);
+  
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test GetGrads and GetRealGrads
+  // Grad values are already asserted in energy test
+  // Just testing that functions return what it is supposed to
+  test = "GetGrads()";
+
+  std::vector<double> grads_manual = system_ref.GetGrads();
+  std::vector<double> grads_read = systems[0].GetGrads();
+
+  CompareVector(grads_manual, grads_read, header_manual + "::" + test, exitcode);
+
+  test = "GetRealGrads()";
+
+  grads_manual = system_ref.GetRealGrads();
+  grads_read = systems[0].GetRealGrads();
+
+  CompareVector(grads_manual, grads_read, header_manual + "::" + test, exitcode);
+  
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test GetCharges and GetRealCharges
+  // Values tested in elec-tools
+  // Only testing that functions return what it is supposed to
+
+  test = "GetCharges()";
+
+  std::vector<double> chg_manual = system_ref.GetCharges();
+  std::vector<double> chg_read = systems[0].GetCharges();
+
+  CompareVector(chg_manual, chg_read, header_manual + "::" + test, exitcode);
+
+  test = "GetRealCharges()";
+
+  chg_manual = system_ref.GetRealCharges();
+  chg_read = systems[0].GetRealCharges();
+
+  CompareVector(chg_manual, chg_read, header_manual + "::" + test, exitcode);
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test GetPolarizabilities and GetRealPolarizabilities
+  // Values tested in elec-tools
+  // Only testing that functions return what it is supposed to
+
+  test = "GetPolarizabilities()";
+
+  std::vector<double> pols_manual = system_ref.GetPolarizabilities();
+  std::vector<double> pols_read = systems[0].GetPolarizabilities();
+
+  CompareVector(pols_manual, pols_read, header_manual + "::" + test, exitcode);
+
+  test = "GetRealPolarizabilities()";
+
+  pols_manual = system_ref.GetRealPolarizabilities();
+  pols_read = systems[0].GetRealPolarizabilities();
+
+  CompareVector(pols_manual, pols_read, header_manual + "::" + test, exitcode);
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test GetPolarizabilityFactors and GetRealPolarizabilityFactors
+  // Values tested in elec-tools
+  // Only testing that functions return what it is supposed to
+
+  test = "GetPolarizabilityFactors()";
+
+  std::vector<double> polfacs_manual = system_ref.GetPolarizabilityFactors();
+  std::vector<double> polfacs_read = systems[0].GetPolarizabilityFactors();
+
+  CompareVector(polfacs_manual, polfacs_read, 
+                header_manual + "::" + test, exitcode);
+
+  test = "GetRealPolarizabilityFactors()";
+
+  polfacs_manual = system_ref.GetRealPolarizabilityFactors();
+  polfacs_read = systems[0].GetRealPolarizabilityFactors();
+
+  CompareVector(polfacs_manual, polfacs_read, 
+                header_manual + "::" + test, exitcode);
+
+  //////////////////////////////////////////////////////////////////////////////
 
   //////////////////////////////////////////////////////////////////////////////
 
