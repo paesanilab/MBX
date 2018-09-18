@@ -46,7 +46,7 @@ int main(int argc, char** argv)
   std::cout << "	X		Y			Z" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
     std::vector<double> xyz = systems[i].GetXyz();
-    std::vector<std::string> at = systems[i].GetSysAtNames();
+    std::vector<std::string> at = systems[i].GetAtomNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
                 << std::setw(8)  << at[j]
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
   std::cout << "\nCharges:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
     std::vector<double> chg = systems[i].GetCharges();
-    std::vector<std::string> at = systems[i].GetSysAtNames();
+    std::vector<std::string> at = systems[i].GetAtomNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
                 << std::setw(8)  << at[j] 
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
   std::cout << "\nPols: " << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
     std::vector<double> plfcs = systems[i].GetPolarizabilities();
-    std::vector<std::string> at = systems[i].GetSysAtNames();
+    std::vector<std::string> at = systems[i].GetAtomNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
                 << std::setw(8)  << at[j]
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
   std::cout << "\nPolfacs: " << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
     std::vector<double> pols = systems[i].GetPolarizabilityFactors();
-    std::vector<std::string> at = systems[i].GetSysAtNames();
+    std::vector<std::string> at = systems[i].GetAtomNames();
     for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
       std::cout << std::setprecision(5) << std::scientific
                 << std::setw(8)  << at[j]

@@ -68,7 +68,7 @@ int main(int argc, char** argv)
               << std::endl << std::endl;
 # ifdef PRINT_GRADS
 
-    std::vector<std::string> atn = systems[i].GetOriginalOrderSysAtNames();
+    std::vector<std::string> atn = systems[i].GetAtomNames();
 
     size_t n_sites = systems[i].GetNumSites();
 

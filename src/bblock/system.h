@@ -189,12 +189,26 @@ class System {
    */
   std::vector<double> GetRealPolarizabilityFactors();
 
+  /** 
+   * Get the atom names in the same order as inputed. 
+   * Will get an array of all the atoma names. 
+   * This includes also the virtual sites, which will come with
+   * the name "virt"
+   * @return A vector of strings with the names of all atoms
+   */
+  std::vector<std::string> GetAtomNames();
+
+  /** 
+   * Get the atom names in the same order as inputed. 
+   * Will get an array of all the atoma names. 
+   * This includes also the virtual sites, which will come with
+   * the name "virt"
+   * @return A vector of strings with the names of all atoms
+   */
+  std::vector<std::string> GetRealAtomNames();
 
 
 
-
-  std::vector<std::string> GetSysAtNames();
-  std::vector<std::string> GetOriginalOrderSysAtNames();
   std::string GetMonId(size_t n);
   // Modifiers
   void SetSysXyz(std::vector<double> xyz);

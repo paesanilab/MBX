@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     // Get NB energy for no_pbc and for pbc
     // First no PBC
     std::vector<double> xyz = systems[i].GetRealXyz();
-    std::vector<std::string> ats = systems[i].GetOriginalOrderSysAtNames();
+    std::vector<std::string> ats = systems[i].GetAtomNames();
     double e1b = systems[i].OneBodyEnergy(false);
     double e2b = systems[i].TwoBodyEnergy(false);
     double e3b = systems[i].ThreeBodyEnergy(false);

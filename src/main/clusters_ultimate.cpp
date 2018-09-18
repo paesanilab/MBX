@@ -66,7 +66,7 @@ int main(int argc, char** argv)
               << std::setw(20) << std::right << energy
               << std::setw(12) << std::right << " kcal/mol" 
               << std::endl << std::endl;
-    std::vector<std::string> atn = systems[i].GetSysAtNames();
+    std::vector<std::string> atn = systems[i].GetAtomNames();
 
     size_t n_sites = systems[i].GetNumSites();
 

@@ -76,10 +76,14 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
 }
 
 std::vector<size_t> System::GetMolecule(size_t n) {return molecules_[n];}
-std::vector<std::string> System::GetSysAtNames() {return atoms_;}
 
-std::vector<std::string> System::GetOriginalOrderSysAtNames() {
+std::vector<std::string> System::GetAtomNames() {
   return systools::ResetOrderN(atoms_, initial_order_, first_index_, sites_);
+}
+
+std::vector<std::string> System::GetRealAtomNames() {
+  return systools::ResetOrderRealN(atoms_, initial_order_realSites_,
+                                   numat_, first_index_, nat_);
 }
 
 std::vector<double> System::GetXyz() {
