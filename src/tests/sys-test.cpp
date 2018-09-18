@@ -21,45 +21,29 @@ static std::vector<bblock::System> systems;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void Compare(std::vector<double> en_ref, std::vector<double> en,
-             std::string test, int &exitcode) {
-  if (en_ref.size() != en.size()) {
-    std::cerr << " ** Error ** : " << "Energy vectors do not have the same size.\n";
+void CompareVector(std::vector<double> vec_ref, std::vector<double> vec,
+                   std::string test, int &exitcode) {
+  if (vec_ref.size() != vec.size()) {
+    std::cerr << " ** Error ** : " << "Size vectors in test " 
+              << test << " do not match: \nRef(" << vec_ref.size()
+              << ") vs. Test(" << vec.size() << ")\n";
     exitcode = 1;
     return;
   }
 
-  for (size_t i = 0; i < en.size(); i++) {
-    double diff = std::abs(en_ref[i] - en[i]);
+  for (size_t i = 0; i < vec.size(); i++) {
+    double diff = std::abs(vec_ref[i] - vec[i]);
     if (diff > REL_TOL) {
-      std::cerr << " ** Error ** : " << " Energies in test: \" " << test
-                << " \" do not match for system[" << i << "]\n";
-      std::cerr << en_ref[i] << " vs. " << en[i] << std::endl;
+      std::cerr << " ** Error ** : " << " Vector values in test: \" " << test
+                << " \" do not match\n";
+      std::cerr << "vec_ref[" << i << "] = " << vec_ref[i] 
+                << " vs. " << "vec[" << i << "] = " << vec[i] << std::endl;
       exitcode = 1;
     }
   }
 }
 
-void CompareGrads(std::vector<double> grad_ref, std::vector<double> grad,
-                  std::string test, size_t sys_index, int &exitcode) {
-  if (grad_ref.size() != grad.size()) {
-    std::cerr << " ** Error ** : " << "Gradient vectors do not have the same size.\n";
-    exitcode = 1;
-    return;
-  }
-
-  for (size_t i = 0; i < grad.size(); i++) {
-    double diff = std::abs(grad_ref[i] - grad[i]);
-    if (diff > REL_TOL) {
-      std::cerr << " ** Error ** : " << " Energies in test: \" " << test
-                << " \" do not match for system[" << sys_index << "]\n";
-      std::cerr << grad_ref[i] << " vs. " << grad[i] << std::endl;
-      exitcode = 1;
-    }
-  }
-}
-
-void PrintError(std::string test, size_t &exitcode) {
+void PrintError(std::string test, int &exitcode) {
   std::cerr << " ** Error ** : " << "Test: \" " << test
             << " has failed." << std::endl;
   exitcode = 1;
@@ -149,6 +133,7 @@ int main(int argc, char** argv)
                                  atom_names_ref.begin() + count + nats_ref[i]);
     std::string monid = monomers_ref[i];
     system_ref.AddMonomer(xyz, ats, monid);
+    count += nats_ref[i];
   }
 
   // Initialize the system to fill in the information
@@ -156,7 +141,7 @@ int main(int argc, char** argv)
 
   //////////////////////////////////////////////////////////////////////////////
 
-  size_t exitcode = 0;
+  int exitcode = 0;
   std::string test;
   std::string header_manual = "Manually created System ";
   std::string header_ref = "Reference ";
@@ -280,6 +265,29 @@ int main(int argc, char** argv)
   //////////////////////////////////////////////////////////////////////////////
 
   // Test GetXyz()
+  test = "GetXyz()";
+
+  std::vector<double> xyz_manual(xyz_ref.size(),0.0);
+  std::vector<double> xyz_read(xyz_ref.size(),0.0);
+
+  std::vector<double> xyz_tmp = system_ref.GetXyz();
+  std::vector<double> xyz_tmp2 = systems[0].GetXyz();
+
+  size_t fi = 0;
+  size_t fi_sites = 0;
+  for (size_t i = 0; i < monomers_ref.size(); i++) {
+    std::copy(xyz_tmp.begin() + fi_sites, 
+              xyz_tmp.begin() + fi_sites + 3*nats_ref[i],
+              xyz_manual.begin() + fi);
+    std::copy(xyz_tmp2.begin() + fi_sites,
+              xyz_tmp2.begin() + fi_sites + 3*nats_ref[i],
+              xyz_read.begin() + fi);
+    fi += 3*nats_ref[i];
+    fi_sites += 3*nsitesv_ref[i];
+  }
+
+  CompareVector(xyz_ref, xyz_manual, header_manual + "::" + test, exitcode);
+  CompareVector(xyz_ref, xyz_read, header_read + "::" + test, exitcode);
   
 
   //////////////////////////////////////////////////////////////////////////////
