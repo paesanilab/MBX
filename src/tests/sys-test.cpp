@@ -405,6 +405,72 @@ int main(int argc, char** argv)
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  
+  // Test SetXyz()
+  
+  test = "SetXyz()";
+
+  // Manually created system
+  // Get the current XYZ of the system
+  std::vector<double> orig_xyz = system_ref.GetXyz();
+  // Create new xyz with all 1.0
+  std::vector<double> new_xyz(orig_xyz.size(),1.0);
+  
+  // Set the new xyz to the system
+  system_ref.SetXyz(new_xyz);
+  // Retrieve it
+  std::vector<double> new_get_xyz = system_ref.GetXyz();
+
+  // Compare it
+  CompareVector(new_get_xyz, new_xyz,
+                header_manual + "::" + test, exitcode);
+
+  // Set old Xyz again
+  system_ref.SetXyz(orig_xyz);
+  
+  // Compare it
+  CompareVector(orig_xyz, system_ref.GetXyz(),
+                header_manual + "::" + test, exitcode);
+
+  // Read system
+  // Get the current XYZ of the system
+  orig_xyz = systems[0].GetXyz();
+  // Create new xyz with all 1.0
+  new_xyz = std::vector<double>(orig_xyz.size(),1.0);
+  
+  // Set the new xyz to the system
+  systems[0].SetXyz(new_xyz);
+  // Retrieve it
+  new_get_xyz = systems[0].GetXyz();
+
+  // Compare it
+  CompareVector(new_get_xyz, new_xyz,
+                header_read + "::" + test, exitcode);
+
+  // Set old Xyz again
+  systems[0].SetXyz(orig_xyz);
+  
+
+  // Compare it
+  CompareVector(orig_xyz, systems[0].GetXyz(),
+                header_read + "::" + test, exitcode);
+
+  // Testing the exceptions
+  std::vector<double> v(2,1.0);
+  try {
+    exitcode = 1;
+    system_ref.SetXyz(v);
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // Make sure the xyz has not been changed
+  CompareVector(orig_xyz, system_ref.GetXyz(),
+                header_manual + "::" + test, exitcode);
+
+  //////////////////////////////////////////////////////////////////////////////
 
   if (exitcode == 0) {
     std::cout << "All tests passed!\n";

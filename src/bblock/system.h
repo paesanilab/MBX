@@ -13,6 +13,7 @@
 #include "kdtree_utils.h"
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
+#include "tools/custom_exceptions.h"
 
 // Potential
 // 1B
@@ -48,6 +49,10 @@ class System {
    * Default Destructor. Destroys the System class.
    */
   ~System();
+  
+  /////////////////////////////////////////////////////////////////////////////
+  // Getters //////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
   /**
    * Gets the total number of monomers in the system.
@@ -214,10 +219,26 @@ class System {
    */
   std::string GetMonId(size_t n);
 
-  // Modifiers
-  void SetSysXyz(std::vector<double> xyz);
-  void SetOriginalOrderSysXyz(std::vector<double> xyz);
-  void SetOriginalOrderRealSysXyz(std::vector<double> xyz);
+  /////////////////////////////////////////////////////////////////////////////
+  // Modifiers ////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+ 
+  /**
+   * Sets the xyz of the system. It assumes that all the coordinates are in the
+   * input vector, including the virtual sites.
+   * @param[in] xyz Is a vector of doubles that contains the coordinates of
+   * the whole system as x1y1z1x2y2z2x3y3z3..., including the virtual sites
+   */
+  void SetXyz(std::vector<double> xyz);
+
+  /**
+   * Sets the xyz of the system. It assumes that only the real coordinates 
+   * are in the input vector.
+   * @param[in] xyz Is a vector of doubles that contains the coordinates of
+   * the real atoms as x1y1z1x2y2z2x3y3z3...
+   */
+  void SetRealXyz(std::vector<double> xyz);
+
   void AddMonomer(std::vector<double> xyz, 
              std::vector<std::string> atoms, std::string id);
   void AddMolecule(std::vector<size_t> molec);
