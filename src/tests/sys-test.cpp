@@ -472,6 +472,72 @@ int main(int argc, char** argv)
 
   //////////////////////////////////////////////////////////////////////////////
 
+  // Test SetRealXyz()
+  
+  test = "SetRealXyz()";
+
+  // Manually created system
+  // Get the current XYZ of the system
+  orig_xyz = system_ref.GetRealXyz();
+  // Create new xyz with all 1.0
+  new_xyz = std::vector<double>(orig_xyz.size(),1.0);
+  
+  // Set the new xyz to the system
+  system_ref.SetRealXyz(new_xyz);
+  // Retrieve it
+  new_get_xyz = system_ref.GetRealXyz();
+
+  // Compare it
+  CompareVector(new_get_xyz, new_xyz,
+                header_manual + "::" + test, exitcode);
+
+  // Set old Xyz again
+  system_ref.SetRealXyz(orig_xyz);
+  
+  // Compare it
+  CompareVector(orig_xyz, system_ref.GetRealXyz(),
+                header_manual + "::" + test, exitcode);
+
+  // Read system
+  // Get the current XYZ of the system
+  orig_xyz = systems[0].GetRealXyz();
+  // Create new xyz with all 1.0
+  new_xyz = std::vector<double>(orig_xyz.size(),1.0);
+  
+  // Set the new xyz to the system
+  systems[0].SetRealXyz(new_xyz);
+  // Retrieve it
+  new_get_xyz = systems[0].GetRealXyz();
+
+  // Compare it
+  CompareVector(new_get_xyz, new_xyz,
+                header_read + "::" + test, exitcode);
+
+  // Set old Xyz again
+  systems[0].SetRealXyz(orig_xyz);
+  
+
+  // Compare it
+  CompareVector(orig_xyz, systems[0].GetRealXyz(),
+                header_read + "::" + test, exitcode);
+
+  // Testing the exceptions
+  v = std::vector<double>(3,2.0);
+  try {
+    exitcode = 1;
+    system_ref.SetRealXyz(v);
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // Make sure the xyz has not been changed
+  CompareVector(orig_xyz, system_ref.GetRealXyz(),
+                header_manual + "::" + test, exitcode);
+
+  //////////////////////////////////////////////////////////////////////////////
+
   if (exitcode == 0) {
     std::cout << "All tests passed!\n";
   }

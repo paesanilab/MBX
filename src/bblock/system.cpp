@@ -185,7 +185,13 @@ void System::SetXyz(std::vector<double> xyz) {
 }
 
 void System::SetRealXyz(std::vector<double> xyz) {
-  // TODO Check that sizes are the same
+  if (xyz.size() != 3*numat_) {
+    std::string text = "Sizes " + std::to_string(xyz.size())
+                     + " and " + std::to_string(3*numat_)
+                     + " don't match.";
+    throw CustomException(__func__,__FILE__,__LINE__,text);
+  }
+
   for (size_t i = 0; i < nat_.size(); i++) {
     size_t ini = 3*initial_order_realSites_[i].second;
     size_t fin = ini + 3*nat_[i];
