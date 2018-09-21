@@ -538,6 +538,87 @@ int main(int argc, char** argv)
 
   //////////////////////////////////////////////////////////////////////////////
 
+  // Test Initialize()
+  
+  test = "Initialize()";
+
+  // Assessing that once the system is initialized, we cannot reinitialize it
+  try {
+    exitcode = 1;
+    system_ref.Initialize();
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test AddMonomer()
+
+  test = "AddMonomer()";
+
+  // Testing that once initialized, we cannot add a new monomer
+  try {
+    exitcode = 1;
+    v = std::vector<double>(3,0.0);
+    std::string id_v = "cl";
+    std::vector<std::string> at_v = {"Cl"};
+    system_ref.AddMonomer(v, at_v, id_v);
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Indirect test of AddMonomerInfo()
+
+  test = "AddMonomerInfo()";
+
+  // Creating a fake system
+  v = std::vector<double>(2,1.0);
+  std::string id_v = "cl";
+  std::vector<std::string> at_v = {"Cl"};
+
+  bblock::System s_wrong;
+  s_wrong.AddMonomer(v, at_v, id_v);
+
+  // Testing that with less than 3 coordinates you cannot have a system
+  try {
+    exitcode = 1;
+    s_wrong.Initialize();
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // Create another fake system, but now with more coordinates than needed
+  v = std::vector<double>(4,1.0);
+  
+  bblock::System s_also_wrong;
+  s_also_wrong.AddMonomer(v, at_v, id_v);
+
+  // Testing that if coordinate size and atom size don't match, it throws
+  // and exception
+  try {
+    exitcode = 1;
+    s_also_wrong.Initialize();
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
   if (exitcode == 0) {
     std::cout << "All tests passed!\n";
   }

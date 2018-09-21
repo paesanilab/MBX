@@ -106,6 +106,8 @@ class System {
    * @return size_t vector with dimension nmax * n-mers. If nmax = 2,
    * it will return a single vector where v[n], n = 0,2,4... is the index
    * first monomer of the dimer, and v[n + 1] is the second one.
+   * @warning Order is not guaranteed. This means that the n-mers
+   * can come in any order
    */
   std::vector<size_t> GetPairList(size_t nmax, double cutoff, 
                                   size_t istart, size_t iend);
@@ -239,11 +241,42 @@ class System {
    */
   void SetRealXyz(std::vector<double> xyz);
 
+  // TODO Keep in mind that the order must be consistent with
+  // the database!!
+  /**
+   * Adds a monomer to the system
+   * @param[in] xyz Is a vector of doubles that contains the coordinates of
+   * the real atoms of the monomer
+   * @param[in] atoms Is a vector of strings with the atom names (atomic
+   * symbols) of the monomer
+   * @param[in] id Is a string that contains the identity of the monomer
+   * @warning The monomer coordinates and atoms must be in the same order 
+   * as the database. 
+   * The id must also match with the database.
+   * Please read the documentation carefully.
+   */
   void AddMonomer(std::vector<double> xyz, 
-             std::vector<std::string> atoms, std::string id);
+                  std::vector<std::string> atoms, 
+                  std::string id);
+  
+  /**
+   * Adds a molecule to the system. A molecule, in the context of this 
+   * software, is a set of indexes of monomers that belong to the same
+   * molecule.
+   * @param[in] molec Is a vector of unsigned integers that contains
+   * the indeces of the monomers that belong to this molecule
+   * @warning This function should not be used. The code will handle
+   * it but do nothing about it.
+   */
   void AddMolecule(std::vector<size_t> molec);
+
+  /** 
+   * Initializes the system once the monomer information is inputed. The
+   * system, once created, cannot be modified in terms of monomer composition.
+   * To see the default values of the initialization, 
+   * please read the documentation.
+   */
   void Initialize();
-  void AddMonomerInfo();
   
   void Set2bCutoff(double cutoff2b);
   void Set3bCutoff(double cutoff3b);
@@ -273,6 +306,8 @@ class System {
   void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
   std::vector<size_t> AddClustersParallel(size_t n_max, double cutoff,
                                           size_t istart, size_t iend);
+  void AddMonomerInfo();
+
   void SetCharges();
   void SetPols();
   void SetPolfacs();

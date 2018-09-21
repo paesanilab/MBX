@@ -48,9 +48,12 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
   std::vector<size_t> pair_list;
 
   if (nmax == 2) {
+    // Loop over all the dimers
     for (size_t i = 0; i < dimers_.size(); i+=nmax) {
+      // Get the initial order of each monomer in the dimer
       size_t mon1 = initial_order_[dimers_[i]].first;
       size_t mon2 = initial_order_[dimers_[i+1]].first;
+      // Add the dimers within the range [istart,iend)
       if ((mon1 >= istart && mon1 < iend) || 
           (mon2 >= istart && mon2 < iend)) {
         pair_list.push_back(mon1);
@@ -58,10 +61,13 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
       }
     }
   } else if (nmax == 3) {
+    // Loop over all the trimers
     for (size_t i = 0; i < trimers_.size(); i+=nmax) {
+      // Get the initial order of each monomer in the trimer
       size_t mon1 = initial_order_[trimers_[i]].first;
       size_t mon2 = initial_order_[trimers_[i+1]].first;
       size_t mon3 = initial_order_[trimers_[i+2]].first;
+      // Add the dimers within the range [istart,iend)
       if ((mon1 >= istart && mon1 < iend) || 
           (mon2 >= istart && mon2 < iend) ||
           (mon3 >= istart && mon3 < iend)) {
@@ -202,7 +208,15 @@ void System::SetRealXyz(std::vector<double> xyz) {
 }
 
 void System::AddMonomer(std::vector<double> xyz, 
-             std::vector<std::string> atoms, std::string id){
+                        std::vector<std::string> atoms, 
+                        std::string id){
+  // If the system has been initialized, adding a monomer is not possible
+  if (initialized_) {
+    std::string text = std::string("The system has already been initialized. ") 
+                     + std::string("Adding a new monomer is not possible");
+    throw CustomException(__func__,__FILE__,__LINE__,text);
+  }
+
   // Adding coordinates
   for (auto i = xyz.begin() ; i != xyz.end() ; i++)
     xyz_.push_back(*i);
@@ -218,54 +232,130 @@ void System::AddMolecule(std::vector<size_t> molec) {
 }
 
 void System::Initialize() {
-  if (initialized_) return;
 
+  // If we try to reinitialize the system, we will get an exception
+  if (initialized_) {
+    std::string text = std::string("The system has already been initialized. ")
+                     + std::string("Reinitialization is not possible");
+    throw CustomException(__func__,__FILE__,__LINE__,text);
+  }
+
+  /////////////
+  // CUTOFFS //
+  /////////////
+
+  // Setting 2B cutoff
+  // Affects the 2B dispersion and 2B polynomials
+  // TODO make it effective for electrostatics too
   cutoff2b_ = 100.0;
-  cutoff3b_ =  5.0;
-  diptol_ = 1E-16;
-  maxNMonEval_ = 1024;
-  maxNDimEval_ = 1024;
-  maxNTriEval_ = 1024;
-  maxItDip_ = 100;
 
+  // Setting 3B cutoff
+  // Affects the 3B polynomials
+  cutoff3b_ =  5.0;
+
+  ////////////////////////
+  // Evaluation batches //
+  ////////////////////////
+
+  // Maximum number in the batch for the 1B evaluation
+  maxNMonEval_ = 1024;
+  // Maximum number in the batch for the 2B evaluation
+  maxNDimEval_ = 1024;
+  // Maximum number in the batch for the 3B evaluation
+  maxNTriEval_ = 1024;
+
+  //////////////////////////////////
+  // Periodic boundary conditions //
+  //////////////////////////////////
+
+  // Setting PBC to false by default
   SetPBC(false);
   
+  /////////////////////////////
+  // Add monomer information //
+  /////////////////////////////
+
+  // Retrieves all the monomer information given the coordinates
+  // and monomer id, such as number of sites, and orders the monomers
   AddMonomerInfo();
+
+  // Setting the number of molecules and number of monomers
   nmol_ = molecules_.size();
   nmon_ = monomers_.size();
 
-  SetVSites();
-  SetCharges();
-  SetPols();
-  SetPolfacs();
+  ////////////////////
+  // ELECTROSTATICS //
+  ////////////////////
 
+  // Setting dipole tolerance to a consrvative value
+  // TODO make it be error/dipole, not total error as it is now
+  diptol_ = 1E-16;
+  // Sets the maximum number of iteartions in the induced dipole
+  // calculation. Will assume no convergence if this number is reached
+  maxItDip_ = 100;
+  // Sets the default method to calculate induced dipoles to ASPC
   dipole_method_ = "aspc";
 
+  // Sets the position of the virtual sites if any
+  SetVSites();
+  // Sets the charges of the system, even the position dependent ones
+  SetCharges();
+  // Sets the polarizabilities of the system
+  SetPols();
+  // Sets the polarizability factors of the system
+  SetPolfacs();
+
+  // With the information previously set, we initialize the 
+  // electrostatics class
   // TODO: Do grads set to true for now. Needs to be fixed
   electrostaticE_.Initialize(chg_, chggrad_, polfac_, 
                 pol_, xyz_, monomers_, sites_, first_index_, 
                 mon_type_count_, true, diptol_, maxItDip_, dipole_method_);
 
+  // We are done. Setting initialized_ to true
   initialized_ = true;
 }
 
 void System::AddMonomerInfo() {
-  // TODO Add check if empty or not initialized
+  // If xyz_ is empty, not possible to add any information
+  if (xyz_.size() < 3) {
+    std::string text = std::string("Cannot initialize the system with ")
+                     + std::string("less than 3 coordinates, and current ")
+                     + std::string("size of xyz is ")
+                     + std::to_string(xyz_.size());
+    throw CustomException(__func__,__FILE__,__LINE__,text);
+  }
+ 
+  // Copy xyz_ and clear it.
   std::vector<double> xyz = xyz_;
   xyz_.clear();
 
+  // If the size of xyz is not 3* size(atoms_), the system has
+  // not been defined properly
+  if (xyz.size() != 3*atoms_.size()) {
+    std::string text = std::string("Number of coordinates (")
+                     + std::to_string(xyz.size())
+                     + std::string(") is not consistent with number of atoms (")
+                     + std::to_string(atoms_.size()) 
+                     + std::string(")");
+    throw CustomException(__func__,__FILE__,__LINE__,text);
+  } 
+
+  // Copy the atoms_ vector and clear it
   std::vector<std::string> atoms = atoms_;
   atoms_.clear();
 
-  
+  // Adding the number of sites of each monomer and storing the first index
   std::vector<size_t> fi_at;
   nsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
   
+  // Calculating the number of atoms
   numat_ = 0;
   for (size_t i = 0; i < nat_.size(); i++) {
     numat_ += nat_[i];
   }
 
+  // Ordering monomers by monomer type, from less to more monomers of each type
   mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, 
             original2current_order_,initial_order_, initial_order_realSites_); 
   
@@ -277,31 +367,37 @@ void System::AddMonomerInfo() {
   first_index_.clear();
   std::vector<size_t> tmpsites;
   std::vector<size_t> tmpnats;
+  // Loop over all the monomers 
   for (size_t i = 0; i < monomers_.size(); i++) {
+    // For each monomer, copy the coordinates and atoms of the input 
+    // order xyz and atoms to the new position in the ordered system
     size_t k = initial_order_[i].first;
+    // Positions
     std::copy(xyz.begin() + 3 * fi_at[k],
               xyz.begin() + 3 * (fi_at[k] + nat_[k]),
               xyz_.begin() + 3 * count);
+    // Atom names
     std::copy(atoms.begin() + fi_at[k],
               atoms.begin() + fi_at[k] + nat_[k],
               atoms_.begin() + count);
+    // Adding the first index of sites
     first_index_.push_back(count);
+    // Update count
     count += sites_[k];
+    // Updating the sites and nat vectors
     tmpsites.push_back(sites_[k]);
     tmpnats.push_back(nat_[k]);
   }
 
+  // Set sites_ and nat_
   sites_ = tmpsites;
   nat_ = tmpnats;
 
-  // Setting Gradients to 0
+  // Initialize gradients, charges, pols and polfacs to the right size
   grad_ = std::vector<double> (3*nsites_, 0.0);
   chg_ = std::vector<double> (nsites_, 0.0);
   pol_ = std::vector<double> (nsites_, 0.0);
   polfac_ = std::vector<double> (nsites_, 0.0);
-  
-  
-
 }
 
 void System::AddClusters(size_t n_max, double cutoff, 
