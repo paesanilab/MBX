@@ -614,8 +614,26 @@ int main(int argc, char** argv)
 
   //////////////////////////////////////////////////////////////////////////////
 
+  // Test SetPBC()
 
+  test = "SetPBC(bool,box)";
 
+  // Checking that the code will throw and exception if the box 
+  // has incorrect size
+
+  try {
+    std::vector<double> box(5,10.0);
+    exitcode = 1;
+    system_ref.SetPBC(true,box);
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  
 
 
 

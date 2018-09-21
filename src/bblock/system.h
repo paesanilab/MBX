@@ -278,28 +278,122 @@ class System {
    */
   void Initialize();
   
+  /**
+   * Sets the two-body cutoff for dispersion and polynomials.
+   * Molecules that are at a larger distance than the cutoff will not
+   * be evaluated
+   * @param[in] cutoff2b Is the distance, in angstrom, of the cutoff
+   */
   void Set2bCutoff(double cutoff2b);
-  void Set3bCutoff(double cutoff3b);
-  void SetNMaxEval1b(size_t nmax);
-  void SetNMaxEval2b(size_t nmax);
-  void SetNMaxEval3b(size_t nmax);
-  void SetStepEval2b(size_t step);
-  void SetStepEval3b(size_t step);
 
+  /**
+   * Sets the three-body cutoff for polynomials.
+   * Molecules that are at a larger distance than the cutoff will not
+   * be evaluated
+   * @param[in] cutoff3b Is the distance, in angstrom, of the cutoff
+   */
+  void Set3bCutoff(double cutoff3b);
+
+  /**
+   * Sets the maximum number of monomers in the batch of the 1B evaluation
+   * @param[in] nmax Is an unsigned int that will set the 
+   * maximum number of monomers in the batch of the 1B evaluation
+   */
+  void SetNMaxEval1b(size_t nmax);
+
+  /**
+   * Sets the maximum number of dimers in the batch of the 2B evaluation
+   * @param[in] nmax Is an unsigned int that will set the 
+   * maximum number of dimers in the batch of the 2B evaluation
+   */
+  void SetNMaxEval2b(size_t nmax);
+
+  /**
+   * Sets the maximum number of trimers in the batch of the 3B evaluation
+   * @param[in] nmax Is an unsigned int that will set the 
+   * maximum number of trimers in the batch of the 3B evaluation
+   */
+  void SetNMaxEval3b(size_t nmax);
+
+  /** 
+   * Sets the maximum error per dipole in the iterative methods to
+   * compute the induced dipoles
+   * @param[in] tol Double value that sets the maximum error per dipole
+   * in the iterative methods to compute the induced dipoles
+   */
   void SetDipoleTol(double tol);
-  void SetDipoleMaxIt(double maxit);
+
+  /**
+   * Sets the maximum number of iterations in the iterative methods
+   * to converge the induced dipoles
+   * @param[in] maxit Maximum number of iterations in the iterative methods
+   * to converge the induced dipoles
+   */
+  void SetDipoleMaxIt(size_t maxit);
+
+  /** 
+   * Sets the iterative dipole method. See documentation for available methods
+   * @param[in] method String with the method abbreviation (iter, cg or aspc)
+   */
   void SetDipoleMethod(std::string method);
 
+  /**
+   * Resets the dipole history when using ASPC. If other method is used,
+   * this function does nothing.
+   */
   void ResetDipoleHistory();
 
+  /** 
+   * Tells the system if we are in Periodic Boundary Conditions (PBC)
+   * or not. If the box is not passed as argument, it is set to 
+   * a cubic box of 1000 Angstrom of side length
+   * @param[in] use_pbc Boolean setting if we use PBC (true) or not (false)
+   * @param[in] box Optional argument. Is a 9 component vector of double with
+   * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
+   */
   void SetPBC(bool use_pbc, std::vector<double> box);
   
-  // Energy Functions
-  // Energy computing gradients. The new gradients of ALL sites 
-  // are returned in grad. 
+  /////////////////////////////////////////////////////////////////////////////
+  // Energy Functions /////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Returns the energy of the system, and the gradients of all the sites.
+   * In order to retrieve the gradients for only the real sites, use
+   * the function GetRealGrads()
+   * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+   * the gradient calculation will not be performed
+   * @param[out] grad After completition, this vector will contain the
+   * gradients of all the sites, including the virtual sites.
+   * @return Energy of the system in kcal/mol
+   */
   double Energy(std::vector<double> &grad, bool do_grads);
+
+  /**
+   * Obtaines the one-body energy. This is the sum of all the monomer
+   * deformation energies.
+   * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+   * the gradient calculation will not be performed
+   * @return One-body energy of the system
+   */ 
   double OneBodyEnergy(bool do_grads);
+
+  /**
+   * Obtaines the two-body energy. This is the sum of all two-body
+   * polynomials and the two-body dispersion
+   * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+   * the gradient calculation will not be performed
+   * @return Two-body energy of the system
+   */ 
   double TwoBodyEnergy(bool do_grads);
+
+  /**
+   * Obtaines the three-body energy. This is the sum of all the 3B
+   * polynomials
+   * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+   * the gradient calculation will not be performed
+   * @return Three-body energy of the system
+   */ 
   double ThreeBodyEnergy(bool do_grads);
 
  private:
@@ -327,10 +421,7 @@ class System {
   size_t maxNMonEval_;                       // Max number of mons to be eval
   size_t maxNDimEval_;                       // Max number of dimers to be eval
   size_t maxNTriEval_;                       // Max number of trimers to be eval
-  size_t stepEval2b_;                        // Number of monomers i to find all
-                                             // pairs i,j , with j>i
-  size_t stepEval3b_;                        // Number of monomers i to find all
-                                             // trimers i,j,k , with j,k > i
+
   size_t maxItDip_;                          // Max number of it in induced dip
   double diptol_;                            // Tolerance for (mu_i - mu_i+1)^2
   double cutoff2b_;                          // Cutoff for dim and trim search 

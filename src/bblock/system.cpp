@@ -151,21 +151,33 @@ void System::Set3bCutoff(double cutoff3b) {cutoff3b_ = cutoff3b;}
 void System::SetNMaxEval1b(size_t nmax) {maxNMonEval_ = nmax;} 
 void System::SetNMaxEval2b(size_t nmax) {maxNDimEval_ = nmax;}
 void System::SetNMaxEval3b(size_t nmax) {maxNTriEval_ = nmax;}
-void System::SetStepEval2b(size_t step) {stepEval2b_ = step;}
-void System::SetStepEval3b(size_t step) {stepEval3b_ = step;}
 
 void System::SetDipoleTol(double tol) {diptol_ = tol;}
-void System::SetDipoleMaxIt(double maxit) {maxItDip_ = maxit;}
+void System::SetDipoleMaxIt(size_t maxit) {maxItDip_ = maxit;}
 void System::SetDipoleMethod(std::string method) {dipole_method_ = method;}
 
 void System::SetPBC(bool use_pbc, 
                     std::vector<double> box = {1000.0,0.0,0.0,
                                                0.0,1000.0,0.0,
                                                0.0,0.0,1000.0}) {
+  // Check that the box has 9 components
+  // Any other size is not acceptable
+  if (box.size() != 9) {
+    std::string text = "Box size of " + std::to_string(box.size())
+                     + " is not acceptable.";
+    throw CustomException(__func__,__FILE__,__LINE__,text);
+  } 
+
+  // Set the box and the bool to use or not pbc
   use_pbc_ = use_pbc;
   box_ = box;
+
+  // If we use PBC, we need to make sure that the monomer atoms are all
+  // close to the central atom (1st atom of each monomer)
   if (use_pbc_) {
+    // Fix monomer coordinates
     systools::FixMonomerCoordinates(xyz_,box_,nat_,first_index_);
+    // Reset the virtual site positions, charges, pols and polfacs
     SetVSites();
     SetCharges();
     SetPols();
@@ -428,6 +440,14 @@ std::vector<size_t> System::AddClustersParallel(size_t n_max, double cutoff,
 }
 
 double System::Energy(std::vector<double> &grad, bool do_grads) {
+  // Check if system has been initialized
+  // If not, throw exception
+  if (!initialized_) {
+    std::string text = std::string("System has not been initialized. ")
+                     + std::string("Energy calculation not possible.");
+    throw CustomException(__func__,__FILE__,__LINE__,text);
+  }
+
   // Reset energy and grads in system to 0
   energy_ = 0.0;
   std::fill(grad_.begin(), grad_.end(), 0.0);
@@ -451,7 +471,8 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   allMonGood_ = true;
   double e1b = Get1B(do_grads);
 
-  // If monomers are too distorted, skip 
+  // If monomers are too distorted, skip 2b and 3b calculation
+  // Return only 
   if (!allMonGood_) {
     grad = systools::ResetOrder3N(grad_, initial_order_, first_index_, sites_);
     return e1b;
@@ -473,22 +494,11 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   auto t4 = std::chrono::high_resolution_clock::now();
 # endif
 
-  // Set charges, polarizabilities and polfacs
-  // Note: Pols and Polfacs are constant
-  SetVSites();
-  SetCharges();
-  SetPols();
-  SetPolfacs();
-
-# ifdef TIMING
-  auto t5 = std::chrono::high_resolution_clock::now();
-# endif
-
   // Electrostatic energy
   double Eelec = GetElectrostatics(do_grads);
 
 # ifdef TIMING
-  auto t6 = std::chrono::high_resolution_clock::now();
+  auto t5 = std::chrono::high_resolution_clock::now();
 # endif
 
   // Set up energy with the new value
@@ -511,10 +521,10 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
     << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count()
     << " milliseconds\n";
   std::cerr << "System::electrostatics(grad=" << do_grads << ") "
-    << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t5).count()
+    << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count()
     << " milliseconds\n";
   std::cerr << "TotalEnergy(grad=" << do_grads << ") "
-    << std::chrono::duration_cast<std::chrono::milliseconds>(t6 - t1).count()
+    << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t1).count()
     << " milliseconds\n";
 # endif
 

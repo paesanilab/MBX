@@ -118,8 +118,6 @@ int main(int argc, char** argv)
     systems[i].SetNMaxEval1b(1);
     systems[i].SetNMaxEval2b(1);
     systems[i].SetNMaxEval3b(1);
-    systems[i].SetStepEval2b(1);
-    systems[i].SetStepEval3b(1);
     e_nograd_test[i] = systems[i].Energy(grad, false);
   } 
   CompareEnergies(energy_nograd, e_nograd_test, testcase, exit_code);
@@ -130,8 +128,6 @@ int main(int argc, char** argv)
     systems[i].SetNMaxEval1b(1);
     systems[i].SetNMaxEval2b(1);
     systems[i].SetNMaxEval3b(1);
-    systems[i].SetStepEval2b(3);
-    systems[i].SetStepEval3b(3);
     e_nograd_test[i] = systems[i].Energy(grad, false);
   } 
   CompareEnergies(energy_nograd, e_nograd_test, testcase, exit_code);
@@ -142,8 +138,6 @@ int main(int argc, char** argv)
     systems[i].SetNMaxEval1b(3);
     systems[i].SetNMaxEval2b(3);
     systems[i].SetNMaxEval3b(3);
-    systems[i].SetStepEval2b(2);
-    systems[i].SetStepEval3b(2);
     e_nograd_test[i] = systems[i].Energy(grad, false);
   } 
   CompareEnergies(energy_nograd, e_nograd_test, testcase, exit_code);
@@ -154,8 +148,6 @@ int main(int argc, char** argv)
     systems[i].SetNMaxEval1b(4);
     systems[i].SetNMaxEval2b(3);
     systems[i].SetNMaxEval3b(4);
-    systems[i].SetStepEval2b(2);
-    systems[i].SetStepEval3b(5);
     e_grad_test[i] = systems[i].Energy(grad, true);
     CompareGrads(grads[i], grad, testcase, i, exit_code);
   } 
