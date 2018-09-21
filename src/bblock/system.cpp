@@ -439,7 +439,7 @@ std::vector<size_t> System::AddClustersParallel(size_t n_max, double cutoff,
   return trimers;
 }
 
-double System::Energy(std::vector<double> &grad, bool do_grads) {
+double System::Energy(bool do_grads) {
   // Check if system has been initialized
   // If not, throw exception
   if (!initialized_) {
@@ -452,7 +452,7 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   energy_ = 0.0;
   std::fill(grad_.begin(), grad_.end(), 0.0);
 
-  // Reset the chargers, pols, polfacs and new Vsite
+  // Reset the charges, pols, polfacs and new Vsite
   if (use_pbc_) {
     SetPBC(use_pbc_,box_);
   } else {
@@ -474,7 +474,6 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
   // If monomers are too distorted, skip 2b and 3b calculation
   // Return only 
   if (!allMonGood_) {
-    grad = systools::ResetOrder3N(grad_, initial_order_, first_index_, sites_);
     return e1b;
   }
 
@@ -527,9 +526,6 @@ double System::Energy(std::vector<double> &grad, bool do_grads) {
     << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t1).count()
     << " milliseconds\n";
 # endif
-
-  // Copy gradients to output grad
-  grad = systools::ResetOrder3N(grad_, initial_order_, first_index_, sites_);
 
   return energy_;
 }

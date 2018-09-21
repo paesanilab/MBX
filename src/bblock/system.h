@@ -358,16 +358,14 @@ class System {
   /////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Returns the energy of the system, and the gradients of all the sites.
+   * Returns the energy of the system.
    * In order to retrieve the gradients for only the real sites, use
-   * the function GetRealGrads()
+   * the function GetRealGrads(), and use GetGrads() otherwise.
    * @param[in] do_grads If true, the gradients will be computed. Otherwise,
    * the gradient calculation will not be performed
-   * @param[out] grad After completition, this vector will contain the
-   * gradients of all the sites, including the virtual sites.
    * @return Energy of the system in kcal/mol
    */
-  double Energy(std::vector<double> &grad, bool do_grads);
+  double Energy(bool do_grads);
 
   /**
    * Obtaines the one-body energy. This is the sum of all the monomer

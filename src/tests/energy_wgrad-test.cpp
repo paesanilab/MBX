@@ -47,7 +47,7 @@ int main(int argc, char** argv)
   std::vector<double> g;
   std::cout << "Energies without gradients:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    double energy = systems[i].Energy(g, false);
+    double energy = systems[i].Energy(false);
     std::cout << std::setprecision(5) << std::scientific
               << "system["  << std::setfill('.')
               << std::setw(5) << i << "]= " << std::setfill(' ')
@@ -57,9 +57,10 @@ int main(int argc, char** argv)
 
   std::cout << "Energies with gradients:" << std::endl;
   for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> grd;
-    
-    double energy = systems[i].Energy(grd, true);
+    double energy = systems[i].Energy(true);
+
+    std::vector<double> grd = systems[i].GetGrads();
+
     std::cout << std::setprecision(5) << std::scientific
               << "system["  << std::setfill('.')
               << std::setw(5) << i << "]= " << std::setfill(' ')
@@ -101,16 +102,16 @@ int main(int argc, char** argv)
       const double x_orig = xyz[j];
       xyz[j] = x_orig + eps;
       systems[i].SetOriginalOrderSysXyz(xyz);
-      const double Ep = systems[i].Energy(g,false);
+      const double Ep = systems[i].Energy(false);
       xyz[j] = x_orig + 2 * eps;
       systems[i].SetOriginalOrderSysXyz(xyz);
-      const double Epp = systems[i].Energy(g,false);
+      const double Epp = systems[i].Energy(false);
       xyz[j] = x_orig - eps;
       systems[i].SetOriginalOrderSysXyz(xyz);
-      const double Em = systems[i].Energy(g,false);
+      const double Em = systems[i].Energy(false);
       xyz[j] = x_orig - 2 * eps;
       systems[i].SetOriginalOrderSysXyz(xyz);
-      const double Emm = systems[i].Energy(g,false);
+      const double Emm = systems[i].Energy(false);
       const double gfd = (8*(Ep - Em) - (Epp - Emm))/(12*eps);
       xyz[j] = x_orig;
       systems[i].SetOriginalOrderSysXyz(xyz);

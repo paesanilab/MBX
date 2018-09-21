@@ -98,13 +98,13 @@ int main(int argc, char** argv)
   // No gradient energy. Save energies in vector
   for (size_t i = 0; i < systems.size(); i++) {
     systems[i].SetDipoleMethod("cg");
-    energy_nograd[i] = systems[i].Energy(grad, false);
+    energy_nograd[i] = systems[i].Energy(false);
   }
 
   // Gradient energy. Save energies and gradients in vector
   for (size_t i = 0; i < systems.size(); i++) {
-    energy_grad[i] = systems[i].Energy(grad, true);
-    grads[i] = grad;
+    energy_grad[i] = systems[i].Energy(true);
+    grads[i] = systems[i].GetGrads();
   }
 
   // CompareEnergies energies with and without grads
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
     systems[i].SetNMaxEval1b(1);
     systems[i].SetNMaxEval2b(1);
     systems[i].SetNMaxEval3b(1);
-    e_nograd_test[i] = systems[i].Energy(grad, false);
+    e_nograd_test[i] = systems[i].Energy(false);
   } 
   CompareEnergies(energy_nograd, e_nograd_test, testcase, exit_code);
   
@@ -128,7 +128,7 @@ int main(int argc, char** argv)
     systems[i].SetNMaxEval1b(1);
     systems[i].SetNMaxEval2b(1);
     systems[i].SetNMaxEval3b(1);
-    e_nograd_test[i] = systems[i].Energy(grad, false);
+    e_nograd_test[i] = systems[i].Energy(false);
   } 
   CompareEnergies(energy_nograd, e_nograd_test, testcase, exit_code);
 
@@ -138,7 +138,7 @@ int main(int argc, char** argv)
     systems[i].SetNMaxEval1b(3);
     systems[i].SetNMaxEval2b(3);
     systems[i].SetNMaxEval3b(3);
-    e_nograd_test[i] = systems[i].Energy(grad, false);
+    e_nograd_test[i] = systems[i].Energy(false);
   } 
   CompareEnergies(energy_nograd, e_nograd_test, testcase, exit_code);
 
@@ -148,7 +148,8 @@ int main(int argc, char** argv)
     systems[i].SetNMaxEval1b(4);
     systems[i].SetNMaxEval2b(3);
     systems[i].SetNMaxEval3b(4);
-    e_grad_test[i] = systems[i].Energy(grad, true);
+    e_grad_test[i] = systems[i].Energy(true);
+    grad = systems[i].GetGrads();
     CompareGrads(grads[i], grad, testcase, i, exit_code);
   } 
   testcase = "Energies (wgrad) with different values for steps and NMaxEval";
@@ -159,7 +160,8 @@ int main(int argc, char** argv)
   for (size_t i = 0; i < systems.size(); i++) {
     systems[i].SetDipoleTol(1E-18);
     systems[i].SetDipoleMaxIt(200);
-    e_grad_test[i] = systems[i].Energy(grad, true);
+    e_grad_test[i] = systems[i].Energy(true);
+    grad = systems[i].GetGrads();
     CompareGrads(grads[i], grad, testcase, i, exit_code);
   }
   testcase = "Energies (wgrad) with maller dipole tolerance";
@@ -168,11 +170,11 @@ int main(int argc, char** argv)
   testcase = "ASPC energy for 10 iterations";
   for (size_t i = 0; i < systems.size(); i++) {
     systems[i].SetDipoleMethod("aspc");
-    double energy_aspc = systems[i].Energy(grad, false);
+    double energy_aspc = systems[i].Energy(false);
     std::vector<double> evec(10,energy_aspc);
     std::vector<double> evec_test(10);
     for (size_t j = 0; j < 10; j++) {
-       evec_test[j] = systems[i].Energy(grad, false);
+       evec_test[j] = systems[i].Energy(false);
     }
     CompareEnergies(evec, evec_test, testcase, exit_code);
   }
