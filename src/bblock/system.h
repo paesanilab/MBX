@@ -369,7 +369,8 @@ class System {
 
   /**
    * Obtaines the one-body energy. This is the sum of all the monomer
-   * deformation energies.
+   * deformation energies. 
+   * Gradients will be ONLY for the one-body part.
    * @param[in] do_grads If true, the gradients will be computed. Otherwise,
    * the gradient calculation will not be performed
    * @return One-body energy of the system
@@ -378,7 +379,8 @@ class System {
 
   /**
    * Obtaines the two-body energy. This is the sum of all two-body
-   * polynomials and the two-body dispersion
+   * polynomials and the two-body dispersion. 
+   * Gradients will be ONLY for the two-body part.
    * @param[in] do_grads If true, the gradients will be computed. Otherwise,
    * the gradient calculation will not be performed
    * @return Two-body energy of the system
@@ -387,7 +389,8 @@ class System {
 
   /**
    * Obtaines the three-body energy. This is the sum of all the 3B
-   * polynomials
+   * polynomials. 
+   * Gradients will be ONLY for the three-body part.
    * @param[in] do_grads If true, the gradients will be computed. Otherwise,
    * the gradient calculation will not be performed
    * @return Three-body energy of the system
@@ -395,14 +398,58 @@ class System {
   double ThreeBodyEnergy(bool do_grads);
 
  private:
+  /** 
+   * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with 
+   * i < j < k. These i,j,k are the index of the corresponding monomer
+   * in the internal order of the system, with i >= istart and i < iend
+   * @param[in] nmax Maximum size of the cluster (nmax=2,3)
+   * @param[in] cutoff Maximum distance allowed between 2 monomers to 
+   * consider them for the cluster
+   * @param[in] istart Minimum index of i
+   * @param[in] iend Maximum index (iend not included) of index i
+   */
   void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
-  std::vector<size_t> AddClustersParallel(size_t n_max, double cutoff,
+
+  /** 
+   * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with 
+   * i < j < k. These i,j,k are the index of the corresponding monomer
+   * in the internal order of the system, with i >= istart and i < iend
+   * @param[in] nmax Maximum size of the cluster (nmax=2,3)
+   * @param[in] cutoff Maximum distance allowed between 2 monomers to 
+   * consider them for the cluster
+   * @param[in] istart Minimum index of i
+   * @param[in] iend Maximum index (iend not included) of index i
+   * @return Vector of size_t with dimention nclusters * nmax
+   */
+  std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff,
                                           size_t istart, size_t iend);
+
+  /**
+   * Fills in the monomer information of the monomers that have been 
+   * added to the system. 
+   */
   void AddMonomerInfo();
 
+  /**
+   * Sets the charges of the system, including the 
+   * position dependent charges
+   */
   void SetCharges();
+
+  /**
+   * Sets the polarizabilities of the system
+   */
   void SetPols();
+
+  /** 
+   * Sets the polarizability factors of the system
+   */
   void SetPolfacs();
+
+  /**
+   * Sets the position of the electrostatic virtual sites (if any)
+   * from the XYZ coordinates set in the system
+   */
   void SetVSites();
 
   double Get1B(bool do_grads);

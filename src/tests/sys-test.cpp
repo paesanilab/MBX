@@ -633,9 +633,52 @@ int main(int argc, char** argv)
 
   //////////////////////////////////////////////////////////////////////////////
 
-  
+  // Test Energy(do_grads), and individual energy functions
 
+  test = "Energy(do_grads)";
 
+  // Make sure that energy is not calculated if system is not initialized
+  bblock::System s_empty;
+
+  // Total Energy
+  try {
+    exitcode = 1;
+    s_empty.Energy(true);
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // One Body
+  try {
+    exitcode = 1;
+    s_empty.OneBodyEnergy(true);
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // Two Body
+  try {
+    exitcode = 1;
+    s_empty.TwoBodyEnergy(true);
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // Three Body
+  try {
+    exitcode = 1;
+    s_empty.ThreeBodyEnergy(true);
+  } catch (CustomException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
 
   if (exitcode == 0) {
     std::cout << "All tests passed!\n";
