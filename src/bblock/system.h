@@ -462,58 +462,267 @@ class System {
    */
   void SetVSites();
 
+  /**
+   * Private function to internally get the 1b energy.
+   * Gradients of the system will be updated.
+   * @param[in] do_grads Boolean. If true, gradients will be computed. 
+   * If false, gradients won't be computed.
+   * @return  One-body energy of the system
+   */
   double Get1B(bool do_grads);
+
+  /**
+   * Private function to internally get the 2b energy.
+   * Gradients of the system will be updated.
+   * @param[in] do_grads Boolean. If true, gradients will be computed. 
+   * If false, gradients won't be computed.
+   * @return  Two-body energy of the system
+   */
   double Get2B(bool do_grads);
+
+  /**
+   * Private function to internally get the 3b energy.
+   * Gradients of the system will be updated.
+   * @param[in] do_grads Boolean. If true, gradients will be computed. 
+   * If false, gradients won't be computed.
+   * @return  Three-body energy of the system
+   */
   double Get3B(bool do_grads);
+
+  /**
+   * Private function to internally get the electrostatic energy.
+   * Gradients of the system will be updated.
+   * @param[in] do_grads Boolean. If true, gradients will be computed. 
+   * If false, gradients won't be computed.
+   * @return  Electrostatic energy of the system
+   */
   double GetElectrostatics(bool do_grads);
 
  private:
-  size_t nmol_;                              // Number of molecules
-  size_t nmon_;                              // Number of monomers
-  size_t nsites_;                            // Number of sites in sys
-  size_t numat_;                            // Number of sites in sys
-  size_t maxNMonEval_;                       // Max number of mons to be eval
-  size_t maxNDimEval_;                       // Max number of dimers to be eval
-  size_t maxNTriEval_;                       // Max number of trimers to be eval
 
-  size_t maxItDip_;                          // Max number of it in induced dip
-  double diptol_;                            // Tolerance for (mu_i - mu_i+1)^2
-  double cutoff2b_;                          // Cutoff for dim and trim search 
-  double cutoff3b_;                          // Cutoff for dim and trim search 
-  double energy_;                            // Energy of the system
-  bool initialized_;                         // Systes is initialized?
-  bool use_pbc_;                             // Periodic boundary conditions?
-  bool allMonGood_;                          // True if all monomers have low e1b 
-                                             // (<60.0kcal/mol)
-  // Electrostatics class
+  /** 
+   * Number of molecules in the system 
+   */
+  size_t nummol; 
+
+  /** 
+   * Number of monomers in the system
+   */
+  size_t nummon_;                
+
+  /** 
+   * Number of sites in the system. It includes all the electrostatic sites
+   */
+  size_t numsites_;
+
+  /** 
+   * Number of sites in the system. 
+   * It doesn't include the electrostatic sites
+   */
+  size_t numat_;                        
+
+  /**
+   * Maximum number of monomers to be evaluated in the same batch
+   */
+  size_t maxNMonEval_; 
+
+  /**
+   * Maximum number of dimers to be evaluated in the same batch
+   */
+  size_t maxNDimEval_; 
+
+  /**
+   * Maximum number of trimers to be evaluated in the same batch
+   */
+  size_t maxNTriEval_; 
+
+  /** 
+   * Maximum number of iterations allowed in the induced dipole calculation
+   */
+  size_t maxItDip_; 
+
+  /** 
+   * Maximum error squared per dipole to assume convergence in the 
+   * induced dipole calculation
+   */
+  double diptol_; 
+
+  /**
+   * Cutoff in the search for clusters for the dimers. 
+   * Molecules which first atoms are at a larger distance than this cutoff
+   * will not be considered a 2b cluster
+   */
+  double cutoff2b_;
+
+  /**
+   * Cutoff in the search for clusters for the trimers. 
+   * Molecules which first atoms are at a larger distance than this cutoff
+   * will not be considered a 3b cluster
+   */
+  double cutoff3b_;
+
+  /**
+   * Stores the energy of the system
+   */
+  double energy_;
+
+  /**
+   * Set to true when the system is initialized.
+   * Initialization is a requirement in order to perform any
+   * energy calculation 
+   */
+  bool initialized_;
+
+  /** 
+   * If set to tru, the box and periodic boundary conditions will be used and
+   * taken into account for the clusters, energy calculations, and any
+   * other operation within the system.
+   */
+  bool use_pbc_;   
+
+  /**
+   * This variable is set to false when one of the monomer energies is larger 
+   * than 60 kcal/mol. Due to their construction, the polynomials do not 
+   * include configurations that distorted.
+   */
+  bool allMonGood_; 
+
+  /**
+   * Electrostatic class that will be used to get the electrostatic energy
+   */
   elec::Electrostatics electrostaticE_;
+
+  /** 
+   * Method used in order to calculate the induced dipoles
+   */
   std::string dipole_method_;
 
-  std::vector<size_t> sites_;                // Number of sites of each mo
-  std::vector<size_t> nat_;                  // Number of atoms of each mo
-  std::vector<size_t> first_index_;          // First index of mon in sys
-  std::vector<size_t> dimers_;               // Dimers of the molecule
-  std::vector<size_t> trimers_;              // Trimers of the molecule
-  std::vector<double> grad_;                 // Gradients of all sites
-  std::vector<double> chggrad_;              // Gradients of pos dep chg
-  std::vector<double> xyz_;                  // Coords of all sites
-  std::vector<double> chg_;                  // Charges of all sites
-  std::vector<double> pol_;                  // Polarizabilities of all sites
-  std::vector<double> polfac_;               // Polfacs of all sites
-  std::vector<double> box_;                  // Box, in case we use PBC
-                                             // Center of the box is origin of coordinates
-  std::vector<std::string> monomers_;        // Monomer ids
-  std::vector<std::string> atoms_;           // Atom names of sys
-  // Molecules of system
+  /**
+   * Vector that contains, in the internal order of the system, the 
+   * number of sites of each monomer
+   */
+  std::vector<size_t> sites_; 
+
+  /** 
+   * Vector that contains, in the internal order of the system, the 
+   * number of atoms of each monomer
+   */
+  std::vector<size_t> nat_;  
+
+  /**
+   * Vector that contains the first index of the first atom of the
+   * monomers in the atom list. As an example, first_index_[4] 
+   * will be the position of the first atom of the 5th monomer
+   * in the atom list. This first index accounts also for 
+   * electrostatic virtual sites
+   */
+  std::vector<size_t> first_index_; 
+
+  /** 
+   * Vector that stores the dimers computed by the AddClusters functions.
+   * The vector stores the two indeces of a dimer, one after the other one,
+   * in the internal order of the system.
+   */
+  std::vector<size_t> dimers_; 
+
+  /** 
+   * Vector that stores the trimers computed by the AddClusters functions.
+   * The vector stores the three indeces of a trimer, one after the other one,
+   * in the internal order of the system.
+   */
+  std::vector<size_t> trimers_; 
+
+  /** 
+   * Vector that stores the gradients of the system in the onternal order
+   * of the system.
+   */
+  std::vector<double> grad_;       
+  
+  /**
+   * Vector that stores the charge gradient of each site.
+   * This charge gradient exists if the charges are position dependent
+   */
+  std::vector<double> chggrad_;   
+
+  /**
+   * Vector that stores the coordinates of all sites in the internal order of
+   * the system
+   */
+  std::vector<double> xyz_;       
+
+  /**
+   * Vector that stores the charges of all sites in the internal order of
+   * the system
+   */
+  std::vector<double> chg_;      
+
+  /**
+   * Vector that stores the polarizabilites of all sites in the internal 
+   * order of the system
+   */
+  std::vector<double> pol_;     
+
+  /**
+   * Vector that stores the polarizability factor of all sites in the internal 
+   * order of the system
+   */
+  std::vector<double> polfac_; 
+
+  /** 
+   * Vector that stores the simulation box. 
+   * The center of the box is origin of coordinates
+   * @warning For now, only cubic or rectangular boxes are allowed.
+   */
+  std::vector<double> box_;   
+
+  /** 
+   * Vector that stores the id of each monomer in the internal order
+   * of the system
+   */
+  std::vector<std::string> monomers_;      
+
+  /**
+   * Vector that stores the atom names of all sites in the internal order
+   * of the system. If a site is a virtual site, its name is "virt"
+   */
+  std::vector<std::string> atoms_;        
+
+  /**
+   * Vector that stores the molecules of system. All the monomers that
+   * belong to the same molecule are in the same vector inside this vector.
+   */
   std::vector<std::vector<size_t> > molecules_; 
-  // Mon type and # mon of each
+
+  /**
+   * Important vector that stores a pair with the monomer id and the
+   * number of monomers of that type. This vector is used for parallelization
+   * and vectorization purposes.
+   */
   std::vector<std::pair<std::string,size_t> > mon_type_count_;  
-  // The position i of this vector contains the position in the current
-  // monomer vector of the ith initial monomer
+
+  /**
+   * Vector that contains the relation between the input monomer
+   * order and the internal monomer order. The position i of this
+   * vector contains the position in the current
+   * monomer vector of the ith initial monomer
+   */
   std::vector<size_t> original2current_order_;       
-  // Input order of monomers <monomer, site first index>
+
+  /**
+   * Input order of monomers <monomer, site first index>. The position i of this
+   * vector contains a pair with the position of monomer "i" in the internal
+   * order when it was inputed in the system. The second index of the pair
+   * is the first index of that monomer in the input order.
+   */
   std::vector<std::pair<size_t,size_t> > initial_order_;       
-  // Input order of monomers <monomer, site first index only Real sites>
+
+  /**
+   * Input order of monomers <monomer, site first index>. The position i of this
+   * vector contains a pair with the position of monomer "i" in the internal
+   * order when it was inputed in the system. The second index of the pair
+   * is the first index of that monomer in the input order, but taking 
+   * into account only real sites.
+   */
   std::vector<std::pair<size_t,size_t> > initial_order_realSites_;       
 };
 
