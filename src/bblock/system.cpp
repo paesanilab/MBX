@@ -1079,6 +1079,26 @@ void System::SetVSites() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+double System::Electrostatics(bool do_grads) {
+  // Check if system has been initialized
+  // If not, throw exception
+  if (!initialized_) {
+    std::string text = std::string("System has not been initialized. ")
+                     + std::string("Electrostatic Energy calculation ")
+                     + std::string("not possible.");
+    throw CustomException(__func__,__FILE__,__LINE__,text);
+  }
+
+  energy_ = 0.0;
+  std::fill(grad_.begin(), grad_.end(), 0.0);
+
+  energy_ = GetElectrostatics(do_grads);
+
+  return energy_;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 double System::GetElectrostatics(bool do_grads) {
   electrostaticE_.SetXyzChgPolPolfac(xyz_, chg_, chggrad_, 
                                      pol_, polfac_, dipole_method_, do_grads);

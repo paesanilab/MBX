@@ -368,7 +368,7 @@ class System {
   double Energy(bool do_grads);
 
   /**
-   * Obtaines the one-body energy. This is the sum of all the monomer
+   * Obtains the one-body energy. This is the sum of all the monomer
    * deformation energies. 
    * Gradients will be ONLY for the one-body part.
    * @param[in] do_grads If true, the gradients will be computed. Otherwise,
@@ -378,7 +378,7 @@ class System {
   double OneBodyEnergy(bool do_grads);
 
   /**
-   * Obtaines the two-body energy. This is the sum of all two-body
+   * Obtains the two-body energy. This is the sum of all two-body
    * polynomials and the two-body dispersion. 
    * Gradients will be ONLY for the two-body part.
    * @param[in] do_grads If true, the gradients will be computed. Otherwise,
@@ -388,7 +388,7 @@ class System {
   double TwoBodyEnergy(bool do_grads);
 
   /**
-   * Obtaines the three-body energy. This is the sum of all the 3B
+   * Obtains the three-body energy. This is the sum of all the 3B
    * polynomials. 
    * Gradients will be ONLY for the three-body part.
    * @param[in] do_grads If true, the gradients will be computed. Otherwise,
@@ -396,6 +396,16 @@ class System {
    * @return Three-body energy of the system
    */ 
   double ThreeBodyEnergy(bool do_grads);
+
+  /**
+   * Obtains the electrostatic energy. This is the sum of the permanent
+   * and induced electrostatics
+   * Gradients will be ONLY for the electrostatics part.
+   * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+   * the gradient calculation will not be performed
+   * @return Three-body energy of the system
+   */
+  double Electrostatics(bool do_grads);
 
  private:
   /** 
@@ -456,7 +466,6 @@ class System {
   double Get2B(bool do_grads);
   double Get3B(bool do_grads);
   double GetElectrostatics(bool do_grads);
-
 
  private:
   size_t nmol_;                              // Number of molecules
