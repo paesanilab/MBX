@@ -146,9 +146,9 @@ int main(int argc, char** argv)
       }
       
       rid_old = rid;
-      systems[0].SetOriginalOrderRealSysXyz(buffer);
-      energy = systems[0].Energy(buffer, true) / 627.509;
-      buffer = systems[0].GetOriginalOrderRealGrads();
+      systems[0].SetRealXyz(buffer);
+      energy = systems[0].Energy(true) / 627.509;
+      buffer = systems[0].GetRealGrads();
       for (size_t i = 0; i < buffer.size(); i++) {
 //        buffer[i] = -buffer[i] / 627.509;
         buffer[i] = -buffer[i] / 1.8897259886 / 627.509;
