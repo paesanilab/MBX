@@ -1,13 +1,13 @@
-#ifndef INCLUDE_TOOLS_CUSTOM_EXCEPTION_H
-#define INCLUDE_TOOLS_CUSTOM_EXCEPTION_H
+#ifndef INCLUDE_TOOLS_CU_EXCEPTION_H
+#define INCLUDE_TOOLS_CU_EXCEPTION_H
 
 #include <iostream>
 #include <exception>
 #include <string>
 
-class CustomException : public std::exception {
+class CUException : public std::exception {
  public:
-   CustomException(const char * func, 
+   CUException(const char * func, 
                    const char * file,
                    const long int line,
                    const std::string errormsg) {

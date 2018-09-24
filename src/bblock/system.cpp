@@ -42,7 +42,7 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff,
   if (nmax != 2 and nmax != 3) {
     std::string text = "nmax value of " + std::to_string(nmax)
                      + " is not acceptable. Possible values are 2 or 3.";
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
 
@@ -173,7 +173,7 @@ void System::SetPBC(bool use_pbc,
   if (box.size() != 9) {
     std::string text = "Box size of " + std::to_string(box.size())
                      + " is not acceptable.";
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   } 
 
   // Set the box and the bool to use or not pbc
@@ -198,7 +198,7 @@ void System::SetXyz(std::vector<double> xyz) {
     std::string text = "Sizes " + std::to_string(xyz.size()) 
                      + " and " + std::to_string(3*numsites_) 
                      + " don't match.";
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   for (size_t i = 0; i < sites_.size(); i++) {
@@ -215,7 +215,7 @@ void System::SetRealXyz(std::vector<double> xyz) {
     std::string text = "Sizes " + std::to_string(xyz.size())
                      + " and " + std::to_string(3*numat_)
                      + " don't match.";
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   for (size_t i = 0; i < nat_.size(); i++) {
@@ -234,7 +234,7 @@ void System::AddMonomer(std::vector<double> xyz,
   if (initialized_) {
     std::string text = std::string("The system has already been initialized. ") 
                      + std::string("Adding a new monomer is not possible");
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   // Adding coordinates
@@ -257,7 +257,7 @@ void System::Initialize() {
   if (initialized_) {
     std::string text = std::string("The system has already been initialized. ")
                      + std::string("Reinitialization is not possible");
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   /////////////
@@ -343,7 +343,7 @@ void System::AddMonomerInfo() {
                      + std::string("less than 3 coordinates, and current ")
                      + std::string("size of xyz is ")
                      + std::to_string(xyz_.size());
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
  
   // Copy xyz_ and clear it.
@@ -358,7 +358,7 @@ void System::AddMonomerInfo() {
                      + std::string(") is not consistent with number of atoms (")
                      + std::to_string(atoms_.size()) 
                      + std::string(")");
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   } 
 
   // Copy the atoms_ vector and clear it
@@ -432,7 +432,7 @@ void System::AddClusters(size_t nmax, double cutoff,
   if (nmax != 2 and nmax != 3) {
     std::string text = "nmax value of " + std::to_string(nmax)
                      + " is not acceptable. Possible values are 2 or 3.";
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   size_t nmon = monomers_.size();
@@ -452,7 +452,7 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff,
   if (nmax != 2 and nmax != 3) {
     std::string text = "nmax value of " + std::to_string(nmax)
                      + " is not acceptable. Possible values are 2 or 3.";
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   size_t nmon = monomers_.size();
@@ -471,7 +471,7 @@ double System::Energy(bool do_grads) {
   if (!initialized_) {
     std::string text = std::string("System has not been initialized. ")
                      + std::string("Energy calculation not possible.");
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   // Reset energy and grads in system to 0
@@ -562,7 +562,7 @@ double System::OneBodyEnergy(bool do_grads) {
   if (!initialized_) {
     std::string text = std::string("System has not been initialized. ")
                      + std::string("1B Energy calculation not possible.");
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   energy_ = 0.0;
@@ -635,7 +635,7 @@ double System::TwoBodyEnergy(bool do_grads) {
   if (!initialized_) {
     std::string text = std::string("System has not been initialized. ")
                      + std::string("2B Energy calculation not possible.");
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   energy_ = 0.0;
@@ -830,7 +830,7 @@ double System::ThreeBodyEnergy(bool do_grads) {
   if (!initialized_) {
     std::string text = std::string("System has not been initialized. ")
                      + std::string("3B Energy calculation not possible.");
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   energy_ = 0.0;
@@ -1086,7 +1086,7 @@ double System::Electrostatics(bool do_grads) {
     std::string text = std::string("System has not been initialized. ")
                      + std::string("Electrostatic Energy calculation ")
                      + std::string("not possible.");
-    throw CustomException(__func__,__FILE__,__LINE__,text);
+    throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
   energy_ = 0.0;

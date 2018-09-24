@@ -460,7 +460,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     system_ref.SetXyz(v);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -526,7 +526,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     system_ref.SetRealXyz(v);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -546,7 +546,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     system_ref.Initialize();
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -565,7 +565,7 @@ int main(int argc, char** argv)
     std::string id_v = "cl";
     std::vector<std::string> at_v = {"Cl"};
     system_ref.AddMonomer(v, at_v, id_v);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -589,7 +589,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     s_wrong.Initialize();
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -606,7 +606,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     s_also_wrong.Initialize();
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -625,7 +625,7 @@ int main(int argc, char** argv)
     std::vector<double> box(5,10.0);
     exitcode = 1;
     system_ref.SetPBC(true,box);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -644,7 +644,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     s_empty.Energy(true);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -654,7 +654,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     s_empty.OneBodyEnergy(true);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -664,7 +664,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     s_empty.TwoBodyEnergy(true);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -674,7 +674,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     s_empty.ThreeBodyEnergy(true);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
@@ -684,7 +684,7 @@ int main(int argc, char** argv)
   try {
     exitcode = 1;
     s_empty.Electrostatics(true);
-  } catch (CustomException &e) {
+  } catch (CUException &e) {
     exitcode = 0;
     std::cerr << "Error message expected:" << std::endl;
     std::cerr << e.what() << std::endl;
