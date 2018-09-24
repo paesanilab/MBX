@@ -194,6 +194,7 @@ void System::SetPBC(bool use_pbc,
 }
 
 void System::SetXyz(std::vector<double> xyz) {
+  // Make sure that the xyz of input has the right size
   if (xyz.size() != 3*numsites_) {
     std::string text = "Sizes " + std::to_string(xyz.size()) 
                      + " and " + std::to_string(3*numsites_) 
@@ -201,6 +202,8 @@ void System::SetXyz(std::vector<double> xyz) {
     throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
+  // Copy each coordinate in the apropriate place in the internal
+  // xyz vector
   for (size_t i = 0; i < sites_.size(); i++) {
     size_t ini = 3*initial_order_[i].second;
     size_t fin = ini + 3*sites_[i];
@@ -211,6 +214,7 @@ void System::SetXyz(std::vector<double> xyz) {
 }
 
 void System::SetRealXyz(std::vector<double> xyz) {
+  // Make sure that the xyz of input has the right size
   if (xyz.size() != 3*numat_) {
     std::string text = "Sizes " + std::to_string(xyz.size())
                      + " and " + std::to_string(3*numat_)
@@ -218,6 +222,8 @@ void System::SetRealXyz(std::vector<double> xyz) {
     throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
+  // Copy each coordinate in the apropriate place in the internal
+  // xyz vector
   for (size_t i = 0; i < nat_.size(); i++) {
     size_t ini = 3*initial_order_realSites_[i].second;
     size_t fin = ini + 3*nat_[i];
@@ -565,9 +571,11 @@ double System::OneBodyEnergy(bool do_grads) {
     throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
+  // Reset energy and gradients
   energy_ = 0.0;
   std::fill(grad_.begin(), grad_.end(), 0.0);
   
+  // Calculate the 1b energy
   energy_ = Get1B(do_grads);
 
   return energy_;
@@ -638,9 +646,11 @@ double System::TwoBodyEnergy(bool do_grads) {
     throw CUException(__func__,__FILE__,__LINE__,text);
   }
 
+  // Reset energy and gradients
   energy_ = 0.0;
   std::fill(grad_.begin(), grad_.end(), 0.0);
 
+  // Calculate the 2b energy
   energy_ = Get2B(do_grads);
 
   return energy_;
@@ -656,25 +666,30 @@ double System::Get2B(bool do_grads) {
   // Variables needed for OMP
   size_t step = 1;
   int num_threads = 1;
-  int grad_step = 3*numsites_;
 
 # ifdef _OPENMP
 # pragma omp parallel
 {
+  // Get the number of threads
   if (omp_get_thread_num() == 0)
     num_threads = omp_get_num_threads();
 }
-  grad_step = 3*numsites_ / num_threads;
+  // Define variables to be used later in the condensation of data
+  int grad_step = 3*numsites_ / num_threads;
   step = std::max(size_t(1),std::min(nummon_/num_threads,step));
 # endif // _OPENMP
 
-  // dimers are ordered
+  // Variables to be used for both serial and parallel implementation
   size_t first_grad = 0;
   size_t last_grad = 3*numsites_;
   int rank = 0;
+
+  // Vector pools that allow compatibility between 
+  // serial and parallel implementation
   std::vector<double> e2b_pool(num_threads,0.0);
   std::vector<double> edisp_pool(num_threads,0.0);
-  std::vector<std::vector<double>> grad_pool(num_threads,std::vector<double>(3*numsites_,0.0));
+  std::vector<std::vector<double>> grad_pool
+       (num_threads,std::vector<double>(3*numsites_,0.0));
 
 # ifdef _OPENMP
 # pragma omp parallel for schedule(dynamic) private(rank)
@@ -683,9 +698,23 @@ double System::Get2B(bool do_grads) {
 #   ifdef _OPENMP
     rank = omp_get_thread_num();
 #   endif // _OPENMP
+
+    // We loop over all the monomers, and we get all the dimers
+    // in which this monomer is involved
+    
+    // In this function, istart and iend refer to the first
+    // monomer of the dimer. The second one will be found from istart+1
+    // to the total number of monomers
+
+    // This iend definition is making sure that we don't go passed
+    // the number of monomers
     size_t iend = std::min(istart + step, nummon_);
 
-    // Adding corresponding clusters      
+    // Adding corresponding clusters depending on if we are within
+    // OPENMP or not     
+
+    // This call will get the dimers that have as first index a monomer
+    // with index between isatrt and iend (iend not included)
 #   ifdef _OPENMP
     std::vector<size_t> dimers =
                        AddClustersParallel(2,cutoff2b_,istart,iend);
@@ -694,23 +723,37 @@ double System::Get2B(bool do_grads) {
     std::vector<size_t> dimers = dimers_;
 #   endif
 
+    // In order to continue, we need at least one dimer
+    // If the size of the dimer vector is not at least 2, means
+    // that we don't have any dimer
     if (dimers.size() < 2) {
       continue;
     }
 
+    // The way the XYZ are set, they include the virtual site, 
+    // but we don't need the electrostatic virtual site for teh 2B
+    // polynomials. Thus, we need to create a pair of vectors with the right 
+    // coordinates to pass to polynomials and dispersion
     std::vector<double> xyz1;
     std::vector<double> xyz2;
     std::vector<double> grad1;
     std::vector<double> grad2;
+
+    // Define the two monomer ids that we are currently looking at
     std::string m1 = monomers_[dimers[0]];
     std::string m2 = monomers_[dimers[1]];
 
+    // Initialize the iteration variables
     size_t i = 0;
     size_t nd = 0;
     size_t nd_tot = 0;
 
+    // Loop over all the dimers
     while (2*nd_tot < dimers.size()) {
       i = (nd_tot + nd) * 2;
+      // Check if we are still in the same type of pair
+      // We will pas the entire batch in the 2b calculator, but they need
+      // to be the same pair (e.g., h2o-h2o, h2o-i, cl-na...)
       if (monomers_[dimers[i]] == m1 && 
           monomers_[dimers[i + 1]] == m2) {
         // Push the coordinates
@@ -756,12 +799,15 @@ double System::Get2B(bool do_grads) {
           // DISPERSION
           edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
                                      xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
+          // Update gradients in system
           size_t i0 = nd_tot * 2;
           for (size_t k = 0; k < nd ; k++) {
+            // Monomer 1
             for (size_t j = 0; j < 3*nat_[dimers[i0 + 2*k]]; j++) {
               grad_pool[rank][3*first_index_[dimers[i0 + 2*k]] + j]
                   += grad1[k*3*nat_[dimers[i0 + 2*k]] + j];
             }
+            // Monomer 2
             for (size_t j = 0; j < 3*nat_[dimers[i0 + 2*k +1]]; j++) {
               grad_pool[rank][3*first_index_[dimers[i0 + 2*k + 1]] + j]
                   += grad2[k*3*nat_[dimers[i0 + 2*k + 1]] + j];
@@ -774,6 +820,8 @@ double System::Get2B(bool do_grads) {
           edisp_pool[rank] += disp::GetDispersion(m1, m2, nd, do_grads,
                                      xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
         }
+       
+        // Update loop variables and clear other temporary variable
         nd_tot += nd;
         nd = 0;
         xyz1.clear();
@@ -801,7 +849,8 @@ double System::Get2B(bool do_grads) {
 # pragma omp barrier
 # endif
 
-  for (size_t i = 0; i < num_threads; i++) {
+  // Condensate gradients
+  for (int i = 0; i < num_threads; i++) {
     for (size_t j = first_grad; j < last_grad; j++) {
       grad_[j] += grad_pool[i][j];
     }
@@ -811,7 +860,8 @@ double System::Get2B(bool do_grads) {
 } // parallel   
 # endif
 
-  for (size_t i = 0; i < num_threads; i++) {
+  // Condensate energy
+  for (int i = 0; i < num_threads; i++) {
     e2b_t += e2b_pool[i];
     edisp_t += edisp_pool[i];
   }
@@ -848,22 +898,26 @@ double System::Get3B(bool do_grads) {
   // Variables needed for OMP
   size_t step = 1;
   int num_threads = 1;
-  int grad_step = 3*numsites_;
   
 # ifdef _OPENMP
 # pragma omp parallel
 {
+  // Get the number of threads
   if (omp_get_thread_num() == 0)
     num_threads = omp_get_num_threads();
 }
-  grad_step = 3*numsites_ / num_threads;
+  // Define variables to be used later in the condensation of data
+  int grad_step = 3*numsites_ / num_threads;
   step = std::max(size_t(1),std::min(nummon_/num_threads,step));
 # endif // _OPENMP
 
-  // trimers are ordered
+  // Variables to be used for both serial and parallel implementation
   size_t first_grad = 0;
   size_t last_grad = 3*numsites_;
   int rank = 0;
+
+  // Vector pools that allow compatibility between 
+  // serial and parallel implementation
   std::vector<double> e3b_pool(num_threads,0.0);
   std::vector<std::vector<double>> grad_pool(num_threads,std::vector<double>(3*numsites_,0.0));
 
@@ -874,9 +928,19 @@ double System::Get3B(bool do_grads) {
 #   ifdef _OPENMP
     rank = omp_get_thread_num();
 #   endif
+
+    // We loop over all the monomers, and we get all the trimers
+    // in which this monomer is involved
+
+    // In this function, istart and iend refer to the first
+    // monomer of the trimer. The second and third ones will 
+    // be found from istart+1 to the total number of monomers
+
+    // This iend definition is making sure that we don't go passed
+    // the number of monomers
+
     size_t iend = std::min(istart + step, nummon_);
 
-    // Adding corresponding clusters      
 #   ifdef _OPENMP
     std::vector<size_t> trimers = 
                        AddClustersParallel(3,cutoff3b_,istart,iend);
@@ -885,10 +949,17 @@ double System::Get3B(bool do_grads) {
     std::vector<size_t> trimers = trimers_;
 #   endif
 
+    // In order to continue, we need at least one dimer
+    // If the size of the dimer vector is not at least 2, means
+    // that we don't have any dimer
     if (trimers.size() < 3) {
       continue;
     }
 
+    // The way the XYZ are set, they include the virtual site, 
+    // but we don't need the electrostatic virtual site for teh 2B
+    // polynomials. Thus, we need to create a pair of vectors with the right 
+    // coordinates to pass to polynomials and dispersion
     std::vector<double> coord1;
     std::vector<double> coord2;
     std::vector<double> coord3;
@@ -896,15 +967,20 @@ double System::Get3B(bool do_grads) {
     std::string m2 = monomers_[trimers[1]];
     std::string m3 = monomers_[trimers[2]];
 
+    // Initialize the iteration variables
     size_t i = 0;
     size_t nt = 0;
     size_t nt_tot = 0;
 
+    // Loop over all the trimers
     while (3*nt_tot < trimers.size()) {
       i = (nt_tot + nt) * 3;
+
+      // Check if we are still in the same type of trimer
       if (monomers_[trimers[i]] == m1 &&
           monomers_[trimers[i + 1]] == m2 && 
           monomers_[trimers[i + 2]] == m3)  {
+
          // Push the coordinates
         for (size_t j = 0; j < 3*nat_[trimers[i]]; j++) {
           coord1.push_back(xyz_[3*first_index_[trimers[i]] + j]);
@@ -935,7 +1011,7 @@ double System::Get3B(bool do_grads) {
           continue;
         }
 
-        // Fix dimer positions if pbc
+        // Fix trimer positions if pbc
         if (use_pbc_) {
           systools::GetCloseTrimerImage(box_, nat_[trimers[nt_tot * 3]],
                              nat_[trimers[nt_tot * 3 + 1]],
@@ -958,16 +1034,20 @@ double System::Get3B(bool do_grads) {
           // POLYNOMIALS
           e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3);
 
+          // Update gradients
           size_t i0 = nt_tot * 3;
           for (size_t k = 0; k < nt ; k++) {
+            // Monomer 1
             for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k]]; j++) {
               grad_pool[rank][3*first_index_[trimers[i0 + 3*k]] + j]
                   += grad1[k*3*nat_[trimers[i0 + 3*k]] + j];
             }
+            // Monomer 2
             for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k + 1]]; j++) {
               grad_pool[rank][3*first_index_[trimers[i0 + 3*k + 1]] + j]
                   += grad2[k*3*nat_[trimers[i0 + 3*k + 1]] + j];
             }
+            // Monomer 3
             for (size_t j = 0; j < 3*nat_[trimers[i0 + 3*k + 2]]; j++) {
               grad_pool[rank][3*first_index_[trimers[i0 + 3*k + 2]] + j]
                   += grad3[k*3*nat_[trimers[i0 + 3*k + 2]] + j];
@@ -977,6 +1057,8 @@ double System::Get3B(bool do_grads) {
           // POLYNOMIALS
           e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
         }
+
+        // Update iteration variables
         nt_tot += nt;
         nt = 0;
         coord1.clear();
@@ -1003,7 +1085,8 @@ double System::Get3B(bool do_grads) {
 # pragma omp barrier
 # endif
 
-  for (size_t i = 0; i < num_threads; i++) {
+  // Condensate gradients
+  for (int i = 0; i < num_threads; i++) {
     for (size_t j = first_grad; j < last_grad; j++) {
       grad_[j] += grad_pool[i][j];
     }
@@ -1013,7 +1096,8 @@ double System::Get3B(bool do_grads) {
 } // parallel   
 # endif
 
-  for (size_t i = 0; i < num_threads; i++) {
+  // Condensate energy
+  for (int i = 0; i < num_threads; i++) {
     e3b_t += e3b_pool[i];
   }
 
@@ -1023,6 +1107,7 @@ double System::Get3B(bool do_grads) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetCharges() {
+  // Set charges for each monomer type
   size_t fi_mon = 0;
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
     std::string mon = mon_type_count_[k].first;
@@ -1038,6 +1123,7 @@ void System::SetCharges() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetPols() {
+  // Set polarizabilities for each monomer type
   size_t fi_mon = 0;
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
     std::string mon = mon_type_count_[k].first;
@@ -1052,6 +1138,7 @@ void System::SetPols() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetPolfacs() {
+  // Set polarizability factors for each monomer type
   size_t fi_mon = 0;
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
     std::string mon = mon_type_count_[k].first;
@@ -1066,6 +1153,7 @@ void System::SetPolfacs() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetVSites() {
+  // Set virtual sites for each monomer type
   size_t fi_mon = 0;
   for (size_t k = 0; k < mon_type_count_.size(); k++) {
     std::string mon = mon_type_count_[k].first;
