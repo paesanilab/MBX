@@ -8,6 +8,11 @@
 #  include <iostream>
 #endif
 
+/** 
+ * @file system.cpp 
+ * @brief System class implementation
+ */
+
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace bblock { // Building Block :: System

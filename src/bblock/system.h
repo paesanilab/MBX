@@ -27,10 +27,17 @@
 // ELECTROSTATICS
 #include "potential/electrostatics/electrostatics.h"
 
+/** 
+ * @file system.h 
+ * @brief System class definition, along with all its member functions
+ * and variables
+ */
 
-////////////////////////////////////////////////////////////////////////////////
-namespace bblock { // Building Block :: System
-////////////////////////////////////////////////////////////////////////////////
+/**
+ * @namespace bblock
+ * @brief Contains all the system building block functions and classes
+ */
+namespace bblock { 
 
 /**
  * The System class is the core class of the whole software. 
