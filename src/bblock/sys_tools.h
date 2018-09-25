@@ -14,6 +14,7 @@
 
 #include "potential/1b/ps.h"
 #include "tools/constants.h"
+#include "tools/custom_exceptions.h"
 
 /** 
  * @file sys_tools.h 
@@ -174,8 +175,34 @@ void GetCloseTrimerImage(std::vector<double> box,
                         size_t nat1, size_t nat2, size_t nat3, size_t nt,
                         double * xyz1, double * xyz2, double * xyz3);
 
-// Given ifnormation of the system, this subroutine fills up the dimers and 
-// trimers of the system.
+/**
+ * @brief Gets the dimers and/or trimers of a system in which the first
+ * monomer index is between istart and iend (iend not included)
+ *
+ * Given a vector of doubles with the coordinates of all monomers, 
+ * this function calculates, using a kd-tree, the monomers that are
+ * closer to the first one, always inside the cutoff range. This
+ * function can also work in PBC, but won't be very efficient for
+ * extremely large systems (>8000 monomers)
+ * The dimers and trimers will be returned in order, <i,j> and 
+ * <i,j,k> with k > j > i
+ * @param[in] n_max Maximum order of the cluster. Implemented for
+ * n_max = 2,3. Otherwise will give an error.
+ * @param[in] cutoff Maximum distance between monomers accepted. Larger
+ * distances will not be considered a cluster
+ * @param[in] istart Minimum value of index i
+ * @param[in] iend Maximum value of index i (not included in the clusters)
+ * @param[in] nmon Number of monomers
+ * @param[in] use_pbc Boolean that states if we are in PBC or not
+ * @param[in] box Vector of 9 components with the three main vectors
+ * of the box
+ * @param[in] xyz_orig Coordinates of the system
+ * @param[in] first_index First index of the monomers in the system
+ * @param[out] dimers Vector of unsigned integers with the dimers
+ * @param[out] trimers Vector of unsigned integers with the trimers
+ * @warning The distance between monomers is computed as the distance 
+ * between the first atom of both monomers
+ */
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
                  size_t nmon, bool use_pbc, 
                  std::vector<double> box,
