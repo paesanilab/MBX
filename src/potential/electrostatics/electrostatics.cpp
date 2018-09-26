@@ -234,7 +234,7 @@ namespace elec {
             Asqsqi = Ai;
           }
           for (size_t m = 0; m < nmon; m++) {
-            elec_field.CalcPermanentElecFieldWithPolfacNonZero(
+            elec_field.CalcPermanentElecField(
                       xyz_.data() + fi_crd, xyz_.data() + fi_crd,
                       chg_.data() + fi_sites, chg_.data() + fi_sites, 
                       m, m, m+1, nmon, nmon, i, j, Ai, Asqsqi,
@@ -332,7 +332,7 @@ namespace elec {
                 Ai = constants::max_dbl;
                 Asqsqi = Ai;
               }
-              local_field->CalcPermanentElecFieldWithPolfacNonZero(
+              local_field->CalcPermanentElecField(
                       xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
                       chg_.data() + fi_sites1, chg_.data() + fi_sites2,
                       m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsqi,
@@ -463,7 +463,7 @@ namespace elec {
           }
           for (size_t m = 0; m < nmon; m++) {
             // TODO. Slowest function
-            elec_tensor.CalcT1AndT2WithPolfacNonZero(
+            elec_tensor.CalcT1AndT2(
                       xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
                       m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD, nsites_,
                       ts1.data(), ts2.data());
@@ -626,13 +626,13 @@ namespace elec {
                 Asqsqi = Ai;
               }
               if (same) {
-                local_elec_tensor->CalcT1AndT2WithPolfacNonZero(
+                local_elec_tensor->CalcT1AndT2(
                     xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
                     m1, 0, m1,
                     nmon1, nmon2, i, j, Asqsqi, aDD, nsites_,
                     ts1_pool[rank].data(), ts2_pool[rank].data());
               }
-              local_elec_tensor->CalcT1AndT2WithPolfacNonZero(
+              local_elec_tensor->CalcT1AndT2(
                     xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
                     m1, m2init, nmon2,
                     nmon1, nmon2, i, j, Asqsqi, aDD, nsites_,
@@ -1080,7 +1080,7 @@ namespace elec {
           }
           for (size_t m = 0; m < nmon; m++) {
             // TODO. Slowest function
-            elec_field.CalcDipoleElecFieldWithPolfacNonZero(
+            elec_field.CalcDipoleElecField(
                       xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
                       mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1,
                       nmon, nmon, i, j, Asqsqi,
@@ -1155,7 +1155,7 @@ namespace elec {
                 Ai = constants::max_dbl;
                 Asqsqi = Ai;
               }
-              local_field->CalcDipoleElecFieldWithPolfacNonZero(
+              local_field->CalcDipoleElecField(
                     xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
                     mu_.data() + fi_crd1, mu_.data() + fi_crd2, 
                     m1, m2init, nmon2,
@@ -1402,7 +1402,7 @@ namespace elec {
             Asqsqi = Ai;
           }
           for (size_t m = 0; m < nmon; m++) {
-            elec_field.CalcElecFieldGradsWithPolfacNonZero(
+            elec_field.CalcElecFieldGrads(
                       xyz_.data() + fi_crd, xyz_.data() + fi_crd,
                       zeros.data(), zeros.data(),
                       mu_.data() + fi_crd, mu_.data() + fi_crd,
@@ -1482,7 +1482,7 @@ namespace elec {
                 Ai = constants::max_dbl;
                 Asqsqi = Ai;
               }
-              local_field->CalcElecFieldGradsWithPolfacNonZero(
+              local_field->CalcElecFieldGrads(
                       xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
                       chg_.data() + fi_sites1, chg_.data() + fi_sites2,
                       mu_.data() + fi_crd1, mu_.data() + fi_crd2,

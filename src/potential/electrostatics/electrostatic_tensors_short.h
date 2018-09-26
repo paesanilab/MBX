@@ -60,7 +60,7 @@ class ElectroTensorShort {
   // Computes the electric field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-  void CalcT0AndT1WithPolfacNonZero(
+  void CalcT0AndT1(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     size_t mon1_index,                // Mon 1 index
     size_t mon2_index_start,          // Mon 2 initial index
@@ -86,7 +86,7 @@ class ElectroTensorShort {
   // Computes the dipole field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-  void CalcT1AndT2WithPolfacNonZero(
+  void CalcT1AndT2(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     size_t mon1_index,                // Mon 1 index
     size_t mon2_index_start,          // Mon 2 initial index

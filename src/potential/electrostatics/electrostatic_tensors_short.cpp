@@ -8,7 +8,7 @@ ElectroTensorShort::ElectroTensorShort(size_t n) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensorShort::CalcT0AndT1WithPolfacNonZero 
+void ElectroTensorShort::CalcT0AndT1 
   (double * xyz1, double * xyz2, 
    size_t mon1_index, 
    size_t mon2_index_start, size_t mon2_index_end,
@@ -101,7 +101,7 @@ void ElectroTensorShort::CalcT0AndT1WithPolfacNonZero
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensorShort::CalcT1AndT2WithPolfacNonZero
+void ElectroTensorShort::CalcT1AndT2
   (double * xyz1, double * xyz2,
    size_t mon1_index,
    size_t mon2_index_start, size_t mon2_index_end,

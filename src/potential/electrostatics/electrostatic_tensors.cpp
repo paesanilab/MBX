@@ -8,7 +8,7 @@ ElectroTensor::ElectroTensor(size_t n) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensor::CalcT0AndT1WithPolfacNonZero 
+void ElectroTensor::CalcT0AndT1 
   (double * xyz1, double * xyz2, 
    size_t mon1_index, 
    size_t mon2_index_start, size_t mon2_index_end,
@@ -105,7 +105,7 @@ void ElectroTensor::CalcT0AndT1WithPolfacNonZero
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensor::CalcT1AndT2WithPolfacNonZero
+void ElectroTensor::CalcT1AndT2
   (double * xyz1, double * xyz2,
    size_t mon1_index,
    size_t mon2_index_start, size_t mon2_index_end,

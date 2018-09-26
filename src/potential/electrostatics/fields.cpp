@@ -19,7 +19,7 @@ ElectricFieldHolder::ElectricFieldHolder(size_t n) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectricFieldHolder::CalcPermanentElecFieldWithPolfacNonZero
+void ElectricFieldHolder::CalcPermanentElecField
   (double * xyz1, double * xyz2, 
    double * chg1, double * chg2,
    size_t mon1_index, 
@@ -142,7 +142,7 @@ void ElectricFieldHolder::CalcPermanentElecFieldWithPolfacNonZero
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectricFieldHolder::CalcDipoleElecFieldWithPolfacNonZero
+void ElectricFieldHolder::CalcDipoleElecField
   (double * xyz1, double * xyz2,
    double * mu1, double * mu2,
    size_t mon1_index,
@@ -257,7 +257,7 @@ void ElectricFieldHolder::CalcDipoleElecFieldWithPolfacNonZero
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectricFieldHolder::CalcElecFieldGradsWithPolfacNonZero
+void ElectricFieldHolder::CalcElecFieldGrads
   (double * xyz1, double * xyz2,
    double * chg1, double * chg2,
    double * mu1, double * mu2,

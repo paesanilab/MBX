@@ -60,7 +60,7 @@ class ElectricFieldHolder {
   // Computes the electric field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-  void CalcPermanentElecFieldWithPolfacNonZero(
+  void CalcPermanentElecField(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * chg1, double * chg2,     // Charges of mon type 1 and 2
     size_t mon1_index,                // Mon 1 index
@@ -87,7 +87,7 @@ class ElectricFieldHolder {
   // Computes the dipole field for a pair of sites for a number of monomers
   // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-  void CalcDipoleElecFieldWithPolfacNonZero(
+  void CalcDipoleElecField(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * mu1, double * mu2,       // Dipoles of mon type 1 and 2
     size_t mon1_index,                // Mon 1 index
@@ -111,7 +111,7 @@ class ElectricFieldHolder {
   // for a number of monomers # = mon2_index_end - mon2_index_start when
   // A=polfac[i] * polfac[j] > 0
 
-  void CalcElecFieldGradsWithPolfacNonZero(
+  void CalcElecFieldGrads(
     double * xyz1, double * xyz2,     // Coordinates of mon type 1 and 2
     double * chg1, double * chg2,     // Charges of mon type 1 and 2
     double * mu1, double * mu2,       // Dipoles of mon type 1 and 2
