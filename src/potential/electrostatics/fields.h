@@ -41,6 +41,7 @@ derived.
 #include <cstddef>
 
 #include "potential/electrostatics/gammq.h"
+#include "tools/constants.h"
 
 namespace elec {
 
@@ -68,7 +69,7 @@ class ElectricFieldHolder {
     size_t nmon1, size_t nmon2,       // # monomers of types 1 and 2
     size_t site_i, size_t site_j,     // Site # i of mon1 and # j of mon 2
     double Ai,                        // (polfac[i] * polfac[j]) inverted
-    double Asqsq,                     // (polfac[i] * polfac[j])^4
+    double Asqsqi,                    // (polfac[i] * polfac[j])^4 inverted
     double aCC, double aCC1_4,        // Thole damping aCC and aCC^(0.25)
     double g34,                       // Gamma ln function. Is a constant.
     double *Efqx_mon1,                // Output electric field on X for Mon 1
@@ -78,22 +79,6 @@ class ElectricFieldHolder {
     double * phi2,                    // Potential on Mon 2
     double * Efq2);                   // Electric field on Mon 2
 
-////////////////////////////////////////////////////////////////////////////////
-
-  // Computes the electric field for a pair of sites for a number of monomers
-  // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] = 0
-
-  void CalcPermanentElecFieldWithPolfacZero(
-    double * xyz1, double * xyz2,
-    double * chg1, double * chg2,
-    size_t mon1_index,
-    size_t mon2_index_start, size_t mon2_index_end,
-    size_t nmon1, size_t nmon2,
-    size_t site_i, size_t site_j,
-    double *Efqx_mon1, double *Efqy_mon1,
-    double *Efqz_mon1, double *phi1,
-    double * phi2,
-    double * Efq2);
 
 ////////////////////////////////////////////////////////////////////////////////
 // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
@@ -110,26 +95,12 @@ class ElectricFieldHolder {
     size_t mon2_index_end,            // Mon 2 final index
     size_t nmon1, size_t nmon2,       // # monomers of types 1 and 2
     size_t site_i, size_t site_j,     // Site # i of mon1 and # j of mon 2
-    double Asqsq,                     // (polfac[i] * polfac[j])^4
+    double Asqsqi,                    // (polfac[i] * polfac[j])^4 inverted
     double aDD,                       // Thole damping aDD (dipole - dipole)
     double * Efd2,                    // Electric field on Mon 2
     double *Efdx_mon1,                // Output electric field on X for Mon 1
     double *Efdy_mon1,                // Output electric field on Y for Mon 1
     double *Efdz_mon1);               // Output electric field on Z for Mon 1
-
-////////////////////////////////////////////////////////////////////////////////
-
-  // Computes the dipole field for a pair of sites for a number of monomers
-  // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] = 0
-
-  void CalcDipoleElecFieldWithPolfacZero(
-    double * xyz1, double * xyz2,
-    double * mu1, double * mu2,
-    size_t mon1_index,
-    size_t mon2_index_start, size_t mon2_index_end,
-    size_t nmon1, size_t nmon2,
-    size_t site_i, size_t site_j, double * Efd2,
-    double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1);
 
 ////////////////////////////////////////////////////////////////////////////////
 // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////
@@ -150,32 +121,13 @@ class ElectricFieldHolder {
     size_t nmon1, size_t nmon2,       // # monomers of types 1 and 2
     size_t site_i, size_t site_j,     // Site # i of mon1 and # j of mon 2
     double aDD, double aCD,           // Thole damping aCC and aDD
-    double Asqsq,                     // (polfac[i] * polfac[j])^4
+    double Asqsqi,                    // (polfac[i] * polfac[j])^4
     double *grdx,                     // Output gradient of site i of mon1 in X
     double *grdy,                     // Output gradient of site i of mon1 in Y
     double *grdz,                     // Output gradient of site i of mon1 in Z
     double *phi1,                     // Output field on site i of mon1
     double * phi2,                    // Field on site j of mon2
     double * grd2);                   // Gradient on site j of mon2
-
-////////////////////////////////////////////////////////////////////////////////
-
-  // Computes the gradients and updates the potential on sites i and j to 
-  // account for the contribution of the dipoles to the potential phi
-  // for a number of monomers # = mon2_index_end - mon2_index_start when
-  // A=polfac[i] * polfac[j] = 0
-
-  void CalcElecFieldGradsWithPolfacZero(
-    double * xyz1, double * xyz2,
-    double * chg1, double * chg2,
-    double * mu1, double * mu2,
-    size_t mon1_index,
-    size_t mon2_index_start, size_t mon2_index_end,
-    size_t nmon1, size_t nmon2,
-    size_t site_i, size_t site_j,
-    double *grdx, double *grdy, double *grdz,
-    double *phi1, double * phi2,
-    double * grd2);
 
 ////////////////////////////////////////////////////////////////////////////////
 

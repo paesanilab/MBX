@@ -223,35 +223,27 @@ namespace elec {
 
           // Get a1a2 and check if is not 0.
           double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+          double Ai = 0.0;
+          double Asqsqi = 0.0;
           if (A > constants::EPS) {
             A = std::pow(A,1.0/6.0);
-            double Ai = 1/A;
-            double Asqsq = A*A*A*A;
-            for (size_t m = 0; m < nmon; m++) {
-              elec_field.CalcPermanentElecFieldWithPolfacNonZero(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd,
-                        chg_.data() + fi_sites, chg_.data() + fi_sites, 
-                        m, m, m+1, nmon, nmon, i, j, Ai, Asqsq,
-                        aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1, 
-                        phi_.data() + fi_sites, Efq_.data() + fi_crd);
-              phi_[fi_sites + inmon + m] += phi1;
-              Efq_[fi_crd + inmon3 + m] += ex; 
-              Efq_[fi_crd + inmon3 + nmon + m] += ey;
-              Efq_[fi_crd + inmon3 + nmon2 + m] += ez; 
-            }
+            Ai = 1/A;
+            Asqsqi = Ai*Ai*Ai*Ai;
           } else {
-            for (size_t m = 0; m < nmon; m++) {
-              elec_field.CalcPermanentElecFieldWithPolfacZero(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd,
-                        chg_.data() + fi_sites, chg_.data() + fi_sites,
-                        m, m, m+1, nmon, nmon, i, j,
-                        &ex, &ey, &ez, &phi1,
-                        phi_.data() + fi_sites, Efq_.data() + fi_crd);
-              phi_[fi_sites + inmon + m] += phi1;
-              Efq_[fi_crd + inmon3 + m] += ex;
-              Efq_[fi_crd + inmon3 + nmon + m] += ey;
-              Efq_[fi_crd + inmon3 + nmon2 + m] += ez;
-            }
+            Ai = constants::max_dbl;
+            Asqsqi = Ai;
+          }
+          for (size_t m = 0; m < nmon; m++) {
+            elec_field.CalcPermanentElecFieldWithPolfacNonZero(
+                      xyz_.data() + fi_crd, xyz_.data() + fi_crd,
+                      chg_.data() + fi_sites, chg_.data() + fi_sites, 
+                      m, m, m+1, nmon, nmon, i, j, Ai, Asqsqi,
+                      aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1, 
+                      phi_.data() + fi_sites, Efq_.data() + fi_crd);
+            phi_[fi_sites + inmon + m] += phi1;
+            Efq_[fi_crd + inmon3 + m] += ex; 
+            Efq_[fi_crd + inmon3 + nmon + m] += ey;
+            Efq_[fi_crd + inmon3 + nmon2 + m] += ez; 
           }
         }
       }
@@ -330,33 +322,27 @@ namespace elec {
 
               // Check if A = 0 and call the proper field calculation
               double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+              double Ai = 0.0;
+              double Asqsqi = 0.0;
               if (A > constants::EPS) {
                 A = std::pow(A,1.0/6.0);
-                double Ai = 1/A;
-                double Asqsq = A*A*A*A;
-                local_field->CalcPermanentElecFieldWithPolfacNonZero(
-                        xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                        chg_.data() + fi_sites1, chg_.data() + fi_sites2,
-                        m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsq,
-                        aCC_, aCC1_4_, g34_, 
-                        &ex_thread, &ey_thread, &ez_thread, &phi1_thread, 
-                        phi_2_pool[rank].data(), Efq_2_pool[rank].data());
-                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
-                Efq_1_pool[rank][inmon13 + m1] += ex_thread;       
-                Efq_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
-                Efq_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                Ai = 1/A;
+                Asqsqi = Ai*Ai*Ai*Ai;
               } else {
-                elec_field.CalcPermanentElecFieldWithPolfacZero(
-                        xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                        chg_.data() + fi_sites1, chg_.data() + fi_sites2,
-                        m1, m2init, nmon2, nmon1, nmon2, i, j,
-                        &ex_thread, &ey_thread, &ez_thread, &phi1_thread,
-                        phi_2_pool[rank].data(), Efq_2_pool[rank].data());  
-                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
-                Efq_1_pool[rank][inmon13 + m1] += ex_thread;
-                Efq_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
-                Efq_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                Ai = constants::max_dbl;
+                Asqsqi = Ai;
               }
+              local_field->CalcPermanentElecFieldWithPolfacNonZero(
+                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                      chg_.data() + fi_sites1, chg_.data() + fi_sites2,
+                      m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsqi,
+                      aCC_, aCC1_4_, g34_, 
+                      &ex_thread, &ey_thread, &ez_thread, &phi1_thread, 
+                      phi_2_pool[rank].data(), Efq_2_pool[rank].data());
+              phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+              Efq_1_pool[rank][inmon13 + m1] += ex_thread;       
+              Efq_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+              Efq_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
             }
           } 
         }
@@ -465,32 +451,29 @@ namespace elec {
           double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
           std::fill(ts1.begin(), ts1.end(), 0.0);
           std::fill(ts2.begin(), ts2.end(), 0.0);
+          double Ai = 0.0;
+          double Asqsqi = 0.0;
           if (A > constants::EPS) {
             A = std::pow(A, 1.0/6.0);
-            double Asqsq = A*A*A*A;
-            for (size_t m = 0; m < nmon; m++) {
-              // TODO. Slowest function
-              elec_tensor.CalcT1AndT2WithPolfacNonZero(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
-                        m, m, m + 1, nmon, nmon, i, j, Asqsq, aDD, nsites_,
-                        ts1.data(), ts2.data());
-            }
+            Ai = 1/A;
+            Asqsqi = Ai*Ai*Ai*Ai;
           } else {
-            for (size_t m = 0; m < nmon; m++) {
-              elec_tensor.CalcT1AndT2WithPolfacZero(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd,
-                        m, m, m + 1, nmon, nmon, i, j, nsites_,
-                        ts1.data(), ts2.data());
-            }
+            Ai = constants::max_dbl;
+            Asqsqi = Ai;
+          }
+          for (size_t m = 0; m < nmon; m++) {
+            // TODO. Slowest function
+            elec_tensor.CalcT1AndT2WithPolfacNonZero(
+                      xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
+                      m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD, nsites_,
+                      ts1.data(), ts2.data());
           }
 
           // ts2 for this monomer and pairs are calculated
           // this is due to mon2
           for (size_t kk = 0; kk < 3; kk++) {
             size_t kknmon = kk * nmon;
-#           ifdef _OPENMP
-#             pragma omp simd
-#           endif
+#           pragma omp simd
             for (size_t k = 0; k < nmon; k++) {
 #             ifdef DEBUG
                 size_t row = fi_crd + inmon3 + k;
@@ -632,33 +615,28 @@ namespace elec {
                         ts2_pool[rank].end(), 0.0);
 
               double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+              double Ai = 0.0;
+              double Asqsqi = 0.0;
               if (A > constants::EPS) {
-                A = std::pow(A,1.0/6.0);
-                double Asqsq = A*A*A*A;
-                if (same) {
-                  local_elec_tensor->CalcT1AndT2WithPolfacNonZero(
-                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                      m1, 0, m1,
-                      nmon1, nmon2, i, j, Asqsq, aDD, nsites_,
-                      ts1_pool[rank].data(), ts2_pool[rank].data());
-                }
-                local_elec_tensor->CalcT1AndT2WithPolfacNonZero(
-                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                      m1, m2init, nmon2,
-                      nmon1, nmon2, i, j, Asqsq, aDD, nsites_,
-                      ts1_pool[rank].data(), ts2_pool[rank].data());
+                A = std::pow(A, 1.0/6.0);
+                Ai = 1/A;
+                Asqsqi = Ai*Ai*Ai*Ai;
               } else {
-                if (same) {
-                  local_elec_tensor->CalcT1AndT2WithPolfacZero(
-                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                      m1, 0, m1, nmon1, nmon2, i, j, nsites_,
-                      ts1_pool[rank].data(), ts2_pool[rank].data());
-                }
-                local_elec_tensor->CalcT1AndT2WithPolfacZero(
-                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                      m1, m2init, nmon2, nmon1, nmon2, i, j, nsites_,
-                      ts1_pool[rank].data(), ts2_pool[rank].data());
+                Ai = constants::max_dbl;
+                Asqsqi = Ai;
               }
+              if (same) {
+                local_elec_tensor->CalcT1AndT2WithPolfacNonZero(
+                    xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                    m1, 0, m1,
+                    nmon1, nmon2, i, j, Asqsqi, aDD, nsites_,
+                    ts1_pool[rank].data(), ts2_pool[rank].data());
+              }
+              local_elec_tensor->CalcT1AndT2WithPolfacNonZero(
+                    xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                    m1, m2init, nmon2,
+                    nmon1, nmon2, i, j, Asqsqi, aDD, nsites_,
+                    ts1_pool[rank].data(), ts2_pool[rank].data());
 
 #             ifdef DEBUG
                 std::cout << "Different monomers (m1 = " << m1 <<"): i = " 
@@ -1090,30 +1068,26 @@ namespace elec {
           aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
 
           double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+          double Ai = 0.0;
+          double Asqsqi = 0.0;
           if (A > constants::EPS) {
             A = std::pow(A, 1.0/6.0);
-            double Asqsq = A*A*A*A;
-            for (size_t m = 0; m < nmon; m++) {
-              // TODO. Slowest function
-              elec_field.CalcDipoleElecFieldWithPolfacNonZero(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
-                        mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1,
-                        nmon, nmon, i, j, Asqsq,
-                        aDD, Efd_.data() + fi_crd, &ex, &ey, &ez);
-              Efd_[fi_crd + inmon3 + m] += ex;
-              Efd_[fi_crd + inmon3 + nmon + m] += ey;
-              Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
-            }
+            Ai = 1/A;
+            Asqsqi = Ai*Ai*Ai*Ai;
           } else {
-            for (size_t m = 0; m < nmon; m++) {
-              elec_field.CalcDipoleElecFieldWithPolfacZero(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd,
-                        mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1,
-                        nmon, nmon, i, j, Efd_.data() + fi_crd, &ex, &ey, &ez);
-              Efd_[fi_crd + inmon3 + m] += ex;
-              Efd_[fi_crd + inmon3 + nmon + m] += ey;
-              Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
-            }
+            Ai = constants::max_dbl;
+            Asqsqi = Ai;
+          }
+          for (size_t m = 0; m < nmon; m++) {
+            // TODO. Slowest function
+            elec_field.CalcDipoleElecFieldWithPolfacNonZero(
+                      xyz_.data() + fi_crd, xyz_.data() + fi_crd, 
+                      mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1,
+                      nmon, nmon, i, j, Asqsqi,
+                      aDD, Efd_.data() + fi_crd, &ex, &ey, &ez);
+            Efd_[fi_crd + inmon3 + m] += ex;
+            Efd_[fi_crd + inmon3 + nmon + m] += ey;
+            Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
           }
         }
       }
@@ -1155,9 +1129,7 @@ namespace elec {
         }
 
         // Parallel loop
-#       ifdef _OPENMP
-#         pragma omp parallel for schedule(dynamic)
-#       endif
+#       pragma omp parallel for schedule(dynamic)
         for (size_t m1 = 0; m1 < nmon1; m1++) {
           int rank = 0;
 #         ifdef _OPENMP
@@ -1173,30 +1145,26 @@ namespace elec {
             size_t inmon13 = 3 * nmon1 * i;
             for (size_t j = 0; j < ns2; j++) {
               double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+              double Ai = 0.0;
+              double Asqsqi = 0.0;
               if (A > constants::EPS) {
-                A = std::pow(A,1.0/6.0);
-                double Asqsq = A*A*A*A;
-                local_field->CalcDipoleElecFieldWithPolfacNonZero(
-                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                      mu_.data() + fi_crd1, mu_.data() + fi_crd2, 
-                      m1, m2init, nmon2,
-                      nmon1, nmon2, i, j, Asqsq,
-                      aDD, Efd_2_pool[rank].data(), 
-                      &ex_thread, &ey_thread, &ez_thread);
-                Efd_1_pool[rank][inmon13 + m1] += ex_thread;
-                Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
-                Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                A = std::pow(A, 1.0/6.0);
+                Ai = 1/A;
+                Asqsqi = Ai*Ai*Ai*Ai;
               } else {
-                local_field->CalcDipoleElecFieldWithPolfacZero(
-                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                      mu_.data() + fi_crd1, mu_.data() + fi_crd2, 
-                      m1, m2init, nmon2, nmon1, nmon2, 
-                      i, j, Efd_2_pool[rank].data(), 
-                      &ex_thread, &ey_thread, &ez_thread);
-                Efd_1_pool[rank][inmon13 + m1] += ex_thread;
-                Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
-                Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                Ai = constants::max_dbl;
+                Asqsqi = Ai;
               }
+              local_field->CalcDipoleElecFieldWithPolfacNonZero(
+                    xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                    mu_.data() + fi_crd1, mu_.data() + fi_crd2, 
+                    m1, m2init, nmon2,
+                    nmon1, nmon2, i, j, Asqsqi,
+                    aDD, Efd_2_pool[rank].data(), 
+                    &ex_thread, &ey_thread, &ez_thread);
+              Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+              Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+              Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
             }
           }
         }
@@ -1423,34 +1391,27 @@ namespace elec {
                               0 : phi_.data() + fi_sites; 
           aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
           double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+          double Ai = 0.0;
+          double Asqsqi = 0.0;
           if (A > constants::EPS) {
             A = std::pow(A, 1.0/6.0);
-            double Asqsq = A*A*A*A;
-            for (size_t m = 0; m < nmon; m++) {
-              elec_field.CalcElecFieldGradsWithPolfacNonZero(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd,
-                        zeros.data(), zeros.data(),
-                        mu_.data() + fi_crd, mu_.data() + fi_crd,
-                        m, m, m+1, nmon, nmon, i, j, aDD, aCD_, Asqsq,
-                        &ex, &ey, &ez, &phi1, phi_mod,
-                        grad_.data() + fi_crd);
-              grad_[fi_crd + inmon3 + m] += ex;
-              grad_[fi_crd + inmon3 + nmon + m] += ey;
-              grad_[fi_crd + inmon3 + nmon2 + m] += ez;
-            }
+            Ai = 1/A;
+            Asqsqi = Ai*Ai*Ai*Ai;
           } else {
-            for (size_t m = 0; m < nmon; m++) {
-              elec_field.CalcElecFieldGradsWithPolfacZero(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd,
-                        zeros.data(), zeros.data(),
-                        mu_.data() + fi_crd, mu_.data() + fi_crd,
-                        m, m, m+1, nmon, nmon, i, j, 
-                        &ex, &ey, &ez, &phi1, phi_mod,
-                        grad_.data() + fi_crd);
-              grad_[fi_crd + inmon3 + m] += ex;
-              grad_[fi_crd + inmon3 + nmon + m] += ey;
-              grad_[fi_crd + inmon3 + nmon2 + m] += ez;
-            }
+            Ai = constants::max_dbl;
+            Asqsqi = Ai;
+          }
+          for (size_t m = 0; m < nmon; m++) {
+            elec_field.CalcElecFieldGradsWithPolfacNonZero(
+                      xyz_.data() + fi_crd, xyz_.data() + fi_crd,
+                      zeros.data(), zeros.data(),
+                      mu_.data() + fi_crd, mu_.data() + fi_crd,
+                      m, m, m+1, nmon, nmon, i, j, aDD, aCD_, Asqsqi,
+                      &ex, &ey, &ez, &phi1, phi_mod,
+                      grad_.data() + fi_crd);
+            grad_[fi_crd + inmon3 + m] += ex;
+            grad_[fi_crd + inmon3 + nmon + m] += ey;
+            grad_[fi_crd + inmon3 + nmon2 + m] += ez;
           }
         }
       }
@@ -1493,9 +1454,7 @@ namespace elec {
            phi_1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
            phi_2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
         }
-#       ifdef _OPENMP
-#         pragma omp parallel for schedule(dynamic)
-#       endif
+#       pragma omp parallel for schedule(dynamic)
         for (size_t m1 = 0; m1 < nmon1; m1++) {
           int rank = 0;
 #         ifdef _OPENMP
@@ -1513,34 +1472,28 @@ namespace elec {
             size_t inmon13  = 3*inmon1;
             for (size_t j = 0; j < ns2; j++) {
               double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+              double Ai = 0.0;
+              double Asqsqi = 0.0;
               if (A > constants::EPS) {
-                A = std::pow(A,1.0/6.0);
-                double Asqsq = A*A*A*A;
-                local_field->CalcElecFieldGradsWithPolfacNonZero(
-                        xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                        chg_.data() + fi_sites1, chg_.data() + fi_sites2,
-                        mu_.data() + fi_crd1, mu_.data() + fi_crd2,
-                        m1, m2init, nmon2, nmon1, nmon2, i, j, 
-                        aDD, aCD_, Asqsq,
-                        &ex_thread, &ey_thread, &ez_thread, &phi1_thread, 
-                        phi_2_pool[rank].data(), grad_2_pool[rank].data());
-                grad_1_pool[rank][inmon13 + m1] += ex_thread;
-                grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
-                grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
-                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+                A = std::pow(A, 1.0/6.0);
+                Ai = 1/A;
+                Asqsqi = Ai*Ai*Ai*Ai;
               } else {
-                local_field->CalcElecFieldGradsWithPolfacZero(
-                        xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
-                        chg_.data() + fi_sites1, chg_.data() + fi_sites2,
-                        mu_.data() + fi_crd1, mu_.data() + fi_crd2,
-                        m1, m2init, nmon2, nmon1, nmon2, i, j, 
-                        &ex_thread, &ey_thread, &ez_thread, &phi1_thread, 
-                        phi_2_pool[rank].data(), grad_2_pool[rank].data());
-                grad_1_pool[rank][inmon13 + m1] += ex_thread;
-                grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
-                grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
-                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+                Ai = constants::max_dbl;
+                Asqsqi = Ai;
               }
+              local_field->CalcElecFieldGradsWithPolfacNonZero(
+                      xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
+                      chg_.data() + fi_sites1, chg_.data() + fi_sites2,
+                      mu_.data() + fi_crd1, mu_.data() + fi_crd2,
+                      m1, m2init, nmon2, nmon1, nmon2, i, j, 
+                      aDD, aCD_, Asqsqi,
+                      &ex_thread, &ey_thread, &ez_thread, &phi1_thread, 
+                      phi_2_pool[rank].data(), grad_2_pool[rank].data());
+              grad_1_pool[rank][inmon13 + m1] += ex_thread;
+              grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+              grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+              phi_1_pool[rank][inmon1 + m1] += phi1_thread;
             }
           }
         }
