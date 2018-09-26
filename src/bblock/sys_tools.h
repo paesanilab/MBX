@@ -211,33 +211,127 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
                  std::vector<size_t> &dimers, 
                  std::vector<size_t> &trimers); 
 
-// Fills up the excluded set pairs for a given monomer
+/**
+ * @brief Sets the excluded pairs for a given monomer
+ * 
+ * Given the id of a monomer, it will return the excluded pairs at
+ * distances 1-2, 1-3 and 1-4. The excluded pairs are given by a set
+ * of pairs, in which each pair specifies the two atoms that are
+ * excluded.
+ * @param[in] mon Monomer id
+ * @param[out] exc12 Set of pairs with the 1-2 excluded atoms
+ * @param[out] exc13 Set of pairs with the 1-3 excluded atoms
+ * @param[out] exc14 Set of pairs with the 1-4 excluded atoms
+ */
 void GetExcluded(std::string mon, 
                  excluded_set_type &exc12,
                  excluded_set_type &exc13,
                  excluded_set_type &exc14);
 
-// Returns if a pair a,b (or b,a) is in the excluded set exc
+/**
+ * @brieh Helper function to compare a pair of an unsigned integer and a
+ * double. 
+ *
+ * Function that compares the pairs used in AddCLusters
+ * @param[in] a First pair
+ * @param[in] b Second pair
+ * @return True if a.second > b.second, False otherwise
+ */
+bool ComparePair(std::pair<size_t,double> a, std::pair<size_t,double> b);
+
+/**
+ * @brief Helper function that compares the unsigned integer of a pair
+ * 
+ * This function is used in AddClusters. Not for any other purpose
+ * @param[in] a First pair
+ * @param[in] b Second pair
+ * @return True if a.second > b.second, False otherwise
+ */ 
+bool CompareMonomerType(std::pair<std::string,size_t> a,
+                        std::pair<std::string,size_t> b); 
+
+/**
+ * @brief Checks if the pair a,b or b,a is in the excluded set exc
+ *
+ * Returns if a pair a,b (or b,a) is in the excluded set.
+ * @param[in] exc Excluder pairs set
+ * @param[in] a Atom index 1
+ * @param[in] b Atom index 2
+ * @return True if the pair a,b or b,a is in exc
+ */
 bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
 
-// Returns the proper aDD value for the electrostatics
+/**
+ * @brief Gets the thole damping for dipole dipole
+ *
+ * Depending on if the pair is 1-2, 1-3 or 1-4 distance, it returns the 
+ * thole damping for dipole-dipole for a given monomer
+ * @param[in] is12 Boolean that states if we want the 1-2 damping
+ * @param[in] is13 Boolean that states if we want the 1-3 damping
+ * @param[in] is14 Boolean that states if we want the 1-4 damping
+ * @param[in] mon Id of the monomer
+ * @return The damping. If all the booleans are false, will return the
+ * intermolecular damping (non-bonded damping).
+ */
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
 
-// Reorders the gradients or coordinates to the original order
+/**
+ * @brief Reorders a vector of 3N coordinates, where N is the number
+ * of sites, from the system order to the input order
+ *
+ * This function is used to reorder coordinates, dipoles, or 
+ * gradients from the system order to the input order. 
+ * @param[in] coords Vector of doubles that can be any physical
+ * or spatial property that has 3N elements
+ * @param[in] original_order Vector of pairs with the input order 
+ * of the monomers in thesystem order
+ * @param[in] first_index Contains the position of the first atom
+ * of a monomer in the system atom list
+ * @param[in] sites Vector with the number of sites of each monomer
+ * @return The reordered vector that includes ALL sites
+ */
 std::vector<double> ResetOrder3N(std::vector<double> coords,
     std::vector<std::pair<size_t,size_t> > original_order, 
     std::vector<size_t> first_index,
     std::vector<size_t> sites);
 
-// Reorders the gradients or coordinates to the original order
-// only taking into account real sites. 
+/**
+ * @brief Reorders a vector of 3N coordinates, where N is the number
+ * of atoms, from the system order to the input order
+ *
+ * This function is used to reorder coordinates, dipoles, or 
+ * gradients from the system order to the input order. 
+ * @param[in] coords Vector of doubles that can be any physical
+ * or spatial property that has 3N elements
+ * @param[in] original_order Vector of pairs with the input order 
+ * of the monomers in thesystem order
+ * @param[in] numats Number of atoms (real atoms) in the system
+ * @param[in] first_index Contains the position of the first atom
+ * of a monomer in the system atom list
+ * @param[in] nats Vector with the number of real atoms of each monomer
+ * @return The reordered vector that includes only the real sites
+ */
 std::vector<double> ResetOrderReal3N(std::vector<double> coords,
     std::vector<std::pair<size_t,size_t> > original_order,
     size_t numats,
     std::vector<size_t> first_index,
     std::vector<size_t> nats);
 
-// Reorders all the atom names to the original order
+/**
+ * @brief Reorders a vector of N elements, where N is the number
+ * of sites, from the system order to the input order
+ *
+ * This function is used to reorder atom names, charges, pols... 
+ * from the system order to the input order. 
+ * @param[in] coords Vector that can be any physical property
+ * with N elements
+ * @param[in] original_order Vector of pairs with the input order 
+ * of the monomers in the system order
+ * @param[in] first_index Contains the position of the first atom
+ * of a monomer in the system atom list
+ * @param[in] sites Vector with the number of real atoms of each monomer
+ * @return The reordered vector that includes ALL sites
+ */
 template <typename T>
 std::vector<T> ResetOrderN(std::vector<T> vector_T,
     std::vector<std::pair<size_t,size_t> > original_order,
@@ -256,7 +350,22 @@ std::vector<T> ResetOrderN(std::vector<T> vector_T,
   return new_vector_T;
 }
 
-// Reorders the real atom names to the original order
+/**
+ * @brief Reorders a vector of N elements, where N is the number
+ * of atoms, from the system order to the input order
+ *
+ * This function is used to reorder atom names, charges, pols... 
+ * from the system order to the input order.
+ * @param[in] coords Vector that can be any physical property
+ * with N elements
+ * @param[in] original_order Vector of pairs with the input order 
+ * of the monomers in the system order
+ * @param[in] numats Number of atoms (real atoms) in the system
+ * @param[in] first_index Contains the position of the first atom
+ * of a monomer in the system atom list
+ * @param[in] nats Vector with the number of real atoms of each monomer
+ * @return The reordered vector that includes only the real sites
+ */
 template <typename T>
 std::vector<T> ResetOrderRealN(std::vector<T> vector_T,
     std::vector<std::pair<size_t,size_t> > original_order,
@@ -276,8 +385,12 @@ std::vector<T> ResetOrderRealN(std::vector<T> vector_T,
   return new_vector_T;
 }
 
-// Calculates the coordinates of the virtual site of a monomer when
-// given the coordinates of the other sites
+// TODO continue documentation here
+/**
+ * @brief Calculates the coordinates of the virtual site of a monomer when
+ * given the coordinates of the other sites
+ * @param[in,out] xyz
+ */
 void SetVSites(std::vector<double> &xyz, std::string mon_id,
                size_t n_mon, size_t nsites, size_t fst_ind);
 

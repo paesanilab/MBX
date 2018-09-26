@@ -318,11 +318,11 @@ void GetCloseTrimerImage(std::vector<double> box,
   }
 }
 
-bool compare_pair (std::pair<size_t,double> a, std::pair<size_t,double> b) {
+bool ComparePair(std::pair<size_t,double> a, std::pair<size_t,double> b) {
   return a.first < b.first;
 }
-bool compare_mon_type (std::pair<std::string,size_t> a, 
-                       std::pair<std::string,size_t> b) {
+bool CompareMonomerType(std::pair<std::string,size_t> a, 
+                        std::pair<std::string,size_t> b) {
   return a.second < b.second;
 }
 
@@ -393,13 +393,11 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
     }
 
 
-    std::sort(ret_matches.begin(), ret_matches.end(), compare_pair);
+    std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
     std::set<std::pair<size_t, size_t>> donek;
 
     // Add the pairs that are not in the dimer vector
     for (size_t j = 0; j < nMatches; j++) {
-  //    size_t pos = ret_matches[j].first / nmon;
-  //    ret_matches[j].first -= nmon * pos;
       std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> retdim;
       if (ret_matches[j].first > i ) {
         retdim = donej.insert(std::make_pair(i,ret_matches[j].first));
@@ -412,8 +410,6 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
         if (n_max > 2) {
           std::pair<std::set<std::pair<size_t,size_t>>::iterator,bool> ret;
           for (size_t k = 0; k < nMatches; k++) {
-   //         size_t pos = ret_matches[k].first / nmon;
-   //         ret_matches[k].first -= nmon * pos;
              
             if (ret_matches[k].first > ret_matches[j].first) {
               ret = donek.insert(std::make_pair(ret_matches[j].first,
@@ -443,14 +439,12 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
 
 
 
-          std::sort(ret_matches2.begin(), ret_matches2.end(), compare_pair);
+          std::sort(ret_matches2.begin(), ret_matches2.end(), ComparePair);
 
           // Add the trimers that fulfil i > j > k, to avoid double counting
           // We will add all trimers that fulfill the condition:
           // At least 2 of the three distances must be smaller than the cutoff 
           for (size_t k = 0; k < nMatches2; k++) {
-    //        size_t pos2 = ret_matches2[k].first / nmon;
-    //        ret_matches2[k].first -= nmon * pos2;
             if (ret_matches2[k].first > i) {
               size_t jel = ret_matches[j].first;
               size_t kel = ret_matches2[k].first;
