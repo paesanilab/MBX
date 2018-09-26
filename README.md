@@ -42,3 +42,8 @@ make
 ./test
 ```
 The output should be the same as the `expected_output`.
+
+### i-pi
+This software is already interfaced with i-pi. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-pi first. Please go to [the i-pi github page](https://github.com/cosmo-epfl/i-pi-dev) and clone and follow the instructions to install i-pi.
+
+

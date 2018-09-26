@@ -22,9 +22,8 @@ void energyf90_(double* coords, int * nat_monomers, char at_names[][5],
   }
 
   s.Initialize();
-  std::vector<double> grad;
 
-  *pot = s.Energy(grad, false);
+  *pot = s.Energy(false);
 }
 
 void energyf90g_(double* coords, int * nat_monomers, char at_names[][5],
@@ -48,11 +47,12 @@ void energyf90g_(double* coords, int * nat_monomers, char at_names[][5],
   }
 
   s.Initialize();
-  std::vector<double> gradv;
 
-  double energy = s.Energy(gradv, true);
+  double energy = s.Energy(true);
 
-  std::vector<std::string> newNames = s.GetOriginalOrderSysAtNames();
+  std::vector<double> gradv = s.GetGrads();
+
+  std::vector<std::string> newNames = s.GetAtomNames();
   int count2 = 0;
   for (size_t i = 0; i < s.GetNumSites(); i++) {
     if (newNames[i] != "virt") {

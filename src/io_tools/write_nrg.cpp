@@ -17,8 +17,8 @@ void WriteNrg(const char * filename, std::vector<bblock::System> systems ) {
 void SaveNrg(std::ostream & os, std::vector<bblock::System> systems ) {
   for (size_t i = 0; i < systems.size(); i++) {
     // Getting system props
-    std::vector<double> xyz = systems[i].GetSysXyz();
-    std::vector<std::string> an = systems[i].GetSysAtNames();
+    std::vector<double> xyz = systems[i].GetXyz();
+    std::vector<std::string> an = systems[i].GetAtomNames();
     os << "SYSTEM " << i << std::endl;
     for (size_t j = 0; j < systems[i].GetNumMol(); j++) {
       os << "MOLECULE " << i << "." << j << std::endl;
@@ -26,7 +26,7 @@ void SaveNrg(std::ostream & os, std::vector<bblock::System> systems ) {
       for (size_t k = 0; k < m.size(); k++) {
         std::string mon_name = systems[i].GetMonId(m[k]);
         os << "MONOMER " << mon_name << std::endl;
-        size_t ns = systems[i].GetMonNat(m[k]);
+        size_t ns = systems[i].GetMonNumAt(m[k]);
         size_t first_ind = systems[i].GetFirstInd(m[k]);
         for (size_t n = 0 ; n < ns ; n++) {
           os << std::scientific;

@@ -51,8 +51,8 @@ int main(int argc, char** argv)
     // Retrieve dimers
     std::cout << "SYSTEM 0\n";
 
-    systems[0].AddClusters(2,15.0,0,systems[0].GetNumMon());
-    std::vector<size_t> dimers = systems[0].GetDimers();
+    std::vector<size_t> dimers = 
+               systems[0].GetPairList(2,15.0,0,systems[0].GetNumMon());
     size_t ndimers = dimers.size() / 2;
     // Print all dimers
     for (size_t j = 0; j < ndimers; j++) {
@@ -63,8 +63,8 @@ int main(int argc, char** argv)
     }
     
     // retrieve Trimers
-    systems[0].AddClusters(3,4.5,0,systems[0].GetNumMon());
-    std::vector<size_t> trimers = systems[0].GetTrimers();
+    std::vector<size_t> trimers =
+               systems[0].GetPairList(3,4.5,0,systems[0].GetNumMon());
     size_t ntrimers = trimers.size() / 3;
     //Print all trimers
     for (size_t j = 0; j < ntrimers; j++) {
@@ -82,8 +82,8 @@ int main(int argc, char** argv)
       box[4] = 100.0;
       box[8] = 100.0;
       systems[1].SetPBC(true, box);
-      systems[1].AddClusters(2,15.0,0,systems[1].GetNumMon());
-      std::vector<size_t> dimers = systems[1].GetDimers();
+      std::vector<size_t> dimers = 
+               systems[1].GetPairList(2,15.0,0,systems[1].GetNumMon());;
       size_t ndimers = dimers.size() / 2;
       // Print all dimers
       for (size_t j = 0; j < ndimers; j++) {
@@ -94,8 +94,8 @@ int main(int argc, char** argv)
       }
 
       // retrieve Trimers
-      systems[1].AddClusters(3,4.5,0,systems[1].GetNumMon());
-      std::vector<size_t> trimers = systems[1].GetTrimers();
+      std::vector<size_t> trimers = 
+              systems[1].GetPairList(3,4.5,0,systems[1].GetNumMon());;
       size_t ntrimers = trimers.size() / 3;
       //Print all trimers
       for (size_t j = 0; j < ntrimers; j++) {
