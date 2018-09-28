@@ -1,5 +1,5 @@
-Language: Cpp
+#Language: Cpp
 BasedOnStyle: Google
 IndentWidth: 4
 ColumnLimit: 120
-SortIncludes: false
+#SortIncludes: false

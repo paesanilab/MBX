@@ -31,6 +31,6 @@ namespace elec {
 double gammq(const double&, const double&);
 double gammln(const double&);
 
-} // namespace ttm
+}  // namespace ttm
 
-#endif // GAMMQ_H
+#endif  // GAMMQ_H
