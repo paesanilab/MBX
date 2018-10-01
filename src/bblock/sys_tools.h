@@ -214,7 +214,7 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
 void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &exc13, excluded_set_type &exc14);
 
 /**
- * @brieh Helper function to compare a pair of an unsigned integer and a
+ * @brief Helper function to compare a pair of an unsigned integer and a
  * double.
  *
  * Function that compares the pairs used in AddCLusters
@@ -302,7 +302,7 @@ std::vector<double> ResetOrderReal3N(std::vector<double> coords, std::vector<std
  *
  * This function is used to reorder atom names, charges, pols...
  * from the system order to the input order.
- * @param[in] coords Vector that can be any physical property
+ * @param[in] vector_T Vector that can be any physical property
  * with N elements
  * @param[in] original_order Vector of pairs with the input order
  * of the monomers in the system order
@@ -332,7 +332,7 @@ std::vector<T> ResetOrderN(std::vector<T> vector_T, std::vector<std::pair<size_t
  *
  * This function is used to reorder atom names, charges, pols...
  * from the system order to the input order.
- * @param[in] coords Vector that can be any physical property
+ * @param[in] vector_T Vector that can be any physical property
  * with N elements
  * @param[in] original_order Vector of pairs with the input order
  * of the monomers in the system order

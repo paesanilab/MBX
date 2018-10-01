@@ -2,10 +2,29 @@
 
 namespace systools {
 
-// constants for water
+/**
+ * @brief TTM4-F M-site position parameter \f$\gamma _M\f$
+ * 
+ * The position of the M-site is computed by the formula:
+ * \f$r^{\alpha} = \gamma _1 O^{\alpha} + \gamma _2 (H_1^{\alpha} + H_2^{\alpha})\f$ 
+ * with \f$\alpha = x,y,z \f$
+ */
 const double gammaM = 0.426706882;
+
+/**
+ * @brief Constant used in M-site calculation
+ */
 const double gamma1 = 1.0 - gammaM;
+
+/**
+ * @brief Constant used in M-site calculation
+ */
 const double gamma2 = gammaM / 2;
+
+/**
+ * @brief Constant used in M-site gradient distribution
+
+ */
 const double gamma21 = gamma2 / gamma1;
 
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
@@ -128,28 +147,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
     return count;
 }
 
-// std::vector<double> GetBoxParams(std::vector<double> box) {
-//  // 3 modules of vector
-//  //+3 angles with XY plane
-//  std::vector<double> box_params(6,0.0);
-//  for (size_t i = 0; i < 3; i++) {
-//    for (size_t j = 0; j < 3; j++) {
-//      box_params[i] += box[3*i + j]*box[3*i + j];
-//    }
-//    box_params[i] = std::sqrt(box_params[i]);
-//  }
-//
-//  box_params[3] = atan2(box[2], std::sqrt(box[0]*box[0] + box[1]*box[1]));
-//  box_params[4] = atan2(box[5], std::sqrt(box[3]*box[3] + box[4]*box[4]));
-//  box_params[5] = atan2(box[8], std::sqrt(box[6]*box[6] + box[7]*box[7]));
-//
-//
-//  return box_params;
-//}
-
 void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<size_t> nat,
                            std::vector<size_t> first_index) {
-    // NOTE, assuming for now orthorombic box:
+    // TODO assuming for now orthorombic box:
     // box = {a,0,0,0,b,0,0,0,c)
 
     // Check that nat and first index have the same size
@@ -438,8 +438,6 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc12.insert(std::make_pair(0, 1));
         exc12.insert(std::make_pair(0, 2));
         exc12.insert(std::make_pair(0, 3));
-        //    exc12.insert(std::make_pair(1,3));
-        //    exc12.insert(std::make_pair(2,3));
         // 13 distances
         exc13.insert(std::make_pair(1, 2));
         exc13.insert(std::make_pair(1, 3));
@@ -452,13 +450,16 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b) {
 }
 
 double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
+    // Intermolecular aDD is always 0.055
     double aDD = 0.055;
+    // For water
     if (mon == "h2o") {
         if (is12) {
             aDD = 0.626;
         } else {
             aDD = 0.055;
         }
+    // Any other molecule (as for 01/10/2018)
     } else {
         if (is12 || is13) {
             aDD = 0.3;
@@ -472,8 +473,9 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
 
 std::vector<double> ResetOrder3N(std::vector<double> coords, std::vector<std::pair<size_t, size_t>> original_order,
                                  std::vector<size_t> first_index, std::vector<size_t> sites) {
-
+    // Define new vector
     std::vector<double> new_coords(coords.size());
+    // Loop over monomers in the system, and fill in the right coordinates
     for (size_t i = 0; i < sites.size(); i++) {
         size_t ini = 3 * first_index[i];
         size_t fin = ini + 3 * sites[i];
@@ -486,8 +488,9 @@ std::vector<double> ResetOrder3N(std::vector<double> coords, std::vector<std::pa
 
 std::vector<double> ResetOrderReal3N(std::vector<double> coords, std::vector<std::pair<size_t, size_t>> original_order,
                                      size_t numats, std::vector<size_t> first_index, std::vector<size_t> nats) {
-
+    // Define new vector
     std::vector<double> new_coords(3 * numats);
+    // Loop over monomers in the system, and fill in the right coordinates
     for (size_t i = 0; i < nats.size(); i++) {
         size_t ini = 3 * first_index[i];
         size_t fin = ini + 3 * nats[i];
@@ -749,6 +752,8 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const 
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
                            const std::vector<double> phi, std::vector<double> &grad,
                            const std::vector<double> chg_grad) {
+
+    // If water, extracted from patridge-schwneke paper
     if (mon == "h2o") {
         for (size_t mm = 0; mm < nmon; mm++) {
             const size_t shift = fi_crd + 12 * mm;
