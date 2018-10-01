@@ -357,25 +357,96 @@ std::vector<T> ResetOrderRealN(std::vector<T> vector_T, std::vector<std::pair<si
     return new_vector_T;
 }
 
-// TODO continue documentation here
 /**
  * @brief Calculates the coordinates of the virtual site of a monomer when
  * given the coordinates of the other sites
- * @param[in,out] xyz
+ *
+ * @param[in,out] xyz Vector of doubles with the positions of all sites. 
+ * It needs the real sites set up, and it will fill the virtual sites
+ * (if any)
+ * @param[in] mon_id Id of the monomer
+ * @param[in] n_mon Number of monomers of the type mon_id
+ * @param[in] nsites Number of sites of the type mon_id monomer
+ * @param[in] fst_ind First index of the coordinates of the type monomer mon_id
  */
 void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
-// Calculates the charges of all the sites in a monomer using its xyz
-// coordinates
+/** 
+ * @brief Sets the charges of a system. If there are osition dependent charges, 
+ * it also calculates them.
+ *
+ * Given the xyz of the system, and the first index of the monoemr type we are
+ * filling in teh charges, it will set the vector charges with the (position 
+ * dependent) charges.
+ * @param[in] xyz Coordinates of the system
+ * @param[out] charges Vector with the charges of the monomer type filled.
+ * Can contain charges for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] nsites Number of sites of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[out] chg_der Vector of doubles that will be filled with the charge
+ * gradients of the position dependent charges
+ */
 void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
                 size_t fst_ind, std::vector<double> &chg_der);
+
+/** 
+ * @brief Sets the polarizability factors of a system.
+ *
+ * Given the first index of the monoemr type we are
+ * filling in, it will set the polarizability factors
+ * @param[out] polfac Vector with the polarizability factor of the monomer type filled.
+ * Can contain polarizability factors for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] nsites Number of sites of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ */
 void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
-// FIXME polfac here should not be necessary (we are only setting pols
+
+/** 
+ * @brief Sets the polarizabilities of a system.
+ *
+ * Given the first index of the monoemr type we are
+ * filling in, it will set the polarizabilities
+ * @param[out] pol Vector with the polarizabilities of the monomer type filled.
+ * Can contain polarizabilities for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] nsites Number of sites of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ */
 void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
+/**
+ * @brief Redistributes the virtual site gradients into the real atoms
+ *
+ * Given the gradients of the whole system, it will redistribute the gradients
+ * of the virtual sites (if any) to the corresponding real atoms
+ * @param[in] mon Monomer id
+ * @param[in] nmon Number of monomers of that type
+ * @param[in] fi_crd First index of the coordinates of the first monomer of this type
+ * @param[in,out] grad Gradients of the whole system. At exit, will have 0.0 for
+ * the virtual sites, and the real sites will be modified accordingly.
+ */
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const size_t fi_crd,
                                 std::vector<double> &grad);
 
+/** 
+ * @brief Redistributes the charge gradient into the real gradients.
+ * 
+ * Given the electric field of the system in each site, the charge derivatives
+ * and the real gradients, it updates teh gradients in the real sites to
+ * account for the charge derivatives
+ * @param[in] mon Monomer id
+ * @param[in] nmon Number of monomers of that type
+ * @param[in] fi_crd First index of the coordinates of the first monomer of this type
+ * @param[in] fi_sites First index of the sites of the first monomer of this type
+ * @param[in] phi Electric field of the system in each site
+ * @param[in,out] grad Gradients of the system
+ * @param[in] chg_grad Charge derivatives
+ */
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
                            const std::vector<double> phi, std::vector<double> &grad,
                            const std::vector<double> chg_grad);
