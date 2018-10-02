@@ -2,31 +2,6 @@
 
 namespace systools {
 
-/**
- * @brief TTM4-F M-site position parameter \f$\gamma _M\f$
- * 
- * The position of the M-site is computed by the formula:
- * \f$r^{\alpha} = \gamma _1 O^{\alpha} + \gamma _2 (H_1^{\alpha} + H_2^{\alpha})\f$ 
- * with \f$\alpha = x,y,z \f$
- */
-const double gammaM = 0.426706882;
-
-/**
- * @brief Constant used in M-site calculation
- */
-const double gamma1 = 1.0 - gammaM;
-
-/**
- * @brief Constant used in M-site calculation
- */
-const double gamma2 = gammaM / 2;
-
-/**
- * @brief Constant used in M-site gradient distribution
-
- */
-const double gamma21 = gamma2 / gamma1;
-
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
     std::vector<std::string> &mon, std::vector<size_t> sites, std::vector<size_t> nats,
     std::vector<size_t> &original2current_order, std::vector<std::pair<size_t, size_t>> &original_order,
@@ -113,9 +88,17 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
 
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
                      std::vector<size_t> &fi_at) {
+    // Make sure that mons, sites and nat have the same size and are
+    // not empty
+    if (mon.size() < 1) {
+        std::string text = "Monomer vector cannot be empty.";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
     // Clearing Vectors
     sites.clear();
     nat.clear();
+    fi_at.clear();
 
     size_t count = 0;
     size_t ats = 0;
