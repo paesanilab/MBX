@@ -12,6 +12,8 @@
 
 #include "bblock/system.h"
 
+#define REL_TOL 1E-04
+
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -19,6 +21,28 @@ static std::vector<bblock::System> systems;
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
+
+void CompareVector(std::vector<double> vec_ref, std::vector<double> vec,
+                   std::string test, int &exitcode) {
+  if (vec_ref.size() != vec.size()) {
+    std::cerr << " ** Error ** : " << "Size vectors in test "
+              << test << " do not match: \nRef(" << vec_ref.size()
+              << ") vs. Test(" << vec.size() << ")\n";
+    exitcode = 1;
+    return;
+  }
+
+  for (size_t i = 0; i < vec.size(); i++) {
+    double diff = std::abs(vec_ref[i] - vec[i]);
+    if (diff > REL_TOL) {
+      std::cerr << " ** Error ** : " << " Vector values in test: \" " << test
+                << " \" do not match\n";
+      std::cerr << "vec_ref[" << i << "] = " << vec_ref[i]
+                << " vs. " << "vec[" << i << "] = " << vec[i] << std::endl;
+      exitcode = 1;
+    }
+  }
+}
 
 int main(int argc, char** argv)
 {
@@ -42,55 +66,281 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  std::cout << "M-sites:" << std::endl;
-  std::cout << "	X		Y			Z" << std::endl;
-  for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> xyz = systems[i].GetXyz();
-    std::vector<std::string> at = systems[i].GetAtomNames();
-    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
-      std::cout << std::setprecision(5) << std::scientific
-                << std::setw(8)  << at[j]
-                << std::setw(12);
-      for (size_t k = 0; k < 3; k++) {
-        std::cout << xyz[3*j + i*3*systems[i].GetNumSites()+k] << "	";
-      }
-      std::cout << std::endl;
-    }
-  }
+  // Setting Vector with expected positions of the entire system
+  std::vector<double> xyz_expected = {
+ 1.29053e+00 , 4.40150e+00 ,3.83867e-02,  
+ 1.40062e+00 , 5.02504e+00 ,7.56240e-01,
+ 3.38249e-01 , 4.22779e+00 ,-1.13894e-02,
+ 1.11085e+00 , 4.49747e+00 ,1.80923e-01,
+ 1.27803e+00 , 1.60669e+00 ,2.03625e-01,
+ 1.60463e+00 , 2.51914e+00 ,1.82890e-01,
+ 1.85519e+00 , 1.11079e+00 ,-3.76182e-01,
+ 1.47085e+00 , 1.69556e+00 ,7.54974e-02,
+-1.13520e+00 , 3.01117e+00 ,-3.01867e-02,
+-1.75524e+00 , 2.83899e+00 ,-7.38120e-01,
+-5.23152e-01 , 2.26042e+00 ,-2.52638e-02,
+-1.13690e+00 , 2.81426e+00 ,-1.80176e-01};
 
-  std::cout << "\nCharges:" << std::endl;
-  for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> chg = systems[i].GetCharges();
-    std::vector<std::string> at = systems[i].GetAtomNames();
-    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
-      std::cout << std::setprecision(5) << std::scientific
-                << std::setw(8)  << at[j] 
-                << std::setw(12) << chg[j] << std::endl;      
-    }    
+  // Setting expected charges
+  std::vector<double> chg_expected = {
+    0.00000e+00, 
+    1.05271e+01,
+    1.04991e+01,
+   -2.10262e+01,
+    0.00000e+00,
+    1.05078e+01,
+    1.05370e+01,
+   -2.10448e+01,
+    0.00000e+00,
+    1.05434e+01,
+    1.05161e+01,
+   -2.10595e+01};
+
+  // Setting expected polarizabilities
+  std::vector<double> pol_expected = {
+ 1.31000e+00, 
+ 2.94000e-01,
+ 2.94000e-01,
+ 0.00000e+00,
+ 1.31000e+00,
+ 2.94000e-01,
+ 2.94000e-01,
+ 0.00000e+00,
+ 1.31000e+00,
+ 2.94000e-01,
+ 2.94000e-01,
+ 0.00000e+00};
+
+  // Setting expected polarizability factors
+  std::vector<double> polfac_expected = {
+ 1.31000e+00, 
+ 2.94000e-01,
+ 2.94000e-01,
+ 1.31000e+00,
+ 1.31000e+00,
+ 2.94000e-01,
+ 2.94000e-01,
+ 1.31000e+00,
+ 1.31000e+00,
+ 2.94000e-01,
+ 2.94000e-01,
+ 1.31000e+00};
+
+  int exitcode = 0;
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test M-Sites
+  std::string test = "M-sites";
+
+  // Check that M-sites are the same as expected
+
+  std::vector<double> xyz = systems[0].GetXyz();
+  CompareVector(xyz_expected, xyz, test, exitcode);
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test charges
+  test = "charges";
+
+  std::vector<double> chg = systems[0].GetCharges();
+  CompareVector(chg_expected, chg, test, exitcode);
+  
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test polarizabilities
+  test = "polarizabilities";
+
+  std::vector<double> pol = systems[0].GetPolarizabilities();
+  CompareVector(pol_expected, pol, test, exitcode);
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test polarizability factors
+  test = "polarizability factors";
+
+  std::vector<double> polfac = systems[0].GetPolarizabilityFactors();
+  CompareVector(polfac_expected, polfac, test, exitcode);
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  // Test Systools functions
+  // Prepare a fake system to order and play with
+  
+  std::vector<std::string> mon_input = {"i", "cl", "br", "cl"};
+  std::vector<double> xyz_input = {
+    0.0, 0.0, 0.0, // i
+    0.0, 0.0, 3.0, // cl
+    0.0, 0.0, 6.0, // br
+    0.0, 0.0, 9.0};// cl
+  std::vector<size_t> sites_input = {1,1,1,1};
+  std::vector<size_t> nats_input = {1,1,1,1};
+  std::vector<size_t> first_index_input = {0,1,2,3};
+  size_t nsites_input = 4;
+  size_t natoms_input = 4;
+
+  // Declare also outputs
+  
+  std::vector<std::string> mon = mon_input;  
+  xyz = xyz_input;
+  std::vector<size_t> sites = sites_input;
+  std::vector<size_t> nats = nats_input;
+  std::vector<size_t> first_index = {0,1,2,3};
+
+  std::vector<size_t> original2current;
+  std::vector<std::pair<size_t, size_t>> original_order;
+  std::vector<std::pair<size_t, size_t>> original_order_realSites;
+
+  // And expected outputs
+  std::vector<size_t> original2current_expected = {0, 2, 1, 3};
+  std::vector<std::pair<size_t, size_t>> original_order_expected;
+  std::vector<std::pair<size_t, size_t>> original_order_realSites_expected;
+  std::vector<std::pair<std::string, size_t> > mon_type_num_expected;
+
+  // Fill in expected outputs
+  // original_order
+  original_order_expected.push_back(std::make_pair(0,0));
+  original_order_expected.push_back(std::make_pair(2,2));
+  original_order_expected.push_back(std::make_pair(1,1));
+  original_order_expected.push_back(std::make_pair(3,3));
+
+  // original_order_realsites
+  original_order_realSites_expected.push_back(std::make_pair(0,0));
+  original_order_realSites_expected.push_back(std::make_pair(2,2));
+  original_order_realSites_expected.push_back(std::make_pair(1,1));
+  original_order_realSites_expected.push_back(std::make_pair(3,3));
+
+  // mon_type num
+  mon_type_num_expected.push_back(std::make_pair("i",1));
+  mon_type_num_expected.push_back(std::make_pair("br",1));
+  mon_type_num_expected.push_back(std::make_pair("cl",2));
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  test = "Order Monomers";
+
+  std::vector<std::pair<std::string, size_t> > mon_type_num = 
+    systools::OrderMonomers(mon, sites, nats, original2current, 
+                            original_order, original_order_realSites);
+  
+  if (original2current != original2current_expected) {
+    std::cerr << test << ":: original2current vector does not match" << std::endl;
+    exitcode = 1;
   }
   
-  std::cout << "\nPols: " << std::endl;
-  for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> plfcs = systems[i].GetPolarizabilities();
-    std::vector<std::string> at = systems[i].GetAtomNames();
-    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
-      std::cout << std::setprecision(5) << std::scientific
-                << std::setw(8)  << at[j]
-                << std::setw(12) << plfcs[j] << std::endl;
-    }
-  }
-
-  std::cout << "\nPolfacs: " << std::endl;
-  for (size_t i = 0; i < systems.size(); i++) {
-    std::vector<double> pols = systems[i].GetPolarizabilityFactors();
-    std::vector<std::string> at = systems[i].GetAtomNames();
-    for (size_t j = 0; j < systems[i].GetNumSites(); j++) {
-      std::cout << std::setprecision(5) << std::scientific
-                << std::setw(8)  << at[j]
-                << std::setw(12) << pols[j] << std::endl;
-    }
+  if (original_order != original_order_expected) {
+    std::cerr << test << ":: original_order vector does not match" << std::endl;
+    exitcode = 1;
   }
   
+  if (original_order_realSites != original_order_realSites_expected) {
+    std::cerr << test << ":: original_order_realSites vector does not match" << std::endl;
+    exitcode = 1;
+  }
+  
+  if (mon_type_num != mon_type_num_expected) {
+    std::cerr << test << ":: mon_type_num vector does not match" << std::endl;
+    exitcode = 1;
+  }
 
-  return 0;
+  // Test assertions for this function
+  std::vector<std::string> mon_empty;
+  std::vector<size_t> nats_bad = {1,4};
+  std::vector<size_t> sites_empty;
+
+  // Try empty monomer vector
+  try {
+    exitcode = 1;
+    std::vector<std::pair<std::string, size_t> > mon_type_num_cp =
+    systools::OrderMonomers(mon_empty, sites, nats, original2current,
+                            original_order, original_order_realSites);
+  } catch (CUException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // Try nats not matching mon size
+  try {
+    exitcode = 1;
+    std::vector<std::pair<std::string, size_t> > mon_type_num_cp =
+    systools::OrderMonomers(mon, sites, nats_bad, original2current,
+                            original_order, original_order_realSites);
+  } catch (CUException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // Try sites not matching mon size
+  try {
+    exitcode = 1;
+    std::vector<std::pair<std::string, size_t> > mon_type_num_cp =
+    systools::OrderMonomers(mon, sites_empty, nats, original2current,
+                            original_order, original_order_realSites);
+  } catch (CUException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+  
+  //////////////////////////////////////////////////////////////////////////////
+
+  test = "SetUpMonomers";
+
+  // Function call
+  size_t nsites = systools::SetUpMonomers(mon_input, sites, nats, first_index);
+  
+  if (nsites != nsites_input) {
+    std::cerr << test << ":: nsites do not match: "
+              << "Expected = " << nsites_input << ", found "
+              << nsites << std::endl;
+    exitcode = 1;
+  }
+
+  if (sites != sites_input) {
+    std::cerr << test << ":: sites vector does not match" << std::endl;
+    exitcode = 1;
+  }
+
+  if (nats != nats_input) {
+    std::cerr << test << ":: nats vector does not match" << std::endl;
+    exitcode = 1;
+  }
+
+  if (first_index != first_index_input) {
+    std::cerr << test << ":: first_index vector does not match" << std::endl;
+    exitcode = 1;
+  }
+
+  // Test assertions
+  std::vector<std::string> mon_unknown = {"cl", "monx"};
+  
+  // Try unknown monomer monx
+  try {
+    exitcode = 1;
+    systools::SetUpMonomers(mon_unknown, sites, nats, first_index);
+  } catch (CUException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+
+  // Try empty monomer vector
+  try {
+    exitcode = 1;
+    systools::SetUpMonomers(mon_empty, sites, nats, first_index);
+  } catch (CUException &e) {
+    exitcode = 0;
+    std::cerr << "Error message expected:" << std::endl;
+    std::cerr << e.what() << std::endl;
+  }
+  
+  //////////////////////////////////////////////////////////////////////////////
+  
+  if (exitcode == 0) {
+    std::cout << "All tests passed!\n";
+  }
+
+  return exitcode;
 }
