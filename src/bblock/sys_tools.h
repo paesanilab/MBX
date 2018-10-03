@@ -16,8 +16,8 @@
 #include "tools/constants.h"
 #include "tools/custom_exceptions.h"
 
-/** 
- * @file sys_tools.h 
+/**
+ * @file sys_tools.h
  * @brief Function definitions for system class tools
  */
 
@@ -31,14 +31,39 @@
  */
 namespace systools {
 
-/** 
+/**
+ * @brief TTM4-F M-site position parameter \f$\gamma _M\f$
+ *
+ * The position of the M-site is computed by the formula:
+ * \f$r^{\alpha} = \gamma _1 O^{\alpha} + \gamma _2 (H_1^{\alpha} + H_2^{\alpha})\f$
+ * with \f$\alpha = x,y,z \f$
+ */
+const double gammaM = 0.426706882;
+
+/**
+ * @brief Constant used in M-site calculation
+ */
+const double gamma1 = 1.0 - gammaM;
+
+/**
+ * @brief Constant used in M-site calculation
+ */
+const double gamma2 = gammaM / 2;
+
+/**
+ * @brief Constant used in M-site gradient distribution
+
+ */
+const double gamma21 = gamma2 / gamma1;
+
+/**
  * @brief Orders the monomers into the internal order, putting
  * equivalent monomers one after the otehr one to maximize efficiency.
  *
  * This function will reorder the monomer list in a way that can maximize
  * the efficiency in the parallel loops. It will put all the equivalent
- * monomers together, one after the other one, from less frquent to 
- * more frequent. 
+ * monomers together, one after the other one, from less frquent to
+ * more frequent.
  * @param[in,out] mon List of monomers in the input order that will be
  * cleared and replaced by the list of monomers in the internal order.
  * @param[in] sites Vector of size_t with the number of sites of each
@@ -46,43 +71,40 @@ namespace systools {
  * @param[in] nats Vector of size_t with the number of real sites of each
  * monomer in the input order
  * @param[out] original2current_order This vector will contain the relation
- * between the input order and the interanl order. As an example, 
- * @verbatim  original2current_order[4] @endverbatim 
+ * between the input order and the interanl order. As an example,
+ * @verbatim  original2current_order[4] @endverbatim
  * will contain the position in the internal order of the 5th monomer
  * in the input order
  * @param[out] original_order This vector of pairs contains the input order
- * and the first index in the input order of a given monomer index. 
+ * and the first index in the input order of a given monomer index.
  * In this case, the virtual sites are taken into account. As an example,
  * @verbatim original_order[3].first @endverbatim
  * will contain the index in the input order of the 4th monomer in the
  * internal order, and
- * @verbatim original_order[3].second @endverbatim 
+ * @verbatim original_order[3].second @endverbatim
  * contains the first index of the 4th monomer in the internal order
  * when it was in the input order
  * @param[out] original_order_realSites This vector of pairs contains the input
- * order and the first index in the input order of a given monomer index. 
+ * order and the first index in the input order of a given monomer index.
  * In this case, the virtual sites are not taken into account. As an example,
  * @verbatim original_order_realSites[3].first @endverbatim
  * will contain the index in the input order of the 4th monomer in the
  * internal order, and
- * @verbatim original_order_realSites[3].second @endverbatim 
+ * @verbatim original_order_realSites[3].second @endverbatim
  * contains the first index of the 4th monomer in the internal order
  * when it was in the input order with virtual sites not taken into account
  * @return An ordered vector of pairs. Each pair has the monomer type id
  * in the first place, and the number of that monomer type in the second one.
- * The order inside this vector is from less number of monomers to more 
+ * The order inside this vector is from less number of monomers to more
  * number of monomers.
  */
-std::vector<std::pair<std::string,size_t>> OrderMonomers
-         (std::vector<std::string> &mon,
-          std::vector<size_t> sites,
-          std::vector<size_t> nats,
-          std::vector<size_t> &original2current_order,
-          std::vector<std::pair<size_t,size_t> > &original_order,
-          std::vector<std::pair<size_t,size_t> > &original_order_realSites);
+std::vector<std::pair<std::string, size_t>> OrderMonomers(
+    std::vector<std::string> &mon, std::vector<size_t> sites, std::vector<size_t> nats,
+    std::vector<size_t> &original2current_order, std::vector<std::pair<size_t, size_t>> &original_order,
+    std::vector<std::pair<size_t, size_t>> &original_order_realSites);
 
 /**
- * @brief Function that fills the sites, atoms and first index of 
+ * @brief Function that fills the sites, atoms and first index of
  * the system given the list of monomer ids
  *
  * Given the monomers in an arbitrary order, this function creates the sites,
@@ -92,13 +114,13 @@ std::vector<std::pair<std::string,size_t>> OrderMonomers
  * @param[out] sites Vector with same length as mon than contains the number
  * of sites of the monomers in the same order as the mon vector
  * @param[out] nat Vector with same length as mon than contains the number
- * of atoms of the monomers in the same order as the mon vector 
+ * of atoms of the monomers in the same order as the mon vector
  * @param[out] fi_at Vector with same length as mon than contains the first
  * index of the monomers in the same order as the mon vector
  * @return Total number of sites
  */
-size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
-                     std::vector<size_t> &nat, std::vector<size_t> &fi_at);
+size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
+                     std::vector<size_t> &fi_at);
 
 /**
  * @brief Makes sure that the coordinates of all atoms of the same monomer
@@ -109,18 +131,16 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites,
  * close to the first atom of that monomer.
  * @param[in,out] xyz Vector of doubles with all the monomer coordinates
  * that will be replaced by the fixed monomer coordinates after applying
- * mirror images of the atoms. It will take 
+ * mirror images of the atoms. It will take
  * @param[in] box Vector of 9 component with the 3 vectors of the box
  * @param[in] nat Vector with the number of atoms of each monomer
  * @param[in] first_index Vector with the first index of each monomer
  */
-void FixMonomerCoordinates(std::vector<double> &xyz,
-                           std::vector<double> box,
-                           std::vector<size_t> nat,
-                           std::vector<size_t> first_index);                           
+void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<size_t> nat,
+                           std::vector<size_t> first_index);
 
 /**
- * @brief This function finds the monomer 2 mirror image that is closer to 
+ * @brief This function finds the monomer 2 mirror image that is closer to
  * the monomer 1 image.
  *
  * In periodic boundary conditions, it will look for the image of the monomer
@@ -140,20 +160,18 @@ void FixMonomerCoordinates(std::vector<double> &xyz,
  * the other one. At output, it will be modified so the coordinates
  * of monomer 2 are the closer image to monomer 1.
  */
-void GetCloseDimerImage(std::vector<double> box,
-                        size_t nat1, size_t nat2, size_t nd,
-                        double * xyz1, double * xyz2);
+void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2);
 
 /**
- * @brief This function finds the monomers 2 and 3 mirror image that is 
+ * @brief This function finds the monomers 2 and 3 mirror image that is
  * closer to the monomer 1 image.
  *
  * In periodic boundary conditions, it will look for the image of the monomer
- * in xyz2 and xyz3 that is closer to the monomer in xyz1. 
+ * in xyz2 and xyz3 that is closer to the monomer in xyz1.
  * This function assumes that
  * all monomers in xyz1 are of the same type, and all monomers in xyz2 are
- * also of the same type, and all monomers in xyz3 are 
- * also of the same type. 
+ * also of the same type, and all monomers in xyz3 are
+ * also of the same type.
  * Monomers in xyz1, xyz2, and xyz3 can be of a different type.
  * The monomers in xyz1, xyz2, and xyz3 have to be paired,
  * meaning that monomer 1 in xyz1, monomer 1 in xyz2, and monomer 1
@@ -171,20 +189,19 @@ void GetCloseDimerImage(std::vector<double> box,
  * the other one. At output, it will be modified so the coordinates
  * of monomer 3 are the closer image to monomer 1.
  */
-void GetCloseTrimerImage(std::vector<double> box,
-                        size_t nat1, size_t nat2, size_t nat3, size_t nt,
-                        double * xyz1, double * xyz2, double * xyz3);
+void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nat3, size_t nt, double *xyz1,
+                         double *xyz2, double *xyz3);
 
 /**
  * @brief Gets the dimers and/or trimers of a system in which the first
  * monomer index is between istart and iend (iend not included)
  *
- * Given a vector of doubles with the coordinates of all monomers, 
+ * Given a vector of doubles with the coordinates of all monomers,
  * this function calculates, using a kd-tree, the monomers that are
  * closer to the first one, always inside the cutoff range. This
  * function can also work in PBC, but won't be very efficient for
  * extremely large systems (>8000 monomers)
- * The dimers and trimers will be returned in order, <i,j> and 
+ * The dimers and trimers will be returned in order, <i,j> and
  * <i,j,k> with k > j > i
  * @param[in] n_max Maximum order of the cluster. Implemented for
  * n_max = 2,3. Otherwise will give an error.
@@ -200,20 +217,16 @@ void GetCloseTrimerImage(std::vector<double> box,
  * @param[in] first_index First index of the monomers in the system
  * @param[out] dimers Vector of unsigned integers with the dimers
  * @param[out] trimers Vector of unsigned integers with the trimers
- * @warning The distance between monomers is computed as the distance 
+ * @warning The distance between monomers is computed as the distance
  * between the first atom of both monomers
  */
-void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
-                 size_t nmon, bool use_pbc, 
-                 std::vector<double> box,
-                 std::vector<double> xyz_orig, 
-                 std::vector<size_t> first_index,
-                 std::vector<size_t> &dimers, 
-                 std::vector<size_t> &trimers); 
+void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
+                 std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
+                 std::vector<size_t> &dimers, std::vector<size_t> &trimers);
 
 /**
  * @brief Sets the excluded pairs for a given monomer
- * 
+ *
  * Given the id of a monomer, it will return the excluded pairs at
  * distances 1-2, 1-3 and 1-4. The excluded pairs are given by a set
  * of pairs, in which each pair specifies the two atoms that are
@@ -223,32 +236,28 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend,
  * @param[out] exc13 Set of pairs with the 1-3 excluded atoms
  * @param[out] exc14 Set of pairs with the 1-4 excluded atoms
  */
-void GetExcluded(std::string mon, 
-                 excluded_set_type &exc12,
-                 excluded_set_type &exc13,
-                 excluded_set_type &exc14);
+void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &exc13, excluded_set_type &exc14);
 
 /**
- * @brieh Helper function to compare a pair of an unsigned integer and a
- * double. 
+ * @brief Helper function to compare a pair of an unsigned integer and a
+ * double.
  *
  * Function that compares the pairs used in AddCLusters
  * @param[in] a First pair
  * @param[in] b Second pair
  * @return True if a.second > b.second, False otherwise
  */
-bool ComparePair(std::pair<size_t,double> a, std::pair<size_t,double> b);
+bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b);
 
-/**
- * @brief Helper function that compares the unsigned integer of a pair
- * 
- * This function is used in AddClusters. Not for any other purpose
- * @param[in] a First pair
- * @param[in] b Second pair
- * @return True if a.second > b.second, False otherwise
- */ 
-bool CompareMonomerType(std::pair<std::string,size_t> a,
-                        std::pair<std::string,size_t> b); 
+///**
+// * @brief Helper function that compares the unsigned integer of a pair
+// *
+// * This function is used in AddClusters. Not for any other purpose
+// * @param[in] a First pair
+// * @param[in] b Second pair
+// * @return True if a.second > b.second, False otherwise
+// */
+//bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b);
 
 /**
  * @brief Checks if the pair a,b or b,a is in the excluded set exc
@@ -264,7 +273,7 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
 /**
  * @brief Gets the thole damping for dipole dipole
  *
- * Depending on if the pair is 1-2, 1-3 or 1-4 distance, it returns the 
+ * Depending on if the pair is 1-2, 1-3 or 1-4 distance, it returns the
  * thole damping for dipole-dipole for a given monomer
  * @param[in] is12 Boolean that states if we want the 1-2 damping
  * @param[in] is13 Boolean that states if we want the 1-3 damping
@@ -279,31 +288,29 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon);
  * @brief Reorders a vector of 3N coordinates, where N is the number
  * of sites, from the system order to the input order
  *
- * This function is used to reorder coordinates, dipoles, or 
- * gradients from the system order to the input order. 
+ * This function is used to reorder coordinates, dipoles, or
+ * gradients from the system order to the input order.
  * @param[in] coords Vector of doubles that can be any physical
  * or spatial property that has 3N elements
- * @param[in] original_order Vector of pairs with the input order 
+ * @param[in] original_order Vector of pairs with the input order
  * of the monomers in thesystem order
  * @param[in] first_index Contains the position of the first atom
  * of a monomer in the system atom list
  * @param[in] sites Vector with the number of sites of each monomer
  * @return The reordered vector that includes ALL sites
  */
-std::vector<double> ResetOrder3N(std::vector<double> coords,
-    std::vector<std::pair<size_t,size_t> > original_order, 
-    std::vector<size_t> first_index,
-    std::vector<size_t> sites);
+std::vector<double> ResetOrder3N(std::vector<double> coords, std::vector<std::pair<size_t, size_t>> original_order,
+                                 std::vector<size_t> first_index, std::vector<size_t> sites);
 
 /**
  * @brief Reorders a vector of 3N coordinates, where N is the number
  * of atoms, from the system order to the input order
  *
- * This function is used to reorder coordinates, dipoles, or 
- * gradients from the system order to the input order. 
+ * This function is used to reorder coordinates, dipoles, or
+ * gradients from the system order to the input order.
  * @param[in] coords Vector of doubles that can be any physical
  * or spatial property that has 3N elements
- * @param[in] original_order Vector of pairs with the input order 
+ * @param[in] original_order Vector of pairs with the input order
  * of the monomers in thesystem order
  * @param[in] numats Number of atoms (real atoms) in the system
  * @param[in] first_index Contains the position of the first atom
@@ -311,21 +318,18 @@ std::vector<double> ResetOrder3N(std::vector<double> coords,
  * @param[in] nats Vector with the number of real atoms of each monomer
  * @return The reordered vector that includes only the real sites
  */
-std::vector<double> ResetOrderReal3N(std::vector<double> coords,
-    std::vector<std::pair<size_t,size_t> > original_order,
-    size_t numats,
-    std::vector<size_t> first_index,
-    std::vector<size_t> nats);
+std::vector<double> ResetOrderReal3N(std::vector<double> coords, std::vector<std::pair<size_t, size_t>> original_order,
+                                     size_t numats, std::vector<size_t> first_index, std::vector<size_t> nats);
 
 /**
  * @brief Reorders a vector of N elements, where N is the number
  * of sites, from the system order to the input order
  *
- * This function is used to reorder atom names, charges, pols... 
- * from the system order to the input order. 
- * @param[in] coords Vector that can be any physical property
+ * This function is used to reorder atom names, charges, pols...
+ * from the system order to the input order.
+ * @param[in] vector_T Vector that can be any physical property
  * with N elements
- * @param[in] original_order Vector of pairs with the input order 
+ * @param[in] original_order Vector of pairs with the input order
  * of the monomers in the system order
  * @param[in] first_index Contains the position of the first atom
  * of a monomer in the system atom list
@@ -333,32 +337,29 @@ std::vector<double> ResetOrderReal3N(std::vector<double> coords,
  * @return The reordered vector that includes ALL sites
  */
 template <typename T>
-std::vector<T> ResetOrderN(std::vector<T> vector_T,
-    std::vector<std::pair<size_t,size_t> > original_order,
-    std::vector<size_t> first_index,
-    std::vector<size_t> sites) {
+std::vector<T> ResetOrderN(std::vector<T> vector_T, std::vector<std::pair<size_t, size_t>> original_order,
+                           std::vector<size_t> first_index, std::vector<size_t> sites) {
 
-  std::vector<T> new_vector_T(vector_T.size());
-  for (size_t i = 0; i < sites.size(); i++) {
-    size_t ini = first_index[i];
-    size_t fin = ini + sites[i];
-    size_t ini_orig = original_order[i].second;
-    std::copy(vector_T.begin() + ini, vector_T.begin() + fin,
-              new_vector_T.begin() + ini_orig);
-  }
+    std::vector<T> new_vector_T(vector_T.size());
+    for (size_t i = 0; i < sites.size(); i++) {
+        size_t ini = first_index[i];
+        size_t fin = ini + sites[i];
+        size_t ini_orig = original_order[i].second;
+        std::copy(vector_T.begin() + ini, vector_T.begin() + fin, new_vector_T.begin() + ini_orig);
+    }
 
-  return new_vector_T;
+    return new_vector_T;
 }
 
 /**
  * @brief Reorders a vector of N elements, where N is the number
  * of atoms, from the system order to the input order
  *
- * This function is used to reorder atom names, charges, pols... 
+ * This function is used to reorder atom names, charges, pols...
  * from the system order to the input order.
- * @param[in] coords Vector that can be any physical property
+ * @param[in] vector_T Vector that can be any physical property
  * with N elements
- * @param[in] original_order Vector of pairs with the input order 
+ * @param[in] original_order Vector of pairs with the input order
  * of the monomers in the system order
  * @param[in] numats Number of atoms (real atoms) in the system
  * @param[in] first_index Contains the position of the first atom
@@ -367,51 +368,113 @@ std::vector<T> ResetOrderN(std::vector<T> vector_T,
  * @return The reordered vector that includes only the real sites
  */
 template <typename T>
-std::vector<T> ResetOrderRealN(std::vector<T> vector_T,
-    std::vector<std::pair<size_t,size_t> > original_order,
-    size_t numats,
-    std::vector<size_t> first_index,
-    std::vector<size_t> nats) {
+std::vector<T> ResetOrderRealN(std::vector<T> vector_T, std::vector<std::pair<size_t, size_t>> original_order,
+                               size_t numats, std::vector<size_t> first_index, std::vector<size_t> nats) {
 
-  std::vector<T> new_vector_T(numats);
-  for (size_t i = 0; i < nats.size(); i++) {
-    size_t ini = first_index[i];
-    size_t fin = ini + nats[i];
-    size_t ini_orig = original_order[i].second;
-    std::copy(vector_T.begin() + ini, vector_T.begin() + fin,
-              new_vector_T.begin() + ini_orig);
-  }
+    std::vector<T> new_vector_T(numats);
+    for (size_t i = 0; i < nats.size(); i++) {
+        size_t ini = first_index[i];
+        size_t fin = ini + nats[i];
+        size_t ini_orig = original_order[i].second;
+        std::copy(vector_T.begin() + ini, vector_T.begin() + fin, new_vector_T.begin() + ini_orig);
+    }
 
-  return new_vector_T;
+    return new_vector_T;
 }
 
-// TODO continue documentation here
 /**
  * @brief Calculates the coordinates of the virtual site of a monomer when
  * given the coordinates of the other sites
- * @param[in,out] xyz
+ *
+ * @param[in,out] xyz Vector of doubles with the positions of all sites.
+ * It needs the real sites set up, and it will fill the virtual sites
+ * (if any)
+ * @param[in] mon_id Id of the monomer
+ * @param[in] n_mon Number of monomers of the type mon_id
+ * @param[in] nsites Number of sites of the type mon_id monomer
+ * @param[in] fst_ind First index of the coordinates of the type monomer mon_id
  */
-void SetVSites(std::vector<double> &xyz, std::string mon_id,
-               size_t n_mon, size_t nsites, size_t fst_ind);
+void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
-// Calculates the charges of all the sites in a monomer using its xyz
-// coordinates
-void SetCharges(std::vector<double> xyz, std::vector<double> &charges,
-                std::string mon_id, size_t n_mon, size_t nsites, 
+/**
+ * @brief Sets the charges of a system. If there are osition dependent charges,
+ * it also calculates them.
+ *
+ * Given the xyz of the system, and the first index of the monoemr type we are
+ * filling in teh charges, it will set the vector charges with the (position
+ * dependent) charges.
+ * @param[in] xyz Coordinates of the system
+ * @param[out] charges Vector with the charges of the monomer type filled.
+ * Can contain charges for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] nsites Number of sites of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[out] chg_der Vector of doubles that will be filled with the charge
+ * gradients of the position dependent charges
+ */
+void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
                 size_t fst_ind, std::vector<double> &chg_der);
-void SetPolfac (std::vector<double> &polfac, std::string mon_id,
-                size_t n_mon, size_t nsites, size_t fst_ind);
-// FIXME polfac here should not be necessary (we are only setting pols
-void SetPol (std::vector<double> &pol, 
-             std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
-void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon,
-        const size_t fi_crd, std::vector<double> &grad);
+/**
+ * @brief Sets the polarizability factors of a system.
+ *
+ * Given the first index of the monoemr type we are
+ * filling in, it will set the polarizability factors
+ * @param[out] polfac Vector with the polarizability factor of the monomer type filled.
+ * Can contain polarizability factors for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] nsites Number of sites of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ */
+void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
-void ChargeDerivativeForce(const std::string mon, const size_t nmon,
-        const size_t fi_crd, const size_t fi_sites,
-        const std::vector<double> phi, std::vector<double> &grad,
-        const std::vector<double> chg_grad); 
+/**
+ * @brief Sets the polarizabilities of a system.
+ *
+ * Given the first index of the monoemr type we are
+ * filling in, it will set the polarizabilities
+ * @param[out] pol Vector with the polarizabilities of the monomer type filled.
+ * Can contain polarizabilities for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] nsites Number of sites of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ */
+void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
-} // systools
-#endif // SYS_TOOLS_H
+/**
+ * @brief Redistributes the virtual site gradients into the real atoms
+ *
+ * Given the gradients of the whole system, it will redistribute the gradients
+ * of the virtual sites (if any) to the corresponding real atoms
+ * @param[in] mon Monomer id
+ * @param[in] nmon Number of monomers of that type
+ * @param[in] fi_crd First index of the coordinates of the first monomer of this type
+ * @param[in,out] grad Gradients of the whole system. At exit, will have 0.0 for
+ * the virtual sites, and the real sites will be modified accordingly.
+ */
+void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const size_t fi_crd,
+                                std::vector<double> &grad);
+
+/**
+ * @brief Redistributes the charge gradient into the real gradients.
+ *
+ * Given the electric field of the system in each site, the charge derivatives
+ * and the real gradients, it updates teh gradients in the real sites to
+ * account for the charge derivatives
+ * @param[in] mon Monomer id
+ * @param[in] nmon Number of monomers of that type
+ * @param[in] fi_crd First index of the coordinates of the first monomer of this type
+ * @param[in] fi_sites First index of the sites of the first monomer of this type
+ * @param[in] phi Electric field of the system in each site
+ * @param[in,out] grad Gradients of the system
+ * @param[in] chg_grad Charge derivatives
+ */
+void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
+                           const std::vector<double> phi, std::vector<double> &grad,
+                           const std::vector<double> chg_grad);
+
+}  // systools
+#endif  // SYS_TOOLS_H

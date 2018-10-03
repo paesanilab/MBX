@@ -1,0 +1,3 @@
+ignore:
+  - "src/potential/2b/poly*"
+  - "src/potential/3b/poly*"

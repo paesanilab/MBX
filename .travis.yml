@@ -134,6 +134,7 @@ before_script:
 script:
   - cd tests
   - ./run_tests.sh
+  - cd ../
 
 notifications:
   email: false
