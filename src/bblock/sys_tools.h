@@ -249,15 +249,15 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
  */
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b);
 
-/**
- * @brief Helper function that compares the unsigned integer of a pair
- *
- * This function is used in AddClusters. Not for any other purpose
- * @param[in] a First pair
- * @param[in] b Second pair
- * @return True if a.second > b.second, False otherwise
- */
-bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b);
+///**
+// * @brief Helper function that compares the unsigned integer of a pair
+// *
+// * This function is used in AddClusters. Not for any other purpose
+// * @param[in] a First pair
+// * @param[in] b Second pair
+// * @return True if a.second > b.second, False otherwise
+// */
+//bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b);
 
 /**
  * @brief Checks if the pair a,b or b,a is in the excluded set exc

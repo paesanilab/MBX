@@ -86,6 +86,7 @@ int main(int argc, char **argv) {
                                            1.31000e+00, 2.94000e-01, 2.94000e-01, 1.31000e+00,
                                            1.31000e+00, 2.94000e-01, 2.94000e-01, 1.31000e+00};
 
+    std::vector<double> box = {100.0,0.0,0.0,0.0,100.0,0.0,0.0,0.0,100.0};
     int exitcode = 0;
 
     //////////////////////////////////////////////////////////////////////////////
@@ -296,6 +297,60 @@ int main(int argc, char **argv) {
     }
 
     //////////////////////////////////////////////////////////////////////////////
+
+    test = "FixMonomerCoordinates";
+
+    // Test assertions
+    
+    // Try box size different from 9
+    try {
+        std::vector<double> box_bad(6,10.0);
+        exitcode = 1;
+        systools::FixMonomerCoordinates(xyz,box_bad,nats,first_index);
+    }
+    catch (CUException &e) {
+        exitcode = 0;
+        std::cerr << "Error message expected:" << std::endl;
+        std::cerr << e.what() << std::endl;
+    }
+
+    // Try nats and first index with different size
+    try {
+        exitcode = 1;
+        systools::FixMonomerCoordinates(xyz,box,nats_bad,first_index);
+    }
+    catch (CUException &e) {
+        exitcode = 0;
+        std::cerr << "Error message expected:" << std::endl;
+        std::cerr << e.what() << std::endl;
+    }
+
+    // Try xyz with too few coordinates
+    std::vector<double> xyz_short(11,0.0);
+    try {
+        exitcode = 1;
+        systools::FixMonomerCoordinates(xyz_short,box,nats,first_index);
+    }
+    catch (CUException &e) {
+        exitcode = 0;
+        std::cerr << "Error message expected:" << std::endl;
+        std::cerr << e.what() << std::endl;
+    }
+
+    // Try with actual coordinates. Should go through
+    xyz_short = xyz;
+    try {
+        exitcode = 0;
+        systools::FixMonomerCoordinates(xyz_short,box,nats,first_index);
+    }
+    catch (CUException &e) {
+        std::cerr << "!!!!!Error message NOT expected:" << std::endl;
+        exitcode = 1;
+        std::cerr << e.what() << std::endl;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    
 
     if (exitcode == 0) {
         std::cout << "All tests passed!\n";

@@ -95,6 +95,11 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
+    // Copy vectors in case something goes wrong
+    std::vector<size_t> sites_cp = sites;
+    std::vector<size_t> nat_cp = nat;
+    std::vector<size_t> fi_at_cp = fi_at;
+
     // Clearing Vectors
     sites.clear();
     nat.clear();
@@ -118,6 +123,11 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
         } else {
             // If monomer not found, throw exception
             std::string text = "No data in the dataset for monomer: " + mon[i];
+            // Reset vectors
+            sites = sites_cp;
+            nat = nat_cp; 
+            fi_at = fi_at_cp;
+            // Throw exception
             throw CUException(__func__, __FILE__, __LINE__, text);
         }
 
@@ -134,6 +144,13 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
                            std::vector<size_t> first_index) {
     // TODO assuming for now orthorombic box:
     // box = {a,0,0,0,b,0,0,0,c)
+   
+    // Check that the box has 9 components
+    // Any other size is not acceptable
+    if (box.size() != 9) {
+        std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
 
     // Check that nat and first index have the same size
     if (nat.size() != first_index.size()) {
@@ -279,9 +296,10 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 }
 
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
-bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b) {
-    return a.second < b.second;
-}
+
+//bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b) {
+//    return a.second < b.second;
+//}
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
