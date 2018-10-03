@@ -225,7 +225,6 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
 
 void System::Initialize() {
-
     // If we try to reinitialize the system, we will get an exception
     if (initialized_) {
         std::string text =
@@ -443,7 +442,7 @@ double System::Energy(bool do_grads) {
         SetPolfacs();
     }
 
-// Get the NB contributions
+    // Get the NB contributions
 
 #ifdef TIMING
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -485,7 +484,9 @@ double System::Energy(bool do_grads) {
     energy_ = e1b + e2b + e3b + Eelec;
 
 #ifdef DEBUG
-    std::cerr << "1B = " << e1b << std::endl << "2B = " << e2b << std::endl << "3B = " << e3b << std::endl
+    std::cerr << "1B = " << e1b << std::endl
+              << "2B = " << e2b << std::endl
+              << "3B = " << e3b << std::endl
               << "Elec = " << Eelec << std::endl;
 #endif
 #ifdef TIMING
@@ -524,7 +525,6 @@ double System::OneBodyEnergy(bool do_grads) {
 }
 
 double System::Get1B(bool do_grads) {
-
     // 1B ENERGY
     // Loop overall the monomers and get their energy
     size_t curr_mon_type = 0;
@@ -909,7 +909,6 @@ double System::Get3B(bool do_grads) {
 
             // Check if we are still in the same type of trimer
             if (monomers_[trimers[i]] == m1 && monomers_[trimers[i + 1]] == m2 && monomers_[trimers[i + 2]] == m3) {
-
                 // Push the coordinates
                 for (size_t j = 0; j < 3 * nat_[trimers[i]]; j++) {
                     coord1.push_back(xyz_[3 * first_index_[trimers[i]] + j]);
@@ -1122,6 +1121,6 @@ void System::ResetDipoleHistory() { electrostaticE_.ResetAspcHistory(); }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-}  // Building Block :: System
+}  // namespace bblock
 
 ////////////////////////////////////////////////////////////////////////////////
