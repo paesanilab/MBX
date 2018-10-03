@@ -33,9 +33,9 @@ namespace systools {
 
 /**
  * @brief TTM4-F M-site position parameter \f$\gamma _M\f$
- * 
+ *
  * The position of the M-site is computed by the formula:
- * \f$r^{\alpha} = \gamma _1 O^{\alpha} + \gamma _2 (H_1^{\alpha} + H_2^{\alpha})\f$ 
+ * \f$r^{\alpha} = \gamma _1 O^{\alpha} + \gamma _2 (H_1^{\alpha} + H_2^{\alpha})\f$
  * with \f$\alpha = x,y,z \f$
  */
 const double gammaM = 0.426706882;
@@ -386,7 +386,7 @@ std::vector<T> ResetOrderRealN(std::vector<T> vector_T, std::vector<std::pair<si
  * @brief Calculates the coordinates of the virtual site of a monomer when
  * given the coordinates of the other sites
  *
- * @param[in,out] xyz Vector of doubles with the positions of all sites. 
+ * @param[in,out] xyz Vector of doubles with the positions of all sites.
  * It needs the real sites set up, and it will fill the virtual sites
  * (if any)
  * @param[in] mon_id Id of the monomer
@@ -396,12 +396,12 @@ std::vector<T> ResetOrderRealN(std::vector<T> vector_T, std::vector<std::pair<si
  */
 void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
-/** 
- * @brief Sets the charges of a system. If there are osition dependent charges, 
+/**
+ * @brief Sets the charges of a system. If there are osition dependent charges,
  * it also calculates them.
  *
  * Given the xyz of the system, and the first index of the monoemr type we are
- * filling in teh charges, it will set the vector charges with the (position 
+ * filling in teh charges, it will set the vector charges with the (position
  * dependent) charges.
  * @param[in] xyz Coordinates of the system
  * @param[out] charges Vector with the charges of the monomer type filled.
@@ -416,7 +416,7 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
 void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
                 size_t fst_ind, std::vector<double> &chg_der);
 
-/** 
+/**
  * @brief Sets the polarizability factors of a system.
  *
  * Given the first index of the monoemr type we are
@@ -430,7 +430,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
  */
 void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
-/** 
+/**
  * @brief Sets the polarizabilities of a system.
  *
  * Given the first index of the monoemr type we are
@@ -458,9 +458,9 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const size_t fi_crd,
                                 std::vector<double> &grad);
 
-/** 
+/**
  * @brief Redistributes the charge gradient into the real gradients.
- * 
+ *
  * Given the electric field of the system in each site, the charge derivatives
  * and the real gradients, it updates teh gradients in the real sites to
  * account for the charge derivatives
