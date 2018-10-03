@@ -18,36 +18,35 @@ namespace {
 
 static std::vector<bblock::System> systems;
 
-} // namespace
+}  // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
 
-  if (argc != 3) {
-    std::cerr << "usage: " << argv[0] << " input.nrg output.nrg"
-              << std::endl;
-    return 0;
-  }
-
-//  auto mylg = spdlog::basic_logger_mt("IoTestMain", "CU.log");
-  try {
-    std::ifstream ifs(argv[1]);
-
-    if (!ifs){
-//      mylg->error("could not open the NRG file");
-      throw std::runtime_error("could not open the NRG file");
+    if (argc != 3) {
+        std::cerr << "usage: " << argv[0] << " input.nrg output.nrg" << std::endl;
+        return 0;
     }
 
-    tools::ReadNrg(argv[1], systems);
-  } catch (const std::exception& e) {
-    std::cerr << " ** Error ** : " << e.what() << std::endl;
-    return 1;
-  }
+    //  auto mylg = spdlog::basic_logger_mt("IoTestMain", "CU.log");
+    try {
+        std::ifstream ifs(argv[1]);
 
-  const char* fname = argv[2];
-  tools::WriteNrg(fname,systems);
-  
-  return 0;
+        if (!ifs) {
+            //      mylg->error("could not open the NRG file");
+            throw std::runtime_error("could not open the NRG file");
+        }
+
+        tools::ReadNrg(argv[1], systems);
+    }
+    catch (const std::exception& e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        return 1;
+    }
+
+    const char* fname = argv[2];
+    tools::WriteNrg(fname, systems);
+
+    return 0;
 }
