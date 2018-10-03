@@ -51,7 +51,7 @@ class ElectroTensorShort {
    public:
     ElectroTensorShort() { maxnmon = 0; }
     ElectroTensorShort(size_t n);
-    ~ElectroTensorShort() {};
+    ~ElectroTensorShort(){};
 
     ////////////////////////////////////////////////////////////////////////////////
     // Get tensor alpha ////////////////////////////////////////////////////////////

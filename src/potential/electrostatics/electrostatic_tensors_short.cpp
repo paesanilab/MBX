@@ -10,7 +10,6 @@ void ElectroTensorShort::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_ind
                                      size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
                                      double Ai, double Asqsqi, double aCC, double aCC1_4, double g34, double* ts0_mon1,
                                      double* ts0_mon2, double* ts1_mon1, double* ts1_mon2) {
-
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -96,7 +95,6 @@ void ElectroTensorShort::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_ind
 void ElectroTensorShort::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_index, size_t mon2_index_start,
                                      size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
                                      double Asqsqi, double aDD, size_t nsites, double* ts1, double* ts2) {
-
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;

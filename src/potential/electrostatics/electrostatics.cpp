@@ -15,14 +15,13 @@
 
 namespace elec {
 
-Electrostatics::Electrostatics() {};
+Electrostatics::Electrostatics(){};
 void Electrostatics::Initialize(std::vector<double> &chg, std::vector<double> &chg_grad, std::vector<double> &polfac,
                                 std::vector<double> &pol, std::vector<double> &sys_xyz,
                                 std::vector<std::string> &mon_id, std::vector<size_t> &sites,
                                 std::vector<size_t> &first_ind,
                                 std::vector<std::pair<std::string, size_t>> &mon_type_count, bool do_grads,
                                 double tolerance, size_t maxit, std::string dip_method) {
-
     // Copy System data in electrostatics
     // sys_chg_ = std::vector<double>(chg.begin(),chg.end());
     sys_chg_ = chg;
@@ -150,7 +149,6 @@ void Electrostatics::ReorderData() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void Electrostatics::CalculatePermanentElecField() {
-
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
@@ -196,7 +194,6 @@ void Electrostatics::CalculatePermanentElecField() {
             size_t inmon = i * nmon;
             size_t inmon3 = inmon * 3;
             for (size_t j = i + 1; j < ns; j++) {
-
                 // Continue only if i and j are not bonded
                 bool is12 = systools::IsExcluded(exc12, i, j);
                 bool is13 = systools::IsExcluded(exc13, i, j);
@@ -297,7 +294,6 @@ void Electrostatics::CalculatePermanentElecField() {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
                     for (size_t j = 0; j < ns2; j++) {
-
                         // Check if A = 0 and call the proper field calculation
                         double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
                         double Ai = 0.0;
@@ -730,14 +726,14 @@ void Electrostatics::CalculateDipolesCG() {
         fi_crd += nmon * ns * 3;
     }
 
-// The Matrix is completed. Now proceed to CG algorithm
-// Following algorithm from:
-// https://en.wikipedia.org/wiki/Conjugate_gradient_method
+    // The Matrix is completed. Now proceed to CG algorithm
+    // Following algorithm from:
+    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
-// Initialize for first iteration
-// for (size_t i = 0; i < nsites3; i++) {
-//  mu_[i] *= pol_sqrt_[i];
-//}
+    // Initialize for first iteration
+    // for (size_t i = 0; i < nsites3; i++) {
+    //  mu_[i] *= pol_sqrt_[i];
+    //}
 
 #ifdef DEBUG
     for (size_t i = 0; i < nsites3; i++) {
@@ -775,7 +771,6 @@ void Electrostatics::CalculateDipolesCG() {
     double rvrv = DotProduct(rv, rv);
     double residual = 0.0;
     while (true) {
-
 #ifdef DEBUG
         std::cout << "Iteration: " << iter << std::endl;
 #endif
@@ -829,7 +824,6 @@ void Electrostatics::CalculateDipolesCG() {
 }
 
 void Electrostatics::SetAspcParameters(size_t k) {
-
     k_aspc_ = k;
     b_consts_aspc_ = std::vector<double>(k + 2, 0.0);
     mu_hist_ = std::vector<double>(mu_.size() * (k + 3), 0.0);
@@ -1121,7 +1115,6 @@ void Electrostatics::CalculateDipolesIterative() {
     size_t iter = 0;
 
     while (true) {
-
         double max_eps = 0.0;
         //  Get new dipoles and check max difference
         size_t fi_mon = 0;

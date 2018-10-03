@@ -25,7 +25,6 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
                                                  double Asqsqi, double aCC, double aCC1_4, double g34,
                                                  double *Efqx_mon1, double *Efqy_mon1, double *Efqz_mon1, double *phi1,
                                                  double *phi2, double *Efq2) {
-
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -137,7 +136,6 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1) {
-
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -236,7 +234,6 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
                                              size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i,
                                              size_t site_j, double aDD, double aCD, double Asqsqi, double *grdx,
                                              double *grdy, double *grdz, double *phi1, double *phi2, double *grd2) {
-
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;

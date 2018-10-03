@@ -10,7 +10,6 @@ void ElectroTensor::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_index, s
                                 size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
                                 double Ai, double Asqsqi, double aCC, double aCC1_4, double g34, double* ts0_mon1,
                                 double* ts0_mon2, double* ts1_mon1, double* ts1_mon2) {
-
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -101,7 +100,6 @@ void ElectroTensor::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_index, s
                                 size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
                                 double Asqsqi, double aDD, size_t nsites, double* ts1_mon1, double* ts1_mon2,
                                 double* ts2) {
-
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -177,8 +175,8 @@ void ElectroTensor::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_index, s
         ts2[mon1_index * nsites3 + nmon2 + m] = ts2xy;   // ts2xy
         ts2[mon1_index * nsites3 + nmon22 + m] = ts2xz;  // ts2xz
 
-        ts2[(mon1_index + nmon1) * nsites3 + m] = ts2xy;          // ts2yx
-        ts2[(mon1_index + nmon1) * nsites3 + nmon2 + m] = ts2yy;  // ts2yy
+        ts2[(mon1_index + nmon1) * nsites3 + m] = ts2xy;           // ts2yx
+        ts2[(mon1_index + nmon1) * nsites3 + nmon2 + m] = ts2yy;   // ts2yy
         ts2[(mon1_index + nmon1) * nsites3 + nmon22 + m] = ts2yz;  // ts2yz
 
         ts2[(mon1_index + nmon12) * nsites3 + m] = ts2xz;           // ts2zx
