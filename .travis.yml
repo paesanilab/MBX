@@ -134,6 +134,7 @@ before_script:
 script:
   - cd tests
   - ./run_tests.sh
+  - cd ../
 
 notifications:
   email: false
@@ -142,7 +143,7 @@ after_success:
     # Creating report
   - cd ${TRAVIS_BUILD_DIR}
   - lcov --directory . --capture --output-file coverage.info # capture coverage info
-  - lcov --remove coverage.info '/usr/*' './src/potential/2b/poly*' './src/potential/3b/poly*' --output-file coverage.info # filter out system
+  - lcov --remove coverage.info '/usr/*' "${TRAVIS_BUILD_DIR}/src/potential/2b/poly*" "${TRAVIS_BUILD_DIR}/src/potential/3b/poly*" --output-file coverage.info # filter out system
   - lcov --list coverage.info #debug info
   # Uploading report to CodeCov
   - bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
