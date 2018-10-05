@@ -201,6 +201,20 @@ int main(int argc, char **argv) {
 
     //////////////////////////////////////////////////////////////////////////////
 
+    // Test GetRealAtomNames()
+    
+    test = "GetRealAtomNames()";
+
+    std::vector<std::string> atnames_ref = system_ref.GetRealAtomNames();
+    std::vector<std::string> atnames_read = systems[0].GetRealAtomNames();
+
+    if (atnames_ref != atnames_read) {
+      PrintError(test + std::string(":: RealAtomNames don't match"), exitcode);
+    }
+  
+    
+    //////////////////////////////////////////////////////////////////////////////
+
     // Test GetMonNumAt(n)
     test = "GetMonNumAt(n)";
 
@@ -577,6 +591,23 @@ int main(int argc, char **argv) {
 
     //////////////////////////////////////////////////////////////////////////////
 
+    // Test GetPairList
+
+    test = "GetPairList()";
+
+    // test assertions:
+    try {
+        exitcode = 1;
+        system_ref.GetPairList(5,3.0,0,1);
+    }
+    catch (CUException &e) {
+        exitcode = 0;
+        std::cerr << "Error message expected:" << std::endl;
+        std::cerr << e.what() << std::endl;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+
     // Test SetPBC()
 
     test = "SetPBC(bool,box)";
@@ -660,6 +691,61 @@ int main(int argc, char **argv) {
     }
 
     //////////////////////////////////////////////////////////////////////////////
+
+    // Test energy
+    
+    // Make sure that energy and the sum of the individual terms are the same
+    double energy_ref = system_ref.Energy(true);
+    double energy_read = systems[0].Energy(true);
+
+    double onebody_ref = system_ref.OneBodyEnergy(true);
+    double twobody_ref = system_ref.TwoBodyEnergy(true);
+    double threebody_ref = system_ref.ThreeBodyEnergy(true);
+    double electrostatic_ref = system_ref.Electrostatics(true);
+
+    double onebody_read = systems[0].OneBodyEnergy(true);
+    double twobody_read = systems[0].TwoBodyEnergy(true);
+    double threebody_read = systems[0].ThreeBodyEnergy(true);
+    double electrostatic_read = systems[0].Electrostatics(true);
+   
+    // Compare one body
+    std::string text = " energy does not match for read and reference system";
+    if (std::abs(onebody_ref - onebody_read) > REL_TOL) {
+      std::cerr << "One body " << text << std::endl;
+      exitcode = 1;
+    }
+    
+    if (std::abs(twobody_ref - twobody_read) > REL_TOL) {
+      std::cerr << "Two body " << text << std::endl;
+      exitcode = 1;
+    }
+    
+    if (std::abs(threebody_ref - threebody_read) > REL_TOL) {
+      std::cerr << "Three body " << text << std::endl;
+      exitcode = 1;
+    }
+    
+    if (std::abs(electrostatic_ref - electrostatic_read) > REL_TOL) {
+      std::cerr << "Electrostatic " << text << std::endl;
+      exitcode = 1;
+    }
+
+    double sum_ref = onebody_ref + twobody_ref + threebody_ref + electrostatic_ref;
+    double sum_read = onebody_read+twobody_read+threebody_read+electrostatic_read;
+    
+    text = "Sum of individual terms does not match total energy in ";
+    
+    if (std::abs(energy_ref - sum_ref) > REL_TOL) {
+      std::cerr << text << "reference system" << std::endl;
+      exitcode = 1;
+    }
+
+    if (std::abs(energy_read - sum_read) > REL_TOL) {
+      std::cerr << text << "read system" << std::endl;
+      exitcode = 1;
+    }
+
+  //////////////////////////////////////////////////////////////////////////////
 
     if (exitcode == 0) {
         std::cout << "All tests passed!\n";
