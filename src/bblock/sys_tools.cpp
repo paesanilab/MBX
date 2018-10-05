@@ -1,5 +1,10 @@
 #include "sys_tools.h"
 
+/**
+ * @file sys_tools.cpp
+ * @brief Contains the implementation of all the functions defined in the header.
+ */
+
 namespace systools {
 
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
