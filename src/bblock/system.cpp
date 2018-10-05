@@ -394,9 +394,9 @@ void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend)
     // Throw exception otherwise
     // Commented for now since this functiuon is private and unlikely to
     // be called from the outside
-    //if (nmax != 2 and nmax != 3) {
-    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2 or 3.";
-    //    throw CUException(__func__, __FILE__, __LINE__, text);
+    // if (nmax != 2 and nmax != 3) {
+    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
+    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
     //}
 
     size_t nmon = monomers_.size();
@@ -411,9 +411,9 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
     // Throw exception otherwise
     // Commented for now since this functiuon is private and unlikely to
     // be called from the outside
-    //if (nmax != 2 and nmax != 3) {
-    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2 or 3.";
-    //    throw CUException(__func__, __FILE__, __LINE__, text);
+    // if (nmax != 2 and nmax != 3) {
+    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
+    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
     //}
 
     size_t nmon = monomers_.size();
