@@ -15,10 +15,9 @@
 
 namespace tools {
 
-void WriteNrg(const char * filename, std::vector<bblock::System> systems );
-void SaveNrg(std::ostream & os, std::vector<bblock::System> systems );
+void WriteNrg(const char* filename, std::vector<bblock::System> systems);
+void SaveNrg(std::ostream& os, std::vector<bblock::System> systems);
 
+}  // namespace tools
 
-} // namespace tools
-
-#endif // CU_INCLUDE_TOOLS_WRITENRG_H
+#endif  // CU_INCLUDE_TOOLS_WRITENRG_H
