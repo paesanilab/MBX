@@ -649,7 +649,7 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw) {
 //}
 //
 void dms_nasa(const double& RESTRICT dms_param1, const double& RESTRICT dms_param2, const double& RESTRICT dms_param3,
-              const double* RESTRICT rr, double* RESTRICT q3, double* RESTRICT dq3, bool ttm3) {
+              const double* RESTRICT rr, double* RESTRICT q3, double* RESTRICT dq3, bool ttm3 = false) {
     const double ath0 = 1.82400520401572996557;
     const double costhe = -0.24780227221366464506;
 
