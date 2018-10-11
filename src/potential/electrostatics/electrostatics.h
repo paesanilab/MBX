@@ -26,20 +26,20 @@ namespace elec {
 class Electrostatics {
    public:
     Electrostatics();
-    void Initialize(std::vector<double> &chg, std::vector<double> &chg_grad, std::vector<double> &polfac,
-                    std::vector<double> &pol, std::vector<double> &sys_xyz, std::vector<std::string> &mon_id,
-                    std::vector<size_t> &sites, std::vector<size_t> &first_ind,
-                    std::vector<std::pair<std::string, size_t> > &mon_type_count, bool do_grads = true,
-                    double tolerance = 1E-16, size_t maxit = 100, std::string dip_method = "iter",
-                    std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0},
-                    bool use_pbc = false);
+    void Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad, const std::vector<double> &polfac,
+                    const std::vector<double> &pol, const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
+                    const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
+                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads = true,
+                    const double tolerance = 1E-16, const size_t maxit = 100, const std::string dip_method = "iter",
+                    const std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0},
+                    const bool use_pbc = false);
 
     double GetElectrostatics(std::vector<double> &grad);
 
     void ResetAspcHistory();
-    void SetXyzChgPolPolfac(std::vector<double> &xyz, std::vector<double> &chg, std::vector<double> &chggrad,
-                            std::vector<double> &pol, std::vector<double> &polfac, std::string dip_method,
-                            bool do_grads, std::vector<double> box, bool use_pbc);
+    void SetXyzChgPolPolfac(const std::vector<double> &xyz, const std::vector<double> &chg, const std::vector<double> &chggrad,
+                            const std::vector<double> &pol, const std::vector<double> &polfac, const std::string dip_method,
+                            const bool do_grads, const std::vector<double> box, bool use_pbc);
 
    private:
     void CalculatePermanentElecField();

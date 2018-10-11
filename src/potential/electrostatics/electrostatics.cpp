@@ -16,13 +16,13 @@
 namespace elec {
 
 Electrostatics::Electrostatics(){};
-void Electrostatics::Initialize(std::vector<double> &chg, std::vector<double> &chg_grad, std::vector<double> &polfac,
-                                std::vector<double> &pol, std::vector<double> &sys_xyz,
-                                std::vector<std::string> &mon_id, std::vector<size_t> &sites,
-                                std::vector<size_t> &first_ind,
-                                std::vector<std::pair<std::string, size_t>> &mon_type_count, bool do_grads,
-                                double tolerance, size_t maxit, std::string dip_method, std::vector<double> box,
-                                bool use_pbc) {
+void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad, const std::vector<double> &polfac,
+                                const std::vector<double> &pol, const std::vector<double> &sys_xyz,
+                                const std::vector<std::string> &mon_id, const std::vector<size_t> &sites,
+                                const std::vector<size_t> &first_ind,
+                                const std::vector<std::pair<std::string, size_t>> &mon_type_count, const bool do_grads,
+                                const double tolerance, const size_t maxit, const std::string dip_method, const std::vector<double> box,
+                                const bool use_pbc) {
     // Copy System data in electrostatics
     // sys_chg_ = std::vector<double>(chg.begin(),chg.end());
     sys_chg_ = chg;
@@ -73,10 +73,10 @@ void Electrostatics::Initialize(std::vector<double> &chg, std::vector<double> &c
     ReorderData();
 }
 
-void Electrostatics::SetXyzChgPolPolfac(std::vector<double> &xyz, std::vector<double> &chg,
-                                        std::vector<double> &chggrad, std::vector<double> &pol,
-                                        std::vector<double> &polfac, std::string dip_method, bool do_grads,
-                                        std::vector<double> box, bool use_pbc) {
+void Electrostatics::SetXyzChgPolPolfac(const std::vector<double> &xyz, const std::vector<double> &chg,
+                                        const std::vector<double> &chggrad, const std::vector<double> &pol,
+                                        const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
+                                        const std::vector<double> box, const bool use_pbc) {
     sys_chg_ = chg;
     sys_chg_grad_ = chggrad;
     polfac_ = polfac;
