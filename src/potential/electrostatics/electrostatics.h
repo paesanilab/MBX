@@ -30,7 +30,8 @@ class Electrostatics {
                     std::vector<double> &pol, std::vector<double> &sys_xyz, std::vector<std::string> &mon_id,
                     std::vector<size_t> &sites, std::vector<size_t> &first_ind,
                     std::vector<std::pair<std::string, size_t> > &mon_type_count, bool do_grads = true,
-                    double tolerance = 1E-16, size_t maxit = 100, std::string dip_method = "iter");
+                    double tolerance = 1E-16, size_t maxit = 100, std::string dip_method = "iter",
+                    std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0});
 
     double GetElectrostatics(std::vector<double> &grad);
 
@@ -135,6 +136,8 @@ class Electrostatics {
     double Eind_;
     // Method for dipoles (ITERative, Conjugate Gradient, ASPC, INVersion)
     std::string dip_method_;
+    // box of the system
+    std::vector<double> box_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
