@@ -22,7 +22,6 @@ static std::vector<bblock::System> systems;
 ////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
-
     if (argc != 2) {
         std::cerr << "usage: energy h2o_ion.nrg" << std::endl;
         return 0;
@@ -36,8 +35,7 @@ int main(int argc, char** argv) {
         }
 
         tools::ReadNrg(argv[1], systems);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << " ** Error ** : " << e.what() << std::endl;
         return 1;
     }
@@ -109,10 +107,10 @@ int main(int argc, char** argv) {
                   << " milliseconds\n";
         std::cout << "3B:(grad) " << std::chrono::duration_cast<std::chrono::milliseconds>(t11 - t10).count()
                   << " milliseconds\n";
-        std::cout << "Get and set 2b clusters: " << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11)
-                                                        .count() << " milliseconds\n";
-        std::cout << "Get and set 3b clusters: " << std::chrono::duration_cast<std::chrono::milliseconds>(t13 - t12)
-                                                        .count() << " milliseconds\n";
+        std::cout << "Get and set 2b clusters: "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(t12 - t11).count() << " milliseconds\n";
+        std::cout << "Get and set 3b clusters: "
+                  << std::chrono::duration_cast<std::chrono::milliseconds>(t13 - t12).count() << " milliseconds\n";
         std::cout << "Electrostatics:(nograd) "
                   << std::chrono::duration_cast<std::chrono::milliseconds>(t14 - t13).count() << " milliseconds\n";
         std::cout << "Electrostatics:(grad) "

@@ -44,7 +44,6 @@ void CompareVector(std::vector<double> vec_ref, std::vector<double> vec, std::st
 }
 
 int main(int argc, char **argv) {
-
     if (argc != 2) {
         std::cerr << "usage: " << argv[0] << " input.nrg" << std::endl;
         return 0;
@@ -58,8 +57,7 @@ int main(int argc, char **argv) {
         }
 
         tools::ReadNrg(argv[1], systems);
-    }
-    catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         std::cerr << " ** Error ** : " << e.what() << std::endl;
         return 1;
     }
@@ -86,7 +84,7 @@ int main(int argc, char **argv) {
                                            1.31000e+00, 2.94000e-01, 2.94000e-01, 1.31000e+00,
                                            1.31000e+00, 2.94000e-01, 2.94000e-01, 1.31000e+00};
 
-    std::vector<double> box = {100.0,0.0,0.0,0.0,100.0,0.0,0.0,0.0,100.0};
+    std::vector<double> box = {100.0, 0.0, 0.0, 0.0, 100.0, 0.0, 0.0, 0.0, 100.0};
     int exitcode = 0;
 
     //////////////////////////////////////////////////////////////////////////////
@@ -212,8 +210,7 @@ int main(int argc, char **argv) {
         exitcode = 1;
         std::vector<std::pair<std::string, size_t>> mon_type_num_cp =
             systools::OrderMonomers(mon_empty, sites, nats, original2current, original_order, original_order_realSites);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -224,8 +221,7 @@ int main(int argc, char **argv) {
         exitcode = 1;
         std::vector<std::pair<std::string, size_t>> mon_type_num_cp =
             systools::OrderMonomers(mon, sites, nats_bad, original2current, original_order, original_order_realSites);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -236,8 +232,7 @@ int main(int argc, char **argv) {
         exitcode = 1;
         std::vector<std::pair<std::string, size_t>> mon_type_num_cp =
             systools::OrderMonomers(mon, sites_empty, nats, original2current, original_order, original_order_realSites);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -278,8 +273,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         systools::SetUpMonomers(mon_unknown, sites, nats, first_index);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -289,8 +283,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         systools::SetUpMonomers(mon_empty, sites, nats, first_index);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -301,14 +294,13 @@ int main(int argc, char **argv) {
     test = "FixMonomerCoordinates";
 
     // Test assertions
-    
+
     // Try box size different from 9
     try {
-        std::vector<double> box_bad(6,10.0);
+        std::vector<double> box_bad(6, 10.0);
         exitcode = 1;
-        systools::FixMonomerCoordinates(xyz,box_bad,nats,first_index);
-    }
-    catch (CUException &e) {
+        systools::FixMonomerCoordinates(xyz, box_bad, nats, first_index);
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -317,21 +309,19 @@ int main(int argc, char **argv) {
     // Try nats and first index with different size
     try {
         exitcode = 1;
-        systools::FixMonomerCoordinates(xyz,box,nats_bad,first_index);
-    }
-    catch (CUException &e) {
+        systools::FixMonomerCoordinates(xyz, box, nats_bad, first_index);
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
     }
 
     // Try xyz with too few coordinates
-    std::vector<double> xyz_short(11,0.0);
+    std::vector<double> xyz_short(11, 0.0);
     try {
         exitcode = 1;
-        systools::FixMonomerCoordinates(xyz_short,box,nats,first_index);
-    }
-    catch (CUException &e) {
+        systools::FixMonomerCoordinates(xyz_short, box, nats, first_index);
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -341,16 +331,14 @@ int main(int argc, char **argv) {
     xyz_short = xyz;
     try {
         exitcode = 0;
-        systools::FixMonomerCoordinates(xyz_short,box,nats,first_index);
-    }
-    catch (CUException &e) {
+        systools::FixMonomerCoordinates(xyz_short, box, nats, first_index);
+    } catch (CUException &e) {
         std::cerr << "!!!!!Error message NOT expected:" << std::endl;
         exitcode = 1;
         std::cerr << e.what() << std::endl;
     }
 
     //////////////////////////////////////////////////////////////////////////////
-    
 
     if (exitcode == 0) {
         std::cout << "All tests passed!\n";

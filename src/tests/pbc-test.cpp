@@ -24,7 +24,6 @@ static std::vector<bblock::System> systems;
 ////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
-
     if (argc != 2) {
         std::cerr << "usage: energy h2o_ion.nrg" << std::endl;
         return 0;
@@ -38,8 +37,7 @@ int main(int argc, char** argv) {
         }
 
         tools::ReadNrg(argv[1], systems);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << " ** Error ** : " << e.what() << std::endl;
         return 1;
     }

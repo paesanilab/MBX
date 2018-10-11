@@ -23,7 +23,6 @@ static std::vector<bblock::System> systems;
 ////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
-
     if (argc != 2) {
         std::cerr << "usage: energy h2o_ion.nrg" << std::endl;
         return 0;
@@ -37,8 +36,7 @@ int main(int argc, char** argv) {
         }
 
         tools::ReadNrg(argv[1], systems);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << " ** Error ** : " << e.what() << std::endl;
         return 1;
     }
@@ -60,7 +58,8 @@ int main(int argc, char** argv) {
 
         std::cout << std::setprecision(5) << std::scientific << "system[" << std::setfill('.') << std::setw(5) << i
                   << "]= " << std::setfill(' ') << std::setw(20) << std::right << energy << std::setw(12) << std::right
-                  << " kcal/mol" << std::endl << std::endl;
+                  << " kcal/mol" << std::endl
+                  << std::endl;
 #ifdef PRINT_GRADS
 
         std::vector<std::string> atn = systems[i].GetAtomNames();
@@ -76,9 +75,9 @@ int main(int argc, char** argv) {
                       << std::right << grd[3 * j + 2] << std::endl;
         }
 #ifdef NUM_GRADS
-        std::cout << std::endl << std::setw(6) << std::left << "Atom" << std::setw(20) << std::right << "Analytical"
-                  << std::setw(20) << std::right << "Numerical" << std::setw(20) << std::right << "Difference"
-                  << std::endl;
+        std::cout << std::endl
+                  << std::setw(6) << std::left << "Atom" << std::setw(20) << std::right << "Analytical" << std::setw(20)
+                  << std::right << "Numerical" << std::setw(20) << std::right << "Difference" << std::endl;
         // Comparing analytical and numerical
         std::vector<double> xyz;
         xyz = systems[i].GetOriginalOrderSysXyz();
