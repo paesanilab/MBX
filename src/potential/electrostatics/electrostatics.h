@@ -22,24 +22,105 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * @file electrostatics.h
+ * @brief Contains the electrostatics class declaration, along
+ * with all its member functions and variables.
+ */
+
+/**
+ * @namespace elec
+ * @brief Namespace that includes all the electrostatic related functions
+ * and classes
+ */
 namespace elec {
+
 class Electrostatics {
    public:
+    /**
+     * @brief Default constructor of the class. Does nothing.
+     */
     Electrostatics();
-    void Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad, const std::vector<double> &polfac,
-                    const std::vector<double> &pol, const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
+
+    /**
+     * @brief Initializes the electrostatics class with the system information
+     *
+     * Given the information of the system, such as charges, coordinates,
+     * polarizabilities, ... of the system, it initializes the class,
+     * reordering in the proper way the variables that need to be reordered.
+     * @param[in] chg Charges of the system
+     * @param[in] chg_grad Charge gradients previously obtained when
+     * the charges were set in the system
+     * @param[in] polfac Vector of polarizability factors of all atoms the system
+     * @param[in] pol Vector of polarizabilities of all atoms the system
+     * @param[in] sys_xyz Vector of coordinates of all atoms of the system
+     * @param[in] mon_id Vector with the id of all the monomers in the system
+     * @param[in] sites Vector with the number of sites of all monomers int he system
+     * @param[in] first_ind Vector with the index in the atom list of the
+     * first atom of each monomer
+     * @param[in] mon_type_count Vector of pairs. First is the id, second is
+     * the number of monomers of that id.
+     * @param[in] do_grads If true, grads will be computed
+     * @param[in] tolerance Maximum error per dipole to assume convergence in
+     * iterative methods
+     * @param[in] maxit Maximum number of iterations of the dipole calculation
+     * @param[in] dip_method Method to use to compute the dipoles
+     * @param[in] box Vector of 9 components with the box. The elements are:
+     * {v1x,v1y,v1z,v2x,v2y,v2z,v3x,v3y,v3z} where v1, v2, and v3 are the
+     * trhee main vectors of the box
+     * @param[in] use_pbc Boolean specifying if PBC are going to be used or not
+     */
+    void Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
+                    const std::vector<double> &polfac, const std::vector<double> &pol,
+                    const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads = true,
                     const double tolerance = 1E-16, const size_t maxit = 100, const std::string dip_method = "iter",
-                    const std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0},
+                    const std::vector<double> &box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0},
                     const bool use_pbc = false);
 
+    /**
+     * @brief Gets the electrostatic energy
+     *
+     * Once the system has been initialized, computes the electrostatic energy
+     * of the system.
+     * @param[out] grad Gradients will be saved here
+     * @return Total electrostatic energy
+     */
     double GetElectrostatics(std::vector<double> &grad);
 
+    /**
+     * @brief Clears the ASPC history
+     *
+     * If ASPC is not being used, will reset the dipole history anyways.
+     * It basically clears out the dipole history vector. Then it is forced to
+     * recalculate the dipoles iteratively to get a new history.
+     */
     void ResetAspcHistory();
-    void SetXyzChgPolPolfac(const std::vector<double> &xyz, const std::vector<double> &chg, const std::vector<double> &chggrad,
-                            const std::vector<double> &pol, const std::vector<double> &polfac, const std::string dip_method,
-                            const bool do_grads, const std::vector<double> box, bool use_pbc);
+
+    /**
+     * @brief "Reinitializes" the electrostatics class.
+     *
+     * If the system changes (coordinates, charges, and so on) it is
+     * needed to reenter the information to the system, and it is done
+     * with this function.
+     * @param[in] xyz Vector of coordinates of all atoms of the system
+     * @param[in] chg Charges of the system
+     * @param[in] chg_grad Charge gradients previously obtained when
+     * the charges were set in the system
+     * @param[in] pol Vector of polarizabilities of all atoms the system
+     * @param[in] polfac Vector of polarizability factors of all atoms the system
+     * @param[in] dip_method Method to use to compute the dipoles
+     * @param[in] do_grads If true, grads will be computed
+     * @param[in] box Vector of 9 components with the box. The elements are:
+     * {v1x,v1y,v1z,v2x,v2y,v2z,v3x,v3y,v3z} where v1, v2, and v3 are the
+     * trhee main vectors of the box
+     * @param[in] use_pbc Boolean specifying if PBC are going to be used or not
+     */
+    void SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
+                          const std::vector<double> &chg_grad, const std::vector<double> &pol,
+                          const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
+                          const std::vector<double> box, bool use_pbc);
 
    private:
     void CalculatePermanentElecField();

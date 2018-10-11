@@ -16,13 +16,13 @@
 namespace elec {
 
 Electrostatics::Electrostatics(){};
-void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad, const std::vector<double> &polfac,
-                                const std::vector<double> &pol, const std::vector<double> &sys_xyz,
-                                const std::vector<std::string> &mon_id, const std::vector<size_t> &sites,
-                                const std::vector<size_t> &first_ind,
+void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
+                                const std::vector<double> &polfac, const std::vector<double> &pol,
+                                const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
+                                const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                                 const std::vector<std::pair<std::string, size_t>> &mon_type_count, const bool do_grads,
-                                const double tolerance, const size_t maxit, const std::string dip_method, const std::vector<double> box,
-                                const bool use_pbc) {
+                                const double tolerance, const size_t maxit, const std::string dip_method,
+                                const std::vector<double> &box, const bool use_pbc) {
     // Copy System data in electrostatics
     // sys_chg_ = std::vector<double>(chg.begin(),chg.end());
     sys_chg_ = chg;
@@ -73,12 +73,12 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     ReorderData();
 }
 
-void Electrostatics::SetXyzChgPolPolfac(const std::vector<double> &xyz, const std::vector<double> &chg,
-                                        const std::vector<double> &chggrad, const std::vector<double> &pol,
-                                        const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
-                                        const std::vector<double> box, const bool use_pbc) {
+void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
+                                      const std::vector<double> &chg_grad, const std::vector<double> &pol,
+                                      const std::vector<double> &polfac, const std::string dip_method,
+                                      const bool do_grads, const std::vector<double> box, const bool use_pbc) {
     sys_chg_ = chg;
-    sys_chg_grad_ = chggrad;
+    sys_chg_grad_ = chg_grad;
     polfac_ = polfac;
     pol_ = pol;
     sys_xyz_ = xyz;
@@ -119,9 +119,15 @@ void Electrostatics::ReorderData() {
     // POL_SQRT will be organized as charges, but three copies of each
     // and square rooted
 
-    // Organize xyz so we have x1_1 x1_2 ... y1_1 y1_2...
+    // Organize xyz so we have
+    // x1_1 x1_2 ... y1_1 y1_2... z1_1 z1_2 ... x2_1 x2_2 ...
     // where xN_M is read as coordinate x of site N of monomer M
     // for the first monomer type. Then follows the second, and so on.
+    // As an example, for a water dimer (OHHM), the system xyz would be
+    // sys_xyz = {Ox, Oy, Oz, Hx, Hy, Hz, Hx, Hy, ...}
+    // And after reordering,
+    // xyz = {Ox, Ox, Oy, Oy, Oz, Oz, Hx, Hx, Hy, Hy, Hz, Hz, Hx, Hx, ... ...}
+
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
