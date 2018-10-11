@@ -257,7 +257,7 @@ bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b);
 // * @param[in] b Second pair
 // * @return True if a.second > b.second, False otherwise
 // */
-//bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b);
+// bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b);
 
 /**
  * @brief Checks if the pair a,b or b,a is in the excluded set exc
@@ -339,7 +339,6 @@ std::vector<double> ResetOrderReal3N(std::vector<double> coords, std::vector<std
 template <typename T>
 std::vector<T> ResetOrderN(std::vector<T> vector_T, std::vector<std::pair<size_t, size_t>> original_order,
                            std::vector<size_t> first_index, std::vector<size_t> sites) {
-
     std::vector<T> new_vector_T(vector_T.size());
     for (size_t i = 0; i < sites.size(); i++) {
         size_t ini = first_index[i];
@@ -370,7 +369,6 @@ std::vector<T> ResetOrderN(std::vector<T> vector_T, std::vector<std::pair<size_t
 template <typename T>
 std::vector<T> ResetOrderRealN(std::vector<T> vector_T, std::vector<std::pair<size_t, size_t>> original_order,
                                size_t numats, std::vector<size_t> first_index, std::vector<size_t> nats) {
-
     std::vector<T> new_vector_T(numats);
     for (size_t i = 0; i < nats.size(); i++) {
         size_t ini = first_index[i];
@@ -476,5 +474,5 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                            const std::vector<double> phi, std::vector<double> &grad,
                            const std::vector<double> chg_grad);
 
-}  // systools
+}  // namespace systools
 #endif  // SYS_TOOLS_H

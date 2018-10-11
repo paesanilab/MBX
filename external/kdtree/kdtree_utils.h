@@ -26,6 +26,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *************************************************************************/
 
+ /*************************************************************************
+  * This software was modified by Marc Riera (mrierari@ucsd,edu) to be
+  * adapted to our software.
+  ************************************************************************/
+
+
 #ifndef KDTREE_UTILS_H
 #define KDTREE_UTILS_H
 

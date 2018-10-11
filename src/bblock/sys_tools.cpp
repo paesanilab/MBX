@@ -1,5 +1,10 @@
 #include "sys_tools.h"
 
+/**
+ * @file sys_tools.cpp
+ * @brief Contains the implementation of all the functions defined in the header.
+ */
+
 namespace systools {
 
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
@@ -125,7 +130,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             std::string text = "No data in the dataset for monomer: " + mon[i];
             // Reset vectors
             sites = sites_cp;
-            nat = nat_cp; 
+            nat = nat_cp;
             fi_at = fi_at_cp;
             // Throw exception
             throw CUException(__func__, __FILE__, __LINE__, text);
@@ -144,7 +149,7 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
                            std::vector<size_t> first_index) {
     // TODO assuming for now orthorombic box:
     // box = {a,0,0,0,b,0,0,0,c)
-   
+
     // Check that the box has 9 components
     // Any other size is not acceptable
     if (box.size() != 9) {
@@ -209,7 +214,6 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
 }
 
 void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2) {
-
     size_t shift1 = 0;
     size_t shift2 = 0;
     size_t coords1 = 3 * nat1;
@@ -243,7 +247,6 @@ void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_
 
 void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nat3, size_t nt, double *xyz1,
                          double *xyz2, double *xyz3) {
-
     size_t shift1 = 0;
     size_t shift2 = 0;
     size_t shift3 = 0;
@@ -297,14 +300,13 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
-//bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b) {
+// bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b) {
 //    return a.second < b.second;
 //}
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
                  std::vector<size_t> &dimers, std::vector<size_t> &trimers) {
-
     // istart is the monomer position for which we will look all dimers and
     // trimers that contain it. iend is the last monomer position.
     // This means, if istart is 0 and iend is 2, we will look for all dimers
@@ -331,7 +333,8 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
 
     // Build the tree
     typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                kdtutils::PointCloud<double>, 3 /* dim */> my_kd_tree_t;
+                                                kdtutils::PointCloud<double>, 3 /* dim */>
+        my_kd_tree_t;
     my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
     index.buildIndex();
 
@@ -375,7 +378,6 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                 if (n_max > 2) {
                     std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> ret;
                     for (size_t k = 0; k < nMatches; k++) {
-
                         if (ret_matches[k].first > ret_matches[j].first) {
                             ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
                             if (ret.second) {
@@ -428,7 +430,6 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
 }
 
 void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &exc13, excluded_set_type &exc14) {
-
     // Clearing excluded pairs just in case
     exc12.clear();
     exc13.clear();
@@ -503,11 +504,9 @@ std::vector<double> ResetOrderReal3N(std::vector<double> coords, std::vector<std
 }
 
 void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind) {
-
     size_t fstind_3 = 3 * fst_ind;
 
     if (mon_id == "h2o") {
-
         // Some useful constants
         size_t nmns = n_mon * 3;
         size_t nmns2 = nmns * 2;
@@ -550,7 +549,6 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
 
 void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
                 size_t fst_ind, std::vector<double> &chg_der) {
-
     // Constant that calculates charge
     const double CHARGECON = constants::CHARGECON;
 
@@ -569,7 +567,6 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
         // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
-
         // chgtmp = M, H1, H2 according to ttm4.cpp
         std::vector<double> chgtmp;
         size_t fstind_3 = 3 * fst_ind;
@@ -578,7 +575,6 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
         // Calculate individual monomer's charges
         for (size_t nv = 0; nv < n_mon; nv++) {
-
             size_t ns3 = nsites * 3;
             size_t shift = 27 * nv;
 
@@ -636,7 +632,6 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 }
 
 void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind) {
-
     // Halides
     if (mon_id == "f") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.4669;
@@ -660,7 +655,6 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.3660;
     } else if (mon_id == "h2o") {
-
         // Creating vector with contiguous data
         std::vector<double> polfac2(n_mon * nsites, 0.0);
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -686,7 +680,6 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
 }
 
 void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind) {
-
     // Halides
     if (mon_id == "f") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.4669;
@@ -710,7 +703,6 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
     } else if (mon_id == "h2o") {
-
         // Creating vector with contiguous data
         std::vector<double> pol2(n_mon * nsites, 0.0);
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -736,7 +728,6 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
 // Assuming for now xyzxyzxyz...
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const size_t fi_crd,
                                 std::vector<double> &grad) {
-
     if (mon == "h2o") {
         for (size_t i = 0; i < nmon; i++) {
             const size_t shift = fi_crd + i * 4 * 3;
@@ -753,7 +744,6 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const 
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
                            const std::vector<double> phi, std::vector<double> &grad,
                            const std::vector<double> chg_grad) {
-
     // If water, extracted from patridge-schwneke paper
     if (mon == "h2o") {
         for (size_t mm = 0; mm < nmon; mm++) {
@@ -804,4 +794,4 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
     }
 }
 
-}  // systools
+}  // namespace systools

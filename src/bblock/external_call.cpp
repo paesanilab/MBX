@@ -2,7 +2,6 @@
 
 extern "C" {
 void energyf90_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* pot) {
-
     bblock::System s;
     int count = 0;
     for (int i = 0; i < *nmon; i++) {
@@ -23,7 +22,6 @@ void energyf90_(double* coords, int* nat_monomers, char at_names[][5], char mono
 
 void energyf90g_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* grad,
                  double* pot) {
-
     bblock::System s;
     int count = 0;
     for (int i = 0; i < *nmon; i++) {

@@ -225,7 +225,6 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
 
 void System::Initialize() {
-
     // If we try to reinitialize the system, we will get an exception
     if (initialized_) {
         std::string text =
@@ -393,10 +392,12 @@ void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend)
 
     // Make sure that nmax is 2 or 3
     // Throw exception otherwise
-    if (nmax != 2 and nmax != 3) {
-        std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2 or 3.";
-        throw CUException(__func__, __FILE__, __LINE__, text);
-    }
+    // Commented for now since this functiuon is private and unlikely to
+    // be called from the outside
+    // if (nmax != 2 and nmax != 3) {
+    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
+    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
+    //}
 
     size_t nmon = monomers_.size();
     systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, dimers_, trimers_);
@@ -408,10 +409,12 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
 
     // Make sure that nmax is 2 or 3
     // Throw exception otherwise
-    if (nmax != 2 and nmax != 3) {
-        std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2 or 3.";
-        throw CUException(__func__, __FILE__, __LINE__, text);
-    }
+    // Commented for now since this functiuon is private and unlikely to
+    // be called from the outside
+    // if (nmax != 2 and nmax != 3) {
+    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
+    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
+    //}
 
     size_t nmon = monomers_.size();
     std::vector<size_t> dimers, trimers;
@@ -443,7 +446,7 @@ double System::Energy(bool do_grads) {
         SetPolfacs();
     }
 
-// Get the NB contributions
+    // Get the NB contributions
 
 #ifdef TIMING
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -485,7 +488,9 @@ double System::Energy(bool do_grads) {
     energy_ = e1b + e2b + e3b + Eelec;
 
 #ifdef DEBUG
-    std::cerr << "1B = " << e1b << std::endl << "2B = " << e2b << std::endl << "3B = " << e3b << std::endl
+    std::cerr << "1B = " << e1b << std::endl
+              << "2B = " << e2b << std::endl
+              << "3B = " << e3b << std::endl
               << "Elec = " << Eelec << std::endl;
 #endif
 #ifdef TIMING
@@ -524,7 +529,6 @@ double System::OneBodyEnergy(bool do_grads) {
 }
 
 double System::Get1B(bool do_grads) {
-
     // 1B ENERGY
     // Loop overall the monomers and get their energy
     size_t curr_mon_type = 0;
@@ -909,7 +913,6 @@ double System::Get3B(bool do_grads) {
 
             // Check if we are still in the same type of trimer
             if (monomers_[trimers[i]] == m1 && monomers_[trimers[i + 1]] == m2 && monomers_[trimers[i + 2]] == m3) {
-
                 // Push the coordinates
                 for (size_t j = 0; j < 3 * nat_[trimers[i]]; j++) {
                     coord1.push_back(xyz_[3 * first_index_[trimers[i]] + j]);
@@ -1112,7 +1115,7 @@ double System::Electrostatics(bool do_grads) {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-    electrostaticE_.SetXyzChgPolPolfac(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads);
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, use_pbc_);
     return electrostaticE_.GetElectrostatics(grad_);
 }
 
@@ -1122,6 +1125,6 @@ void System::ResetDipoleHistory() { electrostaticE_.ResetAspcHistory(); }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-}  // Building Block :: System
+}  // namespace bblock
 
 ////////////////////////////////////////////////////////////////////////////////

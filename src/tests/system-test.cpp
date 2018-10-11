@@ -54,7 +54,6 @@ void PrintDifference(T val1, std::string header1, T val2, std::string header2) {
 }
 
 int main(int argc, char **argv) {
-
     if (argc != 2) {
         std::cerr << "usage: energy input.nrg" << std::endl;
         return 0;
@@ -68,8 +67,7 @@ int main(int argc, char **argv) {
         }
 
         tools::ReadNrg(argv[1], systems);
-    }
-    catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         std::cerr << " ** Error ** : " << e.what() << std::endl;
         return 1;
     }
@@ -197,6 +195,19 @@ int main(int argc, char **argv) {
     if (ns != nat_ref) {
         PrintError(test, exitcode);
         PrintDifference(ns, header_read, nat_ref, header_ref);
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    // Test GetRealAtomNames()
+
+    test = "GetRealAtomNames()";
+
+    std::vector<std::string> atnames_ref = system_ref.GetRealAtomNames();
+    std::vector<std::string> atnames_read = systems[0].GetRealAtomNames();
+
+    if (atnames_ref != atnames_read) {
+        PrintError(test + std::string(":: RealAtomNames don't match"), exitcode);
     }
 
     //////////////////////////////////////////////////////////////////////////////
@@ -424,8 +435,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         system_ref.SetXyz(v);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -485,8 +495,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         system_ref.SetRealXyz(v);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -505,8 +514,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         system_ref.Initialize();
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -525,8 +533,7 @@ int main(int argc, char **argv) {
         std::string id_v = "cl";
         std::vector<std::string> at_v = {"Cl"};
         system_ref.AddMonomer(v, at_v, id_v);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -550,8 +557,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         s_wrong.Initialize();
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -568,8 +574,23 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         s_also_wrong.Initialize();
+    } catch (CUException &e) {
+        exitcode = 0;
+        std::cerr << "Error message expected:" << std::endl;
+        std::cerr << e.what() << std::endl;
     }
-    catch (CUException &e) {
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    // Test GetPairList
+
+    test = "GetPairList()";
+
+    // test assertions:
+    try {
+        exitcode = 1;
+        system_ref.GetPairList(5, 3.0, 0, 1);
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -588,8 +609,7 @@ int main(int argc, char **argv) {
         std::vector<double> box(5, 10.0);
         exitcode = 1;
         system_ref.SetPBC(true, box);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -608,8 +628,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         s_empty.Energy(true);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -619,8 +638,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         s_empty.OneBodyEnergy(true);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -630,8 +648,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         s_empty.TwoBodyEnergy(true);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -641,8 +658,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         s_empty.ThreeBodyEnergy(true);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
@@ -652,11 +668,65 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         s_empty.Electrostatics(true);
-    }
-    catch (CUException &e) {
+    } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
         std::cerr << e.what() << std::endl;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+
+    // Test energy
+
+    // Make sure that energy and the sum of the individual terms are the same
+    double energy_ref = system_ref.Energy(true);
+    double energy_read = systems[0].Energy(true);
+
+    double onebody_ref = system_ref.OneBodyEnergy(true);
+    double twobody_ref = system_ref.TwoBodyEnergy(true);
+    double threebody_ref = system_ref.ThreeBodyEnergy(true);
+    double electrostatic_ref = system_ref.Electrostatics(true);
+
+    double onebody_read = systems[0].OneBodyEnergy(true);
+    double twobody_read = systems[0].TwoBodyEnergy(true);
+    double threebody_read = systems[0].ThreeBodyEnergy(true);
+    double electrostatic_read = systems[0].Electrostatics(true);
+
+    // Compare one body
+    std::string text = " energy does not match for read and reference system";
+    if (std::abs(onebody_ref - onebody_read) > REL_TOL) {
+        std::cerr << "One body " << text << std::endl;
+        exitcode = 1;
+    }
+
+    if (std::abs(twobody_ref - twobody_read) > REL_TOL) {
+        std::cerr << "Two body " << text << std::endl;
+        exitcode = 1;
+    }
+
+    if (std::abs(threebody_ref - threebody_read) > REL_TOL) {
+        std::cerr << "Three body " << text << std::endl;
+        exitcode = 1;
+    }
+
+    if (std::abs(electrostatic_ref - electrostatic_read) > REL_TOL) {
+        std::cerr << "Electrostatic " << text << std::endl;
+        exitcode = 1;
+    }
+
+    double sum_ref = onebody_ref + twobody_ref + threebody_ref + electrostatic_ref;
+    double sum_read = onebody_read + twobody_read + threebody_read + electrostatic_read;
+
+    text = "Sum of individual terms does not match total energy in ";
+
+    if (std::abs(energy_ref - sum_ref) > REL_TOL) {
+        std::cerr << text << "reference system" << std::endl;
+        exitcode = 1;
+    }
+
+    if (std::abs(energy_read - sum_read) > REL_TOL) {
+        std::cerr << text << "read system" << std::endl;
+        exitcode = 1;
     }
 
     //////////////////////////////////////////////////////////////////////////////
