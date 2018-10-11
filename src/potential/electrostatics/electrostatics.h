@@ -31,14 +31,15 @@ class Electrostatics {
                     std::vector<size_t> &sites, std::vector<size_t> &first_ind,
                     std::vector<std::pair<std::string, size_t> > &mon_type_count, bool do_grads = true,
                     double tolerance = 1E-16, size_t maxit = 100, std::string dip_method = "iter",
-                    std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0});
+                    std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0},
+                    bool use_pbc = false);
 
     double GetElectrostatics(std::vector<double> &grad);
 
     void ResetAspcHistory();
     void SetXyzChgPolPolfac(std::vector<double> &xyz, std::vector<double> &chg, std::vector<double> &chggrad,
                             std::vector<double> &pol, std::vector<double> &polfac, std::string dip_method,
-                            bool do_grads);
+                            bool do_grads, std::vector<double> box, bool use_pbc);
 
    private:
     void CalculatePermanentElecField();
@@ -138,6 +139,8 @@ class Electrostatics {
     std::string dip_method_;
     // box of the system
     std::vector<double> box_;
+    // use pbc in the electrostatics calculation
+    bool use_pbc_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

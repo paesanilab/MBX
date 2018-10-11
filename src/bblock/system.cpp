@@ -1115,7 +1115,7 @@ double System::Electrostatics(bool do_grads) {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-    electrostaticE_.SetXyzChgPolPolfac(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads);
+    electrostaticE_.SetXyzChgPolPolfac(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, use_pbc_);
     return electrostaticE_.GetElectrostatics(grad_);
 }
 

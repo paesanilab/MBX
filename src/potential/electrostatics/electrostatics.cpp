@@ -21,7 +21,8 @@ void Electrostatics::Initialize(std::vector<double> &chg, std::vector<double> &c
                                 std::vector<std::string> &mon_id, std::vector<size_t> &sites,
                                 std::vector<size_t> &first_ind,
                                 std::vector<std::pair<std::string, size_t>> &mon_type_count, bool do_grads,
-                                double tolerance, size_t maxit, std::string dip_method, std::vector<double> box) {
+                                double tolerance, size_t maxit, std::string dip_method, std::vector<double> box,
+                                bool use_pbc) {
     // Copy System data in electrostatics
     // sys_chg_ = std::vector<double>(chg.begin(),chg.end());
     sys_chg_ = chg;
@@ -38,6 +39,7 @@ void Electrostatics::Initialize(std::vector<double> &chg, std::vector<double> &c
     maxit_ = maxit;
     dip_method_ = dip_method;
     box_ = box;
+    use_pbc_ = use_pbc;
 
     // Initialize other variables
     nsites_ = sys_chg_.size();
@@ -73,7 +75,8 @@ void Electrostatics::Initialize(std::vector<double> &chg, std::vector<double> &c
 
 void Electrostatics::SetXyzChgPolPolfac(std::vector<double> &xyz, std::vector<double> &chg,
                                         std::vector<double> &chggrad, std::vector<double> &pol,
-                                        std::vector<double> &polfac, std::string dip_method, bool do_grads) {
+                                        std::vector<double> &polfac, std::string dip_method, bool do_grads,
+                                        std::vector<double> box, bool use_pbc) {
     sys_chg_ = chg;
     sys_chg_grad_ = chggrad;
     polfac_ = polfac;
@@ -81,6 +84,8 @@ void Electrostatics::SetXyzChgPolPolfac(std::vector<double> &xyz, std::vector<do
     sys_xyz_ = xyz;
     do_grads_ = do_grads;
     dip_method_ = dip_method;
+    box_ = box;
+    use_pbc_ = use_pbc;
 
     size_t nsites3 = nsites_ * 3;
 
