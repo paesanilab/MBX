@@ -25,3 +25,5 @@ install(TARGETS ${t}
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
 endforeach()
+
+add_subdirectory(unittests)

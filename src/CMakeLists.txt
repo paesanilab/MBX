@@ -1,8 +1,10 @@
+enable_testing ()
 add_subdirectory(bblock)
 add_subdirectory(io_tools)
 add_subdirectory(potential)
 add_subdirectory(tools)
 add_subdirectory(main)
+
 add_subdirectory(tests)
 
 add_library(mbnrg SHARED $<TARGET_OBJECTS:bblock> 
@@ -31,3 +33,4 @@ install(TARGETS mbnrglib
 
 install(DIRECTORY . DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
         FILES_MATCHING PATTERN "*.h")
+

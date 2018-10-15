@@ -22,7 +22,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
                                 const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                                 const std::vector<std::pair<std::string, size_t>> &mon_type_count, const bool do_grads,
                                 const double tolerance, const size_t maxit, const std::string dip_method,
-                                const std::vector<double> &box, const bool use_pbc) {
+                                const std::vector<double> &box) {
     // Copy System data in electrostatics
     // sys_chg_ = std::vector<double>(chg.begin(),chg.end());
     sys_chg_ = chg;
@@ -39,7 +39,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     maxit_ = maxit;
     dip_method_ = dip_method;
     box_ = box;
-    use_pbc_ = use_pbc;
+    use_pbc_ = box.size();
 
     // Initialize other variables
     nsites_ = sys_chg_.size();
