@@ -8,6 +8,7 @@ namespace {
 
 const double EPS = std::numeric_limits<double>::epsilon();
 const double SMALL = std::numeric_limits<double>::min() / EPS;
+const double BIG = std::numeric_limits<double>::max() * EPS;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -121,8 +122,10 @@ double gammq(const double a, const double x) {
 
     assert(x >= 0.0 && a > 0.0);
 
-    if (x == 0.0)
+    if (x < SMALL)
         return 1.0;
+    else if (x > BIG)
+        return 0.0;
     else if (x < a + 1.0)
         return 1.0 - GammaPse(a, x);
     else
