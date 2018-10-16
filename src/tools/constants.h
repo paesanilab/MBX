@@ -33,7 +33,7 @@ const double au2debye = Bohr_A/0.20822678;
 
 // Numeric limits
 const double EPS = std::numeric_limits<double>::epsilon();
-const double max_dbl = std::numeric_limits<double>::max();
+const double max_dbl = std::numeric_limits<double>::max() * EPS;
 
 namespace details {
 

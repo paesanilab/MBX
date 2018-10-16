@@ -1287,7 +1287,6 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
                 bool is14 = systools::IsExcluded(exc14, i, j);
                 // Don't do charge-dipole and modify phi if pair is excluded
                 // TODO check this for distances more than 1-4
-                // TODO careful. YOu are not adding phi1
                 double *phi_mod = (is12 || is13 || is14) ? 0 : phi_.data() + fi_sites;
                 aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
                 double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
