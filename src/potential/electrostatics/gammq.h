@@ -1,36 +1,20 @@
-/*******************************************************************************
-These functions have been obtained from:
+#ifndef CU_INCLUDE_POTENTIAL_ELECTROSTATICS_GAMMQ_H
+#define CU_INCLUDE_POTENTIAL_ELECTROSTATICS_GAMMQ_H
 
-Numerical Recipes in C
-The Art of Scientific Computing
-Second Edition
-William H. Press
-Harvard-Smithsonian Center for Astrophysics
-Saul A. Teukolsky
-Department of Physics, Cornell University
-William T. Vetterling
-Polaroid Corporation
-Brian P. Flannery
-EXXON Research and Engineering Company
+#include <cmath>
+#include <cassert>
 
-CAMBRIDGE UNIVERSITY PRESS
+#include <iostream>
 
-ISBN 0 521 43720 2
+#include <limits>
+#include <algorithm>  
 
-Note. These functions were modified by Vlodymyr Babin on 2012.
-
-
-TODO Check if we can use this bc I have no idea.
-*******************************************************************************/
-
-#ifndef GAMMQ_H
-#define GAMMQ_H
 
 namespace elec {
 
-double gammq(const double&, const double&);
-double gammln(const double&);
+double gammq(const double a, const double x);
+double gammln(const double x);
 
 }  // namespace elec
 
-#endif  // GAMMQ_H
+#endif  // CU_INCLUDE_POTENTIAL_ELECTROSTATICS_GAMMQ_H
