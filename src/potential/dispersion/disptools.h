@@ -29,13 +29,13 @@ namespace disp {
   
   double tang_toennies(int n, const double& x);
   
-  double disp68(const double& C6, const double& d6,
-                const double& C8, const double& d8,
-                const double* p1, const double* p2,
-                      double* g1,       double* g2, bool do_grads); 
-  double disp68(const double& C6, const double& d6,
-                const double& C8, const double& d8,
-                const double* p1, const double* p2);
+//  double disp68(const double& C6, const double& d6,
+//                const double& C8, const double& d8,
+//                const double* p1, const double* p2,
+//                      double* g1,       double* g2, bool do_grads); 
+//  double disp68(const double& C6, const double& d6,
+//                const double& C8, const double& d8,
+//                const double* p1, const double* p2);
   
   double disp6(const double& C6, const double& d6,
                const double* p1a, const double* p2a, size_t n,

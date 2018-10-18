@@ -35,6 +35,8 @@ namespace disp {
   }
   
   //----------------------------------------------------------------------------//
+
+  /* Block commented since C8 is not used for now.
   
   double disp68(const double& C6, const double& d6,
                  const double& C8, const double& d8,
@@ -108,6 +110,8 @@ namespace disp {
     return - (e6 + e8);
   }
   
+  ******************************************************************************/
+  
   //----------------------------------------------------------------------------//
   
   double disp6(const double& C6, const double& d6,
@@ -168,44 +172,6 @@ namespace disp {
     disp_min *= double(disp_count);
     disp -= disp_min;
     return -disp;
-
-    // TODO shift values
-//    double p1[3*n], p2[3*n];
-//    for (size_t i = 0; i < n; i++) {
-//      p1[i] = p1a[3*i];
-//      p1[i + n] = p1a[3*i + 1];
-//      p1[i + 2*n] = p1a[3*i + 2];
-//
-//      p2[i] = p2a[3*i];
-//      p2[i + n] = p2a[3*i + 1];
-//      p2[i + 2*n] = p2a[3*i + 2];
-//    }
-//
-//    // Main loop
-//    size_t n2 = 2*n;
-//    double r[n];
-//    double tt6[n];
-//    double inv_r6[n];
-//    double disp = 0.0;
-//    for (size_t nv = 0; nv < n; nv++) {
-//      const double dx = p1[nv] - p2[nv];
-//      const double dy = p1[nv + n] - p2[nv + n];
-//      const double dz = p1[nv + n2] - p2[nv + n2];
-//
-//      const double rsq = dx*dx + dy*dy + dz*dz;
-//      r[nv] = std::sqrt(rsq);
-//
-//      tt6[nv] = disp::tang_toennies(6, d6*r[nv]);
-//
-//      const double inv_rsq = 1.0/rsq;
-//      inv_r6[nv] = inv_rsq*inv_rsq*inv_rsq;
-//    }
-//    
-//    // TODO shift values
-//    for (size_t nv = 0; nv < n; nv++) {
-//      disp += C6*tt6[nv]*inv_r6[nv];
-//    }
-//    return -disp;
   }
   
   //----------------------------------------------------------------------------//
