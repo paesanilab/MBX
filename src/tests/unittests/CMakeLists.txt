@@ -2,6 +2,7 @@
 set( SOURCES_UNITTESTS_TESTS
     unittest-gas-coulombonly.cpp
     unittest-pbc-coulombonly.cpp
+    unittest-gamma.cpp
 )
 
 #
