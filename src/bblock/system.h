@@ -354,7 +354,7 @@ class System {
      * @param[in] box Optional argument. Is a 9 component vector of double with
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
-    void SetPBC(bool use_pbc, std::vector<double> box);
+    void SetPBC(std::vector<double> box = {});
 
     /////////////////////////////////////////////////////////////////////////////
     // Energy Functions /////////////////////////////////////////////////////////

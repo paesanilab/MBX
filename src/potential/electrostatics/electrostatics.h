@@ -118,7 +118,14 @@ class Electrostatics {
     void SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                           const std::vector<double> &chg_grad, const std::vector<double> &pol,
                           const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
-                          const std::vector<double> box, bool use_pbc);
+                          const std::vector<double> &box = {});
+
+    /**
+     * @brief Sets the cutoff for electrostatic interactions
+     *
+     * @param[in] cutoff New cutoff value
+     */
+    void SetCutoff(double cutoff);
 
    private:
     void CalculatePermanentElecField();
@@ -220,6 +227,8 @@ class Electrostatics {
     std::vector<double> box_;
     // use pbc in the electrostatics calculation
     bool use_pbc_;
+    // electrostatics cutoff
+    double cutoff_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

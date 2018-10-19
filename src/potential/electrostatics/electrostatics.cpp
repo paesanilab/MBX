@@ -16,6 +16,11 @@
 namespace elec {
 
 Electrostatics::Electrostatics(){};
+
+void Electrostatics::SetCutoff(double cutoff) {
+    cutoff_ = cutoff;
+}
+
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                                 const std::vector<double> &polfac, const std::vector<double> &pol,
                                 const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
@@ -40,6 +45,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     dip_method_ = dip_method;
     box_ = box;
     use_pbc_ = box.size();
+    cutoff_ = 10.0;
 
     // Initialize other variables
     nsites_ = sys_chg_.size();
@@ -76,7 +82,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
-                                      const bool do_grads, const std::vector<double> box, const bool use_pbc) {
+                                      const bool do_grads, const std::vector<double> &box) {
     sys_chg_ = chg;
     sys_chg_grad_ = chg_grad;
     polfac_ = polfac;
@@ -85,7 +91,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     do_grads_ = do_grads;
     dip_method_ = dip_method;
     box_ = box;
-    use_pbc_ = use_pbc;
+    use_pbc_ = box.size();
 
     size_t nsites3 = nsites_ * 3;
 
