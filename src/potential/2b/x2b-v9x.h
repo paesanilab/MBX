@@ -20,12 +20,9 @@ namespace x2o {
 //----------------------------------------------------------------------------//
 
 struct x2b_v9x {
-    static double eval(const double* w1, 
-                       const double* w2, const size_t nd);
+    static double eval(const double* w1, const double* w2, const size_t nd);
 
-    static double eval(const double* w1, const double* w2,
-                             double* g1,       double* g2, 
-                       const size_t nd);
+    static double eval(const double* w1, const double* w2, double* g1, double* g2, const size_t nd);
 
     static const double k_HH_intra;
     static const double k_OH_intra;
@@ -44,13 +41,13 @@ struct x2b_v9x {
     static const double r2i;
     static const double r2f;
 
-    static double f_switch(const double&, double&); // O-O separation
+    static double f_switch(const double&, double&);  // O-O separation
 };
 
 //----------------------------------------------------------------------------//
 
-} // namespace x2o
+}  // namespace x2o
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // X2B_V9X_H
+#endif  // X2B_V9X_H
