@@ -259,7 +259,6 @@ void System::Initialize() {
     // Periodic boundary conditions //
     //////////////////////////////////
 
-
     /////////////////////////////
     // Add monomer information //
     /////////////////////////////
@@ -288,14 +287,14 @@ void System::Initialize() {
     // Setting PBC to false by default
     SetPBC();
 
-//    // Sets the position of the virtual sites if any
-//    SetVSites();
-//    // Sets the charges of the system, even the position dependent ones
-//    SetCharges();
-//    // Sets the polarizabilities of the system
-//    SetPols();
-//    // Sets the polarizability factors of the system
-//    SetPolfacs();
+    //    // Sets the position of the virtual sites if any
+    //    SetVSites();
+    //    // Sets the charges of the system, even the position dependent ones
+    //    SetCharges();
+    //    // Sets the polarizabilities of the system
+    //    SetPols();
+    //    // Sets the polarizability factors of the system
+    //    SetPolfacs();
 
     // With the information previously set, we initialize the
     // electrostatics class

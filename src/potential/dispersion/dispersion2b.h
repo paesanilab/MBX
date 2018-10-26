@@ -10,10 +10,9 @@
 
 namespace disp {
 
-double GetDispersion(std::string m1, std::string m2,size_t nm, bool do_grads, 
-                     std::vector<double> xyz1, std::vector<double> xyz2,
-                     std::vector<double> &grd1, std::vector<double> &grd2,
-                     double cutoff, bool use_cutoff);
+double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads, std::vector<double> xyz1,
+                     std::vector<double> xyz2, std::vector<double> &grd1, std::vector<double> &grd2, double cutoff,
+                     bool use_cutoff);
 
-} // namespace disp
+}  // namespace disp
 #endif
