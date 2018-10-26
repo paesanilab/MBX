@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
         double e3b = systems[i].ThreeBodyEnergy(false);
 
         // Then PBC
-        systems[i].SetPBC(true, box);
+        systems[i].SetPBC(box);
         std::vector<double> xyz_pbc = systems[i].GetRealXyz();
         double e1b_pbc = systems[i].OneBodyEnergy(false);
         double e2b_pbc = systems[i].TwoBodyEnergy(false);

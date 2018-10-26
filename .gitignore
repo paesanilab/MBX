@@ -32,3 +32,11 @@ build*
 
 # General linux files
 *.swp
+
+# Qt Creator files
+ClustersUltimate.config
+ClustersUltimate.creator
+ClustersUltimate.creator.user
+ClustersUltimate.files
+ClustersUltimate.includes
+ClustersUltimate.config

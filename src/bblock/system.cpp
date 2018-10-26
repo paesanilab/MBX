@@ -145,16 +145,15 @@ void System::SetDipoleTol(double tol) { diptol_ = tol; }
 void System::SetDipoleMaxIt(size_t maxit) { maxItDip_ = maxit; }
 void System::SetDipoleMethod(std::string method) { dipole_method_ = method; }
 
-void System::SetPBC(bool use_pbc, std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0}) {
-    // Check that the box has 9 components
-    // Any other size is not acceptable
-    if (box.size() != 9) {
+void System::SetPBC(std::vector<double> box) {
+    // Check that the box has 0 or 9 components
+    if (box.size() != 9 && box.size() != 0) {
         std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
     // Set the box and the bool to use or not pbc
-    use_pbc_ = use_pbc;
+    use_pbc_ = box.size();
     box_ = box;
 
     // If we use PBC, we need to make sure that the monomer atoms are all
@@ -162,12 +161,12 @@ void System::SetPBC(bool use_pbc, std::vector<double> box = {1000.0, 0.0, 0.0, 0
     if (use_pbc_) {
         // Fix monomer coordinates
         systools::FixMonomerCoordinates(xyz_, box_, nat_, first_index_);
-        // Reset the virtual site positions, charges, pols and polfacs
-        SetVSites();
-        SetCharges();
-        SetPols();
-        SetPolfacs();
     }
+    // Reset the virtual site positions, charges, pols and polfacs
+    SetVSites();
+    SetCharges();
+    SetPols();
+    SetPolfacs();
 }
 
 void System::SetXyz(std::vector<double> xyz) {
@@ -260,8 +259,6 @@ void System::Initialize() {
     // Periodic boundary conditions //
     //////////////////////////////////
 
-    // Setting PBC to false by default
-    SetPBC(false);
 
     /////////////////////////////
     // Add monomer information //
@@ -288,14 +285,17 @@ void System::Initialize() {
     // Sets the default method to calculate induced dipoles to ASPC
     dipole_method_ = "aspc";
 
-    // Sets the position of the virtual sites if any
-    SetVSites();
-    // Sets the charges of the system, even the position dependent ones
-    SetCharges();
-    // Sets the polarizabilities of the system
-    SetPols();
-    // Sets the polarizability factors of the system
-    SetPolfacs();
+    // Setting PBC to false by default
+    SetPBC();
+
+//    // Sets the position of the virtual sites if any
+//    SetVSites();
+//    // Sets the charges of the system, even the position dependent ones
+//    SetCharges();
+//    // Sets the polarizabilities of the system
+//    SetPols();
+//    // Sets the polarizability factors of the system
+//    SetPolfacs();
 
     // With the information previously set, we initialize the
     // electrostatics class
@@ -437,14 +437,7 @@ double System::Energy(bool do_grads) {
     std::fill(grad_.begin(), grad_.end(), 0.0);
 
     // Reset the charges, pols, polfacs and new Vsite
-    if (use_pbc_) {
-        SetPBC(use_pbc_, box_);
-    } else {
-        SetVSites();
-        SetCharges();
-        SetPols();
-        SetPolfacs();
-    }
+    SetPBC(box_);
 
     // Get the NB contributions
 
@@ -1115,7 +1108,7 @@ double System::Electrostatics(bool do_grads) {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads) {
-    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, use_pbc_);
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_);
     return electrostaticE_.GetElectrostatics(grad_);
 }
 

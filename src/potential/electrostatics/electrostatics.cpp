@@ -16,13 +16,18 @@
 namespace elec {
 
 Electrostatics::Electrostatics(){};
+
+void Electrostatics::SetCutoff(double cutoff) {
+    cutoff_ = cutoff;
+}
+
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                                 const std::vector<double> &polfac, const std::vector<double> &pol,
                                 const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                                 const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                                 const std::vector<std::pair<std::string, size_t>> &mon_type_count, const bool do_grads,
                                 const double tolerance, const size_t maxit, const std::string dip_method,
-                                const std::vector<double> &box, const bool use_pbc) {
+                                const std::vector<double> &box) {
     // Copy System data in electrostatics
     // sys_chg_ = std::vector<double>(chg.begin(),chg.end());
     sys_chg_ = chg;
@@ -39,7 +44,8 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     maxit_ = maxit;
     dip_method_ = dip_method;
     box_ = box;
-    use_pbc_ = use_pbc;
+    use_pbc_ = box.size();
+    cutoff_ = 10.0;
 
     // Initialize other variables
     nsites_ = sys_chg_.size();
@@ -76,7 +82,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
-                                      const bool do_grads, const std::vector<double> box, const bool use_pbc) {
+                                      const bool do_grads, const std::vector<double> &box) {
     sys_chg_ = chg;
     sys_chg_grad_ = chg_grad;
     polfac_ = polfac;
@@ -85,7 +91,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     do_grads_ = do_grads;
     dip_method_ = dip_method;
     box_ = box;
-    use_pbc_ = use_pbc;
+    use_pbc_ = box.size();
 
     size_t nsites3 = nsites_ * 3;
 
@@ -1287,7 +1293,6 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
                 bool is14 = systools::IsExcluded(exc14, i, j);
                 // Don't do charge-dipole and modify phi if pair is excluded
                 // TODO check this for distances more than 1-4
-                // TODO careful. YOu are not adding phi1
                 double *phi_mod = (is12 || is13 || is14) ? 0 : phi_.data() + fi_sites;
                 aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
                 double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];

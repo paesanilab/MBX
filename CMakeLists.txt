@@ -54,7 +54,7 @@ if (USE_OPENMP)
 endif()
 include(custom_cxxstandard)
 include(custom_static_library)
-
+enable_testing()
 ################################  Main Project  ################################
 include(ExternalProject)
 ExternalProject_Add(clusters_ultimate-core
@@ -88,7 +88,7 @@ ExternalProject_Add(clusters_ultimate-core
 
 add_subdirectory(external)
 #add_subdirectory(doc)
-#add_subdirectory(tests)
+
 
 # <<<  Install  >>>
 

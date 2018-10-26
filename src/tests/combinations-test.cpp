@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
         box[0] = 100.0;
         box[4] = 100.0;
         box[8] = 100.0;
-        systems[1].SetPBC(true, box);
+        systems[1].SetPBC(box);
         std::vector<size_t> dimers = systems[1].GetPairList(2, 15.0, 0, systems[1].GetNumMon());
         ;
         size_t ndimers = dimers.size() / 2;

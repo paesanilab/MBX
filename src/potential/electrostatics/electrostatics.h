@@ -68,7 +68,6 @@ class Electrostatics {
      * @param[in] box Vector of 9 components with the box. The elements are:
      * {v1x,v1y,v1z,v2x,v2y,v2z,v3x,v3y,v3z} where v1, v2, and v3 are the
      * trhee main vectors of the box
-     * @param[in] use_pbc Boolean specifying if PBC are going to be used or not
      */
     void Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                     const std::vector<double> &polfac, const std::vector<double> &pol,
@@ -76,8 +75,7 @@ class Electrostatics {
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads = true,
                     const double tolerance = 1E-16, const size_t maxit = 100, const std::string dip_method = "iter",
-                    const std::vector<double> &box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0},
-                    const bool use_pbc = false);
+                    const std::vector<double> &box = {});
 
     /**
      * @brief Gets the electrostatic energy
@@ -120,7 +118,14 @@ class Electrostatics {
     void SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                           const std::vector<double> &chg_grad, const std::vector<double> &pol,
                           const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
-                          const std::vector<double> box, bool use_pbc);
+                          const std::vector<double> &box = {});
+
+    /**
+     * @brief Sets the cutoff for electrostatic interactions
+     *
+     * @param[in] cutoff New cutoff value
+     */
+    void SetCutoff(double cutoff);
 
    private:
     void CalculatePermanentElecField();
@@ -222,6 +227,8 @@ class Electrostatics {
     std::vector<double> box_;
     // use pbc in the electrostatics calculation
     bool use_pbc_;
+    // electrostatics cutoff
+    double cutoff_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
