@@ -46,4 +46,23 @@ The output should be the same as the `expected_output`.
 ### i-pi
 This software is already interfaced with i-pi. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-pi first. Please go to [the i-pi github page](https://github.com/cosmo-epfl/i-pi-dev) and clone and follow the instructions to install i-pi.
 
+## Add new PEFs
+### One-body
+In order to add a new PEF, you must have run all the steps in the [potential fitting](https://github.com/paesanilab/potential_fitting) repository on github. After having done that, you must have a folder called `software_files` inside your fit path (where all the fitting code has been generated). The first thing to do is to add the monomer properties. Then the polynomial files can be added.
+
+#### Monomer properties
+Open the file `software_code.txt` inside the `software_files` folder, and locate the sections: `SITES`, `CHARGES`, `POLFACS`, and `POLS`. In another window, open the file `src/bblock/sys_tools.cpp` and locate these same sections. You will see that after each section, there is a commented line `PASTE YOUR CODE BELOW`. The code below the section in `software_code.txt` needs to be copied in the correspondic section in `src/bblock/sys_tools.cpp`.
+
+#### Monomer polynomials
+First, locate in `software_code.txt` the sections `ONEBODY_NOGRD` and `ONEBODY_GRD`. In the file `src/potential/1b/energy1b.cpp`, locate the same sections. Copy the code below the indications.
+
+Second, locate in your `software_code.txt` the section `CONSTRUCTOR`. Look at the directory `src/potential/1b/`, and check if the `x1b_*_deg*_v1x.cpp` file that you generated in `software_files` already exists. If it does exist, locate the section `CONSTRUCTOR` in the `x1b_*_deg*_v1x.cpp` file in `src/potential/1b/` and paste after the `CONSTRUCTOR` keyword. No further action is required. You can compile the code and run it with your new monomer.
+
+In case the file does not exist in `src/potential/1b/`, paste the code lines in your newly generated `x1b_*_deg*_v1x.cpp` file, after the keyword. Then, copy all `.cpp` and `.h` files inside `software_files` into `src/potential/1b/`. Since the files did not exist, you will need to include the new  `x1b_*_deg*_v1x.h` file in `energy1b.h`. Locate the section `INCLUDE1B` in both files and paste the proper include.
+
+Last but not least we need to tell CMake to compile those files. Open the file `CMakeLists.txt` and add the 3 `.cpp` files you just copied to the first line.
+
+Now compile the code and make sure everything works!
+
+
 
