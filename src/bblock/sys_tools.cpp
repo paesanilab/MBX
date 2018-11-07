@@ -119,6 +119,11 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             // TODO Maybe we can read this from a database
             sites.push_back(4);
             nat.push_back(3);
+
+        // =====>> SECTION SITES <<=====
+        // ==> PASTE YOUR CODE BELOW <==
+
+
             // Halides and alkali metal ions
         } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
                    mon[i] == "br" || mon[i] == "i" || mon[i] == "li" || mon[i] == "na" ||  // Alkali metal ions
@@ -565,7 +570,11 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv] = 1.0 * CHARGECON;
         }
 
-        // Note, for now, assuming only water has site dependant charges
+    // =====>> SECTION CHARGES <<=====
+    // =======>> PASTE BELOW <<=======
+
+
+    // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
         // chgtmp = M, H1, H2 according to ttm4.cpp
         std::vector<double> chgtmp;
@@ -654,6 +663,11 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 1.3614;
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.3660;
+
+    // =====>> SECTION POLFACS <<=====
+    // =======>> PASTE BELOW <<=======
+    
+
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
         std::vector<double> polfac2(n_mon * nsites, 0.0);
@@ -702,6 +716,11 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.3614;
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
+
+    // =====>> SECTION POLS <<=====
+    // =====>> PASTE  BELOW <<=====
+
+
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
         std::vector<double> pol2(n_mon * nsites, 0.0);
