@@ -7,6 +7,11 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &
     // Look for the proper call to energy depending on the monomer id
     if (mon == "h2o") {
         energies = ps::pot_nasa(xyz.data(), 0, nm);
+
+    // =====>> SECTION ONEBODY_NOGRD <<=====
+    // =====>> PASTE YOUR CODE BELOW <<=====
+
+
     } else {
         return 0.0;
     }
@@ -27,6 +32,11 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, std::v
     // Look for the proper call to energy depending on the monomer id
     if (mon == "h2o") {
         energies = ps::pot_nasa(xyz.data(), grad.data(), nm);
+
+    // =====>> SECTION ONEBODY_GRD <<=====
+    // ====>> PASTE YOUR CODE BELOW <<====
+
+
     } else {
         return 0.0;
     }
