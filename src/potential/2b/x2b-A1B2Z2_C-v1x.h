@@ -17,18 +17,14 @@ namespace h2o_ion {
 //----------------------------------------------------------------------------//
 
 struct x2b_h2o_ion_v2x {
-
     // TODO think what to do with default constructor. Error?
-    x2b_h2o_ion_v2x() {};
+    x2b_h2o_ion_v2x(){};
     x2b_h2o_ion_v2x(std::string mon1, std::string mon2);
-    
-    ~x2b_h2o_ion_v2x() {};
 
-    double eval(const double* w1, const double* x,
-                double* g1, double* g2, const size_t nd);
-    double eval(const double* w1, const double*  x,
-                const size_t nd);
-               
+    ~x2b_h2o_ion_v2x(){};
+
+    double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd);
+    double eval(const double* w1, const double* x, const size_t nd);
 
     double k_HH_intra;
     double k_OH_intra;
@@ -52,20 +48,19 @@ struct x2b_h2o_ion_v2x {
     double r2i;
     double r2f;
 
-// ADDED MRR
+    // ADDED MRR
 
     std::vector<double> twobodyfit;
-    
-    
-// END ADDED MRR
 
-    double f_switch(const double&, double&); // O-X separation
+    // END ADDED MRR
+
+    double f_switch(const double&, double&);  // O-X separation
 };
 
 //----------------------------------------------------------------------------//
 
-} // namespace h2o_ion
+}  // namespace h2o_ion
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // X2B_H2O_ION_V2X_H
+#endif  // X2B_H2O_ION_V2X_H

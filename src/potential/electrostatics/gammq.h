@@ -7,8 +7,7 @@
 #include <iostream>
 
 #include <limits>
-#include <algorithm>  
-
+#include <algorithm>
 
 namespace elec {
 

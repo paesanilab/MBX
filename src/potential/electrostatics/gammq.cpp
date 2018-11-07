@@ -14,7 +14,7 @@ const double BIG = std::numeric_limits<double>::max() * EPS;
 
 double GammaPse(const double& a, const double& x) {
     // power series expansion
-    // See https://en.wikipedia.org/wiki/Incomplete_gamma_function#Evaluation_formulae 
+    // See https://en.wikipedia.org/wiki/Incomplete_gamma_function#Evaluation_formulae
     // Look at lower case gamma(s,z)
 
     // We can say that:
@@ -23,7 +23,7 @@ double GammaPse(const double& a, const double& x) {
     // We also know that gamma(a+1) = a*gamma(a)
 
     const double gammaln = elec::gammln(a);
-    
+
     // Start with k=0
     double ak = a;
     double sum = 1.0 / a;
@@ -31,21 +31,21 @@ double GammaPse(const double& a, const double& x) {
 
     // Loop until convergence
     while (true) {
-      // Increase ak
-      ak++;
-      // Update delta from previous by multiplying by x/ak
-      delta *= x/ak;
-      // Add the new term to the sum
-      sum += delta;
+        // Increase ak
+        ak++;
+        // Update delta from previous by multiplying by x/ak
+        delta *= x / ak;
+        // Add the new term to the sum
+        sum += delta;
 
-      // Check convergence
-      if (std::fabs(delta) < std::fabs(sum) * EPS) {
-        break;
-      }
+        // Check convergence
+        if (std::fabs(delta) < std::fabs(sum) * EPS) {
+            break;
+        }
     }
 
     // Return P(a,x)
-    return sum * std::exp(a*std::log(x) - x - gammaln);
+    return sum * std::exp(a * std::log(x) - x - gammaln);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +57,7 @@ double GammaCf(const double a, const double x) {
     // See https://en.wikipedia.org/wiki/Incomplete_gamma_function#Evaluation_formulae
 
     const double gammaln = elec::gammln(a);
-    
+
     // We will compute lim(n->inf) hn
     // h will be:
     // h = b0 + a1/(b1 + a2/(b2 + a3/...))
@@ -65,7 +65,7 @@ double GammaCf(const double a, const double x) {
     // Set b0
     double b = x + 1.0 - a;
     // Set h0
-    double h = b;  
+    double h = b;
     if (std::fabs(b) < SMALL) h = SMALL;
     // Set d0
     double d = 0.0;
@@ -79,7 +79,7 @@ double GammaCf(const double a, const double x) {
         // Get an and bn
         const double an = i * (a - i);
         b += 2.0;
-   
+
         // get dn
         d = an * d + b;
         if (std::fabs(d) < SMALL) d = SMALL;
@@ -93,7 +93,7 @@ double GammaCf(const double a, const double x) {
 
         // Get Delta_n
         const double deltan = d * c;
- 
+
         // Get hn
         h *= deltan;
 
@@ -115,7 +115,6 @@ namespace elec {
 ////////////////////////////////////////////////////////////////////////////////
 
 double gammq(const double a, const double x) {
-
     if (!(x >= 0.0 && a > 0.0)) {
         std::cerr << "gammq: x = " << x << ", a = " << a << std::endl;
     }
@@ -153,7 +152,7 @@ double gammln(const double x) {
 
     // Compute x + g + 0.5
     double prefactor = x + 5.24218750000000000;
-    
+
     // Compute exponent 1 (x + 0.5)
     double exp1 = x + 0.5;
 
@@ -166,14 +165,14 @@ double gammln(const double x) {
     // Compute Ag
     double Ag = 0.999999999999997092;
     for (int i = 0; i < 14; i++) {
-      double den = x + double(i + 1);
-      Ag += cof[i] / den;
+        double den = x + double(i + 1);
+        Ag += cof[i] / den;
     }
 
-    // Return ln(gamma(x)). 
+    // Return ln(gamma(x)).
     // Using relation ln(gamma(x) = ln(gamma(x + 1)) - ln(x)
     // Which means: ln(gamma(x) = ln(gamma(x+1)/x)
-    return std::log(sqrt2pi*Ag/x) - exp2 + std::log(prefactor)*exp1;
+    return std::log(sqrt2pi * Ag / x) - exp2 + std::log(prefactor) * exp1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

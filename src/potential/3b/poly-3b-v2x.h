@@ -14,16 +14,11 @@ struct poly_3b_v2x {
     static const unsigned n_vars = 36;
     static const unsigned size = 1163;
 
-    static std::vector<double> eval(const size_t nt,
-                       const double * a,
-                       const double * x);
+    static std::vector<double> eval(const size_t nt, const double* a, const double* x);
 
-    static std::vector<double> eval(const size_t nt,
-                       const double * a,
-                       const double * x,
-                             double * g);
+    static std::vector<double> eval(const size_t nt, const double* a, const double* x, double* g);
 };
 
-} // namespace x2o
+}  // namespace x2o
 
-#endif // POLY_3B_V2X_H
+#endif  // POLY_3B_V2X_H

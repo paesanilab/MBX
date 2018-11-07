@@ -17,9 +17,7 @@ namespace elec {
 
 Electrostatics::Electrostatics(){};
 
-void Electrostatics::SetCutoff(double cutoff) {
-    cutoff_ = cutoff;
-}
+void Electrostatics::SetCutoff(double cutoff) { cutoff_ = cutoff; }
 
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                                 const std::vector<double> &polfac, const std::vector<double> &pol,

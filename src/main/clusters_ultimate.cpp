@@ -18,110 +18,92 @@ namespace {
 
 static std::vector<bblock::System> systems;
 
-} // namespace
+}  // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 
-int main(int argc, char** argv)
-{
-
-  if (argc != 2) {
-    std::cerr << "usage: energy h2o_ion.nrg"
-              << std::endl;
-    return 0;
-  }
-
-  try {
-    std::ifstream ifs(argv[1]);
-
-    if (!ifs){
-      throw std::runtime_error("could not open the NRG file");
+int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "usage: energy h2o_ion.nrg" << std::endl;
+        return 0;
     }
 
-    tools::ReadNrg(argv[1], systems);
-  } catch (const std::exception& e) {
-    std::cerr << " ** Error ** : " << e.what() << std::endl;
-    return 1;
-  }
+    try {
+        std::ifstream ifs(argv[1]);
 
-  std::vector<double> g;
-  std::cout << "Energies without gradients:" << std::endl;
-  for (size_t i = 0; i < systems.size(); i++) {
-    double energy = systems[i].Energy(false);
-    std::cout << std::setprecision(10) << std::scientific
-              << "system["  << std::setfill('.')
-              << std::setw(5) << i << "]= " << std::setfill(' ')
-              << std::setw(20) << std::right << energy 
-              << std::setw(12) << std::right << " kcal/mol" << std::endl;          
-  }
-# ifdef PRINT_GRADS
-  std::cout << "Energies with gradients:" << std::endl;
-  for (size_t i = 0; i < systems.size(); i++) {
-    double energy = systems[i].Energy(true);
+        if (!ifs) {
+            throw std::runtime_error("could not open the NRG file");
+        }
 
-    std::vector<double> grad = systems[i].GetGrads();
-    
-    std::cout << std::setprecision(10) << std::scientific
-              << "system["  << std::setfill('.')
-              << std::setw(5) << i << "]= " << std::setfill(' ')
-              << std::setw(20) << std::right << energy
-              << std::setw(12) << std::right << " kcal/mol" 
-              << std::endl << std::endl;
-    std::vector<std::string> atn = systems[i].GetAtomNames();
-
-    size_t n_sites = systems[i].GetNumSites();
-
-    std::cout << std::setw(6)  << std::left << "Atom"
-              << std::setw(20) << std::right << "GradientX"
-              << std::setw(20) << std::right << "GradientY"
-              << std::setw(20) << std::right << "GradientZ"
-              << std::endl;
-    for (size_t j = 0; j < n_sites; j++) {
-      if (atn[j] == "virt") continue;
-      std::cout << std::setprecision(10) << std::scientific
-                << std::setw(6) << std::left << atn[j]
-                << std::setw(20) << std::right << grad[3*j]
-                << std::setw(20) << std::right << grad[3*j + 1]
-                << std::setw(20) << std::right << grad[3*j + 2]
-                << std::endl;
+        tools::ReadNrg(argv[1], systems);
+    } catch (const std::exception& e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        return 1;
     }
+
+    std::vector<double> g;
+    std::cout << "Energies without gradients:" << std::endl;
+    for (size_t i = 0; i < systems.size(); i++) {
+        double energy = systems[i].Energy(false);
+        std::cout << std::setprecision(10) << std::scientific << "system[" << std::setfill('.') << std::setw(5) << i
+                  << "]= " << std::setfill(' ') << std::setw(20) << std::right << energy << std::setw(12) << std::right
+                  << " kcal/mol" << std::endl;
+    }
+#ifdef PRINT_GRADS
+    std::cout << "Energies with gradients:" << std::endl;
+    for (size_t i = 0; i < systems.size(); i++) {
+        double energy = systems[i].Energy(true);
+
+        std::vector<double> grad = systems[i].GetGrads();
+
+        std::cout << std::setprecision(10) << std::scientific << "system[" << std::setfill('.') << std::setw(5) << i
+                  << "]= " << std::setfill(' ') << std::setw(20) << std::right << energy << std::setw(12) << std::right
+                  << " kcal/mol" << std::endl
+                  << std::endl;
+        std::vector<std::string> atn = systems[i].GetAtomNames();
+
+        size_t n_sites = systems[i].GetNumSites();
+
+        std::cout << std::setw(6) << std::left << "Atom" << std::setw(20) << std::right << "GradientX" << std::setw(20)
+                  << std::right << "GradientY" << std::setw(20) << std::right << "GradientZ" << std::endl;
+        for (size_t j = 0; j < n_sites; j++) {
+            if (atn[j] == "virt") continue;
+            std::cout << std::setprecision(10) << std::scientific << std::setw(6) << std::left << atn[j]
+                      << std::setw(20) << std::right << grad[3 * j] << std::setw(20) << std::right << grad[3 * j + 1]
+                      << std::setw(20) << std::right << grad[3 * j + 2] << std::endl;
+        }
 #ifdef NUM_GRADS
-    std::cout << std::endl << std::setw(6)  << std::left << "Atom"
-              << std::setw(20) << std::right << "Analytical"
-              << std::setw(20) << std::right << "Numerical"
-              << std::setw(20) << std::right << "Difference"
-              << std::endl;
-    // Comparing analytical and numerical
-    std::vector<double> xyz;
-    xyz = systems[i].GetSysXyz();
-    const double eps = 1.0e-6;
-    for (size_t j = 0; j < n_sites * 3; j++) {
-      if (atn[j/3] == "virt") continue;
-      const double x_orig = xyz[j];
-      xyz[j] = x_orig + eps;
-      systems[i].SetSysXyz(xyz);
-      const double Ep = systems[i].Energy(false);
-      xyz[j] = x_orig + 2 * eps;
-      systems[i].SetSysXyz(xyz);
-      const double Epp = systems[i].Energy(false);
-      xyz[j] = x_orig - eps;
-      systems[i].SetSysXyz(xyz);
-      const double Em = systems[i].Energy(false);
-      xyz[j] = x_orig - 2 * eps;
-      systems[i].SetSysXyz(xyz);
-      const double Emm = systems[i].Energy(false);
-      const double gfd = (8*(Ep - Em) - (Epp - Emm))/(12*eps);
-      xyz[j] = x_orig;
-      systems[i].SetSysXyz(xyz);
-      std::cout << std::setprecision(4) << std::scientific
-                << std::setw(6) << std::left << atn[j/3]
-                << std::setw(20) << std::right << grad[j]
-                << std::setw(20) << std::right << gfd
-                << std::setw(20) << std::right << std::fabs(grad[j] - gfd)
-                << std::endl;
-    }  
-# endif
-  }
-# endif
-  return 0;
+        std::cout << std::endl
+                  << std::setw(6) << std::left << "Atom" << std::setw(20) << std::right << "Analytical" << std::setw(20)
+                  << std::right << "Numerical" << std::setw(20) << std::right << "Difference" << std::endl;
+        // Comparing analytical and numerical
+        std::vector<double> xyz;
+        xyz = systems[i].GetSysXyz();
+        const double eps = 1.0e-6;
+        for (size_t j = 0; j < n_sites * 3; j++) {
+            if (atn[j / 3] == "virt") continue;
+            const double x_orig = xyz[j];
+            xyz[j] = x_orig + eps;
+            systems[i].SetSysXyz(xyz);
+            const double Ep = systems[i].Energy(false);
+            xyz[j] = x_orig + 2 * eps;
+            systems[i].SetSysXyz(xyz);
+            const double Epp = systems[i].Energy(false);
+            xyz[j] = x_orig - eps;
+            systems[i].SetSysXyz(xyz);
+            const double Em = systems[i].Energy(false);
+            xyz[j] = x_orig - 2 * eps;
+            systems[i].SetSysXyz(xyz);
+            const double Emm = systems[i].Energy(false);
+            const double gfd = (8 * (Ep - Em) - (Epp - Emm)) / (12 * eps);
+            xyz[j] = x_orig;
+            systems[i].SetSysXyz(xyz);
+            std::cout << std::setprecision(4) << std::scientific << std::setw(6) << std::left << atn[j / 3]
+                      << std::setw(20) << std::right << grad[j] << std::setw(20) << std::right << gfd << std::setw(20)
+                      << std::right << std::fabs(grad[j] - gfd) << std::endl;
+        }
+#endif
+    }
+#endif
+    return 0;
 }
