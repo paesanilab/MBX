@@ -450,6 +450,10 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc13.insert(std::make_pair(1, 3));
         exc13.insert(std::make_pair(2, 3));
     }
+
+    // =====>> SECTION EXCLUDED <<=====
+    // =====>> PASTE CODE BELOW <<=====
+
 }
 
 bool IsExcluded(excluded_set_type exc, size_t a, size_t b) {
