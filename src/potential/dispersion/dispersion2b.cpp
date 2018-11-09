@@ -255,6 +255,11 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads,
 
     d6.push_back(3.028640000000000e+00); // A^(-1)
     d6.push_back(3.271530000000000e+00); // A^(-1)
+
+    // =====>> SECTION DISPERSION <<=====
+    // ======>> PASTE CODE BELOW <<======
+
+
   } else {
     return 0.0;
   }
