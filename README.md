@@ -62,6 +62,19 @@ In case the file does not exist in `src/potential/1b/`, paste the code lines in 
 
 Last but not least we need to tell CMake to compile those files. Open the file `CMakeLists.txt` and add the 3 `.cpp` files you just copied to the first line.
 
+### Two-body
+#### Dimer properties
+We need to add the dispersion part in the code. Locate the section `DISPERSION` in your `software_code.txt` file, and locate the same section in `src/potential/dispersion/dispersion2b.cpp`. Paste the code below.
+
+#### Dimer polynomials
+First, locate in `software_code.txt` the sections `TWOBODY_NOGRD` and `TWOBODY_GRD`. In the file `src/potential/2b/energy2b.cpp`, locate the same sections. Copy the code below the indications.
+
+Second, locate in your `software_code.txt` the section `CONSTRUCTOR`. Look at the directory `src/potential/2b/`, and check if the `x2b_*_deg*_v1x.cpp` file that you generated in `software_files` already exists. If it does exist, locate the section `CONSTRUCTOR` in the `x2b_*_deg*_v1x.cpp` file in `src/potential/2b/` and paste after the `CONSTRUCTOR` keyword. No further action is required.
+
+In case the file does not exist in `src/potential/2b/`, paste the code lines in your newly generated `x2b_*_deg*_v1x.cpp` file, after the keyword. Then, copy all `.cpp` and `.h` files inside `software_files` into `src/potential/2b/`. Since the files did not exist, you will need to include the new  `x2b_*_deg*_v1x.h` file in `energy2b.h`. Locate the section `INCLUDE2B` in both files and paste the proper include.
+
+Last but not least we need to tell CMake to compile those files. Open the file `CMakeLists.txt` and add the 3 `.cpp` files you just copied to the first line.
+
 Now compile the code and make sure everything works!
 
 

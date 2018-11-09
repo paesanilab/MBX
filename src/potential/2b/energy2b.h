@@ -8,6 +8,8 @@
 // 2B
 #include "potential/2b/x2b-v9x.h"
 #include "potential/2b/x2b-A1B2Z2_C-v1x.h"
+// =====>> SECTION INCLUDE2B <<=====
+// ===>> PASTE YOUR CODE BELOW <<===
 
 /**
  * @file energy2b.h
