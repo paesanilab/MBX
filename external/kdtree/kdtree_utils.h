@@ -101,6 +101,45 @@ struct PointCloud
 
 };
 
+// Gets a vector of XYZ in vectorized form and returns the point cloud
+// All the coordinates will be modified to be the closest image to the reference point
+template <typename T>
+PointCloud<T> XyzToCloudVec(std::vector<T> &xyz, size_t npoints, std::vector<T> box, std::vector<T> reference)
+{
+  PointCloud<T> ptc;
+  ptc.PBC = box.size();
+  ptc.pbcbox = box;
+  ptc.pts.resize(npoints);
+  
+  std::vector<T> box2 = box;
+  for (size_t i = 0; i < box.size(); i++) box2[i] *= 0.5;
+
+  for (size_t dim = 0; dim < 3; dim++) {
+    size_t dimnp = dim*npoints;
+    for (size_t i = 0; i < npoints; i++) {
+      T coord = xyz[dimnp + i];
+      T di = coord - reference[dim];
+      // NOTE Assuming orthorombic box for now
+      if (di > box2[3 * dim + dim]) {
+          // here
+          xyz[dimnp + i] -= box[3 * dim + dim];
+          // here
+      } else if (di <= -box2[3 * dim + dim]) {
+          // here
+          xyz[dimnp + i] += box[3 * dim + dim];
+      } 
+    }
+  }
+
+  for (size_t i = 0; i < npoints; i++) {
+    ptc.pts[i].x = xyz[i];
+    ptc.pts[i].y = xyz[i+npoints];
+    ptc.pts[i].z = xyz[i+2*npoints];
+  }
+
+  return ptc;
+}
+
 // Gets a vector of XYZ and returns the point cloud
 template <typename T>
 PointCloud<T> XyzToCloud(std::vector<T> xyz, bool use_pbc, std::vector<T> box) 
