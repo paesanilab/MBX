@@ -120,9 +120,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             sites.push_back(4);
             nat.push_back(3);
 
-        // =====>> SECTION SITES <<=====
-        // ==> PASTE YOUR CODE BELOW <==
-
+            // =====>> SECTION SITES <<=====
+            // ==> PASTE YOUR CODE BELOW <==
 
             // Halides and alkali metal ions
         } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
@@ -305,8 +304,8 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
-void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff, std::vector<double> &xyz_out, std::vector<size_t> &indexes) {
-
+void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
+                       std::vector<double> &xyz_out, std::vector<size_t> &indexes) {
     // Build the tree
     typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
                                                 kdtutils::PointCloud<double>, 3 /* dim */>
@@ -315,20 +314,20 @@ void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> ref
     index.buildIndex();
 
     // Tree is built
-    
+
     // Reset indexes and output coordinates
     indexes.clear();
     xyz_out.clear();
-    
+
     // Perform the search
     std::vector<std::pair<size_t, double>> ret_matches;
     nanoflann::SearchParams params;
     const size_t nMatches = index.radiusSearch(reference.data(), cutoff * cutoff, ret_matches, params);
- 
+
     std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
- 
+
     // Resize xyz_out to be 3*nMatches
-    xyz_out.resize(3*nMatches);
+    xyz_out.resize(3 * nMatches);
     indexes.resize(nMatches);
 
     // Add the pairs that are not in the pairs vector
@@ -338,7 +337,7 @@ void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> ref
         // Add coordinates in vectorized order
         xyz_out[j] = ptc.pts[index].x;
         xyz_out[j + nMatches] = ptc.pts[index].y;
-        xyz_out[j + 2*nMatches] = ptc.pts[index].z;
+        xyz_out[j + 2 * nMatches] = ptc.pts[index].z;
     }
 }
 
@@ -486,7 +485,6 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
 
     // =====>> SECTION EXCLUDED <<=====
     // =====>> PASTE CODE BELOW <<=====
-
 }
 
 bool IsExcluded(excluded_set_type exc, size_t a, size_t b) {
@@ -607,11 +605,10 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv] = 1.0 * CHARGECON;
         }
 
-    // =====>> SECTION CHARGES <<=====
-    // =======>> PASTE BELOW <<=======
+        // =====>> SECTION CHARGES <<=====
+        // =======>> PASTE BELOW <<=======
 
-
-    // Note, for now, assuming only water has site dependant charges
+        // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
         // chgtmp = M, H1, H2 according to ttm4.cpp
         std::vector<double> chgtmp;
@@ -701,9 +698,8 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.3660;
 
-    // =====>> SECTION POLFACS <<=====
-    // =======>> PASTE BELOW <<=======
-    
+        // =====>> SECTION POLFACS <<=====
+        // =======>> PASTE BELOW <<=======
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
@@ -754,9 +750,8 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
 
-    // =====>> SECTION POLS <<=====
-    // =====>> PASTE  BELOW <<=====
-
+        // =====>> SECTION POLS <<=====
+        // =====>> PASTE  BELOW <<=====
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
