@@ -80,7 +80,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
-                                      const bool do_grads, const std::vector<double> &box) {
+                                      const bool do_grads, const std::vector<double> &box, const double cutoff) {
     sys_chg_ = chg;
     sys_chg_grad_ = chg_grad;
     polfac_ = polfac;
@@ -90,6 +90,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     dip_method_ = dip_method;
     box_ = box;
     use_pbc_ = box.size();
+    cutoff_ = cutoff;
 
     size_t nsites3 = nsites_ * 3;
 

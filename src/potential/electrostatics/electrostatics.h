@@ -120,7 +120,7 @@ class Electrostatics {
     void SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                           const std::vector<double> &chg_grad, const std::vector<double> &pol,
                           const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
-                          const std::vector<double> &box = {});
+                          const std::vector<double> &box = {}, const double cutoff = 100.0);
 
     /**
      * @brief Sets the cutoff for electrostatic interactions
