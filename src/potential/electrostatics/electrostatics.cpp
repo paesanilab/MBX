@@ -43,7 +43,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     dip_method_ = dip_method;
     box_ = box;
     use_pbc_ = box.size();
-    cutoff_ = 10.0;
+    cutoff_ = 1000.0;
 
     // Initialize other variables
     nsites_ = sys_chg_.size();
@@ -309,7 +309,58 @@ void Electrostatics::CalculatePermanentElecField() {
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
+
+                    std::vector<double> xyz_sitei(3);
+                    xyz_sitei[0] = xyz_[fi_crd1 + inmon13 + m1];
+                    xyz_sitei[1] = xyz_[fi_crd1 + inmon13 + nmon1 + m1];
+                    xyz_sitei[2] = xyz_[fi_crd1 + inmon13 + 2*nmon1 + m1];
+
                     for (size_t j = 0; j < ns2; j++) {
+                        size_t jnmon2 = j * nmon2;
+                        size_t jnmon23 = jnmon2 * 3;
+                        // If PBC is activated, get the xyz in vectorized form for 
+                        // all the monomer2 sites j
+                        // What we are going to do here is to get all sites j of all m2
+                        // that are close to site i of the monomer m1 we are looking at
+                        size_t start_j = fi_crd2 + jnmon23;
+                        size_t size_j = nmon2 - m2init;
+                        std::vector<double> xyz_sitej(3*size_j);
+                        // Copy x
+                        std::copy(xyz_.begin() + start_j + m2init, 
+                                  xyz_.begin() + start_j + nmon2,
+                                  xyz_sitej.begin());
+                        // Copy y
+                        std::copy(xyz_.begin() + start_j + nmon2 + m2init,
+                                  xyz_.begin() + start_j + 2*nmon2,
+                                  xyz_sitej.begin() + size_j);
+                        // Copy y
+                        std::copy(xyz_.begin() + start_j + 2*nmon2 + m2init,
+                                  xyz_.begin() + start_j + 3*nmon2,
+                                  xyz_sitej.begin() + 2*size_j);
+
+                        // Vector that will tell the original position of the new sites
+                        std::vector<size_t> indexes(size_j);
+                        std::vector<double> chg_sitej(size_j);
+                        std::vector<double> phi_sitej(size_j,0.0);
+                        std::vector<double> Efq_sitej(3*size_j,0.0);
+
+                        std::copy(chg_.begin() + fi_sites2 + nmon2*j + m2init,
+                                  chg_.begin() + fi_sites2 + nmon2*(j+1),
+                                  chg_sitej.begin());
+
+                        if (use_pbc_) {
+                            // This step will put modify xyz, by moving each site j to be 
+                            // the closest image to the site i
+                            kdtutils::PointCloud<double> ptc = 
+                                kdtutils::XyzToCloudVec(xyz_sitej, size_j, box_, xyz_sitei);
+                            // Now we get all the sites within the cutoff
+                            systools::GetCloseNeighbors(ptc, xyz_sitei, cutoff_, xyz_sitej, indexes);
+                        } else {
+                            for (size_t ind = 0; ind < size_j; ind++) 
+                                indexes[ind] = ind;
+                        } 
+
+
                         // Check if A = 0 and call the proper field calculation
                         double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
                         double Ai = 0.0;
@@ -323,10 +374,24 @@ void Electrostatics::CalculatePermanentElecField() {
                             Asqsqi = Ai;
                         }
                         local_field->CalcPermanentElecField(
-                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() + fi_sites1,
-                            chg_.data() + fi_sites2, m1, m2init, nmon2, nmon1, nmon2, i, j, Ai, Asqsqi, aCC_, aCC1_4_,
-                            g34_, &ex_thread, &ey_thread, &ez_thread, &phi1_thread, phi_2_pool[rank].data(),
-                            Efq_2_pool[rank].data());
+                            xyz_.data() + fi_crd1, xyz_sitej.data(), chg_.data() + fi_sites1,
+                            chg_sitej.data(), m1, 0, size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_,
+                            g34_, &ex_thread, &ey_thread, &ez_thread, &phi1_thread, phi_sitej.data(),
+                            Efq_sitej.data());
+//                        local_field->CalcPermanentElecField(
+//                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() + fi_sites1,
+//                            chg_.data() + fi_sites2, m1, m2init, nmon2, nmon1, nmon2, i, 0, Ai, Asqsqi, aCC_, aCC1_4_,
+//                            g34_, &ex_thread, &ey_thread, &ez_thread, &phi1_thread, phi_2_pool[rank].data(),
+//                            Efq_2_pool[rank].data());
+
+                        // Put proper data in field and electric field of j
+                        for (size_t ind = 0; ind < size_j; ind++) {
+                            phi_2_pool[rank][jnmon2 + m2init + indexes[ind]] += phi_sitej[ind];
+                            for (size_t dim = 0; dim < 3; dim++) {
+                                Efq_2_pool[rank][jnmon23 + nmon2*dim + m2init + indexes[ind]] += Efq_sitej[dim*size_j + ind];
+                            }
+                        }
+
                         phi_1_pool[rank][inmon1 + m1] += phi1_thread;
                         Efq_1_pool[rank][inmon13 + m1] += ex_thread;
                         Efq_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;

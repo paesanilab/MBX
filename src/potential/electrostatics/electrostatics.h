@@ -20,6 +20,8 @@
 #include "potential/electrostatics/electrostatic_tensors.h"
 #include "potential/electrostatics/electrostatic_tensors_short.h"
 
+#include "kdtree_utils.h"
+
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
