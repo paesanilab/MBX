@@ -24,7 +24,8 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
                                                  size_t nmon1, size_t nmon2, size_t site_i, size_t site_j, double Ai,
                                                  double Asqsqi, double aCC, double aCC1_4, double g34,
                                                  double *Efqx_mon1, double *Efqy_mon1, double *Efqz_mon1, double *phi1,
-                                                 double *phi2, double *Efq2) {
+                                                 double *phi2, double *Efq2, double elec_scale_factor,
+                                                 double ewald_alpha) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -61,16 +62,24 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         v2_[m] = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];  // rijz
     }
 
-    // Store r^2 in vector
+    // Store r2 in vector
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v3_[m] = v0_[m] * v0_[m] + v1_[m] * v1_[m] + v2_[m] * v2_[m];  // rsq
+        v3_[m] = v0_[m] * v0_[m] + v1_[m] * v1_[m] + v2_[m] * v2_[m];  // r2
     }
 
-    // Store 1/r, a*(r/A)^4 in vector
+    // Store a*(r/A)^4 in vector
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v4_[m] = 1.0 / std::sqrt(v3_[m]);  // 1/r
-
         v5_[m] = aCC * v3_[m] * v3_[m] * Asqsqi;  // a*(r/A)^4
+    }
+
+    // Convert r2 -> 1/r
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v3_[m] = 1 / std::sqrt(v3_[m]);
+    }
+
+    // Store the attenuated coulomb operator in vector
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v4_[m] = (elec_scale_factor - erf(ewald_alpha / v3_[m])) * v3_[m];  // (1-erf(alpha r))/r
     }
 
     // Compute gammq and store result in vector. This loop is not vectorizable
@@ -84,9 +93,9 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         const double exp1 = std::exp(-v5_[m]);
 
         // Screening functions
-        const double s1r = v4_[m] - exp1 * v4_[m];
+        const double s1r = v4_[m] - exp1 * v3_[m];
         const double s0r = s1r + aCC1_4 * Ai * g34 * v6_[m];
-        const double s1r3 = s1r * v4_[m] * v4_[m];
+        const double s1r3 = s1r * v3_[m] * v3_[m];
 
         // Compute contribution to the field phi
         // Storing the contrib to mon 1 in vector to make it vectorizable

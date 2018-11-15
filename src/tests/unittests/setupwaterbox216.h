@@ -10,10 +10,10 @@
     std::vector<std::string> monomer_names(n_monomers, "h2o");                                                   \
     std::vector<double> charges(n_atoms, 0);                                                                     \
     for (int n = 0; n < n_monomers; ++n) {                                                                       \
-        charges[4 * n + 0] = 0.0;                                                                                \
-        charges[4 * n + 1] = 0.52;                                                                               \
-        charges[4 * n + 2] = 0.52;                                                                               \
-        charges[4 * n + 3] = -1.04;                                                                              \
+        charges[4 * n + 0] = qO;                                                                             \
+        charges[4 * n + 1] = qH;                                                                             \
+        charges[4 * n + 2] = qH;                                                                             \
+        charges[4 * n + 3] = qM;                                                                             \
     }                                                                                                            \
     std::vector<size_t> first_ind(n_monomers, 0);                                                                \
     for (int n = 1; n < n_monomers; ++n) {                                                                       \

@@ -15,9 +15,12 @@
 
 namespace elec {
 
+const double SQRTPI = sqrt(M_PI);
 Electrostatics::Electrostatics(){};
 
 void Electrostatics::SetCutoff(double cutoff) { cutoff_ = cutoff; }
+
+void Electrostatics::SetEwaldAlpha(double alpha) { ewald_alpha_ = alpha; }
 
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                                 const std::vector<double> &polfac, const std::vector<double> &pol,
@@ -215,7 +218,7 @@ void Electrostatics::CalculatePermanentElecField() {
                 bool is12 = systools::IsExcluded(exc12, i, j);
                 bool is13 = systools::IsExcluded(exc13, i, j);
                 bool is14 = systools::IsExcluded(exc14, i, j);
-                if (is12 || is13 || is14) continue;
+                double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
 
                 // Get a1a2 and check if is not 0.
                 double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
@@ -230,10 +233,10 @@ void Electrostatics::CalculatePermanentElecField() {
                     Asqsqi = Ai;
                 }
                 for (size_t m = 0; m < nmon; m++) {
-                    elec_field.CalcPermanentElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd,
-                                                      chg_.data() + fi_sites, chg_.data() + fi_sites, m, m, m + 1, nmon,
-                                                      nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
-                                                      phi_.data() + fi_sites, Efq_.data() + fi_crd);
+                    elec_field.CalcPermanentElecField(
+                        xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data() + fi_sites, chg_.data() + fi_sites, m,
+                        m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
+                        phi_.data() + fi_sites, Efq_.data() + fi_crd, elec_scale_factor, ewald_alpha_);
                     phi_[fi_sites + inmon + m] += phi1;
                     Efq_[fi_crd + inmon3 + m] += ex;
                     Efq_[fi_crd + inmon3 + nmon + m] += ey;
@@ -367,10 +370,12 @@ void Electrostatics::CalculatePermanentElecField() {
                             Ai = constants::max_dbl;
                             Asqsqi = Ai;
                         }
+                        double elec_scale_factor = 1;
                         local_field->CalcPermanentElecField(
                             xyz_.data() + fi_crd1, xyz_sitej.data(), chg_.data() + fi_sites1, chg_sitej.data(), m1, 0,
                             size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
-                            &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data());
+                            &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
+                            ewald_alpha_);
                         //                        local_field->CalcPermanentElecField(
                         //                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() +
                         //                            fi_sites1, chg_.data() + fi_sites2, m1, m2init, nmon2, nmon1,
@@ -802,14 +807,14 @@ void Electrostatics::CalculateDipolesCG() {
         fi_crd += nmon * ns * 3;
     }
 
-    // The Matrix is completed. Now proceed to CG algorithm
-    // Following algorithm from:
-    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
+// The Matrix is completed. Now proceed to CG algorithm
+// Following algorithm from:
+// https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
-    // Initialize for first iteration
-    // for (size_t i = 0; i < nsites3; i++) {
-    //  mu_[i] *= pol_sqrt_[i];
-    //}
+// Initialize for first iteration
+// for (size_t i = 0; i < nsites3; i++) {
+//  mu_[i] *= pol_sqrt_[i];
+//}
 
 #ifdef DEBUG
     for (size_t i = 0; i < nsites3; i++) {
@@ -1262,6 +1267,14 @@ void Electrostatics::CalculateElecEnergy() {
     Eperm_ = 0.0;
     for (size_t i = 0; i < nsites_; i++) Eperm_ += phi_[i] * chg_[i];
     Eperm_ *= 0.5;
+
+    double self_energy = 0;
+    // The Ewald self field
+    if (ewald_alpha_ > 0)
+        for (const auto &q : chg_) {
+            self_energy -= ewald_alpha_ / SQRTPI * q * q;
+        }
+    std::cout << "SLF " << 627.509 * self_energy << std::endl;
 
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;

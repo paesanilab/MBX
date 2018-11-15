@@ -129,6 +129,13 @@ class Electrostatics {
      */
     void SetCutoff(double cutoff);
 
+    /**
+     * @brief Sets the Ewald attenuation parameter (in units of 1/Bohr)
+     *
+     * @param[in] cutoff New cutoff value
+     */
+    void SetEwaldAlpha(double cutoff);
+
    private:
     void CalculatePermanentElecField();
     void CalculateDipolesIterative();
@@ -231,6 +238,8 @@ class Electrostatics {
     bool use_pbc_;
     // electrostatics cutoff
     double cutoff_;
+    // ewald attenuation parameter in inverse bohr
+    double ewald_alpha_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

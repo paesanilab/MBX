@@ -1,7 +1,7 @@
 # Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
     unittest-gas-coulombonly.cpp
-    unittest-pbc-coulombonly.cpp
+    unittest-pme-coulombonly.cpp
     unittest-gamma.cpp
 )
 
@@ -55,8 +55,7 @@ foreach( name ${TARGETS_UNITTESTS_TESTS} )
     target_link_libraries( ${name} PRIVATE mbnrglib ${EXTERNAL_LIBRARIES})
     add_dependencies( ${name} mbnrglib )
     add_test(NAME ${name}
-             COMMAND ${name} 
-             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+             COMMAND ${name})
 endforeach()
 
 foreach( name ${TARGETS_ALL} )

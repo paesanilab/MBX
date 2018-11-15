@@ -5,6 +5,8 @@ cmake_policy(SET CMP0048 NEW)
 project(clusters_ultimate
         VERSION 0.1.0
         LANGUAGES C CXX)
+
+set(PN ${PROJECT_NAME})
 set(clusters_ultimate_AUTHORS      "")
 set(clusters_ultimate_DESCRIPTION  "Clusters Ultimate")
 set(clusters_ultimate_URL          "https://github.com/paesanilab/clusters_ultimate")
@@ -40,6 +42,21 @@ include(GNUInstallDirs)
 include(autocmake_safeguards)
 include(custom_color_messages)
 
+# <<< Export Config to allow other projects to automagically import this >>>
+# GNUInstallDirs "DATADIR" wrong here; CMake search path wants "share".
+set(CMAKECONFIG_INSTALL_DIR "share/cmake/${PN}")
+include(CMakePackageConfigHelpers)
+configure_package_config_file(cmake/${PN}Config.cmake.in
+                              "${CMAKE_CURRENT_BINARY_DIR}/${PN}Config.cmake"
+                              INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR})
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PN}ConfigVersion.cmake
+                                 VERSION ${${PN}_VERSION}
+                                 COMPATIBILITY AnyNewerVersion)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PN}Config.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/${PN}ConfigVersion.cmake
+        DESTINATION ${CMAKECONFIG_INSTALL_DIR})
+
+
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/install" CACHE PATH "Install path" FORCE)
 endif()
@@ -58,8 +75,6 @@ enable_testing()
 ################################  Main Project  ################################
 include(ExternalProject)
 ExternalProject_Add(clusters_ultimate-core
-   # DEPENDS lapack_external
-   #         pybind11_external
    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src
    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
@@ -73,12 +88,7 @@ ExternalProject_Add(clusters_ultimate-core
               -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
               -DCMAKE_INSTALL_DATADIR=${CMAKE_INSTALL_DATADIR}
               -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
-              # -DPYMOD_INSTALL_LIBDIR=${PYMOD_INSTALL_LIBDIR}
-              # -DPYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}
-              # -DPYTHON_INCLUDE_DIR=${PYTHON_INCLUDE_DIR}
-              # -DPYTHON_LIBRARY=${PYTHON_LIBRARY}
-              # -Dpybind11_DIR=${pybind11_DIR}
-              # -DTargetLAPACK_DIR=${TargetLAPACK_DIR}
+              -DCMAKECONFIG_INSTALL_DIR=${CMAKECONFIG_INSTALL_DIR}
               -DLIBC_INTERJECT=${LIBC_INTERJECT}
               -DDESTDIR=${CMAKE_BINARY_DIR}/stage
    CMAKE_CACHE_ARGS -DCMAKE_PREFIX_PATH:PATH=${CMAKE_PREFIX_PATH}
@@ -87,7 +97,6 @@ ExternalProject_Add(clusters_ultimate-core
                    DESTDIR=${CMAKE_BINARY_DIR}/stage)
 
 add_subdirectory(external)
-#add_subdirectory(doc)
 
 
 # <<<  Install  >>>

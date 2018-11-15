@@ -76,7 +76,9 @@ class ElectricFieldHolder {
                                 double *Efqz_mon1,             // Output electric field on Z for Mon 1
                                 double *phi1,                  // Output potential for mon 1
                                 double *phi2,                  // Potential on Mon 2
-                                double *Efq2);                 // Electric field on Mon 2
+                                double *Efq2,                  // Electric field on Mon 2
+                                double elec_scale_factor,  // Scale factor for electrostatic (1=included, 0=excluded)
+                                double ewald_alpha);       // Ewald attenuation paramter
 
     ////////////////////////////////////////////////////////////////////////////////
     // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
