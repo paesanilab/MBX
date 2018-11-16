@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9 FATAL_ERROR)  # 3.3: EP_add(DEPENDS interfacelib
+cmake_minimum_required(VERSION 3.12.4 FATAL_ERROR)  # 3.3: EP_add(DEPENDS interfacelib
 # project_VERSION* variables populated from project(... VERSION x.x.x) string
 cmake_policy(SET CMP0048 NEW)
 
