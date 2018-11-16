@@ -16,11 +16,32 @@
 namespace elec {
 
 const double SQRTPI = sqrt(M_PI);
-Electrostatics::Electrostatics(){};
+
+std::vector<double> InvertUnitCell(const std::vector<double> &box) {
+    double determinant = box[0] * (box[4] * box[8] - box[7] * box[5]) - box[1] * (box[3] * box[8] - box[5] * box[6]) +
+                         box[2] * (box[3] * box[7] - box[4] * box[6]);
+
+    double determinant_inverse = 1 / determinant;
+    std::vector<double> box_inverse(9);
+    box_inverse[0] = (box[4] * box[8] - box[7] * box[5]) * determinant_inverse;
+    box_inverse[1] = (box[2] * box[7] - box[1] * box[8]) * determinant_inverse;
+    box_inverse[2] = (box[1] * box[5] - box[2] * box[4]) * determinant_inverse;
+    box_inverse[3] = (box[5] * box[6] - box[3] * box[8]) * determinant_inverse;
+    box_inverse[4] = (box[0] * box[8] - box[2] * box[6]) * determinant_inverse;
+    box_inverse[5] = (box[3] * box[2] - box[0] * box[5]) * determinant_inverse;
+    box_inverse[6] = (box[3] * box[7] - box[6] * box[4]) * determinant_inverse;
+    box_inverse[7] = (box[6] * box[1] - box[0] * box[7]) * determinant_inverse;
+    box_inverse[8] = (box[0] * box[4] - box[3] * box[1]) * determinant_inverse;
+    return box_inverse;
+}
 
 void Electrostatics::SetCutoff(double cutoff) { cutoff_ = cutoff; }
 
 void Electrostatics::SetEwaldAlpha(double alpha) { ewald_alpha_ = alpha; }
+
+void Electrostatics::SetEwaldGridDensity(double density) { pme_grid_density_ = density; }
+
+void Electrostatics::SetEwaldSplineOrder(int order) { pme_spline_order_ = order; }
 
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                                 const std::vector<double> &polfac, const std::vector<double> &pol,
@@ -29,6 +50,9 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
                                 const std::vector<std::pair<std::string, size_t>> &mon_type_count, const bool do_grads,
                                 const double tolerance, const size_t maxit, const std::string dip_method,
                                 const std::vector<double> &box) {
+    pme_spline_order_ = 5;
+    pme_grid_density_ = 1.2;
+    ewald_alpha_ = 0;
     // Copy System data in electrostatics
     // sys_chg_ = std::vector<double>(chg.begin(),chg.end());
     sys_chg_ = chg;
@@ -51,6 +75,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     // Initialize other variables
     nsites_ = sys_chg_.size();
     size_t nsites3 = nsites_ * 3;
+    rec_phi_and_field_ = std::vector<double>(nsites_ * 4, 0.0);
     sys_phi_ = std::vector<double>(nsites_, 0.0);
     phi_ = std::vector<double>(nsites_, 0.0);
     sys_Efq_ = std::vector<double>(nsites3, 0.0);
@@ -200,6 +225,8 @@ void Electrostatics::CalculatePermanentElecField() {
     excluded_set_type exc13;
     excluded_set_type exc14;
 
+    auto box_inverse = box_.size() ? InvertUnitCell(box_) : std::vector<double>();
+
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
@@ -233,10 +260,11 @@ void Electrostatics::CalculatePermanentElecField() {
                     Asqsqi = Ai;
                 }
                 for (size_t m = 0; m < nmon; m++) {
-                    elec_field.CalcPermanentElecField(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data() + fi_sites, chg_.data() + fi_sites, m,
-                        m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
-                        phi_.data() + fi_sites, Efq_.data() + fi_crd, elec_scale_factor, ewald_alpha_);
+                    elec_field.CalcPermanentElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd,
+                                                      chg_.data() + fi_sites, chg_.data() + fi_sites, m, m, m + 1, nmon,
+                                                      nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
+                                                      phi_.data() + fi_sites, Efq_.data() + fi_crd, elec_scale_factor,
+                                                      ewald_alpha_, use_pbc_, box_, box_inverse, cutoff_);
                     phi_[fi_sites + inmon + m] += phi1;
                     Efq_[fi_crd + inmon3 + m] += ex;
                     Efq_[fi_crd + inmon3 + nmon + m] += ey;
@@ -339,24 +367,12 @@ void Electrostatics::CalculatePermanentElecField() {
                                   xyz_sitej.begin() + 2 * size_j);
 
                         // Vector that will tell the original position of the new sites
-                        std::vector<size_t> indexes(size_j);
                         std::vector<double> chg_sitej(size_j);
                         std::vector<double> phi_sitej(size_j, 0.0);
                         std::vector<double> Efq_sitej(3 * size_j, 0.0);
 
                         std::copy(chg_.begin() + fi_sites2 + nmon2 * j + m2init,
                                   chg_.begin() + fi_sites2 + nmon2 * (j + 1), chg_sitej.begin());
-
-                        if (use_pbc_) {
-                            // This step will put modify xyz, by moving each site j to be
-                            // the closest image to the site i
-                            kdtutils::PointCloud<double> ptc =
-                                kdtutils::XyzToCloudVec(xyz_sitej, size_j, box_, xyz_sitei);
-                            // Now we get all the sites within the cutoff
-                            systools::GetCloseNeighbors(ptc, xyz_sitei, cutoff_, xyz_sitej, indexes);
-                        } else {
-                            for (size_t ind = 0; ind < size_j; ind++) indexes[ind] = ind;
-                        }
 
                         // Check if A = 0 and call the proper field calculation
                         double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
@@ -375,7 +391,7 @@ void Electrostatics::CalculatePermanentElecField() {
                             xyz_.data() + fi_crd1, xyz_sitej.data(), chg_.data() + fi_sites1, chg_sitej.data(), m1, 0,
                             size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
-                            ewald_alpha_);
+                            ewald_alpha_, use_pbc_, box_, box_inverse, cutoff_);
                         //                        local_field->CalcPermanentElecField(
                         //                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() +
                         //                            fi_sites1, chg_.data() + fi_sites2, m1, m2init, nmon2, nmon1,
@@ -385,10 +401,9 @@ void Electrostatics::CalculatePermanentElecField() {
 
                         // Put proper data in field and electric field of j
                         for (size_t ind = 0; ind < size_j; ind++) {
-                            phi_2_pool[rank][jnmon2 + m2init + indexes[ind]] += phi_sitej[ind];
+                            phi_2_pool[rank][jnmon2 + m2init + ind] += phi_sitej[ind];
                             for (size_t dim = 0; dim < 3; dim++) {
-                                Efq_2_pool[rank][jnmon23 + nmon2 * dim + m2init + indexes[ind]] +=
-                                    Efq_sitej[dim * size_j + ind];
+                                Efq_2_pool[rank][jnmon23 + nmon2 * dim + m2init + ind] += Efq_sitej[dim * size_j + ind];
                             }
                         }
 
@@ -427,6 +442,42 @@ void Electrostatics::CalculatePermanentElecField() {
         fi_mon1 += nmon1;
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
+    }
+
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        helpme::PMEInstance<double> pme_solver_;
+        // Compute the reciprocal space terms, using PME
+        double A = box_[0], B = box_[4], C = box_[8];
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
+        auto charges = helpme::Matrix<double>(sys_chg_.data(), nsites_, 1);
+        auto result = helpme::Matrix<double>(rec_phi_and_field_.data(), nsites_, 4);
+        pme_solver_.computePRec(0, charges, coords, coords, 0, result);
+
+        // Resort phi from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    phi_[fi_sites + m + inmon] += result[fi_sites + mns + i][0];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
     }
 }
 
@@ -1270,11 +1321,12 @@ void Electrostatics::CalculateElecEnergy() {
 
     double self_energy = 0;
     // The Ewald self field
-    if (ewald_alpha_ > 0)
+    if (ewald_alpha_ > 0) {
         for (const auto &q : chg_) {
             self_energy -= ewald_alpha_ / SQRTPI * q * q;
         }
-    std::cout << "SLF " << 627.509 * self_energy << std::endl;
+        Eperm_ += self_energy;
+    }
 
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;

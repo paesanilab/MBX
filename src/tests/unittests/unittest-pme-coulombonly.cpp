@@ -5,25 +5,55 @@
 
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
-constexpr double TOL = 1E-8;
-constexpr double angtobohr = 1.8897259886;
+constexpr double TOL = 1E-6;
 
 TEST_CASE("test the electrostatics class for coulomb terms (PME).") {
     // TIP3P test
-    double qO = -0.834;
-    double qH = 0.417;
+    double qO = -0.834 * constants::CHARGECON;
+    double qH = 0.417 * constants::CHARGECON;
     double qM = 0;
     SETUP_WATERBOX_216
+    double ref_energy = -1824.35;
+
     elec::Electrostatics elec;
-    std::vector<double> box_vectors{25 * angtobohr, 0, 0, 0, 25 * angtobohr, 0, 0, 0, 25 * angtobohr};
+    std::vector<double> box_vectors{30, 0, 0, 0, 30, 0, 0, 0, 30};
+
+    /*
+     * Ensure that computed properties are invariant to changes in the Ewald attenuation parameter
+     */
+
+    // alpha = 0.3
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
                     1E-16, 100, "iter", box_vectors);
-    elec.SetCutoff(12 * angtobohr);
-    elec.SetEwaldAlpha(0.3 / angtobohr);
-    std::vector<double> forces(3 * n_atoms);
-    double energy = elec.GetElectrostatics(forces);
-    std::cout << energy * 627.509 << std::endl;
+    elec.SetCutoff(14);
+    elec.SetEwaldAlpha(0.3);
+    elec.SetEwaldGridDensity(0.8);
+    elec.SetEwaldSplineOrder(6);
+    std::vector<double> forces3(3 * n_atoms);
+    double energy3 = elec.GetElectrostatics(forces3);
+    REQUIRE(energy3 == Approx(ref_energy).margin(TOL));
 
-    REQUIRE(energy == Approx(-3.63370).margin(TOL));
+    // alpha = 0.4
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
+                    1E-16, 100, "iter", box_vectors);
+    elec.SetCutoff(9);
+    elec.SetEwaldAlpha(0.4);
+    elec.SetEwaldGridDensity(1.5);
+    elec.SetEwaldSplineOrder(7);
+    std::vector<double> forces4(3 * n_atoms);
+    double energy4 = elec.GetElectrostatics(forces4);
+    REQUIRE(energy4 == Approx(energy3).margin(TOL));
+
+    // alpha = 0.5
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
+                    1E-16, 100, "iter", box_vectors);
+    elec.SetCutoff(7);
+    elec.SetEwaldAlpha(0.5);
+    elec.SetEwaldGridDensity(2.0);
+    elec.SetEwaldSplineOrder(7);
+    std::vector<double> forces5(3 * n_atoms);
+    double energy5 = elec.GetElectrostatics(forces5);
+    REQUIRE(energy5 == Approx(energy4).margin(TOL));
 }

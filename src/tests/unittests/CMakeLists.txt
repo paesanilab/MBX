@@ -52,7 +52,7 @@ add_library( CatchMain OBJECT ${UNITTEST_DIR}/${SOURCES_UNITTESTS_MAIN} ${HEADER
 
 foreach( name ${TARGETS_UNITTESTS_TESTS} )
     add_executable( ${name} ${name}.cpp $<TARGET_OBJECTS:CatchMain> ${HEADER_DIR}/catch.hpp )
-    target_link_libraries( ${name} PRIVATE mbnrglib ${EXTERNAL_LIBRARIES})
+    target_link_libraries( ${name} PRIVATE mbnrglib fftw::fftw)
     add_dependencies( ${name} mbnrglib )
     add_test(NAME ${name}
              COMMAND ${name})

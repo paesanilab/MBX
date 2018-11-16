@@ -21,6 +21,7 @@
 #include "potential/electrostatics/electrostatic_tensors_short.h"
 
 #include "kdtree_utils.h"
+#include "helpme.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,11 +40,6 @@ namespace elec {
 
 class Electrostatics {
    public:
-    /**
-     * @brief Default constructor of the class. Does nothing.
-     */
-    Electrostatics();
-
     /**
      * @brief Initializes the electrostatics class with the system information
      *
@@ -130,11 +126,25 @@ class Electrostatics {
     void SetCutoff(double cutoff);
 
     /**
-     * @brief Sets the Ewald attenuation parameter (in units of 1/Bohr)
+     * @brief Sets the Ewald attenuation parameter (in units of 1/Angstrom)
      *
      * @param[in] cutoff New cutoff value
      */
     void SetEwaldAlpha(double cutoff);
+
+    /**
+     * @brief Sets the PME grid density.
+     *
+     * @param[in] density the number of grid points per Angstrom in each dimension of the PME grid.
+     */
+    void SetEwaldGridDensity(double density);
+
+    /**
+     * @brief Sets the PME B-Spline order.
+     *
+     * @param[in] order the order of the B-Spline used to spread charges
+     */
+    void SetEwaldSplineOrder(int order);
 
    private:
     void CalculatePermanentElecField();
@@ -150,6 +160,8 @@ class Electrostatics {
 
     void ReorderData();
 
+    // PME solver
+    // helpme::PMEInstance<double> pme_solver_;
     // Charges of each site. Order has to follow mon_type_count.
     std::vector<double> chg_;
     // Charges of each site. Order has to follow mon_type_count.
@@ -191,6 +203,8 @@ class Electrostatics {
     std::vector<double> sys_phi_;
     // Electric potential on each site
     std::vector<double> phi_;
+    // Reciprocal space electric potential and field, in sys order at each site
+    std::vector<double> rec_phi_and_field_;
     // Permanent electric field with sys order
     std::vector<double> sys_Efq_;
     // Permanent electric field
@@ -238,8 +252,12 @@ class Electrostatics {
     bool use_pbc_;
     // electrostatics cutoff
     double cutoff_;
-    // ewald attenuation parameter in inverse bohr
+    // ewald attenuation parameter in inverse angstroms
     double ewald_alpha_;
+    // PME grid density
+    double pme_grid_density_;
+    // PME spline order
+    int pme_spline_order_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
