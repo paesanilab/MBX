@@ -19,6 +19,7 @@ matrix:
         packages:
         - clang-3.6
         - lcov
+        - libfftw3-dev
     env:
       - CXX_COMPILER='clang++-3.6'
       - CXX_FLAGS="-fPIC"
@@ -39,6 +40,7 @@ matrix:
         packages:
         - clang-3.7
         - lcov
+        - libfftw3-dev
     env:
       - CXX_COMPILER='clang++-3.7'
       - CXX_FLAGS="-fPIC"
@@ -58,6 +60,7 @@ matrix:
         packages:
         - g++-4.9
         - gcc-4.9
+        - libfftw3-dev
     env:
       - CXX_COMPILER='g++-4.9'
       - C_COMPILER='gcc-4.9'
