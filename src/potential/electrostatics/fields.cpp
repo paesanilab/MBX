@@ -25,7 +25,8 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
                                                  double Asqsqi, double aCC, double aCC1_4, double g34,
                                                  double *Efqx_mon1, double *Efqy_mon1, double *Efqz_mon1, double *phi1,
                                                  double *phi2, double *Efq2, double elec_scale_factor,
-                                                 double ewald_alpha) {
+                                                 double ewald_alpha, bool use_pbc, const std::vector<double> &box,
+                                                 const std::vector<double> &box_inverse, double cutoff) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -62,6 +63,29 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         v2_[m] = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];  // rijz
     }
 
+    // Apply the minimum image convention via fractional coordinates
+    // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+    if (use_pbc) {
+        // Convert to fractional coordinates
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v3_[m] = box_inverse[0] * v0_[m] + box_inverse[1] * v1_[m] + box_inverse[2] * v2_[m];
+            v4_[m] = box_inverse[3] * v0_[m] + box_inverse[4] * v1_[m] + box_inverse[5] * v2_[m];
+            v5_[m] = box_inverse[6] * v0_[m] + box_inverse[7] * v1_[m] + box_inverse[8] * v2_[m];
+        }
+        // Put in the range 0 to 1
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v3_[m] -= std::floor(v3_[m] + 0.5);
+            v4_[m] -= std::floor(v4_[m] + 0.5);
+            v5_[m] -= std::floor(v5_[m] + 0.5);
+        }
+        // Convert back to cartesian coordinates
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v0_[m] = box[0] * v3_[m] + box[1] * v4_[m] + box[2] * v5_[m];
+            v1_[m] = box[3] * v3_[m] + box[4] * v4_[m] + box[5] * v5_[m];
+            v2_[m] = box[6] * v3_[m] + box[7] * v4_[m] + box[8] * v5_[m];
+        }
+    }
+
     // Store r2 in vector
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         v3_[m] = v0_[m] * v0_[m] + v1_[m] * v1_[m] + v2_[m] * v2_[m];  // r2
@@ -77,9 +101,14 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         v3_[m] = 1 / std::sqrt(v3_[m]);
     }
 
+    // Cheesy way to apply cutoffs, for now!
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v3_[m] *= (v3_[m] < 1.0 / cutoff ? 0 : 1);
+    }
+
     // Store the attenuated coulomb operator in vector
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v4_[m] = (elec_scale_factor - erf(ewald_alpha / v3_[m])) * v3_[m];  // (1-erf(alpha r))/r
+        v4_[m] = (elec_scale_factor - erf(ewald_alpha / (v3_[m] + 1e-30))) * v3_[m];  // (1-erf(alpha r))/r
     }
 
     // Compute gammq and store result in vector. This loop is not vectorizable

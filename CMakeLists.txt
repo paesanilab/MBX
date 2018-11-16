@@ -69,6 +69,8 @@ set(STAGED_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/stage${CMAKE_INSTALL_PREFIX})
 if (USE_OPENMP)
     include(autocmake_omp)
 endif()
+
+
 include(custom_cxxstandard)
 include(custom_static_library)
 enable_testing()

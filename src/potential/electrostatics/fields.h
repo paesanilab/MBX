@@ -78,7 +78,11 @@ class ElectricFieldHolder {
                                 double *phi2,                  // Potential on Mon 2
                                 double *Efq2,                  // Electric field on Mon 2
                                 double elec_scale_factor,  // Scale factor for electrostatic (1=included, 0=excluded)
-                                double ewald_alpha);       // Ewald attenuation paramter
+                                double ewald_alpha,        // Ewald attenuation paramter
+                                bool use_pbc,              // Whether to enforce periodic boundary conditions
+                                const std::vector<double> &box,          // The lattice vectors
+                                const std::vector<double> &box_inverse,  // The inverse lattice vectors
+                                double cutoff);                          // The real space cutoff for pairs
 
     ////////////////////////////////////////////////////////////////////////////////
     // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
