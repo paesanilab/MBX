@@ -111,9 +111,17 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         v4_[m] = (elec_scale_factor - erf(ewald_alpha / (v3_[m] + 1e-30))) * v3_[m];  // (1-erf(alpha r))/r
     }
 
+    if (!use_pbc) {
+        // Rescale v3 to ensure right behavior in no PBC conditions
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v3_[m] *= elec_scale_factor;
+            v4_[m] = v3_[m];
+        }
+    }
+
     // Compute gammq and store result in vector. This loop is not vectorizable
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v6_[m] = gammq(0.75, v5_[m]);  // gammq
+        v6_[m] = gammq(0.75, v5_[m]) * elec_scale_factor;  // gammq
     }
 
 // Finalize computation of electric field

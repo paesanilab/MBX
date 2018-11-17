@@ -858,14 +858,14 @@ void Electrostatics::CalculateDipolesCG() {
         fi_crd += nmon * ns * 3;
     }
 
-// The Matrix is completed. Now proceed to CG algorithm
-// Following algorithm from:
-// https://en.wikipedia.org/wiki/Conjugate_gradient_method
+    // The Matrix is completed. Now proceed to CG algorithm
+    // Following algorithm from:
+    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
-// Initialize for first iteration
-// for (size_t i = 0; i < nsites3; i++) {
-//  mu_[i] *= pol_sqrt_[i];
-//}
+    // Initialize for first iteration
+    // for (size_t i = 0; i < nsites3; i++) {
+    //  mu_[i] *= pol_sqrt_[i];
+    //}
 
 #ifdef DEBUG
     for (size_t i = 0; i < nsites3; i++) {
