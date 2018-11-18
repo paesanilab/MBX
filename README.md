@@ -28,7 +28,7 @@ At this point, a folder called `install` should have been created.
 In order to make sure that the installations has been done properly, run the tests. In the home directory of the software:
 ```
 cd tests
-./run_tests.sh
+./run_tests.sh 2> out
 ```
 If all tests are passing, you are good to go!
 
@@ -44,7 +44,40 @@ make
 The output should be the same as the `expected_output`.
 
 ### i-pi
-This software is already interfaced with i-pi. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-pi first. Please go to [the i-pi github page](https://github.com/cosmo-epfl/i-pi-dev) and clone and follow the instructions to install i-pi.
+This software is already interfaced with i-pi. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-pi first. Please go to [the i-pi github page](https://github.com/cosmo-epfl/i-pi-dev) and clone and follow the instructions to install i-pi. Before continuing with this, make sure i-pi is working. If you have any problems with the i-pi installation, you can ask a question in [the i-pi-user forum](https://groups.google.com/forum/#!forum/ipi-users)
+
+After making sure that i-pi is working on yor machine:
+```
+cd plugins/i-pi/src/main/
+export CU_HOME="FULL/PATH/TO/CLUSTERS/ULTIMATE/HOME"
+make
+```
+
+A new file will be generated in `../../bin/`, called `driver`. Now we can run MD using i-pi. Go to the i-pi test folder in clusters_ultimate:
+```
+cd $CU_HOME/plugins/i-pi/test/MD/3h2o/100K/1-nvt/
+```
+
+This folder contains 3 files:
+- `3h2o.nrg` is the energy software input. It needs to be in this same format. If you have more water molecules, just add the `MOLECULE` and `MONOMER` sections, add the OHH coordinates, and end the sections with ENDMON and ENDMOL.
+- `3h2o.xyz` is the input for the coordinates for i-pi. The two files, `nrg` and `xyz`, should have exactly the same order, but the coordinates in the nrg file are not required to be the same as the ones in the XYZ file. XYZ will overwrite NRG.
+- `3h2o.xml` is the i-pi input file. This simulation will run an NVT MD at 100K. Refer to the i-pi user manual for more information.
+
+To run the simulation, in that same folder:
+```
+i-pi 3h2o.xml &
+../../../../../bin/driver 3h2o.nrg 34543 localhost
+```
+
+These should initialize i-pi and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$CU_HOME/plugins/i-pi/test/MD/3h2o/100K/2-nve`.
+```
+cd $CU_HOME/plugins/i-pi/test/MD/3h2o/100K/2-nve
+cp ../1-nvt/RESTART ./restart.xml
+i-pi restart.xml &
+../../../../../bin/driver 3h2o.nrg 34543 localhost
+```
+
+i-pi can also perform PIMD, REMD, and REPIMD. Refer to the manual and the examples in i-pi to see how to set them up.
 
 ## Add new PEFs
 ### One-body
