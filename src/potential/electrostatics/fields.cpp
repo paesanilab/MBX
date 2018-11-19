@@ -125,14 +125,19 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
     }
 
 // Finalize computation of electric field
+    const double SQRTPI = sqrt(M_PI);
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         const double exp1 = std::exp(-v5_[m]);
+        // Terms needed for the Ewald direct space field, see equation 2.8 of
+        // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
+        const double exp_alpha2r2 = std::exp(-ewald_alpha*ewald_alpha/(v3_[m]*v3_[m]));
+        const double ewaldterm = use_pbc ? 2 * exp_alpha2r2 * ewald_alpha / SQRTPI : 0;
 
         // Screening functions
         const double s1r = v4_[m] - exp1 * v3_[m];
         const double s0r = s1r + aCC1_4 * Ai * g34 * v6_[m];
-        const double s1r3 = s1r * v3_[m] * v3_[m];
+        const double s1r3 = (s1r + ewaldterm) * v3_[m] * v3_[m];
 
         // Compute contribution to the field phi
         // Storing the contrib to mon 1 in vector to make it vectorizable

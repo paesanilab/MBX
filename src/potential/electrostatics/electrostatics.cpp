@@ -457,7 +457,7 @@ void Electrostatics::CalculatePermanentElecField() {
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
         auto charges = helpme::Matrix<double>(sys_chg_.data(), nsites_, 1);
         auto result = helpme::Matrix<double>(rec_phi_and_field_.data(), nsites_, 4);
-        pme_solver_.computePRec(0, charges, coords, coords, 0, result);
+        pme_solver_.computePRec(0, charges, coords, coords, 1, result);
 
         // Resort phi from system order
         fi_mon = 0;
@@ -471,12 +471,21 @@ void Electrostatics::CalculatePermanentElecField() {
                 size_t mns3 = mns * 3;
                 for (size_t i = 0; i < ns; i++) {
                     size_t inmon = i * nmon;
-                    size_t inmon3 = 3 * inmon;
-                    phi_[fi_sites + m + inmon] += result[fi_sites + mns + i][0];
+                    const double *result_ptr = result[fi_sites + mns + i];
+                    phi_[fi_sites + inmon + m] += result_ptr[0];
+                    Efq_[3*fi_sites + 3*inmon + 0*nmon + m] -= result_ptr[1];
+                    Efq_[3*fi_sites + 3*inmon + 1*nmon + m] -= result_ptr[2];
+                    Efq_[3*fi_sites + 3*inmon + 2*nmon + m] -= result_ptr[3];
                 }
             }
             fi_mon += nmon;
             fi_sites += nmon * ns;
+        }
+        // The Ewald self potential
+        double *phi_ptr = phi_.data();
+        for (const auto &q : chg_) {
+            *phi_ptr -= 2 * ewald_alpha_ / SQRTPI * q;
+            ++phi_ptr;
         }
     }
 }
@@ -1318,15 +1327,6 @@ void Electrostatics::CalculateElecEnergy() {
     Eperm_ = 0.0;
     for (size_t i = 0; i < nsites_; i++) Eperm_ += phi_[i] * chg_[i];
     Eperm_ *= 0.5;
-
-    double self_energy = 0;
-    // The Ewald self field
-    if (ewald_alpha_ > 0) {
-        for (const auto &q : chg_) {
-            self_energy -= ewald_alpha_ / SQRTPI * q * q;
-        }
-        Eperm_ += self_energy;
-    }
 
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;

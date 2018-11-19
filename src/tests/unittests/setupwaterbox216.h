@@ -5,8 +5,8 @@
     const int n_monomers = 216;                                                                                  \
     const int n_atoms = 864;                                                                                     \
     std::vector<double> chg_grad(27 * n_monomers, 0.0);                                                          \
-    std::vector<double> polfac(n_atoms, 1e-7);                                                                   \
-    std::vector<double> pol(n_atoms, 1e-7);                                                                      \
+    std::vector<double> polfac(n_atoms, 0);                                                                      \
+    std::vector<double> pol(n_atoms, 0);                                                                         \
     std::vector<std::string> monomer_names(n_monomers, "h2o");                                                   \
     std::vector<double> charges(n_atoms, 0);                                                                     \
     for (int n = 0; n < n_monomers; ++n) {                                                                       \
