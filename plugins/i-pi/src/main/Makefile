@@ -2,9 +2,9 @@ CXX=g++
 CXXFLAGS= -Wall -std=c++11 -O2 -g
 
 LIBS = -lmbnrglib -fopenmp
-LIBDIR = -L$(HOME)/codes/clusters_ultimate/install/lib/static
+LIBDIR = -L$(CU_HOME)/install/lib/static
 
-INCLUDEDIR = -I$(HOME)/codes/clusters_ultimate/install/include
+INCLUDEDIR = -I$(CU_HOME)/install/include
 
 BINDIR = ../../bin
 
