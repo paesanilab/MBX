@@ -1617,6 +1617,10 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
     }
 }
 
+double Electrostatics::GetPermanentElectrostaticEnergy() {return Eperm_;}
+
+double Electrostatics::GetInducedElectrostaticEnergy() {return Eind_;}
+
 double Electrostatics::GetElectrostatics(std::vector<double> &grad) {
     CalculatePermanentElecField();
     CalculateDipoles();

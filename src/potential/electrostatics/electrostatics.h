@@ -145,6 +145,20 @@ class Electrostatics {
      * @param[in] order the order of the B-Spline used to spread charges
      */
     void SetEwaldSplineOrder(int order);
+    
+    /** 
+     * @brief Returns permanent electrostatic energy.
+     *
+     * @return Permanent electrostatic energy. Undefined if energy has not yet been calculated
+     */
+    double GetPermanentElectrostaticEnergy();
+
+    /** 
+     * @brief Returns induced electrostatic energy.
+     *
+     * @return Induced electrostatic energy. Undefined if energy has not yet been calculated
+     */
+    double GetInducedElectrostaticEnergy();
 
    private:
     void CalculatePermanentElecField();
