@@ -11,7 +11,7 @@
 constexpr double TOL = 1E-6;
 
 TEST_CASE("Test the electrostatics class for mbpol (gas phase).") {
-    // TIP3P test
+    // MBpol test
     SETUP_WATERBOX_3_MBPOL
     std::vector<double> elec_grad{-7.1325887311e+00, 9.3838029234e+00,  -7.1120493017e+00, -2.6049669131e+00,
                                   3.1364986514e+00,  3.3810366964e+00,  1.9731689382e+01,  1.1749153059e+01,
