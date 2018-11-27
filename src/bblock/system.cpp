@@ -480,6 +480,7 @@ double System::Energy(bool do_grads) {
     energy_ = e1b + e2b + e3b + Eelec;
 
 #ifdef DEBUG
+    std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
