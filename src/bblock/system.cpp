@@ -1,6 +1,6 @@
 #include "system.h"
 
-//#define DEBUG
+#define DEBUG
 //#define TIMING
 
 #ifdef TIMING
@@ -231,6 +231,11 @@ void System::Initialize() {
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cout << std::scientific << std::setprecision(10);
+#endif
+
     /////////////
     // CUTOFFS //
     /////////////
@@ -286,15 +291,6 @@ void System::Initialize() {
 
     // Setting PBC to false by default
     SetPBC();
-
-    //    // Sets the position of the virtual sites if any
-    //    SetVSites();
-    //    // Sets the charges of the system, even the position dependent ones
-    //    SetCharges();
-    //    // Sets the polarizabilities of the system
-    //    SetPols();
-    //    // Sets the polarizability factors of the system
-    //    SetPolfacs();
 
     // With the information previously set, we initialize the
     // electrostatics class
@@ -1039,6 +1035,23 @@ void System::SetCharges() {
         systools::SetCharges(xyz_, chg_, mon, nmon, nsites, first_index_[fi_mon], chggrad_);
         fi_mon += nmon;
     }
+
+#ifdef DEBUG
+    // Get charges of real and virtual sites in the input order
+    std::vector<double> real_chg =
+        systools::ResetOrderRealN(chg_, initial_order_realSites_, numat_, first_index_, nat_);
+    std::vector<double> all_chg = systools::ResetOrderN(chg_, initial_order_, first_index_, sites_);
+
+    // Print them
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "Real sites charges\n";
+    std::cerr << real_chg[0];
+    for (size_t i = 1; i < real_chg.size(); i++) std::cerr << ", " << real_chg[i];
+    std::cerr << "\nAll charges\n";
+    std::cerr << all_chg[0];
+    for (size_t i = 1; i < real_chg.size(); i++) std::cerr << ", " << all_chg[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1054,6 +1067,23 @@ void System::SetPols() {
         systools::SetPol(pol_, mon, nmon, nsites, first_index_[fi_mon]);
         fi_mon += nmon;
     }
+
+#ifdef DEBUG
+    // Get charges of real and virtual sites in the input order
+    std::vector<double> real_pol =
+        systools::ResetOrderRealN(pol_, initial_order_realSites_, numat_, first_index_, nat_);
+    std::vector<double> all_pol = systools::ResetOrderN(pol_, initial_order_, first_index_, sites_);
+
+    // Print them
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "Real sites polarizabilities\n";
+    std::cerr << real_pol[0];
+    for (size_t i = 1; i < real_pol.size(); i++) std::cerr << ", " << real_pol[i];
+    std::cerr << "\nAll polarizabilities\n";
+    std::cerr << all_pol[0];
+    for (size_t i = 1; i < all_pol.size(); i++) std::cerr << ", " << all_pol[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1069,6 +1099,23 @@ void System::SetPolfacs() {
         systools::SetPolfac(polfac_, mon, nmon, nsites, first_index_[fi_mon]);
         fi_mon += nmon;
     }
+
+#ifdef DEBUG
+    // Get charges of real and virtual sites in the input order
+    std::vector<double> real_polfac =
+        systools::ResetOrderRealN(polfac_, initial_order_realSites_, numat_, first_index_, nat_);
+    std::vector<double> all_polfac = systools::ResetOrderN(polfac_, initial_order_, first_index_, sites_);
+
+    // Print them
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "Real sites polarizability factors\n";
+    std::cerr << real_polfac[0];
+    for (size_t i = 1; i < real_polfac.size(); i++) std::cerr << ", " << real_polfac[i];
+    std::cerr << "\nAll polarizability factors\n";
+    std::cerr << all_polfac[0];
+    for (size_t i = 1; i < all_polfac.size(); i++) std::cerr << ", " << all_polfac[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1084,6 +1131,18 @@ void System::SetVSites() {
         systools::SetVSites(xyz_, mon, nmon, nsites, first_index_[fi_mon]);
         fi_mon += nmon;
     }
+
+#ifdef DEBUG
+    // Get charges of real and virtual sites in the input order
+    std::vector<double> all_xyz = systools::ResetOrder3N(xyz_, initial_order_, first_index_, sites_);
+
+    // Print them
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "All coordinates after setting vsites\n";
+    std::cerr << all_xyz[0];
+    for (size_t i = 1; i < all_xyz.size(); i++) std::cerr << ", " << all_xyz[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
 }
 
 ////////////////////////////////////////////////////////////////////////////////
