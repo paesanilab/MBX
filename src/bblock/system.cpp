@@ -1,6 +1,6 @@
 #include "system.h"
 
-#define DEBUG
+//#define DEBUG
 //#define TIMING
 
 #ifdef TIMING
@@ -1049,7 +1049,7 @@ void System::SetCharges() {
     for (size_t i = 1; i < real_chg.size(); i++) std::cerr << ", " << real_chg[i];
     std::cerr << "\nAll charges\n";
     std::cerr << all_chg[0];
-    for (size_t i = 1; i < real_chg.size(); i++) std::cerr << ", " << all_chg[i];
+    for (size_t i = 1; i < all_chg.size(); i++) std::cerr << ", " << all_chg[i];
     std::cerr << std::endl;
 #endif  // DEBUG
 }
