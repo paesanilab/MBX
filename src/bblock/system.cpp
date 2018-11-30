@@ -287,7 +287,7 @@ void System::Initialize() {
     // calculation. Will assume no convergence if this number is reached
     maxItDip_ = 100;
     // Sets the default method to calculate induced dipoles to ASPC
-    dipole_method_ = "aspc";
+    dipole_method_ = "cg";
 
     // Setting PBC to false by default
     SetPBC();
