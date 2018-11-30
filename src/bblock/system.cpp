@@ -511,6 +511,8 @@ double System::OneBodyEnergy(bool do_grads) {
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
 
+    SetPBC(box_);
+
     // Calculate the 1b energy
     energy_ = Get1B(do_grads);
 
@@ -583,6 +585,8 @@ double System::TwoBodyEnergy(bool do_grads) {
     // Reset energy and gradients
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
 
     // Calculate the 2b energy
     energy_ = Get2B(do_grads);
@@ -811,6 +815,8 @@ double System::ThreeBodyEnergy(bool do_grads) {
 
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
 
     energy_ = Get3B(do_grads);
 
@@ -1158,6 +1164,8 @@ double System::Electrostatics(bool do_grads) {
 
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
 
     energy_ = GetElectrostatics(do_grads);
 
