@@ -426,4 +426,41 @@ TEST_CASE("Test energy from system") {
             }
         }
     }
+
+    SECTION("Total Energy") {
+        double energy_nograd = my_system.Energy(false);
+        double energy_grad = my_system.Energy(true);
+        std::vector<double> real_grad = my_system.GetRealGrads();
+        std::vector<double> all_grad = my_system.GetGrads();
+        std::vector<double> real_xyz = my_system.GetRealXyz();
+        std::vector<double> all_xyz = my_system.GetXyz();
+
+        SECTION("Energy without gradients") { REQUIRE(energy_nograd == Approx(total_energy).margin(TOL)); }
+
+        SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(total_energy).margin(TOL)); }
+
+        SECTION("Compare analitical gradients with numerical gradients") {
+            double stepSize = 1E-04;
+            for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusEnergy = my_system.Energy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusEnergy = my_system.Energy(false);
+                all_xyz[degreeOfFreedom] -= 4 * stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusEnergy = my_system.Energy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusEnergy = my_system.Energy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double finiteDifferenceForce =
+                    (8 * (plusEnergy - minusEnergy) - plusplusEnergy + minusminusEnergy) / (12 * stepSize);
+
+                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+            }
+        }
+    }
 }
