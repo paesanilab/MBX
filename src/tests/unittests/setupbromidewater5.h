@@ -2,6 +2,10 @@
 #define UNITTESTS_SETUPBROMIDEWATER5_H
 
 #define SETUP_BROMIDE_WATER_5                                                                                         \
+    double one_body_energy = 1.0759450217e+00;                                                                        \
+    double two_body_energy = 1.0327427996e+01;                                                                        \
+    double three_body_energy = -3.2745042811e-01;                                                                     \
+    double electrostatic_energy = -7.3208264066e+01;                                                                  \
     const int n_monomers = 6;                                                                                         \
     std::vector<double> coords{                                                                                       \
         1.3217649840e+00,  -9.7410428510e-02, -1.7666034010e-01, 1.4174979920e+00,  6.3858453390e-01,                 \

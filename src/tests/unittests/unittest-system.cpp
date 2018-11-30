@@ -7,11 +7,11 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
+#include <cmath>
 
 constexpr double TOL = 1E-6;
 
 TEST_CASE("Test the system class.") {
-
     // Create the bromide -- water system
     SETUP_BROMIDE_WATER_5
 
@@ -21,7 +21,8 @@ TEST_CASE("Test the system class.") {
     // Add monomers to the system
     size_t count = 0;
     for (size_t i = 0; i < n_monomers; i++) {
-        std::vector<double> xyz(real_coords.begin() + 3 * count, real_coords.begin() + 3 * count + 3 * n_atoms_vector[i]);
+        std::vector<double> xyz(real_coords.begin() + 3 * count,
+                                real_coords.begin() + 3 * count + 3 * n_atoms_vector[i]);
         std::vector<std::string> ats(atom_names.begin() + count, atom_names.begin() + count + n_atoms_vector[i]);
         std::string monid = monomer_names[i];
         my_system.AddMonomer(xyz, ats, monid);
@@ -48,7 +49,7 @@ TEST_CASE("Test the system class.") {
 
     SECTION("GetRealAtomNames()") {
         std::vector<std::string> v = my_system.GetRealAtomNames();
-        REQUIRE(VectorsAreEqual(v,atom_names));
+        REQUIRE(VectorsAreEqual(v, atom_names));
     }
 
     SECTION("GetMonNumAt()") {
@@ -67,42 +68,42 @@ TEST_CASE("Test the system class.") {
 
     SECTION("GetXyz()") {
         std::vector<double> xyz = my_system.GetXyz();
-        REQUIRE(VectorsAreEqual(xyz,coords,TOL));
+        REQUIRE(VectorsAreEqual(xyz, coords, TOL));
     }
 
     SECTION("GetRealXyz()") {
         std::vector<double> xyz = my_system.GetRealXyz();
-        REQUIRE(VectorsAreEqual(xyz,real_coords,TOL));
+        REQUIRE(VectorsAreEqual(xyz, real_coords, TOL));
     }
 
     SECTION("GetCharges()") {
         std::vector<double> chg = my_system.GetCharges();
-        REQUIRE(VectorsAreEqual(chg,charges,TOL));
+        REQUIRE(VectorsAreEqual(chg, charges, TOL));
     }
 
     SECTION("GetRealCharges()") {
         std::vector<double> chg = my_system.GetRealCharges();
-        REQUIRE(VectorsAreEqual(chg,real_charges,TOL));
+        REQUIRE(VectorsAreEqual(chg, real_charges, TOL));
     }
 
     SECTION("GetPolarizabilities()") {
         std::vector<double> polar = my_system.GetPolarizabilities();
-        REQUIRE(VectorsAreEqual(polar,pol,TOL));
+        REQUIRE(VectorsAreEqual(polar, pol, TOL));
     }
 
     SECTION("GetRealPolarizabilities()") {
         std::vector<double> polar = my_system.GetRealPolarizabilities();
-        REQUIRE(VectorsAreEqual(polar,real_pol,TOL));
+        REQUIRE(VectorsAreEqual(polar, real_pol, TOL));
     }
 
     SECTION("GetPolarizabilityFactors()") {
         std::vector<double> polarfac = my_system.GetPolarizabilityFactors();
-        REQUIRE(VectorsAreEqual(polarfac,polfac,TOL));
+        REQUIRE(VectorsAreEqual(polarfac, polfac, TOL));
     }
 
     SECTION("GetRealPolarizabilityFactors()") {
         std::vector<double> polarfac = my_system.GetRealPolarizabilityFactors();
-        REQUIRE(VectorsAreEqual(polarfac,real_polfac,TOL));
+        REQUIRE(VectorsAreEqual(polarfac, real_polfac, TOL));
     }
 
     SECTION("SetXyz()") {
@@ -110,13 +111,12 @@ TEST_CASE("Test the system class.") {
         std::vector<double> xyz = my_system.GetXyz();
         SECTION("Proper behavior of the function") {
             // Modify xyz adding 1 to all coordinates
-            for (size_t i =0; i < xyz.size(); i++)
-                xyz[i] += 1.0;
+            for (size_t i = 0; i < xyz.size(); i++) xyz[i] += 1.0;
             // Setting it
             my_system.SetXyz(xyz);
             // Getting it
             std::vector<double> new_xyz = my_system.GetXyz();
-            REQUIRE(VectorsAreEqual(xyz,new_xyz,TOL));
+            REQUIRE(VectorsAreEqual(xyz, new_xyz, TOL));
             // Reset xyz to original coordinates
             my_system.SetXyz(coords);
         }
@@ -138,13 +138,12 @@ TEST_CASE("Test the system class.") {
         std::vector<double> xyz = my_system.GetRealXyz();
         SECTION("Proper behavior of the function") {
             // Modify xyz adding 1 to all coordinates
-            for (size_t i =0; i < xyz.size(); i++)
-                xyz[i] += 1.0;
+            for (size_t i = 0; i < xyz.size(); i++) xyz[i] += 1.0;
             // Setting it
             my_system.SetRealXyz(xyz);
             // Getting it
             std::vector<double> new_xyz = my_system.GetRealXyz();
-            REQUIRE(VectorsAreEqual(xyz,new_xyz,TOL));
+            REQUIRE(VectorsAreEqual(xyz, new_xyz, TOL));
             // Reset xyz to original coordinates
             my_system.SetXyz(coords);
         }
@@ -156,7 +155,7 @@ TEST_CASE("Test the system class.") {
                 my_system.SetRealXyz(v);
             } catch (CUException &e) {
                 xyz_cannot_be_set = true;
-            }   
+            }
             REQUIRE(xyz_cannot_be_set);
         }
     }
@@ -231,7 +230,7 @@ TEST_CASE("Test the system class.") {
             REQUIRE(system_too_long);
         }
     }
-    
+
     SECTION("GetPairList()") {
         SECTION("Get clusters of more than 3 molecules") {
             bool not_possible_to_get_clusters = false;
@@ -243,7 +242,7 @@ TEST_CASE("Test the system class.") {
             REQUIRE(not_possible_to_get_clusters);
         }
     }
-    
+
     SECTION("SetPBC()") {
         SECTION("Wrong box size") {
             bool not_possible_to_set_box = false;
@@ -257,17 +256,100 @@ TEST_CASE("Test the system class.") {
         }
     }
 
-     //   REQUIRE( == Approx(finiteDifferenceForce).margin(TOL));
+    //   REQUIRE( == Approx(finiteDifferenceForce).margin(TOL));
 }
 
+TEST_CASE("Test energy from system") {
+    // Create the bromide -- water system
+    SETUP_BROMIDE_WATER_5
 
+    // Now we create a system that will be the same as the one read
+    bblock::System my_system;
 
+    // Add monomers to the system
+    size_t count = 0;
+    for (size_t i = 0; i < n_monomers; i++) {
+        std::vector<double> xyz(real_coords.begin() + 3 * count,
+                                real_coords.begin() + 3 * count + 3 * n_atoms_vector[i]);
+        std::vector<std::string> ats(atom_names.begin() + count, atom_names.begin() + count + n_atoms_vector[i]);
+        std::string monid = monomer_names[i];
+        my_system.AddMonomer(xyz, ats, monid);
+        count += n_atoms_vector[i];
+    }
 
+    // Initialize the system to fill in the information
+    my_system.Initialize();
 
+    SECTION("One-Body") {
+        double energy_nograd = my_system.OneBodyEnergy(false);
+        double energy_grad = my_system.OneBodyEnergy(true);
+        std::vector<double> real_grad = my_system.GetRealGrads();
+        std::vector<double> all_grad = my_system.GetGrads();
+        std::vector<double> real_xyz = my_system.GetRealXyz();
+        std::vector<double> all_xyz = my_system.GetXyz();
 
+        SECTION("Energy without gradients") { REQUIRE(energy_nograd == Approx(one_body_energy).margin(TOL)); }
 
+        SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(one_body_energy).margin(TOL)); }
 
+        SECTION("Compare analitical gradients with numerical gradients") {
+            double stepSize = 0.00001;
+            for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusEnergy = my_system.OneBodyEnergy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusEnergy = my_system.OneBodyEnergy(false);
+                all_xyz[degreeOfFreedom] -= 4 * stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusEnergy = my_system.OneBodyEnergy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusEnergy = my_system.OneBodyEnergy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double finiteDifferenceForce =
+                    (8 * (plusEnergy - minusEnergy) - plusplusEnergy + minusminusEnergy) / (12 * stepSize);
+                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+            }
+        }
+    }
 
+    SECTION("Two-Body") {
+        double energy_nograd = my_system.TwoBodyEnergy(false);
+        double energy_grad = my_system.TwoBodyEnergy(true);
+        std::vector<double> real_grad = my_system.GetRealGrads();
+        std::vector<double> all_grad = my_system.GetGrads();
+        std::vector<double> real_xyz = my_system.GetRealXyz();
+        std::vector<double> all_xyz = my_system.GetXyz();
 
+        SECTION("Energy without gradients") { REQUIRE(energy_nograd == Approx(two_body_energy).margin(TOL)); }
 
+        SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(two_body_energy).margin(TOL)); }
 
+        SECTION("Compare analitical gradients with numerical gradients") {
+            double stepSize = 1E-04;
+            for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusEnergy = my_system.TwoBodyEnergy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusEnergy = my_system.TwoBodyEnergy(false);
+                all_xyz[degreeOfFreedom] -= 4 * stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusEnergy = my_system.TwoBodyEnergy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusEnergy = my_system.TwoBodyEnergy(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double finiteDifferenceForce =
+                    (8 * (plusEnergy - minusEnergy) - plusplusEnergy + minusminusEnergy) / (12 * stepSize);
+
+                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+            }
+        }
+    }
+}
