@@ -463,4 +463,37 @@ TEST_CASE("Test energy from system") {
             }
         }
     }
+
+    SECTION("Compare real atoms and all atoms") {
+        double energy_grad = my_system.Energy(true);
+        std::vector<double> real_grad = my_system.GetRealGrads();
+        std::vector<double> all_grad = my_system.GetGrads();
+        std::vector<std::string> real_atom_names = my_system.GetRealAtomNames();
+        std::vector<std::string> all_atom_names = my_system.GetAtomNames();
+
+        SECTION("Atom names") {
+            size_t i_real = 0;
+            for (size_t i = 0; i < all_atom_names.size(); i++) {
+                if (all_atom_names[i] != "virt") {
+                    REQUIRE(all_atom_names[i] == real_atom_names[i_real]);
+                    REQUIRE(all_atom_names[i] == atom_names[i_real]);
+                    i_real += 1;
+                }
+            }
+        }
+
+        SECTION("Gradients") {
+            size_t i_real = 0;
+            for (size_t i = 0; i < all_atom_names.size(); i++) {
+                size_t real_offset = 3 * i_real;
+                size_t offset = 3 * i;
+                if (all_atom_names[i] != "virt") {
+                    for (size_t j = 0; j < 3; j++) {
+                        REQUIRE(all_grad[offset] == Approx(real_grad[real_offset]).margin(TOL));
+                    }
+                    i_real += 1;
+                }
+            }
+        }
+    }
 }
