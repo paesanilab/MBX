@@ -332,6 +332,33 @@ void System::AddMonomerInfo() {
     std::vector<size_t> fi_at;
     numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
 
+    #ifdef DEBUG
+    std::cerr << "Finished SetUpMonomers.\n";
+    std::cerr << "Monomer vector:\n";
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        std::cerr << monomers_[i] << " , ";
+    }
+    std::cerr << std::endl;
+    
+    std::cerr << "Sites vector:\n";
+    for (size_t i = 0; i < sites_.size(); i++) {
+        std::cerr << sites_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Atoms vector:\n";
+    for (size_t i = 0; i < nat_.size(); i++) {
+        std::cerr << nat_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "First Index vector:\n";
+    for (size_t i = 0; i < fi_at.size(); i++) {
+        std::cerr << fi_at[i] << " , ";
+    }
+    std::cerr << std::endl;
+    #endif
+
     // Calculating the number of atoms
     numat_ = 0;
     for (size_t i = 0; i < nat_.size(); i++) {
@@ -341,6 +368,40 @@ void System::AddMonomerInfo() {
     // Ordering monomers by monomer type, from less to more monomers of each type
     mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, original2current_order_, initial_order_,
                                               initial_order_realSites_);
+
+    #ifdef DEBUG
+    std::cerr << "Finished OrderMonomers():\n";
+    std::cerr << "mon_type_count:\n";
+    for (size_t i = 0; i < mon_type_count_.size(); i++) {
+        std::cerr << "{\"" << mon_type_count_[i].first << "\","
+                  << mon_type_count_[i].second << "},";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "New monomer vector:\n";
+    for (size_t i = 0;i < monomers_.size(); i++) {
+        std::cerr << monomers_[i] << ",";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Original2Current:\n";
+    for (size_t i = 0; i < original2current_order_.size(); i++) {
+        std::cerr << original2current_order_[i] << ",";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "original_order:\n";
+    for (size_t i = 0; i < initial_order_.size(); i++) {
+        std::cerr << "{" << initial_order_[i].first << "," << initial_order_[i].second << "} , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "original_order_realsites:\n";
+    for (size_t i = 0; i < initial_order_realSites_.size(); i++) {
+        std::cerr << "{" << initial_order_realSites_[i].first << "," << initial_order_realSites_[i].second << "} , ";
+    }
+    std::cerr << std::endl;
+    #endif
 
     // Rearranging coordinates to account for virt sites
     xyz_ = std::vector<double>(3 * numsites_, 0.0);
