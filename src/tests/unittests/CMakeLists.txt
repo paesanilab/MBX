@@ -4,6 +4,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-pme-coulombonly.cpp
     unittest-gas-electrostatics-mbpol.cpp
     unittest-gas-nbodyterms-mbpol.cpp
+    unittest-systools.cpp
     unittest-system.cpp
     unittest-gamma.cpp
 )

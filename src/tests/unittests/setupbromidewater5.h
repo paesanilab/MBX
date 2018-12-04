@@ -37,6 +37,7 @@
     std::vector<size_t> n_atoms_vector = {3, 1, 3, 3, 3, 3};                                                          \
     std::vector<size_t> n_sites_vector = {4, 1, 4, 4, 4, 4};                                                          \
     std::vector<size_t> first_index = {0, 4, 5, 9, 13, 17};                                                           \
+    std::vector<size_t> first_index_realSites = {0, 3, 4, 7, 10, 13};                                                 \
     const size_t n_atoms = 16;                                                                                        \
     const size_t n_sites = 21;                                                                                        \
     std::vector<double> polfac{                                                                                       \
@@ -67,5 +68,9 @@
                                      0.0000000000e+00, 1.0345086203e+01, 1.0344465717e+01, 0.0000000000e+00,          \
                                      1.0363828736e+01, 1.0370201587e+01, 0.0000000000e+00, 1.0358187765e+01,          \
                                      1.0344695552e+01, 0.0000000000e+00, 1.0333701550e+01, 1.0337314982e+01};         \
-    std::vector<std::pair<std::string, size_t>> mon_type_count{{"br", 1}, {"h2o", 5}};
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"br", 1}, {"h2o", 5}}; \
+    std::vector<size_t> internal_original_to_current_order{1,0,2,3,4,5}; \
+    std::vector<std::pair<size_t,size_t>> internal_orginal_order{{1,4} , {0,0} , {2,5} , {3,9} , {4,13} , {5,17}}; \
+    std::vector<std::pair<size_t,size_t>> internal_original_order_realSites{{1,3} , {0,0} , {2,4} , {3,7} , {4,10} , {5,13}}; \
+    std::vector<std::string> internal_monomer_names{"br", "h2o", "h2o", "h2o", "h2o", "h2o"};
 #endif
