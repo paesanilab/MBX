@@ -102,6 +102,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     SetAspcParameters(4);
     mu_pred_ = std::vector<double>(nsites3, 0.0);
 
+    if(use_pbc_) box_inverse_ = InvertUnitCell(box_);
     ReorderData();
 }
 
@@ -119,6 +120,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     box_ = box;
     use_pbc_ = box.size();
     cutoff_ = cutoff;
+    if(use_pbc_) box_inverse_ = InvertUnitCell(box_);
 
     size_t nsites3 = nsites_ * 3;
 
@@ -225,8 +227,6 @@ void Electrostatics::CalculatePermanentElecField() {
     excluded_set_type exc13;
     excluded_set_type exc14;
 
-    auto box_inverse = box_.size() ? InvertUnitCell(box_) : std::vector<double>();
-
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
@@ -264,7 +264,7 @@ void Electrostatics::CalculatePermanentElecField() {
                                                       chg_.data() + fi_sites, chg_.data() + fi_sites, m, m, m + 1, nmon,
                                                       nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
                                                       phi_.data() + fi_sites, Efq_.data() + fi_crd, elec_scale_factor,
-                                                      ewald_alpha_, use_pbc_, box_, box_inverse, cutoff_);
+                                                      ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_);
                     phi_[fi_sites + inmon + m] += phi1;
                     Efq_[fi_crd + inmon3 + m] += ex;
                     Efq_[fi_crd + inmon3 + nmon + m] += ey;
@@ -391,7 +391,7 @@ void Electrostatics::CalculatePermanentElecField() {
                             xyz_.data() + fi_crd1, xyz_sitej.data(), chg_.data() + fi_sites1, chg_sitej.data(), m1, 0,
                             size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
-                            ewald_alpha_, use_pbc_, box_, box_inverse, cutoff_);
+                            ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_);
                         //                        local_field->CalcPermanentElecField(
                         //                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() +
                         //                            fi_sites1, chg_.data() + fi_sites2, m1, m2init, nmon2, nmon1,
@@ -451,7 +451,7 @@ void Electrostatics::CalculatePermanentElecField() {
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
-        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, constants::COULOMB, 0);
         pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -484,7 +484,7 @@ void Electrostatics::CalculatePermanentElecField() {
         // The Ewald self potential
         double *phi_ptr = phi_.data();
         for (const auto &q : chg_) {
-            *phi_ptr -= 2 * ewald_alpha_ / SQRTPI * q;
+            *phi_ptr -= 2 * constants::COULOMB * ewald_alpha_ / SQRTPI * q;
             ++phi_ptr;
         }
     }
@@ -1129,7 +1129,6 @@ void Electrostatics::DipolesIterativeIteration() {
                 bool is13 = systools::IsExcluded(exc13, i, j);
                 bool is14 = systools::IsExcluded(exc14, i, j);
                 aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
-
                 double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
                 double Ai = 0.0;
                 double Asqsqi = 0.0;
@@ -1145,7 +1144,7 @@ void Electrostatics::DipolesIterativeIteration() {
                     // TODO. Slowest function
                     elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, mu_.data() + fi_crd,
                                                    mu_.data() + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
-                                                   Efd_.data() + fi_crd, &ex, &ey, &ez);
+                                                   Efd_.data() + fi_crd, &ex, &ey, &ez,ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_);
                     Efd_[fi_crd + inmon3 + m] += ex;
                     Efd_[fi_crd + inmon3 + nmon + m] += ey;
                     Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
@@ -1217,7 +1216,8 @@ void Electrostatics::DipolesIterativeIteration() {
                         local_field->CalcDipoleElecField(xyz_.data() + fi_crd1, xyz_.data() + fi_crd2,
                                                          mu_.data() + fi_crd1, mu_.data() + fi_crd2, m1, m2init, nmon2,
                                                          nmon1, nmon2, i, j, Asqsqi, aDD, Efd_2_pool[rank].data(),
-                                                         &ex_thread, &ey_thread, &ez_thread);
+                                                         &ex_thread, &ey_thread, &ez_thread,
+                                                         ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_);
                         Efd_1_pool[rank][inmon13 + m1] += ex_thread;
                         Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -1246,6 +1246,75 @@ void Electrostatics::DipolesIterativeIteration() {
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
     }
+
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        // Sort the dipoles to the order helPME expects (for now)
+        int fi_mon = 0;
+        int fi_crd = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
+                }
+            }
+            fi_mon += nmon;
+            fi_crd += nmon * ns * 3;
+        }
+
+        helpme::PMEInstance<double> pme_solver_;
+        // Compute the reciprocal space terms, using PME
+        double A = box_[0], B = box_[4], C = box_[8];
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        // The scale factor is set to one here because the Coulomb constant has already been applied
+        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
+        auto result = helpme::Matrix<double>(sys_Efd_.data(), nsites_, 3);
+        std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
+        pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
+
+        // Resort field from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    const double *result_ptr = result[fi_sites + mns + i];
+                    Efd_[3*fi_sites + 3*inmon + 0*nmon + m] -= result_ptr[0];
+                    Efd_[3*fi_sites + 3*inmon + 1*nmon + m] -= result_ptr[1];
+                    Efd_[3*fi_sites + 3*inmon + 2*nmon + m] -= result_ptr[2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
+        // The Ewald self field due to induced dipoles
+        double slf_prefactor = (4.0/3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / SQRTPI;
+        double *e_ptr = Efd_.data();
+        for (const auto &mu : mu_) {
+            *e_ptr += slf_prefactor * mu;
+            ++e_ptr;
+        }
+    }
+    fi_mon = 0;
+    fi_sites = 0;
 }
 
 void Electrostatics::CalculateDipolesIterative() {
@@ -1317,7 +1386,6 @@ void Electrostatics::CalculateDipolesIterative() {
             std::exit(EXIT_FAILURE);
         }
         iter++;
-
         // Perform next iteration
         DipolesIterativeIteration();
     }

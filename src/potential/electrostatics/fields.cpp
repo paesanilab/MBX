@@ -136,8 +136,8 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
 
         // Screening functions
         const double s1r = v4_[m] - exp1 * v3_[m];
-        const double s0r = s1r + aCC1_4 * Ai * g34 * v6_[m];
-        const double s1r3 = (s1r + ewaldterm) * v3_[m] * v3_[m];
+        const double s0r = constants::COULOMB*(s1r + aCC1_4 * Ai * g34 * v6_[m]);
+        const double s1r3 = constants::COULOMB*(s1r + ewaldterm) * v3_[m] * v3_[m];
 
         // Compute contribution to the field phi
         // Storing the contrib to mon 1 in vector to make it vectorizable
@@ -186,7 +186,9 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
 void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
-                                              double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1) {
+                                              double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
+                                              double ewald_alpha, bool use_pbc, const std::vector<double> &box,
+                                              const std::vector<double> &box_inverse, double cutoff){
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -218,6 +220,20 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
         const double risq = ri * ri;
         const double rsqsq = rsq * rsq;
 
+        // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
+        // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
+        // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
+        // r^-1, r^-3, r^-5
+        double r_alpha = ewald_alpha * r;
+        double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI)*ewald_alpha);
+        double exp_alpha2_r2 = exp(-r_alpha*r_alpha);
+        double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
+        double bn0 = erfc(r_alpha) * ri;
+        alpha_pi_term *= two_alpha_squared;
+        double bn1 = (bn0+alpha_pi_term*exp_alpha2_r2) * risq;
+        alpha_pi_term *= two_alpha_squared;
+        double bn2 = (3*bn1+alpha_pi_term*exp_alpha2_r2) * risq;
+
         // Some values that will be used in the screening functions
         const double rA4 = rsqsq * Asqsqi;
         const double arA4 = aDD * rA4;
@@ -225,9 +241,8 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
         const double exp1 = std::exp(-arA4);
 
         // Get screening functions
-        const double s1r = ri - exp1 * ri;
-        const double s1r3 = s1r * risq;
-        const double s2r5_3 = (3.0 * s1r3 - 4.0 * aDD * rA4 * exp1 * risq * ri) * risq;
+        const double s1r3 = bn1 - exp1 * ri * risq;
+        const double s2r5_3 = bn2 - (3.0 + 4.0 * aDD * rA4) * exp1 * risq * ri * risq;
         const double ts2x = s2r5_3 * rijx;
         const double ts2y = s2r5_3 * rijy;
         const double ts2z = s2r5_3 * rijz;

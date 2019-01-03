@@ -822,7 +822,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 GRADQ(2, 2, k) = DQ3(2, 2, k) - 2 * gamma21 * (DQ3(2, 0, k) + DQ3(2, 1, k));
             }
 
-            for (size_t i = 0; i < 27; ++i) gradq[i] *= constants::CHARGECON;
+            for (size_t i = 0; i < 27; ++i) gradq[i] *= constants::COULOMB;
 
             const size_t io = shift;
             const size_t ih1 = shift + 3;

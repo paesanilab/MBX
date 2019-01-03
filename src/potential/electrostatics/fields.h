@@ -103,7 +103,12 @@ class ElectricFieldHolder {
                              double *Efd2,                  // Electric field on Mon 2
                              double *Efdx_mon1,             // Output electric field on X for Mon 1
                              double *Efdy_mon1,             // Output electric field on Y for Mon 1
-                             double *Efdz_mon1);            // Output electric field on Z for Mon 1
+                             double *Efdz_mon1,             // Output electric field on Z for Mon 1
+                             double ewald_alpha,            // Ewald attenuation paramter
+                             bool use_pbc,                  // Whether to enforce periodic boundary conditions
+                             const std::vector<double> &box,          // The lattice vectors
+                             const std::vector<double> &box_inverse,  // The inverse lattice vectors
+                             double cutoff);                          // The real space cutoff for pairs
 
     ////////////////////////////////////////////////////////////////////////////////
     // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////

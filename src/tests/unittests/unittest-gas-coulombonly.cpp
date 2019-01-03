@@ -12,9 +12,12 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("test the electrostatics class for coulomb terms (gas phase).") {
     // TIP3P test
-    double qO = -0.834 * constants::CHARGECON;
-    double qH = 0.417 * constants::CHARGECON;
+    double qO = -0.834;
+    double qH = 0.417;
     double qM = 0;
+    double polfacO = 0;
+    double polfacH = 0;
+    double polfacM = 0;
     SETUP_WATERBOX_216
     elec::Electrostatics elec;
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,

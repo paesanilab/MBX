@@ -1,7 +1,9 @@
 # Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
     unittest-gas-coulombonly.cpp
+    unittest-gas-withpolarization.cpp
     unittest-pme-coulombonly.cpp
+    unittest-pme-withpolarization.cpp
     unittest-gamma.cpp
 )
 
