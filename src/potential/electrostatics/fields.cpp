@@ -124,20 +124,20 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         v6_[m] = gammq(0.75, v5_[m]) * elec_scale_factor;  // gammq
     }
 
-// Finalize computation of electric field
+    // Finalize computation of electric field
     const double SQRTPI = sqrt(M_PI);
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         const double exp1 = std::exp(-v5_[m]);
         // Terms needed for the Ewald direct space field, see equation 2.8 of
         // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
-        const double exp_alpha2r2 = std::exp(-ewald_alpha*ewald_alpha/(v3_[m]*v3_[m]));
+        const double exp_alpha2r2 = std::exp(-ewald_alpha * ewald_alpha / (v3_[m] * v3_[m]));
         const double ewaldterm = use_pbc ? 2 * exp_alpha2r2 * ewald_alpha / SQRTPI : 0;
 
         // Screening functions
         const double s1r = v4_[m] - exp1 * v3_[m];
-        const double s0r = constants::COULOMB*(s1r + aCC1_4 * Ai * g34 * v6_[m]);
-        const double s1r3 = constants::COULOMB*(s1r + ewaldterm) * v3_[m] * v3_[m];
+        const double s0r = constants::COULOMB * (s1r + aCC1_4 * Ai * g34 * v6_[m]);
+        const double s1r3 = constants::COULOMB * (s1r + ewaldterm) * v3_[m] * v3_[m];
 
         // Compute contribution to the field phi
         // Storing the contrib to mon 1 in vector to make it vectorizable
@@ -188,7 +188,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
                                               double ewald_alpha, bool use_pbc, const std::vector<double> &box,
-                                              const std::vector<double> &box_inverse, double cutoff){
+                                              const std::vector<double> &box_inverse, double cutofff) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -225,14 +225,14 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
         // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
         // r^-1, r^-3, r^-5
         double r_alpha = ewald_alpha * r;
-        double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI)*ewald_alpha);
-        double exp_alpha2_r2 = exp(-r_alpha*r_alpha);
+        double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
         double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
         double bn0 = erfc(r_alpha) * ri;
         alpha_pi_term *= two_alpha_squared;
-        double bn1 = (bn0+alpha_pi_term*exp_alpha2_r2) * risq;
+        double bn1 = (bn0 + alpha_pi_term * exp_alpha2_r2) * risq;
         alpha_pi_term *= two_alpha_squared;
-        double bn2 = (3*bn1+alpha_pi_term*exp_alpha2_r2) * risq;
+        double bn2 = (3 * bn1 + alpha_pi_term * exp_alpha2_r2) * risq;
 
         // Some values that will be used in the screening functions
         const double rA4 = rsqsq * Asqsqi;
@@ -299,7 +299,9 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
                                              double *mu2, size_t mon1_index, size_t mon2_index_start,
                                              size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i,
                                              size_t site_j, double aDD, double aCD, double Asqsqi, double *grdx,
-                                             double *grdy, double *grdz, double *phi1, double *phi2, double *grd2) {
+                                             double *grdy, double *grdz, double *phi1, double *phi2, double *grd2,
+                                             double ewald_alpha, bool use_pbc, const std::vector<double> &box,
+                                             const std::vector<double> &box_inverse, double cutoff) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -345,22 +347,34 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
         const double exp1d = std::exp(-aDD * rA4);
         const double exp1c = std::exp(-aCD * rA4);
 
-        // Get screening functions
-        const double s1rd = ri - exp1d * ri;
-        const double s1r3d = s1rd * risq;
-        const double s2r5_3d = (3.0 * s1r3d - adrA4 * exp1d * risq * ri) * risq;
+        // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
+        // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
+        // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
+        // r^-1, r^-3, r^-5
+        double r_alpha = ewald_alpha * r;
+        double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
+        double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
+        double bn0 = erfc(r_alpha) * ri;
+        alpha_pi_term *= two_alpha_squared;
+        double bn1 = (bn0 + alpha_pi_term * exp_alpha2_r2) * risq;
+        alpha_pi_term *= two_alpha_squared;
+        double bn2 = (3 * bn1 + alpha_pi_term * exp_alpha2_r2) * risq;
+        alpha_pi_term *= two_alpha_squared;
+        double bn3 = (5 * bn2 + alpha_pi_term * exp_alpha2_r2) * risq;
 
-        const double s3r7_15d = (s2r5_3d * 5.0 - adrA4 * exp1d * (adrA4 - 1.0) * risq * risq * ri) * risq;
+        // Get screening functions
+        const double s2r5_3d = bn2 - (3.0 + adrA4) * exp1d * risq * ri * risq;
+        const double s3r7_15d = bn3 - ((15.0 + 5.0 * adrA4) + adrA4 * (adrA4 - 1.0)) * exp1d * ri * risq * risq * risq;
         const double s3r7_15x2 = s3r7_15d * rijx2;
         const double s3r7_15y2 = s3r7_15d * rijy2;
         const double s3r7_15z2 = s3r7_15d * rijz2;
 
-        const double s1rc = ri - exp1c * ri;
-        const double s1r3c = s1rc * risq;
+        const double s1r3c = bn1 - exp1c * ri * risq;
         const double rxs1r3c = rijx * s1r3c;
         const double rys1r3c = rijy * s1r3c;
         const double rzs1r3c = rijz * s1r3c;
-        const double s2r5_3c = (3.0 * s1r3c - acrA4 * exp1c * risq * ri) * risq;
+        const double s2r5_3c = bn2 - (3.0 + acrA4) * exp1c * ri * risq * risq;
 
         // Tensors
         const double ts2x = s2r5_3c * rijx;

@@ -91,21 +91,21 @@ class ElectricFieldHolder {
     // Computes the dipole field for a pair of sites for a number of monomers
     // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
 
-    void CalcDipoleElecField(double *xyz1, double *xyz2,    // Coordinates of mon type 1 and 2
-                             double *mu1, double *mu2,      // Dipoles of mon type 1 and 2
-                             size_t mon1_index,             // Mon 1 index
-                             size_t mon2_index_start,       // Mon 2 initial index
-                             size_t mon2_index_end,         // Mon 2 final index
-                             size_t nmon1, size_t nmon2,    // # monomers of types 1 and 2
-                             size_t site_i, size_t site_j,  // Site # i of mon1 and # j of mon 2
-                             double Asqsqi,                 // (polfac[i] * polfac[j])^4 inverted
-                             double aDD,                    // Thole damping aDD (dipole - dipole)
-                             double *Efd2,                  // Electric field on Mon 2
-                             double *Efdx_mon1,             // Output electric field on X for Mon 1
-                             double *Efdy_mon1,             // Output electric field on Y for Mon 1
-                             double *Efdz_mon1,             // Output electric field on Z for Mon 1
-                             double ewald_alpha,            // Ewald attenuation paramter
-                             bool use_pbc,                  // Whether to enforce periodic boundary conditions
+    void CalcDipoleElecField(double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
+                             double *mu1, double *mu2,                // Dipoles of mon type 1 and 2
+                             size_t mon1_index,                       // Mon 1 index
+                             size_t mon2_index_start,                 // Mon 2 initial index
+                             size_t mon2_index_end,                   // Mon 2 final index
+                             size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
+                             size_t site_i, size_t site_j,            // Site # i of mon1 and # j of mon 2
+                             double Asqsqi,                           // (polfac[i] * polfac[j])^4 inverted
+                             double aDD,                              // Thole damping aDD (dipole - dipole)
+                             double *Efd2,                            // Electric field on Mon 2
+                             double *Efdx_mon1,                       // Output electric field on X for Mon 1
+                             double *Efdy_mon1,                       // Output electric field on Y for Mon 1
+                             double *Efdz_mon1,                       // Output electric field on Z for Mon 1
+                             double ewald_alpha,                      // Ewald attenuation paramter
+                             bool use_pbc,                            // Whether to enforce periodic boundary conditions
                              const std::vector<double> &box,          // The lattice vectors
                              const std::vector<double> &box_inverse,  // The inverse lattice vectors
                              double cutoff);                          // The real space cutoff for pairs
@@ -119,22 +119,28 @@ class ElectricFieldHolder {
     // for a number of monomers # = mon2_index_end - mon2_index_start when
     // A=polfac[i] * polfac[j] > 0
 
-    void CalcElecFieldGrads(double *xyz1, double *xyz2,    // Coordinates of mon type 1 and 2
-                            double *chg1, double *chg2,    // Charges of mon type 1 and 2
-                            double *mu1, double *mu2,      // Dipoles of mon type 1 and 2
-                            size_t mon1_index,             // Mon 1 index
-                            size_t mon2_index_start,       // Mon 2 initial index
-                            size_t mon2_index_end,         // Mon 2 final index
-                            size_t nmon1, size_t nmon2,    // # monomers of types 1 and 2
-                            size_t site_i, size_t site_j,  // Site # i of mon1 and # j of mon 2
-                            double aDD, double aCD,        // Thole damping aCC and aDD
-                            double Asqsqi,                 // (polfac[i] * polfac[j])^4
-                            double *grdx,                  // Output gradient of site i of mon1 in X
-                            double *grdy,                  // Output gradient of site i of mon1 in Y
-                            double *grdz,                  // Output gradient of site i of mon1 in Z
-                            double *phi1,                  // Output field on site i of mon1
-                            double *phi2,                  // Field on site j of mon2
-                            double *grd2);                 // Gradient on site j of mon2
+    void CalcElecFieldGrads(double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
+                            double *chg1, double *chg2,              // Charges of mon type 1 and 2
+                            double *mu1, double *mu2,                // Dipoles of mon type 1 and 2
+                            size_t mon1_index,                       // Mon 1 index
+                            size_t mon2_index_start,                 // Mon 2 initial index
+                            size_t mon2_index_end,                   // Mon 2 final index
+                            size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
+                            size_t site_i, size_t site_j,            // Site # i of mon1 and # j of mon 2
+                            double aDD, double aCD,                  // Thole damping aCC and aDD
+                            double Asqsqi,                           // (polfac[i] * polfac[j])^4
+                            double *grdx,                            // Output gradient of site i of mon1 in X
+                            double *grdy,                            // Output gradient of site i of mon1 in Y
+                            double *grdz,                            // Output gradient of site i of mon1 in Z
+                            double *phi1,                            // Output field on site i of mon1
+                            double *phi2,                            // Field on site j of mon2
+                            double *grd2,                            // Gradient on site j of mon2
+                            double ewald_alpha,                      // Ewald attenuation paramter
+                            bool use_pbc,                            // Whether to enforce periodic boundary conditions
+                            const std::vector<double> &box,          // The lattice vectors
+                            const std::vector<double> &box_inverse,  // The inverse lattice vectors
+                            double cutoff                            // The real space cutoff for pairs
+    );
 
     ////////////////////////////////////////////////////////////////////////////////
 
