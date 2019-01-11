@@ -132,9 +132,12 @@ void ElectroTensor::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_index, s
         // Some values that will be used in the screening functions
         const double rA4 = rsqsq * Asqsqi;
         const double arA4 = aDD * rA4;
+#if NO_THOLE
+        const double exp1 = 0;
+#else
         const double exp1 = std::exp(-arA4);
+#endif
         const double exp1r = exp1 * ri;
-
         // Get screening functions
         const double s1r = ri - exp1r;
         const double s1r3 = s1r * risq;

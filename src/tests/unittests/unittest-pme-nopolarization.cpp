@@ -53,7 +53,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     std::vector<double> forces4(3 * n_atoms);
     double energy4 = elec.GetElectrostatics(forces4);
     REQUIRE(energy4 == Approx(energy3).margin(TOL));
-    for(int n = 0; n < 3*n_atoms; ++n) REQUIRE(forces3[n] == Approx(forces4[n]).margin(TOL));
+    for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces3[n] == Approx(forces4[n]).margin(TOL));
 
     // alpha = 0.5
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
@@ -65,7 +65,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     std::vector<double> forces5(3 * n_atoms);
     double energy5 = elec.GetElectrostatics(forces5);
     REQUIRE(energy5 == Approx(energy4).margin(TOL));
-    for(int n = 0; n < 3*n_atoms; ++n) REQUIRE(forces4[n] == Approx(forces5[n]).margin(TOL));
+    for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces4[n] == Approx(forces5[n]).margin(TOL));
 
     std::cout << "Energies:" << std::endl;
     std::cout << "alpha = 0.3: " << std::setw(16) << std::setprecision(10) << energy3 << std::endl;
@@ -73,18 +73,15 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     std::cout << "alpha = 0.5: " << std::setw(16) << std::setprecision(10) << energy5 << std::endl;
     std::cout << "\nForces:" << std::endl;
     std::cout << "         alpha = 0.3     alpha = 0.4     alpha = 0.5" << std::endl;
-    for(int i = 0; i < 10; ++i){
-        std::cout << i << "x  "
-                  << std::setw(16) << std::setprecision(10) << forces3[3*i+0];
-        std::cout << std::setw(16) << std::setprecision(10) << forces4[3*i+0];
-        std::cout << std::setw(16) << std::setprecision(10) << forces5[3*i+0] << std::endl;
-        std::cout << i << "y  "
-                  << std::setw(16) << std::setprecision(10) << forces3[3*i+1];
-        std::cout << std::setw(16) << std::setprecision(10) << forces4[3*i+1];
-        std::cout << std::setw(16) << std::setprecision(10) << forces5[3*i+1] << std::endl;
-        std::cout << i << "z  "
-                  << std::setw(16) << std::setprecision(10) << forces3[3*i+2];
-        std::cout << std::setw(16) << std::setprecision(10) << forces4[3*i+2];
-        std::cout << std::setw(16) << std::setprecision(10) << forces5[3*i+2] << std::endl;
+    for (int i = 0; i < 10; ++i) {
+        std::cout << i << "x  " << std::setw(16) << std::setprecision(10) << forces3[3 * i + 0];
+        std::cout << std::setw(16) << std::setprecision(10) << forces4[3 * i + 0];
+        std::cout << std::setw(16) << std::setprecision(10) << forces5[3 * i + 0] << std::endl;
+        std::cout << i << "y  " << std::setw(16) << std::setprecision(10) << forces3[3 * i + 1];
+        std::cout << std::setw(16) << std::setprecision(10) << forces4[3 * i + 1];
+        std::cout << std::setw(16) << std::setprecision(10) << forces5[3 * i + 1] << std::endl;
+        std::cout << i << "z  " << std::setw(16) << std::setprecision(10) << forces3[3 * i + 2];
+        std::cout << std::setw(16) << std::setprecision(10) << forces4[3 * i + 2];
+        std::cout << std::setw(16) << std::setprecision(10) << forces5[3 * i + 2] << std::endl;
     }
 }
