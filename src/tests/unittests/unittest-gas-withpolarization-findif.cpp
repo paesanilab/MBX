@@ -7,7 +7,7 @@
 #include <iostream>
 #include <iomanip>
 
-constexpr double TOL = 1E-5;
+constexpr double TOL = 5E-6;
 
 TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS) - finite differences.") {
     // TIP3P test
@@ -18,7 +18,7 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS
     double polfacH = 0.294;
     double polfacM = 0;
     SETUP_WATERBOX_2
-    double ref_energy = -0.163226;
+    double ref_energy = -0.1632261513;
 
     elec::Electrostatics elec;
     std::vector<double> box_vectors{};
@@ -30,9 +30,9 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
     std::cout << "Energy: " << energy << std::endl;
-    // REQUIRE(energy == Approx(ref_energy).margin(TOL));
+    REQUIRE(energy == Approx(ref_energy).epsilon(TOL));
 
-    double stepSize = 0.000005;
+    double stepSize = 0.00001;
     const std::vector<std::string> labels = {"x", "y", "z"};
     std::vector<double> ignoredForces(3 * n_atoms);
     std::cout << " DoF      Analytic         Numerical       Difference" << std::endl;
@@ -56,6 +56,6 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS
         if (std::abs(forces[degreeOfFreedom] - finiteDifferenceForce) > TOL) std::cout << " <---- BAD!";
         std::cout << std::endl;
 
-        //        REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+        REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).epsilon(TOL));
     }
 }

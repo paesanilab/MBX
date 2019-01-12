@@ -7,72 +7,68 @@
 #include <iostream>
 #include <iomanip>
 
-constexpr double TOL = 1E-5;
+constexpr double TOL = 1e-5;
 
 TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald alpha sweep.") {
     // TIP3P test
     double qO = -0.834;
     double qH = 0.417;
     double qM = 0;
-    double polfacO = 1.310;
-    double polfacH = 0.294;
+    double polfacO = 0;
+    double polfacH = 0;
     double polfacM = 0;
-    polfacO = polfacH = 0;
     SETUP_WATERBOX_216
-    double ref_energy = -1824.323;
+    double ref_energy = -1820.686249;
 
     elec::Electrostatics elec;
-    std::vector<double> box_vectors{30, 0, 0, 0, 30, 0, 0, 0, 30};
+    std::vector<double> box_vectors{34, 0, 0, 0, 34, 0, 0, 0, 34};
+
+    const char *method = "iter";
 
     /*
      * Ensure that computed properties are invariant to changes in the Ewald attenuation parameter
      */
-    double alpha = 0;
-    double grid_density = 2.5;
-    int spline_order = 6;
-    const char *method = "cg";
-
     // alpha = 0.3
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, "iter", box_vectors);
-    elec.SetCutoff(14.8);
-    elec.SetEwaldAlpha(0.3);
+                    1E-16, 100, method, box_vectors);
+    elec.SetCutoff(16.5);
+    elec.SetEwaldAlpha(0.25);
     elec.SetEwaldGridDensity(2.5);
     elec.SetEwaldSplineOrder(6);
     std::vector<double> forces3(3 * n_atoms);
     double energy3 = elec.GetElectrostatics(forces3);
-    REQUIRE(energy3 == Approx(ref_energy).margin(TOL));
+    REQUIRE(energy3 == Approx(ref_energy).epsilon(TOL));
 
     // alpha = 0.4
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, "iter", box_vectors);
-    elec.SetCutoff(10);
-    elec.SetEwaldAlpha(0.4);
+                    1E-16, 100, method, box_vectors);
+    elec.SetCutoff(13);
+    elec.SetEwaldAlpha(0.35);
     elec.SetEwaldGridDensity(2.5);
     elec.SetEwaldSplineOrder(7);
     std::vector<double> forces4(3 * n_atoms);
     double energy4 = elec.GetElectrostatics(forces4);
-    REQUIRE(energy4 == Approx(energy3).margin(TOL));
-    for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces3[n] == Approx(forces4[n]).margin(TOL));
+    REQUIRE(energy4 == Approx(energy3).epsilon(TOL));
+    for(int n = 0; n < 3*n_atoms; ++n) REQUIRE(forces3[n] == Approx(forces4[n]).epsilon(TOL));
 
     // alpha = 0.5
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, "iter", box_vectors);
-    elec.SetCutoff(8);
-    elec.SetEwaldAlpha(0.5);
+                    1E-16, 100, method, box_vectors);
+    elec.SetCutoff(10);
+    elec.SetEwaldAlpha(0.45);
     elec.SetEwaldGridDensity(3.5);
-    elec.SetEwaldSplineOrder(7);
+    elec.SetEwaldSplineOrder(8);
     std::vector<double> forces5(3 * n_atoms);
     double energy5 = elec.GetElectrostatics(forces5);
-    REQUIRE(energy5 == Approx(energy4).margin(TOL));
-    for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces4[n] == Approx(forces5[n]).margin(TOL));
+    REQUIRE(energy5 == Approx(energy4).epsilon(TOL));
+    for(int n = 0; n < 3*n_atoms; ++n) REQUIRE(forces4[n] == Approx(forces5[n]).epsilon(TOL));
 
     std::cout << "Energies:" << std::endl;
-    std::cout << "alpha = 0.3: " << std::setw(16) << std::setprecision(10) << energy3 << std::endl;
-    std::cout << "alpha = 0.4: " << std::setw(16) << std::setprecision(10) << energy4 << std::endl;
-    std::cout << "alpha = 0.5: " << std::setw(16) << std::setprecision(10) << energy5 << std::endl;
+    std::cout << "alpha = 0.25: " << std::setw(16) << std::setprecision(10) << energy3 << std::endl;
+    std::cout << "alpha = 0.35: " << std::setw(16) << std::setprecision(10) << energy4 << std::endl;
+    std::cout << "alpha = 0.45: " << std::setw(16) << std::setprecision(10) << energy5 << std::endl;
     std::cout << "\nForces:" << std::endl;
-    std::cout << "         alpha = 0.3     alpha = 0.4     alpha = 0.5" << std::endl;
+    std::cout << "        alpha = 0.25    alpha = 0.35    alpha = 0.45" << std::endl;
     for (int i = 0; i < 10; ++i) {
         std::cout << i << "x  " << std::setw(16) << std::setprecision(10) << forces3[3 * i + 0];
         std::cout << std::setw(16) << std::setprecision(10) << forces4[3 * i + 0];

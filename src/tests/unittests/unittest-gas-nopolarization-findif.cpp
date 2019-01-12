@@ -7,7 +7,7 @@
 #include <iostream>
 #include <iomanip>
 
-constexpr double TOL = 1E-5;
+constexpr double TOL = 5E-6;
 
 TEST_CASE("test the electrostatics class for only coulomb terms (GAS) - finite differences.") {
     // TIP3P test
@@ -31,7 +31,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (GAS) - finite d
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
     std::cout << "Energy: " << energy << std::endl;
-    REQUIRE(energy == Approx(ref_energy).margin(TOL));
+    REQUIRE(energy == Approx(ref_energy).epsilon(TOL));
 
     double stepSize = 0.00001;
     const std::vector<std::string> labels = {"x", "y", "z"};
@@ -57,6 +57,6 @@ TEST_CASE("test the electrostatics class for only coulomb terms (GAS) - finite d
         if (std::abs(forces[degreeOfFreedom] - finiteDifferenceForce) > TOL) std::cout << " <---- BAD!";
         std::cout << std::endl;
 
-        REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+        REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).epsilon(TOL));
     }
 }

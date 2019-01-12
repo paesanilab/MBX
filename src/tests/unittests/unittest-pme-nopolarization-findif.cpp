@@ -7,9 +7,9 @@
 #include <iostream>
 #include <iomanip>
 
-constexpr double TOL = 1E-5;
+constexpr double TOL = 1E-8;
 
-TEST_CASE("test the electrostatics class for only coulomb terms (PME) - finite differences.") {
+TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME) - finite differences.") {
     // TIP3P test
     double qO = -0.834;
     double qH = 0.417;
@@ -18,7 +18,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - finite d
     double polfacH = 0;
     double polfacM = 0;
     SETUP_WATERBOX_2
-    double ref_energy = -0.1625413756;
+    double ref_energy = -0.1744839641;
 
     elec::Electrostatics elec;
     std::vector<double> box_vectors{30, 0, 0, 0, 30, 0, 0, 0, 30};
@@ -29,17 +29,18 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - finite d
     double alpha = 0.3;
     double grid_density = 2.5;
     int spline_order = 6;
-    const char *method = "cg";
+    double cutoff = 10;
+    const char *method = "iter";
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
                     1E-16, 100, method, box_vectors);
-    elec.SetCutoff(12);
+    elec.SetCutoff(cutoff);
     elec.SetEwaldAlpha(alpha);
     elec.SetEwaldGridDensity(grid_density);
     elec.SetEwaldSplineOrder(spline_order);
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
     std::cout << "Energy: " << energy << std::endl;
-    // REQUIRE(energy == Approx(ref_energy).margin(TOL));
+    REQUIRE(energy == Approx(ref_energy).margin(TOL));
 
     double stepSize = 0.00001;
     const std::vector<std::string> labels = {"x", "y", "z"};
@@ -49,6 +50,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - finite d
         coords[degreeOfFreedom] += stepSize;
         elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
                         1E-16, 100, method, box_vectors);
+        elec.SetCutoff(cutoff);
         elec.SetEwaldAlpha(alpha);
         elec.SetEwaldGridDensity(grid_density);
         elec.SetEwaldSplineOrder(spline_order);
@@ -56,6 +58,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - finite d
         coords[degreeOfFreedom] -= 2 * stepSize;
         elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
                         1E-16, 100, method, box_vectors);
+        elec.SetCutoff(cutoff);
         elec.SetEwaldAlpha(alpha);
         elec.SetEwaldGridDensity(grid_density);
         elec.SetEwaldSplineOrder(spline_order);

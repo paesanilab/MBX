@@ -1648,6 +1648,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
     if (ewald_alpha_ > 0 && use_pbc_) {
         // Sort the dipoles to the order helPME expects (for now)
         int fi_mon = 0;
+        int fi_sites = 0;
         int fi_crd = 0;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
             size_t ns = sites_[fi_mon];
@@ -1666,6 +1667,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
                 }
             }
             fi_mon += nmon;
+            fi_sites += nmon * ns;
             fi_crd += nmon * ns * 3;
         }
 
