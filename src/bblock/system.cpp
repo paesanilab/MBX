@@ -152,6 +152,15 @@ void System::SetPBC(std::vector<double> box) {
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
+#ifdef DEBUG
+    std::cerr << "Entered SetPBC():\n";
+    std::cerr << "Coordinate before fixing monomers:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     // Set the box and the bool to use or not pbc
     use_pbc_ = box.size();
     box_ = box;
@@ -162,6 +171,15 @@ void System::SetPBC(std::vector<double> box) {
         // Fix monomer coordinates
         systools::FixMonomerCoordinates(xyz_, box_, nat_, first_index_);
     }
+
+#ifdef DEBUG
+    std::cerr << "Coordinate after fixing monomers:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     // Reset the virtual site positions, charges, pols and polfacs
     SetVSites();
     SetCharges();
@@ -243,7 +261,7 @@ void System::Initialize() {
     // Setting 2B cutoff
     // Affects the 2B dispersion and 2B polynomials
     // TODO make it effective for electrostatics too
-    cutoff2b_ = 100.0;
+    cutoff2b_ = 50.0;
 
     // Setting 3B cutoff
     // Affects the 3B polynomials
@@ -541,7 +559,8 @@ double System::Energy(bool do_grads) {
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
-              << "Elec = " << Eelec << std::endl;
+              << "Elec = " << Eelec << std::endl
+              << "Total = " << energy_ << std::endl;
 #endif
 #ifdef TIMING
     std::cerr << "System::1b(grad=" << do_grads << ") "
