@@ -3,8 +3,9 @@
 
 #define SETUP_BROMIDE_WATER_5                                                                                         \
     double one_body_energy = 1.0759450217e+00;                                                                        \
-    double two_body_energy = 1.0327427996e+01;                                                                        \
+    double two_body_energy = 2.5636777719e+01;                                                                        \
     double three_body_energy = -3.2745042811e-01;                                                                     \
+    double dispersion_energy = -1.5309349723e+01;                                                                     \
     double electrostatic_energy = -7.3208264066e+01;                                                                  \
     double total_energy = -6.2132341476e+01;                                                                          \
     const int n_monomers = 6;                                                                                         \

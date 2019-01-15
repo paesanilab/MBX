@@ -55,6 +55,7 @@ int main(int argc, char** argv) {
         double energy = systems[i].Energy(true);
 
         std::vector<double> grd = systems[i].GetGrads();
+        std::vector<double> real_grd = systems[i].GetRealGrads();
 
         std::cout << std::setprecision(5) << std::scientific << "system[" << std::setfill('.') << std::setw(5) << i
                   << "]= " << std::setfill(' ') << std::setw(20) << std::right << energy << std::setw(12) << std::right
@@ -65,6 +66,7 @@ int main(int argc, char** argv) {
         std::vector<std::string> atn = systems[i].GetAtomNames();
 
         size_t n_sites = systems[i].GetNumSites();
+        size_t n_atoms = systems[i].GetNumRealSites();
 
         std::cout << std::setw(6) << std::left << "Atom" << std::setw(20) << std::right << "GradientX" << std::setw(20)
                   << std::right << "GradientY" << std::setw(20) << std::right << "GradientZ" << std::endl;
@@ -80,29 +82,29 @@ int main(int argc, char** argv) {
                   << std::right << "Numerical" << std::setw(20) << std::right << "Difference" << std::endl;
         // Comparing analytical and numerical
         std::vector<double> xyz;
-        xyz = systems[i].GetOriginalOrderSysXyz();
+        xyz = systems[i].GetRealXyz();
+        std::vector<std::string> atms = systems[i].GetRealAtomNames();
         const double eps = 1.0e-6;
-        for (size_t j = 0; j < n_sites * 3; j++) {
-            if (atn[j / 3] == "virt") continue;
+        for (size_t j = 0; j < n_atoms * 3; j++) {
             const double x_orig = xyz[j];
             xyz[j] = x_orig + eps;
-            systems[i].SetOriginalOrderSysXyz(xyz);
+            systems[i].SetRealXyz(xyz);
             const double Ep = systems[i].Energy(false);
             xyz[j] = x_orig + 2 * eps;
-            systems[i].SetOriginalOrderSysXyz(xyz);
+            systems[i].SetRealXyz(xyz);
             const double Epp = systems[i].Energy(false);
             xyz[j] = x_orig - eps;
-            systems[i].SetOriginalOrderSysXyz(xyz);
+            systems[i].SetRealXyz(xyz);
             const double Em = systems[i].Energy(false);
             xyz[j] = x_orig - 2 * eps;
-            systems[i].SetOriginalOrderSysXyz(xyz);
+            systems[i].SetRealXyz(xyz);
             const double Emm = systems[i].Energy(false);
             const double gfd = (8 * (Ep - Em) - (Epp - Emm)) / (12 * eps);
             xyz[j] = x_orig;
-            systems[i].SetOriginalOrderSysXyz(xyz);
-            std::cout << std::setprecision(5) << std::scientific << std::setw(6) << std::left << atn[j / 3]
-                      << std::setw(20) << std::right << grd[j] << std::setw(20) << std::right << gfd << std::setw(20)
-                      << std::right << std::fabs(grd[j] - gfd) << std::endl;
+            systems[i].SetRealXyz(xyz);
+            std::cout << std::setprecision(5) << std::scientific << std::setw(6) << std::left << atms[j / 3]
+                      << std::setw(20) << std::right << real_grd[j] << std::setw(20) << std::right << gfd << std::setw(20)
+                      << std::right << std::fabs(real_grd[j] - gfd) << std::endl;
         }
 #endif  // NUM_GRADS
 #endif  // PRINT_GRADS

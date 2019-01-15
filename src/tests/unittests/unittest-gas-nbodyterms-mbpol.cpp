@@ -3,7 +3,7 @@
 #include "potential/1b/energy1b.h"
 #include "potential/2b/energy2b.h"
 #include "potential/3b/energy3b.h"
-#include "potential/dispersion/dispersion2b.h"
+#include "potential/dispersion/dispersion.h"
 #include "setupwaterbox3mbpol.h"
 
 #include <vector>
@@ -127,35 +127,19 @@ TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
     }
 
     SECTION("Two body (dispersion)") {
-        std::vector<double> xyz1;
-        std::vector<double> xyz2;
-        std::vector<double> grad(3 * n_atoms);
+        std::vector<double> box;
+        std::vector<double> grad(3 * n_atoms,0.0);
 
-        size_t ndimers = 0;
-        GetDimers(real_xyz, nmon, xyz1, xyz2, ndimers);
+        // C6 vector that is useless but needed
+        std::vector<double> c6_long_range(n_atoms,0.0);
+        disp::Dispersion dispersion_class;
+        dispersion_class.Initialize(c6_long_range, real_xyz, monomer_names, nats, mon_type_count, false, box);
 
-        // Declare gradient vectors
-        std::vector<double> grad1(xyz1.size(), 0.0);
-        std::vector<double> grad2(xyz2.size(), 0.0);
-
-        double energy_2b_nograd =
-            disp::GetDispersion(monomer_name, monomer_name, ndimers, false, xyz1, xyz2, grad1, grad2, 100.0, false);
-        double energy_2b_grad =
-            disp::GetDispersion(monomer_name, monomer_name, ndimers, true, xyz1, xyz2, grad1, grad2, 100.0, false);
-
-        // Add the gradients properly
-        size_t offset_dimer = 0;
-        for (size_t i = 0; i < nmon - 1; i++) {
-            size_t offset_i = 9 * i;
-            for (size_t j = i + 1; j < nmon; j++) {
-                size_t offset_j = 9 * j;
-                for (size_t k = 0; k < 9; k++) {
-                    grad[offset_i + k] += grad1[offset_dimer + k];
-                    grad[offset_j + k] += grad2[offset_dimer + k];
-                }
-                offset_dimer += 9;
-            }
-        }
+        std::vector<double> grad_dummy(3 * n_atoms,0.0);
+        dispersion_class.SetNewParameters(real_xyz, false,100.0,box);
+        double energy_2b_nograd = dispersion_class.GetDispersion(grad_dummy);
+        dispersion_class.SetNewParameters(real_xyz, true,100.0,box);
+        double energy_2b_grad = dispersion_class.GetDispersion(grad);
 
         SECTION("Energy without gradients.") { REQUIRE(energy_2b_nograd == Approx(-8.1876933060e+00).margin(TOL)); }
 
@@ -167,13 +151,13 @@ TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
             for (size_t molecule = 0; molecule < nmon; ++molecule) {
                 for (size_t degreeOfFreedom = atomOffset; degreeOfFreedom < atomOffset + 9; ++degreeOfFreedom) {
                     real_xyz[degreeOfFreedom] += stepSize;
-                    GetDimers(real_xyz, nmon, xyz1, xyz2, ndimers);
-                    double plusEnergy = disp::GetDispersion(monomer_name, monomer_name, ndimers, false, xyz1, xyz2,
-                                                            grad1, grad2, 100.0, false);
+                    dispersion_class.SetNewParameters(real_xyz, false,100.0,box);
+                    double plusEnergy = dispersion_class.GetDispersion(grad_dummy);
+
                     real_xyz[degreeOfFreedom] -= 2 * stepSize;
-                    GetDimers(real_xyz, nmon, xyz1, xyz2, ndimers);
-                    double minusEnergy = disp::GetDispersion(monomer_name, monomer_name, ndimers, false, xyz1, xyz2,
-                                                             grad1, grad2, 100.0, false);
+                    dispersion_class.SetNewParameters(real_xyz, false,100.0,box);
+                    double minusEnergy = dispersion_class.GetDispersion(grad_dummy);
+
                     real_xyz[degreeOfFreedom] += stepSize;
                     double finiteDifferenceForce = (plusEnergy - minusEnergy) / (2 * stepSize);
                     double error = grad[degreeOfFreedom] - finiteDifferenceForce;

@@ -23,7 +23,8 @@
 // 3B
 #include "potential/3b/energy3b.h"
 // DISPERSION
-#include "potential/dispersion/dispersion2b.h"
+#include "potential/dispersion/dispersion.h"
+//#include "potential/dispersion/dispersion2b.h"
 // ELECTROSTATICS
 #include "potential/electrostatics/electrostatics.h"
 
@@ -410,6 +411,8 @@ class System {
      */
     double Electrostatics(bool do_grads);
 
+    double Dispersion(bool do_grads);
+
    private:
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -500,6 +503,8 @@ class System {
      */
     double GetElectrostatics(bool do_grads);
 
+    double GetDispersion(bool do_grads);
+
    private:
     /**
      * Number of molecules in the system
@@ -587,6 +592,11 @@ class System {
      * include configurations that distorted.
      */
     bool allMonGood_;
+
+    /**
+     * Dispersion class that will be used to get the dispersion energy
+     */
+    disp::Dispersion dispersionE_;
 
     /**
      * Electrostatic class that will be used to get the electrostatic energy

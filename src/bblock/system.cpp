@@ -316,6 +316,11 @@ void System::Initialize() {
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
                                true, diptol_, maxItDip_, dipole_method_);
 
+    std::vector<double> xyz_real = GetRealXyz();
+    // TODO modify c6_long_range
+    std::vector<double> c6_long_range(numat_,0.0);
+    dispersionE_.Initialize(c6_long_range, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
+
     // We are done. Setting initialized_ to true
     initialized_ = true;
 }
@@ -533,7 +538,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     double e2b = Get2B(do_grads);
-
+    double edisp = GetDispersion(do_grads);
 #ifdef TIMING
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
@@ -552,13 +557,14 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Set up energy with the new value
-    energy_ = e1b + e2b + e3b + Eelec;
+    energy_ = e1b + e2b + e3b + edisp + Eelec;
 
 #ifdef DEBUG
     std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
+              << "Disp = " << edisp << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
 #endif
@@ -808,8 +814,8 @@ double System::Get2B(bool do_grads) {
                     e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
 
                     // DISPERSION
-                    edisp_pool[rank] +=
-                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
+//                    edisp_pool[rank] +=
+//                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
                     // Update gradients in system
                     size_t i0 = nd_tot * 2;
                     for (size_t k = 0; k < nd; k++) {
@@ -828,8 +834,8 @@ double System::Get2B(bool do_grads) {
                     // POLYNOMIALS
                     e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
                     // DISPERSION
-                    edisp_pool[rank] +=
-                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
+//                    edisp_pool[rank] +=
+//                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
                 }
 
                 // Update loop variables and clear other temporary variable
@@ -1233,6 +1239,27 @@ void System::SetVSites() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+double System::Dispersion(bool do_grads) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Dispersion Energy calculation not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
+
+    energy_ = GetDispersion(do_grads);
+
+    return energy_;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 double System::Electrostatics(bool do_grads) {
     // Check if system has been initialized
     // If not, throw exception
@@ -1257,6 +1284,33 @@ double System::Electrostatics(bool do_grads) {
 double System::GetElectrostatics(bool do_grads) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
     return electrostaticE_.GetElectrostatics(grad_);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::GetDispersion(bool do_grads) {
+    std::vector<double> xyz_real(3*numat_);
+
+    size_t count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3*nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i]*3 + j];
+        }
+        count += 3*nat_[i];
+    }
+
+    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    std::vector<double> real_grad(3*numat_,0.0);
+    double e = dispersionE_.GetDispersion(real_grad);
+
+    count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3*nat_[i]; j++) {
+            grad_[first_index_[i]*3 + j] += real_grad[count + j];
+        }
+        count += 3*nat_[i];
+    }
+    return e;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -685,11 +685,13 @@ int main(int argc, char **argv) {
     double onebody_ref = system_ref.OneBodyEnergy(true);
     double twobody_ref = system_ref.TwoBodyEnergy(true);
     double threebody_ref = system_ref.ThreeBodyEnergy(true);
+    double dispersion_ref = system_ref.Dispersion(true);
     double electrostatic_ref = system_ref.Electrostatics(true);
 
     double onebody_read = systems[0].OneBodyEnergy(true);
     double twobody_read = systems[0].TwoBodyEnergy(true);
     double threebody_read = systems[0].ThreeBodyEnergy(true);
+    double dispersion_read = systems[0].Dispersion(true);
     double electrostatic_read = systems[0].Electrostatics(true);
 
     // Compare one body
@@ -709,13 +711,18 @@ int main(int argc, char **argv) {
         exitcode = 1;
     }
 
+    if (std::abs(dispersion_ref - dispersion_read) > REL_TOL) {
+        std::cerr << "Dispersion " << text << std::endl;
+        exitcode = 1;
+    }
+
     if (std::abs(electrostatic_ref - electrostatic_read) > REL_TOL) {
         std::cerr << "Electrostatic " << text << std::endl;
         exitcode = 1;
     }
 
-    double sum_ref = onebody_ref + twobody_ref + threebody_ref + electrostatic_ref;
-    double sum_read = onebody_read + twobody_read + threebody_read + electrostatic_read;
+    double sum_ref = onebody_ref + twobody_ref + threebody_ref + dispersion_ref + electrostatic_ref;
+    double sum_read = onebody_read + twobody_read + threebody_read + dispersion_read + electrostatic_read;
 
     text = "Sum of individual terms does not match total energy in ";
 
