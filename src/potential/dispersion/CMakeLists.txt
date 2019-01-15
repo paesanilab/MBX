@@ -1,4 +1,5 @@
-set(DISP_SOURCES dispersion2b.cpp disptools.cpp dispersion.cpp disptools_new.cpp)
+set(DISP_SOURCES dispersion.cpp disptools.cpp)
+#set(DISP_SOURCES dispersion2b.cpp disptools.cpp dispersion.cpp disptools_new.cpp)
 
 #add_library(dispersion ${DISP_SOURCES}) 
 #target_include_directories(dispersion PRIVATE ${CMAKE_SOURCE_DIR}) 

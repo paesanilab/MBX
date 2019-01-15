@@ -1,5 +1,5 @@
-#ifndef DISPTOOLS_NEW_H
-#define DISPTOOLS_NEW_H
+#ifndef DISPTOOLS_H
+#define DISPTOOLS_H
 
 #include <cmath>
 #include <algorithm>
@@ -35,15 +35,10 @@ double tang_toennies(int n, const double& x);
 //                const double& C8, const double& d8,
 //                const double* p1, const double* p2);
 
-double disp6(const double C6, const double d6,
-             const double* p1, const double* xyz2,
-             double* grad1, double* grad2,
-             const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
-             const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
-             const double cutoff, const std::vector<double>& box);
-
-void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double &out_c6, double &out_d6);
-
+double disp6(const double& C6, const double& d6, const double* p1a, const double* p2a, size_t n, const double cutoff,
+             const bool use_cutoff);
+double disp6(const double& C6, const double& d6, const double* p1a, const double* p2a, double* g1a, double* g2a,
+             size_t n, const double cutoff, const bool use_cutoff);
 }  // namespace disp
 
 //----------------------------------------------------------------------------//

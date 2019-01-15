@@ -73,27 +73,7 @@ T DotProduct(const std::vector<T> &a, const std::vector<T> &b) {
     return c;
 }
 
-// Pointer based
-// void MatrixTimesVector(const double * A, const double * b, double * c,
-//                       size_t sizeA, size_t sizeb) {
-//  // Check indexes match
-//  if (sizeA % sizeb != 0) {
-//    std::cerr << "ERROR: Indexes do not match. "
-//              << sizeA << " is not a multiple of "
-//              << sizeb << std::endl;
-//  }
-//
-//  size_t ncols = sizeb;
-//  size_t nrows = sizeA / ncols;
-//
-//  for (size_t i = 0; i < nrows; i++) {
-//    size_t incols = i*ncols;
-//    c[i] = 0;
-//    for (size_t j = 0; j < ncols; j++) {
-//      c[i] += A[incols + j] * b[j];
-//    }
-//  }
-//}
+std::vector<double> InvertUnitCell(const std::vector<double> &box);
 
 template <typename T>
 void MatrixTimesVector(const T *A, const T *b, T *c, size_t sizeA, size_t sizeb) {

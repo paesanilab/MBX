@@ -2,26 +2,30 @@
 
 namespace disp {
 
-void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
-                    const std::vector<size_t> &num_atoms, const std::vector<size_t> &first_ind,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads = true, const std::vector<double> &box = {}) {
+void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, 
+                            const std::vector<double> &sys_xyz, 
+                            const std::vector<std::string> &mon_id,
+                            const std::vector<size_t> &num_atoms,
+                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, 
+                    const bool do_grads = true, const std::vector<double> &box = {}) {
 
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
     mon_id_ = mon_id;
     num_atoms_ = num_atoms;
-    first_ind_ = first_ind;
     mon_type_count_ = mon_type_count;
     do_grads_ = do_grads;
     box_ = box;
+    box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
 
-    natoms_ = c6_long_range_.size();
+    natoms_ = sys_c6_long_range_.size();
     size_t natoms3 = 3*natoms_;
     phi_ = std::vector<double>(natoms_, 0.0); 
     xyz_ = std::vector<double>(natoms3, 0.0);
     grad_ = std::vector<double>(natoms3, 0.0);
     sys_grad_ = std::vector<double>(natoms3, 0.0);
     c6_long_range_ = std::vector<double>(natoms_, 0.0);
+    sys_phi_ = std::vector<double>(natoms_, 0.0);
 
     ReorderData();
 
@@ -30,9 +34,12 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads = true, const double cutoff = 100.0, const std::vector<double> &box = {}) {
 
     sys_xyz_ = xyz;
+    box_ = box;
+    box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     do_grads_ = do_grads;
     cutoff_ = cutoff;
-    
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(phi_.begin(),phi_.end(),0.0);
 
     ReorderData();
 
@@ -73,39 +80,39 @@ void Dispersion::ReorderData() {
         fi_crd += nmon * ns * 3;
     }
 }
-//
-//double Dispersion::GetDispersion(std::vector<double> &grad) {
-//    CalculateDispersion();
-//    
-//    fi_mon = 0;
-//    fi_crd = 0;
-//    fi_sites = 0;
-//    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-//        size_t ns = num_atoms_[fi_mon];
-//        size_t nmon = mon_type_count_[mt].second;
-//        size_t nmon2 = nmon * 2;
-//        for (size_t m = 0; m < nmon; m++) {
-//            size_t mns = m * ns;
-//            size_t mns3 = mns * 3;
-//            for (size_t i = 0; i < ns; i++) {
-//                size_t inmon = i * nmon;
-//                size_t inmon3 = 3 * inmon;
-//
-//                sys_phi_[fi_sites + mns + i] = phi_[fi_sites + m + inmon];
-//
-//                grad[fi_crd + mns3 + 3 * i] += grad_[inmon3 + m + fi_crd];
-//                grad[fi_crd + mns3 + 3 * i + 1] += grad_[inmon3 + m + fi_crd + nmon];
-//                grad[fi_crd + mns3 + 3 * i + 2] += grad_[inmon3 + m + fi_crd + nmon2];
-//            }
-//        }
-//        fi_mon += nmon;
-//        fi_sites += nmon * ns;
-//        fi_crd += nmon * ns * 3;
-//    }
-//
-//    return disp_energy_;
-//}
-//
+
+double Dispersion::GetDispersion(std::vector<double> &grad) {
+    CalculateDispersion();
+    
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = num_atoms_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+
+                sys_phi_[fi_sites + mns + i] = phi_[fi_sites + m + inmon];
+
+                grad[fi_crd + mns3 + 3 * i] += grad_[inmon3 + m + fi_crd];
+                grad[fi_crd + mns3 + 3 * i + 1] += grad_[inmon3 + m + fi_crd + nmon];
+                grad[fi_crd + mns3 + 3 * i + 2] += grad_[inmon3 + m + fi_crd + nmon2];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+    return disp_energy_;
+}
+
 void Dispersion::CalculateDispersion() {
 
     disp_energy_ = 0.0;
@@ -132,7 +139,8 @@ void Dispersion::CalculateDispersion() {
     excluded_set_type exc13;
     excluded_set_type exc14;
 
-    auto box_inverse = box_.size() ? InvertUnitCell(box_) : std::vector<double>();
+    auto box_inverse = std::vector<double>();
+    //auto box_inverse = box_.size() ? InvertUnitCell(box_) : std::vector<double>();
 
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
@@ -161,7 +169,7 @@ void Dispersion::CalculateDispersion() {
                     p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
                     p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                     std::fill(g1, g1 + 3, 0.0);
-                    disp_energy_ += disp6(c6,d6,p1,xyz_.data() + fi_crd, g1, grad_.data() + fi_crd, nmon, nmon, m, m+1, i, j, disp_scale_factor, do_grads_, cutoff_, box_);
+                    disp_energy_ += disp6(c6,d6,p1,xyz_.data() + fi_crd, g1, grad_.data() + fi_crd, nmon, nmon, m, m+1, i, j, disp_scale_factor, do_grads_, cutoff_, box_, box_inverse_);
 
                     grad_[fi_crd + inmon3 + m] += g1[0];
                     grad_[fi_crd + inmon3 + nmon + m] += g1[1];
@@ -218,12 +226,12 @@ void Dispersion::CalculateDispersion() {
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
                         double c6,d6;
-                        GetC6(mon_id_[fi_mon],mon_id_[fi_mon],i,j,c6,d6);
-                        disp_energy_ += disp6(c6,d6,xyz_sitei.data(),xyz_.data() + fi_crd2, g1.data(), grad_.data() + fi_crd2, nmon1, nmon2, m2init, nmon2, i, j, 1.0, do_grads_, cutoff_, box_);
-                        grad_[fi_crd1 + inmon13 + m1] += g1[0];
-                        grad_[fi_crd1 + inmon13 + nmon1 + m1] += g1[1];
-                        grad_[fi_crd1 + inmon13 + nmon12 + m1] += g1[2];
+                        GetC6(mon_id_[fi_mon1],mon_id_[fi_mon2],i,j,c6,d6);
+                        disp_energy_ += disp6(c6,d6,xyz_sitei.data(),xyz_.data() + fi_crd2, g1.data(), grad_.data() + fi_crd2, nmon1, nmon2, m2init, nmon2, i, j, 1.0, do_grads_, cutoff_, box_, box_inverse_);
                     }
+                    grad_[fi_crd1 + inmon13 + m1] += g1[0];
+                    grad_[fi_crd1 + inmon13 + nmon1 + m1] += g1[1];
+                    grad_[fi_crd1 + inmon13 + nmon12 + m1] += g1[2];
                 }
             }
             // Update first indexes

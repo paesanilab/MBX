@@ -7,43 +7,27 @@
 #include <omp.h>
 #endif
 
-#include "potential/dispersion/disptools_new.h"
+#include "potential/dispersion/disptools.h"
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
+#include "tools/math_tools.h"
 
 //#include "helpme.h"
 
 namespace disp {
 
-const double SQRTPI = sqrt(M_PI);
-
-std::vector<double> InvertUnitCell(const std::vector<double> &box) {
-    double determinant = box[0] * (box[4] * box[8] - box[7] * box[5]) - box[1] * (box[3] * box[8] - box[5] * box[6]) +
-                         box[2] * (box[3] * box[7] - box[4] * box[6]);
-
-    double determinant_inverse = 1 / determinant;
-    std::vector<double> box_inverse(9);
-    box_inverse[0] = (box[4] * box[8] - box[7] * box[5]) * determinant_inverse;
-    box_inverse[1] = (box[2] * box[7] - box[1] * box[8]) * determinant_inverse;
-    box_inverse[2] = (box[1] * box[5] - box[2] * box[4]) * determinant_inverse;
-    box_inverse[3] = (box[5] * box[6] - box[3] * box[8]) * determinant_inverse;
-    box_inverse[4] = (box[0] * box[8] - box[2] * box[6]) * determinant_inverse;
-    box_inverse[5] = (box[3] * box[2] - box[0] * box[5]) * determinant_inverse;
-    box_inverse[6] = (box[3] * box[7] - box[6] * box[4]) * determinant_inverse;
-    box_inverse[7] = (box[6] * box[1] - box[0] * box[7]) * determinant_inverse;
-    box_inverse[8] = (box[0] * box[4] - box[3] * box[1]) * determinant_inverse;
-    return box_inverse;
-}
-
 class Dispersion {
     public:
 
-    Dispersion();
-    ~Dispersion();
+    Dispersion() {};
+    ~Dispersion() {};
     
-    void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
-                    const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads, const std::vector<double> &box);
+    void Initialize(const std::vector<double> C6_long_range, 
+                    const std::vector<double> &sys_xyz, 
+                    const std::vector<std::string> &mon_id,
+                    const std::vector<size_t> &num_atoms,
+                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, 
+                    const bool do_grads, const std::vector<double> &box);
 
     double GetDispersion(std::vector<double> &grad);
 
@@ -68,8 +52,6 @@ class Dispersion {
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
     std::vector<size_t> num_atoms_;
-    // First index of each atom in system
-    std::vector<size_t> first_ind_;
     // Vector that contains the C6 used at long range
     std::vector<double> c6_long_range_;
     // Vector that contains the C6 used at long range
@@ -99,6 +81,8 @@ class Dispersion {
     double disp_energy_;
     // box of the system
     std::vector<double> box_;
+    // inverted box of the system
+    std::vector<double> box_inverse_;
     // use pbc in the electrostatics calculation
     bool use_pbc_;
     // dispersion cutoff
