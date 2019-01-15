@@ -12,6 +12,7 @@ add_subdirectory(tests)
 
 add_library(mbnrg SHARED $<TARGET_OBJECTS:bblock> 
                          $<TARGET_OBJECTS:io_tools> 
+                         $<TARGET_OBJECTS:tools> 
                          $<TARGET_OBJECTS:1b> 
                          $<TARGET_OBJECTS:2b> 
                          $<TARGET_OBJECTS:3b> 
@@ -22,6 +23,7 @@ target_link_libraries(mbnrg PUBLIC fftw::fftw)
 
 add_library(mbnrglib STATIC $<TARGET_OBJECTS:bblock> 
                          $<TARGET_OBJECTS:io_tools> 
+                         $<TARGET_OBJECTS:tools> 
                          $<TARGET_OBJECTS:1b> 
                          $<TARGET_OBJECTS:2b> 
                          $<TARGET_OBJECTS:3b> 
