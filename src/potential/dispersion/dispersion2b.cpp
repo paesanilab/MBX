@@ -253,8 +253,6 @@ double GetDispersion(std::string m1, std::string m2, size_t nm, bool do_grads, s
         // =====>> SECTION DISPERSION <<=====
         // ======>> PASTE CODE BELOW <<======
 
-
-
     } else {
         return 0.0;
     }

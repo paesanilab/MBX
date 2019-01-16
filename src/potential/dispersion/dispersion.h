@@ -17,21 +17,19 @@
 namespace disp {
 
 class Dispersion {
-    public:
+   public:
+    Dispersion(){};
+    ~Dispersion(){};
 
-    Dispersion() {};
-    ~Dispersion() {};
-    
-    void Initialize(const std::vector<double> C6_long_range, 
-                    const std::vector<double> &sys_xyz, 
-                    const std::vector<std::string> &mon_id,
-                    const std::vector<size_t> &num_atoms,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, 
-                    const bool do_grads, const std::vector<double> &box);
+    void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
+                    const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
+                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads,
+                    const std::vector<double> &box);
 
     double GetDispersion(std::vector<double> &grad);
 
-    void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff, const std::vector<double> &box);
+    void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
+                          const std::vector<double> &box);
 
     /**
      * @brief Sets the cutoff for dispersion interactions
@@ -40,10 +38,10 @@ class Dispersion {
      */
     void SetCutoff(double cutoff);
 
-    private:
+   private:
     void ReorderData();
     void CalculateDispersion();
-    
+
     // System xyz, not ordered XYZ. xyzxyz...(mon1)xyzxyz...(mon2) ...
     std::vector<double> sys_xyz_;
     // System xyz, ordered XYZ. xx..yy..zz(mon1) xx..yy..zz(mon2) ...
@@ -88,12 +86,8 @@ class Dispersion {
     // dispersion cutoff
     double cutoff_;
     // ewald attenuation parameter in inverse angstroms
-
 };
 
-
-} // namespace disp
-
-
+}  // namespace disp
 
 #endif

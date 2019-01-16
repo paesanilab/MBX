@@ -109,21 +109,18 @@ double disp68(const double& C6, const double& d6,
 
 //----------------------------------------------------------------------------//
 
-double disp6(const double C6, const double d6,
-             const double* p1, const double* xyz2,
-             double* grad1, double* grad2, 
-             const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
-             const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
-             const double cutoff, const std::vector<double>& box, const std::vector<double>& box_inverse) {
-
+double disp6(const double C6, const double d6, const double* p1, const double* xyz2, double* grad1, double* grad2,
+             const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2, const size_t atom_index1,
+             const size_t atom_index2, const double disp_scale_factor, bool do_grads, const double cutoff,
+             const std::vector<double>& box, const std::vector<double>& box_inverse) {
     double disp = 0.0;
 
-    size_t nmon22 = nmon2*2;
-    
+    size_t nmon22 = nmon2 * 2;
+
     size_t shift2 = atom_index2 * nmon2 * 3;
 
     bool use_pbc = box.size();
-    
+
     double g1[3], g2[3 * nmon2];
     std::fill(g1, g1 + 3, 0.0);
     std::fill(g2, g2 + 3 * nmon2, 0.0);
@@ -142,7 +139,7 @@ double disp6(const double C6, const double d6,
             tmp1 -= std::floor(tmp1 + 0.5);
             tmp2 -= std::floor(tmp2 + 0.5);
             tmp3 -= std::floor(tmp3 + 0.5);
-        
+
             dx = box[0] * tmp1 + box[1] * tmp2 + box[2] * tmp3;
             dy = box[3] * tmp1 + box[4] * tmp2 + box[5] * tmp3;
             dz = box[6] * tmp1 + box[7] * tmp2 + box[8] * tmp3;
@@ -192,8 +189,7 @@ double disp6(const double C6, const double d6,
     return disp * disp_scale_factor;
 }
 
-void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double &out_C6, double &out_d6) {
-
+void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon_id2 < mon_id1) {
@@ -206,7 +202,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         swaped = true;
     }
 
-    std::vector<double> C6,d6;
+    std::vector<double> C6, d6;
     std::vector<size_t> types1, types2;
     size_t nt2, i, j;
 
@@ -391,28 +387,18 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // =====>> SECTION DISPERSION <<=====
         // ======>> PASTE CODE BELOW <<======
 
-
-
     } else {
         out_C6 = 0.0;
         out_d6 = 0.0;
         return;
     }
 
-
     i = types1[index1];
     j = types2[index2];
 
-    out_C6 = C6[i*nt2 + j];
-    out_d6 = d6[i*nt2 + j];
+    out_C6 = C6[i * nt2 + j];
+    out_d6 = d6[i * nt2 + j];
 }
-
-
-
-
-
-
-
 
 }  // namespace disp
 

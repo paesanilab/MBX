@@ -128,17 +128,17 @@ TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
 
     SECTION("Two body (dispersion)") {
         std::vector<double> box;
-        std::vector<double> grad(3 * n_atoms,0.0);
+        std::vector<double> grad(3 * n_atoms, 0.0);
 
         // C6 vector that is useless but needed
-        std::vector<double> c6_long_range(n_atoms,0.0);
+        std::vector<double> c6_long_range(n_atoms, 0.0);
         disp::Dispersion dispersion_class;
         dispersion_class.Initialize(c6_long_range, real_xyz, monomer_names, nats, mon_type_count, false, box);
 
-        std::vector<double> grad_dummy(3 * n_atoms,0.0);
-        dispersion_class.SetNewParameters(real_xyz, false,100.0,box);
+        std::vector<double> grad_dummy(3 * n_atoms, 0.0);
+        dispersion_class.SetNewParameters(real_xyz, false, 100.0, box);
         double energy_2b_nograd = dispersion_class.GetDispersion(grad_dummy);
-        dispersion_class.SetNewParameters(real_xyz, true,100.0,box);
+        dispersion_class.SetNewParameters(real_xyz, true, 100.0, box);
         double energy_2b_grad = dispersion_class.GetDispersion(grad);
 
         SECTION("Energy without gradients.") { REQUIRE(energy_2b_nograd == Approx(-8.1876933060e+00).margin(TOL)); }
@@ -151,11 +151,11 @@ TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
             for (size_t molecule = 0; molecule < nmon; ++molecule) {
                 for (size_t degreeOfFreedom = atomOffset; degreeOfFreedom < atomOffset + 9; ++degreeOfFreedom) {
                     real_xyz[degreeOfFreedom] += stepSize;
-                    dispersion_class.SetNewParameters(real_xyz, false,100.0,box);
+                    dispersion_class.SetNewParameters(real_xyz, false, 100.0, box);
                     double plusEnergy = dispersion_class.GetDispersion(grad_dummy);
 
                     real_xyz[degreeOfFreedom] -= 2 * stepSize;
-                    dispersion_class.SetNewParameters(real_xyz, false,100.0,box);
+                    dispersion_class.SetNewParameters(real_xyz, false, 100.0, box);
                     double minusEnergy = dispersion_class.GetDispersion(grad_dummy);
 
                     real_xyz[degreeOfFreedom] += stepSize;

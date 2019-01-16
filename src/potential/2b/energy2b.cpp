@@ -33,9 +33,8 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
         h2o_ion::x2b_h2o_ion_v2x pot(m1, m2);
         return pot.eval(xyz1.data(), xyz2.data(), nm);
 
-    // =====>> SECTION TWOBODY_NOGRD <<=====
-    // =====>> PASTE YOUR CODE BELOW <<=====
-
+        // =====>> SECTION TWOBODY_NOGRD <<=====
+        // =====>> PASTE YOUR CODE BELOW <<=====
 
     } else {
         return 0.0;
@@ -73,10 +72,8 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
         h2o_ion::x2b_h2o_ion_v2x pot(m1, m2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grd1.data(), grd2.data(), nm);
 
-    // =====>> SECTION TWOBODY_GRD <<=====
-    // ====>> PASTE YOUR CODE BELOW <<====
-
-
+        // =====>> SECTION TWOBODY_GRD <<=====
+        // ====>> PASTE YOUR CODE BELOW <<====
 
     } else {
         return 0.0;

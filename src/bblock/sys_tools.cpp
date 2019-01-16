@@ -591,7 +591,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
                 size_t fst_ind, std::vector<double> &chg_der) {
     // Constant that calculates charge
     const double CHARGECON = 1.0;
-    //const double CHARGECON = constants::CHARGECON;
+    // const double CHARGECON = constants::CHARGECON;
 
     // Halide charges
     if (mon_id == "f" || mon_id == "cl" || mon_id == "br" || mon_id == "i") {

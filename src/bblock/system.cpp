@@ -318,7 +318,7 @@ void System::Initialize() {
 
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
-    std::vector<double> c6_long_range(numat_,0.0);
+    std::vector<double> c6_long_range(numat_, 0.0);
     dispersionE_.Initialize(c6_long_range, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
 
     // We are done. Setting initialized_ to true
@@ -355,14 +355,14 @@ void System::AddMonomerInfo() {
     std::vector<size_t> fi_at;
     numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
 
-    #ifdef DEBUG
+#ifdef DEBUG
     std::cerr << "Finished SetUpMonomers.\n";
     std::cerr << "Monomer vector:\n";
     for (size_t i = 0; i < monomers_.size(); i++) {
         std::cerr << monomers_[i] << " , ";
     }
     std::cerr << std::endl;
-    
+
     std::cerr << "Sites vector:\n";
     for (size_t i = 0; i < sites_.size(); i++) {
         std::cerr << sites_[i] << " , ";
@@ -380,7 +380,7 @@ void System::AddMonomerInfo() {
         std::cerr << fi_at[i] << " , ";
     }
     std::cerr << std::endl;
-    #endif
+#endif
 
     // Calculating the number of atoms
     numat_ = 0;
@@ -392,17 +392,16 @@ void System::AddMonomerInfo() {
     mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, original2current_order_, initial_order_,
                                               initial_order_realSites_);
 
-    #ifdef DEBUG
+#ifdef DEBUG
     std::cerr << "Finished OrderMonomers():\n";
     std::cerr << "mon_type_count:\n";
     for (size_t i = 0; i < mon_type_count_.size(); i++) {
-        std::cerr << "{\"" << mon_type_count_[i].first << "\","
-                  << mon_type_count_[i].second << "},";
+        std::cerr << "{\"" << mon_type_count_[i].first << "\"," << mon_type_count_[i].second << "},";
     }
     std::cerr << std::endl;
 
     std::cerr << "New monomer vector:\n";
-    for (size_t i = 0;i < monomers_.size(); i++) {
+    for (size_t i = 0; i < monomers_.size(); i++) {
         std::cerr << monomers_[i] << ",";
     }
     std::cerr << std::endl;
@@ -424,7 +423,7 @@ void System::AddMonomerInfo() {
         std::cerr << "{" << initial_order_realSites_[i].first << "," << initial_order_realSites_[i].second << "} , ";
     }
     std::cerr << std::endl;
-    #endif
+#endif
 
     // Rearranging coordinates to account for virt sites
     xyz_ = std::vector<double>(3 * numsites_, 0.0);
@@ -814,8 +813,9 @@ double System::Get2B(bool do_grads) {
                     e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
 
                     // DISPERSION
-//                    edisp_pool[rank] +=
-//                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
+                    //                    edisp_pool[rank] +=
+                    //                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2,
+                    // cutoff2b_, use_pbc_);
                     // Update gradients in system
                     size_t i0 = nd_tot * 2;
                     for (size_t k = 0; k < nd; k++) {
@@ -834,8 +834,9 @@ double System::Get2B(bool do_grads) {
                     // POLYNOMIALS
                     e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
                     // DISPERSION
-//                    edisp_pool[rank] +=
-//                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
+                    //                    edisp_pool[rank] +=
+                    //                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2,
+                    // cutoff2b_, use_pbc_);
                 }
 
                 // Update loop variables and clear other temporary variable
@@ -1133,7 +1134,7 @@ void System::SetCharges() {
     std::vector<double> real_chg =
         systools::ResetOrderRealN(chg_, initial_order_realSites_, numat_, first_index_, nat_);
     std::vector<double> all_chg = systools::ResetOrderN(chg_, initial_order_, first_index_, sites_);
-    
+
     // Print them
     std::cerr << "Entered " << __func__ << std::endl;
     std::cerr << "Real sites charges\n";
@@ -1293,26 +1294,26 @@ double System::GetElectrostatics(bool do_grads) {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetDispersion(bool do_grads) {
-    std::vector<double> xyz_real(3*numat_);
+    std::vector<double> xyz_real(3 * numat_);
 
     size_t count = 0;
     for (size_t i = 0; i < nummon_; i++) {
-        for (size_t j = 0; j < 3*nat_[i]; j++) {
-            xyz_real[count + j] = xyz_[first_index_[i]*3 + j];
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i] * 3 + j];
         }
-        count += 3*nat_[i];
+        count += 3 * nat_[i];
     }
 
     dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
-    std::vector<double> real_grad(3*numat_,0.0);
+    std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersion(real_grad);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {
-        for (size_t j = 0; j < 3*nat_[i]; j++) {
-            grad_[first_index_[i]*3 + j] += real_grad[count + j];
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            grad_[first_index_[i] * 3 + j] += real_grad[count + j];
         }
-        count += 3*nat_[i];
+        count += 3 * nat_[i];
     }
     return e;
 }

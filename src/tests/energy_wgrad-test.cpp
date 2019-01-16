@@ -103,8 +103,8 @@ int main(int argc, char** argv) {
             xyz[j] = x_orig;
             systems[i].SetRealXyz(xyz);
             std::cout << std::setprecision(5) << std::scientific << std::setw(6) << std::left << atms[j / 3]
-                      << std::setw(20) << std::right << real_grd[j] << std::setw(20) << std::right << gfd << std::setw(20)
-                      << std::right << std::fabs(real_grd[j] - gfd) << std::endl;
+                      << std::setw(20) << std::right << real_grd[j] << std::setw(20) << std::right << gfd
+                      << std::setw(20) << std::right << std::fabs(real_grd[j] - gfd) << std::endl;
         }
 #endif  // NUM_GRADS
 #endif  // PRINT_GRADS

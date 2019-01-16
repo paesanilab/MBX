@@ -23,7 +23,7 @@ namespace elec {
 
 const double SQRTPI = sqrt(M_PI);
 
-//std::vector<double> InvertUnitCell(const std::vector<double> &box) {
+// std::vector<double> InvertUnitCell(const std::vector<double> &box) {
 //    double determinant = box[0] * (box[4] * box[8] - box[7] * box[5]) - box[1] * (box[3] * box[8] - box[5] * box[6]) +
 //                         box[2] * (box[3] * box[7] - box[4] * box[6]);
 //
@@ -903,14 +903,14 @@ void Electrostatics::CalculateDipolesCG() {
         fi_crd += nmon * ns * 3;
     }
 
-// The Matrix is completed. Now proceed to CG algorithm
-// Following algorithm from:
-// https://en.wikipedia.org/wiki/Conjugate_gradient_method
+    // The Matrix is completed. Now proceed to CG algorithm
+    // Following algorithm from:
+    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
-// Initialize for first iteration
-// for (size_t i = 0; i < nsites3; i++) {
-//  mu_[i] *= pol_sqrt_[i];
-//}
+    // Initialize for first iteration
+    // for (size_t i = 0; i < nsites3; i++) {
+    //  mu_[i] *= pol_sqrt_[i];
+    //}
 
 #ifdef DEBUG
     for (size_t i = 0; i < nsites3; i++) {
@@ -1836,9 +1836,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
     }
 }
 
-double Electrostatics::GetPermanentElectrostaticEnergy() {return Eperm_;}
+double Electrostatics::GetPermanentElectrostaticEnergy() { return Eperm_; }
 
-double Electrostatics::GetInducedElectrostaticEnergy() {return Eind_;}
+double Electrostatics::GetInducedElectrostaticEnergy() { return Eind_; }
 
 double Electrostatics::GetElectrostatics(std::vector<double> &grad) {
     CalculatePermanentElecField();

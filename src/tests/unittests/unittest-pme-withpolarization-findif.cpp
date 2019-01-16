@@ -18,7 +18,7 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME
     double polfacH = 0.294;
     double polfacM = 0;
     SETUP_WATERBOX_2
-    double ref_energy =  -0.1752818171;
+    double ref_energy = -0.1752818171;
 
     elec::Electrostatics elec;
     std::vector<double> box_vectors{30, 0, 0, 0, 30, 0, 0, 0, 30};

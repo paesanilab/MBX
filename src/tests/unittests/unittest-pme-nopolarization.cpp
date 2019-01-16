@@ -49,7 +49,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     std::vector<double> forces4(3 * n_atoms);
     double energy4 = elec.GetElectrostatics(forces4);
     REQUIRE(energy4 == Approx(energy3).epsilon(TOL));
-    for(int n = 0; n < 3*n_atoms; ++n) REQUIRE(forces3[n] == Approx(forces4[n]).epsilon(TOL));
+    for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces3[n] == Approx(forces4[n]).epsilon(TOL));
 
     // alpha = 0.5
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
@@ -61,7 +61,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     std::vector<double> forces5(3 * n_atoms);
     double energy5 = elec.GetElectrostatics(forces5);
     REQUIRE(energy5 == Approx(energy4).epsilon(TOL));
-    for(int n = 0; n < 3*n_atoms; ++n) REQUIRE(forces4[n] == Approx(forces5[n]).epsilon(TOL));
+    for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces4[n] == Approx(forces5[n]).epsilon(TOL));
 
     std::cout << "Energies:" << std::endl;
     std::cout << "alpha = 0.25: " << std::setw(16) << std::setprecision(10) << energy3 << std::endl;
