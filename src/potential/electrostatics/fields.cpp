@@ -194,7 +194,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
                                               double ewald_alpha, bool use_pbc, const std::vector<double> &box,
-                                              const std::vector<double> &box_inverse, double cutofff) {
+                                              const std::vector<double> &box_inverse, double cutoff) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -243,7 +243,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 
         const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
         const double r = std::sqrt(rsq);
-        const double ri = 1.0 / r;
+        const double ri = r < cutoff ? 1 / r : 0;
         const double risq = ri * ri;
         const double rsqsq = rsq * rsq;
 
@@ -388,7 +388,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
         const double rijz2 = rijz * rijz;
         const double rsq = rijx2 + rijy2 + rijz2;
         const double r = std::sqrt(rsq);
-        const double ri = 1.0 / r;
+        const double ri = r < cutoff ? 1 / r : 0;
         const double risq = ri * ri;
         const double rsqsq = rsq * rsq;
         // Some values that will be used in the screening functions

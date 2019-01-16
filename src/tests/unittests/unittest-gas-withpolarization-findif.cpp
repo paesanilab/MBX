@@ -9,8 +9,7 @@
 
 constexpr double TOL = 5E-6;
 
-TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS) - finite differences.") {
-    // TIP3P test
+void run_test(const char *method) {
     double qO = -0.834;
     double qH = 0.417;
     double qM = 0;
@@ -23,13 +22,13 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS
     elec::Electrostatics elec;
     std::vector<double> box_vectors{};
 
-    const char *method = "iter";
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
                     1E-16, 100, method, box_vectors);
     elec.SetCutoff(12);
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
-    std::cout << "Energy: " << energy << std::endl;
+    std::cout << method << ":" << std::endl;
+    std::cout << "Energy: " << std::setw(16) << std::setprecision(10) << energy << std::endl;
     REQUIRE(energy == Approx(ref_energy).epsilon(TOL));
 
     double stepSize = 0.00001;
@@ -58,4 +57,9 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS
 
         REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).epsilon(TOL));
     }
+}
+
+TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS) - finite differences.") {
+    SECTION("CG algorithm") { run_test("cg"); }
+    SECTION("iter algorithm") { run_test("iter"); }
 }

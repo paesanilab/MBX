@@ -1,4 +1,6 @@
 #include "potential/dispersion/disptools.h"
+#include <string>
+#include <vector>
 
 namespace disp {
 
@@ -112,7 +114,7 @@ double disp68(const double& C6, const double& d6,
 double disp6(const double C6, const double d6, const double* p1, const double* xyz2, double* grad1, double* grad2,
              const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2, const size_t atom_index1,
              const size_t atom_index2, const double disp_scale_factor, bool do_grads, const double cutoff,
-             const std::vector<double>& box, const std::vector<double>& box_inverse) {
+             const std::vector<double> &box, const std::vector<double> &box_inverse) {
     double disp = 0.0;
 
     size_t nmon22 = nmon2 * 2;
@@ -125,6 +127,8 @@ double disp6(const double C6, const double d6, const double* p1, const double* x
     std::fill(g1, g1 + 3, 0.0);
     std::fill(g2, g2 + 3 * nmon2, 0.0);
     //    #pragma simd
+    const double* boxinv = box_inverse.data();
+    const double* boxptr = box.data();
     for (size_t nv = start2; nv < end2; nv++) {
         double dx = p1[0] - xyz2[shift2 + nv];
         double dy = p1[1] - xyz2[nmon2 + shift2 + nv];
@@ -132,17 +136,17 @@ double disp6(const double C6, const double d6, const double* p1, const double* x
 
         // Apply minimum image convetion
         if (use_pbc) {
-            double tmp1 = box_inverse[0] * dx + box_inverse[1] * dy + box_inverse[2] * dz;
-            double tmp2 = box_inverse[3] * dx + box_inverse[4] * dy + box_inverse[5] * dz;
-            double tmp3 = box_inverse[6] * dx + box_inverse[7] * dy + box_inverse[8] * dz;
+            double tmp1 = boxinv[0] * dx + boxinv[1] * dy + boxinv[2] * dz;
+            double tmp2 = boxinv[3] * dx + boxinv[4] * dy + boxinv[5] * dz;
+            double tmp3 = boxinv[6] * dx + boxinv[7] * dy + boxinv[8] * dz;
 
             tmp1 -= std::floor(tmp1 + 0.5);
             tmp2 -= std::floor(tmp2 + 0.5);
             tmp3 -= std::floor(tmp3 + 0.5);
 
-            dx = box[0] * tmp1 + box[1] * tmp2 + box[2] * tmp3;
-            dy = box[3] * tmp1 + box[4] * tmp2 + box[5] * tmp3;
-            dz = box[6] * tmp1 + box[7] * tmp2 + box[8] * tmp3;
+            dx = boxptr[0] * tmp1 + boxptr[1] * tmp2 + boxptr[2] * tmp3;
+            dy = boxptr[3] * tmp1 + boxptr[4] * tmp2 + boxptr[5] * tmp3;
+            dz = boxptr[6] * tmp1 + boxptr[7] * tmp2 + boxptr[8] * tmp3;
         }
 
         const double rsq = dx * dx + dy * dy + dz * dz;

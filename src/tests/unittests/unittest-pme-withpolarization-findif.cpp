@@ -9,7 +9,7 @@
 
 constexpr double TOL = 1E-8;
 
-TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME) - finite differences.") {
+void run_test(const char *method) {
     // TIP3P test
     double qO = -0.834;
     double qH = 0.417;
@@ -30,7 +30,6 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME
     double grid_density = 2;
     int spline_order = 6;
     double cutoff = 10;
-    const char *method = "iter";
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
                     1E-16, 100, method, box_vectors);
     elec.SetCutoff(cutoff);
@@ -39,7 +38,8 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME
     elec.SetEwaldSplineOrder(spline_order);
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
-    std::cout << "Energy: " << energy << std::endl;
+    std::cout << method << ":" << std::endl;
+    std::cout << "Energy: " << std::setw(16) << std::setprecision(10) << energy << std::endl;
     REQUIRE(energy == Approx(ref_energy).margin(TOL));
 
     double stepSize = 0.00001;
@@ -76,4 +76,9 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME
 
         REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
     }
+}
+
+TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME) - finite differences.") {
+    SECTION("CG algorithm") { run_test("cg"); }
+    SECTION("iter algorithm") { run_test("iter"); }
 }
