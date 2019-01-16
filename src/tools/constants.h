@@ -44,7 +44,8 @@ const double E_cc = 1.0e-7 * (c0 * e * c0 * e) / 1.0e-10;  // in J
 
 }  // namespace details
 
-const double CHARGECON = std::sqrt(details::E_cc * Na / kcal_J);
+const double COULOMB = details::E_cc * Na / kcal_J;
+const double CHARGECON = std::sqrt(COULOMB);
 
 // from NIST web site
 

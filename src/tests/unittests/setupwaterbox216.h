@@ -14,6 +14,10 @@
         charges[4 * n + 1] = qH;                                                                                 \
         charges[4 * n + 2] = qH;                                                                                 \
         charges[4 * n + 3] = qM;                                                                                 \
+        polfac[4 * n + 0] = pol[4 * n + 0] = polfacO;                                                            \
+        polfac[4 * n + 1] = pol[4 * n + 1] = polfacH;                                                            \
+        polfac[4 * n + 2] = pol[4 * n + 2] = polfacH;                                                            \
+        polfac[4 * n + 3] = pol[4 * n + 3] = polfacM;                                                            \
     }                                                                                                            \
     std::vector<size_t> first_ind(n_monomers, 0);                                                                \
     for (int n = 1; n < n_monomers; ++n) {                                                                       \

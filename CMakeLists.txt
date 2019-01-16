@@ -70,7 +70,6 @@ if (USE_OPENMP)
     include(autocmake_omp)
 endif()
 
-
 include(custom_cxxstandard)
 include(custom_static_library)
 enable_testing()

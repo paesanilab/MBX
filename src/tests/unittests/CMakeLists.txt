@@ -1,11 +1,15 @@
 # Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
-    unittest-gas-coulombonly.cpp
-    unittest-pme-coulombonly.cpp
     unittest-gas-electrostatics-mbpol.cpp
     unittest-gas-nbodyterms-mbpol.cpp
     unittest-systools.cpp
     unittest-system.cpp
+    unittest-gas-nopolarization-findif.cpp
+    unittest-gas-withpolarization-findif.cpp
+    unittest-pme-nopolarization.cpp
+    unittest-pme-nopolarization-findif.cpp
+    unittest-pme-withpolarization.cpp
+    unittest-pme-withpolarization-findif.cpp
     unittest-gamma.cpp
 )
 

@@ -41,6 +41,7 @@ derived.
 #include <cmath>
 #include <cstddef>
 
+#include "tools/definitions.h"
 #include "potential/electrostatics/gammq.h"
 
 namespace elec {

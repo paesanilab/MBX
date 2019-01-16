@@ -262,6 +262,8 @@ class Electrostatics {
     std::string dip_method_;
     // box of the system
     std::vector<double> box_;
+    // inverse of the unit cell
+    std::vector<double> box_inverse_;
     // use pbc in the electrostatics calculation
     bool use_pbc_;
     // electrostatics cutoff

@@ -33,7 +33,6 @@ void ElectroTensorShort::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_ind
     double v4_[maxnmon];
     double v5_[maxnmon];
     double v6_[maxnmon];
-
 // Store rijx, rijy and rijz in vectors
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -133,7 +132,11 @@ void ElectroTensorShort::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_ind
         // Some values that will be used in the screening functions
         const double rA4 = rsqsq * Asqsqi;
         const double arA4 = aDD * rA4;
+#if NO_THOLE
+        const double exp1 = 0;
+#else
         const double exp1 = std::exp(-arA4);
+#endif
         const double exp1r = exp1 * ri;
 
         // Get screening functions
