@@ -1133,7 +1133,7 @@ void System::SetCharges() {
     std::vector<double> real_chg =
         systools::ResetOrderRealN(chg_, initial_order_realSites_, numat_, first_index_, nat_);
     std::vector<double> all_chg = systools::ResetOrderN(chg_, initial_order_, first_index_, sites_);
-
+    
     // Print them
     std::cerr << "Entered " << __func__ << std::endl;
     std::cerr << "Real sites charges\n";
@@ -1142,6 +1142,10 @@ void System::SetCharges() {
     std::cerr << "\nAll charges\n";
     std::cerr << all_chg[0];
     for (size_t i = 1; i < all_chg.size(); i++) std::cerr << ", " << all_chg[i];
+    std::cerr << std::endl;
+    std::cerr << "\nAll charge derivatives (SYSTEM ORDER ONLY (for water, does not matter order)\n";
+    std::cerr << chggrad_[0];
+    for (size_t i = 1; i < chggrad_.size(); i++) std::cerr << ", " << chggrad_[i];
     std::cerr << std::endl;
 #endif  // DEBUG
 }
