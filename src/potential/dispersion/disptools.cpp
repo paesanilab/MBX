@@ -157,21 +157,28 @@ double disp6(const double C6, const double d6, const double* p1, const double* x
             const double inv_r6 = inv_rsq * inv_rsq * inv_rsq;
 
             const double e6 = C6 * tt6 * inv_r6;
+//MRR added
+            double gsw = 0.0;
+            const double sw = switch_function(r, cutoff - 1.0, cutoff, gsw);
+            
 
-            disp -= e6;
+            disp -= sw * e6;
 
             if (do_grads) {
                 const double grd = 6 * e6 * inv_rsq - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r) / r;
+                gsw *= -e6 / r;
 
-                g1[0] += dx * grd;
-                g2[nv] -= dx * grd;
+                g1[0] += sw * dx * grd + gsw * dx;
+                g2[nv] -= sw * dx * grd + gsw * dx;
 
-                g1[1] += dy * grd;
-                g2[nmon2 + nv] -= dy * grd;
+                g1[1] += sw * dy * grd + gsw * dy;
+                g2[nmon2 + nv] -= sw * dy * grd + gsw * dy;
 
-                g1[2] += dz * grd;
-                g2[nmon22 + nv] -= dz * grd;
+                g1[2] += sw * dz * grd + gsw * dz;
+                g2[nmon22 + nv] -= sw * dz * grd + gsw * dz;
             }
+// End MRR modified
+
         }
     }
 

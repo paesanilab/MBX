@@ -6,6 +6,8 @@
 #include <cassert>
 #include <cstddef>
 
+#include "tools/math_tools.h"
+
 namespace disp {
 
 template <int N>
