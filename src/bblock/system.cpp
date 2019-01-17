@@ -309,6 +309,9 @@ void System::Initialize() {
 
     // Setting PBC to false by default
     SetPBC();
+  
+    // Set C6 for long range pme
+    SetC6LongRange();
 
     // With the information previously set, we initialize the
     // electrostatics class
@@ -318,8 +321,7 @@ void System::Initialize() {
 
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
-    std::vector<double> c6_long_range(numat_, 0.0);
-    dispersionE_.Initialize(c6_long_range, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
+    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -1211,6 +1213,32 @@ void System::SetPolfacs() {
     std::cerr << "\nAll polarizability factors\n";
     std::cerr << all_polfac[0];
     for (size_t i = 1; i < all_polfac.size(); i++) std::cerr << ", " << all_polfac[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetC6LongRange() {
+    // Set virtual sites for each monomer type
+    size_t fi_mon = 0;
+    size_t fi_atoms = 0;
+    c6_lr_ = std::vector<double>(numat_,0.0);
+    for (size_t k = 0; k < mon_type_count_.size(); k++) {
+        std::string mon = mon_type_count_[k].first;
+        size_t nmon = mon_type_count_[k].second;
+        size_t natoms = nat_[fi_mon];
+
+        systools::SetC6LongRange(c6_lr_, mon, nmon, natoms, fi_atoms);
+        fi_mon += nmon;
+        fi_atoms += nmon*natoms;
+    }
+
+#ifdef DEBUG
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "All c6_lr after setting them\n";
+    std::cerr << c6_lr_[0];
+    for (size_t i = 1; i < c6_lr_.size(); i++) std::cerr << ", " << c6_lr_[i];
     std::cerr << std::endl;
 #endif  // DEBUG
 }
