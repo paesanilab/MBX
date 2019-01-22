@@ -37,7 +37,7 @@ double tang_toennies(int n, const double& x);
 //                const double& C8, const double& d8,
 //                const double* p1, const double* p2);
 
-double disp6(const double C6, const double d6, const double* p1, const double* xyz2, double* grad1, double* grad2,
+double disp6(const double C6, const double d6, const double c6i, const double c6j, const double* p1, const double* xyz2, double* grad1, double* grad2, double &phi1, double *phi2,
              const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2, const size_t atom_index1,
              const size_t atom_index2, const double disp_scale_factor, bool do_grads, const double cutoff,
              const std::vector<double>& box, const std::vector<double>& box_inverse);
