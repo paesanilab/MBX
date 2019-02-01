@@ -383,6 +383,7 @@ std::vector<T> ResetOrderRealN(std::vector<T> vector_T, std::vector<std::pair<si
     return new_vector_T;
 }
 
+
 /**
  * @brief Calculates the coordinates of the virtual site of a monomer when
  * given the coordinates of the other sites
@@ -444,6 +445,9 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
  * @param[in] fst_ind First index of first monomer of type mon_id
  */
 void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
+
+
+void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t nsites, size_t natoms);
 
 /**
  * @brief Redistributes the virtual site gradients into the real atoms

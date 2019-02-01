@@ -777,6 +777,39 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     }
 }
 
+void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind) {
+
+    // All these C6 come from Qchem/avtz. We put two molecules at 50 A and get the c6 of the atoms.
+    if (mon_id == "f") {  // Fluoride
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 25.56412750183350184739;
+    } else if (mon_id == "cl") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 57.88297168036554772821;
+    } else if (mon_id == "br") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    } else if (mon_id == "i") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    } else if (mon_id == "li") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 3.24887148714749872914;
+    } else if (mon_id == "na") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 16.02787872333703428437;
+    } else if (mon_id == "k") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    } else if (mon_id == "rb") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    } else if (mon_id == "cs") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    // Water is the only monomer which C6 does not come from qchem.
+    // It comes from MB-pol (C6O = sqrt(C6OO))
+    } else if (mon_id == "h2o") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 15.40523357222455098728;  // O
+            c6_lr[nv * natoms + fst_ind + 1] = 4.48258697649551357815;  // H
+            c6_lr[nv * natoms + fst_ind + 2] = 4.48258697649551357815;  // H
+        }
+    } 
+
+}
+
 // Assuming for now xyzxyzxyz...
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const size_t fi_crd,
                                 std::vector<double> &grad) {

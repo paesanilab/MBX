@@ -109,6 +109,7 @@ double Dispersion::GetDispersion(std::vector<double> &grad) {
 
 void Dispersion::CalculateDispersion() {
     disp_energy_ = 0.0;
+    std::fill(phi_.begin(), phi_.end(), 0.0);
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second;
     // Parallelization
@@ -155,19 +156,23 @@ void Dispersion::CalculateDispersion() {
                 bool is14 = systools::IsExcluded(exc14, i, j);
                 double disp_scale_factor = (is12 || is13 || is14) ? 0 : 1;
                 double c6, d6;
+                double c6i = c6_long_range_[fi_sites + i*nmon];
+                double c6j = c6_long_range_[fi_sites + j*nmon];
                 GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6);
                 for (size_t m = 0; m < nmon; m++) {
                     double p1[3], g1[3];
+                    double phi_i = 0.0;
                     p1[0] = xyz_[fi_crd + inmon3 + m];
                     p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
                     p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                     std::fill(g1, g1 + 3, 0.0);
-                    disp_energy_ += disp6(c6, d6, p1, xyz_.data() + fi_crd, g1, grad_.data() + fi_crd, nmon, nmon, m,
+                    disp_energy_ += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_.data() + fi_crd, phi_i, phi_.data() + fi_sites, nmon, nmon, m,
                                           m + 1, i, j, disp_scale_factor, do_grads_, cutoff_, box_, box_inverse_);
 
                     grad_[fi_crd + inmon3 + m] += g1[0];
                     grad_[fi_crd + inmon3 + nmon + m] += g1[1];
                     grad_[fi_crd + inmon3 + nmon2 + m] += g1[2];
+                    phi_[fi_sites + inmon + m] += phi_i;
                 }
             }
         }
@@ -209,9 +214,10 @@ void Dispersion::CalculateDispersion() {
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
-
+                    double c6i = c6_long_range_[fi_sites1 + i*nmon1];
                     std::vector<double> xyz_sitei(3);
                     std::vector<double> g1(3, 0.0);
+                    double phi_i = 0.0;
                     xyz_sitei[0] = xyz_[fi_crd1 + inmon13 + m1];
                     xyz_sitei[1] = xyz_[fi_crd1 + inmon13 + nmon1 + m1];
                     xyz_sitei[2] = xyz_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
@@ -219,15 +225,17 @@ void Dispersion::CalculateDispersion() {
                     for (size_t j = 0; j < ns2; j++) {
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
+                        double c6j = c6_long_range_[fi_sites2 + j*nmon2];
                         double c6, d6;
                         GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6);
                         disp_energy_ +=
-                            disp6(c6, d6, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(), grad_.data() + fi_crd2,
+                            disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(), grad_.data() + fi_crd2, phi_i, phi_.data() + fi_sites2, 
                                   nmon1, nmon2, m2init, nmon2, i, j, 1.0, do_grads_, cutoff_, box_, box_inverse_);
                     }
                     grad_[fi_crd1 + inmon13 + m1] += g1[0];
                     grad_[fi_crd1 + inmon13 + nmon1 + m1] += g1[1];
                     grad_[fi_crd1 + inmon13 + nmon12 + m1] += g1[2];
+                    phi_[fi_sites1 + inmon1 + m1] += phi_i;
                 }
             }
             // Update first indexes

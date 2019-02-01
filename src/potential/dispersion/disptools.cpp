@@ -111,15 +111,17 @@ double disp68(const double& C6, const double& d6,
 
 //----------------------------------------------------------------------------//
 
-double disp6(const double C6, const double d6, const double* p1, const double* xyz2, double* grad1, double* grad2,
+double disp6(const double C6, const double d6, const double c6i, const double c6j, const double* p1, const double* xyz2, double* grad1, double* grad2, double &phi1, double *phi2,
              const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2, const size_t atom_index1,
              const size_t atom_index2, const double disp_scale_factor, bool do_grads, const double cutoff,
              const std::vector<double> &box, const std::vector<double> &box_inverse) {
     double disp = 0.0;
+    double disp_lr_below_cutoff = 0.0;
 
     size_t nmon22 = nmon2 * 2;
 
-    size_t shift2 = atom_index2 * nmon2 * 3;
+    size_t shift_phi = atom_index2 * nmon2;
+    size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
 
@@ -152,6 +154,16 @@ double disp6(const double C6, const double d6, const double* p1, const double* x
         const double rsq = dx * dx + dy * dy + dz * dz;
         const double r = std::sqrt(rsq);
 
+        const double inv_rsq = 1.0 / rsq;
+        const double inv_r6 = inv_rsq * inv_rsq * inv_rsq;
+
+        // Update phi for long range interactions
+        // phi1 is a double value passed by reference
+        // phi2 is a double array
+        
+        phi1 -= c6j * inv_r6;
+        phi2[shift_phi + nv] -= c6i*inv_r6; 
+
         // If using cutoff, check for distances and get proper dispersion
         if (r <= cutoff) {
             const double d6r = d6 * r;
@@ -162,19 +174,32 @@ double disp6(const double C6, const double d6, const double* p1, const double* x
 
             const double e6 = C6 * tt6 * inv_r6;
 
-            disp -= e6;
+            const double e6_lr = c6i * c6j * inv_r6;
+
+            double gsw = 0.0;
+            const double sw = switch_function(r, cutoff - 1.0, cutoff, gsw);
+            const double sw2 = 1 - sw;
+            double gsw2 = -gsw;
+            
+
+            disp -= sw * e6;
+            disp_lr_below_cutoff -= sw2 * e6_lr;
 
             if (do_grads) {
                 const double grd = 6 * e6 * inv_rsq - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r) / r;
+                const double grd_lr = 6 * e6_lr * inv_rsq;
 
-                g1[0] += dx * grd;
-                g2[nv] -= dx * grd;
+                gsw *= -e6 / r;
+                gsw2 *= -e6_lr / r;
 
-                g1[1] += dy * grd;
-                g2[nmon2 + nv] -= dy * grd;
+                g1[0] += sw * dx * grd + gsw * dx + sw2 * dx* grd_lr + gsw2 * dx;
+                g2[nv] -= sw * dx * grd + gsw * dx + sw2 * dx* grd_lr + gsw2 * dx;
 
-                g1[2] += dz * grd;
-                g2[nmon22 + nv] -= dz * grd;
+                g1[1] += sw * dy * grd + gsw * dy + sw2 * dy* grd_lr + gsw2 * dy;
+                g2[nmon2 + nv] -= sw * dy * grd + gsw * dy + sw2 * dy* grd_lr + gsw2 * dy;
+
+                g1[2] += sw * dz * grd + gsw * dz + sw2 * dz* grd_lr + gsw2 * dz;
+                g2[nmon22 + nv] -= sw * dz * grd + gsw * dz + sw2 * dz* grd_lr + gsw2 * dz;
             }
         }
     }
@@ -190,7 +215,7 @@ double disp6(const double C6, const double d6, const double* p1, const double* x
         }
     }
 
-    return disp * disp_scale_factor;
+    return disp_scale_factor * (disp + disp_lr_below_cutoff);
 }
 
 void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6) {

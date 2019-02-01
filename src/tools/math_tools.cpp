@@ -17,3 +17,18 @@ std::vector<double> InvertUnitCell(const std::vector<double> &box) {
     box_inverse[8] = (box[0] * box[4] - box[3] * box[1]) * determinant_inverse;
     return box_inverse;
 }
+
+double switch_function(const double &r, const double &ri, const double &ro, double &g) {
+    if (r > ro) {
+        g = 0.0;
+        return 0.0;
+    } else if (r > ri) {
+        const double t1 = M_PI / (ro - ri);
+        const double x = (r - ri) * t1;
+        g = -std::sin(x) * t1 / 2.0;
+        return (1.0 + std::cos(x)) / 2.0;
+    } else {
+        g = 0.0;
+        return 1.0;
+    }
+}

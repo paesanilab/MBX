@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iostream>
+#include <cmath>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -74,6 +75,8 @@ T DotProduct(const std::vector<T> &a, const std::vector<T> &b) {
 }
 
 std::vector<double> InvertUnitCell(const std::vector<double> &box);
+
+double switch_function(const double &r, const double &ri, const double &ro, double &g);
 
 template <typename T>
 void MatrixTimesVector(const T *A, const T *b, T *c, size_t sizeA, size_t sizeb) {

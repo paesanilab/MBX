@@ -467,6 +467,8 @@ class System {
      */
     void SetVSites();
 
+    void SetC6LongRange();
+
     /**
      * Private function to internally get the 1b energy.
      * Gradients of the system will be updated.
@@ -678,6 +680,8 @@ class System {
      * order of the system
      */
     std::vector<double> polfac_;
+
+    std::vector<double> c6_lr_;
 
     /**
      * Vector that stores the simulation box.

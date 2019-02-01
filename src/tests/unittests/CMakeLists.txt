@@ -1,6 +1,7 @@
 # Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
     unittest-gas-electrostatics-mbpol.cpp
+    unittest-dispersion-gas-cutoff.cpp
     unittest-gas-nbodyterms-mbpol.cpp
     unittest-systools.cpp
     unittest-system.cpp
