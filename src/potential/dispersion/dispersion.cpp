@@ -1,4 +1,5 @@
 #include "potential/dispersion/dispersion.h"
+#include "potential/electrostatics/helpme.h"
 
 namespace disp {
 
@@ -14,6 +15,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     do_grads_ = do_grads;
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
+    use_pbc_ = box.size();
 
     natoms_ = sys_c6_long_range_.size();
     size_t natoms3 = 3 * natoms_;
@@ -32,6 +34,7 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     sys_xyz_ = xyz;
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
+    use_pbc_ = box.size();
     do_grads_ = do_grads;
     cutoff_ = cutoff;
     std::fill(grad_.begin(), grad_.end(), 0.0);
@@ -156,8 +159,8 @@ void Dispersion::CalculateDispersion() {
                 bool is14 = systools::IsExcluded(exc14, i, j);
                 double disp_scale_factor = (is12 || is13 || is14) ? 0 : 1;
                 double c6, d6;
-                double c6i = c6_long_range_[fi_sites + i*nmon];
-                double c6j = c6_long_range_[fi_sites + j*nmon];
+                double c6i = c6_long_range_[fi_sites + i * nmon];
+                double c6j = c6_long_range_[fi_sites + j * nmon];
                 GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6);
                 for (size_t m = 0; m < nmon; m++) {
                     double p1[3], g1[3];
@@ -166,8 +169,9 @@ void Dispersion::CalculateDispersion() {
                     p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
                     p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                     std::fill(g1, g1 + 3, 0.0);
-                    disp_energy_ += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_.data() + fi_crd, phi_i, phi_.data() + fi_sites, nmon, nmon, m,
-                                          m + 1, i, j, disp_scale_factor, do_grads_, cutoff_, box_, box_inverse_);
+                    disp_energy_ += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_.data() + fi_crd, phi_i,
+                                          phi_.data() + fi_sites, nmon, nmon, m, m + 1, i, j, disp_scale_factor,
+                                          do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_);
 
                     grad_[fi_crd + inmon3 + m] += g1[0];
                     grad_[fi_crd + inmon3 + nmon + m] += g1[1];
@@ -214,7 +218,7 @@ void Dispersion::CalculateDispersion() {
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
-                    double c6i = c6_long_range_[fi_sites1 + i*nmon1];
+                    double c6i = c6_long_range_[fi_sites1 + i * nmon1];
                     std::vector<double> xyz_sitei(3);
                     std::vector<double> g1(3, 0.0);
                     double phi_i = 0.0;
@@ -225,12 +229,13 @@ void Dispersion::CalculateDispersion() {
                     for (size_t j = 0; j < ns2; j++) {
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
-                        double c6j = c6_long_range_[fi_sites2 + j*nmon2];
+                        double c6j = c6_long_range_[fi_sites2 + j * nmon2];
                         double c6, d6;
                         GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6);
                         disp_energy_ +=
-                            disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(), grad_.data() + fi_crd2, phi_i, phi_.data() + fi_sites2, 
-                                  nmon1, nmon2, m2init, nmon2, i, j, 1.0, do_grads_, cutoff_, box_, box_inverse_);
+                            disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
+                                  grad_.data() + fi_crd2, phi_i, phi_.data() + fi_sites2, nmon1, nmon2, m2init, nmon2,
+                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_);
                     }
                     grad_[fi_crd1 + inmon13 + m1] += g1[0];
                     grad_[fi_crd1 + inmon13 + nmon1 + m1] += g1[1];
@@ -247,6 +252,50 @@ void Dispersion::CalculateDispersion() {
         fi_mon1 += nmon1;
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
+    }
+
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        helpme::PMEInstance<double> pme_solver_;
+        // Compute the reciprocal space terms, using PME
+        double A = box_[0], B = box_[4], C = box_[8];
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
+        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
+        auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+        auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
+        std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
+        double rec_energy = pme_solver_.computeEFRec(0, params, coords, forces);
+
+        // Resort forces from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = num_atoms_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    const double *result_ptr = forces[fi_sites + mns + i];
+                    grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                    grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                    grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
+        // The Ewald self energy
+        double prefac = std::pow(ewald_alpha_, 6) / 12.0;
+        double self_energy = 0;
+        for (const auto &c6 : sys_c6_long_range_) {
+            self_energy += c6 * c6 * prefac;
+        }
+        disp_energy_ += rec_energy + self_energy;
     }
 }
 
