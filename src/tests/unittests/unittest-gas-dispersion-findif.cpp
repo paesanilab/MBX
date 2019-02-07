@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "electrostatics.h"
+#include "dispersion2b.h"
 #include "setupwaterbox2.h"
 
 #include <vector>
@@ -9,26 +9,27 @@
 
 constexpr double TOL = 5E-6;
 
-void run_test(const char *method) {
-    double qO = -0.834;
-    double qH = 0.417;
-    double qM = 0;
-    double polfacO = 1.310;
-    double polfacH = 0.294;
-    double polfacM = 0;
-    SETUP_WATERBOX_2
-    double ref_energy = -0.1632261513;
+TEST_CASE("test the two body dispersion code (GAS) - finite differences.") {
+    double ref_energy = -0.162541;
 
-    elec::Electrostatics elec;
-    std::vector<double> box_vectors{};
+    const int natoms = 6;
+    std::vector<double> coords = std::vector<double>{                                             
+        -11.5109336618, 1.0563960610,  6.6033301068,  0.8781403410,  5.7020569050,  
+        -12.2938264730, 7.1259281936,  -11.6417034996, 1.0063049360,
+        -11.5501833807, -1.5847863244, -1.5602148182,  -0.8169061174, -1.9286305994, 
+        -11.2385781621, -2.0926390799, -11.4605158991, -1.5472825089};
+    std::vector<double> box;
+    std::vector<double> grd1(3*natoms, 0);
+    std::vector<double> grd2(3*natoms, 0);
+    int spline_order = 6;
+    const double cutoff = 12;
 
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, method, box_vectors);
+    disp::GetDispersion("h2o", "h2o", 2, true, coords, coords, grd1, grd2, 12, true, 0, box);
+            #if 0
     elec.SetCutoff(12);
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
-    std::cout << method << ":" << std::endl;
-    std::cout << "Energy: " << std::setw(16) << std::setprecision(10) << energy << std::endl;
+    std::cout << "Energy: " << energy << std::endl;
     REQUIRE(energy == Approx(ref_energy).epsilon(TOL));
 
     double stepSize = 0.00001;
@@ -57,9 +58,5 @@ void run_test(const char *method) {
 
         REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).epsilon(TOL));
     }
-}
-
-TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS) - finite differences.") {
-    SECTION("CG algorithm") { run_test("cg"); }
-    SECTION("iter algorithm") { run_test("iter"); }
+    #endif
 }

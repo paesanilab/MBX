@@ -1,4 +1,6 @@
 #include "potential/dispersion/disptools.h"
+#include <string>
+#include <vector>
 
 namespace disp {
 
@@ -109,9 +111,10 @@ double disp68(const double& C6, const double& d6,
 
 //----------------------------------------------------------------------------//
 
-double disp6(const double C6, const double d6, const double c6i, const double c6j, const double* p1, const double* xyz2, double* grad1, double* grad2, double &phi1, double *phi2,
-             const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2, const size_t atom_index1,
-             const size_t atom_index2, const double disp_scale_factor, bool do_grads, const double cutoff,
+double disp6(const double C6, const double d6, const double c6i, const double c6j, const double* p1, const double* xyz2,
+             double* grad1, double* grad2, double& phi1, double* phi2, const size_t nmon1, const size_t nmon2,
+             const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
+             const double disp_scale_factor, bool do_grads, const double cutoff, const double ewald_alpha,
              const std::vector<double>& box, const std::vector<double>& box_inverse) {
     double disp = 0.0;
     double disp_lr_below_cutoff = 0.0;
@@ -122,11 +125,13 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
-
     double g1[3], g2[3 * nmon2];
     std::fill(g1, g1 + 3, 0.0);
     std::fill(g2, g2 + 3 * nmon2, 0.0);
     //    #pragma simd
+    const double* boxinv = box_inverse.data();
+    const double* boxptr = box.data();
+    double dispersion_energy = 0;
     for (size_t nv = start2; nv < end2; nv++) {
         double dx = p1[0] - xyz2[shift2 + nv];
         double dy = p1[1] - xyz2[nmon2 + shift2 + nv];
@@ -134,17 +139,17 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
         // Apply minimum image convetion
         if (use_pbc) {
-            double tmp1 = box_inverse[0] * dx + box_inverse[1] * dy + box_inverse[2] * dz;
-            double tmp2 = box_inverse[3] * dx + box_inverse[4] * dy + box_inverse[5] * dz;
-            double tmp3 = box_inverse[6] * dx + box_inverse[7] * dy + box_inverse[8] * dz;
+            double tmp1 = boxinv[0] * dx + boxinv[1] * dy + boxinv[2] * dz;
+            double tmp2 = boxinv[3] * dx + boxinv[4] * dy + boxinv[5] * dz;
+            double tmp3 = boxinv[6] * dx + boxinv[7] * dy + boxinv[8] * dz;
 
             tmp1 -= std::floor(tmp1 + 0.5);
             tmp2 -= std::floor(tmp2 + 0.5);
             tmp3 -= std::floor(tmp3 + 0.5);
 
-            dx = box[0] * tmp1 + box[1] * tmp2 + box[2] * tmp3;
-            dy = box[3] * tmp1 + box[4] * tmp2 + box[5] * tmp3;
-            dz = box[6] * tmp1 + box[7] * tmp2 + box[8] * tmp3;
+            dx = boxptr[0] * tmp1 + boxptr[1] * tmp2 + boxptr[2] * tmp3;
+            dy = boxptr[3] * tmp1 + boxptr[4] * tmp2 + boxptr[5] * tmp3;
+            dz = boxptr[6] * tmp1 + boxptr[7] * tmp2 + boxptr[8] * tmp3;
         }
 
         const double rsq = dx * dx + dy * dy + dz * dz;
@@ -156,10 +161,9 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         // Update phi for long range interactions
         // phi1 is a double value passed by reference
         // phi2 is a double array
-        
-        phi1 -= c6j * inv_r6;
-        phi2[shift_phi + nv] -= c6i*inv_r6; 
 
+        phi1 -= c6j * inv_r6;
+        phi2[shift_phi + nv] -= c6i * inv_r6;
         // If using cutoff, check for distances and get proper dispersion
         if (r <= cutoff) {
             const double d6r = d6 * r;
@@ -168,39 +172,54 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             const double inv_rsq = 1.0 / rsq;
             const double inv_r6 = inv_rsq * inv_rsq * inv_rsq;
 
+            // Intermediates used in the dispersion PME terms
+            double ar2 = ewald_alpha * ewald_alpha * rsq;
+            double ar4 = ar2 * ar2;
+            double ar6 = ar4 * ar2;
+            double expterm = ewald_alpha ? std::exp(-ar2) : 1;
+
             const double e6 = C6 * tt6 * inv_r6;
 
-            const double e6_lr = c6i * c6j * inv_r6;
+            double ttsw_grad = 0;
+            const double ttsw = switch_function(r, cutoff - 1.0, cutoff, ttsw_grad);
+            const double c6sw = 1 - ttsw;
+            const double c6sw_grad = -ttsw_grad;
 
-            double gsw = 0.0;
-            const double sw = switch_function(r, cutoff - 1.0, cutoff, gsw);
-            const double sw2 = 1 - sw;
-            double gsw2 = -gsw;
-            
-
-            disp -= sw * e6;
-            disp_lr_below_cutoff -= sw2 * e6_lr;
+            // The idea here is quite simple.  At short range we want the TT term (e6) to model dispersion.  At long
+            // range this becomes C6i C6j / Rij^6, which is handled by PME.  The reciprocal space part of PME always
+            // includes extra terms that contribute below the cutoff, even if that pair shouldn't contribute.  For
+            // intermonomer pairs, this means there is the TT contribution that we want, but we have to remove the
+            // part of the reciprocal space from C6i C6j / Rij^6 that was added in the reciprocal space term.  Similarly
+            // for intramonomer terms, there should be no TT contribution or C6i C6j / Rij^6 term, so we use the scale
+            // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
+            // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
+            double c6term = c6i * c6j * inv_r6;
+            double pmeterm = c6i * c6j * (1 - (1 + ar2 + ar4 / 2) * expterm) * inv_r6;
+            double pair_energy = ttsw * (disp_scale_factor * e6) + c6sw * disp_scale_factor * c6term - pmeterm;
+            dispersion_energy -= pair_energy;
 
             if (do_grads) {
-                const double grd = 6 * e6 * inv_rsq - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r) / r;
-                const double grd_lr = 6 * e6_lr * inv_rsq;
+                const double e6term_grad = 6 * e6 * inv_rsq - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r) / r;
+                const double c6term_grad = 6 * c6term * inv_rsq;
+                const double pmeterm_grad =
+                    6 * c6i * c6j * (1 - (1 + ar2 + ar4 / 2 + ar6 / 6) * expterm) * inv_r6 * inv_rsq;
+                const double ttgrad = ttsw * e6term_grad - ttsw_grad * e6 / r;
+                const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term / r;
+                const double grad = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
 
-                gsw *= -e6 / r;
-                gsw2 *= -e6_lr / r;
+                g1[0] += dx * grad;
+                g2[nv] -= dx * grad;
 
-                g1[0] += sw * dx * grd + gsw * dx + sw2 * dx* grd_lr + gsw2 * dx;
-                g2[nv] -= sw * dx * grd + gsw * dx + sw2 * dx* grd_lr + gsw2 * dx;
+                g1[1] += dy * grad;
+                g2[nmon2 + nv] -= dy * grad;
 
-                g1[1] += sw * dy * grd + gsw * dy + sw2 * dy* grd_lr + gsw2 * dy;
-                g2[nmon2 + nv] -= sw * dy * grd + gsw * dy + sw2 * dy* grd_lr + gsw2 * dy;
-
-                g1[2] += sw * dz * grd + gsw * dz + sw2 * dz* grd_lr + gsw2 * dz;
-                g2[nmon22 + nv] -= sw * dz * grd + gsw * dz + sw2 * dz* grd_lr + gsw2 * dz;
+                g1[2] += dz * grad;
+                g2[nmon22 + nv] -= dz * grad;
             }
         }
     }
 
-    if (do_grads && disp_scale_factor > 0.5) {
+    if (do_grads) {
         grad1[0] += g1[0];
         grad1[1] += g1[1];
         grad1[2] += g1[2];
@@ -211,7 +230,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         }
     }
 
-    return disp_scale_factor * (disp + disp_lr_below_cutoff);
+    return dispersion_energy;
 }
 
 void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6) {

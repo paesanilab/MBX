@@ -9,7 +9,7 @@
 
 constexpr double TOL = 5e-5;
 
-TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald alpha sweep.") {
+void run_test(const char *method) {
     // TIP3P test
     double qO = -0.834;
     double qH = 0.417;
@@ -22,8 +22,6 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
 
     elec::Electrostatics elec;
     std::vector<double> box_vectors{34, 0, 0, 0, 34, 0, 0, 0, 34};
-
-    const char *method = "iter";
 
     /*
      * Ensure that computed properties are invariant to changes in the Ewald attenuation parameter
@@ -63,6 +61,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     REQUIRE(energy5 == Approx(energy4).epsilon(TOL));
     for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces4[n] == Approx(forces5[n]).epsilon(TOL));
 
+    std::cout << method << ":" << std::endl;
     std::cout << "Energies:" << std::endl;
     std::cout << "alpha = 0.25: " << std::setw(16) << std::setprecision(10) << energy3 << std::endl;
     std::cout << "alpha = 0.35: " << std::setw(16) << std::setprecision(10) << energy4 << std::endl;
@@ -80,4 +79,8 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
         std::cout << std::setw(16) << std::setprecision(10) << forces4[3 * i + 2];
         std::cout << std::setw(16) << std::setprecision(10) << forces5[3 * i + 2] << std::endl;
     }
+    }
+TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald alpha sweep.") {
+    SECTION("CG algorithm") { run_test("cg"); }
+    SECTION("iter algorithm") { run_test("iter"); }
 }

@@ -32,6 +32,27 @@ class Dispersion {
                           const std::vector<double> &box);
 
     /**
+     * @brief Sets the Ewald attenuation parameter (in units of 1/Angstrom)
+     *
+     * @param[in] cutoff New cutoff value
+     */
+    void setEwaldAlpha(const double alpha) { ewald_alpha_ = alpha; }
+
+    /**
+     * @brief Sets the PME grid density.
+     *
+     * @param[in] density the number of grid points per Angstrom in each dimension of the PME grid.
+     */
+    void SetEwaldGridDensity(double density) { pme_grid_density_ = density; }
+
+    /**
+     * @brief Sets the PME B-Spline order.
+     *
+     * @param[in] order the order of the B-Spline used to spread charges
+     */
+    void SetEwaldSplineOrder(int order) { pme_spline_order_ = order; }
+
+    /**
      * @brief Sets the cutoff for dispersion interactions
      *
      * @param[in] cutoff New cutoff value
@@ -86,6 +107,11 @@ class Dispersion {
     // dispersion cutoff
     double cutoff_;
     // ewald attenuation parameter in inverse angstroms
+    double ewald_alpha_ = 0;
+    // PME grid density
+    double pme_grid_density_ = 0;
+    // PME spline order
+    int pme_spline_order_ = 0;
 };
 
 }  // namespace disp

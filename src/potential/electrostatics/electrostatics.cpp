@@ -23,24 +23,6 @@ namespace elec {
 
 const double SQRTPI = sqrt(M_PI);
 
-// std::vector<double> InvertUnitCell(const std::vector<double> &box) {
-//    double determinant = box[0] * (box[4] * box[8] - box[7] * box[5]) - box[1] * (box[3] * box[8] - box[5] * box[6]) +
-//                         box[2] * (box[3] * box[7] - box[4] * box[6]);
-//
-//    double determinant_inverse = 1 / determinant;
-//    std::vector<double> box_inverse(9);
-//    box_inverse[0] = (box[4] * box[8] - box[7] * box[5]) * determinant_inverse;
-//    box_inverse[1] = (box[2] * box[7] - box[1] * box[8]) * determinant_inverse;
-//    box_inverse[2] = (box[1] * box[5] - box[2] * box[4]) * determinant_inverse;
-//    box_inverse[3] = (box[5] * box[6] - box[3] * box[8]) * determinant_inverse;
-//    box_inverse[4] = (box[0] * box[8] - box[2] * box[6]) * determinant_inverse;
-//    box_inverse[5] = (box[3] * box[2] - box[0] * box[5]) * determinant_inverse;
-//    box_inverse[6] = (box[3] * box[7] - box[6] * box[4]) * determinant_inverse;
-//    box_inverse[7] = (box[6] * box[1] - box[0] * box[7]) * determinant_inverse;
-//    box_inverse[8] = (box[0] * box[4] - box[3] * box[1]) * determinant_inverse;
-//    return box_inverse;
-//}
-
 void Electrostatics::SetCutoff(double cutoff) { cutoff_ = cutoff; }
 
 void Electrostatics::SetEwaldAlpha(double alpha) { ewald_alpha_ = alpha; }
@@ -540,136 +522,21 @@ void Electrostatics::CalculateDipoles() {
 }
 
 void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v) {
-    // Parallelization
-    size_t nthreads = 1;
-#ifdef _OPENMP
-#pragma omp parallel  // omp_get_num_threads() needs to be inside
-                      // parallel region to get number of threads
-    {
-        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
-    }
-#endif
-
-    size_t inv_size = in_v.size();
-    std::vector<std::vector<double>> pv_pool(nthreads, std::vector<double>(inv_size, 0.0));
-
-#ifdef DEBUG
-    std::vector<double> ts2_all(inv_size * inv_size, 0.0);
-#endif
-
-    // Sites on the same monomer
-    size_t fi_mon = 0;
-    size_t fi_sites = 0;
-    size_t fi_crd = 0;
-
-    double aDD = 0.055;
-
-    ElectroTensorShort elec_tensor(maxnmon_);
-
-    // Excluded sets
-    excluded_set_type exc12;
-    excluded_set_type exc13;
-    excluded_set_type exc14;
-
-    std::fill(out_v.begin(), out_v.end(), 0.0);
-
+    // Apply sqrt(pol) to the dipoles
+    int fi_sites = 0;
+    int fi_crd = 0;
+    int fi_mon = 0;
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
-        size_t nmon3 = nmon * 3;
-        size_t nmon32 = nmon3 * 2;
-        std::vector<double> ts2(3 * nmon3);
-        std::vector<double> ts1(nmon3);
-        size_t fi_mon3 = 3 * fi_mon;
-        // Get excluded pairs for this monomer
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = 3 * inmon;
-            for (size_t j = i + 1; j < ns; j++) {
-                size_t jnmon = j * nmon;
-                size_t jnmon3 = 3 * jnmon;
-                // Set the proper aDD
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
-
-                double pfipfj = sqrt(pol_[fi_sites + i] * pol_[fi_sites + j]);
-                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
-                std::fill(ts1.begin(), ts1.end(), 0.0);
-                std::fill(ts2.begin(), ts2.end(), 0.0);
-                double Ai = 0.0;
-                double Asqsqi = 0.0;
-                if (A > constants::EPS) {
-                    A = std::pow(A, 1.0 / 6.0);
-                    Ai = 1 / A;
-                    Asqsqi = Ai * Ai * Ai * Ai;
-                } else {
-                    Ai = BIGNUM;
-                    Asqsqi = Ai;
-                }
-                for (size_t m = 0; m < nmon; m++) {
-                    // TODO. Slowest function
-                    elec_tensor.CalcT1AndT2(xyz_.data() + fi_crd, xyz_.data() + fi_crd, m, m, m + 1, nmon, nmon, i, j,
-                                            Asqsqi, aDD, nsites_, ts1.data(), ts2.data());
-                }
-
-                // ts2 for this monomer and pairs are calculated
-                // this is due to mon2
-                for (size_t kk = 0; kk < 3; kk++) {
-                    size_t kknmon = kk * nmon;
-#pragma omp simd
-                    for (size_t k = 0; k < nmon; k++) {
-#ifdef DEBUG
-                        size_t row = fi_crd + inmon3 + k;
-                        size_t col = fi_crd + jnmon3 + k;
-#endif
-
-                        out_v[fi_crd + inmon3 + k] -= pfipfj * in_v[fi_crd + jnmon3 + k + kknmon] * ts2[k + kknmon];
-
-                        out_v[fi_crd + inmon3 + k + nmon] -=
-                            pfipfj * in_v[fi_crd + jnmon3 + k + kknmon] * ts2[k + kknmon + nmon3];
-
-                        out_v[fi_crd + inmon3 + k + nmon2] -=
-                            pfipfj * in_v[fi_crd + jnmon3 + k + kknmon] * ts2[k + kknmon + nmon32];
-
-#ifdef DEBUG
-                        ts2_all[row * inv_size + col + kknmon] = -pfipfj * ts2[k + kknmon];
-                        ts2_all[(row + nmon) * inv_size + col + kknmon] = -pfipfj * ts2[k + kknmon + nmon3];
-                        ts2_all[(row + nmon2) * inv_size + col + kknmon] = -pfipfj * ts2[k + kknmon + nmon32];
-#endif
-                    }
-                }
-
-                // This is due to mon 1
-                for (size_t kk = 0; kk < 3; kk++) {
-                    size_t kknmon = kk * nmon;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
-                    for (size_t k = 0; k < nmon; k++) {
-#ifdef DEBUG
-                        size_t row = fi_crd + jnmon3 + k;
-                        size_t col = fi_crd + inmon3 + k;
-#endif
-
-                        out_v[fi_crd + jnmon3 + k + kknmon] -= pfipfj * in_v[fi_crd + inmon3 + k] * ts2[k + kknmon];
-
-                        out_v[fi_crd + jnmon3 + k + kknmon] -=
-                            pfipfj * in_v[fi_crd + inmon3 + k + nmon] * ts2[k + kknmon + nmon3];
-
-                        out_v[fi_crd + jnmon3 + k + kknmon] -=
-                            pfipfj * in_v[fi_crd + inmon3 + k + nmon2] * ts2[k + kknmon + nmon32];
-
-#ifdef DEBUG
-                        ts2_all[(row + kknmon) * inv_size + col] = -pfipfj * ts2[k + kknmon];
-                        ts2_all[(row + kknmon) * inv_size + col + nmon] = -pfipfj * ts2[k + kknmon + nmon3];
-                        ts2_all[(row + kknmon) * inv_size + col + nmon2] = -pfipfj * ts2[k + kknmon + nmon32];
-#endif
-                    }
-                }
+        for (size_t i = 0; i < ns; i++) {
+            size_t inmon3 = 3 * i * nmon;
+            double A = -std::sqrt(pol_[fi_sites + i]);
+            for (size_t m = 0; m < nmon; m++) {
+                in_v[fi_crd + inmon3 + m] *= A;
+                in_v[fi_crd + inmon3 + nmon + m] *= A;
+                in_v[fi_crd + inmon3 + nmon2 + m] *= A;
             }
         }
         // Update first indexes
@@ -678,188 +545,37 @@ void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, std::vector<d
         fi_crd += nmon * ns * 3;
     }
 
-#ifdef DEBUG
-    std::cerr << "=== ts2 matrix after intramonomer =======" << std::endl;
-    for (size_t i = 0; i < inv_size; i++) {
-        for (size_t j = 0; j < inv_size; j++) {
-            std::cerr << std::scientific << std::setprecision(3) << std::setw(11) << ts2_all[inv_size * i + j] << " ";
-        }
-        std::cerr << std::endl;
-    }
-#endif
+    // Compute the field from the modified dipoles
+    ComputeDipoleField(in_v, out_v);
 
-    size_t fi_mon1 = 0;
-    size_t fi_mon2 = 0;
-    size_t fi_sites1 = 0;
-    size_t fi_sites2 = 0;
-    size_t fi_crd1 = 0;
-    size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
-    aDD = 0.055;
-    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        size_t ns1 = sites_[fi_mon1];
-        size_t nmon1 = mon_type_count_[mt1].second;
-        size_t nmon12 = 2 * nmon1;
-        size_t nmon13 = nmon1 * 3;
-        fi_mon2 = fi_mon1;
-        fi_sites2 = fi_sites1;
-        fi_crd2 = fi_crd1;
-        for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-            size_t ns2 = sites_[fi_mon2];
-            size_t nmon2 = mon_type_count_[mt2].second;
-            size_t nmon23 = nmon2 * 3;
-            size_t nmon232 = nmon23 * 2;
-
-            bool same = (mt1 == mt2);
-            // TODO add neighbour list here
-            // Prepare for parallelization
-            std::vector<std::shared_ptr<ElectroTensorShort>> elec_tensor_pool;
-            std::vector<std::vector<double>> ts1_pool;
-            std::vector<std::vector<double>> ts2_pool;
-            for (size_t i = 0; i < nthreads; i++) {
-                elec_tensor_pool.push_back(std::make_shared<ElectroTensorShort>(maxnmon_));
-                ts1_pool.push_back(std::vector<double>(nmon23, 0.0));
-                ts2_pool.push_back(std::vector<double>(3 * nmon23, 0.0));
+    // Apply sqrt(pol) to the field product, and revert the changes to mu
+    fi_sites = 0;
+    fi_crd = 0;
+    fi_mon = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            size_t inmon3 = 3 * i * nmon;
+            double A = std::sqrt(pol_[fi_sites + i]);
+            double Ai = A == 0 ? 1 : -1 / A;
+            for (size_t m = 0; m < nmon; m++) {
+                out_v[fi_crd + inmon3 + m] *= A;
+                out_v[fi_crd + inmon3 + nmon + m] *= A;
+                out_v[fi_crd + inmon3 + nmon2 + m] *= A;
+                // Revert scaling of mu
+                in_v[fi_crd + inmon3 + m] *= Ai;
+                in_v[fi_crd + inmon3 + nmon + m] *= Ai;
+                in_v[fi_crd + inmon3 + nmon2 + m] *= Ai;
             }
-
-// Parallel loop
-#ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic)
-#endif
-            for (size_t m1 = 0; m1 < nmon1; m1++) {
-                int rank = 0;
-#ifdef _OPENMP
-                rank = omp_get_thread_num();
-#endif
-                std::shared_ptr<ElectroTensorShort> local_elec_tensor = elec_tensor_pool[rank];
-                size_t m2init = same ? m1 + 1 : 0;
-                for (size_t i = 0; i < ns1; i++) {
-                    size_t inmon1 = i * nmon1;
-                    size_t inmon13 = 3 * inmon1;
-                    size_t j2init = same ? i : 0;
-                    for (size_t j = j2init; j < ns2; j++) {
-                        size_t jnmon2 = j * nmon2;
-                        size_t jnmon23 = 3 * jnmon2;
-                        double pfipfj = sqrt(pol_[fi_sites1 + i] * pol_[fi_sites2 + j]);
-                        std::fill(ts1_pool[rank].begin(), ts1_pool[rank].end(), 0.0);
-                        std::fill(ts2_pool[rank].begin(), ts2_pool[rank].end(), 0.0);
-
-                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
-                        double Ai = 0.0;
-                        double Asqsqi = 0.0;
-                        if (A > constants::EPS) {
-                            A = std::pow(A, 1.0 / 6.0);
-                            Ai = 1 / A;
-                            Asqsqi = Ai * Ai * Ai * Ai;
-                        } else {
-                            Ai = BIGNUM;
-                            Asqsqi = Ai;
-                        }
-                        if (same) {
-                            local_elec_tensor->CalcT1AndT2(xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m1, 0, m1,
-                                                           nmon1, nmon2, i, j, Asqsqi, aDD, nsites_,
-                                                           ts1_pool[rank].data(), ts2_pool[rank].data());
-                        }
-                        local_elec_tensor->CalcT1AndT2(xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m1, m2init, nmon2,
-                                                       nmon1, nmon2, i, j, Asqsqi, aDD, nsites_, ts1_pool[rank].data(),
-                                                       ts2_pool[rank].data());
-
-#ifdef DEBUG
-                        std::cout << "Different monomers (m1 = " << m1 << "): i = " << i << ", j = " << j << std::endl;
-                        for (size_t l = 0; l < ts2_pool[rank].size(); l++) {
-                            std::cout << std::scientific << std::setprecision(3) << std::setw(11)
-                                      << ts2_pool[rank][l] * (-pfipfj) << " ";
-                            if ((l + 1) % nmon23 == 0) std::cout << std::endl;
-                        }
-#endif
-
-// ts2 for this monomer and pairs are calculated
-// this is due to mon2 (upper diagonal)
-//#             ifdef _OPENMP
-//#               pragma omp simd
-//#             endif
-#ifdef DEBUG
-                        for (size_t k = 0; k < nmon23; k++) {
-                            size_t row = fi_crd1 + inmon13 + m1;
-                            size_t col = fi_crd2 + jnmon23 + k;
-                            ts2_all[row * inv_size + col] += -pfipfj * ts2_pool[rank][k];
-                            ts2_all[(row + nmon1) * inv_size + col] += -pfipfj * ts2_pool[rank][nmon23 + k];
-                            ts2_all[(row + nmon12) * inv_size + col] += -pfipfj * ts2_pool[rank][nmon232 + k];
-                        }
-#endif
-                        for (size_t k = 0; k < nmon23; k++) {
-                            pv_pool[rank][fi_crd1 + inmon13 + m1] -=
-                                pfipfj * in_v[fi_crd2 + jnmon23 + k] * ts2_pool[rank][k];
-                        }
-                        for (size_t k = 0; k < nmon23; k++) {
-                            pv_pool[rank][nmon1 + fi_crd1 + inmon13 + m1] -=
-                                pfipfj * in_v[fi_crd2 + jnmon23 + k] * ts2_pool[rank][nmon23 + k];
-                        }
-                        for (size_t k = 0; k < nmon23; k++) {
-                            pv_pool[rank][nmon12 + fi_crd1 + inmon13 + m1] -=
-                                pfipfj * in_v[fi_crd2 + jnmon23 + k] * ts2_pool[rank][nmon232 + k];
-                        }
-                        // This is due to mon 1 (lower diagonal)
-                        if (!same || i != j) {
-                            for (size_t k = 0; k < nmon23; k++) {
-#ifdef DEBUG
-                                size_t row = fi_crd2 + jnmon23 + k;
-                                size_t col = fi_crd1 + inmon13 + m1;
-#endif
-
-                                pv_pool[rank][fi_crd2 + jnmon23 + k] -=
-                                    pfipfj * in_v[fi_crd1 + inmon13 + m1] * ts2_pool[rank][k];
-
-                                pv_pool[rank][fi_crd2 + jnmon23 + k] -=
-                                    pfipfj * in_v[fi_crd1 + inmon13 + m1 + nmon1] * ts2_pool[rank][nmon23 + k];
-
-                                pv_pool[rank][fi_crd2 + jnmon23 + k] -=
-                                    pfipfj * in_v[fi_crd1 + inmon13 + m1 + nmon12] * ts2_pool[rank][nmon232 + k];
-
-#ifdef DEBUG
-                                ts2_all[row * inv_size + col] += -pfipfj * ts2_pool[rank][k];
-                                ts2_all[row * inv_size + col + nmon1] += -pfipfj * ts2_pool[rank][nmon23 + k];
-                                ts2_all[row * inv_size + col + nmon12] += -pfipfj * ts2_pool[rank][nmon232 + k];
-#endif
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Update first indexes
-            fi_mon2 += nmon2;
-            fi_sites2 += nmon2 * ns2;
-            fi_crd2 += nmon2 * ns2 * 3;
         }
         // Update first indexes
-        fi_mon1 += nmon1;
-        fi_sites1 += nmon1 * ns1;
-        fi_crd1 += nmon1 * ns1 * 3;
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
     }
-
-    // Condense pv_pool
-    for (size_t proc = 0; proc < nthreads; proc++) {
-        for (size_t i = 0; i < inv_size; i++) {
-            out_v[i] += pv_pool[proc][i];
-        }
-    }
-
-    // Diagonal elements must be taken into account
-    for (size_t i = 0; i < inv_size; i++) {
-        out_v[i] += in_v[i];
-    }
-
-#ifdef DEBUG
-    std::cerr << "=== ts2 matrix after intermonomer =======" << std::endl;
-    for (size_t i = 0; i < inv_size; i++) {
-        ts2_all[inv_size * i + i] = 1.0;
-        for (size_t j = 0; j < inv_size; j++) {
-            std::cerr << std::scientific << std::setprecision(3) << std::setw(11) << ts2_all[inv_size * i + j] << " ";
-        }
-        std::cerr << std::endl;
-    }
-#endif
+    for (size_t i = 0; i < in_v.size(); i++) { out_v[i] += in_v[i]; }
 }
 
 void Electrostatics::CalculateDipolesCG() {
@@ -902,15 +618,14 @@ void Electrostatics::CalculateDipolesCG() {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
+// The Matrix is completed. Now proceed to CG algorithm
+// Following algorithm from:
+// https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
-    // The Matrix is completed. Now proceed to CG algorithm
-    // Following algorithm from:
-    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
-
-    // Initialize for first iteration
-    // for (size_t i = 0; i < nsites3; i++) {
-    //  mu_[i] *= pol_sqrt_[i];
-    //}
+// Initialize for first iteration
+// for (size_t i = 0; i < nsites3; i++) {
+//  mu_[i] *= pol_sqrt_[i];
+//}
 
 #ifdef DEBUG
     for (size_t i = 0; i < nsites3; i++) {
@@ -920,6 +635,62 @@ void Electrostatics::CalculateDipolesCG() {
 
     std::vector<double> ts2v(nsites3);
     DipolesCGIteration(mu_, ts2v);
+//    std::cout << "CG" << std::endl;
+//    for(auto v:ts2v) std::cout << std::setw(16) << std::setprecision(10) << v << std::endl;
+//    fi_sites = 0;
+//    fi_crd = 0;
+//    fi_mon = 0;
+//    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+//        size_t ns = sites_[fi_mon];
+//        size_t nmon = mon_type_count_[mt].second;
+//        size_t nmon2 = nmon * 2;
+//        for (size_t i = 0; i < ns; i++) {
+//            size_t inmon3 = 3 * i * nmon;
+//            double A = -std::sqrt(pol_[fi_sites + i]);
+//            for (size_t m = 0; m < nmon; m++) {
+//                mu_[fi_crd + inmon3 + m] *= A;
+//                mu_[fi_crd + inmon3 + nmon + m] *= A;
+//                mu_[fi_crd + inmon3 + nmon2 + m] *= A;
+//            }
+//        }
+//        // Update first indexes
+//        fi_mon += nmon;
+//        fi_sites += nmon * ns;
+//        fi_crd += nmon * ns * 3;
+//    }
+//    DipolesIterativeIteration(mu_, ts2v);
+//    // ACS apply alpha inverse
+//    fi_sites = 0;
+//    fi_crd = 0;
+//    fi_mon = 0;
+//    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+//        size_t ns = sites_[fi_mon];
+//        size_t nmon = mon_type_count_[mt].second;
+//        size_t nmon2 = nmon * 2;
+//        for (size_t i = 0; i < ns; i++) {
+//            size_t inmon3 = 3 * i * nmon;
+//            double A = std::sqrt(pol_[fi_sites + i]);
+//            double Ai = A == 0 ? 1 : -1 / A;
+//            for (size_t m = 0; m < nmon; m++) {
+//                ts2v[fi_crd + inmon3 + m] *= A;
+//                ts2v[fi_crd + inmon3 + nmon + m] *= A;
+//                ts2v[fi_crd + inmon3 + nmon2 + m] *= A;
+//                // Revert scaling of mu
+//                mu_[fi_crd + inmon3 + m] *= Ai;
+//                mu_[fi_crd + inmon3 + nmon + m] *= Ai;
+//                mu_[fi_crd + inmon3 + nmon2 + m] *= Ai;
+//            }
+//        }
+//        // Update first indexes
+//        fi_mon += nmon;
+//        fi_sites += nmon * ns;
+//        fi_crd += nmon * ns * 3;
+//    }
+//    for (size_t i = 0; i < mu_.size(); i++) { ts2v[i] += mu_[i]; }
+//    std::cout << "ITER" << std::endl;
+//    for(auto v:ts2v) std::cout << std::setw(16) << std::setprecision(10) << v << std::endl;
+//    std::cout << std::endl;
+//    exit(1);
     std::vector<double> rv(nsites3);
     std::vector<double> pv(nsites3);
     std::vector<double> r_new(nsites3);
@@ -951,7 +722,6 @@ void Electrostatics::CalculateDipolesCG() {
 #ifdef DEBUG
         std::cout << "Iteration: " << iter << std::endl;
 #endif
-
         DipolesCGIteration(pv, ts2v);
         double pvts2pv = DotProduct(pv, ts2v);
         if (rvrv < tolerance_) break;
@@ -1066,7 +836,7 @@ void Electrostatics::CalculateDipolesAspc() {
         std::copy(mu_pred_.begin(), mu_pred_.end(), mu_.begin());
 
         // Now we run a single iteration to get the new Efd
-        DipolesIterativeIteration();
+        ComputeDipoleField(mu_, Efd_);
 
         // Now the Electric dipole field is computed, and we update
         // the dipoles to get the corrector
@@ -1114,7 +884,7 @@ void Electrostatics::CalculateDipolesAspc() {
     }  // end if (hist_num_aspc_ < k_aspc_ + 2)
 }
 
-void Electrostatics::DipolesIterativeIteration() {
+void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v) {
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP
@@ -1129,8 +899,8 @@ void Electrostatics::DipolesIterativeIteration() {
     size_t maxnmon = mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
 
-    std::fill(Efd_.begin(), Efd_.end(), 0.0);
-
+    std::fill(out_v.begin(), out_v.end(), 0);
+    double *in_ptr = in_v.data();
     double aDD = 0.0;
 
     // Excluded sets
@@ -1142,7 +912,6 @@ void Electrostatics::DipolesIterativeIteration() {
     double ex = 0.0;
     double ey = 0.0;
     double ez = 0.0;
-
     // Recalculate Electric field due to dipoles
     // Sites on the same monomer
     size_t fi_mon = 0;
@@ -1178,13 +947,13 @@ void Electrostatics::DipolesIterativeIteration() {
                 }
                 for (size_t m = 0; m < nmon; m++) {
                     // TODO. Slowest function
-                    elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, mu_.data() + fi_crd,
-                                                   mu_.data() + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
-                                                   Efd_.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
+                    elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
+                                                   in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
+                                                   out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
                                                    box_inverse_, cutoff_);
-                    Efd_[fi_crd + inmon3 + m] += ex;
-                    Efd_[fi_crd + inmon3 + nmon + m] += ey;
-                    Efd_[fi_crd + inmon3 + nmon2 + m] += ez;
+                    out_v[fi_crd + inmon3 + m] += ex;
+                    out_v[fi_crd + inmon3 + nmon + m] += ey;
+                    out_v[fi_crd + inmon3 + nmon2 + m] += ez;
                 }
             }
         }
@@ -1251,7 +1020,7 @@ void Electrostatics::DipolesIterativeIteration() {
                             Asqsqi = Ai;
                         }
                         local_field->CalcDipoleElecField(
-                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, mu_.data() + fi_crd1, mu_.data() + fi_crd2,
+                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, in_ptr + fi_crd1, in_ptr + fi_crd2,
                             m1, m2init, nmon2, nmon1, nmon2, i, j, Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread,
                             &ey_thread, &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_);
                         Efd_1_pool[rank][inmon13 + m1] += ex_thread;
@@ -1266,10 +1035,10 @@ void Electrostatics::DipolesIterativeIteration() {
                 size_t kend1 = Efd_1_pool[rank].size();
                 size_t kend2 = Efd_2_pool[rank].size();
                 for (size_t k = 0; k < kend1; k++) {
-                    Efd_[fi_crd1 + k] += Efd_1_pool[rank][k];
+                    out_v[fi_crd1 + k] += Efd_1_pool[rank][k];
                 }
                 for (size_t k = 0; k < kend2; k++) {
-                    Efd_[fi_crd2 + k] += Efd_2_pool[rank][k];
+                    out_v[fi_crd2 + k] += Efd_2_pool[rank][k];
                 }
             }
             // Update first indexes
@@ -1297,9 +1066,9 @@ void Electrostatics::DipolesIterativeIteration() {
                 for (size_t i = 0; i < ns; i++) {
                     size_t inmon = i * nmon;
                     size_t inmon3 = 3 * inmon;
-                    sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
-                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
-                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
+                    sys_mu_[fi_crd + mns3 + 3 * i] = in_ptr[inmon3 + m + fi_crd];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = in_ptr[inmon3 + m + fi_crd + nmon];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = in_ptr[inmon3 + m + fi_crd + nmon2];
                 }
             }
             fi_mon += nmon;
@@ -1332,9 +1101,9 @@ void Electrostatics::DipolesIterativeIteration() {
                 for (size_t i = 0; i < ns; i++) {
                     size_t inmon = i * nmon;
                     const double *result_ptr = result[fi_sites + mns + i];
-                    Efd_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
-                    Efd_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
-                    Efd_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
+                    out_v[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                    out_v[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                    out_v[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
                 }
             }
             fi_mon += nmon;
@@ -1342,8 +1111,8 @@ void Electrostatics::DipolesIterativeIteration() {
         }
         // The Ewald self field due to induced dipoles
         double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / SQRTPI;
-        double *e_ptr = Efd_.data();
-        for (const auto &mu : mu_) {
+        double *e_ptr = out_v.data();
+        for (const auto &mu : in_v) {
             *e_ptr += slf_prefactor * mu;
             ++e_ptr;
         }
@@ -1420,7 +1189,7 @@ void Electrostatics::CalculateDipolesIterative() {
         }
         iter++;
         // Perform next iteration
-        DipolesIterativeIteration();
+        ComputeDipoleField(mu_, Efd_);
     }
 }
 

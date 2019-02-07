@@ -163,7 +163,7 @@ class Electrostatics {
    private:
     void CalculatePermanentElecField();
     void CalculateDipolesIterative();
-    void DipolesIterativeIteration();
+    void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v);
     void CalculateDipolesCG();
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
     void CalculateDipolesAspc();
