@@ -92,7 +92,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     // ASPC parameters
     hist_num_aspc_ = 0;
     // TODO k is defaulted to 4 for now
-    SetAspcParameters(4);
+    SetAspcParameters(6);
     mu_pred_ = std::vector<double>(nsites3, 0.0);
 
     if (use_pbc_) box_inverse_ = InvertUnitCell(box_);
@@ -775,37 +775,59 @@ void Electrostatics::SetAspcParameters(size_t k) {
     b_consts_aspc_ = std::vector<double>(k + 2, 0.0);
     mu_hist_ = std::vector<double>(mu_.size() * (k + 3), 0.0);
 
-    if (k == 0) {
-        b_consts_aspc_[0] = 2.0;
-        b_consts_aspc_[1] = -1.0;
-        omega_aspc_ = 2.0 / 3.0;
-    } else if (k == 1) {
-        b_consts_aspc_[0] = 2.5;
-        b_consts_aspc_[1] = -2.0;
-        b_consts_aspc_[2] = 0.5;
-        omega_aspc_ = 0.6;
-    } else if (k == 2) {
-        b_consts_aspc_[0] = 2.8;
-        b_consts_aspc_[1] = -2.8;
-        b_consts_aspc_[2] = 1.2;
-        b_consts_aspc_[3] = -0.2;
-        omega_aspc_ = 4.0 / 7.0;
-    } else if (k == 3) {
-        b_consts_aspc_[0] = 3.0;
-        b_consts_aspc_[1] = -24.0 / 7.0;
-        b_consts_aspc_[2] = 27.0 / 14.0;
-        b_consts_aspc_[3] = -4.0 / 7.0;
-        b_consts_aspc_[4] = 1.0 / 14.0;
-        omega_aspc_ = 5.0 / 9.0;
-    } else if (k == 4) {
-        b_consts_aspc_[0] = 22.0 / 7.0;
-        b_consts_aspc_[1] = -55.0 / 14.0;
-        b_consts_aspc_[2] = 55.0 / 21.0;
-        b_consts_aspc_[3] = -22.0 / 21.0;
-        b_consts_aspc_[4] = 5.0 / 21.0;
-        b_consts_aspc_[5] = -1.0 / 42.0;
-        omega_aspc_ = 6.0 / 11.0;
+    std::vector<double> a(k + 4, 0.0);
+    a[0] = 0.0;
+    a[1] = -1.0;
+    
+    for (size_t i = 2; i < k+4; i++) {
+        double up_n = i;
+        double down_n = 1.0;
+        double sign_n = -1.0;
+        for(size_t n = 0; n < i-1; n++) {
+            up_n *= k-n;
+            down_n *= (k+3+n);
+            sign_n *= -1;
+        }
+        a[i] = sign_n * up_n / down_n;
     }
+
+    for (size_t i = 0; i < k+2; i++) {
+        b_consts_aspc_[i] = a[i+2] - 2* a[i+1] + a[i];
+    }
+
+    omega_aspc_ = (double(k)+2.0)/(2.0*double(k) + 3.0);  
+
+//    if (k == 0) {
+//        b_consts_aspc_[0] = 2.0;
+//        b_consts_aspc_[1] = -1.0;
+//        omega_aspc_ = 2.0 / 3.0;
+//    } else if (k == 1) {
+//        b_consts_aspc_[0] = 2.5;
+//        b_consts_aspc_[1] = -2.0;
+//        b_consts_aspc_[2] = 0.5;
+//        omega_aspc_ = 0.6;
+//    } else if (k == 2) {
+//        b_consts_aspc_[0] = 2.8;
+//        b_consts_aspc_[1] = -2.8;
+//        b_consts_aspc_[2] = 1.2;
+//        b_consts_aspc_[3] = -0.2;
+//        omega_aspc_ = 4.0 / 7.0;
+//    } else if (k == 3) {
+//        b_consts_aspc_[0] = 3.0;
+//        b_consts_aspc_[1] = -24.0 / 7.0;
+//        b_consts_aspc_[2] = 27.0 / 14.0;
+//        b_consts_aspc_[3] = -4.0 / 7.0;
+//        b_consts_aspc_[4] = 1.0 / 14.0;
+//        omega_aspc_ = 5.0 / 9.0;
+//    } else if (k == 4) {
+//        b_consts_aspc_[0] = 22.0 / 7.0;
+//        b_consts_aspc_[1] = -55.0 / 14.0;
+//        b_consts_aspc_[2] = 55.0 / 21.0;
+//        b_consts_aspc_[3] = -22.0 / 21.0;
+//        b_consts_aspc_[4] = 5.0 / 21.0;
+//        b_consts_aspc_[5] = -1.0 / 42.0;
+//        omega_aspc_ = 6.0 / 11.0;
+//    }
 
     // TODO add exception if k < 0 or k > 4
 }
@@ -843,7 +865,9 @@ void Electrostatics::CalculateDipolesAspc() {
         size_t fi_mon = 0;
         size_t fi_crd = 0;
         size_t fi_sites = 0;
-
+        double alpha = 0.8;
+        double alpha_i = 0.2;
+        std::vector<double> mu_old = mu_;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
             size_t ns = sites_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
@@ -853,11 +877,11 @@ void Electrostatics::CalculateDipolesAspc() {
                 double p = pol_[fi_sites + i];
                 size_t inmon3 = 3 * i * nmon;
                 for (size_t m = 0; m < nmon; m++) {
-                    mu_[fi_crd + inmon3 + m] = p * (Efq_[fi_crd + inmon3 + m] + Efd_[fi_crd + inmon3 + m]);
-                    mu_[fi_crd + inmon3 + nmon + m] =
-                        p * (Efq_[fi_crd + inmon3 + nmon + m] + Efd_[fi_crd + inmon3 + nmon + m]);
-                    mu_[fi_crd + inmon3 + nmon2 + m] =
-                        p * (Efq_[fi_crd + inmon3 + nmon2 + m] + Efd_[fi_crd + inmon3 + nmon2 + m]);
+                    mu_[fi_crd + inmon3 + m] = alpha_i * mu_old[fi_crd + inmon3 + m] + alpha * p * (Efq_[fi_crd + inmon3 + m] + Efd_[fi_crd + inmon3 + m]);
+                    mu_[fi_crd + inmon3 + nmon + m] = alpha_i * mu_old[fi_crd + inmon3 + nmon + m] +
+                        alpha * p * (Efq_[fi_crd + inmon3 + nmon + m] + Efd_[fi_crd + inmon3 + nmon + m]);
+                    mu_[fi_crd + inmon3 + nmon2 + m] = alpha_i * mu_old[fi_crd + inmon3 + nmon2 + m]
+                        + alpha * p * (Efq_[fi_crd + inmon3 + nmon2 + m] + Efd_[fi_crd + inmon3 + nmon2 + m]);
                 }
             }
             fi_mon += nmon;

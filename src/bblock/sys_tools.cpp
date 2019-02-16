@@ -229,19 +229,20 @@ void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_
 
     // Move every dimer to the right place
     for (size_t i = 0; i < nd; i++) {
-        for (size_t j = 0; j < nat2; j++) {
-            size_t j3 = j * 3;
-            for (size_t k = 0; k < 3; k++) {
-                double di = xyz2[shift2 + j3 + k] - xyz1[shift1 + k];
+        for (size_t k = 0; k < 3; k++) {
+            double di = xyz2[shift2 + k] - xyz1[shift1 + k];
+            // here
+            if (di > box2[3 * k + k]) {
                 // here
-                if (di > box2[3 * k + k]) {
-                    // here
-                    xyz2[shift2 + j3 + k] -= box[3 * k + k];
-                    // here
-                } else if (di <= -box2[3 * k + k]) {
-                    // here
-                    xyz2[shift2 + j3 + k] += box[3 * k + k];
-                }
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz2[shift2 + 3*j + k] -= box[3 * k + k];
+                }   
+                // here
+            } else if (di <= -box2[3 * k + k]) {
+                // here
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz2[shift2 + j*3 + k] += box[3 * k + k];
+                }   
             }
         }
         shift1 += coords1;
@@ -264,35 +265,37 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 
     for (size_t i = 0; i < nt; i++) {
         // Moving (if necessary) monomer in xyz2
-        for (size_t j = 0; j < nat2; j++) {
-            size_t j3 = j * 3;
-            for (size_t k = 0; k < 3; k++) {
-                double di = xyz2[shift2 + j3 + k] - xyz1[shift1 + k];
+        for (size_t k = 0; k < 3; k++) {
+            double di = xyz2[shift2 + k] - xyz1[shift1 + k];
+            // here
+            if (di > box2[3 * k + k]) {
                 // here
-                if (di > box2[3 * k + k]) {
-                    // here
-                    xyz2[shift2 + j3 + k] -= box[3 * k + k];
-                    // here
-                } else if (di <= -box2[3 * k + k]) {
-                    // here
-                    xyz2[shift2 + j3 + k] += box[3 * k + k];
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz2[shift2 + j*3 + k] -= box[3 * k + k];
+                }
+                // here
+            } else if (di <= -box2[3 * k + k]) {
+                // here
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz2[shift2 + j*3 + k] += box[3 * k + k];
                 }
             }
         }
 
         // Moving (if necessary) monomer in xyz3
-        for (size_t j = 0; j < nat3; j++) {
-            size_t j3 = j * 3;
-            for (size_t k = 0; k < 3; k++) {
-                double di = xyz3[shift3 + j3 + k] - xyz1[shift1 + k];
+        for (size_t k = 0; k < 3; k++) {
+            double di = xyz3[shift3 + k] - xyz1[shift1 + k];
+            // here
+            if (di > box2[3 * k + k]) {
                 // here
-                if (di > box2[3 * k + k]) {
-                    // here
-                    xyz3[shift3 + j3 + k] -= box[3 * k + k];
-                    // here
-                } else if (di <= -box2[3 * k + k]) {
-                    // here
-                    xyz3[shift3 + j3 + k] += box[3 * k + k];
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz3[shift3 + j*3 + k] -= box[3 * k + k];
+                }
+                // here
+            } else if (di <= -box2[3 * k + k]) {
+                // here
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz3[shift3 + j*3 + k] += box[3 * k + k];
                 }
             }
         }

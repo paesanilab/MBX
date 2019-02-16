@@ -1314,6 +1314,14 @@ double System::Electrostatics(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void System::SetEwald(double alpha, double grid_density, int spline_order) {
+    electrostaticE_.SetEwaldAlpha(alpha);
+    electrostaticE_.SetEwaldGridDensity(grid_density);
+    electrostaticE_.SetEwaldSplineOrder(spline_order);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 double System::GetElectrostatics(bool do_grads) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
     return electrostaticE_.GetElectrostatics(grad_);
