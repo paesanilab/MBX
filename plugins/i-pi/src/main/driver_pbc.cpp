@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 
   // Set method to aspc (by default) for now
   systems[0].SetDipoleMethod("aspc");
-  systems[0].Set2bCutoff(6.0);
+  systems[0].Set2bCutoff(9.0);
   systems[0].SetEwald(0.25, 2.5, 6);
   //systems[0].SetDipoleMethod("cg");
 
@@ -143,8 +143,6 @@ int main(int argc, char** argv)
           box[i] /= 1.8897259886;
       }
 
-      systems[0].SetPBC(box);
-
       // Get forces here and store them in buffer
       for (size_t i = 0; i < buffer.size(); i++) {
         buffer[i] /= 1.8897259886;
@@ -158,6 +156,9 @@ int main(int argc, char** argv)
       
       rid_old = rid;
       systems[0].SetRealXyz(buffer);
+
+      systems[0].SetPBC(box);
+
       energy = systems[0].Energy(true) / 627.509;
       buffer = systems[0].GetRealGrads();
       for (size_t i = 0; i < buffer.size(); i++) {
