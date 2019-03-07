@@ -1,5 +1,4 @@
 #include "potential/electrostatics/electrostatics.h"
-#include <iomanip>
 
 //#define DEBUG
 //#define TIMING
