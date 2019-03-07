@@ -17,8 +17,6 @@
 #include "tools/math_tools.h"
 #include "potential/electrostatics/gammq.h"
 #include "potential/electrostatics/fields.h"
-#include "potential/electrostatics/electrostatic_tensors.h"
-#include "potential/electrostatics/electrostatic_tensors_short.h"
 
 #include "kdtree_utils.h"
 #include "helpme.h"
