@@ -142,7 +142,7 @@ TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
 
         SECTION("Numerical gradients vs analitical gradients") {
             size_t atomOffset = 0;
-            double stepSize = 0.00001;
+            double stepSize = 0.0001;
             for (size_t molecule = 0; molecule < nmon; ++molecule) {
                 for (size_t degreeOfFreedom = atomOffset; degreeOfFreedom < atomOffset + 9; ++degreeOfFreedom) {
                     real_xyz[degreeOfFreedom] += stepSize;
