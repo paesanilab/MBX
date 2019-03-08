@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "catch.hpp"
 
 #include "dispersion2b.h"
@@ -13,19 +47,18 @@ TEST_CASE("test the two body dispersion code (GAS) - finite differences.") {
     double ref_energy = -0.162541;
 
     const int natoms = 6;
-    std::vector<double> coords = std::vector<double>{                                             
-        -11.5109336618, 1.0563960610,  6.6033301068,  0.8781403410,  5.7020569050,  
-        -12.2938264730, 7.1259281936,  -11.6417034996, 1.0063049360,
-        -11.5501833807, -1.5847863244, -1.5602148182,  -0.8169061174, -1.9286305994, 
-        -11.2385781621, -2.0926390799, -11.4605158991, -1.5472825089};
+    std::vector<double> coords = std::vector<double>{
+        -11.5109336618, 1.0563960610,   6.6033301068,   0.8781403410,   5.7020569050,   -12.2938264730,
+        7.1259281936,   -11.6417034996, 1.0063049360,   -11.5501833807, -1.5847863244,  -1.5602148182,
+        -0.8169061174,  -1.9286305994,  -11.2385781621, -2.0926390799,  -11.4605158991, -1.5472825089};
     std::vector<double> box;
-    std::vector<double> grd1(3*natoms, 0);
-    std::vector<double> grd2(3*natoms, 0);
+    std::vector<double> grd1(3 * natoms, 0);
+    std::vector<double> grd2(3 * natoms, 0);
     int spline_order = 6;
     const double cutoff = 12;
 
     disp::GetDispersion("h2o", "h2o", 2, true, coords, coords, grd1, grd2, 12, true, 0, box);
-            #if 0
+#if 0
     elec.SetCutoff(12);
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
@@ -58,5 +91,5 @@ TEST_CASE("test the two body dispersion code (GAS) - finite differences.") {
 
         REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).epsilon(TOL));
     }
-    #endif
+#endif
 }
