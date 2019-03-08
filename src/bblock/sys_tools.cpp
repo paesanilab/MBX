@@ -1,3 +1,39 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "sys_tools.h"
 
 /**
@@ -235,14 +271,14 @@ void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_
             if (di > box2[3 * k + k]) {
                 // here
                 for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + 3*j + k] -= box[3 * k + k];
-                }   
+                    xyz2[shift2 + 3 * j + k] -= box[3 * k + k];
+                }
                 // here
             } else if (di <= -box2[3 * k + k]) {
                 // here
                 for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + j*3 + k] += box[3 * k + k];
-                }   
+                    xyz2[shift2 + j * 3 + k] += box[3 * k + k];
+                }
             }
         }
         shift1 += coords1;
@@ -271,13 +307,13 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
             if (di > box2[3 * k + k]) {
                 // here
                 for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + j*3 + k] -= box[3 * k + k];
+                    xyz2[shift2 + j * 3 + k] -= box[3 * k + k];
                 }
                 // here
             } else if (di <= -box2[3 * k + k]) {
                 // here
                 for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + j*3 + k] += box[3 * k + k];
+                    xyz2[shift2 + j * 3 + k] += box[3 * k + k];
                 }
             }
         }
@@ -289,13 +325,13 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
             if (di > box2[3 * k + k]) {
                 // here
                 for (size_t j = 0; j < nat2; j++) {
-                    xyz3[shift3 + j*3 + k] -= box[3 * k + k];
+                    xyz3[shift3 + j * 3 + k] -= box[3 * k + k];
                 }
                 // here
             } else if (di <= -box2[3 * k + k]) {
                 // here
                 for (size_t j = 0; j < nat2; j++) {
-                    xyz3[shift3 + j*3 + k] += box[3 * k + k];
+                    xyz3[shift3 + j * 3 + k] += box[3 * k + k];
                 }
             }
         }
@@ -781,7 +817,6 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
 }
 
 void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind) {
-
     // All these C6 come from Qchem/avtz. We put two molecules at 50 A and get the c6 of the atoms.
     if (mon_id == "f") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 25.56412750183350184739;
@@ -801,16 +836,15 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
     } else if (mon_id == "cs") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
-    // Water is the only monomer which C6 does not come from qchem.
-    // It comes from MB-pol (C6O = sqrt(C6OO))
+        // Water is the only monomer which C6 does not come from qchem.
+        // It comes from MB-pol (C6O = sqrt(C6OO))
     } else if (mon_id == "h2o") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[nv * natoms + fst_ind] = 15.40523357222455098728;  // O
+            c6_lr[nv * natoms + fst_ind] = 15.40523357222455098728;     // O
             c6_lr[nv * natoms + fst_ind + 1] = 4.48258697649551357815;  // H
             c6_lr[nv * natoms + fst_ind + 2] = 4.48258697649551357815;  // H
         }
-    } 
-
+    }
 }
 
 // Assuming for now xyzxyzxyz...

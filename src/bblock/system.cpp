@@ -1,3 +1,39 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "system.h"
 
 //#define DEBUG
@@ -309,7 +345,7 @@ void System::Initialize() {
 
     // Setting PBC to false by default
     SetPBC();
-  
+
     // Set C6 for long range pme
     SetC6LongRange();
 
@@ -1223,7 +1259,7 @@ void System::SetC6LongRange() {
     // Set virtual sites for each monomer type
     size_t fi_mon = 0;
     size_t fi_atoms = 0;
-    c6_lr_ = std::vector<double>(numat_,0.0);
+    c6_lr_ = std::vector<double>(numat_, 0.0);
     for (size_t k = 0; k < mon_type_count_.size(); k++) {
         std::string mon = mon_type_count_[k].first;
         size_t nmon = mon_type_count_[k].second;
@@ -1231,7 +1267,7 @@ void System::SetC6LongRange() {
 
         systools::SetC6LongRange(c6_lr_, mon, nmon, natoms, fi_atoms);
         fi_mon += nmon;
-        fi_atoms += nmon*natoms;
+        fi_atoms += nmon * natoms;
     }
 
 #ifdef DEBUG
