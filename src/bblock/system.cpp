@@ -10,12 +10,10 @@ copies.
 
 Those desiring to incorporate this Software into commercial products or
 use for commercial purposes should contact the:
-
 Office of Innovation & Commercialization
 University of California, San Diego
 9500 Gilman Drive, Mail Code 0910
 La Jolla, CA 92093-0910
-
 Ph: (858) 534-5815
 FAX: (858) 534-7345
 E-MAIL: invent@ucsd.edu
