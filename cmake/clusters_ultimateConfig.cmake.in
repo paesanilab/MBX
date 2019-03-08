@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+set(PN clusters_ultimate)
+
+if(NOT TARGET ${PN}::mbnrglib)
+    include("${CMAKE_CURRENT_LIST_DIR}/${PN}Targets.cmake")
+endif()

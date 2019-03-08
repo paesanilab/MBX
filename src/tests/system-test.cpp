@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include <cmath>
 #include <cassert>
 
@@ -600,7 +634,7 @@ int main(int argc, char **argv) {
 
     // Test SetPBC()
 
-    test = "SetPBC(bool,box)";
+    test = "SetPBC(box)";
 
     // Checking that the code will throw and exception if the box
     // has incorrect size
@@ -608,7 +642,7 @@ int main(int argc, char **argv) {
     try {
         std::vector<double> box(5, 10.0);
         exitcode = 1;
-        system_ref.SetPBC(true, box);
+        system_ref.SetPBC(box);
     } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
@@ -685,11 +719,13 @@ int main(int argc, char **argv) {
     double onebody_ref = system_ref.OneBodyEnergy(true);
     double twobody_ref = system_ref.TwoBodyEnergy(true);
     double threebody_ref = system_ref.ThreeBodyEnergy(true);
+    double dispersion_ref = system_ref.Dispersion(true);
     double electrostatic_ref = system_ref.Electrostatics(true);
 
     double onebody_read = systems[0].OneBodyEnergy(true);
     double twobody_read = systems[0].TwoBodyEnergy(true);
     double threebody_read = systems[0].ThreeBodyEnergy(true);
+    double dispersion_read = systems[0].Dispersion(true);
     double electrostatic_read = systems[0].Electrostatics(true);
 
     // Compare one body
@@ -709,13 +745,18 @@ int main(int argc, char **argv) {
         exitcode = 1;
     }
 
+    if (std::abs(dispersion_ref - dispersion_read) > REL_TOL) {
+        std::cerr << "Dispersion " << text << std::endl;
+        exitcode = 1;
+    }
+
     if (std::abs(electrostatic_ref - electrostatic_read) > REL_TOL) {
         std::cerr << "Electrostatic " << text << std::endl;
         exitcode = 1;
     }
 
-    double sum_ref = onebody_ref + twobody_ref + threebody_ref + electrostatic_ref;
-    double sum_read = onebody_read + twobody_read + threebody_read + electrostatic_read;
+    double sum_ref = onebody_ref + twobody_ref + threebody_ref + dispersion_ref + electrostatic_ref;
+    double sum_read = onebody_read + twobody_read + threebody_read + dispersion_read + electrostatic_read;
 
     text = "Sum of individual terms does not match total energy in ";
 

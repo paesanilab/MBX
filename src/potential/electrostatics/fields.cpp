@@ -1,4 +1,39 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "fields.h"
+#include <iomanip>
 
 namespace elec {
 
@@ -24,7 +59,9 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
                                                  size_t nmon1, size_t nmon2, size_t site_i, size_t site_j, double Ai,
                                                  double Asqsqi, double aCC, double aCC1_4, double g34,
                                                  double *Efqx_mon1, double *Efqy_mon1, double *Efqz_mon1, double *phi1,
-                                                 double *phi2, double *Efq2) {
+                                                 double *phi2, double *Efq2, double elec_scale_factor,
+                                                 double ewald_alpha, bool use_pbc, const std::vector<double> &box,
+                                                 const std::vector<double> &box_inverse, double cutoff) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -61,32 +98,86 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         v2_[m] = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];  // rijz
     }
 
-    // Store r^2 in vector
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v3_[m] = v0_[m] * v0_[m] + v1_[m] * v1_[m] + v2_[m] * v2_[m];  // rsq
+    // Apply the minimum image convention via fractional coordinates
+    // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+    if (use_pbc) {
+        // Convert to fractional coordinates
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v3_[m] = box_inverse[0] * v0_[m] + box_inverse[1] * v1_[m] + box_inverse[2] * v2_[m];
+            v4_[m] = box_inverse[3] * v0_[m] + box_inverse[4] * v1_[m] + box_inverse[5] * v2_[m];
+            v5_[m] = box_inverse[6] * v0_[m] + box_inverse[7] * v1_[m] + box_inverse[8] * v2_[m];
+        }
+        // Put in the range 0 to 1
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v3_[m] -= std::floor(v3_[m] + 0.5);
+            v4_[m] -= std::floor(v4_[m] + 0.5);
+            v5_[m] -= std::floor(v5_[m] + 0.5);
+        }
+        // Convert back to cartesian coordinates
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v0_[m] = box[0] * v3_[m] + box[1] * v4_[m] + box[2] * v5_[m];
+            v1_[m] = box[3] * v3_[m] + box[4] * v4_[m] + box[5] * v5_[m];
+            v2_[m] = box[6] * v3_[m] + box[7] * v4_[m] + box[8] * v5_[m];
+        }
     }
 
-    // Store 1/r, a*(r/A)^4 in vector
+    // Store r2 in vector
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v4_[m] = 1.0 / std::sqrt(v3_[m]);  // 1/r
+        v3_[m] = v0_[m] * v0_[m] + v1_[m] * v1_[m] + v2_[m] * v2_[m];  // r2
+    }
 
+    // Store a*(r/A)^4 in vector
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         v5_[m] = aCC * v3_[m] * v3_[m] * Asqsqi;  // a*(r/A)^4
+    }
+
+    // Convert r2 -> 1/r
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v3_[m] = 1 / std::sqrt(v3_[m]);
+    }
+
+    // Cheesy way to apply cutoffs, for now!
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v3_[m] *= (v3_[m] < 1.0 / cutoff ? 0 : 1);
+    }
+
+    // Store the attenuated coulomb operator in vector
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v4_[m] = (elec_scale_factor - erf(ewald_alpha / (v3_[m] + 1e-30))) * v3_[m];  // (1-erf(alpha r))/r
+    }
+
+    if (!use_pbc) {
+        // Rescale v3 to ensure right behavior in no PBC conditions
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v3_[m] *= elec_scale_factor;
+            v4_[m] = v3_[m];
+        }
     }
 
     // Compute gammq and store result in vector. This loop is not vectorizable
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v6_[m] = gammq(0.75, v5_[m]);  // gammq
+        v6_[m] = gammq(0.75, v5_[m]) * elec_scale_factor;  // gammq
     }
 
-// Finalize computation of electric field
+    // Finalize computation of electric field
+    const double SQRTPI = std::sqrt(M_PI);
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        const double exp1 = std::exp(-v5_[m]);
+#if NO_THOLE
+        const double exp1 = 0;
+        v6_[m] = 0;
+#else
+        const double exp1 = elec_scale_factor * std::exp(-v5_[m]);
+#endif
+        // Terms needed for the Ewald direct space field, see equation 2.8 of
+        // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
+        const double exp_alpha2r2 = std::exp(-ewald_alpha * ewald_alpha / (v3_[m] * v3_[m]));
+        const double ewaldterm = use_pbc ? 2 * exp_alpha2r2 * ewald_alpha / SQRTPI : 0;
 
         // Screening functions
-        const double s1r = v4_[m] - exp1 * v4_[m];
-        const double s0r = s1r + aCC1_4 * Ai * g34 * v6_[m];
-        const double s1r3 = s1r * v4_[m] * v4_[m];
+        const double s1r = v4_[m] - exp1 * v3_[m];
+        const double s0r = (s1r + aCC1_4 * Ai * g34 * v6_[m]);
+        const double s1r3 = (s1r + ewaldterm) * v3_[m] * v3_[m];
 
         // Compute contribution to the field phi
         // Storing the contrib to mon 1 in vector to make it vectorizable
@@ -135,7 +226,9 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
 void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
-                                              double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1) {
+                                              double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
+                                              double ewald_alpha, bool use_pbc, const std::vector<double> &box,
+                                              const std::vector<double> &box_inverse, double cutoff) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -157,26 +250,64 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         // Distances between sites i and j from mon1 and mon2
-        const double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
-        const double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-        const double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+        const double rawrijx = xyzmon1_x - xyz2[site_jnmon23 + m];
+        const double rawrijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+        const double rawrijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+
+        // Apply the minimum image convention via fractional coordinates
+        // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+        double minrijx, minrijy, minrijz;
+        if (use_pbc) {
+            // Convert to fractional coordinates
+            const double fracrijx = box_inverse[0] * rawrijx + box_inverse[1] * rawrijy + box_inverse[2] * rawrijz;
+            const double fracrijy = box_inverse[3] * rawrijx + box_inverse[4] * rawrijy + box_inverse[5] * rawrijz;
+            const double fracrijz = box_inverse[6] * rawrijx + box_inverse[7] * rawrijy + box_inverse[8] * rawrijz;
+            // Put in the range 0 to 1
+            const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
+            const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
+            const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
+            // Convert back to Cartesian coordinates
+            minrijx = box[0] * minfracrijx + box[1] * minfracrijy + box[2] * minfracrijz;
+            minrijy = box[3] * minfracrijx + box[4] * minfracrijy + box[5] * minfracrijz;
+            minrijz = box[6] * minfracrijx + box[7] * minfracrijy + box[8] * minfracrijz;
+        }
+        const double rijx = use_pbc ? minrijx : rawrijx;
+        const double rijy = use_pbc ? minrijy : rawrijy;
+        const double rijz = use_pbc ? minrijz : rawrijz;
 
         const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
         const double r = std::sqrt(rsq);
-        const double ri = 1.0 / r;
+        const double ri = r < cutoff ? 1 / r : 0;
         const double risq = ri * ri;
         const double rsqsq = rsq * rsq;
+
+        // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
+        // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
+        // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
+        // r^-1, r^-3, r^-5
+        double r_alpha = ewald_alpha * r;
+        double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
+        double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
+        double bn0 = erfc(r_alpha) * ri;
+        alpha_pi_term *= two_alpha_squared;
+        double bn1 = (bn0 + alpha_pi_term * exp_alpha2_r2) * risq;
+        alpha_pi_term *= two_alpha_squared;
+        double bn2 = (3 * bn1 + alpha_pi_term * exp_alpha2_r2) * risq;
 
         // Some values that will be used in the screening functions
         const double rA4 = rsqsq * Asqsqi;
         const double arA4 = aDD * rA4;
-        // TODO look at the exponential function intel vec
+// TODO look at the exponential function intel vec
+#if NO_THOLE
+        const double exp1 = 0;
+#else
         const double exp1 = std::exp(-arA4);
+#endif
 
         // Get screening functions
-        const double s1r = ri - exp1 * ri;
-        const double s1r3 = s1r * risq;
-        const double s2r5_3 = (3.0 * s1r3 - 4.0 * aDD * rA4 * exp1 * risq * ri) * risq;
+        const double s1r3 = bn1 - exp1 * ri * risq;
+        const double s2r5_3 = bn2 - (3 + 4 * aDD * rA4) * exp1 * ri * risq * risq;
         const double ts2x = s2r5_3 * rijx;
         const double ts2y = s2r5_3 * rijy;
         const double ts2z = s2r5_3 * rijz;
@@ -233,7 +364,10 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
                                              double *mu2, size_t mon1_index, size_t mon2_index_start,
                                              size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i,
                                              size_t site_j, double aDD, double aCD, double Asqsqi, double *grdx,
-                                             double *grdy, double *grdz, double *phi1, double *phi2, double *grd2) {
+                                             double *grdy, double *grdz, double *phi1, double *phi2, double *grd2,
+                                             double elec_scale_factor, double ewald_alpha, bool use_pbc,
+                                             const std::vector<double> &box, const std::vector<double> &box_inverse,
+                                             double cutoff) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -258,16 +392,37 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         // Distances between sites i and j from mon1 and mon2
-        const double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
-        const double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-        const double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+        const double rawrijx = xyzmon1_x - xyz2[site_jnmon23 + m];
+        const double rawrijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+        const double rawrijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+
+        // Apply the minimum image convention via fractional coordinates
+        // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+        double minrijx, minrijy, minrijz;
+        if (use_pbc) {
+            // Convert to fractional coordinates
+            const double fracrijx = box_inverse[0] * rawrijx + box_inverse[1] * rawrijy + box_inverse[2] * rawrijz;
+            const double fracrijy = box_inverse[3] * rawrijx + box_inverse[4] * rawrijy + box_inverse[5] * rawrijz;
+            const double fracrijz = box_inverse[6] * rawrijx + box_inverse[7] * rawrijy + box_inverse[8] * rawrijz;
+            // Put in the range 0 to 1
+            const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
+            const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
+            const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
+            // Convert back to Cartesian coordinates
+            minrijx = box[0] * minfracrijx + box[1] * minfracrijy + box[2] * minfracrijz;
+            minrijy = box[3] * minfracrijx + box[4] * minfracrijy + box[5] * minfracrijz;
+            minrijz = box[6] * minfracrijx + box[7] * minfracrijy + box[8] * minfracrijz;
+        }
+        const double rijx = (use_pbc ? minrijx : rawrijx);
+        const double rijy = (use_pbc ? minrijy : rawrijy);
+        const double rijz = (use_pbc ? minrijz : rawrijz);
 
         const double rijx2 = rijx * rijx;
         const double rijy2 = rijy * rijy;
         const double rijz2 = rijz * rijz;
         const double rsq = rijx2 + rijy2 + rijz2;
         const double r = std::sqrt(rsq);
-        const double ri = 1.0 / r;
+        const double ri = r < cutoff ? 1 / r : 0;
         const double risq = ri * ri;
         const double rsqsq = rsq * rsq;
         // Some values that will be used in the screening functions
@@ -276,26 +431,46 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
 
         const double adrA4 = aDD * 4.0 * rA4;
         const double acrA4 = aCD * 4.0 * rA4;
+#if NO_THOLE
+        const double exp1d = 0;
+        const double exp1c = 0;
+#else
         const double exp1d = std::exp(-aDD * rA4);
-        const double exp1c = std::exp(-aCD * rA4);
+        const double exp1c = elec_scale_factor * std::exp(-aCD * rA4);
+#endif
 
-        // Get screening functions
-        const double s1rd = ri - exp1d * ri;
-        const double s1r3d = s1rd * risq;
-        const double s2r5_3d = (3.0 * s1r3d - adrA4 * exp1d * risq * ri) * risq;
+        // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
+        // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
+        // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
+        // r^-1, r^-3, r^-5
+        double r_alpha = ewald_alpha * r;
+        double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
+        double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
+        double erfterm = erf(r_alpha);
+        double bn0 = (1 - erfterm) * ri;
+        double bn0_cd = (elec_scale_factor - erfterm) * ri;
+        alpha_pi_term *= two_alpha_squared;
+        double bn1 = (bn0 + alpha_pi_term * exp_alpha2_r2) * risq;
+        double bn1_cd = (bn0_cd + alpha_pi_term * exp_alpha2_r2) * risq;
+        alpha_pi_term *= two_alpha_squared;
+        double bn2 = (3 * bn1 + alpha_pi_term * exp_alpha2_r2) * risq;
+        double bn2_cd = (3 * bn1_cd + alpha_pi_term * exp_alpha2_r2) * risq;
+        alpha_pi_term *= two_alpha_squared;
+        double bn3 = (5 * bn2 + alpha_pi_term * exp_alpha2_r2) * risq;
 
-        const double s3r7_15d = (s2r5_3d * 5.0 - adrA4 * exp1d * (adrA4 - 1.0) * risq * risq * ri) * risq;
+        // Get screening functions - old version to be untouched and then deleted
+        const double s2r5_3d = bn2 - (3 + adrA4) * exp1d * ri * risq * risq;
+
+        const double s3r7_15d = bn3 - (15 + 4 * adrA4 + adrA4 * adrA4) * exp1d * risq * risq * ri * risq;
         const double s3r7_15x2 = s3r7_15d * rijx2;
         const double s3r7_15y2 = s3r7_15d * rijy2;
         const double s3r7_15z2 = s3r7_15d * rijz2;
-
-        const double s1rc = ri - exp1c * ri;
-        const double s1r3c = s1rc * risq;
+        const double s1r3c = bn1_cd - exp1c * ri * risq;
         const double rxs1r3c = rijx * s1r3c;
         const double rys1r3c = rijy * s1r3c;
         const double rzs1r3c = rijz * s1r3c;
-        const double s2r5_3c = (3.0 * s1r3c - acrA4 * exp1c * risq * ri) * risq;
-
+        const double s2r5_3c = bn2_cd - (3 + acrA4) * exp1c * risq * ri * risq;
         // Tensors
         const double ts2x = s2r5_3c * rijx;
         const double ts2y = s2r5_3c * rijy;
@@ -340,36 +515,40 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
         const double mu1zmu2y = mu1[site_inmon13 + nmon12 + mon1_index] * mu2[site_jnmon23 + nmon2 + m];
         const double mu1zmu2z = mu1[site_inmon13 + nmon12 + mon1_index] * mu2[site_jnmon23 + nmon22 + m];
 
-        if (phi2 != 0) {
-            // Gradients Charge-Dipole
-            // Site site_i
-            // Note. Sign changed
-            v0_[m] = (cj_mix - ci_mjx) * t2_0     // x x
-                     + (cj_miy - ci_mjy) * t2_1   // x y
-                     + (cj_miz - ci_mjz) * t2_2;  // x z
-            v1_[m] = (cj_mix - ci_mjx) * t2_1     // y x
-                     + (cj_miy - ci_mjy) * t2_3   // y y
-                     + (cj_miz - ci_mjz) * t2_4;  // y z
-            v2_[m] = (cj_mix - ci_mjx) * t2_2     // z x
-                     + (cj_miy - ci_mjy) * t2_4   // z y
-                     + (cj_miz - ci_mjz) * t2_5;  // z z
+        // Gradients Charge-Dipole
+        // Site site_i
+        // Note. Sign changed
+        v0_[m] = (cj_mix - ci_mjx) * t2_0     // x x
+                 + (cj_miy - ci_mjy) * t2_1   // x y
+                 + (cj_miz - ci_mjz) * t2_2;  // x z
+        v1_[m] = (cj_mix - ci_mjx) * t2_1     // y x
+                 + (cj_miy - ci_mjy) * t2_3   // y y
+                 + (cj_miz - ci_mjz) * t2_4;  // y z
+        v2_[m] = (cj_mix - ci_mjx) * t2_2     // z x
+                 + (cj_miy - ci_mjy) * t2_4   // z y
+                 + (cj_miz - ci_mjz) * t2_5;  // z z
 
-            // Site site_j
-            grd2[site_jnmon23 + m] -= v0_[m];
-            grd2[site_jnmon23 + nmon2 + m] -= v1_[m];
-            grd2[site_jnmon23 + nmon22 + m] -= v2_[m];
+        // Site site_j
+        grd2[site_jnmon23 + m] -= v0_[m];
+        grd2[site_jnmon23 + nmon2 + m] -= v1_[m];
+        grd2[site_jnmon23 + nmon22 + m] -= v2_[m];
 
-            // Update field
-            // Site site_i
-            v3_[m] = rxs1r3c * mu2[site_jnmon23 + m] + rys1r3c * mu2[site_jnmon23 + nmon2 + m] +
-                     rzs1r3c * mu2[site_jnmon23 + nmon22 + m];
+        // Update field
+        // Site site_i
+        v3_[m] = rxs1r3c * mu2[site_jnmon23 + m] + rys1r3c * mu2[site_jnmon23 + nmon2 + m] +
+                 rzs1r3c * mu2[site_jnmon23 + nmon22 + m];
 
-            // Site site_j
-            phi2[site_jnmon2 + m] -=
-                (rxs1r3c * mu1[site_inmon13 + mon1_index] + rys1r3c * mu1[site_inmon13 + nmon1 + mon1_index] +
-                 rzs1r3c * mu1[site_inmon13 + nmon12 + mon1_index]);
-        }
-        // Gradients Dipole-Dipole
+        // Site site_j
+        phi2[site_jnmon2 + m] -=
+            (rxs1r3c * mu1[site_inmon13 + mon1_index] + rys1r3c * mu1[site_inmon13 + nmon1 + mon1_index] +
+             rzs1r3c * mu1[site_inmon13 + nmon12 + mon1_index]);
+
+// Gradients Dipole-Dipole
+#if DIRECT_ONLY
+        const double gx = 0;
+        const double gy = 0;
+        const double gz = 0;
+#else
         const double gx = mu1xmu2x * t3_0     // x x x
                           + mu1xmu2y * t3_1   // x x y
                           + mu1xmu2z * t3_2   // x x z
@@ -399,6 +578,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
                           + mu1zmu2x * t3_5   // z z x
                           + mu1zmu2y * t3_8   // z z y
                           + mu1zmu2z * t3_9;  // z z z
+#endif
         // Site site_i
         v0_[m] += gx;
         v1_[m] += gy;

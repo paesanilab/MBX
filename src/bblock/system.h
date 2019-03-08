@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #ifndef CU_INCLUDE_BBLOCK_SYSTEM_H
 #define CU_INCLUDE_BBLOCK_SYSTEM_H
 
@@ -23,7 +57,8 @@
 // 3B
 #include "potential/3b/energy3b.h"
 // DISPERSION
-#include "potential/dispersion/dispersion2b.h"
+#include "potential/dispersion/dispersion.h"
+//#include "potential/dispersion/dispersion2b.h"
 // ELECTROSTATICS
 #include "potential/electrostatics/electrostatics.h"
 
@@ -354,7 +389,9 @@ class System {
      * @param[in] box Optional argument. Is a 9 component vector of double with
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
-    void SetPBC(bool use_pbc, std::vector<double> box);
+    void SetPBC(std::vector<double> box = {});
+
+    void SetEwald(double alpha, double grid_density, int spline_order);
 
     /////////////////////////////////////////////////////////////////////////////
     // Energy Functions /////////////////////////////////////////////////////////
@@ -410,6 +447,8 @@ class System {
      */
     double Electrostatics(bool do_grads);
 
+    double Dispersion(bool do_grads);
+
    private:
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -464,6 +503,8 @@ class System {
      */
     void SetVSites();
 
+    void SetC6LongRange();
+
     /**
      * Private function to internally get the 1b energy.
      * Gradients of the system will be updated.
@@ -499,6 +540,8 @@ class System {
      * @return  Electrostatic energy of the system
      */
     double GetElectrostatics(bool do_grads);
+
+    double GetDispersion(bool do_grads);
 
    private:
     /**
@@ -589,6 +632,11 @@ class System {
     bool allMonGood_;
 
     /**
+     * Dispersion class that will be used to get the dispersion energy
+     */
+    disp::Dispersion dispersionE_;
+
+    /**
      * Electrostatic class that will be used to get the electrostatic energy
      */
     elec::Electrostatics electrostaticE_;
@@ -668,6 +716,8 @@ class System {
      * order of the system
      */
     std::vector<double> polfac_;
+
+    std::vector<double> c6_lr_;
 
     /**
      * Vector that stores the simulation box.

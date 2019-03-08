@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #ifndef ELECTROSTATICS_H
 #define ELECTROSTATICS_H
 
@@ -17,8 +51,9 @@
 #include "tools/math_tools.h"
 #include "potential/electrostatics/gammq.h"
 #include "potential/electrostatics/fields.h"
-#include "potential/electrostatics/electrostatic_tensors.h"
-#include "potential/electrostatics/electrostatic_tensors_short.h"
+
+#include "kdtree_utils.h"
+#include "helpme.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -37,11 +72,6 @@ namespace elec {
 
 class Electrostatics {
    public:
-    /**
-     * @brief Default constructor of the class. Does nothing.
-     */
-    Electrostatics();
-
     /**
      * @brief Initializes the electrostatics class with the system information
      *
@@ -68,7 +98,6 @@ class Electrostatics {
      * @param[in] box Vector of 9 components with the box. The elements are:
      * {v1x,v1y,v1z,v2x,v2y,v2z,v3x,v3y,v3z} where v1, v2, and v3 are the
      * trhee main vectors of the box
-     * @param[in] use_pbc Boolean specifying if PBC are going to be used or not
      */
     void Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                     const std::vector<double> &polfac, const std::vector<double> &pol,
@@ -76,8 +105,7 @@ class Electrostatics {
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads = true,
                     const double tolerance = 1E-16, const size_t maxit = 100, const std::string dip_method = "iter",
-                    const std::vector<double> &box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0},
-                    const bool use_pbc = false);
+                    const std::vector<double> &box = {});
 
     /**
      * @brief Gets the electrostatic energy
@@ -120,12 +148,54 @@ class Electrostatics {
     void SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                           const std::vector<double> &chg_grad, const std::vector<double> &pol,
                           const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
-                          const std::vector<double> box, bool use_pbc);
+                          const std::vector<double> &box = {}, const double cutoff = 100.0);
+
+    /**
+     * @brief Sets the cutoff for electrostatic interactions
+     *
+     * @param[in] cutoff New cutoff value
+     */
+    void SetCutoff(double cutoff);
+
+    /**
+     * @brief Sets the Ewald attenuation parameter (in units of 1/Angstrom)
+     *
+     * @param[in] cutoff New cutoff value
+     */
+    void SetEwaldAlpha(double cutoff);
+
+    /**
+     * @brief Sets the PME grid density.
+     *
+     * @param[in] density the number of grid points per Angstrom in each dimension of the PME grid.
+     */
+    void SetEwaldGridDensity(double density);
+
+    /**
+     * @brief Sets the PME B-Spline order.
+     *
+     * @param[in] order the order of the B-Spline used to spread charges
+     */
+    void SetEwaldSplineOrder(int order);
+
+    /**
+     * @brief Returns permanent electrostatic energy.
+     *
+     * @return Permanent electrostatic energy. Undefined if energy has not yet been calculated
+     */
+    double GetPermanentElectrostaticEnergy();
+
+    /**
+     * @brief Returns induced electrostatic energy.
+     *
+     * @return Induced electrostatic energy. Undefined if energy has not yet been calculated
+     */
+    double GetInducedElectrostaticEnergy();
 
    private:
     void CalculatePermanentElecField();
     void CalculateDipolesIterative();
-    void DipolesIterativeIteration();
+    void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v);
     void CalculateDipolesCG();
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
     void CalculateDipolesAspc();
@@ -136,6 +206,8 @@ class Electrostatics {
 
     void ReorderData();
 
+    // PME solver
+    // helpme::PMEInstance<double> pme_solver_;
     // Charges of each site. Order has to follow mon_type_count.
     std::vector<double> chg_;
     // Charges of each site. Order has to follow mon_type_count.
@@ -177,6 +249,8 @@ class Electrostatics {
     std::vector<double> sys_phi_;
     // Electric potential on each site
     std::vector<double> phi_;
+    // Reciprocal space electric potential and field, in sys order at each site
+    std::vector<double> rec_phi_and_field_;
     // Permanent electric field with sys order
     std::vector<double> sys_Efq_;
     // Permanent electric field
@@ -220,8 +294,18 @@ class Electrostatics {
     std::string dip_method_;
     // box of the system
     std::vector<double> box_;
+    // inverse of the unit cell
+    std::vector<double> box_inverse_;
     // use pbc in the electrostatics calculation
     bool use_pbc_;
+    // electrostatics cutoff
+    double cutoff_;
+    // ewald attenuation parameter in inverse angstroms
+    double ewald_alpha_;
+    // PME grid density
+    double pme_grid_density_;
+    // PME spline order
+    int pme_spline_order_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

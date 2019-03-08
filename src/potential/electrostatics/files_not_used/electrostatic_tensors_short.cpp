@@ -1,15 +1,49 @@
-#include "potential/electrostatics/electrostatic_tensors.h"
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
+#include "potential/electrostatics/electrostatic_tensors_short.h"
 
 namespace elec {
 
-ElectroTensor::ElectroTensor(size_t n) { maxnmon = n; }
+ElectroTensorShort::ElectroTensorShort(size_t n) { maxnmon = n; }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensor::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_index, size_t mon2_index_start,
-                                size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
-                                double Ai, double Asqsqi, double aCC, double aCC1_4, double g34, double* ts0_mon1,
-                                double* ts0_mon2, double* ts1_mon1, double* ts1_mon2) {
+void ElectroTensorShort::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_index, size_t mon2_index_start,
+                                     size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
+                                     double Ai, double Asqsqi, double aCC, double aCC1_4, double g34, double* ts0_mon1,
+                                     double* ts0_mon2, double* ts1_mon1, double* ts1_mon2) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -33,11 +67,8 @@ void ElectroTensor::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_index, s
     double v4_[maxnmon];
     double v5_[maxnmon];
     double v6_[maxnmon];
-
 // Store rijx, rijy and rijz in vectors
-#ifdef _OPENMP
 #pragma omp simd
-#endif
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         v0_[m] = xyzmon1_x - xyz2[site_jnmon23 + m];           // rijx
         v1_[m] = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];   // rijy
@@ -62,9 +93,7 @@ void ElectroTensor::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_index, s
     }
 
 // Finalize computation of electric field
-#ifdef _OPENMP
 #pragma omp simd
-#endif
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         const double exp1 = std::exp(-v5_[m]);
 
@@ -96,13 +125,18 @@ void ElectroTensor::CalcT0AndT1(double* xyz1, double* xyz2, size_t mon1_index, s
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectroTensor::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_index, size_t mon2_index_start,
-                                size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
-                                double Asqsqi, double aDD, size_t nsites, double* ts1_mon1, double* ts1_mon2,
-                                double* ts2) {
+void ElectroTensorShort::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_index, size_t mon2_index_start,
+                                     size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
+                                     double Asqsqi, double aDD, size_t nsites, double* ts1, double* ts2) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
+    const size_t nmon23 = nmon2 * 3;
+    const size_t nmon24 = nmon2 * 4;
+    const size_t nmon25 = nmon2 * 5;
+    const size_t nmon26 = nmon2 * 6;
+    const size_t nmon27 = nmon2 * 7;
+    const size_t nmon28 = nmon2 * 8;
 
     const size_t nsites3 = 3 * nsites;
 
@@ -132,7 +166,11 @@ void ElectroTensor::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_index, s
         // Some values that will be used in the screening functions
         const double rA4 = rsqsq * Asqsqi;
         const double arA4 = aDD * rA4;
+#if NO_THOLE
+        const double exp1 = 0;
+#else
         const double exp1 = std::exp(-arA4);
+#endif
         const double exp1r = exp1 * ri;
 
         // Get screening functions
@@ -160,28 +198,27 @@ void ElectroTensor::CalcT1AndT2(double* xyz1, double* xyz2, size_t mon1_index, s
 
         // Store the tensors in the pointers
         // Ts1
-        ts1_mon1[site_inmon13 + m] = ts1x;
-        ts1_mon2[site_jnmon23 + m] = -ts1x;
-
-        ts1_mon1[site_inmon13 + nmon1 + m] = ts1y;
-        ts1_mon2[site_jnmon23 + nmon2 + m] = -ts1y;
-
-        ts1_mon1[site_inmon13 + nmon12 + m] = ts1z;
-        ts1_mon2[site_jnmon23 + nmon22 + m] = -ts1z;
+        // The sign is due to how rij is calculated (mon1 - mon2)
+        // This will return for mon2, so mon1 will be -ts. of mon1
+        ts1[m] = -ts1x;
+        ts1[nmon2 + m] = -ts1y;
+        ts1[nmon22 + m] = -ts1z;
 
         // Ts2
         // Order will be xx xy xz yx yy yz zx zy zz
-        ts2[mon1_index * nsites3 + m] = ts2xx;           // ts2xx
-        ts2[mon1_index * nsites3 + nmon2 + m] = ts2xy;   // ts2xy
-        ts2[mon1_index * nsites3 + nmon22 + m] = ts2xz;  // ts2xz
+        // Will return all xx, then all xy, then all xz, then all yx ...
+        // Total size of vector is 9*nmon2
+        ts2[m] = ts2xx;           // ts2xx
+        ts2[nmon2 + m] = ts2xy;   // ts2xy
+        ts2[nmon22 + m] = ts2xz;  // ts2xz
 
-        ts2[(mon1_index + nmon1) * nsites3 + m] = ts2xy;           // ts2yx
-        ts2[(mon1_index + nmon1) * nsites3 + nmon2 + m] = ts2yy;   // ts2yy
-        ts2[(mon1_index + nmon1) * nsites3 + nmon22 + m] = ts2yz;  // ts2yz
+        ts2[nmon23 + m] = ts2xy;  // ts2yx
+        ts2[nmon24 + m] = ts2yy;  // ts2yy
+        ts2[nmon25 + m] = ts2yz;  // ts2yz
 
-        ts2[(mon1_index + nmon12) * nsites3 + m] = ts2xz;           // ts2zx
-        ts2[(mon1_index + nmon12) * nsites3 + nmon2 + m] = ts2yz;   // ts2zy
-        ts2[(mon1_index + nmon12) * nsites3 + nmon22 + m] = ts2zz;  // ts2zz
+        ts2[nmon26 + m] = ts2xz;  // ts2zx
+        ts2[nmon27 + m] = ts2yz;  // ts2zy
+        ts2[nmon28 + m] = ts2zz;  // ts2zz
     }
 }
 
