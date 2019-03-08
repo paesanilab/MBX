@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "potential/electrostatics/electrostatics.h"
 
 //#define DEBUG
@@ -574,7 +608,9 @@ void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, std::vector<d
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
-    for (size_t i = 0; i < in_v.size(); i++) { out_v[i] += in_v[i]; }
+    for (size_t i = 0; i < in_v.size(); i++) {
+        out_v[i] += in_v[i];
+    }
 }
 
 void Electrostatics::CalculateDipolesCG() {
@@ -617,14 +653,14 @@ void Electrostatics::CalculateDipolesCG() {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
-// The Matrix is completed. Now proceed to CG algorithm
-// Following algorithm from:
-// https://en.wikipedia.org/wiki/Conjugate_gradient_method
+    // The Matrix is completed. Now proceed to CG algorithm
+    // Following algorithm from:
+    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
-// Initialize for first iteration
-// for (size_t i = 0; i < nsites3; i++) {
-//  mu_[i] *= pol_sqrt_[i];
-//}
+    // Initialize for first iteration
+    // for (size_t i = 0; i < nsites3; i++) {
+    //  mu_[i] *= pol_sqrt_[i];
+    //}
 
 #ifdef DEBUG
     for (size_t i = 0; i < nsites3; i++) {
@@ -634,62 +670,62 @@ void Electrostatics::CalculateDipolesCG() {
 
     std::vector<double> ts2v(nsites3);
     DipolesCGIteration(mu_, ts2v);
-//    std::cout << "CG" << std::endl;
-//    for(auto v:ts2v) std::cout << std::setw(16) << std::setprecision(10) << v << std::endl;
-//    fi_sites = 0;
-//    fi_crd = 0;
-//    fi_mon = 0;
-//    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-//        size_t ns = sites_[fi_mon];
-//        size_t nmon = mon_type_count_[mt].second;
-//        size_t nmon2 = nmon * 2;
-//        for (size_t i = 0; i < ns; i++) {
-//            size_t inmon3 = 3 * i * nmon;
-//            double A = -std::sqrt(pol_[fi_sites + i]);
-//            for (size_t m = 0; m < nmon; m++) {
-//                mu_[fi_crd + inmon3 + m] *= A;
-//                mu_[fi_crd + inmon3 + nmon + m] *= A;
-//                mu_[fi_crd + inmon3 + nmon2 + m] *= A;
-//            }
-//        }
-//        // Update first indexes
-//        fi_mon += nmon;
-//        fi_sites += nmon * ns;
-//        fi_crd += nmon * ns * 3;
-//    }
-//    DipolesIterativeIteration(mu_, ts2v);
-//    // ACS apply alpha inverse
-//    fi_sites = 0;
-//    fi_crd = 0;
-//    fi_mon = 0;
-//    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-//        size_t ns = sites_[fi_mon];
-//        size_t nmon = mon_type_count_[mt].second;
-//        size_t nmon2 = nmon * 2;
-//        for (size_t i = 0; i < ns; i++) {
-//            size_t inmon3 = 3 * i * nmon;
-//            double A = std::sqrt(pol_[fi_sites + i]);
-//            double Ai = A == 0 ? 1 : -1 / A;
-//            for (size_t m = 0; m < nmon; m++) {
-//                ts2v[fi_crd + inmon3 + m] *= A;
-//                ts2v[fi_crd + inmon3 + nmon + m] *= A;
-//                ts2v[fi_crd + inmon3 + nmon2 + m] *= A;
-//                // Revert scaling of mu
-//                mu_[fi_crd + inmon3 + m] *= Ai;
-//                mu_[fi_crd + inmon3 + nmon + m] *= Ai;
-//                mu_[fi_crd + inmon3 + nmon2 + m] *= Ai;
-//            }
-//        }
-//        // Update first indexes
-//        fi_mon += nmon;
-//        fi_sites += nmon * ns;
-//        fi_crd += nmon * ns * 3;
-//    }
-//    for (size_t i = 0; i < mu_.size(); i++) { ts2v[i] += mu_[i]; }
-//    std::cout << "ITER" << std::endl;
-//    for(auto v:ts2v) std::cout << std::setw(16) << std::setprecision(10) << v << std::endl;
-//    std::cout << std::endl;
-//    exit(1);
+    //    std::cout << "CG" << std::endl;
+    //    for(auto v:ts2v) std::cout << std::setw(16) << std::setprecision(10) << v << std::endl;
+    //    fi_sites = 0;
+    //    fi_crd = 0;
+    //    fi_mon = 0;
+    //    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+    //        size_t ns = sites_[fi_mon];
+    //        size_t nmon = mon_type_count_[mt].second;
+    //        size_t nmon2 = nmon * 2;
+    //        for (size_t i = 0; i < ns; i++) {
+    //            size_t inmon3 = 3 * i * nmon;
+    //            double A = -std::sqrt(pol_[fi_sites + i]);
+    //            for (size_t m = 0; m < nmon; m++) {
+    //                mu_[fi_crd + inmon3 + m] *= A;
+    //                mu_[fi_crd + inmon3 + nmon + m] *= A;
+    //                mu_[fi_crd + inmon3 + nmon2 + m] *= A;
+    //            }
+    //        }
+    //        // Update first indexes
+    //        fi_mon += nmon;
+    //        fi_sites += nmon * ns;
+    //        fi_crd += nmon * ns * 3;
+    //    }
+    //    DipolesIterativeIteration(mu_, ts2v);
+    //    // ACS apply alpha inverse
+    //    fi_sites = 0;
+    //    fi_crd = 0;
+    //    fi_mon = 0;
+    //    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+    //        size_t ns = sites_[fi_mon];
+    //        size_t nmon = mon_type_count_[mt].second;
+    //        size_t nmon2 = nmon * 2;
+    //        for (size_t i = 0; i < ns; i++) {
+    //            size_t inmon3 = 3 * i * nmon;
+    //            double A = std::sqrt(pol_[fi_sites + i]);
+    //            double Ai = A == 0 ? 1 : -1 / A;
+    //            for (size_t m = 0; m < nmon; m++) {
+    //                ts2v[fi_crd + inmon3 + m] *= A;
+    //                ts2v[fi_crd + inmon3 + nmon + m] *= A;
+    //                ts2v[fi_crd + inmon3 + nmon2 + m] *= A;
+    //                // Revert scaling of mu
+    //                mu_[fi_crd + inmon3 + m] *= Ai;
+    //                mu_[fi_crd + inmon3 + nmon + m] *= Ai;
+    //                mu_[fi_crd + inmon3 + nmon2 + m] *= Ai;
+    //            }
+    //        }
+    //        // Update first indexes
+    //        fi_mon += nmon;
+    //        fi_sites += nmon * ns;
+    //        fi_crd += nmon * ns * 3;
+    //    }
+    //    for (size_t i = 0; i < mu_.size(); i++) { ts2v[i] += mu_[i]; }
+    //    std::cout << "ITER" << std::endl;
+    //    for(auto v:ts2v) std::cout << std::setw(16) << std::setprecision(10) << v << std::endl;
+    //    std::cout << std::endl;
+    //    exit(1);
     std::vector<double> rv(nsites3);
     std::vector<double> pv(nsites3);
     std::vector<double> r_new(nsites3);
@@ -777,56 +813,56 @@ void Electrostatics::SetAspcParameters(size_t k) {
     std::vector<double> a(k + 4, 0.0);
     a[0] = 0.0;
     a[1] = -1.0;
-    
-    for (size_t i = 2; i < k+4; i++) {
+
+    for (size_t i = 2; i < k + 4; i++) {
         double up_n = i;
         double down_n = 1.0;
         double sign_n = -1.0;
-        for(size_t n = 0; n < i-1; n++) {
-            up_n *= k-n;
-            down_n *= (k+3+n);
+        for (size_t n = 0; n < i - 1; n++) {
+            up_n *= k - n;
+            down_n *= (k + 3 + n);
             sign_n *= -1;
         }
         a[i] = sign_n * up_n / down_n;
     }
 
-    for (size_t i = 0; i < k+2; i++) {
-        b_consts_aspc_[i] = a[i+2] - 2* a[i+1] + a[i];
+    for (size_t i = 0; i < k + 2; i++) {
+        b_consts_aspc_[i] = a[i + 2] - 2 * a[i + 1] + a[i];
     }
 
-    omega_aspc_ = (double(k)+2.0)/(2.0*double(k) + 3.0);  
+    omega_aspc_ = (double(k) + 2.0) / (2.0 * double(k) + 3.0);
 
-//    if (k == 0) {
-//        b_consts_aspc_[0] = 2.0;
-//        b_consts_aspc_[1] = -1.0;
-//        omega_aspc_ = 2.0 / 3.0;
-//    } else if (k == 1) {
-//        b_consts_aspc_[0] = 2.5;
-//        b_consts_aspc_[1] = -2.0;
-//        b_consts_aspc_[2] = 0.5;
-//        omega_aspc_ = 0.6;
-//    } else if (k == 2) {
-//        b_consts_aspc_[0] = 2.8;
-//        b_consts_aspc_[1] = -2.8;
-//        b_consts_aspc_[2] = 1.2;
-//        b_consts_aspc_[3] = -0.2;
-//        omega_aspc_ = 4.0 / 7.0;
-//    } else if (k == 3) {
-//        b_consts_aspc_[0] = 3.0;
-//        b_consts_aspc_[1] = -24.0 / 7.0;
-//        b_consts_aspc_[2] = 27.0 / 14.0;
-//        b_consts_aspc_[3] = -4.0 / 7.0;
-//        b_consts_aspc_[4] = 1.0 / 14.0;
-//        omega_aspc_ = 5.0 / 9.0;
-//    } else if (k == 4) {
-//        b_consts_aspc_[0] = 22.0 / 7.0;
-//        b_consts_aspc_[1] = -55.0 / 14.0;
-//        b_consts_aspc_[2] = 55.0 / 21.0;
-//        b_consts_aspc_[3] = -22.0 / 21.0;
-//        b_consts_aspc_[4] = 5.0 / 21.0;
-//        b_consts_aspc_[5] = -1.0 / 42.0;
-//        omega_aspc_ = 6.0 / 11.0;
-//    }
+    //    if (k == 0) {
+    //        b_consts_aspc_[0] = 2.0;
+    //        b_consts_aspc_[1] = -1.0;
+    //        omega_aspc_ = 2.0 / 3.0;
+    //    } else if (k == 1) {
+    //        b_consts_aspc_[0] = 2.5;
+    //        b_consts_aspc_[1] = -2.0;
+    //        b_consts_aspc_[2] = 0.5;
+    //        omega_aspc_ = 0.6;
+    //    } else if (k == 2) {
+    //        b_consts_aspc_[0] = 2.8;
+    //        b_consts_aspc_[1] = -2.8;
+    //        b_consts_aspc_[2] = 1.2;
+    //        b_consts_aspc_[3] = -0.2;
+    //        omega_aspc_ = 4.0 / 7.0;
+    //    } else if (k == 3) {
+    //        b_consts_aspc_[0] = 3.0;
+    //        b_consts_aspc_[1] = -24.0 / 7.0;
+    //        b_consts_aspc_[2] = 27.0 / 14.0;
+    //        b_consts_aspc_[3] = -4.0 / 7.0;
+    //        b_consts_aspc_[4] = 1.0 / 14.0;
+    //        omega_aspc_ = 5.0 / 9.0;
+    //    } else if (k == 4) {
+    //        b_consts_aspc_[0] = 22.0 / 7.0;
+    //        b_consts_aspc_[1] = -55.0 / 14.0;
+    //        b_consts_aspc_[2] = 55.0 / 21.0;
+    //        b_consts_aspc_[3] = -22.0 / 21.0;
+    //        b_consts_aspc_[4] = 5.0 / 21.0;
+    //        b_consts_aspc_[5] = -1.0 / 42.0;
+    //        omega_aspc_ = 6.0 / 11.0;
+    //    }
 
     // TODO add exception if k < 0 or k > 4
 }
@@ -876,11 +912,14 @@ void Electrostatics::CalculateDipolesAspc() {
                 double p = pol_[fi_sites + i];
                 size_t inmon3 = 3 * i * nmon;
                 for (size_t m = 0; m < nmon; m++) {
-                    mu_[fi_crd + inmon3 + m] = alpha_i * mu_old[fi_crd + inmon3 + m] + alpha * p * (Efq_[fi_crd + inmon3 + m] + Efd_[fi_crd + inmon3 + m]);
-                    mu_[fi_crd + inmon3 + nmon + m] = alpha_i * mu_old[fi_crd + inmon3 + nmon + m] +
+                    mu_[fi_crd + inmon3 + m] = alpha_i * mu_old[fi_crd + inmon3 + m] +
+                                               alpha * p * (Efq_[fi_crd + inmon3 + m] + Efd_[fi_crd + inmon3 + m]);
+                    mu_[fi_crd + inmon3 + nmon + m] =
+                        alpha_i * mu_old[fi_crd + inmon3 + nmon + m] +
                         alpha * p * (Efq_[fi_crd + inmon3 + nmon + m] + Efd_[fi_crd + inmon3 + nmon + m]);
-                    mu_[fi_crd + inmon3 + nmon2 + m] = alpha_i * mu_old[fi_crd + inmon3 + nmon2 + m]
-                        + alpha * p * (Efq_[fi_crd + inmon3 + nmon2 + m] + Efd_[fi_crd + inmon3 + nmon2 + m]);
+                    mu_[fi_crd + inmon3 + nmon2 + m] =
+                        alpha_i * mu_old[fi_crd + inmon3 + nmon2 + m] +
+                        alpha * p * (Efq_[fi_crd + inmon3 + nmon2 + m] + Efd_[fi_crd + inmon3 + nmon2 + m]);
                 }
             }
             fi_mon += nmon;
@@ -1043,8 +1082,8 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                             Asqsqi = Ai;
                         }
                         local_field->CalcDipoleElecField(
-                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, in_ptr + fi_crd1, in_ptr + fi_crd2,
-                            m1, m2init, nmon2, nmon1, nmon2, i, j, Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread,
+                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, in_ptr + fi_crd1, in_ptr + fi_crd2, m1,
+                            m2init, nmon2, nmon1, nmon2, i, j, Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread,
                             &ey_thread, &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_);
                         Efd_1_pool[rank][inmon13 + m1] += ex_thread;
                         Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
