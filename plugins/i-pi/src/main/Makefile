@@ -10,7 +10,11 @@ BINDIR = ../../bin
 
 OBJDIR = ../../obj
 
-all: driver driver-noneq driver_pbc
+all: driver driver-noneq driver_pbc raman
+
+raman: raman.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(BINDIR)/.sentinel
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) raman.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(LIBS) -o $@
+	mv raman $(BINDIR)/raman
 
 driver-noneq: driver-noneq.cpp $(OBJDIR)/perturb.o $(BINDIR)/.sentinel
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) driver-noneq.cpp $(OBJDIR)/perturb.o  $(LIBS) -o $@

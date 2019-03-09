@@ -210,7 +210,6 @@ namespace noneq {
                         size_t a3 = 3*a;
                         for(size_t b=0; b<3;b++) {
                             for(size_t m = 0; m < 3; m++) {
-                                //pi_all_[i9 + a3 + b] += learn_param*alpha_i*tij_ab_[i9n + j9 + a3 + m] * pi_all_old[j9 + 3*m +b] + (1.0 - learn_param)*pi_all_old[i9 + a3 + b];
                                 pi_all_[i9 + a3 + b] += alpha_i*tij_ab_[i9n + j9 + a3 + m] * pi_all_old[j9 + 3*m +b] ;
                             }
                         }
@@ -230,7 +229,7 @@ namespace noneq {
 
             // Break if convergence
             if (sqrt(err2) / nsites_ < tol_) break;
-            std::cout << "Iteration: " << it << " " << sqrt(err2) << std::endl;
+//            std::cout << "Iteration: " << it << " " << sqrt(err2) << std::endl;
             
             // Error if maxit have been reached
             if (it > maxit_) {
