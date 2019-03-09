@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "sys_tools.h"
 
 /**
@@ -120,9 +154,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             sites.push_back(4);
             nat.push_back(3);
 
-        // =====>> SECTION SITES <<=====
-        // ==> PASTE YOUR CODE BELOW <==
-
+            // =====>> SECTION SITES <<=====
+            // ==> PASTE YOUR CODE BELOW <==
 
             // Halides and alkali metal ions
         } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
@@ -230,18 +263,19 @@ void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_
 
     // Move every dimer to the right place
     for (size_t i = 0; i < nd; i++) {
-        for (size_t j = 0; j < nat2; j++) {
-            size_t j3 = j * 3;
-            for (size_t k = 0; k < 3; k++) {
-                double di = xyz2[shift2 + j3 + k] - xyz1[shift1 + k];
+        for (size_t k = 0; k < 3; k++) {
+            double di = xyz2[shift2 + k] - xyz1[shift1 + k];
+            // here
+            if (di > box2[3 * k + k]) {
                 // here
-                if (di > box2[3 * k + k]) {
-                    // here
-                    xyz2[shift2 + j3 + k] -= box[3 * k + k];
-                    // here
-                } else if (di <= -box2[3 * k + k]) {
-                    // here
-                    xyz2[shift2 + j3 + k] += box[3 * k + k];
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz2[shift2 + 3 * j + k] -= box[3 * k + k];
+                }
+                // here
+            } else if (di <= -box2[3 * k + k]) {
+                // here
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz2[shift2 + j * 3 + k] += box[3 * k + k];
                 }
             }
         }
@@ -265,35 +299,37 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 
     for (size_t i = 0; i < nt; i++) {
         // Moving (if necessary) monomer in xyz2
-        for (size_t j = 0; j < nat2; j++) {
-            size_t j3 = j * 3;
-            for (size_t k = 0; k < 3; k++) {
-                double di = xyz2[shift2 + j3 + k] - xyz1[shift1 + k];
+        for (size_t k = 0; k < 3; k++) {
+            double di = xyz2[shift2 + k] - xyz1[shift1 + k];
+            // here
+            if (di > box2[3 * k + k]) {
                 // here
-                if (di > box2[3 * k + k]) {
-                    // here
-                    xyz2[shift2 + j3 + k] -= box[3 * k + k];
-                    // here
-                } else if (di <= -box2[3 * k + k]) {
-                    // here
-                    xyz2[shift2 + j3 + k] += box[3 * k + k];
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz2[shift2 + j * 3 + k] -= box[3 * k + k];
+                }
+                // here
+            } else if (di <= -box2[3 * k + k]) {
+                // here
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz2[shift2 + j * 3 + k] += box[3 * k + k];
                 }
             }
         }
 
         // Moving (if necessary) monomer in xyz3
-        for (size_t j = 0; j < nat3; j++) {
-            size_t j3 = j * 3;
-            for (size_t k = 0; k < 3; k++) {
-                double di = xyz3[shift3 + j3 + k] - xyz1[shift1 + k];
+        for (size_t k = 0; k < 3; k++) {
+            double di = xyz3[shift3 + k] - xyz1[shift1 + k];
+            // here
+            if (di > box2[3 * k + k]) {
                 // here
-                if (di > box2[3 * k + k]) {
-                    // here
-                    xyz3[shift3 + j3 + k] -= box[3 * k + k];
-                    // here
-                } else if (di <= -box2[3 * k + k]) {
-                    // here
-                    xyz3[shift3 + j3 + k] += box[3 * k + k];
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz3[shift3 + j * 3 + k] -= box[3 * k + k];
+                }
+                // here
+            } else if (di <= -box2[3 * k + k]) {
+                // here
+                for (size_t j = 0; j < nat2; j++) {
+                    xyz3[shift3 + j * 3 + k] += box[3 * k + k];
                 }
             }
         }
@@ -305,9 +341,42 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
-// bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b) {
-//    return a.second < b.second;
-//}
+void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
+                       std::vector<double> &xyz_out, std::vector<size_t> &indexes) {
+    // Build the tree
+    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                kdtutils::PointCloud<double>, 3 /* dim */>
+        my_kd_tree_t;
+    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+    index.buildIndex();
+
+    // Tree is built
+
+    // Reset indexes and output coordinates
+    indexes.clear();
+    xyz_out.clear();
+
+    // Perform the search
+    std::vector<std::pair<size_t, double>> ret_matches;
+    nanoflann::SearchParams params;
+    const size_t nMatches = index.radiusSearch(reference.data(), cutoff * cutoff, ret_matches, params);
+
+    std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
+
+    // Resize xyz_out to be 3*nMatches
+    xyz_out.resize(3 * nMatches);
+    indexes.resize(nMatches);
+
+    // Add the pairs that are not in the pairs vector
+    for (size_t j = 0; j < nMatches; j++) {
+        indexes[j] = ret_matches[j].first;
+        size_t index = indexes[j];
+        // Add coordinates in vectorized order
+        xyz_out[j] = ptc.pts[index].x;
+        xyz_out[j + nMatches] = ptc.pts[index].y;
+        xyz_out[j + 2 * nMatches] = ptc.pts[index].z;
+    }
+}
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
@@ -453,7 +522,6 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
 
     // =====>> SECTION EXCLUDED <<=====
     // =====>> PASTE CODE BELOW <<=====
-
 }
 
 bool IsExcluded(excluded_set_type exc, size_t a, size_t b) {
@@ -559,7 +627,8 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
 void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
                 size_t fst_ind, std::vector<double> &chg_der) {
     // Constant that calculates charge
-    const double CHARGECON = constants::CHARGECON;
+    const double CHARGECON = 1.0;
+    // const double CHARGECON = constants::CHARGECON;
 
     // Halide charges
     if (mon_id == "f" || mon_id == "cl" || mon_id == "br" || mon_id == "i") {
@@ -574,11 +643,10 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv] = 1.0 * CHARGECON;
         }
 
-    // =====>> SECTION CHARGES <<=====
-    // =======>> PASTE BELOW <<=======
+        // =====>> SECTION CHARGES <<=====
+        // =======>> PASTE BELOW <<=======
 
-
-    // Note, for now, assuming only water has site dependant charges
+        // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
         // chgtmp = M, H1, H2 according to ttm4.cpp
         std::vector<double> chgtmp;
@@ -668,9 +736,8 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.3660;
 
-    // =====>> SECTION POLFACS <<=====
-    // =======>> PASTE BELOW <<=======
-    
+        // =====>> SECTION POLFACS <<=====
+        // =======>> PASTE BELOW <<=======
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
@@ -721,9 +788,8 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
 
-    // =====>> SECTION POLS <<=====
-    // =====>> PASTE  BELOW <<=====
-
+        // =====>> SECTION POLS <<=====
+        // =====>> PASTE  BELOW <<=====
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
@@ -744,6 +810,37 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             for (size_t j = 0; j < nsites; j++) {
                 pol[nv * nsites + j + fst_ind] = pol2[nv + n_mon * j];
             }
+        }
+    }
+}
+
+void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind) {
+    // All these C6 come from Qchem/avtz. We put two molecules at 50 A and get the c6 of the atoms.
+    if (mon_id == "f") {  // Fluoride
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 25.56412750183350184739;
+    } else if (mon_id == "cl") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 57.88297168036554772821;
+    } else if (mon_id == "br") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    } else if (mon_id == "i") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    } else if (mon_id == "li") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 3.24887148714749872914;
+    } else if (mon_id == "na") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 16.02787872333703428437;
+    } else if (mon_id == "k") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    } else if (mon_id == "rb") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    } else if (mon_id == "cs") {
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+        // Water is the only monomer which C6 does not come from qchem.
+        // It comes from MB-pol (C6O = sqrt(C6OO))
+    } else if (mon_id == "h2o") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 15.40523357222455098728;     // O
+            c6_lr[nv * natoms + fst_ind + 1] = 4.48258697649551357815;  // H
+            c6_lr[nv * natoms + fst_ind + 2] = 4.48258697649551357815;  // H
         }
     }
 }
@@ -794,7 +891,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 GRADQ(2, 2, k) = DQ3(2, 2, k) - 2 * gamma21 * (DQ3(2, 0, k) + DQ3(2, 1, k));
             }
 
-            for (size_t i = 0; i < 27; ++i) gradq[i] *= constants::CHARGECON;
+            for (size_t i = 0; i < 27; ++i) gradq[i] *= constants::COULOMB;
 
             const size_t io = shift;
             const size_t ih1 = shift + 3;

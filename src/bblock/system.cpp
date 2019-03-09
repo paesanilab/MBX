@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "system.h"
 
 //#define DEBUG
@@ -145,16 +179,24 @@ void System::SetDipoleTol(double tol) { diptol_ = tol; }
 void System::SetDipoleMaxIt(size_t maxit) { maxItDip_ = maxit; }
 void System::SetDipoleMethod(std::string method) { dipole_method_ = method; }
 
-void System::SetPBC(bool use_pbc, std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0}) {
-    // Check that the box has 9 components
-    // Any other size is not acceptable
-    if (box.size() != 9) {
+void System::SetPBC(std::vector<double> box) {
+    // Check that the box has 0 or 9 components
+    if (box.size() != 9 && box.size() != 0) {
         std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
+#ifdef DEBUG
+    std::cerr << "Entered SetPBC():\n";
+    std::cerr << "Coordinate before fixing monomers:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     // Set the box and the bool to use or not pbc
-    use_pbc_ = use_pbc;
+    use_pbc_ = box.size();
     box_ = box;
 
     // If we use PBC, we need to make sure that the monomer atoms are all
@@ -162,12 +204,21 @@ void System::SetPBC(bool use_pbc, std::vector<double> box = {1000.0, 0.0, 0.0, 0
     if (use_pbc_) {
         // Fix monomer coordinates
         systools::FixMonomerCoordinates(xyz_, box_, nat_, first_index_);
-        // Reset the virtual site positions, charges, pols and polfacs
-        SetVSites();
-        SetCharges();
-        SetPols();
-        SetPolfacs();
     }
+
+#ifdef DEBUG
+    std::cerr << "Coordinate after fixing monomers:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
+    // Reset the virtual site positions, charges, pols and polfacs
+    SetVSites();
+    SetCharges();
+    SetPols();
+    SetPolfacs();
 }
 
 void System::SetXyz(std::vector<double> xyz) {
@@ -232,6 +283,11 @@ void System::Initialize() {
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cout << std::scientific << std::setprecision(10);
+#endif
+
     /////////////
     // CUTOFFS //
     /////////////
@@ -239,7 +295,7 @@ void System::Initialize() {
     // Setting 2B cutoff
     // Affects the 2B dispersion and 2B polynomials
     // TODO make it effective for electrostatics too
-    cutoff2b_ = 100.0;
+    cutoff2b_ = 50.0;
 
     // Setting 3B cutoff
     // Affects the 3B polynomials
@@ -259,9 +315,6 @@ void System::Initialize() {
     //////////////////////////////////
     // Periodic boundary conditions //
     //////////////////////////////////
-
-    // Setting PBC to false by default
-    SetPBC(false);
 
     /////////////////////////////
     // Add monomer information //
@@ -286,22 +339,23 @@ void System::Initialize() {
     // calculation. Will assume no convergence if this number is reached
     maxItDip_ = 100;
     // Sets the default method to calculate induced dipoles to ASPC
-    dipole_method_ = "aspc";
+    dipole_method_ = "cg";
 
-    // Sets the position of the virtual sites if any
-    SetVSites();
-    // Sets the charges of the system, even the position dependent ones
-    SetCharges();
-    // Sets the polarizabilities of the system
-    SetPols();
-    // Sets the polarizability factors of the system
-    SetPolfacs();
+    // Setting PBC to false by default
+    SetPBC();
+
+    // Set C6 for long range pme
+    SetC6LongRange();
 
     // With the information previously set, we initialize the
     // electrostatics class
     // TODO: Do grads set to true for now. Needs to be fixed
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
                                true, diptol_, maxItDip_, dipole_method_);
+
+    std::vector<double> xyz_real = GetRealXyz();
+    // TODO modify c6_long_range
+    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -337,6 +391,33 @@ void System::AddMonomerInfo() {
     std::vector<size_t> fi_at;
     numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
 
+#ifdef DEBUG
+    std::cerr << "Finished SetUpMonomers.\n";
+    std::cerr << "Monomer vector:\n";
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        std::cerr << monomers_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Sites vector:\n";
+    for (size_t i = 0; i < sites_.size(); i++) {
+        std::cerr << sites_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Atoms vector:\n";
+    for (size_t i = 0; i < nat_.size(); i++) {
+        std::cerr << nat_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "First Index vector:\n";
+    for (size_t i = 0; i < fi_at.size(); i++) {
+        std::cerr << fi_at[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     // Calculating the number of atoms
     numat_ = 0;
     for (size_t i = 0; i < nat_.size(); i++) {
@@ -346,6 +427,39 @@ void System::AddMonomerInfo() {
     // Ordering monomers by monomer type, from less to more monomers of each type
     mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, original2current_order_, initial_order_,
                                               initial_order_realSites_);
+
+#ifdef DEBUG
+    std::cerr << "Finished OrderMonomers():\n";
+    std::cerr << "mon_type_count:\n";
+    for (size_t i = 0; i < mon_type_count_.size(); i++) {
+        std::cerr << "{\"" << mon_type_count_[i].first << "\"," << mon_type_count_[i].second << "},";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "New monomer vector:\n";
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        std::cerr << monomers_[i] << ",";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Original2Current:\n";
+    for (size_t i = 0; i < original2current_order_.size(); i++) {
+        std::cerr << original2current_order_[i] << ",";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "original_order:\n";
+    for (size_t i = 0; i < initial_order_.size(); i++) {
+        std::cerr << "{" << initial_order_[i].first << "," << initial_order_[i].second << "} , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "original_order_realsites:\n";
+    for (size_t i = 0; i < initial_order_realSites_.size(); i++) {
+        std::cerr << "{" << initial_order_realSites_[i].first << "," << initial_order_realSites_[i].second << "} , ";
+    }
+    std::cerr << std::endl;
+#endif
 
     // Rearranging coordinates to account for virt sites
     xyz_ = std::vector<double>(3 * numsites_, 0.0);
@@ -437,14 +551,7 @@ double System::Energy(bool do_grads) {
     std::fill(grad_.begin(), grad_.end(), 0.0);
 
     // Reset the charges, pols, polfacs and new Vsite
-    if (use_pbc_) {
-        SetPBC(use_pbc_, box_);
-    } else {
-        SetVSites();
-        SetCharges();
-        SetPols();
-        SetPolfacs();
-    }
+    SetPBC(box_);
 
     // Get the NB contributions
 
@@ -466,7 +573,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     double e2b = Get2B(do_grads);
-
+    double edisp = GetDispersion(do_grads);
 #ifdef TIMING
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
@@ -485,13 +592,16 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Set up energy with the new value
-    energy_ = e1b + e2b + e3b + Eelec;
+    energy_ = e1b + e2b + e3b + edisp + Eelec;
 
 #ifdef DEBUG
+    std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
-              << "Elec = " << Eelec << std::endl;
+              << "Disp = " << edisp << std::endl
+              << "Elec = " << Eelec << std::endl
+              << "Total = " << energy_ << std::endl;
 #endif
 #ifdef TIMING
     std::cerr << "System::1b(grad=" << do_grads << ") "
@@ -521,6 +631,8 @@ double System::OneBodyEnergy(bool do_grads) {
     // Reset energy and gradients
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
 
     // Calculate the 1b energy
     energy_ = Get1B(do_grads);
@@ -594,6 +706,8 @@ double System::TwoBodyEnergy(bool do_grads) {
     // Reset energy and gradients
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
 
     // Calculate the 2b energy
     energy_ = Get2B(do_grads);
@@ -735,8 +849,9 @@ double System::Get2B(bool do_grads) {
                     e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
 
                     // DISPERSION
-                    edisp_pool[rank] +=
-                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
+                    //                    edisp_pool[rank] +=
+                    //                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2,
+                    // cutoff2b_, use_pbc_);
                     // Update gradients in system
                     size_t i0 = nd_tot * 2;
                     for (size_t k = 0; k < nd; k++) {
@@ -755,8 +870,9 @@ double System::Get2B(bool do_grads) {
                     // POLYNOMIALS
                     e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
                     // DISPERSION
-                    edisp_pool[rank] +=
-                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2, cutoff2b_, use_pbc_);
+                    //                    edisp_pool[rank] +=
+                    //                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2,
+                    // cutoff2b_, use_pbc_);
                 }
 
                 // Update loop variables and clear other temporary variable
@@ -822,6 +938,8 @@ double System::ThreeBodyEnergy(bool do_grads) {
 
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
 
     energy_ = Get3B(do_grads);
 
@@ -1046,6 +1164,27 @@ void System::SetCharges() {
         systools::SetCharges(xyz_, chg_, mon, nmon, nsites, first_index_[fi_mon], chggrad_);
         fi_mon += nmon;
     }
+
+#ifdef DEBUG
+    // Get charges of real and virtual sites in the input order
+    std::vector<double> real_chg =
+        systools::ResetOrderRealN(chg_, initial_order_realSites_, numat_, first_index_, nat_);
+    std::vector<double> all_chg = systools::ResetOrderN(chg_, initial_order_, first_index_, sites_);
+
+    // Print them
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "Real sites charges\n";
+    std::cerr << real_chg[0];
+    for (size_t i = 1; i < real_chg.size(); i++) std::cerr << ", " << real_chg[i];
+    std::cerr << "\nAll charges\n";
+    std::cerr << all_chg[0];
+    for (size_t i = 1; i < all_chg.size(); i++) std::cerr << ", " << all_chg[i];
+    std::cerr << std::endl;
+    std::cerr << "\nAll charge derivatives (SYSTEM ORDER ONLY (for water, does not matter order)\n";
+    std::cerr << chggrad_[0];
+    for (size_t i = 1; i < chggrad_.size(); i++) std::cerr << ", " << chggrad_[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1061,6 +1200,23 @@ void System::SetPols() {
         systools::SetPol(pol_, mon, nmon, nsites, first_index_[fi_mon]);
         fi_mon += nmon;
     }
+
+#ifdef DEBUG
+    // Get charges of real and virtual sites in the input order
+    std::vector<double> real_pol =
+        systools::ResetOrderRealN(pol_, initial_order_realSites_, numat_, first_index_, nat_);
+    std::vector<double> all_pol = systools::ResetOrderN(pol_, initial_order_, first_index_, sites_);
+
+    // Print them
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "Real sites polarizabilities\n";
+    std::cerr << real_pol[0];
+    for (size_t i = 1; i < real_pol.size(); i++) std::cerr << ", " << real_pol[i];
+    std::cerr << "\nAll polarizabilities\n";
+    std::cerr << all_pol[0];
+    for (size_t i = 1; i < all_pol.size(); i++) std::cerr << ", " << all_pol[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1076,6 +1232,49 @@ void System::SetPolfacs() {
         systools::SetPolfac(polfac_, mon, nmon, nsites, first_index_[fi_mon]);
         fi_mon += nmon;
     }
+
+#ifdef DEBUG
+    // Get charges of real and virtual sites in the input order
+    std::vector<double> real_polfac =
+        systools::ResetOrderRealN(polfac_, initial_order_realSites_, numat_, first_index_, nat_);
+    std::vector<double> all_polfac = systools::ResetOrderN(polfac_, initial_order_, first_index_, sites_);
+
+    // Print them
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "Real sites polarizability factors\n";
+    std::cerr << real_polfac[0];
+    for (size_t i = 1; i < real_polfac.size(); i++) std::cerr << ", " << real_polfac[i];
+    std::cerr << "\nAll polarizability factors\n";
+    std::cerr << all_polfac[0];
+    for (size_t i = 1; i < all_polfac.size(); i++) std::cerr << ", " << all_polfac[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetC6LongRange() {
+    // Set virtual sites for each monomer type
+    size_t fi_mon = 0;
+    size_t fi_atoms = 0;
+    c6_lr_ = std::vector<double>(numat_, 0.0);
+    for (size_t k = 0; k < mon_type_count_.size(); k++) {
+        std::string mon = mon_type_count_[k].first;
+        size_t nmon = mon_type_count_[k].second;
+        size_t natoms = nat_[fi_mon];
+
+        systools::SetC6LongRange(c6_lr_, mon, nmon, natoms, fi_atoms);
+        fi_mon += nmon;
+        fi_atoms += nmon * natoms;
+    }
+
+#ifdef DEBUG
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "All c6_lr after setting them\n";
+    std::cerr << c6_lr_[0];
+    for (size_t i = 1; i < c6_lr_.size(); i++) std::cerr << ", " << c6_lr_[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1091,6 +1290,39 @@ void System::SetVSites() {
         systools::SetVSites(xyz_, mon, nmon, nsites, first_index_[fi_mon]);
         fi_mon += nmon;
     }
+
+#ifdef DEBUG
+    // Get charges of real and virtual sites in the input order
+    std::vector<double> all_xyz = systools::ResetOrder3N(xyz_, initial_order_, first_index_, sites_);
+
+    // Print them
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "All coordinates after setting vsites\n";
+    std::cerr << all_xyz[0];
+    for (size_t i = 1; i < all_xyz.size(); i++) std::cerr << ", " << all_xyz[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::Dispersion(bool do_grads) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Dispersion Energy calculation not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
+
+    energy_ = GetDispersion(do_grads);
+
+    return energy_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1107,6 +1339,8 @@ double System::Electrostatics(bool do_grads) {
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
 
+    SetPBC(box_);
+
     energy_ = GetElectrostatics(do_grads);
 
     return energy_;
@@ -1114,9 +1348,44 @@ double System::Electrostatics(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void System::SetEwald(double alpha, double grid_density, int spline_order) {
+    electrostaticE_.SetEwaldAlpha(alpha);
+    electrostaticE_.SetEwaldGridDensity(grid_density);
+    electrostaticE_.SetEwaldSplineOrder(spline_order);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 double System::GetElectrostatics(bool do_grads) {
-    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, use_pbc_);
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
     return electrostaticE_.GetElectrostatics(grad_);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::GetDispersion(bool do_grads) {
+    std::vector<double> xyz_real(3 * numat_);
+
+    size_t count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i] * 3 + j];
+        }
+        count += 3 * nat_[i];
+    }
+
+    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    std::vector<double> real_grad(3 * numat_, 0.0);
+    double e = dispersionE_.GetDispersion(real_grad);
+
+    count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            grad_[first_index_[i] * 3 + j] += real_grad[count + j];
+        }
+        count += 3 * nat_[i];
+    }
+    return e;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
