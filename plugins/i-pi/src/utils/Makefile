@@ -1,0 +1,23 @@
+CXX=g++
+CXXFLAGS= -Wall -std=c++11 -O2 -g
+
+LIBS = -lmbnrglib 
+LIBDIR = -L$(CU_HOME)/install/lib/static
+
+INCLUDEDIR = -I$(CU_HOME)/install/include
+
+BINDIR = ../../bin
+OBJDIR = ../../obj
+
+all: perturb.o
+
+perturb.o: perturb.cpp $(OBJDIR)/.sentinel
+	$(CXX) $(CXXFLAGS) perturb.cpp -c -o perturb.o
+	mv perturb.o $(OBJDIR)/
+
+$(OBJDIR)/.sentinel:
+	mkdir -p $(OBJDIR)
+	touch $@
+
+clean:
+	rm -rf $(OBJDIR)
