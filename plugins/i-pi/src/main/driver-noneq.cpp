@@ -152,15 +152,25 @@ int main(int argc, char** argv)
       std::vector<double> xyz = systems[0].GetXyz();
       buffer = systems[0].GetRealGrads();
       if (perturb) {
-         //call function for noneq perturbation
-         add_perturbation();
-         //buffer += extra force in kcal/mol*Angstrom
+         // Declare perturbation
+         noneq::Perturbation my_perturb;
+         // Obtain coordinates, charges, pols, and polfacs
+         std::vector<double> my_xyz = systems[0].GetRealXyz();
+         std::vector<double> my_chg = systems[0].GetRealCharges();
+         std::vector<double> my_pol = systems[0].GetRealPolarizabilities();
+         std::vector<double> my_polfac = systems[0].GetRealPolarizabilityFactors();
+         // initiallize perturbation
+         my_perturb.Initialize(my_xyz, my_chg, my_pol, my_polfac);
+         // Add perturbation forces (in kcal/mol / A) to buffer.
+         // Since buffer is gradient, we substract
+         std::vector<double> forces = my_perturb.GetPerturbationPolarizability(5.0,5.0,0,0,+1);
+         for (size_t k = 0; k < forces.size(); k++) 
+           buffer[k] -= forces[k];
          perturb = false;
       }
+      // Convert grads to force in au
       for (size_t i = 0; i < buffer.size(); i++) {
-//        buffer[i] = -buffer[i] / 627.509;
         buffer[i] = -buffer[i] / 1.8897259886 / 627.509; 
-        //convert gradient in kcal/mol to forcein a.u.
       }
       // TODO check virial
       virial = std::vector<double>(9,0.0);
