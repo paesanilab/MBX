@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <vector>
 
-#include "../main/perturb.h"
+#include "perturb.h"
 #include "setupxe32.h"
 
 int main() {

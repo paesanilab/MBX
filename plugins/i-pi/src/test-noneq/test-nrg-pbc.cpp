@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <vector>
 
-#include "../main/perturb.h"
+#include "perturb.h"
 #include "bblock/system.h"
 #include "io_tools/read_nrg.h"
 
