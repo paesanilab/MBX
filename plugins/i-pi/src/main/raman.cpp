@@ -25,7 +25,7 @@ static std::vector<bblock::System> systems;
 int main(int argc, char** argv)
 {
 
-    if (argc < 2) {
+    if (argc < 3) {
       std::cerr << "Usage: " << argv[0] << " <input.nrg> <trajectory.xyz> [<box_side>]"
                 << std::endl;
       return 0;
@@ -54,7 +54,8 @@ int main(int argc, char** argv)
 
     size_t nframes = xyz.size();
     std::vector<double> box;
-    if (argc > 2) {
+    
+    if (argc > 3) {
         double box_l = atof(argv[3]);
         box = std::vector<double>(9,0.0);
         box[0] = box[4] = box[8] = box_l;
