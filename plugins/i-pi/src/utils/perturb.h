@@ -11,6 +11,9 @@ class Perturbation {
     
     void Initialize(std::vector<double> xyz, std::vector<double> chg, std::vector<double> alpha, std::vector<double> polfac, std::vector<double> box = {});
 
+    void SetDipoles(std::vector<double> mu_perm, std::vector<double> mu_ind);
+    void SetChargeDerivative(std::vector<double> chg_der);
+
     // E1,E2 magnitude of the electric field
     // a,b are the axiz (x(0), y(1) or z(2)) of E1 and E2 respectively
     // Direction is +-1.0 for non eq perturbation
@@ -25,6 +28,9 @@ class Perturbation {
 
     void GetDkPi(std::vector<double> &dk_pi);
 
+    void GetDkMu(std::vector<double> &dk_mu);
+    void GetDkMuInd(std::vector<double> &dk_mu);
+
   private:
     void GetTij_a_ab();
     void GetTij_ab_abc();
@@ -32,6 +38,8 @@ class Perturbation {
     void CalculatePolarizability();
     size_t CalculateDkPiAll(size_t k);
     void CalculateDkPi();
+    void CalculateDkMuAll(size_t k);
+    void CalculateDkMu();
 
   private:
     // number of sites
@@ -74,6 +82,29 @@ class Perturbation {
     // Box of the system
     std::vector<double> box_;
 
+    // Charge derivatives N*3N 
+    std::vector<double> dchg_;
+
+    // Induced dipoles 3*N
+    std::vector<double> mu_ind_all_;
+
+    // Permanent dipoles 3*N
+    std::vector<double> mu_perm_all_;
+
+    // Derivative of mu_ind_all_  3*N*3*N
+    std::vector<double> dk_mu_ind_all_;
+
+    // Derivative of mu_perm_all_  3*N*3*N
+    std::vector<double> dk_mu_perm_all_;
+
+    // Derivative of mu_ind_  3*N*3
+    std::vector<double> dk_mu_ind_;
+
+    // Derivative of mu_perm_  3*N*3
+    std::vector<double> dk_mu_perm_;
+
+    // Derivative of mu_  3*N*3
+    std::vector<double> dk_mu_;
 };
 
 // Get screening functions s1, s2, and s3.
@@ -87,5 +118,9 @@ int Delta(int i, int j);
     
 // Assuming orthorombic box.
 void DoPBC(std::vector<double> &r, const std::vector<double> &box);
+
+// Hardcoded for water. Need to generalize.
+// Returns if i and j are bonded
+bool IsIJBonded(size_t i, size_t j);
 
 } // namespace noneq
