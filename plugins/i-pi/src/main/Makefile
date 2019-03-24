@@ -1,5 +1,5 @@
 CXX=icpc
-CXXFLAGS= -Wall -std=c++11 -O2 -g
+CXXFLAGS= -Wall -std=c++11  -g
 
 LIBS = -lmbnrglib -fopenmp -lfftw3
 LIBDIR = -L$(CU_HOME)/install/lib/static
@@ -10,7 +10,11 @@ BINDIR = ../../bin
 
 OBJDIR = ../../obj
 
-all: driver driver-noneq driver_pbc raman
+all: driver driver-noneq driver_pbc raman infrared
+
+infrared: infrared.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(BINDIR)/.sentinel
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) infrared.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(LIBS) -o $@
+	mv infrared $(BINDIR)/infrared
 
 raman: raman.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(BINDIR)/.sentinel
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) raman.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(LIBS) -o $@
