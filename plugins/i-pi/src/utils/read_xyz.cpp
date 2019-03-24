@@ -21,6 +21,7 @@ void ReadXyz(std::ifstream &ifs, std::vector<double> &xyz, std::vector<std::stri
     // Read coordinates and atoms
     for (size_t i = 0; i < nat; i++) {
         std::getline(ifs,line);
+        ss.clear();
         ss.str(line);
         ss >> atoms[i] >> xyz[3*i] >> xyz[3*i + 1] >> xyz[3*i + 2];
     }
