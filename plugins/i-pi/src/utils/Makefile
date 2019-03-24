@@ -1,5 +1,5 @@
-CXX=g++
-CXXFLAGS= -Wall -std=c++11 -O2 -g
+CXX=icpc
+CXXFLAGS= -Wall -std=c++11 -g
 
 LIBS = -lmbnrglib 
 LIBDIR = -L$(CU_HOME)/install/lib/static
