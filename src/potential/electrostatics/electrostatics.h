@@ -185,6 +185,11 @@ class Electrostatics {
      */
     double GetPermanentElectrostaticEnergy();
 
+    std::vector<double> GetInducedDipoles();
+    std::vector<double> GetPermanentDipoles();
+    std::vector<double> GetMolecularInducedDipoles();
+    std::vector<double> GetMolecularPermanentDipoles();
+
     /**
      * @brief Returns induced electrostatic energy.
      *
@@ -259,8 +264,14 @@ class Electrostatics {
     std::vector<double> sys_Efd_;
     // Induced electric field
     std::vector<double> Efd_;
-    // Dipoles with sys order
+    // Induced dipoles with sys order
     std::vector<double> sys_mu_;
+    // Permanent dipoles with sys order
+    std::vector<double> sys_perm_mu_;
+    // Molecular induced dipoles with sys order
+    std::vector<double> sys_mol_mu_;
+    // Molecular permanent dipoles with sys order
+    std::vector<double> sys_mol_perm_mu_;
     // Dipoles
     std::vector<double> mu_;
     // Dipole history for ASPC
@@ -277,6 +288,8 @@ class Electrostatics {
     size_t k_aspc_;
     // Total number of electrostatic sites
     size_t nsites_;
+    // Total number of monomers (sum of monomer type)
+    size_t nmon_total_;
     // Thole dampings
     double aCC_, aCD_, aDD_;
     // Constants to be used later:
@@ -306,6 +319,8 @@ class Electrostatics {
     double pme_grid_density_;
     // PME spline order
     int pme_spline_order_;
+    // Has the energy been calculated?
+    bool has_energy_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
