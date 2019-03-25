@@ -129,6 +129,15 @@ class System {
      */
     size_t GetMonNumAt(size_t n);
 
+    void GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+    void GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+    void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
+    
+    /**
+     * Returns the charge derivatives for the whole system
+     */
+    std::vector<double> GetChargeDerivatives();
+
     /**
      * Gets the position of the first site of monomer n in the atoms vector
      * @param[in] n Index of the monomer in the monomer list

@@ -1,14 +1,28 @@
 CXX=icpc
-CXXFLAGS= -Wall -std=c++11 -O2 -g
+CXXFLAGS= -Wall -std=c++11  -g
 
 LIBS = -lmbnrglib -fopenmp -lfftw3
 LIBDIR = -L$(CU_HOME)/install/lib/static
 
-INCLUDEDIR = -I$(CU_HOME)/install/include
+INCLUDEDIR = -I$(CU_HOME)/install/include -I../utils
 
 BINDIR = ../../bin
 
-all: driver driver_pbc
+OBJDIR = ../../obj
+
+all: driver driver-noneq driver_pbc raman infrared
+
+infrared: infrared.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(BINDIR)/.sentinel
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) infrared.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(LIBS) -o $@
+	mv infrared $(BINDIR)/infrared
+
+raman: raman.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(BINDIR)/.sentinel
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) raman.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(LIBS) -o $@
+	mv raman $(BINDIR)/raman
+
+driver-noneq: driver-noneq.cpp $(OBJDIR)/perturb.o $(BINDIR)/.sentinel
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) driver-noneq.cpp $(OBJDIR)/perturb.o  $(LIBS) -o $@
+	mv driver-noneq $(BINDIR)/driver-noneq
 
 driver: driver.cpp $(BINDIR)/.sentinel
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) driver.cpp $(LIBS) -o $@
@@ -23,4 +37,4 @@ $(BINDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf $(BINDIR)/driver $(BINDIR)/driver_pbc
+	rm -rf $(BINDIR)

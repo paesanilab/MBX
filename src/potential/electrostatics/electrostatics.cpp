@@ -105,6 +105,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     Efd_ = std::vector<double>(nsites3, 0.0);
     sys_mu_ = std::vector<double>(nsites3, 0.0);
     mu_ = std::vector<double>(nsites3, 0.0);
+    sys_perm_mu_ = std::vector<double>(nsites3, 0.0);
     xyz_ = std::vector<double>(nsites3, 0.0);
     grad_ = std::vector<double>(nsites3, 0.0);
     sys_grad_ = std::vector<double>(nsites3, 0.0);
@@ -130,6 +131,16 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
 
     if (use_pbc_) box_inverse_ = InvertUnitCell(box_);
     ReorderData();
+
+    has_energy_ = false;
+
+    nmon_total_ = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        nmon_total_ += mon_type_count_[mt].second;
+    }
+
+    sys_mol_perm_mu_ = std::vector<double>(3*nmon_total_,0.0);
+    sys_mol_mu_ = std::vector<double>(3*nmon_total_,0.0);
 }
 
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
@@ -164,6 +175,8 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     std::fill(mu_pred_.begin(), mu_pred_.end(), 0.0);
 
     ReorderData();
+
+    has_energy_ = false;
 }
 
 void Electrostatics::ReorderData() {
@@ -1667,6 +1680,101 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
     }
 }
 
+std::vector<double> Electrostatics::GetInducedDipoles() {
+    size_t fi_mon = 0; 
+    size_t fi_sites = 0;
+    size_t fi_crd = 0; 
+    //double db = constants::DEBYE;
+    double db = 1.0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                sys_mu_[fi_crd + mns3 + 3 * i] = db * mu_[inmon3 + m + fi_crd];
+                sys_mu_[fi_crd + mns3 + 3 * i + 1] = db * mu_[inmon3 + m + fi_crd + nmon];
+                sys_mu_[fi_crd + mns3 + 3 * i + 2] = db * mu_[inmon3 + m + fi_crd + nmon2];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+    return sys_mu_;
+}
+
+std::vector<double> Electrostatics::GetPermanentDipoles() {
+    // TODO careful with pbc. Coords inside box?
+    //double db = constants::DEBYE;
+    double db = 1.0;
+    for (size_t i = 0; i < sys_chg_.size(); i++) {
+        double my_chg = sys_chg_[i];
+        for (size_t j = 0; j < 3; j++) {
+            sys_perm_mu_[3*i + j] = db * my_chg * sys_xyz_[3*i + j];
+        }
+    }
+
+    return sys_perm_mu_;
+}
+
+std::vector<double> Electrostatics::GetMolecularInducedDipoles() {
+    GetInducedDipoles();
+    std::fill(sys_mol_mu_.begin(), sys_mol_mu_.end(),0.0);
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    sys_mol_mu_[3*fi_mon + 3*m + j] += sys_mu_[fi_crd + mns3 + 3*i + j];
+                }
+            }
+        }
+        fi_mon += nmon;
+        fi_crd += nmon * ns * 3;
+    }
+    
+    return sys_mol_mu_;               
+}
+
+std::vector<double> Electrostatics::GetMolecularPermanentDipoles() {
+    GetPermanentDipoles();
+    std::fill(sys_mol_perm_mu_.begin(), sys_mol_perm_mu_.end(),0.0);
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    sys_mol_perm_mu_[3*fi_mon + 3*m + j] += sys_perm_mu_[fi_crd + mns3 + 3*i + j];
+                }
+            }
+        }
+        fi_mon += nmon;
+        fi_crd += nmon * ns * 3;
+    }
+
+    return sys_mol_perm_mu_;
+}
+
 double Electrostatics::GetPermanentElectrostaticEnergy() { return Eperm_; }
 
 double Electrostatics::GetInducedElectrostaticEnergy() { return Eind_; }
@@ -1676,6 +1784,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad) {
     CalculateDipoles();
     CalculateElecEnergy();
     if (do_grads_) CalculateGradients(grad);
+    has_energy_ = true;
     return Eperm_ + Eind_;
 }
 
