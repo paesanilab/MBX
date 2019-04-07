@@ -3,3 +3,5 @@ ignore:
   - "src/potential/3b/poly*"
   - "src/tests"
   - "external/kdtree"
+  - "src/potential/electrostatics/files_not_used"
+  - "src/potential/electrostatics/helpme.h"
