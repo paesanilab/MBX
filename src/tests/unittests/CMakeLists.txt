@@ -13,6 +13,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-pme-withpolarization.cpp
     unittest-pme-withpolarization-findif.cpp
     unittest-gamma.cpp
+    unittest-pbc-1b-mbpol-findif.cpp
 )
 
 #
