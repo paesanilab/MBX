@@ -63,8 +63,8 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
     my_sys.SetPBC(box);
     my_sys.SetDipoleMethod("cg");
     my_sys.Set2bCutoff(9.0);
-    my_sys.SetEwald(0.25, 2.5, 6);
-
+    my_sys.SetEwald(0.4, 1.5, 4);
+    
     size_t n_atoms = my_sys.GetNumRealSites();
     std::vector<double> real_xyz = my_sys.GetRealXyz();
 
@@ -80,23 +80,39 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
         SECTION("Numerical gradients vs analitical gradients") {
             size_t atomOffset = 0;
             double stepSize = 0.0001;
-            for (size_t molecule = 0; molecule < n_monomers; ++molecule) {
-                for (size_t degreeOfFreedom = atomOffset; degreeOfFreedom < atomOffset + 3*n_at; ++degreeOfFreedom) {
-                    real_xyz[degreeOfFreedom] += stepSize;
-                    my_sys.SetRealXyz(real_xyz);
-                    double plusEnergy = my_sys.Dispersion(false);
+            for (size_t degreeOfFreedom = 0; degreeOfFreedom < 3*n_atoms; ++degreeOfFreedom) {
+                //if (degreeOfFreedom == 168) {
+                //    std::cout << real_xyz[degreeOfFreedom] << std::endl;
+                //    continue;
+                //}
+                //if (degreeOfFreedom == 169) {
+                //    std::cout << real_xyz[degreeOfFreedom] << std::endl;
+                //    continue;
+                //}
+                //if (degreeOfFreedom == 170) {
+                //    std::cout << real_xyz[degreeOfFreedom] << std::endl;
+                //    continue;
+                //}
+                real_xyz[degreeOfFreedom] += stepSize;
+                my_sys.SetRealXyz(real_xyz);
+                double plusEnergy = my_sys.Dispersion(false);
 
-                    real_xyz[degreeOfFreedom] -= 2 * stepSize;
-                    my_sys.SetRealXyz(real_xyz);
-                    double minusEnergy = my_sys.Dispersion(false);
+                real_xyz[degreeOfFreedom] -= 2 * stepSize;
+                my_sys.SetRealXyz(real_xyz);
+                double minusEnergy = my_sys.Dispersion(false);
 
-                    real_xyz[degreeOfFreedom] += stepSize;
-                    my_sys.SetRealXyz(real_xyz);
+                real_xyz[degreeOfFreedom] += stepSize;
+                my_sys.SetRealXyz(real_xyz);
 
-                    double finiteDifferenceForce = (plusEnergy - minusEnergy) / (2 * stepSize);
-                    double error = grad[degreeOfFreedom] - finiteDifferenceForce;
-                    REQUIRE(grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
-                }
+                double finiteDifferenceForce = (plusEnergy - minusEnergy) / (2 * stepSize);
+                double error = grad[degreeOfFreedom] - finiteDifferenceForce;
+                std::cout << std::scientific
+                          << std::setw(4) << degreeOfFreedom 
+                          << std::setw(20) << grad[degreeOfFreedom]
+                          << std::setw(6) << "<==>"
+                          << std::setw(20) << finiteDifferenceForce << std::endl;
+                REQUIRE(grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+                
             }
         }
     }

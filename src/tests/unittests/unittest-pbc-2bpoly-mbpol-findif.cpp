@@ -80,23 +80,21 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
         SECTION("Numerical gradients vs analitical gradients") {
             size_t atomOffset = 0;
             double stepSize = 0.0001;
-            for (size_t molecule = 0; molecule < n_monomers; ++molecule) {
-                for (size_t degreeOfFreedom = atomOffset; degreeOfFreedom < atomOffset + 3*n_at; ++degreeOfFreedom) {
-                    real_xyz[degreeOfFreedom] += stepSize;
-                    my_sys.SetRealXyz(real_xyz);
-                    double plusEnergy = my_sys.TwoBodyEnergy(false);
+            for (size_t degreeOfFreedom = 0; degreeOfFreedom < 3*n_atoms; ++degreeOfFreedom) {
+                real_xyz[degreeOfFreedom] += stepSize;
+                my_sys.SetRealXyz(real_xyz);
+                double plusEnergy = my_sys.TwoBodyEnergy(false);
 
-                    real_xyz[degreeOfFreedom] -= 2 * stepSize;
-                    my_sys.SetRealXyz(real_xyz);
-                    double minusEnergy = my_sys.TwoBodyEnergy(false);
+                real_xyz[degreeOfFreedom] -= 2 * stepSize;
+                my_sys.SetRealXyz(real_xyz);
+                double minusEnergy = my_sys.TwoBodyEnergy(false);
 
-                    real_xyz[degreeOfFreedom] += stepSize;
-                    my_sys.SetRealXyz(real_xyz);
+                real_xyz[degreeOfFreedom] += stepSize;
+                my_sys.SetRealXyz(real_xyz);
 
-                    double finiteDifferenceForce = (plusEnergy - minusEnergy) / (2 * stepSize);
-                    double error = grad[degreeOfFreedom] - finiteDifferenceForce;
-                    REQUIRE(grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
-                }
+                double finiteDifferenceForce = (plusEnergy - minusEnergy) / (2 * stepSize);
+                double error = grad[degreeOfFreedom] - finiteDifferenceForce;
+                REQUIRE(grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
             }
         }
     }
