@@ -136,6 +136,11 @@ class System {
     /**
      * Returns the charge derivatives for the whole system
      */
+    std::vector<double> GetChargeDerivativesOHH();
+
+    /**
+     * Returns the charge derivatives for the whole system
+     */
     std::vector<double> GetChargeDerivatives();
 
     /**

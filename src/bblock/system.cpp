@@ -213,6 +213,45 @@ void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &m
     }
 }
 
+std::vector<double> System::GetChargeDerivativesOHH() {
+    std::vector<double> chg_der(numat_*numat_*3,0.0);
+
+    size_t fi_chgder = 0;
+    size_t fi_mon = 0;
+    size_t fi_at = 0;
+    size_t row_length = numat_*3;
+    // Loop over all monomer types
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nat = nat_[fi_mon];
+        // For each monomer, check if it is water. If it is not water, skip.
+        if (mon_type_count_[mt].first == "h2o") {
+            // chg_der will be 27*nwaters
+            // Loop over all water molecules
+            for (size_t m = 0; m < nmon; m++) {
+                size_t shift = 3*fi_at + 3*numat_*fi_at;
+                // chg_der has the order H1 H2 O. We want O H1 H2 M
+                for (size_t u = 0; u < 3; u++) {
+                    chg_der[shift + u] = chggrad_[27*m + 18 + 6 + u]; // dqo/dro
+                    chg_der[shift + 3 + u] = chggrad_[27*m + 0 + 6 + u]; // dqo/drh1
+                    chg_der[shift + 6 + u] = chggrad_[27*m + 9 + 6 + u]; // dqo/drh2
+
+                    chg_der[shift + row_length + u] = chggrad_[27*m + 18 + 0 + u]; // dqh1/dro
+                    chg_der[shift + row_length + 3 + u] = chggrad_[27*m + 0 + 0 + u]; // dqh1/drh1
+                    chg_der[shift + row_length + 6 + u] = chggrad_[27*m + 9 + 0 + u]; // dqh1/drh2
+
+                    chg_der[shift + 2*row_length + u] = chggrad_[27*m + 18 + 3 + u]; // dqh2/dro
+                    chg_der[shift + 2*row_length + 3 + u] = chggrad_[27*m + 0 + 3 + u]; // dqh2/drh1
+                    chg_der[shift + 2*row_length + 6 + u] = chggrad_[27*m + 9 + 3 + u]; // dqh2/drh2
+                }
+                fi_at += nat;
+            }
+        }
+        fi_mon += nmon;
+    }
+    return chg_der;
+}
+
 std::vector<double> System::GetChargeDerivatives() {
     std::vector<double> chg_der(numsites_*numsites_*3,0.0);
     
@@ -665,6 +704,13 @@ double System::Energy(bool do_grads) {
 
     // Reset the charges, pols, polfacs and new Vsite
     SetPBC(box_);
+
+    // FIXME
+    //std::vector<double> my_xyz = GetRealXyz();
+    //for (size_t i = 0; i < my_xyz.size(); i++) {
+    //    std::cout << my_xyz[i] << " , ";
+    //}
+    //std::cout << std::endl;
 
     // Get the NB contributions
 
@@ -1465,6 +1511,9 @@ void System::SetEwald(double alpha, double grid_density, int spline_order) {
     electrostaticE_.SetEwaldAlpha(alpha);
     electrostaticE_.SetEwaldGridDensity(grid_density);
     electrostaticE_.SetEwaldSplineOrder(spline_order);
+    dispersionE_.setEwaldAlpha(alpha);
+    dispersionE_.SetEwaldGridDensity(grid_density);
+    dispersionE_.SetEwaldSplineOrder(spline_order);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
