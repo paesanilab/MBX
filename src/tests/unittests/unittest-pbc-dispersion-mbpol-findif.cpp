@@ -41,10 +41,14 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <iomanip>
 #include <random>
+#include <ctime>    // For time()
+#include <cstdlib>  // For srand() and rand()
 
 constexpr double TOL = 1E-4;
+const size_t NPOINTS = 20;
 
 TEST_CASE("Test MB-pol One-body gradients finite differences") {
+    srand(time(0));
     // MB-pol test
     SETUP_WATERBOX_256_PBC_MBPOL
 
@@ -63,7 +67,7 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
     my_sys.SetPBC(box);
     my_sys.SetDipoleMethod("cg");
     my_sys.Set2bCutoff(9.0);
-    my_sys.SetEwald(0.4, 1.5, 4);
+    my_sys.SetEwald(0.4, 1.5, 6);
     
     size_t n_atoms = my_sys.GetNumRealSites();
     std::vector<double> real_xyz = my_sys.GetRealXyz();
@@ -79,20 +83,9 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
 
         SECTION("Numerical gradients vs analitical gradients") {
             size_t atomOffset = 0;
-            double stepSize = 0.0001;
-            for (size_t degreeOfFreedom = 0; degreeOfFreedom < 3*n_atoms; ++degreeOfFreedom) {
-                //if (degreeOfFreedom == 168) {
-                //    std::cout << real_xyz[degreeOfFreedom] << std::endl;
-                //    continue;
-                //}
-                //if (degreeOfFreedom == 169) {
-                //    std::cout << real_xyz[degreeOfFreedom] << std::endl;
-                //    continue;
-                //}
-                //if (degreeOfFreedom == 170) {
-                //    std::cout << real_xyz[degreeOfFreedom] << std::endl;
-                //    continue;
-                //}
+            double stepSize = 0.001;
+            for (size_t i = 0; i < NPOINTS; ++i) {
+                size_t degreeOfFreedom = (rand() % (3*n_atoms));
                 real_xyz[degreeOfFreedom] += stepSize;
                 my_sys.SetRealXyz(real_xyz);
                 double plusEnergy = my_sys.Dispersion(false);
