@@ -41,10 +41,17 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <iomanip>
 #include <random>
+#include <ctime>    // For time()
+#include <cstdlib>  // For srand() and rand()
+
 
 constexpr double TOL = 1E-4;
+const size_t NPOINTS = 20;
 
 TEST_CASE("Test MB-pol One-body gradients finite differences") {
+
+    srand(time(0));
+
     // MB-pol test
     SETUP_WATERBOX_256_PBC_MBPOL
 
@@ -80,7 +87,8 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
         SECTION("Numerical gradients vs analitical gradients") {
             size_t atomOffset = 0;
             double stepSize = 0.0001;
-            for (size_t degreeOfFreedom = 0; degreeOfFreedom < 3*n_atoms; ++degreeOfFreedom) {
+            for (size_t i = 0; i < NPOINTS; ++i) {
+                size_t degreeOfFreedom = (rand() % (3*n_atoms));
                 real_xyz[degreeOfFreedom] += stepSize;
                 my_sys.SetRealXyz(real_xyz);
                 double plusEnergy = my_sys.ThreeBodyEnergy(false);
