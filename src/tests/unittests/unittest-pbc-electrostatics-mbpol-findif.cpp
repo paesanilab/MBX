@@ -86,7 +86,7 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
             size_t atomOffset = 0;
             double stepSize = 0.0001;
             for (size_t i = 0; i < NPOINTS; ++i) {
-                size_t degreeOfFreedom = (rand() % 3*n_atoms);
+                size_t degreeOfFreedom = (rand() % (3*n_atoms));
                 real_xyz[degreeOfFreedom] += stepSize;
                 my_sys.SetRealXyz(real_xyz);
                 double plusEnergy = my_sys.Electrostatics(false);
