@@ -59,7 +59,8 @@ int main(int argc, char** argv)
     systems[0].SetDipoleMethod("cg");
     if (box.size()) {
         systems[0].Set2bCutoff(9.0);
-        systems[0].SetEwald(0.25, 2.5, 6);
+        systems[0].SetEwaldElectrostatics(0.25, 3.0, 8);
+        systems[0].SetEwaldDispersion(0.25, 2.5, 6);
     } else {
         systems[0].Set2bCutoff(100.0);
     }
@@ -86,7 +87,7 @@ int main(int argc, char** argv)
         xyz = systems[0].GetRealXyz();
         real_grd = systems[0].GetRealGrads();
         std::vector<std::string> atms = systems[0].GetRealAtomNames();
-        const double eps = 1.0e-6;
+        const double eps = 1.0e-3;
 
         for (size_t j = 0; j < n_atoms * 3; j++) {
             const double x_orig = xyz[j];
@@ -106,6 +107,7 @@ int main(int argc, char** argv)
             systems[0].SetRealXyz(xyz);
             systems[0].SetPBC(box);
             const double Emm = systems[0].Energy(false);
+            std::cerr << Epp << " " << Ep << " " << Em << " " << Emm << std::endl;
             const double gfd = (8 * (Ep - Em) - (Epp - Emm)) / (12 * eps);
             xyz[j] = x_orig;
             systems[0].SetRealXyz(xyz);
