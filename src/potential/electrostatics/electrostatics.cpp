@@ -1129,8 +1129,10 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 
     if (ewald_alpha_ > 0 && use_pbc_) {
         // Sort the dipoles to the order helPME expects (for now)
-        int fi_mon = 0;
-        int fi_crd = 0;
+        //int fi_mon = 0;
+        //int fi_crd = 0;
+        fi_mon = 0;
+        fi_crd = 0;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
             size_t ns = sites_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
@@ -1371,7 +1373,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
                     Asqsqi = Ai;
                 }
                 for (size_t m = 0; m < nmon; m++) {
-                    elec_field.CalcElecFieldGrads(xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data(),
+                    elec_field.CalcElecFieldGrads(xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data() + fi_sites,
                                                   chg_.data() + fi_sites, mu_.data() + fi_crd, mu_.data() + fi_crd, m,
                                                   m, m + 1, nmon, nmon, i, j, aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1,
                                                   phi_.data() + fi_sites, grad_.data() + fi_crd, elec_scale_factor,
@@ -1490,11 +1492,15 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
     }
+
     if (ewald_alpha_ > 0 && use_pbc_) {
         // Sort the dipoles to the order helPME expects (for now)
-        int fi_mon = 0;
-        int fi_sites = 0;
-        int fi_crd = 0;
+        //int fi_mon = 0;
+        //int fi_sites = 0;
+        //int fi_crd = 0;
+        fi_mon = 0;
+        fi_sites = 0;
+        fi_crd = 0;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
             size_t ns = sites_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
