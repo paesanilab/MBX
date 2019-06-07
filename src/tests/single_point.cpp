@@ -59,8 +59,8 @@ int main(int argc, char** argv)
     systems[0].SetDipoleMethod("cg");
     if (box.size()) {
         systems[0].Set2bCutoff(9.0);
-        systems[0].SetEwaldElectrostatics(0.25, 3.0, 8);
-        systems[0].SetEwaldDispersion(0.25, 2.5, 6);
+        systems[0].SetEwaldElectrostatics(0.6, 2.5, 6);
+        systems[0].SetEwaldDispersion(0.5, 2.5, 6);
     } else {
         systems[0].Set2bCutoff(100.0);
     }
@@ -107,7 +107,6 @@ int main(int argc, char** argv)
             systems[0].SetRealXyz(xyz);
             systems[0].SetPBC(box);
             const double Emm = systems[0].Energy(false);
-            std::cerr << Epp << " " << Ep << " " << Em << " " << Emm << std::endl;
             const double gfd = (8 * (Ep - Em) - (Epp - Emm)) / (12 * eps);
             xyz[j] = x_orig;
             systems[0].SetRealXyz(xyz);
