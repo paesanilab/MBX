@@ -407,6 +407,10 @@ class System {
 
     void SetEwald(double alpha, double grid_density, int spline_order);
 
+    void SetEwaldElectrostatics(double alpha, double grid_density, int spline_order);
+
+    void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
+
     /////////////////////////////////////////////////////////////////////////////
     // Energy Functions /////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
