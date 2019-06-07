@@ -133,6 +133,7 @@ std::vector<std::string> System::GetRealAtomNames() {
 std::vector<double> System::GetXyz() { return systools::ResetOrder3N(xyz_, initial_order_, first_index_, sites_); }
 
 std::vector<double> System::GetRealXyz() {
+    SetPBC(box_);
     return systools::ResetOrderReal3N(xyz_, initial_order_realSites_, numat_, first_index_, nat_);
 }
 
@@ -704,13 +705,6 @@ double System::Energy(bool do_grads) {
 
     // Reset the charges, pols, polfacs and new Vsite
     SetPBC(box_);
-
-    // FIXME
-    //std::vector<double> my_xyz = GetRealXyz();
-    //for (size_t i = 0; i < my_xyz.size(); i++) {
-    //    std::cout << my_xyz[i] << " , ";
-    //}
-    //std::cout << std::endl;
 
     // Get the NB contributions
 
@@ -1507,13 +1501,26 @@ double System::Electrostatics(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void System::SetEwald(double alpha, double grid_density, int spline_order) {
+void System::SetEwaldElectrostatics(double alpha, double grid_density, int spline_order) {
     electrostaticE_.SetEwaldAlpha(alpha);
     electrostaticE_.SetEwaldGridDensity(grid_density);
     electrostaticE_.SetEwaldSplineOrder(spline_order);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetEwaldDispersion(double alpha, double grid_density, int spline_order) {
     dispersionE_.setEwaldAlpha(alpha);
     dispersionE_.SetEwaldGridDensity(grid_density);
     dispersionE_.SetEwaldSplineOrder(spline_order);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetEwald(double alpha, double grid_density, int spline_order) {
+    SetEwaldElectrostatics(alpha, grid_density, spline_order);
+    SetEwaldDispersion(alpha, grid_density, spline_order);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
