@@ -43,6 +43,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/1b/ps.h"
 // ====>> SECTION INCLUDE1B <<====
 // ===>> PASTE INCLUDE BELOW <<===
+#include "potential/1b/x1b_A1B4_deg5_v1x.h"
+#include "potential/1b/x1b_A1B2_deg4_v1x.h"
+#include "potential/1b/x1b_A1B6_deg5_v1x.h"
 
 #include "tools/definitions.h"
 
