@@ -10,7 +10,7 @@ BINDIR = ../../bin
 
 OBJDIR = ../../obj
 
-all: driver driver-noneq driver_pbc raman infrared
+all: driver driver_pbc 
 
 infrared: infrared.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(BINDIR)/.sentinel
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) infrared.cpp $(OBJDIR)/perturb.o $(OBJDIR)/read_xyz.o $(LIBS) -o $@
