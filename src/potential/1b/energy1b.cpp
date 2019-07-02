@@ -50,6 +50,9 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &
     } else if (mon == "nh4+") {
         x1b_A1B4_deg5::x1b_A1B4_v1x pot(mon);
         energies = pot.eval(xyz.data(), nm);
+    } else if (mon == "ch4") {
+        x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon);
+        energies = pot.eval(xyz.data(), nm);
     } else if (mon == "co2") {
         x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon);
         energies = pot.eval(xyz.data(), nm);
@@ -78,6 +81,9 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, std::v
         // ====>> PASTE YOUR CODE BELOW <<====
     } else if (mon == "pf6-") {
         x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon);
+        energies = pot.eval(xyz.data(), grad.data(), nm);
+    } else if (mon == "ch4") {
+        x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon);
         energies = pot.eval(xyz.data(), grad.data(), nm);
     } else if (mon == "nh4+") {
         x1b_A1B4_deg5::x1b_A1B4_v1x pot(mon);

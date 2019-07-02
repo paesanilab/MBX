@@ -4,6 +4,7 @@ import sys
 monomers = {}
 #NH4+
 monomers['nh4+'] = ['N','H','H','H','H']
+monomers['ch4'] = ['C','H','H','H','H']
 monomers['pf6-'] = ['P','F','F','F','F','F','F']
 monomers['co2'] = ['C','O','O']
 #H2O

@@ -159,6 +159,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
         } else if (mon[i] == "pf6-") {
             sites.push_back(7);
             nat.push_back(7);
+        } else if (mon[i] == "ch4") {
+            sites.push_back(5);
+            nat.push_back(5);
         } else if (mon[i] == "nh4+") {
             sites.push_back(5);
             nat.push_back(5);
@@ -536,6 +539,21 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
     // =====>> SECTION EXCLUDED <<=====
     // =====>> PASTE CODE BELOW <<=====
 
+    if (mon == "ch4") {
+        // 12 distances
+        exc12.insert(std::make_pair(0,1));
+        exc12.insert(std::make_pair(0,3));
+        exc12.insert(std::make_pair(0,2));
+        exc12.insert(std::make_pair(0,4));
+        // 13 distances
+        exc13.insert(std::make_pair(1,2));
+        exc13.insert(std::make_pair(1,3));
+        exc13.insert(std::make_pair(1,4));
+        exc13.insert(std::make_pair(2,3));
+        exc13.insert(std::make_pair(3,4));
+        exc13.insert(std::make_pair(2,4));
+        // 14 distances
+    }
     if (mon == "nh4+") {
         // 12 distances
         exc12.insert(std::make_pair(0,1));
@@ -717,6 +735,15 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv*nsites + 6] = -0.44313899999999995 * CHARGECON;
 
         }
+    } else if (mon_id == "ch4") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv*nsites + 0] = -0.538573 * CHARGECON;
+            charges[fst_ind + nv*nsites + 1] = 0.13464325* CHARGECON;
+            charges[fst_ind + nv*nsites + 2] = 0.13464325* CHARGECON;
+            charges[fst_ind + nv*nsites + 3] = 0.13464325* CHARGECON;
+            charges[fst_ind + nv*nsites + 4] = 0.13464325* CHARGECON;
+
+        }
     } else if (mon_id == "nh4+") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv*nsites + 0] = -0.741125 * CHARGECON;
@@ -843,6 +870,15 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv*nsites + 6] = 0.49711381987577635;
 
         }
+    } else if (mon_id == "ch4") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv*nsites + 0] = 1.3932677 ;
+            polfac[fst_ind + nv*nsites + 1] = 0.38978363;
+            polfac[fst_ind + nv*nsites + 2] = 0.38978363;
+            polfac[fst_ind + nv*nsites + 3] = 0.38978363;
+            polfac[fst_ind + nv*nsites + 4] = 0.38978363;
+
+        }
     } else if (mon_id == "nh4+") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv*nsites + 0] = 0.6918051284835324;
@@ -928,6 +964,15 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv*nsites + 6] = 0.49711381987577635;
 
         }
+    } else if (mon_id == "ch4") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv*nsites + 0] = 1.3932677 ;
+            pol[fst_ind + nv*nsites + 1] = 0.38978363;
+            pol[fst_ind + nv*nsites + 2] = 0.38978363;
+            pol[fst_ind + nv*nsites + 3] = 0.38978363;
+            pol[fst_ind + nv*nsites + 4] = 0.38978363;
+
+        }
     } else if (mon_id == "nh4+") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             pol[fst_ind + nv*nsites + 0] = 0.6918051284835324;
@@ -1005,6 +1050,15 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 5] = 11.31594587280531048051; // F
             c6_lr[nv * natoms + fst_ind + 6] = 11.31594587280531048051; // F
         }
+    } else if (mon_id == "ch4") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 17.41398863;  // N
+            c6_lr[nv * natoms + fst_ind + 1] = 6.064748037;  // H
+            c6_lr[nv * natoms + fst_ind + 2] = 6.064748037;  // H
+            c6_lr[nv * natoms + fst_ind + 3] = 6.064748037;  // H
+            c6_lr[nv * natoms + fst_ind + 4] = 6.064748037;  // H
+        }
+
     } else if (mon_id == "nh4+") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 11.00107139850448566299;  // N
