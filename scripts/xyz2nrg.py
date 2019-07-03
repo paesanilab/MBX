@@ -7,6 +7,7 @@ monomers['nh4+'] = ['N','H','H','H','H']
 monomers['ch4'] = ['C','H','H','H','H']
 monomers['pf6-'] = ['P','F','F','F','F','F','F']
 monomers['co2'] = ['C','O','O']
+monomers['li'] = ['Li']
 #H2O
 monomers['h2o'] = ['O','H','H']
 

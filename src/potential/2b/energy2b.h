@@ -47,6 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/x2b_A1B4_C1D2X2_deg4_v1x.h"
 #include "potential/2b/x2b_A1B6_C1D2X2_deg3_v1x.h"
 #include "potential/2b/x2b_A1B4_C1D6_deg3_v1x.h"
+#include "potential/2b/x2b_A1B4_A1B4_deg4_exp0_v1x.h"
 #include "x2b_A1B2_A1B2_v1x.h"
 #include "x2b_A1B2Z2_C1D2_v1x.h"
 

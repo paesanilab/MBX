@@ -20,6 +20,9 @@ set(TWOB_SOURCES energy2b.cpp
                  x2b_A1B4_C1D6_deg3_v1x.cpp
                  x2b_A1B4_C1D2X2_deg4_v1x.cpp
                  x2b_A1B6_C1D2X2_deg3_v1x.cpp
+                 poly_2b_A1B4_A1B4_deg4_exp0_v1.cpp
+                 poly_2b_A1B4_A1B4_deg4_exp0_v1x.cpp
+                 x2b_A1B4_A1B4_deg4_exp0_v1x.cpp
 )
 
 SET_SOURCE_FILES_PROPERTIES(poly-2b-v6x.cpp PROPERTIES COMPILE_FLAGS -O0)
@@ -36,6 +39,8 @@ SET_SOURCE_FILES_PROPERTIES(poly_2b_A1B6_C1D2X2_deg3_v1.cpp PROPERTIES COMPILE_F
 SET_SOURCE_FILES_PROPERTIES(poly_2b_A1B6_C1D2X2_deg3_v1x.cpp PROPERTIES COMPILE_FLAGS -O0)
 SET_SOURCE_FILES_PROPERTIES(poly_2b_A1B4_C1D6_deg3_v1.cpp PROPERTIES COMPILE_FLAGS -O0)
 SET_SOURCE_FILES_PROPERTIES(poly_2b_A1B4_C1D6_deg3_v1x.cpp PROPERTIES COMPILE_FLAGS -O0)
+SET_SOURCE_FILES_PROPERTIES(poly_2b_A1B4_A1B4_deg4_exp0_v1.cpp PROPERTIES COMPILE_FLAGS -O0)
+SET_SOURCE_FILES_PROPERTIES(poly_2b_A1B4_A1B4_deg4_exp0_v1x.cpp PROPERTIES COMPILE_FLAGS -O0)
 
 #add_library(2b ${TWOB_SOURCES})
 #target_include_directories(2b PRIVATE ${CMAKE_SOURCE_DIR}) 

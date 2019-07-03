@@ -72,6 +72,9 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
     } else if (m1 == "nh4+" && m2 == "pf6-") {
         x2b_A1B4_C1D6_deg3::x2b_A1B4_C1D6_v1x pot(m1,m2);
         return pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (m1 == "ch4" && m2 == "ch4") {
+        x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(m1,m2);
+        return pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (m1 == "h2o" && m2 == "pf6-") {
         x2b_A1B6_C1D2X2_deg3::x2b_A1B6_C1D2X2_v1x pot(m1,m2);
         return pot.eval(xyz2.data(), xyz1.data(), nm);
@@ -125,6 +128,9 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
         // ====>> PASTE YOUR CODE BELOW <<====
     } else if (m1 == "nh4+" && m2 == "pf6-") {
         x2b_A1B4_C1D6_deg3::x2b_A1B4_C1D6_v1x pot(m1,m2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grd1.data(), grd2.data(), nm);
+    } else if (m1 == "ch4" && m2 == "ch4") {
+        x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(m1,m2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grd1.data(), grd2.data(), nm);
     } else if (m1 == "h2o" && m2 == "pf6-") {
         x2b_A1B6_C1D2X2_deg3::x2b_A1B6_C1D2X2_v1x pot(m1,m2);
