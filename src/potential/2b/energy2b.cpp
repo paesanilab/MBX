@@ -87,6 +87,9 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
     } else if (m1 == "co2" and m2 == "h2o") {
         x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x pot(m2,m1);
         return pot.eval(xyz2.data(), xyz1.data(), nm);
+    } else if (m1 == "ch4" and m2 == "h2o") {
+        x2b_A1B2Z2_C1D4_deg3_exp0::x2b_A1B2Z2_C1D4_v1x pot(m2,m1);
+        return pot.eval(xyz2.data(), xyz1.data(), nm);
 
     } else {
         return 0.0;
@@ -143,6 +146,9 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
         energy = pot.eval(xyz1.data(), xyz2.data(), grd1.data(), grd2.data(), nm);
     } else if (m1 == "co2" and m2 == "h2o") {
         x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x pot(m2,m1);
+        energy = pot.eval(xyz2.data(), xyz1.data(), grd2.data(), grd1.data(), nm);
+    } else if (m1 == "ch4" and m2 == "h2o") {
+        x2b_A1B2Z2_C1D4_deg3_exp0::x2b_A1B2Z2_C1D4_v1x pot(m2,m1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grd2.data(), grd1.data(), nm);
     } else {
         return 0.0;

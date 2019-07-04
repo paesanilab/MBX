@@ -515,6 +515,31 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.25885);  // A^(-1)
         d6.push_back(3.25885);  // A^(-1)
         d6.push_back(4.05972);  // A^(-1)
+    } else if (mon_id1 == "ch4" && mon_id2 == "h2o") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(222.003);  // kcal/mol * A^(-6) C -- O
+        C6.push_back(105.979);  // kcal/mol * A^(-6) C -- H
+        C6.push_back(80.628);  // kcal/mol * A^(-6) O -- O
+        C6.push_back(37.176);  // kcal/mol * A^(-6) O -- H
+
+        d6.push_back(2.87176);  // A^(-1)
+        d6.push_back(3.68542);  // A^(-1)
+        d6.push_back(3.79757);  // A^(-1)
+        d6.push_back(4.01558);  // A^(-1)
     } else if (mon_id1 == "co2" && mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
