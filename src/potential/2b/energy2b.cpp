@@ -69,6 +69,12 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
 
         // =====>> SECTION TWOBODY_NOGRD <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
+    } else if (m1 == "nh4+" && m2 == "nh4+") {
+        x2b_A1B4_A1B4_deg4::x2b_A1B4_A1B4_v1x pot(m1,m2);
+        return pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (m1 == "pf6-" && m2 == "pf6-") {
+        x2b_A1B6_A1B6_deg3::x2b_A1B6_A1B6_v1x pot(m1,m2);
+        return pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (m1 == "nh4+" && m2 == "pf6-") {
         x2b_A1B4_C1D6_deg3::x2b_A1B4_C1D6_v1x pot(m1,m2);
         return pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -129,6 +135,12 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
 
         // =====>> SECTION TWOBODY_GRD <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
+    } else if (m1 == "nh4+" && m2 == "nh4+") {
+        x2b_A1B4_A1B4_deg4::x2b_A1B4_A1B4_v1x pot(m1,m2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grd1.data(), grd2.data(), nm);
+    } else if (m1 == "pf6-" && m2 == "pf6-") {
+        x2b_A1B6_A1B6_deg3::x2b_A1B6_A1B6_v1x pot(m1,m2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grd1.data(), grd2.data(), nm);
     } else if (m1 == "nh4+" && m2 == "pf6-") {
         x2b_A1B4_C1D6_deg3::x2b_A1B4_C1D6_v1x pot(m1,m2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grd1.data(), grd2.data(), nm);
