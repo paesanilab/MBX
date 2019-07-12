@@ -1,4 +1,6 @@
-set (TOOLS_SOURCES math_tools.cpp)
+set (TOOLS_SOURCES math_tools.cpp
+                   mt19937.cpp   
+                   random-rotation.cpp)
 
 add_library(tools OBJECT ${TOOLS_SOURCES})
 target_include_directories(tools PRIVATE ${CMAKE_SOURCE_DIR})
