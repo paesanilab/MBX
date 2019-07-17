@@ -14,6 +14,7 @@
 #include "bblock/system.h"
 
 //#define NUMGRADS
+//#define PRINT_GRADS
 
 namespace {
 
@@ -48,7 +49,12 @@ int main(int argc, char** argv)
 
     std::vector<double> box;
     
-    if (argc > 2) {
+    if (argc > 4) {
+        box = std::vector<double>(9,0.0);
+        box[0] = atof(argv[2]);
+        box[4] = atof(argv[3]);
+        box[8] = atof(argv[4]);
+    } else if (argc > 2) {
         double box_l = atof(argv[2]);
         box = std::vector<double>(9,0.0);
         box[0] = box[4] = box[8] = box_l;
@@ -71,6 +77,25 @@ int main(int argc, char** argv)
     std::cout << "Energy= " << en << std::endl;
     
     tools::WriteNrg("input_out.nrg", systems);
+
+#ifdef PRINT_GRADS
+    {
+        std::vector<std::string> atn = systems[0].GetAtomNames();
+
+        size_t n_sites = systems[0].GetNumSites();
+        size_t n_atoms = systems[0].GetNumRealSites();
+
+        std::vector<double> grads = systems[0].GetRealGrads();
+
+        for (size_t i = 0; i < n_atoms; i++) {
+            std::cout << std::setprecision(8) << std::scientific
+                      << std::setw(20) << grads[3*i]  
+                      << std::setw(20) << grads[3*i + 1]  
+                      << std::setw(20) << grads[3*i + 2] << std::endl;
+        }  
+    }
+#endif
+
 
 #ifdef NUMGRADS
 
