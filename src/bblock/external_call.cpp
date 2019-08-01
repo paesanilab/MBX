@@ -89,4 +89,73 @@ void energyf90g_(double* coords, int* nat_monomers, char at_names[][5], char mon
     *pot = energy;
 }
 
+void energyf90pbc_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* pot, double* box) {
+    bblock::System s;
+    int count = 0;
+    for (int i = 0; i < *nmon; i++) {
+        std::vector<double> xyz(3 * nat_monomers[i]);
+        std::vector<std::string> vAtNames(nat_monomers[i]);
+
+        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
+        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
+        std::string id = monomers[i];
+        s.AddMonomer(xyz, vAtNames, id);
+        count += nat_monomers[i];
+    }
+
+    s.Initialize();
+    std::vector<double> vbox(9,0.0);
+    std::copy(box, box + 9, vbox.begin());
+    s.SetPBC(vbox);
+    s.SetDipoleMethod("cg");
+    s.Set2bCutoff(9.0);
+    s.SetEwaldElectrostatics(0.6, 2.5, 6);
+    s.SetEwaldDispersion(0.5, 2.5, 6);
+
+    *pot = s.Energy(false);
+}
+
+void energyf90gpbc_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* grad,
+                 double* pot, double* box) {
+    bblock::System s;
+    int count = 0;
+    for (int i = 0; i < *nmon; i++) {
+        std::vector<double> xyz(3 * nat_monomers[i]);
+        std::vector<std::string> vAtNames(nat_monomers[i]);
+
+        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
+        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
+        std::string id = monomers[i];
+        s.AddMonomer(xyz, vAtNames, id);
+        count += nat_monomers[i];
+    }
+
+    s.Initialize();
+    std::vector<double> vbox(9,0.0);
+    std::copy(box, box + 9, vbox.begin());
+    s.SetPBC(vbox);
+    s.SetDipoleMethod("cg");
+    s.Set2bCutoff(9.0);
+    s.SetEwaldElectrostatics(0.6, 2.5, 6);
+    s.SetEwaldDispersion(0.5, 2.5, 6);
+    
+
+    double energy = s.Energy(true);
+
+    std::vector<double> gradv = s.GetGrads();
+
+    std::vector<std::string> newNames = s.GetAtomNames();
+    int count2 = 0;
+    for (size_t i = 0; i < s.GetNumSites(); i++) {
+        if (newNames[i] != "virt") {
+            for (size_t j = 0; j < 3; j++) {
+                grad[count2 + j] = gradv[3 * i + j];
+            }
+            count2 += 3;
+        }
+    }
+
+    *pot = energy;
+}
+
 }  // extern C

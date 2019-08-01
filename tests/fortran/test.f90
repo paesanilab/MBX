@@ -3,6 +3,7 @@ program test
 
   double precision :: Vpot
   double precision, allocatable :: coord(:),grads(:)
+  double precision, allocatable :: box(:)
 
   character(len=5), allocatable :: at_name(:)
   character(len=5), allocatable :: monomers(:)
@@ -17,7 +18,9 @@ program test
   ! energyf90 won't compute gradients (and is faster)
   ! energyf90g will compute and return gradients.
   external energyf90;
+  external energyf90pbc;
   external energyf90g;
+  external energyf90gpbc;
 
   ! need to define here the numebr of monomers, and number of atoms in each one
   ! In the case of a water cluster of 256 molecules, the variables should be:
@@ -32,12 +35,10 @@ program test
 
   ! This will work for the test case, which contains a lithium monomer
   ! at the beggining, and then 6 water molecules
-  nmon = 3
-  allocate(nats(nmon),monomers(nmon))
+  nmon = 1
+  allocate(nats(nmon),monomers(nmon),box(9))
 
-  nats(nmon) = 1
-  monomers(nmon) = "i"
-  do i=1,nmon-1
+  do i=1,nmon
     nats(i) = 3
     monomers(i) = "h2o"
   enddo
@@ -45,7 +46,7 @@ program test
   ! Open file called input.xyz. 
   ! Contains the coordinates in XYZ format.
   ! Assumes halide at the end (because the C++ code does that)
-  xyz='1.xyz'
+  xyz='test.xyz'
   open(unit = 55, file = xyz, status = 'old', action = 'read')
 
   ! Number of atoms
@@ -116,5 +117,25 @@ program test
   enddo
   write(*,*)
 
+  ! Do the same calculation but now with a box
+  box(:) = 0.0
+  box(1) = 25.0
+  box(5) = 25.0
+  box(9) = 25.0
+
+  call energyf90PBC(coord, nats, at_name, monomers, nmon, Vpot, box)
+  write(*,*) "Testing functions that use an array of the coordinates (PBC) "
+  write(*,*)
+  write(*,*) "Energy (no gradients) = " , Vpot
+  write(*,*)
+
+  call energyf90gPBC(coord, nats, at_name, monomers, nmon, grads, Vpot, box)
+  write(*,*) "Energy (gradients) = " , Vpot
+  write(*,*)
+  write(*,*) "Writting gradients below..."
+  do i=1,n_at
+    write(*,*) at_name(i),(grads(3*(i-1)+j),j=1,3)
+  enddo
+  write(*,*)
 end program
 
