@@ -160,5 +160,9 @@ program test
   enddo
   write(*,*)
 
+  ! Don't forget to free the system
+  call finalize_system()
+
+
 end program
 
