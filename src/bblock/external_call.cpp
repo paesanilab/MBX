@@ -34,7 +34,77 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "bblock/system.h"
 
+namespace {
+    bblock::System* my_s;
+} // namespace
+
 extern "C" {
+void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon) {
+    my_s = new bblock::System();
+    int count = 0;
+    for (int i = 0; i < *nmon; i++) {
+        std::vector<double> xyz(3 * nat_monomers[i]);
+        std::vector<std::string> vAtNames(nat_monomers[i]);
+
+        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
+        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
+        std::string id = monomers[i];
+        my_s->AddMonomer(xyz, vAtNames, id);
+        count += nat_monomers[i];
+    }
+
+    my_s->Initialize();
+}
+
+void get_energy_(double* coords, int* nat, double* energy) {
+    std::vector<double> xyz(3 * (*nat));
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+
+    my_s->SetRealXyz(xyz);
+    *energy = my_s->Energy(false);
+}
+
+void get_energy_g_(double* coords, int* nat, double* energy, double* grads) {
+    std::vector<double> xyz(3 * (*nat));
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+
+    my_s->SetRealXyz(xyz);
+    *energy = my_s->Energy(true);
+
+    std::vector<double> gradv = my_s->GetRealGrads();
+    std::copy(gradv.begin(), gradv.end(), grads);
+}
+
+void get_energy_pbc_(double* coords, int* nat, double* box, double* energy) {
+    std::vector<double> xyz(3 * (*nat));
+    std::vector<double> boxv(9,0.0);
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+    std::copy(box, box + 9, boxv.begin());
+
+    my_s->SetRealXyz(xyz);
+    my_s->SetPBC(boxv);
+    *energy = my_s->Energy(false);
+}
+
+void get_energy_pbc_g_(double* coords, int* nat, double* box, double* energy, double* grads) {
+    std::vector<double> xyz(3 * (*nat));
+    std::vector<double> boxv(9,0.0);
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+    std::copy(box, box + 9, boxv.begin());
+    
+    my_s->SetRealXyz(xyz);
+    my_s->SetPBC(boxv);
+    *energy = my_s->Energy(true);
+
+    std::vector<double> gradv = my_s->GetRealGrads();
+    std::copy(gradv.begin(), gradv.end(), grads);
+}
+
+void finalize_system_() {
+    delete my_s;
+}
+    
+
 void energyf90_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* pot) {
     bblock::System s;
     int count = 0;
