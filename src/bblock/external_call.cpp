@@ -54,6 +54,8 @@ void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], c
     }
 
     my_s->Initialize();
+    my_s->SetDipoleMethod("cg");
+    my_s->Set2bCutoff(100.0);
 }
 
 void get_energy_(double* coords, int* nat, double* energy) {
@@ -83,6 +85,9 @@ void get_energy_pbc_(double* coords, int* nat, double* box, double* energy) {
 
     my_s->SetRealXyz(xyz);
     my_s->SetPBC(boxv);
+    my_s->Set2bCutoff(9.0);
+    my_s->SetEwaldElectrostatics(0.6, 2.5, 6);
+    my_s->SetEwaldDispersion(0.5, 2.5, 6);
     *energy = my_s->Energy(false);
 }
 
@@ -94,6 +99,9 @@ void get_energy_pbc_g_(double* coords, int* nat, double* box, double* energy, do
     
     my_s->SetRealXyz(xyz);
     my_s->SetPBC(boxv);
+    my_s->Set2bCutoff(9.0);
+    my_s->SetEwaldElectrostatics(0.6, 2.5, 6);
+    my_s->SetEwaldDispersion(0.5, 2.5, 6);
     *energy = my_s->Energy(true);
 
     std::vector<double> gradv = my_s->GetRealGrads();
