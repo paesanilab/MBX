@@ -40,17 +40,15 @@ namespace buck {
 
 //----------------------------------------------------------------------------//
 
-double Buckingham(const double a, const double b, const double* p1, const double* xyz2,
+double Repulsion(const double a, const double b, const double* p1, const double* xyz2,
              double* grad1, double* grad2, const size_t nmon1, const size_t nmon2,
              const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
              bool do_grads, const double cutoff,                                 
              const std::vector<double>& box, const std::vector<double>& box_inverse) {
 
-    double buck = 0.0;
-
     size_t nmon22 = nmon2 * 2;
 
-    size_t shift2 = shift_phi * 3;
+    size_t shift2 = atom_index2 * nmon2 * 3;
 
     bool use_pbc = box.size();
     double g1[3], g2[3 * nmon2];
@@ -125,9 +123,8 @@ double Buckingham(const double a, const double b, const double* p1, const double
     return repulsion_energy;
 }
 
-void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_a, double& out_b) {
+void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, std::vector<std::pair<std::string,std::string> > buck_pairs, double& out_a, double& out_b) {
     // Order the two monomer names and corresponding xyz
-    bool swaped = false;
     if (mon_id2 < mon_id1) {
         std::string tmp = mon_id1;
         mon_id1 = mon_id2;
@@ -135,7 +132,12 @@ void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         size_t tmp1 = index1;
         index1 = index2;
         index2 = tmp1;
-        swaped = true;
+    }
+
+    if (std::find(buck_pairs.begin(), buck_pairs.end(), std::make_pair(mon_id1,mon_id2)) == buck_pairs.end()) {
+        out_a = 0.0;
+        out_b = 0.0;
+        return;
     }
 
     std::vector<double> a, b;
