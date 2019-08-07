@@ -2,6 +2,7 @@ add_subdirectory(1b)
 add_subdirectory(2b) 
 add_subdirectory(3b) 
 add_subdirectory(dispersion) 
+add_subdirectory(buckingham) 
 add_subdirectory(electrostatics) 
 add_subdirectory(neural_networks) 
 

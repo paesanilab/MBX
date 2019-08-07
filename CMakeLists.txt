@@ -8,8 +8,8 @@ project(clusters_ultimate
 
 set(PN ${PROJECT_NAME})
 set(clusters_ultimate_AUTHORS      "")
-set(clusters_ultimate_DESCRIPTION  "Clusters Ultimate")
-set(clusters_ultimate_URL          "https://github.com/paesanilab/clusters_ultimate")
+set(clusters_ultimate_DESCRIPTION  "MBX")
+set(clusters_ultimate_URL          "https://github.com/paesanilab/MBX")
 set(clusters_ultimate_LICENSE      "BSD 3-clause")
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
