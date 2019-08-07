@@ -58,7 +58,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/3b/energy3b.h"
 // DISPERSION
 #include "potential/dispersion/dispersion.h"
-//#include "potential/dispersion/dispersion2b.h"
+// BUCKINGHAM
+#include "potential/buckingham/buckingham.h"
 // ELECTROSTATICS
 #include "potential/electrostatics/electrostatics.h"
 
@@ -323,6 +324,13 @@ class System {
     void AddMolecule(std::vector<size_t> molec);
 
     /**
+     * Adds a pair that will use TTM-nrg instead of MB-nrg
+     * @param[in] mon1 Is the id of the first monomer
+     * @param[in] mon2 Is the id of the second monomer
+     **/
+    void AddTTMnrgPair(std::string mon1, std::string mon2);
+
+    /**
      * Initializes the system once the monomer information is inputed. The
      * system, once created, cannot be modified in terms of monomer composition.
      * To see the default values of the initialization,
@@ -467,6 +475,8 @@ class System {
 
     double Dispersion(bool do_grads);
 
+    double Buckingham(bool do_grads);
+
    private:
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -561,6 +571,8 @@ class System {
 
     double GetDispersion(bool do_grads);
 
+    double GetBuckingham(bool do_grads);
+
    private:
     /**
      * Number of molecules in the system
@@ -653,6 +665,11 @@ class System {
      * Dispersion class that will be used to get the dispersion energy
      */
     disp::Dispersion dispersionE_;
+
+    /**
+     * Buckingham class for the buckingham calculation
+     **/
+    buck::Buckingham buckinghamE_;
 
     /**
      * Electrostatic class that will be used to get the electrostatic energy
@@ -768,6 +785,11 @@ class System {
      * and vectorization purposes.
      */
     std::vector<std::pair<std::string, size_t> > mon_type_count_;
+
+    /** 
+     * This vector contains the pairs that will use TTM-nrg instead of MB-nrg
+     **/
+    std::vector<std::pair<std::string,std::string> > buck_pairs_;
 
     /**
      * Vector that contains the relation between the input monomer

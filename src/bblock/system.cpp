@@ -427,6 +427,14 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
 
+void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
+    std::pair<std::string,std::string> p = mon2 < mon1 ? std::make_pair(mon2, mon1) : std::make_pair(mon1, mon2);
+
+    if (std::find(buck_pairs_.begin(), buck_pairs_.end(), p) == buck_pairs_.end()) {
+        buck_pairs_.push_back(p);
+    }
+}
+
 void System::Initialize() {
     // If we try to reinitialize the system, we will get an exception
     if (initialized_) {
@@ -727,6 +735,7 @@ double System::Energy(bool do_grads) {
 
     double e2b = Get2B(do_grads);
     double edisp = GetDispersion(do_grads);
+    double ebuck = GetBuckingham(do_grads);
 #ifdef TIMING
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
@@ -745,7 +754,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Set up energy with the new value
-    energy_ = e1b + e2b + e3b + edisp + Eelec;
+    energy_ = e1b + e2b + e3b + edisp + ebuck + Eelec;
 
 #ifdef DEBUG
     std::cerr << std::setprecision(10) << std::scientific;
@@ -753,6 +762,7 @@ double System::Energy(bool do_grads) {
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
               << "Disp = " << edisp << std::endl
+              << "Buck = " << ebuck << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
 #endif
@@ -898,7 +908,6 @@ double System::Get2B(bool do_grads) {
     // Vector pools that allow compatibility between
     // serial and parallel implementation
     std::vector<double> e2b_pool(num_threads, 0.0);
-    std::vector<double> edisp_pool(num_threads, 0.0);
     std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
 
 #ifdef _OPENMP
@@ -997,35 +1006,30 @@ double System::Get2B(bool do_grads) {
                                                  xyz1.data(), xyz2.data());
                 }
 
-                if (do_grads) {
-                    // POLYNOMIALS
-                    e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
+                // Check if this pair needs to use ttm or MB-nrg
+                auto it = m2 < m1 ? std::find(buck_pairs_.begin(), buck_pairs_.end(), std::make_pair(m2,m1)) : std::find(buck_pairs_.begin(), buck_pairs_.end(), std::make_pair(m1,m2));
+                if (it == buck_pairs_.end()) {
+                    if (do_grads) {
+                        // POLYNOMIALS
+                        e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
 
-                    // DISPERSION
-                    //                    edisp_pool[rank] +=
-                    //                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2,
-                    // cutoff2b_, use_pbc_);
-                    // Update gradients in system
-                    size_t i0 = nd_tot * 2;
-                    for (size_t k = 0; k < nd; k++) {
-                        // Monomer 1
-                        for (size_t j = 0; j < 3 * nat_[dimers[i0 + 2 * k]]; j++) {
-                            grad_pool[rank][3 * first_index_[dimers[i0 + 2 * k]] + j] +=
-                                grad1[k * 3 * nat_[dimers[i0 + 2 * k]] + j];
+                        // Update gradients in system
+                        size_t i0 = nd_tot * 2;
+                        for (size_t k = 0; k < nd; k++) {
+                            // Monomer 1
+                            for (size_t j = 0; j < 3 * nat_[dimers[i0 + 2 * k]]; j++) {
+                                grad_pool[rank][3 * first_index_[dimers[i0 + 2 * k]] + j] +=
+                                    grad1[k * 3 * nat_[dimers[i0 + 2 * k]] + j];
+                            }
+                            // Monomer 2
+                            for (size_t j = 0; j < 3 * nat_[dimers[i0 + 2 * k + 1]]; j++) {
+                                grad_pool[rank][3 * first_index_[dimers[i0 + 2 * k + 1]] + j] +=
+                                    grad2[k * 3 * nat_[dimers[i0 + 2 * k + 1]] + j];
+                            }
                         }
-                        // Monomer 2
-                        for (size_t j = 0; j < 3 * nat_[dimers[i0 + 2 * k + 1]]; j++) {
-                            grad_pool[rank][3 * first_index_[dimers[i0 + 2 * k + 1]] + j] +=
-                                grad2[k * 3 * nat_[dimers[i0 + 2 * k + 1]] + j];
-                        }
+                    } else {
+                        e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
                     }
-                } else {
-                    // POLYNOMIALS
-                    e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
-                    // DISPERSION
-                    //                    edisp_pool[rank] +=
-                    //                        disp::GetDispersion(m1, m2, nd, do_grads, xyz1, xyz2, grad1, grad2,
-                    // cutoff2b_, use_pbc_);
                 }
 
                 // Update loop variables and clear other temporary variable
@@ -1070,7 +1074,6 @@ double System::Get2B(bool do_grads) {
     // Condensate energy
     for (int i = 0; i < num_threads; i++) {
         e2b_t += e2b_pool[i];
-        edisp_t += edisp_pool[i];
     }
 
 #ifdef DEBUG
@@ -1480,6 +1483,27 @@ double System::Dispersion(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+double System::Buckingham(bool do_grads) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Buckingham Energy calculation not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+
+    SetPBC(box_);
+
+    energy_ = GetBuckingham(do_grads);
+
+    return energy_;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 double System::Electrostatics(bool do_grads) {
     // Check if system has been initialized
     // If not, throw exception
@@ -1546,6 +1570,33 @@ double System::GetDispersion(bool do_grads) {
     dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersion(real_grad);
+
+    count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            grad_[first_index_[i] * 3 + j] += real_grad[count + j];
+        }
+        count += 3 * nat_[i];
+    }
+    return e;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+double System::GetBuckingham(bool do_grads) {
+    std::vector<double> xyz_real(3 * numat_);
+
+    size_t count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i] * 3 + j];
+        }
+        count += 3 * nat_[i];
+    }
+
+    buckinghamE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    std::vector<double> real_grad(3 * numat_, 0.0);
+    double e = buckinghamE_.GetRepulsion(real_grad);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {
