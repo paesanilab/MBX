@@ -58,12 +58,13 @@ class Buckingham {
     void Initialize(const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count, 
-                    const std::vector<std::pair<std::string,std::string> > &buck_pairs, 
                     const bool do_grads, const std::vector<double> &box);
 
     double GetRepulsion(std::vector<double> &grad);
 
-    void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
+    void SetNewParameters(const std::vector<double> &xyz, 
+                          const std::vector<std::pair<std::string,std::string> > &buck_pairs, 
+                          bool do_grads, const double cutoff,
                           const std::vector<double> &box);
 
     /**

@@ -39,7 +39,6 @@ namespace buck {
 void Buckingham::Initialize(const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                            const std::vector<std::pair<std::string,std::string> > &buck_pairs, 
                             const bool do_grads = true, const std::vector<double> &box = {}) {
     sys_xyz_ = sys_xyz;
     mon_id_ = mon_id;
@@ -49,7 +48,6 @@ void Buckingham::Initialize(const std::vector<double> &sys_xyz,
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     use_pbc_ = box.size();
-    buck_pairs_ = buck_pairs;
     
 
     natoms_ = sys_xyz_.size() / 3;
@@ -61,7 +59,9 @@ void Buckingham::Initialize(const std::vector<double> &sys_xyz,
     ReorderData();
 }
 
-void Buckingham::SetNewParameters(const std::vector<double> &xyz, bool do_grads = true, const double cutoff = 100.0,
+void Buckingham::SetNewParameters(const std::vector<double> &xyz, 
+                                  const std::vector<std::pair<std::string,std::string> > &buck_pairs, 
+                                  bool do_grads = true, const double cutoff = 100.0, 
                                   const std::vector<double> &box = {}) {
     sys_xyz_ = xyz;
     box_ = box;
@@ -69,6 +69,7 @@ void Buckingham::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     use_pbc_ = box.size();
     do_grads_ = do_grads;
     cutoff_ = cutoff;
+    buck_pairs_ = buck_pairs;
     std::fill(grad_.begin(), grad_.end(), 0.0);
 
     ReorderData();
@@ -208,6 +209,8 @@ void Buckingham::CalculateRepulsion() {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
+
+    std::cout << "Buckingham after monomers is: " << rep_energy_ << std::endl;
 
     // Sites corresponding to different monomers
     // Declaring first indexes

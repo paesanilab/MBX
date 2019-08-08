@@ -517,6 +517,7 @@ void System::Initialize() {
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
+    buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, true, box_);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -1594,7 +1595,7 @@ double System::GetBuckingham(bool do_grads) {
         count += 3 * nat_[i];
     }
 
-    buckinghamE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = buckinghamE_.GetRepulsion(real_grad);
 

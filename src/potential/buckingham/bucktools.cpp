@@ -157,8 +157,8 @@ void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         nt2 = 2;
 
         // Fill in (in order) the C6 and d6 coefficients
-        a.push_back(3.488640000000000e+02);  // kcal/mol * A^(-6) F -- O
-        a.push_back(1.286780000000000e+02);  // kcal/mol * A^(-6) F -- H
+        a.push_back(35920.3);  // kcal/mol * A^(-6) F -- O
+        a.push_back(800.553);  // kcal/mol * A^(-6) F -- H
 
         b.push_back(3.586190000000000e+00);  // A^(-1)
         b.push_back(2.697680000000000e+00);  // A^(-1)
