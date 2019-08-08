@@ -210,7 +210,6 @@ void Buckingham::CalculateRepulsion() {
         fi_crd += nmon * ns * 3;
     }
 
-    std::cout << "Buckingham after monomers is: " << rep_energy_ << std::endl;
 
     // Sites corresponding to different monomers
     // Declaring first indexes
