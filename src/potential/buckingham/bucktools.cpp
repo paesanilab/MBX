@@ -95,16 +95,17 @@ double Repulsion(const double a, const double b, const double* p1, const double*
             if (do_grads) {
                 // TODO check that this is correct and gradients are properly calculated
                 // in switch area
-                const double grad = ttsw * (b * inv_r * fac) - ttsw_grad * fac ;
+                // Complciated due to the small energy/grad in this area.
+                const double grad = ttsw * (b * inv_r * fac) - ttsw_grad * fac / r ;
 
-                g1[0] += dx * grad;
-                g2[nv] -= dx * grad;
+                g1[0] -= dx * grad;
+                g2[nv] += dx * grad;
 
-                g1[1] += dy * grad;
-                g2[nmon2 + nv] -= dy * grad;
+                g1[1] -= dy * grad;
+                g2[nmon2 + nv] += dy * grad;
 
-                g1[2] += dz * grad;
-                g2[nmon22 + nv] -= dz * grad;
+                g1[2] -= dz * grad;
+                g2[nmon22 + nv] += dz * grad;
             }
         }
     }

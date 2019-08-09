@@ -13,8 +13,8 @@
 
 #include "bblock/system.h"
 
-//#define NUMGRADS
-//#define PRINT_GRADS
+#define NUMGRADS
+#define PRINT_GRADS
 
 namespace {
 
