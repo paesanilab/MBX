@@ -182,6 +182,16 @@ void Dispersion::CalculateDispersion() {
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
 
+        // For parallel region
+        std::vector<std::vector<double> > phi_pool;
+        std::vector<std::vector<double> > grad_pool;
+        std::vector<double> energy_pool(nthreads,0.0);
+
+
+        for (size_t i = 0; i < nthreads; i++) {
+            phi_pool.push_back(std::vector<double>(nmon * ns,0.0));
+            grad_pool.push_back(std::vector<double>(nmon * ns * 3,0.0));
+        }
         // Loop over each pair of sites
         for (size_t i = 0; i < ns - 1; i++) {
             size_t inmon = i * nmon;
@@ -196,24 +206,45 @@ void Dispersion::CalculateDispersion() {
                 double c6i = c6_long_range_[fi_sites + i * nmon];
                 double c6j = c6_long_range_[fi_sites + j * nmon];
                 GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
                 for (size_t m = 0; m < nmon; m++) {
+                    int rank = 0;
+#ifdef _OPENMP
+                    rank = omp_get_thread_num();
+#endif
                     double p1[3], g1[3];
                     double phi_i = 0.0;
                     p1[0] = xyz_[fi_crd + inmon3 + m];
                     p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
                     p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                     std::fill(g1, g1 + 3, 0.0);
-                    disp_energy_ += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_.data() + fi_crd, phi_i,
-                                          phi_.data() + fi_sites, nmon, nmon, m, m + 1, i, j, disp_scale_factor,
+                    energy_pool[rank] += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
+                                          phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor,
                                           do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_);
 
-                    grad_[fi_crd + inmon3 + m] += g1[0];
-                    grad_[fi_crd + inmon3 + nmon + m] += g1[1];
-                    grad_[fi_crd + inmon3 + nmon2 + m] += g1[2];
-                    phi_[fi_sites + inmon + m] += phi_i;
+                    grad_pool[rank][inmon3 + m] += g1[0];
+                    grad_pool[rank][inmon3 + nmon + m] += g1[1];
+                    grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
+                    phi_pool[rank][inmon + m] += phi_i;
                 }
             }
         }
+
+        // Compress data in phi and grad
+        for (size_t rank = 0; rank < nthreads; rank++) {
+            size_t kend = phi_pool[rank].size();
+            for (size_t k = 0; k < kend; k++) {
+                phi_[fi_sites + k] += phi_pool[rank][k];
+            }
+            kend = grad_pool[rank].size();
+            for (size_t k = 0; k < kend; k++) {
+                grad_[fi_crd + k] += grad_pool[rank][k];
+            }
+            disp_energy_ += energy_pool[rank];
+        }
+
         fi_mon += nmon;
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
@@ -247,7 +278,28 @@ void Dispersion::CalculateDispersion() {
             // If so, same monomer won't be done, since it has been done in
             // previous loop.
             bool same = (mt1 == mt2);
+
+            // For parallel region
+            std::vector<std::vector<double> > phi1_pool;
+            std::vector<std::vector<double> > phi2_pool;
+            std::vector<std::vector<double> > grad1_pool;
+            std::vector<std::vector<double> > grad2_pool;
+            std::vector<double> energy_pool(nthreads,0.0);
+
+            for (size_t i = 0; i < nthreads; i++) {
+                phi1_pool.push_back(std::vector<double>(nmon1 * ns1,0.0));
+                phi2_pool.push_back(std::vector<double>(nmon2 * ns2,0.0));
+                grad1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3,0.0));
+                grad2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3,0.0));
+            }
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
             for (size_t m1 = 0; m1 < nmon1; m1++) {
+                int rank = 0;
+#ifdef _OPENMP
+                rank = omp_get_thread_num();
+#endif
                 size_t m2init = same ? m1 + 1 : 0;
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
@@ -266,17 +318,40 @@ void Dispersion::CalculateDispersion() {
                         double c6j = c6_long_range_[fi_sites2 + j * nmon2];
                         double c6, d6;
                         GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6);
-                        disp_energy_ +=
+                        energy_pool[rank] +=
                             disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
-                                  grad_.data() + fi_crd2, phi_i, phi_.data() + fi_sites2, nmon1, nmon2, m2init, nmon2,
+                                  grad2_pool[rank].data(), phi_i, phi2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
                                   i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_);
                     }
-                    grad_[fi_crd1 + inmon13 + m1] += g1[0];
-                    grad_[fi_crd1 + inmon13 + nmon1 + m1] += g1[1];
-                    grad_[fi_crd1 + inmon13 + nmon12 + m1] += g1[2];
-                    phi_[fi_sites1 + inmon1 + m1] += phi_i;
+                    grad1_pool[rank][inmon13 + m1] += g1[0];
+                    grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
+                    grad1_pool[rank][inmon13 + nmon12 + m1] += g1[2];
+                    phi1_pool[rank][inmon1 + m1] += phi_i;
                 }
             }
+
+            // Compress data in Efq and phi
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                size_t kend1 = grad1_pool[rank].size();
+                size_t kend2 = grad2_pool[rank].size();
+                for (size_t k = 0; k < kend1; k++) {
+                    grad_[fi_crd1 + k] += grad1_pool[rank][k];
+                }
+                for (size_t k = 0; k < kend2; k++) {
+                    grad_[fi_crd2 + k] += grad2_pool[rank][k];
+                }
+                kend1 = phi1_pool[rank].size();
+                kend2 = phi2_pool[rank].size();
+                for (size_t k = 0; k < kend1; k++) {
+                    phi_[fi_sites1 + k] += phi1_pool[rank][k];
+                }
+                for (size_t k = 0; k < kend2; k++) {
+                    phi_[fi_sites2 + k] += phi2_pool[rank][k];
+                }
+                disp_energy_ += energy_pool[rank]; 
+            }
+
+
             // Update first indexes
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
