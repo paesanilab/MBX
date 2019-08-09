@@ -1,3 +1,3 @@
 #!/bin/bash 
 
-../../../../install/bin/single_point 512w.nrg 
+../../../../install/bin/single_point 512w.nrg 30
