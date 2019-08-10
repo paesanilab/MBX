@@ -164,64 +164,72 @@ void Buckingham::CalculateRepulsion() {
 
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+
         size_t ns = num_atoms_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
 
-        // Obtain excluded pairs for monomer type mt
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        // Check if buckingham needs to be done. Otherwise, skip.
+        double dummy_a;
+        double dummy_b;
+        bool do_buck = GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, buck_pairs_, dummy_a, dummy_b);
+        if (do_buck) {
 
-        std::vector<std::vector<double> > grad_pool(nthreads,std::vector<double>(nmon * ns * 3,0.0));
-        std::vector<double> energy_pool(nthreads,0.0);
-
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t j = i + 1; j < ns; j++) {
-                // Continue only if i and j are not bonded
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                bool is_excluded = (is12 || is13 || is14) ? true : false;
-
-                if (is_excluded) continue;
-
-                double a, b;
-                GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, buck_pairs_, a, b);
-
-#ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic)
-#endif
-                for (size_t m = 0; m < nmon; m++) {
-                    int rank = 0;
-#ifdef _OPENMP
-                    rank = omp_get_thread_num();
-#endif
-                    double p1[3], g1[3];
-                    p1[0] = xyz_[fi_crd + inmon3 + m];
-                    p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
-                    p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
-                    std::fill(g1, g1 + 3, 0.0);
-                    energy_pool[rank] += Repulsion(a, b, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), 
-                                          nmon, nmon, m, m + 1, i, j, 
-                                          do_grads_, cutoff_, box_, box_inverse_);
-
-                    grad_pool[rank][inmon3 + m] += g1[0];
-                    grad_pool[rank][inmon3 + nmon + m] += g1[1];
-                    grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
+            // Obtain excluded pairs for monomer type mt
+            systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+    
+            std::vector<std::vector<double> > grad_pool(nthreads,std::vector<double>(nmon * ns * 3,0.0));
+            std::vector<double> energy_pool(nthreads,0.0);
+    
+            // Loop over each pair of sites
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = inmon * 3;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Continue only if i and j are not bonded
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    bool is_excluded = (is12 || is13 || is14) ? true : false;
+    
+                    if (is_excluded) continue;
+    
+                    double a, b;
+                    GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, buck_pairs_, a, b);
+    
+    #ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic)
+    #endif
+                    for (size_t m = 0; m < nmon; m++) {
+                        int rank = 0;
+    #ifdef _OPENMP
+                        rank = omp_get_thread_num();
+    #endif
+                        double p1[3], g1[3];
+                        p1[0] = xyz_[fi_crd + inmon3 + m];
+                        p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
+                        p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
+                        std::fill(g1, g1 + 3, 0.0);
+                        energy_pool[rank] += Repulsion(a, b, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), 
+                                              nmon, nmon, m, m + 1, i, j, 
+                                              do_grads_, cutoff_, box_, box_inverse_);
+    
+                        grad_pool[rank][inmon3 + m] += g1[0];
+                        grad_pool[rank][inmon3 + nmon + m] += g1[1];
+                        grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
+                    }
                 }
             }
-        }
-
-        // Compress data in phi and grad
-        for (size_t rank = 0; rank < nthreads; rank++) {
-            size_t kend = grad_pool[rank].size();
-            for (size_t k = 0; k < kend; k++) {
-                grad_[fi_crd + k] += grad_pool[rank][k];
+    
+            // Compress data in phi and grad
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                size_t kend = grad_pool[rank].size();
+                for (size_t k = 0; k < kend; k++) {
+                    grad_[fi_crd + k] += grad_pool[rank][k];
+                }
+                rep_energy_ += energy_pool[rank];
             }
-            rep_energy_ += energy_pool[rank];
-        }
+        } //if do_buck
 
         fi_mon += nmon;
         fi_sites += nmon * ns;
@@ -250,61 +258,68 @@ void Buckingham::CalculateRepulsion() {
         // For each monomer type mt1, loop over all the other monomer types
         // mt2 >= mt1 to avoid double counting
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
 
-            // Check if monomer types 1 and 2 are the same
-            // If so, same monomer won't be done, since it has been done in
-            // previous loop.
-            bool same = (mt1 == mt2);
+            double dummy_a;
+            double dummy_b;
+            bool do_buck = GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, buck_pairs_, dummy_a, dummy_b);
+            if (do_buck) {
 
-            std::vector<std::vector<double> > grad1_pool(nthreads, std::vector<double>(nmon1 * ns1 * 3,0.0));
-            std::vector<std::vector<double> > grad2_pool(nthreads, std::vector<double>(nmon2 * ns2 * 3,0.0));
-            std::vector<double> energy_pool(nthreads,0.0);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic)
-#endif
-            for (size_t m1 = 0; m1 < nmon1; m1++) {
-                int rank = 0;
-#ifdef _OPENMP
-                rank = omp_get_thread_num();
-#endif
-                size_t m2init = same ? m1 + 1 : 0;
-                for (size_t i = 0; i < ns1; i++) {
-                    size_t inmon1 = i * nmon1;
-                    size_t inmon13 = inmon1 * 3;
-                    std::vector<double> xyz_sitei(3);
-                    std::vector<double> g1(3, 0.0);
-                    xyz_sitei[0] = xyz_[fi_crd1 + inmon13 + m1];
-                    xyz_sitei[1] = xyz_[fi_crd1 + inmon13 + nmon1 + m1];
-                    xyz_sitei[2] = xyz_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
-
-                    for (size_t j = 0; j < ns2; j++) {
-                        double a, b;
-                        GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs_, a, b);
-                        energy_pool[rank] +=
-                            Repulsion(a, b, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
-                                  grad2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
-                                  i, j, do_grads_, cutoff_, box_, box_inverse_);
+                // Check if monomer types 1 and 2 are the same
+                // If so, same monomer won't be done, since it has been done in
+                // previous loop.
+                bool same = (mt1 == mt2);
+    
+                std::vector<std::vector<double> > grad1_pool(nthreads, std::vector<double>(nmon1 * ns1 * 3,0.0));
+                std::vector<std::vector<double> > grad2_pool(nthreads, std::vector<double>(nmon2 * ns2 * 3,0.0));
+                std::vector<double> energy_pool(nthreads,0.0);
+    #ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic)
+    #endif
+                for (size_t m1 = 0; m1 < nmon1; m1++) {
+                    int rank = 0;
+    #ifdef _OPENMP
+                    rank = omp_get_thread_num();
+    #endif
+                    size_t m2init = same ? m1 + 1 : 0;
+                    for (size_t i = 0; i < ns1; i++) {
+                        size_t inmon1 = i * nmon1;
+                        size_t inmon13 = inmon1 * 3;
+                        std::vector<double> xyz_sitei(3);
+                        std::vector<double> g1(3, 0.0);
+                        xyz_sitei[0] = xyz_[fi_crd1 + inmon13 + m1];
+                        xyz_sitei[1] = xyz_[fi_crd1 + inmon13 + nmon1 + m1];
+                        xyz_sitei[2] = xyz_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
+    
+                        for (size_t j = 0; j < ns2; j++) {
+                            double a, b;
+                            GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs_, a, b);
+                            energy_pool[rank] +=
+                                Repulsion(a, b, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
+                                      grad2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
+                                      i, j, do_grads_, cutoff_, box_, box_inverse_);
+                        }
+                        grad1_pool[rank][inmon13 + m1] += g1[0];
+                        grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
+                        grad1_pool[rank][inmon13 + nmon12 + m1] += g1[2];
                     }
-                    grad1_pool[rank][inmon13 + m1] += g1[0];
-                    grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
-                    grad1_pool[rank][inmon13 + nmon12 + m1] += g1[2];
                 }
-            }
-
-            // Compress data in Efq and phi
-            for (size_t rank = 0; rank < nthreads; rank++) {
-                size_t kend1 = grad1_pool[rank].size();
-                size_t kend2 = grad2_pool[rank].size();
-                for (size_t k = 0; k < kend1; k++) {
-                    grad_[fi_crd1 + k] += grad1_pool[rank][k];
+    
+                // Compress data in Efq and phi
+                for (size_t rank = 0; rank < nthreads; rank++) {
+                    size_t kend1 = grad1_pool[rank].size();
+                    size_t kend2 = grad2_pool[rank].size();
+                    for (size_t k = 0; k < kend1; k++) {
+                        grad_[fi_crd1 + k] += grad1_pool[rank][k];
+                    }
+                    for (size_t k = 0; k < kend2; k++) {
+                        grad_[fi_crd2 + k] += grad2_pool[rank][k];
+                    }
+                    rep_energy_ += energy_pool[rank];
                 }
-                for (size_t k = 0; k < kend2; k++) {
-                    grad_[fi_crd2 + k] += grad2_pool[rank][k];
-                }
-                rep_energy_ += energy_pool[rank];
-            }
+            } // if do_buck
             // Update first indexes
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;

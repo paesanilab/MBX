@@ -50,7 +50,7 @@ double Repulsion(const double a, const double b, const double* p1, const double*
              bool do_grads, const double cutoff, 
              const std::vector<double>& box, const std::vector<double>& box_inverse);
 
-void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, std::vector<std::pair<std::string,std::string> > buck_pairs, double& out_a, double& out_b);
+bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, std::vector<std::pair<std::string,std::string> > buck_pairs, double& out_a, double& out_b);
 
 }  // namespace buck
 

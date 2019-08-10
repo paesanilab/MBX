@@ -124,7 +124,7 @@ double Repulsion(const double a, const double b, const double* p1, const double*
     return repulsion_energy;
 }
 
-void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, std::vector<std::pair<std::string,std::string> > buck_pairs, double& out_a, double& out_b) {
+bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, std::vector<std::pair<std::string,std::string> > buck_pairs, double& out_a, double& out_b) {
     // Order the two monomer names and corresponding xyz
     if (mon_id2 < mon_id1) {
         std::string tmp = mon_id1;
@@ -138,7 +138,7 @@ void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
     if (std::find(buck_pairs.begin(), buck_pairs.end(), std::make_pair(mon_id1,mon_id2)) == buck_pairs.end()) {
         out_a = 0.0;
         out_b = 0.0;
-        return;
+        return false;
     }
 
     std::vector<double> a, b;
@@ -549,7 +549,7 @@ void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
     } else {
         out_a = 0.0;
         out_b = 0.0;
-        return;
+        return false;
     }
 
     i = types1[index1];
@@ -557,6 +557,8 @@ void GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
     out_a = a[i * nt2 + j];
     out_b = b[i * nt2 + j];
+    
+    return true;
 }
 
 }  // namespace buck
