@@ -170,9 +170,6 @@ void Dispersion::CalculateDispersion() {
     excluded_set_type exc13;
     excluded_set_type exc14;
 
-    auto box_inverse = std::vector<double>();
-    // auto box_inverse = box_.size() ? InvertUnitCell(box_) : std::vector<double>();
-
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = num_atoms_[fi_mon];
