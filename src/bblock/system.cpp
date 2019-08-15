@@ -971,7 +971,7 @@ double System::Get2B(bool do_grads) {
             bool same = (mt1 == mt2);
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(nonmonotonic:dynamic) private(rank)
+#pragma omp parallel for schedule(dynamic) private(rank)
 #endif  // _OPENMP
             for (size_t m1 = 0; m1 < nmon1; m1++) {
 #ifdef _OPENMP
@@ -1115,7 +1115,7 @@ double System::Get3B(bool do_grads) {
     std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
 
 #ifdef _OPENMP
-#pragma omp parallel for schedule(nonmonotonic:dynamic) private(rank)
+#pragma omp parallel for schedule(dynamic) private(rank)
 #endif  // _OPENMP
     for (size_t istart = 0; istart < nummon_; istart += step) {
 #ifdef _OPENMP
