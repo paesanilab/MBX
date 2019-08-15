@@ -735,6 +735,12 @@ class System {
     std::vector<double> xyz_;
 
     /**
+     * Vector that stores the coordinates of all real sites in the internal order of
+     * the system
+     */
+    std::vector<double> real_xyz_;
+
+    /**
      * Vector that stores the charges of all sites in the internal order of
      * the system
      */
