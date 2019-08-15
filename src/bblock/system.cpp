@@ -383,15 +383,11 @@ void System::SetXyz(std::vector<double> xyz) {
 
     // Copy each coordinate in the apropriate place in the internal
     // xyz vector
-    size_t fi_ats = 0;
     for (size_t i = 0; i < sites_.size(); i++) {
         size_t ini = 3 * initial_order_[i].second;
         size_t fin = ini + 3 * sites_[i];
-        size_t fin_at = ini + 3 * nat_[i];
         size_t ini_new = 3 * first_index_[i];
         std::copy(xyz.begin() + ini, xyz.begin() + fin, xyz_.begin() + ini_new);
-        std::copy(xyz.begin() + ini, xyz.begin() + fin_at, real_xyz_.begin() + fi_ats);
-        fi_ats += 3 * nat_[i];
     }
 }
 
@@ -405,14 +401,11 @@ void System::SetRealXyz(std::vector<double> xyz) {
 
     // Copy each coordinate in the apropriate place in the internal
     // xyz vector
-    size_t fi_ats = 0;
     for (size_t i = 0; i < nat_.size(); i++) {
         size_t ini = 3 * initial_order_realSites_[i].second;
         size_t fin = ini + 3 * nat_[i];
         size_t ini_new = 3 * first_index_[i];
         std::copy(xyz.begin() + ini, xyz.begin() + fin, xyz_.begin() + ini_new);
-        std::copy(xyz.begin() + ini, xyz.begin() + fin, real_xyz_.begin() + fi_ats);
-        fi_ats += 3 * nat_[i];
     }
 }
 
@@ -494,7 +487,6 @@ void System::Initialize() {
     // Setting the number of molecules and number of monomers
     nummol = molecules_.size();
     nummon_ = monomers_.size();
-
 
     ////////////////////
     // ELECTROSTATICS //
@@ -634,11 +626,8 @@ void System::AddMonomerInfo() {
     // Rearranging coordinates to account for virt sites
     xyz_ = std::vector<double>(3 * numsites_, 0.0);
     atoms_ = std::vector<std::string>(numsites_, "virt");
-    // Initialize real_xyz vector
-    real_xyz_ = std::vector<double>(numat_*3,0.0);
 
     size_t count = 0;
-    size_t count_at = 0;
     first_index_.clear();
     std::vector<size_t> tmpsites;
     std::vector<size_t> tmpnats;
@@ -649,14 +638,12 @@ void System::AddMonomerInfo() {
         size_t k = initial_order_[i].first;
         // Positions
         std::copy(xyz.begin() + 3 * fi_at[k], xyz.begin() + 3 * (fi_at[k] + nat_[k]), xyz_.begin() + 3 * count);
-        std::copy(xyz.begin() + 3 * fi_at[k], xyz.begin() + 3 * (fi_at[k] + nat_[k]), real_xyz_.begin() + 3 * count_at);
         // Atom names
         std::copy(atoms.begin() + fi_at[k], atoms.begin() + fi_at[k] + nat_[k], atoms_.begin() + count);
         // Adding the first index of sites
         first_index_.push_back(count);
         // Update count
         count += sites_[k];
-        count_at += nat_[k];
         // Updating the sites and nat vectors
         tmpsites.push_back(sites_[k]);
         tmpnats.push_back(nat_[k]);
@@ -754,7 +741,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     double edisp = GetDispersion(do_grads);
-    
+
 #ifdef TIMING
     auto t2b = std::chrono::high_resolution_clock::now();
 #endif
@@ -911,8 +898,10 @@ double System::Get2B(bool do_grads) {
 
     // 2B ENERGY
     double e2b_t = 0.0;
+    double edisp_t = 0.0;
 
     // Variables needed for OMP
+    size_t step = 1;
     int num_threads = 1;
 
 #ifdef _OPENMP
@@ -923,6 +912,7 @@ double System::Get2B(bool do_grads) {
     }
     // Define variables to be used later in the condensation of data
     int grad_step = 3 * numsites_ / num_threads;
+    step = std::max(size_t(1), std::min(nummon_ / num_threads, step));
 #endif  // _OPENMP
 
     // Variables to be used for both serial and parallel implementation
@@ -932,138 +922,180 @@ double System::Get2B(bool do_grads) {
 
     // Vector pools that allow compatibility between
     // serial and parallel implementation
-    std::vector<double> energy_pool(num_threads,0.0);
+    std::vector<double> e2b_pool(num_threads, 0.0);
     std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
-
-    // Sites corresponding to different monomers
-    // Declaring first indexes
-    size_t fi_mon1 = 0;
-    size_t fi_ats1 = 0;
-    size_t fi_mon2 = 0;
-    size_t fi_ats2 = 0;
-    size_t fi_crd1 = 0;
-    size_t fi_crd2 = 0;
-    size_t fi_realcrd1 = 0;
-    size_t fi_realcrd2 = 0;
-    
-
-    // Loop over all monomer types
-    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        std::string monid1 = monomers_[fi_mon1];
-        size_t nat1 = nat_[fi_mon1];
-        size_t ns1 = sites_[fi_mon1];
-        size_t nmon1 = mon_type_count_[mt1].second;
-        size_t nmon12 = nmon1 * 2;
-        fi_mon2 = fi_mon1;
-        fi_ats2 = fi_ats1;
-        fi_crd2 = fi_crd1;
-        fi_realcrd2 = fi_realcrd1;
-
-        // For each monomer type mt1, loop over all the other monomer types
-        // mt2 >= mt1 to avoid double counting
-        for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-            std::string monid2 = monomers_[fi_mon2];
-            size_t nat2 = nat_[fi_mon2];
-            size_t ns2 = sites_[fi_mon2];
-            size_t nmon2 = mon_type_count_[mt2].second;
-
-            // Check if monomer types 1 and 2 are the same
-            bool same = (mt1 == mt2);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) private(rank)
 #endif  // _OPENMP
-            for (size_t m1 = 0; m1 < nmon1; m1++) {
+    for (size_t istart = 0; istart < nummon_; istart += step) {
 #ifdef _OPENMP
-                rank = omp_get_thread_num();
+        rank = omp_get_thread_num();
 #endif  // _OPENMP
-                size_t m2init = same ? m1 + 1 : 0;
-                size_t num_mon2_to_check = nmon2 - m2init;
-                // Get the pairs of xyz needed to evaluate poly
-                std::vector<double> xyz2_all(real_xyz_.begin() + fi_realcrd2 + m2init * nat2 * 3,
-                                             real_xyz_.begin() + fi_realcrd2 + nmon2 * nat2 * 3);
-                std::vector<size_t> fi_at(num_mon2_to_check);
-                for (size_t i = 0; i < num_mon2_to_check; i++) {
-                    fi_at[i] = i*nat2;
+
+        // We loop over all the monomers, and we get all the dimers
+        // in which this monomer is involved
+
+        // In this function, istart and iend refer to the first
+        // monomer of the dimer. The second one will be found from istart+1
+        // to the total number of monomers
+
+        // This iend definition is making sure that we don't go passed
+        // the number of monomers
+        size_t iend = std::min(istart + step, nummon_);
+
+// Adding corresponding clusters depending on if we are within
+// OPENMP or not
+
+// This call will get the dimers that have as first index a monomer
+// with index between isatrt and iend (iend not included)
+#ifdef _OPENMP
+        std::vector<size_t> dimers = AddClustersParallel(2, cutoff2b_, istart, iend);
+#else
+        AddClusters(2, cutoff2b_, istart, iend);
+        std::vector<size_t> dimers = dimers_;
+#endif
+
+        // In order to continue, we need at least one dimer
+        // If the size of the dimer vector is not at least 2, means
+        // that we don't have any dimer
+        if (dimers.size() < 2) {
+            continue;
+        }
+
+        // The way the XYZ are set, they include the virtual site,
+        // but we don't need the electrostatic virtual site for teh 2B
+        // polynomials. Thus, we need to create a pair of vectors with the right
+        // coordinates to pass to polynomials and dispersion
+        std::vector<double> xyz1;
+        std::vector<double> xyz2;
+        std::vector<double> grad1;
+        std::vector<double> grad2;
+
+        // Define the two monomer ids that we are currently looking at
+        std::string m1 = monomers_[dimers[0]];
+        std::string m2 = monomers_[dimers[1]];
+
+        // Initialize the iteration variables
+        size_t i = 0;
+        size_t nd = 0;
+        size_t nd_tot = 0;
+
+        // Loop over all the dimers
+        while (2 * nd_tot < dimers.size()) {
+            i = (nd_tot + nd) * 2;
+            // Check if we are still in the same type of pair
+            // We will pas the entire batch in the 2b calculator, but they need
+            // to be the same pair (e.g., h2o-h2o, h2o-i, cl-na...)
+            if (monomers_[dimers[i]] == m1 && monomers_[dimers[i + 1]] == m2) {
+                // Push the coordinates
+                for (size_t j = 0; j < 3 * nat_[dimers[i]]; j++) {
+                    xyz1.push_back(xyz_[3 * first_index_[dimers[i]] + j]);
+                    grad1.push_back(0.0);
                 }
+                for (size_t j = 0; j < 3 * nat_[dimers[i + 1]]; j++) {
+                    xyz2.push_back(xyz_[3 * first_index_[dimers[i + 1]] + j]);
+                    grad2.push_back(0.0);
+                }
+                nd++;
+            }
 
-                std::vector<double> point(3);
-                point[0] = real_xyz_[fi_realcrd1 + m1*nat1*3 + 0];
-                point[1] = real_xyz_[fi_realcrd1 + m1*nat1*3 + 1];
-                point[2] = real_xyz_[fi_realcrd1 + m1*nat1*3 + 2];
-
-                std::vector<size_t> dimers, trimers;
-                systools::GetCloseNeighbors(2, point, xyz2_all, fi_at, box_.size(), box_, cutoff2b_, dimers, trimers);
-                size_t num_dimers = dimers.size();
-                
-                std::vector<double> xyz1(num_dimers*nat1*3);
-                std::vector<double> grad1(num_dimers*nat1*3, 0.0);
-                std::vector<double> xyz2(num_dimers*nat2*3);
-                std::vector<double> grad2(num_dimers*nat2*3, 0.0);
-
-                for (size_t i = 0; i < num_dimers; i++) {
-                    std::copy(real_xyz_.begin() + fi_realcrd1 + m1*nat1*3,
-                              real_xyz_.begin() + fi_realcrd1 + (m1+1)*nat1*3,
-                              xyz1.begin() + nat1*3*i);
-                    std::copy(xyz2_all.begin() + dimers[i]*nat2*3,
-                              xyz2_all.begin() + (dimers[i]+1)*nat2*3,
-                              xyz2.begin() + nat2*3*i);
+            // If one of the monomers is different as the previous one
+            // since dimers are also ordered, means that no more dimers of that
+            // type exist. Thus, do calculation, update m? and clear xyz
+            if (monomers_[dimers[i]] != m1 || monomers_[dimers[i + 1]] != m2 || i == dimers.size() - 2 ||
+                nd == maxNDimEval_) {
+                if (nd == 0) {
+                    xyz1.clear();
+                    xyz2.clear();
+                    grad1.clear();
+                    grad2.clear();
+                    m1 = monomers_[dimers[i]];
+                    m2 = monomers_[dimers[i + 1]];
+                    continue;
                 }
 
                 // Fix dimer positions if pbc
                 if (use_pbc_) {
-                    systools::GetCloseDimerImage(box_, nat1, nat2, num_dimers,
+                    systools::GetCloseDimerImage(box_, nat_[dimers[nd_tot * 2]], nat_[dimers[nd_tot * 2 + 1]], nd,
                                                  xyz1.data(), xyz2.data());
                 }
 
                 // Check if this pair needs to use ttm or MB-nrg
-                auto it = monid2 < monid1 ? std::find(buck_pairs_.begin(), buck_pairs_.end(), std::make_pair(monid2,monid1)) : std::find(buck_pairs_.begin(), buck_pairs_.end(), std::make_pair(monid1,monid2));
+                auto it = m2 < m1 ? std::find(buck_pairs_.begin(), buck_pairs_.end(), std::make_pair(m2,m1)) : std::find(buck_pairs_.begin(), buck_pairs_.end(), std::make_pair(m1,m2));
                 if (it == buck_pairs_.end()) {
                     if (do_grads) {
                         // POLYNOMIALS
-                        energy_pool[rank] += e2b::get_2b_energy(monid1, monid2, num_dimers, xyz1, xyz2, grad1, grad2);
+                        e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
 
                         // Update gradients in system
-                        for (size_t k = 0; k < num_dimers; k++) {
+                        size_t i0 = nd_tot * 2;
+                        for (size_t k = 0; k < nd; k++) {
                             // Monomer 1
-                            for (size_t j = 0; j < 3 * nat1; j++) {
-                                grad_pool[rank][fi_crd1 + ns1*m1*3 + j] +=
-                                    grad1[k * 3 * nat1 + j];
+                            for (size_t j = 0; j < 3 * nat_[dimers[i0 + 2 * k]]; j++) {
+                                grad_pool[rank][3 * first_index_[dimers[i0 + 2 * k]] + j] +=
+                                    grad1[k * 3 * nat_[dimers[i0 + 2 * k]] + j];
                             }
                             // Monomer 2
-                            for (size_t j = 0; j < 3 * nat2; j++) {
-                                grad_pool[rank][fi_crd2 + (m2init + dimers[k])*ns2*3 + j] +=
-                                    grad2[k * 3 * nat2 + j];
+                            for (size_t j = 0; j < 3 * nat_[dimers[i0 + 2 * k + 1]]; j++) {
+                                grad_pool[rank][3 * first_index_[dimers[i0 + 2 * k + 1]] + j] +=
+                                    grad2[k * 3 * nat_[dimers[i0 + 2 * k + 1]] + j];
                             }
                         }
                     } else {
-                        energy_pool[rank] += e2b::get_2b_energy(monid1, monid2, num_dimers, xyz1, xyz2);
+                        e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2);
                     }
                 }
+
+                // Update loop variables and clear other temporary variable
+                nd_tot += nd;
+                nd = 0;
+                xyz1.clear();
+                xyz2.clear();
+                grad1.clear();
+                grad2.clear();
+                m1 = monomers_[dimers[i]];
+                m2 = monomers_[dimers[i + 1]];
             }
-
-            // Update first indexes
-            fi_mon2 += nmon2;
-            fi_ats2 += nmon2 * nat2;
-            fi_crd2 += nmon2 * ns2 * 3;
-            fi_realcrd2 += nmon2 * nat2 * 3;
         }
-        // Update first indexes
-        fi_mon1 += nmon1;
-        fi_ats1 += nmon1 * nat1;
-        fi_crd1 += nmon1 * ns1 * 3;
-        fi_realcrd1 += nmon1 * nat1 * 3;
-    }
-                
-    // Condense gradients
-    for (size_t i = 0; i < num_threads; i++) {
-        for (size_t j = 0; j < grad_.size(); j++) {
-            grad_[j] += grad_pool[i][j];
-        }
-        e2b_t += energy_pool[i];
     }
 
-    return e2b_t;
+#ifdef _OPENMP
+#pragma omp parallel private(first_grad, last_grad, rank)
+    {
+        rank = omp_get_thread_num();
+
+        first_grad = 0 + rank * grad_step;
+
+        last_grad = (rank + 1) * grad_step;
+
+        if (rank == num_threads - 1) {
+            last_grad = 3 * numsites_;
+        }
+#pragma omp barrier
+#endif
+
+        // Condensate gradients
+        for (int i = 0; i < num_threads; i++) {
+            for (size_t j = first_grad; j < last_grad; j++) {
+                grad_[j] += grad_pool[i][j];
+            }
+        }
+
+#ifdef _OPENMP
+    }  // parallel
+#endif
+
+    // Condensate energy
+    for (int i = 0; i < num_threads; i++) {
+        e2b_t += e2b_pool[i];
+    }
+
+#ifdef DEBUG
+    std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
+#endif
+
+    return e2b_t + edisp_t;
 }
 
 double System::ThreeBodyEnergy(bool do_grads) {
