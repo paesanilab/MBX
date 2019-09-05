@@ -48,9 +48,9 @@ struct poly_3b_v2x {
     static const unsigned n_vars = 36;
     static const unsigned size = 1163;
 
-    static std::vector<double> eval(const size_t nt, const double* a, const double* x);
+    static double eval(const double* a, const double* x);
 
-    static std::vector<double> eval(const size_t nt, const double* a, const double* x, double* g);
+    static double eval(const double* a, const double* x, double* g);
 };
 
 }  // namespace x2o
