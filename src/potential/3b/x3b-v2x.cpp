@@ -1395,6 +1395,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
     double dab[3 * nt], dac[3 * nt], dbc[3 * nt];
     double e = 0.0;
 
+    double t[32609];
     for (size_t i = 0; i < nt; i++) {
         for (size_t j = 0; j < 3; j++) {
             dab[3 * i + j] = w1[9 * i + j] - w2[9 * i + j];
@@ -1475,7 +1476,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
         x[34] = var(kOO, dOO, Oa, Oc);
         x[35] = var(kOO, dOO, Ob, Oc);
 
-        double e3b = poly_3b_v2x::eval(thefit, x, gg);
+        double e3b = poly_3b_v2x::eval(thefit, x, t, gg);
 
         energy[i] = e3b;
 
