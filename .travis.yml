@@ -22,7 +22,7 @@ matrix:
         - libfftw3-dev
     env:
       - CXX_COMPILER='clang++-3.6'
-      - CXX_FLAGS="-fPIC"
+      - CXX_FLAGS="-fPIC -O0"
 #      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
       - C_COMPILER='clang-3.6'
       - PYTHON_VER='3.5'
@@ -43,7 +43,7 @@ matrix:
         - libfftw3-dev
     env:
       - CXX_COMPILER='clang++-3.7'
-      - CXX_FLAGS="-fPIC"
+      - CXX_FLAGS="-fPIC -O0"
 #      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
       - C_COMPILER='clang-3.7'
       - PYTHON_VER='3.5'
