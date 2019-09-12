@@ -127,7 +127,7 @@ before_script:
     -DCMAKE_C_COMPILER=${C_COMPILER}
     -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
-    -DCMAKE_CXX_FLAGS="${CXX_FLAGS} -O0"
+    -DCMAKE_CXX_FLAGS="-O0 ${CXX_FLAGS}"
     -DUSE_OPENMP:BOOL=FALSE
   - cd build
   - travis_wait 60 make 
@@ -142,7 +142,7 @@ before_script:
     -DCMAKE_C_COMPILER=${C_COMPILER}
     -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
-    -DCMAKE_CXX_FLAGS="${CXX_FLAGS} -O0"
+    -DCMAKE_CXX_FLAGS="-O0 ${CXX_FLAGS}"
     -DUSE_OPENMP:BOOL=TRUE
   - cd build
   - travis_wait 60 make
