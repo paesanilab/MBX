@@ -26,7 +26,7 @@ matrix:
 #      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
       - C_COMPILER='clang-3.6'
       - PYTHON_VER='3.5'
-      - BUILD_TYPE='release'
+      - BUILD_TYPE='debug'
       - NAME='clang'
       - VERSION='3.6'
 
@@ -47,7 +47,7 @@ matrix:
 #      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
       - C_COMPILER='clang-3.7'
       - PYTHON_VER='3.5'
-      - BUILD_TYPE='release'
+      - BUILD_TYPE='debug'
       - NAME='clang'
       - VERSION='3.7'
 
@@ -66,7 +66,7 @@ matrix:
       - C_COMPILER='gcc-4.9'
       - CXX_FLAGS="-fPIC --coverage"
       - PYTHON_VER='3.5'
-      - BUILD_TYPE='release'
+      - BUILD_TYPE='debug'
       - NAME='gcc'
       - VERSION='4.9'
 #
@@ -84,7 +84,7 @@ matrix:
 #      - C_COMPILER='gcc-6'
 #      - CXX_FLAGS='-Ofast'
 #      - PYTHON_VER='3.5'
-#      - BUILD_TYPE='release'
+#      - BUILD_TYPE='debug'
 #      - NAME='gcc'
 #      - VERSION=6
 
@@ -126,6 +126,7 @@ before_script:
     -DCMAKE_CXX_COMPILER=${CXX_COMPILER}
     -DCMAKE_C_COMPILER=${C_COMPILER}
     -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+    -DENABLE_XHOST=OFF
     -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}
     -DCMAKE_CXX_FLAGS="-O0 ${CXX_FLAGS}"
     -DUSE_OPENMP:BOOL=FALSE
