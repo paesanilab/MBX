@@ -130,7 +130,7 @@ before_script:
     -DCMAKE_CXX_FLAGS="-O0 ${CXX_FLAGS}"
     -DUSE_OPENMP:BOOL=FALSE
   - cd build
-  - travis_wait 60 make 
+  - travis_wait 60 make -j 4
   - make install
   - cd .. 
   - mv install install_noOpenMP
@@ -145,7 +145,7 @@ before_script:
     -DCMAKE_CXX_FLAGS="-O0 ${CXX_FLAGS}"
     -DUSE_OPENMP:BOOL=TRUE
   - cd build
-  - travis_wait 60 make
+  - travis_wait 60 make -j 4
   - make install
   - cd ..
   - mv install install_OpenMP
