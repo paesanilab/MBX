@@ -67,7 +67,7 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
         h2o_ion::x2b_h2o_ion_v2x pot(m1, m2);
         return pot.eval(xyz1.data(), xyz2.data(), nm);
 
-        // =====>> SECTION TWOBODY_NOGRD <<=====
+        // =====>> SECTION 2B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (m1 == "nh4+" && m2 == "nh4+") {
         x2b_A1B4_A1B4_deg4::x2b_A1B4_A1B4_v1x pot(m1,m2);
@@ -133,7 +133,7 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
         h2o_ion::x2b_h2o_ion_v2x pot(m1, m2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grd1.data(), grd2.data(), nm);
 
-        // =====>> SECTION TWOBODY_GRD <<=====
+        // =====>> SECTION 2B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
     } else if (m1 == "nh4+" && m2 == "nh4+") {
         x2b_A1B4_A1B4_deg4::x2b_A1B4_A1B4_v1x pot(m1,m2);

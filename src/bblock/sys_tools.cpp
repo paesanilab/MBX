@@ -1075,8 +1075,8 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
     } else if (mon_id == "cs") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
-        // Water is the only monomer which C6 does not come from qchem.
-        // It comes from MB-pol (C6O = sqrt(C6OO))
+    // SECTION C6_LONG_RANGE
+    // ==> PASTE YOUR CODE BELOW <==
     } else if (mon_id == "pf6-") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 36.64845818186718069999; // P
@@ -1115,6 +1115,8 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[fst_ind + nv] = 0.0;
 
         }
+    // Water is the only monomer which C6 does not come from qchem.
+    // It comes from MB-pol (C6O = sqrt(C6OO))
     } else if (mon_id == "h2o") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 15.40523357222455098728;     // O

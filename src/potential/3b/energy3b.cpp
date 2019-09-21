@@ -61,6 +61,8 @@ double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, 
     if (m1 == "h2o" and m2 == "h2o" and m3 == "h2o") {
         x2o::x3b_v2x pot;
         return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
+    // =====>> SECTION 3B_NO_GRADIENT <<=====
+    // =====>> PASTE YOUR CODE BELOW <<=====
     } else {
         return 0.0;
     }
@@ -151,6 +153,8 @@ double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, 
     if (m1 == "h2o" and m2 == "h2o" and m3 == "h2o") {
         x2o::x3b_v2x pot;
         energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grd1.data(), grd2.data(), grd3.data(), nm);
+    // =====>> SECTION 3B_GRADIENT <<=====
+    // =====>> PASTE YOUR CODE BELOW <<=====
     } else {
         energy = 0.0;
     }

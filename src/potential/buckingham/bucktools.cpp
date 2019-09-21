@@ -299,7 +299,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 //        d6.push_back(3.028640000000000e+00);  // A^(-1)
 //        d6.push_back(3.271530000000000e+00);  // A^(-1)
 //
-//        // =====>> SECTION DISPERSION <<=====
+//        // =====>> SECTION BUCKINGHAM <<=====
 //        // ======>> PASTE CODE BELOW <<======
 //    } else if (mon_id1 == "co2" && mon_id2 == "co2") {
 //        // Define the type of atom in each mon

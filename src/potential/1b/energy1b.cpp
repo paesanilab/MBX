@@ -42,7 +42,7 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &
     if (mon == "h2o") {
         energies = ps::pot_nasa(xyz.data(), 0, nm);
 
-        // =====>> SECTION ONEBODY_NOGRD <<=====
+        // =====>> SECTION 1B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon == "pf6-") {
         x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon);
@@ -77,7 +77,7 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, std::v
     if (mon == "h2o") {
         energies = ps::pot_nasa(xyz.data(), grad.data(), nm);
 
-        // =====>> SECTION ONEBODY_GRD <<=====
+        // =====>> SECTION 1B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
     } else if (mon == "pf6-") {
         x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon);
