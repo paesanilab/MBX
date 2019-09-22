@@ -43,9 +43,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // 3B
 #include "potential/3b/x3b-v2x.h"
 #include "potential/3b/poly-3b-v2x.h"
-// =====>> SECTION INCLUDE3B <<=====
+// =====>> BEGIN SECTION INCLUDE3B <<=====
 // ===>> PASTE YOUR CODE BELOW <<===
 
+// =====>> END SECTION INCLUDE3B <<=====
 /**
  * @file energy3b.h
  * @brief Contains the calls to the three-body energy with and without gradients
