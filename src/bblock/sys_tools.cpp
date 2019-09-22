@@ -154,8 +154,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             sites.push_back(4);
             nat.push_back(3);
 
-            // =====>> SECTION SITES <<=====
-            // ==> PASTE YOUR CODE BELOW <==
+        // =====>> BEGIN SECTION SITES <<=====
+        // ==> PASTE YOUR CODE BELOW <==
+
         } else if (mon[i] == "pf6-") {
             sites.push_back(7);
             nat.push_back(7);
@@ -172,13 +173,13 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             sites.push_back(1);
             nat.push_back(1);
 
-
             // Halides and alkali metal ions
         } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
                    mon[i] == "br" || mon[i] == "i" || mon[i] == "li" || mon[i] == "na" ||  // Alkali metal ions
                    mon[i] == "k" || mon[i] == "rb" || mon[i] == "cs") {
             sites.push_back(1);
             nat.push_back(1);
+        // END SECTION SITES
         } else {
             // If monomer not found, throw exception
             std::string text = "No data in the dataset for monomer: " + mon[i];
@@ -573,7 +574,7 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc13.insert(std::make_pair(2, 3));
     }
 
-    // =====>> SECTION EXCLUDED <<=====
+    // =====>> BEGIN SECTION EXCLUDED <<=====
     // =====>> PASTE CODE BELOW <<=====
 
     if (mon == "ch4") {
@@ -637,6 +638,8 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc12.insert(std::make_pair(0, 2));
         exc13.insert(std::make_pair(1, 2));
     }
+        // =====>> END SECTION EXCLUDED <<=====
+
 
 }
 
@@ -759,7 +762,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv] = 1.0 * CHARGECON;
         }
 
-        // =====>> SECTION CHARGES <<=====
+        // =====>> BEGIN SECTION CHARGES <<=====
         // =======>> PASTE BELOW <<=======
     } else if (mon_id == "pf6-") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -802,7 +805,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv] = 0.0;
 
         }
-
+    // END SECTION CHARGES
 
         // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
@@ -894,7 +897,7 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.3660;
 
-        // =====>> SECTION POLFACS <<=====
+        // =====>> BEGIN SECTION POLFACS <<=====
         // =======>> PASTE BELOW <<=======
     } else if (mon_id == "pf6-") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -937,6 +940,7 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv] = 0.0;
 
         }
+        // =====>> END SECTION POLFACS <<=====
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
@@ -987,7 +991,7 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     } else if (mon_id == "cs") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
 
-        // =====>> SECTION POLS <<=====
+        // =====>> BEGIN SECTION POLS <<=====
         // =====>> PASTE  BELOW <<=====
 
     } else if (mon_id == "pf6-") {
@@ -1031,6 +1035,7 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv] = 0.0;
 
         }
+            // =====>> END SECTION POLS <<=====
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
@@ -1075,7 +1080,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
     } else if (mon_id == "cs") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
-    // SECTION C6_LONG_RANGE
+    // BEGIN SECTION C6_LONG_RANGE
     // ==> PASTE YOUR CODE BELOW <==
     } else if (mon_id == "pf6-") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1115,6 +1120,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[fst_ind + nv] = 0.0;
 
         }
+    // END SECTION C6_LONG_RANGE
     // Water is the only monomer which C6 does not come from qchem.
     // It comes from MB-pol (C6O = sqrt(C6OO))
     } else if (mon_id == "h2o") {

@@ -163,6 +163,8 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.586190000000000e+00);  // A^(-1)
         b.push_back(2.697680000000000e+00);  // A^(-1)
+        // =====>> BEGIN SECTION BUCKINGHAM <<=====
+        // ======>> PASTE CODE BELOW <<======
 //    } else if (mon_id1 == "cl" and mon_id2 == "h2o") {
 //        // Define the type of atom in each mon
 //        types1.push_back(0);
@@ -299,8 +301,6 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 //        d6.push_back(3.028640000000000e+00);  // A^(-1)
 //        d6.push_back(3.271530000000000e+00);  // A^(-1)
 //
-//        // =====>> SECTION BUCKINGHAM <<=====
-//        // ======>> PASTE CODE BELOW <<======
 //    } else if (mon_id1 == "co2" && mon_id2 == "co2") {
 //        // Define the type of atom in each mon
 //        types1.push_back(0);
@@ -545,6 +545,8 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 //        d6.push_back( 3.38009);  // A^(-1) A--D
 //        d6.push_back( 3.39886);  // A^(-1) B--C
 //        d6.push_back( 5.20723);  // A^(-1) B--D
+        // =====>> END SECTION BUCKINGHAM <<=====
+
 
     } else {
         out_a = 0.0;

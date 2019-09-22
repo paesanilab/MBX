@@ -462,7 +462,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.028640000000000e+00);  // A^(-1)
         d6.push_back(3.271530000000000e+00);  // A^(-1)
 
-        // =====>> SECTION DISPERSION <<=====
+        // =====>> BEGIN SECTION DISPERSION <<=====
         // ======>> PASTE CODE BELOW <<======
     } else if (mon_id1 == "co2" && mon_id2 == "co2") {
         // Define the type of atom in each mon
@@ -709,6 +709,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back( 3.39886);  // A^(-1) B--C
         d6.push_back( 5.20723);  // A^(-1) B--D
 
+        // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;
         out_d6 = 0.0;
