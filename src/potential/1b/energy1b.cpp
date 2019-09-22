@@ -42,7 +42,7 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &
     if (mon == "h2o") {
         energies = ps::pot_nasa(xyz.data(), 0, nm);
 
-        // =====>> SECTION 1B_NO_GRADIENT <<=====
+        // =====>> BEGIN SECTION 1B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon == "pf6-") {
         x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon);
@@ -56,6 +56,7 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &
     } else if (mon == "co2") {
         x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon);
         energies = pot.eval(xyz.data(), nm);
+        // =====>> END SECTION 1B_NO_GRADIENT <<=====
     } else {
         return 0.0;
     }
@@ -77,7 +78,7 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, std::v
     if (mon == "h2o") {
         energies = ps::pot_nasa(xyz.data(), grad.data(), nm);
 
-        // =====>> SECTION 1B_GRADIENT <<=====
+        // =====>> BEGIN SECTION 1B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
     } else if (mon == "pf6-") {
         x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon);
@@ -91,6 +92,7 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, std::v
     } else if (mon == "co2") {
         x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon);
         energies = pot.eval(xyz.data(), grad.data(), nm);
+        // =====>> END SECTION 1B_GRADIENT <<=====
     } else {
         return 0.0;
     }
