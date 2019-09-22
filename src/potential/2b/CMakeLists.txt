@@ -2,6 +2,7 @@ set(TWOB_SOURCES energy2b.cpp
                  x2b-v9x.cpp 
                  poly-2b-v6x-nogrd.cpp 
                  poly-2b-v6x.cpp 
+# BEGIN SECTION CMAKELISTS
                  x2b-A1B2Z2_C-v1x.cpp 
                  poly-2b-A1B2Z2_C-v1x.cpp
                  poly-2b-A1B2Z2_C-v1.cpp 
@@ -32,6 +33,7 @@ set(TWOB_SOURCES energy2b.cpp
                  poly_2b_A1B4_A1B4_deg4_v1.cpp
                  poly_2b_A1B4_A1B4_deg4_v1x.cpp
                  x2b_A1B4_A1B4_deg4_v1x.cpp
+# END SECTION CMAKELISTS
 )
 
 #SET_SOURCE_FILES_PROPERTIES(poly-2b-v6x.cpp PROPERTIES COMPILE_FLAGS -O0)

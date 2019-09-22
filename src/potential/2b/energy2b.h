@@ -42,7 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // 2B
 #include "potential/2b/x2b-v9x.h"
 #include "potential/2b/x2b-A1B2Z2_C-v1x.h"
-// =====>> SECTION INCLUDE2B <<=====
+// =====>> BEGIN SECTION INCLUDE2B <<=====
 // ===>> PASTE YOUR CODE BELOW <<===
 #include "potential/2b/x2b_A1B4_A1B4_deg4_v1x.h"
 #include "potential/2b/x2b_A1B6_A1B6_deg3_v1x.h"
@@ -53,6 +53,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/x2b_A1B2Z2_C1D4_deg3_exp0_v1x.h"
 #include "x2b_A1B2_A1B2_v1x.h"
 #include "x2b_A1B2Z2_C1D2_v1x.h"
+// =====>> END SECTION INCLUDE2B <<=====
 
 /**
  * @file energy2b.h
