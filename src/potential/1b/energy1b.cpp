@@ -36,26 +36,26 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace e1b {
 
-double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &good) {
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, bool &good) {
     std::vector<double> energies;
     // Look for the proper call to energy depending on the monomer id
-    if (mon == "h2o") {
-        energies = ps::pot_nasa(xyz.data(), 0, nm);
+    if (mon1 == "h2o") {
+        energies = ps::pot_nasa(xyz1.data(), 0, nm);
 
         // =====>> BEGIN SECTION 1B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
-    } else if (mon == "pf6-") {
-        x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon);
-        energies = pot.eval(xyz.data(), nm);
-    } else if (mon == "nh4+") {
-        x1b_A1B4_deg5::x1b_A1B4_v1x pot(mon);
-        energies = pot.eval(xyz.data(), nm);
-    } else if (mon == "ch4") {
-        x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon);
-        energies = pot.eval(xyz.data(), nm);
-    } else if (mon == "co2") {
-        x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon);
-        energies = pot.eval(xyz.data(), nm);
+    } else if (mon1 == "pf6-") {
+        x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), nm);
+    } else if (mon1 == "nh4+") {
+        x1b_A1B4_deg5::x1b_A1B4_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), nm);
+    } else if (mon1 == "ch4") {
+        x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), nm);
+    } else if (mon1 == "co2") {
+        x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), nm);
         // =====>> END SECTION 1B_NO_GRADIENT <<=====
     } else {
         return 0.0;
@@ -72,26 +72,26 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &
     return e;
 }
 
-double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, std::vector<double> &grad, bool &good) {
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, bool &good) {
     std::vector<double> energies;
     // Look for the proper call to energy depending on the monomer id
-    if (mon == "h2o") {
-        energies = ps::pot_nasa(xyz.data(), grad.data(), nm);
+    if (mon1 == "h2o") {
+        energies = ps::pot_nasa(xyz1.data(), grad1.data(), nm);
 
         // =====>> BEGIN SECTION 1B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
-    } else if (mon == "pf6-") {
-        x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon);
-        energies = pot.eval(xyz.data(), grad.data(), nm);
-    } else if (mon == "ch4") {
-        x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon);
-        energies = pot.eval(xyz.data(), grad.data(), nm);
-    } else if (mon == "nh4+") {
-        x1b_A1B4_deg5::x1b_A1B4_v1x pot(mon);
-        energies = pot.eval(xyz.data(), grad.data(), nm);
-    } else if (mon == "co2") {
-        x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon);
-        energies = pot.eval(xyz.data(), grad.data(), nm);
+    } else if (mon1 == "pf6-") {
+        x1b_A1B6_deg5::x1b_A1B6_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), grad1.data(), nm);
+    } else if (mon1 == "ch4") {
+        x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), grad1.data(), nm);
+    } else if (mon1 == "nh4+") {
+        x1b_A1B4_deg5::x1b_A1B4_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), grad1.data(), nm);
+    } else if (mon1 == "co2") {
+        x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), grad1.data(), nm);
         // =====>> END SECTION 1B_GRADIENT <<=====
     } else {
         return 0.0;

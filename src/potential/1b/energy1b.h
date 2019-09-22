@@ -75,7 +75,7 @@ namespace e1b {
  * has an energy larger than the value set in definitions.h (EMAX1B)
  * @return Sum of the one-body energies of all the monomers passed as arguments
  */
-double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &good);
+double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz1, bool &good);
 
 /**
  * @brief Gets the one body energy for a given set of monomers of the same
@@ -91,7 +91,7 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &
  * has an energy larger than the value set in definitions.h (EMAX1B)
  * @return Sum of the one-body energies of all the monomers passed as arguments
  */
-double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, std::vector<double> &grad, bool &good);
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, bool &good);
 
 }  // namespace e1b
 #endif
