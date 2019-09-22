@@ -2,6 +2,7 @@
 #define VARIABLE_H
 
 #include <cmath>
+#include <stdlib.h>
 
 struct variable {
     double v_exp0(const double& r0, const double& k,
@@ -18,6 +19,9 @@ struct variable {
 
     double v_gau0(const double& r0, const double& k,
                  const double * p1, const double * p2 );
+
+    void grads(const double& gg, double * grd1, double * grd2,
+               const double * p1, const double * p2);
 
     double g[3]; // diff(value, p1 - p2)
 };

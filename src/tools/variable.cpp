@@ -1,5 +1,14 @@
 #include "variable.h"
 
+void variable::grads(const double& gg, double * grd1, double * grd2,
+                     const double * p1, const double * p2) {
+    for (size_t i = 0; i < 3 ; i++) {
+        double d = gg*g[i];
+        grd1[i] += d;
+        grd2[i] -= d;
+    }
+}
+
 double variable::v_gau0(const double& r0, const double& k,
                        const double * p1, const double * p2)
 {
