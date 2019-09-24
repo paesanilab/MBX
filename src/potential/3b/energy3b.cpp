@@ -36,29 +36,29 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace e3b {
 
-double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
+double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3) {
     // Order the three monomer names and corresponding xyz
-    if (m2 < m1 && m2 < m3) {
-        std::swap(m1, m2);
+    if (mon2 < mon1 && mon2 < mon3) {
+        std::swap(mon1, mon2);
         std::swap(xyz1, xyz2);
-        if (m3 < m2) {
-            std::swap(m2, m3);
+        if (mon3 < mon2) {
+            std::swap(mon2, mon3);
             std::swap(xyz2, xyz3);
         }
-    } else if (m3 < m1 && m3 < m2) {
-        std::swap(m1, m3);
+    } else if (mon3 < mon1 && mon3 < mon2) {
+        std::swap(mon1, mon3);
         std::swap(xyz1, xyz3);
-        if (m3 < m2) {
-            std::swap(m2, m3);
+        if (mon3 < mon2) {
+            std::swap(mon2, mon3);
             std::swap(xyz2, xyz3);
         }
-    } else if (m3 < m2) {
-        std::swap(m2, m3);
+    } else if (mon3 < mon2) {
+        std::swap(mon2, mon3);
         std::swap(xyz2, xyz3);
     }
 
-    if (m1 == "h2o" and m2 == "h2o" and m3 == "h2o") {
+    if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "h2o") {
         x2o::x3b_v2x pot;
         return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
     // =====>> BEGIN SECTION 3B_NO_GRADIENT <<=====
@@ -70,46 +70,46 @@ double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, 
     }
 }
 
-double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
-                     std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grd1,
-                     std::vector<double> &grd2, std::vector<double> &grd3) {
+double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grad1,
+                     std::vector<double> &grad2, std::vector<double> &grad3) {
     size_t index1(1), index2(2), index3(3);
 
     // Order the three monomer names and corresponding xyz
-    if (m2 < m1 && m2 < m3) {
-        std::swap(m1, m2);
+    if (mon2 < mon1 && mon2 < mon3) {
+        std::swap(mon1, mon2);
         std::swap(xyz1, xyz2);
-        std::swap(grd1, grd2);
+        std::swap(grad1, grad2);
         std::swap(index1, index2);
-        if (m3 < m2) {
-            std::swap(m2, m3);
+        if (mon3 < mon2) {
+            std::swap(mon2, mon3);
             std::swap(xyz2, xyz3);
-            std::swap(grd2, grd3);
+            std::swap(grad2, grad3);
             std::swap(index2, index3);
         }
-    } else if (m3 < m1 && m3 < m2) {
-        std::swap(m1, m3);
+    } else if (mon3 < mon1 && mon3 < mon2) {
+        std::swap(mon1, mon3);
         std::swap(xyz1, xyz3);
-        std::swap(grd1, grd3);
+        std::swap(grad1, grad3);
         std::swap(index1, index3);
-        if (m3 < m2) {
-            std::swap(m2, m3);
+        if (mon3 < mon2) {
+            std::swap(mon2, mon3);
             std::swap(xyz2, xyz3);
-            std::swap(grd2, grd3);
+            std::swap(grad2, grad3);
             std::swap(index2, index3);
         }
-    } else if (m3 < m2) {
-        std::swap(m2, m3);
+    } else if (mon3 < mon2) {
+        std::swap(mon2, mon3);
         std::swap(xyz2, xyz3);
-        std::swap(grd2, grd3);
+        std::swap(grad2, grad3);
         std::swap(index2, index3);
     }
 
     double energy = 0.0;
-    // Note: in the conditional, m2 >= m1 ALWAYS
-    if (m1 == "h2o" and m2 == "h2o" and m3 == "h2o") {
+    // Note: in the conditional, mon2 >= mon1 ALWAYS
+    if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "h2o") {
         x2o::x3b_v2x pot;
-        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grd1.data(), grd2.data(), grd3.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm);
     // =====>> BEGIN SECTION 3B_GRADIENT <<=====
     // =====>> PASTE YOUR CODE BELOW <<=====
 
@@ -121,16 +121,16 @@ double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, 
     if (index1 != 1) {
         if (index2 == 1) {
             std::swap(index1, index2);
-            std::swap(grd1, grd2);
+            std::swap(grad1, grad2);
         } else if (index3 == 1) {
             std::swap(index1, index3);
-            std::swap(grd1, grd3);
+            std::swap(grad1, grad3);
         }  // else { error
     }
 
     if (index2 != 2) {
         std::swap(index2, index3);
-        std::swap(grd2, grd3);
+        std::swap(grad2, grad3);
     }
 
     return energy;
