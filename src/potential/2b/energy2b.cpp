@@ -69,24 +69,9 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 
         // =====>> BEGIN SECTION 2B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
-    } else if (mon1 == "nh4+" && mon2 == "nh4+") {
-        x2b_A1B4_A1B4_deg4::x2b_A1B4_A1B4_v1x pot(mon1,mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
-    } else if (mon1 == "pf6-" && mon2 == "pf6-") {
-        x2b_A1B6_A1B6_deg3::x2b_A1B6_A1B6_v1x pot(mon1,mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
-    } else if (mon1 == "nh4+" && mon2 == "pf6-") {
-        x2b_A1B4_C1D6_deg3::x2b_A1B4_C1D6_v1x pot(mon1,mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "ch4" && mon2 == "ch4") {
         x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(mon1,mon2);
         return pot.eval(xyz1.data(), xyz2.data(), nm);
-    } else if (mon1 == "h2o" && mon2 == "pf6-") {
-        x2b_A1B6_C1D2X2_deg3::x2b_A1B6_C1D2X2_v1x pot(mon1,mon2);
-        return pot.eval(xyz2.data(), xyz1.data(), nm);
-    } else if (mon1 == "h2o" && mon2 == "nh4+") {
-        x2b_A1B4_C1D2X2_deg4::x2b_A1B4_C1D2X2_v1x pot(mon1,mon2);
-        return pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1,mon2);
         return pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -136,24 +121,9 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 
         // =====>> BEGIN SECTION 2B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
-    } else if (mon1 == "nh4+" && mon2 == "nh4+") {
-        x2b_A1B4_A1B4_deg4::x2b_A1B4_A1B4_v1x pot(mon1,mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm);
-    } else if (mon1 == "pf6-" && mon2 == "pf6-") {
-        x2b_A1B6_A1B6_deg3::x2b_A1B6_A1B6_v1x pot(mon1,mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm);
-    } else if (mon1 == "nh4+" && mon2 == "pf6-") {
-        x2b_A1B4_C1D6_deg3::x2b_A1B4_C1D6_v1x pot(mon1,mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm);
     } else if (mon1 == "ch4" && mon2 == "ch4") {
         x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(mon1,mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm);
-    } else if (mon1 == "h2o" && mon2 == "pf6-") {
-        x2b_A1B6_C1D2X2_deg3::x2b_A1B6_C1D2X2_v1x pot(mon1,mon2);
-        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm);
-    } else if (mon1 == "h2o" && mon2 == "nh4+") {
-        x2b_A1B4_C1D2X2_deg4::x2b_A1B4_C1D2X2_v1x pot(mon1,mon2);
-        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm);
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1,mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm);
