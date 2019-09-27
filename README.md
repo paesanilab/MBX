@@ -79,36 +79,39 @@ i-pi restart.xml &
 
 i-pi can also perform PIMD, REMD, and REPIMD. Refer to the manual and the examples in i-pi to see how to set them up.
 
-## Add new PEFs
-### One-body
-In order to add a new PEF, you must have run all the steps in the [potential fitting](https://github.com/paesanilab/potential_fitting) repository on github. After having done that, you must have a folder called `software_files` inside your fit path (where all the fitting code has been generated). The first thing to do is to add the monomer properties. Then the polynomial files can be added.
+## Current Timings (v20190927)
+These timings were obtained using 1, 2, 4, and 8 cores in our local workstation, performing 30 evaluations of the energy. When using PBC, the following settings for the PME part have been used (see `src/tests/n_single_point.cpp` for details)
+- Electrostatics: Ewald alpha = 0.6, Grid density = 2.5, Spline order = 6
+- Dispersion: Ewald alpha = 0.5, Grid density = 2.5, Spline order = 6
 
-#### Monomer properties
-Open the file `software_code.txt` inside the `software_files` folder, and locate the sections: `SITES`, `CHARGES`, `POLFACS`, and `POLS`. In another window, open the file `src/bblock/sys_tools.cpp` and locate these same sections. You will see that after each section, there is a commented line `PASTE YOUR CODE BELOW`. The code below the section in `software_code.txt` needs to be copied in the correspondic section in `src/bblock/sys_tools.cpp`.
+NOTE: The PBC scaling is not good due to the PBC part of the electrostatics. We are working on it.
 
-#### Monomer polynomials
-First, locate in `software_code.txt` the sections `ONEBODY_NOGRD` and `ONEBODY_GRD`. In the file `src/potential/1b/energy1b.cpp`, locate the same sections. Copy the code below the indications.
+|        Gas Phase                  |||
+| Number of cores     | 256 H2O molecules | 512 H2O molecules | 
+----------- | -------- | -------- |
+ 1 | 0.62603 s/eval | 1.79393  s/eval |  
+ 2 | 0.32677 s/eval | 0.90950  s/eval |
+ 4 | 0.17067 s/eval | 0.47167  s/eval |
+ 8 | 0.10073 s/eval | 0.27103  s/eval |
 
-Second, locate in your `software_code.txt` the section `CONSTRUCTOR`. Look at the directory `src/potential/1b/`, and check if the `x1b_*_deg*_v1x.cpp` file that you generated in `software_files` already exists. If it does exist, locate the section `CONSTRUCTOR` in the `x1b_*_deg*_v1x.cpp` file in `src/potential/1b/` and paste after the `CONSTRUCTOR` keyword. No further action is required. You can compile the code and run it with your new monomer.
+|        Periodic Boundary Conditions                  |||
+| Number of cores     | 256 H2O molecules | 512 H2O molecules | 
+----------- | -------- | -------- |
+ 1 | 1.32957 s/eval | 3.53920  s/eval |  
+ 2 | 0.75570 s/eval | 2.03077  s/eval |
+ 4 | 0.47490 s/eval | 1.26917  s/eval |
+ 8 | 0.32820 s/eval | 1.09107  s/eval |
 
-In case the file does not exist in `src/potential/1b/`, paste the code lines in your newly generated `x1b_*_deg*_v1x.cpp` file, after the keyword. Then, copy all `.cpp` and `.h` files inside `software_files` into `src/potential/1b/`. Since the files did not exist, you will need to include the new  `x1b_*_deg*_v1x.h` file in `energy1b.h`. Locate the section `INCLUDE1B` in both files and paste the proper include.
 
-Last but not least we need to tell CMake to compile those files. Open the file `CMakeLists.txt` and add the 3 `.cpp` files you just copied to the first line.
 
-### Two-body
-#### Dimer properties
-We need to add the dispersion part in the code. Locate the section `DISPERSION` in your `software_code.txt` file, and locate the same section in `src/potential/dispersion/dispersion2b.cpp`. Paste the code below.
 
-#### Dimer polynomials
-First, locate in `software_code.txt` the sections `TWOBODY_NOGRD` and `TWOBODY_GRD`. In the file `src/potential/2b/energy2b.cpp`, locate the same sections. Copy the code below the indications.
 
-Second, locate in your `software_code.txt` the section `CONSTRUCTOR`. Look at the directory `src/potential/2b/`, and check if the `x2b_*_deg*_v1x.cpp` file that you generated in `software_files` already exists. If it does exist, locate the section `CONSTRUCTOR` in the `x2b_*_deg*_v1x.cpp` file in `src/potential/2b/` and paste after the `CONSTRUCTOR` keyword. No further action is required.
 
-In case the file does not exist in `src/potential/2b/`, paste the code lines in your newly generated `x2b_*_deg*_v1x.cpp` file, after the keyword. Then, copy all `.cpp` and `.h` files inside `software_files` into `src/potential/2b/`. Since the files did not exist, you will need to include the new  `x2b_*_deg*_v1x.h` file in `energy2b.h`. Locate the section `INCLUDE2B` in both files and paste the proper include.
 
-Last but not least we need to tell CMake to compile those files. Open the file `CMakeLists.txt` and add the 3 `.cpp` files you just copied to the first line.
 
-Now compile the code and make sure everything works!
+
+
+
 
 
 
