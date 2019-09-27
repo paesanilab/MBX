@@ -54,7 +54,7 @@ const double BIGNUM = 1e50;
 
 namespace elec {
 
-const double SQRTPI = sqrt(M_PI);
+const double PIQSRT = sqrt(M_PI);
 
 void Electrostatics::SetCutoff(double cutoff) { cutoff_ = cutoff; }
 
@@ -525,7 +525,7 @@ void Electrostatics::CalculatePermanentElecField() {
         // The Ewald self potential
         double *phi_ptr = phi_.data();
         for (const auto &q : chg_) {
-            *phi_ptr -= 2 * ewald_alpha_ / SQRTPI * q;
+            *phi_ptr -= 2 * ewald_alpha_ / PIQSRT * q;
             ++phi_ptr;
         }
     }
@@ -653,7 +653,7 @@ void Electrostatics::CalculateDipolesCG() {
             double p = pol_[fi_sites + i];
             size_t inmon3 = 3 * i * nmon;
 #ifdef _OPENMP
-#pragma omp simd
+#pragma omp simd 
 #endif
             for (size_t m = 0; m < nmon; m++) {
                 mu_[fi_crd + inmon3 + m] = p * Efq_[fi_crd + inmon3 + m];
@@ -670,11 +670,6 @@ void Electrostatics::CalculateDipolesCG() {
     // Following algorithm from:
     // https://en.wikipedia.org/wiki/Conjugate_gradient_method
 
-    // Initialize for first iteration
-    // for (size_t i = 0; i < nsites3; i++) {
-    //  mu_[i] *= pol_sqrt_[i];
-    //}
-
 #ifdef DEBUG
     for (size_t i = 0; i < nsites3; i++) {
         std::cerr << "mu[" << i << "] = " << mu_[i] << std::endl;
@@ -682,63 +677,9 @@ void Electrostatics::CalculateDipolesCG() {
 #endif
 
     std::vector<double> ts2v(nsites3);
+
     DipolesCGIteration(mu_, ts2v);
-    //    std::cout << "CG" << std::endl;
-    //    for(auto v:ts2v) std::cout << std::setw(16) << std::setprecision(10) << v << std::endl;
-    //    fi_sites = 0;
-    //    fi_crd = 0;
-    //    fi_mon = 0;
-    //    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-    //        size_t ns = sites_[fi_mon];
-    //        size_t nmon = mon_type_count_[mt].second;
-    //        size_t nmon2 = nmon * 2;
-    //        for (size_t i = 0; i < ns; i++) {
-    //            size_t inmon3 = 3 * i * nmon;
-    //            double A = -std::sqrt(pol_[fi_sites + i]);
-    //            for (size_t m = 0; m < nmon; m++) {
-    //                mu_[fi_crd + inmon3 + m] *= A;
-    //                mu_[fi_crd + inmon3 + nmon + m] *= A;
-    //                mu_[fi_crd + inmon3 + nmon2 + m] *= A;
-    //            }
-    //        }
-    //        // Update first indexes
-    //        fi_mon += nmon;
-    //        fi_sites += nmon * ns;
-    //        fi_crd += nmon * ns * 3;
-    //    }
-    //    DipolesIterativeIteration(mu_, ts2v);
-    //    // ACS apply alpha inverse
-    //    fi_sites = 0;
-    //    fi_crd = 0;
-    //    fi_mon = 0;
-    //    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-    //        size_t ns = sites_[fi_mon];
-    //        size_t nmon = mon_type_count_[mt].second;
-    //        size_t nmon2 = nmon * 2;
-    //        for (size_t i = 0; i < ns; i++) {
-    //            size_t inmon3 = 3 * i * nmon;
-    //            double A = std::sqrt(pol_[fi_sites + i]);
-    //            double Ai = A == 0 ? 1 : -1 / A;
-    //            for (size_t m = 0; m < nmon; m++) {
-    //                ts2v[fi_crd + inmon3 + m] *= A;
-    //                ts2v[fi_crd + inmon3 + nmon + m] *= A;
-    //                ts2v[fi_crd + inmon3 + nmon2 + m] *= A;
-    //                // Revert scaling of mu
-    //                mu_[fi_crd + inmon3 + m] *= Ai;
-    //                mu_[fi_crd + inmon3 + nmon + m] *= Ai;
-    //                mu_[fi_crd + inmon3 + nmon2 + m] *= Ai;
-    //            }
-    //        }
-    //        // Update first indexes
-    //        fi_mon += nmon;
-    //        fi_sites += nmon * ns;
-    //        fi_crd += nmon * ns * 3;
-    //    }
-    //    for (size_t i = 0; i < mu_.size(); i++) { ts2v[i] += mu_[i]; }
-    //    std::cout << "ITER" << std::endl;
-    //    for(auto v:ts2v) std::cout << std::setw(16) << std::setprecision(10) << v << std::endl;
-    //    std::cout << std::endl;
-    //    exit(1);
+
     std::vector<double> rv(nsites3);
     std::vector<double> pv(nsites3);
     std::vector<double> r_new(nsites3);
@@ -1187,7 +1128,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             fi_sites += nmon * ns;
         }
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / SQRTPI;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
         double *e_ptr = out_v.data();
         for (const auto &mu : in_v) {
             *e_ptr += slf_prefactor * mu;
