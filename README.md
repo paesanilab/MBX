@@ -86,7 +86,7 @@ These timings were obtained using 1, 2, 4, and 8 cores in our local workstation,
 
 NOTE: The PBC scaling is not good due to the PBC part of the electrostatics. We are working on it.
 
-|        Gas Phase                  |||
+Gas Phase
 | Number of cores     | 256 H2O molecules | 512 H2O molecules | 
 ----------- | -------- | -------- |
  1 | 0.62603 s/eval | 1.79393  s/eval |  
@@ -94,7 +94,7 @@ NOTE: The PBC scaling is not good due to the PBC part of the electrostatics. We 
  4 | 0.17067 s/eval | 0.47167  s/eval |
  8 | 0.10073 s/eval | 0.27103  s/eval |
 
-|        Periodic Boundary Conditions                  |||
+Periodic Boundary Conditions
 | Number of cores     | 256 H2O molecules | 512 H2O molecules | 
 ----------- | -------- | -------- |
  1 | 1.32957 s/eval | 3.53920  s/eval |  
