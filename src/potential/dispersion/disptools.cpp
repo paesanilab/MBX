@@ -515,34 +515,6 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.25885);  // A^(-1)
         d6.push_back(3.25885);  // A^(-1)
         d6.push_back(4.05972);  // A^(-1)
-    } else if (mon_id1 == "nh4+" and mon_id2 == "nh4+") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back( 121.02357191499344);  // kcal/mol * A^(-6)  A--A
-        C6.push_back( 42.87084004560211);  // kcal/mol * A^(-6)  A--B
-        C6.push_back( 42.87084004560211);  // kcal/mol * A^(-6)  B--A
-        C6.push_back( 15.18478609248808);  // kcal/mol * A^(-6)  B--B
-
-        d6.push_back( 3.62294);  // A^(-1) A--A
-        d6.push_back( 4.17516);  // A^(-1) A--B
-        d6.push_back( 4.17516);  // A^(-1) B--A
-        d6.push_back( 6.65926);  // A^(-1) B--B
     } else if (mon_id1 == "ch4" && mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -568,38 +540,6 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.68542);  // A^(-1)
         d6.push_back(3.79757);  // A^(-1)
         d6.push_back(4.01558);  // A^(-1)
-    } else if (mon_id1 == "pf6-" and mon_id2 == "pf6-") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back( 1343.1094871080675);  // kcal/mol * A^(-6)  A--A
-        C6.push_back( 316.586254871107);  // kcal/mol * A^(-6)  A--B
-        C6.push_back( 316.586254871107);  // kcal/mol * A^(-6)  B--A
-        C6.push_back( 128.05063099625954);  // kcal/mol * A^(-6)  B--B
-
-        d6.push_back( 2.97498);  // A^(-1) A--A
-        d6.push_back( 2.97061);  // A^(-1) A--B
-        d6.push_back( 2.97061);  // A^(-1) B--A
-        d6.push_back( 4.29032);  // A^(-1) B--B
     } else if (mon_id1 == "co2" && mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -623,91 +563,6 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.7359);  // A^(-1)
         d6.push_back(3.53045);  // A^(-1)
         d6.push_back(3.89503);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "nh4+") {
-        // Define the type of atom in each mon
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back( 146.8735344463071);  // kcal/mol * A^(-6)  C--A
-        C6.push_back( 52.113303994364706);  // kcal/mol * A^(-6)  C--B
-        C6.push_back( 67.0087248346366);  // kcal/mol * A^(-6)  D--A
-        C6.push_back( 23.700392086279034);  // kcal/mol * A^(-6)  D--B
-
-        d6.push_back( 3.03002);  // A^(-1) C--A
-        d6.push_back( 4.00557);  // A^(-1) C--B
-        d6.push_back( 3.50204);  // A^(-1) D--A
-        d6.push_back( 3.82525);  // A^(-1) D--B
-
-    } else if (mon_id1 == "h2o" and mon_id2 == "pf6-") {
-        // Define the type of atom in each mon
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back( 407.63296458627474);  // kcal/mol * A^(-6)  C--A
-        C6.push_back( 152.50926721566066);  // kcal/mol * A^(-6)  C--B
-        C6.push_back( 203.69935826247843);  // kcal/mol * A^(-6)  D--A
-        C6.push_back( 65.76858803942432);  // kcal/mol * A^(-6)  D--B
-
-        d6.push_back( 2.70377);  // A^(-1) C--A
-        d6.push_back( 3.66078);  // A^(-1) C--B
-        d6.push_back( 3.70149);  // A^(-1) D--A
-        d6.push_back( 4.39919);  // A^(-1) D--B
-    } else if (mon_id1 == "nh4+" and mon_id2 == "pf6-") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back( 359.40542255024184);  // kcal/mol * A^(-6)  A--C
-        C6.push_back( 119.75587652433201);  // kcal/mol * A^(-6)  A--D
-        C6.push_back( 126.31137741680135);  // kcal/mol * A^(-6)  B--C
-        C6.push_back( 42.61190407586103);  // kcal/mol * A^(-6)  B--D
-
-        d6.push_back( 2.85598);  // A^(-1) A--C
-        d6.push_back( 3.38009);  // A^(-1) A--D
-        d6.push_back( 3.39886);  // A^(-1) B--C
-        d6.push_back( 5.20723);  // A^(-1) B--D
 
         // =====>> END SECTION DISPERSION <<=====
     } else {
