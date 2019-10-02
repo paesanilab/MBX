@@ -536,6 +536,7 @@ void System::SetUpFromJson(char *json_file) {
        "max_n_eval_3b"    : 500,
        "dipole_tolerance" : 1E-016,
        "dipole_max_it"    : 100,
+       "diple_method"     : "cg",
        "aplha_ewald_elec" : 0.25,
        "grid_density_elec" : 2.5,
        "spline_order_elec" : 6,
@@ -551,15 +552,15 @@ void System::SetUpFromJson(char *json_file) {
 }
      */
     std::ifstream ifjson;
-    try {
-        ifjson.open(json_file);
-        throw 1;
-    } catch(int i) {
-        std::string text = "There has been a problem loading your json file: " + std::string(json_file); 
-        throw CUException(__func__, __FILE__, __LINE__, text);
+    nlohmann::json j;
+    if (json_file != 0) {
+        try {
+            ifjson.open(json_file);
+            j = nlohmann::json::parse(ifjson);
+        } catch(...) {
+            std::cerr << "There has been a problem loading your json file: " + std::string(json_file) + "... using defaults"; 
+        }
     }
-
-    nlohmann::json j = nlohmann::json::parse(ifjson);
 
     // Try to get box
     // Default: no box (empty vector)
@@ -567,8 +568,7 @@ void System::SetUpFromJson(char *json_file) {
     try {
         std::vector<double> box2 = j["MBX"]["box"];
         box = box2;
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         box.clear();
     }
     box_ = box;
@@ -578,8 +578,7 @@ void System::SetUpFromJson(char *json_file) {
     double cutoff_2b;
     try {
         cutoff_2b = j["MBX"]["twobody_cutoff"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         cutoff_2b = box_.size() ? 9.0 : 100.0;
     }
     cutoff2b_ = cutoff_2b;
@@ -589,41 +588,37 @@ void System::SetUpFromJson(char *json_file) {
     double cutoff_3b;
     try {
         cutoff_3b = j["MBX"]["threebody_cutoff"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         cutoff_3b = 4.5;
     }
     cutoff3b_ = cutoff_3b;
 
     // Try to get maximum number of evaluations for 1b
     // Default: 1000
-    double max_eval_1b;
+    size_t max_eval_1b;
     try {
         max_eval_1b = j["MBX"]["max_n_eval_1b"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         max_eval_1b = 1000;
     }
     maxNMonEval_ = max_eval_1b;
 
     // Try to get maximum number of evaluations for 2b
     // Default: 1000
-    double max_eval_2b;
+    size_t max_eval_2b;
     try {
         max_eval_2b = j["MBX"]["max_n_eval_2b"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         max_eval_2b = 1000;
     }
     maxNDimEval_ = max_eval_2b;
 
     // Try to get maximum number of evaluations for 3b
     // Default: 1000
-    double max_eval_3b;
+    size_t max_eval_3b;
     try {
         max_eval_3b = j["MBX"]["max_n_eval_3b"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         max_eval_3b = 1000;
     }
     maxNTriEval_ = max_eval_3b;
@@ -633,19 +628,27 @@ void System::SetUpFromJson(char *json_file) {
     double dipole_tolerance;
     try {
         dipole_tolerance = j["MBX"]["dipole_tolerance"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         dipole_tolerance = 1E-16;
     }
     diptol_ = dipole_tolerance;
 
+    // Try to get dipole convergence criteria
+    // Default: Conjugate gradient cg
+    std::string dipole_method;
+    try {
+        dipole_method_ = j["MBX"]["dipole_method"];
+    } catch(...) {
+        dipole_method = "cg";
+    }
+    dipole_method_ = dipole_method;
+
     // Try to get dipole max number of iterations
     // Default: 100
-    double dipole_max_it;
+    size_t dipole_max_it;
     try {
         dipole_max_it = j["MBX"]["dipole_max_it"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         dipole_max_it = 1E-16;
     }
     maxItDip_ = dipole_max_it;
@@ -655,8 +658,7 @@ void System::SetUpFromJson(char *json_file) {
     double alpha_disp;
     try {
         alpha_disp = j["MBX"]["aplha_ewald_disp"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         alpha_disp = 0.25;
     }
 
@@ -665,18 +667,16 @@ void System::SetUpFromJson(char *json_file) {
     double grid_density_disp;
     try {
         grid_density_disp = j["MBX"]["grid_density_disp"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         grid_density_disp = 2.5;
     }
 
     // Try to get dispersion PME spline order
     // Default: 6
-    double spline_order_disp;
+    size_t spline_order_disp;
     try {
         spline_order_disp = j["MBX"]["spline_order_disp"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         spline_order_disp = 6;
     }
 
@@ -687,8 +687,7 @@ void System::SetUpFromJson(char *json_file) {
     double alpha_elec;
     try {
         alpha_elec = j["MBX"]["aplha_ewald_elec"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         alpha_elec = 0.25;
     }
 
@@ -697,18 +696,16 @@ void System::SetUpFromJson(char *json_file) {
     double grid_density_elec;
     try {
         grid_density_elec = j["MBX"]["grid_density_elec"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         grid_density_elec = 2.5;
     }
 
     // Try to get electrostatics PME spline order
     // Default: 6
-    double spline_order_elec;
+    size_t spline_order_elec;
     try {
         spline_order_elec = j["MBX"]["spline_order_elec"];
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         spline_order_elec = 6;
     }
 
@@ -718,8 +715,7 @@ void System::SetUpFromJson(char *json_file) {
     try {
         std::vector<std::pair<std::string,std::string> > ttm_pairs2 = j["MBX"]["ttm_pairs"];
         ttm_pairs = ttm_pairs2;
-        throw 1;
-    } catch(int i) {
+    } catch(...) {
         ttm_pairs.clear();
     }
     buck_pairs_ = ttm_pairs;

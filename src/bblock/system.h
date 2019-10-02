@@ -344,7 +344,7 @@ class System {
      * Sets up all the parameters that are specified in a json file
      * @param[in] json_file Is the json formatted file with the system specifications
      **/
-    void SetUpFromJson(char *json_file);
+    void SetUpFromJson(char *json_file = 0);
 
     /**
      * Sets the two-body cutoff for dispersion and polynomials.

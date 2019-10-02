@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 {
 
     if (argc < 2) {
-      std::cerr << "Usage: " << argv[0] << " <input.nrg> [<box_side>]"
+      std::cerr << "Usage: " << argv[0] << " <input.nrg> [mbx.json]"
                 << std::endl;
       return 0;
     }
@@ -49,26 +49,10 @@ int main(int argc, char** argv)
 
     std::vector<double> box;
     
-    if (argc > 4) {
-        box = std::vector<double>(9,0.0);
-        box[0] = atof(argv[2]);
-        box[4] = atof(argv[3]);
-        box[8] = atof(argv[4]);
-    } else if (argc > 2) {
-        double box_l = atof(argv[2]);
-        box = std::vector<double>(9,0.0);
-        box[0] = box[4] = box[8] = box_l;
-    }
-
-
-    systems[0].SetPBC(box);
-    systems[0].SetDipoleMethod("cg");
-    if (box.size()) {
-        systems[0].Set2bCutoff(9.0);
-        systems[0].SetEwaldElectrostatics(0.6, 2.5, 6);
-        systems[0].SetEwaldDispersion(0.5, 2.5, 6);
+    if (argc > 2) {
+        systems[0].SetUpFromJson(argv[2]);
     } else {
-        systems[0].Set2bCutoff(100.0);
+        systems[0].SetUpFromJson();
     }
 
 
