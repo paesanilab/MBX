@@ -26,7 +26,7 @@ set( SOURCES_UNITTESTS_TESTS
 #
 
 include_directories(${PROJECT_SOURCE_DIR}
-                    ${PROJECT_SOURCE_DIR}/../external/kdtree
+                    ${PROJECT_SOURCE_DIR}/../external/
                     ${PROJECT_SOURCE_DIR}/potential/electrostatics )
 
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )

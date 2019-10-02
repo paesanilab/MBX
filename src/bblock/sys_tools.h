@@ -42,8 +42,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <utility>
 #include <algorithm>
 
-#include "nanoflann.hpp"
-#include "kdtree_utils.h"
+#include "kdtree/nanoflann.hpp"
+#include "kdtree/kdtree_utils.h"
 #include "tools/definitions.h"
 
 #include "potential/1b/ps.h"

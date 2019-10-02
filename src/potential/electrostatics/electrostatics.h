@@ -52,7 +52,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/electrostatics/gammq.h"
 #include "potential/electrostatics/fields.h"
 
-#include "kdtree_utils.h"
+#include "kdtree/kdtree_utils.h"
 #include "helpme.h"
 
 ////////////////////////////////////////////////////////////////////////////////

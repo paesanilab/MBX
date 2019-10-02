@@ -34,7 +34,7 @@
 #ifndef KDTREE_UTILS_H
 #define KDTREE_UTILS_H
 
-#include <nanoflann.hpp>
+#include "kdtree/nanoflann.hpp"
 
 namespace kdtutils {
 

@@ -40,11 +40,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <utility>
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <memory>
 
 // Tools
-#include "nanoflann.hpp"
-#include "kdtree_utils.h"
+#include "kdtree/nanoflann.hpp"
+#include "kdtree/kdtree_utils.h"
+#include "json/json.h"
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
 #include "tools/custom_exceptions.h"
@@ -337,6 +339,12 @@ class System {
      * please read the documentation.
      */
     void Initialize();
+
+    /**
+     * Sets up all the parameters that are specified in a json file
+     * @param[in] json_file Is the json formatted file with the system specifications
+     **/
+    void SetUpFromJson(char *json_file);
 
     /**
      * Sets the two-body cutoff for dispersion and polynomials.
