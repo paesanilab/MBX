@@ -659,7 +659,7 @@ void System::SetUpFromJson(char *json_file) {
     try {
         alpha_disp = j["MBX"]["aplha_ewald_disp"];
     } catch(...) {
-        alpha_disp = 0.25;
+        alpha_disp = box_.size() ? 0.25 : 0.0;
     }
 
     // Try to get dispertion PME grid density
@@ -688,7 +688,7 @@ void System::SetUpFromJson(char *json_file) {
     try {
         alpha_elec = j["MBX"]["aplha_ewald_elec"];
     } catch(...) {
-        alpha_elec = 0.25;
+        alpha_elec = box.size() ? 0.25 : 0.0;
     }
 
     // Try to get electrostatics PME grid density
@@ -720,7 +720,7 @@ void System::SetUpFromJson(char *json_file) {
     }
     buck_pairs_ = ttm_pairs;
     
-    SetPBC(box);
+    SetPBC(box_);
     ifjson.close();
 }
 
