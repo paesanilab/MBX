@@ -530,7 +530,7 @@ void System::SetUpFromJson(char *json_file) {
    "MBX" : {
        "box" : [100.0 ,0.0,0.0,100.0,0.0,0.0,0.0,100.0],
        "twobody_cutoff"   : 9.0,
-       "threebody_cutoff" : 5.0,
+       "threebody_cutoff" : 7.0,
        "max_n_eval_1b"    : 500,
        "max_n_eval_2b"    : 500,
        "max_n_eval_3b"    : 500,
@@ -584,12 +584,12 @@ void System::SetUpFromJson(char *json_file) {
     cutoff2b_ = cutoff_2b;
 
     // Try to get 3b cutoff
-    // Default: 4.5 Angstrom
+    // Default: 7.0 Angstrom
     double cutoff_3b;
     try {
         cutoff_3b = j["MBX"]["threebody_cutoff"];
     } catch(...) {
-        cutoff_3b = 4.5;
+        cutoff_3b = 7.0;
     }
     cutoff3b_ = cutoff_3b;
 
@@ -720,6 +720,7 @@ void System::SetUpFromJson(char *json_file) {
     }
     buck_pairs_ = ttm_pairs;
     
+    SetPBC(box);
     ifjson.close();
 }
 
@@ -934,23 +935,27 @@ double System::Energy(bool do_grads) {
     auto t2 = std::chrono::high_resolution_clock::now();
 #endif
 
+    //double e2b = 0.0;
     double e2b = Get2B(do_grads);
 
 #ifdef TIMING
     auto t2a = std::chrono::high_resolution_clock::now();
 #endif
 
+    //double edisp = 0.0;
     double edisp = GetDispersion(do_grads);
 
 #ifdef TIMING
     auto t2b = std::chrono::high_resolution_clock::now();
 #endif
 
+    //double ebuck = 0.0;
     double ebuck = GetBuckingham(do_grads);
 #ifdef TIMING
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
 
+    //double e3b = 0.0;
     double e3b = Get3B(do_grads);
 
 #ifdef TIMING
@@ -959,6 +964,7 @@ double System::Energy(bool do_grads) {
 
     // Electrostatic energy
     double Eelec = GetElectrostatics(do_grads);
+    //double Eelec = 0.0;
 
 #ifdef TIMING
     auto t5 = std::chrono::high_resolution_clock::now();
@@ -967,7 +973,7 @@ double System::Energy(bool do_grads) {
     // Set up energy with the new value
     energy_ = e1b + e2b + e3b + edisp + ebuck + Eelec;
 
-#ifdef DEBUG
+//#ifdef DEBUG
     std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
@@ -976,7 +982,7 @@ double System::Energy(bool do_grads) {
               << "Buck = " << ebuck << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
-#endif
+//#endif
 #ifdef TIMING
     std::cerr << "System::1b(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n";
