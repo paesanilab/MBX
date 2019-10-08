@@ -113,7 +113,6 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         x3b_h2o_ion_v1x_deg4_filtered pot(mon3);
         energy = pot(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm);
     } else if (mon1 == "cs" and mon2 == "h2o" and mon3 == "h2o") {
-        std::cout << "3b!" << std::endl;
         x3b_h2o_ion_v1x_deg4_filtered pot(mon1);
         energy = pot(xyz2.data(), xyz3.data(), xyz1.data(), grad2.data(), grad3.data(), grad1.data(), nm);
     // =====>> BEGIN SECTION 3B_GRADIENT <<=====
