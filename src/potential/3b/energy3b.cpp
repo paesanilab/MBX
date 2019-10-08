@@ -33,29 +33,28 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "energy3b.h"
+#include <iostream>
 
 namespace e3b {
 
 double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3) {
     // Order the three monomer names and corresponding xyz
-    if (mon2 < mon1 && mon2 < mon3) {
-        std::swap(mon1, mon2);
-        std::swap(xyz1, xyz2);
-        if (mon3 < mon2) {
-            std::swap(mon2, mon3);
-            std::swap(xyz2, xyz3);
-        }
-    } else if (mon3 < mon1 && mon3 < mon2) {
+    // Check if mon1 is the largest
+    if (mon1 > mon2 and mon1 > mon3) {
         std::swap(mon1, mon3);
         std::swap(xyz1, xyz3);
-        if (mon3 < mon2) {
-            std::swap(mon2, mon3);
-            std::swap(xyz2, xyz3);
-        }
-    } else if (mon3 < mon2) {
+    // Check if mon2 is the largest
+    } else if (mon2 > mon1 and mon2 > mon3) {
         std::swap(mon2, mon3);
         std::swap(xyz2, xyz3);
+    }
+
+    // At this point mon3 is always the largest
+    // Now sort mon1 and mon2
+    if (mon1 > mon2) {
+        std::swap(mon1, mon2);
+        std::swap(xyz1, xyz2);
     }
 
     if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "h2o") {
@@ -66,7 +65,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         return pot(xyz1.data(), xyz2.data(), xyz3.data(), nm);
     } else if (mon1 == "cs" and mon2 == "h2o" and mon3 == "h2o") {
         x3b_h2o_ion_v1x_deg4_filtered pot(mon1);
-        return pot(xyz3.data(), xyz2.data(), xyz1.data(), nm);
+        return pot(xyz2.data(), xyz3.data(), xyz1.data(), nm);
     // =====>> BEGIN SECTION 3B_NO_GRADIENT <<=====
     // =====>> PASTE YOUR CODE BELOW <<=====
 
@@ -82,35 +81,29 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
     size_t index1(1), index2(2), index3(3);
 
     // Order the three monomer names and corresponding xyz
-    if (mon2 < mon1 && mon2 < mon3) {
-        std::swap(mon1, mon2);
-        std::swap(xyz1, xyz2);
-        std::swap(grad1, grad2);
-        std::swap(index1, index2);
-        if (mon3 < mon2) {
-            std::swap(mon2, mon3);
-            std::swap(xyz2, xyz3);
-            std::swap(grad2, grad3);
-            std::swap(index2, index3);
-        }
-    } else if (mon3 < mon1 && mon3 < mon2) {
+    // Check if mon1 is the largest
+    if (mon1 > mon2 and mon1 > mon3) {
         std::swap(mon1, mon3);
         std::swap(xyz1, xyz3);
         std::swap(grad1, grad3);
         std::swap(index1, index3);
-        if (mon3 < mon2) {
-            std::swap(mon2, mon3);
-            std::swap(xyz2, xyz3);
-            std::swap(grad2, grad3);
-            std::swap(index2, index3);
-        }
-    } else if (mon3 < mon2) {
+    // Check if mon2 is the largest
+    } else if (mon2 > mon1 and mon2 > mon3) {
         std::swap(mon2, mon3);
         std::swap(xyz2, xyz3);
         std::swap(grad2, grad3);
         std::swap(index2, index3);
     }
 
+    // At this point mon3 is always the largest
+    // Now sort mon1 and mon2
+    if (mon1 > mon2) {
+        std::swap(mon1, mon2);
+        std::swap(xyz1, xyz2);
+        std::swap(grad1, grad2);
+        std::swap(index1, index2);
+    }
+    
     double energy = 0.0;
     // Note: in the conditional, mon2 >= mon1 ALWAYS
     if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "h2o") {
@@ -120,8 +113,9 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         x3b_h2o_ion_v1x_deg4_filtered pot(mon3);
         energy = pot(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm);
     } else if (mon1 == "cs" and mon2 == "h2o" and mon3 == "h2o") {
+        std::cout << "3b!" << std::endl;
         x3b_h2o_ion_v1x_deg4_filtered pot(mon1);
-        energy = pot(xyz3.data(), xyz2.data(), xyz1.data(), grad3.data(), grad2.data(), grad1.data(), nm);
+        energy = pot(xyz2.data(), xyz3.data(), xyz1.data(), grad2.data(), grad3.data(), grad1.data(), nm);
     // =====>> BEGIN SECTION 3B_GRADIENT <<=====
     // =====>> PASTE YOUR CODE BELOW <<=====
 

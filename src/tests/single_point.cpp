@@ -13,7 +13,7 @@
 
 #include "bblock/system.h"
 
-#define NUMGRADS
+//#define NUMGRADS
 //#define PRINT_GRADS
 
 namespace {
@@ -102,24 +102,19 @@ int main(int argc, char** argv)
             const double x_orig = xyz[j];
             xyz[j] = x_orig + eps;
             systems[0].SetRealXyz(xyz);
-//            systems[0].SetPBC(box);
             const double Ep = systems[0].Energy(false);
             xyz[j] = x_orig + 2 * eps;
             systems[0].SetRealXyz(xyz);
-//            systems[0].SetPBC(box);
             const double Epp = systems[0].Energy(false);
             xyz[j] = x_orig - eps;
             systems[0].SetRealXyz(xyz);
-//            systems[0].SetPBC(box);
             const double Em = systems[0].Energy(false);
             xyz[j] = x_orig - 2 * eps;
             systems[0].SetRealXyz(xyz);
-//            systems[0].SetPBC(box);
             const double Emm = systems[0].Energy(false);
             const double gfd = (8 * (Ep - Em) - (Epp - Emm)) / (12 * eps);
             xyz[j] = x_orig;
             systems[0].SetRealXyz(xyz);
-//            systems[0].SetPBC(box);
             std::cout << std::setprecision(5) << std::scientific << std::setw(6) << std::left << atms[j / 3]
                       << std::setw(20) << std::right << real_grd[j] << std::setw(20) << std::right << gfd
                       << std::setw(20) << std::right << std::fabs(real_grd[j] - gfd) << std::endl;

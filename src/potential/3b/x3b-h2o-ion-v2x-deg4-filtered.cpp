@@ -134,7 +134,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1,
         drac = std::sqrt(drac);
         drbc = std::sqrt(drbc);
 
-        if (drac > m_r3f or drab > m_r3f) continue;
+        if (drac > m_r3f or drbc > m_r3f) continue;
 
         double gab, gac, gbc;
 
@@ -229,7 +229,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1,
         drac = std::sqrt(drac);
         drbc = std::sqrt(drbc);
 
-        if (drac > m_r3f or drab > m_r3f) continue;
+        if (drac > m_r3f or drbc > m_r3f) continue;
 
         double gab, gac, gbc;
 

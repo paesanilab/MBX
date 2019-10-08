@@ -530,7 +530,7 @@ void System::SetUpFromJson(char *json_file) {
    "MBX" : {
        "box" : [100.0 ,0.0,0.0,100.0,0.0,0.0,0.0,100.0],
        "twobody_cutoff"   : 9.0,
-       "threebody_cutoff" : 7.0,
+       "threebody_cutoff" : 6.5,
        "max_n_eval_1b"    : 500,
        "max_n_eval_2b"    : 500,
        "max_n_eval_3b"    : 500,
@@ -589,7 +589,7 @@ void System::SetUpFromJson(char *json_file) {
     try {
         cutoff_3b = j["MBX"]["threebody_cutoff"];
     } catch(...) {
-        cutoff_3b = 7.0;
+        cutoff_3b = 6.5;
     }
     cutoff3b_ = cutoff_3b;
 
@@ -973,7 +973,7 @@ double System::Energy(bool do_grads) {
     // Set up energy with the new value
     energy_ = e1b + e2b + e3b + edisp + ebuck + Eelec;
 
-//#ifdef DEBUG
+#ifdef DEBUG
     std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
@@ -982,7 +982,7 @@ double System::Energy(bool do_grads) {
               << "Buck = " << ebuck << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
-//#endif
+#endif
 #ifdef TIMING
     std::cerr << "System::1b(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n";
