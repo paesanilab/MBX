@@ -543,7 +543,9 @@ void System::SetUpFromJson(char *json_file) {
        "aplha_ewald_disp" : 0.25,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
-       "ttm_pair" : []
+       "ttm_pair" : [],
+       "ignore_2b_poly" : [],
+       "ignore_3b_poly" : []
    } ,
    "i-pi" : {
        "port" : 34543,
@@ -719,7 +721,25 @@ void System::SetUpFromJson(char *json_file) {
         ttm_pairs.clear();
     }
     buck_pairs_ = ttm_pairs;
+
+    std::vector<std::vector<std::string> > ignore_2b_poly;
+    try {
+        std::vector<std::vector<std::string> > ignore_2b_poly2 = j["MBX"]["ignore_2b_poly"];
+        ignore_2b_poly = ignore_2b_poly2;
+    } catch(...) {
+        ignore_2b_poly.clear();
+    }
+    ignore_2b_poly_ = ignore_2b_poly;
     
+    std::vector<std::vector<std::string> > ignore_3b_poly;
+    try {
+        std::vector<std::vector<std::string> > ignore_3b_poly2 = j["MBX"]["ignore_3b_poly"];
+        ignore_3b_poly = ignore_3b_poly2;
+    } catch(...) {
+        ignore_3b_poly.clear();
+    }
+    ignore_3b_poly_ = ignore_3b_poly;
+
     SetPBC(box_);
     ifjson.close();
 }
@@ -1227,9 +1247,22 @@ double System::Get2B(bool do_grads) {
                                                  xyz1.data(), xyz2.data());
                 }
 
-                // Check if this pair needs to use ttm or MB-nrg
-                auto it = m2 < m1 ? std::find(buck_pairs_.begin(), buck_pairs_.end(), std::make_pair(m2,m1)) : std::find(buck_pairs_.begin(), buck_pairs_.end(), std::make_pair(m1,m2));
-                if (it == buck_pairs_.end()) {
+                // Check if this pair needs to use MB-nrg
+                bool use_poly = true;
+                for (size_t i2b = 0; i2b < ignore_2b_poly_.size(); i2b++) {
+                    std::vector<std::string> v1 = ignore_2b_poly_[i2b];
+                    std::vector<std::string> v2 = {m1,m2};
+                    std::sort(v1.begin(),v1.end());
+                    std::sort(v2.begin(),v2.end());
+                   
+                    if (v1 == v2) {
+                        use_poly = false;
+                        break;
+                    }
+                }
+
+                if (use_poly) {
+
                     if (do_grads) {
                         // POLYNOMIALS
                         e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
@@ -1443,43 +1476,60 @@ double System::Get3B(bool do_grads) {
                                                   coord3.data());
                 }
 
-                std::vector<double> xyz1(coord1.size(), 0.0);
-                std::vector<double> xyz2(coord2.size(), 0.0);
-                std::vector<double> xyz3(coord3.size(), 0.0);
-                std::copy(coord1.begin(), coord1.end(), xyz1.begin());
-                std::copy(coord2.begin(), coord2.end(), xyz2.begin());
-                std::copy(coord3.begin(), coord3.end(), xyz3.begin());
+                // Check if this pair needs to use MB-nrg
+                bool use_poly = true;
+                for (size_t i3b = 0; i3b < ignore_3b_poly_.size(); i3b++) {
+                    std::vector<std::string> v1 = ignore_3b_poly_[i3b];
+                    std::vector<std::string> v2 = {m1,m2,m3};
+                    std::sort(v1.begin(),v1.end());
+                    std::sort(v2.begin(),v2.end());
 
-                if (do_grads) {
-                    // POLYNOMIALS
-                    std::vector<double> grad1(coord1.size(), 0.0);
-                    std::vector<double> grad2(coord2.size(), 0.0);
-                    std::vector<double> grad3(coord3.size(), 0.0);
-                    // POLYNOMIALS
-                    e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3);
-
-                    // Update gradients
-                    size_t i0 = nt_tot * 3;
-                    for (size_t k = 0; k < nt; k++) {
-                        // Monomer 1
-                        for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k]]; j++) {
-                            grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k]] + j] +=
-                                grad1[k * 3 * nat_[trimers[i0 + 3 * k]] + j];
-                        }
-                        // Monomer 2
-                        for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 1]]; j++) {
-                            grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 1]] + j] +=
-                                grad2[k * 3 * nat_[trimers[i0 + 3 * k + 1]] + j];
-                        }
-                        // Monomer 3
-                        for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 2]]; j++) {
-                            grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 2]] + j] +=
-                                grad3[k * 3 * nat_[trimers[i0 + 3 * k + 2]] + j];
-                        }
+                    if (v1 == v2) {
+                        use_poly = false;
+                        break;
                     }
-                } else {
-                    // POLYNOMIALS
-                    e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+                }
+
+                if (use_poly) {
+
+                    std::vector<double> xyz1(coord1.size(), 0.0);
+                    std::vector<double> xyz2(coord2.size(), 0.0);
+                    std::vector<double> xyz3(coord3.size(), 0.0);
+                    std::copy(coord1.begin(), coord1.end(), xyz1.begin());
+                    std::copy(coord2.begin(), coord2.end(), xyz2.begin());
+                    std::copy(coord3.begin(), coord3.end(), xyz3.begin());
+
+                    if (do_grads) {
+                        // POLYNOMIALS
+                        std::vector<double> grad1(coord1.size(), 0.0);
+                        std::vector<double> grad2(coord2.size(), 0.0);
+                        std::vector<double> grad3(coord3.size(), 0.0);
+                        // POLYNOMIALS
+                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3);
+
+                        // Update gradients
+                        size_t i0 = nt_tot * 3;
+                        for (size_t k = 0; k < nt; k++) {
+                            // Monomer 1
+                            for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k]]; j++) {
+                                grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k]] + j] +=
+                                    grad1[k * 3 * nat_[trimers[i0 + 3 * k]] + j];
+                            }
+                            // Monomer 2
+                            for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 1]]; j++) {
+                                grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 1]] + j] +=
+                                    grad2[k * 3 * nat_[trimers[i0 + 3 * k + 1]] + j];
+                            }
+                            // Monomer 3
+                            for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 2]]; j++) {
+                                grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 2]] + j] +=
+                                    grad3[k * 3 * nat_[trimers[i0 + 3 * k + 2]] + j];
+                            }
+                        }
+                    } else {
+                        // POLYNOMIALS
+                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+                    }
                 }
 
                 // Update iteration variables

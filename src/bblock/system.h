@@ -802,8 +802,20 @@ class System {
 
     /** 
      * This vector contains the pairs that will use TTM-nrg instead of MB-nrg
-     **/
+     */
     std::vector<std::pair<std::string,std::string> > buck_pairs_;
+
+    /**
+     * This vector of vectors contains the pairs of monomer types that will be ignored when 
+     * when calculating the 2b polynomials.
+     */
+    std::vector<std::vector<std::string> > ignore_2b_poly_;
+
+    /**
+     * This vector of vectors contains the trimers of monomer types that will be ignored when 
+     * when calculating the 3b polynomials.
+     */
+    std::vector<std::vector<std::string> > ignore_3b_poly_;
 
     /**
      * Vector that contains the relation between the input monomer
