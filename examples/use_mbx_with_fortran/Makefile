@@ -1,12 +1,15 @@
 FC = gfortran
 FFLAGS = -lstdc++ -g
 
-all: test 
+all: test_gas_phase test_pbc
 
-test: test.f90 ../../install/lib/libmbnrg.so
-	$(FC) test.f90 ../../install/lib/libmbnrg.so $(FFLAGS) -o test
+test_pbc: test_pbc.f90 ../../install/lib/libmbnrg.so
+	$(FC) test_pbc.f90 ../../install/lib/libmbnrg.so $(FFLAGS) -o test_pbc
+
+test_gas_phase: test_gas_phase.f90 ../../install/lib/libmbnrg.so
+	$(FC) test_gas_phase.f90 ../../install/lib/libmbnrg.so $(FFLAGS) -o test_gas_phase
 
 clean: 
-	rm -f test 
+	rm -f test_gas_phase test_pbc
 
 .PHONY: all clean
