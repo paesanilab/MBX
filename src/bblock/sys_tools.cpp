@@ -297,10 +297,6 @@ void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_
 
 void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nat3, size_t nt, double *xyz1,
                          double *xyz2, double *xyz3) {
-    std::cout << "nat1 = " << nat1 << "   " 
-              << "nat2 = " << nat2 << "   "
-              << "nat3 = " << nat3 << "   "
-              << "nt = " << nt << std::endl;
     size_t shift1 = 0;
     size_t shift2 = 0;
     size_t shift3 = 0;
