@@ -536,7 +536,7 @@ void System::SetUpFromJson(char *json_file) {
        "max_n_eval_3b"    : 500,
        "dipole_tolerance" : 1E-016,
        "dipole_max_it"    : 100,
-       "diple_method"     : "cg",
+       "dipole_method"     : "cg",
        "aplha_ewald_elec" : 0.25,
        "grid_density_elec" : 2.5,
        "spline_order_elec" : 6,
