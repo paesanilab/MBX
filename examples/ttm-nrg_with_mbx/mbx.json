@@ -17,7 +17,8 @@
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
        "ttm_pairs" : [["f","h2o"]],
-       "ignore_2b_poly" : [["f","h2o"]]
+       "ignore_2b_poly" : [["f","h2o"]],
+       "ignore_3b_poly" : [["f","h2o","h2o"]]
    } ,  
    "i-pi" : {
        "port" : 34543,
