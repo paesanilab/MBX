@@ -34,12 +34,27 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "bblock/system.h"
 
+/**
+ * @file external_call.cpp
+ * @brief Functions to use the system class and its energy functions from other languages
+ */
+
 namespace {
-    bblock::System* my_s;
-} // namespace
+bblock::System* my_s;
+}  // namespace
 
 extern "C" {
-void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, char json_file[20]) {
+/**
+ * Initializes the system in the heap.
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat_monomers Pointer to an array of the number of atoms in each monomer
+ * @param[in] at_names Pointer to an array with the atom names of all the whole system
+ * @param[in] monomers Pointer to the list of monomer ids in your system
+ * @param[in] nmon Number of monomers
+ * @param[in] json_file Name of the json configuration file
+ */
+void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon,
+                        char json_file[20]) {
     my_s = new bblock::System();
     int count = 0;
     for (int i = 0; i < *nmon; i++) {
@@ -57,6 +72,12 @@ void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], c
     my_s->SetUpFromJson(json_file);
 }
 
+/**
+ * Given the coordinates, calculates the energy for a gas phase system
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in he system
+ * @param[out] energy Energy of the system
+ */
 void get_energy_(double* coords, int* nat, double* energy) {
     std::vector<double> xyz(3 * (*nat));
     std::copy(coords, coords + 3 * (*nat), xyz.begin());
@@ -65,6 +86,13 @@ void get_energy_(double* coords, int* nat, double* energy) {
     *energy = my_s->Energy(false);
 }
 
+/**
+ * Given the coordinates, calculates the energy iand gradients for a gas phase system
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in he system
+ * @param[out] energy Energy of the system
+ * @param[out] grads Pointer to the gradients of the system (size 3N)
+ */
 void get_energy_g_(double* coords, int* nat, double* energy, double* grads) {
     std::vector<double> xyz(3 * (*nat));
     std::copy(coords, coords + 3 * (*nat), xyz.begin());
@@ -76,9 +104,16 @@ void get_energy_g_(double* coords, int* nat, double* energy, double* grads) {
     std::copy(gradv.begin(), gradv.end(), grads);
 }
 
+/**
+ * Given the coordinates, calculates the energy for PBC systems
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in he system
+ * @param[in] box Pointer to the array with the box (size 9)
+ * @param[out] energy Energy of the system
+ */
 void get_energy_pbc_(double* coords, int* nat, double* box, double* energy) {
     std::vector<double> xyz(3 * (*nat));
-    std::vector<double> boxv(9,0.0);
+    std::vector<double> boxv(9, 0.0);
     std::copy(coords, coords + 3 * (*nat), xyz.begin());
     std::copy(box, box + 9, boxv.begin());
 
@@ -87,12 +122,20 @@ void get_energy_pbc_(double* coords, int* nat, double* box, double* energy) {
     *energy = my_s->Energy(false);
 }
 
+/**
+ * Given the coordinates, calculates the energy iand gradients for a PBC system
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in he system
+ * @param[in] box Pointer to the array with the box (size 9)
+ * @param[out] energy Energy of the system
+ * @param[out] grads Pointer to the gradients of the system (size 3N)
+ */
 void get_energy_pbc_g_(double* coords, int* nat, double* box, double* energy, double* grads) {
     std::vector<double> xyz(3 * (*nat));
-    std::vector<double> boxv(9,0.0);
+    std::vector<double> boxv(9, 0.0);
     std::copy(coords, coords + 3 * (*nat), xyz.begin());
     std::copy(box, box + 9, boxv.begin());
-    
+
     my_s->SetRealXyz(xyz);
     my_s->SetPBC(boxv);
     *energy = my_s->Energy(true);
@@ -101,124 +144,9 @@ void get_energy_pbc_g_(double* coords, int* nat, double* box, double* energy, do
     std::copy(gradv.begin(), gradv.end(), grads);
 }
 
-void finalize_system_() {
-    delete my_s;
-}
-    
-
-void energyf90_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* pot) {
-    bblock::System s;
-    int count = 0;
-    for (int i = 0; i < *nmon; i++) {
-        std::vector<double> xyz(3 * nat_monomers[i]);
-        std::vector<std::string> vAtNames(nat_monomers[i]);
-
-        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
-        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
-        std::string id = monomers[i];
-        s.AddMonomer(xyz, vAtNames, id);
-        count += nat_monomers[i];
-    }
-
-    s.Initialize();
-
-    *pot = s.Energy(false);
-}
-
-void energyf90g_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* grad,
-                 double* pot) {
-    bblock::System s;
-    int count = 0;
-    for (int i = 0; i < *nmon; i++) {
-        std::vector<double> xyz(3 * nat_monomers[i]);
-        std::vector<std::string> vAtNames(nat_monomers[i]);
-
-        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
-        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
-        std::string id = monomers[i];
-        s.AddMonomer(xyz, vAtNames, id);
-        count += nat_monomers[i];
-    }
-
-    s.Initialize();
-
-    double energy = s.Energy(true);
-
-    std::vector<double> gradv = s.GetGrads();
-
-    std::vector<std::string> newNames = s.GetAtomNames();
-    int count2 = 0;
-    for (size_t i = 0; i < s.GetNumSites(); i++) {
-        if (newNames[i] != "virt") {
-            for (size_t j = 0; j < 3; j++) {
-                grad[count2 + j] = gradv[3 * i + j];
-            }
-            count2 += 3;
-        }
-    }
-
-    *pot = energy;
-}
-
-void energyf90pbc_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* pot, double* box) {
-    bblock::System s;
-    int count = 0;
-    for (int i = 0; i < *nmon; i++) {
-        std::vector<double> xyz(3 * nat_monomers[i]);
-        std::vector<std::string> vAtNames(nat_monomers[i]);
-
-        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
-        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
-        std::string id = monomers[i];
-        s.AddMonomer(xyz, vAtNames, id);
-        count += nat_monomers[i];
-    }
-
-    s.Initialize();
-    std::vector<double> vbox(9,0.0);
-    std::copy(box, box + 9, vbox.begin());
-    s.SetPBC(vbox);
-
-    *pot = s.Energy(false);
-}
-
-void energyf90gpbc_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon, double* grad,
-                 double* pot, double* box) {
-    bblock::System s;
-    int count = 0;
-    for (int i = 0; i < *nmon; i++) {
-        std::vector<double> xyz(3 * nat_monomers[i]);
-        std::vector<std::string> vAtNames(nat_monomers[i]);
-
-        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
-        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
-        std::string id = monomers[i];
-        s.AddMonomer(xyz, vAtNames, id);
-        count += nat_monomers[i];
-    }
-
-    s.Initialize();
-    std::vector<double> vbox(9,0.0);
-    std::copy(box, box + 9, vbox.begin());
-    s.SetPBC(vbox);
-    
-
-    double energy = s.Energy(true);
-
-    std::vector<double> gradv = s.GetGrads();
-
-    std::vector<std::string> newNames = s.GetAtomNames();
-    int count2 = 0;
-    for (size_t i = 0; i < s.GetNumSites(); i++) {
-        if (newNames[i] != "virt") {
-            for (size_t j = 0; j < 3; j++) {
-                grad[count2 + j] = gradv[3 * i + j];
-            }
-            count2 += 3;
-        }
-    }
-
-    *pot = energy;
-}
+/**
+ * Deletes the pointer to the system
+ */
+void finalize_system_() { delete my_s; }
 
 }  // extern C
