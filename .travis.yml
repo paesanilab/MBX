@@ -162,7 +162,7 @@ script:
   - cd tests
   - ./run_tests.sh
   - cd ../
-  - cd build/clusters_ultimate-core-prefix/src/clusters_ultimate-core-build/tests/unittests
+  - cd build/MBX-core-prefix/src/MBX-core-build/tests/unittests
   - ctest
 
 notifications:
