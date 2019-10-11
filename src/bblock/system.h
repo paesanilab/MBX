@@ -126,14 +126,32 @@ class System {
     size_t GetNumRealSites();
 
     /**
-     * Gets the numer of atoms the n-th monomer
+     * Gets the numer of atoms the n-th monomer.
      * @param[in] n Index of the monomer in the monomer list
      * @return Number of atoms of the n-th monomer
      */
     size_t GetMonNumAt(size_t n);
 
+    /**
+     * Gets the molecular dipoles for the system.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     */
     void GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+
+    /**
+     * Gets the point dipole moments in each atom.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     */
     void GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+
+    /**
+     * Gets the total dipole moment for the system.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     * @param[out] mu_tot Total dipole moment
+     */
     void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
     
     /**
@@ -421,10 +439,32 @@ class System {
      */
     void SetPBC(std::vector<double> box = {});
 
+    /**
+     * Sets the values for alpha, the grid density and the spline order when using PME to get the reciprocal space contribution. Sets both the parameters for dispersion and electorstatics to be the same.
+     * @param[in] alpha Value for the Ewald alpha 
+     * @param[in] grid_density Grid density in the PME calculation
+     * @param[in] spline_order Order of the splines used for interpolation
+     */
     void SetEwald(double alpha, double grid_density, int spline_order);
 
+    /**
+     * Sets the values for alpha, the grid density and the spline order when using PME to get 
+the reciprocal space contribution, only for electrostatics.
+to be the same.
+     * @param[in] alpha Value for the Ewald alpha 
+     * @param[in] grid_density Grid density in the PME calculation
+     * @param[in] spline_order Order of the splines used for interpolation
+     */
     void SetEwaldElectrostatics(double alpha, double grid_density, int spline_order);
 
+    /**
+     * Sets the values for alpha, the grid density and the spline order when using PME to get 
+the reciprocal space contribution, only for dispersion. 
+to be the same.
+     * @param[in] alpha Value for the Ewald alpha 
+     * @param[in] grid_density Grid density in the PME calculation
+     * @param[in] spline_order Order of the splines used for interpolation
+     */
     void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
 
     /////////////////////////////////////////////////////////////////////////////
@@ -477,12 +517,26 @@ class System {
      * Gradients will be ONLY for the electrostatics part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
      * the gradient calculation will not be performed
-     * @return Three-body energy of the system
+     * @return Electrostatic energy of the system
      */
     double Electrostatics(bool do_grads);
 
+    /**
+     * Obtains the dispersion energy for the whole system.
+     * Gradients will be ONLY for the dispersion part.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @return Dispersion energy of the system
+     */
     double Dispersion(bool do_grads);
 
+    /**
+     * Obtains the buckingham energy for the whole system.
+     * Gradients will be ONLY for the dispersion part.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @return Buckingham energy of the system
+     */
     double Buckingham(bool do_grads);
 
    private:
@@ -539,6 +593,9 @@ class System {
      */
     void SetVSites();
 
+    /**
+     * Sets the C6 that will be used in combination rules at a distance beyond the 2b cutoff
+     */
     void SetC6LongRange();
 
     /**
@@ -577,8 +634,22 @@ class System {
      */
     double GetElectrostatics(bool do_grads);
 
+    /**
+     * Private function to internally get the dispersion energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @return  Dispersion energy of the system
+     */
     double GetDispersion(bool do_grads);
 
+    /**
+     * Private function to internally get the buckinham energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @return  Buckingham energy of the system
+     */
     double GetBuckingham(bool do_grads);
 
    private:
@@ -766,6 +837,9 @@ class System {
      */
     std::vector<double> polfac_;
 
+    /**
+     * Vector that stores the individual atomic C6 to be used as combination rules at distances larger than the cutoff
+     */
     std::vector<double> c6_lr_;
 
     /**
