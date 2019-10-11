@@ -229,10 +229,9 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
                        std::vector<double> &xyz_out, std::vector<size_t> &indexes);
 
-void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig,
-                 std::vector<size_t> fi_at, bool use_pbc, 
-                 std::vector<double> box, double cutoff,
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers);
+void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, std::vector<size_t> fi_at,
+                       bool use_pbc, std::vector<double> box, double cutoff, std::vector<size_t> &dimers,
+                       std::vector<size_t> &trimers);
 
 /**
  * @brief Gets the dimers and/or trimers of a system in which the first

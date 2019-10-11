@@ -154,16 +154,16 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             sites.push_back(4);
             nat.push_back(3);
 
-        // =====>> BEGIN SECTION SITES <<=====
-        // ==> PASTE YOUR CODE BELOW <==
+            // =====>> BEGIN SECTION SITES <<=====
+            // ==> PASTE YOUR CODE BELOW <==
 
         } else if (mon[i] == "ch4") {
             sites.push_back(5);
             nat.push_back(5);
-        } else if ( mon[i] == "co2") {
+        } else if (mon[i] == "co2") {
             sites.push_back(3);
             nat.push_back(3);
-        } else if ( mon[i] == "dummy") {
+        } else if (mon[i] == "dummy") {
             sites.push_back(1);
             nat.push_back(1);
 
@@ -173,7 +173,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                    mon[i] == "k" || mon[i] == "rb" || mon[i] == "cs") {
             sites.push_back(1);
             nat.push_back(1);
-        // END SECTION SITES
+            // END SECTION SITES
         } else {
             // If monomer not found, throw exception
             std::string text = "No data in the dataset for monomer: " + mon[i];
@@ -389,18 +389,17 @@ void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> ref
     }
 }
 
-void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, 
-                 std::vector<size_t> fi_at, bool use_pbc, 
-                 std::vector<double> box, double cutoff, 
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers) {
+void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, std::vector<size_t> fi_at,
+                       bool use_pbc, std::vector<double> box, double cutoff, std::vector<size_t> &dimers,
+                       std::vector<size_t> &trimers) {
     size_t npoints = fi_at.size();
-    std::vector<double> xyz_points(3*npoints);
+    std::vector<double> xyz_points(3 * npoints);
     for (size_t i = 0; i < npoints; i++) {
-        xyz_points[3*i + 0] = xyz_orig[3 * fi_at[i] + 0];
-        xyz_points[3*i + 1] = xyz_orig[3 * fi_at[i] + 1];
-        xyz_points[3*i + 2] = xyz_orig[3 * fi_at[i] + 2];
+        xyz_points[3 * i + 0] = xyz_orig[3 * fi_at[i] + 0];
+        xyz_points[3 * i + 1] = xyz_orig[3 * fi_at[i] + 1];
+        xyz_points[3 * i + 2] = xyz_orig[3 * fi_at[i] + 2];
     }
-    
+
     // Obtain the data in the structure needed by the kd-tree
     kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz_points, use_pbc, box);
 
@@ -573,17 +572,17 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
 
     if (mon == "ch4") {
         // 12 distances
-        exc12.insert(std::make_pair(0,1));
-        exc12.insert(std::make_pair(0,3));
-        exc12.insert(std::make_pair(0,2));
-        exc12.insert(std::make_pair(0,4));
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(0, 3));
+        exc12.insert(std::make_pair(0, 2));
+        exc12.insert(std::make_pair(0, 4));
         // 13 distances
-        exc13.insert(std::make_pair(1,2));
-        exc13.insert(std::make_pair(1,3));
-        exc13.insert(std::make_pair(1,4));
-        exc13.insert(std::make_pair(2,3));
-        exc13.insert(std::make_pair(3,4));
-        exc13.insert(std::make_pair(2,4));
+        exc13.insert(std::make_pair(1, 2));
+        exc13.insert(std::make_pair(1, 3));
+        exc13.insert(std::make_pair(1, 4));
+        exc13.insert(std::make_pair(2, 3));
+        exc13.insert(std::make_pair(3, 4));
+        exc13.insert(std::make_pair(2, 4));
         // 14 distances
     }
     if (mon == "co2") {
@@ -591,9 +590,7 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc12.insert(std::make_pair(0, 2));
         exc13.insert(std::make_pair(1, 2));
     }
-        // =====>> END SECTION EXCLUDED <<=====
-
-
+    // =====>> END SECTION EXCLUDED <<=====
 }
 
 bool IsExcluded(excluded_set_type exc, size_t a, size_t b) {
@@ -719,26 +716,23 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
         // =======>> PASTE BELOW <<=======
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            charges[fst_ind + nv*nsites + 0] = -0.538573 * CHARGECON;
-            charges[fst_ind + nv*nsites + 1] = 0.13464325* CHARGECON;
-            charges[fst_ind + nv*nsites + 2] = 0.13464325* CHARGECON;
-            charges[fst_ind + nv*nsites + 3] = 0.13464325* CHARGECON;
-            charges[fst_ind + nv*nsites + 4] = 0.13464325* CHARGECON;
-
+            charges[fst_ind + nv * nsites + 0] = -0.538573 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = 0.13464325 * CHARGECON;
+            charges[fst_ind + nv * nsites + 2] = 0.13464325 * CHARGECON;
+            charges[fst_ind + nv * nsites + 3] = 0.13464325 * CHARGECON;
+            charges[fst_ind + nv * nsites + 4] = 0.13464325 * CHARGECON;
         }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            charges[fst_ind + nv*nsites + 0] = 0.706027 * CHARGECON;
-            charges[fst_ind + nv*nsites + 1] = -0.3530135 * CHARGECON;
-            charges[fst_ind + nv*nsites + 2] = -0.3530135 * CHARGECON;
-
+            charges[fst_ind + nv * nsites + 0] = 0.706027 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = -0.3530135 * CHARGECON;
+            charges[fst_ind + nv * nsites + 2] = -0.3530135 * CHARGECON;
         }
     } else if (mon_id == "dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = 0.0;
-
         }
-    // END SECTION CHARGES
+        // END SECTION CHARGES
 
         // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
@@ -834,24 +828,21 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
         // =======>> PASTE BELOW <<=======
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            polfac[fst_ind + nv*nsites + 0] = 1.3932677 ;
-            polfac[fst_ind + nv*nsites + 1] = 0.38978363;
-            polfac[fst_ind + nv*nsites + 2] = 0.38978363;
-            polfac[fst_ind + nv*nsites + 3] = 0.38978363;
-            polfac[fst_ind + nv*nsites + 4] = 0.38978363;
-
+            polfac[fst_ind + nv * nsites + 0] = 1.3932677;
+            polfac[fst_ind + nv * nsites + 1] = 0.38978363;
+            polfac[fst_ind + nv * nsites + 2] = 0.38978363;
+            polfac[fst_ind + nv * nsites + 3] = 0.38978363;
+            polfac[fst_ind + nv * nsites + 4] = 0.38978363;
         }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            polfac[fst_ind + nv*nsites + 0] = 1.471677;
-            polfac[fst_ind + nv*nsites + 1] = 0.769790;
-            polfac[fst_ind + nv*nsites + 2] = 0.769790;
-
+            polfac[fst_ind + nv * nsites + 0] = 1.471677;
+            polfac[fst_ind + nv * nsites + 1] = 0.769790;
+            polfac[fst_ind + nv * nsites + 2] = 0.769790;
         }
     } else if (mon_id == "dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv] = 0.0;
-
         }
         // =====>> END SECTION POLFACS <<=====
 
@@ -909,26 +900,23 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
 
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            pol[fst_ind + nv*nsites + 0] = 1.3932677 ;
-            pol[fst_ind + nv*nsites + 1] = 0.38978363;
-            pol[fst_ind + nv*nsites + 2] = 0.38978363;
-            pol[fst_ind + nv*nsites + 3] = 0.38978363;
-            pol[fst_ind + nv*nsites + 4] = 0.38978363;
-
+            pol[fst_ind + nv * nsites + 0] = 1.3932677;
+            pol[fst_ind + nv * nsites + 1] = 0.38978363;
+            pol[fst_ind + nv * nsites + 2] = 0.38978363;
+            pol[fst_ind + nv * nsites + 3] = 0.38978363;
+            pol[fst_ind + nv * nsites + 4] = 0.38978363;
         }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            pol[fst_ind + nv*nsites + 0] = 1.471677;
-            pol[fst_ind + nv*nsites + 1] = 0.769790;
-            pol[fst_ind + nv*nsites + 2] = 0.769790;
-
+            pol[fst_ind + nv * nsites + 0] = 1.471677;
+            pol[fst_ind + nv * nsites + 1] = 0.769790;
+            pol[fst_ind + nv * nsites + 2] = 0.769790;
         }
     } else if (mon_id == "dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             pol[fst_ind + nv] = 0.0;
-
         }
-            // =====>> END SECTION POLS <<=====
+        // =====>> END SECTION POLS <<=====
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
@@ -973,11 +961,11 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
     } else if (mon_id == "cs") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
-    // BEGIN SECTION C6_LONG_RANGE
-    // ==> PASTE YOUR CODE BELOW <==
+        // BEGIN SECTION C6_LONG_RANGE
+        // ==> PASTE YOUR CODE BELOW <==
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[nv * natoms + fst_ind] = 17.41398863;  // N
+            c6_lr[nv * natoms + fst_ind] = 17.41398863;      // N
             c6_lr[nv * natoms + fst_ind + 1] = 6.064748037;  // H
             c6_lr[nv * natoms + fst_ind + 2] = 6.064748037;  // H
             c6_lr[nv * natoms + fst_ind + 3] = 6.064748037;  // H
@@ -986,18 +974,17 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
 
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[nv * natoms + fst_ind] = 17.91673320223304547491;  // C
+            c6_lr[nv * natoms + fst_ind] = 17.91673320223304547491;      // C
             c6_lr[nv * natoms + fst_ind + 1] = 13.04205731316957524126;  // O
             c6_lr[nv * natoms + fst_ind + 2] = 13.04205731316957524126;  // O
         }
     } else if (mon_id == "dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[fst_ind + nv] = 0.0;
-
         }
-    // END SECTION C6_LONG_RANGE
-    // Water is the only monomer which C6 does not come from qchem.
-    // It comes from MB-pol (C6O = sqrt(C6OO))
+        // END SECTION C6_LONG_RANGE
+        // Water is the only monomer which C6 does not come from qchem.
+        // It comes from MB-pol (C6O = sqrt(C6OO))
     } else if (mon_id == "h2o") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 15.40523357222455098728;     // O
