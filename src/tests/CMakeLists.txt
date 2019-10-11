@@ -16,7 +16,7 @@ foreach(t combinations-test n_single_point single_point energy_wograd-test energ
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR}/../external/)
 
-set(LIBS mbnrglib)
+set(LIBS mbxlib)
 #set(LIBS bblock io_tools 1b 2b 3b dispersion electrostatics)
 #set(LIBS bblock io_tools tools 1b 2b 3b dispersion)
 

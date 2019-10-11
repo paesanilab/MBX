@@ -1,10 +1,10 @@
 CXX=icpc
 CXXFLAGS= -Wall -std=c++11 -O2 -g
 
-LIBS = -lmbnrglib -fopenmp -lfftw3
-LIBDIR = -L$(CU_HOME)/install/lib/static
+LIBS = -lmbxlib -fopenmp -lfftw3
+LIBDIR = -L$(MBX_HOME)/install/lib/static
 
-INCLUDEDIR = -I$(CU_HOME)/install/include -I../utils
+INCLUDEDIR = -I$(MBX_HOME)/install/include -I../utils
 
 BINDIR = ../../bin
 

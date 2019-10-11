@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/chemphys/clusters_ultimate.svg?branch=master)](https://travis-ci.org/chemphys/clusters_ultimate)
-[![codecov](https://codecov.io/gh/chemphys/clusters_ultimate/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/clusters_ultimate)
+[![Build Status](https://travis-ci.org/chemphys/MBX.svg?branch=master)](https://travis-ci.org/chemphys/MBX)
+[![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
 
-# clusters_ultimate
+# MBX
 DO NOT CLONE. Currently under development. This code will be able to calculate the energy of a set of systems composed by molecules, each molecule composed by monomers. 
 
 ## Compilation and Installation
@@ -103,13 +103,13 @@ This software is already interfaced with i-pi. In order to run molecular dynamic
 After making sure that i-pi is working on yor machine:
 ```
 cd plugins/i-pi/src/main/
-export CU_HOME="FULL/PATH/TO/CLUSTERS/ULTIMATE/HOME"
+export MBX_HOME="FULL/PATH/TO/CLUSTERS/ULTIMATE/HOME"
 make
 ```
 
-A new file will be generated in `../../bin/`, called `driver`. Now we can run MD using i-pi. Go to the i-pi test folder in clusters_ultimate:
+A new file will be generated in `../../bin/`, called `driver`. Now we can run MD using i-pi. Go to the i-pi test folder in MBX:
 ```
-cd $CU_HOME/plugins/i-pi/test/MD/3h2o/100K/1-nvt/
+cd $MBX_HOME/plugins/i-pi/test/MD/3h2o/100K/1-nvt/
 ```
 
 This folder contains 5 files:
