@@ -648,7 +648,7 @@ void System::SetUpFromJson(char *json_file) {
     // Default: Conjugate gradient cg
     std::string dipole_method;
     try {
-        dipole_method_ = j["MBX"]["dipole_method"];
+        dipole_method = j["MBX"]["dipole_method"];
     } catch (...) {
         dipole_method = "cg";
     }
