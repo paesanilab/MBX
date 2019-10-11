@@ -173,15 +173,15 @@ std::string System::GetMonId(size_t n) {
 void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
     std::vector<double> tmp_perm = electrostaticE_.GetMolecularPermanentDipoles();
     std::vector<double> tmp_ind = electrostaticE_.GetMolecularInducedDipoles();
-    
-    mu_perm = std::vector<double>(tmp_perm.size(),0.0);
-    mu_ind = std::vector<double>(tmp_ind.size(),0.0);
+
+    mu_perm = std::vector<double>(tmp_perm.size(), 0.0);
+    mu_ind = std::vector<double>(tmp_ind.size(), 0.0);
     // Reorder to match input order
     for (size_t i = 0; i < nummon_; i++) {
         size_t current_pos = original2current_order_[i];
         for (size_t j = 0; j < 3; j++) {
-            mu_perm[3*i +j] = tmp_perm[3*current_pos + j];
-            mu_ind[3*i +j] = tmp_ind[3*current_pos + j];
+            mu_perm[3 * i + j] = tmp_perm[3 * current_pos + j];
+            mu_ind[3 * i + j] = tmp_ind[3 * current_pos + j];
         }
     }
 }
@@ -198,15 +198,15 @@ void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &m
     std::vector<double> all_mu_perm = electrostaticE_.GetPermanentDipoles();
     std::vector<double> all_mu_ind = electrostaticE_.GetInducedDipoles();
 
-    mu_perm = std::vector<double>(3,0.0);
-    mu_ind  = std::vector<double>(3,0.0);
+    mu_perm = std::vector<double>(3, 0.0);
+    mu_ind = std::vector<double>(3, 0.0);
 
-    mu_tot  = std::vector<double>(3,0.0);
+    mu_tot = std::vector<double>(3, 0.0);
 
     for (size_t i = 0; i < numsites_; i++) {
         for (size_t j = 0; j < 3; j++) {
-            mu_perm[j] += all_mu_perm[3*i + j];
-            mu_ind[j] += all_mu_ind[3*i + j];
+            mu_perm[j] += all_mu_perm[3 * i + j];
+            mu_ind[j] += all_mu_ind[3 * i + j];
         }
     }
     for (size_t j = 0; j < 3; j++) {
@@ -215,12 +215,12 @@ void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &m
 }
 
 std::vector<double> System::GetChargeDerivativesOHH() {
-    std::vector<double> chg_der(numat_*numat_*3,0.0);
+    std::vector<double> chg_der(numat_ * numat_ * 3, 0.0);
 
     size_t fi_chgder = 0;
     size_t fi_mon = 0;
     size_t fi_at = 0;
-    size_t row_length = numat_*3;
+    size_t row_length = numat_ * 3;
     // Loop over all monomer types
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t nmon = mon_type_count_[mt].second;
@@ -230,20 +230,20 @@ std::vector<double> System::GetChargeDerivativesOHH() {
             // chg_der will be 27*nwaters
             // Loop over all water molecules
             for (size_t m = 0; m < nmon; m++) {
-                size_t shift = 3*fi_at + 3*numat_*fi_at;
+                size_t shift = 3 * fi_at + 3 * numat_ * fi_at;
                 // chg_der has the order H1 H2 O. We want O H1 H2 M
                 for (size_t u = 0; u < 3; u++) {
-                    chg_der[shift + u] = chggrad_[27*m + 18 + 6 + u]; // dqo/dro
-                    chg_der[shift + 3 + u] = chggrad_[27*m + 0 + 6 + u]; // dqo/drh1
-                    chg_der[shift + 6 + u] = chggrad_[27*m + 9 + 6 + u]; // dqo/drh2
+                    chg_der[shift + u] = chggrad_[27 * m + 18 + 6 + u];     // dqo/dro
+                    chg_der[shift + 3 + u] = chggrad_[27 * m + 0 + 6 + u];  // dqo/drh1
+                    chg_der[shift + 6 + u] = chggrad_[27 * m + 9 + 6 + u];  // dqo/drh2
 
-                    chg_der[shift + row_length + u] = chggrad_[27*m + 18 + 0 + u]; // dqh1/dro
-                    chg_der[shift + row_length + 3 + u] = chggrad_[27*m + 0 + 0 + u]; // dqh1/drh1
-                    chg_der[shift + row_length + 6 + u] = chggrad_[27*m + 9 + 0 + u]; // dqh1/drh2
+                    chg_der[shift + row_length + u] = chggrad_[27 * m + 18 + 0 + u];     // dqh1/dro
+                    chg_der[shift + row_length + 3 + u] = chggrad_[27 * m + 0 + 0 + u];  // dqh1/drh1
+                    chg_der[shift + row_length + 6 + u] = chggrad_[27 * m + 9 + 0 + u];  // dqh1/drh2
 
-                    chg_der[shift + 2*row_length + u] = chggrad_[27*m + 18 + 3 + u]; // dqh2/dro
-                    chg_der[shift + 2*row_length + 3 + u] = chggrad_[27*m + 0 + 3 + u]; // dqh2/drh1
-                    chg_der[shift + 2*row_length + 6 + u] = chggrad_[27*m + 9 + 3 + u]; // dqh2/drh2
+                    chg_der[shift + 2 * row_length + u] = chggrad_[27 * m + 18 + 3 + u];     // dqh2/dro
+                    chg_der[shift + 2 * row_length + 3 + u] = chggrad_[27 * m + 0 + 3 + u];  // dqh2/drh1
+                    chg_der[shift + 2 * row_length + 6 + u] = chggrad_[27 * m + 9 + 3 + u];  // dqh2/drh2
                 }
                 fi_at += nat;
             }
@@ -254,12 +254,12 @@ std::vector<double> System::GetChargeDerivativesOHH() {
 }
 
 std::vector<double> System::GetChargeDerivatives() {
-    std::vector<double> chg_der(numsites_*numsites_*3,0.0);
-    
+    std::vector<double> chg_der(numsites_ * numsites_ * 3, 0.0);
+
     size_t fi_chgder = 0;
     size_t fi_mon = 0;
     size_t fi_sites = 0;
-    size_t row_length = numsites_*3;
+    size_t row_length = numsites_ * 3;
 
     double g21 = systools::gamma21;
 
@@ -272,37 +272,45 @@ std::vector<double> System::GetChargeDerivatives() {
             // chg_der will be 27*nwaters
             // Loop over all water molecules
             for (size_t m = 0; m < nmon; m++) {
-                size_t shift = 3*fi_sites + 3*numsites_*fi_sites;
+                size_t shift = 3 * fi_sites + 3 * numsites_ * fi_sites;
                 // chg_der has the order H1 H2 O. We want O H1 H2 M
                 for (size_t u = 0; u < 3; u++) {
-                    chg_der[shift + u] = 0.0; // dqo/dro
-                    chg_der[shift + 3 + u] = 0.0; // dqo/drh1
-                    chg_der[shift + 6 + u] = 0.0; // dqo/drh2
-                    chg_der[shift + 9 + u] = 0.0; // dqo/drM
+                    chg_der[shift + u] = 0.0;      // dqo/dro
+                    chg_der[shift + 3 + u] = 0.0;  // dqo/drh1
+                    chg_der[shift + 6 + u] = 0.0;  // dqo/drh2
+                    chg_der[shift + 9 + u] = 0.0;  // dqo/drM
 
-                    chg_der[shift + row_length + u] = 0.0; // dqh1/dro
-                    chg_der[shift + row_length + 3 + u] = chggrad_[27*m + u] 
-                + g21*(chggrad_[27*m + u] + chggrad_[27*m + 3 + u]); // dqh1/drh1
-                    chg_der[shift + row_length + 6 + u] = chggrad_[27*m + 9 + u] 
-                + g21*(chggrad_[27*m + 9 + u] + chggrad_[27*m + 9 + 3 + u]); // dqh1/drh2
-                    chg_der[shift + row_length + 9 + u] = chggrad_[27*m + 18 + u] 
-                + g21*(chggrad_[27*m + 18 + u] + chggrad_[27*m + 18 + 3 + u]); // dqh1/drM
+                    chg_der[shift + row_length + u] = 0.0;  // dqh1/dro
+                    chg_der[shift + row_length + 3 + u] =
+                        chggrad_[27 * m + u] + g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqh1/drh1
+                    chg_der[shift + row_length + 6 + u] =
+                        chggrad_[27 * m + 9 + u] +
+                        g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqh1/drh2
+                    chg_der[shift + row_length + 9 + u] =
+                        chggrad_[27 * m + 18 + u] +
+                        g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqh1/drM
 
-                    chg_der[shift + 2*row_length + u] = 0.0; // dqh2/dro
-                    chg_der[shift + 2*row_length + 3 + u] = chggrad_[27*m + 3 + u] 
-                + g21*(chggrad_[27*m + u] + chggrad_[27*m + 3 + u]); // dqh2/drh1
-                    chg_der[shift + 2*row_length + 6 + u] = chggrad_[27*m + 9 + 3 + u] 
-                + g21*(chggrad_[27*m + 9 + u] + chggrad_[27*m + 9 + 3 + u]); // dqh2/drh2
-                    chg_der[shift + 2*row_length + 9 + u] = chggrad_[27*m + 18 + 3 + u]
-                + g21*(chggrad_[27*m + 18 + u] + chggrad_[27*m + 18 + 3 + u]); // dqh2/drM
+                    chg_der[shift + 2 * row_length + u] = 0.0;  // dqh2/dro
+                    chg_der[shift + 2 * row_length + 3 + u] =
+                        chggrad_[27 * m + 3 + u] +
+                        g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqh2/drh1
+                    chg_der[shift + 2 * row_length + 6 + u] =
+                        chggrad_[27 * m + 9 + 3 + u] +
+                        g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqh2/drh2
+                    chg_der[shift + 2 * row_length + 9 + u] =
+                        chggrad_[27 * m + 18 + 3 + u] +
+                        g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqh2/drM
 
-                    chg_der[shift + 3*row_length + u] = 0.0; // dqM/dro
-                    chg_der[shift + 3*row_length + 3 + u] = chggrad_[27*m + 6 + u]
-                - 2*g21*(chggrad_[27*m + u] + chggrad_[27*m + 3 + u]); // dqM/drh1
-                    chg_der[shift + 3*row_length + 6 + u] = chggrad_[27*m + 9 + 6 + u]
-                - 2*g21*(chggrad_[27*m + 9 + u] + chggrad_[27*m + 9 + 3 + u]); // dqM/drh2
-                    chg_der[shift + 3*row_length + 9 + u] = chggrad_[27*m + 18 + 6 + u]
-                - 2*g21*(chggrad_[27*m + 18 + u] + chggrad_[27*m + 18 + 3 + u]); // dqM/drM
+                    chg_der[shift + 3 * row_length + u] = 0.0;  // dqM/dro
+                    chg_der[shift + 3 * row_length + 3 + u] =
+                        chggrad_[27 * m + 6 + u] -
+                        2 * g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqM/drh1
+                    chg_der[shift + 3 * row_length + 6 + u] =
+                        chggrad_[27 * m + 9 + 6 + u] -
+                        2 * g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqM/drh2
+                    chg_der[shift + 3 * row_length + 9 + u] =
+                        chggrad_[27 * m + 18 + 6 + u] -
+                        2 * g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqM/drM
                 }
                 fi_sites += nsites;
             }
@@ -310,13 +318,13 @@ std::vector<double> System::GetChargeDerivatives() {
         fi_mon += nmon;
     }
 
-// FIXME
-//    for (size_t i = 0; i < numsites_ ; i++) {
-//        for (size_t j = 0; j < 3*numsites_; j++) {
-//            std::cout << std::scientific << std::setprecision(4) << std::setw(14) << chg_der[3*numsites_*i + j];
-//        }
-//        std::cout << std::endl;
-//    }
+    // FIXME
+    //    for (size_t i = 0; i < numsites_ ; i++) {
+    //        for (size_t j = 0; j < 3*numsites_; j++) {
+    //            std::cout << std::scientific << std::setprecision(4) << std::setw(14) << chg_der[3*numsites_*i + j];
+    //        }
+    //        std::cout << std::endl;
+    //    }
 
     return chg_der;
 }
@@ -428,7 +436,7 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
 
 void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
-    std::pair<std::string,std::string> p = mon2 < mon1 ? std::make_pair(mon2, mon1) : std::make_pair(mon1, mon2);
+    std::pair<std::string, std::string> p = mon2 < mon1 ? std::make_pair(mon2, mon1) : std::make_pair(mon1, mon2);
 
     if (std::find(buck_pairs_.begin(), buck_pairs_.end(), p) == buck_pairs_.end()) {
         buck_pairs_.push_back(p);
@@ -513,7 +521,7 @@ void System::Initialize() {
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
                                true, diptol_, maxItDip_, dipole_method_);
 
-    // TODO Is this OK? Order of GetReal is input order. 
+    // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
@@ -559,8 +567,9 @@ void System::SetUpFromJson(char *json_file) {
         try {
             ifjson.open(json_file);
             j = nlohmann::json::parse(ifjson);
-        } catch(...) {
-            std::cerr << "There has been a problem loading your json file: " + std::string(json_file) + "... using defaults"; 
+        } catch (...) {
+            std::cerr << "There has been a problem loading your json file: " + std::string(json_file) +
+                             "... using defaults";
         }
     }
 
@@ -570,7 +579,7 @@ void System::SetUpFromJson(char *json_file) {
     try {
         std::vector<double> box2 = j["MBX"]["box"];
         box = box2;
-    } catch(...) {
+    } catch (...) {
         box.clear();
     }
     box_ = box;
@@ -580,7 +589,7 @@ void System::SetUpFromJson(char *json_file) {
     double cutoff_2b;
     try {
         cutoff_2b = j["MBX"]["twobody_cutoff"];
-    } catch(...) {
+    } catch (...) {
         cutoff_2b = box_.size() ? 9.0 : 100.0;
     }
     cutoff2b_ = cutoff_2b;
@@ -590,7 +599,7 @@ void System::SetUpFromJson(char *json_file) {
     double cutoff_3b;
     try {
         cutoff_3b = j["MBX"]["threebody_cutoff"];
-    } catch(...) {
+    } catch (...) {
         cutoff_3b = 6.5;
     }
     cutoff3b_ = cutoff_3b;
@@ -600,7 +609,7 @@ void System::SetUpFromJson(char *json_file) {
     size_t max_eval_1b;
     try {
         max_eval_1b = j["MBX"]["max_n_eval_1b"];
-    } catch(...) {
+    } catch (...) {
         max_eval_1b = 1000;
     }
     maxNMonEval_ = max_eval_1b;
@@ -610,7 +619,7 @@ void System::SetUpFromJson(char *json_file) {
     size_t max_eval_2b;
     try {
         max_eval_2b = j["MBX"]["max_n_eval_2b"];
-    } catch(...) {
+    } catch (...) {
         max_eval_2b = 1000;
     }
     maxNDimEval_ = max_eval_2b;
@@ -620,7 +629,7 @@ void System::SetUpFromJson(char *json_file) {
     size_t max_eval_3b;
     try {
         max_eval_3b = j["MBX"]["max_n_eval_3b"];
-    } catch(...) {
+    } catch (...) {
         max_eval_3b = 1000;
     }
     maxNTriEval_ = max_eval_3b;
@@ -630,7 +639,7 @@ void System::SetUpFromJson(char *json_file) {
     double dipole_tolerance;
     try {
         dipole_tolerance = j["MBX"]["dipole_tolerance"];
-    } catch(...) {
+    } catch (...) {
         dipole_tolerance = 1E-16;
     }
     diptol_ = dipole_tolerance;
@@ -640,7 +649,7 @@ void System::SetUpFromJson(char *json_file) {
     std::string dipole_method;
     try {
         dipole_method_ = j["MBX"]["dipole_method"];
-    } catch(...) {
+    } catch (...) {
         dipole_method = "cg";
     }
     dipole_method_ = dipole_method;
@@ -650,17 +659,17 @@ void System::SetUpFromJson(char *json_file) {
     size_t dipole_max_it;
     try {
         dipole_max_it = j["MBX"]["dipole_max_it"];
-    } catch(...) {
+    } catch (...) {
         dipole_max_it = 1E-16;
     }
     maxItDip_ = dipole_max_it;
 
-		// Try to get dispersion PME alpha
+    // Try to get dispersion PME alpha
     // Default: 0.25
     double alpha_disp;
     try {
         alpha_disp = j["MBX"]["aplha_ewald_disp"];
-    } catch(...) {
+    } catch (...) {
         alpha_disp = box_.size() ? 0.25 : 0.0;
     }
 
@@ -669,7 +678,7 @@ void System::SetUpFromJson(char *json_file) {
     double grid_density_disp;
     try {
         grid_density_disp = j["MBX"]["grid_density_disp"];
-    } catch(...) {
+    } catch (...) {
         grid_density_disp = 2.5;
     }
 
@@ -678,18 +687,18 @@ void System::SetUpFromJson(char *json_file) {
     size_t spline_order_disp;
     try {
         spline_order_disp = j["MBX"]["spline_order_disp"];
-    } catch(...) {
+    } catch (...) {
         spline_order_disp = 6;
     }
 
-    SetEwaldDispersion(alpha_disp,grid_density_disp,spline_order_disp);
+    SetEwaldDispersion(alpha_disp, grid_density_disp, spline_order_disp);
 
     // Try to get electrostatics PME alpha
     // Default: 0.25
     double alpha_elec;
     try {
         alpha_elec = j["MBX"]["aplha_ewald_elec"];
-    } catch(...) {
+    } catch (...) {
         alpha_elec = box.size() ? 0.25 : 0.0;
     }
 
@@ -698,7 +707,7 @@ void System::SetUpFromJson(char *json_file) {
     double grid_density_elec;
     try {
         grid_density_elec = j["MBX"]["grid_density_elec"];
-    } catch(...) {
+    } catch (...) {
         grid_density_elec = 2.5;
     }
 
@@ -707,35 +716,35 @@ void System::SetUpFromJson(char *json_file) {
     size_t spline_order_elec;
     try {
         spline_order_elec = j["MBX"]["spline_order_elec"];
-    } catch(...) {
+    } catch (...) {
         spline_order_elec = 6;
     }
 
-    SetEwaldElectrostatics(alpha_elec,grid_density_elec,spline_order_elec);
+    SetEwaldElectrostatics(alpha_elec, grid_density_elec, spline_order_elec);
 
-    std::vector<std::pair<std::string,std::string> > ttm_pairs;
+    std::vector<std::pair<std::string, std::string>> ttm_pairs;
     try {
-        std::vector<std::pair<std::string,std::string> > ttm_pairs2 = j["MBX"]["ttm_pairs"];
+        std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];
         ttm_pairs = ttm_pairs2;
-    } catch(...) {
+    } catch (...) {
         ttm_pairs.clear();
     }
     buck_pairs_ = ttm_pairs;
 
-    std::vector<std::vector<std::string> > ignore_2b_poly;
+    std::vector<std::vector<std::string>> ignore_2b_poly;
     try {
-        std::vector<std::vector<std::string> > ignore_2b_poly2 = j["MBX"]["ignore_2b_poly"];
+        std::vector<std::vector<std::string>> ignore_2b_poly2 = j["MBX"]["ignore_2b_poly"];
         ignore_2b_poly = ignore_2b_poly2;
-    } catch(...) {
+    } catch (...) {
         ignore_2b_poly.clear();
     }
     ignore_2b_poly_ = ignore_2b_poly;
-    
-    std::vector<std::vector<std::string> > ignore_3b_poly;
+
+    std::vector<std::vector<std::string>> ignore_3b_poly;
     try {
-        std::vector<std::vector<std::string> > ignore_3b_poly2 = j["MBX"]["ignore_3b_poly"];
+        std::vector<std::vector<std::string>> ignore_3b_poly2 = j["MBX"]["ignore_3b_poly"];
         ignore_3b_poly = ignore_3b_poly2;
-    } catch(...) {
+    } catch (...) {
         ignore_3b_poly.clear();
     }
     ignore_3b_poly_ = ignore_3b_poly;
@@ -955,27 +964,27 @@ double System::Energy(bool do_grads) {
     auto t2 = std::chrono::high_resolution_clock::now();
 #endif
 
-    //double e2b = 0.0;
+    // double e2b = 0.0;
     double e2b = Get2B(do_grads);
 
 #ifdef TIMING
     auto t2a = std::chrono::high_resolution_clock::now();
 #endif
 
-    //double edisp = 0.0;
+    // double edisp = 0.0;
     double edisp = GetDispersion(do_grads);
 
 #ifdef TIMING
     auto t2b = std::chrono::high_resolution_clock::now();
 #endif
 
-    //double ebuck = 0.0;
+    // double ebuck = 0.0;
     double ebuck = GetBuckingham(do_grads);
 #ifdef TIMING
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
 
-    //double e3b = 0.0;
+    // double e3b = 0.0;
     double e3b = Get3B(do_grads);
 
 #ifdef TIMING
@@ -984,7 +993,7 @@ double System::Energy(bool do_grads) {
 
     // Electrostatic energy
     double Eelec = GetElectrostatics(do_grads);
-    //double Eelec = 0.0;
+    // double Eelec = 0.0;
 
 #ifdef TIMING
     auto t5 = std::chrono::high_resolution_clock::now();
@@ -1251,10 +1260,10 @@ double System::Get2B(bool do_grads) {
                 bool use_poly = true;
                 for (size_t i2b = 0; i2b < ignore_2b_poly_.size(); i2b++) {
                     std::vector<std::string> v1 = ignore_2b_poly_[i2b];
-                    std::vector<std::string> v2 = {m1,m2};
-                    std::sort(v1.begin(),v1.end());
-                    std::sort(v2.begin(),v2.end());
-                   
+                    std::vector<std::string> v2 = {m1, m2};
+                    std::sort(v1.begin(), v1.end());
+                    std::sort(v2.begin(), v2.end());
+
                     if (v1 == v2) {
                         use_poly = false;
                         break;
@@ -1262,7 +1271,6 @@ double System::Get2B(bool do_grads) {
                 }
 
                 if (use_poly) {
-
                     if (do_grads) {
                         // POLYNOMIALS
                         e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
@@ -1480,9 +1488,9 @@ double System::Get3B(bool do_grads) {
                 bool use_poly = true;
                 for (size_t i3b = 0; i3b < ignore_3b_poly_.size(); i3b++) {
                     std::vector<std::string> v1 = ignore_3b_poly_[i3b];
-                    std::vector<std::string> v2 = {m1,m2,m3};
-                    std::sort(v1.begin(),v1.end());
-                    std::sort(v2.begin(),v2.end());
+                    std::vector<std::string> v2 = {m1, m2, m3};
+                    std::sort(v1.begin(), v1.end());
+                    std::sort(v2.begin(), v2.end());
 
                     if (v1 == v2) {
                         use_poly = false;
@@ -1491,7 +1499,6 @@ double System::Get3B(bool do_grads) {
                 }
 
                 if (use_poly) {
-
                     std::vector<double> xyz1(coord1.size(), 0.0);
                     std::vector<double> xyz2(coord2.size(), 0.0);
                     std::vector<double> xyz3(coord3.size(), 0.0);
@@ -1809,7 +1816,6 @@ void System::SetEwaldDispersion(double alpha, double grid_density, int spline_or
     dispersionE_.SetEwaldGridDensity(grid_density);
     dispersionE_.SetEwaldSplineOrder(spline_order);
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 

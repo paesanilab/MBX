@@ -153,7 +153,7 @@ class System {
      * @param[out] mu_tot Total dipole moment
      */
     void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
-    
+
     /**
      * Returns the charge derivatives for the whole system
      */
@@ -440,28 +440,29 @@ class System {
     void SetPBC(std::vector<double> box = {});
 
     /**
-     * Sets the values for alpha, the grid density and the spline order when using PME to get the reciprocal space contribution. Sets both the parameters for dispersion and electorstatics to be the same.
-     * @param[in] alpha Value for the Ewald alpha 
+     * Sets the values for alpha, the grid density and the spline order when using PME to get the reciprocal space
+     * contribution. Sets both the parameters for dispersion and electorstatics to be the same.
+     * @param[in] alpha Value for the Ewald alpha
      * @param[in] grid_density Grid density in the PME calculation
      * @param[in] spline_order Order of the splines used for interpolation
      */
     void SetEwald(double alpha, double grid_density, int spline_order);
 
     /**
-     * Sets the values for alpha, the grid density and the spline order when using PME to get 
+     * Sets the values for alpha, the grid density and the spline order when using PME to get
 the reciprocal space contribution, only for electrostatics.
 to be the same.
-     * @param[in] alpha Value for the Ewald alpha 
+     * @param[in] alpha Value for the Ewald alpha
      * @param[in] grid_density Grid density in the PME calculation
      * @param[in] spline_order Order of the splines used for interpolation
      */
     void SetEwaldElectrostatics(double alpha, double grid_density, int spline_order);
 
     /**
-     * Sets the values for alpha, the grid density and the spline order when using PME to get 
-the reciprocal space contribution, only for dispersion. 
+     * Sets the values for alpha, the grid density and the spline order when using PME to get
+the reciprocal space contribution, only for dispersion.
 to be the same.
-     * @param[in] alpha Value for the Ewald alpha 
+     * @param[in] alpha Value for the Ewald alpha
      * @param[in] grid_density Grid density in the PME calculation
      * @param[in] spline_order Order of the splines used for interpolation
      */
@@ -874,19 +875,19 @@ to be the same.
      */
     std::vector<std::pair<std::string, size_t> > mon_type_count_;
 
-    /** 
+    /**
      * This vector contains the pairs that will use TTM-nrg instead of MB-nrg
      */
-    std::vector<std::pair<std::string,std::string> > buck_pairs_;
+    std::vector<std::pair<std::string, std::string> > buck_pairs_;
 
     /**
-     * This vector of vectors contains the pairs of monomer types that will be ignored when 
+     * This vector of vectors contains the pairs of monomer types that will be ignored when
      * when calculating the 2b polynomials.
      */
     std::vector<std::vector<std::string> > ignore_2b_poly_;
 
     /**
-     * This vector of vectors contains the trimers of monomer types that will be ignored when 
+     * This vector of vectors contains the trimers of monomer types that will be ignored when
      * when calculating the 3b polynomials.
      */
     std::vector<std::vector<std::string> > ignore_3b_poly_;
