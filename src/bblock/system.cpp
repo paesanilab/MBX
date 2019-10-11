@@ -648,7 +648,7 @@ void System::SetUpFromJson(char *json_file) {
     // Default: Conjugate gradient cg
     std::string dipole_method;
     try {
-        dipole_method_ = j["MBX"]["dipole_method"];
+        dipole_method = j["MBX"]["dipole_method"];
     } catch (...) {
         dipole_method = "cg";
     }
@@ -1002,7 +1002,7 @@ double System::Energy(bool do_grads) {
     // Set up energy with the new value
     energy_ = e1b + e2b + e3b + edisp + ebuck + Eelec;
 
-#ifdef DEBUG
+//#ifdef DEBUG
     std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
@@ -1011,7 +1011,7 @@ double System::Energy(bool do_grads) {
               << "Buck = " << ebuck << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
-#endif
+//#endif
 #ifdef TIMING
     std::cerr << "System::1b(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n";
