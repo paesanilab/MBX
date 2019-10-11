@@ -1732,7 +1732,6 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad) {
     CalculateElecEnergy();
     if (do_grads_) CalculateGradients(grad);
     has_energy_ = true;
-    std::cout << Eperm_ << " " << Eind_ << std::endl;
     return Eperm_ + Eind_;
 }
 
