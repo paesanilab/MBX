@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+set(PN MBX)
+
+if(NOT TARGET ${PN}::mbxlib)
+    include("${CMAKE_CURRENT_LIST_DIR}/${PN}Targets.cmake")
+endif()
