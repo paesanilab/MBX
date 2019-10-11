@@ -4,6 +4,7 @@
     <properties stride='10' filename='pot'>  [ time{picosecond}, potential{kilocal/mol}] </properties>
     <properties stride='10' filename='temperature'>  [ time{picosecond}, temperature{kelvin}] </properties>
     <trajectory filename='pos' stride='10' format='xyz' cell_units='angstrom'> positions{angstrom} </trajectory>
+    <checkpoint stride='5' filename='checkpoint' overwrite=''/>
   </output>
   <total_steps>5000</total_steps>
   <prng>
