@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef UNITTESTS_SETUPWATERPBCBOX256MBPOL_H
-#define UNITTESTS_SETUPWATERPBCBOX256MBPOL_H
+#ifndef UNITTESTS_SETUP_H2O_256_PBC_H
+#define UNITTESTS_SETUP_H2O_256_PBC_H
 
-#define SETUP_WATERBOX_256_PBC_MBPOL                                                                                        \
+#define SETUP_H2O_256_PBC                                                                                        \
     const size_t n_monomers = 256;                                                                                    \
     const size_t n_at = 3;                                                                                            \
     std::vector<std::string> monomer_names(n_monomers, "h2o");                                                        \

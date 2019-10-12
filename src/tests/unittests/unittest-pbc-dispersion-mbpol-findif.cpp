@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "testutils.h"
 
 #include "bblock/system.h"
-#include "setupmbpolbox.h"
+#include "setup_h2o_256_pbc.h"
 
 #include <vector>
 #include <iostream>
@@ -50,7 +50,7 @@ const size_t NPOINTS = 20;
 TEST_CASE("Test MB-pol One-body gradients finite differences") {
     srand(time(0));
     // MB-pol test
-    SETUP_WATERBOX_256_PBC_MBPOL
+    SETUP_H2O_256_PBC
 
     bblock::System my_sys;
 

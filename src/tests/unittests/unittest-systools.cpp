@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "testutils.h"
 
 #include "bblock/sys_tools.h"
-#include "setupbromidewater5.h"
+#include "setup_h2o_5_br_1.h"
 
 #include <vector>
 #include <iostream>
@@ -47,7 +47,7 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test the system tools functions (no PBC).") {
     // Create the bromide -- water system
-    SETUP_BROMIDE_WATER_5
+    SETUP_H2O_5_BR_1
 
     // Prepare variables for SetUpMonomers
     std::vector<size_t> sites_out;

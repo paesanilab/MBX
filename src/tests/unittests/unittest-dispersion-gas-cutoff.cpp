@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "testutils.h"
 
 #include "potential/dispersion/dispersion.h"
-#include "setupfluoridewatermbpol.h"
+#include "setup_h2o_1_f_1.h"
 
 #include <vector>
 #include <iostream>
@@ -48,7 +48,7 @@ constexpr double CUTOFF = 10.0;
 
 TEST_CASE("Test the dispersion class.") {
     // Create the bromide -- water system
-    SETUP_WATER_FLUORIDE_MBPOL
+    SETUP_H2O_1_F_1
 
     std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0};
 

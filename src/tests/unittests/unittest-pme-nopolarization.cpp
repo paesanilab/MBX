@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "catch.hpp"
 
 #include "electrostatics.h"
-#include "setupwaterbox216.h"
+#include "setup_h2o_216.h"
 
 #include <vector>
 #include <iostream>
@@ -51,7 +51,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     double polfacO = 0;
     double polfacH = 0;
     double polfacM = 0;
-    SETUP_WATERBOX_216
+    SETUP_H2O_216
     double ref_energy = -1820.686249;
 
     elec::Electrostatics elec;

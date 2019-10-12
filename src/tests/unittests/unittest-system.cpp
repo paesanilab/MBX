@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "testutils.h"
 
 #include "bblock/system.h"
-#include "setupbromidewater5.h"
+#include "setup_h2o_5_br_1.h"
 
 #include <vector>
 #include <iostream>
@@ -47,7 +47,7 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test the system class.") {
     // Create the bromide -- water system
-    SETUP_BROMIDE_WATER_5
+    SETUP_H2O_5_BR_1
 
     // Now we create a system that will be the same as the one read
     bblock::System my_system;
@@ -295,7 +295,7 @@ TEST_CASE("Test the system class.") {
 
 TEST_CASE("Test energy from system") {
     // Create the bromide -- water system
-    SETUP_BROMIDE_WATER_5
+    SETUP_H2O_5_BR_1
 
     // Now we create a system that will be the same as the one read
     bblock::System my_system;

@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef UNITTESTS_SETUPWATERFLUORIDEMBPOL_H
-#define UNITTESTS_SETUPWATERFLUORIDEMBPOL_H
+#ifndef UNITTESTS_SETUP_H2O_1_F_1_H
+#define UNITTESTS_SETUP_H2O_1_F_1_H
 
-#define SETUP_WATER_FLUORIDE_MBPOL                                                                                     \
+#define SETUP_H2O_1_F_1                                                                                     \
     double one_body_energy = 3.9139698364e-01;                                                                         \
     double two_body_energy = -1.7569884704e-01;                                                                        \
     double three_body_energy = 0.0000000000e+00;                                                                       \
