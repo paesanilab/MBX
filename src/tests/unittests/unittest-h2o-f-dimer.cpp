@@ -287,11 +287,12 @@ TEST_CASE("Test energy from system") {
         }
     }
 
+    // Set the pair to be calculated as buckingham
+    my_system.Set2bIgnorePoly(ignore_2b);
+    my_system.Set3bIgnorePoly(ignore_3b);
+    my_system.SetTTMnrgPairs(ttm_pairs);
+
     SECTION("Buckingham") {
-        // Set the pair to be calculated as buckingham
-        my_system.Set2bIgnorePoly(ignore_2b);
-        my_system.Set3bIgnorePoly(ignore_3b);
-        my_system.SetTTMnrgPairs(ttm_pairs);
         double energy_nograd = my_system.Buckingham(false);
         double energy_grad = my_system.Buckingham(true);
         std::vector<double> real_grad = my_system.GetRealGrads();

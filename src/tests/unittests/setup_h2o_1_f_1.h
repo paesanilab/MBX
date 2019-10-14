@@ -45,9 +45,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     double total_energy = -3.2835905766e+00;                                                                           \
     double total_energy_ttm = -3.0133471347e+00;                                                                           \
     const int n_monomers = 2;                                                                                          \
-    std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"h2o","f"}}; \
-    std::vector<std::vector<std::string> > ignore_2b = {{"h2o","f"}}; \
-    std::vector<std::vector<std::string> > ignore_3b = {{"h2o","h2o","f"}}; \
+    std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"f","h2o"}}; \
+    std::vector<std::vector<std::string> > ignore_2b = {{"f", "h2o"}}; \
+    std::vector<std::vector<std::string> > ignore_3b = {{"f","h2o","h2o"}}; \
     std::vector<double> coords{0.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00,  9.5953519000e-01,               \
                                9.9304800000e-03, -2.8171150000e-02, -3.1093854000e-01, 7.0163128000e-01,               \
                                5.7674150000e-01, 1.3838032710e-01,  1.5181414998e-01,  1.1703937180e-01,               \
