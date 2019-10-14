@@ -446,9 +446,9 @@ void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
 void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string> > ttm_pairs) {
     buck_pairs_.clear();
 
-    for (auto it = ttm_pairs.begin(), it != ttm_pairs.end(); it++) {
-        std::string s1 = *it.first;
-        std::string s2 = *it.second;
+    for (auto it = ttm_pairs.begin(); it != ttm_pairs.end(); it++) {
+        std::string s1 = (*it).first;
+        std::string s2 = (*it).second;
         std::pair<std::string,std::string> p = s2 < s1 ? std::make_pair(s2,s1) : std::make_pair(s1,s2);
         buck_pairs_.push_back(p);
     }
