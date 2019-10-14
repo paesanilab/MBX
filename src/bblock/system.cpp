@@ -444,7 +444,14 @@ void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
 }
 
 void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string> > ttm_pairs) {
-    buck_pairs_ = ttm_pairs;
+    buck_pairs_.clear();
+
+    for (auto it = ttm_pairs.begin(), it != ttm_pairs.end(); it++) {
+        std::string s1 = *it.first;
+        std::string s2 = *it.second;
+        std::pair<std::string,std::string> p = s2 < s1 ? std::make_pair(s2,s1) : std::make_pair(s1,s2);
+        buck_pairs_.push_back(p);
+    }
 }
 
 void System::Add2bIgnorePoly(std::string mon1, std::string mon2) {
@@ -457,7 +464,13 @@ void System::Add2bIgnorePoly(std::string mon1, std::string mon2) {
 }
 
 void System::Set2bIgnorePoly(std::vector<std::vector<std::string> > ignore_2b) {
-    ignore_2b_poly_ = ignore_2b;
+    ignore_2b_poly_.clear();
+
+    for (size_t i = 0; i < ignore_2b.size(); i++) {
+        std::vector<std::string> p = ignore_2b[i];
+        std::sort(p.begin(),p.end());
+        ignore_2b_poly_.push_back(p);
+    }
 }
 
 void System::Add3bIgnorePoly(std::string mon1, std::string mon2, std::string mon3) {
@@ -470,7 +483,13 @@ void System::Add3bIgnorePoly(std::string mon1, std::string mon2, std::string mon
 }
 
 void System::Set3bIgnorePoly(std::vector<std::vector<std::string> > ignore_3b) {
-    ignore_3b_poly_ = ignore_3b;
+    ignore_3b_poly_.clear();
+
+    for (size_t i = 0; i < ignore_3b.size(); i++) {
+        std::vector<std::string> p = ignore_3b[i];
+        std::sort(p.begin(),p.end());
+        ignore_3b_poly_.push_back(p);
+    }
 }
 
 void System::Initialize() {
