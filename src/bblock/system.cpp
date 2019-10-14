@@ -34,7 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "system.h"
 
-//#define DEBUG
+#define DEBUG
 //#define TIMING
 
 #ifdef TIMING
@@ -441,6 +441,36 @@ void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
     if (std::find(buck_pairs_.begin(), buck_pairs_.end(), p) == buck_pairs_.end()) {
         buck_pairs_.push_back(p);
     }
+}
+
+void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string> > ttm_pairs) {
+    buck_pairs_ = ttm_pairs;
+}
+
+void System::Add2bIgnorePoly(std::string mon1, std::string mon2) {
+    std::vector<std::string> p = {mon1,mon2};
+    std::sort(p.begin(), p.end());
+    
+    if (std::find(ignore_2b_poly_.begin(), ignore_2b_poly_.end(), p) == ignore_2b_poly_.end()) {
+        ignore_2b_poly_.push_back(p);
+    }
+}
+
+void System::Set2bIgnorePoly(std::vector<std::vector<std::string> > ignore_2b) {
+    ignore_2b_poly_ = ignore_2b;
+}
+
+void System::Add3bIgnorePoly(std::string mon1, std::string mon2, std::string mon3) {
+    std::vector<std::string> p = {mon1,mon2,mon3};
+    std::sort(p.begin(), p.end());
+
+    if (std::find(ignore_3b_poly_.begin(), ignore_3b_poly_.end(), p) == ignore_3b_poly_.end()) {
+        ignore_3b_poly_.push_back(p);
+    }
+}
+
+void System::Set3bIgnorePoly(std::vector<std::vector<std::string> > ignore_3b) {
+    ignore_3b_poly_ = ignore_3b;
 }
 
 void System::Initialize() {

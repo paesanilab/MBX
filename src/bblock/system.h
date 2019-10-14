@@ -351,6 +351,39 @@ class System {
     void AddTTMnrgPair(std::string mon1, std::string mon2);
 
     /**
+     * Sets the TTM pairs vector as a whole. Will overwrite the previous one.
+     * @param[in] ttm_pairs Vector of pairs of the monomer pairs for which buckingham will be calculated
+     */
+    void SetTTMnrgPairs(std::vector<std::pair<std::string, std::string> > ttm_pairs);
+
+    /**
+     * Adds a pair that will be ignored in the 2b polynomials
+     * @param[in] mon1 Is the id of the first monomer
+     * @param[in] mon2 Is the id of the second monomer
+     */
+    void Add2bIgnorePoly(std::string mon1, std::string mon2);
+
+    /**
+     * Sets the whole vector for which the 2b polynomials won't be calculated
+     * @param[in] ignore_2b Vector of string vectors with the pairs to be ignored
+     */
+    void Set2bIgnorePoly(std::vector<std::vector<std::string> > ignore_2b);
+
+    /**
+     * Adds a pair that will be ignored in the 3b polynomials
+     * @param[in] mon1 Is the id of the first monomer
+     * @param[in] mon2 Is the id of the second monomer
+     * @param[in] mon3 Is the id of the third monomer
+     */
+    void Add3bIgnorePoly(std::string mon1, std::string mon2, std::string mon3);
+
+    /**
+     * Sets the whole vector for which the 3b polynomials won't be calculated
+     * @param[in] ignore_3b Vector of string vectors with the trimers to be ignored
+     */
+    void Set3bIgnorePoly(std::vector<std::vector<std::string> > ignore_3b);
+
+    /**
      * Initializes the system once the monomer information is inputed. The
      * system, once created, cannot be modified in terms of monomer composition.
      * To see the default values of the initialization,
