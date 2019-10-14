@@ -34,7 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "system.h"
 
-#define DEBUG
+//#define DEBUG
 //#define TIMING
 
 #ifdef TIMING

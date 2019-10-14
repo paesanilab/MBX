@@ -40,9 +40,14 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     double two_body_energy = -1.7569884704e-01;                                                                        \
     double three_body_energy = 0.0000000000e+00;                                                                       \
     double dispersion_energy = -1.6532585284e-01;                                                                      \
+    double buckingham_energy = 9.4544594801e-02;                                                                      \
     double electrostatic_energy = -3.3339628603e+00;                                                                   \
     double total_energy = -3.2835905766e+00;                                                                           \
+    double total_energy_ttm = -3.0133471347e+00;                                                                           \
     const int n_monomers = 2;                                                                                          \
+    std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"h2o","f"}}; \
+    std::vector<std::vector<std::string> > ignore_2b = {{"h2o","f"}}; \
+    std::vector<std::vector<std::string> > ignore_3b = {{"h2o","h2o","f"}}; \
     std::vector<double> coords{0.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00,  9.5953519000e-01,               \
                                9.9304800000e-03, -2.8171150000e-02, -3.1093854000e-01, 7.0163128000e-01,               \
                                5.7674150000e-01, 1.3838032710e-01,  1.5181414998e-01,  1.1703937180e-01,               \
