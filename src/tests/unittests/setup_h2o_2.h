@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef UNITTESTS_SETUPWATERBOX2_H
-#define UNITTESTS_SETUPWATERBOX2_H
+#ifndef UNITTESTS_SETUP_H2O_2_H
+#define UNITTESTS_SETUP_H2O_2_H
 
-#define SETUP_WATERBOX_2                                                                            \
+#define SETUP_H2O_2                                                                            \
     const int n_monomers = 2;                                                                       \
     const int n_atoms = 8;                                                                          \
     std::vector<double> chg_grad(27 * n_monomers, 0.0);                                             \

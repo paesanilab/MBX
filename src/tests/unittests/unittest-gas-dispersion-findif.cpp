@@ -35,7 +35,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "catch.hpp"
 
 #include "dispersion2b.h"
-#include "setupwaterbox2.h"
 
 #include <vector>
 #include <iostream>

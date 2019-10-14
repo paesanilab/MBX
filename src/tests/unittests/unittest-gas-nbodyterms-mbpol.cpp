@@ -38,7 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/energy2b.h"
 #include "potential/3b/energy3b.h"
 #include "potential/dispersion/dispersion.h"
-#include "setupwaterbox3mbpol.h"
+#include "setup_h2o_3.h"
 
 #include <vector>
 #include <iostream>
@@ -67,7 +67,7 @@ void GetDimers(const std::vector<double> xyz, const size_t nmon, std::vector<dou
 
 TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
     // MB-pol test
-    SETUP_WATERBOX_3_MBPOL
+    SETUP_H2O_3
     size_t nmon = 3;
     bool good = true;
     std::string monomer_name = "h2o";

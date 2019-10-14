@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "catch.hpp"
 
 #include "electrostatics.h"
-#include "setupwaterbox2.h"
+#include "setup_h2o_2.h"
 
 #include <vector>
 #include <iostream>
@@ -51,7 +51,7 @@ void run_test(const char *method) {
     double polfacO = 1.310;
     double polfacH = 0.294;
     double polfacM = 0;
-    SETUP_WATERBOX_2
+    SETUP_H2O_2
     double ref_energy = -0.1752818171;
 
     elec::Electrostatics elec;

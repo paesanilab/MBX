@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "testutils.h"
 
 #include "electrostatics.h"
-#include "setupwaterbox3mbpol.h"
+#include "setup_h2o_3.h"
 
 #include <vector>
 #include <iostream>
@@ -46,7 +46,7 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test the electrostatics class for mbpol (gas phase).") {
     // MBpol test
-    SETUP_WATERBOX_3_MBPOL
+    SETUP_H2O_3
     std::vector<double> elec_grad{-7.1325887311e+00, 9.3838029234e+00,  -7.1120493017e+00, -2.6049669131e+00,
                                   3.1364986514e+00,  3.3810366964e+00,  1.9731689382e+01,  1.1749153059e+01,
                                   2.9275233225e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,
