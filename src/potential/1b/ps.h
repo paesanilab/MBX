@@ -70,7 +70,7 @@ namespace ps {
  * @param[in] nw Number of water molecules
  * @return Deformation energy of all the water molecules in a vector
  */
-std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw);
+std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vector<double> *virial = 0);
 
 /**
  * @brief Computes the dipole surface and the charges

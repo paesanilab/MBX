@@ -66,11 +66,11 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, bool
     return e;
 }
 
-double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, bool &good) {
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, bool &good, std::vector<double> *virial) {
     std::vector<double> energies;
     // Look for the proper call to energy depending on the monomer id
     if (mon1 == "h2o") {
-        energies = ps::pot_nasa(xyz1.data(), grad1.data(), nm);
+        energies = ps::pot_nasa(xyz1.data(), grad1.data(), nm, virial);
 
         // =====>> BEGIN SECTION 1B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====

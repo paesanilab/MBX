@@ -296,6 +296,12 @@ class System {
      */
     std::string GetMonId(size_t n);
 
+    /**
+     * Gets the virial tensor
+     * @return A vector of doubles of 9 elements with the virial
+     */
+    std::vector<double> GetVirial();
+
     /////////////////////////////////////////////////////////////////////////////
     // Modifiers ////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
@@ -949,6 +955,11 @@ to be the same.
      * into account only real sites.
      */
     std::vector<std::pair<size_t, size_t> > initial_order_realSites_;
+
+    /**
+     * Vector that contains the virial tensor
+     */
+    std::vector<double> virial_;
 };
 
 }  // namespace bblock

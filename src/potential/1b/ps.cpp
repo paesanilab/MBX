@@ -343,7 +343,7 @@ static double c5z[245];
 
 namespace ps {
 
-std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw) {
+std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vector<double> *virial) {
     // Declare vectors with the distances, and grads
     double ROH1[3 * nw], ROH2[3 * nw], RHH[3 * nw];
     double dROH1[nw], dROH2[nw], dRHH[nw];
@@ -555,6 +555,36 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw) {
                 dr[9 * nv + i + 6] = dr2[nv + ij];
             }
         }
+
+        if (virial != 0) {
+            for (size_t i = 0; i < nw; i++){
+            
+                (*virial)[0] += -rr[9*i+ 0]*dr[9*i+ 0]    
+                             -rr[9*i+ 3]*dr[9*i+ 3]
+                             -rr[9*i+ 6]*dr[9*i+ 6];
+                (*virial)[1] += -rr[9*i+ 0]*dr[9*i+ 1]
+                             -rr[9*i+ 3]*dr[9*i+ 4]
+                             -rr[9*i+ 6]*dr[9*i+ 7];
+                (*virial)[2] += -rr[9*i+ 0]*dr[9*i+ 2]
+                             -rr[9*i+ 3]*dr[9*i+ 5]
+                             -rr[9*i+ 6]*dr[9*i+ 8];
+                (*virial)[4] += -rr[9*i+ 1]*dr[9*i+ 1]
+                             -rr[9*i+ 4]*dr[9*i+ 4]
+                             -rr[9*i+ 7]*dr[9*i+ 7];
+                (*virial)[5] += -rr[9*i+ 1]*dr[9*i+ 2]
+                             -rr[9*i+ 4]*dr[9*i+ 5]
+                             -rr[9*i+ 7]*dr[9*i+ 8];
+                (*virial)[8] += -rr[9*i+ 2]*dr[9*i+ 2]
+                             -rr[9*i+ 5]*dr[9*i+ 5]
+                             -rr[9*i+ 8]*dr[9*i+ 8];
+
+                (*virial)[3] = (*virial)[1];
+                (*virial)[6] = (*virial)[2];
+                (*virial)[7] = (*virial)[5];
+    
+            }
+        }
+
     }  // dr
 
     std::vector<double> tot_e(nw);

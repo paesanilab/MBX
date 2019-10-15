@@ -89,7 +89,7 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz1, bool 
  * has an energy larger than the value set in definitions.h (EMAX1B)
  * @return Sum of the one-body energies of all the monomers passed as arguments
  */
-double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, bool &good);
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, bool &good, std::vector<double> *virial = 0);
 
 }  // namespace e1b
 #endif

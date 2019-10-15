@@ -170,6 +170,8 @@ std::string System::GetMonId(size_t n) {
     return monomers_[current_pos];
 }
 
+std::vector<double> System::GetVirial() {return virial_;}
+
 void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
     std::vector<double> tmp_perm = electrostaticE_.GetMolecularPermanentDipoles();
     std::vector<double> tmp_ind = electrostaticE_.GetMolecularInducedDipoles();
@@ -575,6 +577,9 @@ void System::Initialize() {
     // TODO modify c6_long_range
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, true, box_);
+
+    // Define the virial vector
+    virial_ = std::vector<double>(9,0.0);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -990,6 +995,7 @@ double System::Energy(bool do_grads) {
     // Reset energy and grads in system to 0
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(),virial_.end(),0.0);
 
     // Reset the charges, pols, polfacs and new Vsite
     SetPBC(box_);
@@ -1093,6 +1099,7 @@ double System::OneBodyEnergy(bool do_grads) {
     // Reset energy and gradients
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(),virial_.end(),0.0);
 
     SetPBC(box_);
 
@@ -1132,7 +1139,7 @@ double System::Get1B(bool do_grads) {
 
             // Get energy of the chunk as function of monomer
             if (do_grads) {
-                e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, allMonGood_);
+                e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, allMonGood_, &virial_);
 
                 // Reorganize gradients
                 for (size_t i = 0; i < nmon; i++) {
@@ -1168,6 +1175,7 @@ double System::TwoBodyEnergy(bool do_grads) {
     // Reset energy and gradients
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(),virial_.end(),0.0);
 
     SetPBC(box_);
 
@@ -1405,6 +1413,7 @@ double System::ThreeBodyEnergy(bool do_grads) {
 
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(),virial_.end(),0.0);
 
     SetPBC(box_);
 
@@ -1800,6 +1809,7 @@ double System::Dispersion(bool do_grads) {
 
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(),virial_.end(),0.0);
 
     SetPBC(box_);
 
@@ -1821,6 +1831,7 @@ double System::Buckingham(bool do_grads) {
 
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(),virial_.end(),0.0);
 
     SetPBC(box_);
 
@@ -1842,6 +1853,7 @@ double System::Electrostatics(bool do_grads) {
 
     energy_ = 0.0;
     std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(),virial_.end(),0.0);
 
     SetPBC(box_);
 
