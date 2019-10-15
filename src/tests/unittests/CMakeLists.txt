@@ -19,6 +19,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-pbc-3bpoly-mbpol-findif.cpp
     unittest-pbc-electrostatics-mbpol-findif.cpp
     unittest-h2o-f-dimer.cpp
+    unittest-h2o-cl-dimer.cpp
 #    unittest-pbc-chargegrads-mbpol-findif.cpp
 )
 
