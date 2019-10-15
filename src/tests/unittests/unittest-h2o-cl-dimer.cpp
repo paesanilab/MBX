@@ -45,7 +45,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 constexpr double TOL = 1E-6;
 
-TEST_CASE("Test energy from system") {
+TEST_CASE("Test water -- chloride energy terms") {
     // Create the bromide -- water system
     SETUP_H2O_1_CL_1
 
