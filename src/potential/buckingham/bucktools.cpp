@@ -387,15 +387,15 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         nt2 = 2;
 
         // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(4735.44);  // kcal/mol * A^(-6) C -- O
-        C6.push_back(4956.27);  // kcal/mol * A^(-6) C -- H
-        C6.push_back(30678.4);  // kcal/mol * A^(-6) O -- O
-        C6.push_back(4559.97);  // kcal/mol * A^(-6) O -- H
+        a.push_back(4735.44);  // kcal/mol * A^(-6) C -- O
+        a.push_back(4956.27);  // kcal/mol * A^(-6) C -- H
+        a.push_back(30678.4);  // kcal/mol * A^(-6) O -- O
+        a.push_back(4559.97);  // kcal/mol * A^(-6) O -- H
 
-        d6.push_back(2.93819);  // A^(-1)
-        d6.push_back(3.7359);  // A^(-1)
-        d6.push_back(3.53045);  // A^(-1)
-        d6.push_back(3.89503);  // A^(-1)
+        b.push_back(2.93819);  // A^(-1)
+        b.push_back(3.7359);  // A^(-1)
+        b.push_back(3.53045);  // A^(-1)
+        b.push_back(3.89503);  // A^(-1)
         // =====>> BEGIN SECTION BUCKINGHAM <<=====
         // ======>> PASTE CODE BELOW <<======
         // =====>> END SECTION BUCKINGHAM <<=====
