@@ -771,32 +771,32 @@ void System::SetUpFromJson(char *json_file) {
 
     SetEwaldElectrostatics(alpha_elec, grid_density_elec, spline_order_elec);
 
-    std::vector<std::pair<std::string, std::string>> ttm_pairs;
+    std::vector<std::pair<std::string, std::string> > ttm_pairs;
     try {
         std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];
         ttm_pairs = ttm_pairs2;
     } catch (...) {
         ttm_pairs.clear();
     }
-    buck_pairs_ = ttm_pairs;
+    SetTTMnrgPairs(ttm_pairs);
 
-    std::vector<std::vector<std::string>> ignore_2b_poly;
+    std::vector<std::vector<std::string> > ignore_2b_poly;
     try {
         std::vector<std::vector<std::string>> ignore_2b_poly2 = j["MBX"]["ignore_2b_poly"];
         ignore_2b_poly = ignore_2b_poly2;
     } catch (...) {
         ignore_2b_poly.clear();
     }
-    ignore_2b_poly_ = ignore_2b_poly;
+    Set2bIgnorePoly(ignore_2b_poly);
 
-    std::vector<std::vector<std::string>> ignore_3b_poly;
+    std::vector<std::vector<std::string> > ignore_3b_poly;
     try {
         std::vector<std::vector<std::string>> ignore_3b_poly2 = j["MBX"]["ignore_3b_poly"];
         ignore_3b_poly = ignore_3b_poly2;
     } catch (...) {
         ignore_3b_poly.clear();
     }
-    ignore_3b_poly_ = ignore_3b_poly;
+    Set3bIgnorePoly(ignore_3b_poly);
 
     SetPBC(box_);
     ifjson.close();
