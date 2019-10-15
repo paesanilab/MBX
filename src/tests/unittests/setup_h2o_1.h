@@ -37,15 +37,18 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #define SETUP_H2O_1                                                                           \
     const size_t n_monomers = 1;                                                                                    \
-    const size_t n_at = 3;                                                                                            \
-    std::vector<std::string> monomer_names(n_monomers, "h2o");                                                        \
+    std::vector<std::string> atom_names{"O", "H", "H"};                                                           \
+    std::vector<std::string> monomer_names = {"h2o"};                                                             \
+    std::vector<size_t> n_atoms_vector = {3};                                                                       \
+    std::vector<size_t> n_sites_vector = {4};                                                                       \
+    std::vector<size_t> first_index = {0};                                                                          \
+    std::vector<size_t> first_index_realSites = {0};                                                                \
+    const size_t n_atoms = 3;                                                                                          \
+    const size_t n_sites = 4;                                                                                          \
     std::vector<double> box = {}; \
-    std::vector<std::string> atom_names(n_monomers*n_at); \
-    for (size_t i = 0; i < n_monomers; i++) { \
-        atom_names[n_at*i] = "O"; \
-        atom_names[n_at*i + 1] = "H"; \
-        atom_names[n_at*i + 2] = "H"; \
-    } \
-    std::vector<double> coords{                                                                                       \
-        6.81541,    -6.23031,   -8.83384 };
+    std::vector<double> virial = {-12.99560229,  18.52621893, 0, 18.52621893,-3.89464627, 0 , 0, 0, 0} ; \
+    std::vector<double> real_coords{                                                                                       \
+                 -1.59117306 ,   1.07433216 ,   0.00000000, \
+                 -0.63591971 ,   0.97898520  ,  0.00000000, \
+                 -1.91162765  ,  1.97926799 ,   0.00000000}; 
 #endif
