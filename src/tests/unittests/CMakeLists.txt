@@ -23,6 +23,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-h2o-br-dimer.cpp
     unittest-h2o-i-dimer.cpp
     unittest-h2o-li-dimer.cpp
+    unittest-h2o-na-dimer.cpp
     unittest-h2o-h2o-li-trimer.cpp
 #    unittest-pbc-chargegrads-mbpol-findif.cpp
 )
