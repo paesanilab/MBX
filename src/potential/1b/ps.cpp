@@ -578,9 +578,9 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
                              -rr[9*i+ 5]*dr[9*i+ 5]
                              -rr[9*i+ 8]*dr[9*i+ 8];
 
-                (*virial)[3] = (*virial)[1];
-                (*virial)[6] = (*virial)[2];
-                (*virial)[7] = (*virial)[5];
+                (*virial)[3] += (*virial)[1];
+                (*virial)[6] += (*virial)[2];
+                (*virial)[7] += (*virial)[5];
     
             }
         }
