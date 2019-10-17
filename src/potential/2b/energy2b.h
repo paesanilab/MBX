@@ -89,10 +89,11 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
  * @param[in] xyz2 coordinates of the monomer 2
  * @param[in,out] grad1 gradients of the monomer 1. Gradients will be updated
  * @param[in,out] grad2 gradients of the monomer 2. Gradients will be updated
+ * @param[in,out] virial. Virial will be updated
  * @return Sum of the two-body energies of all the dimers passed as arguments
  */
 double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
-                     std::vector<double> &grad1, std::vector<double> &grad2);
+                     std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial = 0);
 
 }  // namespace e2b
 #endif

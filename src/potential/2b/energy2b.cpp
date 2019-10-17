@@ -89,7 +89,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 }
 
 double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
-                     std::vector<double> &grad1, std::vector<double> &grad2) {
+                     std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon2 < mon1) {
@@ -109,7 +109,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     // Note: in the conditional, mon2 >= mon1 ALWAYS
     if (mon1 == "h2o" and mon2 == "h2o") {
         x2o::x2b_v9x pot;
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if ((mon1 == "f" or mon1 == "cl" or mon1 == "br" or mon1 == "cs") and mon2 == "h2o") {
         // The order is bc the poly were generated this way
         // First water and then ion

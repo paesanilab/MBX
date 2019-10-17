@@ -1334,12 +1334,10 @@ double System::Get2B(bool do_grads) {
                         // POLYNOMIALS
                         e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2, &virial);
 			
-                        std::cout << "Virial size: " <<  virial.size() << std::endl;
 			for (size_t k = 0; k < 9; k++){	        // EL  // accumulate virial tensor from pool
-                                std::cout << virial[k] << " "; 
+                   
 				virial_pool[rank][k] += virial[k];	// EL
 			}                                                       // EL
-			std::cout << std::endl;
                         // Update gradients in system
                         size_t i0 = nd_tot * 2;
                         for (size_t k = 0; k < nd; k++) {
@@ -1406,7 +1404,7 @@ double System::Get2B(bool do_grads) {
     // Condensate virial                         // EL
     for (int i = 0; i < num_threads; i++) {      // EL // condensate virial from pool
         for (size_t j = 0; j < 9; j++){          // EL
-            virial_[j] += virial_pool[rank][j];  // EL
+            virial_[j] += virial_pool[i][j];  // EL
         }                                        // EL
     }                                            // EL
 
