@@ -31,7 +31,6 @@ EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
-#include <iostream>
 #include "potential/2b/x2b-v9x.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1687,13 +1686,10 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
         }
 
         e += sw * e2b[i];
+	
+	// Calculate virial
 
-        ///////////////////////////////////////////
-        //
-        //BEGIN ADD VIRIAL
-        //////////////////////////////////////////
-
-	if (virial != 0) {
+        if (virial != 0) {
 
            (*virial)[0] -= w1[0+0+sh9]* g1[0+0+sh9] +
                         w1[0+3+sh9]* g1[0+3+sh9] +
@@ -1743,11 +1739,6 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
            (*virial)[7] += (*virial)[5];
         }
         
-        //////////////////////////////////////////////////
-        //
-        //END ADD VIRIAL 
-        /////////////////////////////////////////////////    
-
     }
 
     return e;
