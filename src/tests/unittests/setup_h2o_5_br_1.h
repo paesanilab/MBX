@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_H2O_5_BR_1_H
 #define UNITTESTS_SETUP_H2O_5_BR_1_H
 
-#define SETUP_H2O_5_BR_1                                                                                         \
+#define SETUP_H2O_5_BR_1                                                                                              \
     double one_body_energy = 1.0759450217e+00;                                                                        \
     double two_body_energy = 2.5636777719e+01;                                                                        \
     double three_body_energy = -3.2745042811e-01;                                                                     \

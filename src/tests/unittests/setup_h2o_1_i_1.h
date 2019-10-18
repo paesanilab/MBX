@@ -35,19 +35,19 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_H2O_1_I_1_H
 #define UNITTESTS_SETUP_H2O_1_I_1_H
 
-#define SETUP_H2O_1_I_1                                                                                     \
+#define SETUP_H2O_1_I_1                                                                                                \
     double one_body_energy = 3.9139698364e-01;                                                                         \
-    double two_body_energy = 4.3867264233e-01;                                                                        \
+    double two_body_energy = 4.3867264233e-01;                                                                         \
     double three_body_energy = 0.0000000000e+00;                                                                       \
     double dispersion_energy = -6.5753452403e-01;                                                                      \
-    double buckingham_energy = 8.0835388177e-01;                                                                      \
+    double buckingham_energy = 8.0835388177e-01;                                                                       \
     double electrostatic_energy = -3.4091806947e+00;                                                                   \
     double total_energy = -3.2366455927e+00;                                                                           \
-    double total_energy_ttm = -2.8669643533e+00;                                                                           \
+    double total_energy_ttm = -2.8669643533e+00;                                                                       \
     const int n_monomers = 2;                                                                                          \
-    std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"i","h2o"}}; \
-    std::vector<std::vector<std::string> > ignore_2b = {{"i", "h2o"}}; \
-    std::vector<std::vector<std::string> > ignore_3b = {{"i","h2o","h2o"}}; \
+    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"i", "h2o"}};                                       \
+    std::vector<std::vector<std::string>> ignore_2b = {{"i", "h2o"}};                                                  \
+    std::vector<std::vector<std::string>> ignore_3b = {{"i", "h2o", "h2o"}};                                           \
     std::vector<double> coords{0.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00,  9.5953519000e-01,               \
                                9.9304800000e-03, -2.8171150000e-02, -3.1093854000e-01, 7.0163128000e-01,               \
                                5.7674150000e-01, 1.3838032710e-01,  1.5181414998e-01,  1.1703937180e-01,               \

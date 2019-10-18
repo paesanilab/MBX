@@ -35,17 +35,16 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_H2O_1_H
 #define UNITTESTS_SETUP_H2O_1_H
 
-#define SETUP_H2O_1                                                                           \
-    const size_t n_monomers = 1;                                                                                    \
-    const size_t n_at = 3;                                                                                            \
-    std::vector<std::string> monomer_names(n_monomers, "h2o");                                                        \
-    std::vector<double> box = {}; \
-    std::vector<std::string> atom_names(n_monomers*n_at); \
-    for (size_t i = 0; i < n_monomers; i++) { \
-        atom_names[n_at*i] = "O"; \
-        atom_names[n_at*i + 1] = "H"; \
-        atom_names[n_at*i + 2] = "H"; \
-    } \
-    std::vector<double> coords{                                                                                       \
-        6.81541,    -6.23031,   -8.83384 };
+#define SETUP_H2O_1                                            \
+    const size_t n_monomers = 1;                               \
+    const size_t n_at = 3;                                     \
+    std::vector<std::string> monomer_names(n_monomers, "h2o"); \
+    std::vector<double> box = {};                              \
+    std::vector<std::string> atom_names(n_monomers* n_at);     \
+    for (size_t i = 0; i < n_monomers; i++) {                  \
+        atom_names[n_at * i] = "O";                            \
+        atom_names[n_at * i + 1] = "H";                        \
+        atom_names[n_at * i + 2] = "H";                        \
+    }                                                          \
+    std::vector<double> coords{6.81541, -6.23031, -8.83384};
 #endif
