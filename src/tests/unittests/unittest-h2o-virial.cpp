@@ -98,7 +98,15 @@ TEST_CASE("Test dimer virial contributions") {
     // Initialize the system to fill in the information
     my_system.Initialize();
 
+    SECTION("One-Body") {
+        double energy_grad = my_system.OneBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
 
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_1b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
 
 
     SECTION("Two-Body") {
