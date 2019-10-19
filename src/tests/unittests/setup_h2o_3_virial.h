@@ -46,6 +46,14 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     const size_t n_atoms = 9;                                                                                          \
     const size_t n_sites = 12;                                                                                          \
     std::vector<std::pair<std::string, size_t>> mon_type_count{{"h2o", n_monomers}};                \
+    std::vector<double> virial_2b = { \
+        21.21728011,  2.92523901,  3.75776769, \
+        2.92523901 ,  9.6500956 ,  13.60719407, \
+        3.75776769 ,  13.60719407 , 21.19627151 }; \
+    std::vector<double> virial_1b= { \
+        -29.82600382,  30.71343212,  -5.88668738, \
+         30.71343212 ,  -5.32311185,   1.01648662, \
+         -5.88668738,   1.01648662,  -3.40683556 }; \
     std::vector<double> virial_3b = {            \
         -0.39645076,  0.28589149, -0.03809345,   \
          0.28589149,  0.13231023,  0.73785134,   \
