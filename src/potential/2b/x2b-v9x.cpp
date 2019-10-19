@@ -1734,9 +1734,9 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
                         w2[0+8+sh9]*g2[0+8+sh9];
 
 
-           (*virial)[3] += (*virial)[1];
-           (*virial)[6] += (*virial)[2];
-           (*virial)[7] += (*virial)[5];
+           (*virial)[3] = (*virial)[1];
+           (*virial)[6] = (*virial)[2];
+           (*virial)[7] = (*virial)[5];
         }
         
     }
