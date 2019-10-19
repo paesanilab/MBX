@@ -1583,7 +1583,7 @@ double System::Get3B(bool do_grads) {
                         std::vector<double> grad1(coord1.size(), 0.0);
                         std::vector<double> grad2(coord2.size(), 0.0);
                         std::vector<double> grad3(coord3.size(), 0.0);
-                        std::vector<double> virial(9,0.0); // EL // declare virial tensor
+                        std::vector<double> virial(9,0.0); // declare virial tensor
                         // POLYNOMIALS
                         e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
 
@@ -1658,12 +1658,12 @@ double System::Get3B(bool do_grads) {
     for (int i = 0; i < num_threads; i++) {
         e3b_t += e3b_pool[i];
     }
-    // Condensate virial                         // EL
-    for (int i = 0; i < num_threads; i++) {      // EL // condensate virial from pool
-        for (size_t j = 0; j < 9; j++){          // EL
-            virial_[j] += virial_pool[i][j];  // EL
-        }                                        // EL
-    }                                            // EL
+    // Condensate virial                         
+    for (int i = 0; i < num_threads; i++) {  
+        for (size_t j = 0; j < 9; j++){          
+            virial_[j] += virial_pool[i][j];   
+        }                                        
+    }                                            
 
     return e3b_t;
 }
