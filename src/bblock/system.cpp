@@ -1463,7 +1463,7 @@ double System::Get3B(bool do_grads) {
     // serial and parallel implementation
     std::vector<double> e3b_pool(num_threads, 0.0);
     std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
-    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0)); // EL // declare virial pool
+    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0)); // declare virial pool
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) private(rank)
