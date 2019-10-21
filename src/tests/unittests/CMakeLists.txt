@@ -32,6 +32,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-h2o-h2o-k-trimer.cpp
     unittest-h2o-h2o-rb-trimer.cpp
     unittest-h2o-h2o-cs-trimer.cpp
+    unittest-co2-monomer.cpp
 )
 
 #
