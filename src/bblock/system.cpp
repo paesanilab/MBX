@@ -1663,10 +1663,6 @@ void System::SetCharges() {
     std::cerr << all_chg[0];
     for (size_t i = 1; i < all_chg.size(); i++) std::cerr << ", " << all_chg[i];
     std::cerr << std::endl;
-    std::cerr << "\nAll charge derivatives (SYSTEM ORDER ONLY (for water, does not matter order)\n";
-    std::cerr << chggrad_[0];
-    for (size_t i = 1; i < chggrad_.size(); i++) std::cerr << ", " << chggrad_[i];
-    std::cerr << std::endl;
 #endif  // DEBUG
 }
 
