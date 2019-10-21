@@ -58,9 +58,9 @@ class Dispersion {
     void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads,
-                    const std::vector<double> &box);
+                    const std::vector<double> &box,std::vector<double> *virial = 0);
 
-    double GetDispersion(std::vector<double> &grad);
+    double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0);
 
     void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
@@ -125,6 +125,8 @@ class Dispersion {
     std::vector<double> sys_phi_;
     // Dispersion potential on each site
     std::vector<double> phi_;
+    // Virial tensor
+    std::vector<double> virial_;
 
     // Total number of atoms
     size_t natoms_;

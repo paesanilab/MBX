@@ -40,7 +40,7 @@ namespace disp {
 void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                            const bool do_grads = true, const std::vector<double> &box = {}) {
+                            const bool do_grads = true, const std::vector<double> &box = {}, std::vector<double> *virial) {
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
     mon_id_ = mon_id;
@@ -56,9 +56,14 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     phi_ = std::vector<double>(natoms_, 0.0);
     xyz_ = std::vector<double>(natoms3, 0.0);
     grad_ = std::vector<double>(natoms3, 0.0);
+    virial_ = std::vector<double>(9,0.0);
     sys_grad_ = std::vector<double>(natoms3, 0.0);
     c6_long_range_ = std::vector<double>(natoms_, 0.0);
     sys_phi_ = std::vector<double>(natoms_, 0.0);
+    
+    if (virial == 0) { // set virial_ to 0 in case we dont want to calculate it
+        virial_ = 0;
+    }    
 
     ReorderData();
 }
@@ -73,6 +78,7 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     cutoff_ = cutoff;
     std::fill(grad_.begin(), grad_.end(), 0.0);
     std::fill(phi_.begin(), phi_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(),0.0);
 
     ReorderData();
 }
@@ -112,12 +118,25 @@ void Dispersion::ReorderData() {
     }
 }
 
-double Dispersion::GetDispersion(std::vector<double> &grad) {
+double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *virial) {
     CalculateDispersion();
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
+
+    if (virial != 0) {
+        (*virial)[0] += virial_[0];
+        (*virial)[1] += virial_[1];
+        (*virial)[2] += virial_[2];
+        (*virial)[3] += virial_[3];
+        (*virial)[4] += virial_[4];
+        (*virial)[5] += virial_[5];
+        (*virial)[6] += virial_[6];
+        (*virial)[7] += virial_[7];
+        (*virial)[8] += virial_[8];
+    }
+
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = num_atoms_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
@@ -183,11 +202,13 @@ void Dispersion::CalculateDispersion() {
         std::vector<std::vector<double> > phi_pool;
         std::vector<std::vector<double> > grad_pool;
         std::vector<double> energy_pool(nthreads,0.0);
+        std::vector<std::vector<double> > virial_pool;
 
 
         for (size_t i = 0; i < nthreads; i++) {
             phi_pool.push_back(std::vector<double>(nmon * ns,0.0));
             grad_pool.push_back(std::vector<double>(nmon * ns * 3,0.0));
+            virial_pool.push_back(std::vector<double>(9,0.0));
         }
         // Loop over each pair of sites
         for (size_t i = 0; i < ns - 1; i++) {
@@ -219,7 +240,7 @@ void Dispersion::CalculateDispersion() {
                     std::fill(g1, g1 + 3, 0.0);
                     energy_pool[rank] += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
                                           phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor,
-                                          do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_);
+                                          do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,virial_pool[rank].data());
 
                     grad_pool[rank][inmon3 + m] += g1[0];
                     grad_pool[rank][inmon3 + nmon + m] += g1[1];
@@ -373,8 +394,24 @@ void Dispersion::CalculateDispersion() {
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
         auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
         auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
+        std::vector<double> dummy_6vec(6,0.0);
+        auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
         std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
-        double rec_energy = pme_solver_.computeEFRec(0, params, coords, forces);
+        double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
+
+        // get virial
+        virial_[0] += *rec_virial[0];
+        virial_[1] += *rec_virial[1];
+        virial_[2] += *rec_virial[3];
+        virial_[4] += *rec_virial[2];
+        virial_[5] += *rec_virial[4];
+        virial_[8] += *rec_virial[5];
+
+        virial_[3] = virial_[1];
+        virial_[6] = virial_[2];
+        virial_[7] = virial_[5];
+
+	
 
         // Resort forces from system order
         fi_mon = 0;
