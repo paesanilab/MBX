@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_H2O_3_H
 #define UNITTESTS_SETUP_H2O_3_H
 
-#define SETUP_H2O_3                                                                             \
+#define SETUP_H2O_3                                                                                        \
     const int n_monomers = 3;                                                                              \
     const int n_atoms = 9;                                                                                 \
     const int n_sites = 12;                                                                                \

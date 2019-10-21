@@ -22,7 +22,18 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-h2o-cl-dimer.cpp
     unittest-h2o-br-dimer.cpp
     unittest-h2o-virial.cpp
-#    unittest-pbc-chargegrads-mbpol-findif.cpp
+    unittest-h2o-i-dimer.cpp
+    unittest-h2o-li-dimer.cpp
+    unittest-h2o-na-dimer.cpp
+    unittest-h2o-k-dimer.cpp
+    unittest-h2o-rb-dimer.cpp
+    unittest-h2o-cs-dimer.cpp
+    unittest-h2o-h2o-li-trimer.cpp
+    unittest-h2o-h2o-na-trimer.cpp
+    unittest-h2o-h2o-k-trimer.cpp
+    unittest-h2o-h2o-rb-trimer.cpp
+    unittest-h2o-h2o-cs-trimer.cpp
+    unittest-co2-monomer.cpp
 )
 
 #
