@@ -1932,7 +1932,7 @@ double System::GetDispersion(bool do_grads) {
 
     dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
-    double e = dispersionE_.GetDispersion(real_grad);
+    double e = dispersionE_.GetDispersion(real_grad, &virial_);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {
