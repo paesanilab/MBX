@@ -56,8 +56,8 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
 
     // Initialize system
     for (size_t i = 0; i < n_monomers; i++) {
-        std::vector<double> xyz(coords.begin() + 3*n_at*i,coords.begin() + 3*n_at*(i+1));
-        std::vector<std::string> ats(atom_names.begin() + i*n_at, atom_names.begin() + (i+1)*n_at);
+        std::vector<double> xyz(coords.begin() + 3 * n_at * i, coords.begin() + 3 * n_at * (i + 1));
+        std::vector<std::string> ats(atom_names.begin() + i * n_at, atom_names.begin() + (i + 1) * n_at);
         my_sys.AddMonomer(xyz, ats, monomer_names[i]);
     }
 
@@ -68,7 +68,7 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
     my_sys.SetDipoleMethod("cg");
     my_sys.Set2bCutoff(9.0);
     my_sys.SetEwald(0.4, 1.5, 6);
-    
+
     size_t n_atoms = my_sys.GetNumRealSites();
     std::vector<double> real_xyz = my_sys.GetRealXyz();
 
@@ -79,13 +79,15 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
 
         grad = my_sys.GetRealGrads();
 
-        SECTION("Compare energy with and without gradients") { REQUIRE(energy_nograd == Approx(energy_grad).margin(TOL)); }
+        SECTION("Compare energy with and without gradients") {
+            REQUIRE(energy_nograd == Approx(energy_grad).margin(TOL));
+        }
 
         SECTION("Numerical gradients vs analitical gradients") {
             size_t atomOffset = 0;
             double stepSize = 0.001;
             for (size_t i = 0; i < NPOINTS; ++i) {
-                size_t degreeOfFreedom = (rand() % (3*n_atoms));
+                size_t degreeOfFreedom = (rand() % (3 * n_atoms));
                 real_xyz[degreeOfFreedom] += stepSize;
                 my_sys.SetRealXyz(real_xyz);
                 double plusEnergy = my_sys.Dispersion(false);
@@ -99,13 +101,10 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
 
                 double finiteDifferenceForce = (plusEnergy - minusEnergy) / (2 * stepSize);
                 double error = grad[degreeOfFreedom] - finiteDifferenceForce;
-                std::cout << std::scientific
-                          << std::setw(4) << degreeOfFreedom 
-                          << std::setw(20) << grad[degreeOfFreedom]
-                          << std::setw(6) << "<==>"
-                          << std::setw(20) << finiteDifferenceForce << std::endl;
+                std::cout << std::scientific << std::setw(4) << degreeOfFreedom << std::setw(20)
+                          << grad[degreeOfFreedom] << std::setw(6) << "<==>" << std::setw(20) << finiteDifferenceForce
+                          << std::endl;
                 REQUIRE(grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
-                
             }
         }
     }

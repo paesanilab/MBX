@@ -35,19 +35,19 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_H2O_1_CL_1_H
 #define UNITTESTS_SETUP_H2O_1_CL_1_H
 
-#define SETUP_H2O_1_CL_1                                                                                     \
+#define SETUP_H2O_1_CL_1                                                                                               \
     double one_body_energy = 3.9139698364e-01;                                                                         \
-    double two_body_energy = 5.3944188932e-02;                                                                        \
+    double two_body_energy = 5.3944188932e-02;                                                                         \
     double three_body_energy = 0.0000000000e+00;                                                                       \
     double dispersion_energy = -3.7556303515e-01;                                                                      \
-    double buckingham_energy = 2.7779908817e-01;                                                                      \
+    double buckingham_energy = 2.7779908817e-01;                                                                       \
     double electrostatic_energy = -3.3657295542e+00;                                                                   \
     double total_energy = -3.2959514168e+00;                                                                           \
-    double total_energy_ttm = -3.0720965175e+00;                                                                           \
+    double total_energy_ttm = -3.0720965175e+00;                                                                       \
     const int n_monomers = 2;                                                                                          \
-    std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"cl","h2o"}}; \
-    std::vector<std::vector<std::string> > ignore_2b = {{"cl", "h2o"}}; \
-    std::vector<std::vector<std::string> > ignore_3b = {{"cl","h2o","h2o"}}; \
+    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"cl", "h2o"}};                                      \
+    std::vector<std::vector<std::string>> ignore_2b = {{"cl", "h2o"}};                                                 \
+    std::vector<std::vector<std::string>> ignore_3b = {{"cl", "h2o", "h2o"}};                                          \
     std::vector<double> coords{0.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00,  9.5953519000e-01,               \
                                9.9304800000e-03, -2.8171150000e-02, -3.1093854000e-01, 7.0163128000e-01,               \
                                5.7674150000e-01, 1.3838032710e-01,  1.5181414998e-01,  1.1703937180e-01,               \
@@ -55,8 +55,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<double> real_coords{0.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00,  9.5953519000e-01,          \
                                     9.9304800000e-03, -2.8171150000e-02, -3.1093854000e-01, 7.0163128000e-01,          \
                                     5.7674150000e-01, 0.0000000000e+00,  0.0000000000e+00,  4.0000000000e+00};         \
-    std::vector<std::string> atom_names{"O", "H", "H", "Cl"};                                                           \
-    std::vector<std::string> monomer_names = {"h2o", "cl"};                                                             \
+    std::vector<std::string> atom_names{"O", "H", "H", "Cl"};                                                          \
+    std::vector<std::string> monomer_names = {"h2o", "cl"};                                                            \
     std::vector<size_t> n_atoms_vector = {3, 1};                                                                       \
     std::vector<size_t> n_sites_vector = {4, 1};                                                                       \
     std::vector<size_t> first_index = {0, 4};                                                                          \
@@ -72,7 +72,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<double> real_pol{1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01, 5.3602000000e+00};              \
     std::vector<double> real_charges{0.0000000000e+00, 5.8639592027e-01, 5.8639592156e-01, -1.0000000000e+00};         \
     std::vector<double> C6_long_range{1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00, 5.7882971680e+01};         \
-    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"h2o", 1}, {"cl", 1}};                         \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"h2o", 1}, {"cl", 1}};                        \
     std::vector<size_t> internal_original_to_current_order{0, 1};                                                      \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}, {1, 4}};                                     \
     std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}, {1, 3}};                          \

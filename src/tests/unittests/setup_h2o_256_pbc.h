@@ -35,17 +35,18 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_H2O_256_PBC_H
 #define UNITTESTS_SETUP_H2O_256_PBC_H
 
-#define SETUP_H2O_256_PBC                                                                                        \
+#define SETUP_H2O_256_PBC                                                                                             \
     const size_t n_monomers = 256;                                                                                    \
     const size_t n_at = 3;                                                                                            \
     std::vector<std::string> monomer_names(n_monomers, "h2o");                                                        \
-    std::vector<double> box = {19.568812174570969, 0.0,0.0,0.0,19.568812174570969,0.0,0.0,0.0,19.568812174570969}; \
-    std::vector<std::string> atom_names(n_monomers*n_at); \
-    for (size_t i = 0; i < n_monomers; i++) { \
-        atom_names[n_at*i] = "O"; \
-        atom_names[n_at*i + 1] = "H"; \
-        atom_names[n_at*i + 2] = "H"; \
-    } \
+    std::vector<double> box = {19.568812174570969, 0.0, 0.0, 0.0, 19.568812174570969, 0.0, 0.0, 0.0,                  \
+                               19.568812174570969};                                                                   \
+    std::vector<std::string> atom_names(n_monomers* n_at);                                                            \
+    for (size_t i = 0; i < n_monomers; i++) {                                                                         \
+        atom_names[n_at * i] = "O";                                                                                   \
+        atom_names[n_at * i + 1] = "H";                                                                               \
+        atom_names[n_at * i + 2] = "H";                                                                               \
+    }                                                                                                                 \
     std::vector<double> coords{                                                                                       \
         6.81541,    -6.23031,   -8.83384,   6.90722,     -6.70395,   -9.66585,   5.87488,    -6.02412,    -8.65157,   \
         -6.79399,   1.63692,    -4.27846,   -7.38218,    1.64854,    -5.05827,   -6.70205,   0.768067,    -3.86103,   \
