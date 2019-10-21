@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_H2O_216_H
 #define UNITTESTS_SETUP_H2O_216_H
 
-#define SETUP_H2O_216                                                                                       \
+#define SETUP_H2O_216                                                                                            \
     const int n_monomers = 216;                                                                                  \
     const int n_atoms = 864;                                                                                     \
     std::vector<double> chg_grad(27 * n_monomers, 0.0);                                                          \

@@ -954,33 +954,33 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2 
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 74.56169774397084024344;
     } else if (mon_id == "i") {
-    // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
+    // FIXME This value will be set from C6 I-O and I-H. Qchem does not allow
     // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
     // It will be calculated as:
-    // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2 
-        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    // (C6(I--O)/C6_lr(O) + C6(I--H)/C6_lr(H)) / 2 
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 105.39445721563933883337;
     } else if (mon_id == "li") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 3.24887148714749872914;
     } else if (mon_id == "na") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 16.02787872333703428437;
     } else if (mon_id == "k") {
-    // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
+    // FIXME This value will be set from C6 K-O and K-H. Qchem does not allow
     // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
     // It will be calculated as:
-    // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2 
-        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    // (C6(K--O)/C6_lr(O) + C6(K--H)/C6_lr(H)) / 2 
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 37.63136349992751547203;
     } else if (mon_id == "rb") {
-    // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
+    // FIXME This value will be set from C6 Rb-O and Rb-H. Qchem does not allow
     // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
     // It will be calculated as:
-    // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2 
-        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    // (C6(Rb--O)/C6_lr(O) + C6(Rb--H)/C6_lr(H)) / 2 
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 49.17633137941422098718;
     } else if (mon_id == "cs") {
-    // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
+    // FIXME This value will be set from C6 Cs-O and Cs-H. Qchem does not allow
     // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
     // It will be calculated as:
-    // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2 
-        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 0;
+    // (C6(Cs--O)/C6_lr(O) + C6(Cs--H)/C6_lr(H)) / 2 
+        for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 65.76255818916154320248;
         // BEGIN SECTION C6_LONG_RANGE
         // ==> PASTE YOUR CODE BELOW <==
     } else if (mon_id == "ch4") {
