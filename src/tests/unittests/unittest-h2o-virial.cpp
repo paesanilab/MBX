@@ -36,6 +36,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "bblock/system.h"
 #include "setup_h2o_1.h"
+#include "setup_h2o_2_virial.h"
+#include "electrostatics.h"
 
 #include <vector>
 #include <iostream>
@@ -45,7 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 constexpr double TOL = 1E-6;
 
-TEST_CASE("Test one water virial contributions") {
+TEST_CASE("Test monomer virial contributions") {
     // Create the bromide -- water system
     SETUP_H2O_1
 
@@ -74,43 +76,48 @@ TEST_CASE("Test one water virial contributions") {
             REQUIRE(virial[i] == Approx(my_virial[i]).margin(TOL));
         }
     }
+}
 
-//    SECTION("Two-Body") {
-//        double energy_nograd = my_system.TwoBodyEnergy(false);
-//        double energy_grad = my_system.TwoBodyEnergy(true);
-//        std::vector<double> real_grad = my_system.GetRealGrads();
-//        std::vector<double> all_grad = my_system.GetGrads();
-//        std::vector<double> real_xyz = my_system.GetRealXyz();
-//        std::vector<double> all_xyz = my_system.GetXyz();
-//
-//        SECTION("Energy without gradients") { REQUIRE(energy_nograd == Approx(two_body_energy).margin(TOL)); }
-//
-//        SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(two_body_energy).margin(TOL)); }
-//
-//        SECTION("Compare analitical gradients with numerical gradients") {
-//            double stepSize = 1E-04;
-//            for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
-//                all_xyz[degreeOfFreedom] += stepSize;
-//                my_system.SetXyz(all_xyz);
-//                double plusEnergy = my_system.TwoBodyEnergy(false);
-//                all_xyz[degreeOfFreedom] += stepSize;
-//                my_system.SetXyz(all_xyz);
-//                double plusplusEnergy = my_system.TwoBodyEnergy(false);
-//                all_xyz[degreeOfFreedom] -= 4 * stepSize;
-//                my_system.SetXyz(all_xyz);
-//                double minusminusEnergy = my_system.TwoBodyEnergy(false);
-//                all_xyz[degreeOfFreedom] += stepSize;
-//                my_system.SetXyz(all_xyz);
-//                double minusEnergy = my_system.TwoBodyEnergy(false);
-//                all_xyz[degreeOfFreedom] += stepSize;
-//                my_system.SetXyz(all_xyz);
-//                double finiteDifferenceForce =
-//                    (8 * (plusEnergy - minusEnergy) - plusplusEnergy + minusminusEnergy) / (12 * stepSize);
-//
-//                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
-//            }
-//        }
-//    }
+TEST_CASE("Test dimer virial contributions") {
+    SETUP_H2O_2_VIRIAL
+
+    bblock::System my_system;   
+
+    // Add monomers to the system
+    size_t count = 0;
+    for (size_t i = 0; i < n_monomers; i++) {
+        std::vector<double> xyz(real_coords.begin() + 3 * count,
+                                real_coords.begin() + 3 * count + 3 * n_atoms_vector[i]);
+        std::vector<std::string> ats(atom_names.begin() + count, atom_names.begin() + count + n_atoms_vector[i]);
+        std::string monid = monomer_names[i];
+        my_system.AddMonomer(xyz, ats, monid);
+        count += n_atoms_vector[i];
+    }
+
+    // Initialize the system to fill in the information
+    my_system.Initialize();
+
+    SECTION("One-Body") {
+        double energy_grad = my_system.OneBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_1b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+
+    SECTION("Two-Body") {
+        double energy_grad = my_system.TwoBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_2b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+       
+    }
+}
 //
 //    SECTION("Three-Body") {
 //        double energy_nograd = my_system.ThreeBodyEnergy(false);
@@ -338,4 +345,4 @@ TEST_CASE("Test one water virial contributions") {
 //            }
 //        }
 //    }
-}
+//}

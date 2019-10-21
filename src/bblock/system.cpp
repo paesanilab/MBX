@@ -1216,7 +1216,7 @@ double System::Get2B(bool do_grads) {
     // serial and parallel implementation
     std::vector<double> e2b_pool(num_threads, 0.0);
     std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
-
+    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0)); // declare virial pool
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) private(rank)
 #endif  // _OPENMP
@@ -1263,6 +1263,7 @@ double System::Get2B(bool do_grads) {
         std::vector<double> xyz2;
         std::vector<double> grad1;
         std::vector<double> grad2;
+        std::vector<double> virial(9,0.0); // declare virial tensor
 
         // Define the two monomer ids that we are currently looking at
         std::string m1 = monomers_[dimers[0]];
@@ -1302,6 +1303,7 @@ double System::Get2B(bool do_grads) {
                     xyz2.clear();
                     grad1.clear();
                     grad2.clear();
+                    std::fill(virial.begin(),virial.end(),0.0);
                     m1 = monomers_[dimers[i]];
                     m2 = monomers_[dimers[i + 1]];
                     continue;
@@ -1330,8 +1332,12 @@ double System::Get2B(bool do_grads) {
                 if (use_poly) {
                     if (do_grads) {
                         // POLYNOMIALS
-                        e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2);
-
+                        e2b_pool[rank] += e2b::get_2b_energy(m1, m2, nd, xyz1, xyz2, grad1, grad2, &virial);
+			
+                        for (size_t k = 0; k < 9; k++){	        // accumulate virial tensor from pool
+                   
+                            virial_pool[rank][k] += virial[k];
+                        }                                     
                         // Update gradients in system
                         size_t i0 = nd_tot * 2;
                         for (size_t k = 0; k < nd; k++) {
@@ -1358,6 +1364,7 @@ double System::Get2B(bool do_grads) {
                 xyz2.clear();
                 grad1.clear();
                 grad2.clear();
+                std::fill(virial.begin(),virial.end(),0.0); // clear virial tensor
                 m1 = monomers_[dimers[i]];
                 m2 = monomers_[dimers[i + 1]];
             }
@@ -1394,6 +1401,12 @@ double System::Get2B(bool do_grads) {
     for (int i = 0; i < num_threads; i++) {
         e2b_t += e2b_pool[i];
     }
+    // Condensate virial                         
+    for (int i = 0; i < num_threads; i++) { 
+        for (size_t j = 0; j < 9; j++){          
+            virial_[j] += virial_pool[i][j];     
+        }                                        
+    }                                            
 
 #ifdef DEBUG
     std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;

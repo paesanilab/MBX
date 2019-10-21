@@ -31,7 +31,6 @@ EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
-
 #include "potential/2b/x2b-v9x.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1489,7 +1488,7 @@ double x2b_v9x::eval(const double* w1, const double* w2, const size_t nd) {
 
 //----------------------------------------------------------------------------//
 
-double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2, const size_t nd) {
+double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2, const size_t nd, std::vector<double> *virial) {
     // the switch
 
     std::vector<size_t> dimers_todo;
@@ -1687,6 +1686,59 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
         }
 
         e += sw * e2b[i];
+	
+	// Calculate virial
+
+        if (virial != 0) {
+
+           (*virial)[0] -= w1[0+0+sh9]* g1[0+0+sh9] +
+                        w1[0+3+sh9]* g1[0+3+sh9] +
+                        w1[0+6+sh9]* g1[0+6+sh9] +
+                        w2[0+0+sh9]* g2[0+0+sh9] +
+                        w2[0+3+sh9]* g2[0+3+sh9] +
+                        w2[0+6+sh9]* g2[0+6+sh9];
+
+           (*virial)[1] -= w1[0+0+sh9]*g1[0+1+sh9] +
+                        w1[0+3+sh9]*g1[0+4+sh9] +
+                        w1[0+6+sh9]*g1[0+7+sh9] +
+                        w2[0+0+sh9]*g2[0+1+sh9] +
+                        w2[0+3+sh9]*g2[0+4+sh9] +
+                        w2[0+6+sh9]*g2[0+7+sh9];
+
+           (*virial)[2] -= w1[0+0+sh9]*g1[0+2+sh9] +
+                        w1[0+3+sh9]*g1[0+5+sh9] +
+                        w1[0+6+sh9]*g1[0+8+sh9] +
+                        w2[0+0+sh9]*g2[0+2+sh9] +
+                        w2[0+3+sh9]*g2[0+5+sh9] +
+                        w2[0+6+sh9]*g2[0+8+sh9];
+
+           (*virial)[4] -= w1[0+1+sh9]*g1[0+1+sh9] +
+                        w1[0+4+sh9]*g1[0+4+sh9] +
+                        w1[0+7+sh9]*g1[0+7+sh9] +
+                        w2[0+1+sh9]*g2[0+1+sh9] +
+                        w2[0+4+sh9]*g2[0+4+sh9] +
+                        w2[0+7+sh9]*g2[0+7+sh9];
+
+           (*virial)[5] -= w1[0+1+sh9]*g1[0+2+sh9] +
+                        w1[0+4+sh9]*g1[0+5+sh9] +
+                        w1[0+7+sh9]*g1[0+8+sh9] +
+                        w2[0+1+sh9]*g2[0+2+sh9] +
+                        w2[0+4+sh9]*g2[0+5+sh9] +
+                        w2[0+7+sh9]*g2[0+8+sh9];
+
+           (*virial)[8] -= w1[0+2+sh9]*g1[0+2+sh9] +
+                        w1[0+5+sh9]*g1[0+5+sh9] +
+                        w1[0+8+sh9]*g1[0+8+sh9] +
+                        w2[0+2+sh9]*g2[0+2+sh9] +
+                        w2[0+5+sh9]*g2[0+5+sh9] +
+                        w2[0+8+sh9]*g2[0+8+sh9];
+
+
+           (*virial)[3] = (*virial)[1];
+           (*virial)[6] = (*virial)[2];
+           (*virial)[7] = (*virial)[5];
+        }
+        
     }
 
     return e;
