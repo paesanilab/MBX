@@ -57,10 +57,9 @@ TEST_CASE("Test math tools") {
         double a_dot_b_calc = DotProduct(a,b);
         REQUIRE(a_dot_b_calc == Approx(a_dot_b).margin(TOL));
 
-        double tmp = 0.0;
         bool fails_if_not_different = false;
         try {
-            tmp = DotProduct(a,c);
+            double tmp = DotProduct(a,c);
         } catch (CUException &e) {
             fails_if_not_different = true;
         }
@@ -77,14 +76,39 @@ TEST_CASE("Test math tools") {
         int a_dot_b_calc = DotProduct(a,b);
         REQUIRE(a_dot_b_calc == a_dot_b);
 
-        int tmp = 0.0;
         bool fails_if_not_different = false;
         try {
-            tmp = DotProduct(a,c);
+            int tmp = DotProduct(a,c);
         } catch (CUException &e) {
             fails_if_not_different = true;
         }
 
         REQUIRE(fails_if_not_different);
+    }
+
+    SECTION("Switch function") {
+        double r = 10.0;
+        double ri = 9.0;
+        double ro = 11.0;
+        double g = 0.0;
+
+        double sw_half = switch_function(r,ri,ro,g);
+
+        REQUIRE(r == Approx(10.0).margin(TOL));
+        REQUIRE(ri == Approx(9.0).margin(TOL));
+        REQUIRE(ro == Approx(11.0).margin(TOL));
+        REQUIRE(sw_half == Approx(0.5).margin(TOL));
+        REQUIRE(g == Approx(-0.7853981634).margin(TOL));
+
+        r = 12.0;
+        double sw_zero = switch_function(r,ri,ro,g);
+        REQUIRE(sw_zero == Approx(0.0).margin(TOL));
+        REQUIRE(g == Approx(0.0).margin(TOL));
+
+        r = 8.0;
+        double sw_one = switch_function(r,ri,ro,g);
+        REQUIRE(sw_one == Approx(1.0).margin(TOL));
+        REQUIRE(g == Approx(0.0).margin(TOL));
+        
     }
 }
