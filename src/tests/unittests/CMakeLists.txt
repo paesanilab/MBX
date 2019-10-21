@@ -6,6 +6,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-gas-nbodyterms-mbpol.cpp
     unittest-systools.cpp
     unittest-system.cpp
+    unittest-mathtools.cpp
     unittest-gas-nopolarization-findif.cpp
     unittest-gas-withpolarization-findif.cpp
     unittest-pme-nopolarization.cpp
