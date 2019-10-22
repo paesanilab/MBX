@@ -62,6 +62,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     sys_phi_ = std::vector<double>(natoms_, 0.0);
     
     calc_virial_ = true;
+
     if (virial == 0) { // set virial_ to 0 in case we dont want to calculate it
         calc_virial_ = false;
     }
@@ -409,7 +410,7 @@ void Dispersion::CalculateDispersion() {
 
         // get virial
         if (calc_virial_) {
-
+            
             virial_[0] += *rec_virial[0];
             virial_[1] += *rec_virial[1];
             virial_[2] += *rec_virial[3];
