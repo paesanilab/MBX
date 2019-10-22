@@ -36,6 +36,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-h2o-h2o-cs-trimer.cpp
     unittest-co2-monomer.cpp
     unittest-ch4-monomer.cpp
+    unittest-dummy-monomer.cpp
 )
 
 #
