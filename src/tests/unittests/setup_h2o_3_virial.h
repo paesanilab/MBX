@@ -43,6 +43,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<size_t> n_sites_vector = {4,4,4};                                                                       \
     std::vector<size_t> first_index = {0,4,8};                                                                          \
     std::vector<size_t> first_index_realSites = {0,3,6};                                                                \
+    std::vector<double> box = {15.0, 0.0, 0.0, 0.0, 15.0, 0.0, 0.0, 0.0,                  \
+                               15.0};    \
     const size_t n_atoms = 9;                                                                                          \
     const size_t n_sites = 12;                                                                                          \
     std::vector<std::pair<std::string, size_t>> mon_type_count{{"h2o", n_monomers}};                \
@@ -62,6 +64,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
          -9.84445507, -0.04295674,  0.80621893, \
          -0.04295674, -3.11563098, -4.61445985, \
          0.80621893,  -4.61445985, -7.50791109}; \
+    std::vector<double> virial_disp_pbc = { \
+         -9.84971319, -0.04303824,  0.8061783 , \
+         -0.04303824, -3.11969407, -4.61424474, \
+          0.8061783  , -4.61424474, -7.5123088 };  \
     std::vector<double> real_coords = std::vector<double>{                                          \
                  -1.58972425,    1.04337922,   -0.08780840,  \
                  -0.63591971,    0.97898520,    0.00000000,  \
