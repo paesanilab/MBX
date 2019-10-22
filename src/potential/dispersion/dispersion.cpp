@@ -62,7 +62,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     sys_phi_ = std::vector<double>(natoms_, 0.0);
     
     if (virial == 0) { // set virial_ to 0 in case we dont want to calculate it
-        std::vector<double> *virial_ = 0; // OK IDK how/why this works but it does
+        std::vector<double> *virial_ = 0;
     }    
 
     ReorderData();
