@@ -127,7 +127,8 @@ class Dispersion {
     std::vector<double> phi_;
     // Virial tensor
     std::vector<double> virial_;
-
+    // virial calc variable
+    bool calc_virial_;
     // Total number of atoms
     size_t natoms_;
     // Max number of monomers

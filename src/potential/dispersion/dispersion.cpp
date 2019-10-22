@@ -61,9 +61,10 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     c6_long_range_ = std::vector<double>(natoms_, 0.0);
     sys_phi_ = std::vector<double>(natoms_, 0.0);
     
+    calc_virial_ = true;
     if (virial == 0) { // set virial_ to 0 in case we dont want to calculate it
-        std::vector<double> *virial_ = 0;
-    }    
+        calc_virial_ = false;
+    }
 
     ReorderData();
 }
@@ -407,18 +408,20 @@ void Dispersion::CalculateDispersion() {
         double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
 
         // get virial
-        virial_[0] += *rec_virial[0];
-        virial_[1] += *rec_virial[1];
-        virial_[2] += *rec_virial[3];
-        virial_[4] += *rec_virial[2];
-        virial_[5] += *rec_virial[4];
-        virial_[8] += *rec_virial[5];
+        if (calc_virial_) {
 
-        virial_[3] = virial_[1];
-        virial_[6] = virial_[2];
-        virial_[7] = virial_[5];
+            virial_[0] += *rec_virial[0];
+            virial_[1] += *rec_virial[1];
+            virial_[2] += *rec_virial[3];
+            virial_[4] += *rec_virial[2];
+            virial_[5] += *rec_virial[4];
+            virial_[8] += *rec_virial[5];
 
-	
+            virial_[3] = virial_[1];
+            virial_[6] = virial_[2];
+            virial_[7] = virial_[5];
+
+        }	
 
         // Resort forces from system order
         fi_mon = 0;
