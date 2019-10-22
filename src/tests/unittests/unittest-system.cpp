@@ -140,6 +140,22 @@ TEST_CASE("Test the system class.") {
         REQUIRE(VectorsAreEqual(polarfac, real_polfac, TOL));
     }
 
+    SECTION("Get2bCutoff") {
+        double old_cutoff = my_system.Get2bCutoff();
+        my_system.Set2bCutoff(9.12345);
+        double new_cutoff = my_system.Get2bCutoff();
+        REQUIRE(new_cutoff == Approx(9.12345).margin(TOL));
+        my_system.Set2bCutoff(old_cutoff);
+    }
+
+    SECTION("Get3bCutoff") {
+        double old_cutoff = my_system.Get3bCutoff();
+        my_system.Set3bCutoff(5.6789);
+        double new_cutoff = my_system.Get3bCutoff();
+        REQUIRE(new_cutoff == Approx(5.6789).margin(TOL));
+        my_system.Set3bCutoff(old_cutoff);
+    }
+
     SECTION("SetXyz()") {
         // Get current XYZ
         std::vector<double> xyz = my_system.GetXyz();
