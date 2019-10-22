@@ -62,7 +62,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     sys_phi_ = std::vector<double>(natoms_, 0.0);
     
     if (virial == 0) { // set virial_ to 0 in case we dont want to calculate it
-        virial_ = 0;
+        std::vector<double> *virial_ = 0; // OK IDK how this works but it does
     }    
 
     ReorderData();
@@ -240,7 +240,7 @@ void Dispersion::CalculateDispersion() {
                     std::fill(g1, g1 + 3, 0.0);
                     energy_pool[rank] += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
                                           phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor,
-                                          do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,virial_pool[rank].data());
+                                          do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_, &virial_pool[rank]);
 
                     grad_pool[rank][inmon3 + m] += g1[0];
                     grad_pool[rank][inmon3 + nmon + m] += g1[1];
