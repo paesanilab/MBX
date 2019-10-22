@@ -1463,6 +1463,7 @@ double System::Get3B(bool do_grads) {
     // serial and parallel implementation
     std::vector<double> e3b_pool(num_threads, 0.0);
     std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
+    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0)); // declare virial pool
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic) private(rank)
@@ -1582,8 +1583,9 @@ double System::Get3B(bool do_grads) {
                         std::vector<double> grad1(coord1.size(), 0.0);
                         std::vector<double> grad2(coord2.size(), 0.0);
                         std::vector<double> grad3(coord3.size(), 0.0);
+                        std::vector<double> virial(9,0.0); // declare virial tensor
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3);
+                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
 
                         // Update gradients
                         size_t i0 = nt_tot * 3;
@@ -1602,6 +1604,10 @@ double System::Get3B(bool do_grads) {
                             for (size_t j = 0; j < 3 * nat_[trimers[i0 + 3 * k + 2]]; j++) {
                                 grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 2]] + j] +=
                                     grad3[k * 3 * nat_[trimers[i0 + 3 * k + 2]] + j];
+                            }
+                            // Virial Tensor
+                            for (size_t j=0; j<9; j++) {
+                                virial_pool[rank][j] += virial[j];
                             }
                         }
                     } else {
@@ -1652,6 +1658,12 @@ double System::Get3B(bool do_grads) {
     for (int i = 0; i < num_threads; i++) {
         e3b_t += e3b_pool[i];
     }
+    // Condensate virial                         
+    for (int i = 0; i < num_threads; i++) {  
+        for (size_t j = 0; j < 9; j++){          
+            virial_[j] += virial_pool[i][j];   
+        }                                        
+    }                                            
 
     return e3b_t;
 }
