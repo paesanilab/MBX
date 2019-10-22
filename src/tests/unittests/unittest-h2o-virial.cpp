@@ -118,6 +118,17 @@ TEST_CASE("Test dimer virial contributions") {
             }
        
     }
+
+    SECTION("Dispersion") {
+        double energy_grad = my_system.Dispersion(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_disp[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
 }
 
 TEST_CASE("Test trimer virial contributions") {
@@ -169,6 +180,17 @@ TEST_CASE("Test trimer virial contributions") {
             }
 
     }
+    SECTION("Dispersion") {
+        double energy_grad = my_system.Dispersion(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_disp[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+
 }
 
 
