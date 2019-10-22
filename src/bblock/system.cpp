@@ -172,164 +172,166 @@ std::string System::GetMonId(size_t n) {
 
 std::vector<double> System::GetVirial() {return virial_;}
 
-void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
-    std::vector<double> tmp_perm = electrostaticE_.GetMolecularPermanentDipoles();
-    std::vector<double> tmp_ind = electrostaticE_.GetMolecularInducedDipoles();
-
-    mu_perm = std::vector<double>(tmp_perm.size(), 0.0);
-    mu_ind = std::vector<double>(tmp_ind.size(), 0.0);
-    // Reorder to match input order
-    for (size_t i = 0; i < nummon_; i++) {
-        size_t current_pos = original2current_order_[i];
-        for (size_t j = 0; j < 3; j++) {
-            mu_perm[3 * i + j] = tmp_perm[3 * current_pos + j];
-            mu_ind[3 * i + j] = tmp_ind[3 * current_pos + j];
-        }
-    }
-}
-
-void System::GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
-    mu_perm = electrostaticE_.GetPermanentDipoles();
-    mu_ind = electrostaticE_.GetInducedDipoles();
-
-    systools::ResetOrderReal3N(mu_perm, initial_order_realSites_, numat_, first_index_, nat_);
-    systools::ResetOrderReal3N(mu_ind, initial_order_realSites_, numat_, first_index_, nat_);
-}
-
-void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot) {
-    std::vector<double> all_mu_perm = electrostaticE_.GetPermanentDipoles();
-    std::vector<double> all_mu_ind = electrostaticE_.GetInducedDipoles();
-
-    mu_perm = std::vector<double>(3, 0.0);
-    mu_ind = std::vector<double>(3, 0.0);
-
-    mu_tot = std::vector<double>(3, 0.0);
-
-    for (size_t i = 0; i < numsites_; i++) {
-        for (size_t j = 0; j < 3; j++) {
-            mu_perm[j] += all_mu_perm[3 * i + j];
-            mu_ind[j] += all_mu_ind[3 * i + j];
-        }
-    }
-    for (size_t j = 0; j < 3; j++) {
-        mu_tot[j] = mu_perm[j] + mu_ind[j];
-    }
-}
-
-std::vector<double> System::GetChargeDerivativesOHH() {
-    std::vector<double> chg_der(numat_ * numat_ * 3, 0.0);
-
-    size_t fi_chgder = 0;
-    size_t fi_mon = 0;
-    size_t fi_at = 0;
-    size_t row_length = numat_ * 3;
-    // Loop over all monomer types
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nat = nat_[fi_mon];
-        // For each monomer, check if it is water. If it is not water, skip.
-        if (mon_type_count_[mt].first == "h2o") {
-            // chg_der will be 27*nwaters
-            // Loop over all water molecules
-            for (size_t m = 0; m < nmon; m++) {
-                size_t shift = 3 * fi_at + 3 * numat_ * fi_at;
-                // chg_der has the order H1 H2 O. We want O H1 H2 M
-                for (size_t u = 0; u < 3; u++) {
-                    chg_der[shift + u] = chggrad_[27 * m + 18 + 6 + u];     // dqo/dro
-                    chg_der[shift + 3 + u] = chggrad_[27 * m + 0 + 6 + u];  // dqo/drh1
-                    chg_der[shift + 6 + u] = chggrad_[27 * m + 9 + 6 + u];  // dqo/drh2
-
-                    chg_der[shift + row_length + u] = chggrad_[27 * m + 18 + 0 + u];     // dqh1/dro
-                    chg_der[shift + row_length + 3 + u] = chggrad_[27 * m + 0 + 0 + u];  // dqh1/drh1
-                    chg_der[shift + row_length + 6 + u] = chggrad_[27 * m + 9 + 0 + u];  // dqh1/drh2
-
-                    chg_der[shift + 2 * row_length + u] = chggrad_[27 * m + 18 + 3 + u];     // dqh2/dro
-                    chg_der[shift + 2 * row_length + 3 + u] = chggrad_[27 * m + 0 + 3 + u];  // dqh2/drh1
-                    chg_der[shift + 2 * row_length + 6 + u] = chggrad_[27 * m + 9 + 3 + u];  // dqh2/drh2
-                }
-                fi_at += nat;
-            }
-        }
-        fi_mon += nmon;
-    }
-    return chg_der;
-}
-
-std::vector<double> System::GetChargeDerivatives() {
-    std::vector<double> chg_der(numsites_ * numsites_ * 3, 0.0);
-
-    size_t fi_chgder = 0;
-    size_t fi_mon = 0;
-    size_t fi_sites = 0;
-    size_t row_length = numsites_ * 3;
-
-    double g21 = systools::gamma21;
-
-    // Loop over all monomer types
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nsites = sites_[fi_mon];
-        // For each monomer, check if it is water. If it is not water, skip.
-        if (mon_type_count_[mt].first == "h2o") {
-            // chg_der will be 27*nwaters
-            // Loop over all water molecules
-            for (size_t m = 0; m < nmon; m++) {
-                size_t shift = 3 * fi_sites + 3 * numsites_ * fi_sites;
-                // chg_der has the order H1 H2 O. We want O H1 H2 M
-                for (size_t u = 0; u < 3; u++) {
-                    chg_der[shift + u] = 0.0;      // dqo/dro
-                    chg_der[shift + 3 + u] = 0.0;  // dqo/drh1
-                    chg_der[shift + 6 + u] = 0.0;  // dqo/drh2
-                    chg_der[shift + 9 + u] = 0.0;  // dqo/drM
-
-                    chg_der[shift + row_length + u] = 0.0;  // dqh1/dro
-                    chg_der[shift + row_length + 3 + u] =
-                        chggrad_[27 * m + u] + g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqh1/drh1
-                    chg_der[shift + row_length + 6 + u] =
-                        chggrad_[27 * m + 9 + u] +
-                        g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqh1/drh2
-                    chg_der[shift + row_length + 9 + u] =
-                        chggrad_[27 * m + 18 + u] +
-                        g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqh1/drM
-
-                    chg_der[shift + 2 * row_length + u] = 0.0;  // dqh2/dro
-                    chg_der[shift + 2 * row_length + 3 + u] =
-                        chggrad_[27 * m + 3 + u] +
-                        g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqh2/drh1
-                    chg_der[shift + 2 * row_length + 6 + u] =
-                        chggrad_[27 * m + 9 + 3 + u] +
-                        g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqh2/drh2
-                    chg_der[shift + 2 * row_length + 9 + u] =
-                        chggrad_[27 * m + 18 + 3 + u] +
-                        g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqh2/drM
-
-                    chg_der[shift + 3 * row_length + u] = 0.0;  // dqM/dro
-                    chg_der[shift + 3 * row_length + 3 + u] =
-                        chggrad_[27 * m + 6 + u] -
-                        2 * g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqM/drh1
-                    chg_der[shift + 3 * row_length + 6 + u] =
-                        chggrad_[27 * m + 9 + 6 + u] -
-                        2 * g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqM/drh2
-                    chg_der[shift + 3 * row_length + 9 + u] =
-                        chggrad_[27 * m + 18 + 6 + u] -
-                        2 * g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqM/drM
-                }
-                fi_sites += nsites;
-            }
-        }
-        fi_mon += nmon;
-    }
-
-    // FIXME
-    //    for (size_t i = 0; i < numsites_ ; i++) {
-    //        for (size_t j = 0; j < 3*numsites_; j++) {
-    //            std::cout << std::scientific << std::setprecision(4) << std::setw(14) << chg_der[3*numsites_*i + j];
-    //        }
-    //        std::cout << std::endl;
-    //    }
-
-    return chg_der;
-}
+// FIXME As for today, these functions are not used. // MRR 20191022
+// Will need to activate them and use them whenever we need them for MB-Spec
+//void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
+//    std::vector<double> tmp_perm = electrostaticE_.GetMolecularPermanentDipoles();
+//    std::vector<double> tmp_ind = electrostaticE_.GetMolecularInducedDipoles();
+//
+//    mu_perm = std::vector<double>(tmp_perm.size(), 0.0);
+//    mu_ind = std::vector<double>(tmp_ind.size(), 0.0);
+//    // Reorder to match input order
+//    for (size_t i = 0; i < nummon_; i++) {
+//        size_t current_pos = original2current_order_[i];
+//        for (size_t j = 0; j < 3; j++) {
+//            mu_perm[3 * i + j] = tmp_perm[3 * current_pos + j];
+//            mu_ind[3 * i + j] = tmp_ind[3 * current_pos + j];
+//        }
+//    }
+//}
+//
+//void System::GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
+//    mu_perm = electrostaticE_.GetPermanentDipoles();
+//    mu_ind = electrostaticE_.GetInducedDipoles();
+//
+//    systools::ResetOrderReal3N(mu_perm, initial_order_realSites_, numat_, first_index_, nat_);
+//    systools::ResetOrderReal3N(mu_ind, initial_order_realSites_, numat_, first_index_, nat_);
+//}
+//
+//void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot) {
+//    std::vector<double> all_mu_perm = electrostaticE_.GetPermanentDipoles();
+//    std::vector<double> all_mu_ind = electrostaticE_.GetInducedDipoles();
+//
+//    mu_perm = std::vector<double>(3, 0.0);
+//    mu_ind = std::vector<double>(3, 0.0);
+//
+//    mu_tot = std::vector<double>(3, 0.0);
+//
+//    for (size_t i = 0; i < numsites_; i++) {
+//        for (size_t j = 0; j < 3; j++) {
+//            mu_perm[j] += all_mu_perm[3 * i + j];
+//            mu_ind[j] += all_mu_ind[3 * i + j];
+//        }
+//    }
+//    for (size_t j = 0; j < 3; j++) {
+//        mu_tot[j] = mu_perm[j] + mu_ind[j];
+//    }
+//}
+//
+//std::vector<double> System::GetChargeDerivativesOHH() {
+//    std::vector<double> chg_der(numat_ * numat_ * 3, 0.0);
+//
+//    size_t fi_chgder = 0;
+//    size_t fi_mon = 0;
+//    size_t fi_at = 0;
+//    size_t row_length = numat_ * 3;
+//    // Loop over all monomer types
+//    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+//        size_t nmon = mon_type_count_[mt].second;
+//        size_t nat = nat_[fi_mon];
+//        // For each monomer, check if it is water. If it is not water, skip.
+//        if (mon_type_count_[mt].first == "h2o") {
+//            // chg_der will be 27*nwaters
+//            // Loop over all water molecules
+//            for (size_t m = 0; m < nmon; m++) {
+//                size_t shift = 3 * fi_at + 3 * numat_ * fi_at;
+//                // chg_der has the order H1 H2 O. We want O H1 H2 M
+//                for (size_t u = 0; u < 3; u++) {
+//                    chg_der[shift + u] = chggrad_[27 * m + 18 + 6 + u];     // dqo/dro
+//                    chg_der[shift + 3 + u] = chggrad_[27 * m + 0 + 6 + u];  // dqo/drh1
+//                    chg_der[shift + 6 + u] = chggrad_[27 * m + 9 + 6 + u];  // dqo/drh2
+//
+//                    chg_der[shift + row_length + u] = chggrad_[27 * m + 18 + 0 + u];     // dqh1/dro
+//                    chg_der[shift + row_length + 3 + u] = chggrad_[27 * m + 0 + 0 + u];  // dqh1/drh1
+//                    chg_der[shift + row_length + 6 + u] = chggrad_[27 * m + 9 + 0 + u];  // dqh1/drh2
+//
+//                    chg_der[shift + 2 * row_length + u] = chggrad_[27 * m + 18 + 3 + u];     // dqh2/dro
+//                    chg_der[shift + 2 * row_length + 3 + u] = chggrad_[27 * m + 0 + 3 + u];  // dqh2/drh1
+//                    chg_der[shift + 2 * row_length + 6 + u] = chggrad_[27 * m + 9 + 3 + u];  // dqh2/drh2
+//                }
+//                fi_at += nat;
+//            }
+//        }
+//        fi_mon += nmon;
+//    }
+//    return chg_der;
+//}
+//
+//std::vector<double> System::GetChargeDerivatives() {
+//    std::vector<double> chg_der(numsites_ * numsites_ * 3, 0.0);
+//
+//    size_t fi_chgder = 0;
+//    size_t fi_mon = 0;
+//    size_t fi_sites = 0;
+//    size_t row_length = numsites_ * 3;
+//
+//    double g21 = systools::gamma21;
+//
+//    // Loop over all monomer types
+//    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+//        size_t nmon = mon_type_count_[mt].second;
+//        size_t nsites = sites_[fi_mon];
+//        // For each monomer, check if it is water. If it is not water, skip.
+//        if (mon_type_count_[mt].first == "h2o") {
+//            // chg_der will be 27*nwaters
+//            // Loop over all water molecules
+//            for (size_t m = 0; m < nmon; m++) {
+//                size_t shift = 3 * fi_sites + 3 * numsites_ * fi_sites;
+//                // chg_der has the order H1 H2 O. We want O H1 H2 M
+//                for (size_t u = 0; u < 3; u++) {
+//                    chg_der[shift + u] = 0.0;      // dqo/dro
+//                    chg_der[shift + 3 + u] = 0.0;  // dqo/drh1
+//                    chg_der[shift + 6 + u] = 0.0;  // dqo/drh2
+//                    chg_der[shift + 9 + u] = 0.0;  // dqo/drM
+//
+//                    chg_der[shift + row_length + u] = 0.0;  // dqh1/dro
+//                    chg_der[shift + row_length + 3 + u] =
+//                        chggrad_[27 * m + u] + g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqh1/drh1
+//                    chg_der[shift + row_length + 6 + u] =
+//                        chggrad_[27 * m + 9 + u] +
+//                        g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqh1/drh2
+//                    chg_der[shift + row_length + 9 + u] =
+//                        chggrad_[27 * m + 18 + u] +
+//                        g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqh1/drM
+//
+//                    chg_der[shift + 2 * row_length + u] = 0.0;  // dqh2/dro
+//                    chg_der[shift + 2 * row_length + 3 + u] =
+//                        chggrad_[27 * m + 3 + u] +
+//                        g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqh2/drh1
+//                    chg_der[shift + 2 * row_length + 6 + u] =
+//                        chggrad_[27 * m + 9 + 3 + u] +
+//                        g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqh2/drh2
+//                    chg_der[shift + 2 * row_length + 9 + u] =
+//                        chggrad_[27 * m + 18 + 3 + u] +
+//                        g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqh2/drM
+//
+//                    chg_der[shift + 3 * row_length + u] = 0.0;  // dqM/dro
+//                    chg_der[shift + 3 * row_length + 3 + u] =
+//                        chggrad_[27 * m + 6 + u] -
+//                        2 * g21 * (chggrad_[27 * m + u] + chggrad_[27 * m + 3 + u]);  // dqM/drh1
+//                    chg_der[shift + 3 * row_length + 6 + u] =
+//                        chggrad_[27 * m + 9 + 6 + u] -
+//                        2 * g21 * (chggrad_[27 * m + 9 + u] + chggrad_[27 * m + 9 + 3 + u]);  // dqM/drh2
+//                    chg_der[shift + 3 * row_length + 9 + u] =
+//                        chggrad_[27 * m + 18 + 6 + u] -
+//                        2 * g21 * (chggrad_[27 * m + 18 + u] + chggrad_[27 * m + 18 + 3 + u]);  // dqM/drM
+//                }
+//                fi_sites += nsites;
+//            }
+//        }
+//        fi_mon += nmon;
+//    }
+//
+//    // FIXME
+//    //    for (size_t i = 0; i < numsites_ ; i++) {
+//    //        for (size_t j = 0; j < 3*numsites_; j++) {
+//    //            std::cout << std::scientific << std::setprecision(4) << std::setw(14) << chg_der[3*numsites_*i + j];
+//    //        }
+//    //        std::cout << std::endl;
+//    //    }
+//
+//    return chg_der;
+//}
 
 void System::Set2bCutoff(double cutoff2b) { cutoff2b_ = cutoff2b; }
 void System::Set3bCutoff(double cutoff3b) { cutoff3b_ = cutoff3b; }
