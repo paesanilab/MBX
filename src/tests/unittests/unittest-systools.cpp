@@ -165,3 +165,25 @@ TEST_CASE("Test the system tools functions (no PBC).") {
 
     // SECTION("Energy without gradients") { REQUIRE(energy_nograd == Approx(one_body_energy).margin(TOL)); }
 }
+
+TEST_CASE("Test functions with PBC") {
+    SECTION("FixMonomerCoordinates") {
+        std::vector<double> box = {10.0,0.0,0.0,0.0,10.0,0.0,0.0,0.0,10.0};
+        std::vector<double> coordinates_fixed_1 = {4.9,4.9,4.9, 5.9,4.9,4.9, 4.9,5.9,4.9, 4.9,4.9,5.9};
+        std::vector<double> coordinates_1 = {4.9,4.9,4.9, -4.1,4.9,4.9, 4.9,-4.1,4.9, 4.9,4.9,-4.1};
+        std::vector<double> coordinates_fixed_2 = {-4.9,-4.9,-4.9, -5.9,-4.9,-4.9, -4.9,-5.9,-4.9, -4.9,-4.9,-5.9};
+        std::vector<double> coordinates_2 = {-4.9,-4.9,-4.9, 4.1,-4.9,-4.9, -4.9,4.1,-4.9, -4.9,-4.9,4.1};
+        std::vector<size_t> nats = {4};
+        std::vector<size_t> first_index = {0};
+
+        systools::FixMonomerCoordinates(coordinates_1, box, nats, first_index);
+        for (size_t i = 0; i < coordinates_1.size(); i++) {
+            REQUIRE(coordinates_1[i] == Approx(coordinates_fixed_1[i]).margin(TOL));
+        }
+        
+        systools::FixMonomerCoordinates(coordinates_2, box, nats, first_index);
+        for (size_t i = 0; i < coordinates_2.size(); i++) {
+            REQUIRE(coordinates_2[i] == Approx(coordinates_fixed_2[i]).margin(TOL));
+        }
+    }
+}
