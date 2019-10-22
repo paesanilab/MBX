@@ -250,19 +250,23 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
                 g1[2] += dz * grad;
                 g2[nmon22 + nv] -= dz * grad;
 
-                (*virial)[0] -= dx* dx * grad; //  update the virial for the atom pair
-                (*virial)[1] -= dx* dy * grad; 
-                (*virial)[2] -= dx* dz * grad; 
 
-                (*virial)[4] -= dy* dy * grad; 
-                (*virial)[5] -= dy* dz * grad; 
+                if (virial != 0 ) {
 
-                (*virial)[8] -= dz* dz * grad; 
+                    (*virial)[0] -= dx* dx * grad; //  update the virial for the atom pair
+                    (*virial)[1] -= dx* dy * grad; 
+                    (*virial)[2] -= dx* dz * grad; 
 
-                (*virial)[3] = (*virial)[1];
-                (*virial)[6] = (*virial)[2];
-                (*virial)[7] = (*virial)[5];
+                    (*virial)[4] -= dy* dy * grad; 
+                    (*virial)[5] -= dy* dz * grad; 
 
+                    (*virial)[8] -= dz* dz * grad; 
+
+                    (*virial)[3] = (*virial)[1];
+                    (*virial)[6] = (*virial)[2];
+                    (*virial)[7] = (*virial)[5];
+                
+                }
 
             }
         }

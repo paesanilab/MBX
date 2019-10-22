@@ -62,7 +62,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     sys_phi_ = std::vector<double>(natoms_, 0.0);
     
     if (virial == 0) { // set virial_ to 0 in case we dont want to calculate it
-        std::vector<double> *virial_ = 0; // OK IDK how this works but it does
+        std::vector<double> *virial_ = 0; // OK IDK how/why this works but it does
     }    
 
     ReorderData();
@@ -250,7 +250,7 @@ void Dispersion::CalculateDispersion() {
             }
         }
 
-        // Compress data in phi and grad
+        // Compress data in phi and grad and virial
         for (size_t rank = 0; rank < nthreads; rank++) {
             size_t kend = phi_pool[rank].size();
             for (size_t k = 0; k < kend; k++) {
@@ -259,6 +259,9 @@ void Dispersion::CalculateDispersion() {
             kend = grad_pool[rank].size();
             for (size_t k = 0; k < kend; k++) {
                 grad_[fi_crd + k] += grad_pool[rank][k];
+            }
+            for (size_t k = 0; k < 9; k++) {
+                virial_[k] += virial_pool[rank][k];
             }
             disp_energy_ += energy_pool[rank];
         }
@@ -303,12 +306,13 @@ void Dispersion::CalculateDispersion() {
             std::vector<std::vector<double> > grad1_pool;
             std::vector<std::vector<double> > grad2_pool;
             std::vector<double> energy_pool(nthreads,0.0);
-
+            std::vector<std::vector<double> > virial_pool;
             for (size_t i = 0; i < nthreads; i++) {
                 phi1_pool.push_back(std::vector<double>(nmon1 * ns1,0.0));
                 phi2_pool.push_back(std::vector<double>(nmon2 * ns2,0.0));
                 grad1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3,0.0));
                 grad2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3,0.0));
+                virial_pool.push_back(std::vector<double>(9,0.0));
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -339,7 +343,7 @@ void Dispersion::CalculateDispersion() {
                         energy_pool[rank] +=
                             disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
                                   grad2_pool[rank].data(), phi_i, phi2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
-                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_);
+                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_, &virial_pool[rank]);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
@@ -365,6 +369,9 @@ void Dispersion::CalculateDispersion() {
                 }
                 for (size_t k = 0; k < kend2; k++) {
                     phi_[fi_sites2 + k] += phi2_pool[rank][k];
+                }
+                for (size_t k = 0; k < 9; k++) {
+                    virial_[k] += virial_pool[rank][k];
                 }
                 disp_energy_ += energy_pool[rank]; 
             }
