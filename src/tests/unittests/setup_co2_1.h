@@ -54,7 +54,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<std::string> monomer_names = {"co2"};                                                            \
     std::vector<size_t> n_atoms_vector = {3};                                                                       \
     std::vector<size_t> n_sites_vector = {3};                                                                       \
-    std::vector<size_t> first_index = {0, 3};                                                                          \
+    std::vector<size_t> first_index = {0};                                                                          \
     std::vector<size_t> first_index_realSites = {0};                                                                \
     const size_t n_atoms = 3;                                                                                          \
     const size_t n_sites = 3;                                                                                          \
