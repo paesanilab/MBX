@@ -193,8 +193,13 @@ TEST_CASE("Test functions with PBC") {
         std::vector<double> coordinates_1 = {4.9,4.9,4.9, -4.1,4.9,4.9, 4.9,-4.1,4.9, 4.9,4.9,-4.1};
         std::vector<double> coordinates_fixed_2 = {-4.9,-4.9,-4.9, -5.9,-4.9,-4.9, -4.9,-5.9,-4.9, -4.9,-4.9,-5.9};
         std::vector<double> coordinates_2 = {-4.9,-4.9,-4.9, 4.1,-4.9,-4.9, -4.9,4.1,-4.9, -4.9,-4.9,4.1};
+
+        std::vector<double> coordinates_fixed_3 = {4.9,4.9,4.9, -4.9,-4.9,-4.9};
+        std::vector<double> coordinates_3 = {-5.1,-5.1,-5.1, 5.1,5.1,5.1};
         std::vector<size_t> nats = {4};
+        std::vector<size_t> nats_3 = {1,1};
         std::vector<size_t> first_index = {0};
+        std::vector<size_t> first_index_3 = {0,1};
 
         systools::FixMonomerCoordinates(coordinates_1, box, nats, first_index);
         for (size_t i = 0; i < coordinates_1.size(); i++) {
@@ -204,6 +209,11 @@ TEST_CASE("Test functions with PBC") {
         systools::FixMonomerCoordinates(coordinates_2, box, nats, first_index);
         for (size_t i = 0; i < coordinates_2.size(); i++) {
             REQUIRE(coordinates_2[i] == Approx(coordinates_fixed_2[i]).margin(TOL));
+        }
+
+        systools::FixMonomerCoordinates(coordinates_3, box, nats_3, first_index_3);
+        for (size_t i = 0; i < coordinates_3.size(); i++) {
+            REQUIRE(coordinates_3[i] == Approx(coordinates_fixed_3[i]).margin(TOL));
         }
     }
 }
