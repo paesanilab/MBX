@@ -566,20 +566,22 @@ void System::Initialize() {
     // Set C6 for long range pme
     SetC6LongRange();
 
+    // Define the virial vector
+    virial_ = std::vector<double>(9,0.0);
+
     // With the information previously set, we initialize the
     // electrostatics class
     // TODO: Do grads set to true for now. Needs to be fixed
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
                                true, diptol_, maxItDip_, dipole_method_);
 
+
+
     // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
-    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
+    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_, &virial_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, true, box_);
-
-    // Define the virial vector
-    virial_ = std::vector<double>(9,0.0);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
