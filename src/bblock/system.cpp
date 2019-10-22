@@ -335,6 +335,8 @@ std::vector<double> System::GetVirial() {return virial_;}
 
 void System::Set2bCutoff(double cutoff2b) { cutoff2b_ = cutoff2b; }
 void System::Set3bCutoff(double cutoff3b) { cutoff3b_ = cutoff3b; }
+double System::Get2bCutoff() { return cutoff2b_; }
+double System::Get3bCutoff() { return cutoff3b_; }
 void System::SetNMaxEval1b(size_t nmax) { maxNMonEval_ = nmax; }
 void System::SetNMaxEval2b(size_t nmax) { maxNDimEval_ = nmax; }
 void System::SetNMaxEval3b(size_t nmax) { maxNTriEval_ = nmax; }

@@ -299,6 +299,18 @@ class System {
     std::string GetMonId(size_t n);
 
     /**
+     * Gets the two-body cutoff for dispersion and polynomials.
+     * @return Two-body cutoff
+     */
+    double Get2bCutoff();
+
+    /**
+     * Gets the three-body cutoff for polynomials.
+     * @return Three-body cutoff
+     */
+    double Get3bCutoff();
+
+    /**
      * Gets the virial tensor
      * @return A vector of doubles of 9 elements with the virial
      */
