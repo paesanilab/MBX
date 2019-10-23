@@ -574,9 +574,6 @@ void System::Initialize() {
     // TODO: Do grads set to true for now. Needs to be fixed
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
                                true, diptol_, maxItDip_, dipole_method_);
-
-
-
     // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
@@ -1912,7 +1909,7 @@ void System::SetEwald(double alpha, double grid_density, int spline_order) {
 
 double System::GetElectrostatics(bool do_grads) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
-    return electrostaticE_.GetElectrostatics(grad_);
+    return electrostaticE_.GetElectrostatics(grad_,&virial_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
