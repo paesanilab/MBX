@@ -156,6 +156,81 @@ TEST_CASE("Test the system class.") {
         my_system.Set3bCutoff(old_cutoff);
     }
 
+    SECTION("TTM pairs") {
+        std::vector<std::pair<std::string, std::string> > empty_vec;
+        std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"h2o","cl"},{"h2o","i"}};
+        std::vector<std::pair<std::string, std::string> > ttm_pairs_expected = {{"cl","h2o"},{"h2o","i"}};
+
+        for (size_t i = 0; i < ttm_pairs.size(); i++) {
+            my_system.AddTTMnrgPair(ttm_pairs[i].first, ttm_pairs[i].second);
+        }
+
+        std::vector<std::pair<std::string, std::string> > ttm_pairs_system = my_system.GetTTMnrgPairs();
+        for (size_t i = 0; i < ttm_pairs.size(); i++) {
+            REQUIRE(ttm_pairs_system[i] == ttm_pairs_expected[i]);
+        }
+
+        my_system.SetTTMnrgPairs(empty_vec);
+        ttm_pairs_system = my_system.GetTTMnrgPairs();
+        REQUIRE(ttm_pairs_system == empty_vec);
+
+        my_system.SetTTMnrgPairs(ttm_pairs);
+        ttm_pairs_system = my_system.GetTTMnrgPairs();
+        for (size_t i = 0; i < ttm_pairs.size(); i++) {
+            REQUIRE(ttm_pairs_system[i] == ttm_pairs_expected[i]);
+        }
+    }
+
+    SECTION("Ignore 2b poly") {
+        std::vector<std::vector<std::string> > empty_vec;
+        std::vector<std::vector<std::string> > ignore2b = {{"h2o","cl"},{"h2o","i"}};
+        std::vector<std::vector<std::string> > ignore2b_expected = {{"cl","h2o"},{"h2o","i"}};
+
+        for (size_t i = 0; i < ignore2b.size(); i++) {
+            my_system.Add2bIgnorePoly(ignore2b[i][0], ignore2b[i][1]);
+        }
+
+        std::vector<std::vector<std::string> > ignore2b_system = my_system.Get2bIgnorePoly();
+        for (size_t i = 0; i < ignore2b.size(); i++) {
+            REQUIRE(ignore2b_system[i] == ignore2b_expected[i]);
+        }
+
+        my_system.Set2bIgnorePoly(empty_vec);
+        ignore2b_system = my_system.Get2bIgnorePoly();
+        REQUIRE(ignore2b_system == empty_vec);
+
+        my_system.Set2bIgnorePoly(ignore2b);
+        ignore2b_system = my_system.Get2bIgnorePoly();
+        for (size_t i = 0; i < ignore2b.size(); i++) {
+            REQUIRE(ignore2b_system[i] == ignore2b_expected[i]);
+        }
+    }
+
+    SECTION("Ignore 3b poly") {
+        std::vector<std::vector<std::string> > empty_vec;
+        std::vector<std::vector<std::string> > ignore3b = {{"h2o","cl","h2o"},{"h2o","i","h2o"}};
+        std::vector<std::vector<std::string> > ignore3b_expected = {{"cl","h2o","h2o"},{"h2o","h2o","i"}};
+
+        for (size_t i = 0; i < ignore3b.size(); i++) {
+            my_system.Add3bIgnorePoly(ignore3b[i][0], ignore3b[i][1], ignore3b[i][2]);
+        }
+
+        std::vector<std::vector<std::string> > ignore3b_system = my_system.Get3bIgnorePoly();
+        for (size_t i = 0; i < ignore3b.size(); i++) {
+            REQUIRE(ignore3b_system[i] == ignore3b_expected[i]);
+        }
+
+        my_system.Set3bIgnorePoly(empty_vec);
+        ignore3b_system = my_system.Get3bIgnorePoly();
+        REQUIRE(ignore3b_system == empty_vec);
+
+        my_system.Set3bIgnorePoly(ignore3b);
+        ignore3b_system = my_system.Get3bIgnorePoly();
+        for (size_t i = 0; i < ignore3b.size(); i++) {
+            REQUIRE(ignore3b_system[i] == ignore3b_expected[i]);
+        }
+    }
+
     SECTION("SetXyz()") {
         // Get current XYZ
         std::vector<double> xyz = my_system.GetXyz();
