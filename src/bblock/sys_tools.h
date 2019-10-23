@@ -515,7 +515,7 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const 
  */
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
                            const std::vector<double> phi, std::vector<double> &grad,
-                           const std::vector<double> chg_grad);
+                           const std::vector<double> chg_grad, double *crd = 0, std::vector<double> *qdvirial = 0);
 
 }  // namespace systools
 #endif  // SYS_TOOLS_H

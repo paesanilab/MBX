@@ -753,7 +753,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
             // Calculating charge
             ps::dms_nasa(0.0, 0.0, 0.0, atomcoords.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
-                         chg_der.data() + shift, false);
+                         chg_der.data() + shift);
             // Inserting the found charges into chgtmp vector before calculating
             // new charge values
             chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
@@ -1032,7 +1032,7 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const 
 
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
                            const std::vector<double> phi, std::vector<double> &grad,
-                           const std::vector<double> chg_grad) {
+                           const std::vector<double> chg_grad, double* crd, std::vector<double> *qdvirial) {
     // If water, extracted from patridge-schwneke paper
     if (mon == "h2o") {
         for (size_t mm = 0; mm < nmon; mm++) {
@@ -1079,6 +1079,186 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                                 + GRADQ(2, 1, k) * phi[sphi + 2]   // phi(h2)
                                 + GRADQ(2, 2, k) * phi[sphi + 3];  // phi(M)
             }
+
+            if (qdvirial != 0) {
+	        std::vector<double> temp_pos = { crd[mm*1], crd[mm + nmon], crd[mm +2*nmon], crd[mm + 3*nmon], 
+                                       crd[mm+4*nmon], crd[mm+5*nmon], crd[mm+6*nmon], crd[mm+7*nmon], crd[mm+8*nmon]};
+
+                std::vector<double> chgtmpnv_test((3));
+                std::vector<double> chgder_test((27));
+
+	        std::vector<double> aux_data(6,0.0); // declare array to store auxillary output from dms_nasa_vir
+
+                ps::dms_nasa(0.0, 0.0, 0.0, temp_pos.data(), chgtmpnv_test.data(),chgder_test.data(), &aux_data); // get them aux data (charge derivateves with respect to internal coords)
+                     
+                // get the charge derivatives in internal coordinates ( r12 = rOH1, r13=rOH2, cos = cos(theta))
+	        double dp1dr12 = aux_data[0];  // pass data onto variables
+                double dp1dr13 = aux_data[1];
+                double dp2dr12 = aux_data[2];
+                double dp2dr13 = aux_data[3];	    
+                double dp1dcos = aux_data[4];
+                double dp2dcos = aux_data[5];
+
+
+                std::vector<double> dqdr12(4, 0.0);
+                std::vector<double> dqdr13(4, 0.0);
+                std::vector<double> dqdcos(4, 0.0);
+
+                double gamma = gammaM;
+    
+                double tmp = gamma / 2.0 / ( 1.0 - gamma );
+                
+                // adding M-site contribution to the derivatives
+                dqdr12[1] = dp1dr12 + ( dp1dr12 + dp2dr12 ) * tmp;   //h1 
+                dqdr13[1] = dp1dr13 + ( dp1dr13 + dp2dr13 ) * tmp;
+                dqdcos[1] = dp1dcos + ( dp1dcos + dp2dcos ) * tmp;
+    
+                dqdr12[2] = dp2dr12 + ( dp1dr12 + dp2dr12 ) * tmp;  //h2
+                dqdr13[2] = dp2dr13 + ( dp1dr13 + dp2dr13 ) * tmp;
+                dqdcos[2] = dp2dcos + ( dp1dcos + dp2dcos ) * tmp;
+    
+                dqdr12[3] = -( dp1dr12 + dp2dr12 ) / ( 1.0 - gamma ); //M
+                dqdr13[3] = -( dp1dr13 + dp2dr13 ) / ( 1.0 - gamma );
+                dqdcos[3] = -( dp1dcos + dp2dcos ) / ( 1.0 - gamma );
+
+
+                for (int ii =0; ii < 4; ii++) {   // loop over all sites
+ 
+                    // get the electrostatic potential on that site
+                    double vtmp;
+
+                    if ( ii == 1 ){
+                        vtmp = phi[sphi + 1]; //h1
+                    }
+
+                    if ( ii == 2 ){
+                        vtmp = phi[sphi + 2];  //h2
+                    }
+
+                    if ( ii == 3 ){
+                        vtmp = phi[sphi + 3]; //M
+                    }
+
+
+
+                    for (int l = 0; l < 3; l++){ // double loop for charge derivatives with respect to each internal bond coordinate (ie r12 and r13) for each atom.
+
+                        for (int m=l+1;m<4;m++) {    
+            
+                            double rx;
+                            double ry;
+                            double rz;
+                            double dqdr_tmp;
+                            double prefac;
+            
+                            // get the distances and charge derivatives with respect to r12 and r13 (the OH bonds)
+                            if ( (l == 0) && (m == 1) ) {
+            
+                                dqdr_tmp = dqdr12[ii];
+            
+                                rx = temp_pos[0] - temp_pos[3];
+                                ry = temp_pos[1] - temp_pos[4];
+                                rz = temp_pos[2] - temp_pos[5];
+                                prefac = 1.0;
+
+                            } else if ( (l == 0) && (m == 2) ) {
+            
+                                dqdr_tmp = dqdr13[ii];
+            
+                                rx = temp_pos[0] - temp_pos[6];
+                                ry = temp_pos[1] - temp_pos[7];
+                                rz = temp_pos[2] - temp_pos[8];
+                                prefac = 1.0;
+            
+                            } else {
+
+                                prefac = 0.0;
+
+                            }
+
+  
+                            double rjk = std::sqrt( rx * rx + ry * ry + rz * rz );
+
+
+                	    // add to virial
+            
+                            (*qdvirial)[0] -=  vtmp * dqdr_tmp * rx * rx / rjk*prefac*constants::COULOMB;
+                            (*qdvirial)[1] -=  vtmp * dqdr_tmp * rx * ry / rjk*prefac*constants::COULOMB;
+                            (*qdvirial)[2] -=  vtmp * dqdr_tmp * rx * rz / rjk*prefac*constants::COULOMB;
+            
+                            (*qdvirial)[4] -=  vtmp * dqdr_tmp * ry * ry / rjk*prefac*constants::COULOMB;
+                            (*qdvirial)[5] -=  vtmp * dqdr_tmp * ry * rz / rjk*prefac*constants::COULOMB;
+            
+                            (*qdvirial)[8] -=  vtmp * dqdr_tmp * rz * rz / rjk*prefac*constants::COULOMB;
+
+
+                        } // m
+                    } // l
+
+                    // angular terms
+                    double rx1 = temp_pos[0] - temp_pos[3];
+                    double ry1 = temp_pos[1] - temp_pos[4];
+                    double rz1 = temp_pos[2] - temp_pos[5];
+
+                    double rx2 = temp_pos[0] - temp_pos[6];
+                    double ry2 = temp_pos[1] - temp_pos[7];
+                    double rz2 = temp_pos[2] - temp_pos[8];
+
+                    double rx3 = temp_pos[3] - temp_pos[6];
+                    double ry3 = temp_pos[4] - temp_pos[7];
+                    double rz3 = temp_pos[5] - temp_pos[8];
+
+
+                    double r1 = std::sqrt( rx1 * rx1 + ry1 * ry1 + rz1 * rz1 );
+                    double r2 = std::sqrt( rx2 * rx2 + ry2 * ry2 + rz2 * rz2 );
+                    double r3 = std::sqrt( rx3 * rx3 + ry3 * ry3 + rz3 * rz3 );
+                     
+                    double rdot = rx1 * rx2 + ry1 * ry2 + rz1 * rz2;
+                    double cost = rdot / ( r1 * r2 );
+                    
+                    double dcosdr12 = ( r1 - r2 * cost ) / r1 / r2;
+                    double dcosdr13 = ( r2 - r1 * cost ) / r1 / r2;
+                    double dcosdr23 = -r3 / r1 / r2;
+
+                    // chain rule the cosine to bond coords
+                    double dcostmp1 = dcosdr12 * rx1 * rx1 / r1 
+                            + dcosdr13 * rx2 * rx2 / r2 
+                            + dcosdr23 * rx3 * rx3 / r3;
+                    double dcostmp2 = dcosdr12 * rx1 * ry1 / r1 
+                            + dcosdr13 * rx2 * ry2 / r2 
+                            + dcosdr23 * rx3 * ry3 / r3;
+                    double dcostmp3 = dcosdr12 * rx1 * rz1 / r1 
+                            + dcosdr13 * rx2 * rz2 / r2 
+                            + dcosdr23 * rx3 * rz3 / r3;
+    
+                    double dcostmp5 = dcosdr12 * ry1 * ry1 / r1 
+                            + dcosdr13 * ry2 * ry2 / r2 
+                            + dcosdr23 * ry3 * ry3 / r3;
+                    double dcostmp6 = dcosdr12 * ry1 * rz1 / r1 
+                            + dcosdr13 * ry2 * rz2 / r2 
+                            + dcosdr23 * ry3 * rz3 / r3;
+    
+                    double dcostmp9 = dcosdr12 * rz1 * rz1 / r1 
+                            + dcosdr13 * rz2 * rz2 / r2 
+                            + dcosdr23 * rz3 * rz3 / r3;
+
+                    // add to virial
+                    (*qdvirial)[0] -= dqdcos[ii] * dcostmp1*vtmp*constants::COULOMB;
+                    (*qdvirial)[1] -= dqdcos[ii] * dcostmp2*vtmp*constants::COULOMB;
+                    (*qdvirial)[2] -= dqdcos[ii] * dcostmp3*vtmp*constants::COULOMB;
+                    (*qdvirial)[4] -= dqdcos[ii] * dcostmp5*vtmp*constants::COULOMB;
+                    (*qdvirial)[5] -= dqdcos[ii] * dcostmp6*vtmp*constants::COULOMB;
+                    (*qdvirial)[8] -= dqdcos[ii] * dcostmp9*vtmp*constants::COULOMB;
+
+                    (*qdvirial)[3] = (*qdvirial)[1];
+                    (*qdvirial)[6] = (*qdvirial)[2];
+                    (*qdvirial)[7] = (*qdvirial)[5];
+
+                } // ii
+
+
+            } // end virial
+
         }
     }
 }
