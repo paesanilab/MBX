@@ -117,7 +117,8 @@ class ElectricFieldHolder {
                                 bool use_pbc,              // Whether to enforce periodic boundary conditions
                                 const std::vector<double> &box,          // The lattice vectors
                                 const std::vector<double> &box_inverse,  // The inverse lattice vectors
-                                double cutoff);                          // The real space cutoff for pairs
+                                double cutoff,  // The real space cutoff for pairs
+                                std::vector<double> *virial = 0);                          // The virial
 
     ////////////////////////////////////////////////////////////////////////////////
     // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
@@ -175,7 +176,8 @@ class ElectricFieldHolder {
                             bool use_pbc,                    // Whether to enforce periodic boundary conditions
                             const std::vector<double> &box,  // The lattice vectors
                             const std::vector<double> &box_inverse,  // The inverse lattice vectors
-                            double cutoff                            // The real space cutoff for pairs
+                            double cutoff,                           // The real space cutoff for pairs
+                            std::vector<double> *virial=0            // the virial
     );
 
     ////////////////////////////////////////////////////////////////////////////////

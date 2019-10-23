@@ -115,7 +115,7 @@ class Electrostatics {
      * @param[out] grad Gradients will be saved here
      * @return Total electrostatic energy
      */
-    double GetElectrostatics(std::vector<double> &grad);
+    double GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial=0);
 
     /**
      * @brief Clears the ASPC history
@@ -321,6 +321,10 @@ class Electrostatics {
     int pme_spline_order_;
     // Has the energy been calculated?
     bool has_energy_;
+    // virial tensor
+    std::vector<double> virial_;
+    // calculate the virial tensor ?
+    bool calc_virial_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
