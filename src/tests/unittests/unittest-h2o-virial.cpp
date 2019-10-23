@@ -128,6 +128,18 @@ TEST_CASE("Test dimer virial contributions") {
             }
 
     }
+
+    SECTION("Electrostatics") {
+        double energy_grad = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+
     SECTION("Dispersion PBC") {
         my_system.SetPBC(box);
         my_system.Set2bCutoff(9.0);
@@ -137,6 +149,19 @@ TEST_CASE("Test dimer virial contributions") {
 
             for (size_t i = 0; i < 9; i++) {
                 REQUIRE(virial_disp_pbc[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Electrostatics PBC") {
+        my_system.SetPBC(box);
+        my_system.Set2bCutoff(9.0);
+        my_system.SetEwald(0.542237671769889, 2.5, 6);
+        double energy_grad = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec_pbc[i] == Approx(my_virial[i]).margin(TOL));
             }
 
     }
@@ -201,6 +226,17 @@ TEST_CASE("Test trimer virial contributions") {
             }
 
     }
+
+    SECTION("Electrostatics") {
+        double energy_grad = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
     SECTION("Dispersion PBC") {
         my_system.SetPBC(box);
         my_system.Set2bCutoff(9.0);
@@ -211,6 +247,19 @@ TEST_CASE("Test trimer virial contributions") {
 
             for (size_t i = 0; i < 9; i++) {
                 REQUIRE(virial_disp_pbc[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Electrostatics PBC") {
+        my_system.SetPBC(box);
+        my_system.Set2bCutoff(9.0);
+        my_system.SetEwald(0.542237671769889, 2.5, 6);
+        double energy_grad = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec_pbc[i] == Approx(my_virial[i]).margin(TOL));
             }
 
     }
