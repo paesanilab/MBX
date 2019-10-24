@@ -718,7 +718,7 @@ void System::SetUpFromJson(nlohmann::json j) {
     try {
         dipole_max_it = j["MBX"]["dipole_max_it"];
     } catch (...) {
-        dipole_max_it = 1E-16;
+        dipole_max_it = 100;
     }
     maxItDip_ = dipole_max_it;
     mbx_j_["MBX"]["dipole_max_it"] = dipole_max_it;
