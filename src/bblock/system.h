@@ -311,10 +311,87 @@ class System {
     double Get3bCutoff();
 
     /**
+     * Gets the TTM pairs vector.
+     * @return Vector of pairs of the monomer pairs for which buckingham will be calculated
+     */
+    std::vector<std::pair<std::string, std::string> > GetTTMnrgPairs();
+
+    /**
+     * Gets the whole vector for which the 2b polynomials won't be calculated
+     * @return Vector of string vectors with the pairs to be ignored
+     */
+    std::vector<std::vector<std::string> > Get2bIgnorePoly();
+
+    /**
+     * Gets the whole vector for which the 3b polynomials won't be calculated
+     * @return Vector of string vectors with the trimers to be ignored
+     */
+    std::vector<std::vector<std::string> > Get3bIgnorePoly();
+
+    /**
      * Gets the virial tensor
      * @return A vector of doubles of 9 elements with the virial
      */
     std::vector<double> GetVirial();
+
+    /**
+     * Gets the box in the system
+     * @return Box in system
+     */
+    std::vector<double> GetBox();
+
+    /**
+     * Gets the maximum number of monomers per chunk in polynomial evaluation
+     * @return Max chunk size for 1b
+     */
+    size_t GetMaxEval1b();
+
+    /**
+     * Gets the maximum number of dimers per chunk in polynomial evaluation
+     * @return Max chunk size for 2b
+     */
+    size_t GetMaxEval2b();
+
+    /**
+     * Gets the maximum number of trimers per chunk in polynomial evaluation
+     * @return Max chunk size for 3b
+     */
+    size_t GetMaxEval3b();
+
+    /**
+     * Gets the current dipole tolerance in the system
+     * @return Current dipole tolerance
+     */
+    double GetDipoleTolerance();
+
+    /**
+     * Gets the maximum number of iteration in induced dipoles set in system
+     * @return Maximum number of iterations
+     */
+    size_t GetMaxIterationsDipoles();
+
+    /**
+     * Gets the dipole method
+     *
+     */
+    std::string GetDipoleMethod();
+
+    /**
+     * Gets the Ewald parameters for electrostatics
+     * @param[out] alpha Ewald alpha
+     * @param[out] grid_density Electrostatics ewald grid density
+     * @param[out] spline_order Electrostatics Ewald spline order for interpolation
+     */
+    void GetEwaldParamsElectrostatics(double &alpha, double &grid_density, size_t &spline_order);
+
+    /**
+     * Gets the Ewald parameters for dispersion
+     * @param[out] alpha Ewald alpha
+     * @param[out] grid_density Dispersion ewald grid density
+     * @param[out] spline_order Dispersion Ewald spline order for interpolation
+     */
+    void GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order);
+
 
     /////////////////////////////////////////////////////////////////////////////
     // Modifiers ////////////////////////////////////////////////////////////////
@@ -416,6 +493,18 @@ class System {
      * @param[in] json_file Is the json formatted file with the system specifications
      **/
     void SetUpFromJson(char *json_file = 0);
+
+    /**
+     * Sets up all the parameters that are specified in a json object
+     * @param[in] j Json object with the system specifications
+     **/
+    void SetUpFromJson(nlohmann::json j);
+
+    /**
+     * Gets the json specifications
+     * @return Json object in the system
+     */
+    nlohmann::json GetJsonConfig();
 
     /**
      * Sets the two-body cutoff for dispersion and polynomials.
@@ -755,6 +844,36 @@ to be the same.
     double diptol_;
 
     /**
+     * Ewald alpha for electrostatics
+     */
+    double elec_alpha_;
+
+    /**
+     * Grid density for electrostatics
+     */
+    double elec_grid_density_;
+
+    /**
+     * Spline order for interpolation for electrostatics
+     */
+    size_t elec_spline_order_;
+
+    /**
+     * Ewald alpha for dispersion
+     */
+    double disp_alpha_;
+
+    /**
+     * Grid density for dispersion
+     */
+    double disp_grid_density_;
+
+    /**
+     * Spline order for interpolation for dispersion
+     */
+    size_t disp_spline_order_;
+
+    /**
      * Cutoff in the search for clusters for the dimers.
      * Molecules which first atoms are at a larger distance than this cutoff
      * will not be considered a 2b cluster
@@ -974,6 +1093,11 @@ to be the same.
      * Vector that contains the virial tensor
      */
     std::vector<double> virial_;
+
+    /**
+     * Json configuration object
+     */
+    nlohmann::json mbx_j_;
 };
 
 }  // namespace bblock

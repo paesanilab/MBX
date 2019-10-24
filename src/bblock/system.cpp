@@ -172,6 +172,33 @@ std::string System::GetMonId(size_t n) {
 
 std::vector<double> System::GetVirial() {return virial_;}
 
+std::vector<double> System::GetBox() { return box_;}
+
+size_t System::GetMaxEval1b() { return maxNMonEval_;}
+
+size_t System::GetMaxEval2b() { return maxNDimEval_;}
+
+size_t System::GetMaxEval3b() { return maxNTriEval_;}
+
+double System::GetDipoleTolerance() { return diptol_;}
+
+std::string System::GetDipoleMethod() { return dipole_method_;}
+
+size_t System::GetMaxIterationsDipoles() { return maxItDip_;}
+
+void System::GetEwaldParamsElectrostatics(double &alpha, double &grid_density, size_t &spline_order) {
+    alpha = elec_alpha_; 
+    grid_density = elec_grid_density_;
+    spline_order = elec_spline_order_;
+}
+
+void System::GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order) {
+    alpha = disp_alpha_; 
+    grid_density = disp_grid_density_;
+    spline_order = disp_spline_order_;
+}
+
+
 // FIXME As for today, these functions are not used. // MRR 20191022
 // Will need to activate them and use them whenever we need them for MB-Spec
 //void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
@@ -441,6 +468,12 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
 
+std::vector<std::pair<std::string, std::string> > System::GetTTMnrgPairs() { return buck_pairs_;}
+
+std::vector<std::vector<std::string> > System::Get2bIgnorePoly() {return ignore_2b_poly_;}
+
+std::vector<std::vector<std::string> > System::Get3bIgnorePoly() {return ignore_3b_poly_;}
+
 void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
     std::pair<std::string, std::string> p = mon2 < mon1 ? std::make_pair(mon2, mon1) : std::make_pair(mon1, mon2);
 
@@ -589,6 +622,209 @@ void System::Initialize() {
     initialized_ = true;
 }
 
+void System::SetUpFromJson(nlohmann::json j) {
+    // Try to get box
+    // Default: no box (empty vector)
+    std::vector<double> box;
+    try {
+        std::vector<double> box2 = j["MBX"]["box"];
+        box = box2;
+    } catch (...) {
+        box.clear();
+    }
+    box_ = box;
+    mbx_j_["MBX"]["box"] = box;
+
+    // Try to get 2b cutoff
+    // Default: 100 Angstrom if empty box, 9 Angstrom if box
+    double cutoff_2b;
+    try {
+        cutoff_2b = j["MBX"]["twobody_cutoff"];
+    } catch (...) {
+        cutoff_2b = box_.size() ? 9.0 : 100.0;
+    }
+    cutoff2b_ = cutoff_2b;
+    mbx_j_["MBX"]["twobody_cutoff"] = cutoff_2b;
+
+    // Try to get 3b cutoff
+    // Default: 7.0 Angstrom
+    double cutoff_3b;
+    try {
+        cutoff_3b = j["MBX"]["threebody_cutoff"];
+    } catch (...) {
+        cutoff_3b = 6.5;
+    }
+    cutoff3b_ = cutoff_3b;
+    mbx_j_["MBX"]["threebody_cutoff"] = cutoff_3b;
+
+    // Try to get maximum number of evaluations for 1b
+    // Default: 1000
+    size_t max_eval_1b;
+    try {
+        max_eval_1b = j["MBX"]["max_n_eval_1b"];
+    } catch (...) {
+        max_eval_1b = 1000;
+    }
+    maxNMonEval_ = max_eval_1b;
+    mbx_j_["MBX"]["max_n_eval_1b"] = max_eval_1b;
+
+    // Try to get maximum number of evaluations for 2b
+    // Default: 1000
+    size_t max_eval_2b;
+    try {
+        max_eval_2b = j["MBX"]["max_n_eval_2b"];
+    } catch (...) {
+        max_eval_2b = 1000;
+    }
+    maxNDimEval_ = max_eval_2b;
+    mbx_j_["MBX"]["max_n_eval_2b"] = max_eval_2b;
+
+    // Try to get maximum number of evaluations for 3b
+    // Default: 1000
+    size_t max_eval_3b;
+    try {
+        max_eval_3b = j["MBX"]["max_n_eval_3b"];
+    } catch (...) {
+        max_eval_3b = 1000;
+    }
+    maxNTriEval_ = max_eval_3b;
+    mbx_j_["MBX"]["max_n_eval_3b"] = max_eval_3b;
+
+    // Try to get dipole convergence criteria
+    // Default: 1E-16
+    double dipole_tolerance;
+    try {
+        dipole_tolerance = j["MBX"]["dipole_tolerance"];
+    } catch (...) {
+        dipole_tolerance = 1E-16;
+    }
+    diptol_ = dipole_tolerance;
+    mbx_j_["MBX"]["dipole_tolerance"] = dipole_tolerance;
+
+    // Try to get dipole convergence criteria
+    // Default: Conjugate gradient cg
+    std::string dipole_method;
+    try {
+        dipole_method = j["MBX"]["dipole_method"];
+    } catch (...) {
+        dipole_method = "cg";
+    }
+    dipole_method_ = dipole_method;
+    mbx_j_["MBX"]["dipole_method"] = dipole_method;
+
+    // Try to get dipole max number of iterations
+    // Default: 100
+    size_t dipole_max_it;
+    try {
+        dipole_max_it = j["MBX"]["dipole_max_it"];
+    } catch (...) {
+        dipole_max_it = 1E-16;
+    }
+    maxItDip_ = dipole_max_it;
+    mbx_j_["MBX"]["dipole_max_it"] = dipole_max_it;
+
+    // Try to get dispersion PME alpha
+    // Default: 0.25
+    double alpha_disp;
+    try {
+        alpha_disp = j["MBX"]["aplha_ewald_disp"];
+    } catch (...) {
+        alpha_disp = box_.size() ? 0.25 : 0.0;
+    }
+    mbx_j_["MBX"]["aplha_ewald_disp"] = alpha_disp;
+
+    // Try to get dispertion PME grid density
+    // Default: 2.5
+    double grid_density_disp;
+    try {
+        grid_density_disp = j["MBX"]["grid_density_disp"];
+    } catch (...) {
+        grid_density_disp = 2.5;
+    }
+    mbx_j_["MBX"]["grid_density_disp"] = grid_density_disp;
+
+    // Try to get dispersion PME spline order
+    // Default: 6
+    size_t spline_order_disp;
+    try {
+        spline_order_disp = j["MBX"]["spline_order_disp"];
+    } catch (...) {
+        spline_order_disp = 6;
+    }
+    mbx_j_["MBX"]["spline_order_disp"] = spline_order_disp;
+
+    SetEwaldDispersion(alpha_disp, grid_density_disp, spline_order_disp);
+
+    // Try to get electrostatics PME alpha
+    // Default: 0.25
+    double alpha_elec;
+    try {
+        alpha_elec = j["MBX"]["aplha_ewald_elec"];
+    } catch (...) {
+        alpha_elec = box.size() ? 0.25 : 0.0;
+    }
+    mbx_j_["MBX"]["aplha_ewald_elec"] = alpha_elec;
+
+    // Try to get electrostatics PME grid density
+    // Default: 2.5
+    double grid_density_elec;
+    try {
+        grid_density_elec = j["MBX"]["grid_density_elec"];
+    } catch (...) {
+        grid_density_elec = 2.5;
+    }
+    mbx_j_["MBX"]["grid_density_elec"] = grid_density_elec;
+
+    // Try to get electrostatics PME spline order
+    // Default: 6
+    size_t spline_order_elec;
+    try {
+        spline_order_elec = j["MBX"]["spline_order_elec"];
+    } catch (...) {
+        spline_order_elec = 6;
+    }
+    mbx_j_["MBX"]["spline_order_elec"] = spline_order_elec;
+
+    SetEwaldElectrostatics(alpha_elec, grid_density_elec, spline_order_elec);
+
+    std::vector<std::pair<std::string, std::string> > ttm_pairs;
+    try {
+        std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];
+        ttm_pairs = ttm_pairs2;
+    } catch (...) {
+        ttm_pairs.clear();
+    }
+    SetTTMnrgPairs(ttm_pairs);
+    mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
+
+    std::vector<std::vector<std::string> > ignore_2b_poly;
+    try {
+        std::vector<std::vector<std::string>> ignore_2b_poly2 = j["MBX"]["ignore_2b_poly"];
+        ignore_2b_poly = ignore_2b_poly2;
+    } catch (...) {
+        ignore_2b_poly.clear();
+    }
+    Set2bIgnorePoly(ignore_2b_poly);
+    mbx_j_["MBX"]["ignore_2b_poly"] = ignore_2b_poly_;
+
+    std::vector<std::vector<std::string> > ignore_3b_poly;
+    try {
+        std::vector<std::vector<std::string>> ignore_3b_poly2 = j["MBX"]["ignore_3b_poly"];
+        ignore_3b_poly = ignore_3b_poly2;
+    } catch (...) {
+        ignore_3b_poly.clear();
+    }
+    Set3bIgnorePoly(ignore_3b_poly);
+    mbx_j_["MBX"]["ignore_3b_poly"] = ignore_3b_poly_;
+
+    SetPBC(box_);
+}
+
+nlohmann::json System::GetJsonConfig() {
+    return mbx_j_;
+}
+
+
 void System::SetUpFromJson(char *json_file) {
     /* Template example for mbx.json
 {
@@ -609,7 +845,7 @@ void System::SetUpFromJson(char *json_file) {
        "aplha_ewald_disp" : 0.25,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
-       "ttm_pair" : [],
+       "ttm_pairs" : [],
        "ignore_2b_poly" : [],
        "ignore_3b_poly" : []
    } ,
@@ -619,6 +855,43 @@ void System::SetUpFromJson(char *json_file) {
    }
 }
      */
+
+    nlohmann::json j_default =
+    {
+        {
+            "Note" , "This is a cofiguration file"
+        },
+        {
+            "MBX" ,
+            {
+                {"box" , {100.0,0.0,0.0,0.0,100.0,0.0,0.0,0.0,100.0}},
+                {"twobody_cutoff"   , 9.0},
+                {"threebody_cutoff" , 7.0},
+                {"max_n_eval_1b"    , 500},
+                {"max_n_eval_2b"    , 500},
+                {"max_n_eval_3b"    , 500},
+                {"dipole_tolerance" , 1E-016},
+                {"dipole_max_it"    , 100},
+                {"dipole_method"    , "cg"},
+                {"aplha_ewald_elec" , 0.0},
+                {"grid_density_elec",  2.5},
+                {"spline_order_elec",  6},
+                {"aplha_ewald_disp" , 0.0},
+                {"grid_density_disp",  2.5},
+                {"spline_order_disp",  6},
+                {"ttm_pairs" , nlohmann::json::array()},
+                {"ignore_2b_poly" , nlohmann::json::array()},
+                {"ignore_3b_poly" , nlohmann::json::array()}
+            }
+        } ,
+        {
+            "i-pi",
+            {
+                {"port" , 34543},
+                {"localhost" , "localhost"}
+            }
+        }
+    };
     std::ifstream ifjson;
     nlohmann::json j;
     if (json_file != 0) {
@@ -626,188 +899,16 @@ void System::SetUpFromJson(char *json_file) {
             ifjson.open(json_file);
             j = nlohmann::json::parse(ifjson);
         } catch (...) {
+            j = j_default;
             std::cerr << "There has been a problem loading your json file: " + std::string(json_file) +
                              "... using defaults";
         }
+    } else {
+        j = j_default;
     }
+    
+    SetUpFromJson(j);
 
-    // Try to get box
-    // Default: no box (empty vector)
-    std::vector<double> box;
-    try {
-        std::vector<double> box2 = j["MBX"]["box"];
-        box = box2;
-    } catch (...) {
-        box.clear();
-    }
-    box_ = box;
-
-    // Try to get 2b cutoff
-    // Default: 100 Angstrom if empty box, 9 Angstrom if box
-    double cutoff_2b;
-    try {
-        cutoff_2b = j["MBX"]["twobody_cutoff"];
-    } catch (...) {
-        cutoff_2b = box_.size() ? 9.0 : 100.0;
-    }
-    cutoff2b_ = cutoff_2b;
-
-    // Try to get 3b cutoff
-    // Default: 7.0 Angstrom
-    double cutoff_3b;
-    try {
-        cutoff_3b = j["MBX"]["threebody_cutoff"];
-    } catch (...) {
-        cutoff_3b = 6.5;
-    }
-    cutoff3b_ = cutoff_3b;
-
-    // Try to get maximum number of evaluations for 1b
-    // Default: 1000
-    size_t max_eval_1b;
-    try {
-        max_eval_1b = j["MBX"]["max_n_eval_1b"];
-    } catch (...) {
-        max_eval_1b = 1000;
-    }
-    maxNMonEval_ = max_eval_1b;
-
-    // Try to get maximum number of evaluations for 2b
-    // Default: 1000
-    size_t max_eval_2b;
-    try {
-        max_eval_2b = j["MBX"]["max_n_eval_2b"];
-    } catch (...) {
-        max_eval_2b = 1000;
-    }
-    maxNDimEval_ = max_eval_2b;
-
-    // Try to get maximum number of evaluations for 3b
-    // Default: 1000
-    size_t max_eval_3b;
-    try {
-        max_eval_3b = j["MBX"]["max_n_eval_3b"];
-    } catch (...) {
-        max_eval_3b = 1000;
-    }
-    maxNTriEval_ = max_eval_3b;
-
-    // Try to get dipole convergence criteria
-    // Default: 1E-16
-    double dipole_tolerance;
-    try {
-        dipole_tolerance = j["MBX"]["dipole_tolerance"];
-    } catch (...) {
-        dipole_tolerance = 1E-16;
-    }
-    diptol_ = dipole_tolerance;
-
-    // Try to get dipole convergence criteria
-    // Default: Conjugate gradient cg
-    std::string dipole_method;
-    try {
-        dipole_method = j["MBX"]["dipole_method"];
-    } catch (...) {
-        dipole_method = "cg";
-    }
-    dipole_method_ = dipole_method;
-
-    // Try to get dipole max number of iterations
-    // Default: 100
-    size_t dipole_max_it;
-    try {
-        dipole_max_it = j["MBX"]["dipole_max_it"];
-    } catch (...) {
-        dipole_max_it = 1E-16;
-    }
-    maxItDip_ = dipole_max_it;
-
-    // Try to get dispersion PME alpha
-    // Default: 0.25
-    double alpha_disp;
-    try {
-        alpha_disp = j["MBX"]["aplha_ewald_disp"];
-    } catch (...) {
-        alpha_disp = box_.size() ? 0.25 : 0.0;
-    }
-
-    // Try to get dispertion PME grid density
-    // Default: 2.5
-    double grid_density_disp;
-    try {
-        grid_density_disp = j["MBX"]["grid_density_disp"];
-    } catch (...) {
-        grid_density_disp = 2.5;
-    }
-
-    // Try to get dispersion PME spline order
-    // Default: 6
-    size_t spline_order_disp;
-    try {
-        spline_order_disp = j["MBX"]["spline_order_disp"];
-    } catch (...) {
-        spline_order_disp = 6;
-    }
-
-    SetEwaldDispersion(alpha_disp, grid_density_disp, spline_order_disp);
-
-    // Try to get electrostatics PME alpha
-    // Default: 0.25
-    double alpha_elec;
-    try {
-        alpha_elec = j["MBX"]["aplha_ewald_elec"];
-    } catch (...) {
-        alpha_elec = box.size() ? 0.25 : 0.0;
-    }
-
-    // Try to get electrostatics PME grid density
-    // Default: 2.5
-    double grid_density_elec;
-    try {
-        grid_density_elec = j["MBX"]["grid_density_elec"];
-    } catch (...) {
-        grid_density_elec = 2.5;
-    }
-
-    // Try to get electrostatics PME spline order
-    // Default: 6
-    size_t spline_order_elec;
-    try {
-        spline_order_elec = j["MBX"]["spline_order_elec"];
-    } catch (...) {
-        spline_order_elec = 6;
-    }
-
-    SetEwaldElectrostatics(alpha_elec, grid_density_elec, spline_order_elec);
-
-    std::vector<std::pair<std::string, std::string> > ttm_pairs;
-    try {
-        std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];
-        ttm_pairs = ttm_pairs2;
-    } catch (...) {
-        ttm_pairs.clear();
-    }
-    SetTTMnrgPairs(ttm_pairs);
-
-    std::vector<std::vector<std::string> > ignore_2b_poly;
-    try {
-        std::vector<std::vector<std::string>> ignore_2b_poly2 = j["MBX"]["ignore_2b_poly"];
-        ignore_2b_poly = ignore_2b_poly2;
-    } catch (...) {
-        ignore_2b_poly.clear();
-    }
-    Set2bIgnorePoly(ignore_2b_poly);
-
-    std::vector<std::vector<std::string> > ignore_3b_poly;
-    try {
-        std::vector<std::vector<std::string>> ignore_3b_poly2 = j["MBX"]["ignore_3b_poly"];
-        ignore_3b_poly = ignore_3b_poly2;
-    } catch (...) {
-        ignore_3b_poly.clear();
-    }
-    Set3bIgnorePoly(ignore_3b_poly);
-
-    SetPBC(box_);
     ifjson.close();
 }
 
@@ -1878,6 +1979,9 @@ double System::Electrostatics(bool do_grads) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetEwaldElectrostatics(double alpha, double grid_density, int spline_order) {
+    elec_alpha_ = alpha;
+    elec_grid_density_ = grid_density;
+    elec_spline_order_ = spline_order;
     electrostaticE_.SetEwaldAlpha(alpha);
     electrostaticE_.SetEwaldGridDensity(grid_density);
     electrostaticE_.SetEwaldSplineOrder(spline_order);
@@ -1886,6 +1990,9 @@ void System::SetEwaldElectrostatics(double alpha, double grid_density, int splin
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetEwaldDispersion(double alpha, double grid_density, int spline_order) {
+    disp_alpha_ = alpha;
+    disp_grid_density_ = grid_density;
+    disp_spline_order_ = spline_order;
     dispersionE_.setEwaldAlpha(alpha);
     dispersionE_.SetEwaldGridDensity(grid_density);
     dispersionE_.SetEwaldSplineOrder(spline_order);
