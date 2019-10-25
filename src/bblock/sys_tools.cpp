@@ -352,78 +352,78 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
-void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
-                       std::vector<double> &xyz_out, std::vector<size_t> &indexes) {
-    // Build the tree
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                kdtutils::PointCloud<double>, 3 /* dim */>
-        my_kd_tree_t;
-    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-    index.buildIndex();
+//void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
+//                       std::vector<double> &xyz_out, std::vector<size_t> &indexes) {
+//    // Build the tree
+//    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+//                                                kdtutils::PointCloud<double>, 3 /* dim */>
+//        my_kd_tree_t;
+//    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+//    index.buildIndex();
+//
+//    // Tree is built
+//
+//    // Reset indexes and output coordinates
+//    indexes.clear();
+//    xyz_out.clear();
+//
+//    // Perform the search
+//    std::vector<std::pair<size_t, double>> ret_matches;
+//    nanoflann::SearchParams params;
+//    const size_t nMatches = index.radiusSearch(reference.data(), cutoff * cutoff, ret_matches, params);
+//
+//    std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
+//
+//    // Resize xyz_out to be 3*nMatches
+//    xyz_out.resize(3 * nMatches);
+//    indexes.resize(nMatches);
+//
+//    // Add the pairs that are not in the pairs vector
+//    for (size_t j = 0; j < nMatches; j++) {
+//        indexes[j] = ret_matches[j].first;
+//        size_t index = indexes[j];
+//        // Add coordinates in vectorized order
+//        xyz_out[j] = ptc.pts[index].x;
+//        xyz_out[j + nMatches] = ptc.pts[index].y;
+//        xyz_out[j + 2 * nMatches] = ptc.pts[index].z;
+//    }
+//}
 
-    // Tree is built
-
-    // Reset indexes and output coordinates
-    indexes.clear();
-    xyz_out.clear();
-
-    // Perform the search
-    std::vector<std::pair<size_t, double>> ret_matches;
-    nanoflann::SearchParams params;
-    const size_t nMatches = index.radiusSearch(reference.data(), cutoff * cutoff, ret_matches, params);
-
-    std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
-
-    // Resize xyz_out to be 3*nMatches
-    xyz_out.resize(3 * nMatches);
-    indexes.resize(nMatches);
-
-    // Add the pairs that are not in the pairs vector
-    for (size_t j = 0; j < nMatches; j++) {
-        indexes[j] = ret_matches[j].first;
-        size_t index = indexes[j];
-        // Add coordinates in vectorized order
-        xyz_out[j] = ptc.pts[index].x;
-        xyz_out[j + nMatches] = ptc.pts[index].y;
-        xyz_out[j + 2 * nMatches] = ptc.pts[index].z;
-    }
-}
-
-void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, std::vector<size_t> fi_at,
-                       bool use_pbc, std::vector<double> box, double cutoff, std::vector<size_t> &dimers,
-                       std::vector<size_t> &trimers) {
-    size_t npoints = fi_at.size();
-    std::vector<double> xyz_points(3 * npoints);
-    for (size_t i = 0; i < npoints; i++) {
-        xyz_points[3 * i + 0] = xyz_orig[3 * fi_at[i] + 0];
-        xyz_points[3 * i + 1] = xyz_orig[3 * fi_at[i] + 1];
-        xyz_points[3 * i + 2] = xyz_orig[3 * fi_at[i] + 2];
-    }
-
-    // Obtain the data in the structure needed by the kd-tree
-    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz_points, use_pbc, box);
-
-    // Build the tree
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                kdtutils::PointCloud<double>, 3 /* dim */>
-        my_kd_tree_t;
-    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-    index.buildIndex();
-
-    // Perform a radial search within the cutoff
-    dimers.clear();
-    if (nmax > 2) trimers.clear();
-
-    // Perform the search
-    std::vector<std::pair<size_t, double>> ret_matches;
-    nanoflann::SearchParams params;
-    const size_t nMatches = index.radiusSearch(point.data(), cutoff * cutoff, ret_matches, params);
-
-    // TODO does ret_matches start at 0?
-    for (size_t j = 0; j < nMatches; j++) {
-        dimers.push_back(ret_matches[j].first);
-    }
-}
+//void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, std::vector<size_t> fi_at,
+//                       bool use_pbc, std::vector<double> box, double cutoff, std::vector<size_t> &dimers,
+//                       std::vector<size_t> &trimers) {
+//    size_t npoints = fi_at.size();
+//    std::vector<double> xyz_points(3 * npoints);
+//    for (size_t i = 0; i < npoints; i++) {
+//        xyz_points[3 * i + 0] = xyz_orig[3 * fi_at[i] + 0];
+//        xyz_points[3 * i + 1] = xyz_orig[3 * fi_at[i] + 1];
+//        xyz_points[3 * i + 2] = xyz_orig[3 * fi_at[i] + 2];
+//    }
+//
+//    // Obtain the data in the structure needed by the kd-tree
+//    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz_points, use_pbc, box);
+//
+//    // Build the tree
+//    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+//                                                kdtutils::PointCloud<double>, 3 /* dim */>
+//        my_kd_tree_t;
+//    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+//    index.buildIndex();
+//
+//    // Perform a radial search within the cutoff
+//    dimers.clear();
+//    if (nmax > 2) trimers.clear();
+//
+//    // Perform the search
+//    std::vector<std::pair<size_t, double>> ret_matches;
+//    nanoflann::SearchParams params;
+//    const size_t nMatches = index.radiusSearch(point.data(), cutoff * cutoff, ret_matches, params);
+//
+//    // TODO does ret_matches start at 0?
+//    for (size_t j = 0; j < nMatches; j++) {
+//        dimers.push_back(ret_matches[j].first);
+//    }
+//}
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,

@@ -32,42 +32,42 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef UNITTESTS_SETUP_CO2_1_H
-#define UNITTESTS_SETUP_CO2_1_H
+#ifndef UNITTESTS_SETUP_DUMMY_1_H
+#define UNITTESTS_SETUP_DUMMY_1_H
 
-#define SETUP_CO2_1                                                                                               \
-    double one_body_energy = 9.9150780942e+00;                                                                         \
+#define SETUP_DUMMY_1                                                                                               \
+    double one_body_energy = 0.0000000000e+00;                                                                         \
     double two_body_energy = 0.0000000000e+00;                                                                         \
     double three_body_energy = 0.0000000000e+00;                                                                       \
     double dispersion_energy = 0.0000000000e+00;                                                                      \
     double buckingham_energy = 0.0000000000e+00;                                                                       \
     double electrostatic_energy = 0.0000000000e+00;                                                                   \
-    double total_energy = 9.9150780942e+00;                                                                           \
-    double total_energy_ttm = 9.9150780942e+00;                                                                       \
+    double total_energy = 0.0000000000e+00;                                                                           \
+    double total_energy_ttm = 0.0000000000e+00;                                                                       \
     const int n_monomers = 1;                                                                                          \
-    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"co2", "h2o"}};                                      \
-    std::vector<std::vector<std::string>> ignore_2b = {{"co2", "h2o"}};                                                 \
-    std::vector<std::vector<std::string>> ignore_3b = {{"co2", "h2o", "h2o"}};                                          \
-    std::vector<double> coords{-3.7350600000e-03, 2.1493800000e-02, -2.0987560000e-02, 1.1921700000e-03, -7.0306800000e-03, 1.2319206500e+00, 1.1921700000e-03, -7.0306800000e-03, -1.2182866600e+00}; \
-    std::vector<double> real_coords{-3.7350600000e-03, 2.1493800000e-02, -2.0987560000e-02, 1.1921700000e-03, -7.0306800000e-03, 1.2319206500e+00, 1.1921700000e-03, -7.0306800000e-03, -1.2182866600e+00}; \
-    std::vector<std::string> atom_names{"C", "O", "O"};                                                          \
-    std::vector<std::string> monomer_names = {"co2"};                                                            \
-    std::vector<size_t> n_atoms_vector = {3};                                                                       \
-    std::vector<size_t> n_sites_vector = {3};                                                                       \
+    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"dummy", "h2o"}};                                      \
+    std::vector<std::vector<std::string>> ignore_2b = {{"dummy", "h2o"}};                                                 \
+    std::vector<std::vector<std::string>> ignore_3b = {{"dummy", "h2o", "h2o"}};                                          \
+    std::vector<double> coords{0.0,0.0,0.0};\
+    std::vector<double> real_coords{0.0,0.0,0.0};\
+    std::vector<std::string> atom_names{"X"};                                                          \
+    std::vector<std::string> monomer_names = {"dummy"};                                                            \
+    std::vector<size_t> n_atoms_vector = {1};                                                                       \
+    std::vector<size_t> n_sites_vector = {1};                                                                       \
     std::vector<size_t> first_index = {0};                                                                          \
     std::vector<size_t> first_index_realSites = {0};                                                                \
     const size_t n_atoms = 3;                                                                                          \
     const size_t n_sites = 3;                                                                                          \
-    std::vector<double> polfac{1.4716770000e+00, 7.6979000000e-01, 7.6979000000e-01}; \
-    std::vector<double> pol{1.4716770000e+00, 7.6979000000e-01, 7.6979000000e-01}; \
-    std::vector<double> charges{7.0602700000e-01, -3.5301350000e-01, -3.5301350000e-01}; \
-    std::vector<double> real_charges{0.0000000000e+00, 5.7511954207e-01, 5.7511954216e-01, 1.0000000000e+00};          \
-    std::vector<double> real_polfac{1.4716770000e+00, 7.6979000000e-01, 7.6979000000e-01}; \
-    std::vector<double> real_pol{1.4716770000e+00, 7.6979000000e-01, 7.6979000000e-01}; \
-    std::vector<double> C6_long_range{1.7916733202e+01, 1.3042057313e+01, 1.3042057313e+01}; \
-    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"co2", 1}};                        \
+    std::vector<double> polfac{0.0}; \
+    std::vector<double> pol{0.0}; \
+    std::vector<double> charges{0.0}; \
+    std::vector<double> real_charges{0.0}; \
+    std::vector<double> real_polfac{0.0}; \
+    std::vector<double> real_pol{0.0}; \
+    std::vector<double> C6_long_range{0.0}; \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"dummy", 1}};                        \
     std::vector<size_t> internal_original_to_current_order{0};                                                      \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}};                                     \
     std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}};                          \
-    std::vector<std::string> internal_monomer_names{"co2"};
+    std::vector<std::string> internal_monomer_names{"dummy"};
 #endif
