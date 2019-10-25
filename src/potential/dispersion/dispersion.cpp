@@ -128,7 +128,7 @@ double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *
     size_t fi_crd = 0;
     size_t fi_sites = 0;
      
-    if (virial != 0) {
+    if (calc_virial_) {
         (*virial)[0] += virial_[0];
         (*virial)[1] += virial_[1];
         (*virial)[2] += virial_[2];
