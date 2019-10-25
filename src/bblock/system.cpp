@@ -575,8 +575,6 @@ void System::Initialize() {
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
                                true, diptol_, maxItDip_, dipole_method_);
 
-
-
     // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
