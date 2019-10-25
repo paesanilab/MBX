@@ -305,11 +305,12 @@ TEST_CASE("Test the system class.") {
         
         // Write the new json file
         std::ofstream off("mbx_mod.json");
+        std::cout << j["MBX"];
         off << std::setw(4) << j;
         off.close();
 
         // Set the json config in system from the file
-        my_system.SetUpFromJson("mbx_mod.json");
+        my_system.SetUpFromJson((char*)"mbx_mod.json");
         // Retrieve it
         nlohmann::json j_sys_mod = my_system.GetJsonConfig();
 
