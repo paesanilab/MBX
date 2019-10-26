@@ -60,7 +60,7 @@ class Dispersion {
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads,
                     const std::vector<double> &box);
 
-    double GetDispersion(std::vector<double> &grad);
+    double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0);
 
     void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
@@ -125,7 +125,10 @@ class Dispersion {
     std::vector<double> sys_phi_;
     // Dispersion potential on each site
     std::vector<double> phi_;
-
+    // Virial tensor
+    std::vector<double> virial_;
+    // virial calc variable
+    bool calc_virial_;
     // Total number of atoms
     size_t natoms_;
     // Max number of monomers

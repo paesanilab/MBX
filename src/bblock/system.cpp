@@ -603,6 +603,9 @@ void System::Initialize() {
     // Set C6 for long range pme
     SetC6LongRange();
 
+    // Define the virial vector
+    virial_ = std::vector<double>(9,0.0);
+
     // With the information previously set, we initialize the
     // electrostatics class
     // TODO: Do grads set to true for now. Needs to be fixed
@@ -614,9 +617,6 @@ void System::Initialize() {
     // TODO modify c6_long_range
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, true, box_);
-
-    // Define the virial vector
-    virial_ = std::vector<double>(9,0.0);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -2039,7 +2039,7 @@ double System::GetDispersion(bool do_grads) {
 
     dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
-    double e = dispersionE_.GetDispersion(real_grad);
+    double e = dispersionE_.GetDispersion(real_grad, &virial_);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {

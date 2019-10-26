@@ -44,15 +44,24 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<size_t> first_index = {0,4};                                                                          \
     std::vector<size_t> first_index_realSites = {0,3};                                                                \
     const size_t n_atoms = 6;                                                                                          \
-    const size_t n_sites = 8;                                                                                          \
+    const size_t n_sites = 8;         \
+    std::vector<double> box = {15.0, 0.0, 0.0, 0.0, 15.0, 0.0, 0.0, 0.0,15.0};                           \
     std::vector<std::pair<std::string, size_t>> mon_type_count{{"h2o", n_monomers}};                \
     std::vector<double> virial_1b = {   \
         -21.11278681,  21.40377629,  -5.88668738, \
          21.40377629,  -3.20344168,   1.01648662, \
         -5.88668738 ,   1.01648662,  -3.40683556}; \
+    std::vector<double> virial_disp_pbc = { \
+         -6.51400574, -0.61599665, -0.45173996,  \
+         -0.61599665, -0.18810851, -0.12214125,  \
+         -0.45173996, -0.12214125, -0.11525956 }; \
     std::vector<double> virial_2b = {14.17836998,  1.04493547,  0.4985588 , \
   1.04493547,        0.09813098, -0.59318356,  \
  0.4985588       ,  -0.59318356        ,  0.19999283}; \
+    std::vector<double> virial_disp = { \
+        -6.51128107, -0.61599187, -0.45178059,  \
+        -0.61599187, -0.18641611, -0.12214221,  \
+        -0.45178059, -0.12214221, -0.11356955 }; \
     std::vector<double> real_coords = std::vector<double>{                                          \
                  -1.58972425,    1.04337922,   -0.08780840,                                         \
                  -0.63591971,    0.97898520,    0.00000000,                                         \
