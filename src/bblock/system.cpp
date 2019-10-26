@@ -724,12 +724,12 @@ void System::SetUpFromJson(nlohmann::json j) {
     mbx_j_["MBX"]["dipole_max_it"] = dipole_max_it;
 
     // Try to get dispersion PME alpha
-    // Default: 0.25
+    // Default: 0.6
     double alpha_disp;
     try {
         alpha_disp = j["MBX"]["aplha_ewald_disp"];
     } catch (...) {
-        alpha_disp = box_.size() ? 0.25 : 0.0;
+        alpha_disp = box_.size() ? 0.6 : 0.0;
     }
     mbx_j_["MBX"]["aplha_ewald_disp"] = alpha_disp;
 
@@ -756,12 +756,12 @@ void System::SetUpFromJson(nlohmann::json j) {
     SetEwaldDispersion(alpha_disp, grid_density_disp, spline_order_disp);
 
     // Try to get electrostatics PME alpha
-    // Default: 0.25
+    // Default: 0.6
     double alpha_elec;
     try {
         alpha_elec = j["MBX"]["aplha_ewald_elec"];
     } catch (...) {
-        alpha_elec = box.size() ? 0.25 : 0.0;
+        alpha_elec = box.size() ? 0.6 : 0.0;
     }
     mbx_j_["MBX"]["aplha_ewald_elec"] = alpha_elec;
 
@@ -839,10 +839,10 @@ void System::SetUpFromJson(char *json_file) {
        "dipole_tolerance" : 1E-016,
        "dipole_max_it"    : 100,
        "dipole_method"     : "cg",
-       "aplha_ewald_elec" : 0.25,
+       "aplha_ewald_elec" : 0.6,
        "grid_density_elec" : 2.5,
        "spline_order_elec" : 6,
-       "aplha_ewald_disp" : 0.25,
+       "aplha_ewald_disp" : 0.6,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
        "ttm_pairs" : [],
@@ -2021,6 +2021,9 @@ void System::SetEwald(double alpha, double grid_density, int spline_order) {
 
 double System::GetElectrostatics(bool do_grads) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+    electrostaticE_.SetDipoleTolerance(diptol_);
+    electrostaticE_.SetDipoleMaxIt(maxItDip_); 
+
     return electrostaticE_.GetElectrostatics(grad_);
 }
 
