@@ -149,7 +149,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
              double* grad1, double* grad2, double& phi1, double* phi2, const size_t nmon1, const size_t nmon2,
              const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
              const double disp_scale_factor, bool do_grads, const double cutoff, const double ewald_alpha,
-             const std::vector<double>& box, const std::vector<double>& box_inverse) {
+             const std::vector<double>& box, const std::vector<double>& box_inverse,std::vector<double> *virial) {
     double disp = 0.0;
     double disp_lr_below_cutoff = 0.0;
 
@@ -249,6 +249,25 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
                 g1[2] += dz * grad;
                 g2[nmon22 + nv] -= dz * grad;
+
+
+                if (virial != 0 ) {
+
+                    (*virial)[0] -= dx* dx * grad; //  update the virial for the atom pair
+                    (*virial)[1] -= dx* dy * grad; 
+                    (*virial)[2] -= dx* dz * grad; 
+
+                    (*virial)[4] -= dy* dy * grad; 
+                    (*virial)[5] -= dy* dz * grad; 
+
+                    (*virial)[8] -= dz* dz * grad; 
+
+                    (*virial)[3] = (*virial)[1];
+                    (*virial)[6] = (*virial)[2];
+                    (*virial)[7] = (*virial)[5];
+                
+                }
+
             }
         }
     }
