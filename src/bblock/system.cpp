@@ -2024,7 +2024,7 @@ double System::GetElectrostatics(bool do_grads) {
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_); 
 
-    return electrostaticE_.GetElectrostatics(grad_);
+    return electrostaticE_.GetElectrostatics(grad_,&virial_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

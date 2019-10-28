@@ -63,6 +63,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
      * Ensure that computed properties are invariant to changes in the Ewald attenuation parameter
      */
     // alpha = 0.3
+
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
                     1E-16, 100, method, box_vectors);
     elec.SetCutoff(16.5);

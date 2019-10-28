@@ -87,7 +87,8 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
  * Should be set to false in this software.
  */
 void dms_nasa(const double& dms_param1, const double& dms_param2, const double& dms_param3, const double* rr,
-              double* q3, double* dq3, bool ttm3);
+              double* q3, double* dq3, std::vector<double> *aux_data = 0);
+              
 
 }  // namespace ps
 

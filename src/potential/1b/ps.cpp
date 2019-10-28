@@ -713,9 +713,10 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
 //}
 //
 void dms_nasa(const double& RESTRICT dms_param1, const double& RESTRICT dms_param2, const double& RESTRICT dms_param3,
-              const double* RESTRICT rr, double* RESTRICT q3, double* RESTRICT dq3, bool ttm3 = false) {
+              const double* RESTRICT rr, double* RESTRICT q3, double* RESTRICT dq3, std::vector<double> *aux_data) {
     const double ath0 = 1.82400520401572996557;
     const double costhe = -0.24780227221366464506;
+    bool ttm3 = false; // This is not used I think, but just for safety...
 
     double ROH1[3], ROH2[3], RHH[3], dROH1(0), dROH2(0), dRHH(0);
 
@@ -858,6 +859,15 @@ void dms_nasa(const double& RESTRICT dms_param1, const double& RESTRICT dms_para
     //    } // ttm3
 
     if (dq3 == 0) return;
+
+    if ( aux_data != 0 ) {
+        (*aux_data)[0] = dp1dr1;
+        (*aux_data)[1] = dp1dr2;
+        (*aux_data)[2] = dp2dr1;
+        (*aux_data)[3] = dp2dr2;
+        (*aux_data)[4] = dp1dcabc;
+        (*aux_data)[5] = dp2dcabc;
+    }
 
     const double f1q1r13 = (dp1dr1 - (dp1dcabc * costh / dROH1)) / dROH1;
     const double f1q1r23 = dp1dcabc / (dROH1 * dROH2);
