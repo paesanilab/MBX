@@ -1092,7 +1092,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 ps::dms_nasa(0.0, 0.0, 0.0, temp_pos.data(), chgtmpnv_test.data(),chgder_test.data(), &aux_data); // get them aux data (charge derivateves with respect to internal coords)
                      
                 // get the charge derivatives in internal coordinates ( r12 = rOH1, r13=rOH2, cos = cos(theta))
-		double dp1dr12 = aux_data[0];  // pass data onto variables
+                double dp1dr12 = aux_data[0];  // pass data onto variables
                 double dp1dr13 = aux_data[1];
                 double dp2dr12 = aux_data[2];
                 double dp2dr13 = aux_data[3];	    
