@@ -158,6 +158,20 @@ class Electrostatics {
     void SetCutoff(double cutoff);
 
     /**
+     * @brief Sets the dipole convergence criteria
+     *
+     * @param[in] tol Dipole convergence criteria
+     */
+    void SetDipoleTolerance(double tol);
+
+    /**
+     * @brief Sets the maximum number of iterations in the dipole loop
+     *
+     * @param[in] maxit Maximum number of iterations
+     */
+    void SetDipoleMaxIt(size_t maxit);
+
+    /**
      * @brief Sets the Ewald attenuation parameter (in units of 1/Angstrom)
      *
      * @param[in] cutoff New cutoff value

@@ -38,6 +38,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include "tools/custom_exceptions.h"
+
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -91,7 +93,8 @@ template <typename T>
 T DotProduct(const std::vector<T> &a, const std::vector<T> &b) {
     // Check that sizes are the same
     if (a.size() != b.size()) {
-        std::cerr << "ERROR: Indexes do not match. " << a.size() << " does not match " << b.size() << std::endl;
+        std::string text = "Indexes do not match. " + std::to_string(a.size()) + " does not match " + std::to_string(b.size());
+        throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
     T c = 0;

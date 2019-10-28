@@ -15,7 +15,7 @@ if [ "$1" == "gnu" ]; then
   make install
   cd ../
 
-else
+elif [ "$1" == "intel" ]; then
   rm -rf build install
   cmake -DUSE_OPENMP=TRUE -DCMAKE_CXX_FLAGS=" -g -Wall -qopt-report -fPIC " -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc -H. -Bbuild
   cd build
@@ -23,4 +23,11 @@ else
   make install
   cd ../
 
+elif [ "$1" == "clang" ]; then
+  module load clang
+  cmake -DUSE_OPENMP=FALSE -DCMAKE_CXX_FLAGS=" -g -Wall -fPIC -O0" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -H. -Bbuild
+  cd build
+  make -j 8 CXX=clang++ CC=clang
+  make install
+  cd ../
 fi
