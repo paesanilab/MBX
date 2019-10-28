@@ -1081,18 +1081,18 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             }
 
             if (qdvirial != 0) {
-	        std::vector<double> temp_pos = { crd[mm*1], crd[mm + nmon], crd[mm +2*nmon], crd[mm + 3*nmon], 
+                std::vector<double> temp_pos = { crd[mm*1], crd[mm + nmon], crd[mm +2*nmon], crd[mm + 3*nmon], 
                                        crd[mm+4*nmon], crd[mm+5*nmon], crd[mm+6*nmon], crd[mm+7*nmon], crd[mm+8*nmon]};
 
                 std::vector<double> chgtmpnv_test((3));
                 std::vector<double> chgder_test((27));
 
-	        std::vector<double> aux_data(6,0.0); // declare array to store auxillary output from dms_nasa_vir
+                std::vector<double> aux_data(6,0.0); // declare array to store auxillary output from dms_nasa_vir
 
                 ps::dms_nasa(0.0, 0.0, 0.0, temp_pos.data(), chgtmpnv_test.data(),chgder_test.data(), &aux_data); // get them aux data (charge derivateves with respect to internal coords)
                      
                 // get the charge derivatives in internal coordinates ( r12 = rOH1, r13=rOH2, cos = cos(theta))
-	        double dp1dr12 = aux_data[0];  // pass data onto variables
+		double dp1dr12 = aux_data[0];  // pass data onto variables
                 double dp1dr13 = aux_data[1];
                 double dp2dr12 = aux_data[2];
                 double dp2dr13 = aux_data[3];	    
@@ -1180,7 +1180,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                             double rjk = std::sqrt( rx * rx + ry * ry + rz * rz );
 
 
-                	    // add to virial
+			    // add to virial
             
                             (*qdvirial)[0] -=  vtmp * dqdr_tmp * rx * rx / rjk*prefac*constants::COULOMB;
                             (*qdvirial)[1] -=  vtmp * dqdr_tmp * rx * ry / rjk*prefac*constants::COULOMB;
