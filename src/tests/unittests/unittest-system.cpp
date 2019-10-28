@@ -39,6 +39,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <random>
 #include <cmath>
@@ -138,6 +139,237 @@ TEST_CASE("Test the system class.") {
     SECTION("GetRealPolarizabilityFactors()") {
         std::vector<double> polarfac = my_system.GetRealPolarizabilityFactors();
         REQUIRE(VectorsAreEqual(polarfac, real_polfac, TOL));
+    }
+
+    SECTION("Get2bCutoff") {
+        double old_cutoff = my_system.Get2bCutoff();
+        my_system.Set2bCutoff(9.12345);
+        double new_cutoff = my_system.Get2bCutoff();
+        REQUIRE(new_cutoff == Approx(9.12345).margin(TOL));
+        my_system.Set2bCutoff(old_cutoff);
+    }
+
+    SECTION("Get3bCutoff") {
+        double old_cutoff = my_system.Get3bCutoff();
+        my_system.Set3bCutoff(5.6789);
+        double new_cutoff = my_system.Get3bCutoff();
+        REQUIRE(new_cutoff == Approx(5.6789).margin(TOL));
+        my_system.Set3bCutoff(old_cutoff);
+    }
+
+    SECTION("TTM pairs") {
+        std::vector<std::pair<std::string, std::string> > empty_vec;
+        std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"h2o","cl"},{"h2o","i"}};
+        std::vector<std::pair<std::string, std::string> > ttm_pairs_expected = {{"cl","h2o"},{"h2o","i"}};
+
+        for (size_t i = 0; i < ttm_pairs.size(); i++) {
+            my_system.AddTTMnrgPair(ttm_pairs[i].first, ttm_pairs[i].second);
+        }
+
+        std::vector<std::pair<std::string, std::string> > ttm_pairs_system = my_system.GetTTMnrgPairs();
+        for (size_t i = 0; i < ttm_pairs.size(); i++) {
+            REQUIRE(ttm_pairs_system[i] == ttm_pairs_expected[i]);
+        }
+
+        my_system.SetTTMnrgPairs(empty_vec);
+        ttm_pairs_system = my_system.GetTTMnrgPairs();
+        REQUIRE(ttm_pairs_system == empty_vec);
+
+        my_system.SetTTMnrgPairs(ttm_pairs);
+        ttm_pairs_system = my_system.GetTTMnrgPairs();
+        for (size_t i = 0; i < ttm_pairs.size(); i++) {
+            REQUIRE(ttm_pairs_system[i] == ttm_pairs_expected[i]);
+        }
+    }
+
+    SECTION("Ignore 2b poly") {
+        std::vector<std::vector<std::string> > empty_vec;
+        std::vector<std::vector<std::string> > ignore2b = {{"h2o","cl"},{"h2o","i"}};
+        std::vector<std::vector<std::string> > ignore2b_expected = {{"cl","h2o"},{"h2o","i"}};
+
+        for (size_t i = 0; i < ignore2b.size(); i++) {
+            my_system.Add2bIgnorePoly(ignore2b[i][0], ignore2b[i][1]);
+        }
+
+        std::vector<std::vector<std::string> > ignore2b_system = my_system.Get2bIgnorePoly();
+        for (size_t i = 0; i < ignore2b.size(); i++) {
+            REQUIRE(ignore2b_system[i] == ignore2b_expected[i]);
+        }
+
+        my_system.Set2bIgnorePoly(empty_vec);
+        ignore2b_system = my_system.Get2bIgnorePoly();
+        REQUIRE(ignore2b_system == empty_vec);
+
+        my_system.Set2bIgnorePoly(ignore2b);
+        ignore2b_system = my_system.Get2bIgnorePoly();
+        for (size_t i = 0; i < ignore2b.size(); i++) {
+            REQUIRE(ignore2b_system[i] == ignore2b_expected[i]);
+        }
+    }
+
+    SECTION("Ignore 3b poly") {
+        std::vector<std::vector<std::string> > empty_vec;
+        std::vector<std::vector<std::string> > ignore3b = {{"h2o","cl","h2o"},{"h2o","i","h2o"}};
+        std::vector<std::vector<std::string> > ignore3b_expected = {{"cl","h2o","h2o"},{"h2o","h2o","i"}};
+
+        for (size_t i = 0; i < ignore3b.size(); i++) {
+            my_system.Add3bIgnorePoly(ignore3b[i][0], ignore3b[i][1], ignore3b[i][2]);
+        }
+
+        std::vector<std::vector<std::string> > ignore3b_system = my_system.Get3bIgnorePoly();
+        for (size_t i = 0; i < ignore3b.size(); i++) {
+            REQUIRE(ignore3b_system[i] == ignore3b_expected[i]);
+        }
+
+        my_system.Set3bIgnorePoly(empty_vec);
+        ignore3b_system = my_system.Get3bIgnorePoly();
+        REQUIRE(ignore3b_system == empty_vec);
+
+        my_system.Set3bIgnorePoly(ignore3b);
+        ignore3b_system = my_system.Get3bIgnorePoly();
+        for (size_t i = 0; i < ignore3b.size(); i++) {
+            REQUIRE(ignore3b_system[i] == ignore3b_expected[i]);
+        }
+    }
+
+    SECTION("JSON settings") {
+        nlohmann::json j = 
+        {
+            {
+                "Note" , "This is a cofiguration file"
+            },
+            {
+                "MBX" , 
+                { 
+                    {"box" , {100.0,0.0,0.0,0.0,100.0,0.0,0.0,0.0,100.0}},
+                    {"twobody_cutoff"   , 9.0},
+                    {"threebody_cutoff" , 7.0},
+                    {"max_n_eval_1b"    , 500},
+                    {"max_n_eval_2b"    , 500},
+                    {"max_n_eval_3b"    , 500},
+                    {"dipole_tolerance" , 1E-016},
+                    {"dipole_max_it"    , 100},
+                    {"dipole_method"    , "cg"},
+                    {"aplha_ewald_elec" , 0.0},
+                    {"grid_density_elec",  2.5},
+                    {"spline_order_elec",  6},
+                    {"aplha_ewald_disp" , 0.0},
+                    {"grid_density_disp",  2.5},
+                    {"spline_order_disp",  6},
+                    {"ttm_pairs" , nlohmann::json::array()},
+                    {"ignore_2b_poly" , nlohmann::json::array()},
+                    {"ignore_3b_poly" , nlohmann::json::array()}
+                }
+            } ,
+            {
+                "i-pi",
+                {
+                    {"port" , 34543},
+                    {"localhost" , "localhost"}
+                }
+            }
+        };
+
+        // Write this configuration into a file
+        std::ofstream of("mbx.json");
+        of << std::setw(4) << j;
+        of.close();
+
+        nlohmann::json j_sys_default;
+
+        SECTION("Compare default json") {
+            my_system.SetUpFromJson();
+            j_sys_default = my_system.GetJsonConfig();
+            REQUIRE(j_sys_default["MBX"] == j["MBX"]);
+        }
+
+        // Update json parameters
+        j["MBX"]["box"] = nlohmann::json::array();
+        j["MBX"]["twobody_cutoff"] = 9.5;
+        j["MBX"]["threebody_cutoff"] = 7.5;
+        j["MBX"]["max_n_eval_1b"] = 400;
+        j["MBX"]["max_n_eval_2b"] = 400;
+        j["MBX"]["max_n_eval_3b"] = 300;
+        j["MBX"]["dipole_tolerance"] = 1E-14;
+        j["MBX"]["dipole_max_it"] = 150;
+        j["MBX"]["dipole_method"] = "iter";
+        j["MBX"]["aplha_ewald_elec" ] = 0.01;
+        j["MBX"]["grid_density_elec"] = 2.8;
+        j["MBX"]["spline_order_elec"] = 5;
+        j["MBX"]["aplha_ewald_disp"] = 0.01;
+        j["MBX"]["grid_density_disp"] = 2.7;
+        j["MBX"]["spline_order_disp"] = 4;
+        j["MBX"]["ttm_pairs"] = nlohmann::json::array({{"h2o","i"},{"cs","h2o"}});
+        j["MBX"]["ignore_2b_poly"] = nlohmann::json::array({{"h2o","i"},{"cs","h2o"}});
+        j["MBX"]["ignore_3b_poly"] = nlohmann::json::array({{"h2o","i"},{"cs","h2o"}});
+        
+        // Write the new json file
+        std::ofstream off("mbx_mod.json");
+        off << std::setw(4) << j;
+        off.close();
+
+        // Set the json config in system from the file
+        my_system.SetUpFromJson((char*)"mbx_mod.json");
+        // Retrieve it
+        nlohmann::json j_sys_mod = my_system.GetJsonConfig();
+
+        SECTION("Compare modified json") {
+            REQUIRE(j_sys_mod["MBX"] == j["MBX"]);
+        }
+
+        SECTION("Compare attributes in system set from json") {
+            std::vector<double> box = my_system.GetBox();
+            REQUIRE(box == j["MBX"]["box"]);
+
+            double cutoff2b = my_system.Get2bCutoff();
+            REQUIRE(cutoff2b == j["MBX"]["twobody_cutoff"]);
+
+            double cutoff3b = my_system.Get3bCutoff();
+            REQUIRE(cutoff3b == j["MBX"]["threebody_cutoff"]);
+
+            size_t neval1b = my_system.GetMaxEval1b();
+            REQUIRE(neval1b == j["MBX"]["max_n_eval_1b"]);
+
+            size_t neval2b = my_system.GetMaxEval2b();
+            REQUIRE(neval2b == j["MBX"]["max_n_eval_2b"]);
+
+            size_t neval3b = my_system.GetMaxEval3b();
+            REQUIRE(neval3b == j["MBX"]["max_n_eval_3b"]);
+
+            double dipole_tolerance = my_system.GetDipoleTolerance();
+            REQUIRE(dipole_tolerance == j["MBX"]["dipole_tolerance"]);
+
+            double dipole_max_it = my_system.GetMaxIterationsDipoles();
+            REQUIRE(dipole_max_it == j["MBX"]["dipole_max_it"]);
+
+            std::string dipole_method = my_system.GetDipoleMethod();
+            REQUIRE(dipole_method == j["MBX"]["dipole_method"]);
+
+            double alpha = 0.0;
+            double grid = 0.0;
+            size_t spline = 0;
+            my_system.GetEwaldParamsElectrostatics(alpha, grid, spline);
+            REQUIRE(alpha == j["MBX"]["aplha_ewald_elec"]);
+            REQUIRE(grid == j["MBX"]["grid_density_elec"]);
+            REQUIRE(spline == j["MBX"]["spline_order_elec"]);
+
+            my_system.GetEwaldParamsDispersion(alpha, grid, spline);
+            REQUIRE(alpha == j["MBX"]["aplha_ewald_disp"]);
+            REQUIRE(grid == j["MBX"]["grid_density_disp"]);
+            REQUIRE(spline == j["MBX"]["spline_order_disp"]);
+
+            std::vector<std::pair<std::string, std::string> > ttmpairs = my_system.GetTTMnrgPairs();
+            REQUIRE(ttmpairs == j["MBX"]["ttm_pairs"]);
+
+            std::vector<std::vector<std::string> > ignore2b = my_system.Get2bIgnorePoly();
+            REQUIRE(ignore2b == j["MBX"]["ignore_2b_poly"]);
+
+            std::vector<std::vector<std::string> > ignore3b = my_system.Get3bIgnorePoly();
+            REQUIRE(ignore3b == j["MBX"]["ignore_3b_poly"]);
+        }
+
+        // Set back the defaults
+        my_system.SetUpFromJson();
     }
 
     SECTION("SetXyz()") {

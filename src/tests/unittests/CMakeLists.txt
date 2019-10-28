@@ -6,6 +6,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-gas-nbodyterms-mbpol.cpp
     unittest-systools.cpp
     unittest-system.cpp
+    unittest-mathtools.cpp
     unittest-gas-nopolarization-findif.cpp
     unittest-gas-withpolarization-findif.cpp
     unittest-pme-nopolarization.cpp
@@ -34,6 +35,8 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-h2o-h2o-rb-trimer.cpp
     unittest-h2o-h2o-cs-trimer.cpp
     unittest-co2-monomer.cpp
+    unittest-ch4-monomer.cpp
+    unittest-dummy-monomer.cpp
 )
 
 #
