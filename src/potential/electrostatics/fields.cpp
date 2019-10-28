@@ -50,6 +50,7 @@ ElectricFieldHolder::ElectricFieldHolder(size_t n) {
     v8_ = std::vector<double>(maxnmon);
     v9_ = std::vector<double>(maxnmon);
     v10_ = std::vector<double>(maxnmon);
+    v11_ = std::vector<double>(6*maxnmon);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,7 +91,7 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
     std::fill(v9_.begin() + mon2_index_start, v9_.begin() + mon2_index_end, 0.0);
     std::fill(v10_.begin() + mon2_index_start, v10_.begin() + mon2_index_end, 0.0);
     // temporary virial holder
-    std::vector<double> v11(6*maxnmon,0.0);
+    std::fill(v11_.begin(), v11_.end(), 0.0);
 // Store rijx, rijy and rijz in vectors
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -216,12 +217,12 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
             double dvy = dvr * v1_[m];
             double dvz = dvr * v2_[m];
 
-            v11[0*maxnmon + m] = v0_[m]*dvx*constants::COULOMB;
-            v11[1*maxnmon + m] = v0_[m]*dvy*constants::COULOMB;
-            v11[2*maxnmon + m] = v0_[m]*dvz*constants::COULOMB;
-            v11[3*maxnmon + m] = v1_[m]*dvy*constants::COULOMB;
-            v11[4*maxnmon + m] = v1_[m]*dvz*constants::COULOMB;
-            v11[5*maxnmon + m] = v2_[m]*dvz*constants::COULOMB;
+            v11_[0*maxnmon + m] = v0_[m]*dvx*constants::COULOMB;
+            v11_[1*maxnmon + m] = v0_[m]*dvy*constants::COULOMB;
+            v11_[2*maxnmon + m] = v0_[m]*dvz*constants::COULOMB;
+            v11_[3*maxnmon + m] = v1_[m]*dvy*constants::COULOMB;
+            v11_[4*maxnmon + m] = v1_[m]*dvz*constants::COULOMB;
+            v11_[5*maxnmon + m] = v2_[m]*dvz*constants::COULOMB;
         }
 
     }
@@ -238,14 +239,14 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         *Efqz_mon1 += v10_[m];
         // condensate virial  
         if (virial != 0) {
-            (*virial)[0] += v11[0*maxnmon + m];
-            (*virial)[1] += v11[1*maxnmon + m];
-            (*virial)[2] += v11[2*maxnmon + m];
+            (*virial)[0] += v11_[0*maxnmon + m];
+            (*virial)[1] += v11_[1*maxnmon + m];
+            (*virial)[2] += v11_[2*maxnmon + m];
 
-            (*virial)[4] += v11[3*maxnmon + m];
-            (*virial)[5] += v11[4*maxnmon + m];
+            (*virial)[4] += v11_[3*maxnmon + m];
+            (*virial)[5] += v11_[4*maxnmon + m];
 
-            (*virial)[8] += v11[5*maxnmon + m];
+            (*virial)[8] += v11_[5*maxnmon + m];
 
             (*virial)[3] = (*virial)[1];
             (*virial)[6] = (*virial)[2];
@@ -421,8 +422,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
     std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
     std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
     std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
- 
-    std::vector<double> v11(6*maxnmon,0.0); // holders for the virial during vectorized loop
+    std::fill(v11_.begin(), v11_.end(), 0.0); // holders for the virial during vectorized loop
 
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -627,14 +627,14 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
         // update virial
         if (virial != 0) {
 
-            v11[0*maxnmon + m] = -rijx*v0_[m]*constants::COULOMB;
-            v11[1*maxnmon + m] = -rijx*v1_[m]*constants::COULOMB;
-            v11[2*maxnmon + m] = -rijx*v2_[m]*constants::COULOMB;
+            v11_[0*maxnmon + m] = -rijx*v0_[m]*constants::COULOMB;
+            v11_[1*maxnmon + m] = -rijx*v1_[m]*constants::COULOMB;
+            v11_[2*maxnmon + m] = -rijx*v2_[m]*constants::COULOMB;
 
-            v11[3*maxnmon + m] = -rijy*v1_[m]*constants::COULOMB;
-            v11[4*maxnmon + m] = -rijy*v2_[m]*constants::COULOMB;
+            v11_[3*maxnmon + m] = -rijy*v1_[m]*constants::COULOMB;
+            v11_[4*maxnmon + m] = -rijy*v2_[m]*constants::COULOMB;
 
-            v11[5*maxnmon + m] = -rijz*v2_[m]*constants::COULOMB;
+            v11_[5*maxnmon + m] = -rijz*v2_[m]*constants::COULOMB;
 
         }
     }
@@ -651,14 +651,14 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
         *phi1 += v3_[m];
         // condensate virial  
         if (virial != 0) {
-            (*virial)[0] += v11[0*maxnmon + m];
-            (*virial)[1] += v11[1*maxnmon + m];
-            (*virial)[2] += v11[2*maxnmon + m];
+            (*virial)[0] += v11_[0*maxnmon + m];
+            (*virial)[1] += v11_[1*maxnmon + m];
+            (*virial)[2] += v11_[2*maxnmon + m];
 
-            (*virial)[4] += v11[3*maxnmon + m];
-            (*virial)[5] += v11[4*maxnmon + m];
+            (*virial)[4] += v11_[3*maxnmon + m];
+            (*virial)[5] += v11_[4*maxnmon + m];
 
-            (*virial)[8] += v11[5*maxnmon + m];
+            (*virial)[8] += v11_[5*maxnmon + m];
 
             (*virial)[3] = (*virial)[1];
             (*virial)[6] = (*virial)[2];

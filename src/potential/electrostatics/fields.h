@@ -200,6 +200,7 @@ class ElectricFieldHolder {
     std::vector<double> v8_;
     std::vector<double> v9_;
     std::vector<double> v10_;
+    std::vector<double> v11_;
 };
 
 }  // namespace elec
