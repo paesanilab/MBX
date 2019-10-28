@@ -163,5 +163,57 @@ TEST_CASE("Test the system tools functions (no PBC).") {
         }
     }
 
+    SECTION("Test the thole damping retrievement") {
+        double add_water_12 = systools::GetAdd(true,false,false, "h2o");
+        REQUIRE(add_water_12 == Approx(0.626).margin(TOL));
+
+        double add_water_13 = systools::GetAdd(false,true,false, "h2o");
+        REQUIRE(add_water_13 == Approx(0.055).margin(TOL));
+
+        double add_water_14 = systools::GetAdd(false,false,true, "h2o");
+        REQUIRE(add_water_14 == Approx(0.055).margin(TOL));
+
+        double add_other_12 = systools::GetAdd(true,false,false, "co2");
+        REQUIRE(add_other_12 == Approx(0.3).margin(TOL));
+
+        double add_other_13 = systools::GetAdd(false,true,false, "co2");
+        REQUIRE(add_other_13 == Approx(0.3).margin(TOL));
+
+        double add_other_14 = systools::GetAdd(false,false,true, "co2");
+        REQUIRE(add_other_14 == Approx(0.055).margin(TOL));
+    }
+
     // SECTION("Energy without gradients") { REQUIRE(energy_nograd == Approx(one_body_energy).margin(TOL)); }
+}
+
+TEST_CASE("Test functions with PBC") {
+    SECTION("FixMonomerCoordinates") {
+        std::vector<double> box = {10.0,0.0,0.0,0.0,10.0,0.0,0.0,0.0,10.0};
+        std::vector<double> coordinates_fixed_1 = {4.9,4.9,4.9, 5.9,4.9,4.9, 4.9,5.9,4.9, 4.9,4.9,5.9};
+        std::vector<double> coordinates_1 = {4.9,4.9,4.9, -4.1,4.9,4.9, 4.9,-4.1,4.9, 4.9,4.9,-4.1};
+        std::vector<double> coordinates_fixed_2 = {-4.9,-4.9,-4.9, -5.9,-4.9,-4.9, -4.9,-5.9,-4.9, -4.9,-4.9,-5.9};
+        std::vector<double> coordinates_2 = {-4.9,-4.9,-4.9, 4.1,-4.9,-4.9, -4.9,4.1,-4.9, -4.9,-4.9,4.1};
+
+        std::vector<double> coordinates_fixed_3 = {4.9,4.9,4.9, -4.9,-4.9,-4.9};
+        std::vector<double> coordinates_3 = {-5.1,-5.1,-5.1, 5.1,5.1,5.1};
+        std::vector<size_t> nats = {4};
+        std::vector<size_t> nats_3 = {1,1};
+        std::vector<size_t> first_index = {0};
+        std::vector<size_t> first_index_3 = {0,1};
+
+        systools::FixMonomerCoordinates(coordinates_1, box, nats, first_index);
+        for (size_t i = 0; i < coordinates_1.size(); i++) {
+            REQUIRE(coordinates_1[i] == Approx(coordinates_fixed_1[i]).margin(TOL));
+        }
+        
+        systools::FixMonomerCoordinates(coordinates_2, box, nats, first_index);
+        for (size_t i = 0; i < coordinates_2.size(); i++) {
+            REQUIRE(coordinates_2[i] == Approx(coordinates_fixed_2[i]).margin(TOL));
+        }
+
+        systools::FixMonomerCoordinates(coordinates_3, box, nats_3, first_index_3);
+        for (size_t i = 0; i < coordinates_3.size(); i++) {
+            REQUIRE(coordinates_3[i] == Approx(coordinates_fixed_3[i]).margin(TOL));
+        }
+    }
 }

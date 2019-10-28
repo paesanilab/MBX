@@ -64,6 +64,10 @@ void Electrostatics::SetEwaldGridDensity(double density) { pme_grid_density_ = d
 
 void Electrostatics::SetEwaldSplineOrder(int order) { pme_spline_order_ = order; }
 
+void Electrostatics::SetDipoleTolerance(double tol) { tolerance_ = tol; }
+
+void Electrostatics::SetDipoleMaxIt(size_t maxit) { maxit_ = maxit;}
+
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                                 const std::vector<double> &polfac, const std::vector<double> &pol,
                                 const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
