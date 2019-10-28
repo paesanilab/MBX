@@ -40,7 +40,7 @@ namespace disp {
 void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                            const bool do_grads = true, const std::vector<double> &box = {}, std::vector<double> *virial) {
+                            const bool do_grads = true, const std::vector<double> &box = {}) {
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
     mon_id_ = mon_id;
@@ -61,12 +61,6 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     c6_long_range_ = std::vector<double>(natoms_, 0.0);
     sys_phi_ = std::vector<double>(natoms_, 0.0);
     
-    calc_virial_ = true;
-
-    if (virial == 0) { // set virial_ to 0 in case we dont want to calculate it
-        calc_virial_ = false;
-    }
-
     ReorderData();
 }
 
@@ -121,13 +115,20 @@ void Dispersion::ReorderData() {
 }
 
 double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *virial) {
+    
+    calc_virial_=false;
+
+    if (virial != 0) {
+        calc_virial_ = true;
+    }
+
     CalculateDispersion();
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
-
-    if (virial != 0) {
+     
+    if (calc_virial_) {
         (*virial)[0] += virial_[0];
         (*virial)[1] += virial_[1];
         (*virial)[2] += virial_[2];

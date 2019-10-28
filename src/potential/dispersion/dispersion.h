@@ -58,7 +58,7 @@ class Dispersion {
     void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads,
-                    const std::vector<double> &box,std::vector<double> *virial = 0);
+                    const std::vector<double> &box);
 
     double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0);
 
