@@ -1788,7 +1788,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     //update viral
     if (virial != 0) {
         for (size_t k = 0; k < 9; k++) {
-            (*virial)[k] = virial_[k];
+            (*virial)[k] += virial_[k];
         }
     }
     has_energy_ = true;
