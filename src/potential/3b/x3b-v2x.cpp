@@ -1564,7 +1564,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
                             w3[0+0 + sh9] * g3[0+0 + sh9] -
                             w3[0+3 + sh9] * g3[0+3 + sh9] -
                             w3[0+6 + sh9] * g3[0+6 + sh9];
-	
+            
             (*virial)[1]+= -w1[0+0 + sh9] * g1[0+1 + sh9] -
                             w1[0+3 + sh9] * g1[0+4 + sh9] -
                             w1[0+6 + sh9] * g1[0+7 + sh9] -

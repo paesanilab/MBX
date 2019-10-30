@@ -15,7 +15,7 @@
 
 //#define NUMGRADS
 //#define PRINT_GRADS
-
+#define PRINT_VIRIAL
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -78,6 +78,19 @@ int main(int argc, char** argv)
                       << std::setw(20) << grads[3*i + 2] << std::endl;
         }  
     }
+#endif
+
+#ifdef PRINT_VIRIAL
+   
+    std::vector<double> virial = systems[0].GetVirial();
+
+    for (size_t i=0; i<9; i++) {
+        std::cout << " virial [daj/mol] " << virial[i] * 418.4 << std::endl;
+
+    }
+		
+
+
 #endif
 
 
