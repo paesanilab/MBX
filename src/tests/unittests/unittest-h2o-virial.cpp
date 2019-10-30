@@ -364,6 +364,40 @@ TEST_CASE("Test tetramer virial contributions") {
 
     }
 
+    SECTION("Electrostatics PBC initilaization test") {
+        my_system.SetPBC(box);
+        my_system.Set2bCutoff(9.0);
+        my_system.SetEwald(0.542237671769889, 2.5, 6);
+        double energy_grad1 = my_system.Electrostatics(true);
+        double energy_grad2 = my_system.Electrostatics(true);
+        double energy_grad3 = my_system.Electrostatics(true);
+        double energy_grad4 = my_system.Electrostatics(true);
+        double energy_grad5 = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec_pbc[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+    SECTION("Dispersion PBC initialization test") {
+        my_system.SetPBC(box);
+        my_system.Set2bCutoff(9.0);
+        my_system.SetEwald(0.5, 2.5, 6);
+        double energy_grad1 = my_system.Dispersion(true);
+        double energy_grad2 = my_system.Dispersion(true);
+        double energy_grad3 = my_system.Dispersion(true);
+        double energy_grad4 = my_system.Dispersion(true);
+        double energy_grad5 = my_system.Dispersion(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_disp_pbc[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+
 
 }
 
