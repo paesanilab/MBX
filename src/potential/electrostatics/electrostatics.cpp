@@ -1781,6 +1781,7 @@ double Electrostatics::GetPermanentElectrostaticEnergy() { return Eperm_; }
 double Electrostatics::GetInducedElectrostaticEnergy() { return Eind_; }
 
 double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial) {
+    std::fill(virial_.begin(), virial_.end(),0.0);
     CalculatePermanentElecField();
     CalculateDipoles();
     CalculateElecEnergy();
