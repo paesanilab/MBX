@@ -217,21 +217,19 @@ int main(int argc, char** argv) {
             } else {
                 systems[0].SetPBC();
             }
-            // TODO check virial
-            virial = std::vector<double>(9, 0.0);
+
             energy = systems[0].Energy(true) / 627.509;
             buffer = systems[0].GetRealGrads();
-            virial = systems[0].GetVirial();
-            for (size_t i = 0; i < 9; i++) {
-                virial[i] = virial[i]/627.509;
-            }
-            //std::cout << "virial" << virial[0] << std::endl;
             for (size_t i = 0; i < buffer.size(); i++) {
                 //        buffer[i] = -buffer[i] / 627.509;
                 buffer[i] = -buffer[i] / 1.8897259886 / 627.509;
             }
             // TODO check virial
-            //virial = std::vector<double>(9, 0.0);
+            virial = std::vector<double>(9, 0.0);
+            virial = systems[0].GetVirial();
+            for (size_t i=0; i<9; i++) {
+                virial[i] /= 627.509;
+            }
 
             hasdata = true;
             header[0] = '\0';
