@@ -558,7 +558,7 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
 
         if (virial != 0) {
             for (size_t i = 0; i < nw; i++){
-            
+                   
                 (*virial)[0] += -rr[9*i+ 0]*dr[9*i+ 0]    
                              -rr[9*i+ 3]*dr[9*i+ 3]
                              -rr[9*i+ 6]*dr[9*i+ 6];

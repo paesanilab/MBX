@@ -225,7 +225,10 @@ int main(int argc, char** argv) {
                 buffer[i] = -buffer[i] / 1.8897259886 / 627.509;
             }
             // TODO check virial
-            virial = std::vector<double>(9, 0.0);
+            virial = systems[0].GetVirial();
+            for (size_t i=0; i<9; i++) {
+                virial[i] /= 627.509;
+            }
 
             hasdata = true;
             header[0] = '\0';

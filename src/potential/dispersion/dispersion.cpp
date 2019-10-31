@@ -115,13 +115,13 @@ void Dispersion::ReorderData() {
 }
 
 double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *virial) {
-    
     calc_virial_=false;
 
     if (virial != 0) {
         calc_virial_ = true;
     }
 
+    std::fill(virial_.begin(), virial_.end(),0.0);
     CalculateDispersion();
 
     size_t fi_mon = 0;

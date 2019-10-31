@@ -1210,7 +1210,6 @@ double System::OneBodyEnergy(bool do_grads) {
 
     // Calculate the 1b energy
     energy_ = Get1B(do_grads);
-
     return energy_;
 }
 
@@ -1710,11 +1709,12 @@ double System::Get3B(bool do_grads) {
                                 grad_pool[rank][3 * first_index_[trimers[i0 + 3 * k + 2]] + j] +=
                                     grad3[k * 3 * nat_[trimers[i0 + 3 * k + 2]] + j];
                             }
-                            // Virial Tensor
-                            for (size_t j=0; j<9; j++) {
-                                virial_pool[rank][j] += virial[j];
-                            }
                         }
+                        // Virial Tensor
+                        for (size_t j=0; j<9; j++) {
+                            virial_pool[rank][j] += virial[j];
+                        }
+
                     } else {
                         // POLYNOMIALS
                         e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
