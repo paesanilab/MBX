@@ -2,6 +2,7 @@
   <output prefix='co2_equil_test'>
     <properties stride='1' filename='out'>  [ step, time{picosecond}, conserved{kilocal/mol}, temperature{kelvin}, potential{kelvin}, pressure_cv{megapascal}, ensemble_pressure{atmosphere} pressure_md{atmosphere}, volume ] </properties>
     <trajectory filename='pos' stride='1' format='xyz' cell_units='angstrom'> positions{angstrom} </trajectory>
+    <checkpoint stride='10'  filename='checkpoint'>39733</checkpoint>
   </output>
   <total_steps>5000</total_steps>
   <prng>
