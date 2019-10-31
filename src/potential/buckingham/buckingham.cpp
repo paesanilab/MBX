@@ -109,7 +109,7 @@ void Buckingham::ReorderData() {
     }
 }
 
-double Buckingham::GetRepulsion(std::vector<double> &grad) {
+double Buckingham::GetRepulsion(std::vector<double> &grad, std::vector<double> *virial) {
     CalculateRepulsion();
 
     size_t fi_mon = 0;
