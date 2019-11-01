@@ -15,7 +15,7 @@
 
 //#define NUMGRADS
 //#define PRINT_GRADS
-//#define PRINT_VIRIAL
+#define PRINT_VIRIAL
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     }
 
 
-    double en = systems[0].Energy(true);
+    double en = systems[0].Energy(true); // EL EL CHANGE THIS AFTER
 
     std::cout << "Energy= " << en << std::endl;
     
@@ -81,13 +81,30 @@ int main(int argc, char** argv)
 #endif
 
 #ifdef PRINT_VIRIAL
-   
-    std::vector<double> virial = systems[0].GetVirial();
+   std::vector<double> virial= {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; 
+   double E1b,E2b,E3b,Eelec,Edisp,Ebuck,Etotal;
+   E1b = systems[0].OneBodyEnergy(true);
+   virial = systems[0].GetVirial();
+   std::cout << " 1B Virial [kcal/mol] " << virial[0]<< " , " << virial[1]<< " , " << virial[2]<< " , " << virial[3]<< " , "  << virial[4]<< " , " << virial[5]<< " , " << virial[6]<< " , "   << virial[7]<< " , " << virial[8]  << std::endl;
+   E2b = systems[0].TwoBodyEnergy(true);
+   virial = systems[0].GetVirial();
+   std::cout << " 2B Virial [kcal/mol] " << virial[0]<< " , " << virial[1]<< " , " << virial[2]<< " , " << virial[3]<< " , "  << virial[4]<< " , " << virial[5]<< " , " << virial[6]<< " , "   << virial[7]<< " , " << virial[8]  << std::endl;
+   E3b = systems[0].ThreeBodyEnergy(true);
+   virial = systems[0].GetVirial();
+   std::cout << " 3B Virial [kcal/mol] " << virial[0]<< " , " << virial[1]<< " , " << virial[2]<< " , " << virial[3]<< " , "  << virial[4]<< " , " << virial[5]<< " , " << virial[6]<< " , "   << virial[7]<< " , " << virial[8]  << std::endl;
+   Eelec = systems[0].Electrostatics(true);
+   virial = systems[0].GetVirial();
+   std::cout << " Elec Virial [kcal/mol] " << virial[0]<< " , " << virial[1]<< " , " << virial[2]<< " , " << virial[3]<< " , "  << virial[4]<< " , " << virial[5]<< " , " << virial[6]<< " , "   << virial[7]<< " , " << virial[8]  << std::endl;
+   Edisp = systems[0].Dispersion(true);
+   virial = systems[0].GetVirial();
+   std::cout << " Disp Virial [kcal/mol] " << virial[0]<< " , " << virial[1]<< " , " << virial[2]<< " , " << virial[3]<< " , "  << virial[4]<< " , " << virial[5]<< " , " << virial[6]<< " , "   << virial[7]<< " , " << virial[8]  << std::endl;
+   Ebuck = systems[0].Buckingham(true);
+   virial = systems[0].GetVirial();
+   std::cout << " Buck Virial [kcal/mol] " << virial[0]<< " , " << virial[1]<< " , " << virial[2]<< " , " << virial[3]<< " , "  << virial[4]<< " , " << virial[5]<< " , " << virial[6]<< " , "   << virial[7]<< " , " << virial[8]  << std::endl;
+   Etotal = systems[0].Energy(true);
+   virial = systems[0].GetVirial();
+   std::cout << " Total Virial [kcal/mol] " << virial[0]<< " , " << virial[1]<< " , " << virial[2]<< " , " << virial[3]<< " , "  << virial[4]<< " , " << virial[5]<< " , " << virial[6]<< " , "   << virial[7]<< " , " << virial[8]  << std::endl;
 
-    for (size_t i=0; i<9; i++) {
-        std::cout << " virial [daj/mol] " << virial[i] * 418.4 << std::endl;
-
-    }
 		
 
 
