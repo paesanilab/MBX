@@ -48,7 +48,7 @@ double Repulsion(const double a, const double b, const double* p1, const double*
              double* grad1, double* grad2, const size_t nmon1, const size_t nmon2,
              const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
              bool do_grads, const double cutoff, 
-             const std::vector<double>& box, const std::vector<double>& box_inverse);
+             const std::vector<double>& box, const std::vector<double>& box_inverse, std::vector<double> *virial=0);
 
 bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, std::vector<std::pair<std::string,std::string> > buck_pairs, double& out_a, double& out_b);
 

@@ -44,7 +44,7 @@ double Repulsion(const double a, const double b, const double* p1, const double*
              double* grad1, double* grad2, const size_t nmon1, const size_t nmon2,
              const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
              bool do_grads, const double cutoff,                                 
-             const std::vector<double>& box, const std::vector<double>& box_inverse) {
+             const std::vector<double>& box, const std::vector<double>& box_inverse,std::vector<double> *virial) {
 
     size_t nmon22 = nmon2 * 2;
 
@@ -106,6 +106,21 @@ double Repulsion(const double a, const double b, const double* p1, const double*
 
                 g1[2] -= dz * grad;
                 g2[nmon22 + nv] += dz * grad;
+
+                if (virial != 0) {
+
+		    (*virial)[0] -= dx * dx * grad;
+                    (*virial)[1] -= dx * dy * grad;
+                    (*virial)[2] -= dx * dz * grad;
+                    (*virial)[4] -= dy * dy * grad;
+                    (*virial)[5] -= dy * dz * grad;
+                    (*virial)[8] -= dz * dz * grad;
+                    
+                    (*virial)[3] = (*virial)[1];
+                    (*virial)[6] = (*virial)[2];
+                    (*virial)[7] = (*virial)[5];
+
+                }
             }
         }
     }
