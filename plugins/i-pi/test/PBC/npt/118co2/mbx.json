@@ -1,7 +1,7 @@
 {
    "Note" : "This is a cofiguration file",
    "MBX" : { 
-       "box" : [19.7295,0.0,0.0,0.0,19.7295,0.0,0.0,0.0,19.7295],
+       "box" : [20.0,0.0,0.0,0.0,20.0,0.0,0.0,0.0,20.0],
        "twobody_cutoff"   : 9.5,
        "threebody_cutoff" : 7.0, 
        "max_n_eval_1b"    : 500,

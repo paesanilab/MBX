@@ -1,5 +1,4 @@
 #!/bin/bash
-#export MBX_HOME=/home/elambros/projects/mbx_virial/dev_working_master_branch/clusters_ultimate
 driver_direc=$MBX_HOME/plugins/i-pi/bin
 
 

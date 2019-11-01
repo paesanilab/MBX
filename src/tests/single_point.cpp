@@ -15,7 +15,7 @@
 
 //#define NUMGRADS
 //#define PRINT_GRADS
-#define PRINT_VIRIAL
+//#define PRINT_VIRIAL
 namespace {
 
 static std::vector<bblock::System> systems;
