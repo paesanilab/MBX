@@ -522,7 +522,7 @@ std::vector<double> x1b_A1B4_v1x::eval(const double* xyz, const size_t nmon) con
 }
 
 std::vector<double> x1b_A1B4_v1x::eval(const double* xyz,
-                double * grad, const size_t nmon) const
+                double * grad, const size_t nmon, std::vector<double> *virial) const
 {
 
     std::vector<double> energies(nmon,0.0);
@@ -584,7 +584,51 @@ std::vector<double> x1b_A1B4_v1x::eval(const double* xyz,
         vr[9].grads(g[9], B_3_g, B_4_g, B_3, B_4);
     
         for (size_t i = 0; i < 15; i++)
-            grad[i + j*15] = xgrd[i];    
+            grad[i + j*15] = xgrd[i];
+
+        if (virial != 0) {
+         
+            (*virial)[0] += -A_1[0]* A_1_g[0]
+                            -B_1[0]* B_1_g[0]
+                            -B_2[0]* B_2_g[0]
+                            -B_3[0]* B_3_g[0]
+                            -B_4[0]* B_4_g[0];
+         
+            (*virial)[1] += -A_1[0]* A_1_g[1]
+                            -B_1[0]* B_1_g[1]
+                            -B_2[0]* B_2_g[1]
+                            -B_3[0]* B_3_g[1]
+                            -B_4[0]* B_4_g[1];
+         
+            (*virial)[2] += -A_1[0]* A_1_g[2]
+                            -B_1[0]* B_1_g[2]
+                            -B_2[0]* B_2_g[2]
+                            -B_3[0]* B_3_g[2]
+                            -B_4[0]* B_4_g[2];
+         
+            (*virial)[3] += -A_1[1]* A_1_g[1]
+                            -B_1[1]* B_1_g[1]
+                            -B_2[1]* B_2_g[1]
+                            -B_3[1]* B_3_g[1]
+                            -B_4[1]* B_4_g[1];
+         
+            (*virial)[4] += -A_1[1]* A_1_g[2]
+                            -B_1[1]* B_1_g[2]
+                            -B_2[1]* B_2_g[2]
+                            -B_3[1]* B_3_g[2]
+                            -B_4[1]* B_4_g[2];
+         
+            (*virial)[5] += -A_1[2]* A_1_g[2]
+                            -B_1[2]* B_1_g[2]
+                            -B_2[2]* B_2_g[2]
+                            -B_3[2]* B_3_g[2]
+                            -B_4[2]* B_4_g[2];
+        
+            (*virial)[3]=(*virial)[1];
+            (*virial)[6]=(*virial)[2];
+            (*virial)[7]=(*virial)[5];
+        
+        } 
  
     }
 

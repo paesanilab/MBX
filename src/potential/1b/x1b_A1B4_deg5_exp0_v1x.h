@@ -28,7 +28,7 @@ struct x1b_A1B4_v1x {
     // returns 1b contribution only
     // XYZ is for the real sites
     std::vector<double> eval(const double* xyz, const size_t nmon) const;
-    std::vector<double> eval(const double* xyz, double* grad, const size_t nmon) const;
+    std::vector<double> eval(const double* xyz, double* grad, const size_t nmon, std::vector<double> *virial=0) const;
     
 private:
 
