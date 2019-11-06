@@ -23,7 +23,6 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-h2o-cl-dimer.cpp
     unittest-h2o-br-dimer.cpp
     unittest-h2o-virial.cpp
-    unittest-h2o-ion-virial.cpp
     unittest-h2o-i-dimer.cpp
     unittest-h2o-li-dimer.cpp
     unittest-h2o-na-dimer.cpp
