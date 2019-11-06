@@ -50,6 +50,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<std::pair<std::string, size_t>> mon_type_count{{"na", 1},{"h2o", 1}};                \
     std::vector<double> virial_1b = {   \
         -15.5885 , 5.34557 , 5.68179 , 5.34557 , -1.94539 , -2.55637 , 5.68179 , -2.55637 , -5.36263}; \
+    std::vector<double> virial_2b = { 6.09501 , -3.1244 , -2.63376 , -3.1244 , 1.49633 , 0.967053 , -2.63376 , 0.967053 , -0.583174 }; \
     std::vector<double> virial_elec = { \
         11.1457 , -3.97076 , 1.79961 , -3.97076 , 2.08396 , 1.0376 , 1.79961 , 1.0376 , 5.64599}; \
     std::vector<double> virial_buck = {8.14904 , -3.9217 , -3.47649 , -3.9217 , 1.89835 , 1.69604 , -3.47649 , 1.69604 , 1.537}; \

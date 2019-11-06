@@ -36,6 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "bblock/system.h"
 #include "setup_na_h2o_virial.h"
+#include "setup_na_2h2o_virial.h"
 #include "electrostatics.h"
 
 #include <vector>
@@ -75,6 +76,103 @@ TEST_CASE("Test Na H2O virial contributions") {
             }
 
     }
+
+    SECTION("Two-Body") {
+        double energy_grad = my_system.TwoBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_2b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+
+
+    SECTION("Dispersion") {
+        double energy_grad = my_system.Dispersion(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_disp[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+    SECTION("Buckingham") {
+        my_system.SetTTMnrgPairs(ttm_pairs);
+        double energy_grad = my_system.Buckingham(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_buck[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+
+    SECTION("Electrostatics") {
+        double energy_grad = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+
+
+}
+
+TEST_CASE("Test Na H2O H2O virial contributions") {
+    SETUP_Na_2H2O_VIRIAL 
+
+    bblock::System my_system;   
+
+    // Add monomers to the system
+    size_t count = 0;
+    for (size_t i = 0; i < n_monomers; i++) {
+        std::vector<double> xyz(real_coords.begin() + 3 * count,
+                                real_coords.begin() + 3 * count + 3 * n_atoms_vector[i]);
+        std::vector<std::string> ats(atom_names.begin() + count, atom_names.begin() + count + n_atoms_vector[i]);
+        std::string monid = monomer_names[i];
+        my_system.AddMonomer(xyz, ats, monid);
+        count += n_atoms_vector[i];
+    }
+
+    // Initialize the system to fill in the information
+    my_system.Initialize();
+
+    SECTION("One-Body") {
+        double energy_grad = my_system.OneBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_1b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Two-Body") {
+        double energy_grad = my_system.TwoBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_2b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Two-Body") {
+        double energy_grad = my_system.ThreeBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_3b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
 
 
     SECTION("Dispersion") {
