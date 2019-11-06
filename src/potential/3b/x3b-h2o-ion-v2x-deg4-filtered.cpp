@@ -193,10 +193,13 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1,
                       const double* xyz3,
                       double* grad1,
                       double* grad2,
-                      double* grad3, size_t nt) const {
+                      double* grad3, size_t nt, std::vector<double> *virial) const {
 
     double energy = 0.0;
     for (size_t i = 0; i < nt; i++) {
+
+        size_t sh9 = 9*i;
+
         const double * w1 = xyz1 + 9*i;
         const double * w2 = xyz2 + 9*i;
         const double * x = xyz3 + 3*i;
@@ -347,6 +350,63 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1,
         for (size_t k = 0; k < 3; k++) {
             grad3[3*i + k] = g3[k];
         }
+
+        if (virial !=0) {
+
+            (*virial)[0]+= -w1[0+0 + sh9] * g1[0+0 + sh9] -
+                            w1[0+3 + sh9] * g1[0+3 + sh9] -
+                            w1[0+6 + sh9] * g1[0+6 + sh9] -
+                            w2[0+0 + sh9] * g2[0+0 + sh9] -
+                            w2[0+3 + sh9] * g2[0+3 + sh9] -
+                            w2[0+6 + sh9] * g2[0+6 + sh9] -
+                            x[0+0 + sh9] * g3[0+0 + sh9];
+            
+            (*virial)[1]+= -w1[0+0 + sh9] * g1[0+1 + sh9] -
+                            w1[0+3 + sh9] * g1[0+4 + sh9] -
+                            w1[0+6 + sh9] * g1[0+7 + sh9] -
+                            w2[0+0 + sh9] * g2[0+1 + sh9] -
+                            w2[0+3 + sh9] * g2[0+4 + sh9] -
+                            w2[0+6 + sh9] * g2[0+7 + sh9] -
+                            x[0+0 + sh9] * g3[0+1 + sh9];
+
+            (*virial)[2]+= -w1[0+0 + sh9] * g1[0+2 + sh9] -
+                            w1[0+3 + sh9] * g1[0+5 + sh9] -
+                            w1[0+6 + sh9] * g1[0+8 + sh9] -
+                            w2[0+0 + sh9] * g2[0+2 + sh9] -
+                            w2[0+3 + sh9] * g2[0+5 + sh9] -
+                            w2[0+6 + sh9] * g2[0+8 + sh9] -
+                            x[0+0 + sh9] * g3[0+2 + sh9];
+
+            (*virial)[4]+= -w1[0+1 + sh9] * g1[0+1 + sh9] -
+                            w1[0+4 + sh9] * g1[0+4 + sh9] -
+                            w1[0+7 + sh9] * g1[0+7 + sh9] -
+                            w2[0+1 + sh9] * g2[0+1 + sh9] -
+                            w2[0+4 + sh9] * g2[0+4 + sh9] -
+                            w2[0+7 + sh9] * g2[0+7 + sh9] -
+                            x[0+1 + sh9] * g3[0+1 + sh9];
+
+            (*virial)[5]+= -w1[0+1 + sh9] * g1[0+2 + sh9] -
+                            w1[0+4 + sh9] * g1[0+5 + sh9] -
+                            w1[0+7 + sh9] * g1[0+8 + sh9] -
+                            w2[0+1 + sh9] * g2[0+2 + sh9] -
+                            w2[0+4 + sh9] * g2[0+5 + sh9] -
+                            w2[0+7 + sh9] * g2[0+8 + sh9] -
+                            x[0+1 + sh9] * g3[0+2 + sh9];
+
+            (*virial)[8]+= -w1[0+2 + sh9] * g1[0+2 + sh9] -
+                            w1[0+5 + sh9] * g1[0+5 + sh9] -
+                            w1[0+8 + sh9] * g1[0+8 + sh9] -
+                            w2[0+2 + sh9] * g2[0+2 + sh9] -
+                            w2[0+5 + sh9] * g2[0+5 + sh9] -
+                            w2[0+8 + sh9] * g2[0+8 + sh9] -
+                            x[0+2 + sh9] * g3[0+2 + sh9];
+
+            (*virial)[3] = (*virial)[1];
+            (*virial)[6] = (*virial)[2];
+            (*virial)[7] = (*virial)[5];
+        }
+
+
 
     }
 
