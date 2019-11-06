@@ -15,7 +15,7 @@
 
 //#define NUMGRADS
 //#define PRINT_GRADS
-#define PRINT_VIRIAL
+//#define PRINT_VIRIAL
 namespace {
 
 static std::vector<bblock::System> systems;
@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     }
 
 
-    double en = systems[0].Energy(true); // EL EL CHANGE THIS AFTER
+    double en = systems[0].Energy(true);
 
     std::cout << "Energy= " << en << std::endl;
     
