@@ -163,7 +163,7 @@ TEST_CASE("Test Na H2O H2O virial contributions") {
 
     }
 
-    SECTION("Two-Body") {
+    SECTION("Three-Body") {
         double energy_grad = my_system.ThreeBodyEnergy(true);
         std::vector<double> my_virial = my_system.GetVirial();
 
