@@ -114,10 +114,10 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // The order is bc the poly were generated this way
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
-        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm);
+        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
     } else if (mon1 == "h2o" and (mon2 == "i" or mon2 == "li" or mon2 == "na" or mon2 == "k" or mon2 == "rb")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
 
         // =====>> BEGIN SECTION 2B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====

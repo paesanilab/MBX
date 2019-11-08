@@ -397,6 +397,16 @@ TEST_CASE("Test Na H2O virial contributions") {
 
     }
 
+    SECTION("Two-Body") {
+        double energy_grad = my_system.TwoBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_2b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
 
     SECTION("Dispersion") {
         double energy_grad = my_system.Dispersion(true);
