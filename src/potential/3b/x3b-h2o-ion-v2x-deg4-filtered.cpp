@@ -198,8 +198,6 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1,
     double energy = 0.0;
     for (size_t i = 0; i < nt; i++) {
 
-        size_t sh9 = 9*i;
-        size_t sh3 = 3*i;
         const double * w1 = xyz1 + 9*i;
         const double * w2 = xyz2 + 9*i;
         const double * x = xyz3 + 3*i;
