@@ -26,7 +26,7 @@ struct x2b_A1B2_A1B2_v1x {
     typedef poly_2b_A1B2_A1B2_deg5_v1x polynomial;
 
     double eval(const double* xyz1, const double* xyz2, const size_t ndim) const;
-    double eval(const double* xyz1, const double* xyz2, double* grad1, double* grad2, const size_t ndim) const;
+    double eval(const double* xyz1, const double* xyz2, double* grad1, double* grad2, const size_t ndim,std::vector<double> *virial=0) const;
     
 private:
 

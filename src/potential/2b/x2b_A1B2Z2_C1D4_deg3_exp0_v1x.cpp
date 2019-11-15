@@ -994,7 +994,7 @@ double x2b_A1B2Z2_C1D4_v1x::eval(const double* xyz1, const double* xyz2, const s
 
 
 double x2b_A1B2Z2_C1D4_v1x::eval(const double* xyz1, const double* xyz2,
-                double * grad1, double * grad2, const size_t ndim) const
+                double * grad1, double * grad2, const size_t ndim, std::vector<double> *virial) const
 {
     std::vector<double> energies(ndim,0.0);
 
@@ -1190,6 +1190,73 @@ double x2b_A1B2Z2_C1D4_v1x::eval(const double* xyz1, const double* xyz2,
             grad1[i+j*9] += d;
             grad2[i+j*15] -= d;
         }
+
+        if (virial != 0) {
+         
+            (*virial)[0] += -A_1_a[0]* A_1_a_g[0]
+                            -B_1_a[0]* B_1_a_g[0]
+                            -B_2_a[0]* B_2_a_g[0]
+                            -C_1_b[0]* C_1_b_g[0]
+                            -D_1_b[0]* D_1_b_g[0]
+                            -D_2_b[0]* D_2_b_g[0]
+                            -D_3_b[0]* D_3_b_g[0]
+                            -D_4_b[0]* D_4_b_g[0];
+         
+            (*virial)[1] += -A_1_a[0]* A_1_a_g[1]
+                            -B_1_a[0]* B_1_a_g[1]
+                            -B_2_a[0]* B_2_a_g[1]
+                            -C_1_b[0]* C_1_b_g[1]
+                            -D_1_b[0]* D_1_b_g[1]
+                            -D_2_b[0]* D_2_b_g[1]
+                            -D_3_b[0]* D_3_b_g[1]
+                            -D_4_b[0]* D_4_b_g[1];
+         
+            (*virial)[2] += -A_1_a[0]* A_1_a_g[2]
+                            -B_1_a[0]* B_1_a_g[2]
+                            -B_2_a[0]* B_2_a_g[2]
+                            -C_1_b[0]* C_1_b_g[2]
+                            -D_1_b[0]* D_1_b_g[2]
+                            -D_2_b[0]* D_2_b_g[2]
+                            -D_3_b[0]* D_3_b_g[2]
+                            -D_4_b[0]* D_4_b_g[2];
+         
+            (*virial)[3] += -A_1_a[1]* A_1_a_g[1]
+                            -B_1_a[1]* B_1_a_g[1]
+                            -B_2_a[1]* B_2_a_g[1]
+                            -C_1_b[1]* C_1_b_g[1]
+                            -D_1_b[1]* D_1_b_g[1]
+                            -D_2_b[1]* D_2_b_g[1]
+                            -D_3_b[1]* D_3_b_g[1]
+                            -D_4_b[1]* D_4_b_g[1];
+         
+            (*virial)[4] += -A_1_a[1]* A_1_a_g[2]
+                            -B_1_a[1]* B_1_a_g[2]
+                            -B_2_a[1]* B_2_a_g[2]
+                            -C_1_b[1]* C_1_b_g[2]
+                            -D_1_b[1]* D_1_b_g[2]
+                            -D_2_b[1]* D_2_b_g[2]
+                            -D_3_b[1]* D_3_b_g[2]
+                            -D_4_b[1]* D_4_b_g[2];
+         
+            (*virial)[5] += -A_1_a[2]* A_1_a_g[2]
+                            -B_1_a[2]* B_1_a_g[2]
+                            -B_2_a[2]* B_2_a_g[2]
+                            -C_1_b[2]* C_1_b_g[2]
+                            -D_1_b[2]* D_1_b_g[2]
+                            -D_2_b[2]* D_2_b_g[2]
+                            -D_3_b[2]* D_3_b_g[2]
+                            -D_4_b[2]* D_4_b_g[2];
+        
+            (*virial)[3]=(*virial)[1];
+            (*virial)[6]=(*virial)[2];
+            (*virial)[7]=(*virial)[5];
+        
+        }
+
+
+
+
+
 
     }
 
