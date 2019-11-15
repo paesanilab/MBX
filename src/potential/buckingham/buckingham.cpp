@@ -55,6 +55,7 @@ void Buckingham::Initialize(const std::vector<double> &sys_xyz,
     xyz_ = std::vector<double>(natoms3, 0.0);
     grad_ = std::vector<double>(natoms3, 0.0);
     sys_grad_ = std::vector<double>(natoms3, 0.0);
+    virial_ = std::vector<double>(9,0.0);
 
     ReorderData();
 }
@@ -109,8 +110,29 @@ void Buckingham::ReorderData() {
     }
 }
 
-double Buckingham::GetRepulsion(std::vector<double> &grad) {
+double Buckingham::GetRepulsion(std::vector<double> &grad, std::vector<double> *virial) {
+    calc_virial_=false;
+
+    if (virial != 0) {
+        calc_virial_ = true;
+    }
+
+    std::fill(virial_.begin(), virial_.end(),0.0);
+
+
     CalculateRepulsion();
+
+    if (calc_virial_) {
+        (*virial)[0] += virial_[0];
+        (*virial)[1] += virial_[1];
+        (*virial)[2] += virial_[2];
+        (*virial)[3] += virial_[3];
+        (*virial)[4] += virial_[4];
+        (*virial)[5] += virial_[5];
+        (*virial)[6] += virial_[6];
+        (*virial)[7] += virial_[7];
+        (*virial)[8] += virial_[8];
+    }
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -180,7 +202,8 @@ void Buckingham::CalculateRepulsion() {
     
             std::vector<std::vector<double> > grad_pool(nthreads,std::vector<double>(nmon * ns * 3,0.0));
             std::vector<double> energy_pool(nthreads,0.0);
-    
+            std::vector<std::vector<double> > virial_pool(nthreads,std::vector<double>(9,0.0));
+            
             // Loop over each pair of sites
             for (size_t i = 0; i < ns - 1; i++) {
                 size_t inmon = i * nmon;
@@ -212,7 +235,7 @@ void Buckingham::CalculateRepulsion() {
                         std::fill(g1, g1 + 3, 0.0);
                         energy_pool[rank] += Repulsion(a, b, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), 
                                               nmon, nmon, m, m + 1, i, j, 
-                                              do_grads_, cutoff_, box_, box_inverse_);
+                                              do_grads_, cutoff_, box_, box_inverse_, &virial_pool[rank]);
     
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
@@ -226,6 +249,9 @@ void Buckingham::CalculateRepulsion() {
                 size_t kend = grad_pool[rank].size();
                 for (size_t k = 0; k < kend; k++) {
                     grad_[fi_crd + k] += grad_pool[rank][k];
+                }
+                for (size_t k = 0; k<9;k++) {
+                     virial_[k] -= virial_pool[rank][k]; // -= bc the atomindeces are switched relative to dlpoly
                 }
                 rep_energy_ += energy_pool[rank];
             }
@@ -275,6 +301,7 @@ void Buckingham::CalculateRepulsion() {
                 std::vector<std::vector<double> > grad1_pool(nthreads, std::vector<double>(nmon1 * ns1 * 3,0.0));
                 std::vector<std::vector<double> > grad2_pool(nthreads, std::vector<double>(nmon2 * ns2 * 3,0.0));
                 std::vector<double> energy_pool(nthreads,0.0);
+                std::vector<std::vector<double> > virial_pool(nthreads,std::vector<double>(9,0.0));
     #ifdef _OPENMP
     #pragma omp parallel for schedule(dynamic)
     #endif
@@ -299,7 +326,7 @@ void Buckingham::CalculateRepulsion() {
                             energy_pool[rank] +=
                                 Repulsion(a, b, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
                                       grad2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
-                                      i, j, do_grads_, cutoff_, box_, box_inverse_);
+                                      i, j, do_grads_, cutoff_, box_, box_inverse_,&virial_pool[rank]);
                         }
                         grad1_pool[rank][inmon13 + m1] += g1[0];
                         grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
@@ -317,6 +344,10 @@ void Buckingham::CalculateRepulsion() {
                     for (size_t k = 0; k < kend2; k++) {
                         grad_[fi_crd2 + k] += grad2_pool[rank][k];
                     }
+                    for (size_t k = 0; k<9;k++) {
+                        virial_[k] -= virial_pool[rank][k]; // -= bc the atomindeces are switched relative to dlpoly
+                    }
+
                     rep_energy_ += energy_pool[rank];
                 }
             } // if do_buck

@@ -1,6 +1,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <string>
+#include <vector>
 
 #include <iostream>
 #include "poly-3b-h2o-ion-v1x_deg4_filtered.h"
@@ -22,7 +23,7 @@ struct x3b_h2o_ion_v1x_deg4_filtered {
                       const double* xyz3,
                       double* grad1,
                       double* grad2,
-                      double* grad3, size_t nt) const;
+                      double* grad3, size_t nt, std::vector<double> *virial=0) const;
 public:
     double m_r3i;
     double m_r3f;

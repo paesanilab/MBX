@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "setup_h2o_1.h"
 #include "setup_h2o_2_virial.h"
 #include "setup_h2o_3_virial.h"
+#include "setup_h2o_4_virial.h"
 #include "electrostatics.h"
 
 #include <vector>
@@ -263,6 +264,139 @@ TEST_CASE("Test trimer virial contributions") {
             }
 
     }
+
+
+}
+
+TEST_CASE("Test tetramer virial contributions") {
+    SETUP_H2O_4_VIRIAL
+
+    bblock::System my_system;
+
+    // Add monomers to the system
+    size_t count = 0;
+    for (size_t i = 0; i < n_monomers; i++) {
+        std::vector<double> xyz(real_coords.begin() + 3 * count,
+                                real_coords.begin() + 3 * count + 3 * n_atoms_vector[i]);
+        std::vector<std::string> ats(atom_names.begin() + count, atom_names.begin() + count + n_atoms_vector[i]);
+        std::string monid = monomer_names[i];
+        my_system.AddMonomer(xyz, ats, monid);
+        count += n_atoms_vector[i];
+    }
+
+    // Initialize the system to fill in the information
+    my_system.Initialize();
+
+    SECTION("One-Body") {
+        double energy_grad = my_system.OneBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_1b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Two-Body") {
+        double energy_grad = my_system.TwoBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_2b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+
+    SECTION("Three-Body") {
+        double energy_grad = my_system.ThreeBodyEnergy(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_3b[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+    SECTION("Dispersion") {
+        double energy_grad = my_system.Dispersion(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_disp[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Electrostatics") {
+        double energy_grad = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Dispersion PBC") {
+        my_system.SetPBC(box);
+        my_system.Set2bCutoff(9.0);
+        my_system.SetEwald(0.5, 2.5, 6);
+     
+        double energy_grad = my_system.Dispersion(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_disp_pbc[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Electrostatics PBC") {
+        my_system.SetPBC(box);
+        my_system.Set2bCutoff(9.0);
+        my_system.SetEwald(0.542237671769889, 2.5, 6);
+        double energy_grad = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec_pbc[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
+    SECTION("Electrostatics PBC initilaization test") {
+        my_system.SetPBC(box);
+        my_system.Set2bCutoff(9.0);
+        my_system.SetEwald(0.542237671769889, 2.5, 6);
+        double energy_grad1 = my_system.Electrostatics(true);
+        double energy_grad2 = my_system.Electrostatics(true);
+        double energy_grad3 = my_system.Electrostatics(true);
+        double energy_grad4 = my_system.Electrostatics(true);
+        double energy_grad5 = my_system.Electrostatics(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_elec_pbc[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+    SECTION("Dispersion PBC initialization test") {
+        my_system.SetPBC(box);
+        my_system.Set2bCutoff(9.0);
+        my_system.SetEwald(0.5, 2.5, 6);
+        double energy_grad1 = my_system.Dispersion(true);
+        double energy_grad2 = my_system.Dispersion(true);
+        double energy_grad3 = my_system.Dispersion(true);
+        double energy_grad4 = my_system.Dispersion(true);
+        double energy_grad5 = my_system.Dispersion(true);
+        std::vector<double> my_virial = my_system.GetVirial();
+
+            for (size_t i = 0; i < 9; i++) {
+                REQUIRE(virial_disp_pbc[i] == Approx(my_virial[i]).margin(TOL));
+            }
+
+    }
+
 
 
 }

@@ -137,7 +137,7 @@ std::vector<double> x1b_A1B2_v1x::eval(const double* xyz, const size_t nmon) con
 }
  
 //----------------------------------------------------------------------------//
-std::vector<double> x1b_A1B2_v1x::eval(const double* xyz, double * grad, const size_t nmon) const {
+std::vector<double> x1b_A1B2_v1x::eval(const double* xyz, double * grad, const size_t nmon, std::vector<double> *virial) const {
     std::vector<double> energies(nmon,0.0);
 
     for (size_t j = 0; j < nmon; j++) {
@@ -161,6 +161,36 @@ std::vector<double> x1b_A1B2_v1x::eval(const double* xyz, double * grad, const s
         g_intra(g[2], k_intra_BB, d_intra_BB, B0, B1, gB0, gB1);
         for (size_t i = 0; i < 9; i++)
             grad[i + j*9] = xgrd[i];
+
+        if (virial !=0) {
+            (*virial)[0] += -A0[0] * gA0[0]  
+                            -B0[0] * gB0[0]
+                            -B1[0] * gB1[0];
+
+            (*virial)[1] += -A0[0] * gA0[1]
+                            -B0[0] * gB0[1]
+                            -B1[0] * gB1[1];
+
+            (*virial)[2] += -A0[0] * gA0[2]
+                            -B0[0] * gB0[2]
+                            -B1[0] * gB1[2];
+
+            (*virial)[4] += -A0[1] * gA0[1]
+                            -B0[1] * gB0[1]
+                            -B1[1] * gB1[1];
+
+            (*virial)[5] += -A0[1] * gA0[2]
+                            -B0[1] * gB0[2]
+                            -B1[1] * gB1[2];
+
+            (*virial)[8] += -A0[2] * gA0[2]
+                            -B0[2] * gB0[2]
+                            -B1[2] * gB1[2];
+
+            (*virial)[3] = (*virial)[1];
+            (*virial)[6] = (*virial)[2];
+            (*virial)[7] = (*virial)[5];
+        }
     }
 
     return energies;
