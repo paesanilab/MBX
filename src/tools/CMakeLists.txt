@@ -1,4 +1,5 @@
 set (TOOLS_SOURCES math_tools.cpp
+                   properties.cpp
                    mt19937.cpp   
                    variable.cpp
                    water_monomer_lp.cpp
