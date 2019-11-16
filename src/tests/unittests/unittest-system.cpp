@@ -241,19 +241,19 @@ TEST_CASE("Test the system class.") {
             {
                 "MBX" , 
                 { 
-                    {"box" , {100.0,0.0,0.0,0.0,100.0,0.0,0.0,0.0,100.0}},
-                    {"twobody_cutoff"   , 9.0},
-                    {"threebody_cutoff" , 7.0},
+                    {"box" , nlohmann::json::array()},
+                    {"twobody_cutoff"   , 100.0},
+                    {"threebody_cutoff" , 6.5},
                     {"max_n_eval_1b"    , 500},
                     {"max_n_eval_2b"    , 500},
                     {"max_n_eval_3b"    , 500},
                     {"dipole_tolerance" , 1E-016},
                     {"dipole_max_it"    , 100},
                     {"dipole_method"    , "cg"},
-                    {"aplha_ewald_elec" , 0.0},
+                    {"alpha_ewald_elec" , 0.0},
                     {"grid_density_elec",  2.5},
                     {"spline_order_elec",  6},
-                    {"aplha_ewald_disp" , 0.0},
+                    {"alpha_ewald_disp" , 0.0},
                     {"grid_density_disp",  2.5},
                     {"spline_order_disp",  6},
                     {"ttm_pairs" , nlohmann::json::array()},
@@ -293,10 +293,10 @@ TEST_CASE("Test the system class.") {
         j["MBX"]["dipole_tolerance"] = 1E-14;
         j["MBX"]["dipole_max_it"] = 150;
         j["MBX"]["dipole_method"] = "iter";
-        j["MBX"]["aplha_ewald_elec" ] = 0.01;
+        j["MBX"]["alpha_ewald_elec" ] = 0.01;
         j["MBX"]["grid_density_elec"] = 2.8;
         j["MBX"]["spline_order_elec"] = 5;
-        j["MBX"]["aplha_ewald_disp"] = 0.01;
+        j["MBX"]["alpha_ewald_disp"] = 0.01;
         j["MBX"]["grid_density_disp"] = 2.7;
         j["MBX"]["spline_order_disp"] = 4;
         j["MBX"]["ttm_pairs"] = nlohmann::json::array({{"h2o","i"},{"cs","h2o"}});
@@ -349,12 +349,12 @@ TEST_CASE("Test the system class.") {
             double grid = 0.0;
             size_t spline = 0;
             my_system.GetEwaldParamsElectrostatics(alpha, grid, spline);
-            REQUIRE(alpha == j["MBX"]["aplha_ewald_elec"]);
+            REQUIRE(alpha == j["MBX"]["alpha_ewald_elec"]);
             REQUIRE(grid == j["MBX"]["grid_density_elec"]);
             REQUIRE(spline == j["MBX"]["spline_order_elec"]);
 
             my_system.GetEwaldParamsDispersion(alpha, grid, spline);
-            REQUIRE(alpha == j["MBX"]["aplha_ewald_disp"]);
+            REQUIRE(alpha == j["MBX"]["alpha_ewald_disp"]);
             REQUIRE(grid == j["MBX"]["grid_density_disp"]);
             REQUIRE(spline == j["MBX"]["spline_order_disp"]);
 

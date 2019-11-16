@@ -631,6 +631,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         box = box2;
     } catch (...) {
         box.clear();
+        std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
     }
     box_ = box;
     mbx_j_["MBX"]["box"] = box;
@@ -642,17 +643,19 @@ void System::SetUpFromJson(nlohmann::json j) {
         cutoff_2b = j["MBX"]["twobody_cutoff"];
     } catch (...) {
         cutoff_2b = box_.size() ? 9.0 : 100.0;
+        std::cerr << "**WARNING** \"twobody_cutoff\" is not defined in json file. Using " << cutoff_2b << "\n";
     }
     cutoff2b_ = cutoff_2b;
     mbx_j_["MBX"]["twobody_cutoff"] = cutoff_2b;
 
     // Try to get 3b cutoff
-    // Default: 7.0 Angstrom
+    // Default: 6.5 Angstrom
     double cutoff_3b;
     try {
         cutoff_3b = j["MBX"]["threebody_cutoff"];
     } catch (...) {
         cutoff_3b = 6.5;
+        std::cerr << "**WARNING** \"threebody_cutoff\" is not defined in json file. Using " << cutoff_3b << "\n";
     }
     cutoff3b_ = cutoff_3b;
     mbx_j_["MBX"]["threebody_cutoff"] = cutoff_3b;
@@ -664,6 +667,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         max_eval_1b = j["MBX"]["max_n_eval_1b"];
     } catch (...) {
         max_eval_1b = 1000;
+        std::cerr << "**WARNING** \"max_n_eval_1b\" is not defined in json file. Using " << max_eval_1b << "\n";
     }
     maxNMonEval_ = max_eval_1b;
     mbx_j_["MBX"]["max_n_eval_1b"] = max_eval_1b;
@@ -675,6 +679,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         max_eval_2b = j["MBX"]["max_n_eval_2b"];
     } catch (...) {
         max_eval_2b = 1000;
+        std::cerr << "**WARNING** \"max_n_eval_2b\" is not defined in json file. Using " << max_eval_2b << "\n";
     }
     maxNDimEval_ = max_eval_2b;
     mbx_j_["MBX"]["max_n_eval_2b"] = max_eval_2b;
@@ -686,6 +691,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         max_eval_3b = j["MBX"]["max_n_eval_3b"];
     } catch (...) {
         max_eval_3b = 1000;
+        std::cerr << "**WARNING** \"max_n_eval_3b\" is not defined in json file. Using " << max_eval_3b << "\n";
     }
     maxNTriEval_ = max_eval_3b;
     mbx_j_["MBX"]["max_n_eval_3b"] = max_eval_3b;
@@ -697,6 +703,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         dipole_tolerance = j["MBX"]["dipole_tolerance"];
     } catch (...) {
         dipole_tolerance = 1E-16;
+        std::cerr << "**WARNING** \"dipole_tolerance\" is not defined in json file. Using " << dipole_tolerance << "\n";
     }
     diptol_ = dipole_tolerance;
     mbx_j_["MBX"]["dipole_tolerance"] = dipole_tolerance;
@@ -708,6 +715,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         dipole_method = j["MBX"]["dipole_method"];
     } catch (...) {
         dipole_method = "cg";
+        std::cerr << "**WARNING** \"dipole_method\" is not defined in json file. Using " << dipole_method << "\n";
     }
     dipole_method_ = dipole_method;
     mbx_j_["MBX"]["dipole_method"] = dipole_method;
@@ -719,6 +727,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         dipole_max_it = j["MBX"]["dipole_max_it"];
     } catch (...) {
         dipole_max_it = 100;
+        std::cerr << "**WARNING** \"dipole_max_it\" is not defined in json file. Using " << dipole_max_it << "\n";
     }
     maxItDip_ = dipole_max_it;
     mbx_j_["MBX"]["dipole_max_it"] = dipole_max_it;
@@ -727,11 +736,12 @@ void System::SetUpFromJson(nlohmann::json j) {
     // Default: 0.6
     double alpha_disp;
     try {
-        alpha_disp = j["MBX"]["aplha_ewald_disp"];
+        alpha_disp = j["MBX"]["alpha_ewald_disp"];
     } catch (...) {
         alpha_disp = box_.size() ? 0.6 : 0.0;
+        std::cerr << "**WARNING** \"alpha_ewald_disp\" is not defined in json file. Using " << alpha_disp << "\n";
     }
-    mbx_j_["MBX"]["aplha_ewald_disp"] = alpha_disp;
+    mbx_j_["MBX"]["alpha_ewald_disp"] = alpha_disp;
 
     // Try to get dispertion PME grid density
     // Default: 2.5
@@ -740,6 +750,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         grid_density_disp = j["MBX"]["grid_density_disp"];
     } catch (...) {
         grid_density_disp = 2.5;
+        std::cerr << "**WARNING** \"grid_density_disp\" is not defined in json file. Using " << grid_density_disp << "\n";
     }
     mbx_j_["MBX"]["grid_density_disp"] = grid_density_disp;
 
@@ -750,6 +761,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         spline_order_disp = j["MBX"]["spline_order_disp"];
     } catch (...) {
         spline_order_disp = 6;
+        std::cerr << "**WARNING** \"spline_order_disp\" is not defined in json file. Using " << spline_order_disp << "\n";
     }
     mbx_j_["MBX"]["spline_order_disp"] = spline_order_disp;
 
@@ -759,11 +771,12 @@ void System::SetUpFromJson(nlohmann::json j) {
     // Default: 0.6
     double alpha_elec;
     try {
-        alpha_elec = j["MBX"]["aplha_ewald_elec"];
+        alpha_elec = j["MBX"]["alpha_ewald_elec"];
     } catch (...) {
         alpha_elec = box.size() ? 0.6 : 0.0;
+        std::cerr << "**WARNING** \"alpha_ewald_elec\" is not defined in json file. Using " << alpha_elec << "\n";
     }
-    mbx_j_["MBX"]["aplha_ewald_elec"] = alpha_elec;
+    mbx_j_["MBX"]["alpha_ewald_elec"] = alpha_elec;
 
     // Try to get electrostatics PME grid density
     // Default: 2.5
@@ -772,6 +785,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         grid_density_elec = j["MBX"]["grid_density_elec"];
     } catch (...) {
         grid_density_elec = 2.5;
+        std::cerr << "**WARNING** \"grid_density_elec\" is not defined in json file. Using " << grid_density_elec << "\n";
     }
     mbx_j_["MBX"]["grid_density_elec"] = grid_density_elec;
 
@@ -782,6 +796,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         spline_order_elec = j["MBX"]["spline_order_elec"];
     } catch (...) {
         spline_order_elec = 6;
+        std::cerr << "**WARNING** \"spline_order_elec\" is not defined in json file. Using " << spline_order_elec << "\n";
     }
     mbx_j_["MBX"]["spline_order_elec"] = spline_order_elec;
 
@@ -793,6 +808,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         ttm_pairs = ttm_pairs2;
     } catch (...) {
         ttm_pairs.clear();
+        std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty list.\n";
     }
     SetTTMnrgPairs(ttm_pairs);
     mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
@@ -803,6 +819,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         ignore_2b_poly = ignore_2b_poly2;
     } catch (...) {
         ignore_2b_poly.clear();
+        std::cerr << "**WARNING** \"ignore_2b_poly\" is not defined in json file. Using empty list.\n";
     }
     Set2bIgnorePoly(ignore_2b_poly);
     mbx_j_["MBX"]["ignore_2b_poly"] = ignore_2b_poly_;
@@ -813,6 +830,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         ignore_3b_poly = ignore_3b_poly2;
     } catch (...) {
         ignore_3b_poly.clear();
+        std::cerr << "**WARNING** \"ignore_3b_poly\" is not defined in json file. Using empty list.\n";
     }
     Set3bIgnorePoly(ignore_3b_poly);
     mbx_j_["MBX"]["ignore_3b_poly"] = ignore_3b_poly_;
@@ -839,10 +857,10 @@ void System::SetUpFromJson(char *json_file) {
        "dipole_tolerance" : 1E-016,
        "dipole_max_it"    : 100,
        "dipole_method"     : "cg",
-       "aplha_ewald_elec" : 0.6,
+       "alpha_ewald_elec" : 0.6,
        "grid_density_elec" : 2.5,
        "spline_order_elec" : 6,
-       "aplha_ewald_disp" : 0.6,
+       "alpha_ewald_disp" : 0.6,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
        "ttm_pairs" : [],
@@ -864,19 +882,19 @@ void System::SetUpFromJson(char *json_file) {
         {
             "MBX" ,
             {
-                {"box" , {100.0,0.0,0.0,0.0,100.0,0.0,0.0,0.0,100.0}},
-                {"twobody_cutoff"   , 9.0},
-                {"threebody_cutoff" , 7.0},
+                {"box" , nlohmann::json::array()},
+                {"twobody_cutoff"   , 100.0},
+                {"threebody_cutoff" , 6.5},
                 {"max_n_eval_1b"    , 500},
                 {"max_n_eval_2b"    , 500},
                 {"max_n_eval_3b"    , 500},
-                {"dipole_tolerance" , 1E-016},
+                {"dipole_tolerance" , 1E-16},
                 {"dipole_max_it"    , 100},
                 {"dipole_method"    , "cg"},
-                {"aplha_ewald_elec" , 0.0},
+                {"alpha_ewald_elec" , 0.0},
                 {"grid_density_elec",  2.5},
                 {"spline_order_elec",  6},
-                {"aplha_ewald_disp" , 0.0},
+                {"alpha_ewald_disp" , 0.0},
                 {"grid_density_disp",  2.5},
                 {"spline_order_disp",  6},
                 {"ttm_pairs" , nlohmann::json::array()},

@@ -49,10 +49,10 @@ The jason file template is the following:
        "dipole_tolerance" : 1E-16,
        "dipole_max_it"    : 100,
        "dipole_method"     : "aspc",
-       "aplha_ewald_elec" : 0.25,
+       "alpha_ewald_elec" : 0.25,
        "grid_density_elec" : 2.5,
        "spline_order_elec" : 6,
-       "aplha_ewald_disp" : 0.25,
+       "alpha_ewald_disp" : 0.25,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
        "ttm_pairs" : [],
@@ -73,7 +73,7 @@ In this file:
 - `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. 
 - `dipole_max_it` is the maximum number of iterations allowed in the dipole iterative method calculation. If the number of iterations exceeds this value, MBX will throw an error message saying that the dipoles have diverged.
 - `dipole_method` is the method that will be used to calculate the induced dipoles. Current options are `iter` (iterative), `cg` (conjugate gradient, faster than iter), and `aspc` (always stable predictor corrector), whoch should only be used in simulations.
-- `aplha_ewald_XX` is the alpha used in the reciprocal space. Should be set to 0 when runing a gas phase calculation.
+- `alpha_ewald_XX` is the alpha used in the reciprocal space. Should be set to 0 when runing a gas phase calculation.
 - `grid_density_XX` is the number of grid points density.
 - `spline_order_XX` is the order of the splines used for interpolation.
 - `ttm_pairs` a list of 2 element lists with the monomer pairs for which the repulsion will be calculated using the buckingham. If a pure TTM-nrg calculation is being performed, `ignore_2b_poly` should contain the same pairs as `ttm_pairs`. Example: `"ttm_pairs" : [["f","h2o"],["na","h2o"]]`
