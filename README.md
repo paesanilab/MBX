@@ -2,7 +2,14 @@
 [![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
 
 # MBX
-DO NOT CLONE. Currently under development. This code will be able to calculate the energy of a set of systems composed by molecules, each molecule composed by monomers. 
+This is the version 0.2.0a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
+
+What's new in v0.2.0a
+- JSON input files have been implemented to modify the system settings without recompiling the code.
+- The virial tensor is now calculated, enabling isobaric isothermal simulations.
+- Untested/unpublished three-body PEFs have been added for the alkali metal ions.
+- Untested/unpublished two-body PEFs have been added for CO2, CO2--H2O, and CO2--CO2.
+- Performance have been improved with respect to v0.1a
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
