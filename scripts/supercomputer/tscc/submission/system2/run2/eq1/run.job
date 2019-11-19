@@ -35,6 +35,9 @@ cd $PBS_O_WORKDIR
 # Print the current jobid in output folder
 echo $PBS_JOBID > jobid.dat
 
+# Clean localhost
+rm -f /tmp/ipi_localhost*
+
 # Run i-pi to initialize communication
 i-pi $INPUT_XML > i-pi.out &
 sleep 10
