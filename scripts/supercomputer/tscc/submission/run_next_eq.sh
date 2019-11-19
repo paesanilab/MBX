@@ -35,6 +35,7 @@ if [ $step -eq $total_steps ]; then
   cat simulation.checkpoint | sed "s/<step>$step<\/step>/<step>0<\/step>/g" | sed "s/<total_steps>$step<\/total_steps>/<total_steps>10000000<\/total_steps>/g"  > ../prod1/config.xml
   cp config.nrg ../prod1
   cp run.job ../prod1
+  cp mbx.json ../prod1
   cd ../prod1
   qsub run.job > jobid.dat 
   echo "Submitted prod1"
@@ -45,6 +46,7 @@ else
   cp simulation.checkpoint ../eq$nextp/config.xml
   cp config.nrg ../eq$nextp
   cp run.job ../eq$nextp
+  cp mbx.json ../eq$nextp
   cd ../eq$nextp
   qsub run.job > jobid.dat
   echo "Submitted eq$nextp (time: $step / $total_steps)"

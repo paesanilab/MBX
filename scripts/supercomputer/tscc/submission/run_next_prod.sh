@@ -37,6 +37,7 @@ else
   cp simulation.checkpoint ../prod$nextp/config.xml
   cp config.nrg ../prod$nextp
   cp run.job ../prod$nextp
+  cp mbx.json ../prod$nextp
   cd ../prod$nextp
   qsub run.job > jobid.dat
   echo "Submitted prod$nextp for job in $PWD"
