@@ -5,14 +5,14 @@ In order to install MBX on tscc, you will need to make sure you have the followi
 
 # Installation
 You can try to install MBX at the login node. For that,
-`cp $MBX_HOME/scripts/supercomputers/tscc/compile_tscc.sh $MBX_HOME`
+`cp $MBX_HOME/scripts/supercomputers/tscc/compilation/compile_tscc.sh $MBX_HOME`
 `cd $MBX_HOME`
 `./compile_tscc.sh gnu`
 
 If there are problems to compile or takes too long, you can submit the compilation as a job.
 First, set `MBX_HOME` to the right path in `scripts/supercomputers/tscc/compile_tscc_gnu.job`.
 Then,
-`cp $MBX_HOME/scripts/supercomputers/tscc/compile_tscc_gnu.job $MBX_HOME`
+`cp $MBX_HOME/scripts/supercomputers/tscc/compilation/compile_tscc_gnu.job $MBX_HOME`
 `cd $MBX_HOME`
 `qsub compile_tscc_gnu.job`
 
