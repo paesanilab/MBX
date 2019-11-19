@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#SBATCH --job-name="mbx_compilation"
+#SBATCH --output="mbx_compilation.%j.%N.out"
+#SBATCH --partition=shared
+#SBATCH --share
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=8
+##SBATCH --mem=80G
+#SBATCH --export=ALL
+#SBATCH -t 01:00:00
+
+MBX_HOME=$HOME/codes/MBX
+CMAKE_EXE=$HOME/codes/cmake-3.14.3/bin/cmake
+
+cd $MBX_HOME 
+
+rm -rf build install
+$CMAKE_EXE -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=True -DCMAKE_CXX_FLAGS=" -fPIC -O2 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
+cd build
+make CXX=g++ CC=gcc
+make install
+cd ../
