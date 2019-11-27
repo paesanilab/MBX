@@ -16,3 +16,9 @@ Everytime that you want to use plumed, you need to set up the following variable
 `source sourceme.sh`
 
 Now PLUMED should be working and talking to i-pi. Look at the examples in this folder.
+
+# Useful information
+If you want to learn how to run metadynamics with PLUMED, look at the folowing tutorials:
+https://www.plumed.org/doc-v2.5/user-doc/html/belfast-6.html
+https://www.plumed.org/doc-v2.5/user-doc/html/trieste-4.html
+https://www.plumed.org/doc-v2.5/user-doc/html/lugano-3.html
