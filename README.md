@@ -5,7 +5,9 @@
 This is the version 0.2.1a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
 
 What's new in v0.2.1a
-- The version name
+- Scripts to compile and run simulations on comet and TSCC have been added.
+- Example on how to install and run plumed with i-pi and MBX.
+- Three-body PEFs for alkali-metal ions and corresponding tests have been updated to the ones that were used for the EXAFS spectra.
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
