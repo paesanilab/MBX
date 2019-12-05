@@ -85,7 +85,7 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
     } else if (mon1 == "nh3") {
         mbnrg_A1B3_deg6::mbnrg_A1B3_deg6_v1 pot(mon1);
-        energies =  pot.eval(xyz1.data(), grad1.data(), nm);
+        energies =  pot.eval(xyz1.data(), grad1.data(), nm, virial);
         // =====>> END SECTION 1B_GRADIENT <<=====
     } else {
         return 0.0;

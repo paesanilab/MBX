@@ -293,7 +293,7 @@ double mbnrg_A1B3_deg6_v1::f_switch(const double r, double& g)
 
 //----------------------------------------------------------------------------//
 
-std::vector<double> mbnrg_A1B3_deg6_v1::eval(const double *xyz1, double *grad1 , const size_t n) {
+std::vector<double> mbnrg_A1B3_deg6_v1::eval(const double *xyz1, double *grad1 , const size_t n, std::vector<double> *virial) {
     std::vector<double> energies(n,0.0);
     std::vector<double> energies_sw(n,0.0);
 
@@ -376,6 +376,45 @@ std::vector<double> mbnrg_A1B3_deg6_v1::eval(const double *xyz1, double *grad1 ,
         for (size_t i = 0; i < 12; i++) {
             grad1[i + j*12] += gradients[0 + i];
         }
+
+        if (virial != 0) {
+         
+            (*virial)[0] += -coords_A_1_a[0]* coords_A_1_a_g[0]
+                            -coords_B_1_a[0]* coords_B_1_a_g[0]
+                            -coords_B_2_a[0]* coords_B_2_a_g[0]
+                            -coords_B_3_a[0]* coords_B_3_a_g[0];
+         
+            (*virial)[1] += -coords_A_1_a[0]* coords_A_1_a_g[1]
+                            -coords_B_1_a[0]* coords_B_1_a_g[1]
+                            -coords_B_2_a[0]* coords_B_2_a_g[1]
+                            -coords_B_3_a[0]* coords_B_3_a_g[1];
+         
+            (*virial)[2] += -coords_A_1_a[0]* coords_A_1_a_g[2]
+                            -coords_B_1_a[0]* coords_B_1_a_g[2]
+                            -coords_B_2_a[0]* coords_B_2_a_g[2]
+                            -coords_B_3_a[0]* coords_B_3_a_g[2];
+         
+            (*virial)[3] += -coords_A_1_a[1]* coords_A_1_a_g[1]
+                            -coords_B_1_a[1]* coords_B_1_a_g[1]
+                            -coords_B_2_a[1]* coords_B_2_a_g[1]
+                            -coords_B_3_a[1]* coords_B_3_a_g[1];
+         
+            (*virial)[4] += -coords_A_1_a[1]* coords_A_1_a_g[2]
+                            -coords_B_1_a[1]* coords_B_1_a_g[2]
+                            -coords_B_2_a[1]* coords_B_2_a_g[2]
+                            -coords_B_3_a[1]* coords_B_3_a_g[2];
+         
+            (*virial)[5] += -coords_A_1_a[2]* coords_A_1_a_g[2]
+                            -coords_B_1_a[2]* coords_B_1_a_g[2]
+                            -coords_B_2_a[2]* coords_B_2_a_g[2]
+                            -coords_B_3_a[2]* coords_B_3_a_g[2];
+        
+            (*virial)[3]=(*virial)[1];
+            (*virial)[6]=(*virial)[2];
+            (*virial)[7]=(*virial)[5];
+        
+        }
+
 
 
     }
