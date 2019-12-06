@@ -8,7 +8,7 @@ What's new in v0.2.1a
 - Scripts to compile and run simulations on comet and TSCC have been added.
 - Example on how to install and run plumed with i-pi and MBX.
 - Three-body PEFs for alkali-metal ions and corresponding tests have been updated to the ones that were used for the EXAFS spectra.
-- Bugfix in virial for CH4, indexes were not correct in the 1b and 2b MB-nrg pefs.
+- Bugfix in virial for CH4, indexes were not correct in the 1b CH4 and 2b CH4-CH4 and CH4-H2O MB-nrg pefs.
 - Added NH3 1b PEF MB-nrg.
 - Added NH3-NH3 2b PEF TTM-nrg.
 
