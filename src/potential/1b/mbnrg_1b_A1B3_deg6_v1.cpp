@@ -394,17 +394,17 @@ std::vector<double> mbnrg_A1B3_deg6_v1::eval(const double *xyz1, double *grad1 ,
                             -coords_B_2_a[0]* coords_B_2_a_g[2]
                             -coords_B_3_a[0]* coords_B_3_a_g[2];
          
-            (*virial)[3] += -coords_A_1_a[1]* coords_A_1_a_g[1]
+            (*virial)[4] += -coords_A_1_a[1]* coords_A_1_a_g[1]
                             -coords_B_1_a[1]* coords_B_1_a_g[1]
                             -coords_B_2_a[1]* coords_B_2_a_g[1]
                             -coords_B_3_a[1]* coords_B_3_a_g[1];
          
-            (*virial)[4] += -coords_A_1_a[1]* coords_A_1_a_g[2]
+            (*virial)[5] += -coords_A_1_a[1]* coords_A_1_a_g[2]
                             -coords_B_1_a[1]* coords_B_1_a_g[2]
                             -coords_B_2_a[1]* coords_B_2_a_g[2]
                             -coords_B_3_a[1]* coords_B_3_a_g[2];
          
-            (*virial)[5] += -coords_A_1_a[2]* coords_A_1_a_g[2]
+            (*virial)[8] += -coords_A_1_a[2]* coords_A_1_a_g[2]
                             -coords_B_1_a[2]* coords_B_1_a_g[2]
                             -coords_B_2_a[2]* coords_B_2_a_g[2]
                             -coords_B_3_a[2]* coords_B_3_a_g[2];
