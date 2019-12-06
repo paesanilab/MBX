@@ -962,7 +962,7 @@ void System::AddMonomerInfo() {
     std::vector<size_t> fi_at;
     numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
 
-    //#ifdef DEBUG
+#ifdef DEBUG
     std::cerr << "Finished SetUpMonomers.\n";
     std::cerr << "Monomer vector:\n";
     for (size_t i = 0; i < monomers_.size(); i++) {
@@ -993,7 +993,7 @@ void System::AddMonomerInfo() {
         std::cerr << fi_at[i] << " , ";
     }
     std::cerr << std::endl;
-    //#endif
+#endif
 
     // Calculating the number of atoms
     numat_ = 0;
@@ -1005,7 +1005,7 @@ void System::AddMonomerInfo() {
     mon_type_count_ = systools::OrderMonomers(monomers_, islocal_, sites_, nat_, original2current_order_, initial_order_,
                                               initial_order_realSites_);
 
-    //#ifdef DEBUG
+#ifdef DEBUG
     std::cerr << "Finished OrderMonomers():\n";
     std::cerr << "mon_type_count:\n";
     for (size_t i = 0; i < mon_type_count_.size(); i++) {
@@ -1042,7 +1042,7 @@ void System::AddMonomerInfo() {
         std::cerr << "{" << initial_order_realSites_[i].first << "," << initial_order_realSites_[i].second << "} , ";
     }
     std::cerr << std::endl;
-    //#endif
+#endif
 
     // Rearranging coordinates to account for virt sites
     xyz_ = std::vector<double>(3 * numsites_, 0.0);
