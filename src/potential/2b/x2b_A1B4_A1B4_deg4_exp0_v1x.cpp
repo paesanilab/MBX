@@ -1926,7 +1926,7 @@ double x2b_A1B4_A1B4_v1x::eval(const double* xyz1, const double* xyz2,
                             -B_3_b[0]* B_3_b_g[2]
                             -B_4_b[0]* B_4_b_g[2];
          
-            (*virial)[3] += -A_1_a[1]* A_1_a_g[1]
+            (*virial)[4] += -A_1_a[1]* A_1_a_g[1]
                             -B_1_a[1]* B_1_a_g[1]
                             -B_2_a[1]* B_2_a_g[1]
                             -B_3_a[1]* B_3_a_g[1]
@@ -1937,7 +1937,7 @@ double x2b_A1B4_A1B4_v1x::eval(const double* xyz1, const double* xyz2,
                             -B_3_b[1]* B_3_b_g[1]
                             -B_4_b[1]* B_4_b_g[1];
          
-            (*virial)[4] += -A_1_a[1]* A_1_a_g[2]
+            (*virial)[5] += -A_1_a[1]* A_1_a_g[2]
                             -B_1_a[1]* B_1_a_g[2]
                             -B_2_a[1]* B_2_a_g[2]
                             -B_3_a[1]* B_3_a_g[2]
@@ -1948,7 +1948,7 @@ double x2b_A1B4_A1B4_v1x::eval(const double* xyz1, const double* xyz2,
                             -B_3_b[1]* B_3_b_g[2]
                             -B_4_b[1]* B_4_b_g[2];
          
-            (*virial)[5] += -A_1_a[2]* A_1_a_g[2]
+            (*virial)[8] += -A_1_a[2]* A_1_a_g[2]
                             -B_1_a[2]* B_1_a_g[2]
                             -B_2_a[2]* B_2_a_g[2]
                             -B_3_a[2]* B_3_a_g[2]
