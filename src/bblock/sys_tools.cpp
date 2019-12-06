@@ -42,7 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace systools {
 
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
-    std::vector<std::string> &mon, std::vector<size_t> sites, std::vector<size_t> nats,
+    std::vector<std::string> &mon, std::vector<size_t> &islocal, std::vector<size_t> sites, std::vector<size_t> nats,
     std::vector<size_t> &original2current_order, std::vector<std::pair<size_t, size_t>> &original_order,
     std::vector<std::pair<size_t, size_t>> &original_order_realSites) {
     // Make sure that mons, sites and nat have the same size and are
@@ -52,9 +52,10 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
-    if (mon.size() != sites.size() || mon.size() != nats.size()) {
+    if (mon.size() != sites.size() || mon.size() != nats.size() || mon.size() != islocal.size()) {
         std::string text = "Sizes of vectors mon(" + std::to_string(mon.size()) + "), sites(" +
                            std::to_string(sites.size()) + "), and nats(" + std::to_string(nats.size()) +
+	                   "), and islocal(" + std::to_string(islocal.size()) +
                            ") don't match.";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
@@ -62,9 +63,13 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
     // Create copy of the input monomers
     std::vector<std::string> monomers = mon;
 
+    // Create copy of the input local/ghost descriptors
+    std::vector<size_t> _is_local = islocal;
+    
     // Make sure that the output vectors are cleared
     original2current_order.clear();
     mon.clear();
+    islocal.clear();
     original_order.clear();
     original_order_realSites.clear();
 
@@ -110,6 +115,7 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
                 original_order.push_back(std::make_pair(i, site_pos));
                 original_order_realSites.push_back(std::make_pair(i, nat_pos));
                 mon.push_back(monid);
+		islocal.push_back(_is_local[i]);
                 original2current_order[i] = mon.size() - 1;
             }
             // Update loop variables

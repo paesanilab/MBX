@@ -450,7 +450,7 @@ void System::SetRealXyz(std::vector<double> xyz) {
     }
 }
 
-void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id) {
+void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal) {
     // If the system has been initialized, adding a monomer is not possible
     if (initialized_) {
         std::string text = std::string("The system has already been initialized. ") +
@@ -464,6 +464,8 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
     for (auto i = atoms.begin(); i != atoms.end(); i++) atoms_.push_back(*i);
     // Adding id
     monomers_.push_back(id);
+    // Adding local/ghost descriptor
+    islocal_.push_back(islocal);
 }
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
@@ -960,7 +962,7 @@ void System::AddMonomerInfo() {
     std::vector<size_t> fi_at;
     numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
 
-#ifdef DEBUG
+    //#ifdef DEBUG
     std::cerr << "Finished SetUpMonomers.\n";
     std::cerr << "Monomer vector:\n";
     for (size_t i = 0; i < monomers_.size(); i++) {
@@ -971,6 +973,12 @@ void System::AddMonomerInfo() {
     std::cerr << "Sites vector:\n";
     for (size_t i = 0; i < sites_.size(); i++) {
         std::cerr << sites_[i] << " , ";
+    }
+    std::cerr << std::endl;
+    
+    std::cerr << "Local/Ghost vector:\n";
+    for (size_t i = 0; i < islocal_.size(); i++) {
+        std::cerr << islocal_[i] << " , ";
     }
     std::cerr << std::endl;
 
@@ -985,7 +993,7 @@ void System::AddMonomerInfo() {
         std::cerr << fi_at[i] << " , ";
     }
     std::cerr << std::endl;
-#endif
+    //#endif
 
     // Calculating the number of atoms
     numat_ = 0;
@@ -994,10 +1002,10 @@ void System::AddMonomerInfo() {
     }
 
     // Ordering monomers by monomer type, from less to more monomers of each type
-    mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, original2current_order_, initial_order_,
+    mon_type_count_ = systools::OrderMonomers(monomers_, islocal_, sites_, nat_, original2current_order_, initial_order_,
                                               initial_order_realSites_);
 
-#ifdef DEBUG
+    //#ifdef DEBUG
     std::cerr << "Finished OrderMonomers():\n";
     std::cerr << "mon_type_count:\n";
     for (size_t i = 0; i < mon_type_count_.size(); i++) {
@@ -1011,6 +1019,12 @@ void System::AddMonomerInfo() {
     }
     std::cerr << std::endl;
 
+    std::cerr << "New Local/Ghost vector:\n";
+    for (size_t i = 0; i < islocal_.size(); i++) {
+        std::cerr << islocal_[i] << " , ";
+    }
+    std::cerr << std::endl;
+    
     std::cerr << "Original2Current:\n";
     for (size_t i = 0; i < original2current_order_.size(); i++) {
         std::cerr << original2current_order_[i] << ",";
@@ -1028,7 +1042,7 @@ void System::AddMonomerInfo() {
         std::cerr << "{" << initial_order_realSites_[i].first << "," << initial_order_realSites_[i].second << "} , ";
     }
     std::cerr << std::endl;
-#endif
+    //#endif
 
     // Rearranging coordinates to account for virt sites
     xyz_ = std::vector<double>(3 * numsites_, 0.0);
@@ -1180,7 +1194,7 @@ double System::Energy(bool do_grads) {
     // Set up energy with the new value
     energy_ = e1b + e2b + e3b + edisp + ebuck + Eelec;
 
-#ifdef DEBUG
+    //#ifdef DEBUG
     std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
@@ -1189,7 +1203,7 @@ double System::Energy(bool do_grads) {
               << "Buck = " << ebuck << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
-#endif
+    //#endif
 #ifdef TIMING
     std::cerr << "System::1b(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n";
@@ -1237,14 +1251,20 @@ double System::Get1B(bool do_grads) {
     size_t curr_mon_type = 0;
     size_t current_coord = 0;
     double e1b = 0.0;
-
+    
+    size_t indx = 0;
     for (size_t k = 0; k < mon_type_count_.size(); k++) {
         // Useful variables
         size_t istart = 0;
         size_t iend = 0;
         while (istart < mon_type_count_[k].second) {
             iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
-            size_t nmon = iend - istart;
+            size_t nmon = 0;
+	    for(size_t i = istart; i < iend; i++) {
+	      //	      std::cout << "i= " << i << "indx+i= " << indx+i << " islocal_= " << islocal_[indx+i] << "\n";
+	      if(islocal_[indx + i]) nmon++;
+	    }
+	    //	    std::cout << "istart= " << istart << " iend= " << iend << " nmon= " << nmon << "\n";
             size_t ncoord = 3 * nat_[curr_mon_type] * nmon;
             std::string mon = mon_type_count_[k].first;
 
@@ -1253,10 +1273,14 @@ double System::Get1B(bool do_grads) {
             std::vector<double> grad2(ncoord, 0.0);
 
             // Set up real coordinates
+	    size_t ii = istart;
             for (size_t i = istart; i < iend; i++) {
-                std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
+	      if(islocal_[indx+i]) {
+		std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
                           xyz_.begin() + current_coord + 3 * (i * sites_[curr_mon_type] + nat_[curr_mon_type]),
-                          xyz.begin() + 3 * (i - istart) * nat_[curr_mon_type]);
+                          xyz.begin() + 3 * (ii - istart) * nat_[curr_mon_type]);
+		ii++;
+	      }
             }
 
             // Get energy of the chunk as function of monomer
@@ -1264,11 +1288,16 @@ double System::Get1B(bool do_grads) {
                 e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, allMonGood_, &virial_);
 
                 // Reorganize gradients
-                for (size_t i = 0; i < nmon; i++) {
+		size_t ii = 0;
+                for (size_t i = istart; i <iend ; i++) {
+		  if(islocal_[indx + i]) {
+		    //		    std::cout << "Adding monomer i= " << i << " indx+i= " << indx+i << " in Get1B\n";
                     for (size_t j = 0; j < 3 * nat_[curr_mon_type]; j++) {
-                        grad_[current_coord + 3 * (i + istart) * sites_[curr_mon_type] + j] +=
-                            grad2[3 * i * nat_[curr_mon_type] + j];
+                        grad_[current_coord + 3 * (ii + istart) * sites_[curr_mon_type] + j] +=
+                            grad2[3 * ii * nat_[curr_mon_type] + j];
                     }
+		    ii++;
+		  }
                 }
             } else {
                 e1b += e1b::get_1b_energy(mon, nmon, xyz, allMonGood_);
@@ -1280,8 +1309,9 @@ double System::Get1B(bool do_grads) {
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
         curr_mon_type += mon_type_count_[k].second;
+	indx = iend;
     }
-
+    
     return e1b;
 }
 

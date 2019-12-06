@@ -100,6 +100,8 @@ const double gamma21 = gamma2 / gamma1;
  * more frequent.
  * @param[in,out] mon List of monomers in the input order that will be
  * cleared and replaced by the list of monomers in the internal order.
+ * @param[in,out] local/ghost descriptor of monomers in the input order
+ * that will be cleared and replaced by the descriptros in the internal order
  * @param[in] sites Vector of size_t with the number of sites of each
  * monomer in the input order
  * @param[in] nats Vector of size_t with the number of real sites of each
@@ -133,7 +135,7 @@ const double gamma21 = gamma2 / gamma1;
  * number of monomers.
  */
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
-    std::vector<std::string> &mon, std::vector<size_t> sites, std::vector<size_t> nats,
+    std::vector<std::string> &mon, std::vector<size_t> &islocal, std::vector<size_t> sites, std::vector<size_t> nats, 
     std::vector<size_t> &original2current_order, std::vector<std::pair<size_t, size_t>> &original_order,
     std::vector<std::pair<size_t, size_t>> &original_order_realSites);
 
