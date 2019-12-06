@@ -436,10 +436,14 @@ class System {
      * @param[in] id Is a string that contains the identity of the monomer
      * @warning The monomer coordinates and atoms must be in the same order
      * as the database.
+     * @param[in] islocal Is an optional int that indicates whether a monomer
+     * is local or ghost within a LAMMPS sub-domain
+     * @warning The monomer coordinates and atoms must be in the same order
+     * as the database.
      * The id must also match with the database.
      * Please read the documentation carefully.
      */
-    void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id);
+     void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1);
 
     /**
      * Adds a molecule to the system. A molecule, in the context of this
@@ -1039,6 +1043,12 @@ to be the same.
      * of the system
      */
     std::vector<std::string> monomers_;
+  
+    /**
+     * Vector that stores local/ghost descriptor for monomer in the internal order
+     * of the system
+     */
+    std::vector<size_t> islocal_;
 
     /**
      * Vector that stores the atom names of all sites in the internal order
