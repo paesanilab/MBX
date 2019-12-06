@@ -1260,11 +1260,9 @@ double System::Get1B(bool do_grads) {
         while (istart < mon_type_count_[k].second) {
             iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
             size_t nmon = 0;
-	    for(size_t i = istart; i < iend; i++) {
-	      //	      std::cout << "i= " << i << "indx+i= " << indx+i << " islocal_= " << islocal_[indx+i] << "\n";
+	    for(size_t i = istart; i < iend; i++) 
 	      if(islocal_[indx + i]) nmon++;
-	    }
-	    //	    std::cout << "istart= " << istart << " iend= " << iend << " nmon= " << nmon << "\n";
+	    
             size_t ncoord = 3 * nat_[curr_mon_type] * nmon;
             std::string mon = mon_type_count_[k].first;
 
@@ -1291,7 +1289,6 @@ double System::Get1B(bool do_grads) {
 		size_t ii = 0;
                 for (size_t i = istart; i <iend ; i++) {
 		  if(islocal_[indx + i]) {
-		    //		    std::cout << "Adding monomer i= " << i << " indx+i= " << indx+i << " in Get1B\n";
                     for (size_t j = 0; j < 3 * nat_[curr_mon_type]; j++) {
                         grad_[current_coord + 3 * (ii + istart) * sites_[curr_mon_type] + j] +=
                             grad2[3 * ii * nat_[curr_mon_type] + j];
