@@ -601,10 +601,10 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(98.66666135686104);  // kcal/mol * A^(-6)  A--B
         C6.push_back(98.66666135686104);  // kcal/mol * A^(-6)  B--A
         C6.push_back(40.09775637853022);  // kcal/mol * A^(-6)  B--B
-        d6.push_back(3.10441);  // A^(-1) A--A
-        d6.push_back(3.87656);  // A^(-1) A--B
-        d6.push_back(3.87656);  // A^(-1) B--A
-        d6.push_back(3.34615);  // A^(-1) B--B
+        d6.push_back(3.10660);  // A^(-1) A--A
+        d6.push_back(3.90008);  // A^(-1) A--B
+        d6.push_back(3.90008);  // A^(-1) B--A
+        d6.push_back(3.33535);  // A^(-1) B--B
         // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;

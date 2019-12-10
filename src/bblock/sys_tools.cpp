@@ -871,10 +871,10 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
 
         } else if (mon_id == "nh3") {
             for (size_t nv = 0; nv < n_mon; nv++) {
-                polfac[fst_ind + nv*nsites + 0] = 0.9886167415283439;
-                polfac[fst_ind + nv*nsites + 1] = 0.42369622951681035;
-                polfac[fst_ind + nv*nsites + 2] = 0.42369622951681035;
-                polfac[fst_ind + nv*nsites + 3] = 0.42369622951681035;
+                polfac[fst_ind + nv*nsites + 0] = 0.9550488255698475;
+                polfac[fst_ind + nv*nsites + 1] = 0.3640594262763482 ;
+                polfac[fst_ind + nv*nsites + 2] = 0.3640594262763482 ;
+                polfac[fst_ind + nv*nsites + 3] = 0.3640594262763482 ;
             }
         // =====>> END SECTION POLFACS <<=====
 
@@ -951,10 +951,10 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
 
         } else if (mon_id == "nh3") {
             for (size_t nv = 0; nv < n_mon; nv++) {
-                pol[fst_ind + nv*nsites + 0] = 0.9886167415283439;
-                pol[fst_ind + nv*nsites + 1] = 0.42369622951681035;
-                pol[fst_ind + nv*nsites + 2] = 0.42369622951681035;
-                pol[fst_ind + nv*nsites + 3] = 0.42369622951681035;
+                pol[fst_ind + nv*nsites + 0] = 0.9550488255698475;
+                pol[fst_ind + nv*nsites + 1] = 0.3640594262763482 ;
+                pol[fst_ind + nv*nsites + 2] = 0.3640594262763482 ;
+                pol[fst_ind + nv*nsites + 3] = 0.3640594262763482 ;
             }
         // =====>> END SECTION POLS <<=====
 
