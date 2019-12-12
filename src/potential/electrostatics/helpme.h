@@ -2038,7 +2038,11 @@ std::ostream& operator<<(std::ostream& os, const std::unique_ptr<MPIWrapper<Real
 }  // Namespace helpme
 #endif  // Header guard
 #else
+
+#ifndef MPI_VERSION
 typedef struct ompi_communicator_t *MPI_Comm;
+#endif
+
 #endif
 // original file: ../src/powers.h
 
