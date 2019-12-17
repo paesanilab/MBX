@@ -141,7 +141,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy =  pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm);
         // =====>> END SECTION 2B_GRADIENT <<=====
     } else {
-        return 0.0;
+        energy = 0.0;
     }
 
     // Reseting gradients in original order if necessary

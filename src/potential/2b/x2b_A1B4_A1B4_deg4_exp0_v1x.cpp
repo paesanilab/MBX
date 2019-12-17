@@ -1593,7 +1593,7 @@ double x2b_A1B4_A1B4_v1x::eval(const double* xyz1, const double* xyz2, const siz
         const double r12 = std::sqrt(r12sq);
     
         if (r12 > m_r2f)
-            return 0.0;
+            continue;
     
         double xcrd[30]; // coordinates of real sites ONLY
     
@@ -1711,7 +1711,7 @@ double x2b_A1B4_A1B4_v1x::eval(const double* xyz1, const double* xyz2,
         const double r12 = std::sqrt(r12sq);
 
         if (r12 > m_r2f)
-            return 0.0;
+            continue;
 
         double xcrd[30]; // coordinates of real sites ONLY
 
