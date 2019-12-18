@@ -440,7 +440,9 @@ bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { ret
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers) {
+		 std::vector<size_t> is_local,
+                 std::vector<size_t> &dimers, std::vector<size_t> &trimers,
+		 bool use_ghost) {
     // istart is the monomer position for which we will look all dimers and
     // trimers that contain it. iend is the last monomer position.
     // This means, if istart is 0 and iend is 2, we will look for all dimers
@@ -450,18 +452,51 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
     // xyz_orig is a double vector with positions of all atoms
     // first_index is a size_t vector with the first index of the site 'i'
     // in in the monomer vector
+    // is_local is local/ghost descriptor for monomers; interactions involving
+    //  all ghost monomers are ignored
+    // use_ghost controls whether or not to include ghost monomers in clusters; default is no.
     // dimers and trimers will be filled with the dimers and trimers found
 
+    // if use_ghost == true,
+    //       include local+ghost monomers in xyz, but only include local-ghost interactions
+    // if use_ghost == false,
+    //       include only local monomers in xyz and do nothing special
+
+    // Perform a radial search within the cutoff
+    dimers.clear();
+    if (n_max > 2) trimers.clear();
+    
+    // if first monomer is ghost and we're not computing local-ghost interactions, then skip
+
+    if(!use_ghost && !is_local[istart]) return;
+    
     // Obtain xyz vector with the positions of first atom of each monomer
     std::vector<double> xyz;
+    size_t nmon2 = 0;
+
+    std::vector<size_t> mon_index;
     for (size_t i = istart; i < nmon; i++) {
+
+      size_t islsum = is_local[istart] + is_local[i];
+
+      bool include_monomer = false;
+      if( use_ghost && islsum == 1) include_monomer = true;
+      if(!use_ghost && islsum == 2) include_monomer = true;
+
+      if(include_monomer) {
+	
         xyz.push_back(xyz_orig[3 * first_index[i]]);
         xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
         xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
+	mon_index.push_back(i);
+	nmon2++;
+	
+      }
     }
 
-    size_t nmon2 = nmon - istart;
-
+    if(nmon2 < 2) return;
+    if(n_max > 2 && nmon2 < 3) return;
+    
     // Obtain the data in the structure needed by the kd-tree
     kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box);
 
@@ -471,11 +506,7 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
         my_kd_tree_t;
     my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
     index.buildIndex();
-
-    // Perform a radial search within the cutoff
-    dimers.clear();
-    if (n_max > 2) trimers.clear();
-
+    
     std::vector<size_t> idone;
     std::set<std::pair<size_t, size_t>> donej;
     for (size_t i = 0; i < iend - istart; i++) {
@@ -504,8 +535,22 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
             if (ret_matches[j].first > i) {
                 retdim = donej.insert(std::make_pair(i, ret_matches[j].first));
                 if (retdim.second) {
-                    dimers.push_back(i + istart);
-                    dimers.push_back(ret_matches[j].first + istart);
+		  // ghost == 0, local == 1
+		  // ghost-ghost == 0
+		  // ghost-local == 1 for all permutations
+		  // local-local == 2
+		  
+		  size_t islsum = is_local[mon_index[i]] +
+		    is_local[mon_index[ret_matches[j].first]];
+		  
+		  bool include_dimer = false;
+		  if( use_ghost && islsum == 1) include_dimer = true; // local-ghost
+		  if(!use_ghost && islsum == 2) include_dimer = true; // local-local
+
+		  if(include_dimer) {
+                    dimers.push_back(mon_index[i]);
+                    dimers.push_back(mon_index[ret_matches[j].first]);
+		  }
                 }
 
                 // Add trimers if requested
@@ -515,9 +560,24 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                         if (ret_matches[k].first > ret_matches[j].first) {
                             ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
                             if (ret.second) {
-                                trimers.push_back(i + istart);
-                                trimers.push_back(ret_matches[j].first + istart);
-                                trimers.push_back(ret_matches[k].first + istart);
+			      // ghost == 0, local == 1
+			      // ghost-ghost-ghost == 0
+			      // ghost-ghost-local == 1 for all permutations
+			      // ghost-local-local == 2 for all permutations
+			      // local-local-local == 3
+			      size_t islsum = is_local[mon_index[i]] +
+				is_local[mon_index[ret_matches[j].first]] +
+				is_local[mon_index[ret_matches[k].first]];
+			      
+			      bool include_trimer = false;
+			      if( use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+			      if(!use_ghost && islsum == 3) include_trimer = true;
+
+			      if(include_trimer) {
+                                trimers.push_back(mon_index[i]);
+                                trimers.push_back(mon_index[ret_matches[j].first]);
+                                trimers.push_back(mon_index[ret_matches[k].first]);
+			      }
                             }
                         }
                     }
@@ -551,9 +611,24 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                             }
                             ret = donek.insert(std::make_pair(jel, kel));
                             if (ret.second && kel > jel) {
-                                trimers.push_back(i + istart);
-                                trimers.push_back(jel + istart);
-                                trimers.push_back(kel + istart);
+			      // ghost == 0, local == 1
+			      // ghost-ghost-ghost == 0
+			      // ghost-ghost-local == 1 for all permutations
+			      // ghost-local-local == 2 for all permutations
+			      // local-local-local == 3
+			      size_t islsum = is_local[mon_index[i]] +
+				is_local[mon_index[jel]] +
+				is_local[mon_index[kel]];
+			      
+			      bool include_trimer = false;
+			      if( use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+			      if(!use_ghost && islsum == 3) include_trimer = true;
+
+			      if(include_trimer) {
+                                trimers.push_back(mon_index[i]);
+                                trimers.push_back(mon_index[jel]);
+                                trimers.push_back(mon_index[kel]);
+			      }
                             }
                         }
                     }

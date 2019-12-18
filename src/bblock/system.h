@@ -656,9 +656,11 @@ to be the same.
      * Gradients will be ONLY for the two-body part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
      * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return Two-body energy of the system
      */
-    double TwoBodyEnergy(bool do_grads);
+    double TwoBodyEnergy(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the three-body energy. This is the sum of all the 3B
@@ -709,7 +711,7 @@ to be the same.
      * @param[in] istart Minimum index of i
      * @param[in] iend Maximum index (iend not included) of index i
      */
-    void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
+    void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
 
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -722,7 +724,8 @@ to be the same.
      * @param[in] iend Maximum index (iend not included) of index i
      * @return Vector of size_t with dimention nclusters * nmax
      */
-    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend);
+    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+					    bool use_ghost = false);
 
     /**
      * Fills in the monomer information of the monomers that have been
@@ -771,9 +774,11 @@ to be the same.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
      * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return  Two-body energy of the system
      */
-    double Get2B(bool do_grads);
+    double Get2B(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the 3b energy.

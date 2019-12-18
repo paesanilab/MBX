@@ -258,14 +258,18 @@ void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<doubl
  * of the box
  * @param[in] xyz_orig Coordinates of the system
  * @param[in] first_index First index of the monomers in the system
+ * @param[in] is_local is local/ghost descriptor for monomers in system
  * @param[out] dimers Vector of unsigned integers with the dimers
  * @param[out] trimers Vector of unsigned integers with the trimers
+ * @param[in] use_ghost whether or not to include ghost monomers in clusters; this is optional
  * @warning The distance between monomers is computed as the distance
  * between the first atom of both monomers
  */
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers);
+		 std::vector<size_t> is_local,
+                 std::vector<size_t> &dimers, std::vector<size_t> &trimers,
+		 bool use_ghost = false);
 
 /**
  * @brief Sets the excluded pairs for a given monomer

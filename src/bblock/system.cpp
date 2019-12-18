@@ -1098,7 +1098,7 @@ void System::AddMonomerInfo() {
     polfac_ = std::vector<double>(numsites_, 0.0);
 }
 
-void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend) {
+void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost_) {
     // istart is the monomer position for which we will look all dimers and
     // trimers that contain it. iend is the last monomer position.
     // This means, if istart is 0 and iend is 2, we will look for all dimers
@@ -1114,10 +1114,10 @@ void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend)
     //}
 
     size_t nmon = monomers_.size();
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, dimers_, trimers_);
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers_, trimers_, use_ghost_);
 }
 
-std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend) {
+std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost_) {
     // Overloaded function to be compatible with omp
     // Returns dimers if nmax == 2, or trimers if nmax == 3
 
@@ -1132,7 +1132,7 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
 
     size_t nmon = monomers_.size();
     std::vector<size_t> dimers, trimers;
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, dimers, trimers);
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers, trimers, use_ghost_);
     if (nmax == 2) return dimers;
     return trimers;
 }
@@ -1220,7 +1220,7 @@ double System::Energy(bool do_grads) {
               << "Buck = " << ebuck << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
-#endif
+    //#endif
 #ifdef TIMING
     std::cerr << "System::1b(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n";
@@ -1329,7 +1329,7 @@ double System::Get1B(bool do_grads) {
     return e1b;
 }
 
-double System::TwoBodyEnergy(bool do_grads) {
+double System::TwoBodyEnergy(bool do_grads, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -1346,12 +1346,12 @@ double System::TwoBodyEnergy(bool do_grads) {
     SetPBC(box_);
 
     // Calculate the 2b energy
-    energy_ = Get2B(do_grads);
+    energy_ = Get2B(do_grads, use_ghost);
 
     return energy_;
 }
 
-double System::Get2B(bool do_grads) {
+double System::Get2B(bool do_grads, bool use_ghost) {
     // No dimers makes the function return 0.
 
     // 2B ENERGY
@@ -1406,11 +1406,11 @@ double System::Get2B(bool do_grads) {
 // OPENMP or not
 
 // This call will get the dimers that have as first index a monomer
-// with index between isatrt and iend (iend not included)
+// with index between istart and iend (iend not included)
 #ifdef _OPENMP
-        std::vector<size_t> dimers = AddClustersParallel(2, cutoff2b_, istart, iend);
+        std::vector<size_t> dimers = AddClustersParallel(2, cutoff2b_, istart, iend, use_ghost);
 #else
-        AddClusters(2, cutoff2b_, istart, iend);
+        AddClusters(2, cutoff2b_, istart, iend, use_ghost);
         std::vector<size_t> dimers = dimers_;
 #endif
 
@@ -1553,9 +1553,10 @@ double System::Get2B(bool do_grads) {
 #endif
 
         // Condensate gradients
+	const double scale = use_ghost ? 0.5 : 1.0;
         for (int i = 0; i < num_threads; i++) {
             for (size_t j = first_grad; j < last_grad; j++) {
-                grad_[j] += grad_pool[i][j];
+                grad_[j] += scale * grad_pool[i][j];
             }
         }
 
@@ -1567,10 +1568,12 @@ double System::Get2B(bool do_grads) {
     for (int i = 0; i < num_threads; i++) {
         e2b_t += e2b_pool[i];
     }
-    // Condensate virial                         
+    if(use_ghost) e2b_t *= 0.5;
+    // Condensate virial
+    const double scale = use_ghost ? 0.5 : 1.0;
     for (int i = 0; i < num_threads; i++) { 
         for (size_t j = 0; j < 9; j++){          
-            virial_[j] += virial_pool[i][j];     
+            virial_[j] += scale * virial_pool[i][j];     
         }                                        
     }                                            
 
