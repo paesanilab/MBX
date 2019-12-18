@@ -668,9 +668,11 @@ to be the same.
      * Gradients will be ONLY for the three-body part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
      * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return Three-body energy of the system
      */
-    double ThreeBodyEnergy(bool do_grads);
+    double ThreeBodyEnergy(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the electrostatic energy. This is the sum of the permanent
@@ -785,9 +787,11 @@ to be the same.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
      * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return  Three-body energy of the system
      */
-    double Get3B(bool do_grads);
+    double Get3B(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the electrostatic energy.

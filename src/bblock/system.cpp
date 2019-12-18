@@ -1553,7 +1553,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
 #endif
 
         // Condensate gradients
-	const double scale = use_ghost ? 0.5 : 1.0;
+	//	const double scale = use_ghost ? 0.5 : 1.0;
+	const double scale = 1.0; // only accumulate force on local particles in LAMMPS
         for (int i = 0; i < num_threads; i++) {
             for (size_t j = first_grad; j < last_grad; j++) {
                 grad_[j] += scale * grad_pool[i][j];
@@ -1584,7 +1585,7 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     return e2b_t + edisp_t;
 }
 
-double System::ThreeBodyEnergy(bool do_grads) {
+double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -1599,12 +1600,12 @@ double System::ThreeBodyEnergy(bool do_grads) {
 
     SetPBC(box_);
 
-    energy_ = Get3B(do_grads);
+    energy_ = Get3B(do_grads, use_ghost);
 
     return energy_;
 }
 
-double System::Get3B(bool do_grads) {
+  double System::Get3B(bool do_grads, bool use_ghost) {
     // 3B ENERGY
     double e3b_t = 0.0;
 
@@ -1655,9 +1656,9 @@ double System::Get3B(bool do_grads) {
         size_t iend = std::min(istart + step, nummon_);
 
 #ifdef _OPENMP
-        std::vector<size_t> trimers = AddClustersParallel(3, cutoff3b_, istart, iend);
+        std::vector<size_t> trimers = AddClustersParallel(3, cutoff3b_, istart, iend, use_ghost);
 #else
-        AddClusters(3, cutoff3b_, istart, iend);
+        AddClusters(3, cutoff3b_, istart, iend, use_ghost);
         std::vector<size_t> trimers = trimers_;
 #endif
 
@@ -1824,6 +1825,8 @@ double System::Get3B(bool do_grads) {
     }  // parallel
 #endif
 
+    // CHRIS: need to be careful with double/triple counting of local-ghost interactions
+    
     // Condensate energy
     for (int i = 0; i < num_threads; i++) {
         e3b_t += e3b_pool[i];
