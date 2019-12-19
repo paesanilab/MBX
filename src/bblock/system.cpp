@@ -1592,6 +1592,8 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
     // 3B ENERGY
     double e3b_t = 0.0;
 
+    const double one_third = 1.0 / 3.0;
+    
     // Variables needed for OMP
     size_t step = 1;
     int num_threads = 1;
@@ -1668,10 +1670,15 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
         size_t nt = 0;
         size_t nt_tot = 0;
 
+	// if ghost monomers included, then force maxNTriEval == 1 to properly tally energy+virial
+	// should we just overwrite maxNTriEval_?
+	size_t _maxNTriEval = (use_ghost) ? 1 : maxNTriEval_;
+	
         // Loop over all the trimers
         while (3 * nt_tot < trimers.size()) {
             i = (nt_tot + nt) * 3;
 
+	    std::cout << "Trimer loop i= " << i << "\n";
             // Check if we are still in the same type of trimer
             if (monomers_[trimers[i]] == m1 && monomers_[trimers[i + 1]] == m2 && monomers_[trimers[i + 2]] == m3) {
                 // Push the coordinates
@@ -1691,7 +1698,7 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
             // since trimers are also ordered, means that no more trimers of that
             // type exist. Thus, do calculation, update m? and clear xyz
             if (monomers_[trimers[i]] != m1 || monomers_[trimers[i + 1]] != m2 || monomers_[trimers[i + 2]] != m3 ||
-                i == trimers.size() - 3 || nt == maxNTriEval_) {
+                i == trimers.size() - 3 || nt == _maxNTriEval) {
                 if (nt == 0) {
                     coord1.clear();
                     coord2.clear();
@@ -1724,7 +1731,8 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
                 }
 
                 if (use_poly) {
-                    std::vector<double> xyz1(coord1.size(), 0.0);
+		    std::cout << "Trimer loop i= " << i << "  evaluating energy\n";
+  		    std::vector<double> xyz1(coord1.size(), 0.0);
                     std::vector<double> xyz2(coord2.size(), 0.0);
                     std::vector<double> xyz3(coord3.size(), 0.0);
                     std::copy(coord1.begin(), coord1.end(), xyz1.begin());
@@ -1738,7 +1746,11 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
                         std::vector<double> grad3(coord3.size(), 0.0);
                         std::vector<double> virial(9,0.0); // declare virial tensor
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+			double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+
+			double escale = 1.0;
+			if(use_ghost) escale = (islocal_[trimers[i]] + islocal_[trimers[i+1]] + islocal_[trimers[i+2]]) * one_third;
+			e3b_pool[rank] += escale * e;
 
                         // Update gradients
                         size_t i0 = nt_tot * 3;
@@ -1761,12 +1773,15 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
                         }
                         // Virial Tensor
                         for (size_t j=0; j<9; j++) {
-                            virial_pool[rank][j] += virial[j];
+                            virial_pool[rank][j] += escale * virial[j];
                         }
 
                     } else {
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+		        double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+			double escale = 1.0;
+			if(use_ghost) escale = (islocal_[trimers[i]] + islocal_[trimers[i+1]] + islocal_[trimers[i+2]]) * one_third;
+			e3b_pool[rank] += escale * e;
                     }
                 }
 
@@ -1807,8 +1822,6 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
 #ifdef _OPENMP
     }  // parallel
 #endif
-
-    // CHRIS: need to be careful with double/triple counting of local-ghost interactions
     
     // Condensate energy
     for (int i = 0; i < num_threads; i++) {
