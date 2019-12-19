@@ -1678,7 +1678,6 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
         while (3 * nt_tot < trimers.size()) {
             i = (nt_tot + nt) * 3;
 
-	    std::cout << "Trimer loop i= " << i << "\n";
             // Check if we are still in the same type of trimer
             if (monomers_[trimers[i]] == m1 && monomers_[trimers[i + 1]] == m2 && monomers_[trimers[i + 2]] == m3) {
                 // Push the coordinates
@@ -1731,7 +1730,6 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
                 }
 
                 if (use_poly) {
-		    std::cout << "Trimer loop i= " << i << "  evaluating energy\n";
   		    std::vector<double> xyz1(coord1.size(), 0.0);
                     std::vector<double> xyz2(coord2.size(), 0.0);
                     std::vector<double> xyz3(coord3.size(), 0.0);
