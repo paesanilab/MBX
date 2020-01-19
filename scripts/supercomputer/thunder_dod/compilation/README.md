@@ -22,6 +22,9 @@ Then,
 Now remember to compile the driver. Set up the environment variable `MBX_HOME`:
 NOTE: Thunder's default shell is csh!! export won't work.
 `setenv MBX_HOME $HOME/codes/MBX`
+If you want to use bash, you can type `bash` in the terminal and the shell is gonna change to bash. Then you can use:
+`export MBX_HOME=$HOME/codes/MBX`
+
 Then load the corresponding modules. 
 
 If you compiled MBX with GNU:
