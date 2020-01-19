@@ -1,0 +1,53 @@
+#!/bin/bash
+
+#PBS -N XXXXXX
+#PBS -q debug
+#PBS -e stderr 
+#PBS -o stdout 
+#PBS -M mrierari@ucsd.edu
+#PBS -l walltime=0:30:00
+#PBS -l select=1:ncpus=36:mpiprocs=36
+#PBS -A AFOSR40693129
+#PBS -j oe
+#PBS -V
+#PBS -S /bin/bash
+
+# Define your environment variables
+export MBX_HOME=$HOME/codes/MBX
+export IPI_HOME=$HOME/codes/i-pi
+export INPUT_NRG="config.nrg"
+export INPUT_XML="config.xml"
+export INPUT_JSON="mbx.json"
+
+# Load modules
+module load gcc-compilers
+module load costinit
+module load fftw3/gnu/3.3.5
+module load python/gnu
+module load numpy/gnu
+
+export OMP_NUM_THREADS=16
+export LD_LIBRARY_PATH=$FFTW3_HOME/lib:$LD_LIBRARY_PATH
+
+# Define driver executable path
+export EXE=$MBX_HOME/plugins/i-pi/bin/driver
+
+# Load environment for i-pi
+cd $IPI_HOME
+source env.sh
+cd $PBS_O_WORKDIR
+
+# Print the current jobid in output folder
+echo $PBS_JOBID > jobid.dat
+
+# Clean localhost
+rm -f /tmp/ipi_localhost*
+
+# Run i-pi to initialize communication
+i-pi $INPUT_XML > i-pi.out &
+sleep 10
+
+# Run driver to start energy calculations
+$EXE $INPUT_NRG $INPUT_JSON > driver.out
+
+ 
