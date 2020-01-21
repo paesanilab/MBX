@@ -21,12 +21,13 @@ export INPUT_JSON="mbx.json"
 
 # Load modules
 module load gcc-compilers
+module load intel-compilers
 module load costinit
-module load fftw3/gnu/3.3.5
-module load python/gnu
-module load numpy/gnu
+module load fftw3/intel/3.3.5
+module load python/intel
+module load numpy/intel
 
-export OMP_NUM_THREADS=16
+export OMP_NUM_THREADS=36
 export LD_LIBRARY_PATH=$FFTW3_HOME/lib:$LD_LIBRARY_PATH
 
 # Define driver executable path
