@@ -38,11 +38,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define SETUP_H2O_2_CS_1                                                                                              \
     double one_body_energy = 1.0803424170e-01;                                                                        \
     double two_body_energy = 7.0308260761e+00;                                                                        \
-    double three_body_energy = 5.7426585955e-02;                                                                      \
+    double three_body_energy = 2.0176306190e-01;                                                                      \
     double dispersion_energy = -3.0137925633e+00;                                                                     \
     double buckingham_energy = 8.0502926085e+00;                                                                      \
     double electrostatic_energy = -3.0276469460e+01;                                                                  \
-    double total_energy = -2.6093975119e+01;                                                                          \
+    double total_energy = -2.5949638643e+01;                                                                          \
     double total_energy_ttm = -2.3676711108e+01;                                                                      \
     const int n_monomers = 3;                                                                                         \
     std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"cs", "h2o"}};                                     \
@@ -87,7 +87,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                       1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00};                          \
     std::vector<double>virial_1b  ={  -5.58441 , -1.81631 , 2.40254 , -1.81631 , -4.42154 , 6.24358 , 2.40254 , 6.24358 , -7.33326};\
     std::vector<double>virial_2b  ={  2.45301 , 1.50019 , -5.81762 , 1.50019 , 35.2383 , 22.9244 , -5.81762 , 22.9244 , 42.517};\
-    std::vector<double>virial_3b  ={  -0.0706162 , 0.0492793 , -0.0697286 , 0.0492793 , 0.120467 , 0.014345 , -0.0697286 , 0.014345 , 0.178931};\
+    std::vector<double>virial_3b  ={  -0.302327973333952 , 0.16842864924138 , -0.257444874834614 , 0.16842864924138 , 0.120247713850445 , -0.173007088793658 , -0.257444874834614 , -0.173007088793658 , 0.452378442003711};\
     std::vector<double>virial_elec={  1.44274 , -0.910748 , 5.25337 , -0.910748 , -29.626 , -20.6073 , 5.25337 , -20.6073 , -37.3998};\
     std::vector<double>virial_disp={  -0.882439 , -1.396 , 1.98534 , -1.396 , -7.2282 , -0.644753 , 1.98534 , -0.644753 , -8.48943};\
     std::vector<double>virial_buck={  0.446315 , 0.297012 , -1.42869 , 0.297012 , 39.2886 , 31.9308 , -1.42869 , 31.9308 , 32.3282};\

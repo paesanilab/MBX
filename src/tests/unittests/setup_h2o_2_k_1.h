@@ -38,11 +38,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define SETUP_H2O_2_K_1                                                                                               \
     double one_body_energy = 1.0803424170e-01;                                                                        \
     double two_body_energy = 4.2055773093e+00;                                                                        \
-    double three_body_energy = 0.068573374;                                                                      \
+    double three_body_energy = 2.5989082359e-01;                                                                      \
     double dispersion_energy = -2.3266025337e+00;                                                                     \
     double buckingham_energy = 3.2125022331e+00;                                                                      \
     double electrostatic_energy = -2.9939326850e+01;                                                                  \
-    double total_energy = -27.8837444592;                                                                          \
+    double total_energy = -2.7692427010e+01;                                                                          \
     double total_energy_ttm = -2.7490168845e+01;                                                                      \
     const int n_monomers = 3;                                                                                         \
     std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"k", "h2o"}};                                      \

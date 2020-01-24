@@ -36,6 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define DEBUG
 //#define TIMING
+//#define PRINT_INDIVIDUAL_TERMS
 
 #ifdef TIMING
 #include <chrono>
@@ -1180,7 +1181,7 @@ double System::Energy(bool do_grads) {
     // Set up energy with the new value
     energy_ = e1b + e2b + e3b + edisp + ebuck + Eelec;
 
-#ifdef DEBUG
+#ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "2B = " << e2b << std::endl
