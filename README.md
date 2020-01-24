@@ -6,11 +6,12 @@ This is the version 0.2.1a. This software should not be used unless the Paesani 
 
 What's new in v0.2.1a
 - Scripts to compile and run simulations on comet and TSCC have been added.
+- Scripts to run on Thunder (DOD) have been added.
 - Example on how to install and run plumed with i-pi and MBX.
-- Three-body PEFs for alkali-metal ions and corresponding tests have been updated to the ones that were used for the EXAFS spectra.
+- Three-body PEFs for alkali-metal ions and corresponding tests have been updated.
 - Bugfix in virial for CH4, indexes were not correct in the 1b CH4 and 2b CH4-CH4 and CH4-H2O MB-nrg pefs.
 - Added NH3 1b PEF MB-nrg.
-- Added NH3-NH3 2b PEF TTM-nrg.
+- Added NH3-NH3 2b PEF TTM-nrg and MB-nrg (should not be used yet).
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
