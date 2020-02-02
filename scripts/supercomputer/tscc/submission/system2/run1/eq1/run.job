@@ -19,8 +19,10 @@ export INPUT_XML="config.xml"
 export INPUT_JSON="mbx.json"
 
 # Load modules
-module load gnu gsl openmpi_ib fftw
+module load intel/2018.1.163 gsl openmpi_ib fftw
+module load gnu
 module load python
+
 export PYTHONPATH=/projects/builder-group/jpg/python/lib/python2.7/site-packages:$PYTHONPATH
 export OMP_NUM_THREADS=16
 export LD_LIBRARY_PATH=$FFTWHOME/lib:$LD_LIBRARY_PATH

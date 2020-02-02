@@ -22,7 +22,7 @@ fi
 
 # Check if equilibration is done:
 if [ ! -f "simulation.checkpoint" ]; then
-  echo "No simulation.checkpoint in eq$nprod ... Maybe something went wrong"
+  echo "No simulation.checkpoint in prod$nprod ... Maybe something went wrong"
   exit
 fi
 
