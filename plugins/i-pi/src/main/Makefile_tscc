@@ -1,4 +1,4 @@
-CXX=g++
+CXX=icpc
 CXXFLAGS= -Wall -std=c++11  
 
 LIBS = -lmbxlib -fopenmp -lfftw3
