@@ -44,8 +44,14 @@ PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
 {
   respa_enable = 1;
   writedata = 1;
+  restartinfo = 0;
 
   mbx_total_energy = 0;
+
+  // energy terms available to pair compute
+  
+  nextra = 11;
+  pvector = new double[nextra];
 }
 
 /* ---------------------------------------------------------------------- */
@@ -59,7 +65,7 @@ PairMBX::~PairMBX()
     memory->destroy(cut);
   }
 
-  //  delete ptr_mbx;
+  delete [] pvector;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -79,10 +85,6 @@ void PairMBX::setup()
 void PairMBX::compute(int eflag, int vflag)
 {
   
-  // Update coordinates in MBX library
-
-  update_mbx_xyz();
-
 #if 0
 
   compute_full();
@@ -95,46 +97,85 @@ void PairMBX::compute(int eflag, int vflag)
   
   // compute energy
 
+  fix_mbx->mbxt_start(MBXT_E1B);
   mbx_e1b = ptr_mbx->OneBodyEnergy(true);
+  fix_mbx->mbxt_stop(MBXT_E1B);
   accumulate_f();
 
+  fix_mbx->mbxt_start(MBXT_E2B_LOCAL);
   double mbx_e2b_local = ptr_mbx->TwoBodyEnergy(true);
+  fix_mbx->mbxt_stop(MBXT_E2B_LOCAL);
   accumulate_f();
   
+  fix_mbx->mbxt_start(MBXT_E2B_GHOST);
   double mbx_e2b_ghost = ptr_mbx->TwoBodyEnergy(true, true);
+  fix_mbx->mbxt_stop(MBXT_E2B_GHOST);
   accumulate_f();
 
   mbx_e2b = mbx_e2b_local + mbx_e2b_ghost;
 
+  fix_mbx->mbxt_start(MBXT_E3B_LOCAL);
   double mbx_e3b_local = ptr_mbx->ThreeBodyEnergy(true);
+  fix_mbx->mbxt_stop(MBXT_E3B_LOCAL);
   accumulate_f();
   
+  fix_mbx->mbxt_start(MBXT_E3B_GHOST);
   double mbx_e3b_ghost = ptr_mbx->ThreeBodyEnergy(true, true);
+  fix_mbx->mbxt_stop(MBXT_E3B_GHOST);
   accumulate_f();
 
   mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
 
   // compute energy+gradients in serial on rank 0 for full system
 
-  if(comm->me == 0) {
-    bblock::System * ptr_mbx_full = fix_mbx->ptr_mbx_full;
-    
-    mbx_disp = ptr_mbx_full->Dispersion(true);
-    accumulate_f_full();
-    
-    mbx_buck = ptr_mbx_full->Buckingham(true);
-    accumulate_f_full();
-    
-    mbx_ele = ptr_mbx_full->Electrostatics(true);
-    accumulate_f_full();
-  }
+  mbx_disp = 0.0;
+  mbx_buck = 0.0;
+  mbx_ele  = 0.0;
+  
+  bblock::System * ptr_mbx_full = fix_mbx->ptr_mbx_full;
+  
+  fix_mbx->mbxt_start(MBXT_DISP);
+  if(comm->me == 0) mbx_disp = ptr_mbx_full->Dispersion(true);
+  fix_mbx->mbxt_stop(MBXT_DISP);
+  accumulate_f_full();
+
+  
+  fix_mbx->mbxt_start(MBXT_BUCK);
+  if(comm->me == 0) mbx_buck = ptr_mbx_full->Buckingham(true);
+  fix_mbx->mbxt_stop(MBXT_BUCK);
+  accumulate_f_full();
+
+  fix_mbx->mbxt_start(MBXT_ELE);
+  if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
+  fix_mbx->mbxt_stop(MBXT_ELE);
+  accumulate_f_full();
 
   mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
 
   // save total energy from mbx as vdwl
   
-  if(eflag) eng_vdwl = mbx_total_energy;
-  
+  if(eflag) {
+    eng_vdwl = mbx_total_energy;
+
+    // generally useful
+    
+    pvector[0] = mbx_e1b;
+    pvector[1] = mbx_e2b;
+    pvector[2] = mbx_e3b;
+    pvector[3] = mbx_disp;
+    pvector[4] = mbx_buck;
+    pvector[5] = mbx_ele;
+    pvector[6] = mbx_total_energy;
+    
+    // for debugging
+    
+    pvector[7]  = mbx_e2b_local;
+    pvector[8]  = mbx_e2b_ghost;
+    pvector[9]  = mbx_e3b_local;
+    pvector[10] = mbx_e3b_ghost;
+  }
+
+#if 0
   // debug output
   
   double e1  = 0.0;
@@ -150,14 +191,17 @@ void PairMBX::compute(int eflag, int vflag)
   MPI_Reduce(&mbx_e3b_ghost, &e3g, 1, MPI_DOUBLE, MPI_SUM, 0, world);
 
   double etot = e1 + e2l + e2g + e3l + e3g + mbx_disp + mbx_buck + mbx_ele;
-  
-  printf("mbx_e1b=   %f  Parallel\n",e1);
-  printf("mbx_e2b=   %f (%f, %f)  Parallel\n",e2l+e2g, e2l, e2g);
-  printf("mbx_e3b=   %f (%f, %f)  Parallel\n",e3l+e3g, e3l, e3g);
-  printf("mbx_disp=  %f  Serial\n",mbx_disp);
-  printf("mbx_buck=  %f  Serial\n",mbx_buck);
-  printf("mbx_ele=   %f  Serial\n",mbx_ele);
-  printf("mbx_total= %f\n",etot);
+
+  if(comm->me == 0) {
+    printf("mbx_e1b=   %f  Parallel\n",e1);
+    printf("mbx_e2b=   %f (%f, %f)  Parallel\n",e2l+e2g, e2l, e2g);
+    printf("mbx_e3b=   %f (%f, %f)  Parallel\n",e3l+e3g, e3l, e3g);
+    printf("mbx_disp=  %f  Serial\n",mbx_disp);
+    printf("mbx_buck=  %f  Serial\n",mbx_buck);
+    printf("mbx_ele=   %f  Serial\n",mbx_ele);
+    printf("mbx_total= %f\n",etot);
+  }
+#endif
   
 #endif
   
@@ -175,9 +219,13 @@ void PairMBX::compute_full()
   //  update_mbx_xyz();
 
   bblock::System * ptr_mbx = fix_mbx->ptr_mbx_full;
+
+#if 0
   
-  //  mbx_total_energy = ptr_mbx->Energy(true);
-  //  accumulate_f_full();
+  mbx_total_energy = ptr_mbx->Energy(true);
+  accumulate_f_full();
+
+#else
   
   mbx_e1b = ptr_mbx->OneBodyEnergy(true);
   accumulate_f_full();
@@ -203,14 +251,17 @@ void PairMBX::compute_full()
   double mbx_e2b_ghost = 0.0;
   double mbx_e3b_local = mbx_e3b;
   double mbx_e3b_ghost = 0.0;
-  
-  printf("mbx_e1b=   %f\n",mbx_e1b);
-  printf("mbx_e2b=   %f (%f, %f)\n",mbx_e2b, mbx_e2b_local, mbx_e2b_ghost);
-  printf("mbx_e3b=   %f (%f, %f)\n",mbx_e3b, mbx_e3b_local, mbx_e3b_ghost);
-  printf("mbx_disp=  %f\n",mbx_disp);
-  printf("mbx_buck=  %f\n",mbx_buck);
-  printf("mbx_ele=   %f\n",mbx_ele);
-  printf("mbx_total= %f\n",mbx_total_energy);
+
+  if(comm->me == 0) {
+    printf("mbx_e1b=   %f\n",mbx_e1b);
+    printf("mbx_e2b=   %f (%f, %f)\n",mbx_e2b, mbx_e2b_local, mbx_e2b_ghost);
+    printf("mbx_e3b=   %f (%f, %f)\n",mbx_e3b, mbx_e3b_local, mbx_e3b_ghost);
+    printf("mbx_disp=  %f\n",mbx_disp);
+    printf("mbx_buck=  %f\n",mbx_buck);
+    printf("mbx_ele=   %f\n",mbx_ele);
+    printf("mbx_total= %f\n",mbx_total_energy);
+  }
+#endif
   
   // save total energy from mbx as vdwl
   
@@ -304,6 +355,8 @@ void PairMBX::init_style()
     if (((Respa *) update->integrate)->level_middle >= 0) respa = 2;
   }
 
+  // currently request neighbor list, but we don't use it for anything...
+  
   irequest = neighbor->request(this,instance_me);
 }
 
@@ -316,79 +369,6 @@ double PairMBX::init_one(int i, int j)
   if (setflag[i][j] == 0) cut[i][j] = mix_distance(cut[i][i],cut[j][j]);
 
   return cut[i][j];
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes to restart file
-------------------------------------------------------------------------- */
-
-void PairMBX::write_restart(FILE *fp)
-{
-  write_restart_settings(fp);
-
-  int i,j;
-  for (i = 1; i <= atom->ntypes; i++)
-    for (j = i; j <= atom->ntypes; j++) {
-      fwrite(&setflag[i][j],sizeof(int),1,fp);
-      if (setflag[i][j]) {
-        fwrite(&cut[i][j],sizeof(double),1,fp);
-      }
-    }
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 reads from restart file, bcasts
-------------------------------------------------------------------------- */
-
-void PairMBX::read_restart(FILE *fp)
-{
-  read_restart_settings(fp);
-  allocate();
-
-  int i,j;
-  int me = comm->me;
-  for (i = 1; i <= atom->ntypes; i++)
-    for (j = i; j <= atom->ntypes; j++) {
-      if (me == 0) fread(&setflag[i][j],sizeof(int),1,fp);
-      MPI_Bcast(&setflag[i][j],1,MPI_INT,0,world);
-      if (setflag[i][j]) {
-        if (me == 0) {
-          fread(&cut[i][j],sizeof(double),1,fp);
-        }
-        MPI_Bcast(&cut[i][j],1,MPI_DOUBLE,0,world);
-      }
-    }
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 writes to restart file
-------------------------------------------------------------------------- */
-
-void PairMBX::write_restart_settings(FILE *fp)
-{
-  fwrite(&cut_global,sizeof(double),1,fp);
-  fwrite(&offset_flag,sizeof(int),1,fp);
-  fwrite(&mix_flag,sizeof(int),1,fp);
-  fwrite(&tail_flag,sizeof(int),1,fp);
-}
-
-/* ----------------------------------------------------------------------
-   proc 0 reads from restart file, bcasts
-------------------------------------------------------------------------- */
-
-void PairMBX::read_restart_settings(FILE *fp)
-{
-  int me = comm->me;
-  if (me == 0) {
-    fread(&cut_global,sizeof(double),1,fp);
-    fread(&offset_flag,sizeof(int),1,fp);
-    fread(&mix_flag,sizeof(int),1,fp);
-    fread(&tail_flag,sizeof(int),1,fp);
-  }
-  MPI_Bcast(&cut_global,1,MPI_DOUBLE,0,world);
-  MPI_Bcast(&offset_flag,1,MPI_INT,0,world);
-  MPI_Bcast(&mix_flag,1,MPI_INT,0,world);
-  MPI_Bcast(&tail_flag,1,MPI_INT,0,world);
 }
 
 /* ----------------------------------------------------------------------
@@ -417,23 +397,13 @@ void *PairMBX::extract(const char *str, int &dim)
   return NULL;
 }
 
-
-/* ----------------------------------------------------------------------
-   update monomer coordinates in MBX
-------------------------------------------------------------------------- */
-
-void PairMBX::update_mbx_xyz()
-{
-
-}
-
 /* ----------------------------------------------------------------------
    update forces with MBX contribution
 ------------------------------------------------------------------------- */
 
 void PairMBX::accumulate_f()
 {
-  // should this just be moved to fix_mbx post_force()??
+  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F);
   
   bblock::System * ptr_mbx = fix_mbx->ptr_mbx;
 
@@ -481,8 +451,8 @@ void PairMBX::accumulate_f()
 
   }
  
+  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F);
 }
-
 
 /* ----------------------------------------------------------------------
    update forces with MBX contribution from full system
@@ -490,51 +460,86 @@ void PairMBX::accumulate_f()
 
 void PairMBX::accumulate_f_full()
 {
-  // should this just be moved to fix_mbx post_force()??
+  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F_FULL);
   
-  bblock::System * ptr_mbx = fix_mbx->ptr_mbx_full;
+  //  printf("[MBX] Inside accumulate_f_full()\n");
+  
+  // master rank retrieves forces
+
+  double ** f_full = fix_mbx->f_full;
+    
+  if(comm->me == 0) {
+    
+    bblock::System * ptr_mbx = fix_mbx->ptr_mbx_full;
+
+    const int natoms = atom->natoms;
+    
+    const int * const mol_anchor_full = fix_mbx->mol_anchor_full;
+    const int * const mol_type_full = fix_mbx->mol_type_full;
+    const tagint * const tag_full = fix_mbx->tag_full;
+    const int * const atom_map_full = fix_mbx->atom_map_full;
+    char ** mol_names = fix_mbx->mol_names;
+    
+    std::vector<double> grads = ptr_mbx->GetRealGrads();
+    
+    // accumulate forces on local particles
+    // -- forces on ghost particles ignored/not needed
+    // -- should use a map created from earlier loop loading particles into mbx
+    
+    int indx = 0;
+    
+    for(int i=0; i<natoms; ++i) {
+      
+      if(mol_anchor_full[i]) {
+	
+	const int mtype = mol_type_full[i];
+	
+	// to be replaced with integer comparison
+	
+	int na = 0;
+	if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
+	else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
+	else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
+	else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
+	
+	tagint anchor = tag_full[i];
+	
+	for(int j=0; j<na; ++j) {
+	  
+	  const int ii = atom_map_full[anchor + j];
+	  f_full[ii][0] = -grads[indx++];
+	  f_full[ii][1] = -grads[indx++];
+	  f_full[ii][2] = -grads[indx++];
+
+	  //	  printf("MASTER:: tag= %i  f= %f %f %f\n",tag_full[ii],f_full[ii][0],f_full[ii][1],f_full[ii][2]);
+	}
+	
+      } // if(anchor)
+      
+    }
+    
+  } // if(me == 0)
+
+  // scatter forces to other ranks
 
   const int nlocal = atom->nlocal;
+  double ** f_local = fix_mbx->f_local;
+  
+  MPI_Scatterv(&(f_full[0][0]), fix_mbx->nlocal_rank3, fix_mbx->nlocal_disp3, MPI_DOUBLE, &(f_local[0][0]), nlocal*3, MPI_DOUBLE, 0, world);
+  
+  // all ranks accumulate forces into their local arrays
+  
+  // for(int i=0; i<nlocal; ++i)
+  //   printf("(%i):: tag= %i  f= %f %f %f\n",comm->me,atom->tag[i],f_local[i][0],f_local[i][1],f_local[i][2]);
+
   double ** f = atom->f;
-
-  const int * const mol_anchor = fix_mbx->mol_anchor;
-  const int * const mol_type = fix_mbx->mol_type;
-  char ** mol_names = fix_mbx->mol_names;
-  
-  std::vector<double> grads = ptr_mbx->GetRealGrads();
-
-  // accumulate forces on local particles
-  // -- forces on ghost particles ignored/not needed
-  // -- should use a map created from earlier loop loading particles into mbx
-
-  int indx = 0;
-  
   for(int i=0; i<nlocal; ++i) {
-
-    if(mol_anchor[i]) {
-
-      const int mtype = mol_type[i];
-
-      // to be replaced with integer comparison
-      
-      int na = 0;
-      if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
-      else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
-
-      tagint anchor = atom->tag[i];
-
-      for(int j=0; j<na; ++j) {
-
-	const int ii = atom->map(anchor + j);
-	f[ii][0] -= grads[indx++];
-	f[ii][1] -= grads[indx++];
-	f[ii][2] -= grads[indx++];
-      }
-     
-    } // if(anchor)
-
+    f[i][0] += f_local[i][0];
+    f[i][1] += f_local[i][1];
+    f[i][2] += f_local[i][2];
   }
- 
+  
+  //  printf("[MBX] Leaving accumulate_f_full()\n");
+  
+  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_FULL);
 }
