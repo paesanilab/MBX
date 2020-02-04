@@ -1,6 +1,26 @@
 WORK IN PROGRESS
 
+*** MBX library/headers ***
 
+Build MBX for your system as you normally would.
+
+An extra step that is currently needed/helpful, is to copy the
+libmbxlib.a library to an easier location for linking. The LAMMPS
+Makefile below assumes the MBX library was copied to the
+build/install/lib directory. An example follows.
+
+cd /home/bin/MBX/build
+make -j 8
+make install
+mkdir install/lib
+cp stage/home/bin/MBX/install/lib/static/libmbxlib.a ./install/lib
+
+Something similar could be done for copying headers to an
+./install/include directory as well.
+
+
+
+*** LAMMPS ***
 
 The LAMMPS-MBX interface is organized as a LAMMPS package. The
 USER-MBX directory should be copied into the lammps-<version>/src
@@ -14,16 +34,12 @@ provided.
 
 MBX = /path_to_mbx/
 
-MBX_INC = -I$(MBX)/src -I$(MBX)/external
-MBX_LIB = $(MBX)/../build_machine/install/lib/libmbxlib.a
+CCFLAGS += -I$(MBX)/src -I$(MBX)/external
+LIB += $(MBX)/build/install/lib/libmbxlib.a
 
 
-CCFLAGS += (MBX_INC)
-LIB += $(MBX_LIB)
-
-
-To compile, simply install the USER-MBX package and use the updated
-machine Makefile.
+To compile, install the USER-MBX package and use the updated machine
+Makefile.
 
 cd lammps-<version>/src
 make yes-USER-MBX

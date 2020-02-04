@@ -38,10 +38,6 @@ class PairMBX : public Pair {
   void coeff(int, char **);
   void init_style();
   double init_one(int, int);
-  void write_restart(FILE *);
-  void read_restart(FILE *);
-  void write_restart_settings(FILE *);
-  void read_restart_settings(FILE *);
   void write_data(FILE *);
   void write_data_all(FILE *);
   void *extract(const char *, int &);
@@ -49,7 +45,7 @@ class PairMBX : public Pair {
  protected:
   double cut_global;
   double **cut;
-
+  
   FixMBX * fix_mbx; // owner of MBX objects
 
   int nmolecule; // # of molecules in system (would break if number of molecules can change)
@@ -65,7 +61,6 @@ class PairMBX : public Pair {
   virtual void allocate();
   void setup();
 
-  void update_mbx_xyz();
   void compute_full();
   void accumulate_f();
   void accumulate_f_full();

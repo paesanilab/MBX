@@ -34,7 +34,7 @@ thermo		1
 #fix             1 all nve
 fix             1 all move linear 0.0 0.0 1.0
 
-fix             2 all mbx 2 3 h2o 1 cl
+fix             2 all mbx 1 256 h2o
 
 dump            1 all custom 1 lmp.lammpstrj id type x y z fx fy fz
 dump_modify     1 format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"

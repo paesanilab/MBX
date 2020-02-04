@@ -480,9 +480,24 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
       size_t islsum = is_local[istart] + is_local[i];
 
       bool include_monomer = false;
-      if( use_ghost && islsum == 1) include_monomer = true;
-      if(!use_ghost && islsum == 2) include_monomer = true;
-
+      if(n_max == 2) {
+	if(i == istart) {
+	  if( use_ghost) include_monomer = true;
+	  else if(!use_ghost && islsum == 2) include_monomer = true;
+	} else {
+	  if( use_ghost && islsum == 1) include_monomer = true;
+	  else if(!use_ghost && islsum == 2) include_monomer = true;
+	}      
+      } else { // trimer
+	if(i == istart) {
+	  if( use_ghost) include_monomer = true;
+	  else if(!use_ghost && islsum == 2) include_monomer = true;
+	} else {
+	  if( use_ghost) include_monomer = true;
+	  else if(!use_ghost && islsum == 2) include_monomer = true;
+	}      
+      }
+	
       if(include_monomer) {
 	
         xyz.push_back(xyz_orig[3 * first_index[i]]);
@@ -493,7 +508,7 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
 	
       }
     }
-
+    
     if(nmon2 < 2) return;
     if(n_max > 2 && nmon2 < 3) return;
     

@@ -26,6 +26,25 @@ FixStyle(mbx,FixMBX)
 
 #include "bblock/system.h"
 
+enum {
+      MBXT_INIT=0,
+      MBXT_UPDATE_XYZ,
+      MBXT_INIT_FULL,
+      MBXT_UPDATE_XYZ_FULL,
+      MBXT_E1B,
+      MBXT_E2B_LOCAL,
+      MBXT_E2B_GHOST,
+      MBXT_E3B_LOCAL,
+      MBXT_E3B_GHOST,
+      MBXT_DISP,
+      MBXT_BUCK,
+      MBXT_ELE,
+      MBXT_ACCUMULATE_F,
+      MBXT_ACCUMULATE_F_FULL,
+
+      MBXT_NUM_TIMERS
+};
+
 namespace LAMMPS_NS {
 
 class FixMBX : public Fix {
@@ -52,7 +71,7 @@ class FixMBX : public Fix {
   bblock::System * ptr_mbx; // pointer to MBX object
   bblock::System * ptr_mbx_full; // pointer to MBX object for full system
 
-  int me;
+  int me, nprocs;
   bigint ngroup;
 
   int num_mol_types;       // # of unique molecule types
@@ -65,9 +84,37 @@ class FixMBX : public Fix {
   int * mol_anchor;   // per-atom array 1/0 if anchor atom of a molecule
   int * mol_intact;   // per-atom array 1/0 if molecule intact on processor (local+ghost)
 
+  int mbx_num_atoms;
+  int mbx_num_atoms_full;
+
+  int * mbxt_count;
+  double * mbxt_time;
+  double * mbxt_time_start;
+  double mbxt_initial_time;
+  void mbxt_start(int);
+  void mbxt_stop(int);
+  void mbxt_write_summary();
+  void mbxt_print_time(const char *, int, double *);
+  
+  // rank 0's copy of all atoms in simulation cell
+  
+  int * mol_anchor_full;
+  int * mol_type_full;
+  double ** x_full;
+  double ** f_full;
+  double ** f_local;
+  tagint * tag_full;
+  int * atom_map_full;
+  int * nlocal_rank;
+  int * nlocal_disp;
+  int * nlocal_rank3;
+  int * nlocal_disp3;
+  
+  
   void mbx_init();
   void mbx_init_full();
-  void mbx_update();
+  void mbx_update_xyz();
+  void mbx_update_xyz_full();
   
   virtual int pack_forward_comm(int, int *, double *, int, int *);
   virtual void unpack_forward_comm(int, int, double *);
