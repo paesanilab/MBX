@@ -14,21 +14,21 @@ matrix:
     addons: &1
       apt:
         sources:
-        - llvm-toolchain-precise-7.0
+        - llvm-toolchain-trusty-7
         - ubuntu-toolchain-r-test
         packages:
-        - clang-7.0
+        - clang-7
         - lcov
         - libfftw3-dev
     env:
-      - CXX_COMPILER='clang++-7.0'
+      - CXX_COMPILER='clang++-7'
       - CXX_FLAGS="-fPIC"
 #      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
-      - C_COMPILER='clang-7.0'
+      - C_COMPILER='clang-7'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='debug'
       - NAME='clang'
-      - VERSION='7.0'
+      - VERSION='7'
 
   - os: linux
     compiler: gcc
@@ -56,17 +56,17 @@ matrix:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-7.2
-        - gcc-7.2
+        - g++-7
+        - gcc-7
         - libfftw3-dev
     env:
-      - CXX_COMPILER='g++-7.2'
-      - C_COMPILER='gcc-7.2'
+      - CXX_COMPILER='g++-7'
+      - C_COMPILER='gcc-7'
       - CXX_FLAGS="-fPIC --coverage"
       - PYTHON_VER='3.5'
       - BUILD_TYPE='debug'
       - NAME='gcc'
-      - VERSION='7.2'
+      - VERSION='7'
 
 before_install:
   - uname -a
