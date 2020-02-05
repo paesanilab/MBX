@@ -14,46 +14,25 @@ matrix:
     addons: &1
       apt:
         sources:
-        - llvm-toolchain-precise-3.6
+        - llvm-toolchain-precise-7.0
         - ubuntu-toolchain-r-test
         packages:
-        - clang-3.6
+        - clang-7.0
         - lcov
         - libfftw3-dev
     env:
-      - CXX_COMPILER='clang++-3.6'
+      - CXX_COMPILER='clang++-7.0'
       - CXX_FLAGS="-fPIC"
 #      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
-      - C_COMPILER='clang-3.6'
+      - C_COMPILER='clang-7.0'
       - PYTHON_VER='3.5'
       - BUILD_TYPE='debug'
       - NAME='clang'
-      - VERSION='3.6'
-
-  - os: linux
-    compiler: clang
-    addons: &2
-      apt:
-        sources:
-        - llvm-toolchain-precise-3.7
-        - ubuntu-toolchain-r-test
-        packages:
-        - clang-3.7
-        - lcov
-        - libfftw3-dev
-    env:
-      - CXX_COMPILER='clang++-3.7'
-      - CXX_FLAGS="-fPIC"
-#      - CXX_FLAGS="-Xclang -coverage-cfg-checksum -Xclang -coverage-no-function-names-in-data -Xclang -coverage-version=\'407*\'" 
-      - C_COMPILER='clang-3.7'
-      - PYTHON_VER='3.5'
-      - BUILD_TYPE='debug'
-      - NAME='clang'
-      - VERSION='3.7'
+      - VERSION='7.0'
 
   - os: linux
     compiler: gcc
-    addons: &3
+    addons: &2
       apt:
         sources:
         - ubuntu-toolchain-r-test
@@ -69,24 +48,25 @@ matrix:
       - BUILD_TYPE='debug'
       - NAME='gcc'
       - VERSION='4.9'
-#
-#  - os: linux
-#    compiler: gcc
-#    addons: &4
-#      apt:
-#        sources:
-#        - ubuntu-toolchain-r-test
-#        packages:
-#        - g++-6
-#        - gcc-6
-#    env:
-#      - CXX_COMPILER='g++-6'
-#      - C_COMPILER='gcc-6'
-#      - CXX_FLAGS='-Ofast'
-#      - PYTHON_VER='3.5'
-#      - BUILD_TYPE='debug'
-#      - NAME='gcc'
-#      - VERSION=6
+
+  - os: linux
+    compiler: gcc
+    addons: &3
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-7.2
+        - gcc-7.2
+        - libfftw3-dev
+    env:
+      - CXX_COMPILER='g++-7.2'
+      - C_COMPILER='gcc-7.2'
+      - CXX_FLAGS="-fPIC --coverage"
+      - PYTHON_VER='3.5'
+      - BUILD_TYPE='debug'
+      - NAME='gcc'
+      - VERSION='7.2'
 
 before_install:
   - uname -a
