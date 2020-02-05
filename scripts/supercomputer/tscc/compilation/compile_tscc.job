@@ -16,8 +16,7 @@ MBX_HOME=$HOME/codes/MBX
 export MODULEPATH=/projects/builder-group/jpg/modulefiles/applications:$MODULEPATH
 module load cmake/3.13.4
 
-module load intel/2018.1.163 gsl openmpi_ib fftw
-module load gnu
+module load gnu gsl openmpi_ib fftw
 export PATH=$FFTWHOME/lib:$FFTWHOME/include:$PATH
 
 cd $MBX_HOME 
@@ -30,6 +29,6 @@ cd ../
 
 # Compile the driver
 cd plugins/i-pi/src/main
-cp Makefile_tscc Makefile
+cp Makefile_tscc_gnu Makefile
 make
 cd -
