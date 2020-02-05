@@ -10,7 +10,7 @@ What's new in v0.2.1a
 - Example on how to install and run plumed with i-pi and MBX.
 - Three-body PEFs for alkali-metal ions and corresponding tests have been updated.
 - Bugfix in virial for CH4, indexes were not correct in the 1b CH4 and 2b CH4-CH4 and CH4-H2O MB-nrg pefs.
-- Added NH3 1b PEF MB-nrg.
+- Added NH3 1b PEF MB-nrg (should not be used yet).
 - Added NH3-NH3 2b PEF TTM-nrg and MB-nrg (should not be used yet).
 
 ## Compilation and Installation
