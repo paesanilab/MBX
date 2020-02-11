@@ -50,6 +50,9 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, bool
     } else if (mon1 == "co2") {
         x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon1);
         energies = pot.eval(xyz1.data(), nm);
+    } else if (mon1 == "nh3") {
+        mbnrg_A1B3_deg6::mbnrg_A1B3_deg6_v1 pot(mon1);
+        energies = pot.eval(xyz1.data(), nm);
         // =====>> END SECTION 1B_NO_GRADIENT <<=====
     } else {
         return 0.0;
@@ -80,6 +83,9 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
     } else if (mon1 == "co2") {
         x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon1);
         energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
+    } else if (mon1 == "nh3") {
+        mbnrg_A1B3_deg6::mbnrg_A1B3_deg6_v1 pot(mon1);
+        energies =  pot.eval(xyz1.data(), grad1.data(), nm, virial);
         // =====>> END SECTION 1B_GRADIENT <<=====
     } else {
         return 0.0;

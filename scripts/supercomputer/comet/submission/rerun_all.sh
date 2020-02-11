@@ -1,7 +1,6 @@
 #!/bin/bash
 
-directories="150co2_150h2o  h2o_in_277co2  nh4pf6_in_277h2o  co2_in_277h2o  nh4_in_277h2o  pf6_in_277h2o  "
-#directories="nh4_in_277h2o pf6_in_277h2o"
+directories="system1 system2"
 
 CURRDIR=$PWD
 

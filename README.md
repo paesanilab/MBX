@@ -2,14 +2,16 @@
 [![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
 
 # MBX
-This is the version 0.2.0a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
+This is the version 0.2.1a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
 
-What's new in v0.2.0a
-- JSON input files have been implemented to modify the system settings without recompiling the code.
-- The virial tensor is now calculated, enabling isobaric isothermal simulations.
-- Untested/unpublished three-body PEFs have been added for the alkali metal ions.
-- Untested/unpublished two-body PEFs have been added for CO2, CO2--H2O, and CO2--CO2.
-- Performance have been improved with respect to v0.1a
+What's new in v0.2.1a
+- Scripts to compile and run simulations on comet and TSCC have been added.
+- Scripts to run on Thunder (DOD) have been added.
+- Example on how to install and run plumed with i-pi and MBX.
+- Three-body PEFs for alkali-metal ions and corresponding tests have been updated.
+- Bugfix in virial for CH4, indexes were not correct in the 1b CH4 and 2b CH4-CH4 and CH4-H2O MB-nrg pefs.
+- Added NH3 1b PEF MB-nrg (should not be used yet).
+- Added NH3-NH3 2b PEF TTM-nrg and MB-nrg (should not be used yet).
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software

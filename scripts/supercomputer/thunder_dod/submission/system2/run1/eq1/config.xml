@@ -1,0 +1,42 @@
+<simulation verbosity='low'>
+  <total_steps>20000</total_steps>
+  <output prefix='simulation'>
+    <properties stride='100' filename='out'>  [ step, time{picosecond}, conserved{kilocal/mol}, temperature{kelvin}, kinetic_cv{kelvin}, potential{kelvin}, pressure_cv{megapascal}] </properties>
+    <properties stride='100' filename='pot'>  [ time{picosecond}, potential{kilocal/mol}] </properties>
+    <properties stride='100' filename='temperature'>  [ time{picosecond}, temperature{kelvin}] </properties>
+    <trajectory filename='pos' stride='100' format='xyz' cell_units='angstrom'> positions{angstrom} </trajectory>
+    <trajectory filename='vel' format='xyz' stride='100'> velocities </trajectory>
+    <checkpoint stride='10' filename='checkpoint'>39733</checkpoint>
+          
+  </output>
+  <prng>
+    <seed>82711</seed>
+  </prng>
+  <ffsocket mode='unix' name='driver'>
+    <address>localhost11</address>
+  </ffsocket>
+  <system>
+    <initialize nbeads='1'>
+      <file mode='xyz' units='angstrom'> config.xyz </file>
+      <cell mode='abc' units='angstrom'>
+        [1.9729500000000002E+01,1.9729500000000002E+01,1.9729500000000002E+01]
+      </cell>
+      <velocities mode='thermal' units='kelvin'>50.0</velocities>
+    </initialize>
+    <forces>
+      <force forcefield='driver'/>
+    </forces>
+    <ensemble>
+      <temperature units='kelvin'>275</temperature>
+    </ensemble>
+    <motion mode='dynamics'>
+      <fixcom> True </fixcom>
+      <dynamics mode='nvt'>
+        <thermostat mode='langevin'>
+          <tau units='femtosecond'>25</tau>
+        </thermostat>
+        <timestep units='femtosecond'>0.200</timestep>
+      </dynamics>
+    </motion>
+  </system>
+</simulation>

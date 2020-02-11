@@ -78,7 +78,7 @@ TEST_CASE("Test water -- cesium trimer energy terms") {
         SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(one_body_energy).margin(TOL)); }
 
         SECTION("Compare analitical gradients with numerical gradients") {
-            double stepSize = 0.00001;
+            double stepSize = 0.0001;
             for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
                 all_xyz[degreeOfFreedom] += stepSize;
                 my_system.SetXyz(all_xyz);
@@ -341,7 +341,7 @@ TEST_CASE("Test water -- cesium trimer energy terms") {
         SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(total_energy_ttm).margin(TOL)); }
 
         SECTION("Compare analitical gradients with numerical gradients") {
-            double stepSize = 1E-05;
+            double stepSize = 0.001;
             for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
                 all_xyz[degreeOfFreedom] += stepSize;
                 my_system.SetXyz(all_xyz);
@@ -360,7 +360,7 @@ TEST_CASE("Test water -- cesium trimer energy terms") {
                 double finiteDifferenceForce =
                     (8 * (plusEnergy - minusEnergy) - plusplusEnergy + minusminusEnergy) / (12 * stepSize);
 
-                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL*10.0));
             }
         }
     }
