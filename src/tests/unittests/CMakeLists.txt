@@ -1,4 +1,4 @@
-# Add any new tests to this list or the one below!
+#Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
     unittest-gas-electrostatics-mbpol.cpp
     unittest-dispersion-gas-cutoff.cpp
@@ -37,7 +37,18 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-co2-monomer.cpp
     unittest-ch4-monomer.cpp
     unittest-dummy-monomer.cpp
+    unittest-bond.cpp
+    unittest-angle.cpp
+    unittest-dihedral.cpp
+    unittest-inversion.cpp
 )
+
+#set( SOURCES_UNITTESTS_TESTS
+#    unittest-h4-dummy-bond.cpp
+#    unittest-h4-dummy-angle.cpp
+#    unittest-h4-dummy-dihedral.cpp
+#    unittest-h4-dummy-inversion.cpp
+#)
 
 #
 # Stuff below shouldn't need to be modified
