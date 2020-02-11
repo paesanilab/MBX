@@ -34,7 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "testutils.h"
 
-#include "setup_h4_dummy_dihedral.h"
+#include "setup_dihedral.h"
 #include "potential/force_field/dihedral.h"
 #include "potential/force_field/topology.h"
 

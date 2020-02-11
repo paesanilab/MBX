@@ -34,7 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "testutils.h"
 
-#include "setup_h4_dummy_bond.h"
+#include "setup_bond.h"
 #include "potential/force_field/bond.h"
 #include "potential/force_field/topology.h"
 
