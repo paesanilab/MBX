@@ -34,7 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "testutils.h"
 
-#include "setup_bond.h"
+#include "setup_h4_dummy.h"
 #include "potential/force_field/bond.h"
 #include "potential/force_field/topology.h"
 
@@ -48,11 +48,11 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test dummy h4 bond") {
     // Create the system
-    SETUP_H4_DUMMY_BOND
+    SETUP_H4_DUMMY
 
     SECTION("Bond-harmonic") {
         std::string functional_form = "harm";
-        Bond obj(connectivity, bond_type, indexes, functional_form);
+        Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
         SECTION("Harmonic Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_harm_energy).margin(TOL)); }
         SECTION("Harmonic Non Linear Value") {
@@ -68,7 +68,7 @@ TEST_CASE("Test dummy h4 bond") {
 
     SECTION("Bond-morse") {
         std::string functional_form = "morse";
-        Bond obj(connectivity, bond_type, indexes, functional_form);
+        Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         obj.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
         SECTION("Morse Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_morse_energy).margin(TOL)); }
         SECTION("Morse Non Linear Value") {
@@ -84,7 +84,7 @@ TEST_CASE("Test dummy h4 bond") {
 
     SECTION("Bond-quartic") {
         std::string functional_form = "quartic";
-        Bond obj(connectivity, bond_type, indexes, functional_form);
+        Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         obj.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
         SECTION("Quartic Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_quartic_energy).margin(TOL)); }
         SECTION("Quartic Non Linear Value") {
@@ -100,7 +100,7 @@ TEST_CASE("Test dummy h4 bond") {
 
     SECTION("Bond-none") {
         std::string functional_form = "none";
-        Bond obj(connectivity, bond_type, indexes, functional_form);
+        Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
         SECTION("None Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_none_energy).margin(TOL)); }
         SECTION("None Non Linear Value") {
@@ -118,7 +118,7 @@ TEST_CASE("Test dummy h4 bond") {
         std::string functional_form = "abcd";
         bool not_possible_to_setup_bond = false;
         try {
-            Bond obj(connectivity, bond_type, indexes, functional_form);
+            Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         } catch (CUException &e) {
             not_possible_to_setup_bond = true;
         }

@@ -34,7 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "testutils.h"
 
-#include "setup_dihedral.h"
+#include "setup_h4_dummy.h"
 #include "potential/force_field/dihedral.h"
 #include "potential/force_field/topology.h"
 
@@ -48,93 +48,99 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test dummy h4 dihedral") {
     // Create the system
-    SETUP_H4_DUMMY_DIHEDRAL
+    SETUP_H4_DUMMY
 
     SECTION("Dihedral-cos") {
         std::string functional_form = "cos";
-        Dihedral obj(connectivity, dihedral_type, indexes, functional_form);
+        Dihedral obj(dihedral_connectivity, dihedral_type, dihedral_indexes, functional_form);
         obj.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
-        SECTION("Cosine Energy") { REQUIRE(obj.GetEnergy(phi) == Approx(ff_dihedral_cos_energy).margin(TOL)); }
+        SECTION("Cosine Energy") { REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_cos_energy).margin(TOL)); }
         SECTION("Cosine Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(phi);
+            std::vector<double> non_lin = obj.GetNonLinearValue(dihedral_phi);
             for (int i = 0; i < non_lin.size(); i++) {
                 REQUIRE(non_lin[i] == Approx(ff_dihedral_cos_non_lin_val[i]).margin(TOL));
             }
         }
         SECTION("Cosine Gradient") {
-            REQUIRE(obj.GetTopologyGradient(phi) == Approx(ff_dihedral_cos_grad).margin(TOL));
+            REQUIRE(obj.GetTopologyGradient(dihedral_phi) == Approx(ff_dihedral_cos_grad).margin(TOL));
         }
     }
 
     SECTION("Dihedral-harmonic") {
         std::string functional_form = "harm";
-        Dihedral obj(connectivity, dihedral_type, indexes, functional_form);
+        Dihedral obj(dihedral_connectivity, dihedral_type, dihedral_indexes, functional_form);
         obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-        SECTION("Harmonic Energy") { REQUIRE(obj.GetEnergy(phi) == Approx(ff_dihedral_harm_energy).margin(TOL)); }
+        SECTION("Harmonic Energy") {
+            REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_harm_energy).margin(TOL));
+        }
         SECTION("Harmonic Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(phi);
+            std::vector<double> non_lin = obj.GetNonLinearValue(dihedral_phi);
             for (int i = 0; i < non_lin.size(); i++) {
                 REQUIRE(non_lin[i] == Approx(ff_dihedral_harm_non_lin_val[i]).margin(TOL));
             }
         }
         SECTION("Harmonic Gradient") {
-            REQUIRE(obj.GetTopologyGradient(phi) == Approx(ff_dihedral_harm_grad).margin(TOL));
+            REQUIRE(obj.GetTopologyGradient(dihedral_phi) == Approx(ff_dihedral_harm_grad).margin(TOL));
         }
     }
 
     SECTION("Dihedral-hcos") {
         std::string functional_form = "hcos";
-        Dihedral obj(connectivity, dihedral_type, indexes, functional_form);
+        Dihedral obj(dihedral_connectivity, dihedral_type, dihedral_indexes, functional_form);
         obj.SetParameters(hcos_linear_parameters, hcos_nonlinear_parameters);
         SECTION("Harmonic Cosine Energy") {
-            REQUIRE(obj.GetEnergy(phi) == Approx(ff_dihedral_hcos_energy).margin(TOL));
+            REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_hcos_energy).margin(TOL));
         }
         SECTION("Harmonic Cosine Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(phi);
+            std::vector<double> non_lin = obj.GetNonLinearValue(dihedral_phi);
             for (int i = 0; i < non_lin.size(); i++) {
                 REQUIRE(non_lin[i] == Approx(ff_dihedral_hcos_non_lin_val[i]).margin(TOL));
             }
         }
         SECTION("Harmonic Cosine Gradient") {
-            REQUIRE(obj.GetTopologyGradient(phi) == Approx(ff_dihedral_hcos_grad).margin(TOL));
+            REQUIRE(obj.GetTopologyGradient(dihedral_phi) == Approx(ff_dihedral_hcos_grad).margin(TOL));
         }
     }
 
     SECTION("Dihedral-cos3") {
         std::string functional_form = "cos3";
-        Dihedral obj(connectivity, dihedral_type, indexes, functional_form);
+        Dihedral obj(dihedral_connectivity, dihedral_type, dihedral_indexes, functional_form);
         obj.SetParameters(cos3_linear_parameters, cos3_nonlinear_parameters);
-        SECTION("Cosine 3 Energy") { REQUIRE(obj.GetEnergy(phi) == Approx(ff_dihedral_cos3_energy).margin(TOL)); }
+        SECTION("Cosine 3 Energy") {
+            REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_cos3_energy).margin(TOL));
+        }
         SECTION("Cosine 3 Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(phi);
+            std::vector<double> non_lin = obj.GetNonLinearValue(dihedral_phi);
             for (int i = 0; i < non_lin.size(); i++) {
                 REQUIRE(non_lin[i] == Approx(ff_dihedral_cos3_non_lin_val[i]).margin(TOL));
             }
         }
         SECTION("Cosine 3 Gradient") {
-            REQUIRE(obj.GetTopologyGradient(phi) == Approx(ff_dihedral_cos3_grad).margin(TOL));
+            REQUIRE(obj.GetTopologyGradient(dihedral_phi) == Approx(ff_dihedral_cos3_grad).margin(TOL));
         }
     }
 
     SECTION("Dihedral-none") {
         std::string functional_form = "none";
-        Dihedral obj(connectivity, dihedral_type, indexes, functional_form);
+        Dihedral obj(dihedral_connectivity, dihedral_type, dihedral_indexes, functional_form);
         obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
-        SECTION("None Energy") { REQUIRE(obj.GetEnergy(phi) == Approx(ff_dihedral_none_energy).margin(TOL)); }
+        SECTION("None Energy") { REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_none_energy).margin(TOL)); }
         SECTION("None Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(phi);
+            std::vector<double> non_lin = obj.GetNonLinearValue(dihedral_phi);
             for (int i = 0; i < non_lin.size(); i++) {
                 REQUIRE(non_lin[i] == Approx(ff_dihedral_none_non_lin_val[i]).margin(TOL));
             }
         }
-        SECTION("None Gradient") { REQUIRE(obj.GetTopologyGradient(phi) == Approx(ff_dihedral_none_grad).margin(TOL)); }
+        SECTION("None Gradient") {
+            REQUIRE(obj.GetTopologyGradient(dihedral_phi) == Approx(ff_dihedral_none_grad).margin(TOL));
+        }
     }
 
     SECTION("Dihedral-undefined-func-form") {
         std::string functional_form = "abcd";
         bool not_possible_to_setup_dihedral = false;
         try {
-            Dihedral obj(connectivity, dihedral_type, indexes, functional_form);
+            Dihedral obj(dihedral_connectivity, dihedral_type, dihedral_indexes, functional_form);
         } catch (CUException &e) {
             not_possible_to_setup_dihedral = true;
         }
@@ -145,7 +151,7 @@ TEST_CASE("Test dummy h4 dihedral") {
         std::string functional_form = "none";
         bool possible_to_set_exclude = true;
         std::string include_exclude = "Exclude";
-        Dihedral obj(connectivity, dihedral_type, indexes, functional_form);
+        Dihedral obj(dihedral_connectivity, dihedral_type, dihedral_indexes, functional_form);
 
         SECTION("Set Include Exclude") {
             try {
@@ -156,6 +162,5 @@ TEST_CASE("Test dummy h4 dihedral") {
             REQUIRE(possible_to_set_exclude);
             REQUIRE(obj.GetIncludeExclude() == include_exclude);
         }
-        // SECTION("Get Include Exclude") { REQUIRE(obj.GetIncludeExclude() == include_exclude); };
     }
 }

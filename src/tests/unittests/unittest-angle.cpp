@@ -34,7 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "testutils.h"
 
-#include "setup_angles.h"
+#include "setup_h4_dummy.h"
 #include "potential/force_field/angles.h"
 #include "potential/force_field/topology.h"
 
@@ -48,11 +48,11 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test dummy h4 angles") {
     // Create the system
-    SETUP_H4_DUMMY_ANGLES
+    SETUP_H4_DUMMY
 
     SECTION("Angle-harmonic") {
         std::string functional_form = "harm";
-        Angles obj(connectivity, angle_type, indexes, functional_form);
+        Angles obj(angle_connectivity, angle_type, angle_index, functional_form);
         obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
         SECTION("Harmonic Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_harm_energy).margin(TOL)); }
         SECTION("Harmonic Non Linear Value") {
@@ -68,7 +68,7 @@ TEST_CASE("Test dummy h4 angles") {
 
     SECTION("Angle-quartic") {
         std::string functional_form = "quartic";
-        Angles obj(connectivity, angle_type, indexes, functional_form);
+        Angles obj(angle_connectivity, angle_type, angle_index, functional_form);
         obj.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
         SECTION("Quartic Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_quartic_energy).margin(TOL)); }
         SECTION("Quartic Non Linear Value") {
@@ -84,7 +84,7 @@ TEST_CASE("Test dummy h4 angles") {
 
     SECTION("Angle-none") {
         std::string functional_form = "none";
-        Angles obj(connectivity, angle_type, indexes, functional_form);
+        Angles obj(angle_connectivity, angle_type, angle_index, functional_form);
         obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
         SECTION("None Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_none_energy).margin(TOL)); }
         SECTION("None Non Linear Value") {
@@ -100,7 +100,7 @@ TEST_CASE("Test dummy h4 angles") {
         std::string functional_form = "abcd";
         bool not_possible_to_setup_angle = false;
         try {
-            Angles obj(connectivity, angle_type, indexes, functional_form);
+            Angles obj(angle_connectivity, angle_type, angle_index, functional_form);
         } catch (CUException &e) {
             not_possible_to_setup_angle = true;
         }
