@@ -15,7 +15,7 @@ What's new in v0.2.1a
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
-- CMake v3.9 or higher
+- CMake v3.12.4 or higher
 - g++/gcc v4.9 or higher [and icpc/icc v2017 or higher - optional]
 - Read the entire README before doing anything
 
