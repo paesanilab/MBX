@@ -94,6 +94,15 @@ class Dihedral : public Topology {
      */
     double GetTopologyGradient(double x);
 
+    /**
+     * @brief Checks if two dihedrals are the same by inspecting
+     * all of the field variables.
+     * @param[in] dihedral Is the other dihedral object that we are comparing
+     * against
+     * @return True if the dihedral objects are the same. False otherwise
+     */
+    bool operator==(Dihedral const &dihedral) const;
+
    private:
     /**
      * Used to specify whether to include or exclude the dihedral

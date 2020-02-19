@@ -41,10 +41,15 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-angle.cpp
     unittest-dihedral.cpp
     unittest-inversion.cpp
+    unittest-connectivity.cpp
+    unittest-connectivity.cpp
+    unittest-io-connectivity.cpp
 )
 
 #set( SOURCES_UNITTESTS_TESTS
 #    unittest-h4-dummy-bond.cpp
+#    unittest-connectivity.cpp
+#    unittest-io-connectivity.cpp
 #    unittest-h4-dummy-angle.cpp
 #    unittest-h4-dummy-dihedral.cpp
 #    unittest-h4-dummy-inversion.cpp

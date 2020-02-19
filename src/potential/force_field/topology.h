@@ -149,26 +149,6 @@ class Topology {
 
    protected:
     /**
-     * The bond type
-     */
-    // size_t bond_type_;
-
-    /**
-     * The angle type
-     */
-    // size_t angle_type_;
-
-    /**
-     * The dihedral type
-     */
-    // size_t dihedral_type_;
-
-    /**
-     * The inversion type
-     */
-    // size_t inversion_type_;
-
-    /**
      * The variable to keep track of the connectivity or the topology. E.g. Bond
      */
     std::string topology_;

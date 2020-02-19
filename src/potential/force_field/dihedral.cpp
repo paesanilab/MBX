@@ -118,3 +118,17 @@ double Dihedral::GetTopologyGradient(double x) {
     }
     return val;
 }
+
+bool Dihedral::operator==(Dihedral const &dihedral) const {
+    // Check field variables
+    if (dihedral.topology_ != this->topology_ || dihedral.topology_type_ != this->topology_type_ ||
+        dihedral.functional_form_ != this->functional_form_ || dihedral.indexes_ != this->indexes_ ||
+        dihedral.linear_parameters_ != this->linear_parameters_ ||
+        dihedral.nonlinear_parameters_ != this->nonlinear_parameters_ || dihedral.linear_ != this->linear_ ||
+        dihedral.num_linear_params_ != this->num_linear_params_ ||
+        dihedral.num_nonlinear_params_ != this->num_nonlinear_params_) {
+        return false;
+    }
+
+    return true;
+}

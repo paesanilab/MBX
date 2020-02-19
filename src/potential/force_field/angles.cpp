@@ -92,3 +92,17 @@ double Angles::GetTopologyGradient(double x) {
     }
     return val;
 }
+
+bool Angles::operator==(Angles const &angle) const {
+    // Check field variables
+    if (angle.topology_ != this->topology_ || angle.topology_type_ != this->topology_type_ ||
+        angle.functional_form_ != this->functional_form_ || angle.indexes_ != this->indexes_ ||
+        angle.linear_parameters_ != this->linear_parameters_ ||
+        angle.nonlinear_parameters_ != this->nonlinear_parameters_ || angle.linear_ != this->linear_ ||
+        angle.num_linear_params_ != this->num_linear_params_ ||
+        angle.num_nonlinear_params_ != this->num_nonlinear_params_) {
+        return false;
+    }
+
+    return true;
+}

@@ -83,6 +83,15 @@ class Bond : public Topology {
      */
     double GetTopologyGradient(double x);
 
+    /**
+     * @brief Checks if two bonds are the same by inspecting
+     * all of the field variables.
+     * @param[in] bond Is the other bond object that we are comparing
+     * against
+     * @return True if the bond objects are the same. False otherwise
+     */
+    bool operator==(Bond const &bond) const;
+
    private:
 };
 

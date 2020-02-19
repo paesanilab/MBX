@@ -1,4 +1,4 @@
-set(BBLOCK_SOURCES system.cpp sys_tools.cpp external_call.cpp)
+set(BBLOCK_SOURCES system.cpp sys_tools.cpp external_call.cpp connectivity.cpp)
 
 #add_library(bblock SHARED ${BBLOCK_SOURCES}) 
 #target_include_directories(bblock PRIVATE ${CMAKE_SOURCE_DIR}) 

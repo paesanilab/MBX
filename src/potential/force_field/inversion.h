@@ -93,6 +93,15 @@ class Inversion : public Topology {
      */
     double GetTopologyGradient(double x);
 
+    /**
+     * @brief Checks if two inversions are the same by inspecting
+     * all of the field variables.
+     * @param[in] inversion Is the other inversion object that we are comparing
+     * against
+     * @return True if the inversion objects are the same. False otherwise
+     */
+    bool operator==(Inversion const &inversion) const;
+
    private:
 };
 

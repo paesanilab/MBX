@@ -77,3 +77,17 @@ double Inversion::GetTopologyGradient(double x) {
 
     return val;
 }
+
+bool Inversion::operator==(Inversion const &inversion) const {
+    // Check field variables
+    if (inversion.topology_ != this->topology_ || inversion.topology_type_ != this->topology_type_ ||
+        inversion.functional_form_ != this->functional_form_ || inversion.indexes_ != this->indexes_ ||
+        inversion.linear_parameters_ != this->linear_parameters_ ||
+        inversion.nonlinear_parameters_ != this->nonlinear_parameters_ || inversion.linear_ != this->linear_ ||
+        inversion.num_linear_params_ != this->num_linear_params_ ||
+        inversion.num_nonlinear_params_ != this->num_nonlinear_params_) {
+        return false;
+    }
+
+    return true;
+}

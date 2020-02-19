@@ -81,6 +81,15 @@ class Angles : public Topology {
      */
     double GetTopologyGradient(double x);
 
+    /**
+     * @brief Checks if two angles are the same by inspecting
+     * all of the field variables.
+     * @param[in] angle Is the other angle object that we are comparing
+     * against
+     * @return True if the angle objects are the same. False otherwise
+     */
+    bool operator==(Angles const &angle) const;
+
    private:
 };
 

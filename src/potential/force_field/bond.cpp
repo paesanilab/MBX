@@ -109,3 +109,18 @@ double Bond::GetTopologyGradient(double x) {
     }
     return val;
 }
+
+bool Bond::operator==(Bond const &bond) const {
+    // Check field variables
+    // std::cout << "called bond compare" << std::endl;
+    if (bond.topology_ != this->topology_ || bond.topology_type_ != this->topology_type_ ||
+        bond.functional_form_ != this->functional_form_ || bond.indexes_ != this->indexes_ ||
+        bond.linear_parameters_ != this->linear_parameters_ ||
+        bond.nonlinear_parameters_ != this->nonlinear_parameters_ || bond.linear_ != this->linear_ ||
+        bond.num_linear_params_ != this->num_linear_params_ ||
+        bond.num_nonlinear_params_ != this->num_nonlinear_params_) {
+        return false;
+    }
+
+    return true;
+}
