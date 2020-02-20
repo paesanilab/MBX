@@ -52,6 +52,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace bblock {  // Building Block :: System
 
+std::unordered_map<std::string, connectivity::Conn> bblock::System::connectivity_map_;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 System::System() { initialized_ = false; }
@@ -1105,6 +1107,10 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
     systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, dimers, trimers);
     if (nmax == 2) return dimers;
     return trimers;
+}
+
+void System::SetConnectivity(std::unordered_map<std::string, connectivity::Conn> connectivity_map) {
+     bblock::System::connectivity_map_ = connectivity_map;
 }
 
 double System::Energy(bool do_grads) {

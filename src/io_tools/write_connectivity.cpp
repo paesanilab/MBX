@@ -62,7 +62,7 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
         os << it->first << std::endl;
         connectivity::Conn obj = it->second;
         // Write the bonds, angles, dihedrals, and inversions
-        vector<Bond> bonds = obj.GetBondVec();
+        std::vector<Bond> bonds = obj.GetBondVec();
         // Loop over all the bond objects
         for (auto bond = bonds.begin(); bond != bonds.end(); bond++) {
             os << bond->GetTopology() << " ";
@@ -85,7 +85,7 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << std::endl;
         }
 
-        vector<Angles> angles = obj.GetAnglesVec();
+        std::vector<Angles> angles = obj.GetAnglesVec();
         // Loop over all the angle objects
         for (auto angle = angles.begin(); angle != angles.end(); angle++) {
             os << angle->GetTopology() << " ";
@@ -108,7 +108,7 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << std::endl;
         }
 
-        vector<Dihedral> dihedrals = obj.GetDihedralVec();
+        std::vector<Dihedral> dihedrals = obj.GetDihedralVec();
         // Loop over all the angle objects
         for (auto dihedral = dihedrals.begin(); dihedral != dihedrals.end(); dihedral++) {
             os << dihedral->GetTopology() << " ";
@@ -131,7 +131,7 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << std::endl;
         }
 
-        vector<Inversion> inversions = obj.GetInversionVec();
+        std::vector<Inversion> inversions = obj.GetInversionVec();
         for (auto inversion = inversions.begin(); inversion != inversions.end(); inversion++) {
             os << inversion->GetTopology() << " ";
             std::vector<size_t> indexes = inversion->GetIndexes();

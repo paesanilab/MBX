@@ -42,7 +42,6 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-dihedral.cpp
     unittest-inversion.cpp
     unittest-connectivity.cpp
-    unittest-connectivity.cpp
     unittest-io-connectivity.cpp
 )
 
