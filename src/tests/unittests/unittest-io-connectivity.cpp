@@ -51,31 +51,48 @@ TEST_CASE("Test Connectivity IO") {
     // Write the linear and nonlinear parameters because they can not be set in
     // the macro
     // obj
-    tmp1.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
-    std::vector<Bond> bond_vec = {tmp1, tmp1};
-    tmp2.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<Angles> angle_vec = {tmp2, tmp2, tmp2};
-    tmp3.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
-    tmp3.SetIncludeExclude("excluded");
-    std::vector<Dihedral> dihedral_vec = {tmp3};
-    tmp4.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<Inversion> inversion_vec = {tmp4};
+    bond1.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
+    bond1.SetLinearFlag(true);
+    std::vector<Bond> bond_vec = {bond1, bond1};
+    angle1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    angle1.SetLinearFlag(true);
+
+    std::vector<Angles> angle_vec = {angle1, angle1, angle1};
+    dihedral1.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
+    dihedral1.SetIncludeExclude("excluded");
+    dihedral1.SetLinearFlag(true);
+
+    std::vector<Dihedral> dihedral_vec = {dihedral1};
+    inversion1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    inversion1.SetLinearFlag(true);
+    std::vector<Inversion> inversion_vec = {inversion1};
 
     // obj2
-    tmp5.SetParameters(harm_linear_parameters, harm_linear_parameters);
-    std::vector<Bond> bond_vec2 = {tmp5};
-    tmp6.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
-    tmp7.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<Angles> angle_vec2 = {tmp6, tmp7};
-    tmp8.SetParameters(hcos_linear_parameters, hcos_nonlinear_parameters);
-    tmp8.SetIncludeExclude("excluded");
-    std::vector<Dihedral> dihedral_vec2 = {tmp8};
-    tmp9.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<Inversion> inversion_vec2 = {tmp9};
-    connectivity::Conn obj = connectivity::Conn(mon_id, bond_vec, angle_vec, dihedral_vec, inversion_vec);
-    connectivity::Conn obj2 = connectivity::Conn("h4_dummy2", bond_vec2, angle_vec2, dihedral_vec2, inversion_vec2);
-    std::unordered_map<std::string, connectivity::Conn> connectivity_map = {std::make_pair("h4_dummy", obj),
-                                                                            std::make_pair("h4_dummy2", obj2)};
+    bond2.SetParameters(harm_linear_parameters, harm_linear_parameters);
+    bond2.SetLinearFlag(true);
+
+    std::vector<Bond> bond_vec2 = {bond2};
+    angle2.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
+    angle2.SetLinearFlag(true);
+
+    angle3.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    angle3.SetLinearFlag(true);
+
+    std::vector<Angles> angle_vec2 = {angle2, angle3};
+    dihedral2.SetParameters(hcos_linear_parameters, hcos_nonlinear_parameters);
+    dihedral2.SetIncludeExclude("excluded");
+    dihedral2.SetLinearFlag(true);
+
+    std::vector<Dihedral> dihedral_vec2 = {dihedral2};
+    inversion2.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    inversion2.SetLinearFlag(true);
+
+    std::vector<Inversion> inversion_vec2 = {inversion2};
+    connectivity::Conn connectivityObj1 = connectivity::Conn(mon_id, bond_vec, angle_vec, dihedral_vec, inversion_vec);
+    connectivity::Conn connectivityObj2 =
+        connectivity::Conn("h4_dummy2", bond_vec2, angle_vec2, dihedral_vec2, inversion_vec2);
+    std::unordered_map<std::string, connectivity::Conn> connectivity_map = {
+        std::make_pair("h4_dummy", connectivityObj1), std::make_pair("h4_dummy2", connectivityObj2)};
 
     // Write out the map
     tools::WriteConnectivity("connectivity_write.out", connectivity_map);

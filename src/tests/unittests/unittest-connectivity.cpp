@@ -50,10 +50,10 @@ TEST_CASE("Test Connectivity") {
 
     // Write the linear and nonlinear parameters because they can not be set in
     // the macro
-    std::vector<Bond> bond_vec = {tmp1, tmp1};
-    std::vector<Angles> angle_vec = {tmp2, tmp2, tmp2};
-    std::vector<Dihedral> dihedral_vec = {tmp3};
-    std::vector<Inversion> inversion_vec = {tmp4};
+    std::vector<Bond> bond_vec = {bond1, bond1};
+    std::vector<Angles> angle_vec = {angle1, angle1, angle1};
+    std::vector<Dihedral> dihedral_vec = {dihedral1};
+    std::vector<Inversion> inversion_vec = {inversion1};
 
     SECTION("Connectivity constructor") {
         bool not_possible_to_setup_connectivity = false;

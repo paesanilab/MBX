@@ -43,41 +43,42 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include "tools/custom_exceptions.h"
 
-#define SETUP_CONNECTIVITY                                                                                      \
-    std::string mon_id = "h4_dummy";                                                                            \
-    std::string bond_connectivity = "bond";                                                                     \
-    size_t bond_type = 1;                                                                                       \
-    std::vector<size_t> bond_indexes = {1, 2};                                                                  \
-    std::string bond_functional_form = "morse";                                                                 \
-    std::string angle_connectivity = "angle";                                                                   \
-    size_t angle_type = 1;                                                                                      \
-    std::vector<size_t> angle_index = {1, 2, 3};                                                                \
-    std::string angle_functional_form = "harm";                                                                 \
-    std::string dihedral_connectivity = "dihedral";                                                             \
-    size_t dihedral_type = 1;                                                                                   \
-    std::vector<size_t> dihedral_indexes = {1, 2, 3, 4};                                                        \
-    std::string dihedral_functional_form = "cos";                                                               \
-    std::string inversion_connectivity = "inversion";                                                           \
-    size_t inversion_type = 1;                                                                                  \
-    std::vector<size_t> inversion_indexes = {1, 2, 3, 4};                                                       \
-    std::string inversion_functional_form = "harm";                                                             \
-    std::vector<double> harm_linear_parameters = {2.0};                                                         \
-    std::vector<double> harm_nonlinear_parameters = {4.0};                                                      \
-    std::vector<double> morse_linear_parameters = {2.0};                                                        \
-    std::vector<double> morse_nonlinear_parameters = {1.0, 4.0};                                                \
-    std::vector<double> quartic_linear_parameters = {1.0, 3.0, 4.0};                                            \
-    std::vector<double> quartic_nonlinear_parameters = {2.0};                                                   \
-    std::vector<double> cos_linear_parameters = {1.0};                                                          \
-    std::vector<double> cos_nonlinear_parameters = {1.0, 0.5};                                                  \
-    std::vector<double> hcos_linear_parameters = {1.0};                                                         \
-    std::vector<double> hcos_nonlinear_parameters = {2.0};                                                      \
-    std::vector<double> cos3_linear_parameters = {1.0, 2.0, 3.0};                                               \
-    std::vector<double> cos3_nonlinear_parameters = {};                                                         \
-    std::vector<double> none_linear_parameters = {};                                                            \
-    std::vector<double> none_nonlinear_parameters = {};                                                         \
-    Bond tmp1 = Bond(bond_connectivity, bond_type, bond_indexes, bond_functional_form);                         \
-    Angles tmp2 = Angles(angle_connectivity, angle_type, angle_index, angle_functional_form);                   \
-    Dihedral tmp3 = Dihedral(dihedral_connectivity, dihedral_type, dihedral_indexes, dihedral_functional_form); \
-    Inversion tmp4 = Inversion(inversion_connectivity, inversion_type, inversion_indexes, inversion_functional_form);
+#define SETUP_CONNECTIVITY                                                                                           \
+    std::string mon_id = "h4_dummy";                                                                                 \
+    std::string bond_connectivity = "bond";                                                                          \
+    size_t bond_type = 1;                                                                                            \
+    std::vector<size_t> bond_indexes = {1, 2};                                                                       \
+    std::string bond_functional_form = "morse";                                                                      \
+    std::string angle_connectivity = "angle";                                                                        \
+    size_t angle_type = 1;                                                                                           \
+    std::vector<size_t> angle_index = {1, 2, 3};                                                                     \
+    std::string angle_functional_form = "harm";                                                                      \
+    std::string dihedral_connectivity = "dihedral";                                                                  \
+    size_t dihedral_type = 1;                                                                                        \
+    std::vector<size_t> dihedral_indexes = {1, 2, 3, 4};                                                             \
+    std::string dihedral_functional_form = "cos";                                                                    \
+    std::string inversion_connectivity = "inversion";                                                                \
+    size_t inversion_type = 1;                                                                                       \
+    std::vector<size_t> inversion_indexes = {1, 2, 3, 4};                                                            \
+    std::string inversion_functional_form = "harm";                                                                  \
+    std::vector<double> harm_linear_parameters = {2.0};                                                              \
+    std::vector<double> harm_nonlinear_parameters = {4.0};                                                           \
+    std::vector<double> morse_linear_parameters = {2.0};                                                             \
+    std::vector<double> morse_nonlinear_parameters = {1.0, 4.0};                                                     \
+    std::vector<double> quartic_linear_parameters = {1.0, 3.0, 4.0};                                                 \
+    std::vector<double> quartic_nonlinear_parameters = {2.0};                                                        \
+    std::vector<double> cos_linear_parameters = {1.0};                                                               \
+    std::vector<double> cos_nonlinear_parameters = {1.0, 0.5};                                                       \
+    std::vector<double> hcos_linear_parameters = {1.0};                                                              \
+    std::vector<double> hcos_nonlinear_parameters = {2.0};                                                           \
+    std::vector<double> cos3_linear_parameters = {1.0, 2.0, 3.0};                                                    \
+    std::vector<double> cos3_nonlinear_parameters = {};                                                              \
+    std::vector<double> none_linear_parameters = {};                                                                 \
+    std::vector<double> none_nonlinear_parameters = {};                                                              \
+    Bond bond1 = Bond(bond_connectivity, bond_type, bond_indexes, bond_functional_form);                             \
+    Angles angle1 = Angles(angle_connectivity, angle_type, angle_index, angle_functional_form);                      \
+    Dihedral dihedral1 = Dihedral(dihedral_connectivity, dihedral_type, dihedral_indexes, dihedral_functional_form); \
+    Inversion inversion1 =                                                                                           \
+        Inversion(inversion_connectivity, inversion_type, inversion_indexes, inversion_functional_form);
 
 #endif

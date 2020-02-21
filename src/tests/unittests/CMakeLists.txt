@@ -46,6 +46,7 @@ set( SOURCES_UNITTESTS_TESTS
 )
 
 #set( SOURCES_UNITTESTS_TESTS
+#     unittest-h4.cpp
 #    unittest-h4-dummy-bond.cpp
 #    unittest-connectivity.cpp
 #    unittest-io-connectivity.cpp

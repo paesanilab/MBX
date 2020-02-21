@@ -54,11 +54,13 @@ std::vector<Inversion> Conn::GetInversionVec() { return inversion_vec_; }
 
 bool Conn::operator==(Conn const &connectivity) const {
     // Check field variables
+
     if (connectivity.mon_id_ != this->mon_id_ || connectivity.bond_vec_ != this->bond_vec_ ||
         connectivity.angle_vec_ != this->angle_vec_ || connectivity.dihedral_vec_ != this->dihedral_vec_ ||
         connectivity.inversion_vec_ != this->inversion_vec_) {
         return false;
     }
+
     return true;
 }
 

@@ -78,7 +78,7 @@ std::vector<double> Angles::GetNonLinearValue(double x) {
 double Angles::GetTopologyGradient(double x) {
     double val = 0.0;
 
-    // Gradient is 0 for an unfitted bond
+    // Gradient is 0 for an unfitted angle
     if (functional_form_ == "none") {
         val = 0.0;
     } else if (functional_form_ == "harm") {
@@ -97,11 +97,29 @@ bool Angles::operator==(Angles const &angle) const {
     // Check field variables
     if (angle.topology_ != this->topology_ || angle.topology_type_ != this->topology_type_ ||
         angle.functional_form_ != this->functional_form_ || angle.indexes_ != this->indexes_ ||
-        angle.linear_parameters_ != this->linear_parameters_ ||
-        angle.nonlinear_parameters_ != this->nonlinear_parameters_ || angle.linear_ != this->linear_ ||
-        angle.num_linear_params_ != this->num_linear_params_ ||
+        angle.linear_ != this->linear_ || angle.num_linear_params_ != this->num_linear_params_ ||
         angle.num_nonlinear_params_ != this->num_nonlinear_params_) {
         return false;
+    }
+
+    // Iterate through each of the non linear parameters and check they are correct
+    for (int i = 0; i < angle.num_nonlinear_params_; i++) {
+        // If the difference between a single entry in the parameters is greater
+        // than constant epsilon, then return false. the two parameters are
+        // different
+        if (fabs(angle.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
+            return false;
+        }
+    }
+
+    // Iterate through each of the linear parameters and check they are correct
+    for (int i = 0; i < angle.num_linear_params_; i++) {
+        // If the difference between a single entry in the parameters is greater
+        // than constant epsilon, then return false. the two parameters are
+        // different
+        if (fabs(angle.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
+            return false;
+        }
     }
 
     return true;

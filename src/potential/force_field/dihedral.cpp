@@ -123,12 +123,84 @@ bool Dihedral::operator==(Dihedral const &dihedral) const {
     // Check field variables
     if (dihedral.topology_ != this->topology_ || dihedral.topology_type_ != this->topology_type_ ||
         dihedral.functional_form_ != this->functional_form_ || dihedral.indexes_ != this->indexes_ ||
-        dihedral.linear_parameters_ != this->linear_parameters_ ||
-        dihedral.nonlinear_parameters_ != this->nonlinear_parameters_ || dihedral.linear_ != this->linear_ ||
-        dihedral.num_linear_params_ != this->num_linear_params_ ||
+        dihedral.linear_ != this->linear_ || dihedral.num_linear_params_ != this->num_linear_params_ ||
         dihedral.num_nonlinear_params_ != this->num_nonlinear_params_) {
         return false;
     }
+
+    // Iterate through each of the non linear parameters and check they are correct
+    for (int i = 0; i < dihedral.num_nonlinear_params_; i++) {
+        // If the difference between a single entry in the parameters is greater
+        // than constant epsilon, then return false. the two parameters are
+        // different
+        if (fabs(dihedral.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
+            return false;
+        }
+    }
+
+    // Iterate through each of the linear parameters and check they are correct
+    for (int i = 0; i < dihedral.num_linear_params_; i++) {
+        // If the difference between a single entry in the parameters is greater
+        // than constant epsilon, then return false. the two parameters are
+        // different
+        if (fabs(dihedral.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
+            return false;
+        }
+    }
+
+    // if (dihedral.topology_ != this->topology_) {
+    //     std::cout << "dihedral.topology_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "dihedral.topology_ (correct)" << std::endl;
+    // }
+
+    // if (dihedral.topology_type_ != this->topology_type_) {
+    //     std::cout << "topology_type_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "topology_type_ same (correct)" << std::endl;
+    // }
+
+    // if (dihedral.functional_form_ != this->functional_form_) {
+    //     std::cout << "functional_form_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "functional_form_ same (correct)" << std::endl;
+    // }
+
+    // if (dihedral.indexes_ != this->indexes_) {
+    //     std::cout << "indexes_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "indexes_ same (correct)" << std::endl;
+    // }
+
+    // if (dihedral.linear_parameters_ != this->linear_parameters_) {
+    //     std::cout << "linear_parameters_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "linear_parameters_ same (correct)" << std::endl;
+    // }
+
+    // if (dihedral.nonlinear_parameters_ != this->nonlinear_parameters_) {
+    //     std::cout << "nonlinear_parameters_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "nonlinear_parameters_ same (correct)" << std::endl;
+    // }
+
+    // if (dihedral.linear_ != this->linear_) {
+    //     std::cout << "linear_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "linear_ same (correct)" << std::endl;
+    // }
+
+    // if (dihedral.num_linear_params_ != this->num_linear_params_) {
+    //     std::cout << "num_linear_params_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "num_linear_params_ same (correct)" << std::endl;
+    // }
+
+    // if (dihedral.num_nonlinear_params_ != this->num_nonlinear_params_) {
+    //     std::cout << "num_nonlinear_params_ not same (incorrect)" << std::endl;
+    // } else {
+    //     std::cout << "num_nonlinear_params_ same (correct)" << std::endl;
+    // }
 
     return true;
 }

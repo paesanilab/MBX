@@ -82,11 +82,29 @@ bool Inversion::operator==(Inversion const &inversion) const {
     // Check field variables
     if (inversion.topology_ != this->topology_ || inversion.topology_type_ != this->topology_type_ ||
         inversion.functional_form_ != this->functional_form_ || inversion.indexes_ != this->indexes_ ||
-        inversion.linear_parameters_ != this->linear_parameters_ ||
-        inversion.nonlinear_parameters_ != this->nonlinear_parameters_ || inversion.linear_ != this->linear_ ||
-        inversion.num_linear_params_ != this->num_linear_params_ ||
+        inversion.linear_ != this->linear_ || inversion.num_linear_params_ != this->num_linear_params_ ||
         inversion.num_nonlinear_params_ != this->num_nonlinear_params_) {
         return false;
+    }
+
+    // Iterate through each of the non linear parameters and check they are correct
+    for (int i = 0; i < inversion.num_nonlinear_params_; i++) {
+        // If the difference between a single entry in the parameters is greater
+        // than constant epsilon, then return false. the two parameters are
+        // different
+        if (fabs(inversion.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
+            return false;
+        }
+    }
+
+    // Iterate through each of the linear parameters and check they are correct
+    for (int i = 0; i < inversion.num_linear_params_; i++) {
+        // If the difference between a single entry in the parameters is greater
+        // than constant epsilon, then return false. the two parameters are
+        // different
+        if (fabs(inversion.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
+            return false;
+        }
     }
 
     return true;
