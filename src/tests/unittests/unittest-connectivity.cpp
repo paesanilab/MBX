@@ -50,9 +50,18 @@ TEST_CASE("Test Connectivity") {
 
     // Write the linear and nonlinear parameters because they can not be set in
     // the macro
+    bond1.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
+    bond1.SetLinearFlag(true);
     std::vector<Bond> bond_vec = {bond1, bond1};
+    angle1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    angle1.SetLinearFlag(true);
     std::vector<Angles> angle_vec = {angle1, angle1, angle1};
+    dihedral1.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
+    dihedral1.SetIncludeExclude("excluded");
+    dihedral1.SetLinearFlag(true);
     std::vector<Dihedral> dihedral_vec = {dihedral1};
+    inversion1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    inversion1.SetLinearFlag(true);
     std::vector<Inversion> inversion_vec = {inversion1};
 
     SECTION("Connectivity constructor") {
