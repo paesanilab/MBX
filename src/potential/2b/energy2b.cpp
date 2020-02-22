@@ -57,7 +57,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         x2o::x2b_v9x pot;
         return pot.eval(xyz1.data(), xyz2.data(), nm);
         // Ion water
-    } else if ((mon1 == "f" or mon1 == "cl" or mon1 == "br" or mon1 == "cs") and mon2 == "h2o") {
+    } else if ((mon1 == "ar" or mon1 == "f" or mon1 == "cl" or mon1 == "br" or mon1 == "cs") and mon2 == "h2o") {
         // The order is bc the poly were generated this way
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
@@ -116,7 +116,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     if (mon1 == "h2o" and mon2 == "h2o") {
         x2o::x2b_v9x pot;
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
-    } else if ((mon1 == "f" or mon1 == "cl" or mon1 == "br" or mon1 == "cs") and mon2 == "h2o") {
+    } else if ((mon1 == "ar" or mon1 == "f" or mon1 == "cl" or mon1 == "br" or mon1 == "cs") and mon2 == "h2o") {
         // The order is bc the poly were generated this way
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
