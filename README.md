@@ -12,10 +12,11 @@ What's new in v0.2.1a
 - Bugfix in virial for CH4, indexes were not correct in the 1b CH4 and 2b CH4-CH4 and CH4-H2O MB-nrg pefs.
 - Added NH3 1b PEF MB-nrg (should not be used yet).
 - Added NH3-NH3 2b PEF TTM-nrg and MB-nrg (should not be used yet).
+- Two-body TTM-nrg and MB-nrg PEFs for Ar-Cs and Ar-H2O have been added. VIRIAL is missing for Ar-Cs.
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
-- CMake v3.9 or higher
+- CMake v3.12.4 or higher
 - g++/gcc v4.9 or higher [and icpc/icc v2017 or higher - optional]
 - Read the entire README before doing anything
 
