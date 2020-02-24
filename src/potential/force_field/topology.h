@@ -46,14 +46,6 @@ class Topology {
     void GetParameters(std::vector<double> &linear_parameters, std::vector<double> &nonlinear_parameters);
 
     /**
-     * @brief Obtain the nonlinearvalue given the nonlinear parameters
-     * @param[in] x The calculated distance, angle, dihedral angle, or
-     *            inversion angle
-     * @return A vector containing all of the nonlinear values
-     */
-    virtual std::vector<double> GetNonLinearValue(double x) = 0;
-
-    /**
      * @brief Obtain the number of nonlinear parameters
      * @return The number of nonlinear parameters
      */
@@ -118,17 +110,6 @@ class Topology {
     std::string GetFunctionalForm();
 
     /**
-     * @brief Allows derived classes to set the linear flag
-     */
-    void SetLinearFlag(bool linear);
-
-    /**
-     * @brief Gets the current state of the linear_ flag
-     * @return The linear_ flag
-     */
-    bool GetLinearFlag();
-
-    /**
      * @brief Sets the topology type
      * @param topology The topology type (bond, angle dihedral, inversion) that
      *        we want to set
@@ -141,33 +122,7 @@ class Topology {
      */
     std::string GetTopology();
 
-    /**
-     * @brief Prints the linear and nonlinear parameters in a formatted manner to the
-     *        console
-     */
-    void PrintParameters();
-
    protected:
-    /**
-     * The bond type
-     */
-    // size_t bond_type_;
-
-    /**
-     * The angle type
-     */
-    // size_t angle_type_;
-
-    /**
-     * The dihedral type
-     */
-    // size_t dihedral_type_;
-
-    /**
-     * The inversion type
-     */
-    // size_t inversion_type_;
-
     /**
      * The variable to keep track of the connectivity or the topology. E.g. Bond
      */
@@ -198,13 +153,6 @@ class Topology {
     std::vector<double> nonlinear_parameters_;
 
     /**
-     * The boolean variable to indicate to fit the linear parameters in a non-
-     * linear way. If linear_ is true, then we want to fit linear terms in a
-     * linear way.
-     */
-    bool linear_;
-
-    /**
      * The variable to keep track of the number of linear parameters
      */
     size_t num_linear_params_;
@@ -213,6 +161,11 @@ class Topology {
      * The variable to keep track of the number of nonlinear parameters
      */
     size_t num_nonlinear_params_;
+
+    /**
+     * Constant value used for double comparison in derived classes
+     */
+    double EPSILON = 0.00000001;
 };
 
 #endif  // TOPOLOGY_H

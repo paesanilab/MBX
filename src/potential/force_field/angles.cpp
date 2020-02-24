@@ -7,8 +7,8 @@
 
 Angles::Angles(){};
 
-Angles::Angles(std::string connectivity, size_t angle_type, std::vector<size_t> indexes, std::string functional_form) {
-    topology_ = connectivity;
+Angles::Angles(std::string topology, size_t angle_type, std::vector<size_t> indexes, std::string functional_form) {
+    topology_ = topology;
     functional_form_ = functional_form;
     indexes_ = indexes;
     topology_type_ = angle_type;
@@ -16,6 +16,7 @@ Angles::Angles(std::string connectivity, size_t angle_type, std::vector<size_t> 
     if (functional_form == "none") {
         num_linear_params_ = 0;
         num_nonlinear_params_ = 0;
+        std::cerr << "Angle has none functional form. Its energy and gradients are not being evaluated" << std::endl;
     } else if (functional_form == "harm") {
         num_linear_params_ = 1;
         num_nonlinear_params_ = 1;
@@ -23,12 +24,12 @@ Angles::Angles(std::string connectivity, size_t angle_type, std::vector<size_t> 
         num_linear_params_ = 3;
         num_nonlinear_params_ = 1;
     } else {
-        std::string text = "Undefined functional form for angles";
+        std::string text = "Undefined or missing functional form for angles";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
-    linear_parameters_ = std::vector<double>(GetNumLinear(), 0.0);
-    nonlinear_parameters_ = std::vector<double>(GetNumNonLinear(), 0.0);
+    linear_parameters_ = std::vector<double>(num_linear_params_, 0.0);
+    nonlinear_parameters_ = std::vector<double>(num_nonlinear_params_, 0.0);
 }
 
 Angles::~Angles(){};
@@ -36,9 +37,7 @@ Angles::~Angles(){};
 double Angles::GetEnergy(double x) {
     double energy = 0.0;
 
-    // Skip fitting this angle if "none" found for functional_form
     if (functional_form_ == "none") {
-        // use each functional form to calculate the potential energy
     } else if (functional_form_ == "harm") {
         energy = linear_parameters_[0] * 0.5 * (x - nonlinear_parameters_[0]) * (x - nonlinear_parameters_[0]);
     } else if (functional_form_ == "quartic") {
@@ -52,33 +51,9 @@ double Angles::GetEnergy(double x) {
     return energy;
 }
 
-std::vector<double> Angles::GetNonLinearValue(double x) {
-    double val = 0.0;
-    std::vector<double> nonLinear;
-
-    // Skip because this angle is not fitted
-    if (functional_form_ == "none") {
-        nonLinear.push_back(val);
-    } else if (functional_form_ == "harm") {
-        val = 0.5 * (x - nonlinear_parameters_[0]) * (x - nonlinear_parameters_[0]);
-        nonLinear.push_back(val);
-    } else if (functional_form_ == "quartic") {
-        val = 0.5 * (x - nonlinear_parameters_[0]) * (x - nonlinear_parameters_[0]);
-        nonLinear.push_back(val);
-        val = (1.0 / 3.0) * (x - nonlinear_parameters_[0]) * (x - nonlinear_parameters_[0]) *
-              (x - nonlinear_parameters_[0]);
-        nonLinear.push_back(val);
-        val = 0.25 * (x - nonlinear_parameters_[0]) * (x - nonlinear_parameters_[0]) * (x - nonlinear_parameters_[0]) *
-              (x - nonlinear_parameters_[0]);
-        nonLinear.push_back(val);
-    }
-    return nonLinear;
-}
-
 double Angles::GetTopologyGradient(double x) {
     double val = 0.0;
 
-    // Gradient is 0 for an unfitted bond
     if (functional_form_ == "none") {
         val = 0.0;
     } else if (functional_form_ == "harm") {
@@ -91,4 +66,31 @@ double Angles::GetTopologyGradient(double x) {
         val = term1 + term2 + term3;
     }
     return val;
+}
+
+bool Angles::operator==(Angles const &angle) const {
+    // Check field variables
+    if (angle.topology_ != this->topology_ || angle.topology_type_ != this->topology_type_ ||
+        angle.functional_form_ != this->functional_form_ || angle.indexes_ != this->indexes_ ||
+        angle.num_linear_params_ != this->num_linear_params_ ||
+        angle.num_nonlinear_params_ != this->num_nonlinear_params_) {
+        return false;
+    }
+
+    // Iterate through each of the non linear parameters and check they are the
+    // same
+    for (int i = 0; i < angle.num_nonlinear_params_; i++) {
+        if (fabs(angle.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
+            return false;
+        }
+    }
+
+    // Iterate through each of the linear parameters and check they are the same
+    for (int i = 0; i < angle.num_linear_params_; i++) {
+        if (fabs(angle.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
+            return false;
+        }
+    }
+
+    return true;
 }

@@ -16,8 +16,7 @@
 
 /**
  * @brief Bond class constructs bond objects and calculates the
- * potential energy or non linear value given the linear and non linear
- * parameters
+ * potential energy and gradients
  *
  * The bond class considers three functional forms: harmonic, morse, and quartic
  * Their potentials are as follows:
@@ -29,31 +28,59 @@
  *
  * Further information on the potentials can be found at:
  * ftp://ftp.dl.ac.uk/ccp5/DL_POLY/DL_POLY_CLASSIC/DOCUMENTS/USRMAN2.19.pdf
+ *
+ *
+ * Parameter dictionary:
+ * Harmonic:
+ * linear_param[0] -> constant k
+ * nonlinear_param[0] -> constant r0
+ *
+ * Morse:
+ * linear_param[0] -> constant E0
+ * nonlinear_param[0] -> constant k
+ * nonlinear_param[1] -> constant r0
+ *
+ * Quartic:
+ * linear_param[0] -> constant k
+ * nonlinear_param[0] -> constant r0
+ * linear_param[1] -> constant k'
+ * linear_param[2] -> constant k''
+ *
+ * The above parameter dictionary also shows how you should enter the parameters
+ * in the connectivity file. Ie:
+ * Bond 1 2 1 morse 1.0 2.0 3.0
+ * will set:
+ * E0 -> 1.0
+ * k -> 2.0
+ * r0 -> 3.0
+ *
  */
 
 class Bond : public Topology {
    public:
     /**
-     * Default constructor. Creates a Bond class
+     * Default constructor
      */
     Bond();
 
     /**
-     * @brief Overloaded constructor, setting the respective bond_type
+     * @brief Overloaded constructor, setting the respective topology, bond_type
      * indexes, and functional_form.
      *
      * This constructor sets the field variables. It also puts the respective
      * number of 0's onto the vectors nonlinear_parameters_ and
-     * linear_parameters_ . These are set to 0 to avoid having to call vector
-     * push_back in the fittig code.
-     * @param[in] connectivity This is the topology, which will be Bond
+     * linear_parameters_ .
+     * @param[in] topology This is the topology, which will be bond
      * @param[in] bond_type This is the bond_type of the given bond
      * @param[in] indexes The indexes of the the atoms in the bond
-     * @param[in] functional_form The functional form that is used to fit the
-     *            bond
+     * @param[in] functional_form The functional form that is used to evaluate
+     *                            the energy
      */
-    Bond(std::string connectivity, size_t bond_type, std::vector<size_t> indexes, std::string functional_form);
+    Bond(std::string topology, size_t bond_type, std::vector<size_t> indexes, std::string functional_form);
 
+    /**
+     * Default deconstructor
+     */
     ~Bond();
 
     /**
@@ -65,23 +92,24 @@ class Bond : public Topology {
     double GetEnergy(double x);
 
     /**
-     * @brief Calculate the non linear value given the nonlinear parameters
-     * @param[in] x Represents the distance rij
-     * @return A vector of non linear values. Each one represents the nonlinear
-     * term for that functional form.
-     */
-    std::vector<double> GetNonLinearValue(double x);
-
-    /**
      * @brief gets the gradient for this particular topology for a given
      *        functional form
-     * @param  x the bond length
+     * @param  x the bond distance rij
      * @return   the gradient
      *
-     * Note. this is not the entire gradient. You still need to manipulate this
-     * with the x,y,z.
+     * Note. this is not the entire gradient. You still need to back propagate
+     * this gradient to each of the individual x,y,z components
      */
     double GetTopologyGradient(double x);
+
+    /**
+     * @brief Checks if two bonds are the same by inspecting
+     * all of the field variables.
+     * @param[in] bond Is the other bond object that we are comparing
+     * against
+     * @return True if the bond objects are the same. False otherwise
+     */
+    bool operator==(Bond const &bond) const;
 
    private:
 };

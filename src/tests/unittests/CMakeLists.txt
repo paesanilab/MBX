@@ -42,14 +42,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-dihedral.cpp
     unittest-inversion.cpp
 )
-
-#set( SOURCES_UNITTESTS_TESTS
-#    unittest-h4-dummy-bond.cpp
-#    unittest-h4-dummy-angle.cpp
-#    unittest-h4-dummy-dihedral.cpp
-#    unittest-h4-dummy-inversion.cpp
-#)
-
+    
 #
 # Stuff below shouldn't need to be modified
 #
