@@ -132,6 +132,12 @@ class System {
      */
     size_t GetMonNumAt(size_t n);
 
+    /**
+     * Gets a vector with the numer of atoms of all the monoemrs in input order.
+     * @return Vector with the numer of atoms of all the monoemrs in input order.
+     */
+    std::vector<size_t> GetMonNumAt();
+
 // FIXME As for today, these functions are not used. // MRR 20191022
 // Will need to activate them and use them whenever we need them for MB-Spec
 //    /**
@@ -297,6 +303,12 @@ class System {
      * @return A string with the ID of the n-th monomer
      */
     std::string GetMonId(size_t n);
+
+    /**
+     * Gets the id string of iall the monomers.
+     * @return A string with the ID of all the monomers.
+     */
+    std::vector<std::string> GetMonId();
 
     /**
      * Gets the two-body cutoff for dispersion and polynomials.
