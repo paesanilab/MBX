@@ -46,7 +46,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/3b/x3b-h2o-ion-v2x-deg4-filtered.h"
 // =====>> BEGIN SECTION INCLUDE3B <<=====
 // ===>> PASTE YOUR CODE BELOW <<===
-
+#include "potential/3b/mbnrg_3b_A1B4_C1D2_C1D2_deg3_v1.h"
 // =====>> END SECTION INCLUDE3B <<=====
 /**
  * @file energy3b.h
