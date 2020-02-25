@@ -55,6 +55,34 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 /**
  * @file write_connectivity.h
  * @brief Contains the function needed to write a connectivity file
+ *
+ * An example of a connectivity write is given below. It is for a bond, but all
+ * the other topology follow
+ *
+ * bond         1         2         1            harm                1.0    2.0
+ * ^            ^         ^         ^            ^                   ^      ^
+ * topology    1st idx  2nd index   topo type    functional form     k      r0
+ *
+ * The parameters are written in the following way:
+ *
+ * Harmonic/Harmonic Cosine:
+ * k    r0/theta0/phi0
+ *
+ * Morse:
+ * E0   k   r0
+ *
+ * Cosine:
+ * A    m   d(delta)
+ *
+ * Triple Cosine:
+ * A1   A2  A3
+ *
+ * Quartic:
+ * k    r0/theta0   k'  k''
+ *
+ * None
+ * (Nothing needs to be here if you specify none functional form)
+ *
  */
 
 /**

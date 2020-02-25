@@ -54,16 +54,8 @@ TEST_CASE("Test dummy h4 inversion") {
         std::string functional_form = "harm";
         Inversion obj(inversion_connectivity, inversion_type, inversion_indexes, functional_form);
         obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-
         SECTION("Harmonic Energy") {
             REQUIRE(obj.GetEnergy(inversion_phi) == Approx(ff_inversion_harm_energy).margin(TOL));
-        }
-
-        SECTION("Harmonic Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(inversion_phi);
-            for (int i = 0; i < non_lin.size(); i++) {
-                REQUIRE(non_lin[i] == Approx(ff_inversion_harm_non_lin_val[i]).margin(TOL));
-            }
         }
         SECTION("Harmonic Gradient") {
             REQUIRE(obj.GetTopologyGradient(inversion_phi) == Approx(ff_inversion_harm_grad).margin(TOL));
@@ -76,12 +68,6 @@ TEST_CASE("Test dummy h4 inversion") {
         obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
         SECTION("None Energy") {
             REQUIRE(obj.GetEnergy(inversion_phi) == Approx(ff_inversion_none_energy).margin(TOL));
-        }
-        SECTION("None Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(inversion_phi);
-            for (int i = 0; i < non_lin.size(); i++) {
-                REQUIRE(non_lin[i] == Approx(ff_inversion_none_non_lin_val[i]).margin(TOL));
-            }
         }
         SECTION("None Gradient") {
             REQUIRE(obj.GetTopologyGradient(inversion_phi) == Approx(ff_inversion_none_grad).margin(TOL));

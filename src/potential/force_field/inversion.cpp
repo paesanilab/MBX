@@ -7,29 +7,30 @@
 
 Inversion::Inversion(){};
 
-Inversion::Inversion(std::string connectivity, size_t inversion_type, std::vector<size_t> indexes,
+Inversion::Inversion(std::string topology, size_t inversion_type, std::vector<size_t> indexes,
                      std::string functional_form) {
-    topology_ = connectivity;
+    topology_ = topology;
     functional_form_ = functional_form;
     indexes_ = indexes;
     topology_type_ = inversion_type;
 
-    // Skip fitting this inversion angle if "none" found for functional_form
     if (functional_form == "none") {
         num_linear_params_ = 0;
         num_nonlinear_params_ = 0;
+        std::cerr << "Inversion has none functional form. Its energy and gradients are not being evaluated"
+                  << std::endl;
     }
 
     else if (functional_form == "harm") {
         num_linear_params_ = 1;
         num_nonlinear_params_ = 1;
     } else {
-        std::string text = "Undefined functional form for inversion";
+        std::string text = "Undefined or missing functional form for inversion";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
-    linear_parameters_ = std::vector<double>(GetNumLinear(), 0.0);
-    nonlinear_parameters_ = std::vector<double>(GetNumNonLinear(), 0.0);
+    linear_parameters_ = std::vector<double>(num_linear_params_, 0.0);
+    nonlinear_parameters_ = std::vector<double>(num_nonlinear_params_, 0.0);
 }
 
 Inversion::~Inversion(){};
@@ -37,28 +38,11 @@ Inversion::~Inversion(){};
 double Inversion::GetEnergy(double x) {
     double energy = 0.0;
 
-    // Skip fitting this inversion angle if "none" found for functional_form
     if (functional_form_ == "none") {
-    }
-
-    else if (functional_form_ == "harm") {
+    } else if (functional_form_ == "harm") {
         energy = linear_parameters_[0] * 0.5 * (x - nonlinear_parameters_[0]) * (x - nonlinear_parameters_[0]);
     }
     return energy;
-}
-
-std::vector<double> Inversion::GetNonLinearValue(double x) {
-    double val = 0.0;
-    std::vector<double> nonLinear;
-
-    // Skip because this inversion angle is not fitted
-    if (functional_form_ == "none") {
-        nonLinear.push_back(val);
-    } else if (functional_form_ == "harm") {
-        val = 0.5 * (x - nonlinear_parameters_[0]) * (x - nonlinear_parameters_[0]);
-        nonLinear.push_back(val);
-    }
-    return nonLinear;
 }
 
 double Inversion::GetTopologyGradient(double x) {
@@ -82,26 +66,21 @@ bool Inversion::operator==(Inversion const &inversion) const {
     // Check field variables
     if (inversion.topology_ != this->topology_ || inversion.topology_type_ != this->topology_type_ ||
         inversion.functional_form_ != this->functional_form_ || inversion.indexes_ != this->indexes_ ||
-        inversion.linear_ != this->linear_ || inversion.num_linear_params_ != this->num_linear_params_ ||
+        inversion.num_linear_params_ != this->num_linear_params_ ||
         inversion.num_nonlinear_params_ != this->num_nonlinear_params_) {
         return false;
     }
 
-    // Iterate through each of the non linear parameters and check they are correct
+    // Iterate through each of the non linear parameters and check they are the
+    // same
     for (int i = 0; i < inversion.num_nonlinear_params_; i++) {
-        // If the difference between a single entry in the parameters is greater
-        // than constant epsilon, then return false. the two parameters are
-        // different
         if (fabs(inversion.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
             return false;
         }
     }
 
-    // Iterate through each of the linear parameters and check they are correct
+    // Iterate through each of the linear parameters and check they are the same
     for (int i = 0; i < inversion.num_linear_params_; i++) {
-        // If the difference between a single entry in the parameters is greater
-        // than constant epsilon, then return false. the two parameters are
-        // different
         if (fabs(inversion.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
             return false;
         }

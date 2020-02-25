@@ -55,6 +55,35 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 /**
  * @file read_connectivity.h
  * @brief Contains the function needed to read a connectivity file
+ *
+ * Parameters should be entered in the following way in the connectivity file to
+ * be read correctly. Below we will give an example using bond as the topology type, but this
+ * follows for all other topology types.
+ *
+ * bond         1         2         1            harm                1.0    2.0
+ * ^            ^         ^         ^            ^                   ^      ^
+ * topology    1st idx  2nd index   topo type    functional form     k      r0
+ *
+ * Now we will list the order in which parameters need to be entered to be read
+ * correctly
+ *
+ * Harmonic/Harmonic Cosine:
+ * k    r0/theta0/phi0
+ *
+ * Morse:
+ * E0   k   r0
+ *
+ * Cosine:
+ * A    m   d(delta)
+ *
+ * Triple Cosine:
+ * A1   A2  A3
+ *
+ * Quartic:
+ * k    r0/theta0   k'  k''
+ *
+ * None
+ * (Nothing needs to be here if you specify none functional form)
  */
 
 /**

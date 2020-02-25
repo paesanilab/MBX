@@ -55,12 +55,6 @@ TEST_CASE("Test dummy h4 bond") {
         Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
         SECTION("Harmonic Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_harm_energy).margin(TOL)); }
-        SECTION("Harmonic Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(distance);
-            for (int i = 0; i < non_lin.size(); i++) {
-                REQUIRE(non_lin[i] == Approx(ff_bond_harm_non_lin_val[i]).margin(TOL));
-            }
-        }
         SECTION("Harmonic Gradient") {
             REQUIRE(obj.GetTopologyGradient(distance) == Approx(ff_bond_harm_grad).margin(TOL));
         }
@@ -71,12 +65,6 @@ TEST_CASE("Test dummy h4 bond") {
         Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         obj.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
         SECTION("Morse Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_morse_energy).margin(TOL)); }
-        SECTION("Morse Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(distance);
-            for (int i = 0; i < non_lin.size(); i++) {
-                REQUIRE(non_lin[i] == Approx(ff_bond_morse_non_lin_val[i]).margin(TOL));
-            }
-        }
         SECTION("Morse Gradient") {
             REQUIRE(obj.GetTopologyGradient(distance) == Approx(ff_bond_morse_grad).margin(TOL));
         }
@@ -87,12 +75,6 @@ TEST_CASE("Test dummy h4 bond") {
         Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         obj.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
         SECTION("Quartic Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_quartic_energy).margin(TOL)); }
-        SECTION("Quartic Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(distance);
-            for (int i = 0; i < non_lin.size(); i++) {
-                REQUIRE(non_lin[i] == Approx(ff_bond_quartic_non_lin_val[i]).margin(TOL));
-            }
-        }
         SECTION("Quartic Gradient") {
             REQUIRE(obj.GetTopologyGradient(distance) == Approx(ff_bond_quartic_grad).margin(TOL));
         }
@@ -103,12 +85,6 @@ TEST_CASE("Test dummy h4 bond") {
         Bond obj(bond_connectivity, bond_type, bond_indexes, functional_form);
         obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
         SECTION("None Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_none_energy).margin(TOL)); }
-        SECTION("None Non Linear Value") {
-            std::vector<double> non_lin = obj.GetNonLinearValue(distance);
-            for (int i = 0; i < non_lin.size(); i++) {
-                REQUIRE(non_lin[i] == Approx(ff_bond_none_non_lin_val[i]).margin(TOL));
-            }
-        }
         SECTION("None Gradient") {
             REQUIRE(obj.GetTopologyGradient(distance) == Approx(ff_bond_none_grad).margin(TOL));
         }

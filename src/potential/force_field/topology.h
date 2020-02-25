@@ -46,14 +46,6 @@ class Topology {
     void GetParameters(std::vector<double> &linear_parameters, std::vector<double> &nonlinear_parameters);
 
     /**
-     * @brief Obtain the nonlinearvalue given the nonlinear parameters
-     * @param[in] x The calculated distance, angle, dihedral angle, or
-     *            inversion angle
-     * @return A vector containing all of the nonlinear values
-     */
-    virtual std::vector<double> GetNonLinearValue(double x) = 0;
-
-    /**
      * @brief Obtain the number of nonlinear parameters
      * @return The number of nonlinear parameters
      */
@@ -118,17 +110,6 @@ class Topology {
     std::string GetFunctionalForm();
 
     /**
-     * @brief Allows derived classes to set the linear flag
-     */
-    void SetLinearFlag(bool linear);
-
-    /**
-     * @brief Gets the current state of the linear_ flag
-     * @return The linear_ flag
-     */
-    bool GetLinearFlag();
-
-    /**
      * @brief Sets the topology type
      * @param topology The topology type (bond, angle dihedral, inversion) that
      *        we want to set
@@ -140,12 +121,6 @@ class Topology {
      * @return The topology (bond, angle, dihedral, inversion)
      */
     std::string GetTopology();
-
-    /**
-     * @brief Prints the linear and nonlinear parameters in a formatted manner to the
-     *        console
-     */
-    void PrintParameters();
 
    protected:
     /**
@@ -176,13 +151,6 @@ class Topology {
      * The set of nonlinear parameters associated with the given functional form
      */
     std::vector<double> nonlinear_parameters_;
-
-    /**
-     * The boolean variable to indicate to fit the linear parameters in a non-
-     * linear way. If linear_ is true, then we want to fit linear terms in a
-     * linear way.
-     */
-    bool linear_;
 
     /**
      * The variable to keep track of the number of linear parameters

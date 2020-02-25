@@ -43,77 +43,72 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include "tools/custom_exceptions.h"
 
-#define SETUP_H4_DUMMY                                                                  \
-    std::string bond_connectivity = "bond";                                             \
-    size_t bond_type = 1;                                                               \
-    std::vector<size_t> bond_indexes = {1, 2};                                          \
-    double distance = 6.06962;                                                          \
-    std::string angle_connectivity = "angle";                                           \
-    size_t angle_type = 1;                                                              \
-    std::vector<size_t> angle_index = {1, 2, 3};                                        \
-    double theta = 0.230331;                                                            \
-    std::string dihedral_connectivity = "dihedral";                                     \
-    size_t dihedral_type = 1;                                                           \
-    std::vector<size_t> dihedral_indexes = {1, 2, 3, 4};                                \
-    double dihedral_phi = -0.302514;                                                    \
-    std::string inversion_connectivity = "inversion";                                   \
-    size_t inversion_type = 1;                                                          \
-    std::vector<size_t> inversion_indexes = {1, 2, 3, 4};                               \
-    double inversion_phi = 0.316936;                                                    \
-    std::vector<double> harm_linear_parameters = {2.0};                                 \
-    std::vector<double> harm_nonlinear_parameters = {4.0};                              \
-    std::vector<double> morse_linear_parameters = {2.0};                                \
-    std::vector<double> morse_nonlinear_parameters = {1.0, 4.0};                        \
-    std::vector<double> quartic_linear_parameters = {1.0, 3.0, 4.0};                    \
-    std::vector<double> quartic_nonlinear_parameters = {2.0};                           \
-    std::vector<double> cos_linear_parameters = {1.0};                                  \
-    std::vector<double> cos_nonlinear_parameters = {1.0, 0.5};                          \
-    std::vector<double> hcos_linear_parameters = {1.0};                                 \
-    std::vector<double> hcos_nonlinear_parameters = {2.0};                              \
-    std::vector<double> cos3_linear_parameters = {1.0, 2.0, 3.0};                       \
-    std::vector<double> cos3_nonlinear_parameters = {};                                 \
-    std::vector<double> none_linear_parameters = {};                                    \
-    std::vector<double> none_nonlinear_parameters = {};                                 \
-    double ff_bond_harm_energy = 4.28333;                                               \
-    std::vector<double> ff_bond_harm_non_lin_val = {2.14167};                           \
-    double ff_bond_harm_grad = 4.13924;                                                 \
-    double ff_bond_morse_energy = 1.52694;                                              \
-    std::vector<double> ff_bond_morse_non_lin_val = {0.763468};                         \
-    double ff_bond_morse_grad = 0.441195;                                               \
-    double ff_bond_quartic_energy = 349.975;                                            \
-    std::vector<double> ff_bond_quartic_non_lin_val = {8.28091, 22.4668, 68.5734};      \
-    double ff_bond_quartic_grad = 323.356;                                              \
-    double ff_bond_none_energy = 0.0;                                                   \
-    std::vector<double> ff_bond_none_non_lin_val = {0.0};                               \
-    double ff_bond_none_grad = 0.0;                                                     \
-    double ff_angles_harm_energy = 14.2104;                                             \
-    std::vector<double> ff_angles_harm_non_lin_val = {7.1052};                          \
-    double ff_angles_harm_grad = -7.53934;                                              \
-    double ff_angles_quartic_energy = 5.83146;                                          \
-    std::vector<double> ff_angles_quartic_non_lin_val = {1.56586, -1.84737, 2.45193};   \
-    double ff_angles_quartic_grad = -14.543;                                            \
-    double ff_angles_none_energy = 0.0;                                                 \
-    std::vector<double> ff_angles_none_non_lin_val = {0.0};                             \
-    double ff_angles_none_grad = 0.0;                                                   \
-    double ff_dihedral_cos_energy = 1.6949;                                             \
-    std::vector<double> ff_dihedral_cos_non_lin_val = {1.6949};                         \
-    double ff_dihedral_cos_grad = 0.719105;                                             \
-    double ff_dihedral_harm_energy = 3.9230588271;                                      \
-    std::vector<double> ff_dihedral_harm_non_lin_val = {1.9615294135};                  \
-    double ff_dihedral_harm_grad = 3.9613426144;                                        \
-    double ff_dihedral_hcos_energy = 0.939461;                                          \
-    std::vector<double> ff_dihedral_hcos_non_lin_val = {0.939461};                      \
-    double ff_dihedral_hcos_grad = 0.408371;                                            \
-    double ff_dihedral_cos3_energy = 3.57834;                                           \
-    std::vector<double> ff_dihedral_cos3_non_lin_val = {0.977295, 0.0887567, 0.807843}; \
-    double ff_dihedral_cos3_grad = 2.557356;                                            \
-    double ff_dihedral_none_energy = 0.0;                                               \
-    std::vector<double> ff_dihedral_none_non_lin_val = {0.0};                           \
-    double ff_dihedral_none_grad = 0.0;                                                 \
-    double ff_inversion_harm_energy = 13.5649604281;                                    \
-    std::vector<double> ff_inversion_harm_non_lin_val = {6.782480214};                  \
-    double ff_inversion_harm_grad = -7.8784654448;                                      \
-    double ff_inversion_none_energy = 0.0;                                              \
-    std::vector<double> ff_inversion_none_non_lin_val = {0.0};                          \
+/**
+ * @file setup_h4_dummy.h
+ * @brief This file is used to test the bond, angles, dihedral, inversion classes
+ *        This file defines all of the necessary components to create the above
+ *        classes, including the parameters. Additionally, the energy for each
+ *        topology type and their functional form is used to check the
+ *        implementation is correct for all the classes
+ */
+
+#define SETUP_H4_DUMMY                                               \
+    std::string bond_connectivity = "bond";                          \
+    size_t bond_type = 1;                                            \
+    std::vector<size_t> bond_indexes = {1, 2};                       \
+    double distance = 6.06962;                                       \
+    std::string angle_connectivity = "angle";                        \
+    size_t angle_type = 1;                                           \
+    std::vector<size_t> angle_index = {1, 2, 3};                     \
+    double theta = 0.230331;                                         \
+    std::string dihedral_connectivity = "dihedral";                  \
+    size_t dihedral_type = 1;                                        \
+    std::vector<size_t> dihedral_indexes = {1, 2, 3, 4};             \
+    double dihedral_phi = -0.302514;                                 \
+    std::string inversion_connectivity = "inversion";                \
+    size_t inversion_type = 1;                                       \
+    std::vector<size_t> inversion_indexes = {1, 2, 3, 4};            \
+    double inversion_phi = 0.316936;                                 \
+    std::vector<double> harm_linear_parameters = {2.0};              \
+    std::vector<double> harm_nonlinear_parameters = {4.0};           \
+    std::vector<double> morse_linear_parameters = {2.0};             \
+    std::vector<double> morse_nonlinear_parameters = {1.0, 4.0};     \
+    std::vector<double> quartic_linear_parameters = {1.0, 3.0, 4.0}; \
+    std::vector<double> quartic_nonlinear_parameters = {2.0};        \
+    std::vector<double> cos_linear_parameters = {1.0};               \
+    std::vector<double> cos_nonlinear_parameters = {1.0, 0.5};       \
+    std::vector<double> hcos_linear_parameters = {1.0};              \
+    std::vector<double> hcos_nonlinear_parameters = {2.0};           \
+    std::vector<double> cos3_linear_parameters = {1.0, 2.0, 3.0};    \
+    std::vector<double> cos3_nonlinear_parameters = {};              \
+    std::vector<double> none_linear_parameters = {};                 \
+    std::vector<double> none_nonlinear_parameters = {};              \
+    double ff_bond_harm_energy = 4.28333;                            \
+    double ff_bond_harm_grad = 4.13924;                              \
+    double ff_bond_morse_energy = 1.52694;                           \
+    double ff_bond_morse_grad = 0.441195;                            \
+    double ff_bond_quartic_energy = 349.975;                         \
+    double ff_bond_quartic_grad = 323.356;                           \
+    double ff_bond_none_energy = 0.0;                                \
+    double ff_bond_none_grad = 0.0;                                  \
+    double ff_angles_harm_energy = 14.2104;                          \
+    double ff_angles_harm_grad = -7.53934;                           \
+    double ff_angles_quartic_energy = 5.83146;                       \
+    double ff_angles_quartic_grad = -14.543;                         \
+    double ff_angles_none_energy = 0.0;                              \
+    double ff_angles_none_grad = 0.0;                                \
+    double ff_dihedral_cos_energy = 1.6949;                          \
+    double ff_dihedral_cos_grad = 0.719105;                          \
+    double ff_dihedral_harm_energy = 3.9230588271;                   \
+    double ff_dihedral_harm_grad = 3.9613426144;                     \
+    double ff_dihedral_hcos_energy = 0.939461;                       \
+    double ff_dihedral_hcos_grad = 0.408371;                         \
+    double ff_dihedral_cos3_energy = 3.57834;                        \
+    double ff_dihedral_cos3_grad = 2.557356;                         \
+    double ff_dihedral_none_energy = 0.0;                            \
+    double ff_dihedral_none_grad = 0.0;                              \
+    double ff_inversion_harm_energy = 13.5649604281;                 \
+    double ff_inversion_harm_grad = -7.8784654448;                   \
+    double ff_inversion_none_energy = 0.0;                           \
     double ff_inversion_none_grad = 0.0;
 #endif

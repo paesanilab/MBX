@@ -41,8 +41,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace tools {
 void ReadConnectivity(char* filename) {
-    // std::unordered_map<std::string, connectivity::Conn> connectivity_map;
-
     // Check filename is not empty
     assert(filename);
     std::ifstream ifs(filename);
@@ -55,202 +53,6 @@ void ReadConnectivity(char* filename) {
     }
 
     std::unordered_map<std::string, connectivity::Conn> connectivity_map = GetConnectivity(ifs);
-
-    // std::string tmp;  // Used to temporarily hold variable from stringstream or getline
-    // std::getline(ifs, tmp);
-
-    // // Loop over each monomer
-    // do {
-    //     // Connectivity field declaration
-    //     std::string mon_id;
-    //     std::vector<Bond> bond_vec;
-    //     std::vector<Angles> angles_vec;
-    //     std::vector<Dihedral> dihedral_vec;
-    //     std::vector<Inversion> inversion_vec;
-    //     std::stringstream mon_id_ss(tmp);
-    //     mon_id_ss >> mon_id;
-
-    //     std::getline(ifs, tmp);
-
-    //     // Loop over all of the connectivity within a monomer
-    //     do {
-    //         std::stringstream ss(tmp); /* = std::stringstream(tmp);*/
-    //         ss >> tmp;
-
-    //         // If end of monomer, exit loop
-    //         if (tmp == "ENDMON") {
-    //             break;
-    //         }
-
-    //         // Variable declaration
-    //         std::string functional_form;
-    //         std::vector<size_t> indexes;
-    //         size_t connectivity_type;
-    //         std::string connectivity;
-    //         bool linear;
-    //         std::vector<double> linear_parameters;
-    //         std::vector<double> nonlinear_parameters;
-
-    //         // Read connectivity
-    //         connectivity = tmp;
-
-    //         // Read the remaining information
-    //         if (connectivity == "bond") {
-    //             // read the first two indicies
-    //             for (int i = 0; i < 2; i++) {
-    //                 ss >> tmp;
-    //                 indexes.push_back(stoi(tmp));
-    //             }
-
-    //             // read the bond type
-    //             ss >> connectivity_type;
-
-    //             // read the functional form that we want
-    //             ss >> functional_form;
-
-    //             // Read if linear fit
-    //             ss >> tmp;
-    //             linear = (tmp == "1") ? true : false;
-
-    //             Bond bond_obj(connectivity, connectivity_type, indexes, functional_form);
-
-    //             // Set the parameters and linear flag
-    //             bond_obj.SetLinearFlag(linear);
-    //             ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
-    //             bond_obj.SetParameters(linear_parameters, nonlinear_parameters);
-
-    //             // clear vectors for next connectivity
-    //             linear_parameters.clear();
-    //             nonlinear_parameters.clear();
-    //             indexes.clear();
-
-    //             // Store bond object to bond vector
-    //             bond_vec.push_back(bond_obj);
-    //         }
-
-    //         // check if the topology is an angle
-    //         else if (connectivity == "angle") {
-    //             // read the first three indicies
-    //             for (int i = 0; i < 3; i++) {
-    //                 ss >> tmp;
-    //                 indexes.push_back(stoi(tmp));
-    //             }
-
-    //             // read the angle type
-    //             ss >> connectivity_type;
-
-    //             // read the functional form that we want
-    //             ss >> functional_form;
-
-    //             // Read if linear fit
-    //             ss >> tmp;
-    //             linear = (tmp == "1") ? true : false;
-
-    //             Angles angle_obj(connectivity, connectivity_type, indexes, functional_form);
-
-    //             // Set the linear flag.
-    //             angle_obj.SetLinearFlag(linear);
-
-    //             ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
-    //             angle_obj.SetParameters(linear_parameters, nonlinear_parameters);
-
-    //             // Clear vectors for next connectivity
-    //             linear_parameters.clear();
-    //             nonlinear_parameters.clear();
-    //             indexes.clear();
-
-    //             // create the angle object and store it in the vector of angles
-    //             angles_vec.push_back(angle_obj);
-    //         }
-
-    //         // check if the topology is a dihedral
-    //         else if (connectivity == "dihedral") {
-    //             // read the first four indicies
-    //             for (int i = 0; i < 4; i++) {
-    //                 ss >> tmp;
-    //                 indexes.push_back(stoi(tmp));
-    //             }
-
-    //             // read the dihedral type
-    //             ss >> connectivity_type;
-
-    //             // read the functional form that we want
-    //             ss >> functional_form;
-
-    //             // read linear flag
-    //             ss >> tmp;
-    //             linear = (tmp == "1") ? true : false;
-
-    //             // Read include or exclude dihedral
-    //             ss >> tmp;
-
-    //             Dihedral dihedral_obj(connectivity, connectivity_type, indexes, functional_form);
-
-    //             // Set the parameters and flag
-    //             dihedral_obj.SetLinearFlag(linear);
-    //             ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
-    //             dihedral_obj.SetParameters(linear_parameters, nonlinear_parameters);
-
-    //             // Clear vectors for next connectivity
-    //             linear_parameters.clear();
-    //             nonlinear_parameters.clear();
-    //             indexes.clear();
-
-    //             // create the dihedral object and store it in the vector of dihedral
-    //             dihedral_vec.push_back(dihedral_obj);
-    //         }
-
-    //         else if (connectivity == "inversion") {
-    //             // read the first four indicies
-    //             for (int i = 0; i < 4; i++) {
-    //                 ss >> tmp;
-    //                 indexes.push_back(stoi(tmp));
-    //             }
-
-    //             // read the inversion type
-    //             ss >> connectivity_type;
-
-    //             // read the functional form that we want
-    //             ss >> functional_form;
-
-    //             // read linear flag
-    //             ss >> tmp;
-    //             linear = (tmp == "1") ? true : false;
-
-    //             Inversion inversion_obj(connectivity, connectivity_type, indexes, functional_form);
-
-    //             // Set the parameters and flag
-    //             inversion_obj.SetLinearFlag(linear);
-    //             ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
-    //             inversion_obj.SetParameters(linear_parameters, nonlinear_parameters);
-
-    //             // Clear vectors for next connectivity
-    //             linear_parameters.clear();
-    //             nonlinear_parameters.clear();
-    //             indexes.clear();
-
-    //             // create the inversion object and store it in the vector of inversions
-    //             inversion_vec.push_back(inversion_obj);
-    //         }
-
-    //         else {
-    //             std::string text = std::string("Unknown connectivity detected. " + connectivity +
-    //                                            " is not a bond, angle, dihedral, or inversion");
-    //             throw CUException(__func__, __FILE__, __LINE__, text);
-    //         }
-    //     } while (std::getline(ifs, tmp));
-
-    //     // Create connectivity object and add to the unordered map
-    //     connectivity::Conn conn(mon_id, bond_vec, angles_vec, dihedral_vec, inversion_vec);
-    //     connectivity_map.insert(std::make_pair(mon_id, conn));
-
-    //     // Clear vectors for next monomer
-    //     bond_vec.clear();
-    //     angles_vec.clear();
-    //     dihedral_vec.clear();
-    //     inversion_vec.clear();
-
-    // } while (std::getline(ifs, tmp));
 
     bblock::System::SetConnectivity(connectivity_map);
 }
@@ -291,7 +93,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
 
         // Loop over all of the connectivity within a monomer
         do {
-            std::stringstream ss(tmp); /* = std::stringstream(tmp);*/
+            std::stringstream ss(tmp);
             ss >> tmp;
 
             // If end of monomer, exit loop
@@ -302,17 +104,16 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
             // Variable declaration
             std::string functional_form;
             std::vector<size_t> indexes;
-            size_t connectivity_type;
-            std::string connectivity;
-            bool linear;
+            size_t topology_type;
+            std::string topology;
             std::vector<double> linear_parameters;
             std::vector<double> nonlinear_parameters;
 
             // Read connectivity
-            connectivity = tmp;
+            topology = tmp;
 
             // Read the remaining information
-            if (connectivity == "bond") {
+            if (topology == "bond") {
                 // read the first two indicies
                 for (int i = 0; i < 2; i++) {
                     ss >> tmp;
@@ -320,23 +121,18 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 }
 
                 // read the bond type
-                ss >> connectivity_type;
+                ss >> topology_type;
 
                 // read the functional form that we want
                 ss >> functional_form;
 
-                // Read if linear fit
-                ss >> tmp;
-                linear = (tmp == "1") ? true : false;
+                Bond bond_obj(topology, topology_type, indexes, functional_form);
 
-                Bond bond_obj(connectivity, connectivity_type, indexes, functional_form);
-
-                // Set the parameters and linear flag
-                bond_obj.SetLinearFlag(linear);
+                // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
                 bond_obj.SetParameters(linear_parameters, nonlinear_parameters);
 
-                // clear vectors for next connectivity
+                // clear vectors for next topology
                 linear_parameters.clear();
                 nonlinear_parameters.clear();
                 indexes.clear();
@@ -346,7 +142,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
             }
 
             // check if the topology is an angle
-            else if (connectivity == "angle") {
+            else if (topology == "angle") {
                 // read the first three indicies
                 for (int i = 0; i < 3; i++) {
                     ss >> tmp;
@@ -354,24 +150,18 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 }
 
                 // read the angle type
-                ss >> connectivity_type;
+                ss >> topology_type;
 
                 // read the functional form that we want
                 ss >> functional_form;
 
-                // Read if linear fit
-                ss >> tmp;
-                linear = (tmp == "1") ? true : false;
+                Angles angle_obj(topology, topology_type, indexes, functional_form);
 
-                Angles angle_obj(connectivity, connectivity_type, indexes, functional_form);
-
-                // Set the linear flag.
-                angle_obj.SetLinearFlag(linear);
-
+                // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
                 angle_obj.SetParameters(linear_parameters, nonlinear_parameters);
 
-                // Clear vectors for next connectivity
+                // Clear vectors for next topology
                 linear_parameters.clear();
                 nonlinear_parameters.clear();
                 indexes.clear();
@@ -381,7 +171,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
             }
 
             // check if the topology is a dihedral
-            else if (connectivity == "dihedral") {
+            else if (topology == "dihedral") {
                 // read the first four indicies
                 for (int i = 0; i < 4; i++) {
                     ss >> tmp;
@@ -389,26 +179,18 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 }
 
                 // read the dihedral type
-                ss >> connectivity_type;
+                ss >> topology_type;
 
                 // read the functional form that we want
                 ss >> functional_form;
 
-                // read linear flag
-                ss >> tmp;
-                linear = (tmp == "1") ? true : false;
+                Dihedral dihedral_obj(topology, topology_type, indexes, functional_form);
 
-                // Read include or exclude dihedral
-                ss >> tmp;
-
-                Dihedral dihedral_obj(connectivity, connectivity_type, indexes, functional_form);
-
-                // Set the parameters and flag
-                dihedral_obj.SetLinearFlag(linear);
+                // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
                 dihedral_obj.SetParameters(linear_parameters, nonlinear_parameters);
 
-                // Clear vectors for next connectivity
+                // Clear vectors for next topology
                 linear_parameters.clear();
                 nonlinear_parameters.clear();
                 indexes.clear();
@@ -417,7 +199,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 dihedral_vec.push_back(dihedral_obj);
             }
 
-            else if (connectivity == "inversion") {
+            else if (topology == "inversion") {
                 // read the first four indicies
                 for (int i = 0; i < 4; i++) {
                     ss >> tmp;
@@ -425,23 +207,18 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 }
 
                 // read the inversion type
-                ss >> connectivity_type;
+                ss >> topology_type;
 
                 // read the functional form that we want
                 ss >> functional_form;
 
-                // read linear flag
-                ss >> tmp;
-                linear = (tmp == "1") ? true : false;
+                Inversion inversion_obj(topology, topology_type, indexes, functional_form);
 
-                Inversion inversion_obj(connectivity, connectivity_type, indexes, functional_form);
-
-                // Set the parameters and flag
-                inversion_obj.SetLinearFlag(linear);
+                // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
                 inversion_obj.SetParameters(linear_parameters, nonlinear_parameters);
 
-                // Clear vectors for next connectivity
+                // Clear vectors for next topology
                 linear_parameters.clear();
                 nonlinear_parameters.clear();
                 indexes.clear();
@@ -451,7 +228,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
             }
 
             else {
-                std::string text = std::string("Unknown connectivity detected. " + connectivity +
+                std::string text = std::string("Unknown topology detected. " + topology +
                                                " is not a bond, angle, dihedral, or inversion");
                 throw CUException(__func__, __FILE__, __LINE__, text);
             }
@@ -493,9 +270,6 @@ void ReadParameters(std::vector<double>& linear_parameters, std::vector<double>&
             linear_parameters.push_back(stod(tmp));
             ss >> tmp;
             linear_parameters.push_back(stod(tmp));
-            ss >> tmp;
-            linear_parameters.push_back(stod(tmp));
-        } else if (functional_form == "plan") {
             ss >> tmp;
             linear_parameters.push_back(stod(tmp));
         } else if (functional_form == "quartic") {

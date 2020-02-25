@@ -76,7 +76,6 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << bond->GetTopologyType() << " ";
             std::string functional_form = bond->GetFunctionalForm();
             os << functional_form << " ";
-            os << bond->GetLinearFlag() << " ";
 
             std::vector<double> linear_parameters;
             std::vector<double> nonlinear_parameters;
@@ -99,7 +98,6 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << angle->GetTopologyType() << " ";
             std::string functional_form = angle->GetFunctionalForm();
             os << functional_form << " ";
-            os << angle->GetLinearFlag() << " ";
 
             std::vector<double> linear_parameters;
             std::vector<double> nonlinear_parameters;
@@ -122,8 +120,6 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << dihedral->GetTopologyType() << " ";
             std::string functional_form = dihedral->GetFunctionalForm();
             os << functional_form << " ";
-            os << dihedral->GetLinearFlag() << " ";
-            os << dihedral->GetIncludeExclude() << " ";
             std::vector<double> linear_parameters;
             std::vector<double> nonlinear_parameters;
             dihedral->GetParameters(linear_parameters, nonlinear_parameters);
@@ -144,7 +140,6 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << inversion->GetTopologyType() << " ";
             std::string functional_form = inversion->GetFunctionalForm();
             os << functional_form << " ";
-            os << inversion->GetLinearFlag() << " ";
             std::vector<double> linear_parameters;
             std::vector<double> nonlinear_parameters;
             inversion->GetParameters(linear_parameters, nonlinear_parameters);
@@ -185,8 +180,6 @@ void WriteParameters(std::ostream& os, std::vector<double>& linear_parameters,
         os << linear_parameters[0] << " ";
         os << linear_parameters[1] << " ";
         os << linear_parameters[2];
-    } else if (functional_form == "plan") {
-        os << linear_parameters[0];
     } else if (functional_form == "quartic") {
         os << linear_parameters[0] << " ";
         os << nonlinear_parameters[0] << " ";

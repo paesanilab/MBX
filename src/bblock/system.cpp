@@ -66,6 +66,14 @@ size_t System::GetNumRealSites() { return numat_; }
 
 size_t System::GetMonNumAt(size_t n) { return nat_[original2current_order_[n]]; }
 
+std::vector<size_t> System::GetMonNumAt() {
+    std::vector<size_t> monnumat(nat_.size(),0);
+    for (size_t i = 0; i < nat_.size(); i++) {
+        monnumat[i] = nat_[original2current_order_[i]];
+    }
+    return monnumat;
+}
+
 size_t System::GetFirstInd(size_t n) {
     // Obtain position in system of monomer in position
     // 'n' in the original order
@@ -171,6 +179,14 @@ std::vector<double> System::GetRealPolarizabilityFactors() {
 std::string System::GetMonId(size_t n) {
     size_t current_pos = original2current_order_[n];
     return monomers_[current_pos];
+}
+
+std::vector<std::string> System::GetMonId() {
+    std::vector<std::string> mon_ids(monomers_.size());
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        mon_ids[i] = monomers_[original2current_order_[i]];
+    }
+    return mon_ids;
 }
 
 std::vector<double> System::GetVirial() {return virial_;}
