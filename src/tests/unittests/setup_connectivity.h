@@ -43,6 +43,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include "tools/custom_exceptions.h"
 
+/**
+ * @file setup_connectivity.h
+ * @brief This file is used to test the connectivity class
+ */
+
 #define SETUP_CONNECTIVITY                                                                                           \
     std::string mon_id = "h4_dummy";                                                                                 \
     std::string bond_connectivity = "bond";                                                                          \

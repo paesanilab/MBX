@@ -50,42 +50,25 @@ TEST_CASE("Test Connectivity IO") {
 
     // Write the linear and nonlinear parameters because they can not be set in
     // the macro
-    // obj
+    // obj1
     bond1.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
-    bond1.SetLinearFlag(true);
     std::vector<Bond> bond_vec = {bond1, bond1};
     angle1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    angle1.SetLinearFlag(true);
-
     std::vector<Angles> angle_vec = {angle1, angle1, angle1};
     dihedral1.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
-    dihedral1.SetIncludeExclude("excluded");
-    dihedral1.SetLinearFlag(true);
-
     std::vector<Dihedral> dihedral_vec = {dihedral1};
     inversion1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    inversion1.SetLinearFlag(true);
     std::vector<Inversion> inversion_vec = {inversion1};
 
     // obj2
     bond2.SetParameters(harm_linear_parameters, harm_linear_parameters);
-    bond2.SetLinearFlag(true);
-
     std::vector<Bond> bond_vec2 = {bond2};
     angle2.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
-    angle2.SetLinearFlag(true);
-
     angle3.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    angle3.SetLinearFlag(true);
-
     std::vector<Angles> angle_vec2 = {angle2, angle3};
     dihedral2.SetParameters(hcos_linear_parameters, hcos_nonlinear_parameters);
-    dihedral2.SetIncludeExclude("excluded");
-    dihedral2.SetLinearFlag(true);
-
     std::vector<Dihedral> dihedral_vec2 = {dihedral2};
     inversion2.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    inversion2.SetLinearFlag(true);
 
     std::vector<Inversion> inversion_vec2 = {inversion2};
     connectivity::Conn connectivityObj1 = connectivity::Conn(mon_id, bond_vec, angle_vec, dihedral_vec, inversion_vec);

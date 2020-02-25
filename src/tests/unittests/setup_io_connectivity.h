@@ -47,6 +47,14 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "io_tools/read_connectivity.h"
 #include "io_tools/write_connectivity.h"
 
+/**
+ * @file setup_io_connectivity.h
+ * @brief This file is used to test the io functions for the
+ * connectivity. Multiple types of connectivity are defined, written to an
+ * unordered set, and then written out to a file before being read back and
+ * compared
+ */
+
 // First connectivity
 SETUP_CONNECTIVITY
 
