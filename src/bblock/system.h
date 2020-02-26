@@ -54,6 +54,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/connectivity.h"
 
 // Potential
+// Force Field
+#include "potential/force_field/energyff.h"
 // 1B
 #include "potential/1b/energy1b.h"
 // 2B
@@ -140,39 +142,39 @@ class System {
      */
     std::vector<size_t> GetMonNumAt();
 
-// FIXME As for today, these functions are not used. // MRR 20191022
-// Will need to activate them and use them whenever we need them for MB-Spec
-//    /**
-//     * Gets the molecular dipoles for the system.
-//     * @param[out] mu_perm Permanent dipole moments
-//     * @param[out] mu_ind Induced dipole moments
-//     */
-//    void GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
-//
-//    /**
-//     * Gets the point dipole moments in each atom.
-//     * @param[out] mu_perm Permanent dipole moments
-//     * @param[out] mu_ind Induced dipole moments
-//     */
-//    void GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
-//
-//    /**
-//     * Gets the total dipole moment for the system.
-//     * @param[out] mu_perm Permanent dipole moments
-//     * @param[out] mu_ind Induced dipole moments
-//     * @param[out] mu_tot Total dipole moment
-//     */
-//    void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
-//
-//    /**
-//     * Returns the charge derivatives for the whole system
-//     */
-//    std::vector<double> GetChargeDerivativesOHH();
-//
-//    /**
-//     * Returns the charge derivatives for the whole system
-//     */
-//    std::vector<double> GetChargeDerivatives();
+    // FIXME As for today, these functions are not used. // MRR 20191022
+    // Will need to activate them and use them whenever we need them for MB-Spec
+    //    /**
+    //     * Gets the molecular dipoles for the system.
+    //     * @param[out] mu_perm Permanent dipole moments
+    //     * @param[out] mu_ind Induced dipole moments
+    //     */
+    //    void GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+    //
+    //    /**
+    //     * Gets the point dipole moments in each atom.
+    //     * @param[out] mu_perm Permanent dipole moments
+    //     * @param[out] mu_ind Induced dipole moments
+    //     */
+    //    void GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+    //
+    //    /**
+    //     * Gets the total dipole moment for the system.
+    //     * @param[out] mu_perm Permanent dipole moments
+    //     * @param[out] mu_ind Induced dipole moments
+    //     * @param[out] mu_tot Total dipole moment
+    //     */
+    //    void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
+    //
+    //    /**
+    //     * Returns the charge derivatives for the whole system
+    //     */
+    //    std::vector<double> GetChargeDerivativesOHH();
+    //
+    //    /**
+    //     * Returns the charge derivatives for the whole system
+    //     */
+    //    std::vector<double> GetChargeDerivatives();
 
     /**
      * Gets the position of the first site of monomer n in the atoms vector
@@ -406,7 +408,6 @@ class System {
      */
     void GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order);
 
-
     /////////////////////////////////////////////////////////////////////////////
     // Modifiers ////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
@@ -624,7 +625,7 @@ to be the same.
      */
     void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
 
-    /**  
+    /**
      * @param[in] connectivity_map A map with monomer id as values and
      * connectivity objects for keys
      */
@@ -653,6 +654,15 @@ to be the same.
      * @return One-body energy of the system
      */
     double OneBodyEnergy(bool do_grads);
+
+    /**
+     * Obtains the classic potential energy. This is the sum of the bonds,
+     * angles, dihedral, and inversion potential energies.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @return the classic potential of the system
+     */
+    double ClassicPotential(bool do_grads);
 
     /**
      * Obtains the two-body energy. This is the sum of all two-body
@@ -769,6 +779,15 @@ to be the same.
      * @return  One-body energy of the system
      */
     double Get1B(bool do_grads);
+
+    /**
+     * Private function to internally get the 1b force field energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be commputed
+     * @return One-body classical energy of the system
+     */
+    double GetFF(bool do_grads);
 
     /**
      * Private function to internally get the 2b energy.
@@ -1123,7 +1142,6 @@ to be the same.
      * Vector that holds the connectivity of each monomer type
      */
     static std::unordered_map<std::string, connectivity::Conn> connectivity_map_;
-
 };
 
 }  // namespace bblock
