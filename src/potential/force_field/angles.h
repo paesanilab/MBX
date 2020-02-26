@@ -40,13 +40,10 @@
  * linear_param[2] -> constant k''
  *
  * The above parameter dictionary also shows how you should enter the parameters
- * in the connectivity file. Ie:
- * Angle 1 2 3 1 quartic 1.0 2.0 3.0 4.0
- * will set:
- * k -> 1.0
- * theta0 -> 2.0
- * k' -> 3.0
- * k'' -> 4.0
+ * in the connectivity file. Below is an example of what each number means
+ * angle         1         2        3          harm          1.0    2.0
+ * ^             ^         ^        ^           ^            ^      ^
+ * topology    1st idx  2nd idx   3rd idx    func form       k      theta0
  *
  */
 
@@ -65,12 +62,11 @@ class Angles : public Topology {
      * number of 0's onto the vectors nonlinear_parameters_ and
      * linear_parameters_.
      * @param[in] topology This is the topology, which will be angle
-     * @param[in] angle_type This is the angle type of the given angle
      * @param[in] indexes The indexes of the the atoms in the angle
      * @param[in] functional_form The functional form that is used to evaluate
      *                            the energy
      */
-    Angles(std::string topology, size_t angle_type, std::vector<size_t> indexes, std::string functional_form);
+    Angles(std::string topology, std::vector<size_t> indexes, std::string functional_form);
 
     /**
      * Default Destructor.

@@ -7,12 +7,10 @@
 
 Inversion::Inversion(){};
 
-Inversion::Inversion(std::string topology, size_t inversion_type, std::vector<size_t> indexes,
-                     std::string functional_form) {
+Inversion::Inversion(std::string topology, std::vector<size_t> indexes, std::string functional_form) {
     topology_ = topology;
     functional_form_ = functional_form;
     indexes_ = indexes;
-    topology_type_ = inversion_type;
 
     if (functional_form == "none") {
         num_linear_params_ = 0;
@@ -64,9 +62,8 @@ double Inversion::GetTopologyGradient(double x) {
 
 bool Inversion::operator==(Inversion const &inversion) const {
     // Check field variables
-    if (inversion.topology_ != this->topology_ || inversion.topology_type_ != this->topology_type_ ||
-        inversion.functional_form_ != this->functional_form_ || inversion.indexes_ != this->indexes_ ||
-        inversion.num_linear_params_ != this->num_linear_params_ ||
+    if (inversion.topology_ != this->topology_ || inversion.functional_form_ != this->functional_form_ ||
+        inversion.indexes_ != this->indexes_ || inversion.num_linear_params_ != this->num_linear_params_ ||
         inversion.num_nonlinear_params_ != this->num_nonlinear_params_) {
         return false;
     }
