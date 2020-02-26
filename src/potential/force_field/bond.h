@@ -47,12 +47,10 @@
  * linear_param[2] -> constant k''
  *
  * The above parameter dictionary also shows how you should enter the parameters
- * in the connectivity file. Ie:
- * Bond 1 2 1 morse 1.0 2.0 3.0
- * will set:
- * E0 -> 1.0
- * k -> 2.0
- * r0 -> 3.0
+ * in the connectivity file. Below is an example of what each number means
+ * bond         1         2             harm            1.0    2.0
+ * ^            ^         ^               ^             ^      ^
+ * topology    1st idx  2nd idx      func form          k      r0
  *
  */
 
@@ -71,12 +69,11 @@ class Bond : public Topology {
      * number of 0's onto the vectors nonlinear_parameters_ and
      * linear_parameters_ .
      * @param[in] topology This is the topology, which will be bond
-     * @param[in] bond_type This is the bond_type of the given bond
      * @param[in] indexes The indexes of the the atoms in the bond
      * @param[in] functional_form The functional form that is used to evaluate
      *                            the energy
      */
-    Bond(std::string topology, size_t bond_type, std::vector<size_t> indexes, std::string functional_form);
+    Bond(std::string topology, std::vector<size_t> indexes, std::string functional_form);
 
     /**
      * Default deconstructor

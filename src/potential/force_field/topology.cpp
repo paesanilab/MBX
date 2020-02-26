@@ -33,10 +33,6 @@ void Topology::SetIndexes(std::vector<size_t> indexes) { indexes_ = indexes; }
 
 std::vector<size_t> Topology::GetIndexes() { return indexes_; }
 
-void Topology::SetTopologyType(size_t topology_type) { topology_type_ = topology_type; }
-
-size_t Topology::GetTopologyType() { return topology_type_; }
-
 void Topology::SetFunctionalForm(std::string functional_form) { functional_form_ = functional_form; }
 
 std::string Topology::GetFunctionalForm() { return functional_form_; }

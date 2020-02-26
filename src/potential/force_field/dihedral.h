@@ -50,12 +50,10 @@
  * linear_param[2] -> constant A3
  *
  * The above parameter dictionary also shows how you should enter the parameters
- * in the connectivity file. Ie:
- * Dihedral 1 2 3 4 1 cos 1.0 2.0 3.0
- * will set:
- * A -> 1.0
- * m -> 2.0
- * d -> 3.0
+ * in the connectivity file. Below is an example of what each number means
+ * dihedral      1         2        3       4      cos         1.0   2.0    3.0
+ * ^             ^         ^        ^       ^      ^           ^      ^     ^
+ * topology   1st idx  2nd idx   3rd idx  4th idx  func form   A      m     d
  *
  */
 
@@ -74,12 +72,11 @@ class Dihedral : public Topology {
      * number of 0's onto the vectors nonlinear_parameters_ and
      * linear_parameters_.
      * @param[in] topology This is the topology, which will be dihedral
-     * @param[in] dihedral_type This is the dihedral_type of the given dihedral
      * @param[in] indexes The indexes of the the atoms in the dihedral
      * @param[in] functional_form The functional form that is used to evaluate
      *                            the energy
      */
-    Dihedral(std::string topology, size_t dihedral_type, std::vector<size_t> indexes, std::string functional_form);
+    Dihedral(std::string topology, std::vector<size_t> indexes, std::string functional_form);
 
     /**
      * Default Destructor
