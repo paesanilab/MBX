@@ -58,10 +58,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // First connectivity
 SETUP_CONNECTIVITY
 
-#define SETUP_IO_CONNECTIVITY                                                              \
-    Bond bond2 = Bond("bond", 1, std::vector<size_t>{8, 3}, "harm");                       \
-    Angles angle2 = Angles("angle", 1, std::vector<size_t>{5, 3, 4}, "quartic");           \
-    Angles angle3 = Angles("angle", 2, std::vector<size_t>{2, 3, 6}, "harm");              \
-    Dihedral dihedral2 = Dihedral("dihedral", 1, std::vector<size_t>{2, 1, 6, 4}, "hcos"); \
-    Inversion inversion2 = Inversion("inversion", 3, std::vector<size_t>{4, 1, 2, 3}, "harm");
+#define SETUP_IO_CONNECTIVITY                                                           \
+    Bond bond2 = Bond("bond", std::vector<size_t>{8, 3}, "harm");                       \
+    Angles angle2 = Angles("angle", std::vector<size_t>{5, 3, 4}, "quartic");           \
+    Angles angle3 = Angles("angle", std::vector<size_t>{2, 3, 6}, "harm");              \
+    Dihedral dihedral2 = Dihedral("dihedral", std::vector<size_t>{2, 1, 6, 4}, "hcos"); \
+    Inversion inversion2 = Inversion("inversion", std::vector<size_t>{4, 1, 2, 3}, "harm");
 #endif

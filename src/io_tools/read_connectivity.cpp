@@ -104,7 +104,6 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
             // Variable declaration
             std::string functional_form;
             std::vector<size_t> indexes;
-            size_t topology_type;
             std::string topology;
             std::vector<double> linear_parameters;
             std::vector<double> nonlinear_parameters;
@@ -120,13 +119,10 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                     indexes.push_back(stoi(tmp));
                 }
 
-                // read the bond type
-                ss >> topology_type;
-
                 // read the functional form that we want
                 ss >> functional_form;
 
-                Bond bond_obj(topology, topology_type, indexes, functional_form);
+                Bond bond_obj(topology, indexes, functional_form);
 
                 // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
@@ -149,13 +145,10 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                     indexes.push_back(stoi(tmp));
                 }
 
-                // read the angle type
-                ss >> topology_type;
-
                 // read the functional form that we want
                 ss >> functional_form;
 
-                Angles angle_obj(topology, topology_type, indexes, functional_form);
+                Angles angle_obj(topology, indexes, functional_form);
 
                 // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
@@ -178,13 +171,10 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                     indexes.push_back(stoi(tmp));
                 }
 
-                // read the dihedral type
-                ss >> topology_type;
-
                 // read the functional form that we want
                 ss >> functional_form;
 
-                Dihedral dihedral_obj(topology, topology_type, indexes, functional_form);
+                Dihedral dihedral_obj(topology, indexes, functional_form);
 
                 // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
@@ -206,13 +196,10 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                     indexes.push_back(stoi(tmp));
                 }
 
-                // read the inversion type
-                ss >> topology_type;
-
                 // read the functional form that we want
                 ss >> functional_form;
 
-                Inversion inversion_obj(topology, topology_type, indexes, functional_form);
+                Inversion inversion_obj(topology, indexes, functional_form);
 
                 // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);

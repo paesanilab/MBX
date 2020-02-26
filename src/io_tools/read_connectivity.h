@@ -60,9 +60,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  * be read correctly. Below we will give an example using bond as the topology type, but this
  * follows for all other topology types.
  *
- * bond         1         2         1            harm                1.0    2.0
- * ^            ^         ^         ^            ^                   ^      ^
- * topology    1st idx  2nd index   topo type    functional form     k      r0
+ * bond         1         2          harm        1.0    2.0
+ * ^            ^         ^            ^          ^      ^
+ * topology    1st idx  2nd idx     func form     k      r0
  *
  * Now we will list the order in which parameters need to be entered to be read
  * correctly
