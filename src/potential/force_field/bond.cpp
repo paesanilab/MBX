@@ -7,11 +7,10 @@
 
 Bond::Bond(){};
 
-Bond::Bond(std::string topology, size_t bond_type, std::vector<size_t> indexes, std::string functional_form) {
+Bond::Bond(std::string topology, std::vector<size_t> indexes, std::string functional_form) {
     topology_ = topology;
     functional_form_ = functional_form;
     indexes_ = indexes;
-    topology_type_ = bond_type;
 
     if (functional_form_ == "none") {
         num_linear_params_ = 0;
@@ -82,9 +81,8 @@ double Bond::GetTopologyGradient(double x) {
 
 bool Bond::operator==(Bond const &bond) const {
     // Check field variables
-    if (bond.topology_ != this->topology_ || bond.topology_type_ != this->topology_type_ ||
-        bond.functional_form_ != this->functional_form_ || bond.indexes_ != this->indexes_ ||
-        bond.num_linear_params_ != this->num_linear_params_ ||
+    if (bond.topology_ != this->topology_ || bond.functional_form_ != this->functional_form_ ||
+        bond.indexes_ != this->indexes_ || bond.num_linear_params_ != this->num_linear_params_ ||
         bond.num_nonlinear_params_ != this->num_nonlinear_params_) {
         return false;
     }

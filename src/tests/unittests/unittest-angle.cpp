@@ -52,7 +52,7 @@ TEST_CASE("Test dummy h4 angles") {
 
     SECTION("Angle-harmonic") {
         std::string functional_form = "harm";
-        Angles obj(angle_connectivity, angle_type, angle_index, functional_form);
+        Angles obj(angle_connectivity, angle_index, functional_form);
         obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
         SECTION("Harmonic Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_harm_energy).margin(TOL)); }
         SECTION("Harmonic Gradient") {
@@ -62,7 +62,7 @@ TEST_CASE("Test dummy h4 angles") {
 
     SECTION("Angle-quartic") {
         std::string functional_form = "quartic";
-        Angles obj(angle_connectivity, angle_type, angle_index, functional_form);
+        Angles obj(angle_connectivity, angle_index, functional_form);
         obj.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
         SECTION("Quartic Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_quartic_energy).margin(TOL)); }
         SECTION("Quartic Gradient") {
@@ -72,7 +72,7 @@ TEST_CASE("Test dummy h4 angles") {
 
     SECTION("Angle-none") {
         std::string functional_form = "none";
-        Angles obj(angle_connectivity, angle_type, angle_index, functional_form);
+        Angles obj(angle_connectivity, angle_index, functional_form);
         obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
         SECTION("None Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_none_energy).margin(TOL)); }
         SECTION("None Gradient") { REQUIRE(obj.GetTopologyGradient(theta) == Approx(ff_angles_none_grad).margin(TOL)); }
@@ -82,7 +82,7 @@ TEST_CASE("Test dummy h4 angles") {
         std::string functional_form = "abcd";
         bool not_possible_to_setup_angle = false;
         try {
-            Angles obj(angle_connectivity, angle_type, angle_index, functional_form);
+            Angles obj(angle_connectivity, angle_index, functional_form);
         } catch (CUException &e) {
             not_possible_to_setup_angle = true;
         }

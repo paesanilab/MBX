@@ -31,11 +31,10 @@
  * nonlinear_param[0] -> constant phi0
  *
  * The above parameter dictionary also shows how you should enter the parameters
- * in the connectivity file. Ie:
- * Inversion 1 2 3 4 1 harm 1.0 2.0
- * will set:
- * k -> 1.0
- * phi0 -> 2.0
+ * in the connectivity file. Below is an example of what each number means
+ * inversion     1         2        3       4      harm        1.0   2.0
+ * ^             ^         ^        ^       ^      ^           ^      ^
+ * topology   1st idx  2nd idx   3rd idx  4th idx  func form   k      phi0
  *
  */
 
@@ -54,12 +53,11 @@ class Inversion : public Topology {
      * number of 0's onto the vectors nonlinear_parameters_ and
      * linear_parameters_.
      * @param[in] topology This is the topology, which will be inversion
-     * @param[in] inversion_type This is the inversion_type of the given inversion
      * @param[in] indexes The indexes of the the atoms in the inversion angle
      * @param[in] functional_form The functional form that is used to evaluate
      *                            the energy
      */
-    Inversion(std::string topology, size_t inversion_type, std::vector<size_t> indexes, std::string functional_form);
+    Inversion(std::string topology, std::vector<size_t> indexes, std::string functional_form);
 
     /**
      * Default Destructor.

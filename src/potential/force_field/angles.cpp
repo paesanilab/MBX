@@ -7,11 +7,10 @@
 
 Angles::Angles(){};
 
-Angles::Angles(std::string topology, size_t angle_type, std::vector<size_t> indexes, std::string functional_form) {
+Angles::Angles(std::string topology, std::vector<size_t> indexes, std::string functional_form) {
     topology_ = topology;
     functional_form_ = functional_form;
     indexes_ = indexes;
-    topology_type_ = angle_type;
 
     if (functional_form == "none") {
         num_linear_params_ = 0;
@@ -70,9 +69,8 @@ double Angles::GetTopologyGradient(double x) {
 
 bool Angles::operator==(Angles const &angle) const {
     // Check field variables
-    if (angle.topology_ != this->topology_ || angle.topology_type_ != this->topology_type_ ||
-        angle.functional_form_ != this->functional_form_ || angle.indexes_ != this->indexes_ ||
-        angle.num_linear_params_ != this->num_linear_params_ ||
+    if (angle.topology_ != this->topology_ || angle.functional_form_ != this->functional_form_ ||
+        angle.indexes_ != this->indexes_ || angle.num_linear_params_ != this->num_linear_params_ ||
         angle.num_nonlinear_params_ != this->num_nonlinear_params_) {
         return false;
     }

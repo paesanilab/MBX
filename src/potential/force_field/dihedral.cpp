@@ -7,12 +7,10 @@
 
 Dihedral::Dihedral(){};
 
-Dihedral::Dihedral(std::string topology, size_t dihedral_type, std::vector<size_t> indexes,
-                   std::string functional_form) {
+Dihedral::Dihedral(std::string topology, std::vector<size_t> indexes, std::string functional_form) {
     topology_ = topology;
     functional_form_ = functional_form;
     indexes_ = indexes;
-    topology_type_ = dihedral_type;
 
     if (functional_form == "none") {
         num_linear_params_ = 0;
@@ -85,9 +83,8 @@ double Dihedral::GetTopologyGradient(double x) {
 
 bool Dihedral::operator==(Dihedral const &dihedral) const {
     // Check field variables
-    if (dihedral.topology_ != this->topology_ || dihedral.topology_type_ != this->topology_type_ ||
-        dihedral.functional_form_ != this->functional_form_ || dihedral.indexes_ != this->indexes_ ||
-        dihedral.num_linear_params_ != this->num_linear_params_ ||
+    if (dihedral.topology_ != this->topology_ || dihedral.functional_form_ != this->functional_form_ ||
+        dihedral.indexes_ != this->indexes_ || dihedral.num_linear_params_ != this->num_linear_params_ ||
         dihedral.num_nonlinear_params_ != this->num_nonlinear_params_) {
         return false;
     }

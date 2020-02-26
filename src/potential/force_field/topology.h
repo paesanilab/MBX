@@ -85,18 +85,6 @@ class Topology {
     std::vector<size_t> GetIndexes();
 
     /**
-     * @brief Set the current topology type
-     * @param[in] topology_type The given topology type
-     */
-    void SetTopologyType(size_t topology_type);
-
-    /**
-     * @brief Get the current topology type
-     * @return A value indicating the topology type
-     */
-    size_t GetTopologyType();
-
-    /**
      * @brief Sets the given functional form
      * @param[in] functional_form The functional form that is going to be set
      *            into the field variable
@@ -128,10 +116,6 @@ class Topology {
      */
     std::string topology_;
 
-    /**
-     * The topology type. e.g. bond type 1
-     */
-    size_t topology_type_;
     /**
      * The functional form
      */
