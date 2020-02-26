@@ -4,6 +4,7 @@ program test
   double precision :: Vpot
   double precision, allocatable :: coord(:),grads(:)
   double precision, allocatable :: box(:)
+  double precision, allocatable :: virial(:)
 
   character(len=5), allocatable :: at_name(:)
   character(len=5), allocatable :: monomers(:)
@@ -18,6 +19,7 @@ program test
   external get_energy
   external get_energy_g
   external finalize_system
+  external get_virial
 
   ! need to define here the numebr of monomers, and number of atoms in each one
   ! In the case of a water cluster of 256 molecules, the variables should be:
@@ -33,7 +35,7 @@ program test
   ! This will work for the test case, which contains a lithium monomer
   ! at the beggining, and then 6 water molecules
   nmon = 7
-  allocate(nats(nmon),monomers(nmon),box(9))
+  allocate(nats(nmon),monomers(nmon),box(9),virial(9))
 
   ! Lithium
   nats(1) = 1
@@ -131,10 +133,15 @@ program test
   enddo
   write(*,*)
 
-  box(:) = 0.0
-  box(1) = 20.0
-  box(5) = 20.0
-  box(9) = 20.0
+  ! At this point the virial should be updated
+  ! For gas phase simulations it will return trash. But you can still get it.
+  call get_virial(virial)
+  write(*,*) "Virial"
+  write(*,*)
+  do i=1,3
+    write(*,*) (virial(3*(i-1) + j),j=1,3)
+  enddo
+  write(*,*)
 
   ! Don't forget to free the system
   call finalize_system()

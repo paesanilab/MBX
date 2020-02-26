@@ -33,7 +33,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "bblock/system.h"
-
+#include <cstdlib>
 /**
  * @file external_call.cpp
  * @brief Functions to use the system class and its energy functions from other languages
@@ -142,6 +142,24 @@ void get_energy_pbc_g_(double* coords, int* nat, double* box, double* energy, do
 
     std::vector<double> gradv = my_s->GetRealGrads();
     std::copy(gradv.begin(), gradv.end(), grads);
+}
+
+/**
+ * Retrieves the virial from the system class
+ * @param[out] virial Pointer to the virial. Must be a 9 element vector.
+ */
+
+void get_virial_(double* virial) {
+    std::vector<double> v = my_s->GetVirial();
+    if (v.size() < 1) {
+        std::fill(virial, virial + 9, 0.0);
+    } else if (v.size() == 9) {
+        std::copy(v.begin(), v.begin() + 9, virial);
+    } else {
+        std::cerr << "Cannot retrieve the virial. Size should be 9, and instead is " 
+                  << v.size() << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
 }
 
 /**
