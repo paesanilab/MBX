@@ -25,7 +25,7 @@ struct mbnrg_A1B4_C1D2_C1D2_deg3_v1 {
     typedef poly_A1B4_C1D2_C1D2_deg3_v1 polynomial;
 
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n);
-    double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3 , const size_t n);
+    double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3 , const size_t n,std::vector<double> *virial=0);
 
   private:
     double m_k_x_intra_A_B_1;
