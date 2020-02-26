@@ -73,7 +73,6 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
                 os << idx << " ";
             }
 
-            os << bond->GetTopologyType() << " ";
             std::string functional_form = bond->GetFunctionalForm();
             os << functional_form << " ";
 
@@ -95,7 +94,6 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
                 os << idx << " ";
             }
 
-            os << angle->GetTopologyType() << " ";
             std::string functional_form = angle->GetFunctionalForm();
             os << functional_form << " ";
 
@@ -117,7 +115,6 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
                 os << idx << " ";
             }
 
-            os << dihedral->GetTopologyType() << " ";
             std::string functional_form = dihedral->GetFunctionalForm();
             os << functional_form << " ";
             std::vector<double> linear_parameters;
@@ -137,7 +134,6 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
                 os << idx << " ";
             }
 
-            os << inversion->GetTopologyType() << " ";
             std::string functional_form = inversion->GetFunctionalForm();
             os << functional_form << " ";
             std::vector<double> linear_parameters;

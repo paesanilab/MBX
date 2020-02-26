@@ -59,9 +59,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  * An example of a connectivity write is given below. It is for a bond, but all
  * the other topology follow
  *
- * bond         1         2         1            harm                1.0    2.0
- * ^            ^         ^         ^            ^                   ^      ^
- * topology    1st idx  2nd index   topo type    functional form     k      r0
+ * bond         1         2            harm             1.0    2.0
+ * ^            ^         ^            ^                ^      ^
+ * topology    1st idx  2nd index   functional form     k      r0
  *
  * The parameters are written in the following way:
  *
