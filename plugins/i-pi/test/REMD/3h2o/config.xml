@@ -1,0 +1,48 @@
+<simulation verbosity='high' threading='False'>
+   <output prefix='remd'>
+      <properties filename='md' stride='1'> [step, time{picosecond}, conserved{kelvin}, temperature{kelvin}, potential{kelvin}, kinetic_cv{kelvin}, spring{kelvin}, kinetic_md{kelvin}, volume, pressure_cv{megapascal} ] </properties>
+      <trajectory filename='pos' stride='1' format='xyz' cell_units='angstrom'> positions{angstrom} </trajectory>
+      <checkpoint filename='checkpoint' stride='100' overwrite='True'/>
+   </output>
+   <total_steps> 10000 </total_steps>
+   <ffsocket mode="unix" name="driver">
+      <address>localhost</address>
+   </ffsocket>
+   <prng> <seed> 456123 </seed> </prng>
+   <system_template>
+   <labels>   [ PREFIX,TEMPERATURE ] </labels> 
+   <instance> [ R01, 20 ] </instance>
+   <instance> [ R02, 30 ] </instance>
+   <instance> [ R03, 40 ] </instance>
+   <instance> [ R04, 50 ] </instance> 
+   <template>
+   <system prefix="PREFIX">
+      <initialize nbeads='1'>
+         <file mode='xyz'> config.xyz </file>
+         <cell mode='abc' units='angstrom'>
+             [1000.0,1000.0,1000.0]
+         </cell>
+         <velocities mode='thermal' units='kelvin'> TEMPERATURE </velocities>
+      </initialize>
+      <forces><force forcefield='driver'></force></forces>
+      <ensemble>
+         <temperature units='kelvin'> TEMPERATURE </temperature>
+      </ensemble>
+      <motion mode='dynamics'>
+         <fixcom> True </fixcom>
+	       <dynamics mode='nvt'>
+	          <thermostat mode='pile_l'>
+               <tau units='femtosecond'> 25 </tau>
+              </thermostat>
+            <timestep units='femtosecond'> 0.2 </timestep>
+	       </dynamics>
+      </motion>
+   </system>
+   </template>
+   </system_template>
+   <smotion mode="remd">
+      <remd>
+         <stride> 100 </stride>
+      </remd>
+   </smotion>
+</simulation>
