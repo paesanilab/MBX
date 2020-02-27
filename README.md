@@ -14,6 +14,7 @@ What's new in v0.2.1a
 - Added NH3 1b PEF MB-nrg (should not be used yet).
 - Added NH3-NH3 2b PEF TTM-nrg and MB-nrg (should not be used yet).
 - Two-body TTM-nrg and MB-nrg PEFs for Ar-Cs and Ar-H2O have been added. VIRIAL is missing for Ar-Cs.
+- Classic potential energy and gradients can be evaluated for bonds, angles, dihedrals, and inversion 
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software

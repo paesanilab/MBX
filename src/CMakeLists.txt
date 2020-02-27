@@ -13,6 +13,7 @@ add_subdirectory(tests)
 add_library(mbx SHARED $<TARGET_OBJECTS:bblock> 
                          $<TARGET_OBJECTS:io_tools> 
                          $<TARGET_OBJECTS:tools> 
+                         $<TARGET_OBJECTS:ff>
                          $<TARGET_OBJECTS:1b> 
                          $<TARGET_OBJECTS:2b> 
                          $<TARGET_OBJECTS:3b> 
@@ -25,6 +26,7 @@ target_link_libraries(mbx PUBLIC fftw::fftw)
 add_library(mbxlib STATIC $<TARGET_OBJECTS:bblock> 
                          $<TARGET_OBJECTS:io_tools> 
                          $<TARGET_OBJECTS:tools> 
+                         $<TARGET_OBJECTS:ff>
                          $<TARGET_OBJECTS:1b> 
                          $<TARGET_OBJECTS:2b> 
                          $<TARGET_OBJECTS:3b> 

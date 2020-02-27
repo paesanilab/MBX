@@ -5,6 +5,7 @@ add_subdirectory(dispersion)
 add_subdirectory(buckingham) 
 add_subdirectory(electrostatics) 
 add_subdirectory(neural_networks) 
+add_subdirectory(force_field)
 
 #add_library(potential)
 #target_link_libraries(potential 1b 2b 3b dispersion electrostatics) 
