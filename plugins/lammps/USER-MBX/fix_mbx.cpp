@@ -529,6 +529,8 @@ void FixMBX::mbx_init()
   
   std::vector<size_t> molec;
 
+  double ximage[3];
+  
   // loop over all atoms on proc (local + ghost)
 
   int nm = 0;
@@ -553,34 +555,40 @@ void FixMBX::mbx_init()
 
 	// add water molecule
 
-	//printf(" -- Adding H2O\n");
+	//	printf(" -- Adding H2O\n");
 	
 	tagint anchor = tag[i];
 	names.push_back("O");
 	xyz.push_back(x[i][0]);
 	xyz.push_back(x[i][1]);
 	xyz.push_back(x[i][2]);
-	//	printf(" -- %i(i): O %f %f %f\n",anchor,i,x[i][0],x[i][1],x[i][2]);
+	//	printf(" -- %i(i): O  %f %f %f\n",anchor,i,x[i][0],x[i][1],x[i][2]);
 
 	int ii = atom->map(anchor+1);
-	ii = domain->closest_image(i, ii); // no choice, but to call there here, but could cache for mbx_update_xyz()
+	//	ii = domain->closest_image(i, ii); // no choice, but to call there here, but could cache for mbx_update_xyz()
 	if(ii < 0) error->all(FLERR,"H2O molecule not intact");
+	domain->closest_image(x[i], x[ii], ximage);
 
 	names.push_back("H");
-	xyz.push_back(x[ii][0]);
-	xyz.push_back(x[ii][1]);
-	xyz.push_back(x[ii][2]);
-	//	printf(" -- %i(i): H %f %f %f\n",anchor,i,x[ii][0],x[ii][1],x[ii][2]);
+	// xyz.push_back(x[ii][0]);
+	// xyz.push_back(x[ii][1]);
+	// xyz.push_back(x[ii][2]);
+	// printf(" -- %i(i): H  %f %f %f\n",anchor,i,x[ii][0],x[ii][1],x[ii][2]);
+	xyz.push_back(ximage[0]);
+	xyz.push_back(ximage[1]);
+	xyz.push_back(ximage[2]);
+	//	printf(" -- %i(i): H  %f %f %f\n",anchor,i,ximage[0],ximage[1],ximage[2]);
 
 	ii = atom->map(anchor+2);
-	ii = domain->closest_image(i, ii);
+	//	ii = domain->closest_image(i, ii);
 	if(ii < 0) error->all(FLERR,"H2O molecule not intact");
+	domain->closest_image(x[i], x[ii], ximage);
 	
 	names.push_back("H");
-	xyz.push_back(x[ii][0]);
-	xyz.push_back(x[ii][1]);
-	xyz.push_back(x[ii][2]);
-	//	printf(" -- %i(i): H %f %f %f\n",anchor,i,x[ii][0],x[ii][1],x[ii][2]);
+	xyz.push_back(ximage[0]);
+	xyz.push_back(ximage[1]);
+	xyz.push_back(ximage[2]);
+	//	printf(" -- %i(i): H  %f %f %f\n",anchor,i,ximage[0],ximage[1],ximage[2]);
 
 	molec.push_back(nm);
 	nm++;
@@ -609,6 +617,8 @@ void FixMBX::mbx_init()
 
       } else if(strcmp("cl",mol_names[mtype]) == 0) {
 	
+	//	printf(" -- Adding Cl\n");
+	
 	// add chloride ion
 
 	tagint anchor = tag[i];
@@ -616,6 +626,7 @@ void FixMBX::mbx_init()
 	xyz.push_back(x[i][0]);
 	xyz.push_back(x[i][1]);
 	xyz.push_back(x[i][2]);
+	//	printf(" -- %i(i): Cl %f %f %f\n",anchor,i,x[i][0],x[i][1],x[i][2]);
 
 	molec.push_back(nm++);
 
@@ -635,22 +646,24 @@ void FixMBX::mbx_init()
 	xyz.push_back(x[i][2]);
 
 	int ii = atom->map(anchor+1);
-	ii = domain->closest_image(i, ii);
+	//	ii = domain->closest_image(i, ii);
 	if(ii < 0) error->all(FLERR,"CO2 molecule not intact");
+	domain->closest_image(x[i], x[ii], ximage);
 
 	names.push_back("O");
-	xyz.push_back(x[ii][0]);
-	xyz.push_back(x[ii][1]);
-	xyz.push_back(x[ii][2]);
+	xyz.push_back(ximage[0]);
+	xyz.push_back(ximage[1]);
+	xyz.push_back(ximage[2]);
 
 	ii = atom->map(anchor+2);
-	ii = domain->closest_image(i, ii);
+	//	ii = domain->closest_image(i, ii);
 	if(ii < 0) error->all(FLERR,"CO2 molecule not intact");
+	domain->closest_image(x[i], x[ii], ximage);
 	
 	names.push_back("O");
-	xyz.push_back(x[ii][0]);
-	xyz.push_back(x[ii][1]);
-	xyz.push_back(x[ii][2]);
+	xyz.push_back(ximage[0]);
+	xyz.push_back(ximage[1]);
+	xyz.push_back(ximage[2]);
 
 	molec.push_back(nm++);
 
@@ -691,13 +704,13 @@ void FixMBX::mbx_init()
   // set MBX solvers
   
   ptr_mbx->SetDipoleMethod("cg");
-  if (box.size()) {
+  //  if (box.size()) {
     ptr_mbx->Set2bCutoff(9.0);
     ptr_mbx->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx->SetEwaldDispersion(0.5, 2.5, 6);
-  } else {
-    ptr_mbx->Set2bCutoff(100.0);
-  }
+    //  } else {
+    //    ptr_mbx->Set2bCutoff(100.0);
+    //  }
 
   mbxt_stop(MBXT_INIT);
 }
@@ -955,6 +968,8 @@ void FixMBX::mbx_update_xyz()
   const int nall = nlocal + atom->nghost;
   tagint * tag = atom->tag;
   double ** x = atom->x;
+
+  double ximage[3];
   
   std::vector<double> xyz(mbx_num_atoms*3); // need to confirm this size matches that of mbx_init()
 
@@ -978,16 +993,18 @@ void FixMBX::mbx_update_xyz()
 	xyz[indx*3+2] = x[i][2];
 	
 	int ii = atom->map(anchor + 1);
-	ii = domain->closest_image(i, ii);
-	xyz[indx*3+3] = x[ii][0];
-	xyz[indx*3+4] = x[ii][1];
-	xyz[indx*3+5] = x[ii][2];
+	//	ii = domain->closest_image(i, ii);
+	domain->closest_image(x[i], x[ii], ximage);
+	xyz[indx*3+3] = ximage[0];
+	xyz[indx*3+4] = ximage[1];
+	xyz[indx*3+5] = ximage[2];
 	
 	ii = atom->map(anchor + 2);
-	ii = domain->closest_image(i, ii);
-	xyz[indx*3+6] = x[ii][0];
-	xyz[indx*3+7] = x[ii][1];
-	xyz[indx*3+8] = x[ii][2];
+	//	ii = domain->closest_image(i, ii);
+	domain->closest_image(x[i], x[ii], ximage);
+	xyz[indx*3+6] = ximage[0];
+	xyz[indx*3+7] = ximage[1];
+	xyz[indx*3+8] = ximage[2];
 
 	indx += 3;
 	m++;
@@ -1019,16 +1036,18 @@ void FixMBX::mbx_update_xyz()
 	xyz[indx*3+2] = x[i][2];
 
 	int ii = atom->map(anchor + 1);
-	ii = domain->closest_image(i, ii);
-	xyz[indx*3+3] = x[ii][0];
-	xyz[indx*3+4] = x[ii][1];
-	xyz[indx*3+5] = x[ii][2];
+	//	ii = domain->closest_image(i, ii);
+	domain->closest_image(x[i], x[ii], ximage);
+	xyz[indx*3+3] = ximage[0];
+	xyz[indx*3+4] = ximage[1];
+	xyz[indx*3+5] = ximage[2];
 	
 	ii = atom->map(anchor + 2);
-	ii = domain->closest_image(i, ii);
-	xyz[indx*3+6] = x[ii][0];
-	xyz[indx*3+7] = x[ii][1];
-	xyz[indx*3+8] = x[ii][2];
+	//	ii = domain->closest_image(i, ii);
+	domain->closest_image(x[i], x[ii], ximage);
+	xyz[indx*3+6] = ximage[0];
+	xyz[indx*3+7] = ximage[1];
+	xyz[indx*3+8] = ximage[2];
 
 	indx += 3;
 	m++;
