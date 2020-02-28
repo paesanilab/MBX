@@ -131,14 +131,22 @@ void PairMBX::compute(int eflag, int vflag)
   mbx_disp = 0.0;
   mbx_buck = 0.0;
   mbx_ele  = 0.0;
+
+#if 0
+  fix_mbx->mbxt_start(MBXT_DISP);
+  if(comm->me == 0) mbx_disp = ptr_mbx->Dispersion(true, true);
+  fix_mbx->mbxt_stop(MBXT_DISP);
+  accumulate_f();
+#endif
   
   bblock::System * ptr_mbx_full = fix_mbx->ptr_mbx_full;
-  
+
+#if 1
   fix_mbx->mbxt_start(MBXT_DISP);
   if(comm->me == 0) mbx_disp = ptr_mbx_full->Dispersion(true);
   fix_mbx->mbxt_stop(MBXT_DISP);
   accumulate_f_full();
-
+#endif
   
   fix_mbx->mbxt_start(MBXT_BUCK);
   if(comm->me == 0) mbx_buck = ptr_mbx_full->Buckingham(true);
