@@ -75,7 +75,9 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
              double* grad1, double* grad2, double& phi1, double* phi2, const size_t nmon1, const size_t nmon2,
              const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
              const double disp_scale_factor, bool do_grads, const double cutoff, const double ewald_alpha,
-             const std::vector<double>& box, const std::vector<double>& box_inverse, std::vector<double> *virial=0);
+             const std::vector<double>& box, const std::vector<double>& box_inverse,
+	     bool use_ghost, const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
+	     std::vector<double> *virial=0);
 
 void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6);
 
