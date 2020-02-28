@@ -617,7 +617,7 @@ void System::Initialize() {
     // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
-    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
+    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, true, box_);
 
     // We are done. Setting initialized_ to true
@@ -1986,7 +1986,7 @@ void System::SetVSites() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double System::Dispersion(bool do_grads) {
+double System::Dispersion(bool do_grads, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -2001,7 +2001,7 @@ double System::Dispersion(bool do_grads) {
 
     SetPBC(box_);
 
-    energy_ = GetDispersion(do_grads);
+    energy_ = GetDispersion(do_grads, use_ghost);
 
     return energy_;
 }
@@ -2091,7 +2091,7 @@ double System::GetElectrostatics(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double System::GetDispersion(bool do_grads) {
+  double System::GetDispersion(bool do_grads, bool use_ghost) {
     std::vector<double> xyz_real(3 * numat_);
 
     size_t count = 0;
@@ -2104,7 +2104,7 @@ double System::GetDispersion(bool do_grads) {
 
     dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
-    double e = dispersionE_.GetDispersion(real_grad, &virial_);
+    double e = dispersionE_.GetDispersion(real_grad, &virial_, use_ghost);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {
