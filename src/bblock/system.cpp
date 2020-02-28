@@ -1220,7 +1220,7 @@ double System::Energy(bool do_grads) {
               << "Buck = " << ebuck << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
-    //#endif
+#endif
 #ifdef TIMING
     std::cerr << "System::1b(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n";
