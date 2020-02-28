@@ -45,7 +45,8 @@ PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
   respa_enable = 1;
   writedata = 1;
   restartinfo = 0;
-
+  no_virial_fdotr_compute = 1;
+  
   mbx_total_energy = 0;
 
   // energy terms available to pair compute
@@ -83,7 +84,8 @@ void PairMBX::setup()
 /* ---------------------------------------------------------------------- */
 
 void PairMBX::compute(int eflag, int vflag)
-{
+{  
+  ev_init(eflag,vflag);
   
 #if 0
 
@@ -192,11 +194,14 @@ void PairMBX::compute(int eflag, int vflag)
   double e3l = 0.0;
   double e3g = 0.0;
 
-  MPI_Reduce(&mbx_e1b,       &e1,  1, MPI_DOUBLE, MPI_SUM, 0, world);
-  MPI_Reduce(&mbx_e2b_local, &e2l, 1, MPI_DOUBLE, MPI_SUM, 0, world);
-  MPI_Reduce(&mbx_e2b_ghost, &e2g, 1, MPI_DOUBLE, MPI_SUM, 0, world);
-  MPI_Reduce(&mbx_e3b_local, &e3l, 1, MPI_DOUBLE, MPI_SUM, 0, world);
-  MPI_Reduce(&mbx_e3b_ghost, &e3g, 1, MPI_DOUBLE, MPI_SUM, 0, world);
+  double v[6];
+  
+  MPI_Reduce(&mbx_e1b,       &e1,   1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_e2b_local, &e2l,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_e2b_ghost, &e2g,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_e3b_local, &e3l,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_e3b_ghost, &e3g,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&virial[0],     &v[0], 6, MPI_DOUBLE, MPI_SUM, 0, world);
 
   double etot = e1 + e2l + e2g + e3l + e3g + mbx_disp + mbx_buck + mbx_ele;
 
@@ -208,6 +213,8 @@ void PairMBX::compute(int eflag, int vflag)
     printf("mbx_buck=  %f  Serial\n",mbx_buck);
     printf("mbx_ele=   %f  Serial\n",mbx_ele);
     printf("mbx_total= %f\n",etot);
+
+    printf("virial= %f %f %f  %f %f %f\n",v[0],v[1],v[2],v[3],v[4],v[5]);
   }
 #endif
   
@@ -268,6 +275,8 @@ void PairMBX::compute_full()
     printf("mbx_buck=  %f\n",mbx_buck);
     printf("mbx_ele=   %f\n",mbx_ele);
     printf("mbx_total= %f\n",mbx_total_energy);
+    
+    printf("virial= %f %f %f  %f %f %f\n",virial[0],virial[1],virial[2],virial[3],virial[4],virial[5]);
   }
 #endif
   
@@ -458,7 +467,30 @@ void PairMBX::accumulate_f()
     } // if(anchor)
 
   }
- 
+
+  // accumulate virial: only global is supported
+  // MBX: xx, xy, xz, yx, yy, yz, zx, zy, zz
+  // LAMMPS: xx, yy, zz, xy, xz, yz
+
+  if(vflag_either) {
+    std::vector<double> mbx_virial = ptr_mbx->GetVirial();
+    
+    virial[0] += mbx_virial[0];
+    virial[1] += mbx_virial[4];
+    virial[2] += mbx_virial[8];
+    virial[3] += mbx_virial[1];
+    virial[4] += mbx_virial[2];
+    virial[5] += mbx_virial[5];
+
+    // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+    // 	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
+    // 	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
+    // 	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    // printf("virial(LMP)= %f %f %f  %f %f %f\n",
+    // 	   virial[0],virial[1],virial[2],
+    // 	   virial[3],virial[4],virial[5]);
+  }
+  
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F);
 }
 
@@ -524,6 +556,29 @@ void PairMBX::accumulate_f_full()
 	
       } // if(anchor)
       
+    }
+    
+    // accumulate virial: only global is supported
+    // MBX: xx, xy, xz, yx, yy, yz, zx, zy, zz
+    // LAMMPS: xx, yy, zz, xy, xz, yz
+    
+    if(vflag_either) {
+      std::vector<double> mbx_virial = ptr_mbx->GetVirial();
+      
+      virial[0] += mbx_virial[0];
+      virial[1] += mbx_virial[4];
+      virial[2] += mbx_virial[8];
+      virial[3] += mbx_virial[1];
+      virial[4] += mbx_virial[2];
+      virial[5] += mbx_virial[5];
+      
+      // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+      // 	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
+      // 	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
+      // 	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+      // printf("virial(LMP)= %f %f %f  %f %f %f\n",
+      // 	     virial[0],virial[1],virial[2],
+      // 	     virial[3],virial[4],virial[5]);
     }
     
   } // if(me == 0)
