@@ -859,6 +859,11 @@ nlohmann::json System::GetJsonConfig() {
     return mbx_j_;
 }
 
+void System::SetUpFromJson(std::string json_text) {
+  nlohmann::json j = nlohmann::json::parse(json_text);
+  SetUpFromJson(j);
+}
+
 
 void System::SetUpFromJson(char *json_file) {
     /* Template example for mbx.json
