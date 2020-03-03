@@ -331,7 +331,6 @@ void FixMBX::post_neighbor()
 
 void FixMBX::setup_pre_force(int vflag)
 {
-
   pre_force(vflag);
 }
 
@@ -355,7 +354,7 @@ void FixMBX::pre_force(int /*vflag*/)
 {
   //  printf("[MBX] Inside pre_force()\n");
   // update coordinates in MBX objects
-
+  
   mbx_update_xyz();
   mbx_update_xyz_full();
 }
@@ -963,6 +962,34 @@ void FixMBX::mbx_update_xyz()
 {
   mbxt_start(MBXT_UPDATE_XYZ);
   //  printf("[MBX] Inside mbx_update_xyz()\n");
+
+  // update if box changes
+  // this box is currently non-periodic, nothing to update
+
+  // if(domain->box_change) {
+    
+  //   std::vector<double> box;
+
+  //   if(!domain->nonperiodic) {
+    
+  //     box = std::vector<double>(9,0.0);
+      
+  //     box[0] = domain->xprd;
+      
+  //     box[3] = domain->xy;
+  //     box[4] = domain->yprd;
+      
+  //     box[6] = domain->xz;
+  //     box[7] = domain->yz;
+  //     box[8] = domain->zprd;
+      
+  //   } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
+  //     error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
+  
+  //   ptr_mbx->SetPBC(box);
+  // }
+
+  // update coordinates
   
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
@@ -971,7 +998,7 @@ void FixMBX::mbx_update_xyz()
 
   double ximage[3];
   
-  std::vector<double> xyz(mbx_num_atoms*3); // need to confirm this size matches that of mbx_init()
+  std::vector<double> xyz(mbx_num_atoms*3);
 
   int indx = 0;
   int m = 0;
@@ -1072,6 +1099,8 @@ void FixMBX::mbx_update_xyz_full()
   mbxt_start(MBXT_UPDATE_XYZ_FULL);
   
   //  printf("[MBX] Inside mbx_update_xyz_full()\n");
+
+  // gather coordinates
   
   const int nlocal = atom->nlocal;
   const int natoms = atom->natoms;
@@ -1088,6 +1117,33 @@ void FixMBX::mbx_update_xyz_full()
     mbxt_stop(MBXT_UPDATE_XYZ_FULL);
     return;
   }
+  
+  // update if box changes
+
+  if(domain->box_change) {
+    
+    std::vector<double> box;
+
+    if(!domain->nonperiodic) {
+    
+      box = std::vector<double>(9,0.0);
+      
+      box[0] = domain->xprd;
+      
+      box[3] = domain->xy;
+      box[4] = domain->yprd;
+      
+      box[6] = domain->xz;
+      box[7] = domain->yz;
+      box[8] = domain->zprd;
+      
+    } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
+      error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
+  
+    ptr_mbx_full->SetPBC(box);
+  }
+
+  // update coordinates
   
   std::vector<double> xyz(natoms*3);
   
