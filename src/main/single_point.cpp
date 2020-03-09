@@ -23,13 +23,14 @@ static std::vector<bblock::System> systems;
 int main(int argc, char** argv)
 {
 
+    // Check number of arguments
     if (argc < 2) {
       std::cerr << "Usage: " << argv[0] << " <input.nrg> [mbx.json]"
                 << std::endl;
       return 0;
     }
 
-
+    // Load the nrg file
     try {
         std::ifstream ifs(argv[1]);
 
@@ -45,6 +46,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    // Load JSON file
     std::vector<double> box;
     
     if (argc > 2) {
@@ -53,12 +55,12 @@ int main(int argc, char** argv)
         systems[0].SetUpFromJson();
     }
 
-
+    // Calculate Energy
     double en = systems[0].Energy(true);
 
-    std::cout << "Energy= " << en << std::endl;
-    
-    tools::WriteNrg("input_out.nrg", systems);
+    // Print Energy
+    std::cout << std::scientific << std::setprecision(10) 
+              << "Energy= " << en << std::endl;
 
 #ifdef PRINT_GRADS
     {
@@ -70,7 +72,7 @@ int main(int argc, char** argv)
         std::vector<double> grads = systems[0].GetRealGrads();
 
         for (size_t i = 0; i < n_atoms; i++) {
-            std::cout << std::setprecision(8) << std::scientific
+            std::cout << std::setprecision(10) << std::scientific
                       << std::setw(20) << grads[3*i]  
                       << std::setw(20) << grads[3*i + 1]  
                       << std::setw(20) << grads[3*i + 2] << std::endl;
