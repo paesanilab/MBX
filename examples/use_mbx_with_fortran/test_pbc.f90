@@ -4,6 +4,7 @@ program test
   double precision :: Vpot
   double precision, allocatable :: coord(:),grads(:)
   double precision, allocatable :: box(:)
+  double precision, allocatable :: virial(:)
 
   character(len=5), allocatable :: at_name(:)
   character(len=5), allocatable :: monomers(:)
@@ -17,6 +18,7 @@ program test
   external initialize_system
   external get_energy_pbc
   external get_energy_pbc_g
+  external get_virial
   external finalize_system
 
   ! need to define here the numebr of monomers, and number of atoms in each one
@@ -33,7 +35,7 @@ program test
   ! This will work for the test case, which contains a lithium monomer
   ! at the beggining, and then 6 water molecules
   nmon = 7
-  allocate(nats(nmon),monomers(nmon),box(9))
+  allocate(nats(nmon),monomers(nmon),box(9),virial(9))
 
   ! Lithium
   nats(1) = 1
@@ -132,6 +134,16 @@ program test
   write(*,*) "Writting gradients below..."
   do i=1,n_at
     write(*,*) at_name(i),(grads(3*(i-1)+j),j=1,3)
+  enddo
+  write(*,*)
+
+  ! At this point the virial should be updated
+  ! For PBC it should return the virial tensor in a 9-element vector
+  call get_virial(virial)
+  write(*,*) "Virial"
+  write(*,*)
+  do i=1,3
+    write(*,*) (virial(3*(i-1) + j),j=1,3)
   enddo
   write(*,*)
 

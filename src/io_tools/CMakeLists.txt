@@ -1,4 +1,4 @@
-add_library(io_tools OBJECT read_nrg.cpp write_nrg.cpp read_xyz.cpp 
+add_library(io_tools OBJECT read_nrg.cpp write_nrg.cpp read_xyz.cpp write_xyz.cpp
 read_connectivity.cpp
 write_connectivity.cpp
 ) 
