@@ -52,7 +52,7 @@ TEST_CASE("Test dummy h4 bond") {
 
     SECTION("Bond-harmonic") {
         std::string functional_form = "harm";
-        Bond obj(bond_connectivity, bond_indexes, functional_form);
+        eff::Bond obj(bond_connectivity, bond_indexes, functional_form);
         obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
         SECTION("Harmonic Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_harm_energy).margin(TOL)); }
         SECTION("Harmonic Gradient") {
@@ -62,7 +62,7 @@ TEST_CASE("Test dummy h4 bond") {
 
     SECTION("Bond-morse") {
         std::string functional_form = "morse";
-        Bond obj(bond_connectivity, bond_indexes, functional_form);
+        eff::Bond obj(bond_connectivity, bond_indexes, functional_form);
         obj.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
         SECTION("Morse Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_morse_energy).margin(TOL)); }
         SECTION("Morse Gradient") {
@@ -72,7 +72,7 @@ TEST_CASE("Test dummy h4 bond") {
 
     SECTION("Bond-quartic") {
         std::string functional_form = "quartic";
-        Bond obj(bond_connectivity, bond_indexes, functional_form);
+        eff::Bond obj(bond_connectivity, bond_indexes, functional_form);
         obj.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
         SECTION("Quartic Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_quartic_energy).margin(TOL)); }
         SECTION("Quartic Gradient") {
@@ -82,7 +82,7 @@ TEST_CASE("Test dummy h4 bond") {
 
     SECTION("Bond-none") {
         std::string functional_form = "none";
-        Bond obj(bond_connectivity, bond_indexes, functional_form);
+        eff::Bond obj(bond_connectivity, bond_indexes, functional_form);
         obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
         SECTION("None Energy") { REQUIRE(obj.GetEnergy(distance) == Approx(ff_bond_none_energy).margin(TOL)); }
         SECTION("None Gradient") {
@@ -94,7 +94,7 @@ TEST_CASE("Test dummy h4 bond") {
         std::string functional_form = "abcd";
         bool not_possible_to_setup_bond = false;
         try {
-            Bond obj(bond_connectivity, bond_indexes, functional_form);
+            eff::Bond obj(bond_connectivity, bond_indexes, functional_form);
         } catch (CUException &e) {
             not_possible_to_setup_bond = true;
         }

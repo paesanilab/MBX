@@ -40,7 +40,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "read_connectivity.h"
 
 namespace tools {
-void ReadConnectivity(char* filename) {
+void ReadConnectivity(char* filename, std::vector<bblock::System>& systems) {
     // Check filename is not empty
     assert(filename);
     std::ifstream ifs(filename);
@@ -52,12 +52,16 @@ void ReadConnectivity(char* filename) {
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
-    std::unordered_map<std::string, connectivity::Conn> connectivity_map = GetConnectivity(ifs);
+    std::unordered_map<std::string, eff::Conn> connectivity_map = GetConnectivity(ifs);
 
-    bblock::System::SetConnectivity(connectivity_map);
+    for (auto system = systems.begin(); system != systems.end(); system++) {
+        system->SetConnectivity(connectivity_map);
+    }
+
+    // bblock::System::SetConnectivity(connectivity_map);
 }
 
-void ReadConnectivity(char* filename, std::unordered_map<std::string, connectivity::Conn>& connectivity_map) {
+void ReadConnectivity(char* filename, std::unordered_map<std::string, eff::Conn>& connectivity_map) {
     // Check filename is not empty
     assert(filename);
     std::ifstream ifs(filename);
@@ -72,8 +76,8 @@ void ReadConnectivity(char* filename, std::unordered_map<std::string, connectivi
     connectivity_map = GetConnectivity(ifs);
 }
 
-std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstream& ifs) {
-    std::unordered_map<std::string, connectivity::Conn> connectivity_map;
+std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs) {
+    std::unordered_map<std::string, eff::Conn> connectivity_map;
 
     std::string tmp;  // Used to temporarily hold variable from stringstream or getline
     std::getline(ifs, tmp);
@@ -82,10 +86,10 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
     do {
         // Connectivity field declaration
         std::string mon_id;
-        std::vector<Bond> bond_vec;
-        std::vector<Angles> angles_vec;
-        std::vector<Dihedral> dihedral_vec;
-        std::vector<Inversion> inversion_vec;
+        std::vector<eff::Bond> bond_vec;
+        std::vector<eff::Angles> angles_vec;
+        std::vector<eff::Dihedral> dihedral_vec;
+        std::vector<eff::Inversion> inversion_vec;
         std::stringstream mon_id_ss(tmp);
         mon_id_ss >> mon_id;
 
@@ -122,7 +126,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 // read the functional form that we want
                 ss >> functional_form;
 
-                Bond bond_obj(topology, indexes, functional_form);
+                eff::Bond bond_obj(topology, indexes, functional_form);
 
                 // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
@@ -148,7 +152,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 // read the functional form that we want
                 ss >> functional_form;
 
-                Angles angle_obj(topology, indexes, functional_form);
+                eff::Angles angle_obj(topology, indexes, functional_form);
 
                 // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
@@ -174,7 +178,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 // read the functional form that we want
                 ss >> functional_form;
 
-                Dihedral dihedral_obj(topology, indexes, functional_form);
+                eff::Dihedral dihedral_obj(topology, indexes, functional_form);
 
                 // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
@@ -199,7 +203,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
                 // read the functional form that we want
                 ss >> functional_form;
 
-                Inversion inversion_obj(topology, indexes, functional_form);
+                eff::Inversion inversion_obj(topology, indexes, functional_form);
 
                 // Set the parameters
                 ReadParameters(linear_parameters, nonlinear_parameters, functional_form, ss);
@@ -222,7 +226,7 @@ std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstrea
         } while (std::getline(ifs, tmp));
 
         // Create connectivity object and add to the unordered map
-        connectivity::Conn conn(mon_id, bond_vec, angles_vec, dihedral_vec, inversion_vec);
+        eff::Conn conn(mon_id, bond_vec, angles_vec, dihedral_vec, inversion_vec);
         connectivity_map.insert(std::make_pair(mon_id, conn));
 
         // Clear vectors for next monomer

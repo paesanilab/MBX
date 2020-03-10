@@ -32,49 +32,36 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "testutils.h"
+#include "potential/force_field/connectivity.h"
 
-#include "setup_connectivity.h"
+namespace eff {
 
-#include <vector>
-#include <iostream>
-#include <iomanip>
-#include <random>
-#include <cmath>
-
-constexpr double TOL = 1E-6;
-
-TEST_CASE("Test Connectivity") {
-    // Create the system
-    SETUP_CONNECTIVITY
-
-    // Write the linear and nonlinear parameters because they can not be set in
-    // the macro
-    bond1.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
-    std::vector<eff::Bond> bond_vec = {bond1, bond1};
-    angle1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<eff::Angles> angle_vec = {angle1, angle1, angle1};
-    dihedral1.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
-    std::vector<eff::Dihedral> dihedral_vec = {dihedral1};
-    inversion1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<eff::Inversion> inversion_vec = {inversion1};
-
-    SECTION("Connectivity constructor") {
-        bool not_possible_to_setup_connectivity = false;
-        try {
-            eff::Conn obj = eff::Conn(mon_id, bond_vec, angle_vec, dihedral_vec, inversion_vec);
-        } catch (CUException &e) {
-            not_possible_to_setup_connectivity = true;
-        }
-        REQUIRE(!not_possible_to_setup_connectivity);
-    }
-
-    SECTION("Connectivity Getters") {
-        eff::Conn obj = eff::Conn(mon_id, bond_vec, angle_vec, dihedral_vec, inversion_vec);
-        REQUIRE(obj.GetMonId() == mon_id);
-        REQUIRE(obj.GetBondVec() == bond_vec);
-        REQUIRE(obj.GetAnglesVec() == angle_vec);
-        REQUIRE(obj.GetDihedralVec() == dihedral_vec);
-        REQUIRE(obj.GetInversionVec() == inversion_vec);
-    }
+Conn::Conn(std::string mon_id, std::vector<Bond> bond_vec, std::vector<Angles> angle_vec,
+           std::vector<Dihedral> dihedral_vec, std::vector<Inversion> inversion_vec) {
+    mon_id_ = mon_id;
+    bond_vec_ = bond_vec;
+    angle_vec_ = angle_vec;
+    dihedral_vec_ = dihedral_vec;
+    inversion_vec_ = inversion_vec;
 }
+
+Conn::~Conn() {}
+std::string Conn::GetMonId() { return mon_id_; }
+std::vector<Bond> Conn::GetBondVec() { return bond_vec_; }
+std::vector<Angles> Conn::GetAnglesVec() { return angle_vec_; }
+std::vector<Dihedral> Conn::GetDihedralVec() { return dihedral_vec_; }
+std::vector<Inversion> Conn::GetInversionVec() { return inversion_vec_; }
+
+bool Conn::operator==(Conn const &connectivity) const {
+    // Check field variables
+
+    if (connectivity.mon_id_ != mon_id_ || connectivity.bond_vec_ != bond_vec_ ||
+        connectivity.angle_vec_ != angle_vec_ || connectivity.dihedral_vec_ != dihedral_vec_ ||
+        connectivity.inversion_vec_ != inversion_vec_) {
+        return false;
+    }
+
+    return true;
+}
+
+}  // namespace eff

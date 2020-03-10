@@ -3,6 +3,7 @@ set(FF_SOURCES angles.cpp
                dihedral.cpp 
                inversion.cpp 
                topology.cpp
+               connectivity.cpp
 #               energyff.cpp 
 #               calculators.cpp  
 )

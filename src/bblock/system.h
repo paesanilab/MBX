@@ -51,7 +51,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
 #include "tools/custom_exceptions.h"
-#include "bblock/connectivity.h"
+#include "potential/force_field/connectivity.h"
 
 // Potential
 // 1B
@@ -628,7 +628,8 @@ to be the same.
      * @param[in] connectivity_map A map with monomer id as values and
      * connectivity objects for keys
      */
-    static void SetConnectivity(std::unordered_map<std::string, connectivity::Conn> connectivity_map);
+    void SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map);
+    // static void SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map);
 
     /////////////////////////////////////////////////////////////////////////////
     // Energy Functions /////////////////////////////////////////////////////////
@@ -1122,7 +1123,8 @@ to be the same.
     /**
      * Vector that holds the connectivity of each monomer type
      */
-    static std::unordered_map<std::string, connectivity::Conn> connectivity_map_;
+    std::unordered_map<std::string, eff::Conn> connectivity_map_;
+    //static std::unordered_map<std::string, eff::Conn> connectivity_map_;
 
 };
 

@@ -52,7 +52,7 @@ TEST_CASE("Test dummy h4 dihedral") {
 
     SECTION("Dihedral-cos") {
         std::string functional_form = "cos";
-        Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
+        eff::Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
         obj.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
         SECTION("Cosine Energy") { REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_cos_energy).margin(TOL)); }
         SECTION("Cosine Gradient") {
@@ -62,7 +62,7 @@ TEST_CASE("Test dummy h4 dihedral") {
 
     SECTION("Dihedral-harmonic") {
         std::string functional_form = "harm";
-        Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
+        eff::Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
         obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
         SECTION("Harmonic Energy") {
             REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_harm_energy).margin(TOL));
@@ -74,7 +74,7 @@ TEST_CASE("Test dummy h4 dihedral") {
 
     SECTION("Dihedral-hcos") {
         std::string functional_form = "hcos";
-        Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
+        eff::Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
         obj.SetParameters(hcos_linear_parameters, hcos_nonlinear_parameters);
         SECTION("Harmonic Cosine Energy") {
             REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_hcos_energy).margin(TOL));
@@ -86,7 +86,7 @@ TEST_CASE("Test dummy h4 dihedral") {
 
     SECTION("Dihedral-cos3") {
         std::string functional_form = "cos3";
-        Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
+        eff::Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
         obj.SetParameters(cos3_linear_parameters, cos3_nonlinear_parameters);
         SECTION("Cosine 3 Energy") {
             REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_cos3_energy).margin(TOL));
@@ -98,7 +98,7 @@ TEST_CASE("Test dummy h4 dihedral") {
 
     SECTION("Dihedral-none") {
         std::string functional_form = "none";
-        Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
+        eff::Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
         obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
         SECTION("None Energy") { REQUIRE(obj.GetEnergy(dihedral_phi) == Approx(ff_dihedral_none_energy).margin(TOL)); }
         SECTION("None Gradient") {
@@ -110,7 +110,7 @@ TEST_CASE("Test dummy h4 dihedral") {
         std::string functional_form = "abcd";
         bool not_possible_to_setup_dihedral = false;
         try {
-            Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
+            eff::Dihedral obj(dihedral_connectivity, dihedral_indexes, functional_form);
         } catch (CUException &e) {
             not_possible_to_setup_dihedral = true;
         }
