@@ -5,5 +5,5 @@ filename="${filename%.*}"
 
 mkdir -p outputs
 
-../../install/bin/combinations-test inputs/${filename}.nrg > outputs/${filename}.out
+../../install/bin/tests/combinations-test inputs/${filename}.nrg > outputs/${filename}.out
 
