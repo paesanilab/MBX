@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef UNITTESTS_SETUP_H2O_4_VIRIAL_H
-#define UNITTESTS_SETUP_H2O_4_VIRIAL_H
+#ifndef UNITTESTS_SETUP_H2O_4_MBPOL_H
+#define UNITTESTS_SETUP_H2O_4_MBPOL_H
 
-#define SETUP_H2O_4_VIRIAL                                                                          \
+#define SETUP_H2O_4_MBPOL                                                                          \
     const size_t n_monomers = 4;                                                                                    \
     std::vector<std::string> atom_names{"O", "H", "H", "O", "H", "H","O", "H", "H","O", "H", "H"};                                                           \
     std::vector<std::string> monomer_names = {"h2o","h2o","h2o","h2o"};                                                             \

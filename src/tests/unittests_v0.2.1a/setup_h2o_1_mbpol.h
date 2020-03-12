@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef UNITTESTS_SETUP_H2O_1_H
-#define UNITTESTS_SETUP_H2O_1_H
+#ifndef UNITTESTS_SETUP_H2O_1_MBPOL_H
+#define UNITTESTS_SETUP_H2O_1_MBPOL_H
 
-#define SETUP_H2O_1                                                                           \
+#define SETUP_H2O_1_MBPOL                                                                           \
     const size_t n_monomers = 1;                                                                                    \
     std::vector<std::string> atom_names{"O", "H", "H"};                                                           \
     std::vector<std::string> monomer_names = {"h2o"};                                                             \
@@ -47,8 +47,22 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     const size_t n_sites = 4;                                                                                          \
     std::vector<double> box = {}; \
     std::vector<double> virial = {-12.99560229,  18.52621893, 0, 18.52621893,-3.89464627, 0 , 0, 0, 0} ; \
+    std::vector<double> polfac{1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01, 1.3100000000e+00};                                                                      \
+    std::vector<double> pol{1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01, 0.0000000000e+00}; \
+    std::vector<double> charges{0.0000000000e+00, 5.9876992410e-01, 5.9876992432e-01, -1.1975398484e+00};                                                                    \
+    std::vector<double> real_polfac{1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01};           \
+    std::vector<double> real_pol{1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01};              \
+    std::vector<double> real_charges{0.0000000000e+00, 5.9876992410e-01, 5.9876992432e-01};         \
+    std::vector<double> C6_long_range{1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00};         \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"h2o", 1}};                         \
+    std::vector<size_t> internal_original_to_current_order{0};                                                      \
+    std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}};                                     \
+    std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}};                          \
+    std::vector<std::string> internal_monomer_names{"h2o"}; \
     std::vector<double> real_coords{                                                                                       \
                  -1.59117306 ,   1.07433216 ,   0.00000000, \
                  -0.63591971 ,   0.97898520  ,  0.00000000, \
-                 -1.91162765  ,  1.97926799 ,   0.00000000}; 
+                 -1.91162765  ,  1.97926799 ,   0.00000000}; \
+    std::vector<double> coords{ \
+-1.5911730600e+00, 1.0743321600e+00, 0.0000000000e+00, -6.3591971000e-01, 9.7898520000e-01, 0.0000000000e+00, -1.9116276500e+00, 1.9792679900e+00, 0.0000000000e+00, -1.4557365602e+00, 1.2470607312e+00, 0.0000000000e+00};
 #endif

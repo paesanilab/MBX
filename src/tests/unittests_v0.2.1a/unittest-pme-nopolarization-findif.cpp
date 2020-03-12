@@ -32,9 +32,9 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "catch.hpp"
+#include "Catch2/single_include/catch.hpp"
 
-#include "electrostatics.h"
+#include "potential/electrostatics/electrostatics.h"
 #include "setup_h2o_2.h"
 
 #include <vector>
@@ -43,16 +43,16 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 constexpr double TOL = 1E-8;
 
-void run_test(const char *method) {
+TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME) - finite differences.") {
     // TIP3P test
     double qO = -0.834;
     double qH = 0.417;
     double qM = 0;
-    double polfacO = 1.310;
-    double polfacH = 0.294;
+    double polfacO = 0;
+    double polfacH = 0;
     double polfacM = 0;
     SETUP_H2O_2
-    double ref_energy = -0.1752818171;
+    double ref_energy = -0.1744839641;
 
     elec::Electrostatics elec;
     std::vector<double> box_vectors{30, 0, 0, 0, 30, 0, 0, 0, 30};
@@ -61,9 +61,10 @@ void run_test(const char *method) {
      * Ensure that computed properties are invariant to changes in the Ewald attenuation parameter
      */
     double alpha = 0.3;
-    double grid_density = 2;
+    double grid_density = 2.5;
     int spline_order = 6;
     double cutoff = 10;
+    const char *method = "iter";
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
                     1E-16, 100, method, box_vectors);
     elec.SetCutoff(cutoff);
@@ -72,8 +73,7 @@ void run_test(const char *method) {
     elec.SetEwaldSplineOrder(spline_order);
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
-    std::cout << method << ":" << std::endl;
-    std::cout << "Energy: " << std::setw(16) << std::setprecision(10) << energy << std::endl;
+    std::cout << "Energy: " << energy << std::endl;
     REQUIRE(energy == Approx(ref_energy).margin(TOL));
 
     double stepSize = 0.00001;
@@ -110,9 +110,4 @@ void run_test(const char *method) {
 
         REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
     }
-}
-
-TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME) - finite differences.") {
-    SECTION("CG algorithm") { run_test("cg"); }
-    SECTION("iter algorithm") { run_test("iter"); }
 }

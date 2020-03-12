@@ -32,9 +32,9 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "testutils.h"
+#include "tools/testutils.h"
 
-#include "gammq.h"
+#include "potential/electrostatics/gammq.h"
 
 #include <vector>
 #include <iostream>

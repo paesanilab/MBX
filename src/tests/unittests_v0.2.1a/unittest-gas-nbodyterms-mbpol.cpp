@@ -32,7 +32,7 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "testutils.h"
+#include "tools/testutils.h"
 
 #include "potential/1b/energy1b.h"
 #include "potential/2b/energy2b.h"

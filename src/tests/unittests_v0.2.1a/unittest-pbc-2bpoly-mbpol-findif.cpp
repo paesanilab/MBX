@@ -32,7 +32,7 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "testutils.h"
+#include "tools/testutils.h"
 
 #include "bblock/system.h"
 #include "setup_h2o_256_pbc.h"
@@ -75,8 +75,8 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
 
     SECTION("One body (polynomials)") {
         std::vector<double> grad;
-        double energy_nograd = my_sys.ThreeBodyEnergy(false);
-        double energy_grad = my_sys.ThreeBodyEnergy(true);
+        double energy_nograd = my_sys.TwoBodyEnergy(false);
+        double energy_grad = my_sys.TwoBodyEnergy(true);
 
         grad = my_sys.GetRealGrads();
 
@@ -91,11 +91,11 @@ TEST_CASE("Test MB-pol One-body gradients finite differences") {
                 size_t degreeOfFreedom = (rand() % (3 * n_atoms));
                 real_xyz[degreeOfFreedom] += stepSize;
                 my_sys.SetRealXyz(real_xyz);
-                double plusEnergy = my_sys.ThreeBodyEnergy(false);
+                double plusEnergy = my_sys.TwoBodyEnergy(false);
 
                 real_xyz[degreeOfFreedom] -= 2 * stepSize;
                 my_sys.SetRealXyz(real_xyz);
-                double minusEnergy = my_sys.ThreeBodyEnergy(false);
+                double minusEnergy = my_sys.TwoBodyEnergy(false);
 
                 real_xyz[degreeOfFreedom] += stepSize;
                 my_sys.SetRealXyz(real_xyz);

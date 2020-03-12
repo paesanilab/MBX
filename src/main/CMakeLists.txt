@@ -5,7 +5,7 @@ foreach(t single_point optimize)
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR}/../external/)
 
-target_link_libraries(${t} mbx)
+target_link_libraries(${t} mbxlib)
 
 
 install(TARGETS ${t}

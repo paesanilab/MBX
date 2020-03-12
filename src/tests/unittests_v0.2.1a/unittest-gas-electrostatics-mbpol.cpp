@@ -32,9 +32,9 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "testutils.h"
+#include "tools/testutils.h"
 
-#include "electrostatics.h"
+#include "potential/electrostatics/electrostatics.h"
 #include "setup_h2o_3.h"
 
 #include <vector>

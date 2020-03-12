@@ -32,14 +32,14 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "testutils.h"
+#include "tools/testutils.h"
 
 #include "bblock/system.h"
-#include "setup_h2o_1.h"
-#include "setup_h2o_2_virial.h"
-#include "setup_h2o_3_virial.h"
-#include "setup_h2o_4_virial.h"
-#include "electrostatics.h"
+#include "setup_h2o_1_mbpol.h"
+#include "setup_h2o_2_mbpol.h"
+#include "setup_h2o_3_mbpol.h"
+#include "setup_h2o_4_mbpol.h"
+#include "potential/electrostatics/electrostatics.h"
 
 #include <vector>
 #include <iostream>
@@ -51,7 +51,7 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test monomer virial contributions") {
     // Create the bromide -- water system
-    SETUP_H2O_1
+    SETUP_H2O_1_MBPOL
 
     // Now we create a system that will be the same as the one read
     bblock::System my_system;
@@ -81,7 +81,7 @@ TEST_CASE("Test monomer virial contributions") {
 }
 
 TEST_CASE("Test dimer virial contributions") {
-    SETUP_H2O_2_VIRIAL
+    SETUP_H2O_2_MBPOL
 
     bblock::System my_system;   
 
@@ -170,7 +170,7 @@ TEST_CASE("Test dimer virial contributions") {
 }
 
 TEST_CASE("Test trimer virial contributions") {
-    SETUP_H2O_3_VIRIAL
+    SETUP_H2O_3_MBPOL
 
     bblock::System my_system;
 
@@ -269,7 +269,7 @@ TEST_CASE("Test trimer virial contributions") {
 }
 
 TEST_CASE("Test tetramer virial contributions") {
-    SETUP_H2O_4_VIRIAL
+    SETUP_H2O_4_MBPOL
 
     bblock::System my_system;
 

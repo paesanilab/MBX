@@ -32,49 +32,38 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "catch.hpp"
+#include "Catch2/single_include/catch.hpp"
 
-#include "electrostatics.h"
+#include "potential/electrostatics/electrostatics.h"
 #include "setup_h2o_2.h"
 
 #include <vector>
 #include <iostream>
 #include <iomanip>
 
-constexpr double TOL = 1E-8;
+constexpr double TOL = 5E-6;
 
-TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME) - finite differences.") {
-    // TIP3P test
+void run_test(const char *method) {
     double qO = -0.834;
     double qH = 0.417;
     double qM = 0;
-    double polfacO = 0;
-    double polfacH = 0;
+    double polfacO = 1.310;
+    double polfacH = 0.294;
     double polfacM = 0;
     SETUP_H2O_2
-    double ref_energy = -0.1744839641;
+    double ref_energy = -0.1632261513;
 
     elec::Electrostatics elec;
-    std::vector<double> box_vectors{30, 0, 0, 0, 30, 0, 0, 0, 30};
+    std::vector<double> box_vectors{};
 
-    /*
-     * Ensure that computed properties are invariant to changes in the Ewald attenuation parameter
-     */
-    double alpha = 0.3;
-    double grid_density = 2.5;
-    int spline_order = 6;
-    double cutoff = 10;
-    const char *method = "iter";
     elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
                     1E-16, 100, method, box_vectors);
-    elec.SetCutoff(cutoff);
-    elec.SetEwaldAlpha(alpha);
-    elec.SetEwaldGridDensity(grid_density);
-    elec.SetEwaldSplineOrder(spline_order);
+    elec.SetCutoff(12);
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
-    std::cout << "Energy: " << energy << std::endl;
-    REQUIRE(energy == Approx(ref_energy).margin(TOL));
+    std::cout << method << ":" << std::endl;
+    std::cout << "Energy: " << std::setw(16) << std::setprecision(10) << energy << std::endl;
+    REQUIRE(energy == Approx(ref_energy).epsilon(TOL));
 
     double stepSize = 0.00001;
     const std::vector<std::string> labels = {"x", "y", "z"};
@@ -84,18 +73,10 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME
         coords[degreeOfFreedom] += stepSize;
         elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
                         1E-16, 100, method, box_vectors);
-        elec.SetCutoff(cutoff);
-        elec.SetEwaldAlpha(alpha);
-        elec.SetEwaldGridDensity(grid_density);
-        elec.SetEwaldSplineOrder(spline_order);
         double plusEnergy = elec.GetElectrostatics(ignoredForces);
         coords[degreeOfFreedom] -= 2 * stepSize;
         elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
                         1E-16, 100, method, box_vectors);
-        elec.SetCutoff(cutoff);
-        elec.SetEwaldAlpha(alpha);
-        elec.SetEwaldGridDensity(grid_density);
-        elec.SetEwaldSplineOrder(spline_order);
         double minusEnergy = elec.GetElectrostatics(ignoredForces);
         coords[degreeOfFreedom] += stepSize;
         double finiteDifferenceForce = (plusEnergy - minusEnergy) / (2 * stepSize);
@@ -108,6 +89,11 @@ TEST_CASE("test the electrostatics class for coulomb and polarization terms (PME
         if (std::abs(forces[degreeOfFreedom] - finiteDifferenceForce) > TOL) std::cout << " <---- BAD!";
         std::cout << std::endl;
 
-        REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+        REQUIRE(forces[degreeOfFreedom] == Approx(finiteDifferenceForce).epsilon(TOL));
     }
+}
+
+TEST_CASE("test the electrostatics class for coulomb and polarization terms (GAS) - finite differences.") {
+    SECTION("CG algorithm") { run_test("cg"); }
+    SECTION("iter algorithm") { run_test("iter"); }
 }

@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "testutils.h"
+#include "tools/testutils.h"
 
 #include "potential/dispersion/dispersion.h"
-#include "setup_h2o_1_f_1.h"
+#include "setup_h2o_2_mbpol.h"
 
 #include <vector>
 #include <iostream>
@@ -48,9 +48,10 @@ constexpr double CUTOFF = 10.0;
 
 TEST_CASE("Test the dispersion class.") {
     // Create the bromide -- water system
-    SETUP_H2O_1_F_1
+    SETUP_H2O_2_MBPOL
 
-    std::vector<double> box = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0};
+    std::vector<double> box2 = {1000.0, 0.0, 0.0, 0.0, 1000.0, 0.0, 0.0, 0.0, 1000.0};
+    box = box2;
 
     // create dispersion class
     disp::Dispersion my_disp;
