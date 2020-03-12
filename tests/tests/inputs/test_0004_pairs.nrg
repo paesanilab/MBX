@@ -42,40 +42,40 @@ MONOMER h2o
 ENDMON h2o
 ENDMOL
 ENDSYS
-SYSTEM cln box of 100
+SYSTEM dummyn box of 100
 MOLECULE
-MONOMER cl
- Cl                0.0 0.0 0.0
-ENDMON cl
+MONOMER dummy
+ X                0.0 0.0 0.0
+ENDMON dummy
 ENDMOL
 MOLECULE
-MONOMER cl
- Cl                1.0 0.0 0.0
-ENDMON cl
+MONOMER dummy
+ X                1.0 0.0 0.0
+ENDMON dummy
 ENDMOL
 MOLECULE
-MONOMER cl
- Cl                0.0 1.0 0.0
-ENDMON cl
+MONOMER dummy
+ X                0.0 1.0 0.0
+ENDMON dummy
 ENDMOL
 MOLECULE
-MONOMER cl
- Cl                0.0 0.0 1.0
-ENDMON cl
+MONOMER dummy
+ X                0.0 0.0 1.0
+ENDMON dummy
 ENDMOL
 MOLECULE
-MONOMER cl
- Cl               99.0 0.0 0.0
-ENDMON cl
+MONOMER dummy
+ X               99.0 0.0 0.0
+ENDMON dummy
 ENDMOL
 MOLECULE
-MONOMER cl
- Cl                0.0 99.0 0.0
-ENDMON cl
+MONOMER dummy
+ X                0.0 99.0 0.0
+ENDMON dummy
 ENDMOL
 MOLECULE
-MONOMER cl
- Cl                0.0 0.0 99.0
-ENDMON cl
+MONOMER dummy
+ X                0.0 0.0 99.0
+ENDMON dummy
 ENDMOL
 ENDSYS
