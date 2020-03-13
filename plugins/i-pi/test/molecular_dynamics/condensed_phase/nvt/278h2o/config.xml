@@ -11,11 +11,11 @@
     <seed>92782</seed>
   </prng>
   <ffsocket mode='unix' name='driver'>
-    <address>localhost2</address>
+    <address>localhost</address>
   </ffsocket>
   <system>
     <initialize nbeads='1'>
-      <file mode='xyz' units='angstrom'> 278h2o.xyz </file>
+      <file mode='xyz' units='angstrom'> config.xyz </file>
       <cell mode='abc' units='angstrom'>
         [22.0,22.0,22.0]
       </cell>

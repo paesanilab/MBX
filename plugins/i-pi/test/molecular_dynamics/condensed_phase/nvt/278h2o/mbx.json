@@ -16,11 +16,13 @@
        "alpha_ewald_disp" : 0.6,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
+       "ignore_2b_poly" : [],
+       "ignore_3b_poly" : [],
        "ttm_pairs" : []
    } ,  
    "i-pi" : {
        "port" : 34567,
-       "localhost" : "localhost2"
+       "localhost" : "localhost"
    }
 }
 
