@@ -15,7 +15,7 @@
   </ffsocket>
   <system>
     <initialize nbeads='1'>
-      <file mode='xyz' units='angstrom'> 3h2o.xyz </file>
+      <file mode='xyz' units='angstrom'> config.xyz </file>
       <cell mode='abc' units='angstrom'>
         [1000.0,1000.0,1000.0]
       </cell>
