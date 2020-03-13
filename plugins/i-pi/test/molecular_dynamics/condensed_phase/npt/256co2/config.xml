@@ -1,0 +1,47 @@
+<simulation verbosity='low'>
+  <output prefix='simulation'>
+    <properties stride='200' filename='out'>  [ step, time{picosecond}, conserved{kilocal/mol}, temperature{kelvin}, kinetic_cv{kelvin}, potential{kelvin}, pressure_cv{megapascal}] </properties>
+    <properties stride='200' filename='pot'>  [ time{picosecond}, potential{kilocal/mol}] </properties>
+    <properties stride='200' filename='temperature'>  [ time{picosecond}, temperature{kelvin}] </properties>
+    <trajectory filename='pos' stride='200' format='xyz' cell_units='angstrom'> positions{angstrom} </trajectory>
+    <checkpoint stride='50' filename='checkpoint'>39733</checkpoint>
+  </output>
+  <total_steps>5000</total_steps>
+  <prng>
+    <seed>92782</seed>
+  </prng>
+  <ffsocket mode='unix' name='driver'>
+    <address>localhost</address>
+  </ffsocket>
+  <system>
+    <initialize nbeads='1'>
+      <file mode='xyz' units='angstrom'> config.xyz </file>
+      <cell mode='abc' units='angstrom'>
+        [2.4440447150000001E+01,2.4440447150000001E+01,2.4440447150000001E+01]
+      </cell>
+      <velocities mode='thermal' units='kelvin'>100.0</velocities>
+    </initialize>
+    <forces>
+      <force forcefield='driver'/>
+    </forces>
+    <ensemble>
+      <temperature units='kelvin'>300</temperature>
+      <pressure units='atmosphere'> 2467.308 </pressure>
+    </ensemble>
+    <motion mode='dynamics'>
+      <fixcom> True </fixcom>
+      <dynamics mode='npt'>
+        <barostat mode='isotropic'>
+          <thermostat mode='langevin'>
+            <tau units='femtosecond'>250</tau>
+          </thermostat>
+      <tau units='femtosecond'>250</tau>
+       </barostat>
+        <thermostat mode='langevin'>
+          <tau units='femtosecond'>25</tau>
+        </thermostat>
+        <timestep units='femtosecond'>0.200</timestep>
+      </dynamics>
+    </motion>
+  </system>
+</simulation>
