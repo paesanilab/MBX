@@ -23,7 +23,7 @@
    } ,  
    "i-pi" : {
        "port" : 34543,
-       "localhost" : "localhost2"
+       "localhost" : "localhost"
    }
 }
 

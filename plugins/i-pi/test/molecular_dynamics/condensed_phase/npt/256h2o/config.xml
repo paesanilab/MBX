@@ -9,11 +9,11 @@
     <seed>921282</seed>
   </prng>
   <ffsocket mode='unix' name='driver'>
-    <address>localhost2</address>
+    <address>localhost</address>
   </ffsocket>
   <system>  
     <initialize nbeads='1'>
-      <file mode='xyz' units='angstrom'> config_256.xyz </file>
+      <file mode='xyz' units='angstrom'> config.xyz </file>
       <cell mode='abc' units='angstrom'>
         [19.7295,19.7295,19.7295]
       </cell>
