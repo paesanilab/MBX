@@ -167,7 +167,7 @@ TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
         // C6 vector that is useless but needed
         std::vector<double> c6_long_range(n_atoms, 0.0);
         disp::Dispersion dispersion_class;
-        dispersion_class.Initialize(c6_long_range, real_xyz, monomer_names, nats, mon_type_count, false, box);
+        dispersion_class.Initialize(c6_long_range, real_xyz, monomer_names, nats, mon_type_count, islocal, false, box);
 
         std::vector<double> grad_dummy(3 * n_atoms, 0.0);
         dispersion_class.SetNewParameters(real_xyz, false, 100.0, box);

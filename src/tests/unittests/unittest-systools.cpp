@@ -68,7 +68,7 @@ TEST_CASE("Test the system tools functions (no PBC).") {
     std::vector<std::string> mon_names = monomer_names;
     // Run OrderMonomers
     try {
-        mon_type_count = systools::OrderMonomers(mon_names, sites_out, nat_out, original2current, orginal_order,
+        mon_type_count = systools::OrderMonomers(mon_names, islocal, sites_out, nat_out, original2current, orginal_order,
                                                  orginal_order_realSites);
     } catch (CUException &e) {
         std::cerr << e.what();
@@ -125,9 +125,10 @@ TEST_CASE("Test the system tools functions (no PBC).") {
             std::vector<size_t> original2current2;
             std::vector<std::pair<size_t, size_t>> orginal_order2;
             std::vector<std::pair<size_t, size_t>> orginal_order_realSites2;
+	    std::vector<size_t> islocal_empty;
             bool not_possible_to_order_monomers = false;
             try {
-                mon_type_count2 = systools::OrderMonomers(monomers_empty, sites_out, nat_out, original2current2,
+	        mon_type_count2 = systools::OrderMonomers(monomers_empty, islocal_empty, sites_out, nat_out, original2current2,
                                                           orginal_order2, orginal_order_realSites2);
             } catch (CUException &e) {
                 not_possible_to_order_monomers = true;
@@ -145,7 +146,7 @@ TEST_CASE("Test the system tools functions (no PBC).") {
             std::vector<std::pair<size_t, size_t>> orginal_order_realSites2;
             bool sites_vector_not_matching_monomer_size = false;
             try {
-                mon_type_count2 = systools::OrderMonomers(monomer_names, sites2, nat_out, original2current2,
+	        mon_type_count2 = systools::OrderMonomers(monomer_names, islocal, sites2, nat_out, original2current2,
                                                           orginal_order2, orginal_order_realSites2);
             } catch (CUException &e) {
                 sites_vector_not_matching_monomer_size = true;
@@ -154,7 +155,7 @@ TEST_CASE("Test the system tools functions (no PBC).") {
 
             bool atoms_vector_not_matching_monomer_size = false;
             try {
-                mon_type_count2 = systools::OrderMonomers(monomer_names, sites_out, nats2, original2current2,
+	        mon_type_count2 = systools::OrderMonomers(monomer_names, islocal, sites_out, nats2, original2current2,
                                                           orginal_order2, orginal_order_realSites2);
             } catch (CUException &e) {
                 atoms_vector_not_matching_monomer_size = true;
