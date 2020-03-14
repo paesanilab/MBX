@@ -1571,10 +1571,10 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     }
     if(use_ghost) e2b_t *= 0.5;
     // Condensate virial
-    const double scale = use_ghost ? 0.5 : 1.0;
+    const double scalev = use_ghost ? 0.5 : 1.0;
     for (int i = 0; i < num_threads; i++) { 
         for (size_t j = 0; j < 9; j++){          
-            virial_[j] += scale * virial_pool[i][j];     
+            virial_[j] += scalev * virial_pool[i][j];
         }                                        
     }                                            
 
