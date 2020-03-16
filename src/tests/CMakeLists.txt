@@ -29,9 +29,10 @@ target_link_libraries(${t} ${LIBS})
 
 
 install(TARGETS ${t}
-        RUNTIME DESTINATION bin
+        RUNTIME DESTINATION bin/tests
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
 endforeach()
 
 add_subdirectory(unittests)
+add_subdirectory(unittests_v0.2.1a)
