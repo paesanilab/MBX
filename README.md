@@ -2,9 +2,9 @@
 [![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
 
 # MBX
-This is the version 0.2.2a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
+This is the version 0.2.3a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
 
-What's new in v0.2.2a
+What's new in v0.2.3a
 - This
 - And that
 
