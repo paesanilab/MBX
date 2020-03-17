@@ -47,6 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     const size_t n_monomers = 2;                                                                                    \
     std::vector<std::string> atom_names{"O", "H", "H", "O", "H", "H"};                                                           \
     std::vector<std::string> monomer_names = {"h2o","h2o"};                                                             \
+    std::vector<size_t> islocal = {1, 1};                                                                             \
     std::vector<size_t> n_atoms_vector = {3,3};                                                                       \
     std::vector<size_t> n_sites_vector = {4,4};                                                                       \
     std::vector<size_t> first_index = {0,4};                                                                          \

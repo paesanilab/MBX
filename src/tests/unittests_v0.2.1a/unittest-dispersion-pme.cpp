@@ -136,14 +136,8 @@ TEST_CASE("Test the dispersion class.") {
 
     SECTION("Switch is 1") {
         disp::Dispersion my_disp;
-<<<<<<< HEAD:src/tests/unittests/unittest-dispersion-pme.cpp
         my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, false,
                            box);
-=======
-        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, false,
-                           box2);
->>>>>>> d7a2d4bdf13eb7463588e5a69442c61dd93231b4:src/tests/unittests_v0.2.1a/unittest-dispersion-pme.cpp
-
         // Get dispersion with no grads
         std::vector<double> dummy(3 * n_atoms, 0.0);
         my_disp.SetNewParameters(real_coords, true, CUTOFF, box2);
@@ -180,14 +174,8 @@ TEST_CASE("Test the dispersion class.") {
 
     SECTION("Switch is 0") {
         disp::Dispersion my_disp;
-<<<<<<< HEAD:src/tests/unittests/unittest-dispersion-pme.cpp
         my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, false,
                            box);
-=======
-        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, false,
-                           box2);
->>>>>>> d7a2d4bdf13eb7463588e5a69442c61dd93231b4:src/tests/unittests_v0.2.1a/unittest-dispersion-pme.cpp
-
         // Get dispersion with no grads
         std::vector<double> dummy(3 * n_atoms, 0.0);
         double original_coord = real_coords[11];
@@ -224,14 +212,8 @@ TEST_CASE("Test the dispersion class.") {
 
     SECTION("Switch is between 0 and 1") {
         disp::Dispersion my_disp;
-<<<<<<< HEAD:src/tests/unittests/unittest-dispersion-pme.cpp
         my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, false,
                            box);
-=======
-        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, false,
-                           box2);
->>>>>>> d7a2d4bdf13eb7463588e5a69442c61dd93231b4:src/tests/unittests_v0.2.1a/unittest-dispersion-pme.cpp
-
         // Get dispersion with no grads
         std::vector<double> dummy(3 * n_atoms, 0.0);
         double original_coord = real_coords[11];
