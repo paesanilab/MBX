@@ -57,10 +57,11 @@ class Dispersion {
 
     void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads,
+                    const std::vector<std::pair<std::string, size_t> > &mon_type_count,
+		    const std::vector<size_t> &islocal_, const bool do_grads,
                     const std::vector<double> &box);
 
-    double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0);
+    double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
 
     void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
@@ -95,12 +96,14 @@ class Dispersion {
 
    private:
     void ReorderData();
-    void CalculateDispersion();
+    void CalculateDispersion(bool use_ghost = 0);
 
     // System xyz, not ordered XYZ. xyzxyz...(mon1)xyzxyz...(mon2) ...
     std::vector<double> sys_xyz_;
     // System xyz, ordered XYZ. xx..yy..zz(mon1) xx..yy..zz(mon2) ...
     std::vector<double> xyz_;
+    // local/ghost descriptor for monomers
+    std::vector<size_t> islocal_;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon

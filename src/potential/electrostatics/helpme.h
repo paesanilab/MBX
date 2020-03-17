@@ -1874,13 +1874,13 @@ struct MPITypes {
 };
 
 template <>
-MPITypes<float>::MPITypes() : realType_(MPI_FLOAT), complexType_(MPI_C_COMPLEX) {}
+inline MPITypes<float>::MPITypes() : realType_(MPI_FLOAT), complexType_(MPI_C_COMPLEX) {}
 
 template <>
-MPITypes<double>::MPITypes() : realType_(MPI_DOUBLE), complexType_(MPI_C_DOUBLE_COMPLEX) {}
+inline MPITypes<double>::MPITypes() : realType_(MPI_DOUBLE), complexType_(MPI_C_DOUBLE_COMPLEX) {}
 
 template <>
-MPITypes<long double>::MPITypes() : realType_(MPI_LONG_DOUBLE), complexType_(MPI_C_LONG_DOUBLE_COMPLEX) {}
+inline MPITypes<long double>::MPITypes() : realType_(MPI_LONG_DOUBLE), complexType_(MPI_C_LONG_DOUBLE_COMPLEX) {}
 
 /*!
  * \brief The MPIWrapper struct is a lightweight C++ wrapper around the C MPI functions.  Its main
@@ -2038,7 +2038,11 @@ std::ostream& operator<<(std::ostream& os, const std::unique_ptr<MPIWrapper<Real
 }  // Namespace helpme
 #endif  // Header guard
 #else
+
+#ifndef MPI_VERSION
 typedef struct ompi_communicator_t *MPI_Comm;
+#endif
+
 #endif
 // original file: ../src/powers.h
 

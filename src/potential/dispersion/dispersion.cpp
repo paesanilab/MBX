@@ -40,9 +40,11 @@ namespace disp {
 void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
+			    const std::vector<size_t> &islocal,
                             const bool do_grads = true, const std::vector<double> &box = {}) {
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
+    islocal_ = islocal;
     mon_id_ = mon_id;
     num_atoms_ = num_atoms;
     mon_type_count_ = mon_type_count;
@@ -114,7 +116,7 @@ void Dispersion::ReorderData() {
     }
 }
 
-double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *virial) {
+  double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *virial,bool use_ghost) {
     calc_virial_=false;
 
     if (virial != 0) {
@@ -122,7 +124,7 @@ double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *
     }
 
     std::fill(virial_.begin(), virial_.end(),0.0);
-    CalculateDispersion();
+    CalculateDispersion(use_ghost);
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -166,7 +168,7 @@ double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *
     return disp_energy_;
 }
 
-void Dispersion::CalculateDispersion() {
+void Dispersion::CalculateDispersion(bool use_ghost) {
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
     // Max number of monomers
@@ -235,20 +237,27 @@ void Dispersion::CalculateDispersion() {
 #ifdef _OPENMP
                     rank = omp_get_thread_num();
 #endif
-                    double p1[3], g1[3];
-                    double phi_i = 0.0;
-                    p1[0] = xyz_[fi_crd + inmon3 + m];
-                    p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
-                    p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
-                    std::fill(g1, g1 + 3, 0.0);
-                    energy_pool[rank] += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
-                                          phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor,
-                                          do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_, &virial_pool[rank]);
+		    bool include_monomer = false;
+		    if(!use_ghost) include_monomer = true;
+		    if(use_ghost && islocal_[fi_mon+m]) include_monomer = true;
 
-                    grad_pool[rank][inmon3 + m] += g1[0];
-                    grad_pool[rank][inmon3 + nmon + m] += g1[1];
-                    grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
-                    phi_pool[rank][inmon + m] += phi_i;
+		    if(include_monomer) {
+		      double p1[3], g1[3];
+		      double phi_i = 0.0;
+		      p1[0] = xyz_[fi_crd + inmon3 + m];
+		      p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
+		      p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
+		      std::fill(g1, g1 + 3, 0.0);
+		      energy_pool[rank] += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
+						 phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor,
+						 do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
+						 use_ghost, islocal_, fi_mon+m, fi_mon,
+						 &virial_pool[rank]);
+		      grad_pool[rank][inmon3 + m] += g1[0];
+		      grad_pool[rank][inmon3 + nmon + m] += g1[1];
+		      grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
+		      phi_pool[rank][inmon + m] += phi_i;
+		    }
                 }
             }
         }
@@ -326,6 +335,7 @@ void Dispersion::CalculateDispersion() {
                 rank = omp_get_thread_num();
 #endif
                 size_t m2init = same ? m1 + 1 : 0;
+
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
@@ -346,7 +356,9 @@ void Dispersion::CalculateDispersion() {
                         energy_pool[rank] +=
                             disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
                                   grad2_pool[rank].data(), phi_i, phi2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
-                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_, &virial_pool[rank]);
+                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
+				  use_ghost, islocal_, fi_mon1+m1, fi_mon2,
+				  &virial_pool[rank]);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
@@ -452,6 +464,7 @@ void Dispersion::CalculateDispersion() {
         }
         disp_energy_ += rec_energy + self_energy;
     }
+
 }
 
 }  // namespace disp

@@ -467,7 +467,7 @@ void System::SetRealXyz(std::vector<double> xyz) {
     }
 }
 
-void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id) {
+void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal) {
     // If the system has been initialized, adding a monomer is not possible
     if (initialized_) {
         std::string text = std::string("The system has already been initialized. ") +
@@ -481,6 +481,8 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
     for (auto i = atoms.begin(); i != atoms.end(); i++) atoms_.push_back(*i);
     // Adding id
     monomers_.push_back(id);
+    // Adding local/ghost descriptor
+    islocal_.push_back(islocal);
 }
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
@@ -632,7 +634,7 @@ void System::Initialize() {
     // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
-    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, true, box_);
+    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, true, box_);
 
     // We are done. Setting initialized_ to true
@@ -995,6 +997,12 @@ void System::AddMonomerInfo() {
         std::cerr << sites_[i] << " , ";
     }
     std::cerr << std::endl;
+    
+    std::cerr << "Local/Ghost vector:\n";
+    for (size_t i = 0; i < islocal_.size(); i++) {
+        std::cerr << islocal_[i] << " , ";
+    }
+    std::cerr << std::endl;
 
     std::cerr << "Atoms vector:\n";
     for (size_t i = 0; i < nat_.size(); i++) {
@@ -1016,7 +1024,7 @@ void System::AddMonomerInfo() {
     }
 
     // Ordering monomers by monomer type, from less to more monomers of each type
-    mon_type_count_ = systools::OrderMonomers(monomers_, sites_, nat_, original2current_order_, initial_order_,
+    mon_type_count_ = systools::OrderMonomers(monomers_, islocal_, sites_, nat_, original2current_order_, initial_order_,
                                               initial_order_realSites_);
 
 #ifdef DEBUG
@@ -1033,6 +1041,12 @@ void System::AddMonomerInfo() {
     }
     std::cerr << std::endl;
 
+    std::cerr << "New Local/Ghost vector:\n";
+    for (size_t i = 0; i < islocal_.size(); i++) {
+        std::cerr << islocal_[i] << " , ";
+    }
+    std::cerr << std::endl;
+    
     std::cerr << "Original2Current:\n";
     for (size_t i = 0; i < original2current_order_.size(); i++) {
         std::cerr << original2current_order_[i] << ",";
@@ -1089,7 +1103,7 @@ void System::AddMonomerInfo() {
     polfac_ = std::vector<double>(numsites_, 0.0);
 }
 
-void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend) {
+void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost_) {
     // istart is the monomer position for which we will look all dimers and
     // trimers that contain it. iend is the last monomer position.
     // This means, if istart is 0 and iend is 2, we will look for all dimers
@@ -1105,10 +1119,10 @@ void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend)
     //}
 
     size_t nmon = monomers_.size();
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, dimers_, trimers_);
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers_, trimers_, use_ghost_);
 }
 
-std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend) {
+std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost_) {
     // Overloaded function to be compatible with omp
     // Returns dimers if nmax == 2, or trimers if nmax == 3
 
@@ -1123,7 +1137,7 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
 
     size_t nmon = monomers_.size();
     std::vector<size_t> dimers, trimers;
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, dimers, trimers);
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers, trimers, use_ghost_);
     if (nmax == 2) return dimers;
     return trimers;
 }
@@ -1259,14 +1273,18 @@ double System::Get1B(bool do_grads) {
     size_t curr_mon_type = 0;
     size_t current_coord = 0;
     double e1b = 0.0;
-
+    
+    size_t indx = 0;
     for (size_t k = 0; k < mon_type_count_.size(); k++) {
         // Useful variables
         size_t istart = 0;
         size_t iend = 0;
         while (istart < mon_type_count_[k].second) {
             iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
-            size_t nmon = iend - istart;
+            size_t nmon = 0;
+	    for(size_t i = istart; i < iend; i++) 
+	      if(islocal_[indx + i]) nmon++;
+	    
             size_t ncoord = 3 * nat_[curr_mon_type] * nmon;
             std::string mon = mon_type_count_[k].first;
 
@@ -1275,10 +1293,14 @@ double System::Get1B(bool do_grads) {
             std::vector<double> grad2(ncoord, 0.0);
 
             // Set up real coordinates
+	    size_t ii = istart;
             for (size_t i = istart; i < iend; i++) {
-                std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
+	      if(islocal_[indx+i]) {
+		std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
                           xyz_.begin() + current_coord + 3 * (i * sites_[curr_mon_type] + nat_[curr_mon_type]),
-                          xyz.begin() + 3 * (i - istart) * nat_[curr_mon_type]);
+                          xyz.begin() + 3 * (ii - istart) * nat_[curr_mon_type]);
+		ii++;
+	      }
             }
 
             // Get energy of the chunk as function of monomer
@@ -1286,11 +1308,15 @@ double System::Get1B(bool do_grads) {
                 e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, allMonGood_, &virial_);
 
                 // Reorganize gradients
-                for (size_t i = 0; i < nmon; i++) {
+		size_t ii = 0;
+                for (size_t i = istart; i <iend ; i++) {
+		  if(islocal_[indx + i]) {
                     for (size_t j = 0; j < 3 * nat_[curr_mon_type]; j++) {
-                        grad_[current_coord + 3 * (i + istart) * sites_[curr_mon_type] + j] +=
-                            grad2[3 * i * nat_[curr_mon_type] + j];
+                        grad_[current_coord + 3 * (ii + istart) * sites_[curr_mon_type] + j] +=
+                            grad2[3 * ii * nat_[curr_mon_type] + j];
                     }
+		    ii++;
+		  }
                 }
             } else {
                 e1b += e1b::get_1b_energy(mon, nmon, xyz, allMonGood_);
@@ -1302,12 +1328,13 @@ double System::Get1B(bool do_grads) {
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
         curr_mon_type += mon_type_count_[k].second;
+	indx = iend;
     }
-
+    
     return e1b;
 }
 
-double System::TwoBodyEnergy(bool do_grads) {
+double System::TwoBodyEnergy(bool do_grads, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -1324,12 +1351,12 @@ double System::TwoBodyEnergy(bool do_grads) {
     SetPBC(box_);
 
     // Calculate the 2b energy
-    energy_ = Get2B(do_grads);
+    energy_ = Get2B(do_grads, use_ghost);
 
     return energy_;
 }
 
-double System::Get2B(bool do_grads) {
+double System::Get2B(bool do_grads, bool use_ghost) {
     // No dimers makes the function return 0.
 
     // 2B ENERGY
@@ -1384,11 +1411,11 @@ double System::Get2B(bool do_grads) {
 // OPENMP or not
 
 // This call will get the dimers that have as first index a monomer
-// with index between isatrt and iend (iend not included)
+// with index between istart and iend (iend not included)
 #ifdef _OPENMP
-        std::vector<size_t> dimers = AddClustersParallel(2, cutoff2b_, istart, iend);
+        std::vector<size_t> dimers = AddClustersParallel(2, cutoff2b_, istart, iend, use_ghost);
 #else
-        AddClusters(2, cutoff2b_, istart, iend);
+        AddClusters(2, cutoff2b_, istart, iend, use_ghost);
         std::vector<size_t> dimers = dimers_;
 #endif
 
@@ -1531,9 +1558,11 @@ double System::Get2B(bool do_grads) {
 #endif
 
         // Condensate gradients
+	//	const double scale = use_ghost ? 0.5 : 1.0;
+	const double scale = 1.0; // only accumulate force on local particles in LAMMPS
         for (int i = 0; i < num_threads; i++) {
             for (size_t j = first_grad; j < last_grad; j++) {
-                grad_[j] += grad_pool[i][j];
+                grad_[j] += scale * grad_pool[i][j];
             }
         }
 
@@ -1545,10 +1574,12 @@ double System::Get2B(bool do_grads) {
     for (int i = 0; i < num_threads; i++) {
         e2b_t += e2b_pool[i];
     }
-    // Condensate virial                         
+    if(use_ghost) e2b_t *= 0.5;
+    // Condensate virial
+    const double scalev = use_ghost ? 0.5 : 1.0;
     for (int i = 0; i < num_threads; i++) { 
         for (size_t j = 0; j < 9; j++){          
-            virial_[j] += virial_pool[i][j];     
+            virial_[j] += scalev * virial_pool[i][j];
         }                                        
     }                                            
 
@@ -1559,7 +1590,7 @@ double System::Get2B(bool do_grads) {
     return e2b_t + edisp_t;
 }
 
-double System::ThreeBodyEnergy(bool do_grads) {
+double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -1574,15 +1605,17 @@ double System::ThreeBodyEnergy(bool do_grads) {
 
     SetPBC(box_);
 
-    energy_ = Get3B(do_grads);
+    energy_ = Get3B(do_grads, use_ghost);
 
     return energy_;
 }
 
-double System::Get3B(bool do_grads) {
+  double System::Get3B(bool do_grads, bool use_ghost) {
     // 3B ENERGY
     double e3b_t = 0.0;
 
+    const double one_third = 1.0 / 3.0;
+    
     // Variables needed for OMP
     size_t step = 1;
     int num_threads = 1;
@@ -1630,9 +1663,9 @@ double System::Get3B(bool do_grads) {
         size_t iend = std::min(istart + step, nummon_);
 
 #ifdef _OPENMP
-        std::vector<size_t> trimers = AddClustersParallel(3, cutoff3b_, istart, iend);
+        std::vector<size_t> trimers = AddClustersParallel(3, cutoff3b_, istart, iend, use_ghost);
 #else
-        AddClusters(3, cutoff3b_, istart, iend);
+        AddClusters(3, cutoff3b_, istart, iend, use_ghost);
         std::vector<size_t> trimers = trimers_;
 #endif
 
@@ -1659,6 +1692,10 @@ double System::Get3B(bool do_grads) {
         size_t nt = 0;
         size_t nt_tot = 0;
 
+	// if ghost monomers included, then force maxNTriEval == 1 to properly tally energy+virial
+	// should we just overwrite maxNTriEval_?
+	size_t _maxNTriEval = (use_ghost) ? 1 : maxNTriEval_;
+	
         // Loop over all the trimers
         while (3 * nt_tot < trimers.size()) {
             i = (nt_tot + nt) * 3;
@@ -1682,7 +1719,7 @@ double System::Get3B(bool do_grads) {
             // since trimers are also ordered, means that no more trimers of that
             // type exist. Thus, do calculation, update m? and clear xyz
             if (monomers_[trimers[i]] != m1 || monomers_[trimers[i + 1]] != m2 || monomers_[trimers[i + 2]] != m3 ||
-                i == trimers.size() - 3 || nt == maxNTriEval_) {
+                i == trimers.size() - 3 || nt == _maxNTriEval) {
                 if (nt == 0) {
                     coord1.clear();
                     coord2.clear();
@@ -1715,7 +1752,7 @@ double System::Get3B(bool do_grads) {
                 }
 
                 if (use_poly) {
-                    std::vector<double> xyz1(coord1.size(), 0.0);
+  		    std::vector<double> xyz1(coord1.size(), 0.0);
                     std::vector<double> xyz2(coord2.size(), 0.0);
                     std::vector<double> xyz3(coord3.size(), 0.0);
                     std::copy(coord1.begin(), coord1.end(), xyz1.begin());
@@ -1729,7 +1766,11 @@ double System::Get3B(bool do_grads) {
                         std::vector<double> grad3(coord3.size(), 0.0);
                         std::vector<double> virial(9,0.0); // declare virial tensor
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+			double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+
+			double escale = 1.0;
+			if(use_ghost) escale = (islocal_[trimers[i]] + islocal_[trimers[i+1]] + islocal_[trimers[i+2]]) * one_third;
+			e3b_pool[rank] += escale * e;
 
                         // Update gradients
                         size_t i0 = nt_tot * 3;
@@ -1752,12 +1793,15 @@ double System::Get3B(bool do_grads) {
                         }
                         // Virial Tensor
                         for (size_t j=0; j<9; j++) {
-                            virial_pool[rank][j] += virial[j];
+                            virial_pool[rank][j] += escale * virial[j];
                         }
 
                     } else {
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+		        double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+			double escale = 1.0;
+			if(use_ghost) escale = (islocal_[trimers[i]] + islocal_[trimers[i+1]] + islocal_[trimers[i+2]]) * one_third;
+			e3b_pool[rank] += escale * e;
                     }
                 }
 
@@ -1798,7 +1842,7 @@ double System::Get3B(bool do_grads) {
 #ifdef _OPENMP
     }  // parallel
 #endif
-
+    
     // Condensate energy
     for (int i = 0; i < num_threads; i++) {
         e3b_t += e3b_pool[i];
@@ -1964,7 +2008,7 @@ void System::SetVSites() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double System::Dispersion(bool do_grads) {
+double System::Dispersion(bool do_grads, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -1979,7 +2023,7 @@ double System::Dispersion(bool do_grads) {
 
     SetPBC(box_);
 
-    energy_ = GetDispersion(do_grads);
+    energy_ = GetDispersion(do_grads, use_ghost);
 
     return energy_;
 }
@@ -2069,7 +2113,7 @@ double System::GetElectrostatics(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double System::GetDispersion(bool do_grads) {
+  double System::GetDispersion(bool do_grads, bool use_ghost) {
     std::vector<double> xyz_real(3 * numat_);
 
     size_t count = 0;
@@ -2082,7 +2126,7 @@ double System::GetDispersion(bool do_grads) {
 
     dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
-    double e = dispersionE_.GetDispersion(real_grad, &virial_);
+    double e = dispersionE_.GetDispersion(real_grad, &virial_, use_ghost);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {

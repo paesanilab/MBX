@@ -149,7 +149,9 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
              double* grad1, double* grad2, double& phi1, double* phi2, const size_t nmon1, const size_t nmon2,
              const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
              const double disp_scale_factor, bool do_grads, const double cutoff, const double ewald_alpha,
-             const std::vector<double>& box, const std::vector<double>& box_inverse,std::vector<double> *virial) {
+             const std::vector<double>& box, const std::vector<double>& box_inverse,
+	     bool use_ghost, const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
+	     std::vector<double> *virial) {
     double disp = 0.0;
     double disp_lr_below_cutoff = 0.0;
 
@@ -198,8 +200,14 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
         phi1 -= c6j * inv_r6;
         phi2[shift_phi + nv] -= c6i * inv_r6;
+
+	bool include_pair = false;
+	size_t isls = islocal[isl1_offset] + islocal[isl2_offset+nv];
+	if(!use_ghost) include_pair = true;
+	if(use_ghost && isls) include_pair = true;
+
         // If using cutoff, check for distances and get proper dispersion
-        if (r <= cutoff) {
+        if (r <= cutoff && include_pair) {
             const double d6r = d6 * r;
             const double tt6 = disp::tang_toennies(6, d6r);
 
@@ -230,6 +238,8 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             double c6term = c6i * c6j * inv_r6;
             double pmeterm = c6i * c6j * (1 - (1 + ar2 + ar4 / 2) * expterm) * inv_r6;
             double pair_energy = ttsw * (disp_scale_factor * e6) + c6sw * disp_scale_factor * c6term - pmeterm;
+
+	    if(isls == 1) pair_energy *= 0.5;
             dispersion_energy -= pair_energy;
 
             if (do_grads) {
