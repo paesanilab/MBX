@@ -1,0 +1,32 @@
+Energies without gradients:
+system[....0]=          1.67786e+00    kcal/mol
+system[....1]=          2.43401e-02    kcal/mol
+system[....2]=          6.47332e+00    kcal/mol
+Energies with gradients:
+system[....0]=          1.67786e+00    kcal/mol
+
+Atom             GradientX           GradientY           GradientZ
+O                1.275e+01           1.626e+01           0.000e+00
+H                6.983e+00          -1.861e+01           0.000e+00
+H               -1.974e+01           2.343e+00           0.000e+00
+system[....1]=          2.43401e-02    kcal/mol
+
+Atom             GradientX           GradientY           GradientZ
+O                1.445e+01           1.016e+01          -1.175e+01
+H                4.015e+00          -1.026e+01           1.553e+01
+H               -1.963e+01           2.318e+00          -1.814e+00
+O                8.362e+00           3.816e+00           3.232e+00
+H                5.892e+00          -5.749e+00          -5.167e+00
+H               -1.310e+01          -2.811e-01          -3.450e-02
+system[....2]=          6.47332e+00    kcal/mol
+
+Atom             GradientX           GradientY           GradientZ
+O                1.802e+01           1.621e+01          -7.452e-01
+H                8.072e+00          -1.275e+01           1.272e+01
+H               -2.059e+01           3.494e+00          -2.644e+00
+O                5.984e+00           3.570e+00           2.004e+00
+H                5.685e+00          -5.548e+00          -4.868e+00
+H               -1.197e+01           1.280e+00           5.253e+00
+O               -2.629e+00           4.980e+00          -2.460e+00
+H                6.860e+00          -1.214e+01          -9.097e+00
+H               -9.434e+00           8.992e-01          -1.658e-01

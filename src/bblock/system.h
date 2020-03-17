@@ -511,6 +511,12 @@ class System {
     void SetUpFromJson(char *json_file = 0);
 
     /**
+     * Sets up the json configuration through a string.
+     * @param[in] json_text Literal string with the json configuration
+     **/
+    void SetUpFromJson(std::string json_text);
+
+    /**
      * Sets up all the parameters that are specified in a json object
      * @param[in] j Json object with the system specifications
      **/

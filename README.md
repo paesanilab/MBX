@@ -2,19 +2,11 @@
 [![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
 
 # MBX
-This is the version 0.2.1a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
+This is the version 0.2.3a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
 
-What's new in v0.2.1a
-- Scripts to compile and run simulations on comet and TSCC have been added.
-- Scripts to run on Thunder (DOD) have been added.
-- Example on how to install and run plumed with i-pi and MBX.
-- Three-body PEFs for alkali-metal ions and corresponding tests have been updated.
-- Bugfix in virial for CH4, indexes were not correct in the 1b CH4 and 2b CH4-CH4 and CH4-H2O MB-nrg pefs. 
-- Three-body PEFs for Methane Water Water have been added. Should not be used yet until deeply tested.
-- Added NH3 1b PEF MB-nrg (should not be used yet).
-- Added NH3-NH3 2b PEF TTM-nrg and MB-nrg (should not be used yet).
-- Two-body TTM-nrg and MB-nrg PEFs for Ar-Cs and Ar-H2O have been added. VIRIAL is missing for Ar-Cs.
-- Classic potential energy and gradients can be evaluated for bonds, angles, dihedrals, and inversion 
+What's new in v0.2.3a
+- This
+- And that
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
@@ -47,7 +39,7 @@ If all tests are passing, you are good to go!
 ## Json File
 To make life easier for you, a json configuration file can be used to pass all the information that MBX needs. Usually, one does not need to change anything except a couple of options. In any case, all the options of the json file are explained below.
 
-The jason file template is the following:
+The json file template is the following:
 ```
 {
    "Note" : "This is a cofiguration file",
@@ -94,15 +86,20 @@ In this file:
 - `port` is used when interfacing with i-pi. Is the port that will hold the socket. Should be greater than 34500.
 - `localhost` is the name of the socket. It MUST match the name in the xml file, otherwise it will send an error saying that the socket was not found.
 
+## Main executables
+After installation, there will be the main executables in `$MBX_HOME/install/bin/main`.
+- `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If the flag to print gradients is activated (`PRINT_GRADS`; see source code in `$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
+- `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
+
 ## Run TTM-nrg with MBX
-It is possible to use the classical polarizable model TTM-nrg with MB-pol using MBX. An example is provided in `MBX_HOME/examples/ttm-nrg_with_mbx`. To do so, just prepare a json file as usual, but add the pairs that you want to calculate with TTM-nrg in the `ttm_pairs` section of the `mbx.json` file. It is recommended to add also the pairs in `ignore_2b_poly` and the trimers involving that species in `ignore_3b_poly` sections (see example).
+It is possible to use the classical polarizable model TTM-nrg with MB-pol using MBX. An example is provided in `MBX_HOME/examples/h2o-co2/ttm-nrg_with_mbx`. To do so, just prepare a json file as usual, but add the pairs that you want to calculate with TTM-nrg in the `ttm_pairs` section of the `mbx.json` file. It is recommended to add also the pairs in `ignore_2b_poly` and the trimers involving that species in `ignore_3b_poly` sections (see example), unless your MB-model has been fitted over a TTM-model. In this case, none of our potentials are fitted over the buckingham repulsion.
 
 ## Interface
 ### Fortran90
-In `examples/use_mbx_with_fortran` there is an example on how to use the recently compiled libraries from fortran. Please see the files `test_pbc.f90` (for pbc calculations with fortran) and `test_gas_phase.f90` (for gas phase calculations with fortran) to see how the energy function must be called. In order to compile and run the fortran test (replace `MBX_HOME` by the actual path to MBX home):
+In `$MBX_HOME/examples/h2o-co2/use_mbx_with_fortran` there is an example on how to use the recently compiled libraries from fortran. Please see the files `test_pbc.f90` (for pbc calculations with fortran) and `test_gas_phase.f90` (for gas phase calculations with fortran) to see how the energy function must be called. In order to compile and run the fortran test (replace `MBX_HOME` by the actual path to MBX home):
 ```
 export LD_LIBRARY_PATH=MBX_HOME/install/lib/:$LD_LIBRARY_PATH
-cd MBX_HOME/examples/use_mbx_with_fortran
+cd MBX_HOME/examples/h2o-co2/use_mbx_with_fortran
 make
 ./test_gas_phase
 ./test_pbc
@@ -115,30 +112,30 @@ This software is already interfaced with i-pi. In order to run molecular dynamic
 After making sure that i-pi is working on yor machine:
 ```
 cd plugins/i-pi/src/main/
-export MBX_HOME="FULL/PATH/TO/CLUSTERS/ULTIMATE/HOME"
+export MBX_HOME="FULL/PATH/TO/MBX/HOME"
 make
 ```
 
 A new file will be generated in `../../bin/`, called `driver`. Now we can run MD using i-pi. Go to the i-pi test folder in MBX:
 ```
-cd $MBX_HOME/plugins/i-pi/test/MD/3h2o/100K/1-nvt/
+cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/1-nvt
 ```
 
 This folder contains 5 files:
-- `3h2o.nrg` is the energy software input. It needs to be in this same format. If you have more water molecules, just add the `MOLECULE` and `MONOMER` sections, add the OHH coordinates, and end the sections with ENDMON and ENDMOL.
-- `3h2o.xyz` is the input for the coordinates for i-pi. The two files, `nrg` and `xyz`, should have exactly the same order, but the coordinates in the nrg file are not required to be the same as the ones in the XYZ file. XYZ will overwrite NRG.
-- `3h2o.xml` is the i-pi input file. This simulation will run an NVT MD at 100K. Refer to the i-pi user manual for more information.
+- `config.nrg` is the energy software input. It needs to be in this same format. If you have more water molecules, just add the `MOLECULE` and `MONOMER` sections, add the OHH coordinates, and end the sections with ENDMON and ENDMOL.
+- `config.xyz` is the input for the coordinates for i-pi. The two files, `nrg` and `xyz`, should have exactly the same order, but the coordinates in the nrg file are not required to be the same as the ones in the XYZ file. XYZ will overwrite NRG.
+- `config.xml` is the i-pi input file. This simulation will run an NVT MD at 100K. Refer to the i-pi user manual for more information.
 - `mbx.json` is the MBX configuration file
-- `run.sh` will run the test. Make sure you sourced the env.sh in the i-pi folder before running the test, or most likely it will fail.
+- `run_i-pi.sh` will run the test. Make sure you sourced the env.sh in the i-pi folder before running the test, or most likely it will fail.
 
-These should initialize i-pi and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$CU_HOME/plugins/i-pi/test/MD/3h2o/100K/2-nve`.
+These should initialize i-pi and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve`.
 ```
-cd $CU_HOME/plugins/i-pi/test/MD/3h2o/100K/2-nve
-cp ../1-nvt/RESTART ./3h2o.xml
-./run.sh
+cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve
+cp ../1-nvt/RESTART ./config.xml
+./run_i-pi.sh
 ```
 
-There are other tests for gas phase and PBC in the `plugins/i-pi/tests/` folder. i-pi can also perform PIMD, REMD, and REPIMD. Refer to the manual and the examples in i-pi to see how to set them up.
+There are other tests for other type of simulations, including condensed phase simulations and replica-exchange simulations. For more information about whatk kind of simulations can i-pi run, please refer to the i-pi user manual.
 
 ## Current Timings (v20190927)
 These timings were obtained using 1, 2, 4, and 8 cores in our local workstation, performing 30 evaluations of the energy. When using PBC, the following settings for the PME part have been used (see `src/tests/n_single_point.cpp` for details)
