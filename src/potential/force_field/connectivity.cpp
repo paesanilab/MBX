@@ -32,48 +32,36 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "topology.h"
-
-/**
- * @file topology.cpp
- * @brief Implementing all of the methods in topology.h
- */
+#include "potential/force_field/connectivity.h"
 
 namespace eff {
 
-Topology::Topology() {}
-Topology::~Topology() {}
-
-void Topology::GetParameters(std::vector<double> &linear_parameters, std::vector<double> &nonlinear_parameters) {
-    linear_parameters = linear_parameters_;
-    nonlinear_parameters = nonlinear_parameters_;
+Conn::Conn(std::string mon_id, std::vector<Bond> bond_vec, std::vector<Angles> angle_vec,
+           std::vector<Dihedral> dihedral_vec, std::vector<Inversion> inversion_vec) {
+    mon_id_ = mon_id;
+    bond_vec_ = bond_vec;
+    angle_vec_ = angle_vec;
+    dihedral_vec_ = dihedral_vec;
+    inversion_vec_ = inversion_vec;
 }
 
-size_t Topology::GetNumNonLinear() { return num_nonlinear_params_; }
+Conn::~Conn() {}
+std::string Conn::GetMonId() { return mon_id_; }
+std::vector<Bond> Conn::GetBondVec() { return bond_vec_; }
+std::vector<Angles> Conn::GetAnglesVec() { return angle_vec_; }
+std::vector<Dihedral> Conn::GetDihedralVec() { return dihedral_vec_; }
+std::vector<Inversion> Conn::GetInversionVec() { return inversion_vec_; }
 
-size_t Topology::GetNumLinear() { return num_linear_params_; }
+bool Conn::operator==(Conn const &connectivity) const {
+    // Check field variables
 
-void Topology::SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters) {
-    linear_parameters_ = linear_parameters;
-    nonlinear_parameters_ = nonlinear_parameters;
+    if (connectivity.mon_id_ != mon_id_ || connectivity.bond_vec_ != bond_vec_ ||
+        connectivity.angle_vec_ != angle_vec_ || connectivity.dihedral_vec_ != dihedral_vec_ ||
+        connectivity.inversion_vec_ != inversion_vec_) {
+        return false;
+    }
+
+    return true;
 }
 
-void Topology::SetParameters(std::vector<double> parameters) {
-    linear_parameters_.resize(num_linear_params_);
-    nonlinear_parameters_.resize(num_nonlinear_params_);
-    std::copy(parameters.begin(), parameters.begin() + num_linear_params_, linear_parameters_.begin());
-    std::copy(parameters.begin() + num_linear_params_, parameters.end(), nonlinear_parameters_.begin());
-}
-
-void Topology::SetIndexes(std::vector<size_t> indexes) { indexes_ = indexes; }
-
-std::vector<size_t> Topology::GetIndexes() { return indexes_; }
-
-void Topology::SetFunctionalForm(std::string functional_form) { functional_form_ = functional_form; }
-
-std::string Topology::GetFunctionalForm() { return functional_form_; }
-
-void Topology::SetTopology(std::string topology) { topology_ = topology; }
-
-std::string Topology::GetTopology() { return topology_; }
-}
+}  // namespace eff

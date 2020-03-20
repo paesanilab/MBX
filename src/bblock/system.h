@@ -42,6 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include <unordered_map>
 
 // Tools
 #include "kdtree/nanoflann.hpp"
@@ -50,6 +51,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
 #include "tools/custom_exceptions.h"
+#include "potential/force_field/connectivity.h"
 
 // Potential
 // 1B
@@ -632,6 +634,13 @@ to be the same.
      */
     void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
 
+    /**  
+     * @param[in] connectivity_map A map with monomer id as values and
+     * connectivity objects for keys
+     */
+    void SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map);
+    // static void SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map);
+
     /////////////////////////////////////////////////////////////////////////////
     // Energy Functions /////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
@@ -1137,6 +1146,13 @@ to be the same.
      * Json configuration object
      */
     nlohmann::json mbx_j_;
+
+    /**
+     * Vector that holds the connectivity of each monomer type
+     */
+    std::unordered_map<std::string, eff::Conn> connectivity_map_;
+    //static std::unordered_map<std::string, eff::Conn> connectivity_map_;
+
 };
 
 }  // namespace bblock

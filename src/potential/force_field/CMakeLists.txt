@@ -3,8 +3,9 @@ set(FF_SOURCES angles.cpp
                dihedral.cpp 
                inversion.cpp 
                topology.cpp
-               #energyff.cpp 
-               #calculators.cpp  
+               connectivity.cpp
+#               energyff.cpp 
+#               calculators.cpp  
 )
 
 add_library(ff OBJECT ${FF_SOURCES})
