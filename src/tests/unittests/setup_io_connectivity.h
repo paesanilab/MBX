@@ -55,13 +55,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  * compared
  */
 
-// First connectivity
+// Import first connectivity
 SETUP_CONNECTIVITY
 
-#define SETUP_IO_CONNECTIVITY                                                     \
-    eff::Bond bond2("bond", std::vector<size_t>{8, 3}, "harm");                   \
-    eff::Angles angle2("angle", std::vector<size_t>{5, 3, 4}, "quartic");         \
-    eff::Angles angle3("angle", std::vector<size_t>{2, 3, 6}, "harm");            \
-    eff::Dihedral dihedral2("dihedral", std::vector<size_t>{2, 1, 6, 4}, "hcos"); \
-    eff::Inversion inversion2("inversion", std::vector<size_t>{4, 1, 2, 3}, "harm");
+#define SETUP_IO_CONNECTIVITY                                                         \
+    eff::Bond mon2_bond("bond", std::vector<size_t>{8, 3}, "harm");                   \
+    eff::Angles mon2_angle1("angle", std::vector<size_t>{5, 3, 4}, "quartic");        \
+    eff::Angles mon2_angle2("angle", std::vector<size_t>{2, 3, 6}, "harm");           \
+    eff::Dihedral mon2_dihedral("dihedral", std::vector<size_t>{2, 1, 6, 4}, "hcos"); \
+    eff::Inversion mon2_inversion("inversion", std::vector<size_t>{4, 1, 2, 3}, "harm");
 #endif

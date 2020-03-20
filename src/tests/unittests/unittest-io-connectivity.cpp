@@ -50,31 +50,32 @@ TEST_CASE("Test Connectivity IO") {
 
     // Write the linear and nonlinear parameters because they can not be set in
     // the macro
-    // obj1
-    bond1.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
-    std::vector<eff::Bond> bond_vec = {bond1, bond1};
-    angle1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<eff::Angles> angle_vec = {angle1, angle1, angle1};
-    dihedral1.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
-    std::vector<eff::Dihedral> dihedral_vec = {dihedral1};
-    inversion1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<eff::Inversion> inversion_vec = {inversion1};
+    // Set first connectivity object
+    mon1_bond.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
+    std::vector<eff::Bond> mon1_bond_vec = {mon1_bond, mon1_bond};
+    mon1_angle.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    std::vector<eff::Angles> mon1_angle_vec = {mon1_angle, mon1_angle, mon1_angle};
+    mon1_dihedral.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
+    std::vector<eff::Dihedral> mon1_dihedral_vec = {mon1_dihedral};
+    mon1_inversion.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    std::vector<eff::Inversion> mon1_inversion_vec = {mon1_inversion};
 
-    // obj2
-    bond2.SetParameters(harm_linear_parameters, harm_linear_parameters);
-    std::vector<eff::Bond> bond_vec2 = {bond2};
-    angle2.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
-    angle3.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<eff::Angles> angle_vec2 = {angle2, angle3};
-    dihedral2.SetParameters(hcos_linear_parameters, hcos_nonlinear_parameters);
-    std::vector<eff::Dihedral> dihedral_vec2 = {dihedral2};
-    inversion2.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    // Set second connectivity object
+    mon2_bond.SetParameters(harm_linear_parameters, harm_linear_parameters);
+    std::vector<eff::Bond> mon2_bond_vec = {mon2_bond};
+    mon2_angle1.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
+    mon2_angle2.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    std::vector<eff::Angles> mon2_angle_vec = {mon2_angle1, mon2_angle2};
+    mon2_dihedral.SetParameters(hcos_linear_parameters, hcos_nonlinear_parameters);
+    std::vector<eff::Dihedral> mon2_dihedral_vec = {mon2_dihedral};
+    mon2_inversion.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    std::vector<eff::Inversion> mon2_inversion_vec = {mon2_inversion};
 
-    std::vector<eff::Inversion> inversion_vec2 = {inversion2};
-    eff::Conn connectivityObj1 = eff::Conn(mon_id, bond_vec, angle_vec, dihedral_vec, inversion_vec);
-    eff::Conn connectivityObj2 = eff::Conn("h4_dummy2", bond_vec2, angle_vec2, dihedral_vec2, inversion_vec2);
-    std::unordered_map<std::string, eff::Conn> connectivity_map = {std::make_pair("h4_dummy", connectivityObj1),
-                                                                   std::make_pair("h4_dummy2", connectivityObj2)};
+    eff::Conn connectivity1 = eff::Conn(mon_id, mon1_bond_vec, mon1_angle_vec, mon1_dihedral_vec, mon1_inversion_vec);
+    eff::Conn connectivity2 =
+        eff::Conn("h4_dummy2", mon2_bond_vec, mon2_angle_vec, mon2_dihedral_vec, mon2_inversion_vec);
+    std::unordered_map<std::string, eff::Conn> connectivity_map = {std::make_pair("h4_dummy", connectivity1),
+                                                                   std::make_pair("h4_dummy2", connectivity2)};
 
     // Write out the map
     tools::WriteConnectivity("connectivity_write.out", connectivity_map);

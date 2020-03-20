@@ -50,19 +50,20 @@ TEST_CASE("Test Connectivity") {
 
     // Write the linear and nonlinear parameters because they can not be set in
     // the macro
-    bond1.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
-    std::vector<eff::Bond> bond_vec = {bond1, bond1};
-    angle1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<eff::Angles> angle_vec = {angle1, angle1, angle1};
-    dihedral1.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
-    std::vector<eff::Dihedral> dihedral_vec = {dihedral1};
-    inversion1.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-    std::vector<eff::Inversion> inversion_vec = {inversion1};
+    mon1_bond.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
+    std::vector<eff::Bond> mon1_bond_vec = {mon1_bond, mon1_bond};
+    mon1_angle.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    std::vector<eff::Angles> mon1_angle_vec = {mon1_angle, mon1_angle, mon1_angle};
+    mon1_dihedral.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
+    std::vector<eff::Dihedral> mon1_dihedral_vec = {mon1_dihedral};
+    mon1_inversion.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    std::vector<eff::Inversion> mon1_inversion_vec = {mon1_inversion};
 
     SECTION("Connectivity constructor") {
         bool not_possible_to_setup_connectivity = false;
         try {
-            eff::Conn obj = eff::Conn(mon_id, bond_vec, angle_vec, dihedral_vec, inversion_vec);
+            eff::Conn connectivity =
+                eff::Conn(mon_id, mon1_bond_vec, mon1_angle_vec, mon1_dihedral_vec, mon1_inversion_vec);
         } catch (CUException &e) {
             not_possible_to_setup_connectivity = true;
         }
@@ -70,11 +71,12 @@ TEST_CASE("Test Connectivity") {
     }
 
     SECTION("Connectivity Getters") {
-        eff::Conn obj = eff::Conn(mon_id, bond_vec, angle_vec, dihedral_vec, inversion_vec);
-        REQUIRE(obj.GetMonId() == mon_id);
-        REQUIRE(obj.GetBondVec() == bond_vec);
-        REQUIRE(obj.GetAnglesVec() == angle_vec);
-        REQUIRE(obj.GetDihedralVec() == dihedral_vec);
-        REQUIRE(obj.GetInversionVec() == inversion_vec);
+        eff::Conn connectivity =
+            eff::Conn(mon_id, mon1_bond_vec, mon1_angle_vec, mon1_dihedral_vec, mon1_inversion_vec);
+        REQUIRE(connectivity.GetMonId() == mon_id);
+        REQUIRE(connectivity.GetBondVec() == mon1_bond_vec);
+        REQUIRE(connectivity.GetAnglesVec() == mon1_angle_vec);
+        REQUIRE(connectivity.GetDihedralVec() == mon1_dihedral_vec);
+        REQUIRE(connectivity.GetInversionVec() == mon1_inversion_vec);
     }
 }
