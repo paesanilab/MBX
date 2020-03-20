@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12.4 FATAL_ERROR)  # 3.3: EP_add(DEPENDS interf
 cmake_policy(SET CMP0048 NEW)
 
 project(MBX
-        VERSION 0.2.2
+        VERSION 0.2.3
         LANGUAGES C CXX)
 
 set(PN ${PROJECT_NAME})

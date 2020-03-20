@@ -60,9 +60,10 @@ TEST_CASE("Test the dispersion class.") {
         std::vector<double> dummy(3 * n_atoms, 0.0);
         double start = 8.5;
         double delta = 0.01;
+
         std::vector<double> original_coord = real_coords;
 //        double original_coord = real_coords[11];
-        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, false,
+        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, false,
                            box2);
         for (size_t i = 3; i < 6; i++) {
             for (size_t j = 0; j < 3; j++) {
@@ -102,7 +103,7 @@ TEST_CASE("Test the dispersion class.") {
         disp::Dispersion ewald_disp;
 
         std::vector<double> forces3(3 * n_atoms, 0.0);
-        ewald_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, true,
+        ewald_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, true,
                               box2);
         ewald_disp.SetNewParameters(real_coords, true, CUTOFF, box2);
         ewald_disp.setEwaldAlpha(0.3);
@@ -135,9 +136,8 @@ TEST_CASE("Test the dispersion class.") {
 
     SECTION("Switch is 1") {
         disp::Dispersion my_disp;
-        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, false,
-                           box2);
-
+        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, false,
+                           box);
         // Get dispersion with no grads
         std::vector<double> dummy(3 * n_atoms, 0.0);
         my_disp.SetNewParameters(real_coords, true, CUTOFF, box2);
@@ -174,9 +174,8 @@ TEST_CASE("Test the dispersion class.") {
 
     SECTION("Switch is 0") {
         disp::Dispersion my_disp;
-        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, false,
-                           box2);
-
+        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, false,
+                           box);
         // Get dispersion with no grads
         std::vector<double> dummy(3 * n_atoms, 0.0);
         double original_coord = real_coords[11];
@@ -213,9 +212,8 @@ TEST_CASE("Test the dispersion class.") {
 
     SECTION("Switch is between 0 and 1") {
         disp::Dispersion my_disp;
-        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, false,
-                           box2);
-
+        my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, false,
+                           box);
         // Get dispersion with no grads
         std::vector<double> dummy(3 * n_atoms, 0.0);
         double original_coord = real_coords[11];

@@ -1,0 +1,47 @@
+units		real
+atom_style	full
+
+pair_style      mbx 9.0
+pair_modify     mix arithmetic
+
+bond_style      none
+angle_style     none
+dihedral_style  none
+improper_style  none
+
+read_data       lmp.data
+
+pair_coeff      * *  0.0 0.0
+
+neighbor	2.0 bin
+neigh_modify	every 1 delay 1 check no
+
+timestep        1.0
+
+compute         mbx all pair mbx
+variable        e1    equal c_mbx[1]
+variable        e2    equal c_mbx[2]
+variable        e3    equal c_mbx[3]
+variable        ebuck equal c_mbx[4]
+variable        edisp equal c_mbx[5]
+variable        eele  equal c_mbx[6]
+variable        etot  equal c_mbx[7]
+
+
+thermo_style    custom step temp v_e1 v_e2 v_e3 v_ebuck v_edisp v_eele v_etot pe etotal
+thermo		1
+
+#fix             1 all nve
+fix             1 all move linear 0.0 0.0 1.0
+
+fix             2 all mbx 1 256 h2o
+
+dump            1 all custom 1 lmp.lammpstrj id type x y z fx fy fz
+dump_modify     1 format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"
+dump_modify     1 sort id
+
+velocity        all create 300.0 4928459 rot yes dist gaussian
+velocity        all zero linear
+velocity        all zero angular
+
+run             10

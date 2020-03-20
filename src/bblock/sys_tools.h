@@ -100,6 +100,8 @@ const double gamma21 = gamma2 / gamma1;
  * more frequent.
  * @param[in,out] mon List of monomers in the input order that will be
  * cleared and replaced by the list of monomers in the internal order.
+ * @param[in,out] local/ghost descriptor of monomers in the input order
+ * that will be cleared and replaced by the descriptros in the internal order
  * @param[in] sites Vector of size_t with the number of sites of each
  * monomer in the input order
  * @param[in] nats Vector of size_t with the number of real sites of each
@@ -133,7 +135,7 @@ const double gamma21 = gamma2 / gamma1;
  * number of monomers.
  */
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
-    std::vector<std::string> &mon, std::vector<size_t> sites, std::vector<size_t> nats,
+    std::vector<std::string> &mon, std::vector<size_t> &islocal, std::vector<size_t> sites, std::vector<size_t> nats, 
     std::vector<size_t> &original2current_order, std::vector<std::pair<size_t, size_t>> &original_order,
     std::vector<std::pair<size_t, size_t>> &original_order_realSites);
 
@@ -256,14 +258,18 @@ void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<doubl
  * of the box
  * @param[in] xyz_orig Coordinates of the system
  * @param[in] first_index First index of the monomers in the system
+ * @param[in] is_local is local/ghost descriptor for monomers in system
  * @param[out] dimers Vector of unsigned integers with the dimers
  * @param[out] trimers Vector of unsigned integers with the trimers
+ * @param[in] use_ghost whether or not to include ghost monomers in clusters; this is optional
  * @warning The distance between monomers is computed as the distance
  * between the first atom of both monomers
  */
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers);
+		 std::vector<size_t> is_local,
+                 std::vector<size_t> &dimers, std::vector<size_t> &trimers,
+		 bool use_ghost = false);
 
 /**
  * @brief Sets the excluded pairs for a given monomer

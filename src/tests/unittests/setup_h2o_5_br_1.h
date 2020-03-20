@@ -73,6 +73,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<size_t> n_sites_vector = {4, 1, 4, 4, 4, 4};                                                          \
     std::vector<size_t> first_index = {0, 4, 5, 9, 13, 17};                                                           \
     std::vector<size_t> first_index_realSites = {0, 3, 4, 7, 10, 13};                                                 \
+    std::vector<size_t> islocal = {1, 1, 1, 1, 1, 1};                                                                 \
     const size_t n_atoms = 16;                                                                                        \
     const size_t n_sites = 21;                                                                                        \
     std::vector<double> polfac{                                                                                       \

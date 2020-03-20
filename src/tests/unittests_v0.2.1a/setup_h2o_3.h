@@ -60,6 +60,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<double> polfac(n_sites, 0.0);                                                              \
     std::vector<double> pol(n_sites, 0.0);                                                                 \
     std::vector<std::string> monomer_names(n_monomers, "h2o");                                             \
+    std::vector<size_t> islocal = {1, 1, 1};                                                               \
     std::vector<double> charges{0.0000000000e+00, 5.7769308798e-01, 5.7615998121e-01, -1.1538530692e+00,   \
                                 0.0000000000e+00, 5.7663564934e-01, 5.7823701694e-01, -1.1548726663e+00,   \
                                 0.0000000000e+00, 5.7859034043e-01, 5.7709162608e-01, -1.1556819665e+00};  \
