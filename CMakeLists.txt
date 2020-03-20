@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12.4 FATAL_ERROR)  # 3.3: EP_add(DEPENDS interf
 cmake_policy(SET CMP0048 NEW)
 
 project(MBX
-        VERSION 0.2.1
+        VERSION 0.2.3
         LANGUAGES C CXX)
 
 set(PN ${PROJECT_NAME})
@@ -32,6 +32,7 @@ option_with_flags(ENABLE_XHOST "Enables processor-specific optimization" ON
 option_with_default(CMAKE_BUILD_TYPE "Build type (Release or Debug)" Release)
 option_with_default(CMAKE_INSTALL_LIBDIR "Directory to which libraries installed" "${PROJECT_SOURCE_DIR}/install/lib")
 option_with_default(CMAKE_INSTALL_OBJDIR "Directory to which objects are installed" "${PROJECT_SOURCE_DIR}/install/obj")
+option_with_default(CMAKE_INSTALL_UNITTESTS "Directory to which unittests are installed" "${PROJECT_SOURCE_DIR}/install/bin/unittests")
 option_with_default(CMAKE_INSTALL_INCLUDEDIR "Directory to which include files are installed" "${PROJECT_SOURCE_DIR}/install/include")
 option_with_default(PYMOD_INSTALL_LIBDIR "Location within CMAKE_INSTALL_LIBDIR to which python modules are installed" /)
 option_with_default(ENABLE_GENERIC "Enables mostly static linking of system libraries for shared library" OFF)
@@ -87,6 +88,7 @@ ExternalProject_Add(MBX-core
               -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
               -DCMAKE_INSTALL_OBJDIR=${CMAKE_INSTALL_OBJDIR}
               -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
+              -DCMAKE_INSTALL_UNITTESTS=${CMAKE_INSTALL_UNITTESTS}
               -DCMAKE_INSTALL_DATADIR=${CMAKE_INSTALL_DATADIR}
               -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
               -DCMAKECONFIG_INSTALL_DIR=${CMAKECONFIG_INSTALL_DIR}

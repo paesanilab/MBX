@@ -5,6 +5,7 @@ set(FF_SOURCES angles.cpp
                topology.cpp
                energyff.cpp 
                calculators.cpp  
+               connectivity.cpp
 )
 
 add_library(ff OBJECT ${FF_SOURCES})

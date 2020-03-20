@@ -51,7 +51,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
 #include "tools/custom_exceptions.h"
-#include "bblock/connectivity.h"
+#include "potential/force_field/connectivity.h"
 
 // Potential
 // Force Field
@@ -439,10 +439,14 @@ class System {
      * @param[in] id Is a string that contains the identity of the monomer
      * @warning The monomer coordinates and atoms must be in the same order
      * as the database.
+     * @param[in] islocal Is an optional int that indicates whether a monomer
+     * is local or ghost within a LAMMPS sub-domain
+     * @warning The monomer coordinates and atoms must be in the same order
+     * as the database.
      * The id must also match with the database.
      * Please read the documentation carefully.
      */
-    void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id);
+     void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1);
 
     /**
      * Adds a molecule to the system. A molecule, in the context of this
@@ -508,6 +512,12 @@ class System {
      * @param[in] json_file Is the json formatted file with the system specifications
      **/
     void SetUpFromJson(char *json_file = 0);
+
+    /**
+     * Sets up the json configuration through a string.
+     * @param[in] json_text Literal string with the json configuration
+     **/
+    void SetUpFromJson(std::string json_text);
 
     /**
      * Sets up all the parameters that are specified in a json object
@@ -629,7 +639,8 @@ to be the same.
      * @param[in] connectivity_map A map with monomer id as values and
      * connectivity objects for keys
      */
-    static void SetConnectivity(std::unordered_map<std::string, connectivity::Conn> connectivity_map);
+    void SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map);
+    // static void SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map);
 
     /////////////////////////////////////////////////////////////////////////////
     // Energy Functions /////////////////////////////////////////////////////////
@@ -670,9 +681,11 @@ to be the same.
      * Gradients will be ONLY for the two-body part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
      * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return Two-body energy of the system
      */
-    double TwoBodyEnergy(bool do_grads);
+    double TwoBodyEnergy(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the three-body energy. This is the sum of all the 3B
@@ -680,9 +693,11 @@ to be the same.
      * Gradients will be ONLY for the three-body part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
      * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return Three-body energy of the system
      */
-    double ThreeBodyEnergy(bool do_grads);
+    double ThreeBodyEnergy(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the electrostatic energy. This is the sum of the permanent
@@ -701,7 +716,7 @@ to be the same.
      * the gradient calculation will not be performed
      * @return Dispersion energy of the system
      */
-    double Dispersion(bool do_grads);
+     double Dispersion(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the buckingham energy for the whole system.
@@ -723,7 +738,7 @@ to be the same.
      * @param[in] istart Minimum index of i
      * @param[in] iend Maximum index (iend not included) of index i
      */
-    void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend);
+    void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
 
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -736,7 +751,8 @@ to be the same.
      * @param[in] iend Maximum index (iend not included) of index i
      * @return Vector of size_t with dimention nclusters * nmax
      */
-    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend);
+    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+					    bool use_ghost = false);
 
     /**
      * Fills in the monomer information of the monomers that have been
@@ -794,18 +810,22 @@ to be the same.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
      * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return  Two-body energy of the system
      */
-    double Get2B(bool do_grads);
+    double Get2B(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the 3b energy.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
      * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return  Three-body energy of the system
      */
-    double Get3B(bool do_grads);
+    double Get3B(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the electrostatic energy.
@@ -821,9 +841,11 @@ to be the same.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
      * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return  Dispersion energy of the system
      */
-    double GetDispersion(bool do_grads);
+     double GetDispersion(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the buckinham energy.
@@ -1066,6 +1088,12 @@ to be the same.
      * of the system
      */
     std::vector<std::string> monomers_;
+  
+    /**
+     * Vector that stores local/ghost descriptor for monomer in the internal order
+     * of the system
+     */
+    std::vector<size_t> islocal_;
 
     /**
      * Vector that stores the atom names of all sites in the internal order
@@ -1141,7 +1169,9 @@ to be the same.
     /**
      * Vector that holds the connectivity of each monomer type
      */
-    static std::unordered_map<std::string, connectivity::Conn> connectivity_map_;
+    std::unordered_map<std::string, eff::Conn> connectivity_map_;
+    //static std::unordered_map<std::string, eff::Conn> connectivity_map_;
+
 };
 
 }  // namespace bblock

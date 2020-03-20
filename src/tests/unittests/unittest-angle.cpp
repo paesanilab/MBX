@@ -52,37 +52,39 @@ TEST_CASE("Test dummy h4 angles") {
 
     SECTION("Angle-harmonic") {
         std::string functional_form = "harm";
-        Angles obj(angle_connectivity, angle_index, functional_form);
-        obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-        SECTION("Harmonic Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_harm_energy).margin(TOL)); }
+        eff::Angles angle(angle_connectivity, angle_index, functional_form);
+        angle.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+        SECTION("Harmonic Energy") { REQUIRE(angle.GetEnergy(theta) == Approx(ff_angles_harm_energy).margin(TOL)); }
         SECTION("Harmonic Gradient") {
-            REQUIRE(obj.GetTopologyGradient(theta) == Approx(ff_angles_harm_grad).margin(TOL));
+            REQUIRE(angle.GetTopologyGradient(theta) == Approx(ff_angles_harm_grad).margin(TOL));
         }
     }
 
     SECTION("Angle-quartic") {
         std::string functional_form = "quartic";
-        Angles obj(angle_connectivity, angle_index, functional_form);
-        obj.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
-        SECTION("Quartic Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_quartic_energy).margin(TOL)); }
+        eff::Angles angle(angle_connectivity, angle_index, functional_form);
+        angle.SetParameters(quartic_linear_parameters, quartic_nonlinear_parameters);
+        SECTION("Quartic Energy") { REQUIRE(angle.GetEnergy(theta) == Approx(ff_angles_quartic_energy).margin(TOL)); }
         SECTION("Quartic Gradient") {
-            REQUIRE(obj.GetTopologyGradient(theta) == Approx(ff_angles_quartic_grad).margin(TOL));
+            REQUIRE(angle.GetTopologyGradient(theta) == Approx(ff_angles_quartic_grad).margin(TOL));
         }
     }
 
     SECTION("Angle-none") {
         std::string functional_form = "none";
-        Angles obj(angle_connectivity, angle_index, functional_form);
-        obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
-        SECTION("None Energy") { REQUIRE(obj.GetEnergy(theta) == Approx(ff_angles_none_energy).margin(TOL)); }
-        SECTION("None Gradient") { REQUIRE(obj.GetTopologyGradient(theta) == Approx(ff_angles_none_grad).margin(TOL)); }
+        eff::Angles angle(angle_connectivity, angle_index, functional_form);
+        angle.SetParameters(none_linear_parameters, none_nonlinear_parameters);
+        SECTION("None Energy") { REQUIRE(angle.GetEnergy(theta) == Approx(ff_angles_none_energy).margin(TOL)); }
+        SECTION("None Gradient") {
+            REQUIRE(angle.GetTopologyGradient(theta) == Approx(ff_angles_none_grad).margin(TOL));
+        }
     }
 
     SECTION("Angle-undefined-func-form") {
         std::string functional_form = "abcd";
         bool not_possible_to_setup_angle = false;
         try {
-            Angles obj(angle_connectivity, angle_index, functional_form);
+            eff::Angles angle(angle_connectivity, angle_index, functional_form);
         } catch (CUException &e) {
             not_possible_to_setup_angle = true;
         }

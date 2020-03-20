@@ -132,6 +132,7 @@ before_script:
   - mv install install_OpenMP
 
 script:
+  - export OMP_NUM_THREADS=1
   - cp -r install_noOpenMP install
   - cd tests
   - ./run_tests.sh
@@ -142,7 +143,7 @@ script:
   - cd tests
   - ./run_tests.sh
   - cd ../
-  - cd build/MBX-core-prefix/src/MBX-core-build/tests/unittests
+  - cd install/bin/unittests
   - ctest
 
 notifications:

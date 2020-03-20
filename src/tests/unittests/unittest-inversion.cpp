@@ -52,25 +52,25 @@ TEST_CASE("Test dummy h4 inversion") {
 
     SECTION("Inversion-harmonic") {
         std::string functional_form = "harm";
-        Inversion obj(inversion_connectivity, inversion_indexes, functional_form);
-        obj.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+        eff::Inversion inversion(inversion_connectivity, inversion_indexes, functional_form);
+        inversion.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
         SECTION("Harmonic Energy") {
-            REQUIRE(obj.GetEnergy(inversion_phi) == Approx(ff_inversion_harm_energy).margin(TOL));
+            REQUIRE(inversion.GetEnergy(inversion_phi) == Approx(ff_inversion_harm_energy).margin(TOL));
         }
         SECTION("Harmonic Gradient") {
-            REQUIRE(obj.GetTopologyGradient(inversion_phi) == Approx(ff_inversion_harm_grad).margin(TOL));
+            REQUIRE(inversion.GetTopologyGradient(inversion_phi) == Approx(ff_inversion_harm_grad).margin(TOL));
         }
     }
 
     SECTION("Inversion-none") {
         std::string functional_form = "none";
-        Inversion obj(inversion_connectivity, inversion_indexes, functional_form);
-        obj.SetParameters(none_linear_parameters, none_nonlinear_parameters);
+        eff::Inversion inversion(inversion_connectivity, inversion_indexes, functional_form);
+        inversion.SetParameters(none_linear_parameters, none_nonlinear_parameters);
         SECTION("None Energy") {
-            REQUIRE(obj.GetEnergy(inversion_phi) == Approx(ff_inversion_none_energy).margin(TOL));
+            REQUIRE(inversion.GetEnergy(inversion_phi) == Approx(ff_inversion_none_energy).margin(TOL));
         }
         SECTION("None Gradient") {
-            REQUIRE(obj.GetTopologyGradient(inversion_phi) == Approx(ff_inversion_none_grad).margin(TOL));
+            REQUIRE(inversion.GetTopologyGradient(inversion_phi) == Approx(ff_inversion_none_grad).margin(TOL));
         }
     }
 
@@ -78,7 +78,7 @@ TEST_CASE("Test dummy h4 inversion") {
         std::string functional_form = "abcd";
         bool not_possible_to_setup_inversion = false;
         try {
-            Inversion obj(inversion_connectivity, inversion_indexes, functional_form);
+            eff::Inversion inversion(inversion_connectivity, inversion_indexes, functional_form);
         } catch (CUException &e) {
             not_possible_to_setup_inversion = true;
         }

@@ -57,6 +57,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                     5.7674150000e-01, 0.0000000000e+00,  0.0000000000e+00,  4.0000000000e+00};         \
     std::vector<std::string> atom_names{"O", "H", "H", "F"};                                                           \
     std::vector<std::string> monomer_names = {"h2o", "f"};                                                             \
+    std::vector<size_t> islocal = {1, 1};
     std::vector<size_t> n_atoms_vector = {3, 1};                                                                       \
     std::vector<size_t> n_sites_vector = {4, 1};                                                                       \
     std::vector<size_t> first_index = {0, 4};                                                                          \

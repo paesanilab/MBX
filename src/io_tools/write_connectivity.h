@@ -45,7 +45,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include "potential/force_field/angles.h"
 #include "potential/force_field/bond.h"
-#include "bblock/connectivity.h"
+#include "potential/force_field/connectivity.h"
 #include "tools/custom_exceptions.h"
 #include "potential/force_field/dihedral.h"
 #include "potential/force_field/inversion.h"
@@ -98,7 +98,7 @@ namespace tools {
  * @param[in] connectivity_map Hashmap with the monomer id as the keys and the
  * connectivity objects as values.
  */
-void WriteConnectivity(char* filename, std::unordered_map<std::string, connectivity::Conn> connectivity_map);
+void WriteConnectivity(char* filename, std::unordered_map<std::string, eff::Conn> connectivity_map);
 
 /**
  * @brief Helper function that saves the connectivity map object in an output
@@ -107,7 +107,7 @@ void WriteConnectivity(char* filename, std::unordered_map<std::string, connectiv
  * @param[in] connectivity_map Hashmap with the monomer id as the keys and the
  * connectivity objects as values.
  */
-void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connectivity::Conn> connectivity_map);
+void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, eff::Conn> connectivity_map);
 
 /**
  * @brief Helper function that writes out the parameters

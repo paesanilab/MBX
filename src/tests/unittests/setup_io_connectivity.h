@@ -39,7 +39,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/force_field/inversion.h"
 #include "potential/force_field/dihedral.h"
 #include "potential/force_field/topology.h"
-#include "bblock/connectivity.h"
+#include "potential/force_field/connectivity.h"
 #include <vector>
 #include "tools/custom_exceptions.h"
 #include "setup_connectivity.h"
@@ -55,13 +55,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  * compared
  */
 
-// First connectivity
+// Import first connectivity
 SETUP_CONNECTIVITY
 
-#define SETUP_IO_CONNECTIVITY                                                           \
-    Bond bond2 = Bond("bond", std::vector<size_t>{8, 3}, "harm");                       \
-    Angles angle2 = Angles("angle", std::vector<size_t>{5, 3, 4}, "quartic");           \
-    Angles angle3 = Angles("angle", std::vector<size_t>{2, 3, 6}, "harm");              \
-    Dihedral dihedral2 = Dihedral("dihedral", std::vector<size_t>{2, 1, 6, 4}, "hcos"); \
-    Inversion inversion2 = Inversion("inversion", std::vector<size_t>{4, 1, 2, 3}, "harm");
+#define SETUP_IO_CONNECTIVITY                                                         \
+    eff::Bond mon2_bond("bond", std::vector<size_t>{8, 3}, "harm");                   \
+    eff::Angles mon2_angle1("angle", std::vector<size_t>{5, 3, 4}, "quartic");        \
+    eff::Angles mon2_angle2("angle", std::vector<size_t>{2, 3, 6}, "harm");           \
+    eff::Dihedral mon2_dihedral("dihedral", std::vector<size_t>{2, 1, 6, 4}, "hcos"); \
+    eff::Inversion mon2_inversion("inversion", std::vector<size_t>{4, 1, 2, 3}, "harm");
 #endif

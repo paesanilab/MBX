@@ -42,7 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace tools {
 
-void WriteConnectivity(char* filename, std::unordered_map<std::string, connectivity::Conn> connectivity_map) {
+void WriteConnectivity(char* filename, std::unordered_map<std::string, eff::Conn> connectivity_map) {
     // Ensure that filename is not empty
     assert(filename);
 
@@ -55,21 +55,21 @@ void WriteConnectivity(char* filename, std::unordered_map<std::string, connectiv
     return;
 }
 
-void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connectivity::Conn> connectivity_map) {
+void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, eff::Conn> connectivity_map) {
     // Loop over all of the keys and values in the map
-    for (auto it = connectivity_map.begin(); it != connectivity_map.end(); it++) {
+    for (auto conn_iter = connectivity_map.begin(); conn_iter != connectivity_map.end(); conn_iter++) {
         // Write the mon_id
-        os << it->first << std::endl;
-        connectivity::Conn obj = it->second;
+        os << conn_iter->first << std::endl;
+        eff::Conn curr_conn = conn_iter->second;
         // Write the bonds, angles, dihedrals, and inversions
-        std::vector<Bond> bonds = obj.GetBondVec();
+        std::vector<eff::Bond> bonds = curr_conn.GetBondVec();
         // Loop over all the bond objects
         for (auto bond = bonds.begin(); bond != bonds.end(); bond++) {
             os << bond->GetTopology() << " ";
             std::vector<size_t> indexes = bond->GetIndexes();
 
             // Loop over indexes
-            for (std::size_t idx : indexes) {
+            for (size_t idx : indexes) {
                 os << idx << " ";
             }
 
@@ -83,14 +83,14 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << std::endl;
         }
 
-        std::vector<Angles> angles = obj.GetAnglesVec();
+        std::vector<eff::Angles> angles = curr_conn.GetAnglesVec();
         // Loop over all the angle objects
         for (auto angle = angles.begin(); angle != angles.end(); angle++) {
             os << angle->GetTopology() << " ";
             std::vector<size_t> indexes = angle->GetIndexes();
 
             // Loop over indexes
-            for (std::size_t idx : indexes) {
+            for (size_t idx : indexes) {
                 os << idx << " ";
             }
 
@@ -104,14 +104,14 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << std::endl;
         }
 
-        std::vector<Dihedral> dihedrals = obj.GetDihedralVec();
+        std::vector<eff::Dihedral> dihedrals = curr_conn.GetDihedralVec();
         // Loop over all the angle objects
         for (auto dihedral = dihedrals.begin(); dihedral != dihedrals.end(); dihedral++) {
             os << dihedral->GetTopology() << " ";
             std::vector<size_t> indexes = dihedral->GetIndexes();
 
             // Loop over indexes
-            for (std::size_t idx : indexes) {
+            for (size_t idx : indexes) {
                 os << idx << " ";
             }
 
@@ -124,13 +124,13 @@ void SaveConnectivity(std::ostream& os, std::unordered_map<std::string, connecti
             os << std::endl;
         }
 
-        std::vector<Inversion> inversions = obj.GetInversionVec();
+        std::vector<eff::Inversion> inversions = curr_conn.GetInversionVec();
         for (auto inversion = inversions.begin(); inversion != inversions.end(); inversion++) {
             os << inversion->GetTopology() << " ";
             std::vector<size_t> indexes = inversion->GetIndexes();
 
             // Loop over indexes
-            for (std::size_t idx : indexes) {
+            for (size_t idx : indexes) {
                 os << idx << " ";
             }
 
@@ -151,19 +151,6 @@ void WriteParameters(std::ostream& os, std::vector<double>& linear_parameters,
                      std::vector<double>& nonlinear_parameters, std::string functional_form) {
     os << std::scientific;
     os << std::setprecision(3);
-
-    // Check all values in linear and non-linear and set to 0 if the value is too small
-    for (int i = 0; i < linear_parameters.size(); i++) {
-        if (linear_parameters[i] < 0.00000000001 && linear_parameters[i] > -0.00000000001) {
-            linear_parameters[i] = 0.0;
-        }
-    }
-
-    for (int i = 0; i < nonlinear_parameters.size(); i++) {
-        if (nonlinear_parameters[i] < 0.00000000001 && nonlinear_parameters[i] > -0.00000000001) {
-            nonlinear_parameters[i] = 0.0;
-        }
-    }
 
     if (functional_form == "harm" || functional_form == "hcos") {
         os << linear_parameters[0] << " ";

@@ -122,7 +122,7 @@ double mbnrg_A1_B1_deg15_v1::f_switch(const double r, double& g)
 
 //----------------------------------------------------------------------------//
 
-double mbnrg_A1_B1_deg15_v1::eval(const double *xyz1, const double *xyz2, double *grad1, double *grad2 , const size_t n) {
+double mbnrg_A1_B1_deg15_v1::eval(const double *xyz1, const double *xyz2, double *grad1, double *grad2 , const size_t n, std::vector<double> *virial) {
     std::vector<double> energies(n,0.0);
     std::vector<double> energies_sw(n,0.0);
 
@@ -207,6 +207,33 @@ double mbnrg_A1_B1_deg15_v1::eval(const double *xyz1, const double *xyz2, double
         for (size_t i = 0; i < 3; i++) {
             grad2[i + j*3] += gradients[3 + i];
         }
+
+        if (virial != 0) {
+         
+            (*virial)[0] += -coords_A_1_a[0]* coords_A_1_a_g[0]
+                            -coords_B_1_b[0]* coords_B_1_b_g[0];
+         
+            (*virial)[1] += -coords_A_1_a[0]* coords_A_1_a_g[1]
+                            -coords_B_1_b[0]* coords_B_1_b_g[1];
+         
+            (*virial)[2] += -coords_A_1_a[0]* coords_A_1_a_g[2]
+                            -coords_B_1_b[0]* coords_B_1_b_g[2];
+         
+            (*virial)[4] += -coords_A_1_a[1]* coords_A_1_a_g[1]
+                            -coords_B_1_b[1]* coords_B_1_b_g[1];
+         
+            (*virial)[5] += -coords_A_1_a[1]* coords_A_1_a_g[2]
+                            -coords_B_1_b[1]* coords_B_1_b_g[2];
+         
+            (*virial)[8] += -coords_A_1_a[2]* coords_A_1_a_g[2]
+                            -coords_B_1_b[2]* coords_B_1_b_g[2];
+        
+            (*virial)[3]=(*virial)[1];
+            (*virial)[6]=(*virial)[2];
+            (*virial)[7]=(*virial)[5];
+        
+        }
+
 
 
     }

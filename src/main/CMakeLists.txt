@@ -1,10 +1,15 @@
-add_executable(MBX MBX.cpp)
-target_include_directories(MBX PRIVATE ${CMAKE_SOURCE_DIR})
-target_include_directories(MBX PRIVATE ${CMAKE_SOURCE_DIR}/../external/)
+add_executable(single_point single_point.cpp)
+add_executable(optimize optimize.cpp)
 
-target_link_libraries(MBX mbx)
+foreach(t single_point optimize)
+target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR})
+target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR}/../external/)
 
-install(TARGETS MBX
-        RUNTIME DESTINATION bin
+target_link_libraries(${t} mbxlib)
+
+
+install(TARGETS ${t}
+        RUNTIME DESTINATION bin/main
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib/static)
+endforeach()

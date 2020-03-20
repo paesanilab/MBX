@@ -45,7 +45,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include "potential/force_field/angles.h"
 #include "potential/force_field/bond.h"
-#include "bblock/connectivity.h"
+#include "potential/force_field/connectivity.h"
 #include "tools/custom_exceptions.h"
 #include "potential/force_field/dihedral.h"
 #include "potential/force_field/inversion.h"
@@ -96,16 +96,19 @@ namespace tools {
 /**
  * Reads a connectivity file into a connectivity map and sets it in system
  * @param[in] filename Name of the connectivity file
+ * @param[out] systems Vector of systems that will be filled with
+ * the information in the file
  */
-void ReadConnectivity(char* filename);
+void ReadConnectivity(char* filename, std::vector<bblock::System>& systems);
 
 /**
- * Reads a connectivity file into the given connectivity map and returns it
+ * Reads a connectivity file into the given connectivity map and returns it.
+ * Used primarily to write unit tests
  * @param[in] filename Name of the connectivity file
  * @param[in, out] connectivity_map reference to connectivity map that needs to be
  * filled
  */
-void ReadConnectivity(char* filename, std::unordered_map<std::string, connectivity::Conn>& connectivity_map);
+void ReadConnectivity(char* filename, std::unordered_map<std::string, eff::Conn>& connectivity_map);
 
 /**
  * Helper function that gets the main connectivity.
@@ -113,7 +116,7 @@ void ReadConnectivity(char* filename, std::unordered_map<std::string, connectivi
  * @param[out] connectivity_map where keys are mon_id and values are
  * connectivity objects
  */
-std::unordered_map<std::string, connectivity::Conn> GetConnectivity(std::ifstream& ifs);
+std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs);
 
 /**
  * Helper function to read the parameters

@@ -43,11 +43,9 @@
 #    unittest-inversion.cpp
 #    unittest-connectivity.cpp
 #    unittest-io-connectivity.cpp
+#    unittest-h4.cpp
 #)
 
-set( SOURCES_UNITTESTS_TESTS
-    unittest-h4.cpp
-)
 # Stuff below shouldn't need to be modified
 #
 
