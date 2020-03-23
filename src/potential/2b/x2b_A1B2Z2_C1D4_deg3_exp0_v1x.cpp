@@ -1186,6 +1186,7 @@ double x2b_A1B2Z2_C1D4_v1x::eval(const double* xyz1, const double* xyz2,
         // gradient of the switch
     
         gsw *= energies[j]/r12;
+        energies[j] *= sw;
         for (int i = 0; i < 3; ++i) {
             const double d = gsw*d12[i];
             grad1[i+j*9] += d;
