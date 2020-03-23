@@ -1155,16 +1155,17 @@ double System::Energy(bool do_grads) {
 
     // Call the get energy function
     allMonGood_ = true;
-    double eff = GetFF(do_grads);
-    // exit(1);  // TODO REMOVE ME
+
+    double eff = 0.0;
+    if (connectivity_map_.size() != 0) {
+        eff = GetFF(do_grads);
+    }
 
     // Get the NB contributions
 
 #ifdef TIMING
     auto t1 = std::chrono::high_resolution_clock::now();
 #endif
-
-    //allMonGood_ = true;
     double e1b = Get1B(do_grads);
 
     // If monomers are too distorted, skip 2b and 3b calculation
