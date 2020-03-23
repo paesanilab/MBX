@@ -52,7 +52,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace bblock {  // Building Block :: System
 
-//std::unordered_map<std::string, eff::Conn> bblock::System::connectivity_map_;
+// std::unordered_map<std::string, eff::Conn> bblock::System::connectivity_map_;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -862,15 +862,12 @@ void System::SetUpFromJson(nlohmann::json j) {
     SetPBC(box_);
 }
 
-nlohmann::json System::GetJsonConfig() {
-    return mbx_j_;
-}
+nlohmann::json System::GetJsonConfig() { return mbx_j_; }
 
 void System::SetUpFromJson(std::string json_text) {
-  nlohmann::json j = nlohmann::json::parse(json_text);
-  SetUpFromJson(j);
+    nlohmann::json j = nlohmann::json::parse(json_text);
+    SetUpFromJson(j);
 }
-
 
 void System::SetUpFromJson(char *json_file) {
     /* Template example for mbx.json
@@ -987,7 +984,7 @@ void System::AddMonomerInfo() {
         std::cerr << sites_[i] << " , ";
     }
     std::cerr << std::endl;
-    
+
     std::cerr << "Local/Ghost vector:\n";
     for (size_t i = 0; i < islocal_.size(); i++) {
         std::cerr << islocal_[i] << " , ";
@@ -1014,8 +1011,8 @@ void System::AddMonomerInfo() {
     }
 
     // Ordering monomers by monomer type, from less to more monomers of each type
-    mon_type_count_ = systools::OrderMonomers(monomers_, islocal_, sites_, nat_, original2current_order_, initial_order_,
-                                              initial_order_realSites_);
+    mon_type_count_ = systools::OrderMonomers(monomers_, islocal_, sites_, nat_, original2current_order_,
+                                              initial_order_, initial_order_realSites_);
 
 #ifdef DEBUG
     std::cerr << "Finished OrderMonomers():\n";
@@ -1036,7 +1033,7 @@ void System::AddMonomerInfo() {
         std::cerr << islocal_[i] << " , ";
     }
     std::cerr << std::endl;
-    
+
     std::cerr << "Original2Current:\n";
     for (size_t i = 0; i < original2current_order_.size(); i++) {
         std::cerr << original2current_order_[i] << ",";
@@ -1109,10 +1106,12 @@ void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend,
     //}
 
     size_t nmon = monomers_.size();
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers_, trimers_, use_ghost_);
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers_,
+                          trimers_, use_ghost_);
 }
 
-std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost_) {
+std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+                                                bool use_ghost_) {
     // Overloaded function to be compatible with omp
     // Returns dimers if nmax == 2, or trimers if nmax == 3
 
@@ -1127,13 +1126,14 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
 
     size_t nmon = monomers_.size();
     std::vector<size_t> dimers, trimers;
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers, trimers, use_ghost_);
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers,
+                          trimers, use_ghost_);
     if (nmax == 2) return dimers;
     return trimers;
 }
 
 void System::SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map) {
-     connectivity_map_ = connectivity_map;
+    connectivity_map_ = connectivity_map;
 }
 
 double System::Energy(bool do_grads) {
@@ -1154,8 +1154,9 @@ double System::Energy(bool do_grads) {
     SetPBC(box_);
 
     // Call the get energy function
+    allMonGood_ = true;
     double eff = GetFF(do_grads);
-    exit(1);  // TODO REMOVE ME
+    // exit(1);  // TODO REMOVE ME
 
     // Get the NB contributions
 
@@ -1163,7 +1164,7 @@ double System::Energy(bool do_grads) {
     auto t1 = std::chrono::high_resolution_clock::now();
 #endif
 
-    allMonGood_ = true;
+    //allMonGood_ = true;
     double e1b = Get1B(do_grads);
 
     // If monomers are too distorted, skip 2b and 3b calculation
@@ -1212,7 +1213,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Set up energy with the new value
-    energy_ = e1b + e2b + e3b + edisp + ebuck + Eelec;
+    energy_ = eff + e1b + e2b + e3b + edisp + ebuck + Eelec;
 
 #ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(10) << std::scientific;
@@ -1327,8 +1328,8 @@ double System::GetFF(bool do_grads) {
                 // EY: Overloaded function to get BOTH gradient and virial.
                 // EY: Note: grad2 is passed by reference.
                 try {
-                    eff += ff::get_ff_energy(bblock::System::connectivity_map_.at(mon), nmon, xyz, grad2, allMonGood_,
-                                             nat_[curr_mon_type], &virial_);
+                    eff += eff::get_ff_energy(bblock::System::connectivity_map_.at(mon), nmon, xyz, grad2, allMonGood_,
+                                              nat_[curr_mon_type], &virial_);
                 } catch (const std::exception &e) {
                     std::string text =
                         std::string("Monomer id not contained in connectivity map. System monomer id given is: ") +
@@ -1347,8 +1348,8 @@ double System::GetFF(bool do_grads) {
             } else {
                 try {
                     // EY: ONLY get the energy
-                    eff += ff::get_ff_energy(bblock::System::connectivity_map_.at(mon), nmon, xyz, allMonGood_,
-                                             nat_[curr_mon_type]);
+                    eff += eff::get_ff_energy(bblock::System::connectivity_map_.at(mon), nmon, xyz, allMonGood_,
+                                              nat_[curr_mon_type]);
                 } catch (const std::exception &e) {
                     std::string text =
                         std::string("Monomer id not contained in connectivity map. System monomer id given is: ") +
@@ -1375,7 +1376,7 @@ double System::Get1B(bool do_grads) {
     size_t curr_mon_type = 0;
     size_t current_coord = 0;
     double e1b = 0.0;
-    
+
     size_t indx = 0;
     for (size_t k = 0; k < mon_type_count_.size(); k++) {
         // Useful variables
@@ -1384,9 +1385,9 @@ double System::Get1B(bool do_grads) {
         while (istart < mon_type_count_[k].second) {
             iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
             size_t nmon = 0;
-	    for(size_t i = istart; i < iend; i++) 
-	      if(islocal_[indx + i]) nmon++;
-	    
+            for (size_t i = istart; i < iend; i++)
+                if (islocal_[indx + i]) nmon++;
+
             size_t ncoord = 3 * nat_[curr_mon_type] * nmon;
             std::string mon = mon_type_count_[k].first;
 
@@ -1395,14 +1396,14 @@ double System::Get1B(bool do_grads) {
             std::vector<double> grad2(ncoord, 0.0);
 
             // Set up real coordinates
-	    size_t ii = istart;
+            size_t ii = istart;
             for (size_t i = istart; i < iend; i++) {
-	      if(islocal_[indx+i]) {
-		std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
-                          xyz_.begin() + current_coord + 3 * (i * sites_[curr_mon_type] + nat_[curr_mon_type]),
-                          xyz.begin() + 3 * (ii - istart) * nat_[curr_mon_type]);
-		ii++;
-	      }
+                if (islocal_[indx + i]) {
+                    std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
+                              xyz_.begin() + current_coord + 3 * (i * sites_[curr_mon_type] + nat_[curr_mon_type]),
+                              xyz.begin() + 3 * (ii - istart) * nat_[curr_mon_type]);
+                    ii++;
+                }
             }
 
             // Get energy of the chunk as function of monomer
@@ -1410,15 +1411,15 @@ double System::Get1B(bool do_grads) {
                 e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, allMonGood_, &virial_);
 
                 // Reorganize gradients
-		size_t ii = 0;
-                for (size_t i = istart; i <iend ; i++) {
-		  if(islocal_[indx + i]) {
-                    for (size_t j = 0; j < 3 * nat_[curr_mon_type]; j++) {
-                        grad_[current_coord + 3 * (ii + istart) * sites_[curr_mon_type] + j] +=
-                            grad2[3 * ii * nat_[curr_mon_type] + j];
+                size_t ii = 0;
+                for (size_t i = istart; i < iend; i++) {
+                    if (islocal_[indx + i]) {
+                        for (size_t j = 0; j < 3 * nat_[curr_mon_type]; j++) {
+                            grad_[current_coord + 3 * (ii + istart) * sites_[curr_mon_type] + j] +=
+                                grad2[3 * ii * nat_[curr_mon_type] + j];
+                        }
+                        ii++;
                     }
-		    ii++;
-		  }
                 }
             } else {
                 e1b += e1b::get_1b_energy(mon, nmon, xyz, allMonGood_);
@@ -1430,9 +1431,9 @@ double System::Get1B(bool do_grads) {
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
         curr_mon_type += mon_type_count_[k].second;
-	indx = iend;
+        indx = iend;
     }
-    
+
     return e1b;
 }
 
@@ -1660,8 +1661,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
 #endif
 
         // Condensate gradients
-	//	const double scale = use_ghost ? 0.5 : 1.0;
-	const double scale = 1.0; // only accumulate force on local particles in LAMMPS
+        //	const double scale = use_ghost ? 0.5 : 1.0;
+        const double scale = 1.0;  // only accumulate force on local particles in LAMMPS
         for (int i = 0; i < num_threads; i++) {
             for (size_t j = first_grad; j < last_grad; j++) {
                 grad_[j] += scale * grad_pool[i][j];
@@ -1676,26 +1677,17 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     for (int i = 0; i < num_threads; i++) {
         e2b_t += e2b_pool[i];
     }
-<<<<<<< HEAD
-    // Condensate virial
-    for (int i = 0; i < num_threads; i++) {
-        for (size_t j = 0; j < 9; j++) {
-            virial_[j] += virial_pool[i][j];
-        }
-    }
-=======
-    if(use_ghost) e2b_t *= 0.5;
+
+    if (use_ghost) e2b_t *= 0.5;
     // Condensate virial
     const double scalev = use_ghost ? 0.5 : 1.0;
-    for (int i = 0; i < num_threads; i++) { 
-        for (size_t j = 0; j < 9; j++){          
+    for (int i = 0; i < num_threads; i++) {
+        for (size_t j = 0; j < 9; j++) {
             virial_[j] += scalev * virial_pool[i][j];
-        }                                        
-    }                                            
->>>>>>> b3a412038b8f34357499b5d2436cbf6db679bb08
+        }
+    }
 
-#ifdef DEBUG
-    std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
+#ifdef DEBUG std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
 #endif
 
     return e2b_t + edisp_t;
@@ -1721,12 +1713,12 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
     return energy_;
 }
 
-  double System::Get3B(bool do_grads, bool use_ghost) {
+double System::Get3B(bool do_grads, bool use_ghost) {
     // 3B ENERGY
     double e3b_t = 0.0;
 
     const double one_third = 1.0 / 3.0;
-    
+
     // Variables needed for OMP
     size_t step = 1;
     int num_threads = 1;
@@ -1803,10 +1795,10 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
         size_t nt = 0;
         size_t nt_tot = 0;
 
-	// if ghost monomers included, then force maxNTriEval == 1 to properly tally energy+virial
-	// should we just overwrite maxNTriEval_?
-	size_t _maxNTriEval = (use_ghost) ? 1 : maxNTriEval_;
-	
+        // if ghost monomers included, then force maxNTriEval == 1 to properly tally energy+virial
+        // should we just overwrite maxNTriEval_?
+        size_t _maxNTriEval = (use_ghost) ? 1 : maxNTriEval_;
+
         // Loop over all the trimers
         while (3 * nt_tot < trimers.size()) {
             i = (nt_tot + nt) * 3;
@@ -1863,7 +1855,7 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
                 }
 
                 if (use_poly) {
-  		    std::vector<double> xyz1(coord1.size(), 0.0);
+                    std::vector<double> xyz1(coord1.size(), 0.0);
                     std::vector<double> xyz2(coord2.size(), 0.0);
                     std::vector<double> xyz3(coord3.size(), 0.0);
                     std::copy(coord1.begin(), coord1.end(), xyz1.begin());
@@ -1877,16 +1869,13 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
                         std::vector<double> grad3(coord3.size(), 0.0);
                         std::vector<double> virial(9, 0.0);  // declare virial tensor
                         // POLYNOMIALS
-<<<<<<< HEAD
-                        e3b_pool[rank] +=
-                            e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-=======
-			double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+                        double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
 
-			double escale = 1.0;
-			if(use_ghost) escale = (islocal_[trimers[i]] + islocal_[trimers[i+1]] + islocal_[trimers[i+2]]) * one_third;
-			e3b_pool[rank] += escale * e;
->>>>>>> b3a412038b8f34357499b5d2436cbf6db679bb08
+                        double escale = 1.0;
+                        if (use_ghost)
+                            escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
+                                     one_third;
+                        e3b_pool[rank] += escale * e;
 
                         // Update gradients
                         size_t i0 = nt_tot * 3;
@@ -1908,21 +1897,18 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
                             }
                         }
                         // Virial Tensor
-<<<<<<< HEAD
                         for (size_t j = 0; j < 9; j++) {
-                            virial_pool[rank][j] += virial[j];
-=======
-                        for (size_t j=0; j<9; j++) {
                             virial_pool[rank][j] += escale * virial[j];
->>>>>>> b3a412038b8f34357499b5d2436cbf6db679bb08
                         }
 
                     } else {
                         // POLYNOMIALS
-		        double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
-			double escale = 1.0;
-			if(use_ghost) escale = (islocal_[trimers[i]] + islocal_[trimers[i+1]] + islocal_[trimers[i+2]]) * one_third;
-			e3b_pool[rank] += escale * e;
+                        double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+                        double escale = 1.0;
+                        if (use_ghost)
+                            escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
+                                     one_third;
+                        e3b_pool[rank] += escale * e;
                     }
                 }
 
@@ -1963,7 +1949,7 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
 #ifdef _OPENMP
     }  // parallel
 #endif
-    
+
     // Condensate energy
     for (int i = 0; i < num_threads; i++) {
         e3b_t += e3b_pool[i];
@@ -2234,7 +2220,7 @@ double System::GetElectrostatics(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-  double System::GetDispersion(bool do_grads, bool use_ghost) {
+double System::GetDispersion(bool do_grads, bool use_ghost) {
     std::vector<double> xyz_real(3 * numat_);
 
     size_t count = 0;

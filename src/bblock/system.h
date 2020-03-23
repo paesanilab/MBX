@@ -446,7 +446,7 @@ class System {
      * The id must also match with the database.
      * Please read the documentation carefully.
      */
-     void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1);
+    void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1);
 
     /**
      * Adds a molecule to the system. A molecule, in the context of this
@@ -716,7 +716,7 @@ to be the same.
      * the gradient calculation will not be performed
      * @return Dispersion energy of the system
      */
-     double Dispersion(bool do_grads, bool use_ghost = 0);
+    double Dispersion(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the buckingham energy for the whole system.
@@ -752,7 +752,7 @@ to be the same.
      * @return Vector of size_t with dimention nclusters * nmax
      */
     std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
-					    bool use_ghost = false);
+                                            bool use_ghost = false);
 
     /**
      * Fills in the monomer information of the monomers that have been
@@ -845,7 +845,7 @@ to be the same.
      * only local monomers included (default)
      * @return  Dispersion energy of the system
      */
-     double GetDispersion(bool do_grads, bool use_ghost = 0);
+    double GetDispersion(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the buckinham energy.
@@ -1088,7 +1088,7 @@ to be the same.
      * of the system
      */
     std::vector<std::string> monomers_;
-  
+
     /**
      * Vector that stores local/ghost descriptor for monomer in the internal order
      * of the system
@@ -1170,8 +1170,7 @@ to be the same.
      * Vector that holds the connectivity of each monomer type
      */
     std::unordered_map<std::string, eff::Conn> connectivity_map_;
-    //static std::unordered_map<std::string, eff::Conn> connectivity_map_;
-
+    // static std::unordered_map<std::string, eff::Conn> connectivity_map_;
 };
 
 }  // namespace bblock
