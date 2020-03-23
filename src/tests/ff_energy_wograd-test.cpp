@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
         if (!ifs) {
             throw std::runtime_error("could not open connectivity file");
         }
-        tools::ReadConnectivity(argv[2]);
+        tools::ReadConnectivity(argv[2], systems);
     } catch (const std::exception& e) {
         std::cerr << " ** Error ** : " << e.what() << std::endl;
         return 1;

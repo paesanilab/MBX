@@ -1,28 +1,8 @@
-Add any new tests to this list or the one below!
+#Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
-    unittest-gas-electrostatics-mbpol.cpp
-    unittest-dispersion-gas-cutoff.cpp
-    unittest-dispersion-pme.cpp
-    unittest-gas-nbodyterms-mbpol.cpp
-    unittest-systools.cpp
-    unittest-system.cpp
-    unittest-mathtools.cpp
-    unittest-gas-nopolarization-findif.cpp
-    unittest-gas-withpolarization-findif.cpp
-    unittest-pme-nopolarization.cpp
-    unittest-pme-nopolarization-findif.cpp
-    unittest-pme-withpolarization.cpp
-    unittest-pme-withpolarization-findif.cpp
-    unittest-gamma.cpp
-    unittest-pbc-1b-mbpol-findif.cpp
-    unittest-pbc-2bpoly-mbpol-findif.cpp
-    unittest-pbc-dispersion-mbpol-findif.cpp
-    unittest-pbc-3bpoly-mbpol-findif.cpp
-    unittest-pbc-electrostatics-mbpol-findif.cpp
     unittest-h2o-f-dimer.cpp
     unittest-h2o-cl-dimer.cpp
     unittest-h2o-br-dimer.cpp
-    unittest-h2o-virial.cpp
     unittest-h2o-i-dimer.cpp
     unittest-h2o-li-dimer.cpp
     unittest-h2o-na-dimer.cpp
@@ -34,9 +14,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-h2o-h2o-k-trimer.cpp
     unittest-h2o-h2o-rb-trimer.cpp
     unittest-h2o-h2o-cs-trimer.cpp
-    unittest-co2-monomer.cpp
     unittest-ch4-monomer.cpp
-    unittest-dummy-monomer.cpp
     unittest-bond.cpp
     unittest-angle.cpp
     unittest-dihedral.cpp
