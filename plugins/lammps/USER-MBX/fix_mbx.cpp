@@ -76,6 +76,22 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     num_mols[i] = force->inumeric(FLERR,arg[iarg++]);
     strcpy(mol_names[i], arg[iarg++]);
   }
+
+  // process remaining optional keywords
+  
+  use_json = 0;
+  json_file = NULL;
+  
+  while(iarg < narg) {
+    if(strcmp(arg[iarg], "json") == 0) {
+      int len = strlen(arg[iarg++]);
+      use_json = 1;
+      json_file = new char[len];
+      strcpy(json_file, arg[iarg]);
+    }
+    
+    iarg++;
+  }
   
   mol_offset = NULL;
   memory->create(mol_offset, num_mol_types+1, "fixmbx:mol_offset");
@@ -104,7 +120,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     mol_offset[i+1] = mol_offset[i] + num_mols[i]*num_atoms_per_mol[i];
 
   if(comm->me == 0) {
-    printf("\n[MBX] # molecule types= %i\n",num_mol_types);
+    if(use_json) printf("\n[MBX] Using json_file= %s\n",json_file);
+    printf("[MBX] # molecule types= %i\n",num_mol_types);
     for(int i=0; i<num_mol_types; ++i)
       printf("[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n",i,num_mols[i],mol_names[i],mol_offset[i]);
     printf("\n");
@@ -140,6 +157,28 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   nlocal_rank3 = NULL;
   nlocal_disp3 = NULL;
 
+  // setup json, if requested
+
+  if(use_json) {
+
+    int size = 0;
+    if(me == 0) {
+      std::ifstream t(json_file);
+      t.seekg(0, std::ios::end);
+      size = t.tellg();
+      json_settings.resize(size);
+      t.seekg(0);
+      t.read(&json_settings[0], size);
+    }
+
+    MPI_Bcast(&size, 1, MPI_INT, 0, world);
+    if(me) json_settings.resize(size);
+
+    MPI_Bcast(&json_settings[0], size+1, MPI_CHAR, 0, world);
+  }
+
+  //  std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
+  
   memory->create(mbxt_count,      MBXT_NUM_TIMERS, "fixmbx:mbxt_count");
   memory->create(mbxt_time,       MBXT_NUM_TIMERS, "fixmbx:mbxt_time");
   memory->create(mbxt_time_start, MBXT_NUM_TIMERS, "fixmbx:mbxt_time_start");
@@ -697,8 +736,6 @@ void FixMBX::mbx_init()
     
   // } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
   //   error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
-  
-  ptr_mbx->SetPBC(box);
 
   // set MBX solvers
   
@@ -711,6 +748,11 @@ void FixMBX::mbx_init()
     //    ptr_mbx->Set2bCutoff(100.0);
     //  }
 
+    
+  if(use_json) ptr_mbx->SetUpFromJson(json_settings);
+  
+  ptr_mbx->SetPBC(box);
+  
   mbxt_stop(MBXT_INIT);
 }
 
@@ -948,6 +990,8 @@ void FixMBX::mbx_init_full()
   } else {
     ptr_mbx_full->Set2bCutoff(100.0);
   }
+  
+  if(use_json) ptr_mbx_full->SetUpFromJson(json_settings);
   
   //  printf("[MBX] Leaving mbx_init_full()\n");
   
