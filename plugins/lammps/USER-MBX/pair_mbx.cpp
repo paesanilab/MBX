@@ -35,6 +35,8 @@
 
 #include "domain.h"
 
+//#define _DEBUG
+
 using namespace LAMMPS_NS;
 using namespace MathConst;
 
@@ -48,6 +50,8 @@ PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
   no_virial_fdotr_compute = 1;
   
   mbx_total_energy = 0;
+
+  me = comm->me;
 
   // energy terms available to pair compute
   
@@ -84,7 +88,12 @@ void PairMBX::setup()
 /* ---------------------------------------------------------------------- */
 
 void PairMBX::compute(int eflag, int vflag)
-{  
+{
+#ifdef _DEBUG
+  MPI_Barrier(world);
+  printf("[MBX] (%i) Inside pair compute()\n",me);
+#endif
+  
   ev_init(eflag,vflag);
   
 #if 0
@@ -96,53 +105,69 @@ void PairMBX::compute(int eflag, int vflag)
   // compute energy+gradients in parallel
 
   bblock::System * ptr_mbx = fix_mbx->ptr_mbx;
+
+  double mbx_e2b_local, mbx_e2b_ghost;
+  double mbx_e3b_local, mbx_e3b_ghost;
   
   // compute energy
 
-  fix_mbx->mbxt_start(MBXT_E1B);
-  mbx_e1b = ptr_mbx->OneBodyEnergy(true);
-  fix_mbx->mbxt_stop(MBXT_E1B);
-  accumulate_f();
-
-  fix_mbx->mbxt_start(MBXT_E2B_LOCAL);
-  double mbx_e2b_local = ptr_mbx->TwoBodyEnergy(true);
-  fix_mbx->mbxt_stop(MBXT_E2B_LOCAL);
-  accumulate_f();
+  mbx_e1b  = 0.0;
+  mbx_e2b  = 0.0;
+  mbx_e3b  = 0.0;
   
-  fix_mbx->mbxt_start(MBXT_E2B_GHOST);
-  double mbx_e2b_ghost = ptr_mbx->TwoBodyEnergy(true, true);
-  fix_mbx->mbxt_stop(MBXT_E2B_GHOST);
-  accumulate_f();
-
-  mbx_e2b = mbx_e2b_local + mbx_e2b_ghost;
-
-  fix_mbx->mbxt_start(MBXT_E3B_LOCAL);
-  double mbx_e3b_local = ptr_mbx->ThreeBodyEnergy(true);
-  fix_mbx->mbxt_stop(MBXT_E3B_LOCAL);
-  accumulate_f();
+  mbx_e2b_local = 0.0;
+  mbx_e2b_ghost = 0.0;
+  mbx_e3b_local = 0.0;
+  mbx_e3b_ghost = 0.0;
   
-  fix_mbx->mbxt_start(MBXT_E3B_GHOST);
-  double mbx_e3b_ghost = ptr_mbx->ThreeBodyEnergy(true, true);
-  fix_mbx->mbxt_stop(MBXT_E3B_GHOST);
-  accumulate_f();
-
-  mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
-
-  // compute energy+gradients in serial on rank 0 for full system
-
   mbx_disp = 0.0;
   mbx_buck = 0.0;
   mbx_ele  = 0.0;
-
-#if 0
-  fix_mbx->mbxt_start(MBXT_DISP);
-  if(comm->me == 0) mbx_disp = ptr_mbx->Dispersion(true, true);
-  fix_mbx->mbxt_stop(MBXT_DISP);
-  accumulate_f();
-#endif
   
-  bblock::System * ptr_mbx_full = fix_mbx->ptr_mbx_full;
+  if(atom->nlocal) {
+  
+    fix_mbx->mbxt_start(MBXT_E1B);
+    mbx_e1b = ptr_mbx->OneBodyEnergy(true);
+    fix_mbx->mbxt_stop(MBXT_E1B);
+    accumulate_f();
+    
+    fix_mbx->mbxt_start(MBXT_E2B_LOCAL);
+    mbx_e2b_local = ptr_mbx->TwoBodyEnergy(true);
+    fix_mbx->mbxt_stop(MBXT_E2B_LOCAL);
+    accumulate_f();
+    
+    fix_mbx->mbxt_start(MBXT_E2B_GHOST);
+    mbx_e2b_ghost = ptr_mbx->TwoBodyEnergy(true, true);
+    fix_mbx->mbxt_stop(MBXT_E2B_GHOST);
+    accumulate_f();
+    
+    mbx_e2b = mbx_e2b_local + mbx_e2b_ghost;
+    
+    fix_mbx->mbxt_start(MBXT_E3B_LOCAL);
+    mbx_e3b_local = ptr_mbx->ThreeBodyEnergy(true);
+    fix_mbx->mbxt_stop(MBXT_E3B_LOCAL);
+    accumulate_f();
+    
+    fix_mbx->mbxt_start(MBXT_E3B_GHOST);
+    mbx_e3b_ghost = ptr_mbx->ThreeBodyEnergy(true, true);
+    fix_mbx->mbxt_stop(MBXT_E3B_GHOST);
+    accumulate_f();
+    
+    mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
+    
+    // compute energy+gradients in serial on rank 0 for full system
+    
+#if 0
+    fix_mbx->mbxt_start(MBXT_DISP);
+    if(comm->me == 0) mbx_disp = ptr_mbx->Dispersion(true, true);
+    fix_mbx->mbxt_stop(MBXT_DISP);
+    accumulate_f();
+#endif
 
+  }
+    
+  bblock::System * ptr_mbx_full = fix_mbx->ptr_mbx_full;
+    
 #if 1
   fix_mbx->mbxt_start(MBXT_DISP);
   if(comm->me == 0) mbx_disp = ptr_mbx_full->Dispersion(true);
@@ -154,12 +179,12 @@ void PairMBX::compute(int eflag, int vflag)
   if(comm->me == 0) mbx_buck = ptr_mbx_full->Buckingham(true);
   fix_mbx->mbxt_stop(MBXT_BUCK);
   accumulate_f_full();
-
+  
   fix_mbx->mbxt_start(MBXT_ELE);
   if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
   fix_mbx->mbxt_stop(MBXT_ELE);
   accumulate_f_full();
-
+  
   mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
 
   // save total energy from mbx as vdwl
@@ -220,6 +245,9 @@ void PairMBX::compute(int eflag, int vflag)
   
 #endif
   
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving pair compute()\n",me);
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -228,6 +256,10 @@ void PairMBX::compute(int eflag, int vflag)
 
 void PairMBX::compute_full()
 {
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside pair compute_full()\n",me);
+#endif
   
   // Update coordinates in MBX library
 
@@ -283,6 +315,10 @@ void PairMBX::compute_full()
   // save total energy from mbx as vdwl
   
   eng_vdwl = mbx_total_energy;
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving pair compute_full()\n",me);
+#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -420,6 +456,10 @@ void *PairMBX::extract(const char *str, int &dim)
 
 void PairMBX::accumulate_f()
 {
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside pair accumulate_f()\n",me);
+#endif
+  
   fix_mbx->mbxt_start(MBXT_ACCUMULATE_F);
   
   bblock::System * ptr_mbx = fix_mbx->ptr_mbx;
@@ -492,6 +532,10 @@ void PairMBX::accumulate_f()
   }
   
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F);
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving pair accumulate_f()\n",me);
+#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -502,7 +546,9 @@ void PairMBX::accumulate_f_full()
 {
   fix_mbx->mbxt_start(MBXT_ACCUMULATE_F_FULL);
   
-  //  printf("[MBX] Inside accumulate_f_full()\n");
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside pair accumulate_f_full()\n",me);
+#endif
   
   // master rank retrieves forces
 
@@ -605,4 +651,8 @@ void PairMBX::accumulate_f_full()
   //  printf("[MBX] Leaving accumulate_f_full()\n");
   
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_FULL);
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving pair accumulate_f_full()\n",me);
+#endif
 }

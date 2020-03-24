@@ -33,6 +33,8 @@
 
 #define _MAX_SIZE_MOL_NAME 10
 
+//#define _DEBUG
+
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
@@ -303,9 +305,11 @@ void FixMBX::setup_post_neighbor()
 void FixMBX::post_neighbor()
 {
   // setup after neighbor build
-  
-  //  printf("\n[MBX] Inside post_neighbor()\n");
 
+#ifdef _DEBUG
+  printf("\n[MBX] (%i) Inside post_neighbor()\n",me);
+#endif
+  
   const int nlocal = atom->nlocal;
   const int nghost = atom->nghost;
   const int nall = nlocal + nghost;
@@ -364,6 +368,10 @@ void FixMBX::post_neighbor()
   
   mbx_init();
   mbx_init_full();
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving post_neighbor()\n",me);
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -557,13 +565,20 @@ int FixMBX::unpack_exchange(int nlocal, double *buf)
 void FixMBX::mbx_init()
 {
   mbxt_start(MBXT_INIT);
-  
-  //  printf("[MBX] Inside mbx_init()\n");
 
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside mbx_init()\n",me);
+#endif
+  
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
   tagint * tag = atom->tag;
   double ** x = atom->x;
+
+  if(nlocal == 0) {
+    mbxt_stop(MBXT_INIT);
+    return;
+  }
   
   std::vector<size_t> molec;
 
@@ -753,6 +768,10 @@ void FixMBX::mbx_init()
   
   ptr_mbx->SetPBC(box);
   
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving mbx_init()\n",me);
+#endif
+  
   mbxt_stop(MBXT_INIT);
 }
 
@@ -764,8 +783,10 @@ void FixMBX::mbx_init()
 void FixMBX::mbx_init_full()
 {
   mbxt_start(MBXT_INIT_FULL);
-  
-  //  printf("[MBX] Inside mbx_init_full()\n");
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside mbx_init_full()\n",me);
+#endif
 
   // gather data from other MPI ranks
   
@@ -992,8 +1013,10 @@ void FixMBX::mbx_init_full()
   }
   
   if(use_json) ptr_mbx_full->SetUpFromJson(json_settings);
-  
-  //  printf("[MBX] Leaving mbx_init_full()\n");
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving mbx_init_full()\n",me);
+#endif
   
   mbxt_stop(MBXT_INIT_FULL);
 }
@@ -1005,7 +1028,10 @@ void FixMBX::mbx_init_full()
 void FixMBX::mbx_update_xyz()
 {
   mbxt_start(MBXT_UPDATE_XYZ);
-  //  printf("[MBX] Inside mbx_update_xyz()\n");
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside mbx_update_xyz()\n",me);
+#endif
 
   // update if box changes
   // this box is currently non-periodic, nothing to update
@@ -1040,6 +1066,11 @@ void FixMBX::mbx_update_xyz()
   tagint * tag = atom->tag;
   double ** x = atom->x;
 
+  if(nlocal == 0) {
+    mbxt_stop(MBXT_UPDATE_XYZ);
+    return;
+  }
+  
   double ximage[3];
   
   std::vector<double> xyz(mbx_num_atoms*3);
@@ -1129,8 +1160,11 @@ void FixMBX::mbx_update_xyz()
   } // for(i<nall)
   
   ptr_mbx->SetRealXyz(xyz);
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving mbx_update_xyz()\n",me);
+#endif
   
-  //  printf("[MBX] Leaving mbx_update_xyz()\n");
   mbxt_stop(MBXT_UPDATE_XYZ);
 }
 
@@ -1141,8 +1175,10 @@ void FixMBX::mbx_update_xyz()
 void FixMBX::mbx_update_xyz_full()
 {
   mbxt_start(MBXT_UPDATE_XYZ_FULL);
-  
-  //  printf("[MBX] Inside mbx_update_xyz_full()\n");
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside mbx_update_xyz_full()\n",me);
+#endif
 
   // gather coordinates
   
@@ -1261,8 +1297,11 @@ void FixMBX::mbx_update_xyz_full()
   } // for(i<nall)
 
   ptr_mbx_full->SetRealXyz(xyz);
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving mbx_update_xyz_full()\n",me);
+#endif
   
-  //  printf("[MBX] Leaving mbx_update_xyz_full()\n");
   mbxt_stop(MBXT_UPDATE_XYZ_FULL);
 }
 
