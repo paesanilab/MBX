@@ -42,6 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
 static const double EMAX1B = 60.0;
+static const double EPSILON = 0.000000001;
 
 // Ignore mutual terms in the dipoles, for debugging
 #define DIRECT_ONLY 0
