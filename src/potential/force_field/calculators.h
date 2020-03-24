@@ -44,7 +44,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <sstream>
 #include <string>
 #include <vector>
+#include <math.h>
 #include "tools/custom_exceptions.h"
+#include "tools/definitions.h"
 
 /**
  * @file calculators.h
@@ -145,18 +147,6 @@ double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coo
 void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::vector<double> coor3,
                     std::vector<double> coor4, std::vector<size_t> indexes, double cummu_grad, double phi,
                     std::vector<double>& gradients, int mon_num, int nat, std::vector<double>& curr_force);
-
-/**
- * Helper function to compute grad_B for dihedral gradients. The sum formula is
- * defined as: [a b]alpha = sum(1-delta_alpha_beta) * a^beta * b^beta. See
- * equation 2.47 in dlpoly manual. Naming conventions also follow dlpoly manual
- *
- * @param[in]  a : first directional vector
- * @param[in]  b : second directional vector
- * @param[in]  alpha : int indicating which dimension we are on
- * @return The sum of the coordinate components
- */
-double SumComponents(std::vector<double> a, std::vector<double> b, int alpha);
 
 /**
  * @brief calculateCrossProduct Calculates the cross product between two sets

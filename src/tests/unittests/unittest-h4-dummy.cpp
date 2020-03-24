@@ -32,7 +32,7 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "setup_h4.h"
+#include "setup_h4_dummy.h"
 
 #include <vector>
 #include <iostream>
@@ -44,7 +44,7 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test monomer H4 energy terms") {
     // Create the system
-    SETUP_H4
+    SETUP_H4_DUMMY
 
     bond1.SetParameters(bond_harm_linear_parameters, bond_harm_nonlinear_parameters);
     bond2.SetParameters(bond_harm_linear_parameters, bond_harm_nonlinear_parameters);

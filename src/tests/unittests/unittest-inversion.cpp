@@ -34,7 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "testutils.h"
 
-#include "setup_h4_dummy.h"
+#include "setup_topology.h"
 #include "potential/force_field/inversion.h"
 #include "potential/force_field/topology.h"
 
@@ -48,7 +48,7 @@ constexpr double TOL = 1E-6;
 
 TEST_CASE("Test dummy h4 inversion") {
     // Create the system
-    SETUP_H4_DUMMY
+    SETUP_TOPOLOGY
 
     SECTION("Inversion-harmonic") {
         std::string functional_form = "harm";

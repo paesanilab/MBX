@@ -40,21 +40,31 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace eff {
 
-const double pi = 3.14159265358979323846;
+const double pi = M_PI;
 
 double CalculateDistance(std::vector<double> coor1, std::vector<double> coor2) {
-    double x1 = coor1[0];
-    double x2 = coor2[0];
-    double y1 = coor1[1];
-    double y2 = coor2[1];
-    double z1 = coor1[2];
-    double z2 = coor2[2];
+    // double x1 = coor1[0];
+    // double x2 = coor2[0];
+    // double y1 = coor1[1];
+    // double y2 = coor2[1];
+    // double z1 = coor1[2];
+    // double z2 = coor2[2];
 
-    return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
+    double distance = 0.0;
+    for (size_t i = 0; i < 3; i++) {
+        distance += (coor2[i] - coor1[i]) * (coor2[i] - coor1[i]);
+    }
+
+    return sqrt(distance);
+
+    // return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
 }
 
 double CalculateDistance(std::vector<double> directional_vec) {
-    return sqrt(pow(directional_vec[0], 2) + pow(directional_vec[1], 2) + pow(directional_vec[2], 2));
+    return sqrt(directional_vec[0] * directional_vec[0] + directional_vec[1] * directional_vec[1] +
+                directional_vec[2] * directional_vec[2]);
+
+    // return sqrt(pow(directional_vec[0], 2) + pow(directional_vec[1], 2) + pow(directional_vec[2], 2));
 }
 
 double CalculateAngle(std::vector<double> coor1, std::vector<double> centerCoordinate, std::vector<double> coor3) {
@@ -62,24 +72,32 @@ double CalculateAngle(std::vector<double> coor1, std::vector<double> centerCoord
     double b = CalculateDistance(coor3, centerCoordinate);
     double c = CalculateDistance(coor1, coor3);
 
-    double inner = (pow(a, 2) + pow(b, 2) - pow(c, 2)) / (2 * a * b);
+    // double inner = (pow(a, 2) + pow(b, 2) - pow(c, 2)) / (2 * a * b);
+    double inner = (a * a + b * b - c * c) / (2 * a * b);
 
     // ensure that the inner is within the range of acos. This if block accounts
     // for potential rounding errors and prevents acos from returning nan if
     // a rounding error occurs
-    if (inner < 1.000000001 && inner > 0.99999999) {
+    if (inner < 1.0 + EPSILON && inner > 1.0 - EPSILON) {
         inner = 1.0;
-    } else if (inner < -0.99999999 && inner > -1.000000001) {
+    } else if (inner < -1.0 + EPSILON && inner > -1.0 - EPSILON) {
         inner = -1.0;
     }
 
+    if (inner > 1.0 + EPSILON || inner < -1.0 - EPSILON) {
+        std::stringstream ss;
+        ss << "Domain error. Attempting to arccos a value of " << inner << std::endl;
+        std::string text = ss.str();
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
     return acos(inner);
+
+    // if (inner) return acos(inner);
 }
 
 double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coor2, std::vector<double> coor3,
                               std::vector<double> coor4) {
-    const double pi = 3.14159265358979323846;
-    const double EPSILON = 0.000000001;
     // store the coordinates of the 4 atoms.
     double x1 = coor1[0];
     double x2 = coor2[0];
@@ -141,8 +159,10 @@ double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coo
         }
 
         if (trig_val > 1.0 || trig_val < -1.0) {
-            std::cerr << "You dihedral theta is NaN. Your energy will likely be wrong because of the dihedral "
-                      << std::endl;
+            std::stringstream ss;
+            ss << "Domain error. Attempting to arccos a value of " << trig_val << std::endl;
+            std::string text = ss.str();
+            throw CUException(__func__, __FILE__, __LINE__, text);
         }
 
         theta = acos(trig_val);
@@ -156,7 +176,7 @@ double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coo
         // have a theta of 0. Meaning that phi is positive.
         int count = 0;
         for (int i = 0; i < n1.size(); i++) {
-            if (fabs(n1[0] - n2[0]) < 0.000000001) {
+            if (fabs(n1[0] - n2[0]) < EPSILON) {
                 count++;
             }
         }
@@ -173,68 +193,19 @@ double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coo
         }
     }
 
-    // Try catch statements to check that both n1 and n2 are not the zero vector
-    // this would mean phi is not a number. If they are the 0 vector, then
-    // just return 0
-    try {
-        int countn1 = 0;
-        int countn2 = 0;
-        for (int i = 0; i < n1.size(); i++) {
-            if (n1[i] < 0.000000001) {
-                countn1++;
-            }
-            if (n2[i] < 0.000000001) {
-                countn2++;
-            }
-        }
-
-        if (countn1 == 3 || countn2 == 3) {
-            throw 1;
-        }
-    } catch (...) {
+    // Check n1 and n2 are not the zero vector.
+    if ((fabs(n1[0]) < EPSILON && fabs(n1[1]) < EPSILON && fabs(n1[2]) < EPSILON) ||
+        (fabs(n2[0]) < EPSILON && fabs(n2[1]) < EPSILON && fabs(n2[2]) < EPSILON)) {
         return 0.0;
     }
 
-    // calculate phi using the formula in the header of this file
-    // double phi =
-    //     acos((CalculateDotProduct(n1,n2) / (sqrt(pow(n1[0], 2) + pow(n1[1], 2) + pow(n1[2], 2)) *
-    //                                                             sqrt(pow(n2[0], 2) + pow(n2[1], 2) + pow(n2[2],
-    //                                                             2))));
-
     double phi = acos((CalculateDotProduct(n1, n2) / (CalculateDistance(n1) * CalculateDistance(n2))));
-
-    // Check if theta is 0 or 180. If theta = 0, we define this direction to
-    // positive phi. Else if theta is 180 degrees or pi, we define this direction
-    // to be negative phi.
-
-    // if (theta <= 0.000000001 && theta >= -0.000000001) {
-    //     return phi;
-    // } else if (theta <= pi + 0.000000001 && theta >= pi - 0.000000001) {
-    //     return -phi;
-    // }
-
-    // std::cout << "phi before sign is: " << phi << std::endl;
-    // std::cout << "theta is  : " << theta << std::endl;
 
     if (theta <= pi / 2 && theta >= -pi / 2) {
         return phi;
     } else {
         return -phi;
     }
-
-    // else if (theta <= pi + 0.000000001 && theta >= pi - 0.000000001) {
-    //     return -phi;
-    // }
-
-    // else {
-    //     std::string text = "";
-    //     throw CUException(__func__, __FILE__, __LINE__, text);
-    // }
-
-    // If theta is not any of the above cases, then print an error message, and
-    // return just phi
-    // cout << "A case slipped through!! Check the dihedralAngleCalculator!" << endl;
-    // return phi;
 }
 
 void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::vector<double> coor3,
@@ -254,11 +225,6 @@ void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::v
     double z3 = coor3[2];
     double z4 = coor4[2];
 
-    // set up all of the vectors from the four points
-    // vector<double> fvector = {x2 - x1, y2 - y1, z2 - z1};  // This is vector rij
-    // vector<double> svector = {x3 - x2, y3 - y2, z3 - z2};  // This is vector rjk
-    // vector<double> tvector = {x4 - x3, y4 - y3, z4 - z3};  // This is vector rkn
-
     std::vector<double> fvector = {x1 - x2, y1 - y2, z1 - z2};  // This is vector rij
     std::vector<double> svector = {x2 - x3, y2 - y3, z2 - z3};  // This is vector rjk
     std::vector<double> tvector = {x3 - x4, y3 - y4, z3 - z4};  // This is vector rkn
@@ -270,13 +236,15 @@ void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::v
                               fvector[2] * svector[0] - fvector[0] * svector[2],
                               fvector[0] * svector[1] - fvector[1] * svector[0]};
     double recip_pb = 1.0 / CalculateDistance(pb);
-    double square_recip_pb = pow(recip_pb, 2);
+    // double square_recip_pb = pow(recip_pb, 2);
+    double square_recip_pb = recip_pb * recip_pb;
 
     std::vector<double> pc = {svector[1] * tvector[2] - svector[2] * tvector[1],
                               svector[2] * tvector[0] - svector[0] * tvector[2],
                               svector[0] * tvector[1] - svector[1] * tvector[0]};
     double recip_pc = 1.0 / CalculateDistance(pc);
-    double square_recip_pc = pow(recip_pc, 2);
+    // double square_recip_pc = pow(recip_pc, 2);
+    double square_recip_pc = recip_pc * recip_pc;
 
     double dot_pb_pc = CalculateDotProduct(pb, pc);
 
@@ -284,8 +252,8 @@ void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::v
                    svector[2] * (pc[0] * pb[1] - pc[1] * pb[0])) *
                   (recip_pb * recip_pc * recip_svector);
 
-    if (sint < 0.000000001 && sint > -0.000000001) {
-        sint = 0.00000001;
+    if (fabs(sint) < EPSILON) {
+        sint = EPSILON;
     }
 
     double recip_sint = 1.0 / sint;
@@ -337,123 +305,12 @@ void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::v
     for (int i = 0; i < curr_force.size(); i++) {
         curr_force[i] = -1 * virial_constants[i];
     }
-    // curr_force[0] = -(fax);
-    // curr_force[1] = -(fay);
-    // curr_force[2] = -(faz);
-    // curr_force[3] = -(-fax - fcx + fb1x);
-    // curr_force[4] = -(-fay - fcy + fb1y);
-    // curr_force[5] = -(-faz - fcz + fb1z);
-    // curr_force[6] = -(fcx - fb1x - fd1x);
-    // curr_force[7] = -(fcy - fb1y - fd1y);
-    // curr_force[8] = -(fcz - fb1z - fd1z);
-    // curr_force[9] = -(fd1x);
-    // curr_force[10] = -(fd1y);
-    // curr_force[11] = -(fd1z);
 
     for (int index = 0; index < indexes.size(); index++) {
         gradients[(indexes[index] - 1) * 3 + (mon_num * nat * 3)] += ans[index * 3];
         gradients[(indexes[index] - 1) * 3 + 1 + (mon_num * nat * 3)] += ans[index * 3 + 1];
         gradients[(indexes[index] - 1) * 3 + 2 + (mon_num * nat * 3)] += ans[index * 3 + 2];
     }
-
-    // std::cout << "ok" << std::endl;
-    // Begin term 1 constants and values
-    // double first_crossP = CalculateDistance(CalculateCrossProduct(fvector, svector));
-    // double second_crossP = CalculateDistance(CalculateCrossProduct(svector, tvector));
-    // double first_term = 1 / (first_crossP * second_crossP);
-    // // End term 1 constants and values
-
-    // // Begin term 2 constants and values
-    // double cos_constant = ((-1) * cos(phi)) / 2;
-    // double first_square_crossP = 1 / (pow(CalculateDistance(CalculateCrossProduct(fvector, svector)), 2));
-    // double second_square_crossP = 1 / (pow(CalculateDistance(CalculateCrossProduct(svector, tvector)), 2));
-    // // End term 2 constants and values
-
-    // // Loop through each atom in the dihedral
-    // for (int index = 0; index < indexes.size(); index++) {
-    //     int delta_li;
-    //     int delta_lj;
-    //     int delta_lk;
-    //     int delta_ln;
-    //     if (index == 0) {
-    //         delta_li = 1;
-    //         delta_lj = 0;
-    //         delta_lk = 0;
-    //         delta_ln = 0;
-    //     } else if (index == 1) {
-    //         delta_li = 0;
-    //         delta_lj = 1;
-    //         delta_lk = 0;
-    //         delta_ln = 0;
-    //     } else if (index == 2) {
-    //         delta_li = 0;
-    //         delta_lj = 0;
-    //         delta_lk = 1;
-    //         delta_ln = 0;
-    //     } else {
-    //         delta_li = 0;
-    //         delta_lj = 0;
-    //         delta_lk = 0;
-    //         delta_ln = 1;
-    //     }
-
-    //     // Loop through each coordinate within an atom
-    //     for (int dim = 0; dim < 3; dim++) {
-    //         // first_term_deriv represents the derivative of
-    //         // {(rij x rjk) dot product (rjk x rkn)}
-    //         double grad_B = 0;
-    //         double first_term_deriv = 0;
-    //         double sum_ij_ij = SumComponents(fvector, fvector, dim);  // This represents [rij rij]alpha
-    //         double sum_jk_jk = SumComponents(svector, svector, dim);  // This represents [rjk rjk]alpha
-    //         double sum_kn_kn = SumComponents(tvector, tvector, dim);  // This represents [rkn rkn]alpha
-    //         double sum_ij_jk = SumComponents(fvector, svector, dim);  // This represents [rij rjk]alpha
-    //         double sum_jk_kn = SumComponents(svector, tvector, dim);  // This represents [rjk rkn]alpha
-    //         double sum_ij_kn = SumComponents(fvector, tvector, dim);  // This represents [rij rkn]alpha
-
-    //         first_term_deriv +=
-    //             fvector[dim] * (sum_jk_jk * (delta_lk - delta_ln) + (sum_jk_kn) * (delta_lk - delta_lj));
-    //         first_term_deriv +=
-    //             svector[dim] * (sum_ij_jk * (delta_ln - delta_lk) + (sum_jk_kn) * (delta_lj - delta_li));
-    //         first_term_deriv +=
-    //             tvector[dim] * (sum_ij_jk * (delta_lk - delta_lj) + (sum_jk_jk) * (delta_li - delta_lj));
-    //         first_term_deriv += 2 * svector[dim] * (sum_ij_kn * (delta_lj - delta_lk));
-
-    //         // second_term_deriv represents the derivative of |rij x rjk|^2
-    //         double second_term_deriv = 0;
-    //         second_term_deriv +=
-    //             2 * fvector[dim] * ((sum_jk_jk) * (delta_lj - delta_li) + (sum_ij_jk) * (delta_lj - delta_lk));
-    //         second_term_deriv +=
-    //             2 * svector[dim] * ((sum_ij_ij) * (delta_lk - delta_lj) + (sum_ij_jk) * (delta_li - delta_lj));
-
-    //         // third_term_deriv represents the derivative of |rjk x rkn|^2
-    //         double third_term_deriv = 0;
-    //         third_term_deriv +=
-    //             2 * tvector[dim] * ((sum_jk_jk) * (delta_ln - delta_lk) + (sum_jk_kn) * (delta_lj - delta_lk));
-    //         third_term_deriv +=
-    //             2 * svector[dim] * ((sum_kn_kn) * (delta_lk - delta_lj) + (sum_jk_kn) * (delta_lk - delta_ln));
-
-    //         grad_B += first_term * first_term_deriv;
-    //         grad_B +=
-    //             cos_constant * (first_square_crossP * second_term_deriv + second_square_crossP * third_term_deriv);
-
-    //         gradients[(indexes[index] - 1) * 3 + dim + (mon_num * nat * 3)] += cummu_grad * grad_B;
-    //         curr_force[index * 3 + dim] = -1 * cummu_grad * grad_B;
-    //     }
-    // }
-}
-
-double SumComponents(std::vector<double> a, std::vector<double> b, int alpha) {
-    double sum = 0;
-    int delta_alpha_beta;
-    for (int dim = 0; dim < 3; dim++) {
-        if (dim == alpha) {
-            delta_alpha_beta = 1;
-        } else {
-            delta_alpha_beta = 0;
-        }
-        sum += (1 - delta_alpha_beta) * a[dim] * b[dim];
-    }
-    return sum;
 }
 
 std::vector<double> CalculateCrossProduct(std::vector<double> v1, std::vector<double> v2) {
@@ -664,153 +521,153 @@ void CalculateInversionGrad(std::vector<double> centralCoor, std::vector<double>
     double cos_jk = cos(phis[2]);
 
     // Gradient of first non central atom for component x, y, and z
-    double fbx = cummu_grad[0] * (-cos_kn * rij[0] * pow(recip_dist_rij, 2) +
+    double fbx = cummu_grad[0] * (-cos_kn * rij[0] * (recip_dist_rij * recip_dist_rij) +
                                   recip_dist_rij * (dot_rij_ukn * ukn_norm[0] + dot_rij_vkn * vkn_norm[0]) / dist_wkn) +
                  (dot_rik_unj * recip_dist_unj * recip_dist_rij *
                       (rik[0] - dot_rik_unj * unj_norm[0] -
-                       (dot_rij_rik - dot_rik_unj * dot_rij_unj) * rij[0] * pow(recip_dist_rij, 2)) -
+                       (dot_rij_rik - dot_rik_unj * dot_rij_unj) * rij[0] * (recip_dist_rij * recip_dist_rij)) -
                   dot_rik_vnj * recip_dist_vnj * recip_dist_rij *
                       (rik[0] - dot_rik_vnj * vnj_norm[0] -
-                       (dot_rij_rik - dot_rik_vnj * dot_rij_vnj) * rij[0] * pow(recip_dist_rij, 2))) *
+                       (dot_rij_rik - dot_rik_vnj * dot_rij_vnj) * rij[0] * (recip_dist_rij * recip_dist_rij))) *
                      cummu_grad[1] * recip_dist_rik / dist_wnj +
                  (dot_rin_ujk * recip_dist_ujk * recip_dist_rij *
                       (rin[0] - dot_rin_ujk * ujk_norm[0] -
-                       (dot_rij_rin - dot_rin_ujk * dot_rij_ujk) * rij[0] * pow(recip_dist_rij, 2)) +
+                       (dot_rij_rin - dot_rin_ujk * dot_rij_ujk) * rij[0] * (recip_dist_rij * recip_dist_rij)) +
                   dot_rin_vjk * recip_dist_vjk * recip_dist_rij *
                       (rin[0] - dot_rin_vjk * vjk_norm[0] -
-                       (dot_rij_rin - dot_rin_vjk * dot_rij_vjk) * rij[0] * pow(recip_dist_rij, 2))) *
+                       (dot_rij_rin - dot_rin_vjk * dot_rij_vjk) * rij[0] * (recip_dist_rij * recip_dist_rij))) *
                      cummu_grad[2] * recip_dist_rin / dist_wjk;
-    double fby = cummu_grad[0] * (-cos_kn * rij[1] * pow(recip_dist_rij, 2) +
+    double fby = cummu_grad[0] * (-cos_kn * rij[1] * (recip_dist_rij * recip_dist_rij) +
                                   recip_dist_rij * (dot_rij_ukn * ukn_norm[1] + dot_rij_vkn * vkn_norm[1]) / dist_wkn) +
                  (dot_rik_unj * recip_dist_unj * recip_dist_rij *
                       (rik[1] - dot_rik_unj * unj_norm[1] -
-                       (dot_rij_rik - dot_rik_unj * dot_rij_unj) * rij[1] * pow(recip_dist_rij, 2)) -
+                       (dot_rij_rik - dot_rik_unj * dot_rij_unj) * rij[1] * (recip_dist_rij * recip_dist_rij)) -
                   dot_rik_vnj * recip_dist_vnj * recip_dist_rij *
                       (rik[1] - dot_rik_vnj * vnj_norm[1] -
-                       (dot_rij_rik - dot_rik_vnj * dot_rij_vnj) * rij[1] * pow(recip_dist_rij, 2))) *
+                       (dot_rij_rik - dot_rik_vnj * dot_rij_vnj) * rij[1] * (recip_dist_rij * recip_dist_rij))) *
                      cummu_grad[1] * recip_dist_rik / dist_wnj +
                  (dot_rin_ujk * recip_dist_ujk * recip_dist_rij *
                       (rin[1] - dot_rin_ujk * ujk_norm[1] -
-                       (dot_rij_rin - dot_rin_ujk * dot_rij_ujk) * rij[1] * pow(recip_dist_rij, 2)) +
+                       (dot_rij_rin - dot_rin_ujk * dot_rij_ujk) * rij[1] * (recip_dist_rij * recip_dist_rij)) +
                   dot_rin_vjk * recip_dist_vjk * recip_dist_rij *
                       (rin[1] - dot_rin_vjk * vjk_norm[1] -
-                       (dot_rij_rin - dot_rin_vjk * dot_rij_vjk) * rij[1] * pow(recip_dist_rij, 2))) *
+                       (dot_rij_rin - dot_rin_vjk * dot_rij_vjk) * rij[1] * (recip_dist_rij * recip_dist_rij))) *
                      cummu_grad[2] * recip_dist_rin / dist_wjk;
-    double fbz = cummu_grad[0] * (-cos_kn * rij[2] * pow(recip_dist_rij, 2) +
+    double fbz = cummu_grad[0] * (-cos_kn * rij[2] * (recip_dist_rij * recip_dist_rij) +
                                   recip_dist_rij * (dot_rij_ukn * ukn_norm[2] + dot_rij_vkn * vkn_norm[2]) / dist_wkn) +
                  (dot_rik_unj * recip_dist_unj * recip_dist_rij *
                       (rik[2] - dot_rik_unj * unj_norm[2] -
-                       (dot_rij_rik - dot_rik_unj * dot_rij_unj) * rij[2] * pow(recip_dist_rij, 2)) -
+                       (dot_rij_rik - dot_rik_unj * dot_rij_unj) * rij[2] * (recip_dist_rij * recip_dist_rij)) -
                   dot_rik_vnj * recip_dist_vnj * recip_dist_rij *
                       (rik[2] - dot_rik_vnj * vnj_norm[2] -
-                       (dot_rij_rik - dot_rik_vnj * dot_rij_vnj) * rij[2] * pow(recip_dist_rij, 2))) *
+                       (dot_rij_rik - dot_rik_vnj * dot_rij_vnj) * rij[2] * (recip_dist_rij * recip_dist_rij))) *
                      cummu_grad[1] * recip_dist_rik / dist_wnj +
                  (dot_rin_ujk * recip_dist_ujk * recip_dist_rij *
                       (rin[2] - dot_rin_ujk * ujk_norm[2] -
-                       (dot_rij_rin - dot_rin_ujk * dot_rij_ujk) * rij[2] * pow(recip_dist_rij, 2)) +
+                       (dot_rij_rin - dot_rin_ujk * dot_rij_ujk) * rij[2] * (recip_dist_rij * recip_dist_rij)) +
                   dot_rin_vjk * recip_dist_vjk * recip_dist_rij *
                       (rin[2] - dot_rin_vjk * vjk_norm[2] -
-                       (dot_rij_rin - dot_rin_vjk * dot_rij_vjk) * rij[2] * pow(recip_dist_rij, 2))) *
+                       (dot_rij_rin - dot_rin_vjk * dot_rij_vjk) * rij[2] * (recip_dist_rij * recip_dist_rij))) *
                      cummu_grad[2] * recip_dist_rin / dist_wjk;
 
     // Gradient of second non central atom for component x, y, and z
-    double fcx = cummu_grad[1] * (-cos_nj * rik[0] * pow(recip_dist_rik, 2) +
+    double fcx = cummu_grad[1] * (-cos_nj * rik[0] * (recip_dist_rik * recip_dist_rik) +
                                   recip_dist_rik * (dot_rik_unj * unj_norm[0] + dot_rik_vnj * vnj_norm[0]) / dist_wnj) +
                  (dot_rin_ujk * recip_dist_ujk * recip_dist_rik *
                       (rin[0] - dot_rin_ujk * ujk_norm[0] -
-                       (dot_rik_rin - dot_rin_ujk * dot_rik_ujk) * rik[0] * pow(recip_dist_rik, 2)) -
+                       (dot_rik_rin - dot_rin_ujk * dot_rik_ujk) * rik[0] * (recip_dist_rik * recip_dist_rik)) -
                   dot_rin_vjk * recip_dist_vjk * recip_dist_rik *
                       (rin[0] - dot_rin_vjk * vjk_norm[0] -
-                       (dot_rik_rin - dot_rin_vjk * dot_rik_vjk) * rik[0] * pow(recip_dist_rik, 2))) *
+                       (dot_rik_rin - dot_rin_vjk * dot_rik_vjk) * rik[0] * (recip_dist_rik * recip_dist_rik))) *
                      cummu_grad[2] * recip_dist_rin / dist_wjk +
                  (dot_rij_ukn * recip_dist_ukn * recip_dist_rik *
                       (rij[0] - dot_rij_ukn * ukn_norm[0] -
-                       (dot_rij_rik - dot_rij_ukn * dot_rik_ukn) * rik[0] * pow(recip_dist_rik, 2)) +
+                       (dot_rij_rik - dot_rij_ukn * dot_rik_ukn) * rik[0] * (recip_dist_rik * recip_dist_rik)) +
                   dot_rij_vkn * recip_dist_vkn * recip_dist_rik *
                       (rij[0] - dot_rij_vkn * vkn_norm[0] -
-                       (dot_rij_rik - dot_rij_vkn * dot_rik_vkn) * rik[0] * pow(recip_dist_rik, 2))) *
+                       (dot_rij_rik - dot_rij_vkn * dot_rik_vkn) * rik[0] * (recip_dist_rik * recip_dist_rik))) *
                      cummu_grad[0] * recip_dist_rij / dist_wkn;
-    double fcy = cummu_grad[1] * (-cos_nj * rik[1] * pow(recip_dist_rik, 2) +
+    double fcy = cummu_grad[1] * (-cos_nj * rik[1] * (recip_dist_rik * recip_dist_rik) +
                                   recip_dist_rik * (dot_rik_unj * unj_norm[1] + dot_rik_vnj * vnj_norm[1]) / dist_wnj) +
                  (dot_rin_ujk * recip_dist_ujk * recip_dist_rik *
                       (rin[1] - dot_rin_ujk * ujk_norm[1] -
-                       (dot_rik_rin - dot_rin_ujk * dot_rik_ujk) * rik[1] * pow(recip_dist_rik, 2)) -
+                       (dot_rik_rin - dot_rin_ujk * dot_rik_ujk) * rik[1] * (recip_dist_rik * recip_dist_rik)) -
                   dot_rin_vjk * recip_dist_vjk * recip_dist_rik *
                       (rin[1] - dot_rin_vjk * vjk_norm[1] -
-                       (dot_rik_rin - dot_rin_vjk * dot_rik_vjk) * rik[1] * pow(recip_dist_rik, 2))) *
+                       (dot_rik_rin - dot_rin_vjk * dot_rik_vjk) * rik[1] * (recip_dist_rik * recip_dist_rik))) *
                      cummu_grad[2] * recip_dist_rin / dist_wjk +
                  (dot_rij_ukn * recip_dist_ukn * recip_dist_rik *
                       (rij[1] - dot_rij_ukn * ukn_norm[1] -
-                       (dot_rij_rik - dot_rij_ukn * dot_rik_ukn) * rik[1] * pow(recip_dist_rik, 2)) +
+                       (dot_rij_rik - dot_rij_ukn * dot_rik_ukn) * rik[1] * (recip_dist_rik * recip_dist_rik)) +
                   dot_rij_vkn * recip_dist_vkn * recip_dist_rik *
                       (rij[1] - dot_rij_vkn * vkn_norm[1] -
-                       (dot_rij_rik - dot_rij_vkn * dot_rik_vkn) * rik[1] * pow(recip_dist_rik, 2))) *
+                       (dot_rij_rik - dot_rij_vkn * dot_rik_vkn) * rik[1] * (recip_dist_rik * recip_dist_rik))) *
                      cummu_grad[0] * recip_dist_rij / dist_wkn;
-    double fcz = cummu_grad[1] * (-cos_nj * rik[2] * pow(recip_dist_rik, 2) +
+    double fcz = cummu_grad[1] * (-cos_nj * rik[2] * (recip_dist_rik * recip_dist_rik) +
                                   recip_dist_rik * (dot_rik_unj * unj_norm[2] + dot_rik_vnj * vnj_norm[2]) / dist_wnj) +
                  (dot_rin_ujk * recip_dist_ujk * recip_dist_rik *
                       (rin[2] - dot_rin_ujk * ujk_norm[2] -
-                       (dot_rik_rin - dot_rin_ujk * dot_rik_ujk) * rik[2] * pow(recip_dist_rik, 2)) -
+                       (dot_rik_rin - dot_rin_ujk * dot_rik_ujk) * rik[2] * (recip_dist_rik * recip_dist_rik)) -
                   dot_rin_vjk * recip_dist_vjk * recip_dist_rik *
                       (rin[2] - dot_rin_vjk * vjk_norm[2] -
-                       (dot_rik_rin - dot_rin_vjk * dot_rik_vjk) * rik[2] * pow(recip_dist_rik, 2))) *
+                       (dot_rik_rin - dot_rin_vjk * dot_rik_vjk) * rik[2] * (recip_dist_rik * recip_dist_rik))) *
                      cummu_grad[2] * recip_dist_rin / dist_wjk +
                  (dot_rij_ukn * recip_dist_ukn * recip_dist_rik *
                       (rij[2] - dot_rij_ukn * ukn_norm[2] -
-                       (dot_rij_rik - dot_rij_ukn * dot_rik_ukn) * rik[2] * pow(recip_dist_rik, 2)) +
+                       (dot_rij_rik - dot_rij_ukn * dot_rik_ukn) * rik[2] * (recip_dist_rik * recip_dist_rik)) +
                   dot_rij_vkn * recip_dist_vkn * recip_dist_rik *
                       (rij[2] - dot_rij_vkn * vkn_norm[2] -
-                       (dot_rij_rik - dot_rij_vkn * dot_rik_vkn) * rik[2] * pow(recip_dist_rik, 2))) *
+                       (dot_rij_rik - dot_rij_vkn * dot_rik_vkn) * rik[2] * (recip_dist_rik * recip_dist_rik))) *
                      cummu_grad[0] * recip_dist_rij / dist_wkn;
 
     // Gradient of third non central atom for component x, y, and z
-    double fdx = cummu_grad[2] * (-cos_jk * rin[0] * pow(recip_dist_rin, 2) +
+    double fdx = cummu_grad[2] * (-cos_jk * rin[0] * (recip_dist_rin * recip_dist_rin) +
                                   recip_dist_rin * (dot_rin_ujk * ujk_norm[0] + dot_rin_vjk * vjk_norm[0]) / dist_wjk) +
                  (dot_rij_ukn * recip_dist_ukn * recip_dist_rin *
                       (rij[0] - dot_rij_ukn * ukn_norm[0] -
-                       (dot_rij_rin - dot_rij_ukn * dot_rin_ukn) * rin[0] * pow(recip_dist_rin, 2)) -
+                       (dot_rij_rin - dot_rij_ukn * dot_rin_ukn) * rin[0] * (recip_dist_rin * recip_dist_rin)) -
                   dot_rij_vkn * recip_dist_vkn * recip_dist_rin *
                       (rij[0] - dot_rij_vkn * vkn_norm[0] -
-                       (dot_rij_rin - dot_rij_vkn * dot_rin_vkn) * rin[0] * pow(recip_dist_rin, 2))) *
+                       (dot_rij_rin - dot_rij_vkn * dot_rin_vkn) * rin[0] * (recip_dist_rin * recip_dist_rin))) *
                      cummu_grad[0] * recip_dist_rij / dist_wkn +
                  (dot_rik_unj * recip_dist_unj * recip_dist_rin *
                       (rik[0] - dot_rik_unj * unj_norm[0] -
-                       (dot_rik_rin - dot_rik_unj * dot_rin_unj) * rin[0] * pow(recip_dist_rin, 2)) +
+                       (dot_rik_rin - dot_rik_unj * dot_rin_unj) * rin[0] * (recip_dist_rin * recip_dist_rin)) +
                   dot_rik_vnj * recip_dist_vnj * recip_dist_rin *
                       (rik[0] - dot_rik_vnj * vnj_norm[0] -
-                       (dot_rik_rin - dot_rik_vnj * dot_rin_vnj) * rin[0] * pow(recip_dist_rin, 2))) *
+                       (dot_rik_rin - dot_rik_vnj * dot_rin_vnj) * rin[0] * (recip_dist_rin * recip_dist_rin))) *
                      cummu_grad[1] * recip_dist_rik / dist_wnj;
-    double fdy = cummu_grad[2] * (-cos_jk * rin[1] * pow(recip_dist_rin, 2) +
+    double fdy = cummu_grad[2] * (-cos_jk * rin[1] * (recip_dist_rin * recip_dist_rin) +
                                   recip_dist_rin * (dot_rin_ujk * ujk_norm[1] + dot_rin_vjk * vjk_norm[1]) / dist_wjk) +
                  (dot_rij_ukn * recip_dist_ukn * recip_dist_rin *
                       (rij[1] - dot_rij_ukn * ukn_norm[1] -
-                       (dot_rij_rin - dot_rij_ukn * dot_rin_ukn) * rin[1] * pow(recip_dist_rin, 2)) -
+                       (dot_rij_rin - dot_rij_ukn * dot_rin_ukn) * rin[1] * (recip_dist_rin * recip_dist_rin)) -
                   dot_rij_vkn * recip_dist_vkn * recip_dist_rin *
                       (rij[1] - dot_rij_vkn * vkn_norm[1] -
-                       (dot_rij_rin - dot_rij_vkn * dot_rin_vkn) * rin[1] * pow(recip_dist_rin, 2))) *
+                       (dot_rij_rin - dot_rij_vkn * dot_rin_vkn) * rin[1] * (recip_dist_rin * recip_dist_rin))) *
                      cummu_grad[0] * recip_dist_rij / dist_wkn +
                  (dot_rik_unj * recip_dist_unj * recip_dist_rin *
                       (rik[1] - dot_rik_unj * unj_norm[1] -
-                       (dot_rik_rin - dot_rik_unj * dot_rin_unj) * rin[1] * pow(recip_dist_rin, 2)) +
+                       (dot_rik_rin - dot_rik_unj * dot_rin_unj) * rin[1] * (recip_dist_rin * recip_dist_rin)) +
                   dot_rik_vnj * recip_dist_vnj * recip_dist_rin *
                       (rik[1] - dot_rik_vnj * vnj_norm[1] -
-                       (dot_rik_rin - dot_rik_vnj * dot_rin_vnj) * rin[1] * pow(recip_dist_rin, 2))) *
+                       (dot_rik_rin - dot_rik_vnj * dot_rin_vnj) * rin[1] * (recip_dist_rin * recip_dist_rin))) *
                      cummu_grad[1] * recip_dist_rik / dist_wnj;
-    double fdz = cummu_grad[2] * (-cos_jk * rin[2] * pow(recip_dist_rin, 2) +
+    double fdz = cummu_grad[2] * (-cos_jk * rin[2] * (recip_dist_rin * recip_dist_rin) +
                                   recip_dist_rin * (dot_rin_ujk * ujk_norm[2] + dot_rin_vjk * vjk_norm[2]) / dist_wjk) +
                  (dot_rij_ukn * recip_dist_ukn * recip_dist_rin *
                       (rij[2] - dot_rij_ukn * ukn_norm[2] -
-                       (dot_rij_rin - dot_rij_ukn * dot_rin_ukn) * rin[2] * pow(recip_dist_rin, 2)) -
+                       (dot_rij_rin - dot_rij_ukn * dot_rin_ukn) * rin[2] * (recip_dist_rin * recip_dist_rin)) -
                   dot_rij_vkn * recip_dist_vkn * recip_dist_rin *
                       (rij[2] - dot_rij_vkn * vkn_norm[2] -
-                       (dot_rij_rin - dot_rij_vkn * dot_rin_vkn) * rin[2] * pow(recip_dist_rin, 2))) *
+                       (dot_rij_rin - dot_rij_vkn * dot_rin_vkn) * rin[2] * (recip_dist_rin * recip_dist_rin))) *
                      cummu_grad[0] * recip_dist_rij / dist_wkn +
                  (dot_rik_unj * recip_dist_unj * recip_dist_rin *
                       (rik[2] - dot_rik_unj * unj_norm[2] -
-                       (dot_rik_rin - dot_rik_unj * dot_rin_unj) * rin[2] * pow(recip_dist_rin, 2)) +
+                       (dot_rik_rin - dot_rik_unj * dot_rin_unj) * rin[2] * (recip_dist_rin * recip_dist_rin)) +
                   dot_rik_vnj * recip_dist_vnj * recip_dist_rin *
                       (rik[2] - dot_rik_vnj * vnj_norm[2] -
-                       (dot_rik_rin - dot_rik_vnj * dot_rin_vnj) * rin[2] * pow(recip_dist_rin, 2))) *
+                       (dot_rik_rin - dot_rik_vnj * dot_rin_vnj) * rin[2] * (recip_dist_rin * recip_dist_rin))) *
                      cummu_grad[1] * recip_dist_rik / dist_wnj;
 
     // Gradient of central atom for component x, y, and z
@@ -828,11 +685,6 @@ void CalculateInversionGrad(std::vector<double> centralCoor, std::vector<double>
         gradients[(indexes[index] - 1) * 3 + 1 + (mon_num * nat * 3)] += ans[index * 3 + 1];
         gradients[(indexes[index] - 1) * 3 + 2 + (mon_num * nat * 3)] += ans[index * 3 + 2];
     }
-    // gradients[(indexes[index] - 1) * 3 + dim + (mon_num * nat * 3)] += cummu_grad * grad_B;
-
-    // for (int i = 0; i < ans.size(); i++) {
-    //     gradients[i + ] += ans[i];
-    // }
 }
 
 void GetVecUVecV(std::vector<double> rix_norm, std::vector<double> riy_norm, std::vector<double>& u_vec,
