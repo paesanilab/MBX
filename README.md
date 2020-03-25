@@ -137,6 +137,28 @@ cp ../1-nvt/RESTART ./config.xml
 
 There are other tests for other type of simulations, including condensed phase simulations and replica-exchange simulations. For more information about whatk kind of simulations can i-pi run, please refer to the i-pi user manual.
 
+### LAMMPS
+First of all you will need to download LAMMPS from their webpage (https://lammps.sandia.gov/download.html). As for March 18th, 2020, the tarball of the stable version seems corrupted, so it is recommended to just clone the repo from github (see the webpage).
+
+MBX needs to be normally installed following the instructions provided in the previous sections. After installation:
+```
+cd MBX_HOME/plugins/lammps
+vi Makefile.mpi_mbx.lab
+```
+Make sure that the `MBX` variable is pointing to the right place. If you have your `MBX_HOME` environment varible you should be fine.
+
+Let's call the directory where LAMMPS has been put/unpacked `LAMMPS_HOME`. 
+Do the following:
+```
+cp Makefile.mpi_mbx.lab LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
+cd LAMMPS_HOME/src/
+make yes-USER-MBX
+make mpi_mbx -j 4
+```
+After this, a new executable `lmp_mpi_mbx` in `src` should apear, and that is the executable you want to use for LAMMPS.
+
+Further doucmentation will follow up. For now, look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. 
+
 ## Current Timings (v20190927)
 These timings were obtained using 1, 2, 4, and 8 cores in our local workstation, performing 30 evaluations of the energy. When using PBC, the following settings for the PME part have been used (see `src/tests/n_single_point.cpp` for details)
 - Electrostatics: Ewald alpha = 0.6, Grid density = 2.5, Spline order = 6
