@@ -32,21 +32,36 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
+#include "potential/force_field/connectivity.h"
 
-#include <set>
-#include <utility>
-#include <cstdlib>
+namespace eff {
 
-typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
+Conn::Conn(std::string mon_id, std::vector<Bond> bond_vec, std::vector<Angles> angle_vec,
+           std::vector<Dihedral> dihedral_vec, std::vector<Inversion> inversion_vec) {
+    mon_id_ = mon_id;
+    bond_vec_ = bond_vec;
+    angle_vec_ = angle_vec;
+    dihedral_vec_ = dihedral_vec;
+    inversion_vec_ = inversion_vec;
+}
 
-static const double EMAX1B = 60.0;
-static const double EPSILON = 0.000000001;
+Conn::~Conn() {}
+std::string Conn::GetMonId() { return mon_id_; }
+std::vector<Bond> Conn::GetBondVec() { return bond_vec_; }
+std::vector<Angles> Conn::GetAnglesVec() { return angle_vec_; }
+std::vector<Dihedral> Conn::GetDihedralVec() { return dihedral_vec_; }
+std::vector<Inversion> Conn::GetInversionVec() { return inversion_vec_; }
 
-// Ignore mutual terms in the dipoles, for debugging
-#define DIRECT_ONLY 0
-// A useful macro for debugging against other codes by removing Thole damping entirely
-#define NO_THOLE 0
+bool Conn::operator==(Conn const &connectivity) const {
+    // Check field variables
 
-#endif
+    if (connectivity.mon_id_ != mon_id_ || connectivity.bond_vec_ != bond_vec_ ||
+        connectivity.angle_vec_ != angle_vec_ || connectivity.dihedral_vec_ != dihedral_vec_ ||
+        connectivity.inversion_vec_ != inversion_vec_) {
+        return false;
+    }
+
+    return true;
+}
+
+}  // namespace eff

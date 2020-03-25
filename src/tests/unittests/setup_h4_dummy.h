@@ -34,81 +34,68 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #ifndef UNITTESTS_SETUP_H4_DUMMY_H
 #define UNITTESTS_SETUP_H4_DUMMY_H
+#include "bblock/system.h"
+#include "testutils.h"
 
-#include "potential/force_field/bond.h"
 #include "potential/force_field/angles.h"
-#include "potential/force_field/dihedral.h"
+#include "potential/force_field/bond.h"
 #include "potential/force_field/inversion.h"
+#include "potential/force_field/dihedral.h"
 #include "potential/force_field/topology.h"
+#include "potential/force_field/connectivity.h"
 #include <vector>
 #include "tools/custom_exceptions.h"
 
 /**
  * @file setup_h4_dummy.h
- * @brief This file is used to test the bond, angles, dihedral, inversion classes
- *        This file defines all of the necessary components to create the above
- *        classes, including the parameters. Additionally, the energy for each
- *        topology type and their functional form is used to check the
- *        implementation is correct for all the classes
+ * @brief This file is used to do full molecule testing for the classic
+ *        potential of bonds, angles, dihedrals, inversions on a dummy H4 system
  */
 
-#define SETUP_H4_DUMMY                                               \
-    std::string bond_connectivity = "bond";                          \
-    size_t bond_type = 1;                                            \
-    std::vector<size_t> bond_indexes = {1, 2};                       \
-    double distance = 6.06962;                                       \
-    std::string angle_connectivity = "angle";                        \
-    size_t angle_type = 1;                                           \
-    std::vector<size_t> angle_index = {1, 2, 3};                     \
-    double theta = 0.230331;                                         \
-    std::string dihedral_connectivity = "dihedral";                  \
-    size_t dihedral_type = 1;                                        \
-    std::vector<size_t> dihedral_indexes = {1, 2, 3, 4};             \
-    double dihedral_phi = -0.302514;                                 \
-    std::string inversion_connectivity = "inversion";                \
-    size_t inversion_type = 1;                                       \
-    std::vector<size_t> inversion_indexes = {1, 2, 3, 4};            \
-    double inversion_phi = 0.316936;                                 \
-    std::vector<double> harm_linear_parameters = {2.0};              \
-    std::vector<double> harm_nonlinear_parameters = {4.0};           \
-    std::vector<double> morse_linear_parameters = {2.0};             \
-    std::vector<double> morse_nonlinear_parameters = {1.0, 4.0};     \
-    std::vector<double> quartic_linear_parameters = {1.0, 3.0, 4.0}; \
-    std::vector<double> quartic_nonlinear_parameters = {2.0};        \
-    std::vector<double> cos_linear_parameters = {1.0};               \
-    std::vector<double> cos_nonlinear_parameters = {1.0, 0.5};       \
-    std::vector<double> hcos_linear_parameters = {1.0};              \
-    std::vector<double> hcos_nonlinear_parameters = {2.0};           \
-    std::vector<double> cos3_linear_parameters = {1.0, 2.0, 3.0};    \
-    std::vector<double> cos3_nonlinear_parameters = {};              \
-    std::vector<double> none_linear_parameters = {};                 \
-    std::vector<double> none_nonlinear_parameters = {};              \
-    double ff_bond_harm_energy = 4.28333;                            \
-    double ff_bond_harm_grad = 4.13924;                              \
-    double ff_bond_morse_energy = 1.52694;                           \
-    double ff_bond_morse_grad = 0.441195;                            \
-    double ff_bond_quartic_energy = 349.975;                         \
-    double ff_bond_quartic_grad = 323.356;                           \
-    double ff_bond_none_energy = 0.0;                                \
-    double ff_bond_none_grad = 0.0;                                  \
-    double ff_angles_harm_energy = 14.2104;                          \
-    double ff_angles_harm_grad = -7.53934;                           \
-    double ff_angles_quartic_energy = 5.83146;                       \
-    double ff_angles_quartic_grad = -14.543;                         \
-    double ff_angles_none_energy = 0.0;                              \
-    double ff_angles_none_grad = 0.0;                                \
-    double ff_dihedral_cos_energy = 1.6949;                          \
-    double ff_dihedral_cos_grad = 0.719105;                          \
-    double ff_dihedral_harm_energy = 3.9230588271;                   \
-    double ff_dihedral_harm_grad = 3.9613426144;                     \
-    double ff_dihedral_hcos_energy = 0.939461;                       \
-    double ff_dihedral_hcos_grad = 0.408371;                         \
-    double ff_dihedral_cos3_energy = 3.57834;                        \
-    double ff_dihedral_cos3_grad = 2.557356;                         \
-    double ff_dihedral_none_energy = 0.0;                            \
-    double ff_dihedral_none_grad = 0.0;                              \
-    double ff_inversion_harm_energy = 13.5649604281;                 \
-    double ff_inversion_harm_grad = -7.8784654448;                   \
-    double ff_inversion_none_energy = 0.0;                           \
-    double ff_inversion_none_grad = 0.0;
+#define SETUP_H4_DUMMY                                                                             \
+    double classic_energy = 16.0903;                                                               \
+    const int n_monomers = 1;                                                                      \
+    std::vector<double> real_coords{-1.35000000000, -0.05000000, 0.44000000000,  0.900000000000,   \
+                                    -1.98000000000, 0.670000000, 1.100000000000, 1.0000000000000,  \
+                                    -1.05000000000, 1.880000000, -1.83760000000, 1.0500000000000}; \
+    std::vector<std::string> atom_names{"H", "H", "H", "H"};                                       \
+    std::vector<std::string> monomer_names = {"h4_dummy"};                                         \
+    std::vector<size_t> n_atoms_vector = {4};                                                      \
+    std::vector<size_t> n_sites_vector = {4};                                                      \
+    const size_t n_atoms = 4;                                                                      \
+    const size_t n_sites = 4;                                                                      \
+    std::string mon_id = "h4_dummy";                                                               \
+    std::string bond_connectivity = "bond";                                                        \
+    std::vector<size_t> bond_indexes1 = {1, 2};                                                    \
+    std::vector<size_t> bond_indexes2 = {2, 3};                                                    \
+    std::vector<size_t> bond_indexes3 = {3, 4};                                                    \
+    std::string bond_functional_form = "harm";                                                     \
+    std::string angle_connectivity = "angle";                                                      \
+    std::vector<size_t> angle_index1 = {1, 2, 3};                                                  \
+    std::vector<size_t> angle_index2 = {2, 3, 4};                                                  \
+    std::string angle_functional_form = "harm";                                                    \
+    std::string dihedral_connectivity = "dihedral";                                                \
+    std::vector<size_t> dihedral_indexes = {1, 2, 3, 4};                                           \
+    std::string dihedral_functional_form = "cos";                                                  \
+    std::string inversion_connectivity = "inversion";                                              \
+    std::vector<size_t> inversion_indexes = {1, 2, 3, 4};                                          \
+    std::string inversion_functional_form = "harm";                                                \
+    std::vector<double> bond_harm_linear_parameters = {2.0};                                       \
+    std::vector<double> bond_harm_nonlinear_parameters = {4.0};                                    \
+    std::vector<double> angle_harm_linear_parameters1 = {1.0};                                     \
+    std::vector<double> angle_harm_nonlinear_parameters1 = {2.0};                                  \
+    std::vector<double> angle_harm_linear_parameters2 = {3.0};                                     \
+    std::vector<double> angle_harm_nonlinear_parameters2 = {3.14159265};                           \
+    std::vector<double> inversion_harm_linear_parameters = {1.0};                                  \
+    std::vector<double> inversion_harm_nonlinear_parameters = {2.0};                               \
+    std::vector<double> dihedral_cos_linear_parameters = {1.0};                                    \
+    std::vector<double> dihedral_cos_nonlinear_parameters = {1.0, 0.5};                            \
+    eff::Bond bond1(bond_connectivity, bond_indexes1, bond_functional_form);                       \
+    eff::Bond bond2(bond_connectivity, bond_indexes2, bond_functional_form);                       \
+    eff::Bond bond3(bond_connectivity, bond_indexes3, bond_functional_form);                       \
+    eff::Angles angle1(angle_connectivity, angle_index1, angle_functional_form);                   \
+    eff::Angles angle2(angle_connectivity, angle_index2, angle_functional_form);                   \
+    eff::Dihedral dihedral1(dihedral_connectivity, dihedral_indexes, dihedral_functional_form);    \
+    eff::Inversion inversion1(inversion_connectivity, inversion_indexes, inversion_functional_form);
+
 #endif

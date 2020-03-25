@@ -34,9 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "testutils.h"
 
-#include "setup_topology.h"
-#include "potential/force_field/inversion.h"
-#include "potential/force_field/topology.h"
+#include "setup_connectivity.h"
 
 #include <vector>
 #include <iostream>
@@ -46,42 +44,39 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 constexpr double TOL = 1E-6;
 
-TEST_CASE("Test dummy h4 inversion") {
+TEST_CASE("Test Connectivity") {
     // Create the system
-    SETUP_TOPOLOGY
+    SETUP_CONNECTIVITY
 
-    SECTION("Inversion-harmonic") {
-        std::string functional_form = "harm";
-        eff::Inversion inversion(inversion_connectivity, inversion_indexes, functional_form);
-        inversion.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
-        SECTION("Harmonic Energy") {
-            REQUIRE(inversion.GetEnergy(inversion_phi) == Approx(ff_inversion_harm_energy).margin(TOL));
-        }
-        SECTION("Harmonic Gradient") {
-            REQUIRE(inversion.GetTopologyGradient(inversion_phi) == Approx(ff_inversion_harm_grad).margin(TOL));
-        }
-    }
+    // Write the linear and nonlinear parameters because they can not be set in
+    // the macro
+    mon1_bond.SetParameters(morse_linear_parameters, morse_nonlinear_parameters);
+    std::vector<eff::Bond> mon1_bond_vec = {mon1_bond, mon1_bond};
+    mon1_angle.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    std::vector<eff::Angles> mon1_angle_vec = {mon1_angle, mon1_angle, mon1_angle};
+    mon1_dihedral.SetParameters(cos_linear_parameters, cos_nonlinear_parameters);
+    std::vector<eff::Dihedral> mon1_dihedral_vec = {mon1_dihedral};
+    mon1_inversion.SetParameters(harm_linear_parameters, harm_nonlinear_parameters);
+    std::vector<eff::Inversion> mon1_inversion_vec = {mon1_inversion};
 
-    SECTION("Inversion-none") {
-        std::string functional_form = "none";
-        eff::Inversion inversion(inversion_connectivity, inversion_indexes, functional_form);
-        inversion.SetParameters(none_linear_parameters, none_nonlinear_parameters);
-        SECTION("None Energy") {
-            REQUIRE(inversion.GetEnergy(inversion_phi) == Approx(ff_inversion_none_energy).margin(TOL));
-        }
-        SECTION("None Gradient") {
-            REQUIRE(inversion.GetTopologyGradient(inversion_phi) == Approx(ff_inversion_none_grad).margin(TOL));
-        }
-    }
-
-    SECTION("Inversion-undefined-func-form") {
-        std::string functional_form = "abcd";
-        bool not_possible_to_setup_inversion = false;
+    SECTION("Connectivity constructor") {
+        bool not_possible_to_setup_connectivity = false;
         try {
-            eff::Inversion inversion(inversion_connectivity, inversion_indexes, functional_form);
+            eff::Conn connectivity =
+                eff::Conn(mon_id, mon1_bond_vec, mon1_angle_vec, mon1_dihedral_vec, mon1_inversion_vec);
         } catch (CUException &e) {
-            not_possible_to_setup_inversion = true;
+            not_possible_to_setup_connectivity = true;
         }
-        REQUIRE(not_possible_to_setup_inversion);
+        REQUIRE(!not_possible_to_setup_connectivity);
+    }
+
+    SECTION("Connectivity Getters") {
+        eff::Conn connectivity =
+            eff::Conn(mon_id, mon1_bond_vec, mon1_angle_vec, mon1_dihedral_vec, mon1_inversion_vec);
+        REQUIRE(connectivity.GetMonId() == mon_id);
+        REQUIRE(connectivity.GetBondVec() == mon1_bond_vec);
+        REQUIRE(connectivity.GetAnglesVec() == mon1_angle_vec);
+        REQUIRE(connectivity.GetDihedralVec() == mon1_dihedral_vec);
+        REQUIRE(connectivity.GetInversionVec() == mon1_inversion_vec);
     }
 }

@@ -32,21 +32,36 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
+#ifndef UNITTESTS_SETUP_IO_CONNECTIVITY
+#define UNITTESTS_SETUP_IO_CONNECTIVITY
+#include "potential/force_field/angles.h"
+#include "potential/force_field/bond.h"
+#include "potential/force_field/inversion.h"
+#include "potential/force_field/dihedral.h"
+#include "potential/force_field/topology.h"
+#include "potential/force_field/connectivity.h"
+#include <vector>
+#include "tools/custom_exceptions.h"
+#include "setup_connectivity.h"
+#include <unordered_map>
+#include "io_tools/read_connectivity.h"
+#include "io_tools/write_connectivity.h"
 
-#include <set>
-#include <utility>
-#include <cstdlib>
+/**
+ * @file setup_io_connectivity.h
+ * @brief This file is used to test the io functions for the
+ * connectivity. Multiple types of connectivity are defined, written to an
+ * unordered set, and then written out to a file before being read back and
+ * compared
+ */
 
-typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
+// Import first connectivity
+SETUP_CONNECTIVITY
 
-static const double EMAX1B = 60.0;
-static const double EPSILON = 0.000000001;
-
-// Ignore mutual terms in the dipoles, for debugging
-#define DIRECT_ONLY 0
-// A useful macro for debugging against other codes by removing Thole damping entirely
-#define NO_THOLE 0
-
+#define SETUP_IO_CONNECTIVITY                                                         \
+    eff::Bond mon2_bond("bond", std::vector<size_t>{8, 3}, "harm");                   \
+    eff::Angles mon2_angle1("angle", std::vector<size_t>{5, 3, 4}, "quartic");        \
+    eff::Angles mon2_angle2("angle", std::vector<size_t>{2, 3, 6}, "harm");           \
+    eff::Dihedral mon2_dihedral("dihedral", std::vector<size_t>{2, 1, 6, 4}, "hcos"); \
+    eff::Inversion mon2_inversion("inversion", std::vector<size_t>{4, 1, 2, 3}, "harm");
 #endif
