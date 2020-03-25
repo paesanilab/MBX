@@ -852,16 +852,38 @@ void System::SetUpFromJson(nlohmann::json j) {
 
     SetEwaldElectrostatics(alpha_elec, grid_density_elec, spline_order_elec);
 
-    std::vector<std::pair<std::string, std::string>> ttm_pairs;
-    try {
-        std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];
-        ttm_pairs = ttm_pairs2;
-    } catch (...) {
-        ttm_pairs.clear();
-        std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty list.\n";
-    }
-    SetTTMnrgPairs(ttm_pairs);
-    mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
+    std::vector<std::pair<std::string, std::string>> ttm_pairs;                                                   
+    try {                                                                                                         
+        std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];                      
+        ttm_pairs = ttm_pairs2;                                                                                   
+    } catch (...) {                                                                                               
+        ttm_pairs.clear();                                                                                        
+        std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty list.\n";                
+    }                                                                                                             
+    SetTTMnrgPairs(ttm_pairs);                                                                                    
+    mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;                                                   
+
+    std::vector<std::string> ff_mons;
+    try {                                                                                                         
+        std::vector<std::string> ff_mons2 = j["MBX"]["ff_mons"];                      
+        ff_mons = ff_mons2;                                                                                   
+    } catch (...) {                                                                                               
+        ff_mons.clear();                                                                                        
+        std::cerr << "**WARNING** \"ff_mons\" is not defined in json file. Using empty list.\n";                
+    }                                                                                                             
+    SetFFMons(ff_mons);                                                                                    
+    mbx_j_["MBX"]["ff_mons"] = ff_mons_;
+
+    std::vector<std::string> ignore_1b_poly;                                                         
+    try {                                                                                                         
+        std::vector<std::string> ignore_1b_poly2 = j["MBX"]["ignore_1b_poly"];                       
+        ignore_1b_poly = ignore_1b_poly2;                                                                         
+    } catch (...) {                                                                                               
+        ignore_1b_poly.clear();                                                                                   
+        std::cerr << "**WARNING** \"ignore_1b_poly\" is not defined in json file. Using empty list.\n";           
+    }                                                                                                             
+    Set1bIgnorePoly(ignore_1b_poly);                                                                              
+    mbx_j_["MBX"]["ignore_1b_poly"] = ignore_1b_poly_;
 
     std::vector<std::vector<std::string>> ignore_2b_poly;
     try {
@@ -916,6 +938,8 @@ void System::SetUpFromJson(char *json_file) {
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
        "ttm_pairs" : [],
+       "ff_mons" : [],
+       "ignore_1b_poly" : [],
        "ignore_2b_poly" : [],
        "ignore_3b_poly" : []
    } ,
@@ -944,6 +968,8 @@ void System::SetUpFromJson(char *json_file) {
                                   {"grid_density_disp", 2.5},
                                   {"spline_order_disp", 6},
                                   {"ttm_pairs", nlohmann::json::array()},
+                                  {"ff_mons", nlohmann::json::array()},
+                                  {"ignore_1b_poly", nlohmann::json::array()},
                                   {"ignore_2b_poly", nlohmann::json::array()},
                                   {"ignore_3b_poly", nlohmann::json::array()}}},
                                 {"i-pi", {{"port", 34543}, {"localhost", "localhost"}}}};
@@ -1714,7 +1740,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         }
     }
 
-#ifdef DEBUG std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
+#ifdef DEBUG
+ std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
 #endif
 
     return e2b_t + edisp_t;
