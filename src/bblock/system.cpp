@@ -490,6 +490,10 @@ void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec
 
 std::vector<std::pair<std::string, std::string>> System::GetTTMnrgPairs() { return buck_pairs_; }
 
+std::vector<std::string> System::GetFFMons() { return ff_mons_; }
+
+std::vector<std::string> System::Get1bIgnorePoly() { return ignore_1b_poly_; }
+
 std::vector<std::vector<std::string>> System::Get2bIgnorePoly() { return ignore_2b_poly_; }
 
 std::vector<std::vector<std::string>> System::Get3bIgnorePoly() { return ignore_3b_poly_; }
@@ -511,6 +515,28 @@ void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string>> ttm
         std::pair<std::string, std::string> p = s2 < s1 ? std::make_pair(s2, s1) : std::make_pair(s1, s2);
         buck_pairs_.push_back(p);
     }
+}
+
+void System::SetFFMons(std::vector<std::string> ff_mons) {                         
+    ff_mons_ = ff_mons;    
+}
+
+void System::AddFFMon(std::string mon) {                                                  
+
+    if (std::find(ff_mons_.begin(), ff_mons_.end(), mon) == ff_mons_.end()) {                              
+        ff_mons_.push_back(mon);                                                                                 
+    }                                                                                                             
+}                                                                                                                 
+                                                                                                                  
+void System::Add1bIgnorePoly(std::string mon) {                                                
+                                                                                                                  
+    if (std::find(ignore_1b_poly_.begin(), ignore_1b_poly_.end(), mon) == ignore_1b_poly_.end()) {             
+        ignore_1b_poly_.push_back(mon);              
+    }                                                                                                             
+}                                                                                                                 
+                                                                                                                  
+void System::Set1bIgnorePoly(std::vector<std::string> ignore_1b) {                                   
+    ignore_1b_poly_ = ignore_1b;       
 }
 
 void System::Add2bIgnorePoly(std::string mon1, std::string mon2) {

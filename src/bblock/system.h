@@ -333,6 +333,18 @@ class System {
     std::vector<std::pair<std::string, std::string> > GetTTMnrgPairs();
 
     /**
+     * Gets the classical force field monomers vector.
+     * @return Vector of pairs of the monomers for which classical ff will be calculated
+     */
+    std::vector<std::string> GetFFMons();
+
+    /**
+     * Gets the whole vector for which the 1b polynomials won't be calculated
+     * @return Vector of string vectors with the monomers to be ignored
+     */
+    std::vector<std::string> Get1bIgnorePoly();
+
+    /**
      * Gets the whole vector for which the 2b polynomials won't be calculated
      * @return Vector of string vectors with the pairs to be ignored
      */
@@ -460,6 +472,12 @@ class System {
     void AddMolecule(std::vector<size_t> molec);
 
     /**
+     * Adds a monomer that will use the classical force field
+     * @param[in] mon1 Is the id of the monomer
+     **/
+    void AddFFMon(std::string mon);
+
+    /**
      * Adds a pair that will use TTM-nrg instead of MB-nrg
      * @param[in] mon1 Is the id of the first monomer
      * @param[in] mon2 Is the id of the second monomer
@@ -467,10 +485,28 @@ class System {
     void AddTTMnrgPair(std::string mon1, std::string mon2);
 
     /**
+     * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
+     * @param[in] ff_mons Vector of monomers for which classical forcefield energy will be calculated
+     */
+    void SetFFMons(std::vector<std::string> ff_mons);
+
+    /**
      * Sets the TTM pairs vector as a whole. Will overwrite the previous one.
      * @param[in] ttm_pairs Vector of pairs of the monomer pairs for which buckingham will be calculated
      */
     void SetTTMnrgPairs(std::vector<std::pair<std::string, std::string> > ttm_pairs);
+
+    /**
+     * Adds a pair that will be ignored in the 1b polynomials
+     * @param[in] mon Is the id of the monomer
+     */
+    void Add1bIgnorePoly(std::string mon);
+
+    /**
+     * Sets the whole vector for which the 1b polynomials won't be calculated
+     * @param[in] ignore_1b Vector of strings with the monomers to be ignored
+     */
+    void Set1bIgnorePoly(std::vector<std::string> ignore_1b);
 
     /**
      * Adds a pair that will be ignored in the 2b polynomials
@@ -1115,9 +1151,20 @@ to be the same.
     std::vector<std::pair<std::string, size_t> > mon_type_count_;
 
     /**
-     * This vector contains the pairs that will use TTM-nrg instead of MB-nrg
+     * This vector contains the pairs that will use TTM-nrg instead of MB-nrg for 1b
+     */
+    std::vector<std::string> ff_mons_;
+
+    /**
+     * This vector contains the pairs that will use TTM-nrg instead of MB-nrg for 2b
      */
     std::vector<std::pair<std::string, std::string> > buck_pairs_;
+
+    /**
+     * This vector of vectors contains the pairs of monomer types that will be ignored when
+     * when calculating the 1b polynomials.
+     */
+    std::vector<std::string> ignore_1b_poly_;
 
     /**
      * This vector of vectors contains the pairs of monomer types that will be ignored when
