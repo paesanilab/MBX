@@ -907,6 +907,21 @@ void System::SetUpFromJson(nlohmann::json j) {
     Set3bIgnorePoly(ignore_3b_poly);
     mbx_j_["MBX"]["ignore_3b_poly"] = ignore_3b_poly_;
 
+    std::string connectivity_file = ""; 
+    try {                                                                                                         
+        connectivity_file = j["MBX"]["connectivity_file"];                       
+        // Set the connectivity map in system
+        // FIXME MRR Get connectivity from the file
+        // FIXME MRR Set up connectivity in system 
+        tools::ReadConnectivity(connectivity_file.c_str(),connectivity_map_);
+    } catch (...) {                                                                                               
+        connectivity_file = "";                                                                                   
+        std::cerr << "**WARNING** \"connectivity_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
+    }                                                                                                             
+    mbx_j_["MBX"]["connectivity_file"] = connectivity_file;
+
+    
+
     SetPBC(box_);
 }
 
@@ -941,7 +956,8 @@ void System::SetUpFromJson(char *json_file) {
        "ff_mons" : [],
        "ignore_1b_poly" : [],
        "ignore_2b_poly" : [],
-       "ignore_3b_poly" : []
+       "ignore_3b_poly" : [],
+       "connectivity_file" = "";
    } ,
    "i-pi" : {
        "port" : 34543,
@@ -969,6 +985,7 @@ void System::SetUpFromJson(char *json_file) {
                                   {"spline_order_disp", 6},
                                   {"ttm_pairs", nlohmann::json::array()},
                                   {"ff_mons", nlohmann::json::array()},
+                                  {"connectivity_file", ""},
                                   {"ignore_1b_poly", nlohmann::json::array()},
                                   {"ignore_2b_poly", nlohmann::json::array()},
                                   {"ignore_3b_poly", nlohmann::json::array()}}},
@@ -1208,16 +1225,14 @@ double System::Energy(bool do_grads) {
     // Call the get energy function
     allMonGood_ = true;
 
-    double eff = 0.0;
-    if (connectivity_map_.size() != 0) {
-        eff = GetFF(do_grads);
-    }
 
     // Get the NB contributions
 
 #ifdef TIMING
     auto t1 = std::chrono::high_resolution_clock::now();
 #endif
+
+    double eff = GetFF(do_grads);
     double e1b = Get1B(do_grads);
 
     // If monomers are too distorted, skip 2b and 3b calculation
@@ -1358,6 +1373,10 @@ double System::GetFF(bool do_grads) {
         size_t istart = 0;
         size_t iend = 0;
 
+        if (std::find(ff_mons_.begin(),ff_mons_.end(),mon_type_count_[k].first) == ff_mons_.end()) {
+            continue;
+        }
+
         // EY: Loops over the number monomer of the current id or type
         while (istart < mon_type_count_[k].second) {
             iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
@@ -1431,10 +1450,16 @@ double System::Get1B(bool do_grads) {
     double e1b = 0.0;
 
     size_t indx = 0;
+
     for (size_t k = 0; k < mon_type_count_.size(); k++) {
         // Useful variables
         size_t istart = 0;
         size_t iend = 0;
+
+        if (std::find(ignore_1b_poly_.begin(),ignore_1b_poly_.end(),mon_type_count_[k].first) != ignore_1b_poly_.end()) {               
+            continue;                                                                                             
+        }
+
         while (istart < mon_type_count_[k].second) {
             iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
             size_t nmon = 0;

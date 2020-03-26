@@ -93,6 +93,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 namespace tools {
 
+// FIXME MRR This function will probably be removed
 /**
  * Reads a connectivity file into a connectivity map and sets it in system
  * @param[in] filename Name of the connectivity file
