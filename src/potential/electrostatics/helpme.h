@@ -3576,7 +3576,9 @@ class PMEInstance {
                     case (NodeOrder::ZYX):
                         myNodeRankA_ = mpiCommunicator_->myRank_ % numNodesA;
                         myNodeRankB_ = (mpiCommunicator_->myRank_ % (numNodesB * numNodesA)) / numNodesA;
-                        myNodeRankC_ = mpiCommunicator_->myRank_ / (numNodesB * numNodesA);
+                        myNodeRankC_ = mpiCommunicator_->myRank_ / (numNodesB * numNodesA);			
+			// std::cout << "myRank_= " << mpiCommunicator_->myRank_ << "  myNodeRankABC= " <<
+			//   myNodeRankA_ << " " << myNodeRankB_ << " " << myNodeRankC_ << std::endl;
                         mpiCommunicatorA_ =
                             mpiCommunicator_->split(myNodeRankC_ * numNodesB + myNodeRankB_, myNodeRankA_);
                         mpiCommunicatorB_ =
@@ -3611,6 +3613,7 @@ class PMEInstance {
             size_t scratchSize;
             int gridPaddingA = 0, gridPaddingB = 0, gridPaddingC = 0;
             if (algorithm == AlgorithmType::CompressedPME) {
+	      //	      std::cout << "algorithm= CompressedPME" << std::endl;
                 gridDimensionA_ = numNodesA * std::ceil(dimA / (float)numNodesA);
                 gridDimensionB_ = numNodesB * std::ceil(dimB / (float)numNodesB);
                 gridDimensionC_ = numNodesC * std::ceil(dimC / (float)numNodesC);
@@ -3641,6 +3644,7 @@ class PMEInstance {
                 scratchSize = (size_t)std::max(myGridDimensionA_, numKSumTermsA) *
                               std::max(myGridDimensionB_, numKSumTermsB) * std::max(myGridDimensionC_, numKSumTermsC);
             } else {
+	      //	      std::cout << "algorithm= PME" << std::endl;
                 gridDimensionA_ = findGridSize(dimA, {numNodesA_});
                 gridDimensionB_ = findGridSize(dimB, {numNodesB_ * numNodesC_});
                 gridDimensionC_ = findGridSize(dimC, {numNodesA_ * numNodesC_, numNodesB_ * numNodesC_});
@@ -3670,6 +3674,12 @@ class PMEInstance {
                 compressionCoefficientsC_ = RealMat();
                 scratchSize = (size_t)myGridDimensionC_ * myComplexGridDimensionA_ * myGridDimensionB_;
             }
+	    
+	    // std::cout << "  myNodeRankABC= " <<
+	    //   myNodeRankA_ << " " << myNodeRankB_ << " " << myNodeRankC_ <<
+	    //   "  myGridDimension_= " << myGridDimensionA_ << " " << myGridDimensionB_ << " " <<
+	    //   myGridDimensionC_ << "  myFirstGridPoint_= " << myFirstGridPointA_ << " " <<
+	    //   myFirstGridPointB_ << " " << myFirstGridPointC_ << std::endl;
 
             // Grid iterators to correctly wrap the grid when using splines.
             gridIteratorA_ = makeGridIterator(gridDimensionA_, myFirstGridPointA_,
@@ -3941,6 +3951,10 @@ class PMEInstance {
                         gridAtomList_[cStartingGridPoint].emplace(startingGridPoint, atom);
                         ++myNumAtoms;
                     }
+		    // if(myFirstGridPointC_ == 0)
+		    //   std::cout << "atom= " << atom << "  atomCoords= "  << atomCoords[0] << " " << atomCoords[1] <<
+		    // 	" " << atomCoords[2] << "  StartingGridPoint= " << aStartingGridPoint << " " <<
+		    // 	bStartingGridPoint << " " << cStartingGridPoint << "  myNumAtoms= " << myNumAtoms << std::endl;
                 }
             }
             numAtomsPerThread_[threadID] = myNumAtoms;

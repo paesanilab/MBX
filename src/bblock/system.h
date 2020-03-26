@@ -631,6 +631,15 @@ to be the same.
      * @param[in] spline_order Order of the splines used for interpolation
      */
     void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
+  
+    /**
+     * Sets MPI environment from driver code
+     * @param[in] comm is MPI communicator
+     * @param[in] nx is # of processors along x-axis (a axis)
+     * @param[in] ny is # of processors along y-axis (b axis)
+     * @param[in] nz is # of processors along z-axis (c axis)
+     */
+    void SetMPI(MPI_Comm comm, int nx, int ny, int nz);
 
     /////////////////////////////////////////////////////////////////////////////
     // Energy Functions /////////////////////////////////////////////////////////
@@ -698,6 +707,7 @@ to be the same.
      * @return Dispersion energy of the system
      */
      double Dispersion(bool do_grads, bool use_ghost = 0);
+     double DispersionPME(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the buckingham energy for the whole system.
@@ -818,6 +828,7 @@ to be the same.
      * @return  Dispersion energy of the system
      */
      double GetDispersion(bool do_grads, bool use_ghost = 0);
+     double GetDispersionPME(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the buckinham energy.
@@ -1137,6 +1148,28 @@ to be the same.
      * Json configuration object
      */
     nlohmann::json mbx_j_;
+  
+    /**
+     * Set to true when driver has intialized MPI
+    */
+    bool mpi_initialized_;
+  
+    /**
+     * MPI Communicator from driver code
+    */
+    MPI_Comm world_;
+
+    /**
+     * MPI processor grid
+    */
+    size_t proc_grid_x_;
+    size_t proc_grid_y_;
+    size_t proc_grid_z_;
+  
+    /**
+     * MPI node order
+    */
+    int node_order_;
 };
 
 }  // namespace bblock
