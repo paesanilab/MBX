@@ -52,8 +52,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#include "helpme.h"
 
-namespace disp {
+#ifndef MPI_VERSION
+//typedef struct ompi_communicator_t *MPI_Comm;
+typedef int MPI_Comm;
+#endif
 
+namespace disp {
+  
 class Dispersion {
    public:
     Dispersion(){};
@@ -62,11 +67,11 @@ class Dispersion {
     void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-		    const std::vector<size_t> &islocal_,
-		    MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z,
-		    const bool do_grads,
+		    const std::vector<size_t> &islocal_, const bool do_grads,
                     const std::vector<double> &box);
 
+    void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
+  
     double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
     double GetDispersionPME(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
 
@@ -161,7 +166,7 @@ class Dispersion {
     // PME spline order
     int pme_spline_order_ = 0;
     // MPI initialized
-    bool mpi_initialized = false;
+    bool mpi_initialized_ = false;
     // MPI Communicator
     MPI_Comm world_;
     // proc_grid

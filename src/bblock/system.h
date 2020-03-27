@@ -640,6 +640,12 @@ to be the same.
      * @param[in] nz is # of processors along z-axis (c axis)
      */
     void SetMPI(MPI_Comm comm, int nx, int ny, int nz);
+  
+    /**
+     * Interface for driver to check if MPI environment initialized
+     * @param[out] 1 for initialized / -1 for not initialized / -2 for not enabled
+     */
+    int TestMPI();
 
     /////////////////////////////////////////////////////////////////////////////
     // Energy Functions /////////////////////////////////////////////////////////
@@ -707,6 +713,14 @@ to be the same.
      * @return Dispersion energy of the system
      */
      double Dispersion(bool do_grads, bool use_ghost = 0);
+  
+    /**
+     * Obtains only the k-space dispersion energy for the whole system.
+     * Gradients will be ONLY for the dispersion part.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @return Dispersion energy of the system
+     */
      double DispersionPME(bool do_grads, bool use_ghost = 0);
 
     /**
@@ -828,6 +842,16 @@ to be the same.
      * @return  Dispersion energy of the system
      */
      double GetDispersion(bool do_grads, bool use_ghost = 0);
+  
+    /**
+     * Private function to internally get the k-space portion of dispersion energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return  Dispersion energy of the system
+     */
      double GetDispersionPME(bool do_grads, bool use_ghost = 0);
 
     /**
@@ -1165,11 +1189,6 @@ to be the same.
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;
-  
-    /**
-     * MPI node order
-    */
-    int node_order_;
 };
 
 }  // namespace bblock

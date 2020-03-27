@@ -562,7 +562,7 @@ void System::Initialize() {
     std::cerr << std::scientific << std::setprecision(10);
     std::cout << std::scientific << std::setprecision(10);
 #endif
-
+    
     /////////////
     // CUTOFFS //
     /////////////
@@ -634,10 +634,8 @@ void System::Initialize() {
     // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
     // TODO modify c6_long_range
-    //    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
-    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_,
-			    world_, proc_grid_x_, proc_grid_y_, proc_grid_z_,
-			    true, box_);
+    if(mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, true, box_);
 
     // We are done. Setting initialized_ to true
@@ -2129,12 +2127,29 @@ void System::SetEwald(double alpha, double grid_density, int spline_order) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetMPI(MPI_Comm comm, int nx, int ny, int nz) {
+#if HAVE_MPI == 1
     mpi_initialized_ = true;
     world_ = comm;
-    node_order_ = 1; // hard-coded to ZYX
     proc_grid_x_ = nx;
     proc_grid_y_ = ny;
     proc_grid_z_ = nz;
+#else
+    world_ = 0;
+    proc_grid_x_ = 1;
+    proc_grid_y_ = 1;
+    proc_grid_z_ = 1;
+#endif
+}
+  
+////////////////////////////////////////////////////////////////////////////////
+
+int System::TestMPI() {
+#if HAVE_MPI == 1
+    if(mpi_initialized_) return 1;
+    else return -1;
+#else
+    return -2;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////

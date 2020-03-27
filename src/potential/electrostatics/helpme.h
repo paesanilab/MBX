@@ -2040,7 +2040,8 @@ std::ostream& operator<<(std::ostream& os, const std::unique_ptr<MPIWrapper<Real
 #else
 
 #ifndef MPI_VERSION
-typedef struct ompi_communicator_t *MPI_Comm;
+//typedef struct ompi_communicator_t *MPI_Comm;
+typedef int MPI_Comm;
 #endif
 
 #endif

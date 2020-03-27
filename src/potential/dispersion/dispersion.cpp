@@ -41,7 +41,6 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
 			    const std::vector<size_t> &islocal,
-			    MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z,
                             const bool do_grads = true, const std::vector<double> &box = {}) {
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
@@ -64,14 +63,24 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     c6_long_range_ = std::vector<double>(natoms_, 0.0);
     sys_phi_ = std::vector<double>(natoms_, 0.0);
 
+    if(!mpi_initialized_) {
+      world_ = 0;
+      proc_grid_x_ = 1;
+      proc_grid_y_ = 1;
+      proc_grid_z_ = 1;
+    }
+    
+    ReorderData();
+}
+  
+void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
+    mpi_initialized_ = true;
     world_ = world;
     proc_grid_x_ = proc_grid_x;
     proc_grid_y_ = proc_grid_y;
     proc_grid_z_ = proc_grid_z;
-    
-    ReorderData();
 }
-
+  
 void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads = true, const double cutoff = 100.0,
                                   const std::vector<double> &box = {}) {
     sys_xyz_ = xyz;
@@ -462,8 +471,6 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         fi_crd1 += nmon1 * ns1 * 3;
     }
     
-    //    std::cout << "disp_energy #1= " << disp_energy_ << std::endl;
-    
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
@@ -524,7 +531,6 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             self_energy += c6 * c6 * prefac;
         }
         disp_energy_ += rec_energy + self_energy;
-	std::cout << "rec_energy= " << rec_energy << "  self_energy= " << self_energy << std::endl;
     }
 
 }
@@ -556,30 +562,20 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
     // if calling this function, they really need to check still?
     if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
     
-    //    std::cout << "disp_energy #1= " << disp_energy_ << "  compute_pme= " << compute_pme << std::endl;
-
-    // hard-coded box size for testing
-
-    //    box_ = {20.0, 0.0, 0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 20.0};
-    
     if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
         double A = box_[0], B = box_[4], C = box_[8];
-	//	std::cout << "  box= " << A << " " << B << " " << C << std::endl;
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
-
-	// std::cout << "ewald_alpha_= " << ewald_alpha_ << "  pme_spline_order_= " << pme_spline_order_ <<
-	//   "  grid= " << grid_A << " " << grid_B << " " << grid_C << std::endl;
 	
-#if 0
-	pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
-#else
-	pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0,
-	 			  world_, PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-#endif
+	if(mpi_initialized_) {
+	  pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0,
+				    world_, PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+	} else {
+	  pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
+	}
 
         pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
 
@@ -591,8 +587,8 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
 	// double yhi = 20.0;
 	// double zlo, zhi;
 
-	int me;
-	MPI_Comm_rank(MPI_COMM_WORLD,&me);
+	// int me;
+	// MPI_Comm_rank(MPI_COMM_WORLD,&me);
 
 	// if(proc_grid_z_ == 2) {
 	
@@ -635,7 +631,8 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
         std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
         double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
 
-	// for(int j=0; j<2; ++j) {
+	const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
+	// for(int j=0; j<num_procs; ++j) {
 
 	//   if(me == j) {
 	//     for(int i=0; i<natoms_; ++i) {
@@ -689,14 +686,13 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
             self_energy += c6 * c6 * prefac;
         }
 	// With the entire system duplicated on all ranks, this over-counts by Nproc
-	const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
 	self_energy /= (double)num_procs;
         disp_energy_ += rec_energy + self_energy;
 	
 	// for(int j=0; j<num_procs; ++j) {
-	  
+	
 	//   if(me == j) {
-	    
+	 
 	//     std::cout << "(" << me << "(  rec_energy= " << rec_energy << "  self_energy= " << self_energy << std::endl;
 	//   }
 	//   MPI_Barrier(world_);
