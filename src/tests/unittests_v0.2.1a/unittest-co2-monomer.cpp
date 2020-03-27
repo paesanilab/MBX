@@ -49,6 +49,15 @@ TEST_CASE("Test co2 monomer energy terms") {
     // Create the bromide -- water system
     SETUP_CO2_1
 
+    co2_bond1.SetParameters(bond_morse_linear_parameters, bond_morse_nonlinear_parameters);
+    co2_bond2.SetParameters(bond_morse_linear_parameters, bond_morse_nonlinear_parameters);
+    std::vector<eff::Bond> bond_vec = {co2_bond1, co2_bond2};
+    co2_angle1.SetParameters(angle_harm_linear_parameters1, angle_harm_nonlinear_parameters1);
+    std::vector<eff::Angles> angle_vec = {co2_angle1};
+    eff::Conn connectivity =
+        eff::Conn("co2", bond_vec, angle_vec, std::vector<eff::Dihedral>{}, std::vector<eff::Inversion>{});
+    std::unordered_map<std::string, eff::Conn> connectivity_map = {std::make_pair("co2", connectivity)};
+
     // Now we create a system that will be the same as the one read
     bblock::System my_system;
 
@@ -63,8 +72,52 @@ TEST_CASE("Test co2 monomer energy terms") {
         count += n_atoms_vector[i];
     }
 
+    // Add the connectivity to the system
+    my_system.SetConnectivity(connectivity_map);
+
     // Initialize the system to fill in the information
     my_system.Initialize();
+
+    SECTION("Classic Potential") {
+        double energy_nograd = my_system.ClassicPotential(false);
+        double energy_grad = my_system.ClassicPotential(true);
+        std::vector<double> real_grad = my_system.GetRealGrads();
+        std::vector<double> all_grad = my_system.GetGrads();
+        std::vector<double> real_xyz = my_system.GetRealXyz();
+        std::vector<double> all_xyz = my_system.GetXyz();
+
+        SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(classic_energy).margin(TOL)); }
+
+        SECTION("Compare analitical gradients with numerical gradients") {
+            double stepSize = 0.0001;
+            for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusplusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] -= 6 * stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusminusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double finiteDifferenceForce = (-1 * minusminusminusEnergy + 9 * minusminusEnergy - 45 * minusEnergy +
+                                                45 * plusEnergy - 9 * plusplusEnergy + plusplusplusEnergy) /
+                                               (60 * stepSize);
+                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+            }
+        }
+    }
 
     SECTION("One-Body") {
         double energy_nograd = my_system.OneBodyEnergy(false);
