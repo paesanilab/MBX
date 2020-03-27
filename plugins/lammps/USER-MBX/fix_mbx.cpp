@@ -33,6 +33,8 @@
 
 #define _MAX_SIZE_MOL_NAME 10
 
+//#define _DEBUG
+
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
@@ -76,6 +78,22 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     num_mols[i] = force->inumeric(FLERR,arg[iarg++]);
     strcpy(mol_names[i], arg[iarg++]);
   }
+
+  // process remaining optional keywords
+  
+  use_json = 0;
+  json_file = NULL;
+  
+  while(iarg < narg) {
+    if(strcmp(arg[iarg], "json") == 0) {
+      int len = strlen(arg[iarg++]);
+      use_json = 1;
+      json_file = new char[len];
+      strcpy(json_file, arg[iarg]);
+    }
+    
+    iarg++;
+  }
   
   mol_offset = NULL;
   memory->create(mol_offset, num_mol_types+1, "fixmbx:mol_offset");
@@ -104,7 +122,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     mol_offset[i+1] = mol_offset[i] + num_mols[i]*num_atoms_per_mol[i];
 
   if(comm->me == 0) {
-    printf("\n[MBX] # molecule types= %i\n",num_mol_types);
+    if(use_json) printf("\n[MBX] Using json_file= %s\n",json_file);
+    printf("[MBX] # molecule types= %i\n",num_mol_types);
     for(int i=0; i<num_mol_types; ++i)
       printf("[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n",i,num_mols[i],mol_names[i],mol_offset[i]);
     printf("\n");
@@ -140,6 +159,28 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   nlocal_rank3 = NULL;
   nlocal_disp3 = NULL;
 
+  // setup json, if requested
+
+  if(use_json) {
+
+    int size = 0;
+    if(me == 0) {
+      std::ifstream t(json_file);
+      t.seekg(0, std::ios::end);
+      size = t.tellg();
+      json_settings.resize(size);
+      t.seekg(0);
+      t.read(&json_settings[0], size);
+    }
+
+    MPI_Bcast(&size, 1, MPI_INT, 0, world);
+    if(me) json_settings.resize(size);
+
+    MPI_Bcast(&json_settings[0], size+1, MPI_CHAR, 0, world);
+  }
+
+  //  std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
+  
   memory->create(mbxt_count,      MBXT_NUM_TIMERS, "fixmbx:mbxt_count");
   memory->create(mbxt_time,       MBXT_NUM_TIMERS, "fixmbx:mbxt_time");
   memory->create(mbxt_time_start, MBXT_NUM_TIMERS, "fixmbx:mbxt_time_start");
@@ -264,9 +305,11 @@ void FixMBX::setup_post_neighbor()
 void FixMBX::post_neighbor()
 {
   // setup after neighbor build
-  
-  //  printf("\n[MBX] Inside post_neighbor()\n");
 
+#ifdef _DEBUG
+  printf("\n[MBX] (%i) Inside post_neighbor()\n",me);
+#endif
+  
   const int nlocal = atom->nlocal;
   const int nghost = atom->nghost;
   const int nall = nlocal + nghost;
@@ -325,6 +368,10 @@ void FixMBX::post_neighbor()
   
   mbx_init();
   mbx_init_full();
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving post_neighbor()\n",me);
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -518,13 +565,20 @@ int FixMBX::unpack_exchange(int nlocal, double *buf)
 void FixMBX::mbx_init()
 {
   mbxt_start(MBXT_INIT);
-  
-  //  printf("[MBX] Inside mbx_init()\n");
 
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside mbx_init()\n",me);
+#endif
+  
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
   tagint * tag = atom->tag;
   double ** x = atom->x;
+
+  if(nlocal == 0) {
+    mbxt_stop(MBXT_INIT);
+    return;
+  }
   
   std::vector<size_t> molec;
 
@@ -697,8 +751,6 @@ void FixMBX::mbx_init()
     
   // } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
   //   error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
-  
-  ptr_mbx->SetPBC(box);
 
   // set MBX solvers
   
@@ -711,6 +763,15 @@ void FixMBX::mbx_init()
     //    ptr_mbx->Set2bCutoff(100.0);
     //  }
 
+    
+  if(use_json) ptr_mbx->SetUpFromJson(json_settings);
+  
+  ptr_mbx->SetPBC(box);
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving mbx_init()\n",me);
+#endif
+  
   mbxt_stop(MBXT_INIT);
 }
 
@@ -722,8 +783,10 @@ void FixMBX::mbx_init()
 void FixMBX::mbx_init_full()
 {
   mbxt_start(MBXT_INIT_FULL);
-  
-  //  printf("[MBX] Inside mbx_init_full()\n");
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside mbx_init_full()\n",me);
+#endif
 
   // gather data from other MPI ranks
   
@@ -949,7 +1012,11 @@ void FixMBX::mbx_init_full()
     ptr_mbx_full->Set2bCutoff(100.0);
   }
   
-  //  printf("[MBX] Leaving mbx_init_full()\n");
+  if(use_json) ptr_mbx_full->SetUpFromJson(json_settings);
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving mbx_init_full()\n",me);
+#endif
   
   mbxt_stop(MBXT_INIT_FULL);
 }
@@ -961,7 +1028,10 @@ void FixMBX::mbx_init_full()
 void FixMBX::mbx_update_xyz()
 {
   mbxt_start(MBXT_UPDATE_XYZ);
-  //  printf("[MBX] Inside mbx_update_xyz()\n");
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside mbx_update_xyz()\n",me);
+#endif
 
   // update if box changes
   // this box is currently non-periodic, nothing to update
@@ -996,6 +1066,11 @@ void FixMBX::mbx_update_xyz()
   tagint * tag = atom->tag;
   double ** x = atom->x;
 
+  if(nlocal == 0) {
+    mbxt_stop(MBXT_UPDATE_XYZ);
+    return;
+  }
+  
   double ximage[3];
   
   std::vector<double> xyz(mbx_num_atoms*3);
@@ -1085,8 +1160,11 @@ void FixMBX::mbx_update_xyz()
   } // for(i<nall)
   
   ptr_mbx->SetRealXyz(xyz);
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving mbx_update_xyz()\n",me);
+#endif
   
-  //  printf("[MBX] Leaving mbx_update_xyz()\n");
   mbxt_stop(MBXT_UPDATE_XYZ);
 }
 
@@ -1097,8 +1175,10 @@ void FixMBX::mbx_update_xyz()
 void FixMBX::mbx_update_xyz_full()
 {
   mbxt_start(MBXT_UPDATE_XYZ_FULL);
-  
-  //  printf("[MBX] Inside mbx_update_xyz_full()\n");
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Inside mbx_update_xyz_full()\n",me);
+#endif
 
   // gather coordinates
   
@@ -1217,8 +1297,11 @@ void FixMBX::mbx_update_xyz_full()
   } // for(i<nall)
 
   ptr_mbx_full->SetRealXyz(xyz);
+
+#ifdef _DEBUG
+  printf("[MBX] (%i) Leaving mbx_update_xyz_full()\n",me);
+#endif
   
-  //  printf("[MBX] Leaving mbx_update_xyz_full()\n");
   mbxt_stop(MBXT_UPDATE_XYZ_FULL);
 }
 

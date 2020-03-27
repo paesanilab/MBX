@@ -84,6 +84,10 @@ class FixMBX : public Fix {
   int * mol_anchor;   // per-atom array 1/0 if anchor atom of a molecule
   int * mol_intact;   // per-atom array 1/0 if molecule intact on processor (local+ghost)
 
+  int use_json;
+  char * json_file;
+  std::string json_settings;
+  
   int mbx_num_atoms;
   int mbx_num_atoms_full;
 
@@ -109,7 +113,6 @@ class FixMBX : public Fix {
   int * nlocal_disp;
   int * nlocal_rank3;
   int * nlocal_disp3;
-  
   
   void mbx_init();
   void mbx_init_full();

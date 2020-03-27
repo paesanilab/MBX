@@ -45,6 +45,8 @@ class PairMBX : public Pair {
  protected:
   double cut_global;
   double **cut;
+
+  int me;
   
   FixMBX * fix_mbx; // owner of MBX objects
 
