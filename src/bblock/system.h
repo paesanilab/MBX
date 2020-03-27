@@ -729,6 +729,7 @@ to be the same.
      * Gradients will be ONLY for the dispersion part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
      * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, then ghost monomers present
      * @return Dispersion energy of the system
      */
      double Dispersion(bool do_grads, bool use_ghost = 0);
@@ -746,10 +747,11 @@ to be the same.
      * Obtains the buckingham energy for the whole system.
      * Gradients will be ONLY for the dispersion part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * @param[in] use_ghost If true, then ghost logic applied
      * the gradient calculation will not be performed
      * @return Buckingham energy of the system
      */
-    double Buckingham(bool do_grads);
+    double Buckingham(bool do_grads, bool use_ghost = 0);
 
    private:
     /**
@@ -887,9 +889,11 @@ to be the same.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
      * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return  Buckingham energy of the system
      */
-    double GetBuckingham(bool do_grads);
+    double GetBuckingham(bool do_grads, bool use_ghost = 0);
 
    private:
     /**
