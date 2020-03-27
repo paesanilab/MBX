@@ -104,9 +104,12 @@ void PairMBX::compute(int eflag, int vflag)
   
   // compute energy+gradients in parallel
 
-  bblock::System * ptr_mbx     = fix_mbx->ptr_mbx;
-  bblock::System * ptr_mbx_pme = fix_mbx->ptr_mbx_pme;
+  bblock::System * ptr_mbx      = fix_mbx->ptr_mbx;
+  bblock::System * ptr_mbx_full = fix_mbx->ptr_mbx_full; // compute term on rank 0
+  bblock::System * ptr_mbx_pme  = fix_mbx->ptr_mbx_pme;  // compute PME terms in parallel
 
+  bool compute_disp_parallel = fix_mbx->mbx_mpi_enabled;
+  
   double mbx_e2b_local, mbx_e2b_ghost;
   double mbx_e3b_local, mbx_e3b_ghost;
   
@@ -125,7 +128,7 @@ void PairMBX::compute(int eflag, int vflag)
   mbx_buck = 0.0;
   mbx_ele  = 0.0;
   
-  if(atom->nlocal) {
+  if(fix_mbx->mbx_num_atoms > 0) {
   
     fix_mbx->mbxt_start(MBXT_E1B);
     mbx_e1b = ptr_mbx->OneBodyEnergy(true);
@@ -155,35 +158,47 @@ void PairMBX::compute(int eflag, int vflag)
     accumulate_f();
     
     mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
+
+    if(compute_disp_parallel) {
+      fix_mbx->mbxt_start(MBXT_DISP);
+      mbx_disp = ptr_mbx->Dispersion(true, true); // computes real-space with local-local & local-ghost pairs
+      fix_mbx->mbxt_stop(MBXT_DISP);
+      accumulate_f();
+    }
+
+#if 1
+    fix_mbx->mbxt_start(MBXT_BUCK);
+    mbx_buck = ptr_mbx->Buckingham(true,true);
+    fix_mbx->mbxt_stop(MBXT_BUCK);
+    accumulate_f();
+#endif
+    
+  }
+  
+  if(compute_disp_parallel) {
+    
+    fix_mbx->mbxt_start(MBXT_DISP_PME);
+    mbx_disp += ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
+    fix_mbx->mbxt_stop(MBXT_DISP_PME);
+    accumulate_f_pme();
+    
+  } else {
     
     fix_mbx->mbxt_start(MBXT_DISP);
-    mbx_disp = ptr_mbx->Dispersion(true, true); // computes real-space with local-local & local-ghost pairs
+    if(comm->me == 0) mbx_disp = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
     fix_mbx->mbxt_stop(MBXT_DISP);
-    accumulate_f();
+    accumulate_f_full();
+    
   }
-    
-#if 1
-  fix_mbx->mbxt_start(MBXT_DISP_PME);
-  mbx_disp += ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
-  fix_mbx->mbxt_stop(MBXT_DISP_PME);
-  accumulate_f_pme();
-#endif
-    
+  
   // compute energy+gradients in serial on rank 0 for full system
-  
-  bblock::System * ptr_mbx_full = fix_mbx->ptr_mbx_full;
-    
+
 #if 0
-  fix_mbx->mbxt_start(MBXT_DISP);
-  if(comm->me == 0) mbx_disp = ptr_mbx_full->Dispersion(true);
-  fix_mbx->mbxt_stop(MBXT_DISP);
-  accumulate_f_full();
-#endif
-  
   fix_mbx->mbxt_start(MBXT_BUCK);
   if(comm->me == 0) mbx_buck = ptr_mbx_full->Buckingham(true);
   fix_mbx->mbxt_stop(MBXT_BUCK);
   accumulate_f_full();
+#endif
   
   fix_mbx->mbxt_start(MBXT_ELE);
   if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);

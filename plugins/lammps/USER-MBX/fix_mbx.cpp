@@ -133,6 +133,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     printf("\n");
   }
 
+  mbx_mpi_enabled = true;
+  
   pair_mbx = NULL;
   pair_mbx = (PairMBX *) force->pair_match("^mbx",0);
 
@@ -201,6 +203,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     mbxt_count[i] = 0;
   }
 
+  mbx_write_warnings = true;
+  
   mbxt_initial_time = MPI_Wtime();
 }
 
@@ -314,6 +318,8 @@ void FixMBX::setup_post_neighbor()
   //  printf("\n[MBX] Inside setup_post_neighbor()\n");
 
   post_neighbor();
+
+  mbx_write_warnings = false;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -600,6 +606,8 @@ void FixMBX::mbx_init()
   tagint * tag = atom->tag;
   double ** x = atom->x;
 
+  mbx_num_atoms = 0;
+  
   if(nlocal == 0) {
     mbxt_stop(MBXT_INIT);
     return;
@@ -613,7 +621,6 @@ void FixMBX::mbx_init()
 
   int nm = 0;
 
-  mbx_num_atoms = 0;
   for(int i=0; i<nall; ++i) {
     
     //    printf("i= %i  mol_anchor= %i\n",i,mol_anchor[i]);
@@ -754,6 +761,11 @@ void FixMBX::mbx_init()
     } // if(mol_anchor)
     
   } // for(i<nall)
+
+  if(mbx_num_atoms == 0) {
+    mbxt_stop(MBXT_INIT);
+    return;
+  }
   
   // int * pg = comm->procgrid;
   // ptr_mbx->SetMPI(world, pg[0], pg[1], pg[2]);
@@ -792,7 +804,6 @@ void FixMBX::mbx_init()
     //    ptr_mbx->Set2bCutoff(100.0);
     //  }
 
-    
   if(use_json) ptr_mbx->SetUpFromJson(json_settings);
   
   ptr_mbx->SetPBC(box);
@@ -823,6 +834,8 @@ void FixMBX::mbx_init_local()
   tagint * tag = atom->tag;
   double ** x = atom->x;
 
+  mbx_num_atoms_local = 0;
+  
   if(nlocal == 0) {
     mbxt_stop(MBXT_INIT);
     return;
@@ -876,7 +889,6 @@ void FixMBX::mbx_init_local()
 
   int nm = 0;
 
-  mbx_num_atoms_local = 0;
   for(int i=0; i<nall; ++i) {
     
     //    printf("i= %i  mol_anchor= %i\n",i,mol_anchor[i]);
@@ -1027,9 +1039,18 @@ void FixMBX::mbx_init_local()
   } // for(i<nall)
 
   printf("(%i)  mbx_num_atoms_local= %i\n",me,mbx_num_atoms_local);
+
+  if(mbx_num_atoms_local == 0) {
+    mbxt_stop(MBXT_INIT);
+    return;
+  }
   
   int * pg = comm->procgrid;
   ptr_mbx_local->SetMPI(world, pg[0], pg[1], pg[2]);
+
+  int err = ptr_mbx_local->TestMPI();
+  if(err == -1) error->all(FLERR, "[MBX] MPI not initialized\n");
+  else if(err == -2) error->all(FLERR,"[MBX] MPI not enabled\n");
   
   ptr_mbx_local->Initialize();
   
@@ -1531,6 +1552,16 @@ void FixMBX::mbx_init_pme()
   
   int * pg = comm->procgrid;
   ptr_mbx_pme->SetMPI(world, pg[0], pg[1], pg[2]);
+
+  // Check that MBX was compiled with MPI support
+  
+  int err = ptr_mbx_pme->TestMPI();
+  if(err == -1) error->all(FLERR, "[MBX] MPI not initialized\n");
+  else if(err == -2) {
+    if(me == 0 && mbx_write_warnings)
+      error->warning(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
+    mbx_mpi_enabled = false;
+  }
   
   ptr_mbx_pme->Initialize();
   
@@ -1622,7 +1653,7 @@ void FixMBX::mbx_update_xyz()
   tagint * tag = atom->tag;
   double ** x = atom->x;
 
-  if(nlocal == 0) {
+  if(mbx_num_atoms == 0) {
     mbxt_stop(MBXT_UPDATE_XYZ);
     return;
   }
@@ -1771,7 +1802,7 @@ void FixMBX::mbx_update_xyz_local()
   tagint * tag = atom->tag;
   double ** x = atom->x;
 
-  if(nlocal == 0) {
+  if(mbx_num_atoms_local == 0) {
     mbxt_stop(MBXT_UPDATE_XYZ);
     return;
   }

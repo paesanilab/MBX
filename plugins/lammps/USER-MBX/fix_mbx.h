@@ -77,6 +77,9 @@ class FixMBX : public Fix {
   int me, nprocs;
   bigint ngroup;
 
+  bool mbx_mpi_enabled;
+  bool mbx_write_warnings;
+  
   int num_mol_types;       // # of unique molecule types
   int num_molecules;       // total # of molecules
   int * num_mols;          // array of # of molecules of each type
