@@ -175,8 +175,6 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
     }
 #endif
 
-    std::cout << "Inside CalculateRepulsion()" << std::endl;
-    
     // This part looks at sites inside the same monomer
     // Reset first indexes
     size_t fi_mon = 0;
