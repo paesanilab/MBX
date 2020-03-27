@@ -166,12 +166,10 @@ void PairMBX::compute(int eflag, int vflag)
       accumulate_f();
     }
 
-#if 1
     fix_mbx->mbxt_start(MBXT_BUCK);
     mbx_buck = ptr_mbx->Buckingham(true,true);
     fix_mbx->mbxt_stop(MBXT_BUCK);
     accumulate_f();
-#endif
     
   }
   
@@ -192,13 +190,6 @@ void PairMBX::compute(int eflag, int vflag)
   }
   
   // compute energy+gradients in serial on rank 0 for full system
-
-#if 0
-  fix_mbx->mbxt_start(MBXT_BUCK);
-  if(comm->me == 0) mbx_buck = ptr_mbx_full->Buckingham(true);
-  fix_mbx->mbxt_stop(MBXT_BUCK);
-  accumulate_f_full();
-#endif
   
   fix_mbx->mbxt_start(MBXT_ELE);
   if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
