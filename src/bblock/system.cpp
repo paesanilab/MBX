@@ -636,7 +636,7 @@ void System::Initialize() {
     // TODO modify c6_long_range
     if(mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
-    buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, true, box_);
+    buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -2053,7 +2053,7 @@ double System::DispersionPME(bool do_grads, bool use_ghost) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double System::Buckingham(bool do_grads) {
+double System::Buckingham(bool do_grads, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -2068,7 +2068,7 @@ double System::Buckingham(bool do_grads) {
 
     SetPBC(box_);
 
-    energy_ = GetBuckingham(do_grads);
+    energy_ = GetBuckingham(do_grads, use_ghost);
 
     return energy_;
 }
@@ -2218,7 +2218,7 @@ double System::GetElectrostatics(bool do_grads) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double System::GetBuckingham(bool do_grads) {
+double System::GetBuckingham(bool do_grads, bool use_ghost) {
     std::vector<double> xyz_real(3 * numat_);
 
     size_t count = 0;
@@ -2231,7 +2231,7 @@ double System::GetBuckingham(bool do_grads) {
 
     buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
-    double e = buckinghamE_.GetRepulsion(real_grad, &virial_);
+    double e = buckinghamE_.GetRepulsion(real_grad, &virial_, use_ghost);
 
     count = 0;
     for (size_t i = 0; i < nummon_; i++) {

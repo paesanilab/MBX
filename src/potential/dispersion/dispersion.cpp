@@ -131,7 +131,8 @@ void Dispersion::ReorderData() {
     }
 }
 
-  double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *virial,bool use_ghost) {
+  double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *virial,
+				   bool use_ghost) {
     calc_virial_=false;
 
     if (virial != 0) {
