@@ -1689,7 +1689,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         }
     }
 
-#ifdef DEBUG std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
+#ifdef DEBUG
+    std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
 #endif
 
     return e2b_t + edisp_t;
