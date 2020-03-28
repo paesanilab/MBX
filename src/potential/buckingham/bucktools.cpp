@@ -41,10 +41,12 @@ namespace buck {
 //----------------------------------------------------------------------------//
 
 double Repulsion(const double a, const double b, const double* p1, const double* xyz2,
-             double* grad1, double* grad2, const size_t nmon1, const size_t nmon2,
-             const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
-             bool do_grads, const double cutoff,                                 
-             const std::vector<double>& box, const std::vector<double>& box_inverse,std::vector<double> *virial) {
+		 double* grad1, double* grad2, const size_t nmon1, const size_t nmon2,
+		 const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
+		 bool do_grads, const double cutoff,                                 
+		 const std::vector<double>& box, const std::vector<double>& box_inverse,
+		 bool use_ghost, const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
+		 std::vector<double> *virial) {
 
     size_t nmon22 = nmon2 * 2;
 
@@ -82,15 +84,23 @@ double Repulsion(const double a, const double b, const double* p1, const double*
 
         const double inv_r = 1.0 / r;
 
+	bool include_pair = false;
+	size_t isls = islocal[isl1_offset] + islocal[isl2_offset+nv];
+	if(!use_ghost) include_pair = true;
+	if(use_ghost && isls) include_pair = true;
+	
         // If using cutoff, check for distances and get proper dispersion
-        if (r <= cutoff) {
+        if (r <= cutoff && include_pair) {
             const double br = -b * r;
             const double fac = a * exp(br);
 
             double ttsw_grad = 0;
             const double ttsw = switch_function(r, cutoff - 1.0, cutoff, ttsw_grad);
 
-            repulsion_energy += ttsw * fac;
+	    double pair_energy = ttsw * fac;
+
+	    if(isls == 1) pair_energy *= 0.5;
+            repulsion_energy += pair_energy;
 
             if (do_grads) {
                 // TODO check that this is correct and gradients are properly calculated
