@@ -40,31 +40,18 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "read_connectivity.h"
 
 namespace tools {
-void ReadConnectivity(char* filename, std::vector<bblock::System>& systems) {
+
+void ReadConnectivity(const char* filename, std::unordered_map<std::string, eff::Conn>& connectivity_map) {
     // Check filename is not empty
     assert(filename);
     std::ifstream ifs(filename);
 
-    // Check that filename exists
-    if (!ifs) {
-        std::string text =
-            std::string("Could not open connectivity file ") + std::string(filename) + std::string(" for reading.");
-        throw CUException(__func__, __FILE__, __LINE__, text);
+    // Check if file name is empty string.
+    if (strcmp(filename, "") == 0) {
+        std::unordered_map<std::string, eff::Conn> empty_connectivity_map;
+        connectivity_map = empty_connectivity_map;
+        return;
     }
-
-    std::unordered_map<std::string, eff::Conn> connectivity_map = GetConnectivity(ifs);
-
-    for (auto system = systems.begin(); system != systems.end(); system++) {
-        system->SetConnectivity(connectivity_map);
-    }
-
-    // bblock::System::SetConnectivity(connectivity_map);
-}
-
-void ReadConnectivity(char* filename, std::unordered_map<std::string, eff::Conn>& connectivity_map) {
-    // Check filename is not empty
-    assert(filename);
-    std::ifstream ifs(filename);
 
     // Check that filename exists
     if (!ifs) {
@@ -79,29 +66,26 @@ void ReadConnectivity(char* filename, std::unordered_map<std::string, eff::Conn>
 std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs) {
     std::unordered_map<std::string, eff::Conn> connectivity_map;
 
-    std::string tmp;  // Used to temporarily hold variable from stringstream or getline
-    std::getline(ifs, tmp);
+    std::string str_holder;  // Used to temporarily hold variable from stringstream or getline
 
-    // Loop over each monomer
-    do {
+    // While there are still lines to be read in the connectivity file
+    while (std::getline(ifs, str_holder)) {
         // Connectivity field declaration
         std::string mon_id;
         std::vector<eff::Bond> bond_vec;
         std::vector<eff::Angles> angles_vec;
         std::vector<eff::Dihedral> dihedral_vec;
         std::vector<eff::Inversion> inversion_vec;
-        std::stringstream mon_id_ss(tmp);
+        std::stringstream mon_id_ss(str_holder);
         mon_id_ss >> mon_id;
 
-        std::getline(ifs, tmp);
-
-        // Loop over all of the connectivity within a monomer
-        do {
-            std::stringstream ss(tmp);
-            ss >> tmp;
+        // While there are still lines to be read for the monomer
+        while (std::getline(ifs, str_holder)) {
+            std::stringstream ss(str_holder);
+            ss >> str_holder;
 
             // If end of monomer, exit loop
-            if (tmp == "ENDMON") {
+            if (str_holder == "ENDMON") {
                 break;
             }
 
@@ -113,14 +97,14 @@ std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs) {
             std::vector<double> nonlinear_parameters;
 
             // Read connectivity
-            topology = tmp;
+            topology = str_holder;
 
             // Read the remaining information
             if (topology == "bond") {
                 // read the first two indicies
                 for (int i = 0; i < 2; i++) {
-                    ss >> tmp;
-                    indexes.push_back(stoi(tmp));
+                    ss >> str_holder;
+                    indexes.push_back(stoi(str_holder));
                 }
 
                 // read the functional form that we want
@@ -145,8 +129,8 @@ std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs) {
             else if (topology == "angle") {
                 // read the first three indicies
                 for (int i = 0; i < 3; i++) {
-                    ss >> tmp;
-                    indexes.push_back(stoi(tmp));
+                    ss >> str_holder;
+                    indexes.push_back(stoi(str_holder));
                 }
 
                 // read the functional form that we want
@@ -171,8 +155,8 @@ std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs) {
             else if (topology == "dihedral") {
                 // read the first four indicies
                 for (int i = 0; i < 4; i++) {
-                    ss >> tmp;
-                    indexes.push_back(stoi(tmp));
+                    ss >> str_holder;
+                    indexes.push_back(stoi(str_holder));
                 }
 
                 // read the functional form that we want
@@ -196,8 +180,8 @@ std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs) {
             else if (topology == "inversion") {
                 // read the first four indicies
                 for (int i = 0; i < 4; i++) {
-                    ss >> tmp;
-                    indexes.push_back(stoi(tmp));
+                    ss >> str_holder;
+                    indexes.push_back(stoi(str_holder));
                 }
 
                 // read the functional form that we want
@@ -223,7 +207,7 @@ std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs) {
                                                " is not a bond, angle, dihedral, or inversion");
                 throw CUException(__func__, __FILE__, __LINE__, text);
             }
-        } while (std::getline(ifs, tmp));
+        }
 
         // Create connectivity object and add to the unordered map
         eff::Conn conn(mon_id, bond_vec, angles_vec, dihedral_vec, inversion_vec);
@@ -234,8 +218,7 @@ std::unordered_map<std::string, eff::Conn> GetConnectivity(std::ifstream& ifs) {
         angles_vec.clear();
         dihedral_vec.clear();
         inversion_vec.clear();
-
-    } while (std::getline(ifs, tmp));
+    }
 
     return connectivity_map;
 }
