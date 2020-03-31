@@ -517,27 +517,21 @@ void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string>> ttm
     }
 }
 
-void System::SetFFMons(std::vector<std::string> ff_mons) {                         
-    ff_mons_ = ff_mons;    
+void System::SetFFMons(std::vector<std::string> ff_mons) { ff_mons_ = ff_mons; }
+
+void System::AddFFMon(std::string mon) {
+    if (std::find(ff_mons_.begin(), ff_mons_.end(), mon) == ff_mons_.end()) {
+        ff_mons_.push_back(mon);
+    }
 }
 
-void System::AddFFMon(std::string mon) {                                                  
-
-    if (std::find(ff_mons_.begin(), ff_mons_.end(), mon) == ff_mons_.end()) {                              
-        ff_mons_.push_back(mon);                                                                                 
-    }                                                                                                             
-}                                                                                                                 
-                                                                                                                  
-void System::Add1bIgnorePoly(std::string mon) {                                                
-                                                                                                                  
-    if (std::find(ignore_1b_poly_.begin(), ignore_1b_poly_.end(), mon) == ignore_1b_poly_.end()) {             
-        ignore_1b_poly_.push_back(mon);              
-    }                                                                                                             
-}                                                                                                                 
-                                                                                                                  
-void System::Set1bIgnorePoly(std::vector<std::string> ignore_1b) {                                   
-    ignore_1b_poly_ = ignore_1b;       
+void System::Add1bIgnorePoly(std::string mon) {
+    if (std::find(ignore_1b_poly_.begin(), ignore_1b_poly_.end(), mon) == ignore_1b_poly_.end()) {
+        ignore_1b_poly_.push_back(mon);
+    }
 }
+
+void System::Set1bIgnorePoly(std::vector<std::string> ignore_1b) { ignore_1b_poly_ = ignore_1b; }
 
 void System::Add2bIgnorePoly(std::string mon1, std::string mon2) {
     std::vector<std::string> p = {mon1, mon2};
@@ -852,37 +846,37 @@ void System::SetUpFromJson(nlohmann::json j) {
 
     SetEwaldElectrostatics(alpha_elec, grid_density_elec, spline_order_elec);
 
-    std::vector<std::pair<std::string, std::string>> ttm_pairs;                                                   
-    try {                                                                                                         
-        std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];                      
-        ttm_pairs = ttm_pairs2;                                                                                   
-    } catch (...) {                                                                                               
-        ttm_pairs.clear();                                                                                        
-        std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty list.\n";                
-    }                                                                                                             
-    SetTTMnrgPairs(ttm_pairs);                                                                                    
-    mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;                                                   
+    std::vector<std::pair<std::string, std::string>> ttm_pairs;
+    try {
+        std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];
+        ttm_pairs = ttm_pairs2;
+    } catch (...) {
+        ttm_pairs.clear();
+        std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty list.\n";
+    }
+    SetTTMnrgPairs(ttm_pairs);
+    mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
 
     std::vector<std::string> ff_mons;
-    try {                                                                                                         
-        std::vector<std::string> ff_mons2 = j["MBX"]["ff_mons"];                      
-        ff_mons = ff_mons2;                                                                                   
-    } catch (...) {                                                                                               
-        ff_mons.clear();                                                                                        
-        std::cerr << "**WARNING** \"ff_mons\" is not defined in json file. Using empty list.\n";                
-    }                                                                                                             
-    SetFFMons(ff_mons);                                                                                    
+    try {
+        std::vector<std::string> ff_mons2 = j["MBX"]["ff_mons"];
+        ff_mons = ff_mons2;
+    } catch (...) {
+        ff_mons.clear();
+        std::cerr << "**WARNING** \"ff_mons\" is not defined in json file. Using empty list.\n";
+    }
+    SetFFMons(ff_mons);
     mbx_j_["MBX"]["ff_mons"] = ff_mons_;
 
-    std::vector<std::string> ignore_1b_poly;                                                         
-    try {                                                                                                         
-        std::vector<std::string> ignore_1b_poly2 = j["MBX"]["ignore_1b_poly"];                       
-        ignore_1b_poly = ignore_1b_poly2;                                                                         
-    } catch (...) {                                                                                               
-        ignore_1b_poly.clear();                                                                                   
-        std::cerr << "**WARNING** \"ignore_1b_poly\" is not defined in json file. Using empty list.\n";           
-    }                                                                                                             
-    Set1bIgnorePoly(ignore_1b_poly);                                                                              
+    std::vector<std::string> ignore_1b_poly;
+    try {
+        std::vector<std::string> ignore_1b_poly2 = j["MBX"]["ignore_1b_poly"];
+        ignore_1b_poly = ignore_1b_poly2;
+    } catch (...) {
+        ignore_1b_poly.clear();
+        std::cerr << "**WARNING** \"ignore_1b_poly\" is not defined in json file. Using empty list.\n";
+    }
+    Set1bIgnorePoly(ignore_1b_poly);
     mbx_j_["MBX"]["ignore_1b_poly"] = ignore_1b_poly_;
 
     std::vector<std::vector<std::string>> ignore_2b_poly;
@@ -907,20 +901,18 @@ void System::SetUpFromJson(nlohmann::json j) {
     Set3bIgnorePoly(ignore_3b_poly);
     mbx_j_["MBX"]["ignore_3b_poly"] = ignore_3b_poly_;
 
-    std::string connectivity_file = ""; 
-    try {                                                                                                         
-        connectivity_file = j["MBX"]["connectivity_file"];                       
+    std::string connectivity_file = "";
+    try {
+        connectivity_file = j["MBX"]["connectivity_file"];
         // Set the connectivity map in system
         // FIXME MRR Get connectivity from the file
-        // FIXME MRR Set up connectivity in system 
-        tools::ReadConnectivity(connectivity_file.c_str(),connectivity_map_);
-    } catch (...) {                                                                                               
-        connectivity_file = "";                                                                                   
+        // FIXME MRR Set up connectivity in system
+        tools::ReadConnectivity(connectivity_file.c_str(), connectivity_map_);
+    } catch (...) {
+        connectivity_file = "";
         std::cerr << "**WARNING** \"connectivity_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
-    }                                                                                                             
+    }
     mbx_j_["MBX"]["connectivity_file"] = connectivity_file;
-
-    
 
     SetPBC(box_);
 }
@@ -1225,7 +1217,6 @@ double System::Energy(bool do_grads) {
     // Call the get energy function
     allMonGood_ = true;
 
-
     // Get the NB contributions
 
 #ifdef TIMING
@@ -1373,7 +1364,7 @@ double System::GetFF(bool do_grads) {
         size_t istart = 0;
         size_t iend = 0;
 
-        if (std::find(ff_mons_.begin(),ff_mons_.end(),mon_type_count_[k].first) == ff_mons_.end()) {
+        if (std::find(ff_mons_.begin(), ff_mons_.end(), mon_type_count_[k].first) == ff_mons_.end()) {
             continue;
         }
 
@@ -1456,8 +1447,9 @@ double System::Get1B(bool do_grads) {
         size_t istart = 0;
         size_t iend = 0;
 
-        if (std::find(ignore_1b_poly_.begin(),ignore_1b_poly_.end(),mon_type_count_[k].first) != ignore_1b_poly_.end()) {               
-            continue;                                                                                             
+        if (std::find(ignore_1b_poly_.begin(), ignore_1b_poly_.end(), mon_type_count_[k].first) !=
+            ignore_1b_poly_.end()) {
+            continue;
         }
 
         while (istart < mon_type_count_[k].second) {
@@ -1766,7 +1758,7 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     }
 
 #ifdef DEBUG
- std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
+    std::cerr << "disp = " << edisp_t << "    2b = " << e2b_t << std::endl;
 #endif
 
     return e2b_t + edisp_t;
