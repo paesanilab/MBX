@@ -671,6 +671,21 @@ to be the same.
      * @param[in] spline_order Order of the splines used for interpolation
      */
     void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
+  
+    /**
+     * Sets MPI environment from driver code
+     * @param[in] comm is MPI communicator
+     * @param[in] nx is # of processors along x-axis (a axis)
+     * @param[in] ny is # of processors along y-axis (b axis)
+     * @param[in] nz is # of processors along z-axis (c axis)
+     */
+    void SetMPI(MPI_Comm comm, int nx, int ny, int nz);
+  
+    /**
+     * Interface for driver to check if MPI environment initialized
+     * @param[out] 1 for initialized / -1 for not initialized / -2 for not enabled
+     */
+    int TestMPI();
 
     /**
      * @param[in] connectivity_map A map with monomer id as values and
@@ -751,18 +766,29 @@ to be the same.
      * Gradients will be ONLY for the dispersion part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
      * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, then ghost monomers present
      * @return Dispersion energy of the system
      */
-    double Dispersion(bool do_grads, bool use_ghost = 0);
+     double Dispersion(bool do_grads, bool use_ghost = 0);
+  
+    /**
+     * Obtains only the k-space dispersion energy for the whole system.
+     * Gradients will be ONLY for the dispersion part.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @return Dispersion energy of the system
+     */
+     double DispersionPME(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the buckingham energy for the whole system.
      * Gradients will be ONLY for the dispersion part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * @param[in] use_ghost If true, then ghost logic applied
      * the gradient calculation will not be performed
      * @return Buckingham energy of the system
      */
-    double Buckingham(bool do_grads);
+    double Buckingham(bool do_grads, bool use_ghost = 0);
 
    private:
     /**
@@ -882,16 +908,29 @@ to be the same.
      * only local monomers included (default)
      * @return  Dispersion energy of the system
      */
-    double GetDispersion(bool do_grads, bool use_ghost = 0);
+     double GetDispersion(bool do_grads, bool use_ghost = 0);
+  
+    /**
+     * Private function to internally get the k-space portion of dispersion energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return  Dispersion energy of the system
+     */
+     double GetDispersionPME(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the buckinham energy.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
      * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return  Buckingham energy of the system
      */
-    double GetBuckingham(bool do_grads);
+    double GetBuckingham(bool do_grads, bool use_ghost = 0);
 
    private:
     /**
@@ -1213,6 +1252,23 @@ to be the same.
      * Json configuration object
      */
     nlohmann::json mbx_j_;
+  
+    /**
+     * Set to true when driver has intialized MPI
+    */
+    bool mpi_initialized_;
+  
+    /**
+     * MPI Communicator from driver code
+    */
+    MPI_Comm world_;
+
+    /**
+     * MPI processor grid
+    */
+    size_t proc_grid_x_;
+    size_t proc_grid_y_;
+    size_t proc_grid_z_;
 
     /**
      * Vector that holds the connectivity of each monomer type

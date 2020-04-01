@@ -45,6 +45,8 @@ class PairMBX : public Pair {
  protected:
   double cut_global;
   double **cut;
+
+  int me;
   
   FixMBX * fix_mbx; // owner of MBX objects
 
@@ -62,8 +64,11 @@ class PairMBX : public Pair {
   void setup();
 
   void compute_full();
+  
   void accumulate_f();
   void accumulate_f_full();
+  //  void accumulate_f_local();
+  void accumulate_f_pme();
 };
 
 }

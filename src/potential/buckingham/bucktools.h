@@ -45,10 +45,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace buck {
 
 double Repulsion(const double a, const double b, const double* p1, const double* xyz2,
-             double* grad1, double* grad2, const size_t nmon1, const size_t nmon2,
-             const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
-             bool do_grads, const double cutoff, 
-             const std::vector<double>& box, const std::vector<double>& box_inverse, std::vector<double> *virial=0);
+		 double* grad1, double* grad2, const size_t nmon1, const size_t nmon2,
+		 const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
+		 bool do_grads, const double cutoff, 
+		 const std::vector<double>& box, const std::vector<double>& box_inverse, 
+		 bool use_ghost, const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
+		 std::vector<double> *virial=0);
 
 bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, std::vector<std::pair<std::string,std::string> > buck_pairs, double& out_a, double& out_b);
 

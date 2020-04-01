@@ -37,6 +37,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <vector>
 
+#if HAVE_MPI
+#include <mpi.h>
+#endif
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -48,8 +52,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#include "helpme.h"
 
-namespace disp {
+#ifndef MPI_VERSION
+//typedef struct ompi_communicator_t *MPI_Comm;
+typedef int MPI_Comm;
+#endif
 
+namespace disp {
+  
 class Dispersion {
    public:
     Dispersion(){};
@@ -61,7 +70,10 @@ class Dispersion {
 		    const std::vector<size_t> &islocal_, const bool do_grads,
                     const std::vector<double> &box);
 
+    void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
+  
     double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
+    double GetDispersionPME(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
 
     void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
@@ -97,6 +109,7 @@ class Dispersion {
    private:
     void ReorderData();
     void CalculateDispersion(bool use_ghost = 0);
+    void CalculateDispersionPME(bool use_ghost = 0);
 
     // System xyz, not ordered XYZ. xyzxyz...(mon1)xyzxyz...(mon2) ...
     std::vector<double> sys_xyz_;
@@ -152,6 +165,14 @@ class Dispersion {
     double pme_grid_density_ = 0;
     // PME spline order
     int pme_spline_order_ = 0;
+    // MPI initialized
+    bool mpi_initialized_ = false;
+    // MPI Communicator
+    MPI_Comm world_;
+    // proc_grid
+    size_t proc_grid_x_;
+    size_t proc_grid_y_;
+    size_t proc_grid_z_;
 };
 
 }  // namespace disp

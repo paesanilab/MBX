@@ -1,0 +1,125 @@
+LAMMPS (7 Aug 2019)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (../comm.cpp:93)
+  using 1 OpenMP thread(s) per MPI task
+units		real
+atom_style	full
+
+pair_style      mbx 9.0
+pair_modify     mix arithmetic
+
+bond_style      none
+angle_style     none
+dihedral_style  none
+improper_style  none
+
+read_data       lmp.data
+  orthogonal box = (-10 -10 -10) to (10 10 10)
+  1 by 2 by 2 MPI processor grid
+  reading atoms ...
+  12 atoms
+  0 = max # of 1-2 neighbors
+  0 = max # of 1-3 neighbors
+  0 = max # of 1-4 neighbors
+  1 = max # of special neighbors
+  special bonds CPU = 0.000765002 secs
+  read_data CPU = 0.00297866 secs
+
+pair_coeff      * *  0.0 0.0
+
+neighbor	2.0 bin
+neigh_modify	every 1
+
+timestep        0.0
+
+thermo_style    custom step temp pe etotal
+thermo		1
+
+compute         mbx all pair mbx
+variable        e1    equal c_mbx[1]
+variable        e2    equal c_mbx[2]
+variable        e3    equal c_mbx[3]
+variable        edisp equal c_mbx[4]
+variable        ebuck equal c_mbx[5]
+variable        eele  equal c_mbx[6]
+variable        etot  equal c_mbx[7]
+
+thermo_style    custom step temp v_e1 v_e2 v_e3 v_ebuck v_edisp v_eele v_etot pe etotal
+#thermo_style    custom step temp pe pxx pyy pzz pxy pxz pyz etotal
+thermo          1
+
+fix             1 all nve
+
+fix             2 all mbx 2 2 co2 2 h2o json mbx.json
+
+dump            1 all custom 1 lmp.lammpstrj id type x y z fx fy fz
+dump_modify     1 format line "%d %d %20.15g %20.15g %20.15g %20.15g %20.15g %20.15g"
+dump_modify     1 sort id
+
+velocity        all create 300.0 4928459 rot yes dist gaussian
+velocity        all zero linear
+velocity        all zero angular
+
+run             0
+Neighbor list info ...
+  update every 1 steps, delay 10 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 11
+  ghost atom cutoff = 11
+  binsize = 5.5, bins = 4 4 4
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair mbx, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d/newton
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 6.907 | 7.095 | 7.282 Mbytes
+Step Temp v_e1 v_e2 v_e3 v_ebuck v_edisp v_eele v_etot PotEng TotEng 
+       0          300   0.78419588    6.3243587            0    7.2520194   -8.4380633    -17.17521   -11.252699   -11.252699   -1.4160258 
+Loop time of 5.47548e-06 on 4 procs for 0 steps with 12 atoms
+
+127.8% CPU use with 4 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0          | 0          | 0          |   0.0 |  0.00
+Bond    | 0          | 0          | 0          |   0.0 |  0.00
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0          | 0          | 0          |   0.0 |  0.00
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 5.475e-06  |            |       |100.00
+
+Nlocal:    3 ave 5 max 0 min
+Histogram: 1 0 0 0 0 0 1 0 1 1
+Nghost:    82.5 ave 112 max 58 min
+Histogram: 1 0 0 1 0 1 0 0 0 1
+Neighs:    16.5 ave 38 max 0 min
+Histogram: 1 0 0 2 0 0 0 0 0 1
+
+Total # of neighbors = 66
+Ave neighs/atom = 5.5
+Ave special neighs/atom = 0
+Neighbor list builds = 0
+Dangerous builds = 0
+
+[MBX] Total MBX fix/pair time= 0.010565 seconds
+[MBX] Timing Summary
+[MBX] INIT                :    0.00094106     0.0012306     0.0016132         1    15.27%
+[MBX] UPDATE_XYZ          :     6.318e-06    8.6252e-06    1.1199e-05         1     0.11%
+[MBX] ACCUMULATE_F        :    3.1905e-05    3.7475e-05    4.9028e-05         5     0.46%
+[MBX] E1B                 :     8.134e-05     0.0001093     0.0001466         1     1.39%
+[MBX] E2B_LOCAL           :    0.00014192    0.00035043    0.00089552         1     8.48%
+[MBX] E2B_GHOST           :    0.00018274    0.00039159    0.00046363         1     4.39%
+[MBX] E3B_LOCAL           :    7.7722e-05    0.00011928    0.00016785         1     1.59%
+[MBX] E3B_GHOST           :    0.00051768    0.00079774     0.0010861         1    10.28%
+[MBX] DISP (FULL)         :    4.6915e-08    7.5882e-05    0.00030337         1     2.87%
+[MBX] BUCK (FULL)         :    4.5984e-08     3.109e-05    0.00012419         1     1.18%
+[MBX] ELE (FULL)          :    4.1095e-08    0.00068228      0.002729         1    25.83%
+[MBX] INIT_FULL           :             0    0.00019421    0.00077685         1     7.35%
+[MBX] UPDATE_XYZ_FULL     :      3.22e-07      1.25e-06     4.001e-06         1     0.04%
+[MBX] ACCUMULATE_F_FULL   :    3.1905e-05    3.7475e-05    4.9028e-05         5     0.46%
+
+Please see the log.cite file for references relevant to this simulation
+
+Total wall time: 0:00:00
