@@ -185,11 +185,6 @@ class Topology {
      * The variable to keep track of the number of nonlinear parameters
      */
     size_t num_nonlinear_params_;
-
-    /**
-     * Constant value used for double comparison in derived classes
-     */
-    double EPSILON = 0.00000001;
 };
 }  // namespace eff
 #endif  // TOPOLOGY_H

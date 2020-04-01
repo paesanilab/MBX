@@ -46,7 +46,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     double total_energy = 9.9150780942e+00;                                                                   \
     double total_energy_ttm = 10.28986;                                                                       \
     const int n_monomers = 1;                                                                                 \
-    std::vector<std::string> ttm_mon = {"co2"};                                                               \
+    std::vector<std::string> ff_mon = {"co2"};                                                                \
     std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"co2", "h2o"}};                            \
     std::vector<std::string> ignore_1b = {"co2"};                                                             \
     std::vector<std::vector<std::string>> ignore_2b = {{"co2", "h2o"}};                                       \

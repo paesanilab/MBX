@@ -119,23 +119,23 @@ double Dihedral::GetTopologyGradient(double x) {
 
 bool Dihedral::operator==(Dihedral const &dihedral) const {
     // Check field variables
-    if (dihedral.topology_ != this->topology_ || dihedral.functional_form_ != this->functional_form_ ||
-        dihedral.indexes_ != this->indexes_ || dihedral.num_linear_params_ != this->num_linear_params_ ||
-        dihedral.num_nonlinear_params_ != this->num_nonlinear_params_) {
+    if (dihedral.topology_ != topology_ || dihedral.functional_form_ != functional_form_ ||
+        dihedral.indexes_ != indexes_ || dihedral.num_linear_params_ != num_linear_params_ ||
+        dihedral.num_nonlinear_params_ != num_nonlinear_params_) {
         return false;
     }
 
     // Iterate through each of the non linear parameters and check they are the
     // same
     for (int i = 0; i < dihedral.num_nonlinear_params_; i++) {
-        if (fabs(dihedral.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
+        if (fabs(dihedral.nonlinear_parameters_[i] - nonlinear_parameters_[i]) > EPSILON) {
             return false;
         }
     }
 
     // Iterate through each of the linear parameters and check they are the same
     for (int i = 0; i < dihedral.num_linear_params_; i++) {
-        if (fabs(dihedral.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
+        if (fabs(dihedral.linear_parameters_[i] - linear_parameters_[i]) > EPSILON) {
             return false;
         }
     }

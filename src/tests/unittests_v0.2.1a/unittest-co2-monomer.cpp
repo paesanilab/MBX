@@ -304,7 +304,7 @@ TEST_CASE("Test co2 monomer energy terms") {
     my_system.Set3bIgnorePoly(ignore_3b);
     my_system.SetTTMnrgPairs(ttm_pairs);
     my_system.Set1bIgnorePoly(ignore_1b);
-    my_system.SetFFMons(ttm_mon);
+    my_system.SetFFMons(ff_mon);
 
     SECTION("Classic Potential") {
         double energy_nograd = my_system.ClassicPotential(false);

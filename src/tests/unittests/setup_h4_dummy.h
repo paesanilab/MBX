@@ -53,11 +53,16 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 
 #define SETUP_H4_DUMMY                                                                             \
-    double classic_energy = 16.0903;                                                               \
+    double classic_energy = 1.6090302673e+01;                                                      \
     const int n_monomers = 1;                                                                      \
     std::vector<double> real_coords{-1.35000000000, -0.05000000, 0.44000000000,  0.900000000000,   \
                                     -1.98000000000, 0.670000000, 1.100000000000, 1.0000000000000,  \
                                     -1.05000000000, 1.880000000, -1.83760000000, 1.0500000000000}; \
+    std::vector<std::string> ff_mon = {"h4_dummy"};                                                \
+    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"h4_dummy", "h4_dummy"}};       \
+    std::vector<std::string> ignore_1b = {"h4_dummy"};                                             \
+    std::vector<std::vector<std::string>> ignore_2b = {{"h4_dummy", "h4_dummy"}};                  \
+    std::vector<std::vector<std::string>> ignore_3b = {{"h4_dummy", "h4_dummy", "h4_dummy"}};      \
     std::vector<std::string> atom_names{"H", "H", "H", "H"};                                       \
     std::vector<std::string> monomer_names = {"h4_dummy"};                                         \
     std::vector<size_t> n_atoms_vector = {4};                                                      \

@@ -78,6 +78,13 @@ TEST_CASE("Test monomer H4 energy terms") {
     // Initialize the system to fill in the information
     my_system.Initialize();
 
+    // Indicate we want the classical energy
+    my_system.Set2bIgnorePoly(ignore_2b);
+    my_system.Set3bIgnorePoly(ignore_3b);
+    my_system.SetTTMnrgPairs(ttm_pairs);
+    my_system.Set1bIgnorePoly(ignore_1b);
+    my_system.SetFFMons(ff_mon);
+
     SECTION("Classic Potential") {
         double energy_nograd = my_system.ClassicPotential(false);
         double energy_grad = my_system.ClassicPotential(true);

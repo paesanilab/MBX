@@ -98,23 +98,23 @@ double Inversion::GetTopologyGradient(double x) {
 
 bool Inversion::operator==(Inversion const &inversion) const {
     // Check field variables
-    if (inversion.topology_ != this->topology_ || inversion.functional_form_ != this->functional_form_ ||
-        inversion.indexes_ != this->indexes_ || inversion.num_linear_params_ != this->num_linear_params_ ||
-        inversion.num_nonlinear_params_ != this->num_nonlinear_params_) {
+    if (inversion.topology_ != topology_ || inversion.functional_form_ != functional_form_ ||
+        inversion.indexes_ != indexes_ || inversion.num_linear_params_ != num_linear_params_ ||
+        inversion.num_nonlinear_params_ != num_nonlinear_params_) {
         return false;
     }
 
     // Iterate through each of the non linear parameters and check they are the
     // same
     for (int i = 0; i < inversion.num_nonlinear_params_; i++) {
-        if (fabs(inversion.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
+        if (fabs(inversion.nonlinear_parameters_[i] - nonlinear_parameters_[i]) > EPSILON) {
             return false;
         }
     }
 
     // Iterate through each of the linear parameters and check they are the same
     for (int i = 0; i < inversion.num_linear_params_; i++) {
-        if (fabs(inversion.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
+        if (fabs(inversion.linear_parameters_[i] - linear_parameters_[i]) > EPSILON) {
             return false;
         }
     }
