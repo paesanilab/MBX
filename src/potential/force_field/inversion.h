@@ -42,6 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include "topology.h"
 #include "tools/custom_exceptions.h"
+#include "tools/definitions.h"
 
 /**
  * @file inversion.h

@@ -190,6 +190,7 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
                 grad1[(indexes[i] - 1) * 3 + 2 + (mon_num * nat * 3)] += (delta_dist_z * delta_grad) / distance;
             }
 
+#ifdef DEBUG
             std::vector<double> bndvirtest(9);
 
             bndvirtest[0] = -((delta_dist_x * delta_grad) / distance) * delta_dist_x;
@@ -205,10 +206,11 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             bndvirtest[6] = bndvirtest[2];
             bndvirtest[7] = bndvirtest[5];
 
-            // std::cout << "###########test bnd vir###########" << std::endl;
-            // for (int teri = 0; teri < 9; teri++) {
-            //     std::cout << bndvirtest[teri] * 418.4 << std::endl;
-            // }
+            std::cout << "###########test bnd vir###########" << std::endl;
+            for (int teri = 0; teri < 9; teri++) {
+                std::cout << bndvirtest[teri] * 418.4 << std::endl;
+            }
+#endif
 
             (*virial)[0] -= ((delta_dist_x * delta_grad) / distance) * delta_dist_x;
             (*virial)[1] -= ((delta_dist_x * delta_grad) / distance) * delta_dist_y;
@@ -300,25 +302,27 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
                 }
             }
 
-            std::vector<double> bndvirtest(9);
+#ifdef DEBUG
+            std::vector<double> anglevirtest(9);
 
-            bndvirtest[0] = r_ij[0] * forces[0] + r_ik[0] * forces[6];
-            bndvirtest[1] = r_ij[0] * forces[1] + r_ik[0] * forces[7];
-            bndvirtest[2] = r_ij[0] * forces[2] + r_ik[0] * forces[8];
+            anglevirtest[0] = r_ij[0] * forces[0] + r_ik[0] * forces[6];
+            anglevirtest[1] = r_ij[0] * forces[1] + r_ik[0] * forces[7];
+            anglevirtest[2] = r_ij[0] * forces[2] + r_ik[0] * forces[8];
 
-            bndvirtest[4] = r_ij[1] * forces[1] + r_ik[1] * forces[7];
-            bndvirtest[5] = r_ij[1] * forces[2] + r_ik[1] * forces[8];
+            anglevirtest[4] = r_ij[1] * forces[1] + r_ik[1] * forces[7];
+            anglevirtest[5] = r_ij[1] * forces[2] + r_ik[1] * forces[8];
 
-            bndvirtest[8] = r_ij[2] * forces[2] + r_ik[2] * forces[8];
+            anglevirtest[8] = r_ij[2] * forces[2] + r_ik[2] * forces[8];
 
-            bndvirtest[3] = bndvirtest[1];
-            bndvirtest[6] = bndvirtest[2];
-            bndvirtest[7] = bndvirtest[5];
+            anglevirtest[3] = anglevirtest[1];
+            anglevirtest[6] = anglevirtest[2];
+            anglevirtest[7] = anglevirtest[5];
 
-            // std::cout << "###########test angle vir###########" << std::endl;
-            // for (int teri = 0; teri < 9; teri++) {
-            //     std::cout << bndvirtest[teri] * 418.4 << std::endl;
-            // }
+            std::cout << "###########test angle vir###########" << std::endl;
+            for (int teri = 0; teri < 9; teri++) {
+                std::cout << anglevirtest[teri] * 418.4 << std::endl;
+            }
+#endif
 
             (*virial)[0] += r_ij[0] * forces[0] + r_ik[0] * forces[6];
             (*virial)[1] += r_ij[0] * forces[1] + r_ik[0] * forces[7];
@@ -353,7 +357,7 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             // Get topology gradient. Each dihedral angle will contribute a gradient to
             // each of the four atoms.
             double delta_grad = dihedral->GetTopologyGradient(phi);
-            double cummu_grad = 0;  // Gradient accumulator
+            double cummu_grad = 0;
 
             // Multiply by minus 1 because we want gradient not force. Check Dlpoly
             // manual equation 2.42 to see why
@@ -374,32 +378,33 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
                                            coor2[2] - coor3[2]};  // This is vector rjk
             std::vector<double> tvector = {coor3[0] - coor4[0], coor3[1] - coor4[1],
                                            coor3[2] - coor4[2]};  // This is vector rkn
+#ifdef DEBUG
+            std::vector<double> dihedralvirtest(9);
 
-            std::vector<double> bndvirtest(9);
-
-            bndvirtest[0] =
+            dihedralvirtest[0] =
                 fvector[0] * curr_force[0] + svector[0] * (curr_force[3] - curr_force[6]) - tvector[0] * curr_force[9];
-            bndvirtest[1] =
+            dihedralvirtest[1] =
                 fvector[1] * curr_force[0] + svector[1] * (curr_force[3] - curr_force[6]) - tvector[1] * curr_force[9];
-            bndvirtest[2] =
+            dihedralvirtest[2] =
                 fvector[2] * curr_force[0] + svector[2] * (curr_force[3] - curr_force[6]) - tvector[2] * curr_force[9];
 
-            bndvirtest[4] =
+            dihedralvirtest[4] =
                 fvector[1] * curr_force[1] + svector[1] * (curr_force[4] - curr_force[7]) - tvector[1] * curr_force[10];
-            bndvirtest[5] =
+            dihedralvirtest[5] =
                 fvector[1] * curr_force[2] + svector[1] * (curr_force[5] - curr_force[8]) - tvector[1] * curr_force[11];
 
-            bndvirtest[8] =
+            dihedralvirtest[8] =
                 fvector[2] * curr_force[2] + svector[2] * (curr_force[5] - curr_force[8]) - tvector[2] * curr_force[11];
 
-            bndvirtest[3] = bndvirtest[1];
-            bndvirtest[6] = bndvirtest[2];
-            bndvirtest[7] = bndvirtest[5];
+            dihedralvirtest[3] = dihedralvirtest[1];
+            dihedralvirtest[6] = dihedralvirtest[2];
+            dihedralvirtest[7] = dihedralvirtest[5];
 
-            // std::cout << "###########test dihedral vir###########" << std::endl;
-            // for (int teri = 0; teri < 9; teri++) {
-            //     std::cout << bndvirtest[teri] * 418.4 << std::endl;
-            // }
+            std::cout << "###########test dihedral vir###########" << std::endl;
+            for (int teri = 0; teri < 9; teri++) {
+                std::cout << dihedralvirtest[teri] * 418.4 << std::endl;
+            }
+#endif
 
             (*virial)[0] +=
                 fvector[0] * curr_force[0] + svector[0] * (curr_force[3] - curr_force[6]) - tvector[0] * curr_force[9];
@@ -478,22 +483,23 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> rik = {coor3[0] - centralCoor[0], coor3[1] - centralCoor[1], coor3[2] - centralCoor[2]};
             std::vector<double> rin = {coor4[0] - centralCoor[0], coor4[1] - centralCoor[1], coor4[2] - centralCoor[2]};
 
-            std::vector<double> bndvirtest(9);
+#ifdef DEBUG
+            std::vector<double> inversionvirtest(9);
+            inversionvirtest[0] = rij[0] * curr_force[3] + rik[0] * curr_force[6] + rin[0] * curr_force[9];
+            inversionvirtest[1] = rij[1] * curr_force[3] + rik[1] * curr_force[6] + rin[1] * curr_force[9];
+            inversionvirtest[2] = rij[2] * curr_force[3] + rik[2] * curr_force[6] + rin[2] * curr_force[9];
+            inversionvirtest[4] = rij[1] * curr_force[4] + rik[1] * curr_force[7] + rin[1] * curr_force[10];
+            inversionvirtest[5] = rij[1] * curr_force[5] + rik[1] * curr_force[8] + rin[1] * curr_force[11];
+            inversionvirtest[8] = rij[2] * curr_force[5] + rik[2] * curr_force[8] + rin[2] * curr_force[11];
+            inversionvirtest[3] = inversionvirtest[1];
+            inversionvirtest[6] = inversionvirtest[2];
+            inversionvirtest[7] = inversionvirtest[5];
 
-            bndvirtest[0] = rij[0] * curr_force[3] + rik[0] * curr_force[6] + rin[0] * curr_force[9];
-            bndvirtest[1] = rij[1] * curr_force[3] + rik[1] * curr_force[6] + rin[1] * curr_force[9];
-            bndvirtest[2] = rij[2] * curr_force[3] + rik[2] * curr_force[6] + rin[2] * curr_force[9];
-            bndvirtest[4] = rij[1] * curr_force[4] + rik[1] * curr_force[7] + rin[1] * curr_force[10];
-            bndvirtest[5] = rij[1] * curr_force[5] + rik[1] * curr_force[8] + rin[1] * curr_force[11];
-            bndvirtest[8] = rij[2] * curr_force[5] + rik[2] * curr_force[8] + rin[2] * curr_force[11];
-            bndvirtest[3] = bndvirtest[1];
-            bndvirtest[6] = bndvirtest[2];
-            bndvirtest[7] = bndvirtest[5];
-
-            // std::cout << "###########test inversion vir###########" << std::endl;
-            // for (int teri = 0; teri < 9; teri++) {
-            //     std::cout << bndvirtest[teri] * 418.4 << std::endl;
-            // }
+            std::cout << "###########test inversion vir###########" << std::endl;
+            for (int teri = 0; teri < 9; teri++) {
+                std::cout << inversionvirtest[teri] * 418.4 << std::endl;
+            }
+#endif
 
             (*virial)[0] += rij[0] * curr_force[3] + rik[0] * curr_force[6] + rin[0] * curr_force[9];
             (*virial)[1] += rij[1] * curr_force[3] + rik[1] * curr_force[6] + rin[1] * curr_force[9];
@@ -512,7 +518,6 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
     }
 
     double tot_E = bondEnergy + angleEnergy + dihedralEnergy + inversionEnergy;
-
 #ifdef DEBUG
     std::cout << "total energy is: " << tot_E << std::endl;
     std::cout << " bond energy is : " << bondEnergy << std::endl;

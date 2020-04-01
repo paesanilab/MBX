@@ -42,6 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include "topology.h"
 #include "tools/custom_exceptions.h"
+#include "tools/definitions.h"
 
 /**
  * @file dihedral.h
@@ -152,7 +153,6 @@ class Dihedral : public Topology {
     bool operator==(Dihedral const &dihedral) const;
 
    private:
-    // pi constant
     static constexpr double pi = 3.14159265358979323846;
     static constexpr double two_pi = 2 * pi;
     static constexpr double recip_two_pi = 1 / two_pi;

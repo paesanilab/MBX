@@ -42,19 +42,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <string>
 #include <vector>
-// #include <unordered_map>
+
 #include "potential/force_field/connectivity.h"
 #include "potential/force_field/angles.h"
 #include "potential/force_field/bond.h"
-// #include "buckingham.h"
 #include "potential/force_field/calculators.h"
-// #include "definitions.h"
 #include "potential/force_field/dihedral.h"
-// #include "dispersion.h"
-// #include "electrostatics.h"
 #include "potential/force_field/inversion.h"
-// #include "reader_func.h"
-// #include "xyz_frame.h"
 #include "tools/definitions.h"
 
 /**
@@ -96,8 +90,9 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
  * @param[in] xyz coordinates of the monomer
  * @param[in,out] grad Gradients of the one-body energy
  * @param[in,out] good Boolean that will be set to false if any of the monomers
- * @param[in] nat Number of atoms in one monomer
  * has an energy larger than the value set in definitions.h (EMAX1B)
+ * @param[in] nat Number of atoms in one monomer
+ * @param[in] virial pointer to the vector that holds the virial values
  * @return Sum of the classical potential energies of all the monomers passed as arguments
  */
 double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1,

@@ -43,28 +43,17 @@ namespace eff {
 const double pi = M_PI;
 
 double CalculateDistance(std::vector<double> coor1, std::vector<double> coor2) {
-    // double x1 = coor1[0];
-    // double x2 = coor2[0];
-    // double y1 = coor1[1];
-    // double y2 = coor2[1];
-    // double z1 = coor1[2];
-    // double z2 = coor2[2];
-
     double distance = 0.0;
     for (size_t i = 0; i < 3; i++) {
         distance += (coor2[i] - coor1[i]) * (coor2[i] - coor1[i]);
     }
 
     return sqrt(distance);
-
-    // return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
 }
 
 double CalculateDistance(std::vector<double> directional_vec) {
     return sqrt(directional_vec[0] * directional_vec[0] + directional_vec[1] * directional_vec[1] +
                 directional_vec[2] * directional_vec[2]);
-
-    // return sqrt(pow(directional_vec[0], 2) + pow(directional_vec[1], 2) + pow(directional_vec[2], 2));
 }
 
 double CalculateAngle(std::vector<double> coor1, std::vector<double> centerCoordinate, std::vector<double> coor3) {
@@ -72,7 +61,6 @@ double CalculateAngle(std::vector<double> coor1, std::vector<double> centerCoord
     double b = CalculateDistance(coor3, centerCoordinate);
     double c = CalculateDistance(coor1, coor3);
 
-    // double inner = (pow(a, 2) + pow(b, 2) - pow(c, 2)) / (2 * a * b);
     double inner = (a * a + b * b - c * c) / (2 * a * b);
 
     // ensure that the inner is within the range of acos. This if block accounts
@@ -92,8 +80,6 @@ double CalculateAngle(std::vector<double> coor1, std::vector<double> centerCoord
     }
 
     return acos(inner);
-
-    // if (inner) return acos(inner);
 }
 
 double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coor2, std::vector<double> coor3,
@@ -236,14 +222,12 @@ void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::v
                               fvector[2] * svector[0] - fvector[0] * svector[2],
                               fvector[0] * svector[1] - fvector[1] * svector[0]};
     double recip_pb = 1.0 / CalculateDistance(pb);
-    // double square_recip_pb = pow(recip_pb, 2);
     double square_recip_pb = recip_pb * recip_pb;
 
     std::vector<double> pc = {svector[1] * tvector[2] - svector[2] * tvector[1],
                               svector[2] * tvector[0] - svector[0] * tvector[2],
                               svector[0] * tvector[1] - svector[1] * tvector[0]};
     double recip_pc = 1.0 / CalculateDistance(pc);
-    // double square_recip_pc = pow(recip_pc, 2);
     double square_recip_pc = recip_pc * recip_pc;
 
     double dot_pb_pc = CalculateDotProduct(pb, pc);

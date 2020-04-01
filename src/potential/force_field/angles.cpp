@@ -105,23 +105,22 @@ double Angles::GetTopologyGradient(double x) {
 
 bool Angles::operator==(Angles const &angle) const {
     // Check field variables
-    if (angle.topology_ != this->topology_ || angle.functional_form_ != this->functional_form_ ||
-        angle.indexes_ != this->indexes_ || angle.num_linear_params_ != this->num_linear_params_ ||
-        angle.num_nonlinear_params_ != this->num_nonlinear_params_) {
+    if (angle.topology_ != topology_ || angle.functional_form_ != functional_form_ || angle.indexes_ != indexes_ ||
+        angle.num_linear_params_ != num_linear_params_ || angle.num_nonlinear_params_ != num_nonlinear_params_) {
         return false;
     }
 
     // Iterate through each of the non linear parameters and check they are the
     // same
     for (int i = 0; i < angle.num_nonlinear_params_; i++) {
-        if (fabs(angle.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
+        if (fabs(angle.nonlinear_parameters_[i] - nonlinear_parameters_[i]) > EPSILON) {
             return false;
         }
     }
 
     // Iterate through each of the linear parameters and check they are the same
     for (int i = 0; i < angle.num_linear_params_; i++) {
-        if (fabs(angle.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
+        if (fabs(angle.linear_parameters_[i] - linear_parameters_[i]) > EPSILON) {
             return false;
         }
     }

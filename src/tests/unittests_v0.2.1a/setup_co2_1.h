@@ -43,12 +43,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     double dispersion_energy = 0.0000000000e+00;                                                              \
     double buckingham_energy = 0.0000000000e+00;                                                              \
     double electrostatic_energy = 0.0000000000e+00;                                                           \
-    /* temporarily adding classic energy until we can select which energy is                                  \
-    desired through the JSON*/                                                                                \
-    double total_energy = 9.9150780942e+00 + classic_energy;                                                  \
-    double total_energy_ttm = 9.9150780942e+00 + classic_energy;                                              \
+    double total_energy = 9.9150780942e+00;                                                                   \
+    double total_energy_ttm = 10.28986;                                                                       \
     const int n_monomers = 1;                                                                                 \
+    std::vector<std::string> ff_mon = {"co2"};                                                                \
     std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"co2", "h2o"}};                            \
+    std::vector<std::string> ignore_1b = {"co2"};                                                             \
     std::vector<std::vector<std::string>> ignore_2b = {{"co2", "h2o"}};                                       \
     std::vector<std::vector<std::string>> ignore_3b = {{"co2", "h2o", "h2o"}};                                \
     std::vector<double> coords{-3.7350600000e-03, 2.1493800000e-02,  -2.0987560000e-02,                       \

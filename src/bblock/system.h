@@ -52,6 +52,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/definitions.h"
 #include "tools/custom_exceptions.h"
 #include "potential/force_field/connectivity.h"
+#include "io_tools/read_connectivity.h"
 
 // Potential
 // Force Field

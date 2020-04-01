@@ -40,6 +40,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <string.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -50,7 +51,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/force_field/dihedral.h"
 #include "potential/force_field/inversion.h"
 #include "potential/force_field/topology.h"
-#include "bblock/system.h"
+// #include "bblock/system.h"
 
 /**
  * @file read_connectivity.h
@@ -93,15 +94,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 namespace tools {
 
-// FIXME MRR This function will probably be removed
-/**
- * Reads a connectivity file into a connectivity map and sets it in system
- * @param[in] filename Name of the connectivity file
- * @param[out] systems Vector of systems that will be filled with
- * the information in the file
- */
-void ReadConnectivity(char* filename, std::vector<bblock::System>& systems);
-
 /**
  * Reads a connectivity file into the given connectivity map and returns it.
  * Used primarily to write unit tests
@@ -109,7 +101,7 @@ void ReadConnectivity(char* filename, std::vector<bblock::System>& systems);
  * @param[in, out] connectivity_map reference to connectivity map that needs to be
  * filled
  */
-void ReadConnectivity(char* filename, std::unordered_map<std::string, eff::Conn>& connectivity_map);
+void ReadConnectivity(const char* filename, std::unordered_map<std::string, eff::Conn>& connectivity_map);
 
 /**
  * Helper function that gets the main connectivity.

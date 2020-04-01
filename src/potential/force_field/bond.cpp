@@ -117,27 +117,26 @@ double Bond::GetTopologyGradient(double x) {
 
 bool Bond::operator==(Bond const &bond) const {
     // Check field variables
-    if (bond.topology_ != this->topology_ || bond.functional_form_ != this->functional_form_ ||
-        bond.indexes_ != this->indexes_ || bond.num_linear_params_ != this->num_linear_params_ ||
-        bond.num_nonlinear_params_ != this->num_nonlinear_params_) {
+    if (bond.topology_ != topology_ || bond.functional_form_ != functional_form_ || bond.indexes_ != indexes_ ||
+        bond.num_linear_params_ != num_linear_params_ || bond.num_nonlinear_params_ != num_nonlinear_params_) {
         return false;
     }
 
     // Iterate through each of the non linear parameters and check they are the
     // same
     for (int i = 0; i < bond.num_nonlinear_params_; i++) {
-        if (fabs(bond.nonlinear_parameters_[i] - this->nonlinear_parameters_[i]) > EPSILON) {
+        if (fabs(bond.nonlinear_parameters_[i] - nonlinear_parameters_[i]) > EPSILON) {
             return false;
         }
     }
 
     // Iterate through each of the linear parameters and check they are the same
     for (int i = 0; i < bond.num_linear_params_; i++) {
-        if (fabs(bond.linear_parameters_[i] - this->linear_parameters_[i]) > EPSILON) {
+        if (fabs(bond.linear_parameters_[i] - linear_parameters_[i]) > EPSILON) {
             return false;
         }
     }
 
     return true;
 }
-}
+}  // namespace eff

@@ -78,47 +78,6 @@ TEST_CASE("Test co2 monomer energy terms") {
     // Initialize the system to fill in the information
     my_system.Initialize();
 
-    SECTION("Classic Potential") {
-        double energy_nograd = my_system.ClassicPotential(false);
-        double energy_grad = my_system.ClassicPotential(true);
-        std::vector<double> real_grad = my_system.GetRealGrads();
-        std::vector<double> all_grad = my_system.GetGrads();
-        std::vector<double> real_xyz = my_system.GetRealXyz();
-        std::vector<double> all_xyz = my_system.GetXyz();
-
-        SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(classic_energy).margin(TOL)); }
-
-        SECTION("Compare analitical gradients with numerical gradients") {
-            double stepSize = 0.0001;
-            for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
-                all_xyz[degreeOfFreedom] += stepSize;
-                my_system.SetXyz(all_xyz);
-                double plusEnergy = my_system.ClassicPotential(false);
-                all_xyz[degreeOfFreedom] += stepSize;
-                my_system.SetXyz(all_xyz);
-                double plusplusEnergy = my_system.ClassicPotential(false);
-                all_xyz[degreeOfFreedom] += stepSize;
-                my_system.SetXyz(all_xyz);
-                double plusplusplusEnergy = my_system.ClassicPotential(false);
-                all_xyz[degreeOfFreedom] -= 6 * stepSize;
-                my_system.SetXyz(all_xyz);
-                double minusminusminusEnergy = my_system.ClassicPotential(false);
-                all_xyz[degreeOfFreedom] += stepSize;
-                my_system.SetXyz(all_xyz);
-                double minusminusEnergy = my_system.ClassicPotential(false);
-                all_xyz[degreeOfFreedom] += stepSize;
-                my_system.SetXyz(all_xyz);
-                double minusEnergy = my_system.ClassicPotential(false);
-                all_xyz[degreeOfFreedom] += stepSize;
-                my_system.SetXyz(all_xyz);
-                double finiteDifferenceForce = (-1 * minusminusminusEnergy + 9 * minusminusEnergy - 45 * minusEnergy +
-                                                45 * plusEnergy - 9 * plusplusEnergy + plusplusplusEnergy) /
-                                               (60 * stepSize);
-                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
-            }
-        }
-    }
-
     SECTION("One-Body") {
         double energy_nograd = my_system.OneBodyEnergy(false);
         double energy_grad = my_system.OneBodyEnergy(true);
@@ -344,6 +303,51 @@ TEST_CASE("Test co2 monomer energy terms") {
     my_system.Set2bIgnorePoly(ignore_2b);
     my_system.Set3bIgnorePoly(ignore_3b);
     my_system.SetTTMnrgPairs(ttm_pairs);
+    my_system.Set1bIgnorePoly(ignore_1b);
+    my_system.SetFFMons(ff_mon);
+
+    SECTION("Classic Potential") {
+        double energy_nograd = my_system.ClassicPotential(false);
+        double energy_grad = my_system.ClassicPotential(true);
+        std::vector<double> real_grad = my_system.GetRealGrads();
+        std::vector<double> all_grad = my_system.GetGrads();
+        std::vector<double> real_xyz = my_system.GetRealXyz();
+        std::vector<double> all_xyz = my_system.GetXyz();
+
+        SECTION("Energy without gradients") { REQUIRE(energy_nograd == Approx(classic_energy).margin(TOL)); }
+
+        SECTION("Energy with gradients") { REQUIRE(energy_grad == Approx(classic_energy).margin(TOL)); }
+
+        SECTION("Compare analitical gradients with numerical gradients") {
+            double stepSize = 0.0001;
+            for (size_t degreeOfFreedom = 0; degreeOfFreedom < all_xyz.size(); ++degreeOfFreedom) {
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double plusplusplusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] -= 6 * stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusminusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusminusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double minusEnergy = my_system.ClassicPotential(false);
+                all_xyz[degreeOfFreedom] += stepSize;
+                my_system.SetXyz(all_xyz);
+                double finiteDifferenceForce = (-1 * minusminusminusEnergy + 9 * minusminusEnergy - 45 * minusEnergy +
+                                                45 * plusEnergy - 9 * plusplusEnergy + plusplusplusEnergy) /
+                                               (60 * stepSize);
+                REQUIRE(all_grad[degreeOfFreedom] == Approx(finiteDifferenceForce).margin(TOL));
+            }
+        }
+    }
 
     SECTION("Buckingham") {
         double energy_nograd = my_system.Buckingham(false);
