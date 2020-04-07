@@ -277,34 +277,54 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
     }
 }
 
-void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2) {
+void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2) {
     size_t shift1 = 0;
     size_t shift2 = 0;
     size_t coords1 = 3 * nat1;
     size_t coords2 = 3 * nat2;
 
-    // Create a "box" with half of the sides
-    std::vector<double> box2 = box;
-    for (size_t i = 0; i < box.size(); i++) box2[i] *= 0.5;
-
     // Move every dimer to the right place
     for (size_t i = 0; i < nd; i++) {
-        for (size_t k = 0; k < 3; k++) {
-            double di = xyz2[shift2 + k] - xyz1[shift1 + k];
-            // here
-            if (di > box2[3 * k + k]) {
-                // here
-                for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + 3 * j + k] -= box[3 * k + k];
-                }
-                // here
-            } else if (di <= -box2[3 * k + k]) {
-                // here
-                for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + j * 3 + k] += box[3 * k + k];
-                }
-            }
-        }
+        // Move first atom of monomer into main box                                                               
+                                                                                                                  
+        double x_rec = box_inv[0] * xyz1[shift1] + box_inv[1] * xyz1[shift1 + 1] + box_inv[2] * xyz1[shift1 + 2]; 
+        double y_rec = box_inv[3] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[5] * xyz1[shift1 + 2]; 
+        double z_rec = box_inv[6] * xyz1[shift1] + box_inv[7] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2];
+
+        double xr0 = box_inv[0] * xyz2[shift2]          
+                   + box_inv[1] * xyz2[shift2 + 1]      
+                   + box_inv[2] * xyz2[shift2 + 2];     
+        double yr0 = box_inv[3] * xyz2[shift2]          
+                   + box_inv[4] * xyz2[shift2 + 1]      
+                   + box_inv[5] * xyz2[shift2 + 2];     
+        double zr0 = box_inv[6] * xyz2[shift2]          
+                   + box_inv[7] * xyz2[shift2 + 1]      
+                   + box_inv[8] * xyz2[shift2 + 2];     
+
+        double dx0 = std::floor(xr0 - x_rec + 0.5);
+        double dy0 = std::floor(yr0 - y_rec + 0.5);
+        double dz0 = std::floor(zr0 - z_rec + 0.5);
+
+        for (size_t j = 0; j < nat2; j++) {                      
+            double xr = box_inv[0] * xyz2[shift2 + 3*j]                 
+                      + box_inv[1] * xyz2[shift2 + 3*j + 1]             
+                      + box_inv[2] * xyz2[shift2 + 3*j + 2];            
+            double yr = box_inv[3] * xyz2[shift2 + 3*j]                 
+                      + box_inv[4] * xyz2[shift2 + 3*j + 1]             
+                      + box_inv[5] * xyz2[shift2 + 3*j + 2];            
+            double zr = box_inv[6] * xyz2[shift2 + 3*j]                 
+                      + box_inv[7] * xyz2[shift2 + 3*j + 1]             
+                      + box_inv[8] * xyz2[shift2 + 3*j + 2];
+                                                                                                                  
+            xr -= dx0;                                                                   
+            yr -= dy0;                                                                   
+            zr -= dz0;                                                                   
+                                                                                                                  
+            xyz2[shift2 + 3*j + 0] = box[0] * xr + box[1] * yr + box[2] * zr;   
+            xyz2[shift2 + 3*j + 1] = box[3] * xr + box[4] * yr + box[5] * zr;   
+            xyz2[shift2 + 3*j + 2] = box[6] * xr + box[7] * yr + box[8] * zr;   
+        }                                                                                                         
+                                                                                                                  
         shift1 += coords1;
         shift2 += coords2;
     }

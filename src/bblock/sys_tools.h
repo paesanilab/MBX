@@ -197,7 +197,7 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box,
  * the other one. At output, it will be modified so the coordinates
  * of monomer 2 are the closer image to monomer 1.
  */
-void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2);
+void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2);
 
 /**
  * @brief This function finds the monomers 2 and 3 mirror image that is

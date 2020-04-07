@@ -1657,7 +1657,7 @@ double System::Get2B(bool do_grads, bool use_ghost) {
 
                 // Fix dimer positions if pbc
                 if (use_pbc_) {
-                    systools::GetCloseDimerImage(box_, nat_[dimers[nd_tot * 2]], nat_[dimers[nd_tot * 2 + 1]], nd,
+                    systools::GetCloseDimerImage(box_, box_inverse_, nat_[dimers[nd_tot * 2]], nat_[dimers[nd_tot * 2 + 1]], nd,
                                                  xyz1.data(), xyz2.data());
                 }
 
