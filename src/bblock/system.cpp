@@ -409,12 +409,13 @@ void System::SetPBC(std::vector<double> box) {
     // Set the box and the bool to use or not pbc
     use_pbc_ = box.size();
     box_ = box;
+    box_inverse_ = InvertUnitCell(box_);
 
     // If we use PBC, we need to make sure that the monomer atoms are all
     // close to the central atom (1st atom of each monomer)
     if (use_pbc_) {
         // Fix monomer coordinates
-        systools::FixMonomerCoordinates(xyz_, box_, nat_, first_index_);
+        systools::FixMonomerCoordinates(xyz_, box_, box_inverse_, nat_, first_index_);
     }
 
 #ifdef DEBUG

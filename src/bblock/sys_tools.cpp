@@ -210,11 +210,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
     return count;
 }
 
-void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<size_t> nat,
+void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<double> box_inv,
+                           std::vector<size_t> nat,
                            std::vector<size_t> first_index) {
-    // TODO assuming for now orthorombic box:
-    // box = {a,0,0,0,b,0,0,0,c)
-
     // Check that the box has 9 components
     // Any other size is not acceptable
     if (box.size() != 9) {
@@ -238,43 +236,44 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
 
     size_t nmon = nat.size();
 
-    std::vector<double> box2 = box;
-    for (size_t i = 0; i < box.size(); i++) box2[i] *= 0.5;
-
     for (size_t i = 0; i < nmon; i++) {
-        size_t shift = 3 * first_index[i];
+        // Move first atom of monomer into main box
+        size_t shift3 = 3 * first_index[i];
 
-        // Put central atom in main box
-        double first_at[3];
-        for (size_t j = 0; j < 3; j++) {
-            double xyzi = xyz[shift + j];
-            if (xyzi < -box2[3 * j + j]) {
-                // here
-                xyz[shift + j] += box[3 * j + j];
-                // here
-            } else if (xyzi > box2[3 * j + j]) {
-                // here
-                xyz[shift + j] -= box[3 * j + j];
-            }
-            first_at[j] = xyz[shift + j];
-        }
+        double x_rec = box_inv[0] * xyz[shift3] + box_inv[1] * xyz[shift3 + 1] + box_inv[2] * xyz[shift3 + 2];
+        double y_rec = box_inv[3] * xyz[shift3] + box_inv[4] * xyz[shift3 + 1] + box_inv[5] * xyz[shift3 + 2];
+        double z_rec = box_inv[6] * xyz[shift3] + box_inv[7] * xyz[shift3 + 1] + box_inv[8] * xyz[shift3 + 2];
 
-        // Put rest of molecule atoms next to central atom
+        x_rec -= std::floor(x_rec + 0.5);
+        y_rec -= std::floor(y_rec + 0.5);
+        z_rec -= std::floor(z_rec + 0.5);
+
+        xyz[shift3 + 0] = box[0] * x_rec + box[1] * y_rec + box[2] * z_rec;
+        xyz[shift3 + 1] = box[3] * x_rec + box[4] * y_rec + box[5] * z_rec;
+        xyz[shift3 + 2] = box[6] * x_rec + box[7] * y_rec + box[8] * z_rec;
+
         for (size_t j = 1; j < nat[i]; j++) {
-            size_t j3 = j * 3;
-            for (size_t k = 0; k < 3; k++) {
-                double di = xyz[shift + j3 + k] - first_at[k];
-                // here
-                if (di > box2[3 * k + k]) {
-                    // here
-                    xyz[shift + j3 + k] -= box[3 * k + k];
-                    // here
-                } else if (di <= -box2[3 * k + k]) {
-                    // here
-                    xyz[shift + j3 + k] += box[3 * k + k];
-                }
-            }
+            double xr = box_inv[0] * xyz[shift3 + 3*j] 
+                      + box_inv[1] * xyz[shift3 + 3*j + 1] 
+                      + box_inv[2] * xyz[shift3 + 3*j + 2];
+            double yr = box_inv[3] * xyz[shift3 + 3*j] 
+                      + box_inv[4] * xyz[shift3 + 3*j + 1] 
+                      + box_inv[5] * xyz[shift3 + 3*j + 2];
+            double zr = box_inv[6] * xyz[shift3 + 3*j] 
+                      + box_inv[7] * xyz[shift3 + 3*j + 1] 
+                      + box_inv[8] * xyz[shift3 + 3*j + 2];
+
+            xr -= std::floor(xr - x_rec + 0.5); 
+            yr -= std::floor(yr - y_rec + 0.5); 
+            zr -= std::floor(zr - z_rec + 0.5);
+
+            xyz[shift3 + 3*j + 0] = box[0] * xr + box[1] * yr + box[2] * zr;
+            xyz[shift3 + 3*j + 1] = box[3] * xr + box[4] * yr + box[5] * zr;
+            xyz[shift3 + 3*j + 2] = box[6] * xr + box[7] * yr + box[8] * zr;
+            
         }
+
+ 
     }
 }
 

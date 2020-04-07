@@ -35,11 +35,16 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "math_tools.h"
 
 std::vector<double> InvertUnitCell(const std::vector<double> &box) {
+    std::vector<double> box_inverse(9);
+    if (box.size() < 9) { 
+        box_inverse.clear();
+        return box_inverse;
+    }
+
     double determinant = box[0] * (box[4] * box[8] - box[7] * box[5]) - box[1] * (box[3] * box[8] - box[5] * box[6]) +
                          box[2] * (box[3] * box[7] - box[4] * box[6]);
 
     double determinant_inverse = 1 / determinant;
-    std::vector<double> box_inverse(9);
     box_inverse[0] = (box[4] * box[8] - box[7] * box[5]) * determinant_inverse;
     box_inverse[1] = (box[2] * box[7] - box[1] * box[8]) * determinant_inverse;
     box_inverse[2] = (box[1] * box[5] - box[2] * box[4]) * determinant_inverse;

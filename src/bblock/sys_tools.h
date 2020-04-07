@@ -172,7 +172,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
  * @param[in] nat Vector with the number of atoms of each monomer
  * @param[in] first_index Vector with the first index of each monomer
  */
-void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<size_t> nat,
+void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, 
+                           std::vector<double> box_inv, std::vector<size_t> nat,
                            std::vector<size_t> first_index);
 
 /**
