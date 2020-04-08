@@ -1908,7 +1908,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
                 // Fix trimer positions if pbc
                 if (use_pbc_) {
-                    systools::GetCloseTrimerImage(box_, nat_[trimers[nt_tot * 3]], nat_[trimers[nt_tot * 3 + 1]],
+                    systools::GetCloseTrimerImage(box_, box_inverse_, nat_[trimers[nt_tot * 3]], nat_[trimers[nt_tot * 3 + 1]],
                                                   nat_[trimers[nt_tot * 3 + 2]], nt, coord1.data(), coord2.data(),
                                                   coord3.data());
                 }
