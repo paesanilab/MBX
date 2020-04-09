@@ -72,7 +72,8 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
                                 const std::vector<double> &polfac, const std::vector<double> &pol,
                                 const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                                 const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
-                                const std::vector<std::pair<std::string, size_t>> &mon_type_count, const bool do_grads,
+                                const std::vector<std::pair<std::string, size_t>> &mon_type_count, 
+				const std::vector<size_t> &islocal, const bool do_grads,
                                 const double tolerance, const size_t maxit, const std::string dip_method,
                                 const std::vector<double> &box) {
     pme_spline_order_ = 5;
@@ -85,6 +86,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     polfac_ = polfac;
     pol_ = pol;
     sys_xyz_ = sys_xyz;
+    islocal_ = islocal;
     mon_id_ = mon_id;
     sites_ = sites;
     first_ind_ = first_ind;
@@ -150,8 +152,23 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     if (do_grads == false) {
         calc_virial_=false;
     }
+    
+    if(!mpi_initialized_) {
+      world_ = 0;
+      proc_grid_x_ = 1;
+      proc_grid_y_ = 1;
+      proc_grid_z_ = 1;
+    }
 }
 
+void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
+    mpi_initialized_ = true;
+    world_ = world;
+    proc_grid_x_ = proc_grid_x;
+    proc_grid_y_ = proc_grid_y;
+    proc_grid_z_ = proc_grid_z;
+}
+  
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
@@ -1780,7 +1797,8 @@ double Electrostatics::GetPermanentElectrostaticEnergy() { return Eperm_; }
 
 double Electrostatics::GetInducedElectrostaticEnergy() { return Eind_; }
 
-double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial) {
+  double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial,
+					   bool use_ghost) {
     std::fill(virial_.begin(), virial_.end(),0.0);
     CalculatePermanentElecField();
     CalculateDipoles();

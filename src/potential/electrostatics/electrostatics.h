@@ -103,10 +103,13 @@ class Electrostatics {
                     const std::vector<double> &polfac, const std::vector<double> &pol,
                     const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, const bool do_grads = true,
+                    const std::vector<std::pair<std::string, size_t> > &mon_type_count,
+		    const std::vector<size_t> &islocal_, const bool do_grads = true,
                     const double tolerance = 1E-16, const size_t maxit = 100, const std::string dip_method = "iter",
                     const std::vector<double> &box = {});
 
+    void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
+  
     /**
      * @brief Gets the electrostatic energy
      *
@@ -115,7 +118,7 @@ class Electrostatics {
      * @param[out] grad Gradients will be saved here
      * @return Total electrostatic energy
      */
-    double GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial=0);
+    double GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial=0, bool use_ghost = 0);
 
     /**
      * @brief Clears the ASPC history
@@ -243,6 +246,8 @@ class Electrostatics {
     std::vector<double> sys_xyz_;
     // System xyz, ordered XYZ. xx..yy..zz(mon1) xx..yy..zz(mon2) ...
     std::vector<double> xyz_;
+    // local/ghost descriptor for monomers
+    std::vector<size_t> islocal_;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
@@ -339,6 +344,14 @@ class Electrostatics {
     std::vector<double> virial_;
     // calculate the virial tensor ?
     bool calc_virial_;
+    // MPI initialized
+    bool mpi_initialized_ = false;
+    // MPI Communicator
+    MPI_Comm world_;
+    // proc_grid
+    size_t proc_grid_x_;
+    size_t proc_grid_y_;
+    size_t proc_grid_z_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

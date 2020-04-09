@@ -545,6 +545,14 @@ class System {
     void Initialize();
 
     /**
+     * Initializes the system with zero monomers when processor contributes to PME. The
+     * system, once created, cannot be modified in terms of monomer composition.
+     * To see the default values of the initialization,
+     * please read the documentation.
+     */
+    void InitializePME();
+  
+    /**
      * Sets up all the parameters that are specified in a json file
      * @param[in] json_file Is the json formatted file with the system specifications
      **/
@@ -757,9 +765,10 @@ to be the same.
      * Gradients will be ONLY for the electrostatics part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
      * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, use islocal_ to handle ghost monomers
      * @return Electrostatic energy of the system
      */
-    double Electrostatics(bool do_grads);
+    double Electrostatics(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the dispersion energy for the whole system.
@@ -895,9 +904,11 @@ to be the same.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
      * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
      * @return  Electrostatic energy of the system
      */
-    double GetElectrostatics(bool do_grads);
+    double GetElectrostatics(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the dispersion energy.
