@@ -63,6 +63,20 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  * with all its member functions and variables.
  */
 
+enum {
+      ELE_PERMDIP_REAL=0,
+      ELE_PERMDIP_PME,
+
+      ELE_DIPFIELD_REAL,
+      ELE_DIPFIELD_PME,
+
+      ELE_GRAD_REAL,
+      ELE_GRAD_PME,
+      ELE_GRAD_FIN,
+
+      ELE_NUM_TIMERS
+};
+
 /**
  * @namespace elec
  * @brief Namespace that includes all the electrostatic related functions
@@ -214,6 +228,9 @@ class Electrostatics {
      */
     double GetInducedElectrostaticEnergy();
 
+  std::vector<size_t> GetInfoCounts();
+  std::vector<double> GetInfoTimings();
+
    private:
     void CalculatePermanentElecField();
     void CalculateDipolesIterative();
@@ -352,6 +369,9 @@ class Electrostatics {
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;
+
+    std::vector<size_t> mbxt_ele_count_;
+    std::vector<double> mbxt_ele_time_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

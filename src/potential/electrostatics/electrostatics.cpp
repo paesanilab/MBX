@@ -159,6 +159,9 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
       proc_grid_y_ = 1;
       proc_grid_z_ = 1;
     }
+
+    mbxt_ele_count_ = std::vector<size_t>(ELE_NUM_TIMERS, 0);
+    mbxt_ele_time_  = std::vector<double>(ELE_NUM_TIMERS, 0.0);
 }
 
 void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
@@ -275,6 +278,8 @@ void Electrostatics::CalculatePermanentElecField() {
     }
 #endif
 
+    double time1 = MPI_Wtime();
+    
     // This part looks at sites inside the same monomer
     // Reset first indexes
     size_t fi_mon = 0;
@@ -524,6 +529,8 @@ void Electrostatics::CalculatePermanentElecField() {
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
+    double time2 = MPI_Wtime();
+    
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
@@ -531,7 +538,12 @@ void Electrostatics::CalculatePermanentElecField() {
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
-        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+	if(mpi_initialized_) {
+	  pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0,
+				    world_, PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+	} else {
+	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+	}
         pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -540,6 +552,22 @@ void Electrostatics::CalculatePermanentElecField() {
         std::fill(rec_phi_and_field_.begin(), rec_phi_and_field_.end(), 0);
         pme_solver_.computePRec(0, charges, coords, coords, 1, result);
 
+	MPI_Allreduce(MPI_IN_PLACE, rec_phi_and_field_.data(), rec_phi_and_field_.size(), MPI_DOUBLE, MPI_SUM, world_);
+	
+	// int me, nprocs;
+	// MPI_Comm_rank(world_, &me);
+	// MPI_Comm_size(world_, &nprocs);
+	
+	// for(int j=0; j<nprocs; ++j) {
+	//   if(me == j) {
+	//     for(int i=0; i<nsites_; ++i) {
+	//       std::cout << "(" << me << ") i= " << i << "  result= " << result(i,0) << " " <<
+	// 	result(i,1) << " " << result(i,2) << " " << result(i,3) << std::endl;
+	//     }
+	//   }
+	//   MPI_Barrier(world_);
+	// }
+	
         // Resort phi from system order
         fi_mon = 0;
         fi_sites = 0;
@@ -567,6 +595,14 @@ void Electrostatics::CalculatePermanentElecField() {
             ++phi_ptr;
         }
     }
+
+    double time3 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_PERMDIP_REAL]++;
+    mbxt_ele_time_[ELE_PERMDIP_REAL] += time2 - time1;
+
+    mbxt_ele_count_[ELE_PERMDIP_PME]++;
+    mbxt_ele_time_[ELE_PERMDIP_PME] += time3 - time2;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -949,6 +985,8 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     }
 #endif
 
+    double time1 = MPI_Wtime();
+    
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
@@ -1106,6 +1144,8 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
+    double time2 = MPI_Wtime();
+    
     if (ewald_alpha_ > 0 && use_pbc_) {
         // Sort the dipoles to the order helPME expects (for now)
         //int fi_mon = 0;
@@ -1137,7 +1177,12 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
-        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+	if(mpi_initialized_) {
+	  pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0,
+				    world_, PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+	} else {
+	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+	}
         pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -1146,6 +1191,8 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
 
+	MPI_Allreduce(MPI_IN_PLACE, sys_Efd_.data(), sys_Efd_.size(), MPI_DOUBLE, MPI_SUM, world_);
+	
         // Resort field from system order
         fi_mon = 0;
         fi_sites = 0;
@@ -1173,6 +1220,14 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             ++e_ptr;
         }
     }
+
+    double time3 = MPI_Wtime();
+    
+    mbxt_ele_count_[ELE_DIPFIELD_REAL]++;
+    mbxt_ele_time_[ELE_DIPFIELD_REAL] += time2 - time1;
+
+    mbxt_ele_count_[ELE_DIPFIELD_PME]++;
+    mbxt_ele_time_[ELE_DIPFIELD_PME] += time3 - time2;
 }
 
 void Electrostatics::CalculateDipolesIterative() {
@@ -1281,6 +1336,8 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
     }
 #endif
 
+    double time1 = MPI_Wtime();
+    
     // Excluded sets
     excluded_set_type exc12;
     excluded_set_type exc13;
@@ -1477,6 +1534,8 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
+    double time2 = MPI_Wtime();
+    
     if (ewald_alpha_ > 0 && use_pbc_) {
         // Sort the dipoles to the order helPME expects (for now)
         //int fi_mon = 0;
@@ -1512,7 +1571,12 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
-        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+	if(mpi_initialized_) {
+	  pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0,
+				    world_, PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+	} else {
+	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+	}
         pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -1530,6 +1594,10 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(0, charges, dipoles,
                                           PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
 
+	    int me;
+	    MPI_Comm_rank(world_, &me);
+	    if(me == 0) std::cout << "\n\n WARNING: need support for computeEFVRecIsotropicInducedDipoles()\n\n" << std::endl;
+	    
             virial_[0] += (*drecvirial[0]) * constants::COULOMB;
             virial_[1] += (*drecvirial[1]) * constants::COULOMB;
             virial_[2] += (*drecvirial[3]) * constants::COULOMB;
@@ -1542,9 +1610,11 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
             virial_[7] = virial_[5];            
         }
 
-
         pme_solver_.computePRec(-1, dipoles, coords, coords, 2, result);
 
+	double * ptr = result[0];
+	MPI_Allreduce(MPI_IN_PLACE, ptr, nsites_*10, MPI_DOUBLE, MPI_SUM, world_);
+	
         // Resort field from system order
         fi_mon = 0;
         fi_sites = 0;
@@ -1591,6 +1661,8 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         result.setZero();
         pme_solver_.computePRec(0, charges, coords, coords, -2, result);
 
+	MPI_Allreduce(MPI_IN_PLACE, ptr, nsites_*10, MPI_DOUBLE, MPI_SUM, world_);
+	
         // Resort field from system order
         fi_mon = 0;
         fi_sites = 0;
@@ -1624,6 +1696,8 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         }
     }
 
+    double time3 = MPI_Wtime();
+    
     ////////////////////////////////////////////////////////////////////////////////
     // REVERT DATA ORGANIZATION ////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
@@ -1696,6 +1770,17 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
+
+    double time4 = MPI_Wtime();
+    
+    mbxt_ele_count_[ELE_GRAD_REAL]++;
+    mbxt_ele_time_[ELE_GRAD_REAL] += time2 - time1;
+
+    mbxt_ele_count_[ELE_GRAD_PME]++;
+    mbxt_ele_time_[ELE_GRAD_PME] += time3 - time2;
+    
+    mbxt_ele_count_[ELE_GRAD_FIN]++;
+    mbxt_ele_time_[ELE_GRAD_FIN] += time4 - time3;
 }
 
 std::vector<double> Electrostatics::GetInducedDipoles() {
@@ -1813,5 +1898,9 @@ double Electrostatics::GetInducedElectrostaticEnergy() { return Eind_; }
     has_energy_ = true;
     return Eperm_ + Eind_;
 }
-
+  
+std::vector<size_t> Electrostatics::GetInfoCounts() { return mbxt_ele_count_; }
+std::vector<double> Electrostatics::GetInfoTimings() { return mbxt_ele_time_; }
+  
 }  // namespace elec
+

@@ -2370,6 +2370,34 @@ double System::Electrostatics(bool do_grads, bool use_ghost) {
     return energy_;
 }
 
+double System::ElectrostaticsMPI(bool do_grads, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Electrostatic Energy calculation ") + std::string("not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
+
+    SetPBC(box_);
+
+    energy_ = GetElectrostatics(do_grads, use_ghost);
+
+    // correct energy and forces for number of processors
+
+    double rnprocs = 1.0 / (double)(proc_grid_x_ * proc_grid_y_ * proc_grid_z_);
+
+    energy_ *= rnprocs;
+    for(int i=0; i<grad_.size(); ++i) grad_[i] *= rnprocs;
+    for(int i=0; i<virial_.size(); ++i) virial_[i] *= rnprocs;
+    
+    return energy_;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetEwaldElectrostatics(double alpha, double grid_density, int spline_order) {
@@ -2521,6 +2549,9 @@ double System::GetBuckingham(bool do_grads, bool use_ghost) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::ResetDipoleHistory() { electrostaticE_.ResetAspcHistory(); }
+
+std::vector<size_t> System::GetInfoElectrostaticsCounts() { return electrostaticE_.GetInfoCounts(); }
+std::vector<double> System::GetInfoElectrostaticsTimings() { return electrostaticE_.GetInfoTimings(); }
 
 ////////////////////////////////////////////////////////////////////////////////
 

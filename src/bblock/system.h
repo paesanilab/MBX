@@ -769,6 +769,7 @@ to be the same.
      * @return Electrostatic energy of the system
      */
     double Electrostatics(bool do_grads, bool use_ghost = 0);
+    double ElectrostaticsMPI(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the dispersion energy for the whole system.
@@ -799,6 +800,9 @@ to be the same.
      */
     double Buckingham(bool do_grads, bool use_ghost = 0);
 
+    std::vector<size_t> GetInfoElectrostaticsCounts();
+    std::vector<double> GetInfoElectrostaticsTimings();
+  
    private:
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
