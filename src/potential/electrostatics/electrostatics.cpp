@@ -1593,10 +1593,8 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
 
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(0, charges, dipoles,
                                           PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
-
-	    int me;
-	    MPI_Comm_rank(world_, &me);
-	    if(me == 0) std::cout << "\n\n WARNING: need support for computeEFVRecIsotropicInducedDipoles()\n\n" << std::endl;
+	    
+	    MPI_Allreduce(MPI_IN_PLACE, trecvir.data(), trecvir.size(), MPI_DOUBLE, MPI_SUM, world_);    
 	    
             virial_[0] += (*drecvirial[0]) * constants::COULOMB;
             virial_[1] += (*drecvirial[1]) * constants::COULOMB;
