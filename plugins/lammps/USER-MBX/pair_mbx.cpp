@@ -514,23 +514,36 @@ void PairMBX::accumulate_f()
       const int mtype = mol_type[i];
 
       // to be replaced with integer comparison
+
+      bool include_monomer = true;
+      tagint anchor = atom->tag[i];
       
       int na = 0;
-      if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
+      if(strcmp("h2o",      mol_names[mtype]) == 0) {
+	na = 3;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
+      }
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
-
-      tagint anchor = atom->tag[i];
-
-      for(int j=0; j<na; ++j) {
-
-	const int ii = atom->map(anchor + j);
-	f[ii][0] -= grads[indx++];
-	f[ii][1] -= grads[indx++];
-	f[ii][2] -= grads[indx++];
+      else if(strcmp("co2", mol_names[mtype]) == 0) {
+	na = 3;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
       }
-     
+
+      if(include_monomer) {
+	for(int j=0; j<na; ++j) {
+	  
+	  const int ii = atom->map(anchor + j);
+	  f[ii][0] -= grads[indx++];
+	  f[ii][1] -= grads[indx++];
+	  f[ii][2] -= grads[indx++];
+	}
+      }
+      
     } // if(anchor)
 
   }
