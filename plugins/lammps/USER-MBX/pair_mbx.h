@@ -67,7 +67,7 @@ class PairMBX : public Pair {
   
   void accumulate_f();
   void accumulate_f_full();
-  //  void accumulate_f_local();
+  void accumulate_f_local();
   void accumulate_f_pme();
 };
 

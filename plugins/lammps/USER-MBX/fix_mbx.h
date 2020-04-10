@@ -43,6 +43,16 @@ enum {
       MBXT_ACCUMULATE_F,
       MBXT_ACCUMULATE_F_FULL,
 
+      MBXT_ELE_PERMDIP_REAL,
+      MBXT_ELE_PERMDIP_PME,
+      
+      MBXT_ELE_DIPFIELD_REAL,
+      MBXT_ELE_DIPFIELD_PME,
+      
+      MBXT_ELE_GRAD_REAL,
+      MBXT_ELE_GRAD_PME,
+      MBXT_ELE_GRAD_FIN,
+
       MBXT_NUM_TIMERS
 };
 
@@ -126,12 +136,12 @@ class FixMBX : public Fix {
   
   void mbx_init();
   void mbx_init_full();
-  //  void mbx_init_local();
+  void mbx_init_local();
   void mbx_init_pme();
   
   void mbx_update_xyz();
   void mbx_update_xyz_full();
-  //  void mbx_update_xyz_local();
+  void mbx_update_xyz_local();
   void mbx_update_xyz_pme();
   
   virtual int pack_forward_comm(int, int *, double *, int, int *);
