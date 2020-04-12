@@ -71,13 +71,13 @@ struct PointCloud {
             return d;
         } else {
             T x_rec = pbcbox_inv[0] * d0 
-                    + pbcbox_inv[1] * d1 
-                    + pbcbox_inv[2] * d2;
-            T y_rec = pbcbox_inv[3] * d0 
+                    + pbcbox_inv[3] * d1 
+                    + pbcbox_inv[6] * d2;
+            T y_rec = pbcbox_inv[1] * d0 
                     + pbcbox_inv[4] * d1 
-                    + pbcbox_inv[5] * d2;
-            T z_rec = pbcbox_inv[6] * d0 
-                    + pbcbox_inv[7] * d1 
+                    + pbcbox_inv[7] * d2;
+            T z_rec = pbcbox_inv[2] * d0 
+                    + pbcbox_inv[5] * d1 
                     + pbcbox_inv[8] * d2;     
 
             x_rec -= std::floor(x_rec + 0.5);
@@ -85,13 +85,13 @@ struct PointCloud {
             z_rec -= std::floor(z_rec + 0.5);
             
             T x = pbcbox[0] * x_rec
-                + pbcbox[1] * y_rec
-                + pbcbox[2] * z_rec;
-            T y = pbcbox[3] * x_rec
+                + pbcbox[3] * y_rec
+                + pbcbox[6] * z_rec;
+            T y = pbcbox[1] * x_rec
                 + pbcbox[4] * y_rec
-                + pbcbox[5] * z_rec;
-            T z = pbcbox[6] * x_rec
-                + pbcbox[7] * y_rec
+                + pbcbox[7] * z_rec;
+            T z = pbcbox[2] * x_rec
+                + pbcbox[5] * y_rec
                 + pbcbox[8] * z_rec;
 
             T d = x*x + y*y + z*z;

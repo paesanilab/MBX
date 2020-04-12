@@ -22,6 +22,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-connectivity.cpp
     unittest-io-connectivity.cpp
     unittest-h4-dummy.cpp
+    unittest-box-shapes.cpp
 )
 
 # Stuff below shouldn't need to be modified

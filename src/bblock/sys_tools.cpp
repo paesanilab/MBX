@@ -240,36 +240,36 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
         // Move first atom of monomer into main box
         size_t shift3 = 3 * first_index[i];
 
-        double x_rec = box_inv[0] * xyz[shift3] + box_inv[1] * xyz[shift3 + 1] + box_inv[2] * xyz[shift3 + 2];
-        double y_rec = box_inv[3] * xyz[shift3] + box_inv[4] * xyz[shift3 + 1] + box_inv[5] * xyz[shift3 + 2];
-        double z_rec = box_inv[6] * xyz[shift3] + box_inv[7] * xyz[shift3 + 1] + box_inv[8] * xyz[shift3 + 2];
+        double x_rec = box_inv[0] * xyz[shift3] + box_inv[3] * xyz[shift3 + 1] + box_inv[6] * xyz[shift3 + 2];
+        double y_rec = box_inv[1] * xyz[shift3] + box_inv[4] * xyz[shift3 + 1] + box_inv[7] * xyz[shift3 + 2];
+        double z_rec = box_inv[2] * xyz[shift3] + box_inv[5] * xyz[shift3 + 1] + box_inv[8] * xyz[shift3 + 2];
 
         x_rec -= std::floor(x_rec + 0.5);
         y_rec -= std::floor(y_rec + 0.5);
         z_rec -= std::floor(z_rec + 0.5);
 
-        xyz[shift3 + 0] = box[0] * x_rec + box[1] * y_rec + box[2] * z_rec;
-        xyz[shift3 + 1] = box[3] * x_rec + box[4] * y_rec + box[5] * z_rec;
-        xyz[shift3 + 2] = box[6] * x_rec + box[7] * y_rec + box[8] * z_rec;
+        xyz[shift3 + 0] = box[0] * x_rec + box[3] * y_rec + box[6] * z_rec;
+        xyz[shift3 + 1] = box[1] * x_rec + box[4] * y_rec + box[7] * z_rec;
+        xyz[shift3 + 2] = box[2] * x_rec + box[5] * y_rec + box[8] * z_rec;
 
         for (size_t j = 1; j < nat[i]; j++) {
             double xr = box_inv[0] * xyz[shift3 + 3*j] 
-                      + box_inv[1] * xyz[shift3 + 3*j + 1] 
-                      + box_inv[2] * xyz[shift3 + 3*j + 2];
-            double yr = box_inv[3] * xyz[shift3 + 3*j] 
+                      + box_inv[3] * xyz[shift3 + 3*j + 1] 
+                      + box_inv[6] * xyz[shift3 + 3*j + 2];
+            double yr = box_inv[1] * xyz[shift3 + 3*j] 
                       + box_inv[4] * xyz[shift3 + 3*j + 1] 
-                      + box_inv[5] * xyz[shift3 + 3*j + 2];
-            double zr = box_inv[6] * xyz[shift3 + 3*j] 
-                      + box_inv[7] * xyz[shift3 + 3*j + 1] 
+                      + box_inv[7] * xyz[shift3 + 3*j + 2];
+            double zr = box_inv[2] * xyz[shift3 + 3*j] 
+                      + box_inv[5] * xyz[shift3 + 3*j + 1] 
                       + box_inv[8] * xyz[shift3 + 3*j + 2];
 
             xr -= std::floor(xr - x_rec + 0.5); 
             yr -= std::floor(yr - y_rec + 0.5); 
             zr -= std::floor(zr - z_rec + 0.5);
 
-            xyz[shift3 + 3*j + 0] = box[0] * xr + box[1] * yr + box[2] * zr;
-            xyz[shift3 + 3*j + 1] = box[3] * xr + box[4] * yr + box[5] * zr;
-            xyz[shift3 + 3*j + 2] = box[6] * xr + box[7] * yr + box[8] * zr;
+            xyz[shift3 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;
+            xyz[shift3 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;
+            xyz[shift3 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;
             
         }
 
@@ -287,18 +287,18 @@ void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, si
     for (size_t i = 0; i < nd; i++) {
         // Move first atom of monomer into main box                                                               
                                                                                                                   
-        double x_rec = box_inv[0] * xyz1[shift1] + box_inv[1] * xyz1[shift1 + 1] + box_inv[2] * xyz1[shift1 + 2]; 
-        double y_rec = box_inv[3] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[5] * xyz1[shift1 + 2]; 
-        double z_rec = box_inv[6] * xyz1[shift1] + box_inv[7] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2];
+        double x_rec = box_inv[0] * xyz1[shift1] + box_inv[3] * xyz1[shift1 + 1] + box_inv[6] * xyz1[shift1 + 2]; 
+        double y_rec = box_inv[1] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[7] * xyz1[shift1 + 2]; 
+        double z_rec = box_inv[2] * xyz1[shift1] + box_inv[5] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2];
 
         double xr0 = box_inv[0] * xyz2[shift2]          
-                   + box_inv[1] * xyz2[shift2 + 1]      
-                   + box_inv[2] * xyz2[shift2 + 2];     
-        double yr0 = box_inv[3] * xyz2[shift2]          
+                   + box_inv[3] * xyz2[shift2 + 1]      
+                   + box_inv[6] * xyz2[shift2 + 2];     
+        double yr0 = box_inv[1] * xyz2[shift2]          
                    + box_inv[4] * xyz2[shift2 + 1]      
-                   + box_inv[5] * xyz2[shift2 + 2];     
-        double zr0 = box_inv[6] * xyz2[shift2]          
-                   + box_inv[7] * xyz2[shift2 + 1]      
+                   + box_inv[7] * xyz2[shift2 + 2];     
+        double zr0 = box_inv[2] * xyz2[shift2]          
+                   + box_inv[5] * xyz2[shift2 + 1]      
                    + box_inv[8] * xyz2[shift2 + 2];     
 
         double dx0 = std::floor(xr0 - x_rec + 0.5);
@@ -307,22 +307,22 @@ void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, si
 
         for (size_t j = 0; j < nat2; j++) {                      
             double xr = box_inv[0] * xyz2[shift2 + 3*j]                 
-                      + box_inv[1] * xyz2[shift2 + 3*j + 1]             
-                      + box_inv[2] * xyz2[shift2 + 3*j + 2];            
-            double yr = box_inv[3] * xyz2[shift2 + 3*j]                 
+                      + box_inv[3] * xyz2[shift2 + 3*j + 1]             
+                      + box_inv[6] * xyz2[shift2 + 3*j + 2];            
+            double yr = box_inv[1] * xyz2[shift2 + 3*j]                 
                       + box_inv[4] * xyz2[shift2 + 3*j + 1]             
-                      + box_inv[5] * xyz2[shift2 + 3*j + 2];            
-            double zr = box_inv[6] * xyz2[shift2 + 3*j]                 
-                      + box_inv[7] * xyz2[shift2 + 3*j + 1]             
+                      + box_inv[7] * xyz2[shift2 + 3*j + 2];            
+            double zr = box_inv[2] * xyz2[shift2 + 3*j]                 
+                      + box_inv[5] * xyz2[shift2 + 3*j + 1]             
                       + box_inv[8] * xyz2[shift2 + 3*j + 2];
                                                                                                                   
             xr -= dx0;                                                                   
             yr -= dy0;                                                                   
             zr -= dz0;                                                                   
                                                                                                                   
-            xyz2[shift2 + 3*j + 0] = box[0] * xr + box[1] * yr + box[2] * zr;   
-            xyz2[shift2 + 3*j + 1] = box[3] * xr + box[4] * yr + box[5] * zr;   
-            xyz2[shift2 + 3*j + 2] = box[6] * xr + box[7] * yr + box[8] * zr;   
+            xyz2[shift2 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;   
+            xyz2[shift2 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;   
+            xyz2[shift2 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;   
         }                                                                                                         
                                                                                                                   
         shift1 += coords1;
@@ -340,18 +340,18 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
     size_t coords3 = 3 * nat3;
 
     for (size_t i = 0; i < nt; i++) {
-        double x_rec = box_inv[0] * xyz1[shift1] + box_inv[1] * xyz1[shift1 + 1] + box_inv[2] * xyz1[shift1 + 2]; 
-        double y_rec = box_inv[3] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[5] * xyz1[shift1 + 2]; 
-        double z_rec = box_inv[6] * xyz1[shift1] + box_inv[7] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2]; 
+        double x_rec = box_inv[0] * xyz1[shift1] + box_inv[3] * xyz1[shift1 + 1] + box_inv[6] * xyz1[shift1 + 2]; 
+        double y_rec = box_inv[1] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[7] * xyz1[shift1 + 2]; 
+        double z_rec = box_inv[2] * xyz1[shift1] + box_inv[5] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2]; 
         
         double xr0 = box_inv[0] * xyz2[shift2]                                                                    
-                   + box_inv[1] * xyz2[shift2 + 1]                                                                
-                   + box_inv[2] * xyz2[shift2 + 2];                                                               
-        double yr0 = box_inv[3] * xyz2[shift2]                                                                    
+                   + box_inv[3] * xyz2[shift2 + 1]                                                                
+                   + box_inv[6] * xyz2[shift2 + 2];                                                               
+        double yr0 = box_inv[1] * xyz2[shift2]                                                                    
                    + box_inv[4] * xyz2[shift2 + 1]                                                                
-                   + box_inv[5] * xyz2[shift2 + 2];                                                               
-        double zr0 = box_inv[6] * xyz2[shift2]                                                                    
-                   + box_inv[7] * xyz2[shift2 + 1]                                                                
+                   + box_inv[7] * xyz2[shift2 + 2];                                                               
+        double zr0 = box_inv[2] * xyz2[shift2]                                                                    
+                   + box_inv[5] * xyz2[shift2 + 1]                                                                
                    + box_inv[8] * xyz2[shift2 + 2];                                                               
         
         double dx0 = std::floor(xr0 - x_rec + 0.5);                                                               
@@ -361,33 +361,33 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
         // Move monomer 2 to be the closest image to mon1 if needed
         for (size_t j = 0; j < nat2; j++) {                                                                       
             double xr = box_inv[0] * xyz2[shift2 + 3*j]                                                           
-                      + box_inv[1] * xyz2[shift2 + 3*j + 1]                                                       
-                      + box_inv[2] * xyz2[shift2 + 3*j + 2];                                                      
-            double yr = box_inv[3] * xyz2[shift2 + 3*j]                                                           
+                      + box_inv[3] * xyz2[shift2 + 3*j + 1]                                                       
+                      + box_inv[6] * xyz2[shift2 + 3*j + 2];                                                      
+            double yr = box_inv[1] * xyz2[shift2 + 3*j]                                                           
                       + box_inv[4] * xyz2[shift2 + 3*j + 1]                                                       
-                      + box_inv[5] * xyz2[shift2 + 3*j + 2];                                                      
-            double zr = box_inv[6] * xyz2[shift2 + 3*j]                                                           
-                      + box_inv[7] * xyz2[shift2 + 3*j + 1]                                                       
+                      + box_inv[7] * xyz2[shift2 + 3*j + 2];                                                      
+            double zr = box_inv[2] * xyz2[shift2 + 3*j]                                                           
+                      + box_inv[5] * xyz2[shift2 + 3*j + 1]                                                       
                       + box_inv[8] * xyz2[shift2 + 3*j + 2];                                                      
                                                                                                                   
             xr -= dx0;                                                                                            
             yr -= dy0;                                                                                            
             zr -= dz0;                                                                                            
                                                                                                                   
-            xyz2[shift2 + 3*j + 0] = box[0] * xr + box[1] * yr + box[2] * zr;                                     
-            xyz2[shift2 + 3*j + 1] = box[3] * xr + box[4] * yr + box[5] * zr;                                     
-            xyz2[shift2 + 3*j + 2] = box[6] * xr + box[7] * yr + box[8] * zr;                                     
+            xyz2[shift2 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;                                     
+            xyz2[shift2 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;                                     
+            xyz2[shift2 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;                                     
         }                                                                                                         
                                                                                                                   
         // Move monomer 3 to be the closest image to mon1 if needed                                               
         xr0 = box_inv[0] * xyz3[shift2]                                                                    
-            + box_inv[1] * xyz3[shift2 + 1]                                                                
-            + box_inv[2] * xyz3[shift2 + 2];                                                               
-        yr0 = box_inv[3] * xyz3[shift2]                                                                    
+            + box_inv[3] * xyz3[shift2 + 1]                                                                
+            + box_inv[6] * xyz3[shift2 + 2];                                                               
+        yr0 = box_inv[1] * xyz3[shift2]                                                                    
             + box_inv[4] * xyz3[shift2 + 1]                                                                
-            + box_inv[5] * xyz3[shift2 + 2];                                                               
-        zr0 = box_inv[6] * xyz3[shift2]                                                                    
-            + box_inv[7] * xyz3[shift2 + 1]                                                                
+            + box_inv[7] * xyz3[shift2 + 2];                                                               
+        zr0 = box_inv[2] * xyz3[shift2]                                                                    
+            + box_inv[5] * xyz3[shift2 + 1]                                                                
             + box_inv[8] * xyz3[shift2 + 2];                                                               
                                                                                                                   
         dx0 = std::floor(xr0 - x_rec + 0.5);                                                               
@@ -396,22 +396,22 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
                                                                                                                   
         for (size_t j = 0; j < nat3; j++) {                                                                       
             double xr = box_inv[0] * xyz3[shift3 + 3*j]                                                           
-                      + box_inv[1] * xyz3[shift3 + 3*j + 1]                                                       
-                      + box_inv[2] * xyz3[shift3 + 3*j + 2];                                                      
-            double yr = box_inv[3] * xyz3[shift3 + 3*j]                                                           
+                      + box_inv[3] * xyz3[shift3 + 3*j + 1]                                                       
+                      + box_inv[6] * xyz3[shift3 + 3*j + 2];                                                      
+            double yr = box_inv[1] * xyz3[shift3 + 3*j]                                                           
                       + box_inv[4] * xyz3[shift3 + 3*j + 1]                                                       
-                      + box_inv[5] * xyz3[shift3 + 3*j + 2];                                                      
-            double zr = box_inv[6] * xyz3[shift3 + 3*j]                                                           
-                      + box_inv[7] * xyz3[shift3 + 3*j + 1]                                                       
+                      + box_inv[7] * xyz3[shift3 + 3*j + 2];                                                      
+            double zr = box_inv[2] * xyz3[shift3 + 3*j]                                                           
+                      + box_inv[5] * xyz3[shift3 + 3*j + 1]                                                       
                       + box_inv[8] * xyz3[shift3 + 3*j + 2];                                                      
                                                                                                                   
             xr -= dx0;                                                                                            
             yr -= dy0;                                                                                            
             zr -= dz0;                                                                                            
                                                                                                                   
-            xyz3[shift2 + 3*j + 0] = box[0] * xr + box[1] * yr + box[2] * zr;                                     
-            xyz3[shift2 + 3*j + 1] = box[3] * xr + box[4] * yr + box[5] * zr;                                     
-            xyz3[shift2 + 3*j + 2] = box[6] * xr + box[7] * yr + box[8] * zr;                                     
+            xyz3[shift2 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;                                     
+            xyz3[shift2 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;                                     
+            xyz3[shift2 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;                                     
         } 
         shift1 += coords1;                                                                                        
         shift2 += coords2;
