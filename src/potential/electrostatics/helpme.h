@@ -1277,6 +1277,15 @@ class FFTWWrapper {
 
    public:
     FFTWWrapper() {}
+    ~FFTWWrapper() {
+      typeinfo::DestroyPlan(forwardPlan_);
+      typeinfo::DestroyPlan(inversePlan_);
+      typeinfo::DestroyPlan(forwardInPlacePlan_);
+      typeinfo::DestroyPlan(inverseInPlacePlan_);
+      typeinfo::DestroyPlan(realToComplexPlan_);
+      typeinfo::DestroyPlan(complexToRealPlan_);
+      typeinfo::CleanupFFTW();
+    }
     FFTWWrapper(size_t fftDimension) : fftDimension_(fftDimension), transformFlags_(FFTW_ESTIMATE) {
         if (!typeinfo::isImplemented) {
             throw std::runtime_error(
