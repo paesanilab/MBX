@@ -914,7 +914,7 @@ void PairMBX::accumulate_f_pme()
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_FULL);
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving pair accumulate_f_full()\n",me);
+  printf("[MBX] (%i) Leaving pair accumulate_f_pme()\n",me);
 #endif
 }
 
