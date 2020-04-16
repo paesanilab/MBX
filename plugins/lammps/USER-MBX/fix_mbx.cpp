@@ -1747,7 +1747,6 @@ void FixMBX::mbx_update_xyz()
   std::vector<double> xyz(mbx_num_atoms*3);
 
   int indx = 0;
-  int m = 0;
   for(int i=0; i<nall; ++i) {
 
     if(mol_anchor[i]) {
@@ -1780,7 +1779,6 @@ void FixMBX::mbx_update_xyz()
 	  xyz[indx*3+8] = ximage[2];
 	  
 	  indx += 3;
-	  m++;
 	}
       }
       else if(strcmp("na",  mol_names[mtype]) == 0) {
@@ -1790,7 +1788,6 @@ void FixMBX::mbx_update_xyz()
 	xyz[indx*3+2] = x[i][2];
 
 	indx++;
-	m++;
       }
       else if(strcmp("cl",  mol_names[mtype]) == 0) {
 
@@ -1799,7 +1796,6 @@ void FixMBX::mbx_update_xyz()
 	xyz[indx*3+2] = x[i][2];
 
 	indx++;
-	m++;
       }
       else if(strcmp("co2", mol_names[mtype]) == 0) {
 	
@@ -1824,7 +1820,6 @@ void FixMBX::mbx_update_xyz()
 	  xyz[indx*3+8] = ximage[2];
 	  
 	  indx += 3;
-	  m++;
 	}
       }
 
@@ -2143,7 +2138,7 @@ void FixMBX::mbx_update_xyz_pme()
 
   // update coordinates
 
-  MPI_Gatherv(&(x[0][0]), nlocal*3, MPI_DOUBLE, &(x_full[0][0]), nlocal_rank3, nlocal_disp3, MPI_DOUBLE, 0, world);  
+  MPI_Allgatherv(&(x[0][0]), nlocal*3, MPI_DOUBLE, &(x_full[0][0]), nlocal_rank3, nlocal_disp3, MPI_DOUBLE, world);  
   
   // update if box changes
 

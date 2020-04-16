@@ -55,7 +55,7 @@ PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
 
   // energy terms available to pair compute
   
-  nextra = 11;
+  nextra = 13;
   pvector = new double[nextra];
 }
 
@@ -113,6 +113,7 @@ void PairMBX::compute(int eflag, int vflag)
   
   double mbx_e2b_local, mbx_e2b_ghost;
   double mbx_e3b_local, mbx_e3b_ghost;
+  double mbx_disp_real, mbx_disp_pme;
   
   // compute energy
 
@@ -124,6 +125,9 @@ void PairMBX::compute(int eflag, int vflag)
   mbx_e2b_ghost = 0.0;
   mbx_e3b_local = 0.0;
   mbx_e3b_ghost = 0.0;
+
+  mbx_disp_real = 0.0;
+  mbx_disp_pme  = 0.0;
   
   mbx_disp = 0.0;
   mbx_buck = 0.0;
@@ -164,7 +168,7 @@ void PairMBX::compute(int eflag, int vflag)
 
     if(compute_disp_parallel) {
       fix_mbx->mbxt_start(MBXT_DISP);
-      mbx_disp = ptr_mbx->Dispersion(true, true); // computes real-space with local-local & local-ghost pairs
+      mbx_disp_real = ptr_mbx->Dispersion(true, true); // computes real-space with local-local & local-ghost pairs
       fix_mbx->mbxt_stop(MBXT_DISP);
       accumulate_f();
     }
@@ -177,12 +181,12 @@ void PairMBX::compute(int eflag, int vflag)
   
   if(compute_disp_parallel) {    
     fix_mbx->mbxt_start(MBXT_DISP_PME);
-    //    mbx_disp += ptr_mbx->DispersionPME(true, true); // computes k-space using sub-domain
+    //    mbx_disp_pme = ptr_mbx->DispersionPME(true, true); // computes k-space using sub-domain
 
-    //    mbx_disp += ptr_mbx_local->DispersionPME(true, true); // computes k-space using sub-domain
+    //    mbx_disp_pme = ptr_mbx_local->DispersionPME(true, true); // computes k-space using sub-domain
     //    accumulate_f_local();
     
-    mbx_disp += ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
+    mbx_disp_pme = ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
     accumulate_f_pme();
     
     fix_mbx->mbxt_stop(MBXT_DISP_PME);
@@ -190,12 +194,14 @@ void PairMBX::compute(int eflag, int vflag)
   } else {
     
     fix_mbx->mbxt_start(MBXT_DISP);
-    if(comm->me == 0) mbx_disp = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
+    if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
     fix_mbx->mbxt_stop(MBXT_DISP);
     accumulate_f_full();
     
   }
 
+  mbx_disp = mbx_disp_real + mbx_disp_pme;
+  
 #if 1
   fix_mbx->mbxt_start(MBXT_ELE);
   mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, true);
@@ -235,6 +241,8 @@ void PairMBX::compute(int eflag, int vflag)
     pvector[8]  = mbx_e2b_ghost;
     pvector[9]  = mbx_e3b_local;
     pvector[10] = mbx_e3b_ghost;
+    pvector[11] = mbx_disp_real;
+    pvector[12] = mbx_disp_pme;
   }
 
 #if 0
@@ -245,6 +253,8 @@ void PairMBX::compute(int eflag, int vflag)
   double e2g = 0.0;
   double e3l = 0.0;
   double e3g = 0.0;
+  double edr = 0.0;
+  double edp = 0.0;
 
   double v[6];
   
@@ -253,6 +263,8 @@ void PairMBX::compute(int eflag, int vflag)
   MPI_Reduce(&mbx_e2b_ghost, &e2g,  1, MPI_DOUBLE, MPI_SUM, 0, world);
   MPI_Reduce(&mbx_e3b_local, &e3l,  1, MPI_DOUBLE, MPI_SUM, 0, world);
   MPI_Reduce(&mbx_e3b_ghost, &e3g,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_disp_real, &edr,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_disp_pme,  &edp,  1, MPI_DOUBLE, MPI_SUM, 0, world);
   MPI_Reduce(&virial[0],     &v[0], 6, MPI_DOUBLE, MPI_SUM, 0, world);
 
   double etot = e1 + e2l + e2g + e3l + e3g + mbx_disp + mbx_buck + mbx_ele;
@@ -261,9 +273,9 @@ void PairMBX::compute(int eflag, int vflag)
     printf("mbx_e1b=   %f  Parallel\n",e1);
     printf("mbx_e2b=   %f (%f, %f)  Parallel\n",e2l+e2g, e2l, e2g);
     printf("mbx_e3b=   %f (%f, %f)  Parallel\n",e3l+e3g, e3l, e3g);
-    printf("mbx_disp=  %f  Serial\n",mbx_disp);
-    printf("mbx_buck=  %f  Serial\n",mbx_buck);
-    printf("mbx_ele=   %f  Serial\n",mbx_ele);
+    printf("mbx_disp=  %f (%f, %f)  Parallel\n",edr+edp, edr, edp);
+    printf("mbx_buck=  %f  Parallel\n",mbx_buck);
+    printf("mbx_ele=   %f  Parallel\n",mbx_ele);
     printf("mbx_total= %f\n",etot);
 
     printf("virial= %f %f %f  %f %f %f\n",v[0],v[1],v[2],v[3],v[4],v[5]);
