@@ -137,11 +137,19 @@ void PairMBX::compute(int eflag, int vflag)
   
   if(fix_mbx->mbx_num_atoms > 0) {
   
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing E1B\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_E1B);
     mbx_e1b = ptr_mbx->OneBodyEnergy(true);
     fix_mbx->mbxt_stop(MBXT_E1B);
     accumulate_f();
     
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing E2B\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_E2B_LOCAL);
     mbx_e2b_local = ptr_mbx->TwoBodyEnergy(true);
     fix_mbx->mbxt_stop(MBXT_E2B_LOCAL);
@@ -154,6 +162,10 @@ void PairMBX::compute(int eflag, int vflag)
     
     mbx_e2b = mbx_e2b_local + mbx_e2b_ghost;
     
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing E3B\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_E3B_LOCAL);
     mbx_e3b_local = ptr_mbx->ThreeBodyEnergy(true);
     fix_mbx->mbxt_stop(MBXT_E3B_LOCAL);
@@ -167,19 +179,33 @@ void PairMBX::compute(int eflag, int vflag)
     mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
 
     if(compute_disp_parallel) {
+      
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing disp real parallel\n",me);
+#endif
+  
       fix_mbx->mbxt_start(MBXT_DISP);
       mbx_disp_real = ptr_mbx->Dispersion(true, true); // computes real-space with local-local & local-ghost pairs
       fix_mbx->mbxt_stop(MBXT_DISP);
       accumulate_f();
     }
 
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing buck\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_BUCK);
     mbx_buck = ptr_mbx->Buckingham(true,true);
     fix_mbx->mbxt_stop(MBXT_BUCK);
     accumulate_f();
   }
   
-  if(compute_disp_parallel) {    
+  if(compute_disp_parallel) {
+    
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing disp pme parallel\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_DISP_PME);
     //    mbx_disp_pme = ptr_mbx->DispersionPME(true, true); // computes k-space using sub-domain
 
@@ -193,6 +219,10 @@ void PairMBX::compute(int eflag, int vflag)
     
   } else {
     
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing disp pme serial\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_DISP);
     if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
     fix_mbx->mbxt_stop(MBXT_DISP);
@@ -203,6 +233,11 @@ void PairMBX::compute(int eflag, int vflag)
   mbx_disp = mbx_disp_real + mbx_disp_pme;
   
 #if 1
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing electrostatics parallel\n",me);
+#endif
+  
   fix_mbx->mbxt_start(MBXT_ELE);
   mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, true);
   fix_mbx->mbxt_stop(MBXT_ELE);

@@ -1668,8 +1668,6 @@ void FixMBX::mbx_init_pme()
     
   } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
     error->one(FLERR,"System must be fully periodic or non-periodic with MBX");
-  
-  ptr_mbx_pme->SetPBC(box);
 
   // set MBX solvers
   
@@ -1684,6 +1682,8 @@ void FixMBX::mbx_init_pme()
   
   if(use_json) ptr_mbx_pme->SetUpFromJson(json_settings);
 
+  ptr_mbx_pme->SetPBC(box);
+  
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving mbx_init_pme()\n",me);
 #endif
