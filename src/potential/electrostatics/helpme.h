@@ -1277,15 +1277,6 @@ class FFTWWrapper {
 
    public:
     FFTWWrapper() {}
-    ~FFTWWrapper() {
-      typeinfo::DestroyPlan(forwardPlan_);
-      typeinfo::DestroyPlan(inversePlan_);
-      typeinfo::DestroyPlan(forwardInPlacePlan_);
-      typeinfo::DestroyPlan(inverseInPlacePlan_);
-      typeinfo::DestroyPlan(realToComplexPlan_);
-      typeinfo::DestroyPlan(complexToRealPlan_);
-      typeinfo::CleanupFFTW();
-    }
     FFTWWrapper(size_t fftDimension) : fftDimension_(fftDimension), transformFlags_(FFTW_ESTIMATE) {
         if (!typeinfo::isImplemented) {
             throw std::runtime_error(
@@ -1310,7 +1301,16 @@ class FFTWWrapper {
         realToComplexPlan_ = typeinfo::MakeRealToComplexPlan(fftDimension_, realPtr, complexPtr1, transformFlags_);
         complexToRealPlan_ = typeinfo::MakeComplexToRealPlan(fftDimension_, complexPtr1, realPtr, transformFlags_);
     }
-
+    void destroy() {
+      typeinfo::DestroyPlan(forwardPlan_);
+      typeinfo::DestroyPlan(inversePlan_);
+      typeinfo::DestroyPlan(forwardInPlacePlan_);
+      typeinfo::DestroyPlan(inverseInPlacePlan_);
+      typeinfo::DestroyPlan(realToComplexPlan_);
+      typeinfo::DestroyPlan(complexToRealPlan_);
+      typeinfo::CleanupFFTW();
+    }
+  
     /*!
      * \brief transform call FFTW to do an out of place complex to real FFT.
      * \param inBuffer the location of the input data.
@@ -2642,7 +2642,7 @@ class PMEInstance {
     std::vector<int> mValsA_, mValsB_, mValsC_;
     /// A temporary list used in the assigning of atoms to threads and resorting by starting grid point.
     std::vector<std::set<std::pair<uint32_t, uint32_t>>> gridAtomList_;
-
+  
     /*!
      * \brief makeGridIterator makes an iterator over the spline values that contribute to this node's grid
      *        in a given Cartesian dimension.  The iterator is of the form (grid point, spline index) and is
@@ -3856,6 +3856,13 @@ class PMEInstance {
     }
 
    public:
+  
+    ~PMEInstance() {
+      fftHelperA_.destroy();
+      fftHelperB_.destroy();
+      fftHelperC_.destroy();
+    }
+  
     /*!
      * \brief Spread the parameters onto the charge grid.  Generally this shouldn't be called;
      *        use the various computeE() methods instead. This the more efficient version that filters
