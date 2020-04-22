@@ -426,7 +426,7 @@ void FixMBX::post_neighbor()
   // -- if anchor-atom is local, then molecule is treated as if local
   
   mbx_init();
-  mbx_init_full();
+  //  mbx_init_full();
   //  mbx_init_local();
   mbx_init_pme();
 
@@ -464,7 +464,7 @@ void FixMBX::pre_force(int /*vflag*/)
   // update coordinates in MBX objects
   
   mbx_update_xyz();
-  mbx_update_xyz_full();
+  //  mbx_update_xyz_full();
   //  mbx_update_xyz_local();
   mbx_update_xyz_pme();
 }
@@ -1445,7 +1445,7 @@ void FixMBX::mbx_init_full()
 
 void FixMBX::mbx_init_pme()
 {
-  mbxt_start(MBXT_INIT_FULL);
+  mbxt_start(MBXT_INIT_PME);
 
 #ifdef _DEBUG
   printf("[MBX] (%i) Inside mbx_init_pme()\n",me);
@@ -1688,7 +1688,7 @@ void FixMBX::mbx_init_pme()
   printf("[MBX] (%i) Leaving mbx_init_pme()\n",me);
 #endif
   
-  mbxt_stop(MBXT_INIT_FULL);
+  mbxt_stop(MBXT_INIT_PME);
 }
 
 
@@ -2123,7 +2123,7 @@ void FixMBX::mbx_update_xyz_full()
 
 void FixMBX::mbx_update_xyz_pme()
 {
-  mbxt_start(MBXT_UPDATE_XYZ_FULL);
+  mbxt_start(MBXT_UPDATE_XYZ_PME);
 
 #ifdef _DEBUG
   printf("[MBX] (%i) Inside mbx_update_xyz_pme()\n",me);
@@ -2137,7 +2137,7 @@ void FixMBX::mbx_update_xyz_pme()
   double ** x = atom->x;
 
   // update coordinates
-
+  
   MPI_Allgatherv(&(x[0][0]), nlocal*3, MPI_DOUBLE, &(x_full[0][0]), nlocal_rank3, nlocal_disp3, MPI_DOUBLE, world);  
   
   // update if box changes
@@ -2237,14 +2237,14 @@ void FixMBX::mbx_update_xyz_pme()
     } // if(mol_anchor)
 
   } // for(i<nall)
-
+  
   ptr_mbx_pme->SetRealXyz(xyz);
-
+  
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving mbx_update_xyz_pme()\n",me);
 #endif
   
-  mbxt_stop(MBXT_UPDATE_XYZ_FULL);
+  mbxt_stop(MBXT_UPDATE_XYZ_PME);
 }
 
 /* ----------------------------------------------------------------------
@@ -2313,19 +2313,23 @@ void FixMBX::mbxt_write_summary()
   mbxt_print_time("UPDATE_XYZ",      MBXT_UPDATE_XYZ,   t);
   mbxt_print_time("ACCUMULATE_F",    MBXT_ACCUMULATE_F, t);
   
-  mbxt_print_time("E1B",             MBXT_E1B,          t);
-  mbxt_print_time("E2B_LOCAL",       MBXT_E2B_LOCAL,    t);
-  mbxt_print_time("E2B_GHOST",       MBXT_E2B_GHOST,    t);
-  mbxt_print_time("E3B_LOCAL",       MBXT_E3B_LOCAL,    t);
-  mbxt_print_time("E3B_GHOST",       MBXT_E3B_GHOST,    t);
-  mbxt_print_time("DISP",            MBXT_DISP,         t);
-  mbxt_print_time("DISP_PME (FULL)", MBXT_DISP_PME,     t);
-  mbxt_print_time("BUCK",            MBXT_BUCK,         t);
-  mbxt_print_time("ELE (FULL)",      MBXT_ELE,          t);
+  mbxt_print_time("E1B",       MBXT_E1B,       t);
+  mbxt_print_time("E2B_LOCAL", MBXT_E2B_LOCAL, t);
+  mbxt_print_time("E2B_GHOST", MBXT_E2B_GHOST, t);
+  mbxt_print_time("E3B_LOCAL", MBXT_E3B_LOCAL, t);
+  mbxt_print_time("E3B_GHOST", MBXT_E3B_GHOST, t);
+  mbxt_print_time("DISP",      MBXT_DISP,      t);
+  mbxt_print_time("DISP_PME",  MBXT_DISP_PME,  t);
+  mbxt_print_time("BUCK",      MBXT_BUCK,      t);
+  mbxt_print_time("ELE",       MBXT_ELE,       t);
   
-  mbxt_print_time("INIT_FULL",         MBXT_INIT_FULL,       t);
-  mbxt_print_time("UPDATE_XYZ_FULL",   MBXT_UPDATE_XYZ_FULL, t);
-  mbxt_print_time("ACCUMULATE_F_FULL", MBXT_ACCUMULATE_F,    t);
+  mbxt_print_time("INIT_FULL",         MBXT_INIT_FULL,         t);
+  mbxt_print_time("UPDATE_XYZ_FULL",   MBXT_UPDATE_XYZ_FULL,   t);
+  mbxt_print_time("ACCUMULATE_F_FULL", MBXT_ACCUMULATE_F_FULL, t);
+  
+  mbxt_print_time("INIT_PME",         MBXT_INIT_PME,         t);
+  mbxt_print_time("UPDATE_XYZ_PME",   MBXT_UPDATE_XYZ_PME,   t);
+  mbxt_print_time("ACCUMULATE_F_PME", MBXT_ACCUMULATE_F_PME, t);
 
   if(screen) {
     fprintf(screen,"\n\n[MBX] Electrostatics Summary\n");

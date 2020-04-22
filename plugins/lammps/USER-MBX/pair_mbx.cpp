@@ -222,11 +222,15 @@ void PairMBX::compute(int eflag, int vflag)
 #ifdef _DEBUG
   printf("[MBX] (%i) -- Computing disp pme serial\n",me);
 #endif
-  
+
+#if 1
+  error->all(FLERR,"MBX_FULL Disabled...\n");
+#else
     fix_mbx->mbxt_start(MBXT_DISP);
     if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
     fix_mbx->mbxt_stop(MBXT_DISP);
     accumulate_f_full();
+#endif
     
   }
 
@@ -841,7 +845,7 @@ void PairMBX::accumulate_f_full()
 
 void PairMBX::accumulate_f_pme()
 {
-  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F_FULL);
+  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F_PME);
   
 #ifdef _DEBUG
   printf("[MBX] (%i) Inside pair accumulate_f_pme()\n",me);
@@ -946,10 +950,9 @@ void PairMBX::accumulate_f_pme()
   
   //  printf("[MBX] Leaving accumulate_f_full()\n");
   
-  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_FULL);
+  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_PME);
   
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving pair accumulate_f_pme()\n",me);
 #endif
 }
-
