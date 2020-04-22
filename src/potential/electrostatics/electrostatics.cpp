@@ -278,7 +278,9 @@ void Electrostatics::CalculatePermanentElecField() {
     }
 #endif
 
+#if HAVE_MPI == 1
     double time1 = MPI_Wtime();
+#endif
     
     // This part looks at sites inside the same monomer
     // Reset first indexes
@@ -529,7 +531,9 @@ void Electrostatics::CalculatePermanentElecField() {
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
+#if HAVE_MPI == 1
     double time2 = MPI_Wtime();
+#endif
     
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
@@ -552,21 +556,9 @@ void Electrostatics::CalculatePermanentElecField() {
         std::fill(rec_phi_and_field_.begin(), rec_phi_and_field_.end(), 0);
         pme_solver_.computePRec(0, charges, coords, coords, 1, result);
 
+#if HAVE_MPI == 1
 	MPI_Allreduce(MPI_IN_PLACE, rec_phi_and_field_.data(), rec_phi_and_field_.size(), MPI_DOUBLE, MPI_SUM, world_);
-	
-	// int me, nprocs;
-	// MPI_Comm_rank(world_, &me);
-	// MPI_Comm_size(world_, &nprocs);
-	
-	// for(int j=0; j<nprocs; ++j) {
-	//   if(me == j) {
-	//     for(int i=0; i<nsites_; ++i) {
-	//       std::cout << "(" << me << ") i= " << i << "  result= " << result(i,0) << " " <<
-	// 	result(i,1) << " " << result(i,2) << " " << result(i,3) << std::endl;
-	//     }
-	//   }
-	//   MPI_Barrier(world_);
-	// }
+#endif
 	
         // Resort phi from system order
         fi_mon = 0;
@@ -596,6 +588,7 @@ void Electrostatics::CalculatePermanentElecField() {
         }
     }
 
+#if HAVE_MPI == 1
     double time3 = MPI_Wtime();
 
     mbxt_ele_count_[ELE_PERMDIP_REAL]++;
@@ -603,6 +596,7 @@ void Electrostatics::CalculatePermanentElecField() {
 
     mbxt_ele_count_[ELE_PERMDIP_PME]++;
     mbxt_ele_time_[ELE_PERMDIP_PME] += time3 - time2;
+#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -985,7 +979,9 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     }
 #endif
 
+#if HAVE_MPI == 1
     double time1 = MPI_Wtime();
+#endif
     
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second;
@@ -1144,7 +1140,9 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
+#if HAVE_MPI == 1
     double time2 = MPI_Wtime();
+#endif
     
     if (ewald_alpha_ > 0 && use_pbc_) {
         // Sort the dipoles to the order helPME expects (for now)
@@ -1191,7 +1189,9 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
 
+#if HAVE_MPI == 1
 	MPI_Allreduce(MPI_IN_PLACE, sys_Efd_.data(), sys_Efd_.size(), MPI_DOUBLE, MPI_SUM, world_);
+#endif
 	
         // Resort field from system order
         fi_mon = 0;
@@ -1221,6 +1221,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }
     }
 
+#if HAVE_MPI == 1
     double time3 = MPI_Wtime();
     
     mbxt_ele_count_[ELE_DIPFIELD_REAL]++;
@@ -1228,6 +1229,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 
     mbxt_ele_count_[ELE_DIPFIELD_PME]++;
     mbxt_ele_time_[ELE_DIPFIELD_PME] += time3 - time2;
+#endif
 }
 
 void Electrostatics::CalculateDipolesIterative() {
@@ -1336,7 +1338,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
     }
 #endif
 
+#if HAVE_MPI == 1
     double time1 = MPI_Wtime();
+#endif
     
     // Excluded sets
     excluded_set_type exc12;
@@ -1534,7 +1538,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
+#if HAVE_MPI == 1
     double time2 = MPI_Wtime();
+#endif
     
     if (ewald_alpha_ > 0 && use_pbc_) {
         // Sort the dipoles to the order helPME expects (for now)
@@ -1593,8 +1599,10 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
 
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(0, charges, dipoles,
                                           PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
-	    
-	    MPI_Allreduce(MPI_IN_PLACE, trecvir.data(), trecvir.size(), MPI_DOUBLE, MPI_SUM, world_);    
+
+#if HAVE_MPI == 1
+	    MPI_Allreduce(MPI_IN_PLACE, trecvir.data(), trecvir.size(), MPI_DOUBLE, MPI_SUM, world_);
+#endif
 	    
             virial_[0] += (*drecvirial[0]) * constants::COULOMB;
             virial_[1] += (*drecvirial[1]) * constants::COULOMB;
@@ -1611,7 +1619,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         pme_solver_.computePRec(-1, dipoles, coords, coords, 2, result);
 
 	double * ptr = result[0];
+#if HAVE_MPI == 1
 	MPI_Allreduce(MPI_IN_PLACE, ptr, nsites_*10, MPI_DOUBLE, MPI_SUM, world_);
+#endif
 	
         // Resort field from system order
         fi_mon = 0;
@@ -1659,7 +1669,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         result.setZero();
         pme_solver_.computePRec(0, charges, coords, coords, -2, result);
 
+#if HAVE_MPI == 1
 	MPI_Allreduce(MPI_IN_PLACE, ptr, nsites_*10, MPI_DOUBLE, MPI_SUM, world_);
+#endif
 	
         // Resort field from system order
         fi_mon = 0;
@@ -1694,7 +1706,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         }
     }
 
+#if HAVE_MPI == 1
     double time3 = MPI_Wtime();
+#endif
     
     ////////////////////////////////////////////////////////////////////////////////
     // REVERT DATA ORGANIZATION ////////////////////////////////////////////////////
@@ -1769,6 +1783,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
         fi_crd += nmon * ns * 3;
     }
 
+#if HAVE_MPI == 1
     double time4 = MPI_Wtime();
     
     mbxt_ele_count_[ELE_GRAD_REAL]++;
@@ -1779,6 +1794,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
     
     mbxt_ele_count_[ELE_GRAD_FIN]++;
     mbxt_ele_time_[ELE_GRAD_FIN] += time4 - time3;
+#endif
 }
 
 std::vector<double> Electrostatics::GetInducedDipoles() {
