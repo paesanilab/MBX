@@ -51,6 +51,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
 #include "tools/custom_exceptions.h"
+#include "tools/math_tools.h"
 #include "potential/force_field/connectivity.h"
 #include "io_tools/read_connectivity.h"
 
@@ -460,6 +461,8 @@ class System {
      * Please read the documentation carefully.
      */
     void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1);
+
+    std::string GetCurrentSystemConfig();
 
     /**
      * Adds a molecule to the system. A molecule, in the context of this
@@ -1170,9 +1173,13 @@ to be the same.
     /**
      * Vector that stores the simulation box.
      * The center of the box is origin of coordinates
-     * @warning For now, only cubic or rectangular boxes are allowed.
      */
     std::vector<double> box_;
+
+    /**
+     * Vector that stores the simulation box inverse.
+     */
+    std::vector<double> box_inverse_;
 
     /**
      * Vector that stores the id of each monomer in the internal order

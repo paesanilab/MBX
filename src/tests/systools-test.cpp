@@ -44,6 +44,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "io_tools/read_nrg.h"
 #include "io_tools/write_nrg.h"
 
+#include "tools/math_tools.h"
+
 #include "bblock/system.h"
 
 #define REL_TOL 1E-04
@@ -119,6 +121,7 @@ int main(int argc, char **argv) {
                                            1.31000e+00, 2.94000e-01, 2.94000e-01, 1.31000e+00};
 
     std::vector<double> box = {100.0, 0.0, 0.0, 0.0, 100.0, 0.0, 0.0, 0.0, 100.0};
+    std::vector<double> box_inv = InvertUnitCell(box);
     int exitcode = 0;
 
     //////////////////////////////////////////////////////////////////////////////
@@ -335,8 +338,9 @@ int main(int argc, char **argv) {
     // Try box size different from 9
     try {
         std::vector<double> box_bad(6, 10.0);
+        std::vector<double> box_bad_inv(6, 10.0);
         exitcode = 1;
-        systools::FixMonomerCoordinates(xyz, box_bad, nats, first_index);
+        systools::FixMonomerCoordinates(xyz, box_bad, box_bad_inv, nats, first_index);
     } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
@@ -346,7 +350,7 @@ int main(int argc, char **argv) {
     // Try nats and first index with different size
     try {
         exitcode = 1;
-        systools::FixMonomerCoordinates(xyz, box, nats_bad, first_index);
+        systools::FixMonomerCoordinates(xyz, box, box_inv, nats_bad, first_index);
     } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
@@ -357,7 +361,7 @@ int main(int argc, char **argv) {
     std::vector<double> xyz_short(11, 0.0);
     try {
         exitcode = 1;
-        systools::FixMonomerCoordinates(xyz_short, box, nats, first_index);
+        systools::FixMonomerCoordinates(xyz_short, box, box_inv, nats, first_index);
     } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
@@ -368,7 +372,7 @@ int main(int argc, char **argv) {
     xyz_short = xyz;
     try {
         exitcode = 0;
-        systools::FixMonomerCoordinates(xyz_short, box, nats, first_index);
+        systools::FixMonomerCoordinates(xyz_short, box, box_inv, nats, first_index);
     } catch (CUException &e) {
         std::cerr << "!!!!!Error message NOT expected:" << std::endl;
         exitcode = 1;

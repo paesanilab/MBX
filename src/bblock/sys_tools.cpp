@@ -210,11 +210,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
     return count;
 }
 
-void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<size_t> nat,
+void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<double> box_inv,
+                           std::vector<size_t> nat,
                            std::vector<size_t> first_index) {
-    // TODO assuming for now orthorombic box:
-    // box = {a,0,0,0,b,0,0,0,c)
-
     // Check that the box has 9 components
     // Any other size is not acceptable
     if (box.size() != 9) {
@@ -238,80 +236,101 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
 
     size_t nmon = nat.size();
 
-    std::vector<double> box2 = box;
-    for (size_t i = 0; i < box.size(); i++) box2[i] *= 0.5;
-
     for (size_t i = 0; i < nmon; i++) {
-        size_t shift = 3 * first_index[i];
+        // Move first atom of monomer into main box
+        size_t shift3 = 3 * first_index[i];
 
-        // Put central atom in main box
-        double first_at[3];
-        for (size_t j = 0; j < 3; j++) {
-            double xyzi = xyz[shift + j];
-            if (xyzi < -box2[3 * j + j]) {
-                // here
-                xyz[shift + j] += box[3 * j + j];
-                // here
-            } else if (xyzi > box2[3 * j + j]) {
-                // here
-                xyz[shift + j] -= box[3 * j + j];
-            }
-            first_at[j] = xyz[shift + j];
-        }
+        double x_rec = box_inv[0] * xyz[shift3] + box_inv[3] * xyz[shift3 + 1] + box_inv[6] * xyz[shift3 + 2];
+        double y_rec = box_inv[1] * xyz[shift3] + box_inv[4] * xyz[shift3 + 1] + box_inv[7] * xyz[shift3 + 2];
+        double z_rec = box_inv[2] * xyz[shift3] + box_inv[5] * xyz[shift3 + 1] + box_inv[8] * xyz[shift3 + 2];
 
-        // Put rest of molecule atoms next to central atom
+        x_rec -= std::floor(x_rec + 0.5);
+        y_rec -= std::floor(y_rec + 0.5);
+        z_rec -= std::floor(z_rec + 0.5);
+
+        xyz[shift3 + 0] = box[0] * x_rec + box[3] * y_rec + box[6] * z_rec;
+        xyz[shift3 + 1] = box[1] * x_rec + box[4] * y_rec + box[7] * z_rec;
+        xyz[shift3 + 2] = box[2] * x_rec + box[5] * y_rec + box[8] * z_rec;
+
         for (size_t j = 1; j < nat[i]; j++) {
-            size_t j3 = j * 3;
-            for (size_t k = 0; k < 3; k++) {
-                double di = xyz[shift + j3 + k] - first_at[k];
-                // here
-                if (di > box2[3 * k + k]) {
-                    // here
-                    xyz[shift + j3 + k] -= box[3 * k + k];
-                    // here
-                } else if (di <= -box2[3 * k + k]) {
-                    // here
-                    xyz[shift + j3 + k] += box[3 * k + k];
-                }
-            }
+            double xr = box_inv[0] * xyz[shift3 + 3*j] 
+                      + box_inv[3] * xyz[shift3 + 3*j + 1] 
+                      + box_inv[6] * xyz[shift3 + 3*j + 2];
+            double yr = box_inv[1] * xyz[shift3 + 3*j] 
+                      + box_inv[4] * xyz[shift3 + 3*j + 1] 
+                      + box_inv[7] * xyz[shift3 + 3*j + 2];
+            double zr = box_inv[2] * xyz[shift3 + 3*j] 
+                      + box_inv[5] * xyz[shift3 + 3*j + 1] 
+                      + box_inv[8] * xyz[shift3 + 3*j + 2];
+
+            xr -= std::floor(xr - x_rec + 0.5); 
+            yr -= std::floor(yr - y_rec + 0.5); 
+            zr -= std::floor(zr - z_rec + 0.5);
+
+            xyz[shift3 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;
+            xyz[shift3 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;
+            xyz[shift3 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;
+            
         }
+
+ 
     }
 }
 
-void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2) {
+void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2) {
     size_t shift1 = 0;
     size_t shift2 = 0;
     size_t coords1 = 3 * nat1;
     size_t coords2 = 3 * nat2;
 
-    // Create a "box" with half of the sides
-    std::vector<double> box2 = box;
-    for (size_t i = 0; i < box.size(); i++) box2[i] *= 0.5;
-
     // Move every dimer to the right place
     for (size_t i = 0; i < nd; i++) {
-        for (size_t k = 0; k < 3; k++) {
-            double di = xyz2[shift2 + k] - xyz1[shift1 + k];
-            // here
-            if (di > box2[3 * k + k]) {
-                // here
-                for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + 3 * j + k] -= box[3 * k + k];
-                }
-                // here
-            } else if (di <= -box2[3 * k + k]) {
-                // here
-                for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + j * 3 + k] += box[3 * k + k];
-                }
-            }
-        }
+        // Move first atom of monomer into main box                                                               
+                                                                                                                  
+        double x_rec = box_inv[0] * xyz1[shift1] + box_inv[3] * xyz1[shift1 + 1] + box_inv[6] * xyz1[shift1 + 2]; 
+        double y_rec = box_inv[1] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[7] * xyz1[shift1 + 2]; 
+        double z_rec = box_inv[2] * xyz1[shift1] + box_inv[5] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2];
+
+        double xr0 = box_inv[0] * xyz2[shift2]          
+                   + box_inv[3] * xyz2[shift2 + 1]      
+                   + box_inv[6] * xyz2[shift2 + 2];     
+        double yr0 = box_inv[1] * xyz2[shift2]          
+                   + box_inv[4] * xyz2[shift2 + 1]      
+                   + box_inv[7] * xyz2[shift2 + 2];     
+        double zr0 = box_inv[2] * xyz2[shift2]          
+                   + box_inv[5] * xyz2[shift2 + 1]      
+                   + box_inv[8] * xyz2[shift2 + 2];     
+
+        double dx0 = std::floor(xr0 - x_rec + 0.5);
+        double dy0 = std::floor(yr0 - y_rec + 0.5);
+        double dz0 = std::floor(zr0 - z_rec + 0.5);
+
+        for (size_t j = 0; j < nat2; j++) {                      
+            double xr = box_inv[0] * xyz2[shift2 + 3*j]                 
+                      + box_inv[3] * xyz2[shift2 + 3*j + 1]             
+                      + box_inv[6] * xyz2[shift2 + 3*j + 2];            
+            double yr = box_inv[1] * xyz2[shift2 + 3*j]                 
+                      + box_inv[4] * xyz2[shift2 + 3*j + 1]             
+                      + box_inv[7] * xyz2[shift2 + 3*j + 2];            
+            double zr = box_inv[2] * xyz2[shift2 + 3*j]                 
+                      + box_inv[5] * xyz2[shift2 + 3*j + 1]             
+                      + box_inv[8] * xyz2[shift2 + 3*j + 2];
+                                                                                                                  
+            xr -= dx0;                                                                   
+            yr -= dy0;                                                                   
+            zr -= dz0;                                                                   
+                                                                                                                  
+            xyz2[shift2 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;   
+            xyz2[shift2 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;   
+            xyz2[shift2 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;   
+        }                                                                                                         
+                                                                                                                  
         shift1 += coords1;
         shift2 += coords2;
     }
 }
 
-void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nat3, size_t nt, double *xyz1,
+void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3, size_t nt, double *xyz1,
                          double *xyz2, double *xyz3) {
     size_t shift1 = 0;
     size_t shift2 = 0;
@@ -320,47 +339,81 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
     size_t coords2 = 3 * nat2;
     size_t coords3 = 3 * nat3;
 
-    // Create a "box" with half of the sides
-    std::vector<double> box2 = box;
-    for (size_t i = 0; i < box.size(); i++) box2[i] *= 0.5;
-
     for (size_t i = 0; i < nt; i++) {
-        // Moving (if necessary) monomer in xyz2
-        for (size_t k = 0; k < 3; k++) {
-            double di = xyz2[shift2 + k] - xyz1[shift1 + k];
-            // here
-            if (di > box2[3 * k + k]) {
-                // here
-                for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + j * 3 + k] -= box[3 * k + k];
-                }
-                // here
-            } else if (di <= -box2[3 * k + k]) {
-                // here
-                for (size_t j = 0; j < nat2; j++) {
-                    xyz2[shift2 + j * 3 + k] += box[3 * k + k];
-                }
-            }
-        }
-
-        // Moving (if necessary) monomer in xyz3
-        for (size_t k = 0; k < 3; k++) {
-            double di = xyz3[shift3 + k] - xyz1[shift1 + k];
-            // here
-            if (di > box2[3 * k + k]) {
-                // here
-                for (size_t j = 0; j < nat3; j++) {
-                    xyz3[shift3 + j * 3 + k] -= box[3 * k + k];
-                }
-                // here
-            } else if (di <= -box2[3 * k + k]) {
-                // here
-                for (size_t j = 0; j < nat3; j++) {
-                    xyz3[shift3 + j * 3 + k] += box[3 * k + k];
-                }
-            }
-        }
-        shift1 += coords1;
+        double x_rec = box_inv[0] * xyz1[shift1] + box_inv[3] * xyz1[shift1 + 1] + box_inv[6] * xyz1[shift1 + 2]; 
+        double y_rec = box_inv[1] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[7] * xyz1[shift1 + 2]; 
+        double z_rec = box_inv[2] * xyz1[shift1] + box_inv[5] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2]; 
+        
+        double xr0 = box_inv[0] * xyz2[shift2]                                                                    
+                   + box_inv[3] * xyz2[shift2 + 1]                                                                
+                   + box_inv[6] * xyz2[shift2 + 2];                                                               
+        double yr0 = box_inv[1] * xyz2[shift2]                                                                    
+                   + box_inv[4] * xyz2[shift2 + 1]                                                                
+                   + box_inv[7] * xyz2[shift2 + 2];                                                               
+        double zr0 = box_inv[2] * xyz2[shift2]                                                                    
+                   + box_inv[5] * xyz2[shift2 + 1]                                                                
+                   + box_inv[8] * xyz2[shift2 + 2];                                                               
+        
+        double dx0 = std::floor(xr0 - x_rec + 0.5);                                                               
+        double dy0 = std::floor(yr0 - y_rec + 0.5);                                                               
+        double dz0 = std::floor(zr0 - z_rec + 0.5);                                                               
+        
+        // Move monomer 2 to be the closest image to mon1 if needed
+        for (size_t j = 0; j < nat2; j++) {                                                                       
+            double xr = box_inv[0] * xyz2[shift2 + 3*j]                                                           
+                      + box_inv[3] * xyz2[shift2 + 3*j + 1]                                                       
+                      + box_inv[6] * xyz2[shift2 + 3*j + 2];                                                      
+            double yr = box_inv[1] * xyz2[shift2 + 3*j]                                                           
+                      + box_inv[4] * xyz2[shift2 + 3*j + 1]                                                       
+                      + box_inv[7] * xyz2[shift2 + 3*j + 2];                                                      
+            double zr = box_inv[2] * xyz2[shift2 + 3*j]                                                           
+                      + box_inv[5] * xyz2[shift2 + 3*j + 1]                                                       
+                      + box_inv[8] * xyz2[shift2 + 3*j + 2];                                                      
+                                                                                                                  
+            xr -= dx0;                                                                                            
+            yr -= dy0;                                                                                            
+            zr -= dz0;                                                                                            
+                                                                                                                  
+            xyz2[shift2 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;                                     
+            xyz2[shift2 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;                                     
+            xyz2[shift2 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;                                     
+        }                                                                                                         
+                                                                                                                  
+        // Move monomer 3 to be the closest image to mon1 if needed                                               
+        xr0 = box_inv[0] * xyz3[shift2]                                                                    
+            + box_inv[3] * xyz3[shift2 + 1]                                                                
+            + box_inv[6] * xyz3[shift2 + 2];                                                               
+        yr0 = box_inv[1] * xyz3[shift2]                                                                    
+            + box_inv[4] * xyz3[shift2 + 1]                                                                
+            + box_inv[7] * xyz3[shift2 + 2];                                                               
+        zr0 = box_inv[2] * xyz3[shift2]                                                                    
+            + box_inv[5] * xyz3[shift2 + 1]                                                                
+            + box_inv[8] * xyz3[shift2 + 2];                                                               
+                                                                                                                  
+        dx0 = std::floor(xr0 - x_rec + 0.5);                                                               
+        dy0 = std::floor(yr0 - y_rec + 0.5);                                                               
+        dz0 = std::floor(zr0 - z_rec + 0.5);                                                               
+                                                                                                                  
+        for (size_t j = 0; j < nat3; j++) {                                                                       
+            double xr = box_inv[0] * xyz3[shift3 + 3*j]                                                           
+                      + box_inv[3] * xyz3[shift3 + 3*j + 1]                                                       
+                      + box_inv[6] * xyz3[shift3 + 3*j + 2];                                                      
+            double yr = box_inv[1] * xyz3[shift3 + 3*j]                                                           
+                      + box_inv[4] * xyz3[shift3 + 3*j + 1]                                                       
+                      + box_inv[7] * xyz3[shift3 + 3*j + 2];                                                      
+            double zr = box_inv[2] * xyz3[shift3 + 3*j]                                                           
+                      + box_inv[5] * xyz3[shift3 + 3*j + 1]                                                       
+                      + box_inv[8] * xyz3[shift3 + 3*j + 2];                                                      
+                                                                                                                  
+            xr -= dx0;                                                                                            
+            yr -= dy0;                                                                                            
+            zr -= dz0;                                                                                            
+                                                                                                                  
+            xyz3[shift2 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;                                     
+            xyz3[shift2 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;                                     
+            xyz3[shift2 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;                                     
+        } 
+        shift1 += coords1;                                                                                        
         shift2 += coords2;
         shift3 += coords3;
     }
@@ -368,82 +421,8 @@ void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size
 
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
-// void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
-//                       std::vector<double> &xyz_out, std::vector<size_t> &indexes) {
-//    // Build the tree
-//    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-//                                                kdtutils::PointCloud<double>, 3 /* dim */>
-//        my_kd_tree_t;
-//    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-//    index.buildIndex();
-//
-//    // Tree is built
-//
-//    // Reset indexes and output coordinates
-//    indexes.clear();
-//    xyz_out.clear();
-//
-//    // Perform the search
-//    std::vector<std::pair<size_t, double>> ret_matches;
-//    nanoflann::SearchParams params;
-//    const size_t nMatches = index.radiusSearch(reference.data(), cutoff * cutoff, ret_matches, params);
-//
-//    std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
-//
-//    // Resize xyz_out to be 3*nMatches
-//    xyz_out.resize(3 * nMatches);
-//    indexes.resize(nMatches);
-//
-//    // Add the pairs that are not in the pairs vector
-//    for (size_t j = 0; j < nMatches; j++) {
-//        indexes[j] = ret_matches[j].first;
-//        size_t index = indexes[j];
-//        // Add coordinates in vectorized order
-//        xyz_out[j] = ptc.pts[index].x;
-//        xyz_out[j + nMatches] = ptc.pts[index].y;
-//        xyz_out[j + 2 * nMatches] = ptc.pts[index].z;
-//    }
-//}
-
-// void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, std::vector<size_t>
-// fi_at,
-//                       bool use_pbc, std::vector<double> box, double cutoff, std::vector<size_t> &dimers,
-//                       std::vector<size_t> &trimers) {
-//    size_t npoints = fi_at.size();
-//    std::vector<double> xyz_points(3 * npoints);
-//    for (size_t i = 0; i < npoints; i++) {
-//        xyz_points[3 * i + 0] = xyz_orig[3 * fi_at[i] + 0];
-//        xyz_points[3 * i + 1] = xyz_orig[3 * fi_at[i] + 1];
-//        xyz_points[3 * i + 2] = xyz_orig[3 * fi_at[i] + 2];
-//    }
-//
-//    // Obtain the data in the structure needed by the kd-tree
-//    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz_points, use_pbc, box);
-//
-//    // Build the tree
-//    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-//                                                kdtutils::PointCloud<double>, 3 /* dim */>
-//        my_kd_tree_t;
-//    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-//    index.buildIndex();
-//
-//    // Perform a radial search within the cutoff
-//    dimers.clear();
-//    if (nmax > 2) trimers.clear();
-//
-//    // Perform the search
-//    std::vector<std::pair<size_t, double>> ret_matches;
-//    nanoflann::SearchParams params;
-//    const size_t nMatches = index.radiusSearch(point.data(), cutoff * cutoff, ret_matches, params);
-//
-//    // TODO does ret_matches start at 0?
-//    for (size_t j = 0; j < nMatches; j++) {
-//        dimers.push_back(ret_matches[j].first);
-//    }
-//}
-
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
-                 std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
+                 std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig, std::vector<size_t> first_index,
                  std::vector<size_t> is_local, std::vector<size_t> &dimers, std::vector<size_t> &trimers,
                  bool use_ghost) {
     // istart is the monomer position for which we will look all dimers and
@@ -521,7 +500,7 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
     if (n_max > 2 && nmon2 < 3) return;
 
     // Obtain the data in the structure needed by the kd-tree
-    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box);
+    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
 
     // Build the tree
     typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,

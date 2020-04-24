@@ -409,12 +409,13 @@ void System::SetPBC(std::vector<double> box) {
     // Set the box and the bool to use or not pbc
     use_pbc_ = box.size();
     box_ = box;
+    box_inverse_ = InvertUnitCell(box_);
 
     // If we use PBC, we need to make sure that the monomer atoms are all
     // close to the central atom (1st atom of each monomer)
     if (use_pbc_) {
         // Fix monomer coordinates
-        systools::FixMonomerCoordinates(xyz_, box_, nat_, first_index_);
+        systools::FixMonomerCoordinates(xyz_, box_, box_inverse_, nat_, first_index_);
     }
 
 #ifdef DEBUG
@@ -1099,6 +1100,71 @@ void System::SetUpFromJson(char *json_file) {
     ifjson.close();
 }
 
+std::string System::GetCurrentSystemConfig() {
+    std::stringstream ss;
+
+    ss <<  std::left << std::setw(25) << "Box:";
+    for (size_t i = 0; i < box_.size(); i++) {
+        ss << std::scientific << std::setprecision(4) << box_[i] << " ";
+    } 
+    ss << std::endl;
+
+    ss << std::left << std::setw(25) << "2B cutoff:" << cutoff2b_ << std::endl;
+    ss << std::left << std::setw(25) << "3B cutoff:" << cutoff3b_ << std::endl;
+    ss << std::left << std::setw(25) << "Max Eval Mon:" << maxNMonEval_ << std::endl;
+    ss << std::left << std::setw(25) << "Max Eval Dim:" << maxNDimEval_ << std::endl;
+    ss << std::left << std::setw(25) << "Max Eval Trim:" << maxNTriEval_ << std::endl;
+    ss << std::left << std::setw(25) << "Dipole Tol:" << diptol_ << std::endl;
+    ss << std::left << std::setw(25) << "Dipole Max Iter:" << maxItDip_ << std::endl;
+    ss << std::left << std::setw(25) << "Dipole Method:" << dipole_method_ << std::endl;
+    ss << std::left << std::setw(25) << "Ewald Alpha Elec:" << elec_alpha_ << std::endl;
+    ss << std::left << std::setw(25) << "Grid Dens Elec:" << elec_grid_density_ << std::endl;
+    ss << std::left << std::setw(25) << "Spline Order Elec:" << elec_spline_order_ << std::endl;
+    ss << std::left << std::setw(25) << "Ewald Alpha Disp:" << disp_alpha_ << std::endl;
+    ss << std::left << std::setw(25) << "Grid Dens Disp:" << disp_grid_density_ << std::endl;
+    ss << std::left << std::setw(25) << "Spline Order Disp:" << disp_spline_order_ << std::endl;
+
+    ss <<  std::left << std::setw(25) << "TTM-pairs:";
+    for (size_t i = 0; i < buck_pairs_.size(); i++) {
+        ss << "{" << buck_pairs_[i].first << "," << buck_pairs_[i].second << "} ";
+    }                                                                                                            
+    ss << std::endl;
+
+    ss <<  std::left << std::setw(25) << "Forcefield Mons:";    
+    for (size_t i = 0; i < ff_mons_.size(); i++) { 
+        ss << ff_mons_[i] << " ";             
+    }                                                                                                            
+    ss << std::endl;
+
+    ss <<  std::left << std::setw(25) << "Ignore 1B poly:";    
+    for (size_t i = 0; i < ignore_1b_poly_.size(); i++) {   
+        ss << ignore_1b_poly_[i] << " ";
+    }
+    ss << std::endl;
+
+    ss <<  std::left << std::setw(25) << "Ignore 2B poly:";    
+    for (size_t i = 0; i < ignore_2b_poly_.size(); i++) {   
+        ss << "{";
+        for (size_t j = 0; j < ignore_2b_poly_[i].size(); j++) {
+          ss << ignore_2b_poly_[i][j] << " ";
+        }
+        ss << "} ";
+    }
+    ss << std::endl;
+
+    ss << std::left << std::setw(25) << "Ignore 3B poly:";    
+    for (size_t i = 0; i < ignore_3b_poly_.size(); i++) {   
+        ss << "{";
+        for (size_t j = 0; j < ignore_3b_poly_[i].size(); j++) {
+          ss << ignore_3b_poly_[i][j] << " ";
+        }
+        ss << "} ";
+    }
+    ss << std::endl;
+
+    return ss.str();
+}
+
 void System::AddMonomerInfo() {
     // If xyz_ is empty, not possible to add any information
     if (xyz_.size() < 3) {
@@ -1264,7 +1330,7 @@ void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend,
     //}
 
     size_t nmon = monomers_.size();
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers_,
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_, dimers_,
                           trimers_, use_ghost_);
 }
 
@@ -1284,7 +1350,7 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
 
     size_t nmon = monomers_.size();
     std::vector<size_t> dimers, trimers;
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, xyz_, first_index_, islocal_, dimers,
+    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_, dimers,
                           trimers, use_ghost_);
     if (nmax == 2) return dimers;
     return trimers;
@@ -1752,7 +1818,7 @@ double System::Get2B(bool do_grads, bool use_ghost) {
 
                 // Fix dimer positions if pbc
                 if (use_pbc_) {
-                    systools::GetCloseDimerImage(box_, nat_[dimers[nd_tot * 2]], nat_[dimers[nd_tot * 2 + 1]], nd,
+                    systools::GetCloseDimerImage(box_, box_inverse_, nat_[dimers[nd_tot * 2]], nat_[dimers[nd_tot * 2 + 1]], nd,
                                                  xyz1.data(), xyz2.data());
                 }
 
@@ -2003,7 +2069,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
                 // Fix trimer positions if pbc
                 if (use_pbc_) {
-                    systools::GetCloseTrimerImage(box_, nat_[trimers[nt_tot * 3]], nat_[trimers[nt_tot * 3 + 1]],
+                    systools::GetCloseTrimerImage(box_, box_inverse_, nat_[trimers[nt_tot * 3]], nat_[trimers[nt_tot * 3 + 1]],
                                                   nat_[trimers[nt_tot * 3 + 2]], nt, coord1.data(), coord2.data(),
                                                   coord3.data());
                 }
