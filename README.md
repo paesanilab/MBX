@@ -152,7 +152,7 @@ Do the following:
 ```
 cp Makefile.mpi_mbx.lab LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
 cd LAMMPS_HOME/src/
-make yes-USER-MBX
+make yes-USER-MBX yes-MOLECULE
 make mpi_mbx -j 4
 ```
 After this, a new executable `lmp_mpi_mbx` in `src` should apear, and that is the executable you want to use for LAMMPS.
