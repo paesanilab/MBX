@@ -1,9 +1,10 @@
 # Before installation (Last Update 11/19/2019)
 In order to install MBX on comet, you will need to make sure you have the following:
-- CMake 3.12.4 or higher. The CMake version installed on COMET is CMake 3.9.1. Best way to get CMake is to download it and install it on your home 
-- Intel compilers v2017 or higher. Currently, the intel compilers on COMET are v2016, and there will be compilation errors when using those. For now, there is no way on getting intel v2017, so we will have to compile with GNU compilers.
+- CMake 3.12.4 or higher. The CMake version installed on COMET is CMake 3.12.1. Best way to get CMake is to download it and install it on your home 
+- Intel compilers v2017 or higher. Intel compilers in comet are 2018, so we are good.
 
 # Installation
+The full process of installation will be using gnu as example, but you can use `intel` or `mpi` to compile with the intel compilers or mpi intel compilers.
 You can try to install MBX at the login node. For that,
 `cp $MBX_HOME/scripts/supercomputers/comet/compilation/compile_comet.sh $MBX_HOME`
 `cd $MBX_HOME`
@@ -16,9 +17,3 @@ Then,
 `cp $MBX_HOME/scripts/supercomputers/comet/compilation/compile_tscc_gnu.job $MBX_HOME`
 `cd $MBX_HOME`
 `sbatch compile_tscc_gnu.job`
-
-# After installation
-Now remember to compile the driver.
-`cd $MBX_HOME/plugins/i-pi/src/main`
-`cp Makefile_comet Makefile`
-`make`
