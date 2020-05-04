@@ -1,5 +1,7 @@
 # Description
 These scripts will help you keep simulations running on COMET without having to be on top of it all the time.
+Comet is no longer prepared for python2. You will need to install it through anaconda or miniconda.
+You will also need to install numpy.
 
 # Set up your simulations
 A basic simulation will need some equilibration time and some production time. Usually, for our purposes, we use 100ps of equilibration and 1ns of production, but these times might vary as a function of what are you trying to calculate.
