@@ -650,8 +650,9 @@ void System::Initialize() {
     // With the information previously set, we initialize the
     // electrostatics class
     // TODO: Do grads set to true for now. Needs to be fixed
+    if(mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
-                               true, diptol_, maxItDip_, dipole_method_);
+                               islocal_, true, diptol_, maxItDip_, dipole_method_);
 
     // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
@@ -659,6 +660,101 @@ void System::Initialize() {
     if(mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
+
+    // We are done. Setting initialized_ to true
+    initialized_ = true;
+}
+  
+void System::InitializePME() {
+    // If we try to reinitialize the system, we will get an exception
+    if (initialized_) {
+        std::string text =
+            std::string("The system has already been initialized. ") + std::string("Reinitialization is not possible");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cout << std::scientific << std::setprecision(10);
+#endif
+    
+    /////////////
+    // CUTOFFS //
+    /////////////
+
+    // Setting 2B cutoff
+    // Affects the 2B dispersion and 2B polynomials
+    // TODO make it effective for electrostatics too
+    cutoff2b_ = 50.0;
+
+    // Setting 3B cutoff
+    // Affects the 3B polynomials
+    cutoff3b_ = 5.0;
+
+    ////////////////////////
+    // Evaluation batches //
+    ////////////////////////
+
+    // Maximum number in the batch for the 1B evaluation
+    maxNMonEval_ = 1024;
+    // Maximum number in the batch for the 2B evaluation
+    maxNDimEval_ = 1024;
+    // Maximum number in the batch for the 3B evaluation
+    maxNTriEval_ = 1024;
+
+    //////////////////////////////////
+    // Periodic boundary conditions //
+    //////////////////////////////////
+
+    /////////////////////////////
+    // Add monomer information //
+    /////////////////////////////
+
+    // Retrieves all the monomer information given the coordinates
+    // and monomer id, such as number of sites, and orders the monomers
+    numat_ = 0;
+    //AddMonomerInfo();
+
+    // Setting the number of molecules and number of monomers
+    nummol = 0;
+    nummon_ = 0;
+
+    ////////////////////
+    // ELECTROSTATICS //
+    ////////////////////
+
+    // Setting dipole tolerance to a consrvative value
+    // TODO make it be error/dipole, not total error as it is now
+    diptol_ = 1E-16;
+    // Sets the maximum number of iteartions in the induced dipole
+    // calculation. Will assume no convergence if this number is reached
+    maxItDip_ = 100;
+    // Sets the default method to calculate induced dipoles to ASPC
+    dipole_method_ = "cg";
+
+    // Setting PBC to false by default
+    SetPBC();
+
+    // Set C6 for long range pme
+    SetC6LongRange();
+
+    // Define the virial vector
+    virial_ = std::vector<double>(9, 0.0);
+
+    // With the information previously set, we initialize the
+    // electrostatics class
+    // TODO: Do grads set to true for now. Needs to be fixed
+    if(mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+    //electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
+    //                               islocal_, true, diptol_, maxItDip_, dipole_method_);
+
+    // TODO Is this OK? Order of GetReal is input order.
+    //std::vector<double> xyz_real = GetRealXyz();
+    std::vector<double> xyz_real = {};
+    // TODO modify c6_long_range
+    if(mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
+    //buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -2285,9 +2381,10 @@ double System::DispersionPME(bool do_grads, bool use_ghost) {
     }
 
     energy_ = 0.0;
+    if(islocal_.size() > 0) {
     std::fill(grad_.begin(), grad_.end(), 0.0);
     std::fill(virial_.begin(),virial_.end(),0.0);
-
+    }
     SetPBC(box_);
 
     energy_ = GetDispersionPME(do_grads, use_ghost);
@@ -2319,7 +2416,7 @@ double System::Buckingham(bool do_grads, bool use_ghost) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double System::Electrostatics(bool do_grads) {
+double System::Electrostatics(bool do_grads, bool use_ghost) {
     // Check if system has been initialized
     // If not, throw exception
     if (!initialized_) {
@@ -2334,8 +2431,36 @@ double System::Electrostatics(bool do_grads) {
 
     SetPBC(box_);
 
-    energy_ = GetElectrostatics(do_grads);
+    energy_ = GetElectrostatics(do_grads, use_ghost);
 
+    return energy_;
+}
+
+double System::ElectrostaticsMPI(bool do_grads, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Electrostatic Energy calculation ") + std::string("not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
+
+    SetPBC(box_);
+
+    energy_ = GetElectrostatics(do_grads, use_ghost);
+
+    // correct energy and forces for number of processors
+
+    double rnprocs = 1.0 / (double)(proc_grid_x_ * proc_grid_y_ * proc_grid_z_);
+
+    energy_ *= rnprocs;
+    for(int i=0; i<grad_.size(); ++i) grad_[i] *= rnprocs;
+    for(int i=0; i<virial_.size(); ++i) virial_[i] *= rnprocs;
+    
     return energy_;
 }
 
@@ -2398,12 +2523,12 @@ int System::TestMPI() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-double System::GetElectrostatics(bool do_grads) {
+double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
 
-    return electrostaticE_.GetElectrostatics(grad_, &virial_);
+    return electrostaticE_.GetElectrostatics(grad_, &virial_, use_ghost);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2490,6 +2615,9 @@ double System::GetBuckingham(bool do_grads, bool use_ghost) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::ResetDipoleHistory() { electrostaticE_.ResetAspcHistory(); }
+
+std::vector<size_t> System::GetInfoElectrostaticsCounts() { return electrostaticE_.GetInfoCounts(); }
+std::vector<double> System::GetInfoElectrostaticsTimings() { return electrostaticE_.GetInfoTimings(); }
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -55,7 +55,7 @@ PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
 
   // energy terms available to pair compute
   
-  nextra = 11;
+  nextra = 13;
   pvector = new double[nextra];
 }
 
@@ -104,14 +104,16 @@ void PairMBX::compute(int eflag, int vflag)
   
   // compute energy+gradients in parallel
 
-  bblock::System * ptr_mbx      = fix_mbx->ptr_mbx;
-  bblock::System * ptr_mbx_full = fix_mbx->ptr_mbx_full; // compute term on rank 0
-  bblock::System * ptr_mbx_pme  = fix_mbx->ptr_mbx_pme;  // compute PME terms in parallel
+  bblock::System * ptr_mbx       = fix_mbx->ptr_mbx;       // compute terms in parallel
+  bblock::System * ptr_mbx_full  = fix_mbx->ptr_mbx_full;  // compute term on rank 0
+  bblock::System * ptr_mbx_local = fix_mbx->ptr_mbx_local; // compute PME terms in parallel w/ sub-domains
+  bblock::System * ptr_mbx_pme   = fix_mbx->ptr_mbx_pme;   // compute PME terms in parallel w/ copies full system
 
   bool compute_disp_parallel = fix_mbx->mbx_mpi_enabled;
   
   double mbx_e2b_local, mbx_e2b_ghost;
   double mbx_e3b_local, mbx_e3b_ghost;
+  double mbx_disp_real, mbx_disp_pme;
   
   // compute energy
 
@@ -123,18 +125,31 @@ void PairMBX::compute(int eflag, int vflag)
   mbx_e2b_ghost = 0.0;
   mbx_e3b_local = 0.0;
   mbx_e3b_ghost = 0.0;
+
+  mbx_disp_real = 0.0;
+  mbx_disp_pme  = 0.0;
   
   mbx_disp = 0.0;
   mbx_buck = 0.0;
   mbx_ele  = 0.0;
+
+  //  printf("(%i) mbx_num_atoms= %i\n",me,fix_mbx->mbx_num_atoms);
   
   if(fix_mbx->mbx_num_atoms > 0) {
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing E1B\n",me);
+#endif
   
     fix_mbx->mbxt_start(MBXT_E1B);
     mbx_e1b = ptr_mbx->OneBodyEnergy(true);
     fix_mbx->mbxt_stop(MBXT_E1B);
     accumulate_f();
     
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing E2B\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_E2B_LOCAL);
     mbx_e2b_local = ptr_mbx->TwoBodyEnergy(true);
     fix_mbx->mbxt_stop(MBXT_E2B_LOCAL);
@@ -147,6 +162,10 @@ void PairMBX::compute(int eflag, int vflag)
     
     mbx_e2b = mbx_e2b_local + mbx_e2b_ghost;
     
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing E3B\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_E3B_LOCAL);
     mbx_e3b_local = ptr_mbx->ThreeBodyEnergy(true);
     fix_mbx->mbxt_stop(MBXT_E3B_LOCAL);
@@ -160,41 +179,83 @@ void PairMBX::compute(int eflag, int vflag)
     mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
 
     if(compute_disp_parallel) {
+      
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing disp real parallel\n",me);
+#endif
+  
       fix_mbx->mbxt_start(MBXT_DISP);
-      mbx_disp = ptr_mbx->Dispersion(true, true); // computes real-space with local-local & local-ghost pairs
+      mbx_disp_real = ptr_mbx->Dispersion(true, true); // computes real-space with local-local & local-ghost pairs
       fix_mbx->mbxt_stop(MBXT_DISP);
       accumulate_f();
     }
 
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing buck\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_BUCK);
     mbx_buck = ptr_mbx->Buckingham(true,true);
     fix_mbx->mbxt_stop(MBXT_BUCK);
     accumulate_f();
-    
   }
   
   if(compute_disp_parallel) {
     
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing disp pme parallel\n",me);
+#endif
+  
     fix_mbx->mbxt_start(MBXT_DISP_PME);
-    mbx_disp += ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
-    fix_mbx->mbxt_stop(MBXT_DISP_PME);
+    //    mbx_disp_pme = ptr_mbx->DispersionPME(true, true); // computes k-space using sub-domain
+
+    //    mbx_disp_pme = ptr_mbx_local->DispersionPME(true, true); // computes k-space using sub-domain
+    //    accumulate_f_local();
+    
+    mbx_disp_pme = ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
     accumulate_f_pme();
+    
+    fix_mbx->mbxt_stop(MBXT_DISP_PME);
     
   } else {
     
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing disp pme serial\n",me);
+#endif
+
+#if 1
+  error->all(FLERR,"MBX_FULL Disabled...\n");
+#else
     fix_mbx->mbxt_start(MBXT_DISP);
-    if(comm->me == 0) mbx_disp = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
+    if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
     fix_mbx->mbxt_stop(MBXT_DISP);
     accumulate_f_full();
+#endif
     
   }
+
+  mbx_disp = mbx_disp_real + mbx_disp_pme;
+  
+#if 1
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i) -- Computing electrostatics parallel\n",me);
+#endif
+  
+  fix_mbx->mbxt_start(MBXT_ELE);
+  mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, true);
+  fix_mbx->mbxt_stop(MBXT_ELE);
+  accumulate_f_pme();
+#endif
   
   // compute energy+gradients in serial on rank 0 for full system
-  
+
+#if 0
   fix_mbx->mbxt_start(MBXT_ELE);
   if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
   fix_mbx->mbxt_stop(MBXT_ELE);
   accumulate_f_full();
+#endif
   
   mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
 
@@ -219,6 +280,8 @@ void PairMBX::compute(int eflag, int vflag)
     pvector[8]  = mbx_e2b_ghost;
     pvector[9]  = mbx_e3b_local;
     pvector[10] = mbx_e3b_ghost;
+    pvector[11] = mbx_disp_real;
+    pvector[12] = mbx_disp_pme;
   }
 
 #if 0
@@ -229,6 +292,8 @@ void PairMBX::compute(int eflag, int vflag)
   double e2g = 0.0;
   double e3l = 0.0;
   double e3g = 0.0;
+  double edr = 0.0;
+  double edp = 0.0;
 
   double v[6];
   
@@ -237,6 +302,8 @@ void PairMBX::compute(int eflag, int vflag)
   MPI_Reduce(&mbx_e2b_ghost, &e2g,  1, MPI_DOUBLE, MPI_SUM, 0, world);
   MPI_Reduce(&mbx_e3b_local, &e3l,  1, MPI_DOUBLE, MPI_SUM, 0, world);
   MPI_Reduce(&mbx_e3b_ghost, &e3g,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_disp_real, &edr,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_disp_pme,  &edp,  1, MPI_DOUBLE, MPI_SUM, 0, world);
   MPI_Reduce(&virial[0],     &v[0], 6, MPI_DOUBLE, MPI_SUM, 0, world);
 
   double etot = e1 + e2l + e2g + e3l + e3g + mbx_disp + mbx_buck + mbx_ele;
@@ -245,9 +312,9 @@ void PairMBX::compute(int eflag, int vflag)
     printf("mbx_e1b=   %f  Parallel\n",e1);
     printf("mbx_e2b=   %f (%f, %f)  Parallel\n",e2l+e2g, e2l, e2g);
     printf("mbx_e3b=   %f (%f, %f)  Parallel\n",e3l+e3g, e3l, e3g);
-    printf("mbx_disp=  %f  Serial\n",mbx_disp);
-    printf("mbx_buck=  %f  Serial\n",mbx_buck);
-    printf("mbx_ele=   %f  Serial\n",mbx_ele);
+    printf("mbx_disp=  %f (%f, %f)  Parallel\n",edr+edp, edr, edp);
+    printf("mbx_buck=  %f  Parallel\n",mbx_buck);
+    printf("mbx_ele=   %f  Parallel\n",mbx_ele);
     printf("mbx_total= %f\n",etot);
 
     printf("virial= %f %f %f  %f %f %f\n",v[0],v[1],v[2],v[3],v[4],v[5]);
@@ -498,23 +565,36 @@ void PairMBX::accumulate_f()
       const int mtype = mol_type[i];
 
       // to be replaced with integer comparison
+
+      bool include_monomer = true;
+      tagint anchor = atom->tag[i];
       
       int na = 0;
-      if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
+      if(strcmp("h2o",      mol_names[mtype]) == 0) {
+	na = 3;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
+      }
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
-
-      tagint anchor = atom->tag[i];
-
-      for(int j=0; j<na; ++j) {
-
-	const int ii = atom->map(anchor + j);
-	f[ii][0] -= grads[indx++];
-	f[ii][1] -= grads[indx++];
-	f[ii][2] -= grads[indx++];
+      else if(strcmp("co2", mol_names[mtype]) == 0) {
+	na = 3;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
       }
-     
+
+      if(include_monomer) {
+	for(int j=0; j<na; ++j) {
+	  
+	  const int ii = atom->map(anchor + j);
+	  f[ii][0] -= grads[indx++];
+	  f[ii][1] -= grads[indx++];
+	  f[ii][2] -= grads[indx++];
+	}
+      }
+      
     } // if(anchor)
 
   }
@@ -554,8 +634,6 @@ void PairMBX::accumulate_f()
    update forces with MBX contribution
 ------------------------------------------------------------------------- */
 
-#if 0
-// broken attempt to only include particles near local sub-domain
 void PairMBX::accumulate_f_local()
 {
 #ifdef _DEBUG
@@ -571,6 +649,7 @@ void PairMBX::accumulate_f_local()
   double ** f = atom->f;
 
   const int * const mol_anchor = fix_mbx->mol_anchor;
+  const int * const mol_local  = fix_mbx->mol_local;
   const int * const mol_type = fix_mbx->mol_type;
   char ** mol_names = fix_mbx->mol_names;
   
@@ -584,7 +663,7 @@ void PairMBX::accumulate_f_local()
   
   for(int i=0; i<nall; ++i) {
 
-    if(mol_anchor[i]) {
+    if(mol_anchor[i] && mol_local[i]) {
 
       const int mtype = mol_type[i];
 
@@ -597,22 +676,13 @@ void PairMBX::accumulate_f_local()
       else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
 
       tagint anchor = atom->tag[i];
-
-      int is_local_atom = 0;
+      
       for(int j=0; j<na; ++j) {
-	is_local_atom += (atom->map(anchor+j) < nlocal);
-      }
-
-      if(is_local_atom) {
 	
-	for(int j=0; j<na; ++j) {
-	  
-	  const int ii = atom->map(anchor + j);
-	  f[ii][0] -= grads[indx++];
-	  f[ii][1] -= grads[indx++];
-	  f[ii][2] -= grads[indx++];
-	}
-
+	const int ii = atom->map(anchor + j);
+	f[ii][0] -= grads[indx++];
+	f[ii][1] -= grads[indx++];
+	f[ii][2] -= grads[indx++];
       }
       
     } // if(anchor)
@@ -648,7 +718,6 @@ void PairMBX::accumulate_f_local()
   printf("[MBX] (%i) Leaving pair accumulate_f_local()\n",me);
 #endif
 }
-#endif
 
 /* ----------------------------------------------------------------------
    update forces with MBX contribution from full system
@@ -776,7 +845,7 @@ void PairMBX::accumulate_f_full()
 
 void PairMBX::accumulate_f_pme()
 {
-  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F_FULL);
+  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F_PME);
   
 #ifdef _DEBUG
   printf("[MBX] (%i) Inside pair accumulate_f_pme()\n",me);
@@ -881,9 +950,9 @@ void PairMBX::accumulate_f_pme()
   
   //  printf("[MBX] Leaving accumulate_f_full()\n");
   
-  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_FULL);
+  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_PME);
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving pair accumulate_f_full()\n",me);
+  printf("[MBX] (%i) Leaving pair accumulate_f_pme()\n",me);
 #endif
 }

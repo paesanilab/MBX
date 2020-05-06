@@ -262,15 +262,16 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
 
                 if (virial != 0 ) {
+		  const double vscale = (isls == 1) ? 0.5 : 1.0;
 
-                    (*virial)[0] -= dx* dx * grad; //  update the virial for the atom pair
-                    (*virial)[1] -= dx* dy * grad; 
-                    (*virial)[2] -= dx* dz * grad; 
+                    (*virial)[0] -= dx* dx * grad * vscale; //  update the virial for the atom pair
+                    (*virial)[1] -= dx* dy * grad * vscale; 
+                    (*virial)[2] -= dx* dz * grad * vscale; 
 
-                    (*virial)[4] -= dy* dy * grad; 
-                    (*virial)[5] -= dy* dz * grad; 
+                    (*virial)[4] -= dy* dy * grad * vscale; 
+                    (*virial)[5] -= dy* dz * grad * vscale; 
 
-                    (*virial)[8] -= dz* dz * grad; 
+                    (*virial)[8] -= dz* dz * grad * vscale; 
 
                     (*virial)[3] = (*virial)[1];
                     (*virial)[6] = (*virial)[2];
