@@ -42,6 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<double> polfac(n_atoms, 0);                                                                      \
     std::vector<double> pol(n_atoms, 0);                                                                         \
     std::vector<std::string> monomer_names(n_monomers, "h2o");                                                   \
+    std::vector<size_t> islocal(n_monomers, 1);                                                   \
     std::vector<double> charges(n_atoms, 0);                                                                     \
     for (int n = 0; n < n_monomers; ++n) {                                                                       \
         charges[4 * n + 0] = qO;                                                                                 \

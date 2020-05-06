@@ -41,6 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<std::string> monomer_names = {"h2o","h2o","h2o"};                                                             \
     std::vector<size_t> n_atoms_vector = {3,3,3};                                                                       \
     std::vector<size_t> n_sites_vector = {4,4,4};                                                                       \
+    std::vector<size_t> islocal = {1,1,1};                                                                          \
     std::vector<size_t> first_index = {0,4,8};                                                                          \
     std::vector<size_t> first_index_realSites = {0,3,6};                                                                \
     std::vector<double> box = {15.0, 0.0, 0.0, 0.0, 15.0, 0.0, 0.0, 0.0,                  \
