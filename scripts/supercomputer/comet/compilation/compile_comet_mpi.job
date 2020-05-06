@@ -16,16 +16,18 @@ CMAKE_EXE=$HOME/codes/cmake-3.14.3/bin/cmake
 cd $MBX_HOME 
 
 module load gnu
+module load intel
+module load intelmpi
 
 rm -rf build install
-$CMAKE_EXE -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=True -DCMAKE_CXX_FLAGS=" -fPIC -O2 -Wall -ftree-vectorize" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
+$CMAKE_EXE -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=True -DCMAKE_CXX_FLAGS=" -fPIC -Wall " -DCMAKE_CXX_COMPILER=mpiicpc -DCMAKE_C_COMPILER=mpiicc -H. -Bbuild
 cd build
-make CXX=g++ CC=gcc
+make CXX=mpiicpc CC=mpiicc
 make install
 cd ../
 
 export MBX_HOME=$PWD
 cd plugins/i-pi/src/main/
-cp Makefile_comet_gnu Makefile
+cp Makefile_comet_intel Makefile
 make
 cd -

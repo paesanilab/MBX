@@ -44,9 +44,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/x2b-A1B2Z2_C-v1x.h"
 // =====>> BEGIN SECTION INCLUDE2B <<=====
 // ===>> PASTE YOUR CODE BELOW <<===
+#include "potential/2b/x2b_A1_A1_deg23_v1x.h"
 #include "potential/2b/x2b_A1B4_A1B4_deg4_exp0_v1x.h"
 #include "potential/2b/x2b_A1B2Z2_C1D4_deg3_exp0_v1x.h"
 #include "potential/2b/x2b_A1B2_A1B2_v1x.h"
+#include "potential/2b/x2b_A1B2Z2_C1_deg5_v1x.h"
 #include "potential/2b/x2b_A1B2Z2_C1D2_v1x.h"
 #include "potential/2b/mbnrg_2b_A1B3_A1B3_deg5_v1.h"
 #include "potential/2b/mbnrg_2b_A1_B1_deg15_v1.h"

@@ -21,6 +21,9 @@ WORKDIR=$PWD
 
 # Load modules
 module load python
+module load gnu
+module load intel 
+module load intelmpi
 export OMP_NUM_THREADS=8
 
 # Define driver executable path

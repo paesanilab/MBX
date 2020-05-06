@@ -1004,6 +1004,71 @@ void System::SetUpFromJson(char *json_file) {
     ifjson.close();
 }
 
+std::string System::GetCurrentSystemConfig() {
+    std::stringstream ss;
+
+    ss <<  std::left << std::setw(25) << "Box:";
+    for (size_t i = 0; i < box_.size(); i++) {
+        ss << std::scientific << std::setprecision(4) << box_[i] << " ";
+    } 
+    ss << std::endl;
+
+    ss << std::left << std::setw(25) << "2B cutoff:" << cutoff2b_ << std::endl;
+    ss << std::left << std::setw(25) << "3B cutoff:" << cutoff3b_ << std::endl;
+    ss << std::left << std::setw(25) << "Max Eval Mon:" << maxNMonEval_ << std::endl;
+    ss << std::left << std::setw(25) << "Max Eval Dim:" << maxNDimEval_ << std::endl;
+    ss << std::left << std::setw(25) << "Max Eval Trim:" << maxNTriEval_ << std::endl;
+    ss << std::left << std::setw(25) << "Dipole Tol:" << diptol_ << std::endl;
+    ss << std::left << std::setw(25) << "Dipole Max Iter:" << maxItDip_ << std::endl;
+    ss << std::left << std::setw(25) << "Dipole Method:" << dipole_method_ << std::endl;
+    ss << std::left << std::setw(25) << "Ewald Alpha Elec:" << elec_alpha_ << std::endl;
+    ss << std::left << std::setw(25) << "Grid Dens Elec:" << elec_grid_density_ << std::endl;
+    ss << std::left << std::setw(25) << "Spline Order Elec:" << elec_spline_order_ << std::endl;
+    ss << std::left << std::setw(25) << "Ewald Alpha Disp:" << disp_alpha_ << std::endl;
+    ss << std::left << std::setw(25) << "Grid Dens Disp:" << disp_grid_density_ << std::endl;
+    ss << std::left << std::setw(25) << "Spline Order Disp:" << disp_spline_order_ << std::endl;
+
+    ss <<  std::left << std::setw(25) << "TTM-pairs:";
+    for (size_t i = 0; i < buck_pairs_.size(); i++) {
+        ss << "{" << buck_pairs_[i].first << "," << buck_pairs_[i].second << "} ";
+    }                                                                                                            
+    ss << std::endl;
+
+    ss <<  std::left << std::setw(25) << "Forcefield Mons:";    
+    for (size_t i = 0; i < ff_mons_.size(); i++) { 
+        ss << ff_mons_[i] << " ";             
+    }                                                                                                            
+    ss << std::endl;
+
+    ss <<  std::left << std::setw(25) << "Ignore 1B poly:";    
+    for (size_t i = 0; i < ignore_1b_poly_.size(); i++) {   
+        ss << ignore_1b_poly_[i] << " ";
+    }
+    ss << std::endl;
+
+    ss <<  std::left << std::setw(25) << "Ignore 2B poly:";    
+    for (size_t i = 0; i < ignore_2b_poly_.size(); i++) {   
+        ss << "{";
+        for (size_t j = 0; j < ignore_2b_poly_[i].size(); j++) {
+          ss << ignore_2b_poly_[i][j] << " ";
+        }
+        ss << "} ";
+    }
+    ss << std::endl;
+
+    ss << std::left << std::setw(25) << "Ignore 3B poly:";    
+    for (size_t i = 0; i < ignore_3b_poly_.size(); i++) {   
+        ss << "{";
+        for (size_t j = 0; j < ignore_3b_poly_[i].size(); j++) {
+          ss << ignore_3b_poly_[i][j] << " ";
+        }
+        ss << "} ";
+    }
+    ss << std::endl;
+
+    return ss.str();
+}
+
 void System::AddMonomerInfo() {
     // If xyz_ is empty, not possible to add any information
     if (xyz_.size() < 3) {

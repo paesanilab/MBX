@@ -462,6 +462,8 @@ class System {
      */
     void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1);
 
+    std::string GetCurrentSystemConfig();
+
     /**
      * Adds a molecule to the system. A molecule, in the context of this
      * software, is a set of indexes of monomers that belong to the same
