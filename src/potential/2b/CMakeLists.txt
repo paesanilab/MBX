@@ -24,6 +24,12 @@ set(TWOB_SOURCES energy2b.cpp
                  mbnrg_2b_A1_B1_deg15_v1.cpp
                  poly_2b_A1_B1_deg15_nograd_v1.cpp
                  poly_2b_A1_B1_deg15_grad_v1.cpp
+                 poly_2b_A1_A1_deg23_v1.cpp
+                 poly_2b_A1_A1_deg23_v1x.cpp
+                 x2b_A1_A1_deg23_v1x.cpp
+                 poly_2b_A1B2Z2_C1_deg5_v1.cpp
+                 poly_2b_A1B2Z2_C1_deg5_v1x.cpp
+                 x2b_A1B2Z2_C1_deg5_v1x.cpp
 # END SECTION CMAKELISTS
 )
 

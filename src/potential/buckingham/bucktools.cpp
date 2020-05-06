@@ -323,6 +323,37 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.028640000000000e+00);  // A^(-1)
         b.push_back(3.271530000000000e+00);  // A^(-1)
+    } else if (mon_id1 == "he" and mon_id2 == "he") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        // Set the number of different types
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(6440.78);  // kcal/mol * A^(-6) He -- O
+
+        b.push_back(4.26243);  // A^(-1)
+        b.push_back(2.697680000000000e+00);  // A^(-1)
+    } else if (mon_id1 == "h2o" and mon_id2 == "he") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        // Set the number of different types
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(12373.7);  // kcal/mol * A^(-6) He -- O
+        a.push_back(1629.41);  // kcal/mol * A^(-6) He -- H
+
+        b.push_back(3.71873);  // A^(-1)
+        b.push_back(3.9707 );  // A^(-1)
     } else if (mon_id1 == "ar" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
