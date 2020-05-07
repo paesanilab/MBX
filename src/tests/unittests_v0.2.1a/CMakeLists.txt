@@ -1,27 +1,27 @@
 #Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
-    unittest-gas-electrostatics-mbpol.cpp
-    unittest-dispersion-gas-cutoff.cpp
-    unittest-dispersion-pme.cpp
-    unittest-gas-nbodyterms-mbpol.cpp
-    unittest-mathtools.cpp
-    unittest-gas-nopolarization-findif.cpp
-    unittest-gas-withpolarization-findif.cpp
-    unittest-pme-nopolarization.cpp
-    unittest-pme-nopolarization-findif.cpp
-    unittest-pme-withpolarization.cpp
-    unittest-pme-withpolarization-findif.cpp
+#    unittest-gas-electrostatics-mbpol.cpp
+#    unittest-dispersion-gas-cutoff.cpp
+#    unittest-dispersion-pme.cpp
+#    unittest-gas-nbodyterms-mbpol.cpp
+#    unittest-mathtools.cpp
+#    unittest-gas-nopolarization-findif.cpp
+#    unittest-gas-withpolarization-findif.cpp
+#    unittest-pme-nopolarization.cpp
+#    unittest-pme-nopolarization-findif.cpp
+#    unittest-pme-withpolarization.cpp
+#    unittest-pme-withpolarization-findif.cpp
     unittest-gamma.cpp
-    unittest-pbc-1b-mbpol-findif.cpp
-    unittest-pbc-2bpoly-mbpol-findif.cpp
-    unittest-pbc-dispersion-mbpol-findif.cpp
-    unittest-pbc-3bpoly-mbpol-findif.cpp
-    unittest-pbc-electrostatics-mbpol-findif.cpp
-    unittest-h2o-virial.cpp
-    unittest-dummy-monomer.cpp
-    unittest-co2-monomer.cpp
-    unittest-system.cpp 
-    unittest-systools.cpp
+#    unittest-pbc-1b-mbpol-findif.cpp
+#    unittest-pbc-2bpoly-mbpol-findif.cpp
+#    unittest-pbc-dispersion-mbpol-findif.cpp
+#    unittest-pbc-3bpoly-mbpol-findif.cpp
+#    unittest-pbc-electrostatics-mbpol-findif.cpp
+#    unittest-h2o-virial.cpp
+#    unittest-dummy-monomer.cpp
+#    unittest-co2-monomer.cpp
+#    unittest-system.cpp 
+#    unittest-systools.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
