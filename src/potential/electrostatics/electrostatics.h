@@ -365,6 +365,10 @@ class Electrostatics {
     bool mpi_initialized_ = false;
     // MPI Communicator
     MPI_Comm world_;
+    // MPI Rank
+    int mpi_rank_;
+    // MPI Comm size
+    size_t num_mpi_ranks_;
     // proc_grid
     size_t proc_grid_x_;
     size_t proc_grid_y_;

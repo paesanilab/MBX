@@ -155,9 +155,11 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     
     if(!mpi_initialized_) {
       world_ = 0;
+      mpi_rank_ = 0;
       proc_grid_x_ = 1;
       proc_grid_y_ = 1;
       proc_grid_z_ = 1;
+      num_mpi_ranks_ = 1;
     }
 
     mbxt_ele_count_ = std::vector<size_t>(ELE_NUM_TIMERS, 0);
@@ -170,6 +172,12 @@ void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid
     proc_grid_x_ = proc_grid_x;
     proc_grid_y_ = proc_grid_y;
     proc_grid_z_ = proc_grid_z;
+#if HAVE_MPI == 1
+    MPI_Comm_rank(world_, &mpi_rank_);
+#else
+    mpi_rank_ = 0;
+#endif
+    num_mpi_ranks_ = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
 }
   
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
@@ -334,7 +342,9 @@ void Electrostatics::CalculatePermanentElecField() {
                     Ai = BIGNUM;
                     Asqsqi = Ai;
                 }
-                for (size_t m = 0; m < nmon; m++) {
+		//                for (size_t m = 0; m < nmon; m++) {
+		size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
+                for (size_t m = mstart; m < nmon; m+=num_mpi_ranks_) {
                     elec_field.CalcPermanentElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd,
                                                       chg_.data() + fi_sites, chg_.data() + fi_sites, m, m, m + 1, nmon,
                                                       nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
@@ -353,7 +363,7 @@ void Electrostatics::CalculatePermanentElecField() {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
-
+    
     // Sites corresponding to different monomers
     // Declaring first indexes
     size_t fi_mon1 = 0;
@@ -401,10 +411,12 @@ void Electrostatics::CalculatePermanentElecField() {
                 virial_pool.push_back(std::vector<double>(9, 0.0));
             }
 
+	    size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
-            for (size_t m1 = 0; m1 < nmon1; m1++) {
+	    for (size_t m1 = m1start; m1 < nmon1; m1+=num_mpi_ranks_) {
+	    //	    for (size_t m1 = 0; m1 < nmon1; m1++) {
                 int rank = 0;
 #ifdef _OPENMP
                 rank = omp_get_thread_num();
@@ -532,6 +544,8 @@ void Electrostatics::CalculatePermanentElecField() {
     }
 
 #if HAVE_MPI == 1
+    MPI_Allreduce(MPI_IN_PLACE, phi_.data(), phi_.size(), MPI_DOUBLE, MPI_SUM, world_);
+    MPI_Allreduce(MPI_IN_PLACE, Efq_.data(), Efq_.size(), MPI_DOUBLE, MPI_SUM, world_);
     double time2 = MPI_Wtime();
 #endif
     
@@ -1033,7 +1047,9 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                     Ai = BIGNUM;
                     Asqsqi = Ai;
                 }
-                for (size_t m = 0; m < nmon; m++) {
+		//                for (size_t m = 0; m < nmon; m++) {
+		size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
+		for (size_t m = mstart; m < nmon; m+=num_mpi_ranks_) {
                     // TODO. Slowest function
                     elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                    in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
@@ -1050,7 +1066,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
-
+    
     size_t fi_mon1 = 0;
     size_t fi_mon2 = 0;
     size_t fi_sites1 = 0;
@@ -1082,8 +1098,12 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             }
 
 // Parallel loop
+	    size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
+#ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
-            for (size_t m1 = 0; m1 < nmon1; m1++) {
+#endif
+            for (size_t m1 = m1start; m1 < nmon1; m1+=num_mpi_ranks_) {
+//            for (size_t m1 = 0; m1 < nmon1; m1++) {
                 int rank = 0;
 #ifdef _OPENMP
                 rank = omp_get_thread_num();
@@ -1141,6 +1161,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     }
 
 #if HAVE_MPI == 1
+    MPI_Allreduce(MPI_IN_PLACE, out_v.data(), out_v.size(), MPI_DOUBLE, MPI_SUM, world_);
     double time2 = MPI_Wtime();
 #endif
     
