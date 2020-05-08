@@ -778,8 +778,8 @@ void PairMBX::accumulate_f_full()
 	else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
 	else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
 	else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
-	else if(strcmp("ch4", mol_names[mtype]) == 0) na = 3;
-	else if(strcmp("co2", mol_names[mtype]) == 0) na = 5;
+	else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
+	else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
 	
 	tagint anchor = tag_full[i];
 	
