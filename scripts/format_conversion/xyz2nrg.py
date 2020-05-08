@@ -18,6 +18,8 @@ monomers['cl'] = ['Cl']
 monomers['br'] = ['Br']
 monomers['i'] = ['I']
 monomers['ar'] = ['Ar']
+monomers['he'] = ['He']
+
 #H2O
 monomers['h2o'] = ['O','H','H']
 

@@ -106,6 +106,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     else if (strcmp("na",  mol_names[i]) == 0) num_atoms_per_mol[i] = 1;
     else if (strcmp("cl",  mol_names[i]) == 0) num_atoms_per_mol[i] = 1;
     else if (strcmp("co2", mol_names[i]) == 0) num_atoms_per_mol[i] = 3;
+    else if (strcmp("ch4", mol_names[i]) == 0) num_atoms_per_mol[i] = 5;
+    else if (strcmp("he", mol_names[i]) == 0) num_atoms_per_mol[i] = 1;
     else error->all(FLERR,"Unsupported molecule type in MBX");
   }
 
@@ -743,7 +745,7 @@ void FixMBX::mbx_init()
 	// add chloride ion
 
 	tagint anchor = tag[i];
-	names.push_back("Na");
+	names.push_back("Cl");
 	xyz.push_back(x[i][0]);
 	xyz.push_back(x[i][1]);
 	xyz.push_back(x[i][2]);
@@ -755,6 +757,26 @@ void FixMBX::mbx_init()
 	ptr_mbx->AddMolecule(molec);
 
 	mbx_num_atoms++;
+
+      } else if(strcmp("he",mol_names[mtype]) == 0) {
+
+  //  printf(" -- Adding Cl\n");
+
+  // add chloride ion
+
+  tagint anchor = tag[i];
+  names.push_back("He");
+  xyz.push_back(x[i][0]);
+  xyz.push_back(x[i][1]);
+  xyz.push_back(x[i][2]);
+  //  printf(" -- %i(i): Cl %f %f %f\n",anchor,i,x[i][0],x[i][1],x[i][2]);
+
+  molec.push_back(nm++);
+
+  ptr_mbx->AddMonomer(xyz, names, "he", is_local);
+  ptr_mbx->AddMolecule(molec);
+
+  mbx_num_atoms++;
 	
       } else if(strcmp("co2",mol_names[mtype]) == 0) {
 
@@ -795,6 +817,61 @@ void FixMBX::mbx_init()
 	  
 	  mbx_num_atoms += 3;
 	}
+      } else if(strcmp("ch4",mol_names[mtype]) == 0) {
+
+  // add CO2 molecule
+
+  tagint anchor = tag[i];
+  names.push_back("C");
+  xyz.push_back(x[i][0]);
+  xyz.push_back(x[i][1]);
+  xyz.push_back(x[i][2]);
+
+  const int ii1 = atom->map(anchor+1);
+  const int ii2 = atom->map(anchor+2);
+  const int ii3 = atom->map(anchor+3);
+  const int ii4 = atom->map(anchor+4);
+
+  // if(me == 1) printf("(%i) -- ii1= %i  ii2= %i\n",me,ii1,ii2);
+  // if(ii1 < 0) error->one(FLERR,"H2O molecule not intact");
+  // if(ii2 < 0) error->one(FLERR,"H2O molecule not intact");
+
+  if( (ii1 > -1) && (ii2 > -1) && (ii3 > -1) && (ii4 > -1)) { 
+    domain->closest_image(x[i], x[ii1], ximage);
+
+    names.push_back("H");
+    xyz.push_back(ximage[0]);
+    xyz.push_back(ximage[1]);
+    xyz.push_back(ximage[2]);
+
+    domain->closest_image(x[i], x[ii2], ximage);
+
+    names.push_back("H");
+    xyz.push_back(ximage[0]);
+    xyz.push_back(ximage[1]);
+    xyz.push_back(ximage[2]);
+
+    domain->closest_image(x[i], x[ii3], ximage);
+
+    names.push_back("H");
+    xyz.push_back(ximage[0]);
+    xyz.push_back(ximage[1]);
+    xyz.push_back(ximage[2]);
+
+    domain->closest_image(x[i], x[ii4], ximage);
+
+    names.push_back("H");
+    xyz.push_back(ximage[0]);
+    xyz.push_back(ximage[1]);
+    xyz.push_back(ximage[2]);
+
+    molec.push_back(nm++);
+
+    ptr_mbx->AddMonomer(xyz, names, "ch4", is_local);
+    ptr_mbx->AddMolecule(molec);
+
+    mbx_num_atoms += 5;
+  } 
 	
       } else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
 	
@@ -1037,6 +1114,26 @@ void FixMBX::mbx_init_local()
 	
 	mbx_num_atoms_local += 3;
 
+      } else if(strcmp("he",mol_names[mtype]) == 0) {
+
+  // add sodium ion
+
+  tagint anchor = tag[i];
+  names.push_back("He");
+  xyz.push_back(x[i][0]);
+  xyz.push_back(x[i][1]);
+  xyz.push_back(x[i][2]);
+
+  // add monomer if at least one atom is local
+
+  molec.push_back(nm++);
+
+  ptr_mbx_local->AddMonomer(xyz, names, "he", is_local);
+  ptr_mbx_local->AddMolecule(molec);
+
+  mbx_num_atoms_local++;
+
+
       } else if(strcmp("na",mol_names[mtype]) == 0) {
 	
 	// add sodium ion
@@ -1063,7 +1160,7 @@ void FixMBX::mbx_init_local()
 	// add chloride ion
 
 	tagint anchor = tag[i];
-	names.push_back("Na");
+	names.push_back("Cl");
 	xyz.push_back(x[i][0]);
 	xyz.push_back(x[i][1]);
 	xyz.push_back(x[i][2]);
@@ -1116,6 +1213,65 @@ void FixMBX::mbx_init_local()
 	ptr_mbx_local->AddMolecule(molec);
 	
 	mbx_num_atoms_local += 3;
+      } else if(strcmp("ch4",mol_names[mtype]) == 0) {
+
+  // add CO2 molecule
+
+  tagint anchor = tag[i];
+  names.push_back("C");
+  xyz.push_back(x[i][0]);
+  xyz.push_back(x[i][1]);
+  xyz.push_back(x[i][2]);
+
+  int ii = atom->map(anchor+1);
+  //  ii = domain->closest_image(i, ii);
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+  domain->closest_image(x[i], x[ii], ximage);
+
+  names.push_back("H");
+  xyz.push_back(ximage[0]);
+  xyz.push_back(ximage[1]);
+  xyz.push_back(ximage[2]);
+
+  ii = atom->map(anchor+2);
+  //  ii = domain->closest_image(i, ii);
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+  domain->closest_image(x[i], x[ii], ximage);
+
+  names.push_back("H");
+  xyz.push_back(ximage[0]);
+  xyz.push_back(ximage[1]);
+  xyz.push_back(ximage[2]);
+
+  ii = atom->map(anchor+3);
+  //  ii = domain->closest_image(i, ii);
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+  domain->closest_image(x[i], x[ii], ximage);
+
+  names.push_back("H");
+  xyz.push_back(ximage[0]);
+  xyz.push_back(ximage[1]);
+  xyz.push_back(ximage[2]);
+
+  ii = atom->map(anchor+4);
+  //  ii = domain->closest_image(i, ii);
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+  domain->closest_image(x[i], x[ii], ximage);
+
+  names.push_back("H");
+  xyz.push_back(ximage[0]);
+  xyz.push_back(ximage[1]);
+  xyz.push_back(ximage[2]);
+
+
+  // add monomer if at least one atom is local
+
+  molec.push_back(nm++);
+
+  ptr_mbx_local->AddMonomer(xyz, names, "ch4", is_local);
+  ptr_mbx_local->AddMolecule(molec);
+
+  mbx_num_atoms_local += 5;
       } else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
 	
     } // if(mol_anchor)
@@ -1338,7 +1494,7 @@ void FixMBX::mbx_init_full()
 	// add chloride ion
 
 	tagint anchor = tag_full[i];
-	names.push_back("Na");
+	names.push_back("Cl");
 	xyz.push_back(x_full[i][0]);
 	xyz.push_back(x_full[i][1]);
 	xyz.push_back(x_full[i][2]);
@@ -1349,6 +1505,22 @@ void FixMBX::mbx_init_full()
 	ptr_mbx_full->AddMolecule(molec);
 
 	mbx_num_atoms_full++;
+      } else if(strcmp("he",mol_names[mtype]) == 0) {
+
+  // add chloride ion
+
+  tagint anchor = tag_full[i];
+  names.push_back("He");
+  xyz.push_back(x_full[i][0]);
+  xyz.push_back(x_full[i][1]);
+  xyz.push_back(x_full[i][2]);
+
+  molec.push_back(nm++);
+
+  ptr_mbx_full->AddMonomer(xyz, names, "he", is_local);
+  ptr_mbx_full->AddMolecule(molec);
+
+  mbx_num_atoms_full++;
 	
       } else if(strcmp("co2",mol_names[mtype]) == 0) {
 
@@ -1381,8 +1553,57 @@ void FixMBX::mbx_init_full()
 	ptr_mbx_full->AddMonomer(xyz, names, "co2", is_local);
 	ptr_mbx_full->AddMolecule(molec);
 
-	mbx_num_atoms_full++;
+	mbx_num_atoms_full += 3;
 	  
+      } else if(strcmp("ch4",mol_names[mtype]) == 0) {
+
+  // add CO2 molecule
+
+  tagint anchor = tag_full[i];
+  names.push_back("C");
+  xyz.push_back(x_full[i][0]);
+  xyz.push_back(x_full[i][1]);
+  xyz.push_back(x_full[i][2]);
+
+  int ii = atom_map_full[anchor+1];
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+
+  names.push_back("H");
+  xyz.push_back(x_full[ii][0]);
+  xyz.push_back(x_full[ii][1]);
+  xyz.push_back(x_full[ii][2]);
+
+  ii = atom_map_full[anchor+2];
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+
+  names.push_back("H");
+  xyz.push_back(x_full[ii][0]);
+  xyz.push_back(x_full[ii][1]);
+  xyz.push_back(x_full[ii][2]);
+
+  ii = atom_map_full[anchor+3];
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+
+  names.push_back("H");
+  xyz.push_back(x_full[ii][0]);
+  xyz.push_back(x_full[ii][1]);
+  xyz.push_back(x_full[ii][2]);
+
+  ii = atom_map_full[anchor+4];
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+
+  names.push_back("H");
+  xyz.push_back(x_full[ii][0]);
+  xyz.push_back(x_full[ii][1]);
+  xyz.push_back(x_full[ii][2]);
+
+  molec.push_back(nm++);
+
+  ptr_mbx_full->AddMonomer(xyz, names, "ch4", is_local);
+  ptr_mbx_full->AddMolecule(molec);
+
+	mbx_num_atoms_full += 5;
+
       } else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
 	
     } // if(mol_anchor)
@@ -1581,7 +1802,7 @@ void FixMBX::mbx_init_pme()
 	// add chloride ion
 
 	tagint anchor = tag_full[i];
-	names.push_back("Na");
+	names.push_back("Cl");
 	xyz.push_back(x_full[i][0]);
 	xyz.push_back(x_full[i][1]);
 	xyz.push_back(x_full[i][2]);
@@ -1592,6 +1813,23 @@ void FixMBX::mbx_init_pme()
 	ptr_mbx_pme->AddMolecule(molec);
 
 	mbx_num_atoms_pme++;
+
+      } else if(strcmp("he",mol_names[mtype]) == 0) {
+
+  // add chloride ion
+
+  tagint anchor = tag_full[i];
+  names.push_back("He");
+  xyz.push_back(x_full[i][0]);
+  xyz.push_back(x_full[i][1]);
+  xyz.push_back(x_full[i][2]);
+
+  molec.push_back(nm++);
+
+  ptr_mbx_pme->AddMonomer(xyz, names, "he", is_local);
+  ptr_mbx_pme->AddMolecule(molec);
+
+  mbx_num_atoms_pme++;
 	
       } else if(strcmp("co2",mol_names[mtype]) == 0) {
 
@@ -1624,8 +1862,59 @@ void FixMBX::mbx_init_pme()
 	ptr_mbx_pme->AddMonomer(xyz, names, "co2", is_local);
 	ptr_mbx_pme->AddMolecule(molec);
 
-	mbx_num_atoms_pme++;
+	mbx_num_atoms_pme += 3;
 	  
+
+      } else if(strcmp("ch4",mol_names[mtype]) == 0) {
+
+  // add CO2 molecule
+
+  tagint anchor = tag_full[i];
+  names.push_back("C");
+  xyz.push_back(x_full[i][0]);
+  xyz.push_back(x_full[i][1]);
+  xyz.push_back(x_full[i][2]);
+
+  int ii = atom_map_full[anchor+1];
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+
+  names.push_back("H");
+  xyz.push_back(x_full[ii][0]);
+  xyz.push_back(x_full[ii][1]);
+  xyz.push_back(x_full[ii][2]);
+
+  ii = atom_map_full[anchor+2];
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+
+  names.push_back("H");
+  xyz.push_back(x_full[ii][0]);
+  xyz.push_back(x_full[ii][1]);
+  xyz.push_back(x_full[ii][2]);
+
+  ii = atom_map_full[anchor+3];
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+
+  names.push_back("H");
+  xyz.push_back(x_full[ii][0]);
+  xyz.push_back(x_full[ii][1]);
+  xyz.push_back(x_full[ii][2]);
+
+  ii = atom_map_full[anchor+4];
+  if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
+
+  names.push_back("H");
+  xyz.push_back(x_full[ii][0]);
+  xyz.push_back(x_full[ii][1]);
+  xyz.push_back(x_full[ii][2]);
+
+  molec.push_back(nm++);
+
+  ptr_mbx_pme->AddMonomer(xyz, names, "ch4", is_local);
+  ptr_mbx_pme->AddMolecule(molec);
+
+  mbx_num_atoms_pme += 5;
+
+
       } else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
 	
     } // if(mol_anchor)
@@ -1797,6 +2086,14 @@ void FixMBX::mbx_update_xyz()
 
 	indx++;
       }
+      else if(strcmp("he",  mol_names[mtype]) == 0) {
+
+  xyz[indx*3  ] = x[i][0];
+  xyz[indx*3+1] = x[i][1];
+  xyz[indx*3+2] = x[i][2];
+
+  indx++;
+      }
       else if(strcmp("co2", mol_names[mtype]) == 0) {
 	
 	tagint anchor = atom->tag[i];
@@ -1822,6 +2119,44 @@ void FixMBX::mbx_update_xyz()
 	  indx += 3;
 	}
       }
+      else if(strcmp("ch4", mol_names[mtype]) == 0) {
+
+  tagint anchor = atom->tag[i];
+
+  const int ii1 = atom->map(anchor + 1);
+  const int ii2 = atom->map(anchor + 2);
+  const int ii3 = atom->map(anchor + 3);
+  const int ii4 = atom->map(anchor + 4);
+
+  if( (ii1 > -1) && (ii2 > -1) && (ii3 > -1) && (ii4 > -1)) {
+    xyz[indx*3  ] = x[i][0];
+    xyz[indx*3+1] = x[i][1];
+    xyz[indx*3+2] = x[i][2];
+
+    domain->closest_image(x[i], x[ii1], ximage);
+    xyz[indx*3+3] = ximage[0];
+    xyz[indx*3+4] = ximage[1];
+    xyz[indx*3+5] = ximage[2];
+
+    domain->closest_image(x[i], x[ii2], ximage);
+    xyz[indx*3+6] = ximage[0];
+    xyz[indx*3+7] = ximage[1];
+    xyz[indx*3+8] = ximage[2];
+
+    domain->closest_image(x[i], x[ii3], ximage);
+    xyz[indx*3+9] = ximage[0];
+    xyz[indx*3+10] = ximage[1];
+    xyz[indx*3+11] = ximage[2];
+
+    domain->closest_image(x[i], x[ii4], ximage);
+    xyz[indx*3+12] = ximage[0];
+    xyz[indx*3+13] = ximage[1];
+    xyz[indx*3+14] = ximage[2];
+
+    indx += 5;
+
+      }
+    }
 
     } // if(mol_anchor)
 
@@ -1942,6 +2277,15 @@ void FixMBX::mbx_update_xyz_local()
 	indx++;
 	m++;
       }
+      else if(strcmp("he",  mol_names[mtype]) == 0) {
+
+  xyz[indx*3  ] = x[i][0];
+  xyz[indx*3+1] = x[i][1];
+  xyz[indx*3+2] = x[i][2];
+
+  indx++;
+  m++;
+      }
       else if(strcmp("co2", mol_names[mtype]) == 0) {
 	
 	tagint anchor = atom->tag[i];
@@ -1964,6 +2308,42 @@ void FixMBX::mbx_update_xyz_local()
 	
 	indx += 3;
 	m++;
+          }
+      else if(strcmp("ch4", mol_names[mtype]) == 0) {
+
+  tagint anchor = atom->tag[i];
+  const int ii1 = atom->map(anchor + 1);
+  const int ii2 = atom->map(anchor + 2);
+  const int ii3 = atom->map(anchor + 3);
+  const int ii4 = atom->map(anchor + 4);
+
+  xyz[indx*3  ] = x[i][0];
+  xyz[indx*3+1] = x[i][1];
+  xyz[indx*3+2] = x[i][2];
+
+  domain->closest_image(x[i], x[ii1], ximage);
+  xyz[indx*3+3] = ximage[0];
+  xyz[indx*3+4] = ximage[1];
+  xyz[indx*3+5] = ximage[2];
+
+  domain->closest_image(x[i], x[ii2], ximage);
+  xyz[indx*3+6] = ximage[0];
+  xyz[indx*3+7] = ximage[1];
+  xyz[indx*3+8] = ximage[2];
+
+  domain->closest_image(x[i], x[ii3], ximage);
+  xyz[indx*3+9] = ximage[0];
+  xyz[indx*3+10] = ximage[1];
+  xyz[indx*3+11] = ximage[2];
+
+  domain->closest_image(x[i], x[ii4], ximage);
+  xyz[indx*3+12] = ximage[0];
+  xyz[indx*3+13] = ximage[1];
+  xyz[indx*3+14] = ximage[2];
+
+  indx += 5;
+  m++;
+
       }
 
     } // if(mol_anchor)
@@ -2082,6 +2462,14 @@ void FixMBX::mbx_update_xyz_full()
 
 	indx++;
       }
+      else if(strcmp("he", mol_names[mtype]) == 0) {
+
+  xyz[indx*3  ] = x_full[i][0];
+  xyz[indx*3+1] = x_full[i][1];
+  xyz[indx*3+2] = x_full[i][2];
+
+  indx++;
+      }
       else if(strcmp("co2", mol_names[mtype]) == 0) {
 	
 	tagint anchor = tag_full[i];
@@ -2101,6 +2489,37 @@ void FixMBX::mbx_update_xyz_full()
 	xyz[indx*3+8] = x_full[ii][2];
 
 	indx += 3;
+     }
+      else if(strcmp("ch4", mol_names[mtype]) == 0) {
+
+  tagint anchor = tag_full[i];
+
+  xyz[indx*3  ] = x_full[i][0];
+  xyz[indx*3+1] = x_full[i][1];
+  xyz[indx*3+2] = x_full[i][2];
+
+  int ii = atom_map_full[anchor + 1];
+  xyz[indx*3+3] = x_full[ii][0];
+  xyz[indx*3+4] = x_full[ii][1];
+  xyz[indx*3+5] = x_full[ii][2];
+
+  ii = atom_map_full[anchor + 2];
+  xyz[indx*3+6] = x_full[ii][0];
+  xyz[indx*3+7] = x_full[ii][1];
+  xyz[indx*3+8] = x_full[ii][2];
+
+  ii = atom_map_full[anchor + 3];
+  xyz[indx*3+9] = x_full[ii][0];
+  xyz[indx*3+10] = x_full[ii][1];
+  xyz[indx*3+11] = x_full[ii][2];
+
+  ii = atom_map_full[anchor + 4];
+  xyz[indx*3+12] = x_full[ii][0];
+  xyz[indx*3+13] = x_full[ii][1];
+  xyz[indx*3+14] = x_full[ii][2];
+
+  indx += 5;
+
       }
 
     } // if(mol_anchor)
@@ -2213,7 +2632,35 @@ void FixMBX::mbx_update_xyz_pme()
 
 	indx++;
       }
+      else if(strcmp("he", mol_names[mtype]) == 0) {
+
+  xyz[indx*3  ] = x_full[i][0];
+  xyz[indx*3+1] = x_full[i][1];
+  xyz[indx*3+2] = x_full[i][2];
+
+  indx++;
+      }
       else if(strcmp("co2", mol_names[mtype]) == 0) {
+
+  tagint anchor = tag_full[i];
+
+  xyz[indx*3  ] = x_full[i][0];
+  xyz[indx*3+1] = x_full[i][1];
+  xyz[indx*3+2] = x_full[i][2];
+
+  int ii = atom_map_full[anchor + 1];
+  xyz[indx*3+3] = x_full[ii][0];
+  xyz[indx*3+4] = x_full[ii][1];
+  xyz[indx*3+5] = x_full[ii][2];
+
+  ii = atom_map_full[anchor + 2];
+  xyz[indx*3+6] = x_full[ii][0];
+  xyz[indx*3+7] = x_full[ii][1];
+  xyz[indx*3+8] = x_full[ii][2];
+
+  indx += 3;
+      }
+      else if(strcmp("ch4", mol_names[mtype]) == 0) {
 	
 	tagint anchor = tag_full[i];
 
@@ -2231,7 +2678,17 @@ void FixMBX::mbx_update_xyz_pme()
 	xyz[indx*3+7] = x_full[ii][1];
 	xyz[indx*3+8] = x_full[ii][2];
 
-	indx += 3;
+	ii = atom_map_full[anchor + 3];
+	xyz[indx*3+9] = x_full[ii][0];
+	xyz[indx*3+10] = x_full[ii][1];
+	xyz[indx*3+11] = x_full[ii][2];
+
+	ii = atom_map_full[anchor + 4];
+	xyz[indx*3+12] = x_full[ii][0];
+	xyz[indx*3+13] = x_full[ii][1];
+	xyz[indx*3+14] = x_full[ii][2];
+
+	indx += 5;
       }
 
     } // if(mol_anchor)

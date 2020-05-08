@@ -175,6 +175,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
         } else if (mon[i] == "ar") {
             sites.push_back(1);
             nat.push_back(1);
+        } else if (mon[i] == "he") {
+            sites.push_back(1);
+            nat.push_back(1);
         } else if (mon[i] == "dummy") {
             sites.push_back(1);
             nat.push_back(1);
@@ -852,6 +855,10 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = 0.0;
         }
+    } else if (mon_id == "he") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv] = 0.0;
+        }
     } else if (mon_id == "ar") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = 0.0;
@@ -988,6 +995,10 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv] = 1.645;
         }
+    } else if (mon_id == "he") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv] = 0.20493754;
+        }
 
     } else if (mon_id == "nh3") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1078,6 +1089,10 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     } else if (mon_id == "ar") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             pol[fst_ind + nv] = 1.645;
+        }
+    } else if (mon_id == "he") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv] = 0.20493754;
         }
 
     } else if (mon_id == "nh3") {
@@ -1183,6 +1198,10 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     } else if (mon_id == "ar") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[fst_ind + nv] = 43.09834;
+        }
+    } else if (mon_id == "he") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[fst_ind + nv] = 4.93437037524;
         }
     } else if (mon_id == "nh3") {
         for (size_t nv = 0; nv < n_mon; nv++) {

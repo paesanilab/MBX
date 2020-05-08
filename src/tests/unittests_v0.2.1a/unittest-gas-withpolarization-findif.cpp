@@ -56,7 +56,7 @@ void run_test(const char *method) {
     elec::Electrostatics elec;
     std::vector<double> box_vectors{};
 
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, true,
                     1E-16, 100, method, box_vectors);
     elec.SetCutoff(12);
     std::vector<double> forces(3 * n_atoms);
@@ -71,11 +71,11 @@ void run_test(const char *method) {
     std::cout << " DoF      Analytic         Numerical       Difference" << std::endl;
     for (int degreeOfFreedom = 0; degreeOfFreedom < 3 * n_atoms; ++degreeOfFreedom) {
         coords[degreeOfFreedom] += stepSize;
-        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
+        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, false,
                         1E-16, 100, method, box_vectors);
         double plusEnergy = elec.GetElectrostatics(ignoredForces);
         coords[degreeOfFreedom] -= 2 * stepSize;
-        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
+        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, false,
                         1E-16, 100, method, box_vectors);
         double minusEnergy = elec.GetElectrostatics(ignoredForces);
         coords[degreeOfFreedom] += stepSize;

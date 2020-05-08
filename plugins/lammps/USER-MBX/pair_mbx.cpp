@@ -577,12 +577,20 @@ void PairMBX::accumulate_f()
 	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
       }
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("co2", mol_names[mtype]) == 0) {
 	na = 3;
 	const int ii1 = atom->map(anchor + 1);
 	const int ii2 = atom->map(anchor + 2);
 	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
+      } else if(strcmp("ch4", mol_names[mtype]) == 0) {
+  na = 5;
+  const int ii1 = atom->map(anchor + 1);
+  const int ii2 = atom->map(anchor + 2);
+  const int ii3 = atom->map(anchor + 3);
+  const int ii4 = atom->map(anchor + 4);
+  if( (ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
       }
 
       if(include_monomer) {
@@ -673,7 +681,9 @@ void PairMBX::accumulate_f_local()
       if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
 
       tagint anchor = atom->tag[i];
       
@@ -767,6 +777,8 @@ void PairMBX::accumulate_f_full()
 	if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
 	else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
 	else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
+	else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
+	else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
 	else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
 	
 	tagint anchor = tag_full[i];
@@ -886,7 +898,9 @@ void PairMBX::accumulate_f_pme()
       if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
       
       tagint anchor = tag_full[i];
       

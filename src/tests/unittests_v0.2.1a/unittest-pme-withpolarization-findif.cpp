@@ -64,7 +64,7 @@ void run_test(const char *method) {
     double grid_density = 2;
     int spline_order = 6;
     double cutoff = 10;
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, true,
                     1E-16, 100, method, box_vectors);
     elec.SetCutoff(cutoff);
     elec.SetEwaldAlpha(alpha);
@@ -82,7 +82,7 @@ void run_test(const char *method) {
     std::cout << " DoF      Analytic         Numerical       Difference" << std::endl;
     for (int degreeOfFreedom = 0; degreeOfFreedom < 3 * n_atoms; ++degreeOfFreedom) {
         coords[degreeOfFreedom] += stepSize;
-        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
+        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, false,
                         1E-16, 100, method, box_vectors);
         elec.SetCutoff(cutoff);
         elec.SetEwaldAlpha(alpha);
@@ -90,7 +90,7 @@ void run_test(const char *method) {
         elec.SetEwaldSplineOrder(spline_order);
         double plusEnergy = elec.GetElectrostatics(ignoredForces);
         coords[degreeOfFreedom] -= 2 * stepSize;
-        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
+        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, false,
                         1E-16, 100, method, box_vectors);
         elec.SetCutoff(cutoff);
         elec.SetEwaldAlpha(alpha);

@@ -23,6 +23,16 @@ elif [ "$1" == "intel" ]; then
   make install
   cd ../
 
+elif [ "$1" == "mpi" ]; then
+  module unload mpi
+  module load intel/mpi
+  rm -rf build install
+  cmake -DUSE_OPENMP=TRUE -DCMAKE_CXX_FLAGS=" -DHAVE_MPI=1 -Wall -qopt-report -fPIC " -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=mpiicpc -DCMAKE_C_COMPILER=mpiicc -H. -Bbuild
+  cd build
+  make -j 8 CXX=mpiicpc CC=mpiicc
+  make install
+  cd ../
+
 elif [ "$1" == "clang" ]; then
   module load clang
   cmake -DUSE_OPENMP=FALSE -DCMAKE_CXX_FLAGS=" -g -Wall -fPIC -O0" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -H. -Bbuild
