@@ -118,18 +118,19 @@ double Repulsion(const double a, const double b, const double* p1, const double*
                 g2[nmon22 + nv] += dz * grad;
 
                 if (virial != 0) {
-
-		    (*virial)[0] -= dx * dx * grad;
-                    (*virial)[1] -= dx * dy * grad;
-                    (*virial)[2] -= dx * dz * grad;
-                    (*virial)[4] -= dy * dy * grad;
-                    (*virial)[5] -= dy * dz * grad;
-                    (*virial)[8] -= dz * dz * grad;
-                    
-                    (*virial)[3] = (*virial)[1];
-                    (*virial)[6] = (*virial)[2];
-                    (*virial)[7] = (*virial)[5];
-
+		  const double vscale = (isls == 1) ? 0.5 : 1.0;
+		  
+		  (*virial)[0] -= dx * dx * grad * vscale;
+		  (*virial)[1] -= dx * dy * grad * vscale;
+		  (*virial)[2] -= dx * dz * grad * vscale;
+		  (*virial)[4] -= dy * dy * grad * vscale;
+		  (*virial)[5] -= dy * dz * grad * vscale;
+		  (*virial)[8] -= dz * dz * grad * vscale;
+                  
+		  (*virial)[3] = (*virial)[1];
+		  (*virial)[6] = (*virial)[2];
+		  (*virial)[7] = (*virial)[5];
+		  
                 }
             }
         }

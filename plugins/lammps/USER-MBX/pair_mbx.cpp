@@ -294,6 +294,8 @@ void PairMBX::compute(int eflag, int vflag)
   double e3g = 0.0;
   double edr = 0.0;
   double edp = 0.0;
+  double eb  = 0.0;
+  double ee  = 0.0;
 
   double v[6];
   
@@ -304,10 +306,15 @@ void PairMBX::compute(int eflag, int vflag)
   MPI_Reduce(&mbx_e3b_ghost, &e3g,  1, MPI_DOUBLE, MPI_SUM, 0, world);
   MPI_Reduce(&mbx_disp_real, &edr,  1, MPI_DOUBLE, MPI_SUM, 0, world);
   MPI_Reduce(&mbx_disp_pme,  &edp,  1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_buck,      &eb,   1, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(&mbx_ele,       &ee,   1, MPI_DOUBLE, MPI_SUM, 0, world);
+
   MPI_Reduce(&virial[0],     &v[0], 6, MPI_DOUBLE, MPI_SUM, 0, world);
 
-  double etot = e1 + e2l + e2g + e3l + e3g + mbx_disp + mbx_buck + mbx_ele;
+  double etot = e1 + e2l + e2g + e3l + e3g + edr + edp + eb + ee;
 
+  printf("(%i)  virial= %f %f %f  %f %f %f\n",me,virial[0],virial[1],virial[2],virial[3],virial[4],virial[5]);
+  
   if(comm->me == 0) {
     printf("mbx_e1b=   %f  Parallel\n",e1);
     printf("mbx_e2b=   %f (%f, %f)  Parallel\n",e2l+e2g, e2l, e2g);

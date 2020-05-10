@@ -83,6 +83,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   
   use_json = 0;
   json_file = NULL;
+  print_settings = 0;
   
   while(iarg < narg) {
     if(strcmp(arg[iarg], "json") == 0) {
@@ -90,6 +91,9 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
       use_json = 1;
       json_file = new char[len];
       strcpy(json_file, arg[iarg]);
+    }
+    else if(strcmp(arg[iarg], "print/settings") == 0) {
+      if(me == 0) print_settings = 1;
     }
     
     iarg++;
@@ -209,7 +213,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     mbxt_count[i] = 0;
   }
 
-  mbx_write_warnings = true;
+  first_step = true;
   
   mbxt_initial_time = MPI_Wtime();
 }
@@ -339,8 +343,8 @@ void FixMBX::setup_post_neighbor()
   //  printf("\n[MBX] Inside setup_post_neighbor()\n");
 
   post_neighbor();
-
-  mbx_write_warnings = false;
+  
+  first_step = false;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -929,6 +933,12 @@ void FixMBX::mbx_init()
   if(use_json) ptr_mbx->SetUpFromJson(json_settings);
   
   ptr_mbx->SetPBC(box);
+
+  if(print_settings && first_step) {
+    std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();
+    if(screen) fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+    if(logfile) fprintf(logfile, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+  }
   
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving mbx_init()\n",me);
@@ -1331,6 +1341,12 @@ void FixMBX::mbx_init_local()
   
   ptr_mbx_local->SetPBC(box);
   
+  if(print_settings && first_step) {
+    std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
+    if(screen) fprintf(screen, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());
+    if(logfile) fprintf(logfile, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());
+  }
+  
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving mbx_init_local()\n",me);
 #endif
@@ -1650,6 +1666,12 @@ void FixMBX::mbx_init_full()
   
   if(use_json) ptr_mbx_full->SetUpFromJson(json_settings);
 
+  if(print_settings && first_step) {
+    std::string mbx_settings_ = ptr_mbx_full->GetCurrentSystemConfig();
+    if(screen) fprintf(screen, "\n[MBX] 'Full' Settings\n%s\n", mbx_settings_.c_str());
+    if(logfile) fprintf(logfile, "\n[MBX] 'Full' Settings\n%s\n", mbx_settings_.c_str());
+  }
+  
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving mbx_init_full()\n",me);
 #endif
@@ -1931,7 +1953,7 @@ void FixMBX::mbx_init_pme()
   int err = ptr_mbx_pme->TestMPI();
   if(err == -1) error->one(FLERR, "[MBX] MPI not initialized\n");
   else if(err == -2) {
-    if(me == 0 && mbx_write_warnings)
+    if(me == 0 && first_step)
       error->warning(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
     mbx_mpi_enabled = false;
   }
@@ -1972,6 +1994,12 @@ void FixMBX::mbx_init_pme()
   if(use_json) ptr_mbx_pme->SetUpFromJson(json_settings);
 
   ptr_mbx_pme->SetPBC(box);
+  
+  if(print_settings && first_step) {
+    std::string mbx_settings_ = ptr_mbx_pme->GetCurrentSystemConfig();
+    if(screen) fprintf(screen, "\n[MBX] 'PME' Settings\n%s\n", mbx_settings_.c_str());
+    if(logfile) fprintf(logfile, "\n[MBX] 'PME' Settings\n%s\n", mbx_settings_.c_str());
+  }
   
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving mbx_init_pme()\n",me);
