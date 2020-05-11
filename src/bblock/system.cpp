@@ -1506,6 +1506,7 @@ double System::Get1B(bool do_grads) {
     size_t curr_mon_type = 0;
     size_t current_coord = 0;
     double e1b = 0.0;
+    enforce_ttm_.clear();
 
     size_t indx = 0;
 
@@ -1564,6 +1565,8 @@ double System::Get1B(bool do_grads) {
 
             istart = iend;
         }
+
+        if (!allMonGood_) enforce_ttm_.push_back(mon_type_count_[k].first);
 
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
@@ -1734,11 +1737,18 @@ double System::Get2B(bool do_grads, bool use_ghost) {
                     std::sort(v1.begin(), v1.end());
                     std::sort(v2.begin(), v2.end());
 
+
                     if (v1 == v2) {
                         use_poly = false;
                         break;
                     }
+
                 }
+               
+                bool m1_is_bad = std::find(enforce_ttm_.begin(), enforce_ttm_.end(), m1) !=  enforce_ttm_.end();
+                bool m2_is_bad = std::find(enforce_ttm_.begin(), enforce_ttm_.end(), m2) !=  enforce_ttm_.end();
+
+                if (m1_is_bad || m2_is_bad) use_poly = false;
 
                 if (use_poly) {
                     if (do_grads) {
@@ -2473,7 +2483,17 @@ double System::GetBuckingham(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, do_grads, cutoff2b_, box_);
+    std::vector<std::pair<std::string, std::string> > buck_pairs_cp = buck_pairs_;
+
+    for (size_t i = 0; i < enforce_ttm_.size(); i++) {
+        for (size_t j = 0; j < mon_type_count_.size() ; j++) {
+            buck_pairs_cp.push_back(std::make_pair(enforce_ttm_[i],mon_type_count_[j].first));
+
+        }
+    }
+
+    buckinghamE_.SetNewParameters(xyz_real, buck_pairs_cp, do_grads, cutoff2b_, box_);
+    //buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = buckinghamE_.GetRepulsion(real_grad, &virial_, use_ghost);
 

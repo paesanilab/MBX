@@ -1220,6 +1220,11 @@ to be the same.
     std::vector<std::vector<std::string> > ignore_2b_poly_;
 
     /**
+     * This vector will have the monomers for which the polynomials wont be calculated due to a hig deformation. This includes 2b and 3b that involve the monomer.
+     */
+    std::vector<std::string> enforce_ttm_;
+
+    /**
      * This vector of vectors contains the trimers of monomer types that will be ignored when
      * when calculating the 3b polynomials.
      */
