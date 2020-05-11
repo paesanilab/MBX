@@ -2,6 +2,17 @@
 
 set(PN MBX)
 
+get_filename_component(MBX_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(MBX_ORIG_CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${MBX_CMAKE_DIR})
+
+# find MBX's FFTW dependency
+include(CMakeFindDependencyMacro)
+find_dependency(FFTW)
+
+set(CMAKE_MODULE_PATH ${MBX_ORIG_CMAKE_MODULE_PATH})
+
+
 if(NOT TARGET ${PN}::mbxlib)
     include("${CMAKE_CURRENT_LIST_DIR}/${PN}Targets.cmake")
 endif()

@@ -1,3 +1,6 @@
+# same version as top-level project
+cmake_minimum_required(VERSION 3.12.4 FATAL_ERROR)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake)
 find_package(FFTW REQUIRED)
 
@@ -36,7 +39,7 @@ add_library(mbxlib STATIC $<TARGET_OBJECTS:bblock>
 
 target_link_libraries(mbxlib PUBLIC fftw::fftw)
 
-set(PN ${PROJECT_NAME})
+set(PN MBX)
 install(EXPORT "${PN}Targets"
         NAMESPACE "${PN}::"
         DESTINATION ${CMAKECONFIG_INSTALL_DIR})

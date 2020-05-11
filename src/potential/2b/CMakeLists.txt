@@ -37,3 +37,4 @@ set(TWOB_SOURCES energy2b.cpp
 
 add_library(2b OBJECT ${TWOB_SOURCES})
 target_include_directories(2b PRIVATE ${CMAKE_SOURCE_DIR}) 
+set_property(TARGET 2b PROPERTY POSITION_INDEPENDENT_CODE TRUE)
