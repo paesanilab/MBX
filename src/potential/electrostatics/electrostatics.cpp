@@ -544,8 +544,9 @@ void Electrostatics::CalculatePermanentElecField() {
     }
 
 #if HAVE_MPI == 1
-    MPI_Allreduce(MPI_IN_PLACE, phi_.data(), phi_.size(), MPI_DOUBLE, MPI_SUM, world_);
-    MPI_Allreduce(MPI_IN_PLACE, Efq_.data(), Efq_.size(), MPI_DOUBLE, MPI_SUM, world_);
+    MPI_Allreduce(MPI_IN_PLACE, phi_.data(),    phi_.size(), MPI_DOUBLE, MPI_SUM, world_);
+    MPI_Allreduce(MPI_IN_PLACE, Efq_.data(),    Efq_.size(), MPI_DOUBLE, MPI_SUM, world_);
+    MPI_Allreduce(MPI_IN_PLACE, virial_.data(), virial_.size(), MPI_DOUBLE, MPI_SUM, world_);
     double time2 = MPI_Wtime();
 #endif
     
