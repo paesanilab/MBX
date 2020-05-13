@@ -658,7 +658,7 @@ void System::Initialize() {
     // TODO modify c6_long_range
     if(mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
-    buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
+    buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, enforce_ttm_for_idx_, islocal_, true, box_);
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -1295,9 +1295,9 @@ double System::Energy(bool do_grads) {
 
     // If monomers are too distorted, skip 2b and 3b calculation
     // Return only
-    if (!allMonGood_) {
-        return e1b;
-    }
+    //if (!allMonGood_) {
+    //    return e1b;
+    //}
 
 #ifdef TIMING
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -1505,8 +1505,9 @@ double System::Get1B(bool do_grads) {
     // Loop overall the monomers and get their energy
     size_t curr_mon_type = 0;
     size_t current_coord = 0;
+    size_t current_mon = 0;
     double e1b = 0.0;
-    enforce_ttm_.clear();
+    enforce_ttm_for_idx_.clear();
 
     size_t indx = 0;
 
@@ -1521,10 +1522,17 @@ double System::Get1B(bool do_grads) {
         }
 
         while (istart < mon_type_count_[k].second) {
+            std::vector<size_t> mon_idxs;
             iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
+            std::vector<size_t> indexes;
             size_t nmon = 0;
-            for (size_t i = istart; i < iend; i++)
-                if (islocal_[indx + i]) nmon++;
+            for (size_t i = istart; i < iend; i++) {
+                if (islocal_[indx + i]) {
+                   mon_idxs.push_back(current_mon);
+                   nmon++;
+                }
+                current_mon++;  
+            }
 
             size_t ncoord = 3 * nat_[curr_mon_type] * nmon;
             std::string mon = mon_type_count_[k].first;
@@ -1546,7 +1554,7 @@ double System::Get1B(bool do_grads) {
 
             // Get energy of the chunk as function of monomer
             if (do_grads) {
-                e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, allMonGood_, &virial_);
+                e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, indexes, &virial_);
 
                 // Reorganize gradients
                 size_t ii = 0;
@@ -1560,13 +1568,15 @@ double System::Get1B(bool do_grads) {
                     }
                 }
             } else {
-                e1b += e1b::get_1b_energy(mon, nmon, xyz, allMonGood_);
+                e1b += e1b::get_1b_energy(mon, nmon, xyz, indexes);
+            }
+
+            for (size_t i = 0; i < indexes.size(); i++) {
+                enforce_ttm_for_idx_.push_back(mon_idxs[indexes[i]]);
             }
 
             istart = iend;
         }
-
-        if (!allMonGood_) enforce_ttm_.push_back(mon_type_count_[k].first);
 
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
@@ -1687,14 +1697,20 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         size_t i = 0;
         size_t nd = 0;
         size_t nd_tot = 0;
+        size_t nd_bad = 0;
 
         // Loop over all the dimers
         while (2 * nd_tot < dimers.size()) {
-            i = (nd_tot + nd) * 2;
+            i = (nd_tot + nd_bad + nd) * 2;
+            if (i  >= dimers.size()) break;
+            bool m1_is_good = true;
+            bool m2_is_good = true;
             // Check if we are still in the same type of pair
             // We will pas the entire batch in the 2b calculator, but they need
             // to be the same pair (e.g., h2o-h2o, h2o-i, cl-na...)
-            if (monomers_[dimers[i]] == m1 && monomers_[dimers[i + 1]] == m2) {
+            if (std::find(enforce_ttm_for_idx_.begin(), enforce_ttm_for_idx_.end(), dimers[i]) !=  enforce_ttm_for_idx_.end()) m1_is_good = false;
+            if (std::find(enforce_ttm_for_idx_.begin(), enforce_ttm_for_idx_.end(), dimers[i+1]) !=  enforce_ttm_for_idx_.end()) m2_is_good = false;
+            if (monomers_[dimers[i]] == m1 && monomers_[dimers[i + 1]] == m2 && m1_is_good && m2_is_good) {
                 // Push the coordinates
                 for (size_t j = 0; j < 3 * nat_[dimers[i]]; j++) {
                     xyz1.push_back(xyz_[3 * first_index_[dimers[i]] + j]);
@@ -1705,13 +1721,15 @@ double System::Get2B(bool do_grads, bool use_ghost) {
                     grad2.push_back(0.0);
                 }
                 nd++;
+
             }
+            if (!m1_is_good || !m2_is_good) nd_bad++;
 
             // If one of the monomers is different as the previous one
             // since dimers are also ordered, means that no more dimers of that
             // type exist. Thus, do calculation, update m? and clear xyz
             if (monomers_[dimers[i]] != m1 || monomers_[dimers[i + 1]] != m2 || i == dimers.size() - 2 ||
-                nd == maxNDimEval_) {
+                nd == maxNDimEval_ || !m1_is_good || !m2_is_good) {
                 if (nd == 0) {
                     xyz1.clear();
                     xyz2.clear();
@@ -1745,11 +1763,6 @@ double System::Get2B(bool do_grads, bool use_ghost) {
 
                 }
                
-                bool m1_is_bad = std::find(enforce_ttm_.begin(), enforce_ttm_.end(), m1) !=  enforce_ttm_.end();
-                bool m2_is_bad = std::find(enforce_ttm_.begin(), enforce_ttm_.end(), m2) !=  enforce_ttm_.end();
-
-                if (m1_is_bad || m2_is_bad) use_poly = false;
-
                 if (use_poly) {
                     if (do_grads) {
                         // POLYNOMIALS
@@ -1779,8 +1792,9 @@ double System::Get2B(bool do_grads, bool use_ghost) {
                 }
 
                 // Update loop variables and clear other temporary variable
-                nd_tot += nd;
+                nd_tot += nd + nd_bad;
                 nd = 0;
+                nd_bad = 0;
                 xyz1.clear();
                 xyz2.clear();
                 grad1.clear();
@@ -2483,16 +2497,7 @@ double System::GetBuckingham(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    std::vector<std::pair<std::string, std::string> > buck_pairs_cp = buck_pairs_;
-
-    for (size_t i = 0; i < enforce_ttm_.size(); i++) {
-        for (size_t j = 0; j < mon_type_count_.size() ; j++) {
-            buck_pairs_cp.push_back(std::make_pair(enforce_ttm_[i],mon_type_count_[j].first));
-
-        }
-    }
-
-    buckinghamE_.SetNewParameters(xyz_real, buck_pairs_cp, do_grads, cutoff2b_, box_);
+    buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, enforce_ttm_for_idx_, do_grads, cutoff2b_, box_);
     //buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = buckinghamE_.GetRepulsion(real_grad, &virial_, use_ghost);

@@ -36,7 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace e1b {
 
-double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, bool &good) {
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<size_t> &bad_idxs) {
     std::vector<double> energies;
     // Look for the proper call to energy depending on the monomer id
     if (mon1 == "h2o") {
@@ -62,14 +62,14 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, bool
     double e = 0.0;
     for (int i = 0; i < nm; i++) {
         e += energies[i];
-        if (energies[i] > EMAX1B) good = false;
+        if (energies[i] > EMAX1B) bad_idxs.push_back(i) ;
     }
 
     // Return energy
     return e;
 }
 
-double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, bool &good, std::vector<double> *virial) {
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, std::vector<size_t> &bad_idxs, std::vector<double> *virial) {
     std::vector<double> energies;
     // Look for the proper call to energy depending on the monomer id
     if (mon1 == "h2o") {
@@ -95,7 +95,7 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
     double e = 0.0;
     for (int i = 0; i < nm; i++) {
         e += energies[i];
-        if (energies[i] > EMAX1B) good = false;
+        if (energies[i] > EMAX1B) bad_idxs.push_back(i);
     }
 
     // Return energy
