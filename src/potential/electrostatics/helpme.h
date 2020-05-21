@@ -3850,7 +3850,7 @@ class PMEInstance {
             workSpace1_ = helpme::vector<Complex>(scratchSize);
             workSpace2_ = helpme::vector<Complex>(scratchSize);
 #if HAVE_MKL
-            mkl_set_num_threads(nThreads_);
+	    mkl_set_num_threads(nThreads_);
 #endif
         }
     }
