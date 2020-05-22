@@ -74,6 +74,7 @@ class Dispersion {
   
     double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
     double GetDispersionPME(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
+    double GetDispersionPMElocal(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
 
     void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
@@ -105,11 +106,19 @@ class Dispersion {
      * @param[in] cutoff New cutoff value
      */
     void SetCutoff(double cutoff);
+  
+    /**
+     * Sets global box dimensions for PME solver; does not alter original PBC settings
+     * @param[in] box is a 9 component vector of double with
+     * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
+     */
+    void SetBoxPMElocal(std::vector<double> box);
 
    private:
     void ReorderData();
     void CalculateDispersion(bool use_ghost = 0);
     void CalculateDispersionPME(bool use_ghost = 0);
+    void CalculateDispersionPMElocal(bool use_ghost = 0);
 
     // System xyz, not ordered XYZ. xyzxyz...(mon1)xyzxyz...(mon2) ...
     std::vector<double> sys_xyz_;
@@ -117,6 +126,8 @@ class Dispersion {
     std::vector<double> xyz_;
     // local/ghost descriptor for monomers
     std::vector<size_t> islocal_;
+    // local/ghost descriptor for atoms
+    std::vector<size_t> islocal_atom_;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
@@ -155,6 +166,8 @@ class Dispersion {
     std::vector<double> box_;
     // inverted box of the system
     std::vector<double> box_inverse_;
+    // box of the domain-decomposed system
+    std::vector<double> box_PMElocal_;
     // use pbc in the electrostatics calculation
     bool use_pbc_;
     // dispersion cutoff

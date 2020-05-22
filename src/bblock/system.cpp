@@ -2382,12 +2382,35 @@ double System::DispersionPME(bool do_grads, bool use_ghost) {
 
     energy_ = 0.0;
     if(islocal_.size() > 0) {
-    std::fill(grad_.begin(), grad_.end(), 0.0);
-    std::fill(virial_.begin(),virial_.end(),0.0);
+      std::fill(grad_.begin(), grad_.end(), 0.0);
+      std::fill(virial_.begin(),virial_.end(),0.0);
     }
     SetPBC(box_);
 
     energy_ = GetDispersionPME(do_grads, use_ghost);
+
+    return energy_;
+}
+  
+////////////////////////////////////////////////////////////////////////////////
+
+double System::DispersionPMElocal(bool do_grads, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Dispersion Energy calculation not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    if(islocal_.size() > 0) {
+      std::fill(grad_.begin(), grad_.end(), 0.0);
+      std::fill(virial_.begin(),virial_.end(),0.0);
+    }
+    SetPBC(box_);
+
+    energy_ = GetDispersionPMElocal(do_grads, use_ghost);
 
     return energy_;
 }
@@ -2585,6 +2608,45 @@ double System::GetDispersion(bool do_grads, bool use_ghost) {
     return e;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+  double System::GetDispersionPMElocal(bool do_grads, bool use_ghost) {
+    std::vector<double> xyz_real(3 * numat_);
+
+    size_t count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i] * 3 + j];
+        }
+        count += 3 * nat_[i];
+    }
+
+    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    std::vector<double> real_grad(3 * numat_, 0.0);
+    double e = dispersionE_.GetDispersionPMElocal(real_grad, &virial_, use_ghost);
+
+    count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            grad_[first_index_[i] * 3 + j] += real_grad[count + j];
+        }
+        count += 3 * nat_[i];
+    }
+    return e;
+}
+  
+////////////////////////////////////////////////////////////////////////////////
+  
+void System::SetBoxPMElocal(std::vector<double> box) {
+  // Check that the box has 0 or 9 components
+  if (box.size() != 9 && box.size() != 0) {
+    std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
+    throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+  
+  dispersionE_.SetBoxPMElocal(box);
+}
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetBuckingham(bool do_grads, bool use_ghost) {
