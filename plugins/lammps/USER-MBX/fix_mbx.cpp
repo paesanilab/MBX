@@ -2178,28 +2178,27 @@ void FixMBX::mbx_update_xyz_local()
   // update if box changes
   // need to update box passed to PME solver
 
-  // if(domain->box_change) {
-    
-  //   std::vector<double> box;
+  if(domain->box_change) {
+    std::vector<double> box;
 
-  //   if(!domain->nonperiodic) {
+    if(!domain->nonperiodic) {
     
-  //     box = std::vector<double>(9,0.0);
+      box = std::vector<double>(9,0.0);
       
-  //     box[0] = domain->xprd;
+      box[0] = domain->xprd;
       
-  //     box[3] = domain->xy;
-  //     box[4] = domain->yprd;
+      box[3] = domain->xy;
+      box[4] = domain->yprd;
       
-  //     box[6] = domain->xz;
-  //     box[7] = domain->yz;
-  //     box[8] = domain->zprd;
+      box[6] = domain->xz;
+      box[7] = domain->yz;
+      box[8] = domain->zprd;
       
-  //   } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
-  //     error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
+    } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
+      error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
   
-  //   ptr_mbx->SetPBC(box);
-  // }
+    ptr_mbx_local->SetBoxPMElocal(box);
+  }
 
   // update coordinates
   
@@ -2224,8 +2223,6 @@ void FixMBX::mbx_update_xyz_local()
     if(mol_anchor[i] && mol_local[i]) {
 
       const int mtype = mol_type[i];
-
-      //      printf("i= %i  mol_type= %i\n",i,mol_type[i]);
       
       int na = 0;
       if(strcmp("h2o", mol_names[mtype]) == 0) {
@@ -2300,7 +2297,7 @@ void FixMBX::mbx_update_xyz_local()
 	
 	indx += 3;
 	m++;
-          }
+      }
       else if(strcmp("ch4", mol_names[mtype]) == 0) {
 
 	tagint anchor = atom->tag[i];
@@ -2418,6 +2415,30 @@ void FixMBX::mbx_update_xyz_full()
       const int mtype = mol_type_full[i];
 
       int na = 0;
+#if 1
+      if(     strcmp("h2o", mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
+	
+      tagint anchor = tag_full[i];
+      
+      xyz[indx*3  ] = x_full[i][0];
+      xyz[indx*3+1] = x_full[i][1];
+      xyz[indx*3+2] = x_full[i][2];
+
+      for(int j=1; j<na; ++j) {
+	int ii = atom_map_full[anchor + j];
+	int jndx = 3 * j;
+	xyz[indx*3 + jndx  ] = x_full[ii][0];
+	xyz[indx*3 + jndx+1] = x_full[ii][1];
+	xyz[indx*3 + jndx+2] = x_full[ii][2];
+      }
+
+      indx += na;
+#else
       if(strcmp("h2o", mol_names[mtype]) == 0) {
 	
 	tagint anchor = tag_full[i];
@@ -2510,9 +2531,9 @@ void FixMBX::mbx_update_xyz_full()
 	xyz[indx*3+13] = x_full[ii][1];
 	xyz[indx*3+14] = x_full[ii][2];
 	
-	indx += 5;
-	
+	indx += 5;	
       }
+#endif
 
     } // if(mol_anchor)
 
@@ -2588,6 +2609,30 @@ void FixMBX::mbx_update_xyz_pme()
       const int mtype = mol_type_full[i];
 
       int na = 0;
+#if 1
+      if(     strcmp("h2o", mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
+      else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
+	
+      tagint anchor = tag_full[i];
+      
+      xyz[indx*3  ] = x_full[i][0];
+      xyz[indx*3+1] = x_full[i][1];
+      xyz[indx*3+2] = x_full[i][2];
+
+      for(int j=1; j<na; ++j) {
+	int ii = atom_map_full[anchor + j];
+	int jndx = 3 * j;
+	xyz[indx*3 + jndx  ] = x_full[ii][0];
+	xyz[indx*3 + jndx+1] = x_full[ii][1];
+	xyz[indx*3 + jndx+2] = x_full[ii][2];
+      }
+
+      indx += na;
+#else
       if(strcmp("h2o", mol_names[mtype]) == 0) {
 	
 	tagint anchor = tag_full[i];
@@ -2682,6 +2727,7 @@ void FixMBX::mbx_update_xyz_pme()
 
 	indx += 5;
       }
+#endif
 
     } // if(mol_anchor)
 
