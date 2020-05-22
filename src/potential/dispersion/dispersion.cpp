@@ -796,10 +796,6 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     // override settings if ghost particles (big assumption?)
     // if calling this function, then shouldn't need to check this
     //    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
-
-    // hard-code box
-
-    //    box_PMElocal_ = {20.0, 0.0, 0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 20.0};
     
     //    if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
@@ -821,8 +817,6 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 	// Zero property of particles outside local region
 
 	// proc grid order hard-coded (as above) for ZYX NodeOrder
-
-	//	std::cout << "(" << me << ")  MBX proc_grid__= " << proc_grid_x_ << " " << proc_grid_y_ << " " << proc_grid_z_ << std::endl;
 	
 	int proc_x = me % proc_grid_x_;
 	int proc_y = (me % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
@@ -854,13 +848,6 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
 	const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
 
-	 // for(int j=0; j<num_procs; ++j) {
-	 //   if(j == me) {
-	
-	     // std::cout << "(" << me << ")  MBX proc_= " << proc_x << " " << proc_y << " " << proc_z <<
-	     //   "   lo/hi= " << xlo << " " << xhi << " " << ylo << " " << yhi << " " << zlo << " " << zhi << std::endl;
-	    
-	int count = 0;
 	for(int i=0; i<natoms_; ++i) {
 	  double x = coords(i,0);
 	  double y = coords(i,1);
@@ -872,15 +859,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 	  if(z <= zlo || z > zhi) local = false;
 	  
 	  if(!local) sys_c6_long_range_local_[i] = 0.0;
-	  // else {
-	  // 	std::cout << "indx= " << count << "  i = " << i << "  xyz= " << x << " " << y << " " << z << std::endl;
-	  // 	count++;
-	  // }
 	}
-	
-	//}
-	//   MPI_Barrier(world_);
-	// }
 	
 	//auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
         auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
@@ -889,18 +868,6 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
         auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
         std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
         double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
-
-	// for(int j=0; j<num_procs; ++j) {
-
-	//   if(me == j) {
-	//     for(int i=0; i<natoms_; ++i) {
-	//       std::cout << "(" << me << ") sys_xyz_= " << coords(i,0) << " " << coords(i,1) << " " << coords(i,2) <<
-	// 	"  c6= " << params(i,0) << std::endl;
-	//     }
-	//   }
-	//   MPI_Barrier(world_);
-
-	// }
 	
         // get virial
         if (calc_virial_) {
@@ -937,74 +904,18 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
             fi_mon += nmon;
             fi_sites += nmon * ns;
         }
-
-	// only include particles within local sub-domain
-	/*	
-	xlo =  proc_x    * dx;
-	xhi = (proc_x+1) * dx;
-	
-	ylo =  proc_y    * dy;
-	yhi = (proc_y+1) * dy;
-	
-	zlo =  proc_z    * dz;
-	zhi = (proc_z+1) * dz;
-	
-	for(int i=0; i<natoms_; ++i) {
-	  double x = coords(i,0);
-	  double y = coords(i,1);
-	  double z = coords(i,2);
-
-	  bool local = true;
-	  if(x <= xlo || x > xhi) local = false;
-	  if(y <= ylo || y > yhi) local = false;
-	  if(z <= zlo || z > zhi) local = false;
-	
-	  if(!local) sys_c6_long_range_local_[i] = 0.0;
-	  // else {
-	  //   std::cout << "i = " << i << "  xyz= " << x << " " << y << " " << z << std::endl;
-	  // }
-	}
-	*/
 	
         // The Ewald self energy
         double prefac = std::pow(ewald_alpha_, 6) / 12.0;
         double self_energy = 0;
-	//        for (const auto &c6 : sys_c6_long_range_) {
-        // for (const auto &c6 : sys_c6_long_range_local_) {
-        //     self_energy += c6 * c6 * prefac;
-        // }
-	// count = 0;
-	// for(int j=0; j<num_procs; ++j) {
-	//   if(j == me) {
 
-	for(int i=0; i<natoms_; ++i) {
+	for(int i=0; i<natoms_; ++i)
 	  self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
-	  // if(islocal_atom_[i])
-	  // 	std::cout << "(" << me << ") i= " << i << "  c6= " << c6_long_range_[i] <<
-	  // 	  "  self_energy= " << self_energy*prefac << std::endl;
-	}
-	//   }
-	//   MPI_Barrier(world_);
-	// }
+	
 	self_energy *= prefac;
-       
+
         disp_energy_ += rec_energy + self_energy;
 
-	// double tot_rec_energy, tot_self_energy;
-	// MPI_Reduce(&rec_energy,  &tot_rec_energy,  1, MPI_DOUBLE, MPI_SUM, 0, world_);
-	// MPI_Reduce(&self_energy, &tot_self_energy, 1, MPI_DOUBLE, MPI_SUM, 0, world_);
-
-	// if(me == 0)
-	//   std::cout << "self_energy= " << tot_self_energy << "  rec_energy= " << tot_rec_energy << std::endl;
-	
-	// for(int j=0; j<num_procs; ++j) {
-	
-	//   if(me == j) {
-	
-	//     std::cout << "(" << me << ")  self_energy= " << self_energy << "  rec_energy= " << rec_energy << std::endl;
-	//   }
-	//   MPI_Barrier(world_);
-	// }
 	//} // if(compute_pme)	
 }
   
