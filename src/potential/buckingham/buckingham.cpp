@@ -383,7 +383,6 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
 }
 
 void Buckingham::CalculateEnforcedRepulsion(bool use_ghost) {
-    rep_energy_ = 0.0;
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP
