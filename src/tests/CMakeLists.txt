@@ -10,10 +10,9 @@ add_executable(test_single_point single_point.cpp)
 add_executable(n_single_point n_single_point.cpp)
 add_executable(get_2b_energies_list get_2b_energies_list.cpp)
 add_executable(mbd mbd.cpp)
-add_executable(optimize optimize.cpp)
 
 #foreach(t combinations-test energy_wograd-test energy_wgrad-test io-test timing elec_tools-test getset-test pbc-test sys-test)
-foreach(t combinations-test n_single_point test_single_point energy_wograd-test energy_wgrad-test io-test systools-test getset-test system-test bad_inputs-test get_2b_energies_list mbd optimize)
+foreach(t combinations-test n_single_point test_single_point energy_wograd-test energy_wgrad-test io-test systools-test getset-test system-test bad_inputs-test get_2b_energies_list mbd)
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR}/../external/)
 
