@@ -1,5 +1,5 @@
 MPICXX=mpiicpc
-CXXFLAGS= -Wall -std=c++11  -g
+CXXFLAGS= -Wall -std=c++11 -O2
 
 LIBS = -lmbxlib -fopenmp -lfftw3 -lrepimd
 LIBDIR = -L$(MBX_HOME)/install/lib/static -L../../lib

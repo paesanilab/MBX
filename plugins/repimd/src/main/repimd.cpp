@@ -141,7 +141,6 @@ int main(int argc, char** argv)
     const double wtime_start = MPI_Wtime();
 
     my_pimd pimd;
-
     try {
         // Get Command line arguments
         parse_cmdline(argc, argv);
