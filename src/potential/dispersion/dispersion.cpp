@@ -814,6 +814,10 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
         pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
 
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
+	
+#if 0
 	// Zero property of particles outside local region
 
 	// proc grid order hard-coded (as above) for ZYX NodeOrder
@@ -840,9 +844,6 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 	double zlo =  proc_z    * dz - padding;
 	double zhi = (proc_z+1) * dz + padding;
 
-        // N.B. these do not make copies; they just wrap the memory with some metadata
-        auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-
         std::vector<double> sys_c6_long_range_local_(sys_c6_long_range_.size(),0.0);
 	for(int i=0; i<natoms_; ++i) sys_c6_long_range_local_[i] = sys_c6_long_range_[i];
 
@@ -861,8 +862,11 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 	  if(!local) sys_c6_long_range_local_[i] = 0.0;
 	}
 	
-	//auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
         auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
+#else
+	auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+#endif
+	
         auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
         std::vector<double> dummy_6vec(6,0.0);
         auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);

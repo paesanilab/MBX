@@ -45,7 +45,6 @@ using namespace MathConst;
 PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
 {
   respa_enable = 1;
-  writedata = 1;
   restartinfo = 0;
   no_virial_fdotr_compute = 1;
   
@@ -243,7 +242,8 @@ void PairMBX::compute(int eflag, int vflag)
 #endif
   
   fix_mbx->mbxt_start(MBXT_ELE);
-  mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, true);
+  //  mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+  mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
   fix_mbx->mbxt_stop(MBXT_ELE);
   accumulate_f_pme();
 #endif

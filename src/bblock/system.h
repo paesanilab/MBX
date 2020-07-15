@@ -780,6 +780,7 @@ to be the same.
      */
     double Electrostatics(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPI(bool do_grads, bool use_ghost = 0);
+    double ElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the dispersion energy for the whole system.
@@ -924,6 +925,7 @@ to be the same.
      * @return  Electrostatic energy of the system
      */
     double GetElectrostatics(bool do_grads, bool use_ghost = 0);
+    double GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the dispersion energy.

@@ -745,8 +745,8 @@ void System::InitializePME() {
     // electrostatics class
     // TODO: Do grads set to true for now. Needs to be fixed
     if(mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    //electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
-    //                               islocal_, true, diptol_, maxItDip_, dipole_method_);
+    electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
+			       islocal_, true, diptol_, maxItDip_, dipole_method_);
 
     // TODO Is this OK? Order of GetReal is input order.
     //std::vector<double> xyz_real = GetRealXyz();
@@ -2486,7 +2486,29 @@ double System::ElectrostaticsMPI(bool do_grads, bool use_ghost) {
     
     return energy_;
 }
+  
+double System::ElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Electrostatic Energy calculation ") + std::string("not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+    
+    energy_ = 0.0;
+    if(islocal_.size() > 0) {
+      std::fill(grad_.begin(), grad_.end(), 0.0);
+      std::fill(virial_.begin(), virial_.end(), 0.0);
+    }
 
+    SetPBC(box_);
+    
+    energy_ = GetElectrostaticsMPIlocal(do_grads, use_ghost);
+
+    return energy_;
+}
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetEwaldElectrostatics(double alpha, double grid_density, int spline_order) {
@@ -2552,6 +2574,14 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
 
     return electrostaticE_.GetElectrostatics(grad_, &virial_, use_ghost);
+}
+
+double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+    electrostaticE_.SetDipoleTolerance(diptol_);
+    electrostaticE_.SetDipoleMaxIt(maxItDip_);
+
+    return electrostaticE_.GetElectrostaticsMPIlocal(grad_, &virial_, use_ghost);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2645,6 +2675,7 @@ void System::SetBoxPMElocal(std::vector<double> box) {
     }
   
   dispersionE_.SetBoxPMElocal(box);
+  electrostaticE_.SetBoxPMElocal(box);
 }
   
 ////////////////////////////////////////////////////////////////////////////////

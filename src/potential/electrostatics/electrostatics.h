@@ -133,6 +133,7 @@ class Electrostatics {
      * @return Total electrostatic energy
      */
     double GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial=0, bool use_ghost = 0);
+    double GetElectrostaticsMPIlocal(std::vector<double> &grad, std::vector<double> *virial=0, bool use_ghost = 0);
 
     /**
      * @brief Clears the ASPC history
@@ -228,21 +229,38 @@ class Electrostatics {
      */
     double GetInducedElectrostaticEnergy();
 
-  std::vector<size_t> GetInfoCounts();
-  std::vector<double> GetInfoTimings();
+    std::vector<size_t> GetInfoCounts();
+    std::vector<double> GetInfoTimings();
 
+    /**
+     * Sets global box dimensions for PME solver; does not alter original PBC settings
+     * @param[in] box is a 9 component vector of double with
+     * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
+     */
+    void SetBoxPMElocal(std::vector<double> box);
+  
    private:
-    void CalculatePermanentElecField();
+    void CalculatePermanentElecField(bool use_ghost = 0);
+    void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
     void CalculateDipolesIterative();
-    void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v);
+  void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
+    void ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesCG();
+    void CalculateDipolesCGMPIlocal(bool use_ghost = 0);
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
+    void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesAspc();
     void SetAspcParameters(size_t k);
     void CalculateDipoles();
+    void CalculateDipolesMPIlocal(bool use_ghost = 0);
     void CalculateElecEnergy();
+    void CalculateElecEnergyMPIlocal();
     void CalculateGradients(std::vector<double> &grad);
+    void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
+    void reverse_forward_comm(std::vector<double> &in_v);
+    void reverse_comm(std::vector<double> &in_v);
+				    
     void ReorderData();
 
     // PME solver
@@ -265,6 +283,10 @@ class Electrostatics {
     std::vector<double> xyz_;
     // local/ghost descriptor for monomers
     std::vector<size_t> islocal_;
+    // local/ghost descriptor for atoms
+    std::vector<size_t> islocal_atom_;
+    // local/ghost descriptor for xyz of atoms
+    std::vector<size_t> islocal_atom_xyz_;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
@@ -345,6 +367,9 @@ class Electrostatics {
     std::vector<double> box_;
     // inverse of the unit cell
     std::vector<double> box_inverse_;
+    // box of the domain-decomposed system
+    std::vector<double> box_PMElocal_;
+    std::vector<double> box_inverse_PMElocal_;
     // use pbc in the electrostatics calculation
     bool use_pbc_;
     // electrostatics cutoff
@@ -374,6 +399,8 @@ class Electrostatics {
     size_t proc_grid_y_;
     size_t proc_grid_z_;
 
+    bool first;
+  
     std::vector<size_t> mbxt_ele_count_;
     std::vector<double> mbxt_ele_time_;
 };

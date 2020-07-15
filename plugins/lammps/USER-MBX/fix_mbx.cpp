@@ -36,6 +36,12 @@
 
 //#define _DEBUG
 
+#ifdef _DEBUG
+#include "universe.h"
+#endif
+
+//#define _USE_MBX_FULL
+
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
@@ -249,8 +255,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
 
 FixMBX::~FixMBX()
 {
-  if (copymode) return;
-
   memory->destroy(mol_offset);
   memory->destroy(mol_names);
   memory->destroy(num_mols);
@@ -260,7 +264,7 @@ FixMBX::~FixMBX()
   atom->delete_callback(id,0);
   atom->delete_callback(id,1);
 
-  memory->destroy(mol_local);  
+  memory->destroy(mol_local);
   memory->destroy(mol_type);
   memory->destroy(mol_anchor);
 
@@ -368,6 +372,8 @@ void FixMBX::setup_post_neighbor()
   memory->create(nlocal_disp3,    comm->nprocs,    "fixmbx::nlocal_disp3");
   
   //  printf("\n[MBX] Inside setup_post_neighbor()\n");
+  
+  const int nall = atom->nlocal + atom->nghost;
 
   post_neighbor();
   
@@ -381,18 +387,12 @@ void FixMBX::post_neighbor()
   // setup after neighbor build
 
 #ifdef _DEBUG
-  printf("\n[MBX] (%i) Inside post_neighbor()\n",me);
+  printf("\n[MBX] (%i,%i) Inside post_neighbor()\n",universe->iworld,me);
 #endif
   
   const int nlocal = atom->nlocal;
   const int nghost = atom->nghost;
   const int nall = nlocal + nghost;
-
-  // most of this should be handled by LAMMPS now (grow, exchange, etc...); need to confirm
-  
-  memory->grow(mol_type,   nall, "fixmbx:mol_type");
-  memory->grow(mol_anchor, nall, "fixmbx:mol_anchor");
-  memory->grow(mol_local,  nall, "fixmbx::mol_local");
   
   tagint * tag = atom->tag;
   int * molecule = atom->molecule;
@@ -450,7 +450,9 @@ void FixMBX::post_neighbor()
   // create initial instance of MBX objects
   
   ptr_mbx       = new bblock::System();
-  //ptr_mbx_full  = new bblock::System();
+#ifdef _USE_MBX_FULL
+  ptr_mbx_full  = new bblock::System();
+#endif
   ptr_mbx_local = new bblock::System();
   ptr_mbx_pme   = new bblock::System();
 
@@ -459,12 +461,12 @@ void FixMBX::post_neighbor()
   // -- if anchor-atom is local, then molecule is treated as if local
   
   mbx_init();
-  //  mbx_init_full();
+  mbx_init_full();
   mbx_init_local();
   mbx_init_pme();
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving post_neighbor()\n",me);
+  printf("[MBX] (%i,%i) Leaving post_neighbor()\n",universe->iworld,me);
 #endif
 }
 
@@ -497,7 +499,7 @@ void FixMBX::pre_force(int /*vflag*/)
   // update coordinates in MBX objects
   
   mbx_update_xyz();
-  //  mbx_update_xyz_full();
+  mbx_update_xyz_full();
   mbx_update_xyz_local();
   mbx_update_xyz_pme();
 }
@@ -617,7 +619,8 @@ double FixMBX::memory_usage()
 void FixMBX::grow_arrays(int nmax)
 {
   memory->grow(mol_type,   nmax, "fixmbx:mol_type");
-  memory->grow(mol_anchor, nmax, "fixmbx:mol_type");
+  memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
+  memory->grow(mol_local,  nmax, "fixmbx:mol_local");
 }
 
 /* ----------------------------------------------------------------------
@@ -628,6 +631,7 @@ void FixMBX::copy_arrays(int i, int j, int /*delflag*/)
 {
   mol_type[j]   = mol_type[i];
   mol_anchor[j] = mol_anchor[i];
+  mol_local[j]  = mol_local[i];
 }
 
 /* ----------------------------------------------------------------------
@@ -639,6 +643,7 @@ int FixMBX::pack_exchange(int i, double *buf)
   int n = 0;
   buf[n++] = mol_type[i];
   buf[n++] = mol_anchor[i];
+  buf[n++] = mol_local[i];
   return n;
 }
 
@@ -651,6 +656,7 @@ int FixMBX::unpack_exchange(int nlocal, double *buf)
   int n = 0;
   mol_type[nlocal]   = buf[n++];
   mol_anchor[nlocal] = buf[n++];
+  mol_local[nlocal]  = buf[n++];
   return n;
 }
 
@@ -663,7 +669,7 @@ void FixMBX::mbx_init()
   mbxt_start(MBXT_INIT);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Inside mbx_init()\n",me);
+  printf("[MBX] (%i,%i) Inside mbx_init()\n",universe->iworld,me);
 #endif
   
   const int nlocal = atom->nlocal;
@@ -891,7 +897,7 @@ void FixMBX::mbx_init()
   if(mbx_num_atoms == 0) {
     mbxt_stop(MBXT_INIT);
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_init()\n",me);
+    printf("[MBX] (%i,%i) Leaving mbx_init()\n",universe->iworld,me);
 #endif
     return;
   }
@@ -944,7 +950,7 @@ void FixMBX::mbx_init()
   }
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_init()\n",me);
+  printf("[MBX] (%i,%i) Leaving mbx_init()\n",universe->iworld,me);
 #endif
   
   mbxt_stop(MBXT_INIT);
@@ -959,7 +965,7 @@ void FixMBX::mbx_init_local()
   mbxt_start(MBXT_INIT_LOCAL);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Inside mbx_init_local()\n",me);
+  printf("[MBX] (%i,%i) Inside mbx_init_local()\n",universe->iworld,me);
 #endif
   
   const int nlocal = atom->nlocal;
@@ -1317,7 +1323,7 @@ void FixMBX::mbx_init_local()
   }
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_init_local()\n",me);
+  printf("[MBX] (%i,%i) Leaving mbx_init_local()\n",universe->iworld,me);
 #endif
   
   mbxt_stop(MBXT_INIT_LOCAL);
@@ -1330,10 +1336,12 @@ void FixMBX::mbx_init_local()
 
 void FixMBX::mbx_init_full()
 {
+#ifdef _USE_MBX_FULL
+  
   mbxt_start(MBXT_INIT_FULL);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Inside mbx_init_full()\n",me);
+  printf("[MBX] (%i,%i) Inside mbx_init_full()\n",universe->iworld,me);
 #endif
 
   // gather data from other MPI ranks
@@ -1388,7 +1396,7 @@ void FixMBX::mbx_init_full()
   
   if(comm->me) {
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_init_full()\n",me);
+    printf("[MBX] (%i,%i) Leaving mbx_init_full()\n",universe->iworld,me);
 #endif
     return;
   }
@@ -1640,10 +1648,11 @@ void FixMBX::mbx_init_full()
   }
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_init_full()\n",me);
+  printf("[MBX] (%i,%i) Leaving mbx_init_full()\n",universe->iworld,me);
 #endif
   
   mbxt_stop(MBXT_INIT_FULL);
+#endif
 }
 
 
@@ -1658,7 +1667,7 @@ void FixMBX::mbx_init_pme()
   mbxt_start(MBXT_INIT_PME);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Inside mbx_init_pme()\n",me);
+  printf("[MBX] (%i,%i) Inside mbx_init_pme()\n",universe->iworld,me);
 #endif
 
   // gather data from other MPI ranks
@@ -1907,6 +1916,8 @@ void FixMBX::mbx_init_pme()
     
   } // for(i<nall)
 
+  //  printf("(%i)  mbx_num_atom_pme= %i\n",me,mbx_num_atoms_pme);
+  
   // Setup MPI for MBX library
   
   int * pg = comm->procgrid;
@@ -1966,7 +1977,7 @@ void FixMBX::mbx_init_pme()
   }
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_init_pme()\n",me);
+  printf("[MBX] (%i,%i) Leaving mbx_init_pme()\n",universe->iworld,me);
 #endif
   
   mbxt_stop(MBXT_INIT_PME);
@@ -1982,7 +1993,7 @@ void FixMBX::mbx_update_xyz()
   mbxt_start(MBXT_UPDATE_XYZ);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Inside mbx_update_xyz()\n",me);
+  printf("[MBX] (%i,%i) Inside mbx_update_xyz()\n",universe->iworld,me);
 #endif
 
   // update if box changes
@@ -2157,7 +2168,7 @@ void FixMBX::mbx_update_xyz()
   ptr_mbx->SetRealXyz(xyz);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_update_xyz()\n",me);
+  printf("[MBX] (%i,%i) Leaving mbx_update_xyz()\n",universe->iworld,me);
 #endif
   
   mbxt_stop(MBXT_UPDATE_XYZ);
@@ -2172,7 +2183,7 @@ void FixMBX::mbx_update_xyz_local()
   mbxt_start(MBXT_UPDATE_XYZ_LOCAL);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Inside mbx_update_xyz_local()\n",me);
+  printf("[MBX] (%i,%i) Inside mbx_update_xyz_local()\n",universe->iworld,me);
 #endif
 
   // update if box changes
@@ -2225,6 +2236,7 @@ void FixMBX::mbx_update_xyz_local()
       const int mtype = mol_type[i];
       
       int na = 0;
+#if 1
       if(strcmp("h2o", mol_names[mtype]) == 0) {
 	
 	tagint anchor = atom->tag[i];
@@ -2331,9 +2343,118 @@ void FixMBX::mbx_update_xyz_local()
 	xyz[indx*3+14] = ximage[2];
 	
 	indx += 5;
-	m++;
-	
+	m++;	
       }
+#else
+      if(strcmp("h2o", mol_names[mtype]) == 0) {
+	
+	tagint anchor = atom->tag[i];
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+
+	xyz[indx*3  ] = x[i][0];
+	xyz[indx*3+1] = x[i][1];
+	xyz[indx*3+2] = x[i][2];
+	
+	domain->closest_image(x[i], x[ii1], ximage);
+	xyz[indx*3+3] = ximage[0];
+	xyz[indx*3+4] = ximage[1];
+	xyz[indx*3+5] = ximage[2];
+	
+	domain->closest_image(x[i], x[ii2], ximage);
+	xyz[indx*3+6] = ximage[0];
+	xyz[indx*3+7] = ximage[1];
+	xyz[indx*3+8] = ximage[2];
+	
+	indx += 3;
+	m++;
+      }
+      else if(strcmp("na",  mol_names[mtype]) == 0) {
+
+	xyz[indx*3  ] = x[i][0];
+	xyz[indx*3+1] = x[i][1];
+	xyz[indx*3+2] = x[i][2];
+	
+	indx++;
+	m++;
+      }
+      else if(strcmp("cl",  mol_names[mtype]) == 0) {
+
+	xyz[indx*3  ] = x[i][0];
+	xyz[indx*3+1] = x[i][1];
+	xyz[indx*3+2] = x[i][2];
+	
+	indx++;
+	m++;
+      }
+      else if(strcmp("he",  mol_names[mtype]) == 0) {
+
+	xyz[indx*3  ] = x[i][0];
+	xyz[indx*3+1] = x[i][1];
+	xyz[indx*3+2] = x[i][2];
+	
+	indx++;
+	m++;
+      }
+      else if(strcmp("co2", mol_names[mtype]) == 0) {
+	
+	tagint anchor = atom->tag[i];
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+
+	xyz[indx*3  ] = x[i][0];
+	xyz[indx*3+1] = x[i][1];
+	xyz[indx*3+2] = x[i][2];
+	
+	domain->closest_image(x[i], x[ii1], ximage);
+	xyz[indx*3+3] = ximage[0];
+	xyz[indx*3+4] = ximage[1];
+	xyz[indx*3+5] = ximage[2];
+	
+	domain->closest_image(x[i], x[ii2], ximage);
+	xyz[indx*3+6] = ximage[0];
+	xyz[indx*3+7] = ximage[1];
+	xyz[indx*3+8] = ximage[2];
+	
+	indx += 3;
+	m++;
+      }
+      else if(strcmp("ch4", mol_names[mtype]) == 0) {
+
+	tagint anchor = atom->tag[i];
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	const int ii3 = atom->map(anchor + 3);
+	const int ii4 = atom->map(anchor + 4);
+	
+	xyz[indx*3  ] = x[i][0];
+	xyz[indx*3+1] = x[i][1];
+	xyz[indx*3+2] = x[i][2];
+	
+	domain->closest_image(x[i], x[ii1], ximage);
+	xyz[indx*3+3] = ximage[0];
+	xyz[indx*3+4] = ximage[1];
+	xyz[indx*3+5] = ximage[2];
+	
+	domain->closest_image(x[i], x[ii2], ximage);
+	xyz[indx*3+6] = ximage[0];
+	xyz[indx*3+7] = ximage[1];
+	xyz[indx*3+8] = ximage[2];
+
+	domain->closest_image(x[i], x[ii3], ximage);
+	xyz[indx*3+9] = ximage[0];
+	xyz[indx*3+10] = ximage[1];
+	xyz[indx*3+11] = ximage[2];
+	
+	domain->closest_image(x[i], x[ii4], ximage);
+	xyz[indx*3+12] = ximage[0];
+	xyz[indx*3+13] = ximage[1];
+	xyz[indx*3+14] = ximage[2];
+	
+	indx += 5;
+	m++;	
+      }
+#endif
 
     } // if(mol_anchor)
 
@@ -2342,7 +2463,7 @@ void FixMBX::mbx_update_xyz_local()
   ptr_mbx_local->SetRealXyz(xyz);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_update_xyz_local()\n",me);
+  printf("[MBX] (%i,%i) Leaving mbx_update_xyz_local()\n",universe->iworld,me);
 #endif
   
   mbxt_stop(MBXT_UPDATE_XYZ_LOCAL);
@@ -2354,10 +2475,12 @@ void FixMBX::mbx_update_xyz_local()
 
 void FixMBX::mbx_update_xyz_full()
 {
+#ifdef _USE_MBX_FULL
+  
   mbxt_start(MBXT_UPDATE_XYZ_FULL);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Inside mbx_update_xyz_full()\n",me);
+  printf("[MBX] (%i,%i) Inside mbx_update_xyz_full()\n",universe->iworld,me);
 #endif
 
   // gather coordinates
@@ -2542,10 +2665,11 @@ void FixMBX::mbx_update_xyz_full()
   ptr_mbx_full->SetRealXyz(xyz);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_update_xyz_full()\n",me);
+  printf("[MBX] (%i,%i) Leaving mbx_update_xyz_full()\n",universe->iworld,me);
 #endif
   
   mbxt_stop(MBXT_UPDATE_XYZ_FULL);
+#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -2558,7 +2682,7 @@ void FixMBX::mbx_update_xyz_pme()
   mbxt_start(MBXT_UPDATE_XYZ_PME);
 
 #ifdef _DEBUG
-  printf("[MBX] (%i) Inside mbx_update_xyz_pme()\n",me);
+  printf("[MBX] (%i,%i) Inside mbx_update_xyz_pme()\n",universe->iworld,me);
 #endif
 
   // gather coordinates
@@ -2736,7 +2860,7 @@ void FixMBX::mbx_update_xyz_pme()
   ptr_mbx_pme->SetRealXyz(xyz);
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) Leaving mbx_update_xyz_pme()\n",me);
+  printf("[MBX] (%i,%i) Leaving mbx_update_xyz_pme()\n",universe->iworld,me);
 #endif
   
   mbxt_stop(MBXT_UPDATE_XYZ_PME);
