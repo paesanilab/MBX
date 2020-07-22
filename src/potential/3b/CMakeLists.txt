@@ -13,3 +13,4 @@ mbnrg_3b_A1B4_C1D2_C1D2_deg3_v1.cpp
 
 add_library(3b OBJECT ${THREEB_SOURCES})
 target_include_directories(3b PRIVATE ${CMAKE_SOURCE_DIR}) 
+set_property(TARGET 3b PROPERTY POSITION_INDEPENDENT_CODE TRUE)
