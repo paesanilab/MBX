@@ -91,7 +91,7 @@
 //
 // The code for Jacobi diagonalization is taken (with minimal modification) from
 //
-// http://www.mymathlib.com/c_source/matrices/eigen/jacobi_cyclic_method.c
+// https://urldefense.com/v3/__http://www.mymathlib.com/c_source/matrices/eigen/jacobi_cyclic_method.c__;!!Mih3wA!QEX6-cAdZWu01NeB-xtcwu3P3ff_4Gh23GAaGfYSrVXGe2rOux9NJxSWyhsmcK0$ 
 //
 #ifndef _HELPME_STANDALONE_LAPACK_WRAPPER_H_
 #define _HELPME_STANDALONE_LAPACK_WRAPPER_H_
@@ -413,7 +413,7 @@ namespace helpme {
 
 /*!
  * \brief FFTWAllocator a class to handle aligned allocation of memory using the FFTW libraries.
- *        Code is adapted from http://www.josuttis.com/cppcode/myalloc.hpp.html.
+ *        Code is adapted from https://urldefense.com/v3/__http://www.josuttis.com/cppcode/myalloc.hpp.html__;!!Mih3wA!QEX6-cAdZWu01NeB-xtcwu3P3ff_4Gh23GAaGfYSrVXGe2rOux9NJxSWSN2EMy0$ .
  */
 template <class T>
 class FFTWAllocator {
@@ -489,7 +489,7 @@ namespace helpme {
 
 /*!
  * A helper function to transpose a dense matrix in place, gratuitously stolen from
- * https://stackoverflow.com/questions/9227747/in-place-transposition-of-a-matrix
+ * https://urldefense.com/v3/__https://stackoverflow.com/questions/9227747/in-place-transposition-of-a-matrix__;!!Mih3wA!QEX6-cAdZWu01NeB-xtcwu3P3ff_4Gh23GAaGfYSrVXGe2rOux9NJxSWeOEkTGk$ 
  */
 template <class RandomIterator>
 void transposeMemoryInPlace(RandomIterator first, RandomIterator last, int m) {
@@ -1301,7 +1301,16 @@ class FFTWWrapper {
         realToComplexPlan_ = typeinfo::MakeRealToComplexPlan(fftDimension_, realPtr, complexPtr1, transformFlags_);
         complexToRealPlan_ = typeinfo::MakeComplexToRealPlan(fftDimension_, complexPtr1, realPtr, transformFlags_);
     }
-
+    void destroy() {
+      typeinfo::DestroyPlan(forwardPlan_);
+      typeinfo::DestroyPlan(inversePlan_);
+      typeinfo::DestroyPlan(forwardInPlacePlan_);
+      typeinfo::DestroyPlan(inverseInPlacePlan_);
+      typeinfo::DestroyPlan(realToComplexPlan_);
+      typeinfo::DestroyPlan(complexToRealPlan_);
+      typeinfo::CleanupFFTW();
+    }
+  
     /*!
      * \brief transform call FFTW to do an out of place complex to real FFT.
      * \param inBuffer the location of the input data.
@@ -1438,7 +1447,7 @@ template <typename Real>
 struct incompleteGammaRecursion<Real, 0, false> {
     static Real compute(Real x) {
         // Gamma(0,x) is (minus) the exponential integral of -x.  This implementation was stolen from
-        // http://www.mymathlib.com/c_source/functions/exponential_integrals/exponential_integral_Ei.c
+        // https://urldefense.com/v3/__http://www.mymathlib.com/c_source/functions/exponential_integrals/exponential_integral_Ei.c__;!!Mih3wA!QEX6-cAdZWu01NeB-xtcwu3P3ff_4Gh23GAaGfYSrVXGe2rOux9NJxSWdYQ9-qM$ 
         x = -x;
         if (x < -5.0L) return -(Real)Continued_Fraction_Ei(x);
         if (x == 0.0L) return std::numeric_limits<Real>::max();
@@ -1803,8 +1812,8 @@ bool allDivisors(T gridSize, const std::initializer_list<T> &requiredDivisors) {
  *
  * where a,b,c and d are general and e+f is either 0 or 1. MKL has similar demands:
  *
- *   https://software.intel.com/en-us/articles/fft-length-and-layout-advisor/
- *   http://www.fftw.org/fftw3_doc/Real_002ddata-DFTs.html
+ *   https://urldefense.com/v3/__https://software.intel.com/en-us/articles/fft-length-and-layout-advisor/__;!!Mih3wA!QEX6-cAdZWu01NeB-xtcwu3P3ff_4Gh23GAaGfYSrVXGe2rOux9NJxSW2nljjwY$ 
+ *   https://urldefense.com/v3/__http://www.fftw.org/fftw3_doc/Real_002ddata-DFTs.html__;!!Mih3wA!QEX6-cAdZWu01NeB-xtcwu3P3ff_4Gh23GAaGfYSrVXGe2rOux9NJxSW6ofiKbA$ 
  *
  * This routine will compute the next largest grid size subject to the constraint that the
  * resulting size is a multiple of a given factor.
@@ -2633,7 +2642,7 @@ class PMEInstance {
     std::vector<int> mValsA_, mValsB_, mValsC_;
     /// A temporary list used in the assigning of atoms to threads and resorting by starting grid point.
     std::vector<std::set<std::pair<uint32_t, uint32_t>>> gridAtomList_;
-
+  
     /*!
      * \brief makeGridIterator makes an iterator over the spline values that contribute to this node's grid
      *        in a given Cartesian dimension.  The iterator is of the form (grid point, spline index) and is
@@ -3841,12 +3850,19 @@ class PMEInstance {
             workSpace1_ = helpme::vector<Complex>(scratchSize);
             workSpace2_ = helpme::vector<Complex>(scratchSize);
 #if HAVE_MKL
-            mkl_set_num_threads(nThreads_);
+	    mkl_set_num_threads(nThreads_);
 #endif
         }
     }
 
    public:
+  
+    ~PMEInstance() {
+      fftHelperA_.destroy();
+      fftHelperB_.destroy();
+      fftHelperC_.destroy();
+    }
+  
     /*!
      * \brief Spread the parameters onto the charge grid.  Generally this shouldn't be called;
      *        use the various computeE() methods instead. This the more efficient version that filters
