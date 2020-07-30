@@ -218,9 +218,18 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   // setup json, if requested
 
   if(use_json) {
-
+    
     int size = 0;
     if(me == 0) {
+
+      // Test if file present
+      FILE * fp = fopen(json_file,"r");
+      if(fp == NULL) {
+	char str[128];
+	snprintf(str,128,"Cannot open file %s",json_file);
+	error->one(FLERR,str);
+      } else fclose(fp);
+      
       std::ifstream t(json_file);
       t.seekg(0, std::ios::end);
       size = t.tellg();
@@ -235,7 +244,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     MPI_Bcast(&json_settings[0], size+1, MPI_CHAR, 0, world);
   }
 
-  //  std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
+  std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
   
   memory->create(mbxt_count,      MBXT_NUM_TIMERS, "fixmbx:mbxt_count");
   memory->create(mbxt_time,       MBXT_NUM_TIMERS, "fixmbx:mbxt_time");
