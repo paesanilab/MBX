@@ -175,17 +175,17 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
         // Apply minimum image convetion
         if (use_pbc) {
-            double tmp1 = boxinv[0] * dx + boxinv[1] * dy + boxinv[2] * dz;
-            double tmp2 = boxinv[3] * dx + boxinv[4] * dy + boxinv[5] * dz;
-            double tmp3 = boxinv[6] * dx + boxinv[7] * dy + boxinv[8] * dz;
+            double tmp1 = boxinv[0] * dx + boxinv[3] * dy + boxinv[6] * dz;
+            double tmp2 = boxinv[1] * dx + boxinv[4] * dy + boxinv[7] * dz;
+            double tmp3 = boxinv[2] * dx + boxinv[5] * dy + boxinv[8] * dz;
 
             tmp1 -= std::floor(tmp1 + 0.5);
             tmp2 -= std::floor(tmp2 + 0.5);
             tmp3 -= std::floor(tmp3 + 0.5);
 
-            dx = boxptr[0] * tmp1 + boxptr[1] * tmp2 + boxptr[2] * tmp3;
-            dy = boxptr[3] * tmp1 + boxptr[4] * tmp2 + boxptr[5] * tmp3;
-            dz = boxptr[6] * tmp1 + boxptr[7] * tmp2 + boxptr[8] * tmp3;
+            dx = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
+            dy = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
+            dz = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
 
         const double rsq = dx * dx + dy * dy + dz * dz;

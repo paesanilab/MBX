@@ -105,9 +105,9 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
     if (use_pbc) {
         // Convert to fractional coordinates
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            v3_[m] = box_inverse[0] * v0_[m] + box_inverse[1] * v1_[m] + box_inverse[2] * v2_[m];
-            v4_[m] = box_inverse[3] * v0_[m] + box_inverse[4] * v1_[m] + box_inverse[5] * v2_[m];
-            v5_[m] = box_inverse[6] * v0_[m] + box_inverse[7] * v1_[m] + box_inverse[8] * v2_[m];
+            v3_[m] = box_inverse[0] * v0_[m] + box_inverse[3] * v1_[m] + box_inverse[6] * v2_[m];
+            v4_[m] = box_inverse[1] * v0_[m] + box_inverse[4] * v1_[m] + box_inverse[7] * v2_[m];
+            v5_[m] = box_inverse[2] * v0_[m] + box_inverse[5] * v1_[m] + box_inverse[8] * v2_[m];
         }
         // Put in the range 0 to 1
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -117,9 +117,9 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         }
         // Convert back to cartesian coordinates
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            v0_[m] = box[0] * v3_[m] + box[1] * v4_[m] + box[2] * v5_[m];
-            v1_[m] = box[3] * v3_[m] + box[4] * v4_[m] + box[5] * v5_[m];
-            v2_[m] = box[6] * v3_[m] + box[7] * v4_[m] + box[8] * v5_[m];
+            v0_[m] = box[0] * v3_[m] + box[3] * v4_[m] + box[6] * v5_[m];
+            v1_[m] = box[1] * v3_[m] + box[4] * v4_[m] + box[7] * v5_[m];
+            v2_[m] = box[2] * v3_[m] + box[5] * v4_[m] + box[8] * v5_[m];
         }
     }
 
@@ -293,17 +293,17 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
         double minrijx, minrijy, minrijz;
         if (use_pbc) {
             // Convert to fractional coordinates
-            const double fracrijx = box_inverse[0] * rawrijx + box_inverse[1] * rawrijy + box_inverse[2] * rawrijz;
-            const double fracrijy = box_inverse[3] * rawrijx + box_inverse[4] * rawrijy + box_inverse[5] * rawrijz;
-            const double fracrijz = box_inverse[6] * rawrijx + box_inverse[7] * rawrijy + box_inverse[8] * rawrijz;
+            const double fracrijx = box_inverse[0] * rawrijx + box_inverse[3] * rawrijy + box_inverse[6] * rawrijz;
+            const double fracrijy = box_inverse[1] * rawrijx + box_inverse[4] * rawrijy + box_inverse[7] * rawrijz;
+            const double fracrijz = box_inverse[2] * rawrijx + box_inverse[5] * rawrijy + box_inverse[8] * rawrijz;
             // Put in the range 0 to 1
             const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
             const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
             const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
             // Convert back to Cartesian coordinates
-            minrijx = box[0] * minfracrijx + box[1] * minfracrijy + box[2] * minfracrijz;
-            minrijy = box[3] * minfracrijx + box[4] * minfracrijy + box[5] * minfracrijz;
-            minrijz = box[6] * minfracrijx + box[7] * minfracrijy + box[8] * minfracrijz;
+            minrijx = box[0] * minfracrijx + box[3] * minfracrijy + box[6] * minfracrijz;
+            minrijy = box[1] * minfracrijx + box[4] * minfracrijy + box[7] * minfracrijz;
+            minrijz = box[2] * minfracrijx + box[5] * minfracrijy + box[8] * minfracrijz;
         }
         const double rijx = use_pbc ? minrijx : rawrijx;
         const double rijy = use_pbc ? minrijy : rawrijy;
@@ -436,17 +436,17 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
         double minrijx, minrijy, minrijz;
         if (use_pbc) {
             // Convert to fractional coordinates
-            const double fracrijx = box_inverse[0] * rawrijx + box_inverse[1] * rawrijy + box_inverse[2] * rawrijz;
-            const double fracrijy = box_inverse[3] * rawrijx + box_inverse[4] * rawrijy + box_inverse[5] * rawrijz;
-            const double fracrijz = box_inverse[6] * rawrijx + box_inverse[7] * rawrijy + box_inverse[8] * rawrijz;
+            const double fracrijx = box_inverse[0] * rawrijx + box_inverse[3] * rawrijy + box_inverse[6] * rawrijz;
+            const double fracrijy = box_inverse[1] * rawrijx + box_inverse[4] * rawrijy + box_inverse[7] * rawrijz;
+            const double fracrijz = box_inverse[2] * rawrijx + box_inverse[5] * rawrijy + box_inverse[8] * rawrijz;
             // Put in the range 0 to 1
             const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
             const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
             const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
             // Convert back to Cartesian coordinates
-            minrijx = box[0] * minfracrijx + box[1] * minfracrijy + box[2] * minfracrijz;
-            minrijy = box[3] * minfracrijx + box[4] * minfracrijy + box[5] * minfracrijz;
-            minrijz = box[6] * minfracrijx + box[7] * minfracrijy + box[8] * minfracrijz;
+            minrijx = box[0] * minfracrijx + box[3] * minfracrijy + box[6] * minfracrijz;
+            minrijy = box[1] * minfracrijx + box[4] * minfracrijy + box[7] * minfracrijz;
+            minrijz = box[2] * minfracrijx + box[5] * minfracrijy + box[8] * minfracrijz;
         }
         const double rijx = (use_pbc ? minrijx : rawrijx);
         const double rijy = (use_pbc ? minrijy : rawrijy);
