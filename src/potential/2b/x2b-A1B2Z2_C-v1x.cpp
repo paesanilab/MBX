@@ -4870,6 +4870,7 @@ double x2b_h2o_ion_v2x::eval(const double* w1, const double* x, double* g1, doub
         }
 
         // gradient of the switch
+        // MRR Careful here. If g1 and g2 are not initialized to 0 before the function call, the virial might not be correct
 
         gsw *= e2b[i] / rab[sh];
         for (size_t j = 0; j < 3; ++j) {
