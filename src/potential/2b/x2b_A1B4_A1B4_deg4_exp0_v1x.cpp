@@ -1874,22 +1874,31 @@ double x2b_A1B4_A1B4_v1x::eval(const double* xyz1, const double* xyz2,
 
         
         for (int i = 0; i < 15; ++i) {
-            grad1[i + j*15] += sw*xgrd[i];
+            xgrd[i] *= sw;
         }
 
         for (int i = 0; i < 15; ++i) {
-            grad2[i + j*15] += sw*xgrd[i + 15];
+            xgrd[i + 15] *= sw;
         }
-
+        
         // gradient of the switch
 
         gsw *= energies[j]/r12;
         energies[j] *= sw;
         for (int i = 0; i < 3; ++i) {
             const double d = gsw*d12[i];
-            grad1[i + j*15] += d;
-            grad2[i + j*15] -= d;
+            xgrd[i] += d;
+            xgrd[15 + i] -= d;
         }
+
+        for (int i = 0; i < 15; ++i) {
+            grad1[i + j*15] += xgrd[i];
+        }
+
+        for (int i = 0; i < 15; ++i) {
+            grad2[i + j*15] += xgrd[i + 15];
+        }
+
 
         if (virial != 0) {
          

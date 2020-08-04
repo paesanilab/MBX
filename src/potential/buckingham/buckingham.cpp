@@ -39,6 +39,7 @@ namespace buck {
 void Buckingham::Initialize(const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
+                            const std::vector<size_t> force_ttm_for_idx,
 			    const std::vector<size_t> &islocal,
                             const bool do_grads = true, const std::vector<double> &box = {}) {
     sys_xyz_ = sys_xyz;
@@ -50,6 +51,7 @@ void Buckingham::Initialize(const std::vector<double> &sys_xyz,
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     use_pbc_ = box.size();
+    force_ttm_for_idx_ = force_ttm_for_idx;
     
 
     natoms_ = sys_xyz_.size() / 3;
@@ -64,6 +66,7 @@ void Buckingham::Initialize(const std::vector<double> &sys_xyz,
 
 void Buckingham::SetNewParameters(const std::vector<double> &xyz, 
                                   const std::vector<std::pair<std::string,std::string> > &buck_pairs, 
+                                  const std::vector<size_t> force_ttm_for_idx,
                                   bool do_grads = true, const double cutoff = 100.0, 
                                   const std::vector<double> &box = {}) {
     sys_xyz_ = xyz;
@@ -73,6 +76,7 @@ void Buckingham::SetNewParameters(const std::vector<double> &xyz,
     do_grads_ = do_grads;
     cutoff_ = cutoff;
     buck_pairs_ = buck_pairs;
+    force_ttm_for_idx_ = force_ttm_for_idx;
     std::fill(grad_.begin(), grad_.end(), 0.0);
 
     ReorderData();
@@ -123,6 +127,8 @@ void Buckingham::ReorderData() {
     std::fill(virial_.begin(), virial_.end(),0.0);
 
     CalculateRepulsion(use_ghost);
+    CalculateEnforcedRepulsion(use_ghost);
+    
 
     if (calc_virial_) {
         (*virial)[0] += virial_[0];
@@ -162,6 +168,7 @@ void Buckingham::ReorderData() {
 
     return rep_energy_;
 }
+
 
 void Buckingham::CalculateRepulsion(bool use_ghost) {
     rep_energy_ = 0.0;
@@ -339,6 +346,130 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
 					  i, j, do_grads_, cutoff_, box_, box_inverse_,
 					  use_ghost, islocal_, fi_mon1+m1, fi_mon2,
 					  &virial_pool[rank]);
+                        }
+                        grad1_pool[rank][inmon13 + m1] += g1[0];
+                        grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
+                        grad1_pool[rank][inmon13 + nmon12 + m1] += g1[2];
+                    }
+                }
+    
+                // Compress data in Efq and phi
+                for (size_t rank = 0; rank < nthreads; rank++) {
+                    size_t kend1 = grad1_pool[rank].size();
+                    size_t kend2 = grad2_pool[rank].size();
+                    for (size_t k = 0; k < kend1; k++) {
+                        grad_[fi_crd1 + k] += grad1_pool[rank][k];
+                    }
+                    for (size_t k = 0; k < kend2; k++) {
+                        grad_[fi_crd2 + k] += grad2_pool[rank][k];
+                    }
+                    for (size_t k = 0; k<9;k++) {
+                        virial_[k] -= virial_pool[rank][k]; // -= bc the atomindeces are switched relative to dlpoly
+                    }
+
+                    rep_energy_ += energy_pool[rank];
+                }
+            } // if do_buck
+            // Update first indexes
+            fi_mon2 += nmon2;
+            fi_sites2 += nmon2 * ns2;
+            fi_crd2 += nmon2 * ns2 * 3;
+        }
+        // Update first indexes
+        fi_mon1 += nmon1;
+        fi_sites1 += nmon1 * ns1;
+        fi_crd1 += nmon1 * ns1 * 3;
+    }
+}
+
+void Buckingham::CalculateEnforcedRepulsion(bool use_ghost) {
+    // Parallelization
+    size_t nthreads = 1;
+#ifdef _OPENMP
+#pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+    {
+        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+    }
+#endif
+
+    // Sites corresponding to different monomers
+    // Declaring first indexes
+    size_t fi_mon1 = 0;
+    size_t fi_sites1 = 0;
+    size_t fi_mon2 = 0;
+    size_t fi_sites2 = 0;
+    size_t fi_crd1 = 0;
+    size_t fi_crd2 = 0;
+
+    // Loop over all monomer types
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        size_t ns1 = num_atoms_[fi_mon1];
+        size_t nmon1 = mon_type_count_[mt1].second;
+        size_t nmon12 = nmon1 * 2;
+        fi_mon2 = fi_mon1;
+        fi_sites2 = fi_sites1;
+        fi_crd2 = fi_crd1;
+
+        // For each monomer type mt1, loop over all the other monomer types
+        // mt2 >= mt1 to avoid double counting
+        for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+
+            size_t ns2 = num_atoms_[fi_mon2];
+            size_t nmon2 = mon_type_count_[mt2].second;
+
+            double dummy_a;
+            double dummy_b;
+            bool do_buck = GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, buck_pairs_, dummy_a, dummy_b);
+            if (!do_buck) {
+
+                // Check if monomer types 1 and 2 are the same
+                // If so, same monomer won't be done, since it has been done in
+                // previous loop.
+                bool same = (mt1 == mt2);
+    
+                std::vector<std::vector<double> > grad1_pool(nthreads, std::vector<double>(nmon1 * ns1 * 3,0.0));
+                std::vector<std::vector<double> > grad2_pool(nthreads, std::vector<double>(nmon2 * ns2 * 3,0.0));
+                std::vector<double> energy_pool(nthreads,0.0);
+                std::vector<std::vector<double> > virial_pool(nthreads,std::vector<double>(9,0.0));
+    #ifdef _OPENMP
+    #pragma omp parallel for schedule(dynamic)
+    #endif
+                for (size_t m1 = 0; m1 < nmon1; m1++) {
+                    int rank = 0;
+                    size_t mon1_idx = fi_mon1 + m1;
+                    bool do_mon1 = (std::find(force_ttm_for_idx_.begin(), force_ttm_for_idx_.end(), mon1_idx) != force_ttm_for_idx_.end()) ;
+    #ifdef _OPENMP
+                    rank = omp_get_thread_num();
+    #endif          
+                    size_t m2init = same ? m1 + 1 : 0;
+                    for (size_t i = 0; i < ns1; i++) {
+                        size_t inmon1 = i * nmon1;
+                        size_t inmon13 = inmon1 * 3;
+                        std::vector<double> xyz_sitei(3);
+                        std::vector<double> g1(3, 0.0);
+                        xyz_sitei[0] = xyz_[fi_crd1 + inmon13 + m1];
+                        xyz_sitei[1] = xyz_[fi_crd1 + inmon13 + nmon1 + m1];
+                        xyz_sitei[2] = xyz_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
+    
+                        std::vector<std::pair<std::string,std::string> > buck_pairs = {
+                                  std::make_pair(mon_id_[fi_mon1], mon_id_[fi_mon2]),
+                                  std::make_pair(mon_id_[fi_mon2], mon_id_[fi_mon1])};
+                        for (size_t j = 0; j < ns2; j++) {
+                            double a, b;
+                            GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs, a, b);
+                            for (size_t m2 = m2init; m2 < nmon2; m2++) {
+                                size_t mon2_idx = fi_mon2 + m2;
+                                bool do_mon2 = (std::find(force_ttm_for_idx_.begin(), force_ttm_for_idx_.end(), mon2_idx) != force_ttm_for_idx_.end()) ;
+                                if (do_mon1 || do_mon2) {
+                                    energy_pool[rank] +=
+                                    Repulsion(a, b, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
+                                    grad2_pool[rank].data(), nmon1, nmon2, m2init, m2init + 1,
+                                    i, j, do_grads_, cutoff_, box_, box_inverse_,
+                                    use_ghost, islocal_, fi_mon1+m1, fi_mon2,
+                                    &virial_pool[rank]);
+                                }
+                            }
                         }
                         grad1_pool[rank][inmon13 + m1] += g1[0];
                         grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];

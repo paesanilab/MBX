@@ -70,11 +70,11 @@ namespace e1b {
  * @param[in] mon Monomer id
  * @param[in] nm number of monomers of monomer type "mon"
  * @param[in] xyz coordinates of the monomer
- * @param[in,out] good Boolean that will be set to false if any of the monomers
+ * @param[in,out] bad_idxs Vector with the indexes o extremely distorted monomers
  * has an energy larger than the value set in definitions.h (EMAX1B)
  * @return Sum of the one-body energies of all the monomers passed as arguments
  */
-double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz1, bool &good);
+double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz1, std::vector<size_t> &bad_idxs);
 
 /**
  * @brief Gets the one body energy for a given set of monomers of the same
@@ -86,11 +86,11 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz1, bool 
  * @param[in] nm number of monomers of monomer type "mon"
  * @param[in] xyz coordinates of the monomer
  * @param[in,out] grad Gradients of the one-body energy
- * @param[in,out] good Boolean that will be set to false if any of the monomers
+ * @param[in,out] bad_idxs Vector with the indexes o extremely distorted monomers
  * has an energy larger than the value set in definitions.h (EMAX1B)
  * @return Sum of the one-body energies of all the monomers passed as arguments
  */
-double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, bool &good, std::vector<double> *virial = 0);
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, std::vector<size_t> &bad_idxs, std::vector<double> *virial = 0);
 
 }  // namespace e1b
 #endif

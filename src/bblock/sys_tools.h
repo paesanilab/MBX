@@ -226,8 +226,8 @@ void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, si
  * the other one. At output, it will be modified so the coordinates
  * of monomer 3 are the closer image to monomer 1.
  */
-void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3, size_t nt, double *xyz1,
-                         double *xyz2, double *xyz3);
+void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3, size_t nt, std::vector<double> &xyz1,
+                         std::vector<double> &xyz2, std::vector<double> &xyz3);
 
 void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
                        std::vector<double> &xyz_out, std::vector<size_t> &indexes);

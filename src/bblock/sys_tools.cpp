@@ -333,8 +333,8 @@ void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, si
     }
 }
 
-void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3, size_t nt, double *xyz1,
-                         double *xyz2, double *xyz3) {
+void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3, size_t nt, std::vector<double> &xyz1,
+                         std::vector<double> &xyz2, std::vector<double> &xyz3) {
     size_t shift1 = 0;
     size_t shift2 = 0;
     size_t shift3 = 0;
@@ -383,15 +383,15 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
         }                                                                                                         
                                                                                                                   
         // Move monomer 3 to be the closest image to mon1 if needed                                               
-        xr0 = box_inv[0] * xyz3[shift2]                                                                    
-            + box_inv[3] * xyz3[shift2 + 1]                                                                
-            + box_inv[6] * xyz3[shift2 + 2];                                                               
-        yr0 = box_inv[1] * xyz3[shift2]                                                                    
-            + box_inv[4] * xyz3[shift2 + 1]                                                                
-            + box_inv[7] * xyz3[shift2 + 2];                                                               
-        zr0 = box_inv[2] * xyz3[shift2]                                                                    
-            + box_inv[5] * xyz3[shift2 + 1]                                                                
-            + box_inv[8] * xyz3[shift2 + 2];                                                               
+        xr0 = box_inv[0] * xyz3[shift3]                                                                    
+            + box_inv[3] * xyz3[shift3 + 1]                                                                
+            + box_inv[6] * xyz3[shift3 + 2];                                                               
+        yr0 = box_inv[1] * xyz3[shift3]                                                                    
+            + box_inv[4] * xyz3[shift3 + 1]                                                                
+            + box_inv[7] * xyz3[shift3 + 2];                                                               
+        zr0 = box_inv[2] * xyz3[shift3]                                                                    
+            + box_inv[5] * xyz3[shift3 + 1]                                                                
+            + box_inv[8] * xyz3[shift3 + 2];                                                               
                                                                                                                   
         dx0 = std::floor(xr0 - x_rec + 0.5);                                                               
         dy0 = std::floor(yr0 - y_rec + 0.5);                                                               
@@ -412,9 +412,9 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
             yr -= dy0;                                                                                            
             zr -= dz0;                                                                                            
                                                                                                                   
-            xyz3[shift2 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;                                     
-            xyz3[shift2 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;                                     
-            xyz3[shift2 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;                                     
+            xyz3[shift3 + 3*j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;                                     
+            xyz3[shift3 + 3*j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;                                     
+            xyz3[shift3 + 3*j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;                                     
         } 
         shift1 += coords1;                                                                                        
         shift2 += coords2;
@@ -1375,6 +1375,10 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                                 prefac = 1.0;
 
                             } else {
+                                rx = EPSILON;
+                                ry = EPSILON;
+                                rz = EPSILON;
+                                dqdr_tmp = EPSILON;
                                 prefac = 0.0;
                             }
 

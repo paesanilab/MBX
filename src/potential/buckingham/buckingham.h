@@ -58,6 +58,7 @@ class Buckingham {
     void Initialize(const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count, 
+                    const std::vector<size_t> force_ttm_for_idx,
                     const std::vector<size_t> &islocal_, const bool do_grads,
 		    const std::vector<double> &box);
 
@@ -65,6 +66,7 @@ class Buckingham {
 
     void SetNewParameters(const std::vector<double> &xyz, 
                           const std::vector<std::pair<std::string,std::string> > &buck_pairs, 
+                          const std::vector<size_t> force_ttm_for_idx,
                           bool do_grads, const double cutoff,
                           const std::vector<double> &box);
 
@@ -78,6 +80,7 @@ class Buckingham {
    private:
     void ReorderData();
     void CalculateRepulsion(bool use_ghost = 0);
+    void CalculateEnforcedRepulsion(bool use_ghost = 0);
 
     // System xyz, not ordered XYZ. xyzxyz...(mon1)xyzxyz...(mon2) ...
     std::vector<double> sys_xyz_;
@@ -94,6 +97,9 @@ class Buckingham {
 
     // pairs that will use the buckingham
     std::vector<std::pair<std::string,std::string> > buck_pairs_;
+
+    // Indexes of the monomers for which TTM is forced
+    std::vector<size_t> force_ttm_for_idx_;
 
     // Bool that if true will perform the gradients calculation.
     bool do_grads_;
