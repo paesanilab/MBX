@@ -745,8 +745,8 @@ void System::InitializePME() {
     // electrostatics class
     // TODO: Do grads set to true for now. Needs to be fixed
     if(mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    //electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
-    //                               islocal_, true, diptol_, maxItDip_, dipole_method_);
+    electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
+			       islocal_, true, diptol_, maxItDip_, dipole_method_);
 
     // TODO Is this OK? Order of GetReal is input order.
     //std::vector<double> xyz_real = GetRealXyz();
@@ -2406,12 +2406,35 @@ double System::DispersionPME(bool do_grads, bool use_ghost) {
 
     energy_ = 0.0;
     if(islocal_.size() > 0) {
-    std::fill(grad_.begin(), grad_.end(), 0.0);
-    std::fill(virial_.begin(),virial_.end(),0.0);
+      std::fill(grad_.begin(), grad_.end(), 0.0);
+      std::fill(virial_.begin(),virial_.end(),0.0);
     }
     SetPBC(box_);
 
     energy_ = GetDispersionPME(do_grads, use_ghost);
+
+    return energy_;
+}
+  
+////////////////////////////////////////////////////////////////////////////////
+
+double System::DispersionPMElocal(bool do_grads, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Dispersion Energy calculation not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    if(islocal_.size() > 0) {
+      std::fill(grad_.begin(), grad_.end(), 0.0);
+      std::fill(virial_.begin(),virial_.end(),0.0);
+    }
+    SetPBC(box_);
+
+    energy_ = GetDispersionPMElocal(do_grads, use_ghost);
 
     return energy_;
 }
@@ -2487,7 +2510,29 @@ double System::ElectrostaticsMPI(bool do_grads, bool use_ghost) {
     
     return energy_;
 }
+  
+double System::ElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text = std::string("System has not been initialized. ") +
+                           std::string("Electrostatic Energy calculation ") + std::string("not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+    
+    energy_ = 0.0;
+    if(islocal_.size() > 0) {
+      std::fill(grad_.begin(), grad_.end(), 0.0);
+      std::fill(virial_.begin(), virial_.end(), 0.0);
+    }
 
+    SetPBC(box_);
+    
+    energy_ = GetElectrostaticsMPIlocal(do_grads, use_ghost);
+
+    return energy_;
+}
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetEwaldElectrostatics(double alpha, double grid_density, int spline_order) {
@@ -2555,6 +2600,14 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     return electrostaticE_.GetElectrostatics(grad_, &virial_, use_ghost);
 }
 
+double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+    electrostaticE_.SetDipoleTolerance(diptol_);
+    electrostaticE_.SetDipoleMaxIt(maxItDip_);
+
+    return electrostaticE_.GetElectrostaticsMPIlocal(grad_, &virial_, use_ghost);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetDispersion(bool do_grads, bool use_ghost) {
@@ -2609,6 +2662,46 @@ double System::GetDispersion(bool do_grads, bool use_ghost) {
     return e;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+  double System::GetDispersionPMElocal(bool do_grads, bool use_ghost) {
+    std::vector<double> xyz_real(3 * numat_);
+
+    size_t count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            xyz_real[count + j] = xyz_[first_index_[i] * 3 + j];
+        }
+        count += 3 * nat_[i];
+    }
+
+    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    std::vector<double> real_grad(3 * numat_, 0.0);
+    double e = dispersionE_.GetDispersionPMElocal(real_grad, &virial_, use_ghost);
+
+    count = 0;
+    for (size_t i = 0; i < nummon_; i++) {
+        for (size_t j = 0; j < 3 * nat_[i]; j++) {
+            grad_[first_index_[i] * 3 + j] += real_grad[count + j];
+        }
+        count += 3 * nat_[i];
+    }
+    return e;
+}
+  
+////////////////////////////////////////////////////////////////////////////////
+  
+void System::SetBoxPMElocal(std::vector<double> box) {
+  // Check that the box has 0 or 9 components
+  if (box.size() != 9 && box.size() != 0) {
+    std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
+    throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+  
+  dispersionE_.SetBoxPMElocal(box);
+  electrostaticE_.SetBoxPMElocal(box);
+}
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetBuckingham(bool do_grads, bool use_ghost) {

@@ -45,7 +45,6 @@ using namespace MathConst;
 PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
 {
   respa_enable = 1;
-  writedata = 1;
   restartinfo = 0;
   no_virial_fdotr_compute = 1;
   
@@ -205,16 +204,16 @@ void PairMBX::compute(int eflag, int vflag)
 #ifdef _DEBUG
   printf("[MBX] (%i) -- Computing disp pme parallel\n",me);
 #endif
+  //  printf("(%i)  procgrid= %i %i %i\n",comm->me,comm->myloc[0],comm->myloc[1],comm->myloc[2]);
   
     fix_mbx->mbxt_start(MBXT_DISP_PME);
-    //    mbx_disp_pme = ptr_mbx->DispersionPME(true, true); // computes k-space using sub-domain
-
-    //    mbx_disp_pme = ptr_mbx_local->DispersionPME(true, true); // computes k-space using sub-domain
-    //    accumulate_f_local();
-    
+#ifdef _USE_PMELOCAL
+    mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true); // computes k-space using sub-domain
+    accumulate_f_local();
+#else
     mbx_disp_pme = ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
     accumulate_f_pme();
-    
+#endif
     fix_mbx->mbxt_stop(MBXT_DISP_PME);
     
   } else {
@@ -243,7 +242,8 @@ void PairMBX::compute(int eflag, int vflag)
 #endif
   
   fix_mbx->mbxt_start(MBXT_ELE);
-  mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, true);
+  //  mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+  mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
   fix_mbx->mbxt_stop(MBXT_ELE);
   accumulate_f_pme();
 #endif
@@ -655,7 +655,7 @@ void PairMBX::accumulate_f_local()
   printf("[MBX] (%i) Inside pair accumulate_f_local()\n",me);
 #endif
   
-  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F);
+  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F_LOCAL);
   
   bblock::System * ptr_mbx = fix_mbx->ptr_mbx_local;
 
@@ -729,7 +729,7 @@ void PairMBX::accumulate_f_local()
     // 	   virial[3],virial[4],virial[5]);
   }
   
-  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F);
+  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_LOCAL);
   
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving pair accumulate_f_local()\n",me);

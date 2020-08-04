@@ -62,6 +62,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     sys_grad_ = std::vector<double>(natoms3, 0.0);
     c6_long_range_ = std::vector<double>(natoms_, 0.0);
     sys_phi_ = std::vector<double>(natoms_, 0.0);
+    islocal_atom_ = std::vector<size_t>(natoms_, 0);
 
     if(!mpi_initialized_) {
       world_ = 0;
@@ -93,9 +94,15 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     std::fill(phi_.begin(), phi_.end(), 0.0);
     std::fill(virial_.begin(), virial_.end(),0.0);
 
+    box_PMElocal_ = {};
+    
     ReorderData();
 }
 
+void Dispersion::SetBoxPMElocal(std::vector<double> box) {
+  box_PMElocal_ = box;
+}
+  
 void Dispersion::ReorderData() {
     // Organize xyz so we have
     // x1_1 x1_2 ... y1_1 y1_2... z1_1 z1_2 ... x2_1 x2_2 ...
@@ -123,6 +130,7 @@ void Dispersion::ReorderData() {
                 xyz_[inmon3 + m + fi_crd + nmon] = sys_xyz_[fi_crd + mns3 + 3 * i + 1];
                 xyz_[inmon3 + m + fi_crd + nmon2] = sys_xyz_[fi_crd + mns3 + 3 * i + 2];
                 c6_long_range_[fi_sites + m + inmon] = sys_c6_long_range_[fi_sites + mns + i];
+		islocal_atom_[fi_sites + m + inmon] = islocal_[fi_mon + m];
             }
         }
         fi_mon += nmon;
@@ -237,6 +245,62 @@ void Dispersion::ReorderData() {
     return disp_energy_;
 }
 
+  double Dispersion::GetDispersionPMElocal(std::vector<double> &grad,std::vector<double> *virial,bool use_ghost) {
+    calc_virial_=false;
+    
+    if (virial != 0) {
+        calc_virial_ = true;
+    }
+
+    if(natoms_ > 0) std::fill(virial_.begin(), virial_.end(),0.0);
+    CalculateDispersionPMElocal(use_ghost);
+
+    if(natoms_ > 0) {
+    
+      size_t fi_mon = 0;
+      size_t fi_crd = 0;
+      size_t fi_sites = 0;
+      
+      if (calc_virial_) {
+        (*virial)[0] += virial_[0];
+        (*virial)[1] += virial_[1];
+        (*virial)[2] += virial_[2];
+        (*virial)[3] += virial_[3];
+        (*virial)[4] += virial_[4];
+        (*virial)[5] += virial_[5];
+        (*virial)[6] += virial_[6];
+        (*virial)[7] += virial_[7];
+        (*virial)[8] += virial_[8];
+      }
+      
+      for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = num_atoms_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+	  size_t mns = m * ns;
+	  size_t mns3 = mns * 3;
+	  for (size_t i = 0; i < ns; i++) {
+	    size_t inmon = i * nmon;
+	    size_t inmon3 = 3 * inmon;
+	    
+	    sys_phi_[fi_sites + mns + i] = phi_[fi_sites + m + inmon];
+	    
+	    grad[fi_crd + mns3 + 3 * i] += grad_[inmon3 + m + fi_crd];
+	    grad[fi_crd + mns3 + 3 * i + 1] += grad_[inmon3 + m + fi_crd + nmon];
+	    grad[fi_crd + mns3 + 3 * i + 2] += grad_[inmon3 + m + fi_crd + nmon2];
+	  }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+      }
+      
+    }
+    
+    return disp_energy_;
+}
+  
 void Dispersion::CalculateDispersion(bool use_ghost) {
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
@@ -700,6 +764,163 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
 	// }
     }
 
+}
+
+void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
+  
+    int me;
+    MPI_Comm_rank(world_,&me);
+    
+    disp_energy_ = 0.0;
+    std::fill(phi_.begin(), phi_.end(), 0.0);
+    // Max number of monomers
+    //    size_t maxnmon = mon_type_count_.back().second;
+    // Parallelization
+    size_t nthreads = 1;
+#ifdef _OPENMP
+#pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+    {
+        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+    }
+#endif
+
+    // This part looks at sites inside the same monomer
+    // Reset first indexes
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+
+    bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
+
+    // override settings if ghost particles (big assumption?)
+    // if calling this function, then shouldn't need to check this
+    //    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
+    
+    //    if (compute_pme) {
+        helpme::PMEInstance<double> pme_solver_;
+        // Compute the reciprocal space terms, using PME
+        double A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+	
+	if(mpi_initialized_) {
+	  pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0,
+				    world_, PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+	} else {
+	  pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
+	}
+
+        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
+	
+#if 0
+	// Zero property of particles outside local region
+
+	// proc grid order hard-coded (as above) for ZYX NodeOrder
+	
+	int proc_x = me % proc_grid_x_;
+	int proc_y = (me % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
+	int proc_z = me / (proc_grid_x_ * proc_grid_y_);
+
+	// include particles within local sub-domain and small halo region
+	// this allows the full ghost region to be included for pairwise calculations,
+	// but should exclude ghost monomers that are periodic images of local monomer
+
+	double padding = cutoff_ * 0.5;
+	double dx = A / (double) proc_grid_x_;
+	double dy = B / (double) proc_grid_y_;
+	double dz = C / (double) proc_grid_z_;
+
+	double xlo =  proc_x    * dx - padding;
+	double xhi = (proc_x+1) * dx + padding;
+	
+	double ylo =  proc_y    * dy - padding;
+	double yhi = (proc_y+1) * dy + padding;
+	
+	double zlo =  proc_z    * dz - padding;
+	double zhi = (proc_z+1) * dz + padding;
+
+        std::vector<double> sys_c6_long_range_local_(sys_c6_long_range_.size(),0.0);
+	for(int i=0; i<natoms_; ++i) sys_c6_long_range_local_[i] = sys_c6_long_range_[i];
+
+	const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
+
+	for(int i=0; i<natoms_; ++i) {
+	  double x = coords(i,0);
+	  double y = coords(i,1);
+	  double z = coords(i,2);
+	  
+	  bool local = true;
+	  if(x <= xlo || x > xhi) local = false;
+	  if(y <= ylo || y > yhi) local = false;
+	  if(z <= zlo || z > zhi) local = false;
+	  
+	  if(!local) sys_c6_long_range_local_[i] = 0.0;
+	}
+	
+        auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
+#else
+	auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+#endif
+	
+        auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
+        std::vector<double> dummy_6vec(6,0.0);
+        auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
+        std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
+        double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
+	
+        // get virial
+        if (calc_virial_) {
+            
+            virial_[0] += *rec_virial[0];
+            virial_[1] += *rec_virial[1];
+            virial_[2] += *rec_virial[3];
+            virial_[4] += *rec_virial[2];
+            virial_[5] += *rec_virial[4];
+            virial_[8] += *rec_virial[5];
+
+            virial_[3] = virial_[1];
+            virial_[6] = virial_[2];
+            virial_[7] = virial_[5];
+
+        }	
+
+        // Resort forces from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = num_atoms_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    const double *result_ptr = forces[fi_sites + mns + i];
+                    grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                    grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                    grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
+	
+        // The Ewald self energy
+        double prefac = std::pow(ewald_alpha_, 6) / 12.0;
+        double self_energy = 0;
+
+	for(int i=0; i<natoms_; ++i)
+	  self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
+	
+	self_energy *= prefac;
+
+        disp_energy_ += rec_energy + self_energy;
+
+	//} // if(compute_pme)	
 }
   
 }  // namespace disp

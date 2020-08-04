@@ -556,6 +556,13 @@ class System {
     void InitializePME();
   
     /**
+     * Sets global box dimensions for PME solver; does not alter original PBC settings
+     * @param[in] box is a 9 component vector of double with
+     * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
+     */
+    void SetBoxPMElocal(std::vector<double> box);
+  
+    /**
      * Sets up all the parameters that are specified in a json file
      * @param[in] json_file Is the json formatted file with the system specifications
      **/
@@ -773,6 +780,7 @@ to be the same.
      */
     double Electrostatics(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPI(bool do_grads, bool use_ghost = 0);
+    double ElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the dispersion energy for the whole system.
@@ -792,6 +800,7 @@ to be the same.
      * @return Dispersion energy of the system
      */
      double DispersionPME(bool do_grads, bool use_ghost = 0);
+     double DispersionPMElocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the buckingham energy for the whole system.
@@ -916,6 +925,7 @@ to be the same.
      * @return  Electrostatic energy of the system
      */
     double GetElectrostatics(bool do_grads, bool use_ghost = 0);
+    double GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the dispersion energy.
@@ -938,6 +948,7 @@ to be the same.
      * @return  Dispersion energy of the system
      */
      double GetDispersionPME(bool do_grads, bool use_ghost = 0);
+     double GetDispersionPMElocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the buckinham energy.

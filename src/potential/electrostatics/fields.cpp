@@ -62,7 +62,10 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
                                                  double *Efqx_mon1, double *Efqy_mon1, double *Efqz_mon1, double *phi1,
                                                  double *phi2, double *Efq2, double elec_scale_factor,
                                                  double ewald_alpha, bool use_pbc, const std::vector<double> &box,
-                                                 const std::vector<double> &box_inverse, double cutoff, std::vector<double> *virial) {
+                                                 const std::vector<double> &box_inverse, double cutoff,
+						 bool use_ghost, const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
+
+						 std::vector<double> *virial) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -102,7 +105,7 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
 
     // Apply the minimum image convention via fractional coordinates
     // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-    if (use_pbc) {
+    if (use_pbc || use_ghost) {
         // Convert to fractional coordinates
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             v3_[m] = box_inverse[0] * v0_[m] + box_inverse[3] * v1_[m] + box_inverse[6] * v2_[m];
@@ -111,9 +114,9 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         }
         // Put in the range 0 to 1
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            v3_[m] -= std::floor(v3_[m] + 0.5);
-            v4_[m] -= std::floor(v4_[m] + 0.5);
-            v5_[m] -= std::floor(v5_[m] + 0.5);
+	  v3_[m] -= std::floor(v3_[m] + 0.5);
+	  v4_[m] -= std::floor(v4_[m] + 0.5);
+	  v5_[m] -= std::floor(v5_[m] + 0.5);
         }
         // Convert back to cartesian coordinates
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -148,7 +151,7 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         v4_[m] = (elec_scale_factor - erf(ewald_alpha / (v3_[m] + 1e-30))) * v3_[m];  // (1-erf(alpha r))/r
     }
 
-    if (!use_pbc) {
+    if (!use_pbc && !use_ghost) {
         // Rescale v3 to ensure right behavior in no PBC conditions
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             v3_[m] *= elec_scale_factor;
@@ -165,6 +168,16 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
     const double PIQSRT = std::sqrt(M_PI);
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+      bool accum2 = false;
+      if(!use_ghost) accum2 = true;
+      size_t isls = islocal[isl1_offset] + islocal[m+isl2_offset+m2_offset];
+      if(use_ghost && isls) accum2 = true;
+
+      if(accum2) {
+
+	double scale = 1.0;
+	if(use_ghost && (isls == 1)) scale = 0.5;
+      
 #if NO_THOLE
         const double exp1 = 0;
         v6_[m] = 0;
@@ -174,7 +187,8 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         // Terms needed for the Ewald direct space field, see equation 2.8 of
         // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
         const double exp_alpha2r2 = std::exp(-ewald_alpha * ewald_alpha / (v3_[m] * v3_[m]));
-        const double ewaldterm = use_pbc ? 2 * exp_alpha2r2 * ewald_alpha / PIQSRT : 0;
+	const bool use_ewald = use_pbc || use_ghost;
+        const double ewaldterm = use_ewald ? 2 * exp_alpha2r2 * ewald_alpha / PIQSRT : 0;
 
         // Screening functions
         const double s1r = v4_[m] - exp1 * v3_[m];
@@ -187,8 +201,8 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         // Assuming phi will be at1mon1_index at1m2 at1m3 .. for same type of mons
         // phi[finsts1 + site_inmon1 + mon1_index]
         //                           += s0r *chg[finsts2 + site_jnmon2 + m];
-        v7_[m] = s0r * chg2[site_jnmon2 + m];
-        phi2[site_jnmon2 + m] += s0r * chg1[site_inmon1 + mon1_index];
+        v7_[m] = scale * s0r * chg2[site_jnmon2 + m];
+        phi2[site_jnmon2 + m] += scale * s0r * chg1[site_inmon1 + mon1_index];
 
         // Field will be as xyz xxxxyyyyzzzzat1 xxxxxyyyyzzzz at2...
         const double s1r3ci = s1r3 * chg1[site_inmon1 + mon1_index];
@@ -198,24 +212,24 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
         // Storing contributions to mon1 in vectors to make the loop vectorizable
 
         // Efq[fincrd1 + site_inmon13 + mon1_index] += s1r3cj * v0_[m];
-        v8_[m] = s1r3cj * v0_[m];
-        Efq2[site_jnmon23 + m] -= s1r3ci * v0_[m];
+        v8_[m] = scale * s1r3cj * v0_[m];
+        Efq2[site_jnmon23 + m] -= scale * s1r3ci * v0_[m];
 
         // Efq[fincrd1 + site_inmon13 + nmon1 + mon1_index] += s1r3cj * v1_[m];
-        v9_[m] = s1r3cj * v1_[m];
-        Efq2[site_jnmon23 + nmon2 + m] -= s1r3ci * v1_[m];
+        v9_[m] = scale * s1r3cj * v1_[m];
+        Efq2[site_jnmon23 + nmon2 + m] -= scale * s1r3ci * v1_[m];
 
         // Efq[fincrd1 + site_inmon13 + nmon12 + mon1_index] += s1r3cj * v2_[m];
-        v10_[m] = s1r3cj * v2_[m];
-        Efq2[site_jnmon23 + nmon22 + m] -= s1r3ci * v2_[m];
+        v10_[m] = scale * s1r3cj * v2_[m];
+        Efq2[site_jnmon23 + nmon22 + m] -= scale * s1r3ci * v2_[m];
         
         // update virial 
         if (virial != 0) {
 
             double dvr=chg2[site_jnmon2 + m]* chg1[site_inmon1 + mon1_index] * s1r3;
-            double dvx = dvr * v0_[m];
-            double dvy = dvr * v1_[m];
-            double dvz = dvr * v2_[m];
+            double dvx = scale * dvr * v0_[m];
+            double dvy = scale * dvr * v1_[m];
+            double dvz = scale * dvr * v2_[m];
 
             v11_[0*maxnmon + m] = v0_[m]*dvx*constants::COULOMB;
             v11_[1*maxnmon + m] = v0_[m]*dvy*constants::COULOMB;
@@ -225,6 +239,7 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
             v11_[5*maxnmon + m] = v2_[m]*dvz*constants::COULOMB;
         }
 
+      } // if(accum2)
     }
 
     // Add up the contributions to the mon1 site
@@ -232,26 +247,27 @@ void ElectricFieldHolder::CalcPermanentElecField(double *xyz1, double *xyz2, dou
     *Efqx_mon1 = 0.0;
     *Efqy_mon1 = 0.0;
     *Efqz_mon1 = 0.0;
+
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        *phi1 += v7_[m];
-        *Efqx_mon1 += v8_[m];
-        *Efqy_mon1 += v9_[m];
-        *Efqz_mon1 += v10_[m];
-        // condensate virial  
-        if (virial != 0) {
-            (*virial)[0] += v11_[0*maxnmon + m];
-            (*virial)[1] += v11_[1*maxnmon + m];
-            (*virial)[2] += v11_[2*maxnmon + m];
-
-            (*virial)[4] += v11_[3*maxnmon + m];
-            (*virial)[5] += v11_[4*maxnmon + m];
-
-            (*virial)[8] += v11_[5*maxnmon + m];
-
-            (*virial)[3] = (*virial)[1];
-            (*virial)[6] = (*virial)[2];
-            (*virial)[7] = (*virial)[5];
-        }
+      *phi1 += v7_[m];
+      *Efqx_mon1 += v8_[m];
+      *Efqy_mon1 += v9_[m];
+      *Efqz_mon1 += v10_[m];
+      // condensate virial  
+      if (virial != 0) {
+	(*virial)[0] += v11_[0*maxnmon + m];
+	(*virial)[1] += v11_[1*maxnmon + m];
+	(*virial)[2] += v11_[2*maxnmon + m];
+	
+	(*virial)[4] += v11_[3*maxnmon + m];
+	(*virial)[5] += v11_[4*maxnmon + m];
+	
+	(*virial)[8] += v11_[5*maxnmon + m];
+	
+	(*virial)[3] = (*virial)[1];
+	(*virial)[6] = (*virial)[2];
+	(*virial)[7] = (*virial)[5];
+      }
     }
 }
 
@@ -262,7 +278,8 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
                                               double ewald_alpha, bool use_pbc, const std::vector<double> &box,
-                                              const std::vector<double> &box_inverse, double cutoff) {
+                                              const std::vector<double> &box_inverse, double cutoff,
+					      bool use_ghost, const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -280,9 +297,21 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
     std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
     std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
     std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-
+    
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+      bool accum2 = false;
+      if(!use_ghost) accum2 = true;
+      size_t isls = islocal[isl1_offset] + islocal[m+isl2_offset];
+      if(use_ghost && isls) accum2 = true;
+
+      if(accum2) {
+
+	double scale = 1.0;
+	if(use_ghost && (isls == 1)) scale = 0.5;
+	// if(use_ghost && isls == 1) scale = 0.5;
+	// if(use_ghost && isls == 0) scale = 0.0;
+	
         // Distances between sites i and j from mon1 and mon2
         const double rawrijx = xyzmon1_x - xyz2[site_jnmon23 + m];
         const double rawrijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
@@ -291,7 +320,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
         // Apply the minimum image convention via fractional coordinates
         // It is probably a good idea to identify orthorhombic cases and write a faster version for them
         double minrijx, minrijy, minrijz;
-        if (use_pbc) {
+        if (use_pbc || use_ghost) {
             // Convert to fractional coordinates
             const double fracrijx = box_inverse[0] * rawrijx + box_inverse[3] * rawrijy + box_inverse[6] * rawrijz;
             const double fracrijy = box_inverse[1] * rawrijx + box_inverse[4] * rawrijy + box_inverse[7] * rawrijz;
@@ -305,9 +334,9 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
             minrijy = box[1] * minfracrijx + box[4] * minfracrijy + box[7] * minfracrijz;
             minrijz = box[2] * minfracrijx + box[5] * minfracrijy + box[8] * minfracrijz;
         }
-        const double rijx = use_pbc ? minrijx : rawrijx;
-        const double rijy = use_pbc ? minrijy : rawrijy;
-        const double rijz = use_pbc ? minrijz : rawrijz;
+        const double rijx = (use_pbc || use_ghost) ? minrijx : rawrijx;
+	const double rijy = (use_pbc || use_ghost) ? minrijy : rawrijy;
+	const double rijz = (use_pbc || use_ghost) ? minrijz : rawrijz;
 
         const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
         const double r = std::sqrt(rsq);
@@ -351,34 +380,52 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 
         // Component x
         // Efd[fincrd1 + site_inmon13 + mon1_index] +=
-        v0_[m] = ((ts2x * rijx - s1r3) * mu2[site_jnmon23 + m] + ts2x * rijy * mu2[site_jnmon23 + nmon2 + m] +
+        v0_[m] = scale * ((ts2x * rijx - s1r3) * mu2[site_jnmon23 + m] + ts2x * rijy * mu2[site_jnmon23 + nmon2 + m] +
                   ts2x * rijz * mu2[site_jnmon23 + nmon22 + m]);
 
         // Component y
         // Efd[fincrd1 + site_inmon13 + nmon1 + mon1_index] +=
-        v1_[m] = (ts2y * rijx * mu2[site_jnmon23 + m] + (ts2y * rijy - s1r3) * mu2[site_jnmon23 + nmon2 + m] +
+        v1_[m] = scale * (ts2y * rijx * mu2[site_jnmon23 + m] + (ts2y * rijy - s1r3) * mu2[site_jnmon23 + nmon2 + m] +
                   ts2y * rijz * mu2[site_jnmon23 + nmon22 + m]);
 
         // Component z
         // Efd[fincrd1 + site_inmon13 + nmon12 + mon1_index] +=
-        v2_[m] = (ts2z * rijx * mu2[site_jnmon23 + m] + ts2z * rijy * mu2[site_jnmon23 + nmon2 + m] +
+        v2_[m] = scale * (ts2z * rijx * mu2[site_jnmon23 + m] + ts2z * rijy * mu2[site_jnmon23 + nmon2 + m] +
                   (ts2z * rijz - s1r3) * mu2[site_jnmon23 + nmon22 + m]);
 
         // Contributions to the dipole electric field to site j of mon2
         // Component x
-        Efd2[site_jnmon23 + m] += ((ts2x * rijx - s1r3) * mu1[site_inmon13 + mon1_index] +
-                                   ts2x * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                   ts2x * rijz * mu1[site_inmon13 + nmon12 + mon1_index]);
+	double tmpx = scale * ((ts2x * rijx - s1r3) * mu1[site_inmon13 + mon1_index] +
+			       ts2x * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
+			       ts2x * rijz * mu1[site_inmon13 + nmon12 + mon1_index]);
+        Efd2[site_jnmon23 + m] += tmpx;
 
         // Component y
-        Efd2[site_jnmon23 + nmon2 + m] += ((ts2y * rijx) * mu1[site_inmon13 + mon1_index] +
+	double tmpy = scale * ((ts2y * rijx) * mu1[site_inmon13 + mon1_index] +
                                            (ts2y * rijy - s1r3) * mu1[site_inmon13 + nmon1 + mon1_index] +
                                            ts2y * rijz * mu1[site_inmon13 + nmon12 + mon1_index]);
+        Efd2[site_jnmon23 + nmon2 + m] += tmpy;
 
         // Component z
-        Efd2[site_jnmon23 + nmon22 + m] +=
+	double tmpz = scale * 
             ((ts2z * rijx) * mu1[site_inmon13 + mon1_index] + ts2z * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
              (ts2z * rijz - s1r3) * mu1[site_inmon13 + nmon12 + mon1_index]);
+        Efd2[site_jnmon23 + nmon22 + m] += tmpz;
+
+#if 0
+	// debug output
+	std::cout << "xyz1= " << xyzmon1_x << " " << xyzmon1_y << " " << xyzmon1_z <<
+	  " xyz2= " << xyz2[site_jnmon23 + m] << " " << xyz2[site_jnmon23 + nmon2 + m] << " " << xyz2[site_jnmon23 + nmon22 + m] <<
+	  " Efd1= " << v0_[m] << " " << v1_[m] << " " << v2_[m] <<
+	  " Efd2= " << tmpx << " " << tmpy << " " << tmpz <<
+	  std::endl;
+	std::cout << "          mu1= " << mu1[site_inmon13 + mon1_index] << " " <<
+	  mu1[site_inmon13 + nmon1 + mon1_index] << " " << mu1[site_inmon13 + nmon12 + mon1_index] <<
+	  "  mu2= " << mu2[site_jnmon23 + m] << " " << mu2[site_jnmon23 + nmon2 + m] << " " <<
+	  mu2[site_jnmon23 + nmon22 + m] << std::endl;
+	// debug output
+#endif
+      } // if(accum2)
     }
 
     // Setting the values to the output
