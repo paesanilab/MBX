@@ -408,7 +408,16 @@ void System::SetPBC(std::vector<double> box) {
 
     // Set the box and the bool to use or not pbc
     use_pbc_ = box.size();
+
     box_ = box;
+    if (box.size() == 9) {
+        box_ = box;
+        box_ABCabc_ = BoxVecToBoxABCabc(box);
+    } else if (box.size() == 6) {
+        box_ABCabc_ = box;
+        box_ = BoxABCabcToBoxVec(box);
+    }
+
     box_inverse_ = InvertUnitCell(box_);
 
     // If we use PBC, we need to make sure that the monomer atoms are all
@@ -771,7 +780,16 @@ void System::SetUpFromJson(nlohmann::json j) {
         box.clear();
         std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
     }
+
     box_ = box;
+    if (box.size() == 9) {
+        box_ = box;
+        box_ABCabc_ = BoxVecToBoxABCabc(box);
+    } else if (box.size() == 6) {
+        box_ABCabc_ = box;
+        box_ = BoxABCabcToBoxVec(box);
+    }
+    
     mbx_j_["MBX"]["box"] = box;
 
     // Try to get 2b cutoff

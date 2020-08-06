@@ -50,6 +50,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     mon_type_count_ = mon_type_count;
     do_grads_ = do_grads;
     box_ = box;
+    box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     use_pbc_ = box.size();
 
@@ -87,6 +88,7 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     sys_xyz_ = xyz;
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
+    box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     use_pbc_ = box.size();
     do_grads_ = do_grads;
     cutoff_ = cutoff;
@@ -539,12 +541,18 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
-        double A = box_[0], B = box_[4], C = box_[8];
+        double A = box_ABCabc_[0];
+        double B = box_ABCabc_[1];
+        double C = box_ABCabc_[2];
+        double alpha = box_ABCabc_[3];
+        double beta = box_ABCabc_[4];
+        double gamma = box_ABCabc_[5];
+        
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
-	pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+       	pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
         auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
@@ -769,7 +777,11 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
 void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
   
     int me;
-    MPI_Comm_rank(world_,&me);
+#if HAVE_MPI == 1
+    MPI_Comm_rank(world_, &me);
+#else
+    me = 0;
+#endif
     
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
@@ -922,5 +934,5 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
 	//} // if(compute_pme)	
 }
-  
+
 }  // namespace disp

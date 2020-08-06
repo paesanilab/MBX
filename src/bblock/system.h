@@ -1188,6 +1188,12 @@ to be the same.
     std::vector<double> box_;
 
     /**
+     * Vector that stores the simulation box in ABCabc format (6 elements).
+     * The center of the box is origin of coordinates
+     */
+    std::vector<double> box_ABCabc_;
+
+    /**
      * Vector that stores the simulation box inverse.
      */
     std::vector<double> box_inverse_;

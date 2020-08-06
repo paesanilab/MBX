@@ -98,6 +98,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     maxit_ = maxit;
     dip_method_ = dip_method;
     box_ = box;
+    box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     use_pbc_ = box.size();
     cutoff_ = 1000.0;
 
@@ -200,6 +201,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     box_ = box;
     use_pbc_ = box.size();
     cutoff_ = cutoff;
+    box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     if (use_pbc_) box_inverse_ = InvertUnitCell(box_);
 
     size_t nsites3 = nsites_ * 3;
@@ -295,7 +297,11 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     ElectricFieldHolder elec_field(maxnmon);
     
     int me;
+#if HAVE_MPI == 1
     MPI_Comm_rank(world_,&me);
+#else
+    me = 0;
+#endif
     
     // Parallelization
     size_t nthreads = 1;
@@ -675,12 +681,18 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
-        double A, B, C;
-	if(use_ghost) {
-	  A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-	} else {
-	  A = box_[0], B = box_[4], C = box_[8];
-	}
+        double A, B, C, alpha, beta, gamma;
+  	    if(use_ghost) {
+        	  A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
+            alpha = beta = gamma = 90.0;
+  	    } else {
+	          A = box_ABCabc_[0];
+            B = box_ABCabc_[1];
+            C = box_ABCabc_[2];
+            alpha = box_ABCabc_[3];
+            beta = box_ABCabc_[4];
+            gamma = box_ABCabc_[5];
+  	    }
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
@@ -690,7 +702,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 	} else {
 	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
 	}
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 	
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -1217,7 +1229,14 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
-        double A = box_[0], B = box_[4], C = box_[8];
+        double A, B, C, alpha, beta, gamma;
+        A = box_ABCabc_[0];
+        B = box_ABCabc_[1];
+        C = box_ABCabc_[2];
+        alpha = box_ABCabc_[3];
+        beta = box_ABCabc_[4];
+        gamma = box_ABCabc_[5];
+        
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
@@ -1227,7 +1246,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 	} else {
 	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
 	}
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
         auto charges = helpme::Matrix<double>(sys_chg_.data(), nsites_, 1);
@@ -1658,8 +1677,11 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
     size_t iter = 1;
     double rvrv = DotProduct(rv, rv);
     double rvrv_global = 0.0;
+#if HAVE_MPI == 1
     MPI_Allreduce(&rvrv, &rvrv_global, 1, MPI_DOUBLE, MPI_SUM, world_);
-    
+#else
+    rvrv_global = rvrv;
+#endif
     double residual = 0.0;
     double residual_global = 0.0;
     while (true) {
@@ -1671,7 +1693,11 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
         double pvts2pv = DotProduct(pv, ts2v);
 
 	double pvts2pv_global = 0.0;
+#if HAVE_MPI == 1
 	MPI_Allreduce(&pvts2pv, &pvts2pv_global, 1, MPI_DOUBLE, MPI_SUM, world_);
+#else
+  pvts2pv_global = pvts2pv;
+#endif
 	
         if (rvrv_global < tolerance_) break;
         double alphak = rvrv_global / pvts2pv_global;
@@ -1687,8 +1713,12 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
         }
 
 	residual_global = 0.0;
+#if HAVE_MPI == 1
 	MPI_Allreduce(&residual, &residual_global, 1, MPI_DOUBLE, MPI_SUM, world_);
-	
+#else
+  residual_global = residual;
+#endif
+
         // Check if converged
         if (residual_global < tolerance_) break;
 	
@@ -2214,10 +2244,18 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 
   int local_size = nsites_;
   int global_size = 0;
+#if HAVE_MPI == 1
   MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
+#else
+  global_size = local_size;
+#endif
 
   int offset = 0;
+#if HAVE_MPI == 1
   MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
+#else // FIXME Is this correct?
+  offset = local_size;
+#endif
   
   // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
   //   " offset= " << offset << std::endl;
@@ -2260,8 +2298,10 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
     fi_crd += nmon * ns * 3;
   }
   
+#if HAVE_MPI == 1  // FIXME Not sure if there is somethign to do if not defined
   MPI_Allreduce(MPI_IN_PLACE, in_all.data(),  global_size*3, MPI_DOUBLE, MPI_SUM, world_);
   MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size*3, MPI_DOUBLE, MPI_SUM, world_);
+#endif
 
   const double tolerance = 1e-6;
 
@@ -2294,6 +2334,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	  // Apply PBC :(
 	  {
 	    // Convert to fractional coordinates
+// FIXME Chris, the indexes here I think the are the wrong ones. Box vectors are {0,1,2},{3,4,5}{6,7,8}, not {0,3,6},{1,4,7},{2,5,8}
             const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy + box_inverse_PMElocal_[2] * dz;
             const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy + box_inverse_PMElocal_[5] * dz;
             const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy + box_inverse_PMElocal_[8] * dz;
@@ -2433,10 +2474,18 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
 
   int local_size = nsites_;
   int global_size = 0;
+#if HAVE_MPI == 1
   MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
+#else
+  global_size = local_size;
+#endif
 
   int offset = 0;
+#if HAVE_MPI == 1
   MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
+#else // FIXME Please check that this is correct, chris!
+  offset = local_size;
+#endif
   
   // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
   //   " offset= " << offset << std::endl;
@@ -2479,8 +2528,10 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
     fi_crd += nmon * ns * 3;
   }
   
+#if HAVE_MPI == 1 // FIXME nothing to do if else?
   MPI_Allreduce(MPI_IN_PLACE, in_all.data(),  global_size*3, MPI_DOUBLE, MPI_SUM, world_);
   MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size*3, MPI_DOUBLE, MPI_SUM, world_);
+#endif
 
   const double tolerance = 1e-6;
 
@@ -2515,6 +2566,7 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
 	    
 	    // Apply PBC :(
 	    {
+// FIXME Chris, I think this also has the indexes swapped.
 	      // Convert to fractional coordinates
 	      const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy + box_inverse_PMElocal_[2] * dz;
 	      const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy + box_inverse_PMElocal_[5] * dz;
@@ -2615,7 +2667,11 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     //    reverse_forward_comm(in_v);
     
     int me;
+#if HAVE_MPI == 1
     MPI_Comm_rank(world_,&me);
+#else
+    me = 0;
+#endif
     
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
@@ -2991,12 +3047,18 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
-        double A, B, C;
-	if(use_ghost) {
-	  A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-	} else {
-	  A = box_[0], B = box_[4], C = box_[8];
-	}
+        double A, B, C, alpha, beta, gamma;
+        if(use_ghost) {
+            A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
+            alpha = beta = gamma = 90.0;
+        } else {
+            A = box_ABCabc_[0];
+            B = box_ABCabc_[1];
+            C = box_ABCabc_[2];
+            alpha = box_ABCabc_[3];
+            beta = box_ABCabc_[4];
+            gamma = box_ABCabc_[5];
+        }
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
@@ -3006,7 +3068,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 	} else {
 	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
 	}
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 	
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -3597,8 +3659,15 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }
 
         helpme::PMEInstance<double> pme_solver_;
+        double A, B, C, alpha, beta, gamma;
+        A = box_ABCabc_[0];
+        B = box_ABCabc_[1];
+        C = box_ABCabc_[2];
+        alpha = box_ABCabc_[3];
+        beta = box_ABCabc_[4];
+        gamma = box_ABCabc_[5];
+        
         // Compute the reciprocal space terms, using PME
-        double A = box_[0], B = box_[4], C = box_[8];
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
@@ -3608,7 +3677,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 	} else {
 	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
 	}
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
@@ -4142,7 +4211,12 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
-        double A = box_[0], B = box_[4], C = box_[8];
+        double A = box_ABCabc_[0];
+        double B = box_ABCabc_[1];
+        double C = box_ABCabc_[2];
+        double alpha = box_ABCabc_[3];
+        double beta = box_ABCabc_[4];
+        double gamma = box_ABCabc_[5];
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
@@ -4152,7 +4226,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 	} else {
 	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
 	}
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
@@ -4619,7 +4693,12 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
 
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
-        double A = box_[0], B = box_[4], C = box_[8];
+        double A = box_ABCabc_[0];
+        double B = box_ABCabc_[1];
+        double C = box_ABCabc_[2];
+        double alpha = box_ABCabc_[3];
+        double beta = box_ABCabc_[4];
+        double gamma = box_ABCabc_[5];
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
@@ -4629,7 +4708,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad) {
 	} else {
 	  pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
 	}
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
