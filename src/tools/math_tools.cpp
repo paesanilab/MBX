@@ -105,11 +105,11 @@ std::vector<double> BoxVecToBoxABCabc(std::vector<double> box) {
     double AdotC = box[0] * box[6];
     double BdotC = box[3] * box[6] + box[4] * box[7];
 
-    gamma = acos(A*B/AdotB);
-    beta = acos(A*C/AdotC);
-    alpha = acos(B*C/BdotC);
+    gamma = acos(AdotB/A/B);
+    beta  = acos(AdotC/A/C);
+    alpha = acos(BdotC/B/C);
 
-    std::vector<double> box_out = {A, B, C, alpha, beta, gamma};
+    std::vector<double> box_out = {A, B, C, alpha/M_PI*180.0, beta/M_PI*180.0, gamma/M_PI*180.0};
     return box_out;
 }
 
@@ -118,9 +118,9 @@ std::vector<double> BoxABCabcToBoxVec(std::vector<double> box) {
     A = box[0];
     B = box[1];
     C = box[2];
-    alpha = box[3];
-    beta = box[4];
-    gamma = box[5];
+    alpha = box[3]/180.0*M_PI;
+    beta = box[4]/180.0*M_PI;
+    gamma = box[5]/180.0*M_PI;
 
     std::vector<double> box_out(9,0.0);
     box_out[0] = A;
