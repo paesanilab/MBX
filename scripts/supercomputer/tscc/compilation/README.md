@@ -4,16 +4,13 @@ In order to install MBX on tscc, you will need to make sure you have the followi
 - Intel compilers v2017 or higher. The default compilers are 2016, but one can load the 2018 compilers (see compilation scripts)
 
 # Installation
-You can try to install MBX at the login node. For that,
-`cp $MBX_HOME/scripts/supercomputers/tscc/compilation/compile_tscc.sh $MBX_HOME`
-`cd $MBX_HOME`
-`./compile_tscc.sh intel`
-
-If there are problems to compile or takes too long, you can submit the compilation as a job.
-First, set `MBX_HOME` to the right path in `scripts/supercomputers/tscc/compile_tscc.job`.
+You can submit the compilation as a job.
+First, set `MBX_HOME` to the right path in `scripts/supercomputers/tscc/compile_tscc_XXX.job`, being XXX intel, gnu, or intelmpi. 
 Then,
-`cp $MBX_HOME/scripts/supercomputers/tscc/compilation/compile_tscc.job $MBX_HOME`
+`cp $MBX_HOME/scripts/supercomputers/tscc/compilation/compile_tscc_XXX.job $MBX_HOME`
 `cd $MBX_HOME`
-`qsub compile_tscc.job`
+`qsub compile_tscc_XXX.job`
 
 This will compile both the driver and the MBX library.
+
+If your goal is to run LAMMPS, you must compile using MPI. 
