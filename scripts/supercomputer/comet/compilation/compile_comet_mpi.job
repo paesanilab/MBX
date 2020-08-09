@@ -20,14 +20,10 @@ module load intel
 module load intelmpi
 
 rm -rf build install
-$CMAKE_EXE -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=True -DCMAKE_CXX_FLAGS=" -fPIC -Wall " -DCMAKE_CXX_COMPILER=mpiicpc -DCMAKE_C_COMPILER=mpiicc -H. -Bbuild
+$CMAKE_EXE -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=True -DCMAKE_CXX_FLAGS="-DHAVE_MPI=1 -fPIC -Wall " -DCMAKE_CXX_COMPILER=mpiicpc -DCMAKE_C_COMPILER=mpiicc -H. -Bbuild
 cd build
 make CXX=mpiicpc CC=mpiicc
 make install
 cd ../
 
 export MBX_HOME=$PWD
-cd plugins/i-pi/src/main/
-cp Makefile_comet_intel Makefile
-make
-cd -
