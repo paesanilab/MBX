@@ -72,12 +72,17 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<double> real_pol{1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01, 2.3660000000e+00};              \
     std::vector<double> real_charges{0.0000000000e+00, 5.7511954207e-01, 5.7511954216e-01, 1.0000000000e+00};          \
     std::vector<double> C6_long_range{1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00, 6.5762558189e+01};         \
-    std::vector<double>virial_1b    ={ -2.25373 , -0.098751 , 0.877896 , -0.098751 , -2.55759 , -0.49551 , 0.877896 , -0.49551 , -0.45364};\
-    std::vector<double>virial_2b    ={ 0.609642 , -0.52781 , -0.292091 , -0.52781 , 1.78304 , 0.4733 , -0.292091 , 0.4733 , 0.17854};\
-    std::vector<double>virial_3b    ={ 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0};\
-    std::vector<double>virial_elec  ={ -1.90935 , 6.70993 , 1.74504 , 6.70993 , -16.1033 , -4.95037 , 1.74504 , -4.95037 , -1.41505};\
-    std::vector<double>virial_disp  ={ -0.346724 , 0.672904 , 0.236766 , 0.672904 , -1.39149 , -0.473235 , 0.236766 , -0.473235 , -0.163905};\
-    std::vector<double>virial_buck  ={ 0.931849 , -1.95515 , -0.655256 , -1.95515 , 4.12684 , 1.37863 , -0.655256 , 1.37863 , 0.461358};\
+    std::vector<double> virial_1b = {-2.25373, -0.098751, 0.877896, -0.098751, -2.55759,                               \
+                                     -0.49551, 0.877896,  -0.49551, -0.45364};                                         \
+    std::vector<double> virial_2b = {0.609642, -0.52781,  -0.292091, -0.52781, 1.78304,                                \
+                                     0.4733,   -0.292091, 0.4733,    0.17854};                                         \
+    std::vector<double> virial_3b = {0, 0, 0, 0, 0, 0, 0, 0, 0};                                                       \
+    std::vector<double> virial_elec = {-1.90935, 6.70993, 1.74504,  6.70993, -16.1033,                                 \
+                                       -4.95037, 1.74504, -4.95037, -1.41505};                                         \
+    std::vector<double> virial_disp = {-0.346724, 0.672904, 0.236766,  0.672904, -1.39149,                             \
+                                       -0.473235, 0.236766, -0.473235, -0.163905};                                     \
+    std::vector<double> virial_buck = {0.931849, -1.95515,  -0.655256, -1.95515, 4.12684,                              \
+                                       1.37863,  -0.655256, 1.37863,   0.461358};                                      \
     std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"h2o", 1}, {"cs", 1}};                        \
     std::vector<size_t> internal_original_to_current_order{0, 1};                                                      \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}, {1, 4}};                                     \
