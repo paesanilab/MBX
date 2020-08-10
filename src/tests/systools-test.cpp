@@ -248,8 +248,8 @@ int main(int argc, char **argv) {
     // Try empty monomer vector
     try {
         exitcode = 1;
-        std::vector<std::pair<std::string, size_t>> mon_type_num_cp =
-            systools::OrderMonomers(mon_empty, islocal_empty, sites, nats, original2current, original_order, original_order_realSites);
+        std::vector<std::pair<std::string, size_t>> mon_type_num_cp = systools::OrderMonomers(
+            mon_empty, islocal_empty, sites, nats, original2current, original_order, original_order_realSites);
     } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
@@ -259,8 +259,8 @@ int main(int argc, char **argv) {
     // Try nats not matching mon size
     try {
         exitcode = 1;
-        std::vector<std::pair<std::string, size_t>> mon_type_num_cp =
-	    systools::OrderMonomers(mon, islocal, sites, nats_bad, original2current, original_order, original_order_realSites);
+        std::vector<std::pair<std::string, size_t>> mon_type_num_cp = systools::OrderMonomers(
+            mon, islocal, sites, nats_bad, original2current, original_order, original_order_realSites);
     } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
@@ -270,8 +270,8 @@ int main(int argc, char **argv) {
     // Try sites not matching mon size
     try {
         exitcode = 1;
-        std::vector<std::pair<std::string, size_t>> mon_type_num_cp =
-	    systools::OrderMonomers(mon, islocal, sites_empty, nats, original2current, original_order, original_order_realSites);
+        std::vector<std::pair<std::string, size_t>> mon_type_num_cp = systools::OrderMonomers(
+            mon, islocal, sites_empty, nats, original2current, original_order, original_order_realSites);
     } catch (CUException &e) {
         exitcode = 0;
         std::cerr << "Error message expected:" << std::endl;
