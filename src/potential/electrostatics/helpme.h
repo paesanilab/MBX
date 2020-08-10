@@ -3,7 +3,6 @@
 // Do not modify this source code directly as any changes will be overwritten
 //
 
-
 // original file: ../src/helpme.h
 
 // BEGINLICENSE
@@ -419,10 +418,10 @@ class FFTWAllocator {
    public:
     // type definitions
     typedef T value_type;
-    typedef T* pointer;
-    typedef const T* const_pointer;
-    typedef T& reference;
-    typedef const T& const_reference;
+    typedef T *pointer;
+    typedef const T *const_pointer;
+    typedef T &reference;
+    typedef const T &const_reference;
     typedef std::size_t size_type;
     typedef std::ptrdiff_t difference_type;
 
@@ -440,40 +439,40 @@ class FFTWAllocator {
      * - nothing to do because the allocator has no state
      */
     FFTWAllocator() throw() {}
-    FFTWAllocator(const FFTWAllocator&) throw() {}
+    FFTWAllocator(const FFTWAllocator &) throw() {}
     template <class U>
-    FFTWAllocator(const FFTWAllocator<U>&) throw() {}
+    FFTWAllocator(const FFTWAllocator<U> &) throw() {}
     ~FFTWAllocator() throw() {}
-    FFTWAllocator& operator=(FFTWAllocator other) throw() {}
+    FFTWAllocator &operator=(FFTWAllocator other) throw() {}
     template <class U>
-    FFTWAllocator& operator=(FFTWAllocator<U> other) throw() {}
+    FFTWAllocator &operator=(FFTWAllocator<U> other) throw() {}
 
     // return maximum number of elements that can be allocated
     size_type max_size() const throw() { return std::numeric_limits<std::size_t>::max() / sizeof(T); }
 
     // allocate but don't initialize num elements of type T
-    pointer allocate(size_type num, const void* = 0) { return static_cast<pointer>(fftw_malloc(num * sizeof(T))); }
+    pointer allocate(size_type num, const void * = 0) { return static_cast<pointer>(fftw_malloc(num * sizeof(T))); }
 
     // initialize elements of allocated storage p with value value
-    void construct(pointer p, const T& value) {
+    void construct(pointer p, const T &value) {
         // initialize memory with placement new
-        new ((void*)p) T(value);
+        new ((void *)p) T(value);
     }
 
     // destroy elements of initialized storage p
     void destroy(pointer p) {}
 
     // deallocate storage p of deleted elements
-    void deallocate(pointer p, size_type num) { fftw_free(static_cast<void*>(p)); }
+    void deallocate(pointer p, size_type num) { fftw_free(static_cast<void *>(p)); }
 };
 
 // return that all specializations of this allocator are interchangeable
 template <class T1, class T2>
-bool operator==(const FFTWAllocator<T1>&, const FFTWAllocator<T2>&) throw() {
+bool operator==(const FFTWAllocator<T1> &, const FFTWAllocator<T2> &) throw() {
     return true;
 }
 template <class T1, class T2>
-bool operator!=(const FFTWAllocator<T1>&, const FFTWAllocator<T2>&) throw() {
+bool operator!=(const FFTWAllocator<T1> &, const FFTWAllocator<T2> &) throw() {
     return false;
 }
 
@@ -524,26 +523,26 @@ class Matrix {
     /// A vector to conveniently allocate data, if we really need to.
     helpme::vector<Real> allocatedData_;
     /// Pointer to the raw data, whose allocation may not be controlled by us.
-    Real* data_;
+    Real *data_;
 
    public:
     enum class SortOrder { Ascending, Descending };
 
-    inline const Real& operator()(int row, int col) const { return *(data_ + row * nCols_ + col); }
-    inline const Real& operator()(const std::pair<int, int>& indices) const {
+    inline const Real &operator()(int row, int col) const { return *(data_ + row * nCols_ + col); }
+    inline const Real &operator()(const std::pair<int, int> &indices) const {
         return *(data_ + std::get<0>(indices) * nCols_ + std::get<1>(indices));
     }
-    inline Real& operator()(int row, int col) { return *(data_ + row * nCols_ + col); }
-    inline Real& operator()(const std::pair<int, int>& indices) {
+    inline Real &operator()(int row, int col) { return *(data_ + row * nCols_ + col); }
+    inline Real &operator()(const std::pair<int, int> &indices) {
         return *(data_ + std::get<0>(indices) * nCols_ + std::get<1>(indices));
     }
-    inline const Real* operator[](int row) const { return data_ + row * nCols_; }
-    inline Real* operator[](int row) { return data_ + row * nCols_; }
+    inline const Real *operator[](int row) const { return data_ + row * nCols_; }
+    inline Real *operator[](int row) { return data_ + row * nCols_; }
 
-    Real* begin() const { return data_; }
-    Real* end() const { return data_ + nRows_ * nCols_; }
-    const Real* cbegin() const { return data_; }
-    const Real* cend() const { return data_ + nRows_ * nCols_; }
+    Real *begin() const { return data_; }
+    Real *end() const { return data_ + nRows_ * nCols_; }
+    const Real *cbegin() const { return data_; }
+    const Real *cend() const { return data_ + nRows_ * nCols_; }
 
     /*!
      * \brief The sliceIterator struct provides a read-only view of a sub-block of a matrix, with arbitrary size.
@@ -551,70 +550,70 @@ class Matrix {
     struct sliceIterator {
         Real *begin_, *end_, *ptr_;
         size_t stride_;
-        sliceIterator(Real* start, Real* end, size_t stride) : begin_(start), end_(end), ptr_(start), stride_(stride) {}
+        sliceIterator(Real *start, Real *end, size_t stride) : begin_(start), end_(end), ptr_(start), stride_(stride) {}
         sliceIterator begin() const { return sliceIterator(begin_, end_, stride_); }
         sliceIterator end() const { return sliceIterator(end_, end_, 0); }
         sliceIterator cbegin() const { return sliceIterator(begin_, end_, stride_); }
         sliceIterator cend() const { return sliceIterator(end_, end_, 0); }
-        bool operator!=(const sliceIterator& other) { return ptr_ != other.ptr_; }
+        bool operator!=(const sliceIterator &other) { return ptr_ != other.ptr_; }
         sliceIterator operator*=(Real val) {
-            for (auto& element : *this) element *= val;
+            for (auto &element : *this) element *= val;
             return *this;
         }
         sliceIterator operator/=(Real val) {
             Real invVal = 1 / val;
-            for (auto& element : *this) element *= invVal;
+            for (auto &element : *this) element *= invVal;
             return *this;
         }
         sliceIterator operator-=(Real val) {
-            for (auto& element : *this) element -= val;
+            for (auto &element : *this) element -= val;
             return *this;
         }
         sliceIterator operator+=(Real val) {
-            for (auto& element : *this) element += val;
+            for (auto &element : *this) element += val;
             return *this;
         }
         sliceIterator operator++() {
             ptr_ += stride_;
             return *this;
         }
-        const Real& operator[](size_t index) { return *(begin_ + index); }
+        const Real &operator[](size_t index) { return *(begin_ + index); }
         size_t size() const { return std::distance(begin_, end_) / stride_; }
-        void assertSameSize(const sliceIterator& other) const {
+        void assertSameSize(const sliceIterator &other) const {
             if (size() != other.size())
                 throw std::runtime_error("Slice operations only supported for slices of the same size.");
         }
-        void assertContiguous(const sliceIterator& iter) const {
+        void assertContiguous(const sliceIterator &iter) const {
             if (iter.stride_ != 1)
                 throw std::runtime_error(
                     "Slice operations called on operation that is only allowed for contiguous data.");
         }
-        Matrix<Real> operator-(const sliceIterator& other) const {
+        Matrix<Real> operator-(const sliceIterator &other) const {
             assertSameSize(other);
             assertContiguous(*this);
             assertContiguous(other);
             Matrix ret(1, size());
             std::transform(begin_, end_, other.begin_, ret[0],
-                           [](const Real& a, const Real& b) -> Real { return a - b; });
+                           [](const Real &a, const Real &b) -> Real { return a - b; });
             return ret;
         }
-        sliceIterator operator-=(const sliceIterator& other) const {
+        sliceIterator operator-=(const sliceIterator &other) const {
             assertSameSize(other);
             assertContiguous(*this);
             assertContiguous(other);
             std::transform(begin_, end_, other.begin_, begin_,
-                           [](const Real& a, const Real& b) -> Real { return a - b; });
+                           [](const Real &a, const Real &b) -> Real { return a - b; });
             return *this;
         }
-        sliceIterator operator+=(const sliceIterator& other) const {
+        sliceIterator operator+=(const sliceIterator &other) const {
             assertSameSize(other);
             assertContiguous(*this);
             assertContiguous(other);
             std::transform(begin_, end_, other.begin_, begin_,
-                           [](const Real& a, const Real& b) -> Real { return a + b; });
+                           [](const Real &a, const Real &b) -> Real { return a + b; });
             return *this;
         }
-        Real& operator*() { return *ptr_; }
+        Real &operator*() { return *ptr_; }
     };
 
     /*!
@@ -658,7 +657,7 @@ class Matrix {
      * \brief Matrix Constructs a new matrix, allocating memory.
      * \param filename the ASCII file from which to read this matrix
      */
-    Matrix(const std::string& filename) {
+    Matrix(const std::string &filename) {
         Real tmp;
         std::ifstream inFile(filename);
 
@@ -692,7 +691,7 @@ class Matrix {
         nRows_ = data.size();
         nCols_ = nRows_ ? data.begin()->size() : 0;
         allocatedData_.reserve(nRows_ * nCols_);
-        for (auto& row : data) {
+        for (auto &row : data) {
             if (row.size() != nCols_) throw std::runtime_error("Inconsistent row dimensions in matrix specification.");
             allocatedData_.insert(allocatedData_.end(), row.begin(), row.end());
         }
@@ -715,7 +714,7 @@ class Matrix {
      * \param nRows the number of rows in the matrix.
      * \param nCols the number of columns in the matrix.
      */
-    Matrix(Real* ptr, size_t nRows, size_t nCols) : nRows_(nRows), nCols_(nCols), data_(ptr) {}
+    Matrix(Real *ptr, size_t nRows, size_t nCols) : nRows_(nRows), nCols_(nCols), data_(ptr) {}
 
     /*!
      * \brief cast make a copy of this matrix, with its elements cast as a different type.
@@ -725,8 +724,8 @@ class Matrix {
     template <typename NewReal>
     Matrix<NewReal> cast() const {
         Matrix<NewReal> newMat(nRows_, nCols_);
-        NewReal* newPtr = newMat[0];
-        const Real* dataPtr = data_;
+        NewReal *newPtr = newMat[0];
+        const Real *dataPtr = data_;
         for (size_t addr = 0; addr < nRows_ * nCols_; ++addr) *newPtr++ = static_cast<NewReal>(*dataPtr++);
         return newMat;
     }
@@ -748,7 +747,7 @@ class Matrix {
      * \return whether all values are near zero or not.
      */
     bool isNearZero(Real threshold = 1e-10f) const {
-        return !std::any_of(cbegin(), cend(), [&](const Real& val) { return std::abs(val) > threshold; });
+        return !std::any_of(cbegin(), cend(), [&](const Real &val) { return std::abs(val) > threshold; });
     }
 
     /*!
@@ -781,7 +780,7 @@ class Matrix {
             // Generic case; just use spectral decomposition, invert the eigenvalues, and stitch back together.
             // Note that this only works for symmetric matrices.  Need to hook into Lapack for a general
             // inversion routine if this becomes a limitation.
-            return this->applyOperation([](Real& element) { element = 1 / element; });
+            return this->applyOperation([](Real &element) { element = 1 / element; });
         }
         return matrixInverse;
     }
@@ -790,7 +789,7 @@ class Matrix {
      * \brief assertSymmetric checks that this matrix is symmetric within some threshold.
      * \param threshold the value below which an pair's difference is considered zero.
      */
-    void assertSymmetric(const Real& threshold = 1e-10f) const {
+    void assertSymmetric(const Real &threshold = 1e-10f) const {
         assertSquare();
         for (int row = 0; row < nRows_; ++row) {
             for (int col = 0; col < row; ++col) {
@@ -804,7 +803,7 @@ class Matrix {
      * \brief applyOperationToEachElement modifies every element in the matrix by applying an operation.
      * \param function a unary operator describing the operation to perform.
      */
-    void applyOperationToEachElement(const std::function<void(Real&)>& fxn) { std::for_each(begin(), end(), fxn); }
+    void applyOperationToEachElement(const std::function<void(Real &)> &fxn) { std::for_each(begin(), end(), fxn); }
 
     /*!
      * \brief applyOperation applies an operation to this matrix using the spectral decomposition,
@@ -812,7 +811,7 @@ class Matrix {
      * \param function a undary operator describing the operation to perform.
      * \return the matrix transformed by the operator.
      */
-    Matrix applyOperation(const std::function<void(Real&)>& function) const {
+    Matrix applyOperation(const std::function<void(Real &)> &function) const {
         assertSymmetric();
 
         auto eigenPairs = this->diagonalize();
@@ -823,7 +822,7 @@ class Matrix {
         for (int row = 0; row < nRows_; ++row) {
             Real transformedEigenvalue = evalsReal[row][0];
             std::for_each(evecsT.data_ + row * nCols_, evecsT.data_ + (row + 1) * nCols_,
-                          [&](Real& val) { val *= transformedEigenvalue; });
+                          [&](Real &val) { val *= transformedEigenvalue; });
         }
         return evecs * evecsT;
     }
@@ -832,7 +831,7 @@ class Matrix {
      * \brief assertSameSize make sure that this Matrix has the same dimensions as another Matrix.
      * \param other the matrix to compare to.
      */
-    void assertSameSize(const Matrix& other) const {
+    void assertSameSize(const Matrix &other) const {
         if (nRows_ != other.nRows_ || nCols_ != other.nCols_)
             throw std::runtime_error("Attepting to compare matrices of different sizes!");
     }
@@ -850,14 +849,14 @@ class Matrix {
      * \param other the right hand side of the matrix product.
      * \return the product of this matrix with the matrix other.
      */
-    Matrix multiply(const Matrix& other) const {
+    Matrix multiply(const Matrix &other) const {
         // TODO one fine day this should be replaced by GEMM calls, if matrix multiplies actually get used much.
         if (nCols_ != other.nRows_)
             throw std::runtime_error("Attempting to multiply matrices with incompatible dimensions.");
         Matrix product(nRows_, other.nCols_);
-        Real* output = product.data_;
+        Real *output = product.data_;
         for (int row = 0; row < nRows_; ++row) {
-            const Real* rowPtr = data_ + row * nCols_;
+            const Real *rowPtr = data_ + row * nCols_;
             for (int col = 0; col < other.nCols_; ++col) {
                 for (int link = 0; link < nCols_; ++link) {
                     *output += rowPtr[link] * other.data_[link * other.nCols_ + col];
@@ -873,17 +872,17 @@ class Matrix {
      * \param other the right hand side of the matrix product.
      * \return the product of this matrix with the matrix other.
      */
-    Matrix operator*(const Matrix& other) const { return this->multiply(other); }
+    Matrix operator*(const Matrix &other) const { return this->multiply(other); }
 
     /*!
      * \brief increment this matrix with another, returning a new matrix containing the sum.
      * \param other the right hand side of the matrix sum.
      * \return the sum of this matrix and the matrix other.
      */
-    Matrix incrementWith(const Matrix& other) {
+    Matrix incrementWith(const Matrix &other) {
         assertSameSize(other);
         std::transform(begin(), end(), other.begin(), begin(),
-                       [](const Real& a, const Real& b) -> Real { return a + b; });
+                       [](const Real &a, const Real &b) -> Real { return a + b; });
         return *this;
     }
 
@@ -892,7 +891,7 @@ class Matrix {
      * \param other the right hand side of the matrix sum.
      * \return the sum of this matrix and the matrix other.
      */
-    Matrix operator+=(const Matrix& other) { return this->incrementWith(other); }
+    Matrix operator+=(const Matrix &other) { return this->incrementWith(other); }
 
     /*!
      * \brief almostEquals checks that two matrices have all elements the same, within some specificied tolerance.
@@ -901,7 +900,7 @@ class Matrix {
      * \return whether the two matrices are almost equal.
      */
     template <typename T = Real, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
-    bool almostEquals(const Matrix& other, Real tolerance = 1e-6) const {
+    bool almostEquals(const Matrix &other, Real tolerance = 1e-6) const {
         // The floating point version
         assertSameSize(other);
 
@@ -910,7 +909,7 @@ class Matrix {
         });
     }
     template <typename T = Real, typename std::enable_if<!std::is_floating_point<T>::value, int>::type = 0>
-    bool almostEquals(const Matrix& other, Real tolerance = 1e-6) const {
+    bool almostEquals(const Matrix &other, Real tolerance = 1e-6) const {
         // The complex version
         assertSameSize(other);
 
@@ -927,7 +926,7 @@ class Matrix {
      * \param other the other matrix in the inner product, which must have the same dimensions.
      * \return the inner product.
      */
-    Real dot(const Matrix& other) const {
+    Real dot(const Matrix &other) const {
         assertSameSize(other);
 
         return std::inner_product(cbegin(), cend(), other.cbegin(), Real(0));
@@ -940,7 +939,7 @@ class Matrix {
      * \param precision the precision of each matrix element's formatted representation.
      * \param printDimensions whether to print the dimensions at the top of the file.
      */
-    void writeToFile(const std::string& filename, int width = 20, int precision = 14,
+    void writeToFile(const std::string &filename, int width = 20, int precision = 14,
                      bool printDimensions = false) const {
         std::ofstream file;
         file.open(filename, std::ios::out);
@@ -954,7 +953,7 @@ class Matrix {
      * \param os stream object to write to.
      * \return modified stream object.
      */
-    std::ostream& write(std::ostream& os) const {
+    std::ostream &write(std::ostream &os) const {
         for (int row = 0; row < nRows_; ++row) os << stringify(data_ + row * nCols_, nCols_, nCols_);
         os << std::endl;
         return os;
@@ -1005,12 +1004,12 @@ class Matrix {
         JacobiCyclicDiagonalization<Real>(eigenValues[0], unsortedEigenVectors[0], cbegin(), nRows_);
         unsortedEigenVectors.transposeInPlace();
 
-        std::vector<std::pair<Real, const Real*>> eigenPairs;
+        std::vector<std::pair<Real, const Real *>> eigenPairs;
         for (int val = 0; val < nRows_; ++val) eigenPairs.push_back({eigenValues[val][0], unsortedEigenVectors[val]});
         std::sort(eigenPairs.begin(), eigenPairs.end());
         if (order == SortOrder::Descending) std::reverse(eigenPairs.begin(), eigenPairs.end());
         for (int val = 0; val < nRows_; ++val) {
-            const auto& e = eigenPairs[val];
+            const auto &e = eigenPairs[val];
             eigenValues.data_[val] = std::get<0>(e);
             std::copy(std::get<1>(e), std::get<1>(e) + nCols_, sortedEigenVectors[val]);
         }
@@ -1023,7 +1022,7 @@ class Matrix {
  * A helper function to allow printing of Matrix objects to a stream.
  */
 template <typename Real>
-std::ostream& operator<<(std::ostream& os, Matrix<Real> const& m) {
+std::ostream &operator<<(std::ostream &os, Matrix<Real> const &m) {
     return m.write(os);
 }
 
@@ -1301,15 +1300,15 @@ class FFTWWrapper {
         complexToRealPlan_ = typeinfo::MakeComplexToRealPlan(fftDimension_, complexPtr1, realPtr, transformFlags_);
     }
     void destroy() {
-      typeinfo::DestroyPlan(forwardPlan_);
-      typeinfo::DestroyPlan(inversePlan_);
-      typeinfo::DestroyPlan(forwardInPlacePlan_);
-      typeinfo::DestroyPlan(inverseInPlacePlan_);
-      typeinfo::DestroyPlan(realToComplexPlan_);
-      typeinfo::DestroyPlan(complexToRealPlan_);
-      typeinfo::CleanupFFTW();
+        typeinfo::DestroyPlan(forwardPlan_);
+        typeinfo::DestroyPlan(inversePlan_);
+        typeinfo::DestroyPlan(forwardInPlacePlan_);
+        typeinfo::DestroyPlan(inverseInPlacePlan_);
+        typeinfo::DestroyPlan(realToComplexPlan_);
+        typeinfo::DestroyPlan(complexToRealPlan_);
+        typeinfo::CleanupFFTW();
     }
-  
+
     /*!
      * \brief transform call FFTW to do an out of place complex to real FFT.
      * \param inBuffer the location of the input data.
@@ -1918,7 +1917,7 @@ struct MPIWrapper {
     }
 
     MPIWrapper() : mpiCommunicator_(0), numNodes_(0), myRank_(0) {}
-    MPIWrapper(const MPI_Comm& communicator, int numNodesX, int numNodesY, int numNodesZ)
+    MPIWrapper(const MPI_Comm &communicator, int numNodesX, int numNodesY, int numNodesZ)
         : numNodesX_(numNodesX), numNodesY_(numNodesY), numNodesZ_(numNodesZ) {
         if (MPI_Comm_dup(communicator, &mpiCommunicator_) != MPI_SUCCESS)
             throw std::runtime_error("Problem calling MPI_Comm_dup in MPIWrapper constructor.");
@@ -1963,7 +1962,7 @@ struct MPIWrapper {
      * \param outBuffer the buffer to send results to.
      * \param dimension the number of elements to be communicated.
      */
-    void allToAll(std::complex<Real>* inBuffer, std::complex<Real>* outBuffer, int dimension) {
+    void allToAll(std::complex<Real> *inBuffer, std::complex<Real> *outBuffer, int dimension) {
         if (MPI_Alltoall(inBuffer, 2 * dimension, types_.realType_, outBuffer, 2 * dimension, types_.realType_,
                          mpiCommunicator_) != MPI_SUCCESS)
             throw std::runtime_error("Problem encountered calling MPI alltoall.");
@@ -1974,7 +1973,7 @@ struct MPIWrapper {
      * \param outBuffer the buffer to send results to.
      * \param dimension the number of elements to be communicated.
      */
-    void allToAll(Real* inBuffer, Real* outBuffer, int dimension) {
+    void allToAll(Real *inBuffer, Real *outBuffer, int dimension) {
         if (MPI_Alltoall(inBuffer, dimension, types_.realType_, outBuffer, dimension, types_.realType_,
                          mpiCommunicator_) != MPI_SUCCESS)
             throw std::runtime_error("Problem encountered calling MPI alltoall.");
@@ -1986,7 +1985,7 @@ struct MPIWrapper {
      * \param dimension the number of elements to be reduced.
      * \param node the node to reduce the result to (defaulted to zero).
      */
-    void reduce(Real* inBuffer, Real* outBuffer, int dimension, int node = 0) {
+    void reduce(Real *inBuffer, Real *outBuffer, int dimension, int node = 0) {
         if (MPI_Reduce(inBuffer, outBuffer, dimension, types_.realType_, MPI_SUM, node, mpiCommunicator_) !=
             MPI_SUCCESS)
             throw std::runtime_error("Problem encountered calling MPI reduce.");
@@ -1997,7 +1996,7 @@ struct MPIWrapper {
      * \param outBuffer the buffer to send results to.
      * \param dimension the number of elements to be reduced on each node (currently must be the same on all nodes).
      */
-    void reduceScatterBlock(Real* inBuffer, Real* outBuffer, int dimension) {
+    void reduceScatterBlock(Real *inBuffer, Real *outBuffer, int dimension) {
         if (MPI_Reduce_scatter_block(inBuffer, outBuffer, dimension, types_.realType_, MPI_SUM, mpiCommunicator_) !=
             MPI_SUCCESS)
             throw std::runtime_error("Problem encountered calling MPI reducescatter.");
@@ -2008,7 +2007,7 @@ struct MPIWrapper {
      * \param dimension the number of elements to be broadcast.
      * \param outBuffer the buffer to send results to.
      */
-    void allGather(Real* inBuffer, Real* outBuffer, int dimension) {
+    void allGather(Real *inBuffer, Real *outBuffer, int dimension) {
         if (MPI_Allgather(inBuffer, dimension, types_.realType_, outBuffer, dimension, types_.realType_,
                           mpiCommunicator_) != MPI_SUCCESS)
             throw std::runtime_error("Problem encountered calling MPI allgather.");
@@ -2017,7 +2016,7 @@ struct MPIWrapper {
     /*!
      * \brief operator << a convenience wrapper around ostream, to inject node info.
      */
-    friend std::ostream& operator<<(std::ostream& os, const MPIWrapper& obj) {
+    friend std::ostream &operator<<(std::ostream &os, const MPIWrapper &obj) {
         os << "Node " << obj.myRank_ << " of " << obj.numNodes_ << ":" << std::endl;
         return os;
     }
@@ -2025,7 +2024,7 @@ struct MPIWrapper {
 
 // Adapter to allow piping of streams into unique_ptr-held object
 template <typename Real>
-std::ostream& operator<<(std::ostream& os, const std::unique_ptr<MPIWrapper<Real>>& obj) {
+std::ostream &operator<<(std::ostream &os, const std::unique_ptr<MPIWrapper<Real>> &obj) {
     os << *obj;
     return os;
 }
@@ -2048,7 +2047,7 @@ std::ostream& operator<<(std::ostream& os, const std::unique_ptr<MPIWrapper<Real
 #else
 
 #ifndef MPI_VERSION
-//typedef struct ompi_communicator_t *MPI_Comm;
+// typedef struct ompi_communicator_t *MPI_Comm;
 typedef int MPI_Comm;
 #endif
 
@@ -2641,7 +2640,7 @@ class PMEInstance {
     std::vector<int> mValsA_, mValsB_, mValsC_;
     /// A temporary list used in the assigning of atoms to threads and resorting by starting grid point.
     std::vector<std::set<std::pair<uint32_t, uint32_t>>> gridAtomList_;
-  
+
     /*!
      * \brief makeGridIterator makes an iterator over the spline values that contribute to this node's grid
      *        in a given Cartesian dimension.  The iterator is of the form (grid point, spline index) and is
@@ -3585,9 +3584,9 @@ class PMEInstance {
                     case (NodeOrder::ZYX):
                         myNodeRankA_ = mpiCommunicator_->myRank_ % numNodesA;
                         myNodeRankB_ = (mpiCommunicator_->myRank_ % (numNodesB * numNodesA)) / numNodesA;
-                        myNodeRankC_ = mpiCommunicator_->myRank_ / (numNodesB * numNodesA);			
-			// std::cout << "myRank_= " << mpiCommunicator_->myRank_ << "  myNodeRankABC= " <<
-			//   myNodeRankA_ << " " << myNodeRankB_ << " " << myNodeRankC_ << std::endl;
+                        myNodeRankC_ = mpiCommunicator_->myRank_ / (numNodesB * numNodesA);
+                        // std::cout << "myRank_= " << mpiCommunicator_->myRank_ << "  myNodeRankABC= " <<
+                        //   myNodeRankA_ << " " << myNodeRankB_ << " " << myNodeRankC_ << std::endl;
                         mpiCommunicatorA_ =
                             mpiCommunicator_->split(myNodeRankC_ * numNodesB + myNodeRankB_, myNodeRankA_);
                         mpiCommunicatorB_ =
@@ -3622,7 +3621,7 @@ class PMEInstance {
             size_t scratchSize;
             int gridPaddingA = 0, gridPaddingB = 0, gridPaddingC = 0;
             if (algorithm == AlgorithmType::CompressedPME) {
-	      //	      std::cout << "algorithm= CompressedPME" << std::endl;
+                //	      std::cout << "algorithm= CompressedPME" << std::endl;
                 gridDimensionA_ = numNodesA * std::ceil(dimA / (float)numNodesA);
                 gridDimensionB_ = numNodesB * std::ceil(dimB / (float)numNodesB);
                 gridDimensionC_ = numNodesC * std::ceil(dimC / (float)numNodesC);
@@ -3653,7 +3652,7 @@ class PMEInstance {
                 scratchSize = (size_t)std::max(myGridDimensionA_, numKSumTermsA) *
                               std::max(myGridDimensionB_, numKSumTermsB) * std::max(myGridDimensionC_, numKSumTermsC);
             } else {
-	      //	      std::cout << "algorithm= PME" << std::endl;
+                //	      std::cout << "algorithm= PME" << std::endl;
                 gridDimensionA_ = findGridSize(dimA, {numNodesA_});
                 gridDimensionB_ = findGridSize(dimB, {numNodesB_ * numNodesC_});
                 gridDimensionC_ = findGridSize(dimC, {numNodesA_ * numNodesC_, numNodesB_ * numNodesC_});
@@ -3683,12 +3682,12 @@ class PMEInstance {
                 compressionCoefficientsC_ = RealMat();
                 scratchSize = (size_t)myGridDimensionC_ * myComplexGridDimensionA_ * myGridDimensionB_;
             }
-	    
-	    // std::cout << "  myNodeRankABC= " <<
-	    //   myNodeRankA_ << " " << myNodeRankB_ << " " << myNodeRankC_ <<
-	    //   "  myGridDimension_= " << myGridDimensionA_ << " " << myGridDimensionB_ << " " <<
-	    //   myGridDimensionC_ << "  myFirstGridPoint_= " << myFirstGridPointA_ << " " <<
-	    //   myFirstGridPointB_ << " " << myFirstGridPointC_ << std::endl;
+
+            // std::cout << "  myNodeRankABC= " <<
+            //   myNodeRankA_ << " " << myNodeRankB_ << " " << myNodeRankC_ <<
+            //   "  myGridDimension_= " << myGridDimensionA_ << " " << myGridDimensionB_ << " " <<
+            //   myGridDimensionC_ << "  myFirstGridPoint_= " << myFirstGridPointA_ << " " <<
+            //   myFirstGridPointB_ << " " << myFirstGridPointC_ << std::endl;
 
             // Grid iterators to correctly wrap the grid when using splines.
             gridIteratorA_ = makeGridIterator(gridDimensionA_, myFirstGridPointA_,
@@ -3849,19 +3848,18 @@ class PMEInstance {
             workSpace1_ = helpme::vector<Complex>(scratchSize);
             workSpace2_ = helpme::vector<Complex>(scratchSize);
 #if HAVE_MKL
-	    mkl_set_num_threads(nThreads_);
+            mkl_set_num_threads(nThreads_);
 #endif
         }
     }
 
    public:
-  
     ~PMEInstance() {
-      fftHelperA_.destroy();
-      fftHelperB_.destroy();
-      fftHelperC_.destroy();
+        fftHelperA_.destroy();
+        fftHelperB_.destroy();
+        fftHelperC_.destroy();
     }
-  
+
     /*!
      * \brief Spread the parameters onto the charge grid.  Generally this shouldn't be called;
      *        use the various computeE() methods instead. This the more efficient version that filters
@@ -3967,10 +3965,10 @@ class PMEInstance {
                         gridAtomList_[cStartingGridPoint].emplace(startingGridPoint, atom);
                         ++myNumAtoms;
                     }
-		    // if(myFirstGridPointC_ == 0)
-		    //   std::cout << "atom= " << atom << "  atomCoords= "  << atomCoords[0] << " " << atomCoords[1] <<
-		    // 	" " << atomCoords[2] << "  StartingGridPoint= " << aStartingGridPoint << " " <<
-		    // 	bStartingGridPoint << " " << cStartingGridPoint << "  myNumAtoms= " << myNumAtoms << std::endl;
+                    // if(myFirstGridPointC_ == 0)
+                    //   std::cout << "atom= " << atom << "  atomCoords= "  << atomCoords[0] << " " << atomCoords[1] <<
+                    // 	" " << atomCoords[2] << "  StartingGridPoint= " << aStartingGridPoint << " " <<
+                    // 	bStartingGridPoint << " " << cStartingGridPoint << "  myNumAtoms= " << myNumAtoms << std::endl;
                 }
             }
             numAtomsPerThread_[threadID] = myNumAtoms;

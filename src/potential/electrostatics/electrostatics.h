@@ -64,17 +64,17 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 
 enum {
-      ELE_PERMDIP_REAL=0,
-      ELE_PERMDIP_PME,
+    ELE_PERMDIP_REAL = 0,
+    ELE_PERMDIP_PME,
 
-      ELE_DIPFIELD_REAL,
-      ELE_DIPFIELD_PME,
+    ELE_DIPFIELD_REAL,
+    ELE_DIPFIELD_PME,
 
-      ELE_GRAD_REAL,
-      ELE_GRAD_PME,
-      ELE_GRAD_FIN,
+    ELE_GRAD_REAL,
+    ELE_GRAD_PME,
+    ELE_GRAD_FIN,
 
-      ELE_NUM_TIMERS
+    ELE_NUM_TIMERS
 };
 
 /**
@@ -118,12 +118,12 @@ class Electrostatics {
                     const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-		    const std::vector<size_t> &islocal_, const bool do_grads = true,
-                    const double tolerance = 1E-16, const size_t maxit = 100, const std::string dip_method = "iter",
+                    const std::vector<size_t> &islocal_, const bool do_grads = true, const double tolerance = 1E-16,
+                    const size_t maxit = 100, const std::string dip_method = "iter",
                     const std::vector<double> &box = {});
 
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
-  
+
     /**
      * @brief Gets the electrostatic energy
      *
@@ -132,8 +132,8 @@ class Electrostatics {
      * @param[out] grad Gradients will be saved here
      * @return Total electrostatic energy
      */
-    double GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial=0, bool use_ghost = 0);
-    double GetElectrostaticsMPIlocal(std::vector<double> &grad, std::vector<double> *virial=0, bool use_ghost = 0);
+    double GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
+    double GetElectrostaticsMPIlocal(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
 
     /**
      * @brief Clears the ASPC history
@@ -238,12 +238,12 @@ class Electrostatics {
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
     void SetBoxPMElocal(std::vector<double> box);
-  
+
    private:
     void CalculatePermanentElecField(bool use_ghost = 0);
     void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
     void CalculateDipolesIterative();
-  void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
+    void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesCG();
     void CalculateDipolesCGMPIlocal(bool use_ghost = 0);
@@ -260,7 +260,7 @@ class Electrostatics {
 
     void reverse_forward_comm(std::vector<double> &in_v);
     void reverse_comm(std::vector<double> &in_v);
-				    
+
     void ReorderData();
 
     // PME solver
@@ -402,7 +402,7 @@ class Electrostatics {
     size_t proc_grid_z_;
 
     bool first;
-  
+
     std::vector<size_t> mbxt_ele_count_;
     std::vector<double> mbxt_ele_time_;
 };
