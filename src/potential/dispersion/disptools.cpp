@@ -149,9 +149,9 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
              double* grad1, double* grad2, double& phi1, double* phi2, const size_t nmon1, const size_t nmon2,
              const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
              const double disp_scale_factor, bool do_grads, const double cutoff, const double ewald_alpha,
-             const std::vector<double>& box, const std::vector<double>& box_inverse,
-	     bool use_ghost, const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
-	     std::vector<double> *virial) {
+             const std::vector<double>& box, const std::vector<double>& box_inverse, bool use_ghost,
+             const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
+             std::vector<double>* virial) {
     double disp = 0.0;
     double disp_lr_below_cutoff = 0.0;
 
@@ -201,10 +201,10 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         phi1 -= c6j * inv_r6;
         phi2[shift_phi + nv] -= c6i * inv_r6;
 
-	bool include_pair = false;
-	size_t isls = islocal[isl1_offset] + islocal[isl2_offset+nv];
-	if(!use_ghost) include_pair = true;
-	if(use_ghost && isls) include_pair = true;
+        bool include_pair = false;
+        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
+        if (!use_ghost) include_pair = true;
+        if (use_ghost && isls) include_pair = true;
 
         // If using cutoff, check for distances and get proper dispersion
         if (r <= cutoff && include_pair) {
@@ -239,7 +239,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             double pmeterm = c6i * c6j * (1 - (1 + ar2 + ar4 / 2) * expterm) * inv_r6;
             double pair_energy = ttsw * (disp_scale_factor * e6) + c6sw * disp_scale_factor * c6term - pmeterm;
 
-	    if(isls == 1) pair_energy *= 0.5;
+            if (isls == 1) pair_energy *= 0.5;
             dispersion_energy -= pair_energy;
 
             if (do_grads) {
@@ -260,25 +260,22 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
                 g1[2] += dz * grad;
                 g2[nmon22 + nv] -= dz * grad;
 
+                if (virial != 0) {
+                    const double vscale = (isls == 1) ? 0.5 : 1.0;
 
-                if (virial != 0 ) {
-		  const double vscale = (isls == 1) ? 0.5 : 1.0;
+                    (*virial)[0] -= dx * dx * grad * vscale;  //  update the virial for the atom pair
+                    (*virial)[1] -= dx * dy * grad * vscale;
+                    (*virial)[2] -= dx * dz * grad * vscale;
 
-                    (*virial)[0] -= dx* dx * grad * vscale; //  update the virial for the atom pair
-                    (*virial)[1] -= dx* dy * grad * vscale; 
-                    (*virial)[2] -= dx* dz * grad * vscale; 
+                    (*virial)[4] -= dy * dy * grad * vscale;
+                    (*virial)[5] -= dy * dz * grad * vscale;
 
-                    (*virial)[4] -= dy* dy * grad * vscale; 
-                    (*virial)[5] -= dy* dz * grad * vscale; 
-
-                    (*virial)[8] -= dz* dz * grad * vscale; 
+                    (*virial)[8] -= dz * dz * grad * vscale;
 
                     (*virial)[3] = (*virial)[1];
                     (*virial)[6] = (*virial)[2];
                     (*virial)[7] = (*virial)[5];
-                
                 }
-
             }
         }
     }
@@ -521,7 +518,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(26.208221);  // kcal/mol * A^(-6) He -- H
 
         d6.push_back(3.71873);  // A^(-1)
-        d6.push_back(3.9707);  // A^(-1)
+        d6.push_back(3.9707);   // A^(-1)
     } else if (mon_id1 == "ar" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -582,9 +579,9 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         nt2 = 2;
 
         // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(303.247);  // kcal/mol * A^(-6) C -- C
-        C6.push_back(104.10825);  // kcal/mol * A^(-6) C -- O
-        C6.push_back(104.10825);  // kcal/mol * A^(-6) O -- C
+        C6.push_back(303.247);      // kcal/mol * A^(-6) C -- C
+        C6.push_back(104.10825);    // kcal/mol * A^(-6) C -- O
+        C6.push_back(104.10825);    // kcal/mol * A^(-6) O -- C
         C6.push_back(36.78116875);  // kcal/mol * A^(-6) O -- O
 
         d6.push_back(3.37925);  // A^(-1)
@@ -609,8 +606,8 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(222.003);  // kcal/mol * A^(-6) C -- O
         C6.push_back(105.979);  // kcal/mol * A^(-6) C -- H
-        C6.push_back(80.628);  // kcal/mol * A^(-6) O -- O
-        C6.push_back(37.176);  // kcal/mol * A^(-6) O -- H
+        C6.push_back(80.628);   // kcal/mol * A^(-6) O -- O
+        C6.push_back(37.176);   // kcal/mol * A^(-6) O -- H
 
         d6.push_back(2.87176);  // A^(-1)
         d6.push_back(3.68542);  // A^(-1)
@@ -636,7 +633,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(94.19873);  // kcal/mol * A^(-6) O -- H
 
         d6.push_back(2.93819);  // A^(-1)
-        d6.push_back(3.7359);  // A^(-1)
+        d6.push_back(3.7359);   // A^(-1)
         d6.push_back(3.53045);  // A^(-1)
         d6.push_back(3.89503);  // A^(-1)
 
@@ -655,13 +652,13 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(243.38373570927124);  // kcal/mol * A^(-6)  A--A
-        C6.push_back(98.66666135686104);  // kcal/mol * A^(-6)  A--B
-        C6.push_back(98.66666135686104);  // kcal/mol * A^(-6)  B--A
-        C6.push_back(40.09775637853022);  // kcal/mol * A^(-6)  B--B
-        d6.push_back(3.10660);  // A^(-1) A--A
-        d6.push_back(3.90008);  // A^(-1) A--B
-        d6.push_back(3.90008);  // A^(-1) B--A
-        d6.push_back(3.33535);  // A^(-1) B--B
+        C6.push_back(98.66666135686104);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(98.66666135686104);   // kcal/mol * A^(-6)  B--A
+        C6.push_back(40.09775637853022);   // kcal/mol * A^(-6)  B--B
+        d6.push_back(3.10660);             // A^(-1) A--A
+        d6.push_back(3.90008);             // A^(-1) A--B
+        d6.push_back(3.90008);             // A^(-1) B--A
+        d6.push_back(3.33535);             // A^(-1) B--B
     } else if (mon_id1 == "ar" and mon_id2 == "cs") {
         types1.push_back(0);
 
@@ -671,7 +668,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(1857.467);  // kcal/mol * A^(-6)  A--B
-        d6.push_back(3.19908);  // A^(-1) A--B
+        d6.push_back(3.19908);   // A^(-1) A--B
         // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;

@@ -53,12 +53,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 //#include "helpme.h"
 
 #ifndef MPI_VERSION
-//typedef struct ompi_communicator_t *MPI_Comm;
+// typedef struct ompi_communicator_t *MPI_Comm;
 typedef int MPI_Comm;
 #endif
 
 namespace disp {
-  
+
 class Dispersion {
    public:
     Dispersion(){};
@@ -67,14 +67,13 @@ class Dispersion {
     void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-		    const std::vector<size_t> &islocal_, const bool do_grads,
-                    const std::vector<double> &box);
+                    const std::vector<size_t> &islocal_, const bool do_grads, const std::vector<double> &box);
 
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
-  
-    double GetDispersion(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
-    double GetDispersionPME(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
-    double GetDispersionPMElocal(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
+
+    double GetDispersion(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
+    double GetDispersionPME(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
+    double GetDispersionPMElocal(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
 
     void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
@@ -106,7 +105,7 @@ class Dispersion {
      * @param[in] cutoff New cutoff value
      */
     void SetCutoff(double cutoff);
-  
+
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
      * @param[in] box is a 9 component vector of double with

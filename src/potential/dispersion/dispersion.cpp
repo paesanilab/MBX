@@ -40,8 +40,8 @@ namespace disp {
 void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-			    const std::vector<size_t> &islocal,
-                            const bool do_grads = true, const std::vector<double> &box = {}) {
+                            const std::vector<size_t> &islocal, const bool do_grads = true,
+                            const std::vector<double> &box = {}) {
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
     islocal_ = islocal;
@@ -59,22 +59,22 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     phi_ = std::vector<double>(natoms_, 0.0);
     xyz_ = std::vector<double>(natoms3, 0.0);
     grad_ = std::vector<double>(natoms3, 0.0);
-    virial_ = std::vector<double>(9,0.0);
+    virial_ = std::vector<double>(9, 0.0);
     sys_grad_ = std::vector<double>(natoms3, 0.0);
     c6_long_range_ = std::vector<double>(natoms_, 0.0);
     sys_phi_ = std::vector<double>(natoms_, 0.0);
     islocal_atom_ = std::vector<size_t>(natoms_, 0);
 
-    if(!mpi_initialized_) {
-      world_ = 0;
-      proc_grid_x_ = 1;
-      proc_grid_y_ = 1;
-      proc_grid_z_ = 1;
+    if (!mpi_initialized_) {
+        world_ = 0;
+        proc_grid_x_ = 1;
+        proc_grid_y_ = 1;
+        proc_grid_z_ = 1;
     }
-    
+
     ReorderData();
 }
-  
+
 void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
     mpi_initialized_ = true;
     world_ = world;
@@ -82,7 +82,7 @@ void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, 
     proc_grid_y_ = proc_grid_y;
     proc_grid_z_ = proc_grid_z;
 }
-  
+
 void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads = true, const double cutoff = 100.0,
                                   const std::vector<double> &box = {}) {
     sys_xyz_ = xyz;
@@ -94,17 +94,15 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     cutoff_ = cutoff;
     std::fill(grad_.begin(), grad_.end(), 0.0);
     std::fill(phi_.begin(), phi_.end(), 0.0);
-    std::fill(virial_.begin(), virial_.end(),0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
 
     box_PMElocal_ = {};
-    
+
     ReorderData();
 }
 
-void Dispersion::SetBoxPMElocal(std::vector<double> box) {
-  box_PMElocal_ = box;
-}
-  
+void Dispersion::SetBoxPMElocal(std::vector<double> box) { box_PMElocal_ = box; }
+
 void Dispersion::ReorderData() {
     // Organize xyz so we have
     // x1_1 x1_2 ... y1_1 y1_2... z1_1 z1_2 ... x2_1 x2_2 ...
@@ -132,7 +130,7 @@ void Dispersion::ReorderData() {
                 xyz_[inmon3 + m + fi_crd + nmon] = sys_xyz_[fi_crd + mns3 + 3 * i + 1];
                 xyz_[inmon3 + m + fi_crd + nmon2] = sys_xyz_[fi_crd + mns3 + 3 * i + 2];
                 c6_long_range_[fi_sites + m + inmon] = sys_c6_long_range_[fi_sites + mns + i];
-		islocal_atom_[fi_sites + m + inmon] = islocal_[fi_mon + m];
+                islocal_atom_[fi_sites + m + inmon] = islocal_[fi_mon + m];
             }
         }
         fi_mon += nmon;
@@ -141,21 +139,20 @@ void Dispersion::ReorderData() {
     }
 }
 
-  double Dispersion::GetDispersion(std::vector<double> &grad,std::vector<double> *virial,
-				   bool use_ghost) {
-    calc_virial_=false;
+double Dispersion::GetDispersion(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+    calc_virial_ = false;
 
     if (virial != 0) {
         calc_virial_ = true;
     }
 
-    std::fill(virial_.begin(), virial_.end(),0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculateDispersion(use_ghost);
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
-     
+
     if (calc_virial_) {
         (*virial)[0] += virial_[0];
         (*virial)[1] += virial_[1];
@@ -194,21 +191,20 @@ void Dispersion::ReorderData() {
     return disp_energy_;
 }
 
-  
-  double Dispersion::GetDispersionPME(std::vector<double> &grad,std::vector<double> *virial,bool use_ghost) {
-    calc_virial_=false;
+double Dispersion::GetDispersionPME(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+    calc_virial_ = false;
 
     if (virial != 0) {
         calc_virial_ = true;
     }
 
-    std::fill(virial_.begin(), virial_.end(),0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculateDispersionPME(use_ghost);
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
-     
+
     if (calc_virial_) {
         (*virial)[0] += virial_[0];
         (*virial)[1] += virial_[1];
@@ -247,62 +243,60 @@ void Dispersion::ReorderData() {
     return disp_energy_;
 }
 
-  double Dispersion::GetDispersionPMElocal(std::vector<double> &grad,std::vector<double> *virial,bool use_ghost) {
-    calc_virial_=false;
-    
+double Dispersion::GetDispersionPMElocal(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+    calc_virial_ = false;
+
     if (virial != 0) {
         calc_virial_ = true;
     }
 
-    if(natoms_ > 0) std::fill(virial_.begin(), virial_.end(),0.0);
+    if (natoms_ > 0) std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculateDispersionPMElocal(use_ghost);
 
-    if(natoms_ > 0) {
-    
-      size_t fi_mon = 0;
-      size_t fi_crd = 0;
-      size_t fi_sites = 0;
-      
-      if (calc_virial_) {
-        (*virial)[0] += virial_[0];
-        (*virial)[1] += virial_[1];
-        (*virial)[2] += virial_[2];
-        (*virial)[3] += virial_[3];
-        (*virial)[4] += virial_[4];
-        (*virial)[5] += virial_[5];
-        (*virial)[6] += virial_[6];
-        (*virial)[7] += virial_[7];
-        (*virial)[8] += virial_[8];
-      }
-      
-      for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = num_atoms_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = nmon * 2;
-        for (size_t m = 0; m < nmon; m++) {
-	  size_t mns = m * ns;
-	  size_t mns3 = mns * 3;
-	  for (size_t i = 0; i < ns; i++) {
-	    size_t inmon = i * nmon;
-	    size_t inmon3 = 3 * inmon;
-	    
-	    sys_phi_[fi_sites + mns + i] = phi_[fi_sites + m + inmon];
-	    
-	    grad[fi_crd + mns3 + 3 * i] += grad_[inmon3 + m + fi_crd];
-	    grad[fi_crd + mns3 + 3 * i + 1] += grad_[inmon3 + m + fi_crd + nmon];
-	    grad[fi_crd + mns3 + 3 * i + 2] += grad_[inmon3 + m + fi_crd + nmon2];
-	  }
+    if (natoms_ > 0) {
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        if (calc_virial_) {
+            (*virial)[0] += virial_[0];
+            (*virial)[1] += virial_[1];
+            (*virial)[2] += virial_[2];
+            (*virial)[3] += virial_[3];
+            (*virial)[4] += virial_[4];
+            (*virial)[5] += virial_[5];
+            (*virial)[6] += virial_[6];
+            (*virial)[7] += virial_[7];
+            (*virial)[8] += virial_[8];
         }
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-      }
-      
+
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = num_atoms_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+
+                    sys_phi_[fi_sites + mns + i] = phi_[fi_sites + m + inmon];
+
+                    grad[fi_crd + mns3 + 3 * i] += grad_[inmon3 + m + fi_crd];
+                    grad[fi_crd + mns3 + 3 * i + 1] += grad_[inmon3 + m + fi_crd + nmon];
+                    grad[fi_crd + mns3 + 3 * i + 2] += grad_[inmon3 + m + fi_crd + nmon2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
     }
-    
+
     return disp_energy_;
 }
-  
+
 void Dispersion::CalculateDispersion(bool use_ghost) {
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
@@ -341,14 +335,13 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         // For parallel region
         std::vector<std::vector<double> > phi_pool;
         std::vector<std::vector<double> > grad_pool;
-        std::vector<double> energy_pool(nthreads,0.0);
+        std::vector<double> energy_pool(nthreads, 0.0);
         std::vector<std::vector<double> > virial_pool;
 
-
         for (size_t i = 0; i < nthreads; i++) {
-            phi_pool.push_back(std::vector<double>(nmon * ns,0.0));
-            grad_pool.push_back(std::vector<double>(nmon * ns * 3,0.0));
-            virial_pool.push_back(std::vector<double>(9,0.0));
+            phi_pool.push_back(std::vector<double>(nmon * ns, 0.0));
+            grad_pool.push_back(std::vector<double>(nmon * ns * 3, 0.0));
+            virial_pool.push_back(std::vector<double>(9, 0.0));
         }
         // Loop over each pair of sites
         for (size_t i = 0; i < ns - 1; i++) {
@@ -372,27 +365,27 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 #ifdef _OPENMP
                     rank = omp_get_thread_num();
 #endif
-		    bool include_monomer = false;
-		    if(!use_ghost) include_monomer = true;
-		    if(use_ghost && islocal_[fi_mon+m]) include_monomer = true;
+                    bool include_monomer = false;
+                    if (!use_ghost) include_monomer = true;
+                    if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
 
-		    if(include_monomer) {
-		      double p1[3], g1[3];
-		      double phi_i = 0.0;
-		      p1[0] = xyz_[fi_crd + inmon3 + m];
-		      p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
-		      p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
-		      std::fill(g1, g1 + 3, 0.0);
-		      energy_pool[rank] += disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
-						 phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor,
-						 do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
-						 use_ghost, islocal_, fi_mon+m, fi_mon,
-						 &virial_pool[rank]);
-		      grad_pool[rank][inmon3 + m] += g1[0];
-		      grad_pool[rank][inmon3 + nmon + m] += g1[1];
-		      grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
-		      phi_pool[rank][inmon + m] += phi_i;
-		    }
+                    if (include_monomer) {
+                        double p1[3], g1[3];
+                        double phi_i = 0.0;
+                        p1[0] = xyz_[fi_crd + inmon3 + m];
+                        p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
+                        p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
+                        std::fill(g1, g1 + 3, 0.0);
+                        energy_pool[rank] +=
+                            disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
+                                  phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor, do_grads_,
+                                  cutoff_, ewald_alpha_, box_, box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon,
+                                  &virial_pool[rank]);
+                        grad_pool[rank][inmon3 + m] += g1[0];
+                        grad_pool[rank][inmon3 + nmon + m] += g1[1];
+                        grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
+                        phi_pool[rank][inmon + m] += phi_i;
+                    }
                 }
             }
         }
@@ -452,14 +445,14 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             std::vector<std::vector<double> > phi2_pool;
             std::vector<std::vector<double> > grad1_pool;
             std::vector<std::vector<double> > grad2_pool;
-            std::vector<double> energy_pool(nthreads,0.0);
+            std::vector<double> energy_pool(nthreads, 0.0);
             std::vector<std::vector<double> > virial_pool;
             for (size_t i = 0; i < nthreads; i++) {
-                phi1_pool.push_back(std::vector<double>(nmon1 * ns1,0.0));
-                phi2_pool.push_back(std::vector<double>(nmon2 * ns2,0.0));
-                grad1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3,0.0));
-                grad2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3,0.0));
-                virial_pool.push_back(std::vector<double>(9,0.0));
+                phi1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
+                phi2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
+                grad1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+                grad2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+                virial_pool.push_back(std::vector<double>(9, 0.0));
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -491,9 +484,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         energy_pool[rank] +=
                             disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
                                   grad2_pool[rank].data(), phi_i, phi2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
-                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
-				  use_ghost, islocal_, fi_mon1+m1, fi_mon2,
-				  &virial_pool[rank]);
+                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_, use_ghost, islocal_,
+                                  fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
@@ -523,9 +515,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
                 }
-                disp_energy_ += energy_pool[rank]; 
+                disp_energy_ += energy_pool[rank];
             }
-
 
             // Update first indexes
             fi_mon2 += nmon2;
@@ -537,7 +528,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
     }
-    
+
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
@@ -547,24 +538,23 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         double alpha = box_ABCabc_[3];
         double beta = box_ABCabc_[4];
         double gamma = box_ABCabc_[5];
-        
+
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
-       	pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
+        pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
         auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
         auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
-        std::vector<double> dummy_6vec(6,0.0);
+        std::vector<double> dummy_6vec(6, 0.0);
         auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
         std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
         double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
 
         // get virial
         if (calc_virial_) {
-            
             virial_[0] += *rec_virial[0];
             virial_[1] += *rec_virial[1];
             virial_[2] += *rec_virial[3];
@@ -575,8 +565,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             virial_[3] = virial_[1];
             virial_[6] = virial_[2];
             virial_[7] = virial_[5];
-
-        }	
+        }
 
         // Resort forces from system order
         fi_mon = 0;
@@ -605,7 +594,6 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         }
         disp_energy_ += rec_energy + self_energy;
     }
-
 }
 
 void Dispersion::CalculateDispersionPME(bool use_ghost) {
@@ -633,8 +621,8 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
 
     // override settings if ghost particles (big assumption?)
     // if calling this function, they really need to check still?
-    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
-    
+    if (!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
+
     if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
@@ -642,84 +630,83 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
-	
-	if(mpi_initialized_) {
-	  pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0,
-				    world_, PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-	} else {
-	  pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
-	}
+
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
+        }
 
         pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
 
-	// Zero property of particles outside local region
+        // Zero property of particles outside local region
 
-	// double xlo = 0.0;
-	// double xhi = 20.0;
-	// double ylo = 0.0;
-	// double yhi = 20.0;
-	// double zlo, zhi;
+        // double xlo = 0.0;
+        // double xhi = 20.0;
+        // double ylo = 0.0;
+        // double yhi = 20.0;
+        // double zlo, zhi;
 
-	// int me;
-	// MPI_Comm_rank(MPI_COMM_WORLD,&me);
+        // int me;
+        // MPI_Comm_rank(MPI_COMM_WORLD,&me);
 
-	// if(proc_grid_z_ == 2) {
-	
-	//   if(me == 0) {
-	//     zlo = 0.0;
-	//     zhi = 10.0;
-	//   } else {
-	//     zlo =  9.9; // padding
-	//     zhi = 20.0;
-	//   }
-	// } else {
-	//   zlo = 0.0;
-	//   zhi = 20.0;
-	// }
-	
+        // if(proc_grid_z_ == 2) {
+
+        //   if(me == 0) {
+        //     zlo = 0.0;
+        //     zhi = 10.0;
+        //   } else {
+        //     zlo =  9.9; // padding
+        //     zhi = 20.0;
+        //   }
+        // } else {
+        //   zlo = 0.0;
+        //   zhi = 20.0;
+        // }
+
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
 
         // std::vector<double> sys_c6_long_range_local_(sys_c6_long_range_.size(),0.0);
-	// for(int i=0; i<natoms_; ++i) sys_c6_long_range_local_[i] = sys_c6_long_range_[i];
-	
-	// for(int i=0; i<natoms_; ++i) {
-	//   double x = coords(i,0);
-	//   double y = coords(i,1);
-	//   double z = coords(i,2);
+        // for(int i=0; i<natoms_; ++i) sys_c6_long_range_local_[i] = sys_c6_long_range_[i];
 
-	//   bool local = true;
-	//   if(x <= xlo || x > xhi) local = false;
-	//   if(y <= ylo || y > yhi) local = false;
-	//   if(z <= zlo || z > zhi) local = false;
-	  
-	//   if(!local) sys_c6_long_range_local_[i] = 0.0;
-	// }
-	
-	auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
-        //auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
+        // for(int i=0; i<natoms_; ++i) {
+        //   double x = coords(i,0);
+        //   double y = coords(i,1);
+        //   double z = coords(i,2);
+
+        //   bool local = true;
+        //   if(x <= xlo || x > xhi) local = false;
+        //   if(y <= ylo || y > yhi) local = false;
+        //   if(z <= zlo || z > zhi) local = false;
+
+        //   if(!local) sys_c6_long_range_local_[i] = 0.0;
+        // }
+
+        auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+        // auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
         auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
-        std::vector<double> dummy_6vec(6,0.0);
+        std::vector<double> dummy_6vec(6, 0.0);
         auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
         std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
         double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
 
-	const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
-	// for(int j=0; j<num_procs; ++j) {
+        const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
+        // for(int j=0; j<num_procs; ++j) {
 
-	//   if(me == j) {
-	//     for(int i=0; i<natoms_; ++i) {
-	//       std::cout << "(" << me << ") sys_xyz_= " << coords(i,0) << " " << coords(i,1) << " " << coords(i,2) <<
-	// 	"  c6= " << params(i,0) << std::endl;
-	//     }
-	//   }
-	//   MPI_Barrier(world_);
+        //   if(me == j) {
+        //     for(int i=0; i<natoms_; ++i) {
+        //       std::cout << "(" << me << ") sys_xyz_= " << coords(i,0) << " " << coords(i,1) << " " << coords(i,2) <<
+        // 	"  c6= " << params(i,0) << std::endl;
+        //     }
+        //   }
+        //   MPI_Barrier(world_);
 
-	// }
-	
+        // }
+
         // get virial
         if (calc_virial_) {
-            
             virial_[0] += *rec_virial[0];
             virial_[1] += *rec_virial[1];
             virial_[2] += *rec_virial[3];
@@ -730,8 +717,7 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
             virial_[3] = virial_[1];
             virial_[6] = virial_[2];
             virial_[7] = virial_[5];
-
-        }	
+        }
 
         // Resort forces from system order
         fi_mon = 0;
@@ -758,31 +744,30 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
         for (const auto &c6 : sys_c6_long_range_) {
             self_energy += c6 * c6 * prefac;
         }
-	// With the entire system duplicated on all ranks, this over-counts by Nproc
-	self_energy /= (double)num_procs;
+        // With the entire system duplicated on all ranks, this over-counts by Nproc
+        self_energy /= (double)num_procs;
         disp_energy_ += rec_energy + self_energy;
-	
-	// for(int j=0; j<num_procs; ++j) {
-	
-	//   if(me == j) {
-	 
-	//     std::cout << "(" << me << "(  rec_energy= " << rec_energy << "  self_energy= " << self_energy << std::endl;
-	//   }
-	//   MPI_Barrier(world_);
-	// }
-    }
 
+        // for(int j=0; j<num_procs; ++j) {
+
+        //   if(me == j) {
+
+        //     std::cout << "(" << me << "(  rec_energy= " << rec_energy << "  self_energy= " << self_energy <<
+        //     std::endl;
+        //   }
+        //   MPI_Barrier(world_);
+        // }
+    }
 }
 
 void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
-  
     int me;
 #if HAVE_MPI == 1
     MPI_Comm_rank(world_, &me);
 #else
     me = 0;
 #endif
-    
+
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
     // Max number of monomers
@@ -808,27 +793,27 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     // override settings if ghost particles (big assumption?)
     // if calling this function, then shouldn't need to check this
     //    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
-    
+
     //    if (compute_pme) {
-        helpme::PMEInstance<double> pme_solver_;
-        // Compute the reciprocal space terms, using PME
-        double A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-        int grid_A = pme_grid_density_ * A;
-        int grid_B = pme_grid_density_ * B;
-        int grid_C = pme_grid_density_ * C;
-	
-	if(mpi_initialized_) {
-	  pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0,
-				    world_, PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-	} else {
-	  pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
-	}
+    helpme::PMEInstance<double> pme_solver_;
+    // Compute the reciprocal space terms, using PME
+    double A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
+    int grid_A = pme_grid_density_ * A;
+    int grid_B = pme_grid_density_ * B;
+    int grid_C = pme_grid_density_ * C;
 
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+    if (mpi_initialized_) {
+        pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0, world_,
+                                  PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+    } else {
+        pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
+    }
 
-        // N.B. these do not make copies; they just wrap the memory with some metadata
-        auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-	
+    pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+
+    // N.B. these do not make copies; they just wrap the memory with some metadata
+    auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
+
 #if 0
 	// Zero property of particles outside local region
 
@@ -876,63 +861,60 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 	
         auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
 #else
-	auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+    auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
 #endif
-	
-        auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
-        std::vector<double> dummy_6vec(6,0.0);
-        auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
-        std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
-        double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
-	
-        // get virial
-        if (calc_virial_) {
-            
-            virial_[0] += *rec_virial[0];
-            virial_[1] += *rec_virial[1];
-            virial_[2] += *rec_virial[3];
-            virial_[4] += *rec_virial[2];
-            virial_[5] += *rec_virial[4];
-            virial_[8] += *rec_virial[5];
 
-            virial_[3] = virial_[1];
-            virial_[6] = virial_[2];
-            virial_[7] = virial_[5];
+    auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
+    std::vector<double> dummy_6vec(6, 0.0);
+    auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
+    std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
+    double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
 
-        }	
+    // get virial
+    if (calc_virial_) {
+        virial_[0] += *rec_virial[0];
+        virial_[1] += *rec_virial[1];
+        virial_[2] += *rec_virial[3];
+        virial_[4] += *rec_virial[2];
+        virial_[5] += *rec_virial[4];
+        virial_[8] += *rec_virial[5];
 
-        // Resort forces from system order
-        fi_mon = 0;
-        fi_sites = 0;
-        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = num_atoms_[fi_mon];
-            size_t nmon = mon_type_count_[mt].second;
-            for (size_t m = 0; m < nmon; m++) {
-                size_t mns = m * ns;
-                for (size_t i = 0; i < ns; i++) {
-                    size_t inmon = i * nmon;
-                    const double *result_ptr = forces[fi_sites + mns + i];
-                    grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
-                    grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
-                    grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
-                }
+        virial_[3] = virial_[1];
+        virial_[6] = virial_[2];
+        virial_[7] = virial_[5];
+    }
+
+    // Resort forces from system order
+    fi_mon = 0;
+    fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = num_atoms_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                const double *result_ptr = forces[fi_sites + mns + i];
+                grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
             }
-            fi_mon += nmon;
-            fi_sites += nmon * ns;
         }
-	
-        // The Ewald self energy
-        double prefac = std::pow(ewald_alpha_, 6) / 12.0;
-        double self_energy = 0;
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+    }
 
-	for(int i=0; i<natoms_; ++i)
-	  self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
-	
-	self_energy *= prefac;
+    // The Ewald self energy
+    double prefac = std::pow(ewald_alpha_, 6) / 12.0;
+    double self_energy = 0;
 
-        disp_energy_ += rec_energy + self_energy;
+    for (int i = 0; i < natoms_; ++i) self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
 
-	//} // if(compute_pme)	
+    self_energy *= prefac;
+
+    disp_energy_ += rec_energy + self_energy;
+
+    //} // if(compute_pme)
 }
 
 }  // namespace disp
