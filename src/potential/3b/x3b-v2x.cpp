@@ -1388,7 +1388,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, const
 //----------------------------------------------------------------------------//
 
 double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, double* g1, double* g2, double* g3,
-                     size_t nt, std::vector<double> *virial) {
+                     size_t nt, std::vector<double>* virial) {
     std::vector<double> energy(nt, 0.0);
     double rabsq[nt], racsq[nt], rbcsq[nt];
     double rab[nt], rac[nt], rbc[nt];
@@ -1553,67 +1553,42 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
             gOb[n] += gbc * dbc[3 * sh + n] - gab * dab[3 * sh + n];
             gOc[n] -= gac * dac[3 * sh + n] + gbc * dbc[3 * sh + n];
         }
-        if (virial !=0) {
+        if (virial != 0) {
+            (*virial)[0] += -w1[0 + 0 + sh9] * g1[0 + 0 + sh9] - w1[0 + 3 + sh9] * g1[0 + 3 + sh9] -
+                            w1[0 + 6 + sh9] * g1[0 + 6 + sh9] - w2[0 + 0 + sh9] * g2[0 + 0 + sh9] -
+                            w2[0 + 3 + sh9] * g2[0 + 3 + sh9] - w2[0 + 6 + sh9] * g2[0 + 6 + sh9] -
+                            w3[0 + 0 + sh9] * g3[0 + 0 + sh9] - w3[0 + 3 + sh9] * g3[0 + 3 + sh9] -
+                            w3[0 + 6 + sh9] * g3[0 + 6 + sh9];
 
-            (*virial)[0]+= -w1[0+0 + sh9] * g1[0+0 + sh9] -
-                            w1[0+3 + sh9] * g1[0+3 + sh9] -
-                            w1[0+6 + sh9] * g1[0+6 + sh9] -
-                            w2[0+0 + sh9] * g2[0+0 + sh9] -
-                            w2[0+3 + sh9] * g2[0+3 + sh9] -
-                            w2[0+6 + sh9] * g2[0+6 + sh9] -
-                            w3[0+0 + sh9] * g3[0+0 + sh9] -
-                            w3[0+3 + sh9] * g3[0+3 + sh9] -
-                            w3[0+6 + sh9] * g3[0+6 + sh9];
-            
-            (*virial)[1]+= -w1[0+0 + sh9] * g1[0+1 + sh9] -
-                            w1[0+3 + sh9] * g1[0+4 + sh9] -
-                            w1[0+6 + sh9] * g1[0+7 + sh9] -
-                            w2[0+0 + sh9] * g2[0+1 + sh9] -
-                            w2[0+3 + sh9] * g2[0+4 + sh9] -
-                            w2[0+6 + sh9] * g2[0+7 + sh9] -
-                            w3[0+0 + sh9] * g3[0+1 + sh9] -
-                            w3[0+3 + sh9] * g3[0+4 + sh9] -
-                            w3[0+6 + sh9] * g3[0+7 + sh9];
+            (*virial)[1] += -w1[0 + 0 + sh9] * g1[0 + 1 + sh9] - w1[0 + 3 + sh9] * g1[0 + 4 + sh9] -
+                            w1[0 + 6 + sh9] * g1[0 + 7 + sh9] - w2[0 + 0 + sh9] * g2[0 + 1 + sh9] -
+                            w2[0 + 3 + sh9] * g2[0 + 4 + sh9] - w2[0 + 6 + sh9] * g2[0 + 7 + sh9] -
+                            w3[0 + 0 + sh9] * g3[0 + 1 + sh9] - w3[0 + 3 + sh9] * g3[0 + 4 + sh9] -
+                            w3[0 + 6 + sh9] * g3[0 + 7 + sh9];
 
-            (*virial)[2]+= -w1[0+0 + sh9] * g1[0+2 + sh9] -
-                            w1[0+3 + sh9] * g1[0+5 + sh9] -
-                            w1[0+6 + sh9] * g1[0+8 + sh9] -
-                            w2[0+0 + sh9] * g2[0+2 + sh9] -
-                            w2[0+3 + sh9] * g2[0+5 + sh9] -
-                            w2[0+6 + sh9] * g2[0+8 + sh9] -
-                            w3[0+0 + sh9] * g3[0+2 + sh9] -
-                            w3[0+3 + sh9] * g3[0+5 + sh9] -
-                            w3[0+6 + sh9] * g3[0+8 + sh9];
+            (*virial)[2] += -w1[0 + 0 + sh9] * g1[0 + 2 + sh9] - w1[0 + 3 + sh9] * g1[0 + 5 + sh9] -
+                            w1[0 + 6 + sh9] * g1[0 + 8 + sh9] - w2[0 + 0 + sh9] * g2[0 + 2 + sh9] -
+                            w2[0 + 3 + sh9] * g2[0 + 5 + sh9] - w2[0 + 6 + sh9] * g2[0 + 8 + sh9] -
+                            w3[0 + 0 + sh9] * g3[0 + 2 + sh9] - w3[0 + 3 + sh9] * g3[0 + 5 + sh9] -
+                            w3[0 + 6 + sh9] * g3[0 + 8 + sh9];
 
-            (*virial)[4]+= -w1[0+1 + sh9] * g1[0+1 + sh9] -
-                            w1[0+4 + sh9] * g1[0+4 + sh9] -
-                            w1[0+7 + sh9] * g1[0+7 + sh9] -
-                            w2[0+1 + sh9] * g2[0+1 + sh9] -
-                            w2[0+4 + sh9] * g2[0+4 + sh9] -
-                            w2[0+7 + sh9] * g2[0+7 + sh9] -
-                            w3[0+1 + sh9] * g3[0+1 + sh9] -
-                            w3[0+4 + sh9] * g3[0+4 + sh9] -
-                            w3[0+7 + sh9] * g3[0+7 + sh9];
+            (*virial)[4] += -w1[0 + 1 + sh9] * g1[0 + 1 + sh9] - w1[0 + 4 + sh9] * g1[0 + 4 + sh9] -
+                            w1[0 + 7 + sh9] * g1[0 + 7 + sh9] - w2[0 + 1 + sh9] * g2[0 + 1 + sh9] -
+                            w2[0 + 4 + sh9] * g2[0 + 4 + sh9] - w2[0 + 7 + sh9] * g2[0 + 7 + sh9] -
+                            w3[0 + 1 + sh9] * g3[0 + 1 + sh9] - w3[0 + 4 + sh9] * g3[0 + 4 + sh9] -
+                            w3[0 + 7 + sh9] * g3[0 + 7 + sh9];
 
-            (*virial)[5]+= -w1[0+1 + sh9] * g1[0+2 + sh9] -
-                            w1[0+4 + sh9] * g1[0+5 + sh9] -
-                            w1[0+7 + sh9] * g1[0+8 + sh9] -
-                            w2[0+1 + sh9] * g2[0+2 + sh9] -
-                            w2[0+4 + sh9] * g2[0+5 + sh9] -
-                            w2[0+7 + sh9] * g2[0+8 + sh9] -
-                            w3[0+1 + sh9] * g3[0+2 + sh9] -
-                            w3[0+4 + sh9] * g3[0+5 + sh9] -
-                            w3[0+7 + sh9] * g3[0+8 + sh9];
+            (*virial)[5] += -w1[0 + 1 + sh9] * g1[0 + 2 + sh9] - w1[0 + 4 + sh9] * g1[0 + 5 + sh9] -
+                            w1[0 + 7 + sh9] * g1[0 + 8 + sh9] - w2[0 + 1 + sh9] * g2[0 + 2 + sh9] -
+                            w2[0 + 4 + sh9] * g2[0 + 5 + sh9] - w2[0 + 7 + sh9] * g2[0 + 8 + sh9] -
+                            w3[0 + 1 + sh9] * g3[0 + 2 + sh9] - w3[0 + 4 + sh9] * g3[0 + 5 + sh9] -
+                            w3[0 + 7 + sh9] * g3[0 + 8 + sh9];
 
-            (*virial)[8]+= -w1[0+2 + sh9] * g1[0+2 + sh9] -
-                            w1[0+5 + sh9] * g1[0+5 + sh9] -
-                            w1[0+8 + sh9] * g1[0+8 + sh9] -
-                            w2[0+2 + sh9] * g2[0+2 + sh9] -
-                            w2[0+5 + sh9] * g2[0+5 + sh9] -
-                            w2[0+8 + sh9] * g2[0+8 + sh9] -
-                            w3[0+2 + sh9] * g3[0+2 + sh9] -
-                            w3[0+5 + sh9] * g3[0+5 + sh9] -
-                            w3[0+8 + sh9] * g3[0+8 + sh9];
+            (*virial)[8] += -w1[0 + 2 + sh9] * g1[0 + 2 + sh9] - w1[0 + 5 + sh9] * g1[0 + 5 + sh9] -
+                            w1[0 + 8 + sh9] * g1[0 + 8 + sh9] - w2[0 + 2 + sh9] * g2[0 + 2 + sh9] -
+                            w2[0 + 5 + sh9] * g2[0 + 5 + sh9] - w2[0 + 8 + sh9] * g2[0 + 8 + sh9] -
+                            w3[0 + 2 + sh9] * g3[0 + 2 + sh9] - w3[0 + 5 + sh9] * g3[0 + 5 + sh9] -
+                            w3[0 + 8 + sh9] * g3[0 + 8 + sh9];
 
             (*virial)[3] = (*virial)[1];
             (*virial)[6] = (*virial)[2];

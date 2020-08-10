@@ -8,7 +8,7 @@
 #include "tools/constants.h"
 #include "tools/variable.h"
 #include "tools/water_monomer_lp.h"
-#include "poly_3b_A1B4_C1D2_C1D2_deg3_v1.h" 
+#include "poly_3b_A1B4_C1D2_C1D2_deg3_v1.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -17,17 +17,18 @@ namespace mbnrg_A1B4_C1D2_C1D2_deg3 {
 //----------------------------------------------------------------------------//
 
 struct mbnrg_A1B4_C1D2_C1D2_deg3_v1 {
-    mbnrg_A1B4_C1D2_C1D2_deg3_v1() {};
+    mbnrg_A1B4_C1D2_C1D2_deg3_v1(){};
     mbnrg_A1B4_C1D2_C1D2_deg3_v1(const std::string mon1, const std::string mon2, const std::string mon3);
 
-    ~mbnrg_A1B4_C1D2_C1D2_deg3_v1() {};
+    ~mbnrg_A1B4_C1D2_C1D2_deg3_v1(){};
 
     typedef poly_A1B4_C1D2_C1D2_deg3_v1 polynomial;
 
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n);
-    double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3 , const size_t n,std::vector<double> *virial=0);
+    double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3,
+                const size_t n, std::vector<double> *virial = 0);
 
-  private:
+   private:
     double m_k_x_intra_A_B_1;
     double m_k_x_inter_A_C_0;
     double m_k_x_inter_A_D_0;
@@ -43,14 +44,14 @@ struct mbnrg_A1B4_C1D2_C1D2_deg3_v1 {
     double m_ri = 7.0;
     double m_ro = 8.0;
 
-    double f_switch(const double, double&);
+    double f_switch(const double, double &);
 
     std::vector<double> coefficients;
 };
 
 //----------------------------------------------------------------------------//
 
-} // namespace mbnrg_A1B4_C1D2_C1D2_deg3
+}  // namespace mbnrg_A1B4_C1D2_C1D2_deg3
 
 ////////////////////////////////////////////////////////////////////////////////
 
