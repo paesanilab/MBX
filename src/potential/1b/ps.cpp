@@ -343,7 +343,7 @@ static double c5z[245];
 
 namespace ps {
 
-std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vector<double> *virial) {
+std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vector<double>* virial) {
     // Declare vectors with the distances, and grads
     double ROH1[3 * nw], ROH2[3 * nw], RHH[3 * nw];
     double dROH1[nw], dROH2[nw], dRHH[nw];
@@ -557,31 +557,23 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
         }
 
         if (virial != 0) {
-            for (size_t i = 0; i < nw; i++){
-                   
-                (*virial)[0] += -rr[9*i+ 0]*dr[9*i+ 0]    
-                             -rr[9*i+ 3]*dr[9*i+ 3]
-                             -rr[9*i+ 6]*dr[9*i+ 6];
-                (*virial)[1] += -rr[9*i+ 0]*dr[9*i+ 1]
-                             -rr[9*i+ 3]*dr[9*i+ 4]
-                             -rr[9*i+ 6]*dr[9*i+ 7];
-                (*virial)[2] += -rr[9*i+ 0]*dr[9*i+ 2]
-                             -rr[9*i+ 3]*dr[9*i+ 5]
-                             -rr[9*i+ 6]*dr[9*i+ 8];
-                (*virial)[4] += -rr[9*i+ 1]*dr[9*i+ 1]
-                             -rr[9*i+ 4]*dr[9*i+ 4]
-                             -rr[9*i+ 7]*dr[9*i+ 7];
-                (*virial)[5] += -rr[9*i+ 1]*dr[9*i+ 2]
-                             -rr[9*i+ 4]*dr[9*i+ 5]
-                             -rr[9*i+ 7]*dr[9*i+ 8];
-                (*virial)[8] += -rr[9*i+ 2]*dr[9*i+ 2]
-                             -rr[9*i+ 5]*dr[9*i+ 5]
-                             -rr[9*i+ 8]*dr[9*i+ 8];
+            for (size_t i = 0; i < nw; i++) {
+                (*virial)[0] +=
+                    -rr[9 * i + 0] * dr[9 * i + 0] - rr[9 * i + 3] * dr[9 * i + 3] - rr[9 * i + 6] * dr[9 * i + 6];
+                (*virial)[1] +=
+                    -rr[9 * i + 0] * dr[9 * i + 1] - rr[9 * i + 3] * dr[9 * i + 4] - rr[9 * i + 6] * dr[9 * i + 7];
+                (*virial)[2] +=
+                    -rr[9 * i + 0] * dr[9 * i + 2] - rr[9 * i + 3] * dr[9 * i + 5] - rr[9 * i + 6] * dr[9 * i + 8];
+                (*virial)[4] +=
+                    -rr[9 * i + 1] * dr[9 * i + 1] - rr[9 * i + 4] * dr[9 * i + 4] - rr[9 * i + 7] * dr[9 * i + 7];
+                (*virial)[5] +=
+                    -rr[9 * i + 1] * dr[9 * i + 2] - rr[9 * i + 4] * dr[9 * i + 5] - rr[9 * i + 7] * dr[9 * i + 8];
+                (*virial)[8] +=
+                    -rr[9 * i + 2] * dr[9 * i + 2] - rr[9 * i + 5] * dr[9 * i + 5] - rr[9 * i + 8] * dr[9 * i + 8];
 
                 (*virial)[3] = (*virial)[1];
                 (*virial)[6] = (*virial)[2];
                 (*virial)[7] = (*virial)[5];
-    
             }
         }
 
@@ -713,10 +705,10 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
 //}
 //
 void dms_nasa(const double& RESTRICT dms_param1, const double& RESTRICT dms_param2, const double& RESTRICT dms_param3,
-              const double* RESTRICT rr, double* RESTRICT q3, double* RESTRICT dq3, std::vector<double> *aux_data) {
+              const double* RESTRICT rr, double* RESTRICT q3, double* RESTRICT dq3, std::vector<double>* aux_data) {
     const double ath0 = 1.82400520401572996557;
     const double costhe = -0.24780227221366464506;
-    bool ttm3 = false; // This is not used I think, but just for safety...
+    bool ttm3 = false;  // This is not used I think, but just for safety...
 
     double ROH1[3], ROH2[3], RHH[3], dROH1(0), dROH2(0), dRHH(0);
 
@@ -860,7 +852,7 @@ void dms_nasa(const double& RESTRICT dms_param1, const double& RESTRICT dms_para
 
     if (dq3 == 0) return;
 
-    if ( aux_data != 0 ) {
+    if (aux_data != 0) {
         (*aux_data)[0] = dp1dr1;
         (*aux_data)[1] = dp1dr2;
         (*aux_data)[2] = dp2dr1;

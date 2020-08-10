@@ -45,7 +45,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // ===>> PASTE INCLUDE BELOW <<===
 #include "potential/1b/x1b_A1B4_deg5_exp0_v1x.h"
 #include "potential/1b/x1b_A1B2_deg4_v1x.h"
-#include "potential/1b/mbnrg_1b_A1B3_deg6_v1.h"
 // ====>> END SECTION INCLUDE1B <<====
 
 #include "tools/definitions.h"
@@ -90,7 +89,8 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz1, std::
  * has an energy larger than the value set in definitions.h (EMAX1B)
  * @return Sum of the one-body energies of all the monomers passed as arguments
  */
-double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1, std::vector<size_t> &bad_idxs, std::vector<double> *virial = 0);
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1,
+                     std::vector<size_t> &bad_idxs, std::vector<double> *virial = 0);
 
 }  // namespace e1b
 #endif
