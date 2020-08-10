@@ -135,7 +135,7 @@ const double gamma21 = gamma2 / gamma1;
  * number of monomers.
  */
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
-    std::vector<std::string> &mon, std::vector<size_t> &islocal, std::vector<size_t> sites, std::vector<size_t> nats, 
+    std::vector<std::string> &mon, std::vector<size_t> &islocal, std::vector<size_t> sites, std::vector<size_t> nats,
     std::vector<size_t> &original2current_order, std::vector<std::pair<size_t, size_t>> &original_order,
     std::vector<std::pair<size_t, size_t>> &original_order_realSites);
 
@@ -172,9 +172,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
  * @param[in] nat Vector with the number of atoms of each monomer
  * @param[in] first_index Vector with the first index of each monomer
  */
-void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, 
-                           std::vector<double> box_inv, std::vector<size_t> nat,
-                           std::vector<size_t> first_index);
+void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<double> box_inv,
+                           std::vector<size_t> nat, std::vector<size_t> first_index);
 
 /**
  * @brief This function finds the monomer 2 mirror image that is closer to
@@ -197,7 +196,8 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box,
  * the other one. At output, it will be modified so the coordinates
  * of monomer 2 are the closer image to monomer 1.
  */
-void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2);
+void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nd,
+                        double *xyz1, double *xyz2);
 
 /**
  * @brief This function finds the monomers 2 and 3 mirror image that is
@@ -226,8 +226,8 @@ void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, si
  * the other one. At output, it will be modified so the coordinates
  * of monomer 3 are the closer image to monomer 1.
  */
-void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3, size_t nt, std::vector<double> &xyz1,
-                         std::vector<double> &xyz2, std::vector<double> &xyz3);
+void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,
+                         size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3);
 
 void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
                        std::vector<double> &xyz_out, std::vector<size_t> &indexes);
@@ -267,10 +267,9 @@ void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<doubl
  * between the first atom of both monomers
  */
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
-                 std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig, std::vector<size_t> first_index,
-		 std::vector<size_t> is_local,
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers,
-		 bool use_ghost = false);
+                 std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
+                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
+                 std::vector<size_t> &trimers, bool use_ghost = false);
 
 /**
  * @brief Sets the excluded pairs for a given monomer
@@ -521,8 +520,8 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const 
  * @param[in] chg_grad Charge derivatives
  */
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
-                           const std::vector<double> phi, std::vector<double> &grad,
-                           const std::vector<double> chg_grad, double *crd = 0, std::vector<double> *qdvirial = 0);
+                           const std::vector<double> phi, std::vector<double> &grad, const std::vector<double> chg_grad,
+                           double *crd = 0, std::vector<double> *qdvirial = 0);
 
 }  // namespace systools
 #endif  // SYS_TOOLS_H
