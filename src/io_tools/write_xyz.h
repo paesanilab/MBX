@@ -71,10 +71,8 @@ namespace tools {
  * @param[in] write_box Bool that states if the box will be written
  * @param[in] to_angstrom Conversion factor to convert from the units to angstrom
  */
-void WriteXYZ(std::ofstream &off, std::vector<std::string> &atom_names,
-             std::vector<double> &coords, 
-             std::vector<double> &boxes, bool write_box = false,
-             double to_angstrom = 1.0);
+void WriteXYZ(std::ofstream &off, std::vector<std::string> &atom_names, std::vector<double> &coords,
+              std::vector<double> &boxes, bool write_box = false, double to_angstrom = 1.0);
 
 }  // namespace tools
 
