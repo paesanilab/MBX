@@ -69,8 +69,8 @@ TEST_CASE("Test the system tools functions (no PBC).") {
     std::vector<std::string> mon_names = monomer_names;
     // Run OrderMonomers
     try {
-        mon_type_count = systools::OrderMonomers(mon_names, islocal, sites_out, nat_out, original2current, orginal_order,
-                                                 orginal_order_realSites);
+        mon_type_count = systools::OrderMonomers(mon_names, islocal, sites_out, nat_out, original2current,
+                                                 orginal_order, orginal_order_realSites);
     } catch (CUException &e) {
         std::cerr << e.what();
     }
@@ -126,11 +126,11 @@ TEST_CASE("Test the system tools functions (no PBC).") {
             std::vector<size_t> original2current2;
             std::vector<std::pair<size_t, size_t>> orginal_order2;
             std::vector<std::pair<size_t, size_t>> orginal_order_realSites2;
-	    std::vector<size_t> islocal_empty;
+            std::vector<size_t> islocal_empty;
             bool not_possible_to_order_monomers = false;
             try {
-	        mon_type_count2 = systools::OrderMonomers(monomers_empty, islocal_empty, sites_out, nat_out, original2current2,
-                                                          orginal_order2, orginal_order_realSites2);
+                mon_type_count2 = systools::OrderMonomers(monomers_empty, islocal_empty, sites_out, nat_out,
+                                                          original2current2, orginal_order2, orginal_order_realSites2);
             } catch (CUException &e) {
                 not_possible_to_order_monomers = true;
             }
@@ -147,7 +147,7 @@ TEST_CASE("Test the system tools functions (no PBC).") {
             std::vector<std::pair<size_t, size_t>> orginal_order_realSites2;
             bool sites_vector_not_matching_monomer_size = false;
             try {
-	        mon_type_count2 = systools::OrderMonomers(monomer_names, islocal, sites2, nat_out, original2current2,
+                mon_type_count2 = systools::OrderMonomers(monomer_names, islocal, sites2, nat_out, original2current2,
                                                           orginal_order2, orginal_order_realSites2);
             } catch (CUException &e) {
                 sites_vector_not_matching_monomer_size = true;
@@ -156,7 +156,7 @@ TEST_CASE("Test the system tools functions (no PBC).") {
 
             bool atoms_vector_not_matching_monomer_size = false;
             try {
-	        mon_type_count2 = systools::OrderMonomers(monomer_names, islocal, sites_out, nats2, original2current2,
+                mon_type_count2 = systools::OrderMonomers(monomer_names, islocal, sites_out, nats2, original2current2,
                                                           orginal_order2, orginal_order_realSites2);
             } catch (CUException &e) {
                 atoms_vector_not_matching_monomer_size = true;
@@ -166,22 +166,22 @@ TEST_CASE("Test the system tools functions (no PBC).") {
     }
 
     SECTION("Test the thole damping retrievement") {
-        double add_water_12 = systools::GetAdd(true,false,false, "h2o");
+        double add_water_12 = systools::GetAdd(true, false, false, "h2o");
         REQUIRE(add_water_12 == Approx(0.626).margin(TOL));
 
-        double add_water_13 = systools::GetAdd(false,true,false, "h2o");
+        double add_water_13 = systools::GetAdd(false, true, false, "h2o");
         REQUIRE(add_water_13 == Approx(0.055).margin(TOL));
 
-        double add_water_14 = systools::GetAdd(false,false,true, "h2o");
+        double add_water_14 = systools::GetAdd(false, false, true, "h2o");
         REQUIRE(add_water_14 == Approx(0.055).margin(TOL));
 
-        double add_other_12 = systools::GetAdd(true,false,false, "co2");
+        double add_other_12 = systools::GetAdd(true, false, false, "co2");
         REQUIRE(add_other_12 == Approx(0.3).margin(TOL));
 
-        double add_other_13 = systools::GetAdd(false,true,false, "co2");
+        double add_other_13 = systools::GetAdd(false, true, false, "co2");
         REQUIRE(add_other_13 == Approx(0.3).margin(TOL));
 
-        double add_other_14 = systools::GetAdd(false,false,true, "co2");
+        double add_other_14 = systools::GetAdd(false, false, true, "co2");
         REQUIRE(add_other_14 == Approx(0.055).margin(TOL));
     }
 
@@ -190,26 +190,27 @@ TEST_CASE("Test the system tools functions (no PBC).") {
 
 TEST_CASE("Test functions with PBC") {
     SECTION("FixMonomerCoordinates") {
-        std::vector<double> box = {10.0,0.0,0.0,0.0,10.0,0.0,0.0,0.0,10.0};
+        std::vector<double> box = {10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0};
         std::vector<double> box_inv = InvertUnitCell(box);
 
-        std::vector<double> coordinates_fixed_1 = {4.9,4.9,4.9, 5.9,4.9,4.9, 4.9,5.9,4.9, 4.9,4.9,5.9};
-        std::vector<double> coordinates_1 = {4.9,4.9,4.9, -4.1,4.9,4.9, 4.9,-4.1,4.9, 4.9,4.9,-4.1};
-        std::vector<double> coordinates_fixed_2 = {-4.9,-4.9,-4.9, -5.9,-4.9,-4.9, -4.9,-5.9,-4.9, -4.9,-4.9,-5.9};
-        std::vector<double> coordinates_2 = {-4.9,-4.9,-4.9, 4.1,-4.9,-4.9, -4.9,4.1,-4.9, -4.9,-4.9,4.1};
+        std::vector<double> coordinates_fixed_1 = {4.9, 4.9, 4.9, 5.9, 4.9, 4.9, 4.9, 5.9, 4.9, 4.9, 4.9, 5.9};
+        std::vector<double> coordinates_1 = {4.9, 4.9, 4.9, -4.1, 4.9, 4.9, 4.9, -4.1, 4.9, 4.9, 4.9, -4.1};
+        std::vector<double> coordinates_fixed_2 = {-4.9, -4.9, -4.9, -5.9, -4.9, -4.9,
+                                                   -4.9, -5.9, -4.9, -4.9, -4.9, -5.9};
+        std::vector<double> coordinates_2 = {-4.9, -4.9, -4.9, 4.1, -4.9, -4.9, -4.9, 4.1, -4.9, -4.9, -4.9, 4.1};
 
-        std::vector<double> coordinates_fixed_3 = {4.9,4.9,4.9, -4.9,-4.9,-4.9};
-        std::vector<double> coordinates_3 = {-5.1,-5.1,-5.1, 5.1,5.1,5.1};
+        std::vector<double> coordinates_fixed_3 = {4.9, 4.9, 4.9, -4.9, -4.9, -4.9};
+        std::vector<double> coordinates_3 = {-5.1, -5.1, -5.1, 5.1, 5.1, 5.1};
         std::vector<size_t> nats = {4};
-        std::vector<size_t> nats_3 = {1,1};
+        std::vector<size_t> nats_3 = {1, 1};
         std::vector<size_t> first_index = {0};
-        std::vector<size_t> first_index_3 = {0,1};
+        std::vector<size_t> first_index_3 = {0, 1};
 
         systools::FixMonomerCoordinates(coordinates_1, box, box_inv, nats, first_index);
         for (size_t i = 0; i < coordinates_1.size(); i++) {
             REQUIRE(coordinates_1[i] == Approx(coordinates_fixed_1[i]).margin(TOL));
         }
-        
+
         systools::FixMonomerCoordinates(coordinates_2, box, box_inv, nats, first_index);
         for (size_t i = 0; i < coordinates_2.size(); i++) {
             REQUIRE(coordinates_2[i] == Approx(coordinates_fixed_2[i]).margin(TOL));

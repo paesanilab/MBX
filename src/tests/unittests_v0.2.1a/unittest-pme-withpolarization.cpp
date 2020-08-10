@@ -62,8 +62,8 @@ void run_test(const char *method) {
      */
     // alpha = 0.3
 
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, true,
-                    1E-16, 100, method, box_vectors);
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, method, box_vectors);
     elec.SetCutoff(16.5);
     elec.SetEwaldAlpha(0.25);
     elec.SetEwaldGridDensity(2.5);
@@ -73,8 +73,8 @@ void run_test(const char *method) {
     REQUIRE(energy3 == Approx(ref_energy).epsilon(TOL));
 
     // alpha = 0.4
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, true,
-                    1E-16, 100, method, box_vectors);
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, method, box_vectors);
     elec.SetCutoff(13);
     elec.SetEwaldAlpha(0.35);
     elec.SetEwaldGridDensity(3);
@@ -85,8 +85,8 @@ void run_test(const char *method) {
     for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces3[n] == Approx(forces4[n]).epsilon(TOL));
 
     // alpha = 0.5
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, true,
-                    1E-16, 100, method, box_vectors);
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, method, box_vectors);
     elec.SetCutoff(10);
     elec.SetEwaldAlpha(0.45);
     elec.SetEwaldGridDensity(3.5);

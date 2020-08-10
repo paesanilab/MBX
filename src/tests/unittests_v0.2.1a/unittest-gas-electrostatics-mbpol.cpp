@@ -58,8 +58,8 @@ TEST_CASE("Test the electrostatics class for mbpol (gas phase).") {
                                   -5.6001142142e+00, 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00};
 
     elec::Electrostatics elec;
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal, true,
-                    1E-16, 100, "iter", std::vector<double>{});
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, "iter", std::vector<double>{});
     std::vector<double> forces(3 * n_sites);
     double energy = elec.GetElectrostatics(forces);
     double perm_elec = elec.GetPermanentElectrostaticEnergy();
