@@ -94,7 +94,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   
   while(iarg < narg) {
     if(strcmp(arg[iarg], "json") == 0) {
-      int len = strlen(arg[iarg++]);
+      int len = strlen(arg[++iarg]);
       use_json = 1;
       json_file = new char[len];
       strcpy(json_file, arg[iarg]);
@@ -331,8 +331,9 @@ int FixMBX::setmask()
 {
   int mask = 0;
   mask |= POST_NEIGHBOR;
+  mask |= MIN_POST_NEIGHBOR;
   mask |= PRE_FORCE;
-  mask |= PRE_FORCE_RESPA;
+  //  mask |= PRE_FORCE_RESPA;
   mask |= MIN_PRE_FORCE;
   return mask;
 }
@@ -363,6 +364,10 @@ void FixMBX::init()
 
 void FixMBX::setup_post_neighbor()
 {
+#ifdef _DEBUG
+  printf("\n[MBX] (%i,%i) Inside setup_post_neighbor()\n",universe->iworld,me);
+#endif
+  
   // setup after first neighbor build completes
 
   // allocate memory on rank 0 to hold full system data
@@ -387,6 +392,10 @@ void FixMBX::setup_post_neighbor()
   post_neighbor();
   
   first_step = false;
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i,%i) Leaving setup_post_neighbor()\n",universe->iworld,me);
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -702,11 +711,11 @@ void FixMBX::mbx_init()
   int nm = 0;
 
   //  printf("(%i)  nlocal= %i  nall= %i\n",me,nlocal,nall);
-  //  int proc_write = 1;
+  //  int proc_write = 0;
 
   for(int i=0; i<nall; ++i) {
 
-    //if(me == proc_write) printf("i= %i  mol_anchor= %i\n",i,mol_anchor[i]);
+    //    if(me == proc_write) printf("i= %i  mol_anchor= %i\n",i,mol_anchor[i]);
     
     // if anchor-atom, then add to MBX (currently assume molecule is intact)
     
@@ -2729,7 +2738,7 @@ void FixMBX::mbx_update_xyz_pme()
   
     ptr_mbx_pme->SetPBC(box);
   }
-
+  
   // update coordinates
   
   std::vector<double> xyz(natoms*3);
