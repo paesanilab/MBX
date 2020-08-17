@@ -9,7 +9,7 @@ A basic simulation will need some equilibration time and some production time. U
 All the scripts that will be used are assuming a given folder tree:
 ```
 |-- rerun_all.sh
-|-- run.job
+|-- run_ipi.job
 |-- run_next_eq.sh
 |-- run_next_prod.sh
 |-- system1
@@ -19,21 +19,21 @@ All the scripts that will be used are assuming a given folder tree:
 |   |       |-- config.xml
 |   |       |-- config.xyz
 |   |       |-- mbx.json
-|   |       `-- run.job
+|   |       `-- run_ipi.job
 |   |-- run2
 |   |   `-- eq1
 |   |       |-- config.nrg
 |   |       |-- config.xml
 |   |       |-- config.xyz
 |   |       |-- mbx.json
-|   |       `-- run.job
+|   |       `-- run_ipi.job
 |   `-- run3
 |       `-- eq1
 |           |-- config.nrg
 |           |-- config.xml
 |           |-- config.xyz
 |           |-- mbx.json
-|           `-- run.job
+|           `-- run_ipi.job
 `-- system2
     |-- run1
     |   `-- eq1
@@ -41,14 +41,14 @@ All the scripts that will be used are assuming a given folder tree:
     |       |-- config.xml
     |       |-- config.xyz
     |       |-- mbx.json
-    |       `-- run.job
+    |       `-- run_ipi.job
     `-- run2
         `-- eq1
             |-- config.nrg
             |-- config.xml
             |-- config.xyz
             |-- mbx.json
-            `-- run.job
+            `-- run_ipi.job
 ```
 
 Here, system1 and system2 are examples of two different simulations (different system, different temperatures...) These folders can have any name. It is recommended to call them by what they are, like `1na_in_277h2o_300K_1atm_npt` or stuff like this. 
@@ -67,13 +67,13 @@ Make sure that the number of trheads you use and the number you request is consi
 The main script that needs to be run is `rerun_all.sh`. In that script, modify `directories` to be all the directories in your folder that you want to keep running until completition. Then, make sure you submit each of the equilibration runs (`eq1`) directing the output to `jobid.dat`. THIS IS CRUCIAL. The jobid.dat MUST contain just the id, in this case. You can do the following:
 ```
 cd PATH/TO/EQ1
-sbatch run.job > tmp.dat 
+sbatch run_ipi.job > tmp.dat 
 cat tmp.dat | awk '{print $4}' > jobid.dat
 rm tmp.dat
 ```
 A faster way, if you don't wanna go manually:
 ```
-for i in system1 system2; do cd $i; for j in `ls -d run*`; do cd $j/eq1 ; sbatch run.job > tmp.dat ; cat tmp.dat | awk '{print $4}' > jobid.dat ; rm tmp.dat ; cd ../../; done ; cd ../ ; done
+for i in system1 system2; do cd $i; for j in `ls -d run*`; do cd $j/eq1 ; sbatch run_ipi.job > tmp.dat ; cat tmp.dat | awk '{print $4}' > jobid.dat ; rm tmp.dat ; cd ../../; done ; cd ../ ; done
 ```
 
 Once that is done, will be enough to put the `rerun_all.sh` in a loop:

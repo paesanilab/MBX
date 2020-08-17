@@ -36,10 +36,10 @@ else
   mkdir ../prod$nextp
   cp simulation.checkpoint ../prod$nextp/config.xml
   cp config.nrg ../prod$nextp
-  cp run.job ../prod$nextp
+  cp run_ipi.job ../prod$nextp
   cp mbx.json ../prod$nextp
   cd ../prod$nextp
-  sbatch run.job > tmp.dat 
+  sbatch run_ipi.job > tmp.dat 
   cat tmp.dat | awk '{print $4}' > jobid.dat
   rm tmp.dat
   echo "Submitted prod$nextp for job in $PWD"

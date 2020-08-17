@@ -1,17 +1,16 @@
 #!/bin/bash
 
 #SBATCH --job-name="mbx_compilation"
-#SBATCH --output="mbx_compilation.%j.%N.out"
+#SBATCH --output="mbx_compilation.out"
 #SBATCH --partition=shared
 #SBATCH --share
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
-##SBATCH --mem=80G
 #SBATCH --export=ALL
 #SBATCH -t 01:00:00
 
-MBX_HOME=$HOME/codes/MBX
-CMAKE_EXE=$HOME/codes/cmake-3.14.3/bin/cmake
+MBX_HOME=$HOME/software/MBX
+CMAKE_EXE=$HOME/software/cmake-3.17.3/bin/cmake
 
 cd $MBX_HOME 
 
