@@ -637,28 +637,6 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.53045);  // A^(-1)
         d6.push_back(3.89503);  // A^(-1)
 
-    } else if (mon_id1 == "nh3" and mon_id2 == "nh3") {
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(243.38373570927124);  // kcal/mol * A^(-6)  A--A
-        C6.push_back(98.66666135686104);   // kcal/mol * A^(-6)  A--B
-        C6.push_back(98.66666135686104);   // kcal/mol * A^(-6)  B--A
-        C6.push_back(40.09775637853022);   // kcal/mol * A^(-6)  B--B
-        d6.push_back(3.10660);             // A^(-1) A--A
-        d6.push_back(3.90008);             // A^(-1) A--B
-        d6.push_back(3.90008);             // A^(-1) B--A
-        d6.push_back(3.33535);             // A^(-1) B--B
     } else if (mon_id1 == "ar" and mon_id2 == "cs") {
         types1.push_back(0);
 
