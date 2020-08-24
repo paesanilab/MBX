@@ -1,20 +1,17 @@
 #!/bin/bash
 
 #PBS -N compile_MBX
-#PBS -q glean
-#PBS -l walltime=00:20:00,nodes=1:ppn=16
+#PBS -q condo
+#PBS -l walltime=01:00:00,nodes=1:ppn=16
 #PBS -e stderr 
 #PBS -o stdout 
-#PBS -M your_email@ucsd.edu
-##PBS -m abe
+#PBS -M your_email_address
+#PBS -m abe
 ##PBS -m ae
 #PBS -m n 
 #PBS -V
 
-MBX_HOME=$HOME/codes/MBX
-
-export MODULEPATH=/projects/builder-group/jpg/modulefiles/applications:$MODULEPATH
-module load cmake/3.13.4
+export MBX_HOME=$HOME/software/MBX
 
 module load gnu openmpi_ib fftw
 export PATH=$FFTWHOME/lib:$FFTWHOME/include:$PATH
@@ -26,3 +23,18 @@ cd build
 make -j 8 CXX=g++ CC=gcc
 make install
 cd ../
+
+echo
+echo "MBX LIBRARY COMPILED!"
+echo
+
+# Compile the driver
+cd plugins/i-pi/src/main
+cp Makefile_tscc_gnu Makefile
+make
+cd -
+
+echo
+echo "i-pi DRIVER COMPILED!"
+echo
+

@@ -76,4 +76,4 @@ std::string Topology::GetFunctionalForm() { return functional_form_; }
 void Topology::SetTopology(std::string topology) { topology_ = topology; }
 
 std::string Topology::GetTopology() { return topology_; }
-}
+}  // namespace eff

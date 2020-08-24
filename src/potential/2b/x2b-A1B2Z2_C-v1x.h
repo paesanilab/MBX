@@ -57,7 +57,8 @@ struct x2b_h2o_ion_v2x {
 
     ~x2b_h2o_ion_v2x(){};
 
-    double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd, std::vector<double> *virial =0);
+    double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd,
+                std::vector<double>* virial = 0);
     double eval(const double* w1, const double* x, const size_t nd);
 
     double k_HH_intra;

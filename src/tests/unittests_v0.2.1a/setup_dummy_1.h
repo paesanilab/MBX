@@ -35,39 +35,39 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_DUMMY_1_H
 #define UNITTESTS_SETUP_DUMMY_1_H
 
-#define SETUP_DUMMY_1                                                                                               \
-    double one_body_energy = 0.0000000000e+00;                                                                         \
-    double two_body_energy = 0.0000000000e+00;                                                                         \
-    double three_body_energy = 0.0000000000e+00;                                                                       \
-    double dispersion_energy = 0.0000000000e+00;                                                                      \
-    double buckingham_energy = 0.0000000000e+00;                                                                       \
-    double electrostatic_energy = 0.0000000000e+00;                                                                   \
-    double total_energy = 0.0000000000e+00;                                                                           \
-    double total_energy_ttm = 0.0000000000e+00;                                                                       \
-    const int n_monomers = 1;                                                                                          \
-    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"dummy", "h2o"}};                                      \
-    std::vector<std::vector<std::string>> ignore_2b = {{"dummy", "h2o"}};                                                 \
-    std::vector<std::vector<std::string>> ignore_3b = {{"dummy", "h2o", "h2o"}};                                          \
-    std::vector<double> coords{0.0,0.0,0.0};\
-    std::vector<double> real_coords{0.0,0.0,0.0};\
-    std::vector<std::string> atom_names{"X"};                                                          \
-    std::vector<std::string> monomer_names = {"dummy"};                                                            \
-    std::vector<size_t> n_atoms_vector = {1};                                                                       \
-    std::vector<size_t> n_sites_vector = {1};                                                                       \
-    std::vector<size_t> first_index = {0};                                                                          \
-    std::vector<size_t> first_index_realSites = {0};                                                                \
-    const size_t n_atoms = 3;                                                                                          \
-    const size_t n_sites = 3;                                                                                          \
-    std::vector<double> polfac{0.0}; \
-    std::vector<double> pol{0.0}; \
-    std::vector<double> charges{0.0}; \
-    std::vector<double> real_charges{0.0}; \
-    std::vector<double> real_polfac{0.0}; \
-    std::vector<double> real_pol{0.0}; \
-    std::vector<double> C6_long_range{0.0}; \
-    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"dummy", 1}};                        \
-    std::vector<size_t> internal_original_to_current_order{0};                                                      \
-    std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}};                                     \
-    std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}};                          \
+#define SETUP_DUMMY_1                                                                  \
+    double one_body_energy = 0.0000000000e+00;                                         \
+    double two_body_energy = 0.0000000000e+00;                                         \
+    double three_body_energy = 0.0000000000e+00;                                       \
+    double dispersion_energy = 0.0000000000e+00;                                       \
+    double buckingham_energy = 0.0000000000e+00;                                       \
+    double electrostatic_energy = 0.0000000000e+00;                                    \
+    double total_energy = 0.0000000000e+00;                                            \
+    double total_energy_ttm = 0.0000000000e+00;                                        \
+    const int n_monomers = 1;                                                          \
+    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"dummy", "h2o"}};   \
+    std::vector<std::vector<std::string>> ignore_2b = {{"dummy", "h2o"}};              \
+    std::vector<std::vector<std::string>> ignore_3b = {{"dummy", "h2o", "h2o"}};       \
+    std::vector<double> coords{0.0, 0.0, 0.0};                                         \
+    std::vector<double> real_coords{0.0, 0.0, 0.0};                                    \
+    std::vector<std::string> atom_names{"X"};                                          \
+    std::vector<std::string> monomer_names = {"dummy"};                                \
+    std::vector<size_t> n_atoms_vector = {1};                                          \
+    std::vector<size_t> n_sites_vector = {1};                                          \
+    std::vector<size_t> first_index = {0};                                             \
+    std::vector<size_t> first_index_realSites = {0};                                   \
+    const size_t n_atoms = 3;                                                          \
+    const size_t n_sites = 3;                                                          \
+    std::vector<double> polfac{0.0};                                                   \
+    std::vector<double> pol{0.0};                                                      \
+    std::vector<double> charges{0.0};                                                  \
+    std::vector<double> real_charges{0.0};                                             \
+    std::vector<double> real_polfac{0.0};                                              \
+    std::vector<double> real_pol{0.0};                                                 \
+    std::vector<double> C6_long_range{0.0};                                            \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"dummy", 1}}; \
+    std::vector<size_t> internal_original_to_current_order{0};                         \
+    std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}};             \
+    std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}};  \
     std::vector<std::string> internal_monomer_names{"dummy"};
 #endif

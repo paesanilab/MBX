@@ -71,10 +71,9 @@ namespace tools {
  * @param[in] read_box Bool that states if the box will be read (i-pi format)
  * @param[in] to_angstrom Conversion factor to convert from the units to angstrom
  */
-void ReadXYZ(char* filename, std::vector<std::vector<std::string> > &atom_names,
-             std::vector<std::vector<double> > &coords, 
-             std::vector<std::vector<double> > &boxes,
-             bool read_box = false, double to_angstrom = 1.0);
+void ReadXYZ(char *filename, std::vector<std::vector<std::string> > &atom_names,
+             std::vector<std::vector<double> > &coords, std::vector<std::vector<double> > &boxes, bool read_box = false,
+             double to_angstrom = 1.0);
 
 /**
  * @brief Reads a frame inside the XYZ file
@@ -91,11 +90,8 @@ void ReadXYZ(char* filename, std::vector<std::vector<std::string> > &atom_names,
 
  * the information in the file
  */
-void ReadFrame(size_t& lineno, std::istream& ifs, 
-                std::vector<std::string> &atom_names,
-                std::vector<double> &coords,
-                std::vector<double> &box,
-                bool read_box = false, double to_angstrom = 1.0);
+void ReadFrame(size_t &lineno, std::istream &ifs, std::vector<std::string> &atom_names, std::vector<double> &coords,
+               std::vector<double> &box, bool read_box = false, double to_angstrom = 1.0);
 
 }  // namespace tools
 

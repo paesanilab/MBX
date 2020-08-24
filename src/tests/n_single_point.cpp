@@ -20,22 +20,19 @@ namespace {
 
 static std::vector<bblock::System> systems;
 
-} // namespace
+}  // namespace
 
-int main(int argc, char** argv)
-{
-
+int main(int argc, char** argv) {
     if (argc < 3) {
-      std::cerr << "Usage: " << argv[0] << " <input.nrg> <neval> [mbx.json]"
-                << std::endl;
-      return 0;
+        std::cerr << "Usage: " << argv[0] << " <input.nrg> <neval> [mbx.json]" << std::endl;
+        return 0;
     }
 
     size_t neval = 1;
     try {
         std::ifstream ifs(argv[1]);
 
-        if (!ifs){
+        if (!ifs) {
             throw std::runtime_error("could not open the NRG file");
         }
 

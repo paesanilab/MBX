@@ -44,7 +44,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
     if (mon1 > mon2 and mon1 > mon3) {
         std::swap(mon1, mon3);
         std::swap(xyz1, xyz3);
-    // Check if mon2 is the largest
+        // Check if mon2 is the largest
     } else if (mon2 > mon1 and mon2 > mon3) {
         std::swap(mon2, mon3);
         std::swap(xyz2, xyz3);
@@ -66,13 +66,13 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
     } else if (mon1 == "cs" and mon2 == "h2o" and mon3 == "h2o") {
         x3b_h2o_ion_v1x_deg4_filtered pot(mon1);
         return pot(xyz2.data(), xyz3.data(), xyz1.data(), nm);
-    // =====>> BEGIN SECTION 3B_NO_GRADIENT <<=====
-    // =====>> PASTE YOUR CODE BELOW <<=====
+        // =====>> BEGIN SECTION 3B_NO_GRADIENT <<=====
+        // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon1 == "ch4" and mon2 == "h2o" and mon3 == "h2o") {
         mbnrg_A1B4_C1D2_C1D2_deg3::mbnrg_A1B4_C1D2_C1D2_deg3_v1 pot(mon1, mon2, mon3);
         return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
 
-    // =====>> END SECTION 3B_NO_GRADIENT <<=====
+        // =====>> END SECTION 3B_NO_GRADIENT <<=====
     } else {
         return 0.0;
     }
@@ -90,7 +90,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         std::swap(xyz1, xyz3);
         std::swap(grad1, grad3);
         std::swap(index1, index3);
-    // Check if mon2 is the largest
+        // Check if mon2 is the largest
     } else if (mon2 > mon1 and mon2 > mon3) {
         std::swap(mon2, mon3);
         std::swap(xyz2, xyz3);
@@ -106,7 +106,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         std::swap(grad1, grad2);
         std::swap(index1, index2);
     }
-    
+
     double energy = 0.0;
     // Note: in the conditional, mon2 >= mon1 ALWAYS
     if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "h2o") {
@@ -118,13 +118,13 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
     } else if (mon1 == "cs" and mon2 == "h2o" and mon3 == "h2o") {
         x3b_h2o_ion_v1x_deg4_filtered pot(mon1);
         energy = pot(xyz2.data(), xyz3.data(), xyz1.data(), grad2.data(), grad3.data(), grad1.data(), nm, virial);
-    // =====>> BEGIN SECTION 3B_GRADIENT <<=====
-    // =====>> PASTE YOUR CODE BELOW <<=====
+        // =====>> BEGIN SECTION 3B_GRADIENT <<=====
+        // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon1 == "ch4" and mon2 == "h2o" and mon3 == "h2o") {
         mbnrg_A1B4_C1D2_C1D2_deg3::mbnrg_A1B4_C1D2_C1D2_deg3_v1 pot(mon1, mon2, mon3);
-        energy =  pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
+        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
 
-    // =====>> END SECTION 3B_GRADIENT <<=====
+        // =====>> END SECTION 3B_GRADIENT <<=====
     } else {
         energy = 0.0;
     }

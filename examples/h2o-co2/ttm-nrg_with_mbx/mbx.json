@@ -16,7 +16,9 @@
        "alpha_ewald_disp" : 0.0, 
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
+       "ff_mons"   : ["co2"],
        "ttm_pairs" : [["co2","h2o"]],
+       "ignore_1b_poly" : ["co2"],
        "ignore_2b_poly" : [["co2","h2o"]],
        "ignore_3b_poly" : [["co2","h2o","h2o"]]
    } ,  

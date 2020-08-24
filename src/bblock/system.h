@@ -554,14 +554,14 @@ class System {
      * please read the documentation.
      */
     void InitializePME();
-  
+
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
      * @param[in] box is a 9 component vector of double with
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
     void SetBoxPMElocal(std::vector<double> box);
-  
+
     /**
      * Sets up all the parameters that are specified in a json file
      * @param[in] json_file Is the json formatted file with the system specifications
@@ -689,7 +689,7 @@ to be the same.
      * @param[in] spline_order Order of the splines used for interpolation
      */
     void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
-  
+
     /**
      * Sets MPI environment from driver code
      * @param[in] comm is MPI communicator
@@ -698,7 +698,7 @@ to be the same.
      * @param[in] nz is # of processors along z-axis (c axis)
      */
     void SetMPI(MPI_Comm comm, int nx, int ny, int nz);
-  
+
     /**
      * Interface for driver to check if MPI environment initialized
      * @param[out] 1 for initialized / -1 for not initialized / -2 for not enabled
@@ -790,8 +790,8 @@ to be the same.
      * @param[in] use_ghost If true, then ghost monomers present
      * @return Dispersion energy of the system
      */
-     double Dispersion(bool do_grads, bool use_ghost = 0);
-  
+    double Dispersion(bool do_grads, bool use_ghost = 0);
+
     /**
      * Obtains only the k-space dispersion energy for the whole system.
      * Gradients will be ONLY for the dispersion part.
@@ -799,8 +799,8 @@ to be the same.
      * the gradient calculation will not be performed
      * @return Dispersion energy of the system
      */
-     double DispersionPME(bool do_grads, bool use_ghost = 0);
-     double DispersionPMElocal(bool do_grads, bool use_ghost = 0);
+    double DispersionPME(bool do_grads, bool use_ghost = 0);
+    double DispersionPMElocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains the buckingham energy for the whole system.
@@ -814,7 +814,7 @@ to be the same.
 
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
-  
+
    private:
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -936,8 +936,8 @@ to be the same.
      * only local monomers included (default)
      * @return  Dispersion energy of the system
      */
-     double GetDispersion(bool do_grads, bool use_ghost = 0);
-  
+    double GetDispersion(bool do_grads, bool use_ghost = 0);
+
     /**
      * Private function to internally get the k-space portion of dispersion energy.
      * Gradients of the system will be updated.
@@ -947,8 +947,8 @@ to be the same.
      * only local monomers included (default)
      * @return  Dispersion energy of the system
      */
-     double GetDispersionPME(bool do_grads, bool use_ghost = 0);
-     double GetDispersionPMElocal(bool do_grads, bool use_ghost = 0);
+    double GetDispersionPME(bool do_grads, bool use_ghost = 0);
+    double GetDispersionPMElocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the buckinham energy.
@@ -1188,6 +1188,12 @@ to be the same.
     std::vector<double> box_;
 
     /**
+     * Vector that stores the simulation box in ABCabc format (6 elements).
+     * The center of the box is origin of coordinates
+     */
+    std::vector<double> box_ABCabc_;
+
+    /**
      * Vector that stores the simulation box inverse.
      */
     std::vector<double> box_inverse_;
@@ -1246,6 +1252,12 @@ to be the same.
     std::vector<std::vector<std::string> > ignore_2b_poly_;
 
     /**
+     * This vector will have the indexes of monomers for which the polynomials wont be calculated due to a hig
+     * deformation. This includes 2b and 3b that involve the monomer.
+     */
+    std::vector<size_t> enforce_ttm_for_idx_;
+
+    /**
      * This vector of vectors contains the trimers of monomer types that will be ignored when
      * when calculating the 3b polynomials.
      */
@@ -1285,20 +1297,20 @@ to be the same.
      * Json configuration object
      */
     nlohmann::json mbx_j_;
-  
+
     /**
      * Set to true when driver has intialized MPI
-    */
+     */
     bool mpi_initialized_;
-  
+
     /**
      * MPI Communicator from driver code
-    */
+     */
     MPI_Comm world_;
 
     /**
      * MPI processor grid
-    */
+     */
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;

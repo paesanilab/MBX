@@ -41,11 +41,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace tools {
 
-void ReadXYZ(char* filename, std::vector<std::vector<std::string> > &atom_names,
-             std::vector<std::vector<double> > &coords, 
-             std::vector<std::vector<double> > &boxes,
-             bool read_box, double to_angstrom) {
-
+void ReadXYZ(char *filename, std::vector<std::vector<std::string> > &atom_names,
+             std::vector<std::vector<double> > &coords, std::vector<std::vector<double> > &boxes, bool read_box,
+             double to_angstrom) {
     // Check that filename is not empty
     assert(filename);
     std::ifstream ifs(filename);
@@ -64,17 +62,17 @@ void ReadXYZ(char* filename, std::vector<std::vector<std::string> > &atom_names,
     atom_names.clear();
     coords.clear();
     boxes.clear();
-    
+
     // Read trajectory til the end
     std::vector<double> crd;
     std::vector<double> box;
     std::vector<std::string> at_names;
-    
+
     size_t frameno = 0;
     while (true) {
         // Read system from file
 
-        ReadFrame(lineno, ifs, at_names,crd,box,read_box,to_angstrom);
+        ReadFrame(lineno, ifs, at_names, crd, box, read_box, to_angstrom);
 
         // Store data in vectors
         atom_names.push_back(at_names);
@@ -96,12 +94,8 @@ void ReadXYZ(char* filename, std::vector<std::vector<std::string> > &atom_names,
     return;
 }
 
-void ReadFrame(size_t& lineno, std::istream& ifs, 
-               std::vector<std::string> &atom_names,
-               std::vector<double> &coords,
-               std::vector<double> &box,
-               bool read_box, double to_angstrom) {
-    
+void ReadFrame(size_t &lineno, std::istream &ifs, std::vector<std::string> &atom_names, std::vector<double> &coords,
+               std::vector<double> &box, bool read_box, double to_angstrom) {
     // Check we are not at the end of the file
     if (ifs.eof()) return;
 
@@ -132,14 +126,15 @@ void ReadFrame(size_t& lineno, std::istream& ifs,
     std::string tmp;
     try {
         // Will assume that the box line is and is a othrogonal box:
-        // # CELL(abcABC):   19.72950    19.72950    19.72950    90.00000    90.00000    90.00000  Step:           0  Bead:       0 positions{angstrom}  cell{angstrom}
+        // # CELL(abcABC):   19.72950    19.72950    19.72950    90.00000    90.00000    90.00000  Step:           0
+        // Bead:       0 positions{angstrom}  cell{angstrom}
         if (read_box) {
             std::istringstream boxline(line);
             double x;
             double y;
             double z;
             boxline >> tmp >> tmp >> x >> y >> z;
-            box = {x*to_angstrom,0.0,0.0,0.0,y*to_angstrom,0.0,0.0,0.0,z*to_angstrom};
+            box = {x * to_angstrom, 0.0, 0.0, 0.0, y * to_angstrom, 0.0, 0.0, 0.0, z * to_angstrom};
         }
     } catch (...) {
         std::ostringstream oss;
@@ -156,14 +151,14 @@ void ReadFrame(size_t& lineno, std::istream& ifs,
         double x;
         double y;
         double z;
-        
+
         std::istringstream atline(line);
         try {
             atline >> at >> x >> y >> z;
             atom_names.push_back(at);
-            coords.push_back(x*to_angstrom);
-            coords.push_back(y*to_angstrom);
-            coords.push_back(z*to_angstrom);
+            coords.push_back(x * to_angstrom);
+            coords.push_back(y * to_angstrom);
+            coords.push_back(z * to_angstrom);
         } catch (...) {
             std::ostringstream oss;
             oss << "A problem has occured while reading atom " << i << " at line " << lineno;
@@ -179,4 +174,3 @@ void ReadFrame(size_t& lineno, std::istream& ifs,
 }
 
 }  // namespace tools
-

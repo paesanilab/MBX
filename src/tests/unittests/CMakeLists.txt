@@ -64,13 +64,13 @@ CheckFileList( SOURCES_ALL_PATH ${UNITTEST_DIR} )
 string( REPLACE ".cpp" "" BASENAMES_UNITTESTS_TESTS "${SOURCES_UNITTESTS_TESTS}" )
 set( TARGETS_UNITTESTS_TESTS ${BASENAMES_UNITTESTS_TESTS} )
 
-set( TARGETS_ALL ${TARGETS_UNITTESTS_TESTS} CatchMain )
+set( TARGETS_ALL ${TARGETS_UNITTESTS_TESTS} CatchMain_dev )
 
 # Define program targets:
-add_library( CatchMain OBJECT ${UNITTEST_DIR}/${SOURCES_UNITTESTS_MAIN} ${HEADER_DIR}/catch.hpp )
+add_library( CatchMain_dev OBJECT ${UNITTEST_DIR}/${SOURCES_UNITTESTS_MAIN} ${HEADER_DIR}/catch.hpp )
 
 foreach( name ${TARGETS_UNITTESTS_TESTS} )
-    add_executable( ${name} ${name}.cpp $<TARGET_OBJECTS:CatchMain> ${HEADER_DIR}/catch.hpp )
+    add_executable( ${name} ${name}.cpp $<TARGET_OBJECTS:CatchMain_dev> ${HEADER_DIR}/catch.hpp )
     target_link_libraries( ${name} PRIVATE mbxlib fftw::fftw)
     add_dependencies( ${name} mbxlib )
     add_test(NAME ${name}

@@ -55,7 +55,8 @@ TEST_CASE("Test the dispersion class.") {
 
     // create dispersion class
     disp::Dispersion my_disp;
-    my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal, false, box);
+    my_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count, islocal,
+                       false, box);
 
     SECTION("Switch is 1") {
         // Get dispersion with no grads

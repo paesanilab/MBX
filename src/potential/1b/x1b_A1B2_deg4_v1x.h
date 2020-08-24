@@ -18,32 +18,32 @@ namespace x1b_A1B2_deg4 {
 //----------------------------------------------------------------------------//
 
 struct x1b_A1B2_v1x {
-    x1b_A1B2_v1x() {};
+    x1b_A1B2_v1x(){};
     x1b_A1B2_v1x(const std::string mon);
-    ~x1b_A1B2_v1x() {};
+    ~x1b_A1B2_v1x(){};
 
     typedef poly_1b_A1B2_deg4_v1x polynomial;
 
     std::vector<double> eval(const double* xyz, const size_t nmon) const;
-    std::vector<double> eval(const double* xyz, double* grad, const size_t nmon, std::vector<double> *virial=0) const;    
+    std::vector<double> eval(const double* xyz, double* grad, const size_t nmon, std::vector<double>* virial = 0) const;
 
-private:
-
+   private:
     double d_intra_AB;
     double d_intra_BB;
     double k_intra_AB;
     double k_intra_BB;
-private:
+
+   private:
     std::vector<double> coefficients;
 
-//private:
-//    double f_switch(const double& r, double& g) const;
+    // private:
+    //    double f_switch(const double& r, double& g) const;
 };
 
 //----------------------------------------------------------------------------//
 
-} // namespace A1B2
+}  // namespace x1b_A1B2_deg4
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // X1B_A1B2_DEG4_H
+#endif  // X1B_A1B2_DEG4_H

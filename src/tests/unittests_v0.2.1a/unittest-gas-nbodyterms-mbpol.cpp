@@ -69,7 +69,7 @@ TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
     // MB-pol test
     SETUP_H2O_3
     size_t nmon = 3;
-    bool good = true;
+    std::vector<size_t> good;
     std::string monomer_name = "h2o";
 
     // Obtain coordinates without virtual sites

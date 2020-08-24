@@ -35,10 +35,10 @@ if [ $step -eq $total_steps ]; then
   mkdir ../prod1
   cat simulation.checkpoint | sed "s/<step>$step<\/step>/<step>0<\/step>/g" | sed "s/<total_steps>$step<\/total_steps>/<total_steps>10000000<\/total_steps>/g"  > ../prod1/config.xml
   cp config.nrg ../prod1
-  cp run.job ../prod1
+  cp run_ipi.job ../prod1
   cp mbx.json ../prod1
   cd ../prod1
-  sbatch run.job > tmp.dat 
+  sbatch run_ipi.job > tmp.dat 
   cat tmp.dat | awk '{print $4}' > jobid.dat
   rm tmp.dat
   echo "Submitted prod1"
@@ -48,10 +48,10 @@ else
   mkdir ../eq$nextp
   cp simulation.checkpoint ../eq$nextp/config.xml
   cp config.nrg ../eq$nextp
-  cp run.job ../eq$nextp
+  cp run_ipi.job ../eq$nextp
   cp mbx.json ../eq$nextp
   cd ../eq$nextp
-  sbatch run.job > tmp.dat 
+  sbatch run_ipi.job > tmp.dat 
   cat tmp.dat | awk '{print $4}' > jobid.dat
   rm tmp.dat
   echo "Submitted eq$nextp (time: $step / $total_steps)"

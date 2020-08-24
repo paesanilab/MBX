@@ -38,7 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define SETUP_H2O_2_NA_1                                                                                              \
     double one_body_energy = 1.0803424170e-01;                                                                        \
     double two_body_energy = 2.8736601016e+00;                                                                        \
-    double three_body_energy = 1.9055043094e-01;                                                                  \
+    double three_body_energy = 1.9055043094e-01;                                                                      \
     double dispersion_energy = -1.7064606812e+00;                                                                     \
     double buckingham_energy = 1.0327578345e+00;                                                                      \
     double electrostatic_energy = -2.9678893074e+01;                                                                  \
@@ -85,12 +85,19 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                      0.0000000000e+00, 5.7555409696e-01, 5.7555409698e-01};                           \
     std::vector<double> C6_long_range{1.6027878723e+01, 1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00,         \
                                       1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00};                          \
-    std::vector<double> virial_1b = { -5.58441 , -1.81631 , 2.40254 , -1.81631 , -4.42154 , 6.24358 , 2.40254 , 6.24358 , -7.33326 }; \
-    std::vector<double> virial_2b = {  2.40048 , 1.73389 , -4.50587 , 1.73389 , 8.8705 , -0.462716 , -4.50587 , -0.462716 , 18.2374}; \
-    std::vector<double> virial_3b = { -0.15670969213232 , 0.353288315887017 , -0.567006694513452 , 0.353288315887017 , 1.24674516345045 , 0.0368221203315391 , -0.567006694513452 , 0.0368221203315391 , 1.74858088055828 }; \
-    std::vector<double> virial_elec = {  1.41759 , -0.858596 , 5.09369 , -0.858596 , -28.7583 , -20.1132 , 5.09369 , -20.1132 , -36.3972 }; \
-    std::vector<double> virial_disp = {  -0.763606 , -1.04449 , 1.89534 , -1.04449 , -3.03916 , 1.57541 , 1.89534 , 1.57541 , -6.24503 }; \
-    std::vector<double> virial_buck = {  0.044093 , -0.075866 , -0.230262 , -0.075866 , 5.95973 , 5.30237 , -0.230262 , 5.30237 , 5.3376};\
+    std::vector<double> virial_1b = {-5.58441, -1.81631, 2.40254, -1.81631, -4.42154,                                 \
+                                     6.24358,  2.40254,  6.24358, -7.33326};                                          \
+    std::vector<double> virial_2b = {2.40048,   1.73389,  -4.50587,  1.73389, 8.8705,                                 \
+                                     -0.462716, -4.50587, -0.462716, 18.2374};                                        \
+    std::vector<double> virial_3b = {-0.15670969213232,  0.353288315887017,  -0.567006694513452,                      \
+                                     0.353288315887017,  1.24674516345045,   0.0368221203315391,                      \
+                                     -0.567006694513452, 0.0368221203315391, 1.74858088055828};                       \
+    std::vector<double> virial_elec = {1.41759,  -0.858596, 5.09369,  -0.858596, -28.7583,                            \
+                                       -20.1132, 5.09369,   -20.1132, -36.3972};                                      \
+    std::vector<double> virial_disp = {-0.763606, -1.04449, 1.89534, -1.04449, -3.03916,                              \
+                                       1.57541,   1.89534,  1.57541, -6.24503};                                       \
+    std::vector<double> virial_buck = {0.044093, -0.075866, -0.230262, -0.075866, 5.95973,                            \
+                                       5.30237,  -0.230262, 5.30237,   5.3376};                                       \
     std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"na", 1}, {"h2o", 2}};                       \
     std::vector<size_t> internal_original_to_current_order{0, 1, 2};                                                  \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}, {1, 1}, {2, 5}};                            \

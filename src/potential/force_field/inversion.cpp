@@ -121,4 +121,4 @@ bool Inversion::operator==(Inversion const &inversion) const {
 
     return true;
 }
-}
+}  // namespace eff

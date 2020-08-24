@@ -370,7 +370,7 @@ TEST_CASE("Test water -- cesium energy terms") {
 TEST_CASE("Test Cs H2O virial contributions") {
     SETUP_H2O_1_CS_1
 
-    bblock::System my_system;   
+    bblock::System my_system;
 
     // Add monomers to the system
     size_t count = 0;
@@ -390,54 +390,44 @@ TEST_CASE("Test Cs H2O virial contributions") {
         double energy_grad = my_system.OneBodyEnergy(true);
         std::vector<double> my_virial = my_system.GetVirial();
 
-            for (size_t i = 0; i < 9; i++) {
-                REQUIRE(virial_1b[i] == Approx(my_virial[i]).margin(TOL));
-            }
-
+        for (size_t i = 0; i < 9; i++) {
+            REQUIRE(virial_1b[i] == Approx(my_virial[i]).margin(TOL));
+        }
     }
 
     SECTION("Two-Body") {
         double energy_grad = my_system.TwoBodyEnergy(true);
         std::vector<double> my_virial = my_system.GetVirial();
 
-            for (size_t i = 0; i < 9; i++) {
-                REQUIRE(virial_2b[i] == Approx(my_virial[i]).margin(TOL));
-            }
-
+        for (size_t i = 0; i < 9; i++) {
+            REQUIRE(virial_2b[i] == Approx(my_virial[i]).margin(TOL));
+        }
     }
-
 
     SECTION("Dispersion") {
         double energy_grad = my_system.Dispersion(true);
         std::vector<double> my_virial = my_system.GetVirial();
 
-            for (size_t i = 0; i < 9; i++) {
-                REQUIRE(virial_disp[i] == Approx(my_virial[i]).margin(TOL));
-            }
-
+        for (size_t i = 0; i < 9; i++) {
+            REQUIRE(virial_disp[i] == Approx(my_virial[i]).margin(TOL));
+        }
     }
     SECTION("Buckingham") {
         my_system.SetTTMnrgPairs(ttm_pairs);
         double energy_grad = my_system.Buckingham(true);
         std::vector<double> my_virial = my_system.GetVirial();
 
-            for (size_t i = 0; i < 9; i++) {
-                REQUIRE(virial_buck[i] == Approx(my_virial[i]).margin(TOL));
-            }
-
+        for (size_t i = 0; i < 9; i++) {
+            REQUIRE(virial_buck[i] == Approx(my_virial[i]).margin(TOL));
+        }
     }
-
 
     SECTION("Electrostatics") {
         double energy_grad = my_system.Electrostatics(true);
         std::vector<double> my_virial = my_system.GetVirial();
 
-            for (size_t i = 0; i < 9; i++) {
-                REQUIRE(virial_elec[i] == Approx(my_virial[i]).margin(TOL));
-            }
-
+        for (size_t i = 0; i < 9; i++) {
+            REQUIRE(virial_elec[i] == Approx(my_virial[i]).margin(TOL));
+        }
     }
-
-
-
 }

@@ -156,8 +156,7 @@ void get_virial_(double* virial) {
     } else if (v.size() == 9) {
         std::copy(v.begin(), v.begin() + 9, virial);
     } else {
-        std::cerr << "Cannot retrieve the virial. Size should be 9, and instead is " 
-                  << v.size() << std::endl;
+        std::cerr << "Cannot retrieve the virial. Size should be 9, and instead is " << v.size() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 }

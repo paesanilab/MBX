@@ -50,7 +50,7 @@ struct poly_3b_v2x {
 
     static double eval(const double* a, const double* x);
 
-    static double eval(const double* a, const double* x, double *t, double* g);
+    static double eval(const double* a, const double* x, double* t, double* g);
 };
 
 }  // namespace x2o
