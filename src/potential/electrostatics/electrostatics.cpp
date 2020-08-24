@@ -47,7 +47,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #endif
 
-//#define _DEBUG_LOCAL
+//#define _DEBUG_PERM
+//#define _DEBUG_DIPOLE
+//#define _DEBUG_ITERATION 2
+//#define _DEBUG_COMM
+//#define _DEBUG_DIPFIELD
+//#define _DEBUG_ENERGY
 
 // When turning polarization off, don't set the 1/polarity value to max_dbl because it gets
 // added to the potential and field values, generating inf values that result in NaN energies.
@@ -394,7 +399,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         fi_crd += nmon * ns * 3;
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_PERM
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -616,7 +621,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 	fi_crd1 += nmon1 * ns1 * 3;
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_PERM
     {  // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -779,7 +784,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 	for(int i=0; i<nsites_; ++i) phi_[i] -= 2 * ewald_alpha_ / PIQSRT * chg_[i] * islocal_atom_[i];
     }
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_PERM
     {  // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -933,7 +938,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
         fi_crd += nmon * ns * 3;
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_PERM
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -1166,7 +1171,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
     double time2 = MPI_Wtime();
 #endif
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_PERM
     {  // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -1267,7 +1272,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
         }
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_PERM
     {  // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -1582,7 +1587,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
     std::vector<double> pv(nsites3);
     std::vector<double> r_new(nsites3);
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPOLE
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -1696,8 +1701,8 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
 
         double rvrv_new = residual_global;
 
-#if 0
-	if(iter > 2) {
+#ifdef _DEBUG_ITERATION
+	if(iter > _DEBUG_ITERATION) {
 	  std::cout << "Not converged" << std::endl;
 	  break;
 	}
@@ -1727,7 +1732,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
 #endif
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPOLE
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -1835,7 +1840,7 @@ void Electrostatics::CalculateDipolesCG() {
     std::vector<double> pv(nsites3);
     std::vector<double> r_new(nsites3);
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPOLE
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -1936,8 +1941,8 @@ void Electrostatics::CalculateDipolesCG() {
         // Check if converged
         if (residual < tolerance_) break;
 
-#if 0
-	if(iter > 2) {
+#ifdef _DEBUG_ITERATION
+	if(iter > _DEBUG_ITERATION) {
 	  std::cout << "Not converged" << std::endl;
 	  break;
 	}
@@ -1968,7 +1973,7 @@ void Electrostatics::CalculateDipolesCG() {
 #endif
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPOLE
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -2161,7 +2166,7 @@ void Electrostatics::CalculateDipolesAspc() {
 
 void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_COMM
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -2327,7 +2332,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
     fi_crd += nmon * ns * 3;
   }
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_COMM
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -2380,7 +2385,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
   
 void Electrostatics::reverse_comm(std::vector<double> &in_v) {
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_COMM
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -2550,7 +2555,7 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
     fi_crd += nmon * ns * 3;
   }
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_COMM
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -2621,7 +2626,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     double time1 = MPI_Wtime();
 #endif
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -2757,7 +2762,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     //   }
     // } // for(ip)
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -2906,7 +2911,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     //   }
     // } // for(ip)
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -3093,7 +3098,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
 	{ // debug print
 	  int me, nprocs;
 	  MPI_Comm_size(world_, &nprocs);
@@ -3152,7 +3157,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 	//	for(int i=0; i<nsites_*3; ++i) out_v[i] += slf_prefactor * in_v[i];
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -3232,7 +3237,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     double time1 = MPI_Wtime();
 #endif
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -3365,7 +3370,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     //   }
     // } // for(ip)
     
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -3521,7 +3526,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     double time2 = MPI_Wtime();
 #endif
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -3615,7 +3620,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         auto result = helpme::Matrix<double>(sys_Efd_.data(), nsites_, 3);
         std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
 	{ // debug print
 	  int me, nprocs;
 	  MPI_Comm_size(world_, &nprocs);
@@ -3641,7 +3646,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 	
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
 	
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
 	{ // debug print
 	  int me, nprocs;
 	  MPI_Comm_size(world_, &nprocs);
@@ -3696,7 +3701,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
     { // debug print
       int me, nprocs;
       MPI_Comm_size(world_, &nprocs);
@@ -3841,7 +3846,7 @@ void Electrostatics::CalculateElecEnergyMPIlocal() {
     for (size_t i = 0; i < 3 * nsites_; i++) Eind_ -= mu_[i] * Efq_[i] * islocal_atom_xyz_[i];
     Eind_ *= 0.5 * constants::COULOMB;
 
-#if 0
+#ifdef _DEBUG_ENERGY
     { // debug_output
 
       // for(int i=0; i<num_mpi_ranks_; ++i) {
@@ -3873,7 +3878,7 @@ void Electrostatics::CalculateElecEnergy() {
     for (size_t i = 0; i < 3 * nsites_; i++) Eind_ -= mu_[i] * Efq_[i];
     Eind_ *= 0.5 * constants::COULOMB;
 
-#if 0
+#ifdef _DEBUG_ENERGY
     { // debug_output
 
       // for(int i=0; i<num_mpi_ranks_; ++i) {
