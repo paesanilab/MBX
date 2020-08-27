@@ -955,13 +955,12 @@ void FixMBX::mbx_init()
   // set MBX solvers
   
   ptr_mbx->SetDipoleMethod("cg");
-  //  if (box.size()) {
-    ptr_mbx->Set2bCutoff(pair_mbx->cut_global);
+  ptr_mbx->Set2bCutoff(pair_mbx->cut_global);
+
+  if(!domain->nonperiodic) {
     ptr_mbx->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx->SetEwaldDispersion(0.5, 2.5, 6);
-    //  } else {
-    //    ptr_mbx->Set2bCutoff(100.0);
-    //  }
+  }
 
   if(use_json) ptr_mbx->SetUpFromJson(json_settings);
   
