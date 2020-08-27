@@ -52,7 +52,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 //#define _DEBUG_ITERATION 2
 //#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
-//#define _DEBUG_ENERGY
+#define _DEBUG_ENERGY
 
 // When turning polarization off, don't set the 1/polarity value to max_dbl because it gets
 // added to the potential and field values, generating inf values that result in NaN energies.
@@ -651,6 +651,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                                       << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
                                       << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
                                       << xyz_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_[fi_sites + inmon + m]
+				      << " chg_= " << sys_chg_[fi_sites + inmon + m] << " " 
                                       << " Efq_= " << Efq_[fi_crd + inmon3 + m] << " "
                                       << Efq_[fi_crd + inmon3 + nmon + m] << " " << Efq_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
@@ -705,7 +706,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
 
-#if 1
+#if 0
         // Zero property of particles outside local region
 
         // proc grid order hard-coded (as above) for ZYX NodeOrder
@@ -718,7 +719,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         // this allows the full ghost region to be included for pairwise calculations,
         // but should exclude ghost monomers that are periodic images of local monomer
 
-        double padding = cutoff_ * 0.5;
+	double padding = cutoff_ * 0.5;
         double dx = A / (double)proc_grid_x_;
         double dy = B / (double)proc_grid_y_;
         double dz = C / (double)proc_grid_z_;
@@ -1198,6 +1199,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                                       << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
                                       << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
                                       << xyz_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_[fi_sites + inmon + m]
+				      << " chg_= " << sys_chg_[fi_sites + inmon + m] << " " 
                                       << " Efq_= " << Efq_[fi_crd + inmon3 + m] << " "
                                       << Efq_[fi_crd + inmon3 + nmon + m] << " " << Efq_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
@@ -2175,7 +2177,7 @@ void Electrostatics::CalculateDipolesAspc() {
 }
 
 void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_COMM
     {  // debug print
         int me, nprocs;
         MPI_Comm_size(world_, &nprocs);
@@ -2357,7 +2359,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
         fi_crd += nmon * ns * 3;
     }
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_COMM
     {  // debug print
         int me, nprocs;
         MPI_Comm_size(world_, &nprocs);
@@ -2405,7 +2407,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 }
 
 void Electrostatics::reverse_comm(std::vector<double> &in_v) {
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_COMM
     {  // debug print
         int me, nprocs;
         MPI_Comm_size(world_, &nprocs);
@@ -3057,7 +3059,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
 
-#if 1
+#if 0
         // Zero property of particles outside local region
 
         // proc grid order hard-coded (as above) for ZYX NodeOrder
@@ -3113,7 +3115,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         auto result = helpme::Matrix<double>(sys_Efd_.data(), nsites_, 3);
         std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
 
-#ifdef _DEBUG_LOCAL
+#ifdef _DEBUG_DIPFIELD
         {  // debug print
             int me, nprocs;
             MPI_Comm_size(world_, &nprocs);
@@ -3149,7 +3151,8 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 	      
 	      std::cout << "\n" << std::endl;	  
 	      for (size_t i = 0; i < nsites_; i++) {
-		std::cout << "(" << me << ") DIPFIELD PRec LOCAL: i= " << i <<
+		std::cout << "(" << me << ") DIPFIELD PRec LOCAL (before Allreduce): i= " << i <<
+		  " xyz= " << coords(i,0) << " " << coords(i,1) << " " << coords(i,2) <<
 		  " result= " << result(i,0) << " " << result(i,1) << " " << result(i,2) <<
 		  std::endl;
 	      }
@@ -3704,6 +3707,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 	      std::cout << "\n" << std::endl;	  
 	      for (size_t i = 0; i < nsites_; i++) {
 		std::cout << "(" << me << ") DIPFIELD PRec ORIG (before Allreduce): i= " << i <<
+		  " xyz= " << coords(i,0) << " " << coords(i,1) << " " << coords(i,2) <<
 		  " result= " << result(i,0) << " " << result(i,1) << " " << result(i,2) <<
 		  std::endl;
 	      }
