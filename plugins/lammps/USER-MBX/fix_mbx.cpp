@@ -40,7 +40,8 @@
 #include "universe.h"
 #endif
 
-//#define _USE_MBX_FULL
+#define _USE_MBX_LOCAL // use with MBX MPI-enabled
+#define _USE_MBX_FULL  // required if MBX not MPI-enabled
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -189,6 +190,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   
   ptr_mbx_pme = NULL;
 
+#ifdef _USE_MBX_LOCAL
 #ifdef _USE_PMELOCAL
   // check that LAMMPS proc mapping matches PME solver
 
@@ -215,6 +217,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
       error->all(FLERR,"[MBX] Simulation box origin required to be {0, 0, 0} for PME solver");
   }
 #endif
+#endif
+  
   // setup json, if requested
 
   if(use_json) {
@@ -471,7 +475,9 @@ void FixMBX::post_neighbor()
 #ifdef _USE_MBX_FULL
   ptr_mbx_full  = new bblock::System();
 #endif
+#ifdef _USE_MBX_LOCAL
   ptr_mbx_local = new bblock::System();
+#endif
   ptr_mbx_pme   = new bblock::System();
 
   // loop over all atoms looking for anchor-atom of a molecule
@@ -950,7 +956,7 @@ void FixMBX::mbx_init()
   
   ptr_mbx->SetDipoleMethod("cg");
   //  if (box.size()) {
-    ptr_mbx->Set2bCutoff(9.0);
+    ptr_mbx->Set2bCutoff(pair_mbx->cut_global);
     ptr_mbx->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx->SetEwaldDispersion(0.5, 2.5, 6);
     //  } else {
@@ -980,6 +986,8 @@ void FixMBX::mbx_init()
 
 void FixMBX::mbx_init_local()
 {
+#ifdef _USE_MBX_LOCAL
+  
   mbxt_start(MBXT_INIT_LOCAL);
 
 #ifdef _DEBUG
@@ -1008,7 +1016,7 @@ void FixMBX::mbx_init_local()
     if(mol_anchor[i]) mol_local[i] = 1;
   }
 
-  double padding = 9.0 * 0.5; // hard-coded cutoff
+  double padding = pair_mbx->cut_global * 0.5; // hard-coded cutoff
   double xlo = domain->sublo[0] - padding;
   double xhi = domain->subhi[0] + padding;
   
@@ -1283,7 +1291,7 @@ void FixMBX::mbx_init_local()
     
   } // for(i<nall)
 
-  //  printf("(%i)  mbx_num_atoms_local= %i\n",me,mbx_num_atoms_local);
+  //printf("(%i)  mbx_num_atoms_local= %i\n",me,mbx_num_atoms_local);
 
   // if(mbx_num_atoms_local == 0) {
   //   mbxt_stop(MBXT_INIT);
@@ -1295,7 +1303,12 @@ void FixMBX::mbx_init_local()
 
   int err = ptr_mbx_local->TestMPI();
   if(err == -1) error->all(FLERR, "[MBX] MPI not initialized\n");
-  else if(err == -2) error->all(FLERR,"[MBX] MPI not enabled\n");
+  else if(err == -2) {
+    if(me == 0 && first_step)
+      error->warning(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
+    mbx_mpi_enabled = false;
+  }
+  //  else if(err == -2) error->all(FLERR,"[MBX] MPI not enabled\n");
   
   if(mbx_num_atoms_local == 0) ptr_mbx_local->InitializePME();
   else ptr_mbx_local->Initialize();
@@ -1306,11 +1319,15 @@ void FixMBX::mbx_init_local()
   std::vector<double> box;
 
   // set MBX solvers
-  
-  ptr_mbx_local->SetDipoleMethod("cg");
-  ptr_mbx_local->Set2bCutoff(9.0);
-  ptr_mbx_local->SetEwaldElectrostatics(0.6, 2.5, 6);
-  ptr_mbx_local->SetEwaldDispersion(0.5, 2.5, 6);
+
+  if(!domain->nonperiodic) {
+    ptr_mbx_local->SetDipoleMethod("cg");
+    ptr_mbx_local->Set2bCutoff(pair_mbx->cut_global);
+    ptr_mbx_local->SetEwaldElectrostatics(0.6, 2.5, 6);
+    ptr_mbx_local->SetEwaldDispersion(0.5, 2.5, 6);
+  } else {
+    ptr_mbx_local->Set2bCutoff(100.0);
+  }
     
   if(use_json) ptr_mbx_local->SetUpFromJson(json_settings);
   
@@ -1329,10 +1346,9 @@ void FixMBX::mbx_init_local()
     box[7] = domain->yz;
     box[8] = domain->zprd;
     
+    ptr_mbx_local->SetBoxPMElocal(box);
   } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
     error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
-  
-  ptr_mbx_local->SetBoxPMElocal(box);
   
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
@@ -1345,6 +1361,7 @@ void FixMBX::mbx_init_local()
 #endif
   
   mbxt_stop(MBXT_INIT_LOCAL);
+#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -1650,7 +1667,7 @@ void FixMBX::mbx_init_full()
   
   ptr_mbx_full->SetDipoleMethod("cg");
   if (box.size()) {
-    ptr_mbx_full->Set2bCutoff(9.0);
+    ptr_mbx_full->Set2bCutoff(pair_mbx->cut_global);
     ptr_mbx_full->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx_full->SetEwaldDispersion(0.5, 2.5, 6);
   } else {
@@ -1977,7 +1994,7 @@ void FixMBX::mbx_init_pme()
   
   ptr_mbx_pme->SetDipoleMethod("cg");
   if (box.size()) {
-    ptr_mbx_pme->Set2bCutoff(9.0);
+    ptr_mbx_pme->Set2bCutoff(pair_mbx->cut_global);
     ptr_mbx_pme->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx_pme->SetEwaldDispersion(0.5, 2.5, 6);
   } else {
@@ -2198,6 +2215,8 @@ void FixMBX::mbx_update_xyz()
 
 void FixMBX::mbx_update_xyz_local()
 {
+#ifdef _USE_MBX_LOCAL
+  
   mbxt_start(MBXT_UPDATE_XYZ_LOCAL);
 
 #ifdef _DEBUG
@@ -2485,6 +2504,7 @@ void FixMBX::mbx_update_xyz_local()
 #endif
   
   mbxt_stop(MBXT_UPDATE_XYZ_LOCAL);
+#endif
 }
 
 /* ----------------------------------------------------------------------

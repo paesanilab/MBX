@@ -36,6 +36,7 @@
 #include "domain.h"
 
 //#define _DEBUG
+//#define _DEBUG_VIRIAL
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
@@ -108,7 +109,7 @@ void PairMBX::compute(int eflag, int vflag)
   bblock::System * ptr_mbx_local = fix_mbx->ptr_mbx_local; // compute PME terms in parallel w/ sub-domains
   bblock::System * ptr_mbx_pme   = fix_mbx->ptr_mbx_pme;   // compute PME terms in parallel w/ copies full system
 
-  bool compute_disp_parallel = fix_mbx->mbx_mpi_enabled;
+  bool mbx_parallel = fix_mbx->mbx_mpi_enabled;
   
   double mbx_e2b_local, mbx_e2b_ghost;
   double mbx_e3b_local, mbx_e3b_ghost;
@@ -177,7 +178,7 @@ void PairMBX::compute(int eflag, int vflag)
     
     mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
 
-    if(compute_disp_parallel) {
+    if(mbx_parallel) {
       
 #ifdef _DEBUG
   printf("[MBX] (%i) -- Computing disp real parallel\n",me);
@@ -198,23 +199,25 @@ void PairMBX::compute(int eflag, int vflag)
     fix_mbx->mbxt_stop(MBXT_BUCK);
     accumulate_f();
   }
-  
-  if(compute_disp_parallel) {
+
+  if(mbx_parallel) {
     
 #ifdef _DEBUG
-  printf("[MBX] (%i) -- Computing disp pme parallel\n",me);
+    printf("[MBX] (%i) -- Computing disp pme parallel\n",me);
 #endif
-  //  printf("(%i)  procgrid= %i %i %i\n",comm->me,comm->myloc[0],comm->myloc[1],comm->myloc[2]);
-  
-    fix_mbx->mbxt_start(MBXT_DISP_PME);
+    //  printf("(%i)  procgrid= %i %i %i\n",comm->me,comm->myloc[0],comm->myloc[1],comm->myloc[2]);
+    
+    if(!domain->nonperiodic) {
+      fix_mbx->mbxt_start(MBXT_DISP_PME);
 #ifdef _USE_PMELOCAL
-    mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true); // computes k-space using sub-domain
-    accumulate_f_local();
+      mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true); // computes k-space using sub-domain
+      accumulate_f_local();
 #else
-    mbx_disp_pme = ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
-    accumulate_f_pme();
+      mbx_disp_pme = ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
+      accumulate_f_pme();
 #endif
-    fix_mbx->mbxt_stop(MBXT_DISP_PME);
+      fix_mbx->mbxt_stop(MBXT_DISP_PME);
+    }
     
   } else {
     
@@ -222,40 +225,41 @@ void PairMBX::compute(int eflag, int vflag)
   printf("[MBX] (%i) -- Computing disp pme serial\n",me);
 #endif
 
-#if 1
-  error->all(FLERR,"MBX_FULL Disabled...\n");
-#else
-    fix_mbx->mbxt_start(MBXT_DISP);
-    if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
-    fix_mbx->mbxt_stop(MBXT_DISP);
-    accumulate_f_full();
-#endif
-    
+  fix_mbx->mbxt_start(MBXT_DISP);
+  if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
+  fix_mbx->mbxt_stop(MBXT_DISP);
+  accumulate_f_full();
+  
   }
 
   mbx_disp = mbx_disp_real + mbx_disp_pme;
   
-#if 1
+  if(mbx_parallel) {
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) -- Computing electrostatics parallel\n",me);
+    printf("[MBX] (%i) -- Computing electrostatics parallel\n",me);
 #endif
   
-  fix_mbx->mbxt_start(MBXT_ELE);
-  //  mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
-  mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
-  fix_mbx->mbxt_stop(MBXT_ELE);
-  accumulate_f_pme();
+    fix_mbx->mbxt_start(MBXT_ELE);
+    //  mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+    mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
+    fix_mbx->mbxt_stop(MBXT_ELE);
+    accumulate_f_pme();
+    
+  } else {
+    
+#ifdef _DEBUG
+    printf("[MBX] (%i) -- Computing electrostatics serial\n",me);
 #endif
-  
-  // compute energy+gradients in serial on rank 0 for full system
-
-#if 0
-  fix_mbx->mbxt_start(MBXT_ELE);
-  if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
-  fix_mbx->mbxt_stop(MBXT_ELE);
-  accumulate_f_full();
-#endif
+    
+    // compute energy+gradients in serial on rank 0 for full system
+    
+    fix_mbx->mbxt_start(MBXT_ELE);
+    if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
+    fix_mbx->mbxt_stop(MBXT_ELE);
+    accumulate_f_full();
+    
+  }
   
   mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
 
@@ -284,7 +288,7 @@ void PairMBX::compute(int eflag, int vflag)
     pvector[12] = mbx_disp_pme;
   }
 
-#if 0
+#ifdef _DEBUG_VIRIAL
   // debug output
   
   double e1  = 0.0;
