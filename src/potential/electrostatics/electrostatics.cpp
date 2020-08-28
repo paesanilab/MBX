@@ -52,7 +52,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 //#define _DEBUG_ITERATION 2
 //#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
-#define _DEBUG_ENERGY
+//#define _DEBUG_ENERGY
 
 // When turning polarization off, don't set the 1/polarity value to max_dbl because it gets
 // added to the potential and field values, generating inf values that result in NaN energies.
