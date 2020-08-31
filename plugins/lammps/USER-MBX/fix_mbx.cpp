@@ -138,12 +138,12 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   num_molecules = 0;
   for(int i=0; i<num_mol_types; ++i) num_molecules += num_mols[i];
 
-  if(comm->me == 0) {
-    if(use_json) printf("\n[MBX] Using json_file= %s\n",json_file);
-    printf("[MBX] # molecule types= %i\n",num_mol_types);
-    printf("[MBX] # molecules=      %i\n",num_molecules);
+  if(screen && comm->me == 0) {
+    if(use_json) fprintf(screen,"\n[MBX] Using json_file= %s\n",json_file);
+    fprintf(screen,"[MBX] # molecule types= %i\n",num_mol_types);
+    fprintf(screen,"[MBX] # molecules=      %i\n",num_molecules);
     for(int i=0; i<num_mol_types; ++i)
-      printf("[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n",i,num_mols[i],mol_names[i],mol_offset[i]);
+      fprintf(screen,"[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n",i,num_mols[i],mol_names[i],mol_offset[i]);
     printf("\n");
   }
 
@@ -248,7 +248,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     MPI_Bcast(&json_settings[0], size+1, MPI_CHAR, 0, world);
   }
 
-  std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
+  if(screen && comm->me == 0) 
+    std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
   
   memory->create(mbxt_count,      MBXT_NUM_TIMERS, "fixmbx:mbxt_count");
   memory->create(mbxt_time,       MBXT_NUM_TIMERS, "fixmbx:mbxt_time");
@@ -1345,9 +1346,10 @@ void FixMBX::mbx_init_local()
     box[7] = domain->yz;
     box[8] = domain->zprd;
     
-    ptr_mbx_local->SetBoxPMElocal(box);
   } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
     error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
+    
+  ptr_mbx_local->SetBoxPMElocal(box);
   
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();

@@ -222,14 +222,14 @@ void PairMBX::compute(int eflag, int vflag)
   } else {
     
 #ifdef _DEBUG
-  printf("[MBX] (%i) -- Computing disp pme serial\n",me);
+    printf("[MBX] (%i) -- Computing disp pme serial\n",me);
 #endif
-
-  fix_mbx->mbxt_start(MBXT_DISP);
-  if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
-  fix_mbx->mbxt_stop(MBXT_DISP);
-  accumulate_f_full();
-  
+    
+    fix_mbx->mbxt_start(MBXT_DISP);
+    if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
+    fix_mbx->mbxt_stop(MBXT_DISP);
+    accumulate_f_full();
+    
   }
 
   mbx_disp = mbx_disp_real + mbx_disp_pme;
@@ -241,10 +241,11 @@ void PairMBX::compute(int eflag, int vflag)
 #endif
   
     fix_mbx->mbxt_start(MBXT_ELE);
-    //  mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+    //if(!domain->nonperiodic) mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
     mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
     fix_mbx->mbxt_stop(MBXT_ELE);
     accumulate_f_pme();
+    //if(!domain->nonperiodic) accumulate_f_local();
     
   } else {
     
