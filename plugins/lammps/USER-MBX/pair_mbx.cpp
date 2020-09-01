@@ -241,11 +241,17 @@ void PairMBX::compute(int eflag, int vflag)
 #endif
   
     fix_mbx->mbxt_start(MBXT_ELE);
-    //if(!domain->nonperiodic) mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+#ifdef _USE_PMELOCAL
+    if(!domain->nonperiodic) mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+#else
     mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
+#endif
     fix_mbx->mbxt_stop(MBXT_ELE);
+#ifdef _USE_PMELOCAL
+    if(!domain->nonperiodic) accumulate_f_local();
+#else
     accumulate_f_pme();
-    //if(!domain->nonperiodic) accumulate_f_local();
+#endif
     
   } else {
     

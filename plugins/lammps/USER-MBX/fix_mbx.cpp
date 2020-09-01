@@ -36,9 +36,9 @@
 
 //#define _DEBUG
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 #include "universe.h"
-#endif
+//#endif
 
 #define _USE_MBX_LOCAL // use with MBX MPI-enabled
 #define _USE_MBX_FULL  // required if MBX not MPI-enabled
@@ -144,7 +144,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     fprintf(screen,"[MBX] # molecules=      %i\n",num_molecules);
     for(int i=0; i<num_mol_types; ++i)
       fprintf(screen,"[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n",i,num_mols[i],mol_names[i],mol_offset[i]);
-    printf("\n");
+    fprintf(screen,"\n");
   }
 
   mbx_mpi_enabled = true;
@@ -248,7 +248,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     MPI_Bcast(&json_settings[0], size+1, MPI_CHAR, 0, world);
   }
 
-  if(screen && comm->me == 0) 
+  if(screen && universe->iworld == 0 && comm->me == 0) 
     std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
   
   memory->create(mbxt_count,      MBXT_NUM_TIMERS, "fixmbx:mbxt_count");
