@@ -40,7 +40,9 @@
 #include "universe.h"
 //#endif
 
+#ifdef _USE_PMELOCAL
 #define _USE_MBX_LOCAL // use with MBX MPI-enabled
+#endif
 #define _USE_MBX_FULL  // required if MBX not MPI-enabled
 
 using namespace LAMMPS_NS;
@@ -191,7 +193,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   ptr_mbx_pme = NULL;
 
 #ifdef _USE_MBX_LOCAL
-#ifdef _USE_PMELOCAL
   // check that LAMMPS proc mapping matches PME solver
 
   {
@@ -216,7 +217,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     if( (fabs(x) > SMALL) || (fabs(y) > SMALL) || (fabs(z) > SMALL) )
       error->all(FLERR,"[MBX] Simulation box origin required to be {0, 0, 0} for PME solver");
   }
-#endif
 #endif
   
   // setup json, if requested
@@ -993,7 +993,9 @@ void FixMBX::mbx_init_local()
 #ifdef _DEBUG
   printf("[MBX] (%i,%i) Inside mbx_init_local()\n",universe->iworld,me);
 #endif
-  
+
+  if(domain->nonperiodic) error->all(FLERR,"gas-phase not yet supported with -D_USE_PMELOCAL");
+    
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
   tagint * tag = atom->tag;
@@ -1016,6 +1018,9 @@ void FixMBX::mbx_init_local()
     if(mol_anchor[i]) mol_local[i] = 1;
   }
 
+#if 0
+  // remove ghost monomers outside domain with small halo region
+  
   double padding = pair_mbx->cut_global * 0.5; // hard-coded cutoff
   double xlo = domain->sublo[0] - padding;
   double xhi = domain->subhi[0] + padding;
@@ -1028,8 +1033,6 @@ void FixMBX::mbx_init_local()
 
   //  printf("(%i)  LAMMPS lo/hi= %f %f  %f %f  %f %f\n",me,xlo,xhi,ylo,yhi,zlo,zhi);
 
-  // remove ghost monomers outside domain with small halo region
-
   for(int i=nlocal; i<nall; ++i) {
     if(mol_anchor[i] && mol_local[i]) {
 
@@ -1041,6 +1044,7 @@ void FixMBX::mbx_init_local()
       if(!local) mol_local[i] = 0;
     }
   }
+#endif
   
   // remove ghost monomers that are periodic images of local monomer
   
