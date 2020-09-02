@@ -229,13 +229,6 @@ void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, si
 void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,
                          size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3);
 
-void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
-                       std::vector<double> &xyz_out, std::vector<size_t> &indexes);
-
-void GetCloseNeighbors(size_t nmax, std::vector<double> point, std::vector<double> xyz_orig, std::vector<size_t> fi_at,
-                       bool use_pbc, std::vector<double> box, double cutoff, std::vector<size_t> &dimers,
-                       std::vector<size_t> &trimers);
-
 /**
  * @brief Gets the dimers and/or trimers of a system in which the first
  * monomer index is between istart and iend (iend not included)
@@ -295,16 +288,6 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
  * @return True if a.second > b.second, False otherwise
  */
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b);
-
-///**
-// * @brief Helper function that compares the unsigned integer of a pair
-// *
-// * This function is used in AddClusters. Not for any other purpose
-// * @param[in] a First pair
-// * @param[in] b Second pair
-// * @return True if a.second > b.second, False otherwise
-// */
-// bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b);
 
 /**
  * @brief Checks if the pair a,b or b,a is in the excluded set exc
@@ -445,7 +428,7 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
  * @brief Sets the charges of a system. If there are osition dependent charges,
  * it also calculates them.
  *
- * Given the xyz of the system, and the first index of the monoemr type we are
+ * Given the xyz of the system, and the first index of the monomer type we are
  * filling in teh charges, it will set the vector charges with the (position
  * dependent) charges.
  * @param[in] xyz Coordinates of the system
@@ -464,7 +447,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 /**
  * @brief Sets the polarizability factors of a system.
  *
- * Given the first index of the monoemr type we are
+ * Given the first index of the monomer type we are
  * filling in, it will set the polarizability factors
  * @param[out] polfac Vector with the polarizability factor of the monomer type filled.
  * Can contain polarizability factors for other monomer types. They won't be overwritten
@@ -478,7 +461,7 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
 /**
  * @brief Sets the polarizabilities of a system.
  *
- * Given the first index of the monoemr type we are
+ * Given the first index of the monomer type we are
  * filling in, it will set the polarizabilities
  * @param[out] pol Vector with the polarizabilities of the monomer type filled.
  * Can contain polarizabilities for other monomer types. They won't be overwritten
@@ -489,7 +472,19 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
  */
 void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
 
-void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t nsites, size_t natoms);
+/**
+ * @brief Sets the C6 "charge" for each atom of a system.
+ *
+ * Given the first index of the monomer type we are
+ * filling in, it will set the long range C6. For an atom A, C6_lr = sqrt(C6_AA).
+ * @param[out] c6_lr Vector with the C6 coefficients for long range of the monomer type filled.
+ * Can contain C6s for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] natoms Number of real atoms of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ */
+void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind);
 
 /**
  * @brief Redistributes the virtual site gradients into the real atoms
