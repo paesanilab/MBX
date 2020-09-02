@@ -5108,8 +5108,8 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 
         // // Gradients due to position dependant charges
         if (calc_virial_) {  // calculate virial if need be
-            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_,
-                                            xyz_.data() + fi_crd, &virial_);
+	    systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_,
+					  xyz_.data() + fi_crd, &virial_);
         } else {
             systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_);
         }
@@ -5862,8 +5862,8 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 
         // // Gradients due to position dependant charges
         if (calc_virial_) {  // calculate virial if need be
-            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_,
-                                            xyz_.data() + fi_crd, &virial_);
+  	    systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_,
+					  xyz_.data() + fi_crd, &virial_);
         } else {
             systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_);
         }

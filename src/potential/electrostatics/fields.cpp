@@ -62,7 +62,6 @@ void ElectricFieldHolder::CalcPermanentElecField(
     double *phi2, double *Efq2, double elec_scale_factor, double ewald_alpha, bool use_pbc,
     const std::vector<double> &box, const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
     const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
-
     std::vector<double> *virial) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
@@ -691,14 +690,14 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
 	    
 	    // update virial
 	    if (virial != 0) {
-	      v11_[0 * maxnmon + m] = -rijx * v0_[m] * scale * constants::COULOMB;
-	      v11_[1 * maxnmon + m] = -rijx * v1_[m] * scale * constants::COULOMB;
-	      v11_[2 * maxnmon + m] = -rijx * v2_[m] * scale * constants::COULOMB;
+	      v11_[0 * maxnmon + m] = -rijx * v0_[m] * constants::COULOMB;
+	      v11_[1 * maxnmon + m] = -rijx * v1_[m] * constants::COULOMB;
+	      v11_[2 * maxnmon + m] = -rijx * v2_[m] * constants::COULOMB;
 	      
-	      v11_[3 * maxnmon + m] = -rijy * v1_[m] * scale * constants::COULOMB;
-	      v11_[4 * maxnmon + m] = -rijy * v2_[m] * scale * constants::COULOMB;
+	      v11_[3 * maxnmon + m] = -rijy * v1_[m] * constants::COULOMB;
+	      v11_[4 * maxnmon + m] = -rijy * v2_[m] * constants::COULOMB;
 	      
-	      v11_[5 * maxnmon + m] = -rijz * v2_[m] * scale * constants::COULOMB;
+	      v11_[5 * maxnmon + m] = -rijz * v2_[m] * constants::COULOMB;
 	    }
 	} // if(accum2)
     }
