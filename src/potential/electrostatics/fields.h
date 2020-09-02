@@ -182,6 +182,10 @@ class ElectricFieldHolder {
                             const std::vector<double> &box,  // The lattice vectors
                             const std::vector<double> &box_inverse,  // The inverse lattice vectors
                             double cutoff,                           // The real space cutoff for pairs
+			    bool use_ghost,                          // use ghost monomers
+			    const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
+			    const size_t m2_offset,
+			    const size_t rank = 0,
                             std::vector<double> *virial = 0          // the virial
     );
 

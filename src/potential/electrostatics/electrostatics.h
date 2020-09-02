@@ -255,11 +255,13 @@ class Electrostatics {
     void CalculateDipolesMPIlocal(bool use_ghost = 0);
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
-    void CalculateGradients(std::vector<double> &grad);
+    void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
     void reverse_forward_comm(std::vector<double> &in_v);
     void reverse_comm(std::vector<double> &in_v);
+    void reverse_comm_1d(std::vector<double> &in_v);
+    void forward_comm(std::vector<double> &in_v);
 
     void ReorderData();
 
