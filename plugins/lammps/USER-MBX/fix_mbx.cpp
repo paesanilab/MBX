@@ -2200,7 +2200,8 @@ void FixMBX::mbx_update_xyz()
     } // if(mol_anchor)
 
   } // for(i<nall)
-  
+
+  if(xyz.size() != indx*3) error->one(FLERR,"Inconsistent # of atoms");
   ptr_mbx->SetRealXyz(xyz);
 
 #ifdef _DEBUG
@@ -2498,6 +2499,7 @@ void FixMBX::mbx_update_xyz_local()
 
   } // for(i<nall)
   
+  if(xyz.size() != indx*3) error->one(FLERR,"Inconsistent # of atoms");
   ptr_mbx_local->SetRealXyz(xyz);
 
 #ifdef _DEBUG
@@ -2701,6 +2703,7 @@ void FixMBX::mbx_update_xyz_full()
 
   } // for(i<nall)
 
+  if(xyz.size() != indx*3) error->one(FLERR,"Inconsistent # of atoms");
   ptr_mbx_full->SetRealXyz(xyz);
 
 #ifdef _DEBUG
@@ -2896,6 +2899,7 @@ void FixMBX::mbx_update_xyz_pme()
 
   } // for(i<nall)
   
+  if(xyz.size() != indx*3) error->one(FLERR,"Inconsistent # of atoms");
   ptr_mbx_pme->SetRealXyz(xyz);
   
 #ifdef _DEBUG
