@@ -4418,9 +4418,6 @@ void Electrostatics::CalculateElecEnergy() {
 }
 
 void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost) {
-
-    int me;
-    MPI_Comm_rank(world_, &me);
     
     // Reset grad
     grad_ = std::vector<double>(3 * nsites_, 0.0);
@@ -4441,7 +4438,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     }
 #endif
 
+    int me = 0;
 #if HAVE_MPI == 1
+    MPI_Comm_rank(world_, &me);
     double time1 = MPI_Wtime();
 #endif
 
