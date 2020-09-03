@@ -123,7 +123,7 @@ TEST_CASE("sys_tools::SetupMonomers") {
 
 TEST_CASE("sys_tools::OrderMonomers") {
     std::vector<std::string> in_mons = {"c", "b", "b", "a"};
-    std::vector<size_t> in_islocal = {1, 1, 1, 1};
+    std::vector<size_t> in_islocal = {1, 1, 0, 0};
     std::vector<size_t> in_sites = {3, 1, 1, 2};
     std::vector<size_t> in_nats = {2, 1, 1, 2};
     std::vector<size_t> out_original2current;
@@ -132,7 +132,7 @@ TEST_CASE("sys_tools::OrderMonomers") {
     std::vector<std::pair<std::string, size_t>> out_mon_type_count;
 
     std::vector<std::string> expected_mons = {"c", "a", "b", "b"};
-    std::vector<size_t> expected_islocal = {1, 1, 1, 1};
+    std::vector<size_t> expected_islocal = {1, 0, 1, 0};
     std::vector<size_t> expected_sites = {3, 2, 1, 1};
     std::vector<size_t> expected_nats = {2, 2, 1, 1};
     std::vector<size_t> expected_original2current = {0, 2, 3, 1};
@@ -397,11 +397,425 @@ TEST_CASE("sys_tools::FixMonomerCoordinates") {
 
             bool coords_vector_is_too_long = false;
             try {
-                systools::FixMonomerCoordinates(coords_short, box, box_inv, nats_3, first_index_3);
+                systools::FixMonomerCoordinates(coords_long, box, box_inv, nats_3, first_index_3);
             } catch (CUException &e) {
                 coords_vector_is_too_long = true;
             }
             REQUIRE(coords_vector_is_too_long);
+        }
+    }
+}
+
+TEST_CASE("sys_tools::GetCloseDimerImage") {
+    SECTION("General behavior: cubic box") {
+        std::vector<double> box = {10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0};
+        std::vector<double> box_inv = InvertUnitCell(box);
+
+        std::vector<double> v1 = {10.0, 0.0, 0.0};
+        std::vector<double> v2 = {0.0, 10.0, 0.0};
+        std::vector<double> v3 = {0.0, 0.0, 10.0};
+
+        SECTION("Monoatomic") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0};
+            std::vector<double> m2_coordinates = {1.0, 1.0, 1.0};
+            std::vector<double> m2_coordinates_close = {1.0, 1.0, 1.0};
+
+            size_t nat1 = 1;
+            size_t nat2 = 1;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+
+            systools::GetCloseDimerImage(box, box_inv, nat1, nat2, 1, m1_coordinates.data(), m2_coordinates.data());
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+        }
+
+        SECTION("Poliatomic") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+            std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+
+            size_t nat1 = 3;
+            size_t nat2 = 2;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+
+            systools::GetCloseDimerImage(box, box_inv, nat1, nat2, 1, m1_coordinates.data(), m2_coordinates.data());
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+        }
+
+        SECTION("Poliatomic, multiple dimers") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+                                                  0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+            std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+
+            size_t nat1 = 3;
+            size_t nat2 = 2;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+
+            systools::GetCloseDimerImage(box, box_inv, nat1, nat2, 2, m1_coordinates.data(), m2_coordinates.data());
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+        }
+    }
+
+    SECTION("General behavior: standard triclinic box") {
+        std::vector<double> box = {10.0, 0.0, 0.0, 10.0, 15.0, 0.0, 5.0, 5.0, 20.0};
+        std::vector<double> box_inv = InvertUnitCell(box);
+
+        std::vector<double> v1 = {10.0, 0.0, 0.0};
+        std::vector<double> v2 = {10.0, 15.0, 0.0};
+        std::vector<double> v3 = {5.0, 5.0, 20.0};
+
+        SECTION("Monoatomic") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0};
+            std::vector<double> m2_coordinates = {1.0, 1.0, 1.0};
+            std::vector<double> m2_coordinates_close = {1.0, 1.0, 1.0};
+
+            size_t nat1 = 1;
+            size_t nat2 = 1;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+
+            systools::GetCloseDimerImage(box, box_inv, nat1, nat2, 1, m1_coordinates.data(), m2_coordinates.data());
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+        }
+
+        SECTION("Poliatomic") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+            std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+
+            size_t nat1 = 3;
+            size_t nat2 = 2;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+
+            systools::GetCloseDimerImage(box, box_inv, nat1, nat2, 1, m1_coordinates.data(), m2_coordinates.data());
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+        }
+
+        SECTION("Poliatomic, multiple dimers") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+                                                  0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+            std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+
+            size_t nat1 = 3;
+            size_t nat2 = 2;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+
+            systools::GetCloseDimerImage(box, box_inv, nat1, nat2, 2, m1_coordinates.data(), m2_coordinates.data());
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+        }
+    }
+}
+
+TEST_CASE("sys_tools::GetCloseTrimerImage") {
+    SECTION("General behavior: cubic box") {
+        std::vector<double> box = {10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0};
+        std::vector<double> box_inv = InvertUnitCell(box);
+
+        std::vector<double> v1 = {10.0, 0.0, 0.0};
+        std::vector<double> v2 = {0.0, 10.0, 0.0};
+        std::vector<double> v3 = {0.0, 0.0, 10.0};
+
+        SECTION("Monoatomic") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0};
+            std::vector<double> m2_coordinates = {1.0, 1.0, 1.0};
+            std::vector<double> m2_coordinates_close = {1.0, 1.0, 1.0};
+            std::vector<double> m3_coordinates = {-1.0, -1.0, -1.0};
+            std::vector<double> m3_coordinates_close = {-1.0, -1.0, -1.0};
+
+            size_t nat1 = 1;
+            size_t nat2 = 1;
+            size_t nat3 = 1;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                    m3_coordinates[3 * i + j] -= 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m3_coordinates_close[3 * i + j] -= 0.51 * v1[j] + 0.51 * v2[j] + 0.51 * v3[j];
+                }
+            }
+
+            systools::GetCloseTrimerImage(box, box_inv, nat1, nat2, nat3, 1, m1_coordinates, m2_coordinates,
+                                          m3_coordinates);
+            for (size_t i = 0; i < m1_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+                REQUIRE(m3_coordinates[i] == Approx(m3_coordinates_close[i]).margin(TOL));
+            }
+        }
+
+        SECTION("Poliatomic") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+            std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m3_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+            std::vector<double> m3_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+
+            size_t nat1 = 3;
+            size_t nat2 = 2;
+            size_t nat3 = 4;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m3_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m3_coordinates[3 * i + j] -= 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m3_coordinates_close[3 * i + j] -= 0.51 * v1[j] + 0.51 * v2[j] + 0.51 * v3[j];
+                }
+            }
+
+            systools::GetCloseTrimerImage(box, box_inv, nat1, nat2, nat3, 1, m1_coordinates, m2_coordinates,
+                                          m3_coordinates);
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+            for (size_t i = 0; i < m3_coordinates.size(); i++) {
+                REQUIRE(m3_coordinates[i] == Approx(m3_coordinates_close[i]).margin(TOL));
+            }
+        }
+
+        SECTION("Poliatomic, multiple dimers") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+                                                  0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+            std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m3_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0,
+                                                  2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+            std::vector<double> m3_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0,
+                                                        2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+
+            size_t nat1 = 3;
+            size_t nat2 = 2;
+            size_t nat3 = 4;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m3_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m3_coordinates[3 * i + j] -= 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m3_coordinates_close[3 * i + j] -= 0.51 * v1[j] + 0.51 * v2[j] + 0.51 * v3[j];
+                }
+            }
+
+            systools::GetCloseTrimerImage(box, box_inv, nat1, nat2, nat3, 2, m1_coordinates, m2_coordinates,
+                                          m3_coordinates);
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+            for (size_t i = 0; i < m3_coordinates.size(); i++) {
+                REQUIRE(m3_coordinates[i] == Approx(m3_coordinates_close[i]).margin(TOL));
+            }
+        }
+    }
+
+    SECTION("General behavior: standard triclinic box") {
+        std::vector<double> box = {10.0, 0.0, 0.0, 10.0, 15.0, 0.0, 5.0, 5.0, 20.0};
+        std::vector<double> box_inv = InvertUnitCell(box);
+
+        std::vector<double> v1 = {10.0, 0.0, 0.0};
+        std::vector<double> v2 = {10.0, 15.0, 0.0};
+        std::vector<double> v3 = {5.0, 5.0, 20.0};
+
+        SECTION("Monoatomic") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0};
+            std::vector<double> m2_coordinates = {1.0, 1.0, 1.0};
+            std::vector<double> m2_coordinates_close = {1.0, 1.0, 1.0};
+            std::vector<double> m3_coordinates = {-1.0, -1.0, -1.0};
+            std::vector<double> m3_coordinates_close = {-1.0, -1.0, -1.0};
+
+            size_t nat1 = 1;
+            size_t nat2 = 1;
+            size_t nat3 = 1;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                    m3_coordinates[3 * i + j] -= 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m3_coordinates_close[3 * i + j] -= 0.51 * v1[j] + 0.51 * v2[j] + 0.51 * v3[j];
+                }
+            }
+
+            systools::GetCloseTrimerImage(box, box_inv, nat1, nat2, nat3, 1, m1_coordinates, m2_coordinates,
+                                          m3_coordinates);
+            for (size_t i = 0; i < m1_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+                REQUIRE(m3_coordinates[i] == Approx(m3_coordinates_close[i]).margin(TOL));
+            }
+        }
+
+        SECTION("Poliatomic") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+            std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m3_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+            std::vector<double> m3_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+
+            size_t nat1 = 3;
+            size_t nat2 = 2;
+            size_t nat3 = 4;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m3_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m3_coordinates[3 * i + j] -= 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m3_coordinates_close[3 * i + j] -= 0.51 * v1[j] + 0.51 * v2[j] + 0.51 * v3[j];
+                }
+            }
+
+            systools::GetCloseTrimerImage(box, box_inv, nat1, nat2, nat3, 1, m1_coordinates, m2_coordinates,
+                                          m3_coordinates);
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+            for (size_t i = 0; i < m3_coordinates.size(); i++) {
+                REQUIRE(m3_coordinates[i] == Approx(m3_coordinates_close[i]).margin(TOL));
+            }
+        }
+
+        SECTION("Poliatomic, multiple dimers") {
+            std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
+                                                  0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
+            std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
+            std::vector<double> m3_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0,
+                                                  2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+            std::vector<double> m3_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0,
+                                                        2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+
+            size_t nat1 = 3;
+            size_t nat2 = 2;
+            size_t nat3 = 4;
+
+            for (size_t i = 0; i < m1_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m1_coordinates[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m2_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m2_coordinates[3 * i + j] += 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m2_coordinates_close[3 * i + j] -= 0.49 * v1[j] + 0.49 * v2[j] + 0.49 * v3[j];
+                }
+            }
+            for (size_t i = 0; i < m3_coordinates.size() / 3; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    m3_coordinates[3 * i + j] -= 1.51 * v1[j] + 3.51 * v2[j] + 2.51 * v3[j];
+                    m3_coordinates_close[3 * i + j] -= 0.51 * v1[j] + 0.51 * v2[j] + 0.51 * v3[j];
+                }
+            }
+
+            systools::GetCloseTrimerImage(box, box_inv, nat1, nat2, nat3, 2, m1_coordinates, m2_coordinates,
+                                          m3_coordinates);
+            for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
+            }
+            for (size_t i = 0; i < m3_coordinates.size(); i++) {
+                REQUIRE(m3_coordinates[i] == Approx(m3_coordinates_close[i]).margin(TOL));
+            }
         }
     }
 }
