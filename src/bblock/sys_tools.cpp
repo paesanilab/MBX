@@ -132,8 +132,7 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
 
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
                      std::vector<size_t> &fi_at) {
-    // Make sure that mons, sites and nat have the same size and are
-    // not empty
+    // Make sure that mon is not empty
     if (mon.size() < 1) {
         std::string text = "Monomer vector cannot be empty.";
         throw CUException(__func__, __FILE__, __LINE__, text);
@@ -218,6 +217,11 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
+    if (box_inv.size() != 9) {
+        std::string text = "Box inverse size of " + std::to_string(box_inv.size()) + " is not acceptable.";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
     // Check that nat and first index have the same size
     if (nat.size() != first_index.size()) {
         std::string text = std::string("Atoms vector and first index vector don't ") +
@@ -229,6 +233,9 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
     // Check that xyz has enough coordinates
     if (xyz.size() < 3 * first_index.back() + 3 * nat.back()) {
         std::string text = std::string("The xyz vector is too small ") + std::string("for the first indexes passed.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    } else if (xyz.size() > 3 * first_index.back() + 3 * nat.back()) {
+        std::string text = std::string("The xyz vector is too big ") + std::string("for the first indexes passed.");
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
@@ -655,7 +662,6 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc13.insert(std::make_pair(2, 3));
         // 14 distances
     }
-
 
     // =====>> END SECTION EXCLUDED <<=====
 }
