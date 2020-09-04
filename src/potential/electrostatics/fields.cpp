@@ -448,7 +448,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
                                              const std::vector<double> &box, const std::vector<double> &box_inverse,
                                              double cutoff, bool use_ghost,
 					     const std::vector<size_t> &islocal, const size_t isl1_offset,
-					     const size_t isl2_offset, size_t m2_offset, std::vector<double> *virial) {
+					     const size_t isl2_offset, std::vector<double> *virial) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -475,7 +475,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = false;
         if (!use_ghost) accum2 = true;
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset + m2_offset];
+        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         if (use_ghost && isls) accum2 = true;
 	
         if (accum2) {
