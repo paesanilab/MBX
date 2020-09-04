@@ -59,6 +59,7 @@ namespace bblock {  // Building Block :: System
 System::System() {
     initialized_ = false;
     mpi_initialized_ = false;
+    simcell_periodic_ = false;
 }
 System::~System() {}
 
@@ -411,6 +412,7 @@ void System::SetPBC(std::vector<double> box) {
 
     // Set the box and the bool to use or not pbc
     use_pbc_ = box.size();
+    if(use_pbc_) simcell_periodic_ = true;
 
     box_ = box;
     if (box.size() == 9) {
@@ -2614,6 +2616,13 @@ int System::TestMPI() {
 #endif
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+void System::SetPeriodicity(bool periodic) {
+  simcell_periodic_ = periodic;
+  electrostaticE_.SetPeriodicity(periodic);
+}
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads, bool use_ghost) {

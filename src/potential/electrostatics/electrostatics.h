@@ -238,6 +238,7 @@ class Electrostatics {
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
     void SetBoxPMElocal(std::vector<double> box);
+    void SetPeriodicity(bool periodic);
 
    private:
     void CalculatePermanentElecField(bool use_ghost = 0);
@@ -402,7 +403,9 @@ class Electrostatics {
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;
-
+    // periodicity of simulation cell
+    bool simcell_periodic_;
+    
     bool first;
 
     std::vector<size_t> mbxt_ele_count_;

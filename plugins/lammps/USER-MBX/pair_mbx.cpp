@@ -35,6 +35,8 @@
 
 #include "domain.h"
 
+#include "universe.h"
+
 //#define _DEBUG
 //#define _DEBUG_VIRIAL
 
@@ -199,7 +201,7 @@ void PairMBX::compute(int eflag, int vflag)
     fix_mbx->mbxt_stop(MBXT_BUCK);
     accumulate_f();
   }
-
+  
   if(mbx_parallel) {
     
 #ifdef _DEBUG
@@ -242,13 +244,13 @@ void PairMBX::compute(int eflag, int vflag)
   
     fix_mbx->mbxt_start(MBXT_ELE);
 #ifdef _USE_PMELOCAL
-    if(!domain->nonperiodic) mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+    mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
 #else
     mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
 #endif
     fix_mbx->mbxt_stop(MBXT_ELE);
 #ifdef _USE_PMELOCAL
-    if(!domain->nonperiodic) accumulate_f_local();
+    accumulate_f_local();
 #else
     accumulate_f_pme();
 #endif

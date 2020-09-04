@@ -77,6 +77,8 @@ void Electrostatics::SetEwaldSplineOrder(int order) { pme_spline_order_ = order;
 void Electrostatics::SetDipoleTolerance(double tol) { tolerance_ = tol; }
 
 void Electrostatics::SetDipoleMaxIt(size_t maxit) { maxit_ = maxit; }
+  
+void Electrostatics::SetPeriodicity(bool periodic) { simcell_periodic_ = periodic; }
 
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                                 const std::vector<double> &polfac, const std::vector<double> &pol,
@@ -107,6 +109,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     box_ = box;
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     use_pbc_ = box.size();
+    simcell_periodic_ = use_pbc_;
     cutoff_ = 1000.0;
 
     // Initialize other variables
@@ -387,7 +390,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         elec_field.CalcPermanentElecField(
                             xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data() + fi_sites, chg_.data() + fi_sites,
                             m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
-                            phi_.data() + fi_sites, Efq_.data() + fi_crd, elec_scale_factor, ewald_alpha_, use_pbc_,
+                            phi_.data() + fi_sites, Efq_.data() + fi_crd, elec_scale_factor, ewald_alpha_, simcell_periodic_,
                             box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon, 0,
                             &virial_);
                         phi_[fi_sites + inmon + m] += phi1;
@@ -569,7 +572,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                             xyz_.data() + fi_crd1, xyz_sitej.data(), chg_.data() + fi_sites1, chg_sitej.data(), m1, 0,
                             size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
-                            ewald_alpha_, use_pbc_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_,
+                            ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_,
                             fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
 
                         // Put proper data in field and electric field of j
@@ -680,6 +683,8 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 
     if (!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
 
+    if(!simcell_periodic_) compute_pme = false;
+    
     if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
@@ -1107,12 +1112,6 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                             &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
                             ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_, fi_mon1 + m1,
                             fi_mon2, m2init, &virial_thread);
-                        //                        local_field->CalcPermanentElecField(
-                        //                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() +
-                        //                            fi_sites1, chg_.data() + fi_sites2, m1, m2init, nmon2, nmon1,
-                        //                            nmon2, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread,
-                        //                            &ey_thread, &ez_thread, &phi1_thread, phi_2_pool[rank].data(),
-                        //                            Efq_2_pool[rank].data());
 
                         // Put proper data in field and electric field of j
                         for (size_t ind = 0; ind < size_j; ind++) {
@@ -2319,7 +2318,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                     double dz = xyz_[fi_crd + inmon3 + nmon2 + m] - xyz_all[j * 3 + 2];
 
                     // Apply PBC :(
-                    {
+                    if (simcell_periodic_) {
                         // Convert to fractional coordinates
                         // FIXME Chris, the indexes here I think the are the wrong ones. Box vectors are
                         // {0,1,2},{3,4,5}{6,7,8}, not {0,3,6},{1,4,7},{2,5,8}
@@ -2551,7 +2550,7 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
                         double dz = xyz_[fi_crd + inmon3 + nmon2 + m] - xyz_all[j * 3 + 2];
 
                         // Apply PBC :(
-                        {
+                        if (simcell_periodic_) {
                             // FIXME Chris, I think this also has the indexes swapped.
                             // Convert to fractional coordinates
                             const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
@@ -2785,7 +2784,7 @@ void Electrostatics::reverse_comm_1d(std::vector<double> &in_v) {
                         double dz = xyz_[fi_crd + inmon3 + nmon2 + m] - xyz_all[j * 3 + 2];
 
                         // Apply PBC :(
-                        {
+                        if (simcell_periodic_) {
                             // FIXME Chris, I think this also has the indexes swapped.
                             // Convert to fractional coordinates
                             const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
@@ -3021,7 +3020,7 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
 		double dz = xyz_[fi_crd + inmon3 + nmon2 + m] - xyz_all[j * 3 + 2];
 		
 		// Apply PBC :(
-		{
+		if (simcell_periodic_) {
 		  // FIXME Chris, I think this also has the indexes swapped.
 		  // Convert to fractional coordinates
 		  const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
@@ -3256,7 +3255,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
                     if (include_monomer) {
                         elec_field.CalcDipoleElecField(
                             xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd, in_ptr + fi_crd, m, m, m + 1,
-                            nmon, nmon, i, j, Asqsqi, aDD, out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_,
+                            nmon, nmon, i, j, Asqsqi, aDD, out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, simcell_periodic_,
                             box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon);
                         out_v[fi_crd + inmon3 + m] += ex;
                         out_v[fi_crd + inmon3 + nmon + m] += ey;
@@ -3388,7 +3387,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
                         local_field->CalcDipoleElecField(
                             xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, in_ptr + fi_crd1, in_ptr + fi_crd2, m1,
                             m2init, nmon2, nmon1, nmon2, i, j, Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread,
-                            &ey_thread, &ez_thread, ewald_alpha_, use_pbc_, box_PMElocal_, box_inverse_PMElocal_,
+                            &ey_thread, &ez_thread, ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_,
                             cutoff_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
 
                         Efd_1_pool[rank][inmon13 + m1] += ex_thread;
@@ -3481,6 +3480,8 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 
     if (!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
 
+    if(!simcell_periodic_) compute_pme = false;
+    
     if (compute_pme) {
         // Sort the dipoles to the order helPME expects (for now)
         // int fi_mon = 0;
@@ -4573,7 +4574,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                                                   chg_.data() + fi_sites, mu_.data() + fi_crd, mu_.data() + fi_crd, m,
                                                   m, m + 1, nmon, nmon, i, j, aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1,
                                                   phi_.data() + fi_sites, grad_.data() + fi_crd, elec_scale_factor,
-                                                  ewald_alpha_, use_pbc_, box_PMElocal_, box_inverse_PMElocal_, cutoff_,
+                                                  ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_,
 						  use_ghost, islocal_, fi_mon+m, fi_mon, &virial_);
                     phi_[fi_sites + inmon + m] += phi1;
                     grad_[fi_crd + inmon3 + m] += ex;
@@ -4702,7 +4703,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                             xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() + fi_sites1,
                             chg_.data() + fi_sites2, mu_.data() + fi_crd1, mu_.data() + fi_crd2, m1, m2init, nmon2,
                             nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread, &phi1_thread,
-                            phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_, box_PMElocal_,
+                            phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, simcell_periodic_, box_PMElocal_,
                             box_inverse_PMElocal_, cutoff_, use_ghost, islocal_, fi_mon1+m1, fi_mon2, &virial_pool[rank]);
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
@@ -4800,6 +4801,8 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 
     if (!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
 
+    if(!simcell_periodic_) compute_pme = false;
+    
     if (compute_pme) {
         // Sort the dipoles to the order helPME expects (for now)
         // int fi_mon = 0;

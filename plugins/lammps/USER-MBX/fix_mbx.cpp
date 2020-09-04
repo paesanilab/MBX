@@ -993,8 +993,6 @@ void FixMBX::mbx_init_local()
 #ifdef _DEBUG
   printf("[MBX] (%i,%i) Inside mbx_init_local()\n",universe->iworld,me);
 #endif
-
-  if(domain->nonperiodic) error->all(FLERR,"gas-phase not yet supported with -D_USE_PMELOCAL");
     
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
@@ -1031,8 +1029,6 @@ void FixMBX::mbx_init_local()
   double zlo = domain->sublo[2] - padding;
   double zhi = domain->subhi[2] + padding;
 
-  //  printf("(%i)  LAMMPS lo/hi= %f %f  %f %f  %f %f\n",me,xlo,xhi,ylo,yhi,zlo,zhi);
-
   for(int i=nlocal; i<nall; ++i) {
     if(mol_anchor[i] && mol_local[i]) {
 
@@ -1068,30 +1064,11 @@ void FixMBX::mbx_init_local()
   	  double dy = x[i][1] - ximage[1];
   	  double dz = x[i][2] - ximage[2];
   	  double rsq = dx*dx + dy*dy + dz*dz;
-  	  if(rsq < 0.00001) {
-  	    mol_local[j] = 0;
-	    //  	    if(me == 1) printf("i= %i  j= %i  removing xyz= %f %f %f\n",i,j,x[j][0],x[j][1],x[j][2]);
-  	  }
+  	  if(rsq < 0.00001) mol_local[j] = 0;
   	}
       }
     }
   }
-  
-  // for(int j=0; j<comm->nprocs; ++j) {
-
-  //   if(me == j) {
-  //     for(int i=0; i<nall; ++i) {
-  // 	if(mol_anchor[i]) {
-  // 	  const int indx = atom->map( atom->tag[i] );
-  // 	  printf("(%i) i= %i  xyz= %f %f %f  tag= %i  indx= %i  is_local= %i  is_anchor= %i  molecule= %i  mol_local= %i\n",
-  // 		 me,x[i][0],x[i][1],x[i][2],i,atom->tag[i],indx,i<nlocal,mol_anchor[i],atom->molecule[i],mol_local[i]);
-  // 	}
-  //     }
-  //   }
-  //   MPI_Barrier(world);
-  // }
-
-  //  error->all(FLERR,"Early Termination");
   
   std::vector<size_t> molec;
   
@@ -1354,6 +1331,8 @@ void FixMBX::mbx_init_local()
     error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
     
   ptr_mbx_local->SetBoxPMElocal(box);
+
+  ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
   
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();

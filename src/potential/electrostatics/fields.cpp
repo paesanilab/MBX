@@ -100,10 +100,10 @@ void ElectricFieldHolder::CalcPermanentElecField(
         v1_[m] = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];   // rijy
         v2_[m] = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];  // rijz
     }
-
+    
     // Apply the minimum image convention via fractional coordinates
     // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-    if (use_pbc || use_ghost) {
+    if (use_pbc) {
         // Convert to fractional coordinates
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             v3_[m] = box_inverse[0] * v0_[m] + box_inverse[3] * v1_[m] + box_inverse[6] * v2_[m];
@@ -149,7 +149,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
         v4_[m] = (elec_scale_factor - erf(ewald_alpha / (v3_[m] + 1e-30))) * v3_[m];  // (1-erf(alpha r))/r
     }
 
-    if (!use_pbc && !use_ghost) {
+    if (!use_pbc) {
         // Rescale v3 to ensure right behavior in no PBC conditions
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             v3_[m] *= elec_scale_factor;
@@ -184,7 +184,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
             // Terms needed for the Ewald direct space field, see equation 2.8 of
             // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
             const double exp_alpha2r2 = std::exp(-ewald_alpha * ewald_alpha / (v3_[m] * v3_[m]));
-            const bool use_ewald = use_pbc || use_ghost;
+            const bool use_ewald = use_pbc;
             const double ewaldterm = use_ewald ? 2 * exp_alpha2r2 * ewald_alpha / PIQSRT : 0;
 
             // Screening functions
@@ -316,7 +316,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
             // Apply the minimum image convention via fractional coordinates
             // It is probably a good idea to identify orthorhombic cases and write a faster version for them
             double minrijx, minrijy, minrijz;
-            if (use_pbc || use_ghost) {
+            if (use_pbc) {
                 // Convert to fractional coordinates
                 const double fracrijx = box_inverse[0] * rawrijx + box_inverse[3] * rawrijy + box_inverse[6] * rawrijz;
                 const double fracrijy = box_inverse[1] * rawrijx + box_inverse[4] * rawrijy + box_inverse[7] * rawrijz;
@@ -330,9 +330,9 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
                 minrijy = box[1] * minfracrijx + box[4] * minfracrijy + box[7] * minfracrijz;
                 minrijz = box[2] * minfracrijx + box[5] * minfracrijy + box[8] * minfracrijz;
             }
-            const double rijx = (use_pbc || use_ghost) ? minrijx : rawrijx;
-            const double rijy = (use_pbc || use_ghost) ? minrijy : rawrijy;
-            const double rijz = (use_pbc || use_ghost) ? minrijz : rawrijz;
+            const double rijx = use_pbc ? minrijx : rawrijx;
+            const double rijy = use_pbc ? minrijy : rawrijy;
+            const double rijz = use_pbc ? minrijz : rawrijz;
 
             const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
             const double r = std::sqrt(rsq);
@@ -490,7 +490,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
 	    // Apply the minimum image convention via fractional coordinates
 	    // It is probably a good idea to identify orthorhombic cases and write a faster version for them
 	    double minrijx, minrijy, minrijz;
-	    if (use_pbc || use_ghost) {
+	    if (use_pbc) {
 	      // Convert to fractional coordinates
 	      const double fracrijx = box_inverse[0] * rawrijx + box_inverse[3] * rawrijy + box_inverse[6] * rawrijz;
 	      const double fracrijy = box_inverse[1] * rawrijx + box_inverse[4] * rawrijy + box_inverse[7] * rawrijz;
@@ -504,9 +504,9 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
 	      minrijy = box[1] * minfracrijx + box[4] * minfracrijy + box[7] * minfracrijz;
 	      minrijz = box[2] * minfracrijx + box[5] * minfracrijy + box[8] * minfracrijz;
 	    }
-	    const double rijx = (use_pbc || use_ghost) ? minrijx : rawrijx;
-	    const double rijy = (use_pbc || use_ghost) ? minrijy : rawrijy;
-	    const double rijz = (use_pbc || use_ghost) ? minrijz : rawrijz;
+	    const double rijx = use_pbc ? minrijx : rawrijx;
+	    const double rijy = use_pbc ? minrijy : rawrijy;
+	    const double rijz = use_pbc ? minrijz : rawrijz;
 
 	    const double rijx2 = rijx * rijx;
 	    const double rijy2 = rijy * rijy;
