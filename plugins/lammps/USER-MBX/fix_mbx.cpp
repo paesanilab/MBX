@@ -286,7 +286,20 @@ FixMBX::~FixMBX()
 
   if(ptr_mbx_full) delete ptr_mbx_full;
 
-  if(ptr_mbx_local) delete ptr_mbx_local;
+  if(ptr_mbx_local) {
+    
+    // accumulate timing info from pme electrostatics
+    
+    std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
+    std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
+    
+    for(int i=0; i<tmpi.size(); ++i) {
+      mbxt_count[MBXT_ELE_PERMDIP_REAL+i] += tmpi[i];
+      mbxt_time[MBXT_ELE_PERMDIP_REAL+i] += tmpd[i];
+    }
+
+    delete ptr_mbx_local;
+  }
   
   if(ptr_mbx_pme) {
 
@@ -454,7 +467,20 @@ void FixMBX::post_neighbor()
 
   if(ptr_mbx)       delete ptr_mbx;
   if(ptr_mbx_full)  delete ptr_mbx_full;
-  if(ptr_mbx_local) delete ptr_mbx_local;
+  if(ptr_mbx_local) {
+
+    // accumulate timing info from pme electrostatics
+    
+    std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
+    std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
+    
+    for(int i=0; i<tmpi.size(); ++i) {
+      mbxt_count[MBXT_ELE_PERMDIP_REAL+i] += tmpi[i];
+      mbxt_time[MBXT_ELE_PERMDIP_REAL+i] += tmpd[i];
+    }
+    
+    delete ptr_mbx_local;
+  }
   if(ptr_mbx_pme)   {
 
     // accumulate timing info from pme electrostatics
@@ -3001,7 +3027,8 @@ void FixMBX::mbxt_write_summary()
   mbxt_print_time("ELE_DIPFIELD_REAL", MBXT_ELE_DIPFIELD_REAL, t);
   mbxt_print_time("ELE_DIPFIELD_PME",  MBXT_ELE_DIPFIELD_PME,  t);
   
-  mbxt_print_time("ELE_GRAD_REAL", MBXT_ELE_GRAD_REAL, t);
-  mbxt_print_time("ELE_GRAD_PME",  MBXT_ELE_GRAD_PME,  t);
-  mbxt_print_time("ELE_GRAD_FIN",  MBXT_ELE_GRAD_FIN,  t);
+  mbxt_print_time("ELE_GRAD_REAL",   MBXT_ELE_GRAD_REAL,   t);
+  mbxt_print_time("ELE_GRAD_PME",    MBXT_ELE_GRAD_PME,    t);
+  mbxt_print_time("ELE_GRAD_FIN",    MBXT_ELE_GRAD_FIN,    t);
+  mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
 }

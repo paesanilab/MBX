@@ -35,8 +35,6 @@
 
 #include "domain.h"
 
-#include "universe.h"
-
 //#define _DEBUG
 //#define _DEBUG_VIRIAL
 

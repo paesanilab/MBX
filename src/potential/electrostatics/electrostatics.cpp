@@ -2182,6 +2182,11 @@ void Electrostatics::CalculateDipolesAspc() {
 }
 
 void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+  
 #ifdef _DEBUG_COMM
     {  // debug print
         int me, nprocs;
@@ -2409,6 +2414,14 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
         }
     }  // debug print
 #endif
+
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_COMM_REVFOR]++;
+    mbxt_ele_time_[ELE_COMM_REVFOR] += time2 - time1;
+#endif
+    
 }
 
 void Electrostatics::reverse_comm(std::vector<double> &in_v) {
@@ -3128,13 +3141,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 
     // proxy for sequence of reverse_comm(in_v) to accumulate and forward_comm(in_v) to update
     //    reverse_forward_comm(in_v);
-
-    int me;
-#if HAVE_MPI == 1
-    MPI_Comm_rank(world_, &me);
-#else
-    me = 0;
-#endif
 
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
