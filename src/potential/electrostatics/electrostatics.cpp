@@ -4438,9 +4438,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     }
 #endif
 
-    int me = 0;
 #if HAVE_MPI == 1
-    MPI_Comm_rank(world_, &me);
     double time1 = MPI_Wtime();
 #endif
 
@@ -4576,7 +4574,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                                                   m, m + 1, nmon, nmon, i, j, aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1,
                                                   phi_.data() + fi_sites, grad_.data() + fi_crd, elec_scale_factor,
                                                   ewald_alpha_, use_pbc_, box_PMElocal_, box_inverse_PMElocal_, cutoff_,
-						  use_ghost, islocal_, fi_mon+m, fi_mon, 0, me, &virial_);
+						  use_ghost, islocal_, fi_mon+m, fi_mon, 0, &virial_);
                     phi_[fi_sites + inmon + m] += phi1;
                     grad_[fi_crd + inmon3 + m] += ex;
                     grad_[fi_crd + inmon3 + nmon + m] += ey;
@@ -4705,7 +4703,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                             chg_.data() + fi_sites2, mu_.data() + fi_crd1, mu_.data() + fi_crd2, m1, m2init, nmon2,
                             nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread, &phi1_thread,
                             phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_, box_PMElocal_,
-                            box_inverse_PMElocal_, cutoff_, use_ghost, islocal_, fi_mon1+m1, fi_mon2, 0, me, &virial_pool[rank]);
+                            box_inverse_PMElocal_, cutoff_, use_ghost, islocal_, fi_mon1+m1, fi_mon2, 0, &virial_pool[rank]);
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -5330,7 +5328,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                                                   m, m + 1, nmon, nmon, i, j, aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1,
                                                   phi_.data() + fi_sites, grad_.data() + fi_crd, elec_scale_factor,
                                                   ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_,
-						  use_ghost, islocal_, fi_mon+m, fi_mon, fi_mon, -1, &virial_);
+						  use_ghost, islocal_, fi_mon+m, fi_mon, fi_mon, &virial_);
                     phi_[fi_sites + inmon + m] += phi1;
                     grad_[fi_crd + inmon3 + m] += ex;
                     grad_[fi_crd + inmon3 + nmon + m] += ey;
@@ -5458,7 +5456,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                             chg_.data() + fi_sites2, mu_.data() + fi_crd1, mu_.data() + fi_crd2, m1, m2init, nmon2,
                             nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread, &phi1_thread,
                             phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_, box_,
-                            box_inverse_, cutoff_, use_ghost, islocal_, fi_mon+m1, fi_mon2, m2init, -1, &virial_pool[rank]);
+                            box_inverse_, cutoff_, use_ghost, islocal_, fi_mon+m1, fi_mon2, m2init, &virial_pool[rank]);
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;

@@ -448,7 +448,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
                                              const std::vector<double> &box, const std::vector<double> &box_inverse,
                                              double cutoff, bool use_ghost,
 					     const std::vector<size_t> &islocal, const size_t isl1_offset,
-					     const size_t isl2_offset, size_t m2_offset, const size_t rank, std::vector<double> *virial) {
+					     const size_t isl2_offset, size_t m2_offset, std::vector<double> *virial) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -477,13 +477,6 @@ void ElectricFieldHolder::CalcElecFieldGrads(double *xyz1, double *xyz2, double 
         if (!use_ghost) accum2 = true;
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset + m2_offset];
         if (use_ghost && isls) accum2 = true;
-
-	// if(rank == 0) std::cout << "m= " << m << "  isls= " << islocal[isl1_offset] << " " <<
-	// 		islocal[m +isl2_offset+m2_offset] << "  offsets= " << isl1_offset << " " <<
-	// 		isl2_offset << " " << m2_offset << "  accum2= " << accum2 <<
-	// 		"xyz1= " << xyzmon1_x << " " << xyzmon1_y << " " << xyzmon1_z <<
-	// 		"xyz2= " << xyz2[site_jnmon23 + m] << " " << xyz2[site_jnmon23 + nmon2 + m] <<
-	// 		" " << xyz2[site_jnmon23 + nmon22 + m] << std::endl;
 	
         if (accum2) {
             double scale = 1.0;

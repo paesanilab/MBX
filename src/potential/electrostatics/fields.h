@@ -185,7 +185,6 @@ class ElectricFieldHolder {
 			    bool use_ghost,                          // use ghost monomers
 			    const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
 			    const size_t m2_offset,
-			    const size_t rank = 0,
                             std::vector<double> *virial = 0          // the virial
     );
 
