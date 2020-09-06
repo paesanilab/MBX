@@ -285,7 +285,7 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
  * Function that compares the pairs used in AddCLusters
  * @param[in] a First pair
  * @param[in] b Second pair
- * @return True if a.second > b.second, False otherwise
+ * @return True if a.first < b.first, False otherwise
  */
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b);
 
