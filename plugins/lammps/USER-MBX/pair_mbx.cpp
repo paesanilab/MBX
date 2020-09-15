@@ -603,12 +603,12 @@ void PairMBX::accumulate_f()
 	const int ii2 = atom->map(anchor + 2);
 	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
       } else if(strcmp("ch4", mol_names[mtype]) == 0) {
-  na = 5;
-  const int ii1 = atom->map(anchor + 1);
-  const int ii2 = atom->map(anchor + 2);
-  const int ii3 = atom->map(anchor + 3);
-  const int ii4 = atom->map(anchor + 4);
-  if( (ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
+	na = 5;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	const int ii3 = atom->map(anchor + 3);
+	const int ii4 = atom->map(anchor + 4);
+	if( (ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
       }
 
       if(include_monomer) {
@@ -639,13 +639,15 @@ void PairMBX::accumulate_f()
     virial[4] += mbx_virial[2];
     virial[5] += mbx_virial[5];
 
-    // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    // 	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    // 	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    // 	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
-    // printf("virial(LMP)= %f %f %f  %f %f %f\n",
-    // 	   virial[0],virial[1],virial[2],
-    // 	   virial[3],virial[4],virial[5]);
+#ifdef _DEBUG_VIRIAL
+    printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+    	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
+    	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
+    	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    printf("virial(LMP)= %f %f %f  %f %f %f\n",
+    	   virial[0],virial[1],virial[2],
+    	   virial[3],virial[4],virial[5]);
+#endif
   }
   
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F);
@@ -694,23 +696,43 @@ void PairMBX::accumulate_f_local()
       const int mtype = mol_type[i];
 
       // to be replaced with integer comparison
+
+      bool include_monomer = true;
+      tagint anchor = atom->tag[i];
       
       int na = 0;
-      if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
+      if(strcmp("h2o",      mol_names[mtype]) == 0) {
+	na = 3;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
+      }
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
-      else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
+      else if(strcmp("co2", mol_names[mtype]) == 0) {
+	na = 3;	
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
+      }
+      else if(strcmp("ch4", mol_names[mtype]) == 0) {
+	na = 5;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	const int ii3 = atom->map(anchor + 3);
+	const int ii4 = atom->map(anchor + 4);
+	if( (ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
+      }
 
-      tagint anchor = atom->tag[i];
-      
-      for(int j=0; j<na; ++j) {
-	
-	const int ii = atom->map(anchor + j);
-	f[ii][0] -= grads[indx++];
-	f[ii][1] -= grads[indx++];
-	f[ii][2] -= grads[indx++];
+      if(include_monomer) {
+	for(int j=0; j<na; ++j) {
+	  
+	  const int ii = atom->map(anchor + j);
+	  f[ii][0] -= grads[indx++];
+	  f[ii][1] -= grads[indx++];
+	  f[ii][2] -= grads[indx++];
+	}
       }
       
     } // if(anchor)
@@ -731,13 +753,15 @@ void PairMBX::accumulate_f_local()
     virial[4] += mbx_virial[2];
     virial[5] += mbx_virial[5];
 
-    // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    // 	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    // 	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    // 	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
-    // printf("virial(LMP)= %f %f %f  %f %f %f\n",
-    // 	   virial[0],virial[1],virial[2],
-    // 	   virial[3],virial[4],virial[5]);
+#ifdef _DEBUG_VIRIAL
+    printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+    	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
+    	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
+    	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    printf("virial(LMP)= %f %f %f  %f %f %f\n",
+    	   virial[0],virial[1],virial[2],
+    	   virial[3],virial[4],virial[5]);
+#endif
   }
   
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_LOCAL);
@@ -828,14 +852,16 @@ void PairMBX::accumulate_f_full()
       virial[3] += mbx_virial[1];
       virial[4] += mbx_virial[2];
       virial[5] += mbx_virial[5];
-      
-      // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-      // 	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
-      // 	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
-      // 	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
-      // printf("virial(LMP)= %f %f %f  %f %f %f\n",
-      // 	     virial[0],virial[1],virial[2],
-      // 	     virial[3],virial[4],virial[5]);
+
+#ifdef _DEBUG_VIRIAL
+      printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+      	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
+      	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
+      	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+      printf("virial(LMP)= %f %f %f  %f %f %f\n",
+      	     virial[0],virial[1],virial[2],
+      	     virial[3],virial[4],virial[5]);
+#endif
     }
     
   } // if(me == 0)
@@ -949,14 +975,16 @@ void PairMBX::accumulate_f_pme()
     virial[3] += mbx_virial[1];
     virial[4] += mbx_virial[2];
     virial[5] += mbx_virial[5];
-    
-    // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    // 	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    // 	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    // 	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
-    // printf("virial(LMP)= %f %f %f  %f %f %f\n",
-    // 	     virial[0],virial[1],virial[2],
-    // 	     virial[3],virial[4],virial[5]);
+
+#ifdef _DEBUG_VIRIAL
+    printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+    	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
+    	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
+    	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    printf("virial(LMP)= %f %f %f  %f %f %f\n",
+    	     virial[0],virial[1],virial[2],
+    	     virial[3],virial[4],virial[5]);
+#endif
   }
 
   // scatter forces to other ranks
