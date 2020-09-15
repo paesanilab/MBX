@@ -1216,7 +1216,6 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 std::vector<double> temp_pos = {crd[mm * 1],        crd[mm + nmon],     crd[mm + 2 * nmon],
                                                 crd[mm + 3 * nmon], crd[mm + 4 * nmon], crd[mm + 5 * nmon],
                                                 crd[mm + 6 * nmon], crd[mm + 7 * nmon], crd[mm + 8 * nmon]};
-
                 std::vector<double> chgtmpnv_test((3));
                 std::vector<double> chgder_test((27));
 
@@ -1257,7 +1256,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 for (int ii = 0; ii < 4; ii++) {  // loop over all sites
 
                     // get the electrostatic potential on that site
-                    double vtmp;
+		  double vtmp = 0.0;
 
                     if (ii == 1) {
                         vtmp = phi[sphi + 1];  // h1
@@ -1309,7 +1308,6 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                             double rjk = std::sqrt(rx * rx + ry * ry + rz * rz);
 
                             // add to virial
-
                             (*qdvirial)[0] -= vtmp * dqdr_tmp * rx * rx / rjk * prefac * constants::COULOMB;
                             (*qdvirial)[1] -= vtmp * dqdr_tmp * rx * ry / rjk * prefac * constants::COULOMB;
                             (*qdvirial)[2] -= vtmp * dqdr_tmp * rx * rz / rjk * prefac * constants::COULOMB;
