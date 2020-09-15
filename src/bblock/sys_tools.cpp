@@ -1256,7 +1256,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 for (int ii = 0; ii < 4; ii++) {  // loop over all sites
 
                     // get the electrostatic potential on that site
-		  double vtmp = 0.0;
+                    double vtmp = 0.0;
 
                     if (ii == 1) {
                         vtmp = phi[sphi + 1];  // h1
