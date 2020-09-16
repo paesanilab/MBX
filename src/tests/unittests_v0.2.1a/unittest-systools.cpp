@@ -395,14 +395,6 @@ TEST_CASE("sys_tools::FixMonomerCoordinates") {
                 coords_vector_is_too_short = true;
             }
             REQUIRE(coords_vector_is_too_short);
-
-            bool coords_vector_is_too_long = false;
-            try {
-                systools::FixMonomerCoordinates(coords_long, box, box_inv, nats_3, first_index_3);
-            } catch (CUException &e) {
-                coords_vector_is_too_long = true;
-            }
-            REQUIRE(coords_vector_is_too_long);
         }
     }
 }
@@ -1011,7 +1003,82 @@ TEST_CASE("sys_tools::AddClusters") {
                     REQUIRE(trimers.size() == expected_number_of_trimers * 3);
                 }
             }
-
         }
     }
 }
+
+TEST_CASE("sys_tools::ChargeDerivativeForce") {
+    SECTION("Single Water Monomer") {
+        std::string mon = "h2o";
+        size_t nmon = 1;
+        size_t nsites = nmon*4;
+        size_t first_index_sites = 0;
+        size_t first_index_coordinates = 0;
+        
+        std::vector<double> phi(nsites,0.0);
+        std::vector<double> grad(nsites*3,0.0);
+        std::vector<double> xyz = {-1.5911730600e+00, 1.0743321600e+00, 0.0000000000e+00, -6.3591971000e-01, 9.7898520000e-01, 0.0000000000e+00, -1.9116276500e+00, 1.9792679900e+00, 0.0000000000e+00, -1.4557365602e+00, 1.2470607312e+00, 0.0000000000e+00};
+
+        std::vector<double> chg_grad = {-1.8989400193e-01,-5.8492316288e-02,-0.0000000000e+00,-1.0353680537e-01,-6.7111909817e-02,-0.0000000000e+00,2.9343080730e-01,1.2560422610e-01,0.0000000000e+00,-4.0477684016e-02,-1.1655657767e-01,-0.0000000000e+00,-1.1507818891e-02,-1.9836494986e-01,-0.0000000000e+00,5.1985502907e-02,3.1492152753e-01,0.0000000000e+00,2.3037168594e-01,1.7504889395e-01,0.0000000000e+00,1.1504462426e-01,2.6547685968e-01,0.0000000000e+00,-3.4541631020e-01,-4.4052575363e-01,-0.0000000000e+00};
+        std::vector<double> virial(9,0.0);
+        
+        systools::ChargeDerivativeForce(mon,nmon, first_index_coordinates, first_index_sites, phi, grad, chg_grad, xyz.data(), &virial);
+
+        for (size_t i = 0; i < grad.size(); i++) {
+            REQUIRE(grad[i] == Approx(0.0).margin(TOL));
+        }
+        for (size_t i = 0; i < virial.size(); i++) {
+            REQUIRE(virial[i] == Approx(0.0).margin(TOL));
+        }
+    }
+
+    SECTION("Two Water Monomers") {
+        std::string mon = "h2o";
+        size_t nmon = 2;
+        size_t nsites = nmon*4;
+        size_t first_index_sites = 0;
+        size_t first_index_coordinates = 0;
+
+        std::vector<double> phi = {-2.1326567137e-02,-4.3826925160e-02,-1.5115873713e-02,-2.2648794837e-02,4.2939245830e-02,2.1780574543e-02,4.1014905976e-02,3.7686839052e-02};
+        std::vector<double> grad(nsites*3,0.0);
+        std::vector<double> grad_expected = {-1.9273960629999998, -1.0401458249999997, 0.7649756429999996, 1.5751887596, 0.37091197700000045, -0.23931989299999934, 0.3522073040000002, 0.6692338485, -0.5256557496, 0.0, 0.0, 0.0, -1.6280496752999998, -1.0206275764000003, -0.7605410515000002, 1.3400508063999998, 0.41931509369999986, 0.2871619009999993, 0.2879988690000008, 0.60131248261, 0.47337915047100004, 0.0, 0.0, 0.0};
+        std::vector<double> xyz = {-1.5897242500e+00,1.6492450700e+00,1.0433792200e+00,1.0859465600e+00,-8.7808400000e-02,0.0000000000e+00,-6.3591971000e-01,2.6087802600e+00,9.7898520000e-01,1.0958770400e+00,0.0000000000e+00,-2.8171150000e-02,-1.9006628000e+00,1.3383065300e+00,1.7450105000e+00,1.7875778400e+00,-6.6454990000e-01,5.7674150000e-01,-1.4525665789e+00,1.7876253971e+00,1.1793359822e+00,1.2377607100e+00,-1.9212395930e-01,1.1703937180e-01};
+
+        std::vector<double> chg_grad = {-1.9040711750e-01,-4.7529900389e-02,3.1098570197e-02,-1.0418089900e-01,-5.3351273039e-02,3.9036659208e-02,2.9458801649e-01,1.0088117343e-01,-7.0135229406e-02,-4.1663776414e-02,-9.1216434033e-02,7.1885820762e-02,-1.3554183683e-02,-1.5464558539e-01,1.2402463639e-01,5.5217960097e-02,2.4586201943e-01,-1.9591045715e-01,2.3207089391e-01,1.3874633442e-01,-1.0298439096e-01,1.1773508268e-01,2.0799685843e-01,-1.6306129559e-01,-3.4980597659e-01,-3.4674319286e-01,2.6604568655e-01,-1.9073305635e-01,-5.7624631175e-02,-3.9215535777e-02,-8.0449950373e-02,-5.6483280224e-02,-4.2453353590e-02,2.7118300672e-01,1.1410791140e-01,8.1668889366e-02,-4.1733850419e-02,-7.7562002231e-02,-6.0887314328e-02,-5.9964726090e-03,-1.5820321163e-01,-1.2717445613e-01,4.7730323027e-02,2.3576521386e-01,1.8806177046e-01,2.3246690677e-01,1.3518663341e-01,1.0010285010e-01,8.6446422982e-02,2.1468649185e-01,1.6962780972e-01,-3.1891332975e-01,-3.4987312526e-01,-2.6973065983e-01};
+        std::vector<double> virial(9,0.0);
+        std::vector<double> virial_expected = {-2.5891833192, -0.36106328759999995, -0.0635323633, -0.36106328759999995, -0.8717345355000001, 0.018416471699999715, -0.0635323633, 0.018416471699999715, -0.54708090892};
+
+        systools::ChargeDerivativeForce(mon,nmon, first_index_coordinates, first_index_sites, phi, grad, chg_grad, xyz.data(), &virial);
+
+        for (size_t i = 0; i < grad.size(); i++) {
+            REQUIRE(grad[i] == Approx(grad_expected[i]).margin(TOL));
+        }
+        for (size_t i = 0; i < virial.size(); i++) {
+            REQUIRE(virial[i] == Approx(virial_expected[i]).margin(TOL));
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
