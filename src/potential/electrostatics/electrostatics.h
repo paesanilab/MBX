@@ -74,6 +74,8 @@ enum {
     ELE_GRAD_PME,
     ELE_GRAD_FIN,
 
+    ELE_COMM_REVFOR,
+    
     ELE_NUM_TIMERS
 };
 
@@ -238,6 +240,7 @@ class Electrostatics {
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
     void SetBoxPMElocal(std::vector<double> box);
+    void SetPeriodicity(bool periodic);
 
    private:
     void CalculatePermanentElecField(bool use_ghost = 0);
@@ -255,11 +258,13 @@ class Electrostatics {
     void CalculateDipolesMPIlocal(bool use_ghost = 0);
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
-    void CalculateGradients(std::vector<double> &grad);
+    void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
     void reverse_forward_comm(std::vector<double> &in_v);
     void reverse_comm(std::vector<double> &in_v);
+    void reverse_comm_1d(std::vector<double> &in_v);
+    void forward_comm(std::vector<double> &in_v);
 
     void ReorderData();
 
@@ -400,7 +405,9 @@ class Electrostatics {
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;
-
+    // periodicity of simulation cell
+    bool simcell_periodic_;
+    
     bool first;
 
     std::vector<size_t> mbxt_ele_count_;

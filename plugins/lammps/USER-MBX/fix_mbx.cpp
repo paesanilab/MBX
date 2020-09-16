@@ -36,11 +36,14 @@
 
 //#define _DEBUG
 
-#ifdef _DEBUG
+//#ifdef _DEBUG
 #include "universe.h"
-#endif
+//#endif
 
-//#define _USE_MBX_FULL
+#ifdef _USE_PMELOCAL
+#define _USE_MBX_LOCAL // use with MBX MPI-enabled
+#endif
+#define _USE_MBX_FULL  // required if MBX not MPI-enabled
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
@@ -94,7 +97,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   
   while(iarg < narg) {
     if(strcmp(arg[iarg], "json") == 0) {
-      int len = strlen(arg[iarg++]);
+      int len = strlen(arg[++iarg]);
       use_json = 1;
       json_file = new char[len];
       strcpy(json_file, arg[iarg]);
@@ -137,13 +140,13 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   num_molecules = 0;
   for(int i=0; i<num_mol_types; ++i) num_molecules += num_mols[i];
 
-  if(comm->me == 0) {
-    if(use_json) printf("\n[MBX] Using json_file= %s\n",json_file);
-    printf("[MBX] # molecule types= %i\n",num_mol_types);
-    printf("[MBX] # molecules=      %i\n",num_molecules);
+  if(screen && comm->me == 0) {
+    if(use_json) fprintf(screen,"\n[MBX] Using json_file= %s\n",json_file);
+    fprintf(screen,"[MBX] # molecule types= %i\n",num_mol_types);
+    fprintf(screen,"[MBX] # molecules=      %i\n",num_molecules);
     for(int i=0; i<num_mol_types; ++i)
-      printf("[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n",i,num_mols[i],mol_names[i],mol_offset[i]);
-    printf("\n");
+      fprintf(screen,"[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n",i,num_mols[i],mol_names[i],mol_offset[i]);
+    fprintf(screen,"\n");
   }
 
   mbx_mpi_enabled = true;
@@ -189,7 +192,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   
   ptr_mbx_pme = NULL;
 
-#ifdef _USE_PMELOCAL
+#ifdef _USE_MBX_LOCAL
   // check that LAMMPS proc mapping matches PME solver
 
   {
@@ -215,6 +218,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
       error->all(FLERR,"[MBX] Simulation box origin required to be {0, 0, 0} for PME solver");
   }
 #endif
+  
   // setup json, if requested
 
   if(use_json) {
@@ -244,7 +248,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     MPI_Bcast(&json_settings[0], size+1, MPI_CHAR, 0, world);
   }
 
-  std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
+  if(screen && universe->iworld == 0 && comm->me == 0) 
+    std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
   
   memory->create(mbxt_count,      MBXT_NUM_TIMERS, "fixmbx:mbxt_count");
   memory->create(mbxt_time,       MBXT_NUM_TIMERS, "fixmbx:mbxt_time");
@@ -281,7 +286,20 @@ FixMBX::~FixMBX()
 
   if(ptr_mbx_full) delete ptr_mbx_full;
 
-  if(ptr_mbx_local) delete ptr_mbx_local;
+  if(ptr_mbx_local) {
+    
+    // accumulate timing info from pme electrostatics
+    
+    std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
+    std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
+    
+    for(int i=0; i<tmpi.size(); ++i) {
+      mbxt_count[MBXT_ELE_PERMDIP_REAL+i] += tmpi[i];
+      mbxt_time[MBXT_ELE_PERMDIP_REAL+i] += tmpd[i];
+    }
+
+    delete ptr_mbx_local;
+  }
   
   if(ptr_mbx_pme) {
 
@@ -331,8 +349,9 @@ int FixMBX::setmask()
 {
   int mask = 0;
   mask |= POST_NEIGHBOR;
+  mask |= MIN_POST_NEIGHBOR;
   mask |= PRE_FORCE;
-  mask |= PRE_FORCE_RESPA;
+  //  mask |= PRE_FORCE_RESPA;
   mask |= MIN_PRE_FORCE;
   return mask;
 }
@@ -363,6 +382,10 @@ void FixMBX::init()
 
 void FixMBX::setup_post_neighbor()
 {
+#ifdef _DEBUG
+  printf("\n[MBX] (%i,%i) Inside setup_post_neighbor()\n",universe->iworld,me);
+#endif
+  
   // setup after first neighbor build completes
 
   // allocate memory on rank 0 to hold full system data
@@ -387,6 +410,10 @@ void FixMBX::setup_post_neighbor()
   post_neighbor();
   
   first_step = false;
+  
+#ifdef _DEBUG
+  printf("[MBX] (%i,%i) Leaving setup_post_neighbor()\n",universe->iworld,me);
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -440,7 +467,20 @@ void FixMBX::post_neighbor()
 
   if(ptr_mbx)       delete ptr_mbx;
   if(ptr_mbx_full)  delete ptr_mbx_full;
-  if(ptr_mbx_local) delete ptr_mbx_local;
+  if(ptr_mbx_local) {
+
+    // accumulate timing info from pme electrostatics
+    
+    std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
+    std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
+    
+    for(int i=0; i<tmpi.size(); ++i) {
+      mbxt_count[MBXT_ELE_PERMDIP_REAL+i] += tmpi[i];
+      mbxt_time[MBXT_ELE_PERMDIP_REAL+i] += tmpd[i];
+    }
+    
+    delete ptr_mbx_local;
+  }
   if(ptr_mbx_pme)   {
 
     // accumulate timing info from pme electrostatics
@@ -462,7 +502,9 @@ void FixMBX::post_neighbor()
 #ifdef _USE_MBX_FULL
   ptr_mbx_full  = new bblock::System();
 #endif
+#ifdef _USE_MBX_LOCAL
   ptr_mbx_local = new bblock::System();
+#endif
   ptr_mbx_pme   = new bblock::System();
 
   // loop over all atoms looking for anchor-atom of a molecule
@@ -702,11 +744,11 @@ void FixMBX::mbx_init()
   int nm = 0;
 
   //  printf("(%i)  nlocal= %i  nall= %i\n",me,nlocal,nall);
-  //  int proc_write = 1;
+  //  int proc_write = 0;
 
   for(int i=0; i<nall; ++i) {
 
-    //if(me == proc_write) printf("i= %i  mol_anchor= %i\n",i,mol_anchor[i]);
+    //    if(me == proc_write) printf("i= %i  mol_anchor= %i\n",i,mol_anchor[i]);
     
     // if anchor-atom, then add to MBX (currently assume molecule is intact)
     
@@ -940,13 +982,12 @@ void FixMBX::mbx_init()
   // set MBX solvers
   
   ptr_mbx->SetDipoleMethod("cg");
-  //  if (box.size()) {
-    ptr_mbx->Set2bCutoff(9.0);
+  ptr_mbx->Set2bCutoff(pair_mbx->cut_global);
+
+  if(!domain->nonperiodic) {
     ptr_mbx->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx->SetEwaldDispersion(0.5, 2.5, 6);
-    //  } else {
-    //    ptr_mbx->Set2bCutoff(100.0);
-    //  }
+  }
 
   if(use_json) ptr_mbx->SetUpFromJson(json_settings);
   
@@ -971,12 +1012,14 @@ void FixMBX::mbx_init()
 
 void FixMBX::mbx_init_local()
 {
+#ifdef _USE_MBX_LOCAL
+  
   mbxt_start(MBXT_INIT_LOCAL);
 
 #ifdef _DEBUG
   printf("[MBX] (%i,%i) Inside mbx_init_local()\n",universe->iworld,me);
 #endif
-  
+    
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
   tagint * tag = atom->tag;
@@ -999,7 +1042,10 @@ void FixMBX::mbx_init_local()
     if(mol_anchor[i]) mol_local[i] = 1;
   }
 
-  double padding = 9.0 * 0.5; // hard-coded cutoff
+#if 0
+  // remove ghost monomers outside domain with small halo region
+  
+  double padding = pair_mbx->cut_global * 0.5; // hard-coded cutoff
   double xlo = domain->sublo[0] - padding;
   double xhi = domain->subhi[0] + padding;
   
@@ -1008,10 +1054,6 @@ void FixMBX::mbx_init_local()
   
   double zlo = domain->sublo[2] - padding;
   double zhi = domain->subhi[2] + padding;
-
-  //  printf("(%i)  LAMMPS lo/hi= %f %f  %f %f  %f %f\n",me,xlo,xhi,ylo,yhi,zlo,zhi);
-
-  // remove ghost monomers outside domain with small halo region
 
   for(int i=nlocal; i<nall; ++i) {
     if(mol_anchor[i] && mol_local[i]) {
@@ -1024,6 +1066,7 @@ void FixMBX::mbx_init_local()
       if(!local) mol_local[i] = 0;
     }
   }
+#endif
   
   // remove ghost monomers that are periodic images of local monomer
   
@@ -1047,37 +1090,18 @@ void FixMBX::mbx_init_local()
   	  double dy = x[i][1] - ximage[1];
   	  double dz = x[i][2] - ximage[2];
   	  double rsq = dx*dx + dy*dy + dz*dz;
-  	  if(rsq < 0.00001) {
-  	    mol_local[j] = 0;
-	    //  	    if(me == 1) printf("i= %i  j= %i  removing xyz= %f %f %f\n",i,j,x[j][0],x[j][1],x[j][2]);
-  	  }
+  	  if(rsq < 0.00001) mol_local[j] = 0;
   	}
       }
     }
   }
-  
-  // for(int j=0; j<comm->nprocs; ++j) {
-
-  //   if(me == j) {
-  //     for(int i=0; i<nall; ++i) {
-  // 	if(mol_anchor[i]) {
-  // 	  const int indx = atom->map( atom->tag[i] );
-  // 	  printf("(%i) i= %i  xyz= %f %f %f  tag= %i  indx= %i  is_local= %i  is_anchor= %i  molecule= %i  mol_local= %i\n",
-  // 		 me,x[i][0],x[i][1],x[i][2],i,atom->tag[i],indx,i<nlocal,mol_anchor[i],atom->molecule[i],mol_local[i]);
-  // 	}
-  //     }
-  //   }
-  //   MPI_Barrier(world);
-  // }
-
-  //  error->all(FLERR,"Early Termination");
   
   std::vector<size_t> molec;
   
   // loop over all atoms on proc
 
   int nm = 0;
-
+  
   for(int i=0; i<nall; ++i) {
     
     //    printf("i= %i  mol_anchor= %i\n",i,mol_anchor[i]);
@@ -1098,55 +1122,37 @@ void FixMBX::mbx_init_local()
 	// add water molecule
 	
 	tagint anchor = tag[i];
-	names.push_back("O");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	const int ii1 = atom->map(anchor+1);
+	const int ii2 = atom->map(anchor+2);
 
-	int ii = atom->map(anchor+1);
-	if(ii < 0) error->one(FLERR,"H2O molecule not intact");
-	domain->closest_image(x[i], x[ii], ximage);
-
-	names.push_back("H");
-	xyz.push_back(ximage[0]);
-	xyz.push_back(ximage[1]);
-	xyz.push_back(ximage[2]);
-
-	ii = atom->map(anchor+2);
-	if(ii < 0) error->one(FLERR,"H2O molecule not intact");
-	domain->closest_image(x[i], x[ii], ximage);
+	if( (ii1 > -1) && (ii2 > -1) ) {
+	  names.push_back("O");
+	  xyz.push_back(x[i][0]);
+	  xyz.push_back(x[i][1]);
+	  xyz.push_back(x[i][2]);
+	  
+	  domain->closest_image(x[i], x[ii1], ximage);
+	  
+	  names.push_back("H");
+	  xyz.push_back(ximage[0]);
+	  xyz.push_back(ximage[1]);
+	  xyz.push_back(ximage[2]);
+	  
+	  domain->closest_image(x[i], x[ii2], ximage);
 	
-	names.push_back("H");
-	xyz.push_back(ximage[0]);
-	xyz.push_back(ximage[1]);
-	xyz.push_back(ximage[2]);
-
-	// add monomer if at least one atom is local
+	  names.push_back("H");
+	  xyz.push_back(ximage[0]);
+	  xyz.push_back(ximage[1]);
+	  xyz.push_back(ximage[2]);
+	  
+	  molec.push_back(nm);
+	  nm++;
 	
-	molec.push_back(nm);
-	nm++;
+	  ptr_mbx_local->AddMonomer(xyz, names, "h2o", is_local);
+	  ptr_mbx_local->AddMolecule(molec);
 	
-	ptr_mbx_local->AddMonomer(xyz, names, "h2o", is_local);
-	ptr_mbx_local->AddMolecule(molec);
-	
-	mbx_num_atoms_local += 3;
-
-      } else if(strcmp("he",mol_names[mtype]) == 0) {
-
-	// add sodium ion
-	
-	tagint anchor = tag[i];
-	names.push_back("He");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
-	
-	molec.push_back(nm++);
-	
-	ptr_mbx_local->AddMonomer(xyz, names, "he", is_local);
-	ptr_mbx_local->AddMolecule(molec);
-	
-	mbx_num_atoms_local++;
+	  mbx_num_atoms_local += 3;
+	}
 
       } else if(strcmp("na",mol_names[mtype]) == 0) {
 	
@@ -1182,99 +1188,119 @@ void FixMBX::mbx_init_local()
 	
 	mbx_num_atoms_local++;
 	
+      } else if(strcmp("he",mol_names[mtype]) == 0) {
+
+	// add sodium ion
+	
+	tagint anchor = tag[i];
+	names.push_back("He");
+	xyz.push_back(x[i][0]);
+	xyz.push_back(x[i][1]);
+	xyz.push_back(x[i][2]);
+	
+	molec.push_back(nm++);
+	
+	ptr_mbx_local->AddMonomer(xyz, names, "he", is_local);
+	ptr_mbx_local->AddMolecule(molec);
+	
+	mbx_num_atoms_local++;
+	
       } else if(strcmp("co2",mol_names[mtype]) == 0) {
 
 	// add CO2 molecule
 
 	tagint anchor = tag[i];
-	names.push_back("C");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	const int ii1 = atom->map(anchor+1);
+	const int ii2 = atom->map(anchor+2);
 
-	int ii = atom->map(anchor+1);
-	if(ii < 0) error->one(FLERR,"CO2 molecule not intact");
-	domain->closest_image(x[i], x[ii], ximage);
+	if( (ii1 > -1) && (ii2 > -1) ) {
+	
+	  names.push_back("C");
+	  xyz.push_back(x[i][0]);
+	  xyz.push_back(x[i][1]);
+	  xyz.push_back(x[i][2]);
+	  
+	  domain->closest_image(x[i], x[ii1], ximage);
 
-	names.push_back("O");
-	xyz.push_back(ximage[0]);
-	xyz.push_back(ximage[1]);
-	xyz.push_back(ximage[2]);
-
-	ii = atom->map(anchor+2);
-	if(ii < 0) error->one(FLERR,"CO2 molecule not intact");
-	domain->closest_image(x[i], x[ii], ximage);
+	  names.push_back("O");
+	  xyz.push_back(ximage[0]);
+	  xyz.push_back(ximage[1]);
+	  xyz.push_back(ximage[2]);
+	  
+	  domain->closest_image(x[i], x[ii2], ximage);
 	
-	names.push_back("O");
-	xyz.push_back(ximage[0]);
-	xyz.push_back(ximage[1]);
-	xyz.push_back(ximage[2]);
+	  names.push_back("O");
+	  xyz.push_back(ximage[0]);
+	  xyz.push_back(ximage[1]);
+	  xyz.push_back(ximage[2]);
+	  
+	  molec.push_back(nm++);
+	  
+	  ptr_mbx_local->AddMonomer(xyz, names, "co2", is_local);
+	  ptr_mbx_local->AddMolecule(molec);
+	  
+	  mbx_num_atoms_local += 3;
+	}
 	
-	molec.push_back(nm++);
-	
-	ptr_mbx_local->AddMonomer(xyz, names, "co2", is_local);
-	ptr_mbx_local->AddMolecule(molec);
-	
-	mbx_num_atoms_local += 3;
       } else if(strcmp("ch4",mol_names[mtype]) == 0) {
 
-	// add CO2 molecule
+	// add CH4 molecule
 	
 	tagint anchor = tag[i];
-	names.push_back("C");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	const int ii1 = atom->map(anchor+1);
+	const int ii2 = atom->map(anchor+2);
+	const int ii3 = atom->map(anchor+3);
+	const int ii4 = atom->map(anchor+4);
 	
-	int ii = atom->map(anchor+1);
-	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
-	domain->closest_image(x[i], x[ii], ximage);
+	if( (ii1 > -1) && (ii2 > -1) && (ii3 > -1) && (ii4 > -1)) { 
+	  names.push_back("C");
+	  xyz.push_back(x[i][0]);
+	  xyz.push_back(x[i][1]);
+	  xyz.push_back(x[i][2]);
+	  
+	  domain->closest_image(x[i], x[ii1], ximage);
 	
-	names.push_back("H");
-	xyz.push_back(ximage[0]);
-	xyz.push_back(ximage[1]);
-	xyz.push_back(ximage[2]);
+	  names.push_back("H");
+	  xyz.push_back(ximage[0]);
+	  xyz.push_back(ximage[1]);
+	  xyz.push_back(ximage[2]);
+	  
+	  domain->closest_image(x[i], x[ii2], ximage);
 	
-	ii = atom->map(anchor+2);
-	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
-	domain->closest_image(x[i], x[ii], ximage);
+	  names.push_back("H");
+	  xyz.push_back(ximage[0]);
+	  xyz.push_back(ximage[1]);
+	  xyz.push_back(ximage[2]);
 	
-	names.push_back("H");
-	xyz.push_back(ximage[0]);
-	xyz.push_back(ximage[1]);
-	xyz.push_back(ximage[2]);
+	  domain->closest_image(x[i], x[ii3], ximage);
 	
-	ii = atom->map(anchor+3);
-	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
-	domain->closest_image(x[i], x[ii], ximage);
+	  names.push_back("H");
+	  xyz.push_back(ximage[0]);
+	  xyz.push_back(ximage[1]);
+	  xyz.push_back(ximage[2]);
+	  
+	  domain->closest_image(x[i], x[ii4], ximage);
 	
-	names.push_back("H");
-	xyz.push_back(ximage[0]);
-	xyz.push_back(ximage[1]);
-	xyz.push_back(ximage[2]);
+	  names.push_back("H");
+	  xyz.push_back(ximage[0]);
+	  xyz.push_back(ximage[1]);
+	  xyz.push_back(ximage[2]);
+	  
+	  molec.push_back(nm++);
+	  
+	  ptr_mbx_local->AddMonomer(xyz, names, "ch4", is_local);
+	  ptr_mbx_local->AddMolecule(molec);
+	  
+	  mbx_num_atoms_local += 5;
+	}
 	
-	ii = atom->map(anchor+4);
-	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
-	domain->closest_image(x[i], x[ii], ximage);
-	
-	names.push_back("H");
-	xyz.push_back(ximage[0]);
-	xyz.push_back(ximage[1]);
-	xyz.push_back(ximage[2]);
-	
-	molec.push_back(nm++);
-	
-	ptr_mbx_local->AddMonomer(xyz, names, "ch4", is_local);
-	ptr_mbx_local->AddMolecule(molec);
-	
-	mbx_num_atoms_local += 5;
       } else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
 	
     } // if(mol_anchor)
     
   } // for(i<nall)
 
-  //  printf("(%i)  mbx_num_atoms_local= %i\n",me,mbx_num_atoms_local);
+  //printf("(%i)  mbx_num_atoms_local= %i\n",me,mbx_num_atoms_local);
 
   // if(mbx_num_atoms_local == 0) {
   //   mbxt_stop(MBXT_INIT);
@@ -1286,7 +1312,12 @@ void FixMBX::mbx_init_local()
 
   int err = ptr_mbx_local->TestMPI();
   if(err == -1) error->all(FLERR, "[MBX] MPI not initialized\n");
-  else if(err == -2) error->all(FLERR,"[MBX] MPI not enabled\n");
+  else if(err == -2) {
+    if(me == 0 && first_step)
+      error->warning(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
+    mbx_mpi_enabled = false;
+  }
+  //  else if(err == -2) error->all(FLERR,"[MBX] MPI not enabled\n");
   
   if(mbx_num_atoms_local == 0) ptr_mbx_local->InitializePME();
   else ptr_mbx_local->Initialize();
@@ -1297,11 +1328,15 @@ void FixMBX::mbx_init_local()
   std::vector<double> box;
 
   // set MBX solvers
-  
-  ptr_mbx_local->SetDipoleMethod("cg");
-  ptr_mbx_local->Set2bCutoff(9.0);
-  ptr_mbx_local->SetEwaldElectrostatics(0.6, 2.5, 6);
-  ptr_mbx_local->SetEwaldDispersion(0.5, 2.5, 6);
+
+  if(!domain->nonperiodic) {
+    ptr_mbx_local->SetDipoleMethod("cg");
+    ptr_mbx_local->Set2bCutoff(pair_mbx->cut_global);
+    ptr_mbx_local->SetEwaldElectrostatics(0.6, 2.5, 6);
+    ptr_mbx_local->SetEwaldDispersion(0.5, 2.5, 6);
+  } else {
+    ptr_mbx_local->Set2bCutoff(100.0);
+  }
     
   if(use_json) ptr_mbx_local->SetUpFromJson(json_settings);
   
@@ -1322,8 +1357,10 @@ void FixMBX::mbx_init_local()
     
   } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
     error->all(FLERR,"System must be fully periodic or non-periodic with MBX");
-  
+    
   ptr_mbx_local->SetBoxPMElocal(box);
+
+  ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
   
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
@@ -1336,6 +1373,7 @@ void FixMBX::mbx_init_local()
 #endif
   
   mbxt_stop(MBXT_INIT_LOCAL);
+#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -1641,7 +1679,7 @@ void FixMBX::mbx_init_full()
   
   ptr_mbx_full->SetDipoleMethod("cg");
   if (box.size()) {
-    ptr_mbx_full->Set2bCutoff(9.0);
+    ptr_mbx_full->Set2bCutoff(pair_mbx->cut_global);
     ptr_mbx_full->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx_full->SetEwaldDispersion(0.5, 2.5, 6);
   } else {
@@ -1968,7 +2006,7 @@ void FixMBX::mbx_init_pme()
   
   ptr_mbx_pme->SetDipoleMethod("cg");
   if (box.size()) {
-    ptr_mbx_pme->Set2bCutoff(9.0);
+    ptr_mbx_pme->Set2bCutoff(pair_mbx->cut_global);
     ptr_mbx_pme->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx_pme->SetEwaldDispersion(0.5, 2.5, 6);
   } else {
@@ -2173,7 +2211,8 @@ void FixMBX::mbx_update_xyz()
     } // if(mol_anchor)
 
   } // for(i<nall)
-  
+
+  if(xyz.size() != indx*3) error->one(FLERR,"Inconsistent # of atoms");
   ptr_mbx->SetRealXyz(xyz);
 
 #ifdef _DEBUG
@@ -2189,6 +2228,8 @@ void FixMBX::mbx_update_xyz()
 
 void FixMBX::mbx_update_xyz_local()
 {
+#ifdef _USE_MBX_LOCAL
+  
   mbxt_start(MBXT_UPDATE_XYZ_LOCAL);
 
 #ifdef _DEBUG
@@ -2252,22 +2293,24 @@ void FixMBX::mbx_update_xyz_local()
 	const int ii1 = atom->map(anchor + 1);
 	const int ii2 = atom->map(anchor + 2);
 
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	domain->closest_image(x[i], x[ii1], ximage);
-	xyz[indx*3+3] = ximage[0];
-	xyz[indx*3+4] = ximage[1];
-	xyz[indx*3+5] = ximage[2];
-	
-	domain->closest_image(x[i], x[ii2], ximage);
-	xyz[indx*3+6] = ximage[0];
-	xyz[indx*3+7] = ximage[1];
-	xyz[indx*3+8] = ximage[2];
-	
-	indx += 3;
-	m++;
+	if( (ii1 > -1) && (ii2 > -1) ) {
+	  xyz[indx*3  ] = x[i][0];
+	  xyz[indx*3+1] = x[i][1];
+	  xyz[indx*3+2] = x[i][2];
+	  
+	  domain->closest_image(x[i], x[ii1], ximage);
+	  xyz[indx*3+3] = ximage[0];
+	  xyz[indx*3+4] = ximage[1];
+	  xyz[indx*3+5] = ximage[2];
+	  
+	  domain->closest_image(x[i], x[ii2], ximage);
+	  xyz[indx*3+6] = ximage[0];
+	  xyz[indx*3+7] = ximage[1];
+	  xyz[indx*3+8] = ximage[2];
+	  
+	  indx += 3;
+	  m++;
+	}
       }
       else if(strcmp("na",  mol_names[mtype]) == 0) {
 
@@ -2302,22 +2345,24 @@ void FixMBX::mbx_update_xyz_local()
 	const int ii1 = atom->map(anchor + 1);
 	const int ii2 = atom->map(anchor + 2);
 
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	domain->closest_image(x[i], x[ii1], ximage);
-	xyz[indx*3+3] = ximage[0];
-	xyz[indx*3+4] = ximage[1];
-	xyz[indx*3+5] = ximage[2];
-	
-	domain->closest_image(x[i], x[ii2], ximage);
-	xyz[indx*3+6] = ximage[0];
-	xyz[indx*3+7] = ximage[1];
-	xyz[indx*3+8] = ximage[2];
-	
-	indx += 3;
-	m++;
+	if( (ii1 > -1) && (ii2 > -1) ) {
+	  xyz[indx*3  ] = x[i][0];
+	  xyz[indx*3+1] = x[i][1];
+	  xyz[indx*3+2] = x[i][2];
+	  
+	  domain->closest_image(x[i], x[ii1], ximage);
+	  xyz[indx*3+3] = ximage[0];
+	  xyz[indx*3+4] = ximage[1];
+	  xyz[indx*3+5] = ximage[2];
+	  
+	  domain->closest_image(x[i], x[ii2], ximage);
+	  xyz[indx*3+6] = ximage[0];
+	  xyz[indx*3+7] = ximage[1];
+	  xyz[indx*3+8] = ximage[2];
+	  
+	  indx += 3;
+	  m++;
+	}
       }
       else if(strcmp("ch4", mol_names[mtype]) == 0) {
 
@@ -2327,32 +2372,34 @@ void FixMBX::mbx_update_xyz_local()
 	const int ii3 = atom->map(anchor + 3);
 	const int ii4 = atom->map(anchor + 4);
 	
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	domain->closest_image(x[i], x[ii1], ximage);
-	xyz[indx*3+3] = ximage[0];
-	xyz[indx*3+4] = ximage[1];
-	xyz[indx*3+5] = ximage[2];
-	
-	domain->closest_image(x[i], x[ii2], ximage);
-	xyz[indx*3+6] = ximage[0];
-	xyz[indx*3+7] = ximage[1];
-	xyz[indx*3+8] = ximage[2];
-
-	domain->closest_image(x[i], x[ii3], ximage);
-	xyz[indx*3+9] = ximage[0];
-	xyz[indx*3+10] = ximage[1];
-	xyz[indx*3+11] = ximage[2];
-	
-	domain->closest_image(x[i], x[ii4], ximage);
-	xyz[indx*3+12] = ximage[0];
-	xyz[indx*3+13] = ximage[1];
-	xyz[indx*3+14] = ximage[2];
-	
-	indx += 5;
-	m++;	
+	if( (ii1 > -1) && (ii2 > -1) && (ii3 > -1) && (ii4 > -1)) {
+	  xyz[indx*3  ] = x[i][0];
+	  xyz[indx*3+1] = x[i][1];
+	  xyz[indx*3+2] = x[i][2];
+	  
+	  domain->closest_image(x[i], x[ii1], ximage);
+	  xyz[indx*3+3] = ximage[0];
+	  xyz[indx*3+4] = ximage[1];
+	  xyz[indx*3+5] = ximage[2];
+	  
+	  domain->closest_image(x[i], x[ii2], ximage);
+	  xyz[indx*3+6] = ximage[0];
+	  xyz[indx*3+7] = ximage[1];
+	  xyz[indx*3+8] = ximage[2];
+	  
+	  domain->closest_image(x[i], x[ii3], ximage);
+	  xyz[indx*3+9] = ximage[0];
+	  xyz[indx*3+10] = ximage[1];
+	  xyz[indx*3+11] = ximage[2];
+	  
+	  domain->closest_image(x[i], x[ii4], ximage);
+	  xyz[indx*3+12] = ximage[0];
+	  xyz[indx*3+13] = ximage[1];
+	  xyz[indx*3+14] = ximage[2];
+	  
+	  indx += 5;
+	  m++;
+	}
       }
 #else
       if(strcmp("h2o", mol_names[mtype]) == 0) {
@@ -2469,6 +2516,7 @@ void FixMBX::mbx_update_xyz_local()
 
   } // for(i<nall)
   
+  if(xyz.size() != indx*3) error->one(FLERR,"Inconsistent # of atoms");
   ptr_mbx_local->SetRealXyz(xyz);
 
 #ifdef _DEBUG
@@ -2476,6 +2524,7 @@ void FixMBX::mbx_update_xyz_local()
 #endif
   
   mbxt_stop(MBXT_UPDATE_XYZ_LOCAL);
+#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -2671,6 +2720,7 @@ void FixMBX::mbx_update_xyz_full()
 
   } // for(i<nall)
 
+  if(xyz.size() != indx*3) error->one(FLERR,"Inconsistent # of atoms");
   ptr_mbx_full->SetRealXyz(xyz);
 
 #ifdef _DEBUG
@@ -2729,7 +2779,7 @@ void FixMBX::mbx_update_xyz_pme()
   
     ptr_mbx_pme->SetPBC(box);
   }
-
+  
   // update coordinates
   
   std::vector<double> xyz(natoms*3);
@@ -2866,6 +2916,7 @@ void FixMBX::mbx_update_xyz_pme()
 
   } // for(i<nall)
   
+  if(xyz.size() != indx*3) error->one(FLERR,"Inconsistent # of atoms");
   ptr_mbx_pme->SetRealXyz(xyz);
   
 #ifdef _DEBUG
@@ -2984,7 +3035,8 @@ void FixMBX::mbxt_write_summary()
   mbxt_print_time("ELE_DIPFIELD_REAL", MBXT_ELE_DIPFIELD_REAL, t);
   mbxt_print_time("ELE_DIPFIELD_PME",  MBXT_ELE_DIPFIELD_PME,  t);
   
-  mbxt_print_time("ELE_GRAD_REAL", MBXT_ELE_GRAD_REAL, t);
-  mbxt_print_time("ELE_GRAD_PME",  MBXT_ELE_GRAD_PME,  t);
-  mbxt_print_time("ELE_GRAD_FIN",  MBXT_ELE_GRAD_FIN,  t);
+  mbxt_print_time("ELE_GRAD_REAL",   MBXT_ELE_GRAD_REAL,   t);
+  mbxt_print_time("ELE_GRAD_PME",    MBXT_ELE_GRAD_PME,    t);
+  mbxt_print_time("ELE_GRAD_FIN",    MBXT_ELE_GRAD_FIN,    t);
+  mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
 }

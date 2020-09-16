@@ -704,6 +704,12 @@ to be the same.
      * @param[out] 1 for initialized / -1 for not initialized / -2 for not enabled
      */
     int TestMPI();
+  
+    /**
+     * Set periodicity from driver code based on spatial decomposition
+     * @param[in] true for periodic (condensed phase; use PME) / 0 for non-periodic (gas-phase; no PME)
+     */
+    void SetPeriodicity(bool periodic);
 
     /**
      * @param[in] connectivity_map A map with monomer id as values and
@@ -1315,6 +1321,13 @@ to be the same.
     size_t proc_grid_y_;
     size_t proc_grid_z_;
 
+    /**
+     * Set to true simulation cell in driver code is periodic
+     * Default value controlled by use_pbc defined by size of box
+     * Driver code can then make explicit using SetPeriodic(bool)
+     */
+    bool simcell_periodic_;
+  
     /**
      * Vector that holds the connectivity of each monomer type
      */

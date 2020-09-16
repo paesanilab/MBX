@@ -30,6 +30,8 @@ PairStyle(mbx,PairMBX)
 namespace LAMMPS_NS {
 
 class PairMBX : public Pair {
+  friend FixMBX; // accesses cut_global
+  
  public:
   PairMBX(class LAMMPS *);
   virtual ~PairMBX();

@@ -36,6 +36,7 @@
 #include "domain.h"
 
 //#define _DEBUG
+//#define _DEBUG_VIRIAL
 
 using namespace LAMMPS_NS;
 using namespace MathConst;
@@ -108,7 +109,7 @@ void PairMBX::compute(int eflag, int vflag)
   bblock::System * ptr_mbx_local = fix_mbx->ptr_mbx_local; // compute PME terms in parallel w/ sub-domains
   bblock::System * ptr_mbx_pme   = fix_mbx->ptr_mbx_pme;   // compute PME terms in parallel w/ copies full system
 
-  bool compute_disp_parallel = fix_mbx->mbx_mpi_enabled;
+  bool mbx_parallel = fix_mbx->mbx_mpi_enabled;
   
   double mbx_e2b_local, mbx_e2b_ghost;
   double mbx_e3b_local, mbx_e3b_ghost;
@@ -177,7 +178,7 @@ void PairMBX::compute(int eflag, int vflag)
     
     mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
 
-    if(compute_disp_parallel) {
+    if(mbx_parallel) {
       
 #ifdef _DEBUG
   printf("[MBX] (%i) -- Computing disp real parallel\n",me);
@@ -199,63 +200,73 @@ void PairMBX::compute(int eflag, int vflag)
     accumulate_f();
   }
   
-  if(compute_disp_parallel) {
+  if(mbx_parallel) {
     
 #ifdef _DEBUG
-  printf("[MBX] (%i) -- Computing disp pme parallel\n",me);
+    printf("[MBX] (%i) -- Computing disp pme parallel\n",me);
 #endif
-  //  printf("(%i)  procgrid= %i %i %i\n",comm->me,comm->myloc[0],comm->myloc[1],comm->myloc[2]);
-  
-    fix_mbx->mbxt_start(MBXT_DISP_PME);
+    //  printf("(%i)  procgrid= %i %i %i\n",comm->me,comm->myloc[0],comm->myloc[1],comm->myloc[2]);
+    
+    if(!domain->nonperiodic) {
+      fix_mbx->mbxt_start(MBXT_DISP_PME);
 #ifdef _USE_PMELOCAL
-    mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true); // computes k-space using sub-domain
-    accumulate_f_local();
+      mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true); // computes k-space using sub-domain
+      accumulate_f_local();
 #else
-    mbx_disp_pme = ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
-    accumulate_f_pme();
+      mbx_disp_pme = ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
+      accumulate_f_pme();
 #endif
-    fix_mbx->mbxt_stop(MBXT_DISP_PME);
+      fix_mbx->mbxt_stop(MBXT_DISP_PME);
+    }
     
   } else {
     
 #ifdef _DEBUG
-  printf("[MBX] (%i) -- Computing disp pme serial\n",me);
+    printf("[MBX] (%i) -- Computing disp pme serial\n",me);
 #endif
-
-#if 1
-  error->all(FLERR,"MBX_FULL Disabled...\n");
-#else
+    
     fix_mbx->mbxt_start(MBXT_DISP);
     if(comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true); // compute full dispersion on rank 0
     fix_mbx->mbxt_stop(MBXT_DISP);
     accumulate_f_full();
-#endif
     
   }
 
   mbx_disp = mbx_disp_real + mbx_disp_pme;
   
-#if 1
+  if(mbx_parallel) {
   
 #ifdef _DEBUG
-  printf("[MBX] (%i) -- Computing electrostatics parallel\n",me);
+    printf("[MBX] (%i) -- Computing electrostatics parallel\n",me);
 #endif
   
-  fix_mbx->mbxt_start(MBXT_ELE);
-  //  mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
-  mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
-  fix_mbx->mbxt_stop(MBXT_ELE);
-  accumulate_f_pme();
+    fix_mbx->mbxt_start(MBXT_ELE);
+#ifdef _USE_PMELOCAL
+    mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
+#else
+    mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
 #endif
-  
-  // compute energy+gradients in serial on rank 0 for full system
-
-#if 0
-  fix_mbx->mbxt_start(MBXT_ELE);
-  if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
-  fix_mbx->mbxt_stop(MBXT_ELE);
-  accumulate_f_full();
+    fix_mbx->mbxt_stop(MBXT_ELE);
+#ifdef _USE_PMELOCAL
+    accumulate_f_local();
+#else
+    accumulate_f_pme();
 #endif
+    
+  } else {
+    
+#ifdef _DEBUG
+    printf("[MBX] (%i) -- Computing electrostatics serial\n",me);
+#endif
+    
+    // compute energy+gradients in serial on rank 0 for full system
+    
+    fix_mbx->mbxt_start(MBXT_ELE);
+    if(comm->me == 0) mbx_ele = ptr_mbx_full->Electrostatics(true);
+    fix_mbx->mbxt_stop(MBXT_ELE);
+    accumulate_f_full();
+    
+  }
   
   mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
 
@@ -284,7 +295,7 @@ void PairMBX::compute(int eflag, int vflag)
     pvector[12] = mbx_disp_pme;
   }
 
-#if 0
+#ifdef _DEBUG_VIRIAL
   // debug output
   
   double e1  = 0.0;
@@ -592,12 +603,12 @@ void PairMBX::accumulate_f()
 	const int ii2 = atom->map(anchor + 2);
 	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
       } else if(strcmp("ch4", mol_names[mtype]) == 0) {
-  na = 5;
-  const int ii1 = atom->map(anchor + 1);
-  const int ii2 = atom->map(anchor + 2);
-  const int ii3 = atom->map(anchor + 3);
-  const int ii4 = atom->map(anchor + 4);
-  if( (ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
+	na = 5;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	const int ii3 = atom->map(anchor + 3);
+	const int ii4 = atom->map(anchor + 4);
+	if( (ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
       }
 
       if(include_monomer) {
@@ -628,13 +639,15 @@ void PairMBX::accumulate_f()
     virial[4] += mbx_virial[2];
     virial[5] += mbx_virial[5];
 
-    // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    // 	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    // 	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    // 	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
-    // printf("virial(LMP)= %f %f %f  %f %f %f\n",
-    // 	   virial[0],virial[1],virial[2],
-    // 	   virial[3],virial[4],virial[5]);
+#ifdef _DEBUG_VIRIAL
+    printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+    	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
+    	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
+    	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    printf("virial(LMP)= %f %f %f  %f %f %f\n",
+    	   virial[0],virial[1],virial[2],
+    	   virial[3],virial[4],virial[5]);
+#endif
   }
   
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F);
@@ -683,23 +696,43 @@ void PairMBX::accumulate_f_local()
       const int mtype = mol_type[i];
 
       // to be replaced with integer comparison
+
+      bool include_monomer = true;
+      tagint anchor = atom->tag[i];
       
       int na = 0;
-      if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
+      if(strcmp("h2o",      mol_names[mtype]) == 0) {
+	na = 3;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
+      }
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
-      else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
+      else if(strcmp("co2", mol_names[mtype]) == 0) {
+	na = 3;	
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	if( (ii1 < 0) || (ii2 < 0) ) include_monomer = false;
+      }
+      else if(strcmp("ch4", mol_names[mtype]) == 0) {
+	na = 5;
+	const int ii1 = atom->map(anchor + 1);
+	const int ii2 = atom->map(anchor + 2);
+	const int ii3 = atom->map(anchor + 3);
+	const int ii4 = atom->map(anchor + 4);
+	if( (ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
+      }
 
-      tagint anchor = atom->tag[i];
-      
-      for(int j=0; j<na; ++j) {
-	
-	const int ii = atom->map(anchor + j);
-	f[ii][0] -= grads[indx++];
-	f[ii][1] -= grads[indx++];
-	f[ii][2] -= grads[indx++];
+      if(include_monomer) {
+	for(int j=0; j<na; ++j) {
+	  
+	  const int ii = atom->map(anchor + j);
+	  f[ii][0] -= grads[indx++];
+	  f[ii][1] -= grads[indx++];
+	  f[ii][2] -= grads[indx++];
+	}
       }
       
     } // if(anchor)
@@ -720,13 +753,15 @@ void PairMBX::accumulate_f_local()
     virial[4] += mbx_virial[2];
     virial[5] += mbx_virial[5];
 
-    // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    // 	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    // 	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    // 	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
-    // printf("virial(LMP)= %f %f %f  %f %f %f\n",
-    // 	   virial[0],virial[1],virial[2],
-    // 	   virial[3],virial[4],virial[5]);
+#ifdef _DEBUG_VIRIAL
+    printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+    	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
+    	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
+    	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    printf("virial(LMP)= %f %f %f  %f %f %f\n",
+    	   virial[0],virial[1],virial[2],
+    	   virial[3],virial[4],virial[5]);
+#endif
   }
   
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_LOCAL);
@@ -817,14 +852,16 @@ void PairMBX::accumulate_f_full()
       virial[3] += mbx_virial[1];
       virial[4] += mbx_virial[2];
       virial[5] += mbx_virial[5];
-      
-      // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-      // 	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
-      // 	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
-      // 	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
-      // printf("virial(LMP)= %f %f %f  %f %f %f\n",
-      // 	     virial[0],virial[1],virial[2],
-      // 	     virial[3],virial[4],virial[5]);
+
+#ifdef _DEBUG_VIRIAL
+      printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+      	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
+      	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
+      	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+      printf("virial(LMP)= %f %f %f  %f %f %f\n",
+      	     virial[0],virial[1],virial[2],
+      	     virial[3],virial[4],virial[5]);
+#endif
     }
     
   } // if(me == 0)
@@ -938,14 +975,16 @@ void PairMBX::accumulate_f_pme()
     virial[3] += mbx_virial[1];
     virial[4] += mbx_virial[2];
     virial[5] += mbx_virial[5];
-    
-    // printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    // 	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    // 	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    // 	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
-    // printf("virial(LMP)= %f %f %f  %f %f %f\n",
-    // 	     virial[0],virial[1],virial[2],
-    // 	     virial[3],virial[4],virial[5]);
+
+#ifdef _DEBUG_VIRIAL
+    printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
+    	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
+    	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
+    	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    printf("virial(LMP)= %f %f %f  %f %f %f\n",
+    	     virial[0],virial[1],virial[2],
+    	     virial[3],virial[4],virial[5]);
+#endif
   }
 
   // scatter forces to other ranks
