@@ -11,7 +11,7 @@ set( SOURCES_UNITTESTS_TESTS
 #    unittest-pme-nopolarization-findif.cpp
 #    unittest-pme-withpolarization.cpp
 #    unittest-pme-withpolarization-findif.cpp
-    unittest-gamma.cpp
+#    unittest-gamma.cpp
 #    unittest-pbc-1b-mbpol-findif.cpp
 #    unittest-pbc-2bpoly-mbpol-findif.cpp
 #    unittest-pbc-dispersion-mbpol-findif.cpp
@@ -21,7 +21,7 @@ set( SOURCES_UNITTESTS_TESTS
 #    unittest-dummy-monomer.cpp
 #    unittest-co2-monomer.cpp
 #    unittest-system.cpp 
-#    unittest-systools.cpp
+    unittest-systools.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
