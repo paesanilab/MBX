@@ -101,7 +101,10 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     ReorderData();
 }
 
-void Dispersion::SetBoxPMElocal(std::vector<double> box) { box_PMElocal_ = box; }
+void Dispersion::SetBoxPMElocal(std::vector<double> box) {
+  box_PMElocal_ = box;
+  box_ABCabc_PMElocal_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
+}
 
 void Dispersion::ReorderData() {
     // Organize xyz so we have
@@ -797,7 +800,12 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     //    if (compute_pme) {
     helpme::PMEInstance<double> pme_solver_;
     // Compute the reciprocal space terms, using PME
-    double A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
+    double A = box_ABCabc_PMElocal_[0];
+    double B = box_ABCabc_PMElocal_[1];
+    double C = box_ABCabc_PMElocal_[2];
+    double alpha = box_ABCabc_PMElocal_[3];
+    double beta = box_ABCabc_PMElocal_[4];
+    double gamma = box_ABCabc_PMElocal_[5];
     int grid_A = pme_grid_density_ * A;
     int grid_B = pme_grid_density_ * B;
     int grid_C = pme_grid_density_ * C;
@@ -809,7 +817,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
         pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
     }
 
-    pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
+    pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
     // N.B. these do not make copies; they just wrap the memory with some metadata
     auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);

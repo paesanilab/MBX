@@ -238,7 +238,8 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
 
 void Electrostatics::SetBoxPMElocal(std::vector<double> box) {
     box_PMElocal_ = box;
-    box_inverse_PMElocal_ = InvertUnitCell(box_PMElocal_);
+    box_ABCabc_PMElocal_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
+    box_inverse_PMElocal_ = InvertUnitCell(box);
 }
 
 void Electrostatics::ReorderData() {
@@ -690,8 +691,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         // Compute the reciprocal space terms, using PME
         double A, B, C, alpha, beta, gamma;
         if (use_ghost) {
-            A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-            alpha = beta = gamma = 90.0;
+	    A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
         } else {
             A = box_ABCabc_[0];
             B = box_ABCabc_[1];
@@ -2325,24 +2330,22 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                     // Apply PBC :(
                     if (simcell_periodic_) {
                         // Convert to fractional coordinates
-                        // FIXME Chris, the indexes here I think the are the wrong ones. Box vectors are
-                        // {0,1,2},{3,4,5}{6,7,8}, not {0,3,6},{1,4,7},{2,5,8}
-                        const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
-                                                box_inverse_PMElocal_[2] * dz;
-                        const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy +
-                                                box_inverse_PMElocal_[5] * dz;
-                        const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy +
+                        const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[3] * dy +
+                                                box_inverse_PMElocal_[6] * dz;
+                        const double fracrijy = box_inverse_PMElocal_[1] * dx + box_inverse_PMElocal_[4] * dy +
+                                                box_inverse_PMElocal_[7] * dz;
+                        const double fracrijz = box_inverse_PMElocal_[2] * dx + box_inverse_PMElocal_[5] * dy +
                                                 box_inverse_PMElocal_[8] * dz;
                         // Put in the range 0 to 1
                         const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
                         const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
                         const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
                         // Convert back to Cartesian coordinates
-                        dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[1] * minfracrijy +
-                             box_PMElocal_[2] * minfracrijz;
-                        dy = box_PMElocal_[3] * minfracrijx + box_PMElocal_[4] * minfracrijy +
-                             box_PMElocal_[5] * minfracrijz;
-                        dz = box_PMElocal_[6] * minfracrijx + box_PMElocal_[7] * minfracrijy +
+                        dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[3] * minfracrijy +
+                             box_PMElocal_[6] * minfracrijz;
+                        dy = box_PMElocal_[1] * minfracrijx + box_PMElocal_[4] * minfracrijy +
+                             box_PMElocal_[7] * minfracrijz;
+                        dz = box_PMElocal_[2] * minfracrijx + box_PMElocal_[5] * minfracrijy +
                              box_PMElocal_[8] * minfracrijz;
                     }
 
@@ -2484,8 +2487,6 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
     int offset = 0;
 #if HAVE_MPI == 1
     MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
-#else  // FIXME Please check that this is correct, chris!
-    offset = local_size;
 #endif
 
     // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
@@ -2564,24 +2565,23 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
 
                         // Apply PBC :(
                         if (simcell_periodic_) {
-                            // FIXME Chris, I think this also has the indexes swapped.
                             // Convert to fractional coordinates
-                            const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
-                                                    box_inverse_PMElocal_[2] * dz;
-                            const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy +
-                                                    box_inverse_PMElocal_[5] * dz;
-                            const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy +
+                            const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[3] * dy +
+                                                    box_inverse_PMElocal_[6] * dz;
+                            const double fracrijy = box_inverse_PMElocal_[1] * dx + box_inverse_PMElocal_[4] * dy +
+                                                    box_inverse_PMElocal_[7] * dz;
+                            const double fracrijz = box_inverse_PMElocal_[2] * dx + box_inverse_PMElocal_[5] * dy +
                                                     box_inverse_PMElocal_[8] * dz;
                             // Put in the range 0 to 1
                             const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
                             const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
                             const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
                             // Convert back to Cartesian coordinates
-                            dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[1] * minfracrijy +
-                                 box_PMElocal_[2] * minfracrijz;
-                            dy = box_PMElocal_[3] * minfracrijx + box_PMElocal_[4] * minfracrijy +
-                                 box_PMElocal_[5] * minfracrijz;
-                            dz = box_PMElocal_[6] * minfracrijx + box_PMElocal_[7] * minfracrijy +
+                            dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[3] * minfracrijy +
+                                 box_PMElocal_[6] * minfracrijz;
+                            dy = box_PMElocal_[1] * minfracrijx + box_PMElocal_[4] * minfracrijy +
+                                 box_PMElocal_[7] * minfracrijz;
+                            dz = box_PMElocal_[2] * minfracrijx + box_PMElocal_[5] * minfracrijy +
                                  box_PMElocal_[8] * minfracrijz;
                         }
 
@@ -2718,8 +2718,6 @@ void Electrostatics::reverse_comm_1d(std::vector<double> &in_v) {
     int offset = 0;
 #if HAVE_MPI == 1
     MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
-#else  // FIXME Please check that this is correct, chris!
-    offset = local_size;
 #endif
 
     // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
@@ -2798,24 +2796,23 @@ void Electrostatics::reverse_comm_1d(std::vector<double> &in_v) {
 
                         // Apply PBC :(
                         if (simcell_periodic_) {
-                            // FIXME Chris, I think this also has the indexes swapped.
                             // Convert to fractional coordinates
-                            const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
-                                                    box_inverse_PMElocal_[2] * dz;
-                            const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy +
-                                                    box_inverse_PMElocal_[5] * dz;
-                            const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy +
+                            const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[3] * dy +
+                                                    box_inverse_PMElocal_[6] * dz;
+                            const double fracrijy = box_inverse_PMElocal_[1] * dx + box_inverse_PMElocal_[4] * dy +
+                                                    box_inverse_PMElocal_[7] * dz;
+                            const double fracrijz = box_inverse_PMElocal_[2] * dx + box_inverse_PMElocal_[5] * dy +
                                                     box_inverse_PMElocal_[8] * dz;
                             // Put in the range 0 to 1
                             const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
                             const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
                             const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
                             // Convert back to Cartesian coordinates
-                            dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[1] * minfracrijy +
-                                 box_PMElocal_[2] * minfracrijz;
-                            dy = box_PMElocal_[3] * minfracrijx + box_PMElocal_[4] * minfracrijy +
-                                 box_PMElocal_[5] * minfracrijz;
-                            dz = box_PMElocal_[6] * minfracrijx + box_PMElocal_[7] * minfracrijy +
+                            dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[3] * minfracrijy +
+                                 box_PMElocal_[6] * minfracrijz;
+                            dy = box_PMElocal_[1] * minfracrijx + box_PMElocal_[4] * minfracrijy +
+                                 box_PMElocal_[7] * minfracrijz;
+                            dz = box_PMElocal_[2] * minfracrijx + box_PMElocal_[5] * minfracrijy +
                                  box_PMElocal_[8] * minfracrijz;
                         }
 
@@ -2954,8 +2951,6 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
     int offset = 0;
 #if HAVE_MPI == 1
     MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
-#else  // FIXME Please check that this is correct, chris!
-    offset = local_size;
 #endif
 
     // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
@@ -3034,24 +3029,23 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
 		
 		// Apply PBC :(
 		if (simcell_periodic_) {
-		  // FIXME Chris, I think this also has the indexes swapped.
 		  // Convert to fractional coordinates
-		  const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
-		    box_inverse_PMElocal_[2] * dz;
-		  const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy +
-		    box_inverse_PMElocal_[5] * dz;
-		  const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy +
+		  const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[3] * dy +
+		    box_inverse_PMElocal_[6] * dz;
+		  const double fracrijy = box_inverse_PMElocal_[1] * dx + box_inverse_PMElocal_[4] * dy +
+		    box_inverse_PMElocal_[7] * dz;
+		  const double fracrijz = box_inverse_PMElocal_[2] * dx + box_inverse_PMElocal_[5] * dy +
 		    box_inverse_PMElocal_[8] * dz;
 		  // Put in the range 0 to 1
 		  const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
 		  const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
 		  const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
 		  // Convert back to Cartesian coordinates
-		  dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[1] * minfracrijy +
-		    box_PMElocal_[2] * minfracrijz;
-		  dy = box_PMElocal_[3] * minfracrijx + box_PMElocal_[4] * minfracrijy +
-		    box_PMElocal_[5] * minfracrijz;
-		  dz = box_PMElocal_[6] * minfracrijx + box_PMElocal_[7] * minfracrijy +
+		  dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[3] * minfracrijy +
+		    box_PMElocal_[6] * minfracrijz;
+		  dy = box_PMElocal_[1] * minfracrijx + box_PMElocal_[4] * minfracrijy +
+		    box_PMElocal_[7] * minfracrijz;
+		  dz = box_PMElocal_[2] * minfracrijx + box_PMElocal_[5] * minfracrijy +
 		    box_PMElocal_[8] * minfracrijz;
 		}
 		
@@ -3517,8 +3511,12 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         // Compute the reciprocal space terms, using PME
         double A, B, C, alpha, beta, gamma;
         if (use_ghost) {
-            A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-            alpha = beta = gamma = 90.0;
+	    A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
         } else {
             A = box_ABCabc_[0];
             B = box_ABCabc_[1];
@@ -4842,8 +4840,12 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         // Compute the reciprocal space terms, using PME
 	double A, B, C, alpha, beta, gamma;
 	if (use_ghost) {
-	  A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-	  alpha = beta = gamma = 90.0;
+	  A = box_ABCabc_PMElocal_[0];
+	  B = box_ABCabc_PMElocal_[1];
+	  C = box_ABCabc_PMElocal_[2];
+	  alpha = box_ABCabc_PMElocal_[3];
+	  beta = box_ABCabc_PMElocal_[4];
+	  gamma = box_ABCabc_PMElocal_[5];
 	} else {
             A = box_ABCabc_[0];
             B = box_ABCabc_[1];

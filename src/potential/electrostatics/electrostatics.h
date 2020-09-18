@@ -374,6 +374,7 @@ class Electrostatics {
     std::vector<double> box_inverse_;
     // box in ABCabc format
     std::vector<double> box_ABCabc_;
+    std::vector<double> box_ABCabc_PMElocal_;
     // box of the domain-decomposed system
     std::vector<double> box_PMElocal_;
     std::vector<double> box_inverse_PMElocal_;
