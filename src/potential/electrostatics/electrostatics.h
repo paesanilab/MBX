@@ -120,7 +120,8 @@ class Electrostatics {
                     const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                    const std::vector<size_t> &islocal_, const bool do_grads = true, const double tolerance = 1E-16,
+                    const std::vector<size_t> &islocal_, const std::vector<int> &sys_atom_tag_,
+		    const bool do_grads = true, const double tolerance = 1E-16,
                     const size_t maxit = 100, const std::string dip_method = "iter",
                     const std::vector<double> &box = {});
 
@@ -292,6 +293,10 @@ class Electrostatics {
     std::vector<size_t> islocal_atom_;
     // local/ghost descriptor for xyz of atoms
     std::vector<size_t> islocal_atom_xyz_;
+    // Atom tags for real and virtual sites, unordered
+    std::vector<int> sys_atom_tag_;
+    // Atom tags for real and virtual sites, ordered
+    std::vector<int> atom_tag_;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon

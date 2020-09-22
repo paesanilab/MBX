@@ -668,7 +668,7 @@ void System::Initialize() {
     // TODO: Do grads set to true for now. Needs to be fixed
     if (mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
-                               islocal_, true, diptol_, maxItDip_, dipole_method_);
+                               islocal_, atom_tag_, true, diptol_, maxItDip_, dipole_method_);
 
     // TODO Is this OK? Order of GetReal is input order.
     std::vector<double> xyz_real = GetRealXyz();
@@ -762,7 +762,7 @@ void System::InitializePME() {
     // TODO: Do grads set to true for now. Needs to be fixed
     if (mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
-                               islocal_, true, diptol_, maxItDip_, dipole_method_);
+                               islocal_, atom_tag_, true, diptol_, maxItDip_, dipole_method_);
 
     // TODO Is this OK? Order of GetReal is input order.
     // std::vector<double> xyz_real = GetRealXyz();

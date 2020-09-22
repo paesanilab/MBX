@@ -85,7 +85,8 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
                                 const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                                 const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                                 const std::vector<std::pair<std::string, size_t>> &mon_type_count,
-                                const std::vector<size_t> &islocal, const bool do_grads, const double tolerance,
+                                const std::vector<size_t> &islocal, const std::vector<int> &sys_atom_tag,
+				const bool do_grads, const double tolerance,
                                 const size_t maxit, const std::string dip_method, const std::vector<double> &box) {
     pme_spline_order_ = 5;
     pme_grid_density_ = 1.2;
@@ -98,6 +99,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     pol_ = pol;
     sys_xyz_ = sys_xyz;
     islocal_ = islocal;
+    sys_atom_tag_ = sys_atom_tag;
     mon_id_ = mon_id;
     sites_ = sites;
     first_ind_ = first_ind;
@@ -133,6 +135,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     virial_ = std::vector<double>(9, 0.0);
     islocal_atom_ = std::vector<size_t>(nsites_, 0.0);
     islocal_atom_xyz_ = std::vector<size_t>(nsites3, 0.0);
+    atom_tag_ = std::vector<int>(nsites_, 0);
     aCC_ = 0.4;
     aCD_ = 0.4;
     aDD_ = 0.055;
@@ -290,6 +293,8 @@ void Electrostatics::ReorderData() {
                 islocal_atom_xyz_[inmon3 + m + fi_crd] = islocal_[fi_mon + m];
                 islocal_atom_xyz_[inmon3 + m + fi_crd + nmon] = islocal_[fi_mon + m];
                 islocal_atom_xyz_[inmon3 + m + fi_crd + nmon2] = islocal_[fi_mon + m];
+
+		atom_tag_[fi_sites + m + inmon] = sys_atom_tag_[fi_sites + mns + i];
             }
         }
         fi_mon += nmon;
@@ -2192,6 +2197,23 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
     double time1 = MPI_Wtime();
 #endif
   
+    // poor-man's reverse_forward communication that doesn't scale...
+
+    int local_size = nsites_;
+    int global_size = 0;
+#if HAVE_MPI == 1
+    MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
+#else
+    global_size = local_size;
+#endif
+
+    int offset = 0;
+#if HAVE_MPI == 1
+    MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
+#endif
+
+    offset -= local_size;
+    
 #ifdef _DEBUG_COMM
     {  // debug print
         int me, nprocs;
@@ -2216,14 +2238,15 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                         size_t inmon = i * nmon;
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") REVFORCOMM IN LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
-                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
-                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
-                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
-                                      << std::endl;
+			  std::cout << "(" << me << ") REVFORCOMM IN LOCAL: mt= " << mt << " i= " << i << " m= " << m
+				    << "  islocal= " << islocal_[fi_mon + m] << " tag= " << atom_tag_[fi_sites + m + inmon]
+				    << " indx= " << fi_crd + inmon3 + m
+				    << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
+				    << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
+				    << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
+				    << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
+				    << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
+				    << std::endl;
                         }
                     }
 
@@ -2232,41 +2255,29 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                     fi_sites += nmon * ns;
                     fi_crd += nmon * ns * 3;
                 }
+
+		std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
+		  " offset= " << offset << std::endl;
+
+		std::cout << "atom_tag_= ";
+		for(int i=0; i<nsites_; ++i) std::cout << " " << atom_tag_[i];
+		std::cout << std::endl;
             }
             MPI_Barrier(world_);
         }
     }  // debug print
 #endif
 
-    // poor-man's reverse_forward communication that doesn't scale...
-
-    int local_size = nsites_;
-    int global_size = 0;
-#if HAVE_MPI == 1
-    MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
-#else
-    global_size = local_size;
-#endif
-
-    int offset = 0;
-#if HAVE_MPI == 1
-    MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
-#else  // FIXME Is this correct?
-    offset = local_size;
-#endif
-
-    // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
-    //   " offset= " << offset << std::endl;
-
-    offset = (offset - local_size) * 3;
     std::vector<double> in_all(global_size * 3, 0.0);
     std::vector<double> xyz_all(global_size * 3, 0.0);
+    std::vector<int> tag_all(global_size, 0);
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
 
     size_t indx = offset;
+    size_t indx3 = offset * 3;
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
@@ -2278,15 +2289,18 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
             size_t inmon = i * nmon;
             size_t inmon3 = inmon * 3;
             for (size_t m = 0; m < nmon; m++) {
-                in_all[indx] = in_v[fi_crd + inmon3 + m];
-                in_all[indx + 1] = in_v[fi_crd + inmon3 + nmon + m];
-                in_all[indx + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
+                in_all[indx3] = in_v[fi_crd + inmon3 + m];
+                in_all[indx3 + 1] = in_v[fi_crd + inmon3 + nmon + m];
+                in_all[indx3 + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
 
-                xyz_all[indx] = xyz_[fi_crd + inmon3 + m];
-                xyz_all[indx + 1] = xyz_[fi_crd + inmon3 + nmon + m];
-                xyz_all[indx + 2] = xyz_[fi_crd + inmon3 + nmon2 + m];
+                xyz_all[indx3] = xyz_[fi_crd + inmon3 + m];
+                xyz_all[indx3 + 1] = xyz_[fi_crd + inmon3 + nmon + m];
+                xyz_all[indx3 + 2] = xyz_[fi_crd + inmon3 + nmon2 + m];
 
-                indx += 3;
+		tag_all[indx] = atom_tag_[fi_sites + m + inmon];
+
+		indx++;
+                indx3 += 3;
             }
         }
 
@@ -2296,9 +2310,10 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
         fi_crd += nmon * ns * 3;
     }
 
-#if HAVE_MPI == 1  // FIXME Not sure if there is somethign to do if not defined
-    MPI_Allreduce(MPI_IN_PLACE, in_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
+#if HAVE_MPI == 1
+    MPI_Allreduce(MPI_IN_PLACE, in_all.data(),  global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
     MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
+    MPI_Allreduce(MPI_IN_PLACE, tag_all.data(), global_size,     MPI_INT,    MPI_SUM, world_);
 #endif
 
     const double tolerance = 1e-6;
@@ -2321,7 +2336,15 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
             size_t inmon3 = inmon * 3;
             for (size_t m = 0; m < nmon; m++) {
                 // test for same position in global list and tally
+  	        int tagi = atom_tag_[fi_sites + m + inmon];
                 for (int j = 0; j < global_size; ++j) {
+#if 1
+		  if(tagi == tag_all[j]) {
+		    in_v[fi_crd + inmon3 + m] += in_all[j * 3];
+		    in_v[fi_crd + inmon3 + nmon + m] += in_all[j * 3 + 1];
+		    in_v[fi_crd + inmon3 + nmon2 + m] += in_all[j * 3 + 2];
+		  }
+#else
                     bool same_particle = true;
                     double dx = xyz_[fi_crd + inmon3 + m] - xyz_all[j * 3];
                     double dy = xyz_[fi_crd + inmon3 + nmon + m] - xyz_all[j * 3 + 1];
@@ -2360,7 +2383,8 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                         in_v[fi_crd + inmon3 + m] += in_all[j * 3];
                         in_v[fi_crd + inmon3 + nmon + m] += in_all[j * 3 + 1];
                         in_v[fi_crd + inmon3 + nmon2 + m] += in_all[j * 3 + 2];
-                    }
+		    }
+#endif
 
                 }  // for(j)
             }
@@ -2397,7 +2421,8 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") REVFORCOMM OUT LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " tag= " << atom_tag_[fi_sites + m + inmon]
+				      << " indx= " << fi_crd + inmon3 + m
                                       << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
                                       << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
                                       << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
@@ -2425,6 +2450,8 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
     mbxt_ele_time_[ELE_COMM_REVFOR] += time2 - time1;
 #endif
     
+    //    std::cerr << "Early Termination" << std::endl;
+    //    std::exit(EXIT_FAILURE);
 }
 
 void Electrostatics::reverse_comm(std::vector<double> &in_v) {
@@ -2530,7 +2557,7 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
         fi_crd += nmon * ns * 3;
     }
 
-#if HAVE_MPI == 1  // FIXME nothing to do if else?
+#if HAVE_MPI == 1
     MPI_Allreduce(MPI_IN_PLACE, in_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
     MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
 #endif
@@ -2761,7 +2788,7 @@ void Electrostatics::reverse_comm_1d(std::vector<double> &in_v) {
         fi_crd += nmon * ns * 3;
     }
 
-#if HAVE_MPI == 1  // FIXME nothing to do if else?
+#if HAVE_MPI == 1
     MPI_Allreduce(MPI_IN_PLACE, in_all.data(),  global_size,     MPI_DOUBLE, MPI_SUM, world_);
     MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
 #endif
@@ -2996,7 +3023,7 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
         fi_crd += nmon * ns * 3;
     }
 
-#if HAVE_MPI == 1  // FIXME nothing to do if else?
+#if HAVE_MPI == 1
     MPI_Allreduce(MPI_IN_PLACE, in_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
     MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
 #endif
