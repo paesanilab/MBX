@@ -48,7 +48,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 constexpr double TOL = 1E-6;
 
-TEST_CASE("sys_tools::SetupMonomers") {
+TEST_CASE("systools::SetupMonomers") {
     SECTION("General behavior co2_2 h2o_2") {
         // Set up variables to create a system of 2 co2 and 2 h2o
         SETUP_CO2_2_H2O_2
@@ -122,7 +122,7 @@ TEST_CASE("sys_tools::SetupMonomers") {
     }
 }
 
-TEST_CASE("sys_tools::OrderMonomers") {
+TEST_CASE("systools::OrderMonomers") {
     std::vector<std::string> in_mons = {"c", "b", "b", "a"};
     std::vector<size_t> in_islocal = {1, 1, 0, 0};
     std::vector<size_t> in_sites = {3, 1, 1, 2};
@@ -212,7 +212,7 @@ TEST_CASE("sys_tools::OrderMonomers") {
     }
 }
 
-TEST_CASE("sys_tools::FixMonomerCoordinates") {
+TEST_CASE("systools::FixMonomerCoordinates") {
     SECTION("General behavior: cubic box -> A=B=C=10.0, a=b=c=90.0") {
         std::vector<double> box = {10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0};
         std::vector<double> box_inv = InvertUnitCell(box);
@@ -377,7 +377,7 @@ TEST_CASE("sys_tools::FixMonomerCoordinates") {
     }
 }
 
-TEST_CASE("sys_tools::GetCloseDimerImage") {
+TEST_CASE("systools::GetCloseDimerImage") {
     SECTION("General behavior: cubic box") {
         std::vector<double> box = {10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0};
         std::vector<double> box_inv = InvertUnitCell(box);
@@ -551,7 +551,7 @@ TEST_CASE("sys_tools::GetCloseDimerImage") {
     }
 }
 
-TEST_CASE("sys_tools::GetCloseTrimerImage") {
+TEST_CASE("systools::GetCloseTrimerImage") {
     SECTION("General behavior: cubic box") {
         std::vector<double> box = {10.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0};
         std::vector<double> box_inv = InvertUnitCell(box);
@@ -791,7 +791,7 @@ TEST_CASE("sys_tools::GetCloseTrimerImage") {
     }
 }
 
-TEST_CASE("sys_tools::ComparePair") {
+TEST_CASE("systools::ComparePair") {
     std::pair<size_t, double> a = std::make_pair(3, 1.0);
     std::pair<size_t, double> b = std::make_pair(5, 0.0);
     std::pair<size_t, double> c = std::make_pair(10, 4.2);
@@ -809,7 +809,7 @@ TEST_CASE("sys_tools::ComparePair") {
     REQUIRE(c_lt_d);
 }
 
-TEST_CASE("sys_tools::AddClusters") {
+TEST_CASE("systools::AddClusters") {
     SECTION("Gas Phase") {
         SECTION("Monoatomic") {
             std::vector<double> xyz_monomer = {0.0, 0.0, 0.0};
@@ -990,7 +990,7 @@ TEST_CASE("sys_tools::AddClusters") {
     }
 }
 
-TEST_CASE("sys_tools::GetExcluded") {
+TEST_CASE("systools::GetExcluded") {
     SECTION("h2o") {
         excluded_set_type exc12, exc12_expected;
         excluded_set_type exc13, exc13_expected;
@@ -1060,9 +1060,32 @@ TEST_CASE("sys_tools::GetExcluded") {
         REQUIRE(exc13 == exc13_expected);
         REQUIRE(exc14 == exc14_expected);
     }
+
+    SECTION("h4_dummy") {
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "h4_dummy";
+
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+        exc12_expected.insert(std::make_pair(0, 2));
+        exc12_expected.insert(std::make_pair(0, 3));
+        // 13 distances
+        exc13_expected.insert(std::make_pair(1, 2));
+        exc13_expected.insert(std::make_pair(1, 3));
+        exc13_expected.insert(std::make_pair(2, 3));
+
+        systools::GetExcluded(mon, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
 }
 
-TEST_CASE("sys_tools::GetAdd") {
+TEST_CASE("systools::GetAdd") {
     bool t = true;
     bool f = false;
     SECTION("h2o") {
@@ -1106,9 +1129,23 @@ TEST_CASE("sys_tools::GetAdd") {
         REQUIRE(systools::GetAdd(f, t, f, mon) == Approx(aDD_13).margin(TOL));
         REQUIRE(systools::GetAdd(f, f, t, mon) == Approx(aDD_14).margin(TOL));
     }
+
+    SECTION("h4_dummy") {
+        double aDD_12 = 0.3;
+        double aDD_13 = 0.3;
+        double aDD_14 = 0.055;
+        double aDD_inter = 0.055;
+
+        std::string mon = "ch4";
+
+        REQUIRE(systools::GetAdd(f, f, f, mon) == Approx(aDD_inter).margin(TOL));
+        REQUIRE(systools::GetAdd(t, f, f, mon) == Approx(aDD_12).margin(TOL));
+        REQUIRE(systools::GetAdd(f, t, f, mon) == Approx(aDD_13).margin(TOL));
+        REQUIRE(systools::GetAdd(f, f, t, mon) == Approx(aDD_14).margin(TOL));
+    }
 }
 
-TEST_CASE("sys_tools::ResetOrder3N") {
+TEST_CASE("systools::ResetOrder3N") {
     SECTION("Arbitrary System") {
         std::vector<double> coords_in = {0.0, 0.0, 0.0,                                                // mon1
                                          1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0,                  // mon2
@@ -1140,7 +1177,7 @@ TEST_CASE("sys_tools::ResetOrder3N") {
     }
 }
 
-TEST_CASE("sys_tools::ResetOrderReal3N") {
+TEST_CASE("systools::ResetOrderReal3N") {
     SECTION("Arbitrary System") {
         std::vector<double> coords_in = {0.0, 0.0, 0.0,                                                // mon1
                                          1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0,                  // mon2
@@ -1174,7 +1211,7 @@ TEST_CASE("sys_tools::ResetOrderReal3N") {
     }
 }
 
-TEST_CASE("sys_tools::SetVSites") {
+TEST_CASE("systools::SetVSites") {
     SECTION("One water") {
         std::vector<double> xyz = {9.9259685460e-01,
                                    2.1439525102e+00,
@@ -1335,7 +1372,144 @@ TEST_CASE("sys_tools::SetVSites") {
     }
 }
 
-TEST_CASE("sys_tools::ChargeDerivativeForce") {
+TEST_CASE("systools::SetCharges") {
+    SETUP_MONMIX
+    for (size_t i = 0; i < n_monomers; i++) {
+        std::string monname = monomer_names[i];
+        SECTION(monname) {
+            size_t n_mon = 1;
+            size_t nsites = n_sites_vector[i];
+            size_t fi = first_index[i];
+            std::vector<double> chg_der(27 * n_mon, 0.0);
+            std::vector<double> chg(n_sites, 0.0);
+
+            systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der);
+
+            for (size_t k = 0; k < nsites; k++) {
+                REQUIRE(chg[k + fi] == Approx(charges[k + fi]).margin(TOL));
+            }
+        }
+    }
+
+    SECTION("Multiple water molecules") {
+        std::vector<double> xyz = {
+            -4.4590985000e-03, -5.1342579600e-02, 1.5813800000e-05,  9.8613021140e-01,  -7.4573098400e-02,
+            5.4324000000e-06,  -1.5974709230e-01, 8.9671808950e-01,  -1.6493200000e-05, 1.7375531156e-01,
+            1.4597311531e-01,  6.7060829692e-06,  -4.4590985000e-03, -5.1342579600e-02, 3.0000158138e+00,
+            9.8613021140e-01,  -7.4573098400e-02, 3.0000054324e+00,  -1.5974709230e-01, 8.9671808950e-01,
+            3.0000164932e+00,  1.7375531156e-01,  1.4597311531e-01,  3.0000137438e+00,  -1.5989540000e+01,
+            -4.3787000000e-01, 2.5724300000e+00,  -1.5247830000e+01, 1.0363000000e-01,  1.9881600000e+00,
+            -1.6551160000e+01, 2.3073000000e-01,  3.1955700000e+00,  -1.6639150000e+01, -8.8267000000e-01,
+            1.9054200000e+00,  -1.5452720000e+01, -1.1652700000e+00, 3.1896100000e+00};
+        std::string monname = "h2o";
+        std::vector<double> charges_expected = {
+            0.0000000000e+00, 5.5994360603e-01, 5.6438371699e-01,  -1.1243273230e+00, 0.0000000000e+00,
+            5.5994360616e-01, 5.6438371720e-01, -1.1243273234e+00, -5.3857300000e-01, 1.3464325000e-01,
+            1.3464325000e-01, 1.3464325000e-01, 1.3464325000e-01};
+        std::vector<double> charge_der_expected = {
+            -1.9774807929e-01, -5.8226673322e-02, 4.3312083589e-06,  -5.2438371945e-02, -5.3746127141e-02,
+            2.5249227302e-06,  2.5018645124e-01,  1.1197280046e-01,  -6.8561310891e-06, -5.5012500373e-02,
+            -6.5151995707e-02, 2.9638990631e-06,  -2.2842827899e-02, -2.1123412103e-01, 7.8486074784e-06,
+            7.7855328272e-02,  2.7638611674e-01,  -1.0812506542e-05, 2.5276057967e-01,  1.2337866903e-01,
+            -7.2951074220e-06, 7.5281199844e-02,  2.6498024817e-01,  -1.0373530209e-05, -3.2804177951e-01,
+            -3.8835891720e-01, 1.7668637631e-05,  -1.9774807924e-01, -5.8226673484e-02, 2.1355086003e-06,
+            -5.2438372013e-02, -5.3746127153e-02, 6.0474101469e-07,  2.5018645126e-01,  1.1197280064e-01,
+            -2.7402496150e-06, -5.5012500505e-02, -6.5151995924e-02, 6.4322792271e-07,  -2.2842827875e-02,
+            -2.1123412127e-01, 4.5197110687e-07,  7.7855328380e-02,  2.7638611719e-01,  -1.0951990296e-06,
+            2.5276057975e-01,  1.2337866941e-01,  -2.7787365231e-06, 7.5281199888e-02,  2.6498024842e-01,
+            -1.0567121216e-06, -3.2804177964e-01, -3.8835891783e-01, 3.8354486446e-06};
+        size_t fi = 0;
+        size_t nsites = 4;
+        size_t nmon = 2;
+
+        std::vector<double> chg(charges_expected.size(), 0.0);
+        std::vector<double> chg_der(charge_der_expected.size(), 0.0);
+
+        systools::SetCharges(xyz, chg, monname, nmon, nsites, fi, chg_der);
+
+        fi = 8;
+        nsites = 5;
+        nmon = 1;
+        monname = "ch4";
+
+        systools::SetCharges(xyz, chg, monname, nmon, nsites, fi, chg_der);
+
+        for (size_t i = 0; i < charges_expected.size(); i++) {
+            REQUIRE(chg[i] == Approx(charges_expected[i]).margin(TOL));
+        }
+
+        for (size_t i = 0; i < charge_der_expected.size(); i++) {
+            REQUIRE(chg_der[i] == Approx(charge_der_expected[i]).margin(TOL));
+        }
+    }
+}
+
+TEST_CASE("systools::SetPol") {
+    SETUP_MONMIX
+    for (size_t i = 0; i < n_monomers; i++) {
+        std::string monname = monomer_names[i];
+        SECTION(monname) {
+            size_t n_mon = 1;
+            size_t nsites = n_sites_vector[i];
+            size_t fi = first_index[i];
+            std::vector<double> pol_out(n_sites, 0.0);
+
+            systools::SetPol(pol_out, monname, n_mon, nsites, fi);
+
+            for (size_t k = 0; k < nsites; k++) {
+                REQUIRE(pol_out[k + fi] == Approx(pol[k + fi]).margin(TOL));
+            }
+        }
+    }
+}
+
+TEST_CASE("systools::SetPolfac") {
+    SETUP_MONMIX
+    for (size_t i = 0; i < n_monomers; i++) {
+        std::string monname = monomer_names[i];
+        SECTION(monname) {
+            size_t n_mon = 1;
+            size_t nsites = n_sites_vector[i];
+            size_t fi = first_index[i];
+            std::vector<double> polfac_out(n_sites, 0.0);
+
+            systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi);
+
+            for (size_t k = 0; k < nsites; k++) {
+                REQUIRE(polfac_out[k + fi] == Approx(polfac[k + fi]).margin(TOL));
+            }
+        }
+    }
+}
+
+TEST_CASE("systools::SetC6LongRange") {
+    SETUP_MONMIX
+    for (size_t i = 0; i < n_monomers; i++) {
+        std::string monname = monomer_names[i];
+        SECTION(monname) {
+            size_t n_mon = 1;
+            size_t natoms = n_atoms_vector[i];
+            size_t fi = first_index_realSites[i];
+            std::vector<double> c6_out(n_atoms, 0.0);
+
+            systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi);
+
+            for (size_t k = 0; k < natoms; k++) {
+                REQUIRE(c6_out[k + fi] == Approx(C6_long_range[k + fi]).margin(TOL));
+            }
+        }
+    }
+}
+
+TEST_CASE("systools::RedistributeVirtGrads2Real") {
+    SECTION("One water") {}
+
+    SECTION("Two waters") {}
+
+    SECTION("One ch4, 2h2o") {}
+}
+
+TEST_CASE("systools::ChargeDerivativeForce") {
     SECTION("Single Water Monomer") {
         std::string mon = "h2o";
         size_t nmon = 1;

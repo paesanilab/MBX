@@ -94,7 +94,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                      5.7203329069e-01,  0.0000000000e+00,  5.7636979828e-01,  5.7479892955e-01};      \
     std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"co2", 2}, {"h2o", 2}};                      \
     std::vector<size_t> internal_original_to_current_order{0, 1, 2, 3};                                               \
-    std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}, {1, 3}, {2, 6}, {3, 10}};                   \
+    std::vector<std::pair<size_t, size_t>> internal_original_order{{0, 0}, {1, 3}, {2, 6}, {3, 10}};                  \
     std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}, {1, 3}, {2, 6}, {3, 9}};         \
     std::vector<double> C6_long_range{1.7916733202e+01, 1.3042057313e+01, 1.3042057313e+01, 1.7916733202e+01,         \
                                       1.3042057313e+01, 1.3042057313e+01, 1.5405233572e+01, 4.4825869765e+00,         \
