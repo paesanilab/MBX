@@ -305,8 +305,6 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
         if (accum2) {
             double scale = 1.0;
             if (use_ghost && (isls == 1)) scale = 0.5;
-            // if(use_ghost && isls == 1) scale = 0.5;
-            // if(use_ghost && isls == 0) scale = 0.0;
 
             // Distances between sites i and j from mon1 and mon2
             const double rawrijx = xyzmon1_x - xyz2[site_jnmon23 + m];

@@ -263,9 +263,6 @@ class Electrostatics {
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
     void reverse_forward_comm(std::vector<double> &in_v);
-    void reverse_comm(std::vector<double> &in_v);
-    void reverse_comm_1d(std::vector<double> &in_v);
-    void forward_comm(std::vector<double> &in_v);
 
     void ReorderData();
 
@@ -297,6 +294,11 @@ class Electrostatics {
     std::vector<int> sys_atom_tag_;
     // Atom tags for real and virtual sites, ordered
     std::vector<int> atom_tag_;
+    // Nearest Neighbor Look-up table: first neighbor, num neighbors, neighbor list
+    std::vector<size_t> nn_first_neigh;
+    std::vector<size_t> nn_num_neighs;
+    std::vector<size_t> nn_neighs;
+    bool nn_first;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
