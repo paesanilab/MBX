@@ -2320,7 +2320,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
     const double tolerance = 1e-6;
 
     for (int i = 0; i < nsites_ * 3; ++i) in_v[i] = 0.0;
-#if 1
+
     // record lookup table
 
     if(nn_first) {
@@ -2389,7 +2389,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
             for (size_t m = 0; m < nmon; m++) {
 
 	      for(int j = 0; j < nn_num_neighs[indx]; ++j) {
-		in_v[fi_crd + inmon3 + m]         += in_all[ nn_neighs[nn_first_neigh[indx] + j] ];
+		in_v[fi_crd + inmon3 + m]         += in_all[ nn_neighs[nn_first_neigh[indx] + j]    ];
 		in_v[fi_crd + inmon3 + nmon + m]  += in_all[ nn_neighs[nn_first_neigh[indx] + j] + 1];
 		in_v[fi_crd + inmon3 + nmon2 + m] += in_all[ nn_neighs[nn_first_neigh[indx] + j] + 2];
 	      }
@@ -2403,42 +2403,6 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
-#else
-    fi_mon = 0;
-    fi_crd = 0;
-    fi_sites = 0;
-
-    // Loop over each monomer type
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
-
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t m = 0; m < nmon; m++) {
-                // test for same position in global list and tally
-  	        int tagi = atom_tag_[fi_sites + m + inmon];
-                for (int j = 0; j < global_size; ++j) {
-		  
-		  if(tagi == tag_all[j]) {
-		    in_v[fi_crd + inmon3 + m] += in_all[j * 3];
-		    in_v[fi_crd + inmon3 + nmon + m] += in_all[j * 3 + 1];
-		    in_v[fi_crd + inmon3 + nmon2 + m] += in_all[j * 3 + 2];
-		  }
-
-                }  // for(j)
-            }
-        }
-
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-#endif
     
 #ifdef _DEBUG_COMM
     {  // debug print

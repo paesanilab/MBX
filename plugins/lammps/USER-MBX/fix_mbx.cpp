@@ -30,15 +30,12 @@
 #include "memory.h"
 #include "citeme.h"
 #include "error.h"
+#include "universe.h"
 
 #define _MAX_SIZE_MOL_NAME 10
 #define SMALL 1.0e-4
 
 //#define _DEBUG
-
-//#ifdef _DEBUG
-#include "universe.h"
-//#endif
 
 #ifdef _USE_PMELOCAL
 #define _USE_MBX_LOCAL // use with MBX MPI-enabled
@@ -505,7 +502,7 @@ void FixMBX::post_neighbor()
   
   ptr_mbx       = new bblock::System();
 #ifdef _USE_MBX_FULL
-  ptr_mbx_full  = new bblock::System();
+  if(domain->nonperiodic) ptr_mbx_full  = new bblock::System();
 #endif
 #ifdef _USE_MBX_LOCAL
   ptr_mbx_local = new bblock::System();
@@ -517,7 +514,7 @@ void FixMBX::post_neighbor()
   // -- if anchor-atom is local, then molecule is treated as if local
   
   mbx_init();
-  mbx_init_full();
+  if(domain->nonperiodic) mbx_init_full();
   mbx_init_local();
   mbx_init_pme();
 
@@ -555,7 +552,7 @@ void FixMBX::pre_force(int /*vflag*/)
   // update coordinates in MBX objects
   
   mbx_update_xyz();
-  mbx_update_xyz_full();
+  if(domain->nonperiodic) mbx_update_xyz_full();
   mbx_update_xyz_local();
   mbx_update_xyz_pme();
 }
