@@ -132,8 +132,7 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
 
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
                      std::vector<size_t> &fi_at) {
-    // Make sure that mons, sites and nat have the same size and are
-    // not empty
+    // Make sure that mon is not empty
     if (mon.size() < 1) {
         std::string text = "Monomer vector cannot be empty.";
         throw CUException(__func__, __FILE__, __LINE__, text);
@@ -215,6 +214,11 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
     // Any other size is not acceptable
     if (box.size() != 9) {
         std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    if (box_inv.size() != 9) {
+        std::string text = "Box inverse size of " + std::to_string(box_inv.size()) + " is not acceptable.";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
@@ -655,7 +659,6 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc13.insert(std::make_pair(2, 3));
         // 14 distances
     }
-
 
     // =====>> END SECTION EXCLUDED <<=====
 }
@@ -1165,19 +1168,25 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const 
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
                            const std::vector<double> phi, std::vector<double> &grad, const std::vector<double> chg_grad,
                            double *crd, std::vector<double> *qdvirial) {
+    // Note: XYZ is in the internal electorstatics order: Ox1Ox2Ox3...Oy1Oy2Oy3.. Oz1...Hx1Hx2..
     // If water, extracted from patridge-schwneke paper
     if (mon == "h2o") {
         for (size_t mm = 0; mm < nmon; mm++) {
+            // Declaring shfts for coordinates and fields
             const size_t shift = fi_crd + 12 * mm;
             const size_t sphi = fi_sites + 4 * mm;
+            // Size of gradq is 27: derivative of charge in each site (3) with respect of the position of each site (3) in each of the xyz components (3); 3x3x3 OHH reign
             double gradq[27];
             std::fill(gradq, gradq + 27, 0.0);
+            // Derivatives of the charges in HHM reign
             double chgdev[27];
             std::copy(chg_grad.begin() + 27 * mm, chg_grad.begin() + 27 * (mm + 1), chgdev);
 
-#define DQ3(l, m, k) chgdev[k + 3 * (m + 3 * l)]
-#define GRADQ(l, m, k) gradq[k + 3 * (m + 3 * l)]
+            // Fast way to access the derivatives
+#define     DQ3(l, m, k) chgdev[k + 3 * (m + 3 * l)]
+#define     GRADQ(l, m, k) gradq[k + 3 * (m + 3 * l)]
 
+            // Convert charge derivatives from HHM to OHH 
             for (size_t k = 0; k < 3; ++k) {
                 GRADQ(0, 0, k) = DQ3(0, 0, k) + gamma21 * (DQ3(0, 0, k) + DQ3(0, 1, k));
                 GRADQ(1, 0, k) = DQ3(1, 0, k) + gamma21 * (DQ3(1, 0, k) + DQ3(1, 1, k));
@@ -1192,12 +1201,15 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 GRADQ(2, 2, k) = DQ3(2, 2, k) - 2 * gamma21 * (DQ3(2, 0, k) + DQ3(2, 1, k));
             }
 
+            // Convert units to match kcal/mol when multiplied by phi
             for (size_t i = 0; i < 27; ++i) gradq[i] *= constants::COULOMB;
 
             const size_t io = shift;
             const size_t ih1 = shift + 3;
             const size_t ih2 = shift + 6;
 
+            // See J. Chem. Phys. 116, 5115 (2002); https://doi.org/10.1063/1.1447904, Eqs. A8 and A9
+            // Retrieve the actual gradients in kcal/mol 
             for (size_t k = 0; k < 3; ++k) {
                 grad[ih1 + k] += GRADQ(0, 0, k) * phi[sphi + 1]     // phi(h1)
                                  + GRADQ(0, 1, k) * phi[sphi + 2]   // phi(h2)
@@ -1213,6 +1225,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             }
 
             if (qdvirial != 0) {
+                // OHH coordinates of current water molecule
                 std::vector<double> temp_pos = {crd[mm * 1],        crd[mm + nmon],     crd[mm + 2 * nmon],
                                                 crd[mm + 3 * nmon], crd[mm + 4 * nmon], crd[mm + 5 * nmon],
                                                 crd[mm + 6 * nmon], crd[mm + 7 * nmon], crd[mm + 8 * nmon]};
@@ -1225,6 +1238,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                              &aux_data);  // get them aux data (charge derivateves with respect to internal coords)
 
                 // get the charge derivatives in internal coordinates ( r12 = rOH1, r13=rOH2, cos = cos(theta))
+                // p1 is H1 charge, p2 is H2 charge, p0 would be the O = -H1 - H2
                 double dp1dr12 = aux_data[0];  // pass data onto variables
                 double dp1dr13 = aux_data[1];
                 double dp2dr12 = aux_data[2];
@@ -1240,7 +1254,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
 
                 double tmp = gamma / 2.0 / (1.0 - gamma);
 
-                // adding M-site contribution to the derivatives
+                // adding M-site contribution to the derivatives -> converting from p (3 point charge fropm PS) to q (4 point charge)
                 dqdr12[1] = dp1dr12 + (dp1dr12 + dp2dr12) * tmp;  // h1
                 dqdr13[1] = dp1dr13 + (dp1dr13 + dp2dr13) * tmp;
                 dqdcos[1] = dp1dcos + (dp1dcos + dp2dcos) * tmp;
@@ -1253,6 +1267,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 dqdr13[3] = -(dp1dr13 + dp2dr13) / (1.0 - gamma);
                 dqdcos[3] = -(dp1dcos + dp2dcos) / (1.0 - gamma);
 
+                // probably start at ii =1 
                 for (int ii = 0; ii < 4; ii++) {  // loop over all sites
 
                     // get the electrostatic potential on that site
@@ -1269,6 +1284,8 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                     if (ii == 3) {
                         vtmp = phi[sphi + 3];  // M
                     }
+
+                    // We could remove l loop, and set m=1 and m=2, or delete the m part.
 
                     for (int l = 0; l < 3; l++) {  // double loop for charge derivatives with respect to each internal
                                                    // bond coordinate (ie r12 and r13) for each atom.
