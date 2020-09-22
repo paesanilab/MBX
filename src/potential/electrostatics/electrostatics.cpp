@@ -3757,10 +3757,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     } // debug print
 #endif
 
-    // proxy for reverse_comm(out_v) to accumulate
-    //    reverse_comm(out_v);
-    reverse_forward_comm(out_v);
-
 #if HAVE_MPI == 1
     double time3 = MPI_Wtime();
 
@@ -3770,6 +3766,9 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     mbxt_ele_count_[ELE_DIPFIELD_PME]++;
     mbxt_ele_time_[ELE_DIPFIELD_PME] += time3 - time2;
 #endif
+    
+    // proxy for reverse_forward_comm(out_v) to accumulate
+    reverse_forward_comm(out_v);
 }
 
 void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
@@ -4453,8 +4452,6 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     
     // Reset grad
     grad_ = std::vector<double>(3 * nsites_, 0.0);
-
-    //    reverse_forward_comm(Efq_);
     
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second;
