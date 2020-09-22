@@ -455,12 +455,15 @@ class System {
      * as the database.
      * @param[in] islocal Is an optional int that indicates whether a monomer
      * is local or ghost within a LAMMPS sub-domain
+     * @param[in] tag Is an optional int that indicates unique tag of first 
+     * atom in monomer
      * @warning The monomer coordinates and atoms must be in the same order
      * as the database.
      * The id must also match with the database.
      * Please read the documentation carefully.
      */
-    void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1);
+    void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id,
+		    size_t islocal = 1, int tag = 0);
 
     std::string GetCurrentSystemConfig();
 
@@ -1215,6 +1218,11 @@ to be the same.
      * of the system
      */
     std::vector<size_t> islocal_;
+  
+    /**
+     * Vector that stores unique id for atoms within monomer; positive and negative values used
+     */
+    std::vector<int> atom_tag_;
 
     /**
      * Vector that stores the atom names of all sites in the internal order

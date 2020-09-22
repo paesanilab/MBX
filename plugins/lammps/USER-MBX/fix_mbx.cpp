@@ -261,6 +261,11 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   }
 
   first_step = true;
+
+  // MBX currently requires 4-byte tags
+
+  if( sizeof(tagint) != sizeof(int) )
+    error->all(FLERR,"[MBX] Tagints required to be of type int.");
   
   mbxt_initial_time = MPI_Wtime();
 }
@@ -794,7 +799,7 @@ void FixMBX::mbx_init()
 	  molec.push_back(nm);
 	  nm++;
 	  
-	  ptr_mbx->AddMonomer(xyz, names, "h2o", is_local);
+	  ptr_mbx->AddMonomer(xyz, names, "h2o", is_local, anchor);
 	  ptr_mbx->AddMolecule(molec);
 	  
 	  mbx_num_atoms += 3;
@@ -812,7 +817,7 @@ void FixMBX::mbx_init()
 
 	molec.push_back(nm++);
 
-	ptr_mbx->AddMonomer(xyz, names, "na", is_local);
+	ptr_mbx->AddMonomer(xyz, names, "na", is_local, anchor);
 	ptr_mbx->AddMolecule(molec);
 
 	mbx_num_atoms++;
@@ -829,7 +834,7 @@ void FixMBX::mbx_init()
 
 	molec.push_back(nm++);
 
-	ptr_mbx->AddMonomer(xyz, names, "cl", is_local);
+	ptr_mbx->AddMonomer(xyz, names, "cl", is_local, anchor);
 	ptr_mbx->AddMolecule(molec);
 
 	mbx_num_atoms++;
@@ -846,7 +851,7 @@ void FixMBX::mbx_init()
 	
 	molec.push_back(nm++);
 	
-	ptr_mbx->AddMonomer(xyz, names, "he", is_local);
+	ptr_mbx->AddMonomer(xyz, names, "he", is_local, anchor);
 	ptr_mbx->AddMolecule(molec);
 	
 	mbx_num_atoms++;
@@ -881,7 +886,7 @@ void FixMBX::mbx_init()
 	  
 	  molec.push_back(nm++);
 	  
-	  ptr_mbx->AddMonomer(xyz, names, "co2", is_local);
+	  ptr_mbx->AddMonomer(xyz, names, "co2", is_local, anchor);
 	  ptr_mbx->AddMolecule(molec);
 	  
 	  mbx_num_atoms += 3;
@@ -931,7 +936,7 @@ void FixMBX::mbx_init()
 	  
 	  molec.push_back(nm++);
 	  
-	  ptr_mbx->AddMonomer(xyz, names, "ch4", is_local);
+	  ptr_mbx->AddMonomer(xyz, names, "ch4", is_local, anchor);
 	  ptr_mbx->AddMolecule(molec);
 	  
 	  mbx_num_atoms += 5;
@@ -1148,7 +1153,7 @@ void FixMBX::mbx_init_local()
 	  molec.push_back(nm);
 	  nm++;
 	
-	  ptr_mbx_local->AddMonomer(xyz, names, "h2o", is_local);
+	  ptr_mbx_local->AddMonomer(xyz, names, "h2o", is_local, anchor);
 	  ptr_mbx_local->AddMolecule(molec);
 	
 	  mbx_num_atoms_local += 3;
@@ -1166,7 +1171,7 @@ void FixMBX::mbx_init_local()
 	
 	molec.push_back(nm++);
 	
-	ptr_mbx_local->AddMonomer(xyz, names, "na", is_local);
+	ptr_mbx_local->AddMonomer(xyz, names, "na", is_local, anchor);
 	ptr_mbx_local->AddMolecule(molec);
 	
 	mbx_num_atoms_local++;
@@ -1183,7 +1188,7 @@ void FixMBX::mbx_init_local()
 	
 	molec.push_back(nm++);
 	
-	ptr_mbx_local->AddMonomer(xyz, names, "cl", is_local);
+	ptr_mbx_local->AddMonomer(xyz, names, "cl", is_local, anchor);
 	ptr_mbx_local->AddMolecule(molec);
 	
 	mbx_num_atoms_local++;
@@ -1200,7 +1205,7 @@ void FixMBX::mbx_init_local()
 	
 	molec.push_back(nm++);
 	
-	ptr_mbx_local->AddMonomer(xyz, names, "he", is_local);
+	ptr_mbx_local->AddMonomer(xyz, names, "he", is_local, anchor);
 	ptr_mbx_local->AddMolecule(molec);
 	
 	mbx_num_atoms_local++;
@@ -1236,7 +1241,7 @@ void FixMBX::mbx_init_local()
 	  
 	  molec.push_back(nm++);
 	  
-	  ptr_mbx_local->AddMonomer(xyz, names, "co2", is_local);
+	  ptr_mbx_local->AddMonomer(xyz, names, "co2", is_local, anchor);
 	  ptr_mbx_local->AddMolecule(molec);
 	  
 	  mbx_num_atoms_local += 3;
@@ -1288,7 +1293,7 @@ void FixMBX::mbx_init_local()
 	  
 	  molec.push_back(nm++);
 	  
-	  ptr_mbx_local->AddMonomer(xyz, names, "ch4", is_local);
+	  ptr_mbx_local->AddMonomer(xyz, names, "ch4", is_local, anchor);
 	  ptr_mbx_local->AddMolecule(molec);
 	  
 	  mbx_num_atoms_local += 5;
@@ -1505,7 +1510,7 @@ void FixMBX::mbx_init_full()
 	molec.push_back(nm);
 	nm++;
 
-	ptr_mbx_full->AddMonomer(xyz, names, "h2o", is_local);
+	ptr_mbx_full->AddMonomer(xyz, names, "h2o", is_local, anchor);
 	ptr_mbx_full->AddMolecule(molec);
 
 	mbx_num_atoms_full += 3;
@@ -1522,7 +1527,7 @@ void FixMBX::mbx_init_full()
 
 	molec.push_back(nm++);
 
-	ptr_mbx_full->AddMonomer(xyz, names, "na", is_local);
+	ptr_mbx_full->AddMonomer(xyz, names, "na", is_local, anchor);
 	ptr_mbx_full->AddMolecule(molec);
 
 	mbx_num_atoms_full++;
@@ -1539,7 +1544,7 @@ void FixMBX::mbx_init_full()
 
 	molec.push_back(nm++);
 
-	ptr_mbx_full->AddMonomer(xyz, names, "cl", is_local);
+	ptr_mbx_full->AddMonomer(xyz, names, "cl", is_local, anchor);
 	ptr_mbx_full->AddMolecule(molec);
 
 	mbx_num_atoms_full++;
@@ -1555,7 +1560,7 @@ void FixMBX::mbx_init_full()
 	
 	molec.push_back(nm++);
 	
-	ptr_mbx_full->AddMonomer(xyz, names, "he", is_local);
+	ptr_mbx_full->AddMonomer(xyz, names, "he", is_local, anchor);
 	ptr_mbx_full->AddMolecule(molec);
 	
 	mbx_num_atoms_full++;
@@ -1588,7 +1593,7 @@ void FixMBX::mbx_init_full()
 
 	molec.push_back(nm++);
 
-	ptr_mbx_full->AddMonomer(xyz, names, "co2", is_local);
+	ptr_mbx_full->AddMonomer(xyz, names, "co2", is_local, anchor);
 	ptr_mbx_full->AddMolecule(molec);
 
 	mbx_num_atoms_full += 3;
@@ -1637,7 +1642,7 @@ void FixMBX::mbx_init_full()
 	
 	molec.push_back(nm++);
 	
-	ptr_mbx_full->AddMonomer(xyz, names, "ch4", is_local);
+	ptr_mbx_full->AddMonomer(xyz, names, "ch4", is_local, anchor);
 	ptr_mbx_full->AddMolecule(molec);
 	
 	mbx_num_atoms_full += 5;
@@ -1818,7 +1823,7 @@ void FixMBX::mbx_init_pme()
 	molec.push_back(nm);
 	nm++;
 
-	ptr_mbx_pme->AddMonomer(xyz, names, "h2o", is_local);
+	ptr_mbx_pme->AddMonomer(xyz, names, "h2o", is_local, anchor);
 	ptr_mbx_pme->AddMolecule(molec);
 
 	mbx_num_atoms_pme += 3;
@@ -1835,7 +1840,7 @@ void FixMBX::mbx_init_pme()
 
 	molec.push_back(nm++);
 
-	ptr_mbx_pme->AddMonomer(xyz, names, "na", is_local);
+	ptr_mbx_pme->AddMonomer(xyz, names, "na", is_local, anchor);
 	ptr_mbx_pme->AddMolecule(molec);
 
 	mbx_num_atoms_pme++;
@@ -1852,7 +1857,7 @@ void FixMBX::mbx_init_pme()
 
 	molec.push_back(nm++);
 
-	ptr_mbx_pme->AddMonomer(xyz, names, "cl", is_local);
+	ptr_mbx_pme->AddMonomer(xyz, names, "cl", is_local, anchor);
 	ptr_mbx_pme->AddMolecule(molec);
 
 	mbx_num_atoms_pme++;
@@ -1869,7 +1874,7 @@ void FixMBX::mbx_init_pme()
 	
 	molec.push_back(nm++);
 	
-	ptr_mbx_pme->AddMonomer(xyz, names, "he", is_local);
+	ptr_mbx_pme->AddMonomer(xyz, names, "he", is_local, anchor);
 	ptr_mbx_pme->AddMolecule(molec);
 	
 	mbx_num_atoms_pme++;
@@ -1902,7 +1907,7 @@ void FixMBX::mbx_init_pme()
 
 	molec.push_back(nm++);
 
-	ptr_mbx_pme->AddMonomer(xyz, names, "co2", is_local);
+	ptr_mbx_pme->AddMonomer(xyz, names, "co2", is_local, anchor);
 	ptr_mbx_pme->AddMolecule(molec);
 
 	mbx_num_atoms_pme += 3;
@@ -1952,7 +1957,7 @@ void FixMBX::mbx_init_pme()
 	
 	molec.push_back(nm++);
 	
-	ptr_mbx_pme->AddMonomer(xyz, names, "ch4", is_local);
+	ptr_mbx_pme->AddMonomer(xyz, names, "ch4", is_local, anchor);
 	ptr_mbx_pme->AddMolecule(molec);
 	
 	mbx_num_atoms_pme += 5;
