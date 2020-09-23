@@ -102,8 +102,8 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
 }
 
 void Dispersion::SetBoxPMElocal(std::vector<double> box) {
-  box_PMElocal_ = box;
-  box_ABCabc_PMElocal_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
+    box_PMElocal_ = box;
+    box_ABCabc_PMElocal_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
 }
 
 void Dispersion::ReorderData() {
