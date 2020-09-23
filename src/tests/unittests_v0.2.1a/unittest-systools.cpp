@@ -1085,6 +1085,22 @@ TEST_CASE("systools::GetExcluded") {
     }
 }
 
+TEST_CASE("systools::IsExcluded") {
+    excluded_set_type exc = {{0, 1}, {4, 2}, {9999, 1}, {0, 3}, {2, 1}, {5, 6}, {10, 100}};
+
+    REQUIRE(systools::IsExcluded(exc, 0, 1));
+    REQUIRE(systools::IsExcluded(exc, 1, 0));
+    REQUIRE(systools::IsExcluded(exc, 9999, 1));
+    REQUIRE(systools::IsExcluded(exc, 1, 2));
+    REQUIRE(systools::IsExcluded(exc, 10, 100));
+
+    REQUIRE(!systools::IsExcluded(exc, 0, 2));
+    REQUIRE(!systools::IsExcluded(exc, 2, 0));
+    REQUIRE(!systools::IsExcluded(exc, 10, 99));
+    REQUIRE(!systools::IsExcluded(exc, 9999, 2));
+    REQUIRE(!systools::IsExcluded(exc, 0, 0));
+}
+
 TEST_CASE("systools::GetAdd") {
     bool t = true;
     bool f = false;
@@ -1502,11 +1518,67 @@ TEST_CASE("systools::SetC6LongRange") {
 }
 
 TEST_CASE("systools::RedistributeVirtGrads2Real") {
-    SECTION("One water") {}
+    SECTION("One water") {
+        std::string mon = "h2o";
+        size_t nmon = 1;
+        size_t fi = 0;
+        std::vector<double> grad = {-39.0938, -6.31525, 0.000669562, 33.418, 4.8743, -0.000553522,
+                                    5.67578,  1.44095,  -0.00011604, 0,      0,      0};
+        std::vector<double> grad_expected = {-39.0938, -6.31525, 0.000669562, 33.418, 4.8743, -0.000553522,
+                                             5.67578,  1.44095,  -0.00011604, 0,      0,      0};
 
-    SECTION("Two waters") {}
+        systools::RedistributeVirtGrads2Real(mon, nmon, fi, grad);
 
-    SECTION("One ch4, 2h2o") {}
+        for (size_t k = 0; k < grad.size(); k++) {
+            REQUIRE(grad[k] == Approx(grad_expected[k]).margin(TOL));
+        }
+    }
+
+    SECTION("Two waters") {
+        std::string mon = "h2o";
+        size_t nmon = 2;
+        size_t fi = 0;
+        std::vector<double> grad = {-39.2479,  -6.45608, 3.10583,  35.519,  6.24413,  -0.669744, 6.77133,  3.68489,
+                                    -0.738357, -3.04238, -3.47303, 4.34023, -39.248,  -6.45611,  -3.10484, 35.5191,
+                                    6.2441,    0.669039, 6.77132,  3.68503, 0.738464, -3.04237,  -3.47293, -4.34062};
+        std::vector<double> grad_expected = {
+            -40.9921, -8.44714, 5.59405,  34.8699, 5.50315, 0.256258,  6.12223, 2.94391, 0.187646,  0, 0, 0,
+            -40.9922, -8.44712, -5.59328, 34.87,   5.50314, -0.257047, 6.12222, 2.94407, -0.187622, 0, 0, 0};
+
+        systools::RedistributeVirtGrads2Real(mon, nmon, fi, grad);
+
+        for (size_t k = 0; k < grad.size(); k++) {
+            REQUIRE(grad[k] == Approx(grad_expected[k]).margin(TOL));
+        }
+    }
+
+    SECTION("One ch4, 2h2o") {
+        std::string mon = "ch4";
+        size_t nmon = 1;
+        size_t fi = 0;
+        std::vector<double> grad = {-40.555,  -13.6802, -22.4947, 0.299268, -4.52007, -2.77728,  2.4222,  -9.35109,
+                                    -8.00349, 30.8887,  28.4027,  29.7365,  6.94466,  -0.851252, 3.53904, -39.248,
+                                    -6.45607, 3.10583,  35.5182,  6.24427,  -0.66965, 6.77037,   3.68497, -0.738304,
+                                    -3.04062, -3.47331, 4.34009,  -39.248,  -6.45611, -3.10485,  35.5184, 6.24419,
+                                    0.668865, 6.77041,  3.68504,  0.738276, -3.04068, -3.4731,   -4.34027};
+        std::vector<double> grad_expected = {
+            -40.555,  -13.6802, -22.4947,  0.299268,  -4.52007, -2.77728,  2.4222,  -9.35109, -8.00349, 30.8887,
+            28.4027,  29.7365,  6.94466,   -0.851252, 3.53904,  -40.9911,  -8.4473, 5.59398,  34.8695,  5.50323,
+            0.256322, 6.12164,  2.94392,   0.187668,  0,        0,         0,       -40.9912, -8.44721, -5.5931,
+            34.8697,  5.5032,   -0.257147, 6.12167,   2.94405,  -0.187736, 0,       0,        0};
+
+        systools::RedistributeVirtGrads2Real(mon, nmon, fi, grad);
+
+        nmon = 2;
+        fi = 15;
+        mon = "h2o";
+
+        systools::RedistributeVirtGrads2Real(mon, nmon, fi, grad);
+
+        for (size_t k = 0; k < grad.size(); k++) {
+            REQUIRE(grad[k] == Approx(grad_expected[k]).margin(TOL));
+        }
+    }
 }
 
 TEST_CASE("systools::ChargeDerivativeForce") {
