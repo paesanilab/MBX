@@ -613,6 +613,7 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
     exc13.clear();
     exc14.clear();
 
+    // MBX v0.1.0a
     if (mon == "h2o") {
         // 12 distances
         exc12.insert(std::make_pair(0, 1));
@@ -623,10 +624,13 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc13.insert(std::make_pair(1, 3));
         exc13.insert(std::make_pair(2, 3));
     }
-
-    // =====>> BEGIN SECTION EXCLUDED <<=====
-    // =====>> PASTE CODE BELOW <<=====
-
+    // MBX v0.2.3a
+    if (mon == "co2") {
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(0, 2));
+        exc13.insert(std::make_pair(1, 2));
+    }
+    // MBX v0.2.4a
     if (mon == "ch4") {
         // 12 distances
         exc12.insert(std::make_pair(0, 1));
@@ -640,13 +644,10 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
         exc13.insert(std::make_pair(2, 3));
         exc13.insert(std::make_pair(3, 4));
         exc13.insert(std::make_pair(2, 4));
-        // 14 distances
     }
-    if (mon == "co2") {
-        exc12.insert(std::make_pair(0, 1));
-        exc12.insert(std::make_pair(0, 2));
-        exc13.insert(std::make_pair(1, 2));
-    }
+
+    // =====>> BEGIN SECTION EXCLUDED <<=====
+    // =====>> PASTE CODE BELOW <<=====
 
     if (mon == "h4_dummy") {
         // 12 distances
@@ -1175,7 +1176,8 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             // Declaring shfts for coordinates and fields
             const size_t shift = fi_crd + 12 * mm;
             const size_t sphi = fi_sites + 4 * mm;
-            // Size of gradq is 27: derivative of charge in each site (3) with respect of the position of each site (3) in each of the xyz components (3); 3x3x3 OHH reign
+            // Size of gradq is 27: derivative of charge in each site (3) with respect of the position of each site (3)
+            // in each of the xyz components (3); 3x3x3 OHH reign
             double gradq[27];
             std::fill(gradq, gradq + 27, 0.0);
             // Derivatives of the charges in HHM reign
@@ -1183,10 +1185,10 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             std::copy(chg_grad.begin() + 27 * mm, chg_grad.begin() + 27 * (mm + 1), chgdev);
 
             // Fast way to access the derivatives
-#define     DQ3(l, m, k) chgdev[k + 3 * (m + 3 * l)]
-#define     GRADQ(l, m, k) gradq[k + 3 * (m + 3 * l)]
+#define DQ3(l, m, k) chgdev[k + 3 * (m + 3 * l)]
+#define GRADQ(l, m, k) gradq[k + 3 * (m + 3 * l)]
 
-            // Convert charge derivatives from HHM to OHH 
+            // Convert charge derivatives from HHM to OHH
             for (size_t k = 0; k < 3; ++k) {
                 GRADQ(0, 0, k) = DQ3(0, 0, k) + gamma21 * (DQ3(0, 0, k) + DQ3(0, 1, k));
                 GRADQ(1, 0, k) = DQ3(1, 0, k) + gamma21 * (DQ3(1, 0, k) + DQ3(1, 1, k));
@@ -1209,7 +1211,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             const size_t ih2 = shift + 6;
 
             // See J. Chem. Phys. 116, 5115 (2002); https://doi.org/10.1063/1.1447904, Eqs. A8 and A9
-            // Retrieve the actual gradients in kcal/mol 
+            // Retrieve the actual gradients in kcal/mol
             for (size_t k = 0; k < 3; ++k) {
                 grad[ih1 + k] += GRADQ(0, 0, k) * phi[sphi + 1]     // phi(h1)
                                  + GRADQ(0, 1, k) * phi[sphi + 2]   // phi(h2)
@@ -1254,7 +1256,8 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
 
                 double tmp = gamma / 2.0 / (1.0 - gamma);
 
-                // adding M-site contribution to the derivatives -> converting from p (3 point charge fropm PS) to q (4 point charge)
+                // adding M-site contribution to the derivatives -> converting from p (3 point charge fropm PS) to q (4
+                // point charge)
                 dqdr12[1] = dp1dr12 + (dp1dr12 + dp2dr12) * tmp;  // h1
                 dqdr13[1] = dp1dr13 + (dp1dr13 + dp2dr13) * tmp;
                 dqdcos[1] = dp1dcos + (dp1dcos + dp2dcos) * tmp;
@@ -1267,7 +1270,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
                 dqdr13[3] = -(dp1dr13 + dp2dr13) / (1.0 - gamma);
                 dqdcos[3] = -(dp1dcos + dp2dcos) / (1.0 - gamma);
 
-                // probably start at ii =1 
+                // probably start at ii =1
                 for (int ii = 0; ii < 4; ii++) {  // loop over all sites
 
                     // get the electrostatic potential on that site
