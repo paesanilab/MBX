@@ -455,15 +455,15 @@ class System {
      * as the database.
      * @param[in] islocal Is an optional int that indicates whether a monomer
      * is local or ghost within a LAMMPS sub-domain
-     * @param[in] tag Is an optional int that indicates unique tag of first 
+     * @param[in] tag Is an optional int that indicates unique tag of first
      * atom in monomer
      * @warning The monomer coordinates and atoms must be in the same order
      * as the database.
      * The id must also match with the database.
      * Please read the documentation carefully.
      */
-    void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id,
-		    size_t islocal = 1, int tag = 0);
+    void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1,
+                    int tag = 0);
 
     std::string GetCurrentSystemConfig();
 
@@ -707,7 +707,7 @@ to be the same.
      * @param[out] 1 for initialized / -1 for not initialized / -2 for not enabled
      */
     int TestMPI();
-  
+
     /**
      * Set periodicity from driver code based on spatial decomposition
      * @param[in] true for periodic (condensed phase; use PME) / 0 for non-periodic (gas-phase; no PME)
@@ -1218,7 +1218,7 @@ to be the same.
      * of the system
      */
     std::vector<size_t> islocal_;
-  
+
     /**
      * Vector that stores unique id for atoms within monomer; positive and negative values used
      */
@@ -1335,7 +1335,7 @@ to be the same.
      * Driver code can then make explicit using SetPeriodic(bool)
      */
     bool simcell_periodic_;
-  
+
     /**
      * Vector that holds the connectivity of each monomer type
      */

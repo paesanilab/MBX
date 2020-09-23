@@ -483,7 +483,8 @@ void System::SetRealXyz(std::vector<double> xyz) {
     }
 }
 
-void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal, int tag) {
+void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal,
+                        int tag) {
     // If the system has been initialized, adding a monomer is not possible
     if (initialized_) {
         std::string text = std::string("The system has already been initialized. ") +
@@ -500,7 +501,7 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
     // Adding local/ghost descriptor
     islocal_.push_back(islocal);
     // Adding unique ids
-    for (int i=0; i<atoms.size(); ++i) atom_tag_.push_back(tag+i);
+    for (int i = 0; i < atoms.size(); ++i) atom_tag_.push_back(tag + i);
 }
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
@@ -1219,7 +1220,7 @@ void System::AddMonomerInfo() {
     // Copy atom_tag_ vector and clear it.
     std::vector<int> atom_tag = atom_tag_;
     atom_tag_.clear();
-    
+
     // Adding the number of sites of each monomer and storing the first index
     std::vector<size_t> fi_at;
     numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
@@ -1243,7 +1244,7 @@ void System::AddMonomerInfo() {
         std::cerr << islocal_[i] << " , ";
     }
     std::cerr << std::endl;
-    
+
     std::cerr << "Atom tag vector:\n";
     for (size_t i = 0; i < atom_tag.size(); i++) {
         std::cerr << atom_tag[i] << " , ";
@@ -1292,7 +1293,7 @@ void System::AddMonomerInfo() {
         std::cerr << islocal_[i] << " , ";
     }
     std::cerr << std::endl;
-    
+
     std::cerr << "Original2Current:\n";
     for (size_t i = 0; i < original2current_order_.size(); i++) {
         std::cerr << original2current_order_[i] << ",";
@@ -1316,7 +1317,7 @@ void System::AddMonomerInfo() {
     xyz_ = std::vector<double>(3 * numsites_, 0.0);
     atoms_ = std::vector<std::string>(numsites_, "virt");
     atom_tag_ = std::vector<int>(numsites_, 0);
-    
+
     size_t count = 0;
     first_index_.clear();
     std::vector<size_t> tmpsites;
@@ -1330,10 +1331,10 @@ void System::AddMonomerInfo() {
         std::copy(xyz.begin() + 3 * fi_at[k], xyz.begin() + 3 * (fi_at[k] + nat_[k]), xyz_.begin() + 3 * count);
         // Atom names
         std::copy(atoms.begin() + fi_at[k], atoms.begin() + fi_at[k] + nat_[k], atoms_.begin() + count);
-	// Atom tags 
-	std::copy(atom_tag.begin() + fi_at[k], atom_tag.begin() + fi_at[k] + nat_[k], atom_tag_.begin() + count);
-	// Atom tags for virtual sites
-	for(size_t j=0; j<(sites_[k]-nat_[k]); ++j) atom_tag_[count+nat_[k]+j] = -atom_tag[fi_at[k]+j];
+        // Atom tags
+        std::copy(atom_tag.begin() + fi_at[k], atom_tag.begin() + fi_at[k] + nat_[k], atom_tag_.begin() + count);
+        // Atom tags for virtual sites
+        for (size_t j = 0; j < (sites_[k] - nat_[k]); ++j) atom_tag_[count + nat_[k] + j] = -atom_tag[fi_at[k] + j];
         // Adding the first index of sites
         first_index_.push_back(count);
         // Update count
@@ -1352,7 +1353,7 @@ void System::AddMonomerInfo() {
     chg_ = std::vector<double>(numsites_, 0.0);
     pol_ = std::vector<double>(numsites_, 0.0);
     polfac_ = std::vector<double>(numsites_, 0.0);
-    
+
 #ifdef DEBUG
     std::cerr << "New Atom tag vector w/ sites:\n";
     for (size_t i = 0; i < atom_tag_.size(); i++) {

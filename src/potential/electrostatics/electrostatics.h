@@ -75,7 +75,7 @@ enum {
     ELE_GRAD_FIN,
 
     ELE_COMM_REVFOR,
-    
+
     ELE_NUM_TIMERS
 };
 
@@ -121,9 +121,8 @@ class Electrostatics {
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
                     const std::vector<size_t> &islocal_, const std::vector<int> &sys_atom_tag_,
-		    const bool do_grads = true, const double tolerance = 1E-16,
-                    const size_t maxit = 100, const std::string dip_method = "iter",
-                    const std::vector<double> &box = {});
+                    const bool do_grads = true, const double tolerance = 1E-16, const size_t maxit = 100,
+                    const std::string dip_method = "iter", const std::vector<double> &box = {});
 
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
 
@@ -415,7 +414,7 @@ class Electrostatics {
     size_t proc_grid_z_;
     // periodicity of simulation cell
     bool simcell_periodic_;
-    
+
     bool first;
 
     std::vector<size_t> mbxt_ele_count_;
