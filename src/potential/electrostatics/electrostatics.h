@@ -75,7 +75,7 @@ enum {
     ELE_GRAD_FIN,
 
     ELE_COMM_REVFOR,
-    
+
     ELE_NUM_TIMERS
 };
 
@@ -120,9 +120,9 @@ class Electrostatics {
                     const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                    const std::vector<size_t> &islocal_, const bool do_grads = true, const double tolerance = 1E-16,
-                    const size_t maxit = 100, const std::string dip_method = "iter",
-                    const std::vector<double> &box = {});
+                    const std::vector<size_t> &islocal_, const std::vector<int> &sys_atom_tag_,
+                    const bool do_grads = true, const double tolerance = 1E-16, const size_t maxit = 100,
+                    const std::string dip_method = "iter", const std::vector<double> &box = {});
 
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
 
@@ -262,9 +262,6 @@ class Electrostatics {
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
     void reverse_forward_comm(std::vector<double> &in_v);
-    void reverse_comm(std::vector<double> &in_v);
-    void reverse_comm_1d(std::vector<double> &in_v);
-    void forward_comm(std::vector<double> &in_v);
 
     void ReorderData();
 
@@ -292,6 +289,15 @@ class Electrostatics {
     std::vector<size_t> islocal_atom_;
     // local/ghost descriptor for xyz of atoms
     std::vector<size_t> islocal_atom_xyz_;
+    // Atom tags for real and virtual sites, unordered
+    std::vector<int> sys_atom_tag_;
+    // Atom tags for real and virtual sites, ordered
+    std::vector<int> atom_tag_;
+    // Nearest Neighbor Look-up table: first neighbor, num neighbors, neighbor list
+    std::vector<size_t> nn_first_neigh;
+    std::vector<size_t> nn_num_neighs;
+    std::vector<size_t> nn_neighs;
+    bool nn_first;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
@@ -374,6 +380,7 @@ class Electrostatics {
     std::vector<double> box_inverse_;
     // box in ABCabc format
     std::vector<double> box_ABCabc_;
+    std::vector<double> box_ABCabc_PMElocal_;
     // box of the domain-decomposed system
     std::vector<double> box_PMElocal_;
     std::vector<double> box_inverse_PMElocal_;
@@ -407,7 +414,7 @@ class Electrostatics {
     size_t proc_grid_z_;
     // periodicity of simulation cell
     bool simcell_periodic_;
-    
+
     bool first;
 
     std::vector<size_t> mbxt_ele_count_;

@@ -165,6 +165,7 @@ class Dispersion {
     std::vector<double> box_;
     // box in ABCabc notation
     std::vector<double> box_ABCabc_;
+    std::vector<double> box_ABCabc_PMElocal_;
     // inverted box of the system
     std::vector<double> box_inverse_;
     // box of the domain-decomposed system

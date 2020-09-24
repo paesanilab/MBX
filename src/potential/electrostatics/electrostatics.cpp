@@ -84,8 +84,9 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
                                 const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                                 const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                                 const std::vector<std::pair<std::string, size_t>> &mon_type_count,
-                                const std::vector<size_t> &islocal, const bool do_grads, const double tolerance,
-                                const size_t maxit, const std::string dip_method, const std::vector<double> &box) {
+                                const std::vector<size_t> &islocal, const std::vector<int> &sys_atom_tag,
+                                const bool do_grads, const double tolerance, const size_t maxit,
+                                const std::string dip_method, const std::vector<double> &box) {
     pme_spline_order_ = 5;
     pme_grid_density_ = 1.2;
     ewald_alpha_ = 0;
@@ -97,6 +98,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     pol_ = pol;
     sys_xyz_ = sys_xyz;
     islocal_ = islocal;
+    sys_atom_tag_ = sys_atom_tag;
     mon_id_ = mon_id;
     sites_ = sites;
     first_ind_ = first_ind;
@@ -132,6 +134,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     virial_ = std::vector<double>(9, 0.0);
     islocal_atom_ = std::vector<size_t>(nsites_, 0.0);
     islocal_atom_xyz_ = std::vector<size_t>(nsites3, 0.0);
+    atom_tag_ = std::vector<int>(nsites_, 0);
     aCC_ = 0.4;
     aCD_ = 0.4;
     aDD_ = 0.055;
@@ -180,6 +183,10 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     mbxt_ele_time_ = std::vector<double>(ELE_NUM_TIMERS, 0.0);
 
     first = true;
+
+    nn_first = true;
+    nn_first_neigh = std::vector<size_t>(nsites_, -1);
+    nn_num_neighs = std::vector<size_t>(nsites_, 0);
 }
 
 void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
@@ -237,7 +244,8 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
 
 void Electrostatics::SetBoxPMElocal(std::vector<double> box) {
     box_PMElocal_ = box;
-    box_inverse_PMElocal_ = InvertUnitCell(box_PMElocal_);
+    box_ABCabc_PMElocal_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
+    box_inverse_PMElocal_ = InvertUnitCell(box);
 }
 
 void Electrostatics::ReorderData() {
@@ -288,6 +296,8 @@ void Electrostatics::ReorderData() {
                 islocal_atom_xyz_[inmon3 + m + fi_crd] = islocal_[fi_mon + m];
                 islocal_atom_xyz_[inmon3 + m + fi_crd + nmon] = islocal_[fi_mon + m];
                 islocal_atom_xyz_[inmon3 + m + fi_crd + nmon2] = islocal_[fi_mon + m];
+
+                atom_tag_[fi_sites + m + inmon] = sys_atom_tag_[fi_sites + mns + i];
             }
         }
         fi_mon += nmon;
@@ -686,8 +696,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         // Compute the reciprocal space terms, using PME
         double A, B, C, alpha, beta, gamma;
         if (use_ghost) {
-            A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-            alpha = beta = gamma = 90.0;
+            A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
         } else {
             A = box_ABCabc_[0];
             B = box_ABCabc_[1];
@@ -1739,9 +1753,6 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
 #endif
     }
 
-    // update ghost dipoles with value of local dipoles
-    //    forward_comm(mu_);
-
 #ifdef _DEBUG_DIPOLE
     {  // debug print
         int me, nprocs;
@@ -2170,6 +2181,22 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
     double time1 = MPI_Wtime();
 #endif
 
+    // poor-man's reverse_forward communication that doesn't scale...
+
+    int local_size = nsites_;
+    int global_size = 0;
+#if HAVE_MPI == 1
+    MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
+#else
+    global_size = local_size;
+#endif
+
+    int offset = 0;
+#if HAVE_MPI == 1
+    MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
+    offset -= local_size;
+#endif
+
 #ifdef _DEBUG_COMM
     {  // debug print
         int me, nprocs;
@@ -2195,7 +2222,8 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") REVFORCOMM IN LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
+                                      << "  islocal= " << islocal_[fi_mon + m]
+                                      << " tag= " << atom_tag_[fi_sites + m + inmon] << " indx= " << fi_crd + inmon3 + m
                                       << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
                                       << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
                                       << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
@@ -2210,41 +2238,29 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                     fi_sites += nmon * ns;
                     fi_crd += nmon * ns * 3;
                 }
+
+                std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size
+                          << " offset= " << offset << std::endl;
+
+                std::cout << "atom_tag_= ";
+                for (int i = 0; i < nsites_; ++i) std::cout << " " << atom_tag_[i];
+                std::cout << std::endl;
             }
             MPI_Barrier(world_);
         }
     }  // debug print
 #endif
 
-    // poor-man's reverse_forward communication that doesn't scale...
-
-    int local_size = nsites_;
-    int global_size = 0;
-#if HAVE_MPI == 1
-    MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
-#else
-    global_size = local_size;
-#endif
-
-    int offset = 0;
-#if HAVE_MPI == 1
-    MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
-#else  // FIXME Is this correct?
-    offset = local_size;
-#endif
-
-    // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
-    //   " offset= " << offset << std::endl;
-
-    offset = (offset - local_size) * 3;
     std::vector<double> in_all(global_size * 3, 0.0);
     std::vector<double> xyz_all(global_size * 3, 0.0);
+    std::vector<int> tag_all(global_size, 0);
 
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
 
     size_t indx = offset;
+    size_t indx3 = offset * 3;
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
@@ -2256,15 +2272,18 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
             size_t inmon = i * nmon;
             size_t inmon3 = inmon * 3;
             for (size_t m = 0; m < nmon; m++) {
-                in_all[indx] = in_v[fi_crd + inmon3 + m];
-                in_all[indx + 1] = in_v[fi_crd + inmon3 + nmon + m];
-                in_all[indx + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
+                in_all[indx3] = in_v[fi_crd + inmon3 + m];
+                in_all[indx3 + 1] = in_v[fi_crd + inmon3 + nmon + m];
+                in_all[indx3 + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
 
-                xyz_all[indx] = xyz_[fi_crd + inmon3 + m];
-                xyz_all[indx + 1] = xyz_[fi_crd + inmon3 + nmon + m];
-                xyz_all[indx + 2] = xyz_[fi_crd + inmon3 + nmon2 + m];
+                xyz_all[indx3] = xyz_[fi_crd + inmon3 + m];
+                xyz_all[indx3 + 1] = xyz_[fi_crd + inmon3 + nmon + m];
+                xyz_all[indx3 + 2] = xyz_[fi_crd + inmon3 + nmon2 + m];
 
-                indx += 3;
+                tag_all[indx] = atom_tag_[fi_sites + m + inmon];
+
+                indx++;
+                indx3 += 3;
             }
         }
 
@@ -2274,19 +2293,70 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
         fi_crd += nmon * ns * 3;
     }
 
-#if HAVE_MPI == 1  // FIXME Not sure if there is somethign to do if not defined
+#if HAVE_MPI == 1
     MPI_Allreduce(MPI_IN_PLACE, in_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
     MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
+    MPI_Allreduce(MPI_IN_PLACE, tag_all.data(), global_size, MPI_INT, MPI_SUM, world_);
 #endif
 
     const double tolerance = 1e-6;
 
     for (int i = 0; i < nsites_ * 3; ++i) in_v[i] = 0.0;
 
+    // record lookup table
+
+    if (nn_first) {
+        fi_mon = 0;
+        fi_crd = 0;
+        fi_sites = 0;
+
+        indx = 0;
+        int n_indx = 0;
+        // Loop over each monomer type
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = 2 * nmon;
+
+            // Loop over each pair of sites
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = inmon * 3;
+                for (size_t m = 0; m < nmon; m++) {
+                    // test for same position in global list and tally
+                    int tagi = atom_tag_[fi_sites + m + inmon];
+
+                    int num_neighs = 0;
+                    for (int j = 0; j < global_size; ++j)
+                        if (tagi == tag_all[j]) {
+                            num_neighs++;
+                            nn_neighs.push_back(j * 3);
+                        }
+
+                    nn_first_neigh[indx] = n_indx;
+                    nn_num_neighs[indx] = num_neighs;
+
+                    indx++;
+                    n_indx += num_neighs;
+                }
+            }
+
+            // Update first indexes
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
+
+        nn_first = false;
+    }
+
+    // now play back lookup table
+
     fi_mon = 0;
     fi_crd = 0;
     fi_sites = 0;
 
+    indx = 0;
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
@@ -2298,51 +2368,12 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
             size_t inmon = i * nmon;
             size_t inmon3 = inmon * 3;
             for (size_t m = 0; m < nmon; m++) {
-                // test for same position in global list and tally
-                for (int j = 0; j < global_size; ++j) {
-                    bool same_particle = true;
-                    double dx = xyz_[fi_crd + inmon3 + m] - xyz_all[j * 3];
-                    double dy = xyz_[fi_crd + inmon3 + nmon + m] - xyz_all[j * 3 + 1];
-                    double dz = xyz_[fi_crd + inmon3 + nmon2 + m] - xyz_all[j * 3 + 2];
-
-                    // Apply PBC :(
-                    if (simcell_periodic_) {
-                        // Convert to fractional coordinates
-                        // FIXME Chris, the indexes here I think the are the wrong ones. Box vectors are
-                        // {0,1,2},{3,4,5}{6,7,8}, not {0,3,6},{1,4,7},{2,5,8}
-                        const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
-                                                box_inverse_PMElocal_[2] * dz;
-                        const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy +
-                                                box_inverse_PMElocal_[5] * dz;
-                        const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy +
-                                                box_inverse_PMElocal_[8] * dz;
-                        // Put in the range 0 to 1
-                        const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
-                        const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
-                        const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
-                        // Convert back to Cartesian coordinates
-                        dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[1] * minfracrijy +
-                             box_PMElocal_[2] * minfracrijz;
-                        dy = box_PMElocal_[3] * minfracrijx + box_PMElocal_[4] * minfracrijy +
-                             box_PMElocal_[5] * minfracrijz;
-                        dz = box_PMElocal_[6] * minfracrijx + box_PMElocal_[7] * minfracrijy +
-                             box_PMElocal_[8] * minfracrijz;
-                    }
-
-                    if (dx * dx > tolerance)
-                        same_particle = false;
-                    else if (dy * dy > tolerance)
-                        same_particle = false;
-                    else if (dz * dz > tolerance)
-                        same_particle = false;
-
-                    if (same_particle) {
-                        in_v[fi_crd + inmon3 + m] += in_all[j * 3];
-                        in_v[fi_crd + inmon3 + nmon + m] += in_all[j * 3 + 1];
-                        in_v[fi_crd + inmon3 + nmon2 + m] += in_all[j * 3 + 2];
-                    }
-
-                }  // for(j)
+                for (int j = 0; j < nn_num_neighs[indx]; ++j) {
+                    in_v[fi_crd + inmon3 + m] += in_all[nn_neighs[nn_first_neigh[indx] + j]];
+                    in_v[fi_crd + inmon3 + nmon + m] += in_all[nn_neighs[nn_first_neigh[indx] + j] + 1];
+                    in_v[fi_crd + inmon3 + nmon2 + m] += in_all[nn_neighs[nn_first_neigh[indx] + j] + 2];
+                }
+                indx++;
             }
         }
 
@@ -2377,7 +2408,8 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") REVFORCOMM OUT LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
+                                      << "  islocal= " << islocal_[fi_mon + m]
+                                      << " tag= " << atom_tag_[fi_sites + m + inmon] << " indx= " << fi_crd + inmon3 + m
                                       << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
                                       << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
                                       << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
@@ -2406,701 +2438,6 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 #endif
 }
 
-void Electrostatics::reverse_comm(std::vector<double> &in_v) {
-#ifdef _DEBUG_COMM
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") REVCOMM IN LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
-                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
-                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
-                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
-                                      << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-
-    // poor-man's reverse communication that doesn't scale...
-
-    int local_size = nsites_;
-    int global_size = 0;
-#if HAVE_MPI == 1
-    MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
-#else
-    global_size = local_size;
-#endif
-
-    int offset = 0;
-#if HAVE_MPI == 1
-    MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
-#else  // FIXME Please check that this is correct, chris!
-    offset = local_size;
-#endif
-
-    // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
-    //   " offset= " << offset << std::endl;
-
-    offset = (offset - local_size) * 3;
-    std::vector<double> in_all(global_size * 3, 0.0);
-    std::vector<double> xyz_all(global_size * 3, 0.0);
-
-    size_t fi_mon = 0;
-    size_t fi_crd = 0;
-    size_t fi_sites = 0;
-
-    size_t indx = offset;
-    // Loop over each monomer type
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
-
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t m = 0; m < nmon; m++) {
-                in_all[indx] = in_v[fi_crd + inmon3 + m];
-                in_all[indx + 1] = in_v[fi_crd + inmon3 + nmon + m];
-                in_all[indx + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
-
-                xyz_all[indx] = xyz_[fi_crd + inmon3 + m];
-                xyz_all[indx + 1] = xyz_[fi_crd + inmon3 + nmon + m];
-                xyz_all[indx + 2] = xyz_[fi_crd + inmon3 + nmon2 + m];
-
-                indx += 3;
-            }
-        }
-
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-
-#if HAVE_MPI == 1  // FIXME nothing to do if else?
-    MPI_Allreduce(MPI_IN_PLACE, in_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
-    MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
-#endif
-
-    const double tolerance = 1e-6;
-
-    for (int i = 0; i < nsites_ * 3; ++i) in_v[i] = 0.0;
-
-    fi_mon = 0;
-    fi_crd = 0;
-    fi_sites = 0;
-
-    // Loop over each monomer type
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
-
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t m = 0; m < nmon; m++) {
-                // test if local monomer
-                if (islocal_[fi_mon + m]) {
-                    // test for same position in global list and tally
-                    for (int j = 0; j < global_size; ++j) {
-                        bool same_particle = true;
-                        double dx = xyz_[fi_crd + inmon3 + m] - xyz_all[j * 3];
-                        double dy = xyz_[fi_crd + inmon3 + nmon + m] - xyz_all[j * 3 + 1];
-                        double dz = xyz_[fi_crd + inmon3 + nmon2 + m] - xyz_all[j * 3 + 2];
-
-                        // Apply PBC :(
-                        if (simcell_periodic_) {
-                            // FIXME Chris, I think this also has the indexes swapped.
-                            // Convert to fractional coordinates
-                            const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
-                                                    box_inverse_PMElocal_[2] * dz;
-                            const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy +
-                                                    box_inverse_PMElocal_[5] * dz;
-                            const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy +
-                                                    box_inverse_PMElocal_[8] * dz;
-                            // Put in the range 0 to 1
-                            const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
-                            const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
-                            const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
-                            // Convert back to Cartesian coordinates
-                            dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[1] * minfracrijy +
-                                 box_PMElocal_[2] * minfracrijz;
-                            dy = box_PMElocal_[3] * minfracrijx + box_PMElocal_[4] * minfracrijy +
-                                 box_PMElocal_[5] * minfracrijz;
-                            dz = box_PMElocal_[6] * minfracrijx + box_PMElocal_[7] * minfracrijy +
-                                 box_PMElocal_[8] * minfracrijz;
-                        }
-
-                        if (dx * dx > tolerance)
-                            same_particle = false;
-                        else if (dy * dy > tolerance)
-                            same_particle = false;
-                        else if (dz * dz > tolerance)
-                            same_particle = false;
-
-                        if (same_particle) {
-                            in_v[fi_crd + inmon3 + m] += in_all[j * 3];
-                            in_v[fi_crd + inmon3 + nmon + m] += in_all[j * 3 + 1];
-                            in_v[fi_crd + inmon3 + nmon2 + m] += in_all[j * 3 + 2];
-                        }
-
-                    }  // for(j)
-                }      // if(islocal)
-            }
-        }
-
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-
-#ifdef _DEBUG_COMM
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") REVCOMM OUT LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
-                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
-                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
-                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
-                                      << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-}
-
-void Electrostatics::reverse_comm_1d(std::vector<double> &in_v) {
-#ifdef _DEBUG_COMM
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") REVCOMM1D IN LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
-                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
-                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << " in_v= " << in_v[fi_sites + inmon + m] << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-
-    // poor-man's reverse communication that doesn't scale...
-
-    int local_size = nsites_;
-    int global_size = 0;
-#if HAVE_MPI == 1
-    MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
-#else
-    global_size = local_size;
-#endif
-
-    int offset = 0;
-#if HAVE_MPI == 1
-    MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
-#else  // FIXME Please check that this is correct, chris!
-    offset = local_size;
-#endif
-
-    // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
-    //   " offset= " << offset << std::endl;
-
-    offset = (offset - local_size);
-    std::vector<double> in_all(global_size, 0.0);
-    std::vector<double> xyz_all(global_size * 3, 0.0);
-
-    size_t fi_mon = 0;
-    size_t fi_crd = 0;
-    size_t fi_sites = 0;
-
-    size_t indx = offset;
-    size_t indx3 = offset * 3;
-    // Loop over each monomer type
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
-
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t m = 0; m < nmon; m++) {
-                in_all[indx] = in_v[fi_sites + inmon + m];
-
-                xyz_all[indx3] = xyz_[fi_crd + inmon3 + m];
-                xyz_all[indx3 + 1] = xyz_[fi_crd + inmon3 + nmon + m];
-                xyz_all[indx3 + 2] = xyz_[fi_crd + inmon3 + nmon2 + m];
-
-                indx++;
-                indx3 += 3;
-            }
-        }
-
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-
-#if HAVE_MPI == 1  // FIXME nothing to do if else?
-    MPI_Allreduce(MPI_IN_PLACE, in_all.data(), global_size, MPI_DOUBLE, MPI_SUM, world_);
-    MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
-#endif
-
-    const double tolerance = 1e-6;
-
-    for (int i = 0; i < nsites_; ++i) in_v[i] = 0.0;
-
-    fi_mon = 0;
-    fi_crd = 0;
-    fi_sites = 0;
-
-    // Loop over each monomer type
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
-
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t m = 0; m < nmon; m++) {
-                // test if local monomer
-                if (islocal_[fi_mon + m]) {
-                    // test for same position in global list and tally
-                    for (int j = 0; j < global_size; ++j) {
-                        bool same_particle = true;
-                        double dx = xyz_[fi_crd + inmon3 + m] - xyz_all[j * 3];
-                        double dy = xyz_[fi_crd + inmon3 + nmon + m] - xyz_all[j * 3 + 1];
-                        double dz = xyz_[fi_crd + inmon3 + nmon2 + m] - xyz_all[j * 3 + 2];
-
-                        // Apply PBC :(
-                        if (simcell_periodic_) {
-                            // FIXME Chris, I think this also has the indexes swapped.
-                            // Convert to fractional coordinates
-                            const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
-                                                    box_inverse_PMElocal_[2] * dz;
-                            const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy +
-                                                    box_inverse_PMElocal_[5] * dz;
-                            const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy +
-                                                    box_inverse_PMElocal_[8] * dz;
-                            // Put in the range 0 to 1
-                            const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
-                            const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
-                            const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
-                            // Convert back to Cartesian coordinates
-                            dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[1] * minfracrijy +
-                                 box_PMElocal_[2] * minfracrijz;
-                            dy = box_PMElocal_[3] * minfracrijx + box_PMElocal_[4] * minfracrijy +
-                                 box_PMElocal_[5] * minfracrijz;
-                            dz = box_PMElocal_[6] * minfracrijx + box_PMElocal_[7] * minfracrijy +
-                                 box_PMElocal_[8] * minfracrijz;
-                        }
-
-                        if (dx * dx > tolerance)
-                            same_particle = false;
-                        else if (dy * dy > tolerance)
-                            same_particle = false;
-                        else if (dz * dz > tolerance)
-                            same_particle = false;
-
-                        if (same_particle) in_v[fi_sites + inmon + m] += in_all[j];
-
-                    }  // for(j)
-                }      // if(islocal)
-            }
-        }
-
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-
-#ifdef _DEBUG_COMM
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") REVCOMM1D OUT LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
-                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
-                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << " in_v= " << in_v[fi_sites + inmon + m] << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-}
-
-void Electrostatics::forward_comm(std::vector<double> &in_v) {
-#ifdef _DEBUG_COMM
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") FORCOMM IN LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
-                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
-                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
-                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
-                                      << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-
-    // poor-man's reverse communication that doesn't scale...
-    // only pack up local monomers
-
-    size_t fi_mon = 0;
-    size_t fi_crd = 0;
-    size_t fi_sites = 0;
-
-    int local_size = 0;
-    for (size_t i = 0; i < nsites_; i++)
-        if (islocal_[i]) local_size++;
-
-    int global_size = 0;
-#if HAVE_MPI == 1
-    MPI_Allreduce(&local_size, &global_size, 1, MPI_INT, MPI_SUM, world_);
-#else
-    global_size = local_size;
-#endif
-
-    int offset = 0;
-#if HAVE_MPI == 1
-    MPI_Scan(&local_size, &offset, 1, MPI_INT, MPI_SUM, world_);
-#else  // FIXME Please check that this is correct, chris!
-    offset = local_size;
-#endif
-
-    // std::cout << "(" << mpi_rank_ << ") local_size= " << local_size << " global_size= " << global_size <<
-    //   " offset= " << offset << std::endl;
-
-    offset = (offset - local_size) * 3;
-    std::vector<double> in_all(global_size * 3, 0.0);
-    std::vector<double> xyz_all(global_size * 3, 0.0);
-
-    fi_mon = 0;
-    fi_crd = 0;
-    fi_sites = 0;
-
-    size_t indx = offset;
-    // Loop over each monomer type
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
-
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t m = 0; m < nmon; m++) {
-                if (islocal_[fi_mon + m]) {
-                    in_all[indx] = in_v[fi_crd + inmon3 + m];
-                    in_all[indx + 1] = in_v[fi_crd + inmon3 + nmon + m];
-                    in_all[indx + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
-
-                    xyz_all[indx] = xyz_[fi_crd + inmon3 + m];
-                    xyz_all[indx + 1] = xyz_[fi_crd + inmon3 + nmon + m];
-                    xyz_all[indx + 2] = xyz_[fi_crd + inmon3 + nmon2 + m];
-
-                    indx += 3;
-                }
-            }
-        }
-
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-
-#if HAVE_MPI == 1  // FIXME nothing to do if else?
-    MPI_Allreduce(MPI_IN_PLACE, in_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
-    MPI_Allreduce(MPI_IN_PLACE, xyz_all.data(), global_size * 3, MPI_DOUBLE, MPI_SUM, world_);
-#endif
-
-    const double tolerance = 1e-6;
-
-    for (size_t i = 0; i < nsites_ * 3; ++i) in_v[i] = 0.0;
-
-    fi_mon = 0;
-    fi_crd = 0;
-    fi_sites = 0;
-
-    // Loop over each monomer type
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
-
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t m = 0; m < nmon; m++) {
-                // test for same position in global list and tally
-                for (size_t j = 0; j < global_size; ++j) {
-                    bool same_particle = true;
-                    double dx = xyz_[fi_crd + inmon3 + m] - xyz_all[j * 3];
-                    double dy = xyz_[fi_crd + inmon3 + nmon + m] - xyz_all[j * 3 + 1];
-                    double dz = xyz_[fi_crd + inmon3 + nmon2 + m] - xyz_all[j * 3 + 2];
-
-                    // Apply PBC :(
-                    if (simcell_periodic_) {
-                        // FIXME Chris, I think this also has the indexes swapped.
-                        // Convert to fractional coordinates
-                        const double fracrijx = box_inverse_PMElocal_[0] * dx + box_inverse_PMElocal_[1] * dy +
-                                                box_inverse_PMElocal_[2] * dz;
-                        const double fracrijy = box_inverse_PMElocal_[3] * dx + box_inverse_PMElocal_[4] * dy +
-                                                box_inverse_PMElocal_[5] * dz;
-                        const double fracrijz = box_inverse_PMElocal_[6] * dx + box_inverse_PMElocal_[7] * dy +
-                                                box_inverse_PMElocal_[8] * dz;
-                        // Put in the range 0 to 1
-                        const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
-                        const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
-                        const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
-                        // Convert back to Cartesian coordinates
-                        dx = box_PMElocal_[0] * minfracrijx + box_PMElocal_[1] * minfracrijy +
-                             box_PMElocal_[2] * minfracrijz;
-                        dy = box_PMElocal_[3] * minfracrijx + box_PMElocal_[4] * minfracrijy +
-                             box_PMElocal_[5] * minfracrijz;
-                        dz = box_PMElocal_[6] * minfracrijx + box_PMElocal_[7] * minfracrijy +
-                             box_PMElocal_[8] * minfracrijz;
-                    }
-
-                    if (dx * dx > tolerance)
-                        same_particle = false;
-                    else if (dy * dy > tolerance)
-                        same_particle = false;
-                    else if (dz * dz > tolerance)
-                        same_particle = false;
-
-                    if (same_particle) {
-                        in_v[fi_crd + inmon3 + m] += in_all[j * 3];
-                        in_v[fi_crd + inmon3 + nmon + m] += in_all[j * 3 + 1];
-                        in_v[fi_crd + inmon3 + nmon2 + m] += in_all[j * 3 + 2];
-                    }
-
-                }  // for(j)
-            }
-        }
-
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-
-#ifdef _DEBUG_COMM
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") FORCOMM OUT LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
-                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
-                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
-                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
-                                      << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-}
-
 void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
     // Parallelization
     size_t nthreads = 1;
@@ -3111,9 +2448,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
     }
 #endif
-
-    // proxy for sequence of reverse_comm(in_v) to accumulate and forward_comm(in_v) to update
-    //    reverse_forward_comm(in_v);
 
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
@@ -3188,12 +2522,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     size_t fi_sites = 0;
     size_t fi_crd = 0;
 
-    // for(int ip=0; ip<num_mpi_ranks_; ++ip) {
-
-    //   MPI_Barrier(world_);
-    //   if(ip == mpi_rank_) {
-    // 	if(ip == 0) std::cout << "debugging CalcDipoleElecField()" << std::endl;
-
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
         //      TODO: Check why this makes shit fail
@@ -3247,9 +2575,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         fi_crd += nmon * ns * 3;
     }
 
-    //   }
-    // } // for(ip)
-
 #ifdef _DEBUG_DIPFIELD
     {  // debug print
         int me, nprocs;
@@ -3293,12 +2618,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         }
     }  // debug print
 #endif
-
-    // for(int ip=0; ip<num_mpi_ranks_; ++ip) {
-
-    //   MPI_Barrier(world_);
-    //   if(ip == mpi_rank_) {
-    // 	if(ip == 0) std::cout << "debugging CalcDipoleElecField()" << std::endl;
 
     size_t fi_mon1 = 0;
     size_t fi_mon2 = 0;
@@ -3481,8 +2800,12 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         // Compute the reciprocal space terms, using PME
         double A, B, C, alpha, beta, gamma;
         if (use_ghost) {
-            A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-            alpha = beta = gamma = 90.0;
+            A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
         } else {
             A = box_ABCabc_[0];
             B = box_ABCabc_[1];
@@ -3623,25 +2946,13 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
                     out_v[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
                     out_v[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
                     out_v[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
-
-                    // out_v[3 * fi_sites + 3 * inmon + 0 * nmon + m] += slf_prefactor * in_v[3 * fi_sites + 3 * inmon +
-                    // 0 * nmon + m] * islocal_atom_[fi_sites + m + inmon]; out_v[3 * fi_sites + 3 * inmon + 1 * nmon +
-                    // m] += slf_prefactor * in_v[3 * fi_sites + 3 * inmon + 1 * nmon + m] * islocal_atom_[fi_sites + m
-                    // + inmon]; out_v[3 * fi_sites + 3 * inmon + 2 * nmon + m] += slf_prefactor * in_v[3 * fi_sites + 3
-                    // * inmon + 2 * nmon + m] * islocal_atom_[fi_sites + m + inmon];
                 }
             }
             fi_mon += nmon;
             fi_sites += nmon * ns;
         }
-        // double *e_ptr = out_v.data();
-        // for (const auto &mu : in_v) {
-        //     *e_ptr += slf_prefactor * mu;
-        //     ++e_ptr;
-        // }
 
         for (int i = 0; i < nsites_ * 3; ++i) out_v[i] += slf_prefactor * in_v[i] * islocal_atom_xyz_[i];
-        //	for(int i=0; i<nsites_*3; ++i) out_v[i] += slf_prefactor * in_v[i];
     }
 
 #ifdef _DEBUG_DIPFIELD
@@ -3690,10 +3001,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     }  // debug print
 #endif
 
-    // proxy for reverse_comm(out_v) to accumulate
-    //    reverse_comm(out_v);
-    reverse_forward_comm(out_v);
-
 #if HAVE_MPI == 1
     double time3 = MPI_Wtime();
 
@@ -3703,6 +3010,9 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     mbxt_ele_count_[ELE_DIPFIELD_PME]++;
     mbxt_ele_time_[ELE_DIPFIELD_PME] += time3 - time2;
 #endif
+
+    // proxy for reverse_forward_comm(out_v) to accumulate
+    reverse_forward_comm(out_v);
 }
 
 void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
@@ -3790,12 +3100,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     size_t fi_sites = 0;
     size_t fi_crd = 0;
 
-    // for(int ip=0; ip<num_mpi_ranks_; ++ip) {
-
-    //   MPI_Barrier(world_);
-    //   if(ip == mpi_rank_) {
-    // 	if(ip == 0) std::cout << "debugging CalcDipoleElecField()" << std::endl;
-
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
         //      TODO: Check why this makes shit fail
@@ -3844,9 +3148,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         fi_crd += nmon * ns * 3;
     }
 
-    //   }
-    // } // for(ip)
-
 #ifdef _DEBUG_DIPFIELD
     {  // debug print
         int me, nprocs;
@@ -3890,12 +3191,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }
     }  // debug print
 #endif
-
-    // for(int ip=0; ip<num_mpi_ranks_; ++ip) {
-
-    //   MPI_Barrier(world_);
-    //   if(ip == mpi_rank_) {
-    // 	if(ip == 0) std::cout << "debugging CalcDipoleElecField()" << std::endl;
 
     size_t fi_mon1 = 0;
     size_t fi_mon2 = 0;
@@ -3990,9 +3285,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
     }
-
-    //   }
-    // } // for(ip)
 
 #if HAVE_MPI == 1
     MPI_Allreduce(MPI_IN_PLACE, out_v.data(), out_v.size(), MPI_DOUBLE, MPI_SUM, world_);
@@ -4316,13 +3608,6 @@ void Electrostatics::CalculateElecEnergyMPIlocal() {
 
 #ifdef _DEBUG_PRINT_ENERGY
     {  // debug_output
-
-        // for(int i=0; i<num_mpi_ranks_; ++i) {
-        // 	MPI_Barrier(world_);
-        // 	if(i == mpi_rank_) std::cout << "(" << mpi_rank_ << ") Eperm(LOCAL)= " << Eperm_ << "  Eind_= " << Eind_
-        // << std::endl;
-        // }
-
         double Eperm_total = 0.0;
         double Eind_total = 0.0;
         MPI_Reduce(&Eperm_, &Eperm_total, 1, MPI_DOUBLE, MPI_SUM, 0, world_);
@@ -4330,7 +3615,6 @@ void Electrostatics::CalculateElecEnergyMPIlocal() {
         if (0 == mpi_rank_)
             std::cout << "(" << mpi_rank_ << ") Eperm(LOCAL)= " << Eperm_total << "  Eind_= " << Eind_total
                       << std::endl;
-
     }  // debug_output
 #endif
 
@@ -4351,13 +3635,8 @@ void Electrostatics::CalculateElecEnergy() {
 
 #ifdef _DEBUG_PRINT_ENERGY
     {  // debug_output
-
-        // for(int i=0; i<num_mpi_ranks_; ++i) {
-        // 	MPI_Barrier(world_);
         if (0 == mpi_rank_)
             std::cout << "(" << mpi_rank_ << ") Eperm(ORIG)= " << Eperm_ << "  Eind_= " << Eind_ << std::endl;
-        //      }
-
     }  // debug_output
 #endif
 
@@ -4369,8 +3648,6 @@ void Electrostatics::CalculateElecEnergy() {
 void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost) {
     // Reset grad
     grad_ = std::vector<double>(3 * nsites_, 0.0);
-
-    //    reverse_forward_comm(Efq_);
 
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second;
@@ -4774,10 +4051,15 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 
         helpme::PMEInstance<double> pme_solver_;
         // Compute the reciprocal space terms, using PME
+
         double A, B, C, alpha, beta, gamma;
         if (use_ghost) {
-            A = box_PMElocal_[0], B = box_PMElocal_[4], C = box_PMElocal_[8];
-            alpha = beta = gamma = 90.0;
+            A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
         } else {
             A = box_ABCabc_[0];
             B = box_ABCabc_[1];
