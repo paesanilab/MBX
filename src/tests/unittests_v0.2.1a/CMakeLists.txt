@@ -22,6 +22,7 @@ set( SOURCES_UNITTESTS_TESTS
 #    unittest-co2-monomer.cpp
 #    unittest-system.cpp 
     unittest-systools.cpp
+    unittest-tools.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
