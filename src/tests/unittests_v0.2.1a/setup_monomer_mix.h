@@ -36,8 +36,14 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define UNITTESTS_SETUP_MONMIX_H
 
 #define SETUP_MONMIX                                                                                                  \
-    std::vector<std::string> atom_names{"C", "H",  "H",  "H", "H",  "O",  "H", "H",  "C",  "O", "O", "X", "He", "Ar", \
-                                        "F", "Cl", "Br", "I", "li", "Na", "K", "Rb", "Cs", "H", "H", "H", "H"};       \
+    std::vector<std::string> atom_names = {                                                                           \
+        "C", "H",  "H",  "H", "H",  "O",  "H", "H",  "C",  "O", "O", "X", "He", "Ar",                                 \
+        "F", "Cl", "Br", "I", "Li", "Na", "K", "Rb", "Cs", "H", "H", "H", "H"};                                       \
+    std::vector<double> atom_masses = {                                                                               \
+        12.0000000,    1.007825032,  1.007825032,  1.007825032,  1.007825032,  15.994914619,  1.007825032,            \
+        1.007825032,   12.0000000,   15.994914619, 15.994914619, 0.0,          4.00260325413, 39.9623831237,          \
+        18.998403162,  34.968852682, 78.9183376,   126.9044719,  7.0160034366, 22.989769282,  38.9637064864,          \
+        84.9114977282, 132.905429,   1.007825032,  1.007825032,  1.007825032,  1.007825032};                          \
     std::vector<std::string> monomer_names = {"ch4", "h2o", "co2", "dummy", "he", "ar", "f",  "cl",                   \
                                               "br",  "i",   "li",  "na",    "k",  "rb", "cs", "h4_dummy"};            \
     const int n_monomers = monomer_names.size();                                                                      \
