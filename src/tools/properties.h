@@ -48,14 +48,14 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace tools {
 
 /**
- * Returns the mass for a given atom.
+ * @brief Returns the mass for a given atom.
  * @param[in] atom The name of the atom
  * @return Mass of the atom in atomic units
  */
 double GetMass(const std::string atom);
 
 /**
- * Returns the distance between two points
+ * @brief Returns the distance between two points
  * @param[in] p1 Pointer to the coordinates of the first point
  * @param[in] p2 Pointer to the coordinates of the second point
  * @param[in] box Optional. Box of the system.

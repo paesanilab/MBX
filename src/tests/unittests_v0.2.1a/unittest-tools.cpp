@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/math_tools.h"
 #include "tools/properties.h"
 #include "tools/variable.h"
+#include "tools/water_monomer_lp.h"
 
 #include "setup_monomer_mix.h"
 
@@ -360,6 +361,11 @@ TEST_CASE("mathtools::DotProduct") {
 
 TEST_CASE("properties::GetMass") {
     SETUP_MONMIX
+    // Add atoms not in monomer mix
+    atom_names.push_back("D");
+    atom_masses.push_back(2.01410178);
+    atom_names.push_back("N");
+    atom_masses.push_back(14.0);
     for (size_t i = 0; i < atom_masses.size(); i++) {
         std::string at = atom_names[i];
         SECTION(at) {
@@ -860,4 +866,31 @@ TEST_CASE("variable::variable") {
         REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
         REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     }
+}
+
+TEST_CASE("water_lone_pairs") {
+    std::vector<double> ohh = {-4.45909850e-03, -5.13425796e-02, 1.58138000e-05, 9.86130211e-01, -7.45730984e-02,
+                               5.43240000e-06,  -1.59747092e-01, 8.96718089e-01, -1.64932000e-05};
+    double wpar = -9.72148691e-02;
+    double wper = 9.85927208e-02;
+    std::vector<double> lp(6, 0.0);
+    std::vector<double> lp_expected = {-4.50599082e-02, -9.62928864e-02, 9.22544693e-02,
+                                       -4.50619969e-02, -9.62995148e-02, -9.22186917e-02};
+
+    monomer m;
+    m.setup(ohh.data(), wpar, wper, lp.data(), lp.data() + 3);
+
+    REQUIRE(VectorsAreEqual(lp, lp_expected, TOL));
+
+    std::vector<double> lp_grads = {-3.20986004e-01, -8.83967986e-03, 1.32951414e-01,
+                                    -2.40589346e-01, -4.20190011e-03, 1.08928886e-01};
+    std::vector<double> wat_grads = {7.34398467e-01, 2.98780376e-01, -2.53156873e-01, -2.05608860e-01, 7.66832320e-03,
+                                     5.76607508e-03, 2.88598962e-02, -2.93103039e-01, 8.28008339e-03};
+    std::vector<double> water_grads_expected = {1.15929202e-01,  2.81756838e-01,  4.01487144e-03,
+                                                -1.76066707e-01, 8.67028831e-03,  1.59472667e-03,
+                                                5.62116582e-02,  -2.90123046e-01, -2.84001193e-03};
+
+    m.grads(lp_grads.data(), lp_grads.data() + 3, wpar, wper, wat_grads.data());
+
+    REQUIRE(VectorsAreEqual(wat_grads, water_grads_expected, TOL));
 }
