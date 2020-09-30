@@ -1,7 +1,7 @@
 #ifndef X1B_A1B2_DEG4_H
 #define X1B_A1B2_DEG4_H
 
-#include "poly_1b_A1B2_deg4_v1x.h"
+#include "potential/1b/poly_1b_A1B2_deg4_v1x.h"
 
 #include <iostream>
 #include <string>
@@ -35,9 +35,6 @@ struct x1b_A1B2_v1x {
 
    private:
     std::vector<double> coefficients;
-
-    // private:
-    //    double f_switch(const double& r, double& g) const;
 };
 
 //----------------------------------------------------------------------------//

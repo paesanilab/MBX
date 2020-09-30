@@ -4,6 +4,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-tools.cpp
     unittest-ps.cpp
     unittest-poly-1b.cpp
+    unittest-poly-holder-1b.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
