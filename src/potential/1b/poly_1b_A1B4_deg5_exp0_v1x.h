@@ -1,6 +1,11 @@
 #ifndef POLY_1B_A1B4_DEG5_EXP0_H
 #define POLY_1B_A1B4_DEG5_EXP0_H
 
+#ifdef DEBUG
+#include <iostream>
+#include <iomanip>
+#endif
+
 namespace x1b_A1B4_deg5_exp0 {
 
 struct poly_1b_A1B4_deg5_exp0_v1x {
