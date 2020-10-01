@@ -157,6 +157,17 @@ TEST_CASE("energy1b::get_1b_energy_nograd") {
             REQUIRE(VectorsAreEqual(bad_idxs, bad_idxs_expected[i]));
         }
     }
+
+    SECTION("Unknown monomer") {
+        std::vector<size_t> bad_idxs;
+        std::vector<size_t> bad_idxs_expected;
+        std::vector<double> xyz_nomon = {1.0, 0.0, 0.0};
+        size_t nmon_nomon = 1;
+        double e = e1b::get_1b_energy("not_a_monomer", nmon_nomon, xyz_nomon, bad_idxs);
+
+        REQUIRE(VectorsAreEqual(bad_idxs, bad_idxs_expected));
+        REQUIRE(e == Approx(0.0).margin(TOL));
+    }
 }
 
 TEST_CASE("energy1b::get_1b_energy_grad") {
@@ -169,5 +180,23 @@ TEST_CASE("energy1b::get_1b_energy_grad") {
             REQUIRE(VectorsAreEqual(grad[i], grad_expected[i], TOL));
             REQUIRE(VectorsAreEqual(virial[i], virial_expected[i], TOL));
         }
+    }
+
+    SECTION("Unknown monomer") {
+        std::vector<size_t> bad_idxs;
+        std::vector<size_t> bad_idxs_expected;
+        std::vector<double> grad_nomon = {2.0, 0.0, 0.0};
+        std::vector<double> grad_nomon_expected = {2.0, 0.0, 0.0};
+        std::vector<double> xyz_nomon = {1.0, 0.0, 0.0};
+        size_t nmon_nomon = 1;
+        std::vector<double> virial_nomon(9, 1.0);
+        std::vector<double> virial_nomon_expected(9, 1.0);
+        std::string mon_nomon = "not_a_monomer";
+        double e = e1b::get_1b_energy(mon_nomon, nmon_nomon, xyz_nomon, grad_nomon, bad_idxs, &virial_nomon);
+
+        REQUIRE(VectorsAreEqual(bad_idxs, bad_idxs_expected));
+        REQUIRE(VectorsAreEqual(grad_nomon, grad_nomon_expected, TOL));
+        REQUIRE(VectorsAreEqual(virial_nomon, virial_nomon_expected, TOL));
+        REQUIRE(e == Approx(0.0).margin(TOL));
     }
 }

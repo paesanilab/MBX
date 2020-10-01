@@ -1,4 +1,5 @@
 ignore:
+  - "src/potential/1b/poly*"
   - "src/potential/2b/poly*"
   - "src/potential/3b/poly*"
   - "src/tests"
