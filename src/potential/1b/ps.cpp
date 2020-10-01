@@ -354,12 +354,14 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
         }
         std::cerr << std::endl;
     }
-    std::cerr << "Input gradients (dr) for " << nw << " water molecules:\n";
-    for (size_t i = 0; i < nw; i++) {
-        for (size_t j = 0; j < 9; j++) {
-            std::cerr << dr[9 * i + j] << " , ";
+    if (dr != 0) {
+        std::cerr << "Input gradients (dr) for " << nw << " water molecules:\n";
+        for (size_t i = 0; i < nw; i++) {
+            for (size_t j = 0; j < 9; j++) {
+                std::cerr << dr[9 * i + j] << " , ";
+            }
+            std::cerr << std::endl;
         }
-        std::cerr << std::endl;
     }
     if (virial != 0) {
         std::cerr << "Input virial:\n";
@@ -610,12 +612,14 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
 
 #ifdef DEBUG
     std::cerr << "Exiting " << __func__ << " in " << __FILE__ << std::endl;
-    std::cerr << "Output gradients (dr) for " << nw << " water molecules:\n";
-    for (size_t i = 0; i < nw; i++) {
-        for (size_t j = 0; j < 9; j++) {
-            std::cerr << dr[9 * i + j] << " , ";
+    if (dr != 0) {
+        std::cerr << "Output gradients (dr) for " << nw << " water molecules:\n";
+        for (size_t i = 0; i < nw; i++) {
+            for (size_t j = 0; j < 9; j++) {
+                std::cerr << dr[9 * i + j] << " , ";
+            }
+            std::cerr << std::endl;
         }
-        std::cerr << std::endl;
     }
     std::cerr << "Output energies for " << nw << " water molecules:\n";
     for (size_t j = 0; j < nw; j++) {
