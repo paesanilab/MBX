@@ -1718,7 +1718,9 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
         int break_local = 0;
         if (residual_global < tolerance_) break_local = 1;
 
+#if HAVE_MPI == 1
         MPI_Bcast(&break_local, 1, MPI_INT, 0, world_);
+#endif
         // std::cout << "residual= " << residual << "  residual_global= " << residual_global << "  break_local= " <<
         // break_local << std::endl;
         if (break_local) break;
