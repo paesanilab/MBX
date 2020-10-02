@@ -1714,11 +1714,14 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
 #else
         residual_global = residual;
 #endif
-
         // Check if converged
-        if (residual_global < tolerance_) break;
+        int break_local = 0;
+        if (residual_global < tolerance_) break_local = 1;
 
-        //	std::cout << "residual= " << residual << "  residual_global= " << residual_global << std::endl;
+        MPI_Bcast(&break_local, 1, MPI_INT, 0, world_);
+        // std::cout << "residual= " << residual << "  residual_global= " << residual_global << "  break_local= " <<
+        // break_local << std::endl;
+        if (break_local) break;
 
         double rvrv_new = residual_global;
 
@@ -3650,7 +3653,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     grad_ = std::vector<double>(3 * nsites_, 0.0);
 
     // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
+    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -4112,7 +4115,8 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             std::vector<double> tforcevec(sys_grad_.size(), 0.0);
 
             auto drecvirial = helpme::Matrix<double>(trecvir.data(), 6, 1);
-            auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), nsites_, 3);
+            int ns_ = (nsites_ == 0) ? 1 : nsites_;
+            auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), ns_, 3);
 
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(
                 0, charges, dipoles, PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
@@ -4297,9 +4301,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                                       << "  phi_= " << sys_phi_[fi_sites + m + inmon]
                                       << " grad= " << grad[fi_crd + inmon3 + m] << " "
                                       << grad[fi_crd + inmon3 + nmon + m] << " " << grad[fi_crd + inmon3 + nmon2 + m]
-                                      << " sys_chg_grad_= " << sys_chg_grad_[fi_crd + inmon3 + m] << " "
-                                      << sys_chg_grad_[fi_crd + inmon3 + nmon + m] << " "
-                                      << sys_chg_grad_[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                                      << std::endl;
                         }
                     }
 
