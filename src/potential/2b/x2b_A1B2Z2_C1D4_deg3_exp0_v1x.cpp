@@ -43,11 +43,7 @@ namespace {
 struct variable {
     double v_exp0(const double& r0, const double& k, const double* p1, const double* p2);
 
-    double v_exp(const double& k, const double* p1, const double* p2);
-
     double v_coul0(const double& r0, const double& k, const double* p1, const double* p2);
-
-    double v_coul(const double& k, const double* p1, const double* p2);
 
     void grads(const double& gg, double* grd1, double* grd2, const double* p1, const double* p2);
 
@@ -71,48 +67,6 @@ double variable::v_exp0(const double& r0, const double& k, const double* p1, con
     g[2] *= gg;
 
     return exp1;
-}
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-
-double variable::v_exp(const double& k, const double* p1, const double* p2) {
-    g[0] = p1[0] - p2[0];
-    g[1] = p1[1] - p2[1];
-    g[2] = p1[2] - p2[2];
-
-    const double r = std::sqrt(g[0] * g[0] + g[1] * g[1] + g[2] * g[2]);
-
-    const double exp1 = std::exp(k * (-r));
-    const double gg = -k * exp1 / r;
-
-    g[0] *= gg;
-    g[1] *= gg;
-    g[2] *= gg;
-
-    return exp1;
-}
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-
-double variable::v_coul(const double& k, const double* p1, const double* p2) {
-    g[0] = p1[0] - p2[0];
-    g[1] = p1[1] - p2[1];
-    g[2] = p1[2] - p2[2];
-
-    const double rsq = g[0] * g[0] + g[1] * g[1] + g[2] * g[2];
-    const double r = std::sqrt(rsq);
-
-    const double exp1 = std::exp(k * (-r));
-    const double rinv = 1.0 / r;
-    const double val = exp1 * rinv;
-
-    const double gg = -(k + rinv) * val * rinv;
-
-    g[0] *= gg;
-    g[1] *= gg;
-    g[2] *= gg;
-
-    return val;
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
@@ -865,6 +819,10 @@ double x2b_A1B2Z2_C1D4_v1x::f_switch(const double& r, double& g) const {
 //----------------------------------------------------------------------------//
 
 double x2b_A1B2Z2_C1D4_v1x::eval(const double* xyz1, const double* xyz2, const size_t ndim) const {
+#ifdef DEBUG
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+#endif
+
     std::vector<double> energies(ndim, 0.0);
 
     for (size_t j = 0; j < ndim; j++) {
@@ -970,11 +928,69 @@ double x2b_A1B2Z2_C1D4_v1x::eval(const double* xyz1, const double* xyz2, const s
         energy += energies[i];
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates (1) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << xyz1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input coordinates (2) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 15; j++) {
+            std::cerr << xyz2[15 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output energy: " << energy << std::endl;
+#endif
+
     return energy;
 }
 
 double x2b_A1B2Z2_C1D4_v1x::eval(const double* xyz1, const double* xyz2, double* grad1, double* grad2,
                                  const size_t ndim, std::vector<double>* virial) const {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates (1) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << xyz1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input coordinates (2) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 15; j++) {
+            std::cerr << xyz2[15 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input gradients (1) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << grad1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input gradients (2) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 15; j++) {
+            std::cerr << grad2[15 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input virial:\n";
+    for (size_t i = 0; i < 9; i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     std::vector<double> energies(ndim, 0.0);
 
     for (size_t j = 0; j < ndim; j++) {
@@ -1202,6 +1218,31 @@ double x2b_A1B2Z2_C1D4_v1x::eval(const double* xyz1, const double* xyz2, double*
     for (size_t i = 0; i < ndim; i++) {
         energy += energies[i];
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Output energy: " << energy << std::endl;
+    std::cerr << "Output gradients (1) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << grad1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output gradients (2) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 15; j++) {
+            std::cerr << grad2[15 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output virial:\n";
+    for (size_t i = 0; i < 9; i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 
     return energy;
 }

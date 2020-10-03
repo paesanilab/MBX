@@ -7,6 +7,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-poly-holder-1b.cpp
     unittest-energy1b.cpp
     unittest-poly-2b.cpp
+    unittest-poly-holder-2b.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
