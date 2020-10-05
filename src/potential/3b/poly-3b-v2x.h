@@ -38,18 +38,44 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <stdlib.h>
 #include <vector>
 
+/**
+ * @file poly-3b-v2x.h
+ * @brief Contains the structure that allows the evaluation of the polynomial for MB-pol.
+ */
+
+/**
+ * @namespace x2o
+ * @brief Namespace that encloses the MB-pol polynomial structure
+ */
 namespace x2o {
 
-//
-// this is the polynomial used by x3b_v2 (including gradients)
-//
-
-struct poly_3b_v2x {
+class poly_3b_v2x {
+    // Number of variables
     static const unsigned n_vars = 36;
+
+    // Number of terms
     static const unsigned size = 1163;
 
+    /**
+     * @brief Evaluates the polynomial of degree 4 for MB-pol.
+     *
+     * Given the linear parameters and the value of the polynomial variables, evaluates the polynomial for MB-pol
+     * @param[in] a Double array of 1163 elements with the linear parameters of the polynomial
+     * @param[in] x Double array of length 36 with the variable values
+     * @return Value of the polynomial
+     */
     static double eval(const double* a, const double* x);
 
+    /**
+     * @brief Evaluates the polynomial of degree 4 for MB-pol.
+     *
+     * Given the linear parameters and the value of the polynomial variables, evaluates the polynomial for MB-pol
+     * and calculates the gradients.
+     * @param[in] a Double array of 1163 elements with the linear parameters of the polynomial
+     * @param[in] x Double array of length 36 with the variable values
+     * @param[out] g Double array of length 36 that will store the gradients dP/dxi
+     * @return Value of the polynomial
+     */
     static double eval(const double* a, const double* x, double* t, double* g);
 };
 
