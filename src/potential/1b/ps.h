@@ -37,6 +37,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <algorithm>
 #include <vector>
+#include <iomanip>
+#include <iostream>
 
 /**
  * @file ps.h

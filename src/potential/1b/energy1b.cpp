@@ -37,6 +37,16 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace e1b {
 
 double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<size_t> &bad_idxs) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates for " << nm << " monomers of type " << mon1 << ":\n";
+    for (size_t i = 0; i < xyz1.size(); i++) {
+        std::cerr << xyz1[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     std::vector<double> energies;
     // Look for the proper call to energy depending on the monomer id
     if (mon1 == "h2o") {
@@ -62,12 +72,43 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         if (energies[i] > EMAX1B) bad_idxs.push_back(i);
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Output bad indexes for " << mon1 << ":\n";
+    for (size_t i = 0; i < bad_idxs.size(); i++) {
+        std::cerr << bad_idxs[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output energy: " << e << std::endl;
+#endif
+
     // Return energy
     return e;
 }
 
 double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1,
                      std::vector<size_t> &bad_idxs, std::vector<double> *virial) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates for " << nm << " monomers of type " << mon1 << ":\n";
+    for (size_t i = 0; i < xyz1.size(); i++) {
+        std::cerr << xyz1[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input gradients for " << nm << " monomers of type " << mon1 << ":\n";
+    for (size_t i = 0; i < grad1.size(); i++) {
+        std::cerr << grad1[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input virial:" << std::endl;
+    for (size_t i = 0; i < (*virial).size(); i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     std::vector<double> energies;
     // Look for the proper call to energy depending on the monomer id
     if (mon1 == "h2o") {
@@ -92,6 +133,27 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         e += energies[i];
         if (energies[i] > EMAX1B) bad_idxs.push_back(i);
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Output bad indexes for " << mon1 << ":\n";
+    for (size_t i = 0; i < bad_idxs.size(); i++) {
+        std::cerr << bad_idxs[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output gradients for " << nm << " monomers of type " << mon1 << ":\n";
+    for (size_t i = 0; i < grad1.size(); i++) {
+        std::cerr << grad1[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output virial:" << std::endl;
+    for (size_t i = 0; i < (*virial).size(); i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output energy: " << e << std::endl;
+#endif
 
     // Return energy
     return e;
