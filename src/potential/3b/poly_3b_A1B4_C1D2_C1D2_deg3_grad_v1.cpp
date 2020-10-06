@@ -37,6 +37,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace mbnrg_A1B4_C1D2_C1D2_deg3 {
 
 double poly_A1B4_C1D2_C1D2_deg3_v1::eval(const double x[55], const double a[1254], double g[55]) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+#endif
     const double t1 = a[3];
     const double t2 = a[283];
     const double t17 = x[14];
@@ -24316,7 +24320,30 @@ double poly_A1B4_C1D2_C1D2_deg3_v1::eval(const double x[55], const double a[1254
     g[52] = t25385 + t25533 + t25601 + t25710;
     g[53] = t25790 + t25870 + t25937 + t25986;
     g[54] = t26208 + t26423 + t26570 + t26706;
-    return t5473 + t8043 + t9624 + t11051;
+    double e = t5473 + t8043 + t9624 + t11051;
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 1254; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x):\n";
+    for (size_t j = 0; j < 55; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g):\n";
+    for (size_t j = 0; j < 55; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial energy: " << e << std::endl;
+#endif
+
+    return e;
 }
 
 }  // namespace mbnrg_A1B4_C1D2_C1D2_deg3

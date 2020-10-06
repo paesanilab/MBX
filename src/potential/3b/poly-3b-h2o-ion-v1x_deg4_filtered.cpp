@@ -37,6 +37,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace h2o_ion {
 
 double poly_3b_h2o_ion_v1x_deg4_filtered::eval(const double a[1016], const double x[21], double g[21]) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+#endif
     const double t1 = a[128];
     const double t4 = x[20];
     const double t2 = t4 * t1;
@@ -8046,7 +8050,29 @@ double poly_3b_h2o_ion_v1x_deg4_filtered::eval(const double a[1016], const doubl
     g[18] = t8825;
     g[19] = t10774;
     g[20] = t10761;
-    return t5786;
+    double e = t5786;
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 1016; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x):\n";
+    for (size_t j = 0; j < 21; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g):\n";
+    for (size_t j = 0; j < 21; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial energy: " << e << std::endl;
+#endif
+
+    return e;
 }
 
 }  // namespace h2o_ion

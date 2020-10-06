@@ -35,6 +35,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef POLY_3B_MBNRG_A1B4_C1D2_C1D2_DEG3_H
 #define POLY_3B_MBNRG_A1B4_C1D2_C1D2_DEG3_H
 
+#ifdef DEBUG
+#include <iostream>
+#include <iomanip>
+#endif
+
 /**
  * @file poly_3b_A1B4_C1D2_C1D2_deg3_v1.h
  * @brief Contains the structure that allows the evaluation of the polynomial for A1B4_C1D2_C1D2 symmetry.
@@ -46,7 +51,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 namespace mbnrg_A1B4_C1D2_C1D2_deg3 {
 
-struct poly_A1B4_C1D2_C1D2_deg3_v1 {
+class poly_A1B4_C1D2_C1D2_deg3_v1 {
+   public:
     // Degree of the polynomial
     static const unsigned degree = 3;
 

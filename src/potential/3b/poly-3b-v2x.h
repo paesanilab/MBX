@@ -35,6 +35,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef POLY_3B_V2X_H
 #define POLY_3B_V2X_H
 
+#ifdef DEBUG
+#include <iostream>
+#include <iomanip>
+#endif
+
 #include <stdlib.h>
 #include <vector>
 
@@ -50,6 +55,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace x2o {
 
 class poly_3b_v2x {
+   public:
     // Number of variables
     static const unsigned n_vars = 36;
 

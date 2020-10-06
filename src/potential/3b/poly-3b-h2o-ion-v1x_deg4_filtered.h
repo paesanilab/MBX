@@ -35,6 +35,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef POLY_3B_H2O_ION_V1X_DEG4_FILTERED_H
 #define POLY_3B_H2O_ION_V1X_DEG4_FILTERED_H
 
+#ifdef DEBUG
+#include <iostream>
+#include <iomanip>
+#endif
+
 /**
  * @file poly-3b-h2o-ion-v1x_deg4_filtered.h
  * @brief Contains the structure that allows the evaluation of the polynomial for monoatomic ion - water - water
@@ -47,7 +52,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 namespace h2o_ion {
 
-struct poly_3b_h2o_ion_v1x_deg4_filtered {
+class poly_3b_h2o_ion_v1x_deg4_filtered {
+   public:
     // Number of variables
     static const unsigned n_vars = 21;
 

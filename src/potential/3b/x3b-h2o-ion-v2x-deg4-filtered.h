@@ -42,7 +42,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 ////////////////////////////////////////////////////////////////////////////////
 
-struct x3b_h2o_ion_v1x_deg4_filtered {
+class x3b_h2o_ion_v1x_deg4_filtered {
+   public:
     x3b_h2o_ion_v1x_deg4_filtered(std::string m3);
 
     static const unsigned ncoeffs = h2o_ion::poly_3b_h2o_ion_v1x_deg4_filtered::size;

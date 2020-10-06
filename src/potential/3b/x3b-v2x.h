@@ -46,7 +46,8 @@ namespace x2o {
 
 //----------------------------------------------------------------------------//
 
-struct x3b_v2x {
+class x3b_v2x {
+   public:
     static double eval(const double* w1, const double* w2, const double* w3, const size_t nt);
 
     static double eval(const double* w1, const double* w2, const double* w3, double* g1, double* g2, double* g3,

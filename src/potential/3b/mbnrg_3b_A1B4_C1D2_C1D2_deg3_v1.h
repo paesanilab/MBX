@@ -16,7 +16,8 @@ namespace mbnrg_A1B4_C1D2_C1D2_deg3 {
 
 //----------------------------------------------------------------------------//
 
-struct mbnrg_A1B4_C1D2_C1D2_deg3_v1 {
+class mbnrg_A1B4_C1D2_C1D2_deg3_v1 {
+   public:
     mbnrg_A1B4_C1D2_C1D2_deg3_v1(){};
     mbnrg_A1B4_C1D2_C1D2_deg3_v1(const std::string mon1, const std::string mon2, const std::string mon3);
 

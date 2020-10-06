@@ -67247,6 +67247,11 @@ void fmg51(const double *x, const double *a, double *t) {
 }
 
 double poly_A1B2_A1B2_A1B2_deg4_v1::eval(const double x[36], const double a[2331], double g[36]) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+#endif
+
     double t[67476];
     fmg1(x, a, t);
     fmg2(x, a, t);
@@ -67336,7 +67341,30 @@ double poly_A1B2_A1B2_A1B2_deg4_v1::eval(const double x[36], const double a[2331
     g[33] = t[63799] + t[64403];
     g[34] = t[65247] + t[66168];
     g[35] = t[67039] + t[67475];
-    return t[24877] + t[34019];
+    double e = t[24877] + t[34019];
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 2331; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x):\n";
+    for (size_t j = 0; j < 36; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g):\n";
+    for (size_t j = 0; j < 36; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial energy: " << e << std::endl;
+#endif
+
+    return e;
 }
 
 }  // namespace mbnrg_A1B2_A1B2_A1B2_deg4
