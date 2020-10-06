@@ -39,7 +39,7 @@ namespace mbnrg_A1B4_C1D2_C1D2_deg3 {
 double poly_A1B4_C1D2_C1D2_deg3_v1::eval(const double x[55], const double a[1254], double g[55]) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(20);
-    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
 #endif
     const double t1 = a[3];
     const double t2 = a[283];

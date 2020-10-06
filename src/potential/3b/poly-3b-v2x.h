@@ -79,6 +79,7 @@ class poly_3b_v2x {
      * and calculates the gradients.
      * @param[in] a Double array of 1163 elements with the linear parameters of the polynomial
      * @param[in] x Double array of length 36 with the variable values
+     * @param[in] t Double array of length 32609 used as intermediate values for the polynomial evaluation
      * @param[out] g Double array of length 36 that will store the gradients dP/dxi
      * @return Value of the polynomial
      */

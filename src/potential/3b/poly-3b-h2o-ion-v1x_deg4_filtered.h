@@ -64,17 +64,6 @@ class poly_3b_h2o_ion_v1x_deg4_filtered {
      * @brief Evaluates the polynomial of degree 4 for monoatomic ion - water - water structure symmetry.
      *
      * Given the linear parameters and the value of the polynomial variables, evaluates the polynomial for the
-     * monoatomic ion - water - water structure symmetry
-     * @param[in] a Double array of 1016 elements with the linear parameters of the polynomial
-     * @param[in] x Double array of length 21 with the variable values
-     * @return Value of the polynomial
-     */
-    static double eval(const double a[1016], const double x[21]);
-
-    /**
-     * @brief Evaluates the polynomial of degree 4 for monoatomic ion - water - water structure symmetry.
-     *
-     * Given the linear parameters and the value of the polynomial variables, evaluates the polynomial for the
      * monoatomic ion - water - water structure symmetry, and calculates the gradients.
      * @param[in] a Double array of 1016 elements with the linear parameters of the polynomial
      * @param[in] x Double array of length 21 with the variable values

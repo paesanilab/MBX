@@ -39,7 +39,7 @@ namespace h2o_ion {
 double poly_3b_h2o_ion_v1x_deg4_filtered::eval(const double a[1016], const double x[21], double g[21]) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(20);
-    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
 #endif
     const double t1 = a[128];
     const double t4 = x[20];

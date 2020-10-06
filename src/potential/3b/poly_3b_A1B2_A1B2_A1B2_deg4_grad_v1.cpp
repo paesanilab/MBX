@@ -67249,7 +67249,7 @@ void fmg51(const double *x, const double *a, double *t) {
 double poly_A1B2_A1B2_A1B2_deg4_v1::eval(const double x[36], const double a[2331], double g[36]) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(20);
-    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
 #endif
 
     double t[67476];
