@@ -40,23 +40,62 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include "poly-3b-h2o-ion-v1x_deg4_filtered.h"
 
-////////////////////////////////////////////////////////////////////////////////
+/**
+ * @file x3b-h2o-ion-v2x-deg4-filtered.h
+ * @brief Contains the structure of the polynomial holder for ion-water-water
+ */
 
 class x3b_h2o_ion_v1x_deg4_filtered {
    public:
+    /**
+     * @brief Creates a class and initializes the parameters corresponding to h2o, h2o and m3, which is the ion of
+     * interest.
+     * @param[in] m3 Monomer id of the ion of interest
+     */
     x3b_h2o_ion_v1x_deg4_filtered(std::string m3);
 
+    // Number of terms
     static const unsigned ncoeffs = h2o_ion::poly_3b_h2o_ion_v1x_deg4_filtered::size;
 
+    /**
+     * @brief Computes the two body polynomials for the trimers
+     *
+     * Given the coordinates of a number of trimers (mon1 in xyz1, mon2 in xyz2, and mon3 in xyz3, it calculates the
+     * polynomial value for each one of them, and returns the sum of the contributions for the trimers.
+     * @param[in] xyz1 Pointer to a double array with the coordinates of the monomers of type mon1.
+     * @param[in] xyz2 Pointer to a double array with the coordinates of the monomers of type mon2.
+     * @param[in] xyz3 Pointer to a double array with the coordinates of the monomers of type mon3.
+     * @param[in] nt Number of trimers passed in the xyz arrays.
+     * @return Double with the sum of the energies of each trimer.
+     */
     double operator()(const double* xyz1, const double* xyz2, const double* xyz3, size_t nt) const;
+
+    /**
+     * @brief Computes the two body polynomials for the trimers
+     *
+     * Given the coordinates of a number of trimers (mon1 in xyz1, mon2 in xyz2, and mon3 in xyz3, it calculates the
+     * polynomial value for each one of them, and returns the sum of the contributions for the trimers.
+     * @param[in] xyz1 Pointer to a double array with the coordinates of the monomers of type mon1.
+     * @param[in] xyz2 Pointer to a double array with the coordinates of the monomers of type mon2.
+     * @param[in] xyz3 Pointer to a double array with the coordinates of the monomers of type mon3.
+     * @param[in,out] grad1 Pointer to a double array with the gradients of the monomers of type mon1.
+     * @param[in,out] grad2 Pointer to a double array with the gradients of the monomers of type mon2.
+     * @param[in,out] grad3 Pointer to a double array with the gradients of the monomers of type mon3.
+     * @param[in] nt Number of trimers passed in the xyz arrays.
+     * @param[in,out] virial Vector of 9 elements with the virial tensor.
+     * @return Double with the sum of the energies of each trimer.
+     */
     double operator()(const double* xyz1, const double* xyz2, const double* xyz3, double* grad1, double* grad2,
                       double* grad3, size_t nt, std::vector<double>* virial = 0) const;
 
-   public:
+    // Inner cutoff
     double m_r3i;
+
+    // Outer cutoff
     double m_r3f;
 
    private:
+    // Values of the non-linear parameters of the polynomials
     double m_kOH_intra;
     double m_kHH_intra;
 
@@ -77,10 +116,10 @@ class x3b_h2o_ion_v1x_deg4_filtered {
     double m_dXO;
     double m_dXH;
 
-   private:
+    // Values of the linear parameters of the polynomials
     double m_coeffs[ncoeffs];
 
-   private:
+    // Switch function
     double f_switch(const double& r, double& g) const;
 };
 
