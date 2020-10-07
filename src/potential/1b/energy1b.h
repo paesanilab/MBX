@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <string>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 // 1B
 #include "potential/1b/ps.h"

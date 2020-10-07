@@ -41,31 +41,29 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <cmath>
 #include "tools/custom_exceptions.h"
 
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-
 namespace tools {
 
 /**
- * Returns the mass for a given atom.
+ * @brief Returns the mass for a given atom.
  * @param[in] atom The name of the atom
  * @return Mass of the atom in atomic units
  */
 double GetMass(const std::string atom);
 
 /**
- * Returns the distance between two points
- * @param[in] p1 Pointer to the coordinates of the first point 
- * @param[in] p2 Pointer to the coordinates of the second point 
+ * @brief Returns the distance between two points
+ * @param[in] p1 Pointer to the coordinates of the first point
+ * @param[in] p2 Pointer to the coordinates of the second point
  * @param[in] box Optional. Box of the system.
  * @param[in] box_inverse Optional. Inverse of the box matrix.
  * @return Distance between points one and two.
  */
-double distance(double *p1, double *p2, std::vector<double> box = {}, std::vector<double> box_inverse = {});
+double Distance(double *p1, double *p2, std::vector<double> box = {}, std::vector<double> box_inverse = {});
 
-} // namespace tools
+}  // namespace tools
 
 #endif
