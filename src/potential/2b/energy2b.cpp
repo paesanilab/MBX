@@ -214,7 +214,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         std::cerr << grad1[i] << " , ";
     }
     std::cerr << std::endl;
-    std::cerr << "output gradients for " << nm << " monomers of type " << mon2 << ":\n";
+    std::cerr << "Output gradients for " << nm << " monomers of type " << mon2 << ":\n";
     for (size_t i = 0; i < grad2.size(); i++) {
         std::cerr << grad2[i] << " , ";
     }
