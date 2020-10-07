@@ -2458,10 +2458,9 @@ double System::DispersionPME(bool do_grads, bool use_ghost) {
     }
 
     energy_ = 0.0;
-    if (islocal_.size() > 0) {
-        std::fill(grad_.begin(), grad_.end(), 0.0);
-        std::fill(virial_.begin(), virial_.end(), 0.0);
-    }
+    if (islocal_.size() > 0) std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
+
     SetPBC(box_);
 
     energy_ = GetDispersionPME(do_grads, use_ghost);
@@ -2481,10 +2480,9 @@ double System::DispersionPMElocal(bool do_grads, bool use_ghost) {
     }
 
     energy_ = 0.0;
-    if (islocal_.size() > 0) {
-        std::fill(grad_.begin(), grad_.end(), 0.0);
-        std::fill(virial_.begin(), virial_.end(), 0.0);
-    }
+    if (islocal_.size() > 0) std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
+
     SetPBC(box_);
 
     energy_ = GetDispersionPMElocal(do_grads, use_ghost);
@@ -2574,10 +2572,8 @@ double System::ElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     }
 
     energy_ = 0.0;
-    if (islocal_.size() > 0) {
-        std::fill(grad_.begin(), grad_.end(), 0.0);
-        std::fill(virial_.begin(), virial_.end(), 0.0);
-    }
+    if (islocal_.size() > 0) std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
 
     SetPBC(box_);
 
