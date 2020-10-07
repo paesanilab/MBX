@@ -253,25 +253,25 @@ double Dispersion::GetDispersionPMElocal(std::vector<double> &grad, std::vector<
         calc_virial_ = true;
     }
 
-    if (natoms_ > 0) std::fill(virial_.begin(), virial_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculateDispersionPMElocal(use_ghost);
+
+    if (calc_virial_) {
+        (*virial)[0] += virial_[0];
+        (*virial)[1] += virial_[1];
+        (*virial)[2] += virial_[2];
+        (*virial)[3] += virial_[3];
+        (*virial)[4] += virial_[4];
+        (*virial)[5] += virial_[5];
+        (*virial)[6] += virial_[6];
+        (*virial)[7] += virial_[7];
+        (*virial)[8] += virial_[8];
+    }
 
     if (natoms_ > 0) {
         size_t fi_mon = 0;
         size_t fi_crd = 0;
         size_t fi_sites = 0;
-
-        if (calc_virial_) {
-            (*virial)[0] += virial_[0];
-            (*virial)[1] += virial_[1];
-            (*virial)[2] += virial_[2];
-            (*virial)[3] += virial_[3];
-            (*virial)[4] += virial_[4];
-            (*virial)[5] += virial_[5];
-            (*virial)[6] += virial_[6];
-            (*virial)[7] += virial_[7];
-            (*virial)[8] += virial_[8];
-        }
 
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
             size_t ns = num_atoms_[fi_mon];
