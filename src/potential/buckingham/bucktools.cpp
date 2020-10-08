@@ -40,14 +40,12 @@ namespace buck {
 
 //----------------------------------------------------------------------------//
 
-double Repulsion(const double a, const double b, const double* p1, const double* xyz2,
-		 double* grad1, double* grad2, const size_t nmon1, const size_t nmon2,
-		 const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
-		 bool do_grads, const double cutoff,                                 
-		 const std::vector<double>& box, const std::vector<double>& box_inverse,
-		 bool use_ghost, const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
-		 std::vector<double> *virial) {
-
+double Repulsion(const double a, const double b, const double* p1, const double* xyz2, double* grad1, double* grad2,
+                 const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
+                 const size_t atom_index1, const size_t atom_index2, bool do_grads, const double cutoff,
+                 const std::vector<double>& box, const std::vector<double>& box_inverse, bool use_ghost,
+                 const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
+                 std::vector<double>* virial) {
     size_t nmon22 = nmon2 * 2;
 
     size_t shift2 = atom_index2 * nmon2 * 3;
@@ -66,17 +64,17 @@ double Repulsion(const double a, const double b, const double* p1, const double*
 
         // Apply minimum image convetion
         if (use_pbc) {
-            double tmp1 = boxinv[0] * dx + boxinv[1] * dy + boxinv[2] * dz;
-            double tmp2 = boxinv[3] * dx + boxinv[4] * dy + boxinv[5] * dz;
-            double tmp3 = boxinv[6] * dx + boxinv[7] * dy + boxinv[8] * dz;
+            double tmp1 = boxinv[0] * dx + boxinv[3] * dy + boxinv[6] * dz;
+            double tmp2 = boxinv[1] * dx + boxinv[4] * dy + boxinv[7] * dz;
+            double tmp3 = boxinv[2] * dx + boxinv[5] * dy + boxinv[8] * dz;
 
             tmp1 -= std::floor(tmp1 + 0.5);
             tmp2 -= std::floor(tmp2 + 0.5);
             tmp3 -= std::floor(tmp3 + 0.5);
 
-            dx = boxptr[0] * tmp1 + boxptr[1] * tmp2 + boxptr[2] * tmp3;
-            dy = boxptr[3] * tmp1 + boxptr[4] * tmp2 + boxptr[5] * tmp3;
-            dz = boxptr[6] * tmp1 + boxptr[7] * tmp2 + boxptr[8] * tmp3;
+            dx = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
+            dy = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
+            dz = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
 
         const double rsq = dx * dx + dy * dy + dz * dz;
@@ -84,11 +82,11 @@ double Repulsion(const double a, const double b, const double* p1, const double*
 
         const double inv_r = 1.0 / r;
 
-	bool include_pair = false;
-	size_t isls = islocal[isl1_offset] + islocal[isl2_offset+nv];
-	if(!use_ghost) include_pair = true;
-	if(use_ghost && isls) include_pair = true;
-	
+        bool include_pair = false;
+        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
+        if (!use_ghost) include_pair = true;
+        if (use_ghost && isls) include_pair = true;
+
         // If using cutoff, check for distances and get proper dispersion
         if (r <= cutoff && include_pair) {
             const double br = -b * r;
@@ -97,16 +95,16 @@ double Repulsion(const double a, const double b, const double* p1, const double*
             double ttsw_grad = 0;
             const double ttsw = switch_function(r, cutoff - 1.0, cutoff, ttsw_grad);
 
-	    double pair_energy = ttsw * fac;
+            double pair_energy = ttsw * fac;
 
-	    if(isls == 1) pair_energy *= 0.5;
+            if (isls == 1) pair_energy *= 0.5;
             repulsion_energy += pair_energy;
 
             if (do_grads) {
                 // TODO check that this is correct and gradients are properly calculated
                 // in switch area
                 // Complciated due to the small energy/grad in this area.
-                const double grad = ttsw * (b * inv_r * fac) - ttsw_grad * fac / r ;
+                const double grad = ttsw * (b * inv_r * fac) - ttsw_grad * fac / r;
 
                 g1[0] -= dx * grad;
                 g2[nv] += dx * grad;
@@ -118,19 +116,18 @@ double Repulsion(const double a, const double b, const double* p1, const double*
                 g2[nmon22 + nv] += dz * grad;
 
                 if (virial != 0) {
-		  const double vscale = (isls == 1) ? 0.5 : 1.0;
-		  
-		  (*virial)[0] -= dx * dx * grad * vscale;
-		  (*virial)[1] -= dx * dy * grad * vscale;
-		  (*virial)[2] -= dx * dz * grad * vscale;
-		  (*virial)[4] -= dy * dy * grad * vscale;
-		  (*virial)[5] -= dy * dz * grad * vscale;
-		  (*virial)[8] -= dz * dz * grad * vscale;
-                  
-		  (*virial)[3] = (*virial)[1];
-		  (*virial)[6] = (*virial)[2];
-		  (*virial)[7] = (*virial)[5];
-		  
+                    const double vscale = (isls == 1) ? 0.5 : 1.0;
+
+                    (*virial)[0] -= dx * dx * grad * vscale;
+                    (*virial)[1] -= dx * dy * grad * vscale;
+                    (*virial)[2] -= dx * dz * grad * vscale;
+                    (*virial)[4] -= dy * dy * grad * vscale;
+                    (*virial)[5] -= dy * dz * grad * vscale;
+                    (*virial)[8] -= dz * dz * grad * vscale;
+
+                    (*virial)[3] = (*virial)[1];
+                    (*virial)[6] = (*virial)[2];
+                    (*virial)[7] = (*virial)[5];
                 }
             }
         }
@@ -150,7 +147,8 @@ double Repulsion(const double a, const double b, const double* p1, const double*
     return repulsion_energy;
 }
 
-bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, std::vector<std::pair<std::string,std::string> > buck_pairs, double& out_a, double& out_b) {
+bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2,
+                   std::vector<std::pair<std::string, std::string> > buck_pairs, double& out_a, double& out_b) {
     // Order the two monomer names and corresponding xyz
     if (mon_id2 < mon_id1) {
         std::string tmp = mon_id1;
@@ -161,7 +159,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         index2 = tmp1;
     }
 
-    if (std::find(buck_pairs.begin(), buck_pairs.end(), std::make_pair(mon_id1,mon_id2)) == buck_pairs.end()) {
+    if (std::find(buck_pairs.begin(), buck_pairs.end(), std::make_pair(mon_id1, mon_id2)) == buck_pairs.end()) {
         out_a = 0.0;
         out_b = 0.0;
         return false;
@@ -287,7 +285,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         // Fill in (in order) the C6 and d6 coefficients
         a.push_back(49986.5);  // kcal/mol * A^(-6) K -- O
-        a.push_back(4951.5);  // kcal/mol * A^(-6) K -- H
+        a.push_back(4951.5);   // kcal/mol * A^(-6) K -- H
 
         b.push_back(3.401250000000000e+00);  // A^(-1)
         b.push_back(3.321390000000000e+00);  // A^(-1)
@@ -336,7 +334,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Fill in (in order) the C6 and d6 coefficients
         a.push_back(6440.78);  // kcal/mol * A^(-6) He -- O
 
-        b.push_back(4.26243);  // A^(-1)
+        b.push_back(4.26243);                // A^(-1)
         b.push_back(2.697680000000000e+00);  // A^(-1)
     } else if (mon_id1 == "h2o" and mon_id2 == "he") {
         // Define the type of atom in each mon
@@ -354,7 +352,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         a.push_back(1629.41);  // kcal/mol * A^(-6) He -- H
 
         b.push_back(3.71873);  // A^(-1)
-        b.push_back(3.9707 );  // A^(-1)
+        b.push_back(3.9707);   // A^(-1)
     } else if (mon_id1 == "ar" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -415,7 +413,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         a.push_back(42713.9);  // kcal/mol * A^(-6) C -- C
         a.push_back(3258.86);  // kcal/mol * A^(-6) C -- O
         a.push_back(3258.86);  // kcal/mol * A^(-6) O -- C
-        a.push_back(2594.4);  // kcal/mol * A^(-6) O -- O
+        a.push_back(2594.4);   // kcal/mol * A^(-6) O -- O
 
         b.push_back(3.37925);  // A^(-1)
         b.push_back(3.25885);  // A^(-1)
@@ -466,7 +464,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         a.push_back(4559.97);  // kcal/mol * A^(-6) O -- H
 
         b.push_back(2.93819);  // A^(-1)
-        b.push_back(3.7359);  // A^(-1)
+        b.push_back(3.7359);   // A^(-1)
         b.push_back(3.53045);  // A^(-1)
         b.push_back(3.89503);  // A^(-1)
         // =====>> BEGIN SECTION BUCKINGHAM <<=====
@@ -480,7 +478,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         // Fill in (in order) the C6 and d6 coefficients
         a.push_back(127779.0);  // kcal/mol A--B
-        b.push_back(3.19908);  // A^(-1) A--B
+        b.push_back(3.19908);   // A^(-1) A--B
         // =====>> END SECTION BUCKINGHAM <<=====
     } else {
         out_a = 0.0;
@@ -493,7 +491,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
     out_a = a[i * nt2 + j];
     out_b = b[i * nt2 + j];
-    
+
     return true;
 }
 
