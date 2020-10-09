@@ -1919,11 +1919,32 @@ double poly_2b_A1B2Z2_C1_deg5_v1x::eval(const double a[496], const double x[8], 
              (t2690 + t2661 + t2586 + t2587 + t2691 + t2692 + t3020 + t3021 + t1311) * t1736) *
                 t1736) *
                t1736;
-    return (t1 + t12) * t7 + (t1 + t25 + t41) * t33 + (t44 + t55 + t74 + t116) * t98 +
-           (t44 + t55 + t74 + t160 + t179) * t167 + (t182 + t193 + t212 + t254 + t286 + t378) * t344 +
-           (t391 + t410 + t452 + t484 + t576 + t713) * t701 +
-           (t726 + t745 + t787 + t860 + t976 + t1143 + t1372) * t1347 +
-           (t726 + t745 + t1381 + t1394 + t1420 + t1462 + t1660 + t1751) * t1736;
+    double e = (t1 + t12) * t7 + (t1 + t25 + t41) * t33 + (t44 + t55 + t74 + t116) * t98 +
+               (t44 + t55 + t74 + t160 + t179) * t167 + (t182 + t193 + t212 + t254 + t286 + t378) * t344 +
+               (t391 + t410 + t452 + t484 + t576 + t713) * t701 +
+               (t726 + t745 + t787 + t860 + t976 + t1143 + t1372) * t1347 +
+               (t726 + t745 + t1381 + t1394 + t1420 + t1462 + t1660 + t1751) * t1736;
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 496; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x):\n";
+    for (size_t j = 0; j < 8; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g):\n";
+    for (size_t j = 0; j < 8; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial energy: " << e << std::endl;
+#endif
+    return e;
 }
 
 }  // namespace x2b_A1B2Z2_C1_deg5

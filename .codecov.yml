@@ -1,8 +1,8 @@
 ignore:
+  - "src/potential/1b/poly*"
   - "src/potential/2b/poly*"
   - "src/potential/3b/poly*"
   - "src/tests"
-  - "external"
   - "external"
   - "src/potential/electrostatics/files_not_used"
   - "src/potential/electrostatics/helpme.h"
