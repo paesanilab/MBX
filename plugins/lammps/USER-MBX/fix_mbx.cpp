@@ -126,8 +126,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
 
   int na = 0;
   for(int i=0; i<num_mol_types; ++i) na += num_mols[i] * num_atoms_per_mol[i];
-
-  if(na != atom->natoms) error->all(FLERR,"Inconsistent # of atoms");
   
   mol_offset[0] = 0;
   mol_offset[1] = num_mols[0]*num_atoms_per_mol[0];
@@ -145,6 +143,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
       fprintf(screen,"[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n",i,num_mols[i],mol_names[i],mol_offset[i]);
     fprintf(screen,"\n");
   }
+
+  if(na != atom->natoms) error->all(FLERR,"Inconsistent # of atoms");
 
   mbx_mpi_enabled = true;
   
@@ -1319,7 +1319,6 @@ void FixMBX::mbx_init_local()
       error->warning(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
     mbx_mpi_enabled = false;
   }
-  //  else if(err == -2) error->all(FLERR,"[MBX] MPI not enabled\n");
   
   if(mbx_num_atoms_local == 0) ptr_mbx_local->InitializePME();
   else ptr_mbx_local->Initialize();
@@ -1545,9 +1544,10 @@ void FixMBX::mbx_init_full()
 	ptr_mbx_full->AddMolecule(molec);
 
 	mbx_num_atoms_full++;
+
       } else if(strcmp("he",mol_names[mtype]) == 0) {
 
-	// add chloride ion
+	// add helium atom
 	
 	tagint anchor = tag_full[i];
 	names.push_back("He");
@@ -1861,7 +1861,7 @@ void FixMBX::mbx_init_pme()
 
       } else if(strcmp("he",mol_names[mtype]) == 0) {
 
-	// add helium ion
+	// add helium atom
 	
 	tagint anchor = tag_full[i];
 	names.push_back("He");
