@@ -103,8 +103,8 @@ double Repulsion(const double a, const double b, const double* p1, const double*
  * @param[in] index2 Atom index of the atom j of monomer 2. In case of water, O -> 0 and H -> 1 or 2
  * @param[in] buck_pairs Contains the pairs of monomers that require buckingham. If the pair {mon_id1,mon_id2} is not
  * there, a and b will be set to 0.
- * @param[in,out] out_a Contains the parameter A corresponding to the atoms i,j of monomers 1 and 2.
- * @param[in,out] out_b Contains the parameter b corresponding to the atoms i,j of monomers 1 and 2.
+ * @param[out] out_a Contains the parameter A corresponding to the atoms i,j of monomers 1 and 2.
+ * @param[out] out_b Contains the parameter b corresponding to the atoms i,j of monomers 1 and 2.
  * @return True if the pair was found, false otherwise
  */
 bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2,
