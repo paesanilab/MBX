@@ -62,8 +62,9 @@ TEST_CASE("bucktools::Repulsion") {
 
     double cutoff = 9.0;
 
-    std::vector<double> box;
-    std::vector<double> box_inv;
+    std::vector<double> box = {100.0, 0.0, 0.0, 0.0, 100.0, 0.0, 0.0, 0.0, 100.0};
+    std::vector<double> box_inv = {1 / 100.0, 0.0, 0.0, 0.0, 1 / 100.0, 0.0, 0.0, 0.0, 1 / 100.0};
+
     std::vector<double> virial(9, 0.0);
 
     for (size_t i = 0; i < nat2a; i++) {
@@ -202,7 +203,7 @@ TEST_CASE("bucktools::Repulsion") {
             for (size_t j = 0; j < nat2a; j++) {
                 for (size_t k = 0; k < 3; k++) {
                     size_t shift_c = first_index_2a + j * 3 * nmon2a + k * nmon2a + i;
-                    for (size_t k2 = k; k2 < 3; k2++) {
+                    for (size_t k2 = 0; k2 < 3; k2++) {
                         size_t shift_f = first_index_2a + j * 3 * nmon2a + k2 * nmon2a + i;
                         virial_manual[3 * k + k2] -= xyz2[shift_c] * numgrads2[shift_f];
                     }
@@ -214,7 +215,7 @@ TEST_CASE("bucktools::Repulsion") {
             for (size_t j = 0; j < nat2b; j++) {
                 for (size_t k = 0; k < 3; k++) {
                     size_t shift_c = first_index_2b + j * 3 * nmon2b + k * nmon2b + i;
-                    for (size_t k2 = k; k2 < 3; k2++) {
+                    for (size_t k2 = 0; k2 < 3; k2++) {
                         size_t shift_f = first_index_2b + j * 3 * nmon2b + k2 * nmon2b + i;
                         virial_manual[3 * k + k2] -= xyz2[shift_c] * numgrads2[shift_f];
                     }
@@ -222,9 +223,6 @@ TEST_CASE("bucktools::Repulsion") {
             }
         }
 
-        virial_manual[3] = virial_manual[1];
-        virial_manual[6] = virial_manual[2];
-        virial_manual[7] = virial_manual[5];
         REQUIRE(VectorsAreEqual(virial, virial_manual, TOL));
     }
 }

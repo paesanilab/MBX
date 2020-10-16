@@ -250,7 +250,7 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
                     grad_[fi_crd + k] += grad_pool[rank][k];
                 }
                 for (size_t k = 0; k < 9; k++) {
-                    virial_[k] -= virial_pool[rank][k];  // -= bc the atomindeces are switched relative to dlpoly
+                    virial_[k] += virial_pool[rank][k];  // -= bc the atomindeces are switched relative to dlpoly
                 }
                 rep_energy_ += energy_pool[rank];
             }
@@ -341,7 +341,7 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
                         grad_[fi_crd2 + k] += grad2_pool[rank][k];
                     }
                     for (size_t k = 0; k < 9; k++) {
-                        virial_[k] -= virial_pool[rank][k];  // -= bc the atomindeces are switched relative to dlpoly
+                        virial_[k] += virial_pool[rank][k];  // -= bc the atomindeces are switched relative to dlpoly
                     }
 
                     rep_energy_ += energy_pool[rank];
@@ -464,7 +464,7 @@ void Buckingham::CalculateEnforcedRepulsion(bool use_ghost) {
                         grad_[fi_crd2 + k] += grad2_pool[rank][k];
                     }
                     for (size_t k = 0; k < 9; k++) {
-                        virial_[k] -= virial_pool[rank][k];  // -= bc the atomindeces are switched relative to dlpoly
+                        virial_[k] += virial_pool[rank][k];  // -= bc the atomindeces are switched relative to dlpoly
                     }
 
                     rep_energy_ += energy_pool[rank];
