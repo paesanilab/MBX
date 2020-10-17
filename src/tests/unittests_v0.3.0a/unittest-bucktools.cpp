@@ -226,3 +226,118 @@ TEST_CASE("bucktools::Repulsion") {
         REQUIRE(VectorsAreEqual(virial, virial_manual, TOL));
     }
 }
+
+TEST_CASE("GetBuckParams") {
+    std::vector<std::pair<std::string, std::string> > pairs = {
+        {"f", "h2o"},  {"cl", "h2o"}, {"br", "h2o"},  {"h2o", "i"},   {"h2o", "li"},  {"h2o", "na"}, {"h2o", "k"},
+        {"h2o", "rb"}, {"cs", "h2o"}, {"co2", "h2o"}, {"ch4", "h2o"}, {"co2", "co2"}, {"ch4", "ch4"}};
+
+    std::vector<std::pair<std::string, std::string> > buck_pairs = {
+        {"f", "h2o"},  {"cl", "h2o"}, {"br", "h2o"},  {"i", "h2o"},   {"li", "h2o"},  {"na", "h2o"}, {"k", "h2o"},
+        {"rb", "h2o"}, {"cs", "h2o"}, {"co2", "h2o"}, {"ch4", "h2o"}, {"co2", "co2"}, {"ch4", "ch4"}};
+
+    std::vector<std::vector<double> > a_expected = {{35920.3, 800.553},                    // {"f","h2o"}
+                                                    {50180.4, 2594.28},                    // {"cl","h2o"}
+                                                    {37682.2, 3804.53},                    // {"br","h2o"}
+                                                    {22210.0, 6215.10},                    // {"i","h2o"}
+                                                    {32318.0, 3245.78},                    // {"li","h2o"}
+                                                    {47827.7, 4992.61},                    // {"na","h2o"}
+                                                    {49986.5, 4951.5},                     // {"k","h2o"}
+                                                    {48456.3, 6794.51},                    // {"rb","h2o"}
+                                                    {42431.0, 9403.73},                    // {"cs","h2o"}
+                                                    {4735.44, 4956.27, 30678.4, 4559.97},  // {"co2","h2o"}
+                                                    {11447.5, 4887.62, 6182.32, 1480.08},  // {"ch4","h2o"}
+                                                    {9038.48, 12608.9, 12608.9, 24274.7},  // {"co2","co2"}
+                                                    {42713.9, 3258.86, 3258.86, 2594.4}};  // {"ch4","ch4"}
+
+    std::vector<std::vector<double> > b_expected = {{3.586190000000000e+00, 2.697680000000000e+00},  // {"f","h2o"}
+                                                    {3.275420000000000e+00, 2.782260000000000e+00},  // {"cl","h2o"}
+                                                    {3.058250000000000e+00, 2.798040000000000e+00},  // {"br","h2o"}
+                                                    {2.723140000000000e+00, 2.799110000000000e+00},  // {"i","h2o"}
+                                                    {4.023330000000000e+00, 4.006630000000000e+00},  // {"li","h2o"}
+                                                    {3.769530000000000e+00, 3.822550000000000e+00},  // {"na","h2o"}
+                                                    {3.401250000000000e+00, 3.321390000000000e+00},  // {"k","h2o"}
+                                                    {3.236530000000000e+00, 3.313640000000000e+00},  // {"rb","h2o"}
+                                                    {3.028640000000000e+00, 3.271530000000000e+00},  // {"cs","h2o"}
+                                                    {2.93819, 3.7359, 3.53045, 3.89503},             // {"co2","h2o"}
+                                                    {2.87176, 3.68542, 3.79757, 4.01558},            // {"ch4","h2o"}
+                                                    {3.12663, 3.64236, 3.64236, 3.52744},            // {"co2","co2"}
+                                                    {3.37925, 3.25885, 3.25885, 4.05972}};           // {"ch4","ch4"}
+
+    std::vector<size_t> ntypes2 = {2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2};
+
+    std::vector<std::vector<size_t> > types1 = {{0},               // {"f","h2o"}
+                                                {0},               // {"cl","h2o"}
+                                                {0},               // {"br","h2o"}
+                                                {0, 1, 1},         // {"h2o","i"}
+                                                {0, 1, 1},         // {"h2o","li"}
+                                                {0, 1, 1},         // {"h2o","na"}
+                                                {0, 1, 1},         // {"h2o","k"}
+                                                {0, 1, 1},         // {"h2o","rb"}
+                                                {0},               // {"cs","h2o"}
+                                                {0, 1, 1},         // {"co2","h2o"}
+                                                {0, 1, 1, 1, 1},   // {"ch4","h2o"}
+                                                {0, 1, 1},         // {"co2","co2"}
+                                                {0, 1, 1, 1, 1}};  // {"ch4","ch4"}
+
+    std::vector<std::vector<size_t> > types2 = {{0, 1, 1},         // {"f","h2o"}
+                                                {0, 1, 1},         // {"cl","h2o"}
+                                                {0, 1, 1},         // {"br","h2o"}
+                                                {0},               // {"h2o","i"}
+                                                {0},               // {"h2o","li"}
+                                                {0},               // {"h2o","na"}
+                                                {0},               // {"h2o","k"}
+                                                {0},               // {"h2o","rb"}
+                                                {0},               // {"cs","h2o"}
+                                                {0, 1, 1},         // {"co2","h2o"}
+                                                {0, 1, 1},         // {"ch4","h2o"}
+                                                {0, 1, 1},         // {"co2","co2"}
+                                                {0, 1, 1, 1, 1}};  // {"ch4","ch4"}
+
+    for (size_t i = 0; i < pairs.size(); i++) {
+        SECTION("Pair " + pairs[i].first + "," + pairs[i].second) {
+            std::string m1 = pairs[i].first;
+            std::string m2 = pairs[i].second;
+            for (size_t at1 = 0; at1 < types1[i].size(); at1++) {
+                for (size_t at2 = 0; at2 < types2[i].size(); at2++) {
+                    double a = -1.0;
+                    double b = -1.0;
+                    double a_swapped = -1.0;
+                    double b_swapped = -1.0;
+                    bool found = buck::GetBuckParams(m1, m2, at1, at2, buck_pairs, a, b);
+                    bool found_swapped = buck::GetBuckParams(m2, m1, at2, at1, buck_pairs, a_swapped, b_swapped);
+                    size_t ii = types1[i][at1];
+                    size_t jj = types2[i][at2];
+                    size_t nt2 = ntypes2[i];
+                    double a_exp = a_expected[i][ii * nt2 + jj];
+                    double b_exp = b_expected[i][ii * nt2 + jj];
+                    REQUIRE(a == Approx(a_exp).margin(TOL));
+                    REQUIRE(b == Approx(b_exp).margin(TOL));
+                    REQUIRE(a_swapped == Approx(a_exp).margin(TOL));
+                    REQUIRE(b_swapped == Approx(b_exp).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Pair not found") {
+        std::string m1 = "h2o";
+        std::string m2 = "f";
+        std::string m3 = "none";
+
+        std::vector<std::pair<std::string, std::string> > buck_pairs_empty;
+
+        double a = -1.0;
+        double b = -1.0;
+
+        bool found = buck::GetBuckParams(m1, m2, 0, 0, buck_pairs_empty, a, b);
+        REQUIRE(a == Approx(0.0).margin(TOL));
+        REQUIRE(b == Approx(0.0).margin(TOL));
+        REQUIRE(found == false);
+
+        found = buck::GetBuckParams(m1, m3, 0, 0, buck_pairs, a, b);
+        REQUIRE(a == Approx(0.0).margin(TOL));
+        REQUIRE(b == Approx(0.0).margin(TOL));
+        REQUIRE(found == false);
+    }
+}

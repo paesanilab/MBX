@@ -159,7 +159,8 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         index2 = tmp1;
     }
 
-    if (std::find(buck_pairs.begin(), buck_pairs.end(), std::make_pair(mon_id1, mon_id2)) == buck_pairs.end()) {
+    if (std::find(buck_pairs.begin(), buck_pairs.end(), std::make_pair(mon_id1, mon_id2)) == buck_pairs.end() &&
+        std::find(buck_pairs.begin(), buck_pairs.end(), std::make_pair(mon_id2, mon_id1)) == buck_pairs.end()) {
         out_a = 0.0;
         out_b = 0.0;
         return false;
@@ -322,53 +323,6 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.028640000000000e+00);  // A^(-1)
         b.push_back(3.271530000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "he" and mon_id2 == "he") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-
-        // Set the number of different types
-        nt2 = 1;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        a.push_back(6440.78);  // kcal/mol * A^(-6) He -- O
-
-        b.push_back(4.26243);                // A^(-1)
-        b.push_back(2.697680000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "he") {
-        // Define the type of atom in each mon
-        types2.push_back(0);
-
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        // Set the number of different types
-        nt2 = 1;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        a.push_back(12373.7);  // kcal/mol * A^(-6) He -- O
-        a.push_back(1629.41);  // kcal/mol * A^(-6) He -- H
-
-        b.push_back(3.71873);  // A^(-1)
-        b.push_back(3.9707);   // A^(-1)
-    } else if (mon_id1 == "ar" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        a.push_back(52941.3);  // kcal/mol * A^(-6) Cs -- O
-        a.push_back(5351.94);  // kcal/mol * A^(-6) Cs -- H
-
-        b.push_back(3.43864);  // A^(-1)
-        b.push_back(3.45707);  // A^(-1)
     } else if (mon_id1 == "co2" && mon_id2 == "co2") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -469,16 +423,6 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         b.push_back(3.89503);  // A^(-1)
         // =====>> BEGIN SECTION BUCKINGHAM <<=====
         // ======>> PASTE CODE BELOW <<======
-    } else if (mon_id1 == "ar" and mon_id2 == "cs") {
-        types1.push_back(0);
-
-        types2.push_back(0);
-
-        nt2 = 1;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        a.push_back(127779.0);  // kcal/mol A--B
-        b.push_back(3.19908);   // A^(-1) A--B
         // =====>> END SECTION BUCKINGHAM <<=====
     } else {
         out_a = 0.0;
