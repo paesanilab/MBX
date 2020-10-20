@@ -16,6 +16,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-bond.cpp
     unittest-angle.cpp
     unittest-dihedral.cpp
+    unittest-inversion.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
