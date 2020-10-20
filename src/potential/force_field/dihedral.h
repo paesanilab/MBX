@@ -40,6 +40,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
+
 #include "topology.h"
 #include "tools/custom_exceptions.h"
 #include "tools/definitions.h"

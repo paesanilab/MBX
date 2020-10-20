@@ -15,6 +15,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-bucktools.cpp
     unittest-bond.cpp
     unittest-angle.cpp
+    unittest-dihedral.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
