@@ -46,20 +46,22 @@ Angles::Angles(){};
 Angles::Angles(std::string topology, std::vector<size_t> indexes, std::string functional_form) {
     topology_ = topology;
     functional_form_ = functional_form;
+    std::transform(topology_.begin(), topology_.end(), topology_.begin(), ::tolower);
+    std::transform(functional_form_.begin(), functional_form_.end(), functional_form_.begin(), ::tolower);
+
     indexes_ = indexes;
 
-    if (functional_form == "none") {
+    if (functional_form_ == "none") {
         num_linear_params_ = 0;
         num_nonlinear_params_ = 0;
-        std::cerr << "Angle has none functional form. Its energy and gradients are not being evaluated" << std::endl;
-    } else if (functional_form == "harm") {
+    } else if (functional_form_ == "harm") {
         num_linear_params_ = 1;
         num_nonlinear_params_ = 1;
-    } else if (functional_form == "quartic") {
+    } else if (functional_form_ == "quartic") {
         num_linear_params_ = 3;
         num_nonlinear_params_ = 1;
     } else {
-        std::string text = "Undefined or missing functional form for angles";
+        std::string text = "Undefined or missing functional form for angles: " + functional_form_;
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 

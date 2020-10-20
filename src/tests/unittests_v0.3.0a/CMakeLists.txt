@@ -14,6 +14,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-energy3b.cpp
     unittest-bucktools.cpp
     unittest-bond.cpp
+    unittest-angle.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
