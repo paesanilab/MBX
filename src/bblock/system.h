@@ -179,6 +179,17 @@ class System {
     //    std::vector<double> GetChargeDerivatives();
 
     /**
+     * @brief Fills out the monomer indexes and ids for each atom
+     *
+     * @param[out] original_atom_index_to_original_mon_index Contains, for atom i, the index of the monomer to which it
+     * belongs
+     * @param[out] original_atom_index_to_original_mon_id Contains, for atom i, the id of the monomer to which it
+     * belongs
+     */
+    void GetAtomMonIndex(std::vector<size_t> &original_atom_index_to_original_mon_index,
+                         std::vector<std::string> &original_atom_index_to_original_mon_id);
+
+    /**
      * Gets the position of the first site of monomer n in the atoms vector
      * @param[in] n Index of the monomer in the monomer list
      * @return First index of monomer n
