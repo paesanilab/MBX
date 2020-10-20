@@ -1,8 +1,46 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "poly_3b_A1B4_C1D2_C1D2_deg3_v1.h"
 
 namespace mbnrg_A1B4_C1D2_C1D2_deg3 {
 
 double poly_A1B4_C1D2_C1D2_deg3_v1::eval(const double x[55], const double a[1254], double g[55]) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+#endif
     const double t1 = a[3];
     const double t2 = a[283];
     const double t17 = x[14];
@@ -24282,7 +24320,30 @@ double poly_A1B4_C1D2_C1D2_deg3_v1::eval(const double x[55], const double a[1254
     g[52] = t25385 + t25533 + t25601 + t25710;
     g[53] = t25790 + t25870 + t25937 + t25986;
     g[54] = t26208 + t26423 + t26570 + t26706;
-    return t5473 + t8043 + t9624 + t11051;
+    double e = t5473 + t8043 + t9624 + t11051;
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 1254; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x):\n";
+    for (size_t j = 0; j < 55; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g):\n";
+    for (size_t j = 0; j < 55; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial energy: " << e << std::endl;
+#endif
+
+    return e;
 }
 
 }  // namespace mbnrg_A1B4_C1D2_C1D2_deg3

@@ -40,6 +40,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
 /**
  * @file topology.h
  * @brief Contains all of the methods common to all of the topology types.

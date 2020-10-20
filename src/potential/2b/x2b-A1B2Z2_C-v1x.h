@@ -40,27 +40,62 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <string>
 #include "poly-2b-A1B2Z2_C-v1x.h"
 
+/**
+ * @file x2b-A1B2Z2_C-v1x.h
+ * @brief Contains the structure of the polynomial holder for symmetry A1B2Z2_C
+ */
+
+/**
+ * @namespace h2o_ion
+ * @brief Encloses the structure of the polynomial holder for symmetry A1B2Z2_C
+ */
 namespace h2o_ion {
 
-//----------------------------------------------------------------------------//
-
-//
-//  x2b_h2o_ion_v1<4> with gradients and no fitting interface
-//
-
-//----------------------------------------------------------------------------//
-
-struct x2b_h2o_ion_v2x {
-    // TODO think what to do with default constructor. Error?
+class x2b_h2o_ion_v2x {
+   public:
+    // Creates an empty class
     x2b_h2o_ion_v2x(){};
+
+    /**
+     * @brief Creates a class and initializes the parameters corresponding to mon1 and mon2
+     * @param[in] mon1 Monomer id of the first monomer of interest
+     * @param[in] mon2 Monomer id of the second monomer of interest
+     */
     x2b_h2o_ion_v2x(std::string mon1, std::string mon2);
 
+    // Destroys the class
     ~x2b_h2o_ion_v2x(){};
 
+    /**
+     * @brief Computes the two body polynomials for the dimers
+     *
+     * Given the coordinates of a number of dimers (mon1 in xyz1 and mon2 in xyz2, it calculates the polynomial value
+     * for each one of them, and returns the sum of the contributions for the dimers.
+     * @param[in] w1 Pointer to a double array with the coordinates of the monomers of water.
+     * @param[in] x Pointer to a double array with the coordinates of the monomers of monoatomic atom.
+     * @param[in,out] g1 Pointer to a double array with the gradients of the monomers of waer.
+     * @param[in,out] g2 Pointer to a double array with the gradients of the monomers of monoatomic atom.
+     * @param[in] nd Number of dimers passed in the xyz arrays.
+     * @param[in.out] virial Vector of doubles with the energies of each monomer, in the same order as the input.
+     * @return Double with the sum of the energies of each dimer.
+     */
     double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd,
                 std::vector<double>* virial = 0);
+
+    /**
+     * @brief Computes the two body polynomials for the dimers
+     *
+     * Given the coordinates of a number of dimers (mon1 in xyz1 and mon2 in xyz2, it calculates the polynomial value
+     * for each one of them, and returns the sum of the contributions for the dimers.
+     * @param[in] w1 Pointer to a double array with the coordinates of the monomers of water.
+     * @param[in] x Pointer to a double array with the coordinates of the monomers of the monoatomic atom.
+     * @param[in] nd Number of dimers passed in the xyz arrays.
+     * @return Double with the sum of the energies of each dimer.
+     */
     double eval(const double* w1, const double* x, const size_t nd);
 
+   private:
+    // Values of the non-linear parameters of the polynomials
     double k_HH_intra;
     double k_OH_intra;
 
@@ -80,16 +115,17 @@ struct x2b_h2o_ion_v2x {
     double in_plane_gamma;
     double out_of_plane_gamma;
 
+    // Inner cutoff
     double r2i;
+
+    // Outer cutoff
     double r2f;
 
-    // ADDED MRR
+    // Switch function
+    double f_switch(const double&, double&);
 
+    // Values of the linear parameters of the polynomials
     std::vector<double> twobodyfit;
-
-    // END ADDED MRR
-
-    double f_switch(const double&, double&);  // O-X separation
 };
 
 //----------------------------------------------------------------------------//

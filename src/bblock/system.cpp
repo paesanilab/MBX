@@ -135,6 +135,19 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
     return pair_list;
 }
 
+void System::GetAtomMonIndex(std::vector<size_t> &original_atom_index_to_original_mon_index,
+                             std::vector<std::string> &original_atom_index_to_original_mon_id) {
+    original_atom_index_to_original_mon_index = std::vector<size_t>(numat_, 0);
+    original_atom_index_to_original_mon_id = std::vector<std::string>(numat_, 0);
+    for (size_t i = 0; i < nat_.size(); i++) {
+        size_t original_index = initial_order_realSites_[i].first;
+        for (size_t j = 0; j < nat_[i]; j++) {
+            original_atom_index_to_original_mon_index[original_index + j] = i;
+            original_atom_index_to_original_mon_id[original_index + j] = monomers_[i];
+        }
+    }
+}
+
 std::vector<size_t> System::GetMolecule(size_t n) { return molecules_[n]; }
 
 std::vector<std::string> System::GetAtomNames() {
