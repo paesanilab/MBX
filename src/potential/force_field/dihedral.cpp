@@ -76,6 +76,45 @@ Dihedral::Dihedral(std::string topology, std::vector<size_t> indexes, std::strin
 
 Dihedral::~Dihedral(){};
 
+void Dihedral::SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters) {
+    if (functional_form_ == "none") {
+        num_linear_params_ = 0;
+        num_nonlinear_params_ = 0;
+    } else if (functional_form_ == "cos") {
+        num_linear_params_ = 1;
+        num_nonlinear_params_ = 2;
+    } else if (functional_form_ == "harm") {
+        num_linear_params_ = 1;
+        num_nonlinear_params_ = 1;
+    } else if (functional_form_ == "hcos") {
+        num_linear_params_ = 1;
+        num_nonlinear_params_ = 1;
+    } else if (functional_form_ == "cos3") {
+        num_linear_params_ = 3;
+        num_nonlinear_params_ = 0;
+    } else {
+        std::string text = "Undefined or missing functional form for dihedral: " + functional_form_;
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    if (num_linear_params_ != linear_parameters.size()) {
+        std::string text = "Expected number of linear parameters for functional form " + functional_form_ + " is " +
+                           std::to_string(num_linear_params_) + " while the number of parameters passed is " +
+                           std::to_string(linear_parameters.size());
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    if (num_nonlinear_params_ != nonlinear_parameters.size()) {
+        std::string text = "Expected number of nonlinear parameters for functional form " + functional_form_ + " is " +
+                           std::to_string(num_nonlinear_params_) + " while the number of parameters passed is " +
+                           std::to_string(nonlinear_parameters.size());
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    linear_parameters_ = linear_parameters;
+    nonlinear_parameters_ = nonlinear_parameters;
+}
+
 double Dihedral::GetEnergy(double x) {
     double energy = 0.0;
 
