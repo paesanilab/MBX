@@ -57,11 +57,6 @@ size_t Topology::SetNumNonLinear(size_t num_nonlinear) { num_nonlinear_params_ =
 
 size_t Topology::SetNumLinear(size_t num_linear) { num_linear_params_ = num_linear; }
 
-void Topology::SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters) {
-    linear_parameters_ = linear_parameters;
-    nonlinear_parameters_ = nonlinear_parameters;
-}
-
 void Topology::SetIndexes(std::vector<size_t> indexes) { indexes_ = indexes; }
 
 std::vector<size_t> Topology::GetIndexes() { return indexes_; }

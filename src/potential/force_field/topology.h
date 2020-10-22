@@ -82,6 +82,15 @@ class Topology {
     virtual double GetEnergy(double x) = 0;
 
     /**
+     * @brief Used to set the linear and nonlinear parameters
+     * @param[in] linear_parameters The vector containing the set of
+     *            linear parameters
+     * @param[in] nonlinear_parameters The vector containing the set of
+     *            nonlinear parameters
+     */
+    virtual void SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters) = 0;
+
+    /**
      * @brief Gets the current nonlinear and linear parameters
      * @param[in,out] linear_parameters Variables to hold the obtained
      *                linear_parameters
@@ -113,15 +122,6 @@ class Topology {
      * @return The number of linear parameters
      */
     size_t GetNumLinear();
-
-    /**
-     * @brief Used to set the linear and nonlinear parameters
-     * @param[in] linear_parameters The vector containing the set of
-     *            linear parameters
-     * @param[in] nonlinear_parameters The vector containing the set of
-     *            nonlinear parameters
-     */
-    void SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters);
 
     /**
      * @brief Sets the current indexes for the given topology type

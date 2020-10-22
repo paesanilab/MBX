@@ -115,8 +115,11 @@ class Angles : public Topology {
     ~Angles();
 
     /**
-     * @brief Used to set the nonlinear parameters. Only used to fit linear as nonlinear
-     * @param parameters [description]
+     * @brief Used to set the linear and nonlinear parameters
+     * @param[in] linear_parameters The vector containing the set of
+     *            linear parameters
+     * @param[in] nonlinear_parameters The vector containing the set of
+     *            nonlinear parameters
      */
     void SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters);
 
