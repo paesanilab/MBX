@@ -18,6 +18,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-dihedral.cpp
     unittest-inversion.cpp
     unittest-topology.cpp
+    unittest-connectivity.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
