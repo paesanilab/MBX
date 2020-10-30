@@ -19,6 +19,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-inversion.cpp
     unittest-topology.cpp
     unittest-connectivity.cpp
+    unittest-ffcalculators.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )

@@ -40,9 +40,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace eff {
 
-const double pi = M_PI;
-
 double CalculateDistance(std::vector<double> coor1, std::vector<double> coor2) {
+    if (coor1.size() != 3 or coor2.size() != 3) {
+        std::string text = "The points must belong to R3, but they have " + std::to_string(coor1.size()) + " and " + std::to_string(coor2.size()) + " coordinates";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
     double distance = 0.0;
     for (size_t i = 0; i < 3; i++) {
         distance += (coor2[i] - coor1[i]) * (coor2[i] - coor1[i]);
@@ -52,6 +55,11 @@ double CalculateDistance(std::vector<double> coor1, std::vector<double> coor2) {
 }
 
 double CalculateDistance(std::vector<double> directional_vec) {
+    if (directional_vec.size() != 3) {
+        std::string text = "The vector must belong to R3, but it has " + std::to_string(directional_vec.size()) + " coordinates";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
     return sqrt(directional_vec[0] * directional_vec[0] + directional_vec[1] * directional_vec[1] +
                 directional_vec[2] * directional_vec[2]);
 }
