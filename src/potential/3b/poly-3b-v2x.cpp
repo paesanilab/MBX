@@ -30851,6 +30851,10 @@ void f223(const double *x, const double *a, double *t) {
 }
 
 double poly_3b_v2x::eval(const double *a, const double *x, double *t, double *g) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+#endif
     f1(x, a, t);
     f2(x, a, t);
     f3(x, a, t);
@@ -31111,7 +31115,30 @@ double poly_3b_v2x::eval(const double *a, const double *x, double *t, double *g)
     g[33] = t[27713] + t[28802];
     g[34] = t[30251] + t[30876];
     g[35] = t[31746] + t[32608];
-    return t[9982] + t[13942];
+    double e = t[9982] + t[13942];
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 1163; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x):\n";
+    for (size_t j = 0; j < 36; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g):\n";
+    for (size_t j = 0; j < 36; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial energy: " << e << std::endl;
+#endif
+
+    return e;
 }
 
 }  // namespace x2o

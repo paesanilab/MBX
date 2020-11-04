@@ -40,21 +40,58 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/3b/poly-3b-v2x.h"
 
-////////////////////////////////////////////////////////////////////////////////
+/**
+ * @file x3b-v2x.h
+ * @brief Contains the structure of the polynomial holder for water-water-water MB-pol
+ */
 
+/**
+ * @namespace x2o
+ * @brief Encloses the structure of the polynomial holder for water-water-water MB-pol
+ */
 namespace x2o {
 
-//----------------------------------------------------------------------------//
-
-struct x3b_v2x {
+class x3b_v2x {
+   public:
+    /**
+     * @brief Computes the two body polynomials for the trimers
+     *
+     * Given the coordinates of a number of trimers (mon1 in xyz1, mon2 in xyz2, and mon3 in xyz3, it calculates the
+     * polynomial value for each one of them, and returns the sum of the contributions for the trimers.
+     * @param[in] w1 Pointer to a double array with the coordinates of the first water molecule.
+     * @param[in] w2 Pointer to a double array with the coordinates of the second water molecule.
+     * @param[in] w3 Pointer to a double array with the coordinates of the third water molecule.
+     * @param[in] nt Number of trimers passed in the xyz arrays.
+     * @return Double with the sum of the energies of each trimer.
+     */
     static double eval(const double* w1, const double* w2, const double* w3, const size_t nt);
 
+    /**
+     * @brief Computes the two body polynomials for the trimers
+     *
+     * Given the coordinates of a number of trimers (mon1 in xyz1, mon2 in xyz2, and mon3 in xyz3, it calculates the
+     * polynomial value for each one of them, and returns the sum of the contributions for the trimers.
+     * @param[in] w1 Pointer to a double array with the coordinates of the first water molecule.
+     * @param[in] w2 Pointer to a double array with the coordinates of the second water molecule.
+     * @param[in] w3 Pointer to a double array with the coordinates of the third water molecule.
+     * @param[in] g1 Pointer to a double array with the gradients of the first water molecule.
+     * @param[in] g2 Pointer to a double array with the gradients of the second water molecule.
+     * @param[in] g3 Pointer to a double array with the gradients of the third water molecule.
+     * @param[in] nt Number of trimers passed in the xyz arrays.
+     * @param[in,out] virial Vector of 9 elements with the virial tensor.
+     * @return Double with the sum of the energies of each trimer.
+     */
     static double eval(const double* w1, const double* w2, const double* w3, double* g1, double* g2, double* g3,
                        const size_t nt, std::vector<double>* virial = 0);
 
+    // Inner cutoff
     static const double r3i;
+
+    // Outer cutoff
     static const double r3f;
 
+   private:
+    // Values of the non-linear parameters of the polynomials
     static const double kOH_intra;
     static const double kHH_intra;
 
@@ -69,14 +106,10 @@ struct x3b_v2x {
     static const double dOH;
     static const double dHH;
 
-   private:
+    // Switch function
     static double f_switch(const double& r, double& g);
 };
 
-//----------------------------------------------------------------------------//
-
 }  // namespace x2o
-
-////////////////////////////////////////////////////////////////////////////////
 
 #endif  // X3B_V2X_H
