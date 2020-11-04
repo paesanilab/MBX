@@ -68,7 +68,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   
   if (narg<5) error->all(FLERR,"Illegal fix mbx command");
 
-  num_mol_types = force->inumeric(FLERR,arg[3]);
+  num_mol_types = utils::inumeric(FLERR,arg[3],false,lmp);
   
   if (num_mol_types < 1) error->all(FLERR,"Illegal fix mbx command");
 
@@ -82,7 +82,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
 
   int iarg = 4;
   for(int i=0; i<num_mol_types; ++i) {
-    num_mols[i] = force->inumeric(FLERR,arg[iarg++]);
+    num_mols[i] = utils::inumeric(FLERR,arg[iarg++],false,lmp);
     strcpy(mol_names[i], arg[iarg++]);
   }
   
