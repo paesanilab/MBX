@@ -2,12 +2,10 @@
 
 SHELL = /bin/sh
 
-MBX=/Users/cjknight/Documents/Catalyst/Support/2019/Paesani/build_mac_mpi/install
-#MBX=/Users/cjknight/Documents/Catalyst/Support/2019/Paesani/build_mac/install
+MBX=/path_to_mbx/install
 MBX_INC=$(MBX)/include
 MBX_LIB=$(MBX)/lib/static
-FFTW=/Users/cjknight/Documents/bin/fftw/mac_gcc
-
+FFTW=/path_to_fftw3/install
 
 # ---------------------------------------------------------------------
 # compiler/linker settings
