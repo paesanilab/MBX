@@ -771,11 +771,11 @@ void FixMBX::mbx_init()
       
       tagint anchor = tag[i];
 
-      int indx[5];
+      int amap[5];
       bool add_monomer = true;
       for(int j=1; j<na; ++j) {
-	indx[j] = atom->map(anchor+j);
-	if(indx[j] == -1) add_monomer = false;
+	amap[j] = atom->map(anchor+j);
+	if(amap[j] == -1) add_monomer = false;
       }
       
       // add info
@@ -789,7 +789,7 @@ void FixMBX::mbx_init()
 	xyz.push_back(x[i][2] - zlo);
 	
 	for(int j=1; j<na; ++j) {
-	  domain->closest_image(x[i], x[indx[j]], ximage);
+	  domain->closest_image(x[i], x[amap[j]], ximage);
 	  xyz.push_back(ximage[0] - xlo);
 	  xyz.push_back(ximage[1] - ylo);
 	  xyz.push_back(ximage[2] - zlo);
@@ -1203,11 +1203,11 @@ void FixMBX::mbx_init_local()
       
       tagint anchor = tag[i];
 
-      int indx[5];
+      int amap[5];
       bool add_monomer = true;
       for(int j=1; j<na; ++j) {
-	indx[j] = atom->map(anchor+j);
-	if(indx[j] == -1) add_monomer = false;
+	amap[j] = atom->map(anchor+j);
+	if(amap[j] == -1) add_monomer = false;
       }
       
       // add info
@@ -1221,7 +1221,7 @@ void FixMBX::mbx_init_local()
 	xyz.push_back(x[i][2] - zlo);
 	
 	for(int j=1; j<na; ++j) {
-	  domain->closest_image(x[i], x[indx[j]], ximage);
+	  domain->closest_image(x[i], x[amap[j]], ximage);
 	  xyz.push_back(ximage[0] - xlo);
 	  xyz.push_back(ximage[1] - ylo);
 	  xyz.push_back(ximage[2] - zlo);
@@ -2251,8 +2251,48 @@ void FixMBX::mbx_update_xyz()
       const int mtype = mol_type[i];
 
       //      printf("i= %i  mol_type= %i\n",i,mol_type[i]);
-      
+
+#if 1
       int na = 0;
+      if(strcmp("h2o",mol_names[mtype])      == 0) na = 3;
+      else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
+      else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
+
+      // ids of particles in molecule on proc
+      
+      tagint anchor = tag[i];
+
+      int amap[5];
+      bool add_monomer = true;
+      for(int j=1; j<na; ++j) {
+	amap[j] = atom->map(anchor+j);
+	if(amap[j] == -1) add_monomer = false;
+      }
+      
+      // add info
+      
+      if(add_monomer) {
+
+	// add coordinates
+	
+	xyz[indx*3  ] = x[i][0] - xlo;
+	xyz[indx*3+1] = x[i][1] - ylo;
+	xyz[indx*3+2] = x[i][2] - zlo;
+	
+	for(int j=1; j<na; ++j) {
+	  domain->closest_image(x[i], x[amap[j]], ximage);
+	  xyz[(indx+j)*3  ] = ximage[0] - xlo;
+	  xyz[(indx+j)*3+1] = ximage[1] - ylo;
+	  xyz[(indx+j)*3+2] = ximage[2] - zlo;
+	}
+
+	indx += na;
+      }
+#else
       if(strcmp("h2o", mol_names[mtype]) == 0) {
 	
 	tagint anchor = atom->tag[i];
@@ -2365,7 +2405,7 @@ void FixMBX::mbx_update_xyz()
 	  
 	}
       }
-      
+#endif
     } // if(mol_anchor)
 
   } // for(i<nall)
@@ -2440,15 +2480,54 @@ void FixMBX::mbx_update_xyz_local()
   std::vector<double> xyz(mbx_num_atoms_local*3);
 
   int indx = 0;
-  int m = 0;
+  //  int m = 0;
   for(int i=0; i<nall; ++i) {
 
     if(mol_anchor[i] && mol_local[i]) {
 
       const int mtype = mol_type[i];
       
+#if 1
       int na = 0;
+      if(strcmp("h2o",mol_names[mtype])      == 0) na = 3;
+      else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
+      else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
 
+      // ids of particles in molecule on proc
+      
+      tagint anchor = tag[i];
+
+      int amap[5];
+      bool add_monomer = true;
+      for(int j=1; j<na; ++j) {
+	amap[j] = atom->map(anchor+j);
+	if(amap[j] == -1) add_monomer = false;
+      }
+      
+      // add info
+      
+      if(add_monomer) {
+
+	// add coordinates
+	
+	xyz[indx*3  ] = x[i][0] - xlo;
+	xyz[indx*3+1] = x[i][1] - ylo;
+	xyz[indx*3+2] = x[i][2] - zlo;
+	
+	for(int j=1; j<na; ++j) {
+	  domain->closest_image(x[i], x[amap[j]], ximage);
+	  xyz[(indx+j)*3  ] = ximage[0] - xlo;
+	  xyz[(indx+j)*3+1] = ximage[1] - ylo;
+	  xyz[(indx+j)*3+2] = ximage[2] - zlo;
+	}
+
+	indx += na;
+      }
+#else
       if(strcmp("h2o", mol_names[mtype]) == 0) {
 	
 	tagint anchor = atom->tag[i];
@@ -2563,7 +2642,7 @@ void FixMBX::mbx_update_xyz_local()
 	  m++;
 	}
       }
-
+#endif
     } // if(mol_anchor)
 
   } // for(i<nall)
