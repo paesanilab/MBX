@@ -203,17 +203,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     MPI_Allreduce(&e, &err, 1, MPI_INT, MPI_SUM, world);
     if(err) error->all(FLERR,"[MBX] Inconsistent proc mapping; 'processors * * * map xyz' required for PME solver");
   }
-
-  // check that LAMMPS domain origin is at {0,0,0} for PME solver
-
-  {
-    double x = domain->boxlo[0];
-    double y = domain->boxlo[1];
-    double z = domain->boxlo[2];
-
-    if( (fabs(x) > SMALL) || (fabs(y) > SMALL) || (fabs(z) > SMALL) )
-      error->all(FLERR,"[MBX] Simulation box origin required to be {0, 0, 0} for PME solver");
-  }
 #endif
   
   // setup json, if requested
@@ -748,6 +737,10 @@ void FixMBX::mbx_init()
   //  printf("(%i)  nlocal= %i  nall= %i\n",me,nlocal,nall);
   //  int proc_write = 0;
 
+  const double xlo = domain->boxlo[0];
+  const double ylo = domain->boxlo[1];
+  const double zlo = domain->boxlo[2];
+  
   for(int i=0; i<nall; ++i) {
 
     //    if(me == proc_write) printf("i= %i  mol_anchor= %i\n",i,mol_anchor[i]);
@@ -775,23 +768,23 @@ void FixMBX::mbx_init()
 	
 	if( (ii1 > -1) && (ii2 > -1) ) {
 	  names.push_back("O");
-	  xyz.push_back(x[i][0]);
-	  xyz.push_back(x[i][1]);
-	  xyz.push_back(x[i][2]);
+	  xyz.push_back(x[i][0] - xlo);
+	  xyz.push_back(x[i][1] - ylo);
+	  xyz.push_back(x[i][2] - zlo);
 	
 	  domain->closest_image(x[i], x[ii1], ximage);
 	  
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
 	  
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  molec.push_back(nm);
 	  nm++;
@@ -808,9 +801,9 @@ void FixMBX::mbx_init()
 
 	tagint anchor = tag[i];
 	names.push_back("Na");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	xyz.push_back(x[i][0] - xlo);
+	xyz.push_back(x[i][1] - ylo);
+	xyz.push_back(x[i][2] - zlo);
 
 	molec.push_back(nm++);
 
@@ -825,9 +818,9 @@ void FixMBX::mbx_init()
 
 	tagint anchor = tag[i];
 	names.push_back("Cl");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	xyz.push_back(x[i][0] - xlo);
+	xyz.push_back(x[i][1] - ylo);
+	xyz.push_back(x[i][2] - zlo);
 
 	molec.push_back(nm++);
 
@@ -842,9 +835,9 @@ void FixMBX::mbx_init()
 	
 	tagint anchor = tag[i];
 	names.push_back("He");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	xyz.push_back(x[i][0] - xlo);
+	xyz.push_back(x[i][1] - ylo);
+	xyz.push_back(x[i][2] - zlo);
 	
 	molec.push_back(nm++);
 	
@@ -863,23 +856,23 @@ void FixMBX::mbx_init()
 	
 	if( (ii1 > -1) && (ii2 > -1) ) {
 	  names.push_back("C");
-	  xyz.push_back(x[i][0]);
-	  xyz.push_back(x[i][1]);
-	  xyz.push_back(x[i][2]);
+	  xyz.push_back(x[i][0] - xlo);
+	  xyz.push_back(x[i][1] - ylo);
+	  xyz.push_back(x[i][2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii1], ximage);
 	  
 	  names.push_back("O");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
 	  
 	  names.push_back("O");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  molec.push_back(nm++);
 	  
@@ -900,36 +893,36 @@ void FixMBX::mbx_init()
 	
 	if( (ii1 > -1) && (ii2 > -1) && (ii3 > -1) && (ii4 > -1)) { 
 	  names.push_back("C");
-	  xyz.push_back(x[i][0]);
-	  xyz.push_back(x[i][1]);
-	  xyz.push_back(x[i][2]);
+	  xyz.push_back(x[i][0] - xlo);
+	  xyz.push_back(x[i][1] - ylo);
+	  xyz.push_back(x[i][2] - zlo);
 	  domain->closest_image(x[i], x[ii1], ximage);
 	  
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
 	  
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii3], ximage);
 	  
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii4], ximage);
 	  
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  molec.push_back(nm++);
 	  
@@ -1100,6 +1093,10 @@ void FixMBX::mbx_init_local()
   
   std::vector<size_t> molec;
   
+  const double xlo = domain->boxlo[0];
+  const double ylo = domain->boxlo[1];
+  const double zlo = domain->boxlo[2];
+  
   // loop over all atoms on proc
 
   int nm = 0;
@@ -1129,23 +1126,23 @@ void FixMBX::mbx_init_local()
 
 	if( (ii1 > -1) && (ii2 > -1) ) {
 	  names.push_back("O");
-	  xyz.push_back(x[i][0]);
-	  xyz.push_back(x[i][1]);
-	  xyz.push_back(x[i][2]);
+	  xyz.push_back(x[i][0] - xlo);
+	  xyz.push_back(x[i][1] - ylo);
+	  xyz.push_back(x[i][2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii1], ximage);
 	  
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
 	
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  molec.push_back(nm);
 	  nm++;
@@ -1162,9 +1159,9 @@ void FixMBX::mbx_init_local()
 
 	tagint anchor = tag[i];
 	names.push_back("Na");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	xyz.push_back(x[i][0] - xlo);
+	xyz.push_back(x[i][1] - ylo);
+	xyz.push_back(x[i][2] - zlo);
 	
 	molec.push_back(nm++);
 	
@@ -1179,9 +1176,9 @@ void FixMBX::mbx_init_local()
 
 	tagint anchor = tag[i];
 	names.push_back("Cl");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	xyz.push_back(x[i][0] - xlo);
+	xyz.push_back(x[i][1] - ylo);
+	xyz.push_back(x[i][2] - zlo);
 	
 	molec.push_back(nm++);
 	
@@ -1196,9 +1193,9 @@ void FixMBX::mbx_init_local()
 	
 	tagint anchor = tag[i];
 	names.push_back("He");
-	xyz.push_back(x[i][0]);
-	xyz.push_back(x[i][1]);
-	xyz.push_back(x[i][2]);
+	xyz.push_back(x[i][0] - xlo);
+	xyz.push_back(x[i][1] - ylo);
+	xyz.push_back(x[i][2] - zlo);
 	
 	molec.push_back(nm++);
 	
@@ -1218,23 +1215,23 @@ void FixMBX::mbx_init_local()
 	if( (ii1 > -1) && (ii2 > -1) ) {
 	
 	  names.push_back("C");
-	  xyz.push_back(x[i][0]);
-	  xyz.push_back(x[i][1]);
-	  xyz.push_back(x[i][2]);
+	  xyz.push_back(x[i][0] - xlo);
+	  xyz.push_back(x[i][1] - ylo);
+	  xyz.push_back(x[i][2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii1], ximage);
 
 	  names.push_back("O");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
 	
 	  names.push_back("O");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  molec.push_back(nm++);
 	  
@@ -1256,37 +1253,37 @@ void FixMBX::mbx_init_local()
 	
 	if( (ii1 > -1) && (ii2 > -1) && (ii3 > -1) && (ii4 > -1)) { 
 	  names.push_back("C");
-	  xyz.push_back(x[i][0]);
-	  xyz.push_back(x[i][1]);
-	  xyz.push_back(x[i][2]);
+	  xyz.push_back(x[i][0] - xlo);
+	  xyz.push_back(x[i][1] - ylo);
+	  xyz.push_back(x[i][2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii1], ximage);
 	
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
 	
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	
 	  domain->closest_image(x[i], x[ii3], ximage);
 	
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  domain->closest_image(x[i], x[ii4], ximage);
 	
 	  names.push_back("H");
-	  xyz.push_back(ximage[0]);
-	  xyz.push_back(ximage[1]);
-	  xyz.push_back(ximage[2]);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
 	  
 	  molec.push_back(nm++);
 	  
@@ -1457,6 +1454,10 @@ void FixMBX::mbx_init_full()
 
   // loop over all atoms on proc (local + ghost)
 
+  const double xlo = domain->boxlo[0];
+  const double ylo = domain->boxlo[1];
+  const double zlo = domain->boxlo[2];
+  
   int nm = 0;
 
   mbx_num_atoms_full = 0;
@@ -1483,25 +1484,25 @@ void FixMBX::mbx_init_full()
 	
 	tagint anchor = tag_full[i];
 	names.push_back("O");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 
 	int ii = atom_map_full[anchor+1];
 	if(ii < 0) error->one(FLERR,"H2O molecule not intact");
 
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 
 	ii = atom_map_full[anchor+2];
 	if(ii < 0) error->one(FLERR,"H2O molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 
 	molec.push_back(nm);
 	nm++;
@@ -1517,9 +1518,9 @@ void FixMBX::mbx_init_full()
 
 	tagint anchor = tag_full[i];
 	names.push_back("Na");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 
 	molec.push_back(nm++);
 
@@ -1534,9 +1535,9 @@ void FixMBX::mbx_init_full()
 
 	tagint anchor = tag_full[i];
 	names.push_back("Cl");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 
 	molec.push_back(nm++);
 
@@ -1551,9 +1552,9 @@ void FixMBX::mbx_init_full()
 	
 	tagint anchor = tag_full[i];
 	names.push_back("He");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 	
 	molec.push_back(nm++);
 	
@@ -1568,25 +1569,25 @@ void FixMBX::mbx_init_full()
 
 	tagint anchor = tag_full[i];
 	names.push_back("C");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 
 	int ii = atom_map_full[anchor+1];
 	if(ii < 0) error->one(FLERR,"CO2 molecule not intact");
 
 	names.push_back("O");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 
 	ii = atom_map_full[anchor+2];
 	if(ii < 0) error->one(FLERR,"CO2 molecule not intact");
 	
 	names.push_back("O");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 
 	molec.push_back(nm++);
 
@@ -1601,41 +1602,41 @@ void FixMBX::mbx_init_full()
 	
 	tagint anchor = tag_full[i];
 	names.push_back("C");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 	
 	int ii = atom_map_full[anchor+1];
 	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 	
 	ii = atom_map_full[anchor+2];
 	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 	
 	ii = atom_map_full[anchor+3];
 	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 	
 	ii = atom_map_full[anchor+4];
 	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 	
 	molec.push_back(nm++);
 	
@@ -1771,6 +1772,10 @@ void FixMBX::mbx_init_pme()
 
   // loop over all atoms on proc (local + ghost)
 
+  const double xlo = domain->boxlo[0];
+  const double ylo = domain->boxlo[1];
+  const double zlo = domain->boxlo[2];
+  
   int nm = 0;
 
   mbx_num_atoms_pme = 0;
@@ -1797,25 +1802,25 @@ void FixMBX::mbx_init_pme()
 	
 	tagint anchor = tag_full[i];
 	names.push_back("O");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 
 	int ii = atom_map_full[anchor+1];
 	if(ii < 0) error->one(FLERR,"H2O molecule not intact");
 
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 
 	ii = atom_map_full[anchor+2];
 	if(ii < 0) error->one(FLERR,"H2O molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 
 	molec.push_back(nm);
 	nm++;
@@ -1831,9 +1836,9 @@ void FixMBX::mbx_init_pme()
 
 	tagint anchor = tag_full[i];
 	names.push_back("Na");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 
 	molec.push_back(nm++);
 
@@ -1848,9 +1853,9 @@ void FixMBX::mbx_init_pme()
 
 	tagint anchor = tag_full[i];
 	names.push_back("Cl");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 
 	molec.push_back(nm++);
 
@@ -1865,9 +1870,9 @@ void FixMBX::mbx_init_pme()
 	
 	tagint anchor = tag_full[i];
 	names.push_back("He");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 	
 	molec.push_back(nm++);
 	
@@ -1882,25 +1887,25 @@ void FixMBX::mbx_init_pme()
 	
 	tagint anchor = tag_full[i];
 	names.push_back("C");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 
 	int ii = atom_map_full[anchor+1];
 	if(ii < 0) error->one(FLERR,"CO2 molecule not intact");
 
 	names.push_back("O");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 
 	ii = atom_map_full[anchor+2];
 	if(ii < 0) error->one(FLERR,"CO2 molecule not intact");
 	
 	names.push_back("O");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 
 	molec.push_back(nm++);
 
@@ -1916,41 +1921,41 @@ void FixMBX::mbx_init_pme()
 	
 	tagint anchor = tag_full[i];
 	names.push_back("C");
-	xyz.push_back(x_full[i][0]);
-	xyz.push_back(x_full[i][1]);
-	xyz.push_back(x_full[i][2]);
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
 	
 	int ii = atom_map_full[anchor+1];
 	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 	
 	ii = atom_map_full[anchor+2];
 	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 	
 	ii = atom_map_full[anchor+3];
 	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 	
 	ii = atom_map_full[anchor+4];
 	if(ii < 0) error->one(FLERR,"CH4 molecule not intact");
 	
 	names.push_back("H");
-	xyz.push_back(x_full[ii][0]);
-	xyz.push_back(x_full[ii][1]);
-	xyz.push_back(x_full[ii][2]);
+	xyz.push_back(x_full[ii][0] - xlo);
+	xyz.push_back(x_full[ii][1] - ylo);
+	xyz.push_back(x_full[ii][2] - zlo);
 	
 	molec.push_back(nm++);
 	
@@ -2083,6 +2088,10 @@ void FixMBX::mbx_update_xyz()
     return;
   }
   
+  const double xlo = domain->boxlo[0];
+  const double ylo = domain->boxlo[1];
+  const double zlo = domain->boxlo[2];
+  
   double ximage[3];
   
   std::vector<double> xyz(mbx_num_atoms*3);
@@ -2105,44 +2114,44 @@ void FixMBX::mbx_update_xyz()
 	const int ii2 = atom->map(anchor + 2);
 	
 	if( (ii1 > -1) && (ii2 > -1) ) {
-	  xyz[indx*3  ] = x[i][0];
-	  xyz[indx*3+1] = x[i][1];
-	  xyz[indx*3+2] = x[i][2];
+	  xyz[indx*3  ] = x[i][0] - xlo;
+	  xyz[indx*3+1] = x[i][1] - ylo;
+	  xyz[indx*3+2] = x[i][2] - zlo;
 	
 	  domain->closest_image(x[i], x[ii1], ximage);
-	  xyz[indx*3+3] = ximage[0];
-	  xyz[indx*3+4] = ximage[1];
-	  xyz[indx*3+5] = ximage[2];
+	  xyz[indx*3+3] = ximage[0] - xlo;
+	  xyz[indx*3+4] = ximage[1] - ylo;
+	  xyz[indx*3+5] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
-	  xyz[indx*3+6] = ximage[0];
-	  xyz[indx*3+7] = ximage[1];
-	  xyz[indx*3+8] = ximage[2];
+	  xyz[indx*3+6] = ximage[0] - xlo;
+	  xyz[indx*3+7] = ximage[1] - ylo;
+	  xyz[indx*3+8] = ximage[2] - zlo;
 	  
 	  indx += 3;
 	}
       }
       else if(strcmp("na",  mol_names[mtype]) == 0) {
 
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
+	xyz[indx*3  ] = x[i][0] - xlo;
+	xyz[indx*3+1] = x[i][1] - ylo;
+	xyz[indx*3+2] = x[i][2] - zlo;
 
 	indx++;
       }
       else if(strcmp("cl",  mol_names[mtype]) == 0) {
 
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
+	xyz[indx*3  ] = x[i][0] - xlo;
+	xyz[indx*3+1] = x[i][1] - ylo;
+	xyz[indx*3+2] = x[i][2] - zlo;
 
 	indx++;
       }
       else if(strcmp("he",  mol_names[mtype]) == 0) {
 
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
+	xyz[indx*3  ] = x[i][0] - xlo;
+	xyz[indx*3+1] = x[i][1] - ylo;
+	xyz[indx*3+2] = x[i][2] - zlo;
 	
 	indx++;
       }
@@ -2154,19 +2163,19 @@ void FixMBX::mbx_update_xyz()
 	const int ii2 = atom->map(anchor + 2);
 	
 	if( (ii1 > -1) && (ii2 > -1) ) {
-	  xyz[indx*3  ] = x[i][0];
-	  xyz[indx*3+1] = x[i][1];
-	  xyz[indx*3+2] = x[i][2];
+	  xyz[indx*3  ] = x[i][0] - xlo;
+	  xyz[indx*3+1] = x[i][1] - ylo;
+	  xyz[indx*3+2] = x[i][2] - zlo;
 	
 	  domain->closest_image(x[i], x[ii1], ximage);
-	  xyz[indx*3+3] = ximage[0];
-	  xyz[indx*3+4] = ximage[1];
-	  xyz[indx*3+5] = ximage[2];
+	  xyz[indx*3+3] = ximage[0] - xlo;
+	  xyz[indx*3+4] = ximage[1] - ylo;
+	  xyz[indx*3+5] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
-	  xyz[indx*3+6] = ximage[0];
-	  xyz[indx*3+7] = ximage[1];
-	  xyz[indx*3+8] = ximage[2];
+	  xyz[indx*3+6] = ximage[0] - xlo;
+	  xyz[indx*3+7] = ximage[1] - ylo;
+	  xyz[indx*3+8] = ximage[2] - zlo;
 	  
 	  indx += 3;
 	}
@@ -2181,29 +2190,29 @@ void FixMBX::mbx_update_xyz()
 	const int ii4 = atom->map(anchor + 4);
 	
 	if( (ii1 > -1) && (ii2 > -1) && (ii3 > -1) && (ii4 > -1)) {
-	  xyz[indx*3  ] = x[i][0];
-	  xyz[indx*3+1] = x[i][1];
-	  xyz[indx*3+2] = x[i][2];
+	  xyz[indx*3  ] = x[i][0] - xlo;
+	  xyz[indx*3+1] = x[i][1] - ylo;
+	  xyz[indx*3+2] = x[i][2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii1], ximage);
-	  xyz[indx*3+3] = ximage[0];
-	  xyz[indx*3+4] = ximage[1];
-	  xyz[indx*3+5] = ximage[2];
+	  xyz[indx*3+3] = ximage[0] - xlo;
+	  xyz[indx*3+4] = ximage[1] - ylo;
+	  xyz[indx*3+5] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
-	  xyz[indx*3+6] = ximage[0];
-	  xyz[indx*3+7] = ximage[1];
-	  xyz[indx*3+8] = ximage[2];
+	  xyz[indx*3+6] = ximage[0] - xlo;
+	  xyz[indx*3+7] = ximage[1] - ylo;
+	  xyz[indx*3+8] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii3], ximage);
-	  xyz[indx*3+9] = ximage[0];
-	  xyz[indx*3+10] = ximage[1];
-	  xyz[indx*3+11] = ximage[2];
+	  xyz[indx*3+9]  = ximage[0] - xlo;
+	  xyz[indx*3+10] = ximage[1] - ylo;
+	  xyz[indx*3+11] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii4], ximage);
-	  xyz[indx*3+12] = ximage[0];
-	  xyz[indx*3+13] = ximage[1];
-	  xyz[indx*3+14] = ximage[2];
+	  xyz[indx*3+12] = ximage[0] - xlo;
+	  xyz[indx*3+13] = ximage[1] - ylo;
+	  xyz[indx*3+14] = ximage[2] - zlo;
 	  
 	  indx += 5;
 	  
@@ -2275,6 +2284,10 @@ void FixMBX::mbx_update_xyz_local()
     return;
   }
   
+  const double xlo = domain->boxlo[0];
+  const double ylo = domain->boxlo[1];
+  const double zlo = domain->boxlo[2];
+  
   double ximage[3];
   
   std::vector<double> xyz(mbx_num_atoms_local*3);
@@ -2288,7 +2301,7 @@ void FixMBX::mbx_update_xyz_local()
       const int mtype = mol_type[i];
       
       int na = 0;
-#if 1
+
       if(strcmp("h2o", mol_names[mtype]) == 0) {
 	
 	tagint anchor = atom->tag[i];
@@ -2296,19 +2309,19 @@ void FixMBX::mbx_update_xyz_local()
 	const int ii2 = atom->map(anchor + 2);
 
 	if( (ii1 > -1) && (ii2 > -1) ) {
-	  xyz[indx*3  ] = x[i][0];
-	  xyz[indx*3+1] = x[i][1];
-	  xyz[indx*3+2] = x[i][2];
+	  xyz[indx*3  ] = x[i][0] - xlo;
+	  xyz[indx*3+1] = x[i][1] - ylo;
+	  xyz[indx*3+2] = x[i][2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii1], ximage);
-	  xyz[indx*3+3] = ximage[0];
-	  xyz[indx*3+4] = ximage[1];
-	  xyz[indx*3+5] = ximage[2];
+	  xyz[indx*3+3] = ximage[0] - xlo;
+	  xyz[indx*3+4] = ximage[1] - ylo;
+	  xyz[indx*3+5] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
-	  xyz[indx*3+6] = ximage[0];
-	  xyz[indx*3+7] = ximage[1];
-	  xyz[indx*3+8] = ximage[2];
+	  xyz[indx*3+6] = ximage[0] - xlo;
+	  xyz[indx*3+7] = ximage[1] - ylo;
+	  xyz[indx*3+8] = ximage[2] - zlo;
 	  
 	  indx += 3;
 	  m++;
@@ -2316,27 +2329,27 @@ void FixMBX::mbx_update_xyz_local()
       }
       else if(strcmp("na",  mol_names[mtype]) == 0) {
 
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
+	xyz[indx*3  ] = x[i][0] - xlo;
+	xyz[indx*3+1] = x[i][1] - ylo;
+	xyz[indx*3+2] = x[i][2] - zlo;
 	
 	indx++;
 	m++;
       }
       else if(strcmp("cl",  mol_names[mtype]) == 0) {
 
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
+	xyz[indx*3  ] = x[i][0] - xlo;
+	xyz[indx*3+1] = x[i][1] - ylo;
+	xyz[indx*3+2] = x[i][2] - zlo;
 	
 	indx++;
 	m++;
       }
       else if(strcmp("he",  mol_names[mtype]) == 0) {
 
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
+	xyz[indx*3  ] = x[i][0] - xlo;
+	xyz[indx*3+1] = x[i][1] - ylo;
+	xyz[indx*3+2] = x[i][2] - zlo;
 	
 	indx++;
 	m++;
@@ -2348,19 +2361,19 @@ void FixMBX::mbx_update_xyz_local()
 	const int ii2 = atom->map(anchor + 2);
 
 	if( (ii1 > -1) && (ii2 > -1) ) {
-	  xyz[indx*3  ] = x[i][0];
-	  xyz[indx*3+1] = x[i][1];
-	  xyz[indx*3+2] = x[i][2];
+	  xyz[indx*3  ] = x[i][0] - xlo;
+	  xyz[indx*3+1] = x[i][1] - ylo;
+	  xyz[indx*3+2] = x[i][2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii1], ximage);
-	  xyz[indx*3+3] = ximage[0];
-	  xyz[indx*3+4] = ximage[1];
-	  xyz[indx*3+5] = ximage[2];
+	  xyz[indx*3+3] = ximage[0] - xlo;
+	  xyz[indx*3+4] = ximage[1] - ylo;
+	  xyz[indx*3+5] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
-	  xyz[indx*3+6] = ximage[0];
-	  xyz[indx*3+7] = ximage[1];
-	  xyz[indx*3+8] = ximage[2];
+	  xyz[indx*3+6] = ximage[0] - xlo;
+	  xyz[indx*3+7] = ximage[1] - ylo;
+	  xyz[indx*3+8] = ximage[2] - zlo;
 	  
 	  indx += 3;
 	  m++;
@@ -2375,144 +2388,34 @@ void FixMBX::mbx_update_xyz_local()
 	const int ii4 = atom->map(anchor + 4);
 	
 	if( (ii1 > -1) && (ii2 > -1) && (ii3 > -1) && (ii4 > -1)) {
-	  xyz[indx*3  ] = x[i][0];
-	  xyz[indx*3+1] = x[i][1];
-	  xyz[indx*3+2] = x[i][2];
+	  xyz[indx*3  ] = x[i][0] - xlo;
+	  xyz[indx*3+1] = x[i][1] - ylo;
+	  xyz[indx*3+2] = x[i][2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii1], ximage);
-	  xyz[indx*3+3] = ximage[0];
-	  xyz[indx*3+4] = ximage[1];
-	  xyz[indx*3+5] = ximage[2];
+	  xyz[indx*3+3] = ximage[0] - xlo;
+	  xyz[indx*3+4] = ximage[1] - ylo;
+	  xyz[indx*3+5] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii2], ximage);
-	  xyz[indx*3+6] = ximage[0];
-	  xyz[indx*3+7] = ximage[1];
-	  xyz[indx*3+8] = ximage[2];
+	  xyz[indx*3+6] = ximage[0] - xlo;
+	  xyz[indx*3+7] = ximage[1] - ylo;
+	  xyz[indx*3+8] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii3], ximage);
-	  xyz[indx*3+9] = ximage[0];
-	  xyz[indx*3+10] = ximage[1];
-	  xyz[indx*3+11] = ximage[2];
+	  xyz[indx*3+9]  = ximage[0] - xlo;
+	  xyz[indx*3+10] = ximage[1] - ylo;
+	  xyz[indx*3+11] = ximage[2] - zlo;
 	  
 	  domain->closest_image(x[i], x[ii4], ximage);
-	  xyz[indx*3+12] = ximage[0];
-	  xyz[indx*3+13] = ximage[1];
-	  xyz[indx*3+14] = ximage[2];
+	  xyz[indx*3+12] = ximage[0] - xlo;
+	  xyz[indx*3+13] = ximage[1] - ylo;
+	  xyz[indx*3+14] = ximage[2] - zlo;
 	  
 	  indx += 5;
 	  m++;
 	}
       }
-#else
-      if(strcmp("h2o", mol_names[mtype]) == 0) {
-	
-	tagint anchor = atom->tag[i];
-	const int ii1 = atom->map(anchor + 1);
-	const int ii2 = atom->map(anchor + 2);
-
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	domain->closest_image(x[i], x[ii1], ximage);
-	xyz[indx*3+3] = ximage[0];
-	xyz[indx*3+4] = ximage[1];
-	xyz[indx*3+5] = ximage[2];
-	
-	domain->closest_image(x[i], x[ii2], ximage);
-	xyz[indx*3+6] = ximage[0];
-	xyz[indx*3+7] = ximage[1];
-	xyz[indx*3+8] = ximage[2];
-	
-	indx += 3;
-	m++;
-      }
-      else if(strcmp("na",  mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	indx++;
-	m++;
-      }
-      else if(strcmp("cl",  mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	indx++;
-	m++;
-      }
-      else if(strcmp("he",  mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	indx++;
-	m++;
-      }
-      else if(strcmp("co2", mol_names[mtype]) == 0) {
-	
-	tagint anchor = atom->tag[i];
-	const int ii1 = atom->map(anchor + 1);
-	const int ii2 = atom->map(anchor + 2);
-
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	domain->closest_image(x[i], x[ii1], ximage);
-	xyz[indx*3+3] = ximage[0];
-	xyz[indx*3+4] = ximage[1];
-	xyz[indx*3+5] = ximage[2];
-	
-	domain->closest_image(x[i], x[ii2], ximage);
-	xyz[indx*3+6] = ximage[0];
-	xyz[indx*3+7] = ximage[1];
-	xyz[indx*3+8] = ximage[2];
-	
-	indx += 3;
-	m++;
-      }
-      else if(strcmp("ch4", mol_names[mtype]) == 0) {
-
-	tagint anchor = atom->tag[i];
-	const int ii1 = atom->map(anchor + 1);
-	const int ii2 = atom->map(anchor + 2);
-	const int ii3 = atom->map(anchor + 3);
-	const int ii4 = atom->map(anchor + 4);
-	
-	xyz[indx*3  ] = x[i][0];
-	xyz[indx*3+1] = x[i][1];
-	xyz[indx*3+2] = x[i][2];
-	
-	domain->closest_image(x[i], x[ii1], ximage);
-	xyz[indx*3+3] = ximage[0];
-	xyz[indx*3+4] = ximage[1];
-	xyz[indx*3+5] = ximage[2];
-	
-	domain->closest_image(x[i], x[ii2], ximage);
-	xyz[indx*3+6] = ximage[0];
-	xyz[indx*3+7] = ximage[1];
-	xyz[indx*3+8] = ximage[2];
-
-	domain->closest_image(x[i], x[ii3], ximage);
-	xyz[indx*3+9] = ximage[0];
-	xyz[indx*3+10] = ximage[1];
-	xyz[indx*3+11] = ximage[2];
-	
-	domain->closest_image(x[i], x[ii4], ximage);
-	xyz[indx*3+12] = ximage[0];
-	xyz[indx*3+13] = ximage[1];
-	xyz[indx*3+14] = ximage[2];
-	
-	indx += 5;
-	m++;	
-      }
-#endif
 
     } // if(mol_anchor)
 
@@ -2588,6 +2491,10 @@ void FixMBX::mbx_update_xyz_full()
 
   // update coordinates
   
+  const double xlo = domain->boxlo[0];
+  const double ylo = domain->boxlo[1];
+  const double zlo = domain->boxlo[2];
+  
   std::vector<double> xyz(natoms*3);
   
   int indx = 0;
@@ -2598,7 +2505,7 @@ void FixMBX::mbx_update_xyz_full()
       const int mtype = mol_type_full[i];
 
       int na = 0;
-#if 1
+
       if(     strcmp("h2o", mol_names[mtype]) == 0) na = 3;
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
@@ -2608,115 +2515,19 @@ void FixMBX::mbx_update_xyz_full()
 	
       tagint anchor = tag_full[i];
       
-      xyz[indx*3  ] = x_full[i][0];
-      xyz[indx*3+1] = x_full[i][1];
-      xyz[indx*3+2] = x_full[i][2];
+      xyz[indx*3  ] = x_full[i][0] - xlo;
+      xyz[indx*3+1] = x_full[i][1] - ylo;
+      xyz[indx*3+2] = x_full[i][2] - zlo;
 
       for(int j=1; j<na; ++j) {
 	int ii = atom_map_full[anchor + j];
 	int jndx = 3 * j;
-	xyz[indx*3 + jndx  ] = x_full[ii][0];
-	xyz[indx*3 + jndx+1] = x_full[ii][1];
-	xyz[indx*3 + jndx+2] = x_full[ii][2];
+	xyz[indx*3 + jndx  ] = x_full[ii][0] - xlo;
+	xyz[indx*3 + jndx+1] = x_full[ii][1] - ylo;
+	xyz[indx*3 + jndx+2] = x_full[ii][2] - zlo;
       }
 
       indx += na;
-#else
-      if(strcmp("h2o", mol_names[mtype]) == 0) {
-	
-	tagint anchor = tag_full[i];
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-
-	int ii = atom_map_full[anchor + 1];
-	xyz[indx*3+3] = x_full[ii][0];
-	xyz[indx*3+4] = x_full[ii][1];
-	xyz[indx*3+5] = x_full[ii][2];
-	
-	ii = atom_map_full[anchor + 2];
-	xyz[indx*3+6] = x_full[ii][0];
-	xyz[indx*3+7] = x_full[ii][1];
-	xyz[indx*3+8] = x_full[ii][2];
-
-	indx += 3;
-      }
-      else if(strcmp("na", mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-
-	indx++;
-      }
-      else if(strcmp("cl", mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-
-	indx++;
-      }
-      else if(strcmp("he", mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-	
-	indx++;
-      }
-      else if(strcmp("co2", mol_names[mtype]) == 0) {
-	
-	tagint anchor = tag_full[i];
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-
-	int ii = atom_map_full[anchor + 1];
-	xyz[indx*3+3] = x_full[ii][0];
-	xyz[indx*3+4] = x_full[ii][1];
-	xyz[indx*3+5] = x_full[ii][2];
-	
-	ii = atom_map_full[anchor + 2];
-	xyz[indx*3+6] = x_full[ii][0];
-	xyz[indx*3+7] = x_full[ii][1];
-	xyz[indx*3+8] = x_full[ii][2];
-
-	indx += 3;
-     }
-      else if(strcmp("ch4", mol_names[mtype]) == 0) {
-
-	tagint anchor = tag_full[i];
-	
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-	
-	int ii = atom_map_full[anchor + 1];
-	xyz[indx*3+3] = x_full[ii][0];
-	xyz[indx*3+4] = x_full[ii][1];
-	xyz[indx*3+5] = x_full[ii][2];
-	
-	ii = atom_map_full[anchor + 2];
-	xyz[indx*3+6] = x_full[ii][0];
-	xyz[indx*3+7] = x_full[ii][1];
-	xyz[indx*3+8] = x_full[ii][2];
-	
-	ii = atom_map_full[anchor + 3];
-	xyz[indx*3+9] = x_full[ii][0];
-	xyz[indx*3+10] = x_full[ii][1];
-	xyz[indx*3+11] = x_full[ii][2];
-	
-	ii = atom_map_full[anchor + 4];
-	xyz[indx*3+12] = x_full[ii][0];
-	xyz[indx*3+13] = x_full[ii][1];
-	xyz[indx*3+14] = x_full[ii][2];
-	
-	indx += 5;	
-      }
-#endif
 
     } // if(mol_anchor)
 
@@ -2784,6 +2595,10 @@ void FixMBX::mbx_update_xyz_pme()
   
   // update coordinates
   
+  const double xlo = domain->boxlo[0];
+  const double ylo = domain->boxlo[1];
+  const double zlo = domain->boxlo[2];
+  
   std::vector<double> xyz(natoms*3);
   
   int indx = 0;
@@ -2794,7 +2609,7 @@ void FixMBX::mbx_update_xyz_pme()
       const int mtype = mol_type_full[i];
 
       int na = 0;
-#if 1
+
       if(     strcmp("h2o", mol_names[mtype]) == 0) na = 3;
       else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
       else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
@@ -2804,115 +2619,19 @@ void FixMBX::mbx_update_xyz_pme()
 	
       tagint anchor = tag_full[i];
       
-      xyz[indx*3  ] = x_full[i][0];
-      xyz[indx*3+1] = x_full[i][1];
-      xyz[indx*3+2] = x_full[i][2];
+      xyz[indx*3  ] = x_full[i][0] - xlo;
+      xyz[indx*3+1] = x_full[i][1] - ylo;
+      xyz[indx*3+2] = x_full[i][2] - zlo;
 
       for(int j=1; j<na; ++j) {
 	int ii = atom_map_full[anchor + j];
 	int jndx = 3 * j;
-	xyz[indx*3 + jndx  ] = x_full[ii][0];
-	xyz[indx*3 + jndx+1] = x_full[ii][1];
-	xyz[indx*3 + jndx+2] = x_full[ii][2];
+	xyz[indx*3 + jndx  ] = x_full[ii][0] - xlo;
+	xyz[indx*3 + jndx+1] = x_full[ii][1] - ylo;
+	xyz[indx*3 + jndx+2] = x_full[ii][2] - zlo;
       }
 
       indx += na;
-#else
-      if(strcmp("h2o", mol_names[mtype]) == 0) {
-	
-	tagint anchor = tag_full[i];
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-
-	int ii = atom_map_full[anchor + 1];
-	xyz[indx*3+3] = x_full[ii][0];
-	xyz[indx*3+4] = x_full[ii][1];
-	xyz[indx*3+5] = x_full[ii][2];
-	
-	ii = atom_map_full[anchor + 2];
-	xyz[indx*3+6] = x_full[ii][0];
-	xyz[indx*3+7] = x_full[ii][1];
-	xyz[indx*3+8] = x_full[ii][2];
-
-	indx += 3;
-      }
-      else if(strcmp("na", mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-
-	indx++;
-      }
-      else if(strcmp("cl", mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-
-	indx++;
-      }
-      else if(strcmp("he", mol_names[mtype]) == 0) {
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-	
-	indx++;
-      }
-      else if(strcmp("co2", mol_names[mtype]) == 0) {
-
-	tagint anchor = tag_full[i];
-	
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-	
-	int ii = atom_map_full[anchor + 1];
-	xyz[indx*3+3] = x_full[ii][0];
-	xyz[indx*3+4] = x_full[ii][1];
-	xyz[indx*3+5] = x_full[ii][2];
-	
-	ii = atom_map_full[anchor + 2];
-	xyz[indx*3+6] = x_full[ii][0];
-	xyz[indx*3+7] = x_full[ii][1];
-	xyz[indx*3+8] = x_full[ii][2];
-	
-	indx += 3;
-      }
-      else if(strcmp("ch4", mol_names[mtype]) == 0) {
-	
-	tagint anchor = tag_full[i];
-
-	xyz[indx*3  ] = x_full[i][0];
-	xyz[indx*3+1] = x_full[i][1];
-	xyz[indx*3+2] = x_full[i][2];
-
-	int ii = atom_map_full[anchor + 1];
-	xyz[indx*3+3] = x_full[ii][0];
-	xyz[indx*3+4] = x_full[ii][1];
-	xyz[indx*3+5] = x_full[ii][2];
-	
-	ii = atom_map_full[anchor + 2];
-	xyz[indx*3+6] = x_full[ii][0];
-	xyz[indx*3+7] = x_full[ii][1];
-	xyz[indx*3+8] = x_full[ii][2];
-
-	ii = atom_map_full[anchor + 3];
-	xyz[indx*3+9] = x_full[ii][0];
-	xyz[indx*3+10] = x_full[ii][1];
-	xyz[indx*3+11] = x_full[ii][2];
-
-	ii = atom_map_full[anchor + 4];
-	xyz[indx*3+12] = x_full[ii][0];
-	xyz[indx*3+13] = x_full[ii][1];
-	xyz[indx*3+14] = x_full[ii][2];
-
-	indx += 5;
-      }
-#endif
 
     } // if(mol_anchor)
 
