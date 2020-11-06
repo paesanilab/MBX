@@ -192,6 +192,11 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
 #ifdef _USE_MBX_LOCAL
   // check that LAMMPS proc mapping matches PME solver
 
+  if(comm->style != 0) error->all(FLERR,"Fix mbx must be used with comm_style brick");
+
+  if(comm->layout != Comm::LAYOUT_UNIFORM)
+    error->all(FLERR,"Fix mbx must be used with comm layout of equal-sized bricks");
+  
   {
     int proc_x = me % comm->procgrid[0];
     int proc_y = (me % (comm->procgrid[0] * comm->procgrid[1])) / comm->procgrid[0];
