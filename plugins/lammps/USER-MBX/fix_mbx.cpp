@@ -757,7 +757,80 @@ void FixMBX::mbx_init()
       int is_local = (i<nlocal);
 
       //if(me == proc_write) printf("(%i) -- mtype= %i  is_local= %i\n",me,mtype,is_local);
-	    
+#if 1
+      int na;
+      if(strcmp("h2o",mol_names[mtype])      == 0) na = 3;
+      else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
+      else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
+
+      // ids of particles in molecule on proc
+      
+      tagint anchor = tag[i];
+
+      int indx[5];
+      bool add_monomer = true;
+      for(int j=1; j<na; ++j) {
+	indx[j] = atom->map(anchor+j);
+	if(indx[j] == -1) add_monomer = false;
+      }
+      
+      // add info
+      
+      if(add_monomer) {
+
+	// add coordinates
+	
+	xyz.push_back(x[i][0] - xlo);
+	xyz.push_back(x[i][1] - ylo);
+	xyz.push_back(x[i][2] - zlo);
+	
+	for(int j=1; j<na; ++j) {
+	  domain->closest_image(x[i], x[indx[j]], ximage);
+	  xyz.push_back(ximage[0] - xlo);
+	  xyz.push_back(ximage[1] - ylo);
+	  xyz.push_back(ximage[2] - zlo);
+	}
+	
+	if(strcmp("h2o",mol_names[mtype])      == 0) {
+	  names.push_back("O");
+	  names.push_back("H");
+	  names.push_back("H");
+	}
+	else if(strcmp("na",mol_names[mtype])  == 0) {
+	  names.push_back("Na");
+	}
+	else if(strcmp("cl",mol_names[mtype])  == 0) {
+	  names.push_back("Cl");
+	}
+	else if(strcmp("he",mol_names[mtype])  == 0) {
+	  names.push_back("He");
+	}
+	else if(strcmp("co2",mol_names[mtype]) == 0) {
+	  names.push_back("C");
+	  names.push_back("O");
+	  names.push_back("O");
+	}
+	else if(strcmp("ch4",mol_names[mtype]) == 0) {
+	  names.push_back("C");
+	  names.push_back("H");
+	  names.push_back("H");
+	  names.push_back("H");
+	  names.push_back("H");
+	}
+
+	molec.push_back(nm);
+	nm++;
+	
+	ptr_mbx->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
+	ptr_mbx->AddMolecule(molec);
+
+	mbx_num_atoms += na;
+      }
+#else // block to be removed...
       if(strcmp("h2o",mol_names[mtype]) == 0) {
 
 	// add water molecule
@@ -933,7 +1006,7 @@ void FixMBX::mbx_init()
 	} 
 	
       } else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
-	
+#endif
     } // if(mol_anchor)
     
   } // for(i<nall)
