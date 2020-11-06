@@ -2,10 +2,20 @@
 
 SHELL = /bin/sh
 
-MBX=/path_to_mbx/install
+ifndef MBX_HOME
+$(info "MBX_HOME is not set. Please set it or ignore if the default HOME/codes/MBX is OK")
+MBX_HOME=$(HOME)/codes/MBX
+endif
+
+ifndef FFTWHOME
+$(info "FFTWHOME is not set. Please set it or ignore if FFTW is already in the path")
+FFTWHOME=
+endif
+
+MBX=$(MBX_HOME)/install
 MBX_INC=$(MBX)/include
 MBX_LIB=$(MBX)/lib/static
-FFTW=/path_to_fftw3/install
+FFTW=$(FFTWHOME)
 
 # ---------------------------------------------------------------------
 # compiler/linker settings

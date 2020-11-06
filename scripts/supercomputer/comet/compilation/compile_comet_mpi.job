@@ -9,8 +9,20 @@
 #SBATCH --export=ALL
 #SBATCH -t 01:00:00
 
-MBX_HOME=$HOME/software/MBX
-CMAKE_EXE=$HOME/software/cmake-3.17.3/bin/cmake
+if [ -z "$MBX_HOME"] ; then
+  echo "MBX_HOME is not defined. Please run:"
+  echo "export MBX_HOME=PATH/TO/MBX/HOME"
+  exit
+else
+  echo "Installing MBX located in $MBX_HOME"
+fi
+
+cmake --version
+if [ $? -ne 0 ]; then
+  echo "CMake has not properly been installed or the pointer to cmake exe is not correct"
+  exit
+fi
+
 
 cd $MBX_HOME 
 
@@ -19,10 +31,9 @@ module load intel
 module load intelmpi
 
 rm -rf build install
-$CMAKE_EXE -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=True -DCMAKE_CXX_FLAGS="-DHAVE_MPI=1 -fPIC -Wall " -DCMAKE_CXX_COMPILER=mpiicpc -DCMAKE_C_COMPILER=mpiicc -H. -Bbuild
+cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=True -DCMAKE_CXX_FLAGS="-DHAVE_MPI=1 -fPIC -Wall " -DCMAKE_CXX_COMPILER=mpiicpc -DCMAKE_C_COMPILER=mpiicc -H. -Bbuild
 cd build
 make CXX=mpiicpc CC=mpiicc
 make install
 cd ../
 
-export MBX_HOME=$PWD
