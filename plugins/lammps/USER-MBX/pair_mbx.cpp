@@ -77,12 +77,11 @@ PairMBX::~PairMBX()
 
 void PairMBX::setup()
 {
-
   fix_mbx = NULL;
   int ifix = modify->find_fix_by_style("mbx");
+  if(ifix < 0) error->all(FLERR,"Fix MBX not found");
+  
   fix_mbx = (FixMBX *) modify->fix[ifix];
-
-  if(!fix_mbx) error->all(FLERR,"Fix MBX not found");
 }
 
 /* ---------------------------------------------------------------------- */
