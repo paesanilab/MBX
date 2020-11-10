@@ -357,7 +357,7 @@ int FixMBX::setmask()
 void FixMBX::init()
 {
   if (!atom->q_flag)
-    error->all(FLERR,"Fix qeq/reax requires atom attribute q");
+    error->all(FLERR,"Fix mbx requires atom attribute q");
 
   ngroup = group->count(igroup);
   if (ngroup == 0) error->all(FLERR,"Fix mbx group has no atoms");
@@ -1061,11 +1061,11 @@ void FixMBX::mbx_init()
     ptr_mbx->SetEwaldElectrostatics(0.6, 2.5, 6);
     ptr_mbx->SetEwaldDispersion(0.5, 2.5, 6);
   }
-
+  
   if(use_json) ptr_mbx->SetUpFromJson(json_settings);
   
   ptr_mbx->SetPBC(box);
-
+    
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();
     if(screen) fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
@@ -1512,10 +1512,21 @@ void FixMBX::mbx_init_local()
 
   ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
   
+  std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
+  std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1);
+    
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
-    if(screen) fprintf(screen, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());
-    if(logfile) fprintf(logfile, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());
+    if(screen) {
+      fprintf(screen, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());
+      fprintf(screen, "[MBX] LOCAL electrostatics FFT grid= %i %i %i\n",egrid[0],egrid[1],egrid[2]);
+      fprintf(screen, "[MBX] LOCAL dispersion FFT grid= %i %i %i\n",dgrid[0],dgrid[1],dgrid[2]);
+    }
+    if(logfile) {
+      fprintf(logfile, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());
+      fprintf(logfile, "[MBX] LOCAL electrostatics FFT grid= %i %i %i\n",egrid[0],egrid[1],egrid[2]);
+      fprintf(logfile, "[MBX] LOCAL dispersion FFT grid= %i %i %i\n",dgrid[0],dgrid[1],dgrid[2]);
+    }
   }
   
 #ifdef _DEBUG
@@ -1843,10 +1854,21 @@ void FixMBX::mbx_init_full()
   
   if(use_json) ptr_mbx_full->SetUpFromJson(json_settings);
 
+  std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(0);
+  std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(0);
+  
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_full->GetCurrentSystemConfig();
-    if(screen) fprintf(screen, "\n[MBX] 'Full' Settings\n%s\n", mbx_settings_.c_str());
-    if(logfile) fprintf(logfile, "\n[MBX] 'Full' Settings\n%s\n", mbx_settings_.c_str());
+    if(screen) {
+      fprintf(screen, "\n[MBX] 'Full' Settings\n%s\n", mbx_settings_.c_str()); 
+      fprintf(screen, "[MBX] FULL electrostatics FFT grid= %i %i %i\n",egrid[0],egrid[1],egrid[2]);
+      fprintf(screen, "[MBX] FULL dispersion FFT grid= %i %i %i\n",dgrid[0],dgrid[1],dgrid[2]);
+    }
+    if(logfile) {
+      fprintf(logfile, "\n[MBX] 'Full' Settings\n%s\n", mbx_settings_.c_str());
+      fprintf(logfile, "[MBX] FULL electrostatics FFT grid= %i %i %i\n",egrid[0],egrid[1],egrid[2]);
+      fprintf(logfile, "[MBX] FULL dispersion FFT grid= %i %i %i\n",dgrid[0],dgrid[1],dgrid[2]);
+    }
   }
   
 #ifdef _DEBUG
@@ -2176,10 +2198,21 @@ void FixMBX::mbx_init_pme()
 
   ptr_mbx_pme->SetPBC(box);
   
+  std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
+  std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1);
+  
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_pme->GetCurrentSystemConfig();
-    if(screen) fprintf(screen, "\n[MBX] 'PME' Settings\n%s\n", mbx_settings_.c_str());
-    if(logfile) fprintf(logfile, "\n[MBX] 'PME' Settings\n%s\n", mbx_settings_.c_str());
+    if(screen) {
+      fprintf(screen, "\n[MBX] 'PME' Settings\n%s\n", mbx_settings_.c_str());
+      fprintf(screen, "[MBX] PME electrostatics FFT grid= %i %i %i\n",egrid[0],egrid[1],egrid[2]);
+      fprintf(screen, "[MBX] PME dispersion FFT grid= %i %i %i\n",dgrid[0],dgrid[1],dgrid[2]);
+    }
+    if(logfile) {
+      fprintf(logfile, "\n[MBX] 'PME' Settings\n%s\n", mbx_settings_.c_str());
+      fprintf(logfile, "[MBX] PME electrostatics FFT grid= %i %i %i\n",egrid[0],egrid[1],egrid[2]);
+      fprintf(logfile, "[MBX] PME dispersion FFT grid= %i %i %i\n",dgrid[0],dgrid[1],dgrid[2]);
+    }
   }
   
 #ifdef _DEBUG
