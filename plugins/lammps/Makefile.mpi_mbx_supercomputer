@@ -2,23 +2,23 @@
 
 SHELL = /bin/sh
 
-MBX=$(MBX_HOME)
+MBX = /home/ux451890/software/mbx+lammps/original/MBX-master
 
 # ---------------------------------------------------------------------
 # compiler/linker settings
 # specify flags and libraries needed for your compiler
 
-CC =            mpicxx
-CCFLAGS =       -g -O3 -fopenmp -lfftw3 -std=c++11
+CC =            mpiicpc
+CCFLAGS =       -g -O3 -fopenmp -lfftw3 -std=c++11  -I/usr/include -I/opt/fftw/3.3.8/gnu/intelmpi/include
 CCFLAGS +=      -I$(MBX)/install/include
 CCFLAGS +=      -D_USE_PMELOCAL
 SHFLAGS =       -fPIC
 DEPFLAGS =      -M
 
-LINK =          mpicxx
+LINK =          mpiicpc
 LINKFLAGS =     -g -O3 -fopenmp -lfftw3 -std=c++11
 LIB =
-LIB +=          $(MBX)/install/lib/static/libmbxlib.a
+LIB +=          $(MBX)/install/lib/static/libmbxlib.a  -L/opt/fftw/3.3.8/gnu/intelmpi/lib
 SIZE =          size
 
 ARCHIVE =       ar
