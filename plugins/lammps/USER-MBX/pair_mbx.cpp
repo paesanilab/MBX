@@ -55,7 +55,7 @@ PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
 
   // energy terms available to pair compute
   
-  nextra = 13;
+  nextra = 19;
   pvector = new double[nextra];
 }
 
@@ -131,6 +131,8 @@ void PairMBX::compute(int eflag, int vflag)
   mbx_disp = 0.0;
   mbx_buck = 0.0;
   mbx_ele  = 0.0;
+
+  for(int i=0; i<6; ++i) mbx_virial[i] = 0.0;
 
   //  printf("(%i) mbx_num_atoms= %i\n",me,fix_mbx->mbx_num_atoms);
   
@@ -269,9 +271,11 @@ void PairMBX::compute(int eflag, int vflag)
   
   mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
 
+  for(int i=0; i<6; ++i) virial[i] += mbx_virial[i];
+  
   // save total energy from mbx as vdwl
   
-  if(eflag) {
+  if(evflag) {
     eng_vdwl = mbx_total_energy;
 
     // generally useful
@@ -292,6 +296,15 @@ void PairMBX::compute(int eflag, int vflag)
     pvector[10] = mbx_e3b_ghost;
     pvector[11] = mbx_disp_real;
     pvector[12] = mbx_disp_pme;
+
+    // for comparison with MBX
+
+    pvector[13] = mbx_virial[0];
+    pvector[14] = mbx_virial[1];
+    pvector[15] = mbx_virial[2];
+    pvector[16] = mbx_virial[3];
+    pvector[17] = mbx_virial[4];
+    pvector[18] = mbx_virial[5];
   }
 
 #ifdef _DEBUG_VIRIAL
@@ -361,13 +374,6 @@ void PairMBX::compute_full()
   //  update_mbx_xyz();
 
   bblock::System * ptr_mbx = fix_mbx->ptr_mbx_full;
-
-#if 0
-  
-  mbx_total_energy = ptr_mbx->Energy(true);
-  accumulate_f_full();
-
-#else
   
   mbx_e1b = ptr_mbx->OneBodyEnergy(true);
   accumulate_f_full();
@@ -389,6 +395,8 @@ void PairMBX::compute_full()
   
   mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
 
+  for(int i=0; i<6; ++i) virial[i] += mbx_virial[i];
+  
   double mbx_e2b_local = mbx_e2b;
   double mbx_e2b_ghost = 0.0;
   double mbx_e3b_local = mbx_e3b;
@@ -405,7 +413,6 @@ void PairMBX::compute_full()
     
     printf("virial= %f %f %f  %f %f %f\n",virial[0],virial[1],virial[2],virial[3],virial[4],virial[5]);
   }
-#endif
   
   // save total energy from mbx as vdwl
   
@@ -629,20 +636,20 @@ void PairMBX::accumulate_f()
   // LAMMPS: xx, yy, zz, xy, xz, yz
 
   if(vflag_either) {
-    std::vector<double> mbx_virial = ptr_mbx->GetVirial();
+    std::vector<double> mbx_vir = ptr_mbx->GetVirial();
     
-    virial[0] += mbx_virial[0];
-    virial[1] += mbx_virial[4];
-    virial[2] += mbx_virial[8];
-    virial[3] += mbx_virial[1];
-    virial[4] += mbx_virial[2];
-    virial[5] += mbx_virial[5];
+    mbx_virial[0] += mbx_vir[0];
+    mbx_virial[1] += mbx_vir[4];
+    mbx_virial[2] += mbx_vir[8];
+    mbx_virial[3] += mbx_vir[1];
+    mbx_virial[4] += mbx_vir[2];
+    mbx_virial[5] += mbx_vir[5];
 
 #ifdef _DEBUG_VIRIAL
     printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    	   mbx_vir[0],mbx_vir[1],mbx_vir[2],
+    	   mbx_vir[3],mbx_vir[4],mbx_vir[5],
+    	   mbx_vir[6],mbx_vir[7],mbx_vir[8]);
     printf("virial(LMP)= %f %f %f  %f %f %f\n",
     	   virial[0],virial[1],virial[2],
     	   virial[3],virial[4],virial[5]);
@@ -743,20 +750,20 @@ void PairMBX::accumulate_f_local()
   // LAMMPS: xx, yy, zz, xy, xz, yz
 
   if(vflag_either) {
-    std::vector<double> mbx_virial = ptr_mbx->GetVirial();
+    std::vector<double> mbx_vir = ptr_mbx->GetVirial();
     
-    virial[0] += mbx_virial[0];
-    virial[1] += mbx_virial[4];
-    virial[2] += mbx_virial[8];
-    virial[3] += mbx_virial[1];
-    virial[4] += mbx_virial[2];
-    virial[5] += mbx_virial[5];
+    mbx_virial[0] += mbx_vir[0];
+    mbx_virial[1] += mbx_vir[4];
+    mbx_virial[2] += mbx_vir[8];
+    mbx_virial[3] += mbx_vir[1];
+    mbx_virial[4] += mbx_vir[2];
+    mbx_virial[5] += mbx_vir[5];
 
 #ifdef _DEBUG_VIRIAL
     printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    	   mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    	   mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    	   mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    	   mbx_vir[0],mbx_vir[1],mbx_vir[2],
+    	   mbx_vir[3],mbx_vir[4],mbx_vir[5],
+    	   mbx_vir[6],mbx_vir[7],mbx_vir[8]);
     printf("virial(LMP)= %f %f %f  %f %f %f\n",
     	   virial[0],virial[1],virial[2],
     	   virial[3],virial[4],virial[5]);
@@ -843,20 +850,20 @@ void PairMBX::accumulate_f_full()
     // LAMMPS: xx, yy, zz, xy, xz, yz
     
     if(vflag_either) {
-      std::vector<double> mbx_virial = ptr_mbx->GetVirial();
+      std::vector<double> mbx_vir = ptr_mbx->GetVirial();
       
-      virial[0] += mbx_virial[0];
-      virial[1] += mbx_virial[4];
-      virial[2] += mbx_virial[8];
-      virial[3] += mbx_virial[1];
-      virial[4] += mbx_virial[2];
-      virial[5] += mbx_virial[5];
+      mbx_virial[0] += mbx_vir[0];
+      mbx_virial[1] += mbx_vir[4];
+      mbx_virial[2] += mbx_vir[8];
+      mbx_virial[3] += mbx_vir[1];
+      mbx_virial[4] += mbx_vir[2];
+      mbx_virial[5] += mbx_vir[5];
 
 #ifdef _DEBUG_VIRIAL
       printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-      	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
-      	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
-      	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+      	     mbx_vir[0],mbx_vir[1],mbx_vir[2],
+      	     mbx_vir[3],mbx_vir[4],mbx_vir[5],
+      	     mbx_vir[6],mbx_vir[7],mbx_vir[8]);
       printf("virial(LMP)= %f %f %f  %f %f %f\n",
       	     virial[0],virial[1],virial[2],
       	     virial[3],virial[4],virial[5]);
@@ -966,20 +973,20 @@ void PairMBX::accumulate_f_pme()
   // LAMMPS: xx, yy, zz, xy, xz, yz
   
   if(vflag_either) {
-    std::vector<double> mbx_virial = ptr_mbx->GetVirial();
+    std::vector<double> mbx_vir = ptr_mbx->GetVirial();
     
-    virial[0] += mbx_virial[0];
-    virial[1] += mbx_virial[4];
-    virial[2] += mbx_virial[8];
-    virial[3] += mbx_virial[1];
-    virial[4] += mbx_virial[2];
-    virial[5] += mbx_virial[5];
+    mbx_virial[0] += mbx_vir[0];
+    mbx_virial[1] += mbx_vir[4];
+    mbx_virial[2] += mbx_vir[8];
+    mbx_virial[3] += mbx_vir[1];
+    mbx_virial[4] += mbx_vir[2];
+    mbx_virial[5] += mbx_vir[5];
 
 #ifdef _DEBUG_VIRIAL
     printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    	     mbx_virial[0],mbx_virial[1],mbx_virial[2],
-    	     mbx_virial[3],mbx_virial[4],mbx_virial[5],
-    	     mbx_virial[6],mbx_virial[7],mbx_virial[8]);
+    	     mbx_vir[0],mbx_vir[1],mbx_vir[2],
+    	     mbx_vir[3],mbx_vir[4],mbx_vir[5],
+    	     mbx_vir[6],mbx_vir[7],mbx_vir[8]);
     printf("virial(LMP)= %f %f %f  %f %f %f\n",
     	     virial[0],virial[1],virial[2],
     	     virial[3],virial[4],virial[5]);
