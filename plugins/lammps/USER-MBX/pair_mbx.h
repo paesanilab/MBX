@@ -62,6 +62,8 @@ class PairMBX : public Pair {
   double mbx_ele;
   double mbx_total_energy;
 
+  double mbx_virial[6];
+
   virtual void allocate();
   void setup();
 
