@@ -1398,7 +1398,7 @@ namespace helpme {
 #ifndef M_PI
 #define M_PI static_cast<Real>(3.14159265358979323846264338327950288419716939937510582097494L)
 #endif
-  
+
 /*!
  * Compute upper incomplete gamma functions for positive half-integral s values using the recursion
  * \f$ \Gamma[\frac{\mathrm{twoS}}{2},x] = \Gamma[\frac{\mathrm{twoS}-2}{2},x] + x^{\frac{\mathrm{twoS}-2}{2}}e^{-x}\f$

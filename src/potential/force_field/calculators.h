@@ -70,7 +70,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 namespace eff {
 
-
 /**
  * @brief CalculateDistance Calculates the euclidean distance between two
  *        sets of coordinates

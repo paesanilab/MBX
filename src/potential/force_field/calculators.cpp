@@ -42,7 +42,8 @@ namespace eff {
 
 double CalculateDistance(std::vector<double> coor1, std::vector<double> coor2) {
     if (coor1.size() != 3 or coor2.size() != 3) {
-        std::string text = "The points must belong to R3, but they have " + std::to_string(coor1.size()) + " and " + std::to_string(coor2.size()) + " coordinates";
+        std::string text = "The points must belong to R3, but they have " + std::to_string(coor1.size()) + " and " +
+                           std::to_string(coor2.size()) + " coordinates";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
@@ -56,7 +57,8 @@ double CalculateDistance(std::vector<double> coor1, std::vector<double> coor2) {
 
 double CalculateDistance(std::vector<double> directional_vec) {
     if (directional_vec.size() != 3) {
-        std::string text = "The vector must belong to R3, but it has " + std::to_string(directional_vec.size()) + " coordinates";
+        std::string text =
+            "The vector must belong to R3, but it has " + std::to_string(directional_vec.size()) + " coordinates";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
@@ -134,12 +136,13 @@ double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coo
     // to obtain the sign for phi. Edge case: only when n1 and n2 are parallel
     // does the phi_sign_vector become the 0 vector. In which case, we use the
     // directions above to determine the sign for phi.
-    //std::vector<double> phi_sign_vector = CalculateCrossProduct(n1, n2);
+    // std::vector<double> phi_sign_vector = CalculateCrossProduct(n1, n2);
 
-    //double modulus_sign_vector = CalculateDistance(phi_sign_vector);
+    // double modulus_sign_vector = CalculateDistance(phi_sign_vector);
 
-    //double phi = acos(CalculateDotProduct(n1, n2) / (modulus_n1 * modulus_n2) );
-    double phi = atan2(((CalculateDistance(svector) * CalculateDotProduct(fvector,n2)))/(modulus_n1 * modulus_n2),(CalculateDotProduct(n1, n2) / (modulus_n1 * modulus_n2) ));
+    // double phi = acos(CalculateDotProduct(n1, n2) / (modulus_n1 * modulus_n2) );
+    double phi = atan2(((CalculateDistance(svector) * CalculateDotProduct(fvector, n2))) / (modulus_n1 * modulus_n2),
+                       (CalculateDotProduct(n1, n2) / (modulus_n1 * modulus_n2)));
     return phi;
 }
 
@@ -189,7 +192,6 @@ void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::v
     }
     std::cerr << std::endl;
 #endif
-    
 
     // store the coordinates of the 4 atoms.
     double x1 = coor1[0];
@@ -406,6 +408,58 @@ void CalculateInversionGrad(std::vector<double> centralCoor, std::vector<double>
                             std::vector<double> coor4, std::vector<size_t> indexes, std::vector<double> cummu_grad,
                             std::vector<double> phis, std::vector<double>& gradients, int mon_num, int nat,
                             std::vector<double>& curr_force) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "CentralCoor:\n";
+    for (size_t i = 0; i < centralCoor.size(); i++) {
+        std::cerr << centralCoor[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord2:\n";
+    for (size_t i = 0; i < coor2.size(); i++) {
+        std::cerr << coor2[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord3:\n";
+    for (size_t i = 0; i < coor3.size(); i++) {
+        std::cerr << coor3[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord4:\n";
+    for (size_t i = 0; i < coor4.size(); i++) {
+        std::cerr << coor4[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Indexes:\n";
+    for (size_t i = 0; i < indexes.size(); i++) {
+        std::cerr << indexes[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "cummu_grad:\n";
+    for (size_t i = 0; i < cummu_grad.size(); i++) {
+        std::cerr << cummu_grad[i] << ", ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "phis:\n";
+    for (size_t i = 0; i < phis.size(); i++) {
+        std::cerr << phis[i] << ", ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Gradients:\n";
+    for (size_t i = 0; i < gradients.size(); i++) {
+        std::cerr << gradients[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "mon_num: " << mon_num << std::endl;
+    std::cerr << "nat: " << nat << std::endl;
+    std::cerr << "Curr_force:\n";
+    for (size_t i = 0; i < curr_force.size(); i++) {
+        std::cerr << curr_force[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     // store the coordinates of the 4 atoms.
     double x1 = centralCoor[0];
     double x2 = coor2[0];
@@ -678,6 +732,21 @@ void CalculateInversionGrad(std::vector<double> centralCoor, std::vector<double>
         gradients[(indexes[index] - 1) * 3 + 1 + (mon_num * nat * 3)] += ans[index * 3 + 1];
         gradients[(indexes[index] - 1) * 3 + 2 + (mon_num * nat * 3)] += ans[index * 3 + 2];
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Gradients:\n";
+    for (size_t i = 0; i < gradients.size(); i++) {
+        std::cerr << gradients[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Curr_force:\n";
+    for (size_t i = 0; i < curr_force.size(); i++) {
+        std::cerr << curr_force[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 void GetVecUVecV(std::vector<double> rix_norm, std::vector<double> riy_norm, std::vector<double>& u_vec,
