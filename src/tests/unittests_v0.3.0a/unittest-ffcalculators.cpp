@@ -36,6 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/force_field/calculators.h"
 #include "potential/force_field/dihedral.h"
+#include "potential/force_field/inversion.h"
 
 #include <vector>
 #include <iostream>
@@ -428,6 +429,106 @@ TEST_CASE("calculators::CalculateInversionAngle") {
 
         for (size_t i = 0; i < 3; i++) {
             REQUIRE(inv[i] == Approx(inv_expected).margin(TOL));
+        }
+    }
+}
+
+TEST_CASE("calculators::CalculateInversionGrad") {
+    SECTION("Perfect thretrahedron") {
+        std::vector<double> p1 = {0.0, 0.0, 1.0};
+        std::vector<double> p2 = {sqrt(8.0 / 9.0), 0, -1.0 / 3.0};
+        std::vector<double> p3 = {-sqrt(2.0 / 9.0), sqrt(2.0 / 3.0), -1.0 / 3.0};
+        std::vector<double> p4 = {-sqrt(2.0 / 9.0), -sqrt(2.0 / 3.0), -1.0 / 3.0};
+
+        // Expected outputs
+        std::vector<std::vector<double> > expected_grads = {
+            {0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00,
+             0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00,
+             0.0000000000e+00},
+            {-6.9388939039e-18, 6.9388939039e-18, 1.0828271806e-01, -5.1044962818e-02, 0.0000000000e+00,
+             -3.6094239354e-02, 2.5522481409e-02, -4.4206234535e-02, -3.6094239354e-02, 2.5522481409e-02,
+             4.4206234535e-02, -3.6094239354e-02}};
+        std::vector<std::vector<double> > expected_curr_force = {
+            {0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00,
+             0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00,
+             0.0000000000e+00},
+            {6.9388939039e-18, -6.9388939039e-18, -1.0828271806e-01, 5.1044962818e-02, -0.0000000000e+00,
+             3.6094239354e-02, -2.5522481409e-02, 4.4206234535e-02, 3.6094239354e-02, -2.5522481409e-02,
+             -4.4206234535e-02, 3.6094239354e-02}};
+
+        // Make a inv
+        std::string topo = "iNVersioN";
+        std::vector<size_t> idxs = {1, 2, 3, 4};
+        std::vector<std::string> funcform = {"NONE", "haRm"};
+        std::vector<std::vector<double> > linear_params = {{}, {2.0}};
+        std::vector<std::vector<double> > nonlinear_params = {{}, {pi / 3}};
+
+        std::vector<std::vector<double> > points = {p1, p2, p3, p4};
+
+        for (size_t i = 0; i < funcform.size(); i++) {
+            std::vector<double> phi = eff::CalculateInversionAngle(p1, p2, p3, p4);
+
+            ////////////////////////////////////
+            // FIXME Eventually this needs to be reordered in the phi calculation to return ijkn, iknj, injk in this
+            // order
+            std::vector<double> temp_shift_vector = phi;
+
+            // Shift the phis vector because the inversion angles are assigned
+            // in the incorrect order from dlpoly
+            for (int i = 0; i < 3; i++) {
+                phi[i] = temp_shift_vector[(i + 1) % 3];
+            }
+            ////////////////////////////////////
+
+            double s = 0.0001;
+            SECTION(funcform[i]) {
+                eff::Inversion inv(topo, idxs, funcform[i]);
+                inv.SetParameters(linear_params[i], nonlinear_params[i]);
+
+                double energy = inv.GetEnergy(phi[0]) + inv.GetEnergy(phi[1]) + inv.GetEnergy(phi[2]);
+                energy /= 3.0;
+                std::vector<double> cummu_grad = {-1.0 / sin(phi[0]) / 3.0 * inv.GetTopologyGradient(phi[0]),
+                                                  -1.0 / sin(phi[1]) / 3.0 * inv.GetTopologyGradient(phi[1]),
+                                                  -1.0 / sin(phi[2]) / 3.0 * inv.GetTopologyGradient(phi[2])};
+                std::vector<double> grads(12, 0.0);
+                size_t mon_num = 0;
+                size_t nat = 4;
+                std::vector<double> curr_force(12, 0.0);
+                eff::CalculateInversionGrad(p1, p2, p3, p4, idxs, cummu_grad, phi, grads, mon_num, nat, curr_force);
+
+                REQUIRE(VectorsAreEqual(grads, expected_grads[i], TOL));
+                REQUIRE(VectorsAreEqual(curr_force, expected_curr_force[i], TOL));
+
+                for (size_t j = 0; j < points.size(); j++) {
+                    for (size_t k = 0; k < 3; k++) {
+                        points[j][k] += s;
+                        std::vector<double> phi_p =
+                            eff::CalculateInversionAngle(points[0], points[1], points[2], points[3]);
+                        double ep = (inv.GetEnergy(phi_p[0]) + inv.GetEnergy(phi_p[1]) + inv.GetEnergy(phi_p[2])) / 3.0;
+
+                        points[j][k] += s;
+                        std::vector<double> phi_pp =
+                            eff::CalculateInversionAngle(points[0], points[1], points[2], points[3]);
+                        double epp =
+                            (inv.GetEnergy(phi_pp[0]) + inv.GetEnergy(phi_pp[1]) + inv.GetEnergy(phi_pp[2])) / 3.0;
+
+                        points[j][k] -= 4.0 * s;
+                        std::vector<double> phi_mm =
+                            eff::CalculateInversionAngle(points[0], points[1], points[2], points[3]);
+                        double emm =
+                            (inv.GetEnergy(phi_mm[0]) + inv.GetEnergy(phi_mm[1]) + inv.GetEnergy(phi_mm[2])) / 3.0;
+
+                        points[j][k] += s;
+                        std::vector<double> phi_m =
+                            eff::CalculateInversionAngle(points[0], points[1], points[2], points[3]);
+                        double em = (inv.GetEnergy(phi_m[0]) + inv.GetEnergy(phi_m[1]) + inv.GetEnergy(phi_m[2])) / 3.0;
+                        points[j][k] += s;
+
+                        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+                        REQUIRE(numgrad == Approx(grads[3 * j + k]).margin(TOL));
+                    }
+                }
+            }
         }
     }
 }
