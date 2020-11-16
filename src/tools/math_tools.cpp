@@ -45,7 +45,7 @@ std::vector<double> InvertUnitCell(const std::vector<double> &box) {
                          box[2] * (box[3] * box[7] - box[4] * box[6]);
 
     // Check matrix has inverse
-    if (abs(determinant) < 1E-36) {
+    if (std::fabs(determinant) < 1E-36) {
         std::string text = "Matrix has no inverse. Determinant is 0 (" + std::to_string(determinant) + "}..\n";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }

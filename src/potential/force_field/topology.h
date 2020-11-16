@@ -103,13 +103,13 @@ class Topology {
      * @brief Obtain the number of nonlinear parameters
      * @return The number of nonlinear parameters
      */
-    size_t SetNumNonLinear(size_t num_nonlinear);
+    void SetNumNonLinear(size_t num_nonlinear);
 
     /**
      * @brief Obtain the number of linear parameters
      * @return The number of linear parameters
      */
-    size_t SetNumLinear(size_t num_linear);
+    void SetNumLinear(size_t num_linear);
 
     /**
      * @brief Obtain the number of nonlinear parameters
