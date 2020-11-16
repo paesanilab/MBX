@@ -115,6 +115,15 @@ class Angles : public Topology {
     ~Angles();
 
     /**
+     * @brief Used to set the linear and nonlinear parameters
+     * @param[in] linear_parameters The vector containing the set of
+     *            linear parameters
+     * @param[in] nonlinear_parameters The vector containing the set of
+     *            nonlinear parameters
+     */
+    void SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters);
+
+    /**
      * @brief Calculates the potential energy using the nonlinear and linear
      *        parameters
      * @param[in] x Represents the theta,

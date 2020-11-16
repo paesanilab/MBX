@@ -42,8 +42,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 bool VectorsAreEqual(const std::vector<double>& computed, const std::vector<double>& expected,
                      double tolerance = 1e-6) {
-    return std::equal(computed.begin(), computed.end(), expected.begin(),
-                      [&](double x, double y) -> bool { std::cout << std::scientific << std::setprecision(8) << std::setw(20) << x << " <==> " << std::setw(20) << y << std::endl; return x == Approx(y).margin(tolerance); });
+    return std::equal(computed.begin(), computed.end(), expected.begin(), [&](double x, double y) -> bool {
+        std::cout << std::scientific << std::setprecision(8) << std::setw(20) << x << " <==> " << std::setw(20) << y
+                  << std::endl;
+        return x == Approx(y).margin(tolerance);
+    });
 }
 
 template <typename T, typename U>

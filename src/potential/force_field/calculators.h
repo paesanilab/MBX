@@ -41,6 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <exception>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -137,7 +138,7 @@ double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coo
  * @param[in]  coor2 Is the xyz coordinate of the first inner atom.
  * @param[in]  coor3 Is the xyz coordinate of the second inner atom.
  * @param[in]  coor4 Is the xyz coordinate of the second outer atom.
- * @param[in]  indexes is the vector of atom indexes in the dihedral.
+ * @param[in]  indexes is the vector of atom indexes in the dihedral. STARTS at 1!
  * @param[in]  cummu_grad is the constant used to compute full gradient. See
  * eval.cpp for the function
  * @param[in]  gradients is a pointer to the gradients vector. Used by function
