@@ -258,6 +258,14 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   if( sizeof(tagint) != sizeof(int) )
     error->all(FLERR,"[MBX] Tagints required to be of type int.");
   
+#ifndef _USE_PMELOCAL
+  error->all(FLERR,"[MBX] Recompile LAMMPS with -D_USE_PMELOCAL");
+#endif
+  
+#ifdef _USE_MBX_FULL
+  //  error->all(FLERR,"[MBX] LAMMPS should not be compiled with _USE_MBX_FULL set");
+#endif
+  
   mbxt_initial_time = MPI_Wtime();
 }
 
@@ -492,7 +500,7 @@ void FixMBX::post_neighbor()
     delete ptr_mbx_pme;
   }
   
-  // create initial instance of MBX objects
+  // create instance of MBX objects
   
   ptr_mbx       = new bblock::System();
 #ifdef _USE_MBX_FULL
@@ -503,15 +511,23 @@ void FixMBX::post_neighbor()
 #endif
   ptr_mbx_pme   = new bblock::System();
 
-  // loop over all atoms looking for anchor-atom of a molecule
-  // -- assumption is that first atom in molecule is the anchor-atom
-  // -- if anchor-atom is local, then molecule is treated as if local
+  // require MBX library to be compiled with MPI
+
+  int err = ptr_mbx->TestMPI();
+  if(err == -2) {
+    error->all(FLERR,"[MBX] Rebuild MBX library with MPI enabled.\n");
+    mbx_mpi_enabled = false;
+  }
+  
+  // initialize MBX instances
   
   mbx_init();
+#ifdef _USE_MBX_FULL
   if(domain->nonperiodic) mbx_init_full();
+#endif
   mbx_init_local();
   mbx_init_pme();
-
+  
 #ifdef _DEBUG
   printf("[MBX] (%i,%i) Leaving post_neighbor()\n",universe->iworld,me);
 #endif
@@ -546,7 +562,9 @@ void FixMBX::pre_force(int /*vflag*/)
   // update coordinates in MBX objects
   
   mbx_update_xyz();
+#ifdef _USE_MBX_FULL
   if(domain->nonperiodic) mbx_update_xyz_full();
+#endif
   mbx_update_xyz_local();
   mbx_update_xyz_pme();
 }
@@ -1066,10 +1084,21 @@ void FixMBX::mbx_init()
   
   ptr_mbx->SetPBC(box);
     
+  std::vector<int> egrid = ptr_mbx_pme->GetFFTDimensionElectrostatics(0);
+  std::vector<int> dgrid = ptr_mbx_pme->GetFFTDimensionDispersion(0);
+  
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();
-    if(screen) fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
-    if(logfile) fprintf(logfile, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+    if(screen) {
+      fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+      fprintf(screen, "[MBX] electrostatics FFT grid= %i %i %i\n",egrid[0],egrid[1],egrid[2]);
+      fprintf(screen, "[MBX] dispersion FFT grid= %i %i %i\n",dgrid[0],dgrid[1],dgrid[2]);
+    }
+    if(logfile) {
+      fprintf(logfile, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+      fprintf(logfile, "[MBX] electrostatics FFT grid= %i %i %i\n",egrid[0],egrid[1],egrid[2]);
+      fprintf(logfile, "[MBX] dispersion FFT grid= %i %i %i\n",dgrid[0],dgrid[1],dgrid[2]);
+    }
   }
   
 #ifdef _DEBUG
@@ -1465,7 +1494,7 @@ void FixMBX::mbx_init_local()
   if(err == -1) error->all(FLERR, "[MBX] MPI not initialized\n");
   else if(err == -2) {
     if(me == 0 && first_step)
-      error->warning(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
+      error->all(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
     mbx_mpi_enabled = false;
   }
   
@@ -1854,8 +1883,8 @@ void FixMBX::mbx_init_full()
   
   if(use_json) ptr_mbx_full->SetUpFromJson(json_settings);
 
-  std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(0);
-  std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(0);
+  std::vector<int> egrid = ptr_mbx_full->GetFFTDimensionElectrostatics(0);
+  std::vector<int> dgrid = ptr_mbx_full->GetFFTDimensionDispersion(0);
   
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_full->GetCurrentSystemConfig();
@@ -2157,7 +2186,7 @@ void FixMBX::mbx_init_pme()
   if(err == -1) error->one(FLERR, "[MBX] MPI not initialized\n");
   else if(err == -2) {
     if(me == 0 && first_step)
-      error->warning(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
+      error->all(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
     mbx_mpi_enabled = false;
   }
   
@@ -2198,8 +2227,8 @@ void FixMBX::mbx_init_pme()
 
   ptr_mbx_pme->SetPBC(box);
   
-  std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
-  std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1);
+  std::vector<int> egrid = ptr_mbx_pme->GetFFTDimensionElectrostatics(0);
+  std::vector<int> dgrid = ptr_mbx_pme->GetFFTDimensionDispersion(0);
   
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx_pme->GetCurrentSystemConfig();
