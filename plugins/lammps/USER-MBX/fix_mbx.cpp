@@ -850,8 +850,6 @@ void FixMBX::mbx_init_local()
   double ** x = atom->x;
 
   mbx_num_atoms_local = 0;
-
-  // remove ghost monomers that are periodic images of other monomer
   
   for(int i=0; i<nall; ++i) mol_local[i] = 0;
 
@@ -862,6 +860,8 @@ void FixMBX::mbx_init_local()
   }
   
   // remove ghost monomers that are periodic images of local monomer
+  // -- just an artifact for small systems and PBC
+  // -- should be able to remove this
   
   for(int i=nlocal; i<nall; ++i) {
     if(mol_anchor[i]) {
@@ -871,6 +871,8 @@ void FixMBX::mbx_init_local()
   }
 
   // remove ghost monomers that are periodic images of ghost monomer
+  // -- just an artifact for small systems and PBC
+  // -- should be able to remove this
 
   double ximage[3];
   for(int i=nlocal; i<nall-1; ++i) {
@@ -1143,8 +1145,85 @@ void FixMBX::mbx_init_full()
 
       const int mtype = mol_type_full[i];
 
-      int is_local = 1; //(i<nlocal);
+      int is_local = 1;
 
+#if 1
+      int na;
+      if(strcmp("h2o",mol_names[mtype])      == 0) na = 3;
+      else if(strcmp("na",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("cl",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("he",mol_names[mtype])  == 0) na = 1;
+      else if(strcmp("co2",mol_names[mtype]) == 0) na = 3;
+      else if(strcmp("ch4",mol_names[mtype]) == 0) na = 5;
+      else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
+
+      // ids of particles in molecule on proc
+      
+      tagint anchor = tag_full[i];
+
+      int amap[5];
+      bool add_monomer = true;
+      for(int j=1; j<na; ++j) {
+	amap[j] = atom_map_full[anchor+j];
+	if(amap[j] == -1) {
+	  error->one(FLERR,"Molecule not intact");
+	  add_monomer = false;
+	}
+      }
+
+      // add info
+
+      if(add_monomer) {
+
+	// add coordinates
+	
+	xyz.push_back(x_full[i][0] - xlo);
+	xyz.push_back(x_full[i][1] - ylo);
+	xyz.push_back(x_full[i][2] - zlo);
+
+	for(int j=1; j<na; ++j) {
+	  xyz.push_back(x_full[ amap[j] ][0] - xlo);
+	  xyz.push_back(x_full[ amap[j] ][1] - ylo);
+	  xyz.push_back(x_full[ amap[j] ][2] - zlo);
+	}
+	
+	if(strcmp("h2o",mol_names[mtype])      == 0) {
+	  names.push_back("O");
+	  names.push_back("H");
+	  names.push_back("H");
+	}
+	else if(strcmp("na",mol_names[mtype])  == 0) {
+	  names.push_back("Na");
+	}
+	else if(strcmp("cl",mol_names[mtype])  == 0) {
+	  names.push_back("Cl");
+	}
+	else if(strcmp("he",mol_names[mtype])  == 0) {
+	  names.push_back("He");
+	}
+	else if(strcmp("co2",mol_names[mtype]) == 0) {
+	  names.push_back("C");
+	  names.push_back("O");
+	  names.push_back("O");
+	}
+	else if(strcmp("ch4",mol_names[mtype]) == 0) {
+	  names.push_back("C");
+	  names.push_back("H");
+	  names.push_back("H");
+	  names.push_back("H");
+	  names.push_back("H");
+	}
+	
+	molec.push_back(nm);
+	nm++;
+
+	ptr_mbx_full->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
+	ptr_mbx_full->AddMolecule(molec);
+
+	mbx_num_atoms_full += na;
+      }
+      
+#else // block to be removed...
       if(strcmp("h2o",mol_names[mtype]) == 0) {
 
 	// add water molecule
@@ -1313,7 +1392,7 @@ void FixMBX::mbx_init_full()
 	mbx_num_atoms_full += 5;
 
       } else error->one(FLERR,"Unsupported molecule type in MBX"); // should never get this far...
-	
+#endif	
     } // if(mol_anchor)
     
   } // for(i<nall)
