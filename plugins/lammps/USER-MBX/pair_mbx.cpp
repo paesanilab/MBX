@@ -100,7 +100,6 @@ void PairMBX::compute(int eflag, int vflag)
   bblock::System * ptr_mbx       = fix_mbx->ptr_mbx;       // compute terms in parallel
   bblock::System * ptr_mbx_full  = fix_mbx->ptr_mbx_full;  // compute term on rank 0
   bblock::System * ptr_mbx_local = fix_mbx->ptr_mbx_local; // compute PME terms in parallel w/ sub-domains
-  bblock::System * ptr_mbx_pme   = fix_mbx->ptr_mbx_pme;   // compute PME terms in parallel w/ copies full system
 
   bool mbx_parallel = fix_mbx->mbx_mpi_enabled;
   
@@ -204,13 +203,8 @@ void PairMBX::compute(int eflag, int vflag)
     
     if(!domain->nonperiodic) {
       fix_mbx->mbxt_start(MBXT_DISP_PME);
-#ifdef _USE_PMELOCAL
       mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true); // computes k-space using sub-domain
       accumulate_f_local();
-#else
-      mbx_disp_pme = ptr_mbx_pme->DispersionPME(true, true); // computes k-space using copies of full system
-      accumulate_f_pme();
-#endif
       fix_mbx->mbxt_stop(MBXT_DISP_PME);
     }
     
@@ -236,17 +230,9 @@ void PairMBX::compute(int eflag, int vflag)
 #endif
   
     fix_mbx->mbxt_start(MBXT_ELE);
-#ifdef _USE_PMELOCAL
     mbx_ele = ptr_mbx_local->ElectrostaticsMPIlocal(true, true);
-#else
-    mbx_ele = ptr_mbx_pme->ElectrostaticsMPI(true, false);
-#endif
     fix_mbx->mbxt_stop(MBXT_ELE);
-#ifdef _USE_PMELOCAL
     accumulate_f_local();
-#else
-    accumulate_f_pme();
-#endif
     
   } else {
     
@@ -822,128 +808,5 @@ void PairMBX::accumulate_f_full()
   
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving pair accumulate_f_full()\n",me);
-#endif
-}
-
-/* ----------------------------------------------------------------------
-   update forces with MBX contribution from full system
-   MPI-enabled
-------------------------------------------------------------------------- */
-
-void PairMBX::accumulate_f_pme()
-{
-  fix_mbx->mbxt_start(MBXT_ACCUMULATE_F_PME);
-  
-#ifdef _DEBUG
-  printf("[MBX] (%i) Inside pair accumulate_f_pme()\n",me);
-#endif
-  
-  // master rank retrieves forces
-
-  double ** f_pme  = fix_mbx->f_pme;
-  double ** f_full = fix_mbx->f_full;
-  
-  bblock::System * ptr_mbx = fix_mbx->ptr_mbx_pme;
-
-  const int natoms = atom->natoms;
-    
-  const int * const mol_anchor_full = fix_mbx->mol_anchor_full;
-  const int * const mol_type_full = fix_mbx->mol_type_full;
-  const tagint * const tag_full = fix_mbx->tag_full;
-  const int * const atom_map_full = fix_mbx->atom_map_full;
-  char ** mol_names = fix_mbx->mol_names;
-    
-  std::vector<double> grads = ptr_mbx->GetRealGrads();
-  
-  // accumulate forces on local particles
-  // -- forces on ghost particles ignored/not needed
-  // -- should use a map created from earlier loop loading particles into mbx
-  
-  int indx = 0;
-  
-  for(int i=0; i<natoms; ++i) {
-    
-    if(mol_anchor_full[i]) {
-      
-      const int mtype = mol_type_full[i];
-      
-      // to be replaced with integer comparison
-      
-      int na = 0;
-      if(strcmp("h2o",      mol_names[mtype]) == 0) na = 3;
-      else if(strcmp("na",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("cl",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("he",  mol_names[mtype]) == 0) na = 1;
-      else if(strcmp("co2", mol_names[mtype]) == 0) na = 3;
-      else if(strcmp("ch4", mol_names[mtype]) == 0) na = 5;
-      
-      tagint anchor = tag_full[i];
-      
-      for(int j=0; j<na; ++j) {
-	
-	const int ii = atom_map_full[anchor + j];
-	f_full[ii][0] = -grads[indx++];
-	f_full[ii][1] = -grads[indx++];
-	f_full[ii][2] = -grads[indx++];
-	
-	//	  printf("MASTER:: tag= %i  f= %f %f %f\n",tag_full[ii],f_full[ii][0],f_full[ii][1],f_full[ii][2]);
-      }
-      
-    } // if(anchor)
-    
-  }
-  
-  // accumulate virial: only global is supported
-  // MBX: xx, xy, xz, yx, yy, yz, zx, zy, zz
-  // LAMMPS: xx, yy, zz, xy, xz, yz
-  
-  if(vflag_either) {
-    std::vector<double> mbx_vir = ptr_mbx->GetVirial();
-    
-    mbx_virial[0] += mbx_vir[0];
-    mbx_virial[1] += mbx_vir[4];
-    mbx_virial[2] += mbx_vir[8];
-    mbx_virial[3] += mbx_vir[1];
-    mbx_virial[4] += mbx_vir[2];
-    mbx_virial[5] += mbx_vir[5];
-
-#ifdef _DEBUG_VIRIAL
-    printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n",
-    	     mbx_vir[0],mbx_vir[1],mbx_vir[2],
-    	     mbx_vir[3],mbx_vir[4],mbx_vir[5],
-    	     mbx_vir[6],mbx_vir[7],mbx_vir[8]);
-    printf("virial(LMP)= %f %f %f  %f %f %f\n",
-    	     virial[0],virial[1],virial[2],
-    	     virial[3],virial[4],virial[5]);
-#endif
-  }
-
-  // scatter forces to other ranks
-
-  const int nlocal = atom->nlocal;
-  double ** f_local = fix_mbx->f_local;
-
-  MPI_Reduce(&(f_full[0][0]), &(f_pme[0][0]), natoms*3, MPI_DOUBLE, MPI_SUM, 0, world);
-  
-  MPI_Scatterv(&(f_pme[0][0]), fix_mbx->nlocal_rank3, fix_mbx->nlocal_disp3, MPI_DOUBLE, &(f_local[0][0]), nlocal*3, MPI_DOUBLE, 0, world);
-  
-  // all ranks accumulate forces into their local arrays
-  
-  // for(int i=0; i<nlocal; ++i)
-  //   printf("(%i):: tag= %i  f= %f %f %f\n",comm->me,atom->tag[i],f_local[i][0],f_local[i][1],f_local[i][2]);
-  
-  double ** f = atom->f;
-  for(int i=0; i<nlocal; ++i) {
-    f[i][0] += f_local[i][0];
-    f[i][1] += f_local[i][1];
-    f[i][2] += f_local[i][2];
-  }
-  
-  //  printf("[MBX] Leaving accumulate_f_full()\n");
-  
-  fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_PME);
-  
-#ifdef _DEBUG
-  printf("[MBX] (%i) Leaving pair accumulate_f_pme()\n",me);
 #endif
 }
