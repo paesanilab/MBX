@@ -38,6 +38,10 @@
 //#define _DEBUG
 //#define _DEBUG_VIRIAL
 
+// subject for removal
+// Systems::DispersionPME()
+// Systems::ElectrostaticsMPI()
+
 using namespace LAMMPS_NS;
 using namespace MathConst;
 
@@ -126,8 +130,6 @@ void PairMBX::compute(int eflag, int vflag)
   mbx_ele  = 0.0;
 
   for(int i=0; i<6; ++i) mbx_virial[i] = 0.0;
-
-  //  printf("(%i) mbx_num_atoms= %i\n",me,fix_mbx->mbx_num_atoms);
   
   if(fix_mbx->mbx_num_atoms > 0) {
   
@@ -494,7 +496,6 @@ void PairMBX::accumulate_f()
 
   int indx = 0;
   
-  //  for(int i=0; i<nall; ++i) {
   for(int i=0; i<nlocal; ++i) {
 
     if(mol_anchor[i]) {
@@ -750,8 +751,6 @@ void PairMBX::accumulate_f_full()
 	  f_full[ii][0] = -grads[indx++];
 	  f_full[ii][1] = -grads[indx++];
 	  f_full[ii][2] = -grads[indx++];
-
-	  //	  printf("MASTER:: tag= %i  f= %f %f %f\n",tag_full[ii],f_full[ii][0],f_full[ii][1],f_full[ii][2]);
 	}
 	
       } // if(anchor)
@@ -793,9 +792,6 @@ void PairMBX::accumulate_f_full()
   MPI_Scatterv(&(f_full[0][0]), fix_mbx->nlocal_rank3, fix_mbx->nlocal_disp3, MPI_DOUBLE, &(f_local[0][0]), nlocal*3, MPI_DOUBLE, 0, world);
   
   // all ranks accumulate forces into their local arrays
-  
-  // for(int i=0; i<nlocal; ++i)
-  //   printf("(%i):: tag= %i  f= %f %f %f\n",comm->me,atom->tag[i],f_local[i][0],f_local[i][1],f_local[i][2]);
 
   double ** f = atom->f;
   for(int i=0; i<nlocal; ++i) {
