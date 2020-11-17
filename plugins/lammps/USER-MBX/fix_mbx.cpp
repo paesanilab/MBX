@@ -37,11 +37,6 @@
 
 //#define _DEBUG
 
-#ifdef _USE_PMELOCAL
-#define _USE_MBX_LOCAL // use with MBX MPI-enabled
-#endif
-#define _USE_MBX_FULL  // required if MBX not MPI-enabled
-
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
@@ -184,7 +179,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   ptr_mbx_local = NULL;
   mbx_num_atoms_local = 0;
 
-#ifdef _USE_MBX_LOCAL
   // check that LAMMPS proc mapping matches PME solver
 
   if(comm->style != 0) error->all(FLERR,"Fix mbx must be used with comm_style brick");
@@ -203,7 +197,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     MPI_Allreduce(&e, &err, 1, MPI_INT, MPI_SUM, world);
     if(err) error->all(FLERR,"[MBX] Inconsistent proc mapping; 'processors * * * map xyz' required for PME solver");
   }
-#endif
   
   // setup json, if requested
 
@@ -252,14 +245,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
 
   if( sizeof(tagint) != sizeof(int) )
     error->all(FLERR,"[MBX] Tagints required to be of type int.");
-  
-#ifndef _USE_PMELOCAL
-  //  error->all(FLERR,"[MBX] Recompile LAMMPS with -D_USE_PMELOCAL");
-#endif
-  
-#ifdef _USE_MBX_FULL
-  //  error->all(FLERR,"[MBX] LAMMPS should not be compiled with _USE_MBX_FULL set");
-#endif
   
   mbxt_initial_time = MPI_Wtime();
 }
@@ -475,22 +460,14 @@ void FixMBX::post_neighbor()
 
   // create helper MBX instances
   
-#ifdef _USE_MBX_FULL
-  if(domain->nonperiodic || !mbx_mpi_enabled) ptr_mbx_full  = new bblock::System();
-#endif
-#ifdef _USE_MBX_LOCAL
-  ptr_mbx_local = new bblock::System();
-#endif
+  if(mbx_mpi_enabled) ptr_mbx_local = new bblock::System();
+  else ptr_mbx_full  = new bblock::System();
 
   // initialize all MBX instances
   
   mbx_init();
-#ifdef _USE_MBX_FULL
-  if(domain->nonperiodic || !mbx_mpi_enabled) mbx_init_full();
-#endif
-#ifdef _USE_MBX_LOCAL
-  mbx_init_local();
-#endif
+  if(mbx_mpi_enabled) mbx_init_local();
+  else mbx_init_full();
   
 #ifdef _DEBUG
   printf("[MBX] (%i,%i) Leaving post_neighbor()\n",universe->iworld,me);
@@ -526,12 +503,8 @@ void FixMBX::pre_force(int /*vflag*/)
   // update coordinates in MBX objects
   
   mbx_update_xyz();
-#ifdef _USE_MBX_FULL
-  if(domain->nonperiodic || !mbx_mpi_enabled) mbx_update_xyz_full();
-#endif
-#ifdef _USE_MBX_LOCAL
-  mbx_update_xyz_local();
-#endif
+  if(mbx_mpi_enabled) mbx_update_xyz_local();
+  else mbx_update_xyz_full();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1078,9 +1051,7 @@ void FixMBX::mbx_init()
 ------------------------------------------------------------------------- */
 
 void FixMBX::mbx_init_local()
-{
-#ifdef _USE_MBX_LOCAL
-  
+{ 
   mbxt_start(MBXT_INIT_LOCAL);
 
 #ifdef _DEBUG
@@ -1528,7 +1499,6 @@ void FixMBX::mbx_init_local()
 #endif
   
   mbxt_stop(MBXT_INIT_LOCAL);
-#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -1537,9 +1507,7 @@ void FixMBX::mbx_init_local()
 ------------------------------------------------------------------------- */
 
 void FixMBX::mbx_init_full()
-{
-#ifdef _USE_MBX_FULL
-  
+{  
   mbxt_start(MBXT_INIT_FULL);
 
 #ifdef _DEBUG
@@ -1870,7 +1838,6 @@ void FixMBX::mbx_init_full()
 #endif
   
   mbxt_stop(MBXT_INIT_FULL);
-#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -2113,9 +2080,7 @@ void FixMBX::mbx_update_xyz()
 ------------------------------------------------------------------------- */
 
 void FixMBX::mbx_update_xyz_local()
-{
-#ifdef _USE_MBX_LOCAL
-  
+{  
   mbxt_start(MBXT_UPDATE_XYZ_LOCAL);
 
 #ifdef _DEBUG
@@ -2343,7 +2308,6 @@ void FixMBX::mbx_update_xyz_local()
 #endif
   
   mbxt_stop(MBXT_UPDATE_XYZ_LOCAL);
-#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -2351,9 +2315,7 @@ void FixMBX::mbx_update_xyz_local()
 ------------------------------------------------------------------------- */
 
 void FixMBX::mbx_update_xyz_full()
-{
-#ifdef _USE_MBX_FULL
-  
+{  
   mbxt_start(MBXT_UPDATE_XYZ_FULL);
 
 #ifdef _DEBUG
@@ -2455,7 +2417,6 @@ void FixMBX::mbx_update_xyz_full()
 #endif
   
   mbxt_stop(MBXT_UPDATE_XYZ_FULL);
-#endif
 }
 
 /* ----------------------------------------------------------------------
@@ -2530,11 +2491,7 @@ void FixMBX::mbxt_write_summary()
   mbxt_print_time("E3B_LOCAL", MBXT_E3B_LOCAL, t);
   mbxt_print_time("E3B_GHOST", MBXT_E3B_GHOST, t);
   mbxt_print_time("DISP",      MBXT_DISP,      t);
-#ifdef _USE_PMELOCAL
-  mbxt_print_time("DISP_PME (LOCAL)",  MBXT_DISP_PME,  t);
-#else
-  mbxt_print_time("DISP_PME (PME)",    MBXT_DISP_PME,  t);  
-#endif
+  mbxt_print_time("DISP_PME",  MBXT_DISP_PME,  t);
   mbxt_print_time("BUCK",      MBXT_BUCK,      t);
   mbxt_print_time("ELE",       MBXT_ELE,       t);
   
