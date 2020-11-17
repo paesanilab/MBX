@@ -736,6 +736,8 @@ void FixMBX::mbx_init()
 	  xyz.push_back(ximage[1] - ylo);
 	  xyz.push_back(ximage[2] - zlo);
 	}
+
+	// add types
 	
 	if(strcmp("h2o",mol_names[mtype])      == 0) {
 	  names.push_back("O");
@@ -764,6 +766,8 @@ void FixMBX::mbx_init()
 	  names.push_back("H");
 	}
 
+	// add monomer
+	
 	molec.push_back(nm);
 	nm++;
 	
@@ -1186,6 +1190,8 @@ void FixMBX::mbx_init_full()
 	  xyz.push_back(x_full[ amap[j] ][1] - ylo);
 	  xyz.push_back(x_full[ amap[j] ][2] - zlo);
 	}
+
+	// add types
 	
 	if(strcmp("h2o",mol_names[mtype])      == 0) {
 	  names.push_back("O");
@@ -1213,6 +1219,8 @@ void FixMBX::mbx_init_full()
 	  names.push_back("H");
 	  names.push_back("H");
 	}
+
+	// add monomer
 	
 	molec.push_back(nm);
 	nm++;
