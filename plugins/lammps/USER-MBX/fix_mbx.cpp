@@ -184,10 +184,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
   ptr_mbx_local = NULL;
   mbx_num_atoms_local = 0;
 
-  // instance of MBX for parallel PME solver
-  
-  ptr_mbx_pme = NULL;
-
 #ifdef _USE_MBX_LOCAL
   // check that LAMMPS proc mapping matches PME solver
 
@@ -304,21 +300,6 @@ FixMBX::~FixMBX()
     delete ptr_mbx_local;
   }
   
-  if(ptr_mbx_pme) {
-
-    // accumulate timing info from pme electrostatics
-    
-    std::vector<size_t> tmpi = ptr_mbx_pme->GetInfoElectrostaticsCounts();
-    std::vector<double> tmpd = ptr_mbx_pme->GetInfoElectrostaticsTimings();
-    
-    for(int i=0; i<tmpi.size(); ++i) {
-      mbxt_count[MBXT_ELE_PERMDIP_REAL+i] += tmpi[i];
-      mbxt_time[MBXT_ELE_PERMDIP_REAL+i] += tmpd[i];
-    }
-    
-    delete ptr_mbx_pme;
-  }
-
   memory->destroy(mol_anchor_full);
   memory->destroy(mol_type_full);
   memory->destroy(x_full);
@@ -482,20 +463,6 @@ void FixMBX::post_neighbor()
     
     delete ptr_mbx_local;
   }
-  if(ptr_mbx_pme)   {
-
-    // accumulate timing info from pme electrostatics
-    
-    std::vector<size_t> tmpi = ptr_mbx_pme->GetInfoElectrostaticsCounts();
-    std::vector<double> tmpd = ptr_mbx_pme->GetInfoElectrostaticsTimings();
-    
-    for(int i=0; i<tmpi.size(); ++i) {
-      mbxt_count[MBXT_ELE_PERMDIP_REAL+i] += tmpi[i];
-      mbxt_time[MBXT_ELE_PERMDIP_REAL+i] += tmpd[i];
-    }
-    
-    delete ptr_mbx_pme;
-  }
 
   // create main instance of MBX object
   
@@ -514,7 +481,6 @@ void FixMBX::post_neighbor()
 #ifdef _USE_MBX_LOCAL
   ptr_mbx_local = new bblock::System();
 #endif
-  ptr_mbx_pme   = new bblock::System();
 
   // initialize all MBX instances
   
@@ -1083,8 +1049,8 @@ void FixMBX::mbx_init()
   
   ptr_mbx->SetPBC(box);
     
-  std::vector<int> egrid = ptr_mbx_pme->GetFFTDimensionElectrostatics(0);
-  std::vector<int> dgrid = ptr_mbx_pme->GetFFTDimensionDispersion(0);
+  std::vector<int> egrid = ptr_mbx->GetFFTDimensionElectrostatics(0);
+  std::vector<int> dgrid = ptr_mbx->GetFFTDimensionDispersion(0);
   
   if(print_settings && first_step) {
     std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();

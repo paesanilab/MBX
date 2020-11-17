@@ -87,7 +87,6 @@ class FixMBX : public Fix {
   bblock::System * ptr_mbx;       // pointer to MBX object
   bblock::System * ptr_mbx_full;  // pointer to MBX object for full system
   bblock::System * ptr_mbx_local; // pointer to MBX object for local atoms
-  bblock::System * ptr_mbx_pme;   // pointer to MBX object for full system MPI-enabled
 
   int me, nprocs;
   bigint ngroup;
