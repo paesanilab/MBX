@@ -95,12 +95,6 @@ void PairMBX::compute(int eflag, int vflag)
   
   ev_init(eflag,vflag);
   
-#if 0
-
-  compute_full();
-
-#else
-  
   // compute energy+gradients in parallel
 
   bblock::System * ptr_mbx       = fix_mbx->ptr_mbx;       // compute terms in parallel
@@ -351,75 +345,8 @@ void PairMBX::compute(int eflag, int vflag)
   }
 #endif
   
-#endif
-  
 #ifdef _DEBUG
   printf("[MBX] (%i) Leaving pair compute()\n",me);
-#endif
-}
-
-/* ---------------------------------------------------------------------- */
-// compute energy of full system on rank 0
-/* ---------------------------------------------------------------------- */
-
-void PairMBX::compute_full()
-{
-  
-#ifdef _DEBUG
-  printf("[MBX] (%i) Inside pair compute_full()\n",me);
-#endif
-  
-  // Update coordinates in MBX library
-
-  //  update_mbx_xyz();
-
-  bblock::System * ptr_mbx = fix_mbx->ptr_mbx_full;
-  
-  mbx_e1b = ptr_mbx->OneBodyEnergy(true);
-  accumulate_f_full();
-
-  mbx_e2b = ptr_mbx->TwoBodyEnergy(true);
-  accumulate_f_full();
-
-  mbx_e3b = ptr_mbx->ThreeBodyEnergy(true);
-  accumulate_f_full();
-  
-  mbx_disp = ptr_mbx->Dispersion(true);
-  accumulate_f_full();
-  
-  mbx_buck = ptr_mbx->Buckingham(true);
-  accumulate_f_full();
-
-  mbx_ele = ptr_mbx->Electrostatics(true);
-  accumulate_f_full();
-  
-  mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
-
-  for(int i=0; i<6; ++i) virial[i] += mbx_virial[i];
-  
-  double mbx_e2b_local = mbx_e2b;
-  double mbx_e2b_ghost = 0.0;
-  double mbx_e3b_local = mbx_e3b;
-  double mbx_e3b_ghost = 0.0;
-
-  if(comm->me == 0) {
-    printf("mbx_e1b=   %f\n",mbx_e1b);
-    printf("mbx_e2b=   %f (%f, %f)\n",mbx_e2b, mbx_e2b_local, mbx_e2b_ghost);
-    printf("mbx_e3b=   %f (%f, %f)\n",mbx_e3b, mbx_e3b_local, mbx_e3b_ghost);
-    printf("mbx_disp=  %f\n",mbx_disp);
-    printf("mbx_buck=  %f\n",mbx_buck);
-    printf("mbx_ele=   %f\n",mbx_ele);
-    printf("mbx_total= %f\n",mbx_total_energy);
-    
-    printf("virial= %f %f %f  %f %f %f\n",virial[0],virial[1],virial[2],virial[3],virial[4],virial[5]);
-  }
-  
-  // save total energy from mbx as vdwl
-  
-  eng_vdwl = mbx_total_energy;
-  
-#ifdef _DEBUG
-  printf("[MBX] (%i) Leaving pair compute_full()\n",me);
 #endif
 }
 
@@ -890,8 +817,6 @@ void PairMBX::accumulate_f_full()
     f[i][1] += f_local[i][1];
     f[i][2] += f_local[i][2];
   }
-  
-  //  printf("[MBX] Leaving accumulate_f_full()\n");
   
   fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F_FULL);
   

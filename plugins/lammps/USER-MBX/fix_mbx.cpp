@@ -259,7 +259,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) :
     error->all(FLERR,"[MBX] Tagints required to be of type int.");
   
 #ifndef _USE_PMELOCAL
-  error->all(FLERR,"[MBX] Recompile LAMMPS with -D_USE_PMELOCAL");
+  //  error->all(FLERR,"[MBX] Recompile LAMMPS with -D_USE_PMELOCAL");
 #endif
   
 #ifdef _USE_MBX_FULL
@@ -499,33 +499,35 @@ void FixMBX::post_neighbor()
     
     delete ptr_mbx_pme;
   }
+
+  // create main instance of MBX object
   
-  // create instance of MBX objects
+  ptr_mbx = new bblock::System();
   
-  ptr_mbx       = new bblock::System();
+  // check if MBX compiled with MPI
+
+  int err = ptr_mbx->TestMPI();
+  if(err == -2) mbx_mpi_enabled = false;
+
+  // create helper MBX instances
+  
 #ifdef _USE_MBX_FULL
-  if(domain->nonperiodic) ptr_mbx_full  = new bblock::System();
+  if(domain->nonperiodic || !mbx_mpi_enabled) ptr_mbx_full  = new bblock::System();
 #endif
 #ifdef _USE_MBX_LOCAL
   ptr_mbx_local = new bblock::System();
 #endif
   ptr_mbx_pme   = new bblock::System();
 
-  // require MBX library to be compiled with MPI
-
-  int err = ptr_mbx->TestMPI();
-  if(err == -2) {
-    error->all(FLERR,"[MBX] Rebuild MBX library with MPI enabled.\n");
-    mbx_mpi_enabled = false;
-  }
-  
-  // initialize MBX instances
+  // initialize all MBX instances
   
   mbx_init();
 #ifdef _USE_MBX_FULL
-  if(domain->nonperiodic) mbx_init_full();
+  if(domain->nonperiodic || !mbx_mpi_enabled) mbx_init_full();
 #endif
+#ifdef _USE_MBX_LOCAL
   mbx_init_local();
+#endif
   mbx_init_pme();
   
 #ifdef _DEBUG
@@ -563,9 +565,11 @@ void FixMBX::pre_force(int /*vflag*/)
   
   mbx_update_xyz();
 #ifdef _USE_MBX_FULL
-  if(domain->nonperiodic) mbx_update_xyz_full();
+  if(domain->nonperiodic || !mbx_mpi_enabled) mbx_update_xyz_full();
 #endif
+#ifdef _USE_MBX_LOCAL
   mbx_update_xyz_local();
+#endif
   mbx_update_xyz_pme();
 }
 
@@ -1867,8 +1871,6 @@ void FixMBX::mbx_init_full()
     
   } else if(domain->xperiodic || domain->yperiodic || domain->zperiodic)
     error->one(FLERR,"System must be fully periodic or non-periodic with MBX");
-  
-  ptr_mbx_full->SetPBC(box);
 
   // set MBX solvers
   
@@ -1883,6 +1885,8 @@ void FixMBX::mbx_init_full()
   
   if(use_json) ptr_mbx_full->SetUpFromJson(json_settings);
 
+  ptr_mbx_full->SetPBC(box);
+  
   std::vector<int> egrid = ptr_mbx_full->GetFFTDimensionElectrostatics(0);
   std::vector<int> dgrid = ptr_mbx_full->GetFFTDimensionDispersion(0);
   
@@ -2186,7 +2190,7 @@ void FixMBX::mbx_init_pme()
   if(err == -1) error->one(FLERR, "[MBX] MPI not initialized\n");
   else if(err == -2) {
     if(me == 0 && first_step)
-      error->all(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
+      error->warning(FLERR,"[MBX] MPI not enabled. FULL terms computed on rank 0\n");
     mbx_mpi_enabled = false;
   }
   
