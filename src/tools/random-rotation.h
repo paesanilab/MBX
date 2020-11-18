@@ -5,4 +5,4 @@
 
 void random_rotation(const double*, double*);
 
-#endif // RANDOM_ROTATION_H
+#endif  // RANDOM_ROTATION_H

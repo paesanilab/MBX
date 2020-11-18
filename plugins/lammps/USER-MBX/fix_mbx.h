@@ -31,8 +31,6 @@ enum {
       MBXT_UPDATE_XYZ,
       MBXT_INIT_FULL,
       MBXT_UPDATE_XYZ_FULL,
-      MBXT_INIT_PME,
-      MBXT_UPDATE_XYZ_PME,
       MBXT_INIT_LOCAL,
       MBXT_UPDATE_XYZ_LOCAL,
       MBXT_E1B,
@@ -46,7 +44,6 @@ enum {
       MBXT_ELE,
       MBXT_ACCUMULATE_F,
       MBXT_ACCUMULATE_F_FULL,
-      MBXT_ACCUMULATE_F_PME,
       MBXT_ACCUMULATE_F_LOCAL,
 
       MBXT_ELE_PERMDIP_REAL,
@@ -90,7 +87,6 @@ class FixMBX : public Fix {
   bblock::System * ptr_mbx;       // pointer to MBX object
   bblock::System * ptr_mbx_full;  // pointer to MBX object for full system
   bblock::System * ptr_mbx_local; // pointer to MBX object for local atoms
-  bblock::System * ptr_mbx_pme;   // pointer to MBX object for full system MPI-enabled
 
   int me, nprocs;
   bigint ngroup;
@@ -119,7 +115,6 @@ class FixMBX : public Fix {
   int mbx_num_atoms;
   int mbx_num_atoms_full;
   int mbx_num_atoms_local;
-  int mbx_num_atoms_pme;
 
   int * mbxt_count;
   double * mbxt_time;
@@ -136,7 +131,6 @@ class FixMBX : public Fix {
   int * mol_type_full;
   double ** x_full;
   double ** f_full;
-  double ** f_pme;
   double ** f_local;
   tagint * tag_full;
   int * atom_map_full;
@@ -148,12 +142,10 @@ class FixMBX : public Fix {
   void mbx_init();
   void mbx_init_full();
   void mbx_init_local();
-  void mbx_init_pme();
   
   void mbx_update_xyz();
   void mbx_update_xyz_full();
   void mbx_update_xyz_local();
-  void mbx_update_xyz_pme();
   
   virtual int pack_forward_comm(int, int *, double *, int, int *);
   virtual void unpack_forward_comm(int, int, double *);

@@ -361,7 +361,7 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
 
             // Multiply by minus 1 because we want gradient not force. Check Dlpoly
             // manual equation 2.42 to see why
-            cummu_grad += (-1) * (1.0 / sin(phi)) * delta_grad;
+            cummu_grad += (-1.0 / sin(phi)) * delta_grad;
 
             // Used to store the current force for this dihedral to be used in
             // virial calculation

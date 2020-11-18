@@ -25,7 +25,6 @@ CC =		mpicxx
 CCFLAGS =	-g -O3 -fopenmp -std=c++11
 CCFLAGS +=      -I$(MBX_INC)
 CCFLAGS +=      -I$(FFTW)/include
-CCFLAGS +=      -D_USE_PMELOCAL
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
 

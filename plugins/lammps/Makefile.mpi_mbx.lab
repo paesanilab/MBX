@@ -11,7 +11,6 @@ MBX=$(MBX_HOME)
 CC =            mpicxx
 CCFLAGS =       -g -O3 -fopenmp -lfftw3 -std=c++11
 CCFLAGS +=      -I$(MBX)/install/include
-CCFLAGS +=      -D_USE_PMELOCAL
 SHFLAGS =       -fPIC
 DEPFLAGS =      -M
 

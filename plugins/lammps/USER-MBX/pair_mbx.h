@@ -66,13 +66,10 @@ class PairMBX : public Pair {
 
   virtual void allocate();
   void setup();
-
-  void compute_full();
   
   void accumulate_f();
   void accumulate_f_full();
   void accumulate_f_local();
-  void accumulate_f_pme();
 };
 
 }
