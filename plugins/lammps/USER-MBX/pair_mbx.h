@@ -62,15 +62,14 @@ class PairMBX : public Pair {
   double mbx_ele;
   double mbx_total_energy;
 
+  double mbx_virial[6];
+
   virtual void allocate();
   void setup();
-
-  void compute_full();
   
   void accumulate_f();
   void accumulate_f_full();
   void accumulate_f_local();
-  void accumulate_f_pme();
 };
 
 }

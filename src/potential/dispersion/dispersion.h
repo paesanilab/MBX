@@ -113,6 +113,20 @@ class Dispersion {
      */
     void SetBoxPMElocal(std::vector<double> box);
 
+    /**
+     * @brief Returns FFT grid used by PME solver
+     *
+     * @return Array of three integers
+     */
+    std::vector<int> GetFFTDimension(int box_id = 0);
+
+    /**
+     * @brief Provides FFT grid used by PME solver
+     *
+     * @param[in] Array of three integers
+     */
+    void SetFFTDimension(std::vector<int> grid);
+
    private:
     void ReorderData();
     void CalculateDispersion(bool use_ghost = 0);
@@ -188,6 +202,8 @@ class Dispersion {
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;
+    // User-specified FFT grid
+    std::vector<int> user_fft_grid_;
 };
 
 }  // namespace disp

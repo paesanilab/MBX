@@ -231,8 +231,33 @@ class Electrostatics {
      */
     double GetInducedElectrostaticEnergy();
 
+    /**
+     * @brief Returns timing section call counts.
+     *
+     * @return Array of call counts for timing statistics
+     */
     std::vector<size_t> GetInfoCounts();
+
+    /**
+     * @brief Returns timing section call times.
+     *
+     * @return Array of call times for timing statistics
+     */
     std::vector<double> GetInfoTimings();
+
+    /**
+     * @brief Returns FFT grid used by PME solver
+     *
+     * @return Array of three integers
+     */
+    std::vector<int> GetFFTDimension(int box_id = 0);
+
+    /**
+     * @brief Provides FFT grid used by PME solver
+     *
+     * @param[in] Array of three integers
+     */
+    void SetFFTDimension(std::vector<int> grid);
 
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
@@ -419,6 +444,8 @@ class Electrostatics {
 
     std::vector<size_t> mbxt_ele_count_;
     std::vector<double> mbxt_ele_time_;
+    // User-specified FFT grid
+    std::vector<int> user_fft_grid_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -2517,6 +2517,8 @@ class PMEInstance {
    protected:
     /// The FFT grid dimensions in the {A,B,C} grid dimensions.
     int gridDimensionA_ = 0, gridDimensionB_ = 0, gridDimensionC_ = 0;
+    /// User-specified FFT grid dimensions in the {A,B,C} grid dimensions.
+    int user_gridDimensionA_ = 0, user_gridDimensionB_ = 0, user_gridDimensionC_ = 0;
     /// The number of K vectors in the {A,B,C} dimensions.  Equal to dim{A,B,C} for PME, lower for cPME.
     int numKSumTermsA_ = 0, numKSumTermsB_ = 0, numKSumTermsC_ = 0;
     /// The number of K vectors in the {A,B,C} dimensions to be handled by this node in a parallel setup.
@@ -3623,10 +3625,14 @@ class PMEInstance {
             size_t scratchSize;
             int gridPaddingA = 0, gridPaddingB = 0, gridPaddingC = 0;
             if (algorithm == AlgorithmType::CompressedPME) {
-                //	      std::cout << "algorithm= CompressedPME" << std::endl;
                 gridDimensionA_ = numNodesA * std::ceil(dimA / (float)numNodesA);
                 gridDimensionB_ = numNodesB * std::ceil(dimB / (float)numNodesB);
                 gridDimensionC_ = numNodesC * std::ceil(dimC / (float)numNodesC);
+                if (user_gridDimensionA_ > 0) {
+                    gridDimensionA_ = user_gridDimensionA_;
+                    gridDimensionB_ = user_gridDimensionB_;
+                    gridDimensionC_ = user_gridDimensionC_;
+                }
                 gridPaddingA = (numNodesA > 1 ? splineOrder - 1 : 0);
                 gridPaddingB = (numNodesB > 1 ? splineOrder - 1 : 0);
                 gridPaddingC = (numNodesC > 1 ? splineOrder - 1 : 0);
@@ -3654,10 +3660,14 @@ class PMEInstance {
                 scratchSize = (size_t)std::max(myGridDimensionA_, numKSumTermsA) *
                               std::max(myGridDimensionB_, numKSumTermsB) * std::max(myGridDimensionC_, numKSumTermsC);
             } else {
-                //	      std::cout << "algorithm= PME" << std::endl;
                 gridDimensionA_ = findGridSize(dimA, {numNodesA_});
                 gridDimensionB_ = findGridSize(dimB, {numNodesB_ * numNodesC_});
                 gridDimensionC_ = findGridSize(dimC, {numNodesA_ * numNodesC_, numNodesB_ * numNodesC_});
+                if (user_gridDimensionA_ > 0) {
+                    gridDimensionA_ = user_gridDimensionA_;
+                    gridDimensionB_ = user_gridDimensionB_;
+                    gridDimensionC_ = user_gridDimensionC_;
+                }
                 gridPaddingA = gridPaddingB = gridPaddingC = 0;
                 myGridDimensionA_ = gridDimensionA_ / numNodesA_;
                 myGridDimensionB_ = gridDimensionB_ / numNodesB_;
@@ -4132,6 +4142,27 @@ class PMEInstance {
         } else {
             unitCellHasChanged_ = false;
         }
+    }
+
+    /*!
+     * \return FFT grid dimension used; must be called after setup.
+     */
+    std::vector<int> GetFFTDimension() {
+        std::vector<int> dim(3);
+        dim[0] = gridDimensionA_;
+        dim[1] = gridDimensionB_;
+        dim[2] = gridDimensionC_;
+
+        return dim;
+    }
+
+    /*!
+     * \ User-specified FFT grid dimension
+     */
+    void SetFFTDimension(std::vector<int> grid) {
+        user_gridDimensionA_ = grid[0];
+        user_gridDimensionB_ = grid[1];
+        user_gridDimensionC_ = grid[2];
     }
 
     /*!

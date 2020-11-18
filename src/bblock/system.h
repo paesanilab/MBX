@@ -726,6 +726,28 @@ to be the same.
     void SetPeriodicity(bool periodic);
 
     /**
+     * Get FFT grid from electrostatic pme solver
+     * @param[in] 0 for default box / 1 for PMElocal box
+     */
+    std::vector<int> GetFFTDimensionElectrostatics(int box_id = 0);
+
+    /**
+     * Get FFT grid from dispersion pme solver
+     * @param[in] 0 for default box / 1 for PMElocal box
+     */
+    std::vector<int> GetFFTDimensionDispersion(int box_id = 0);
+
+    /**
+     * Set FFT grid for electrostatic pme solver
+     */
+    void SetFFTDimensionElectrostatics(std::vector<int> grid);
+
+    /**
+     * Set FFT grid for dispersion pme solver
+     */
+    void SetFFTDimensionDispersion(std::vector<int> grid);
+
+    /**
      * @param[in] connectivity_map A map with monomer id as values and
      * connectivity objects for keys
      */
@@ -1352,6 +1374,12 @@ to be the same.
      */
     std::unordered_map<std::string, eff::Conn> connectivity_map_;
     // static std::unordered_map<std::string, eff::Conn> connectivity_map_;
+
+    /**
+     * Vectors that hold user-specified FFT grid dimensions
+     */
+    std::vector<int> grid_fftdim_elec_;
+    std::vector<int> grid_fftdim_disp_;
 };
 
 }  // namespace bblock

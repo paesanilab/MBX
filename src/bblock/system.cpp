@@ -228,6 +228,14 @@ void System::GetEwaldParamsElectrostatics(double &alpha, double &grid_density, s
     spline_order = elec_spline_order_;
 }
 
+std::vector<int> System::GetFFTDimensionElectrostatics(int box_id) { return electrostaticE_.GetFFTDimension(box_id); }
+
+std::vector<int> System::GetFFTDimensionDispersion(int box_id) { return dispersionE_.GetFFTDimension(box_id); }
+
+void System::SetFFTDimensionElectrostatics(std::vector<int> grid) { electrostaticE_.SetFFTDimension(grid); }
+
+void System::SetFFTDimensionDispersion(std::vector<int> grid) { dispersionE_.SetFFTDimension(grid); }
+
 void System::GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order) {
     alpha = disp_alpha_;
     grid_density = disp_grid_density_;
@@ -691,6 +699,9 @@ void System::Initialize() {
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, enforce_ttm_for_idx_, islocal_, true, box_);
 
+    grid_fftdim_elec_ = std::vector<int>{};
+    grid_fftdim_disp_ = std::vector<int>{};
+
     // We are done. Setting initialized_ to true
     initialized_ = true;
 }
@@ -812,6 +823,42 @@ void System::SetUpFromJson(nlohmann::json j) {
     }
 
     mbx_j_["MBX"]["box"] = box;
+
+    // Try to get FFT grid for electrostatics
+    // Default: no user-specified grid (empty vector)
+    std::vector<int> grid_fftdim_elec;
+    try {
+        std::vector<int> grid_fftdim_elec2 = j["MBX"]["grid_fftdim_elec"];
+        grid_fftdim_elec = grid_fftdim_elec2;
+        //        if(grid_fftdim_elec.size()) std::cerr << "**WARNING** \"grid_fftdim_elec\" is defined in json
+        //        file.\n";
+    } catch (...) {
+        grid_fftdim_elec.clear();
+    }
+
+    grid_fftdim_elec_ = grid_fftdim_elec;
+
+    mbx_j_["MBX"]["grid_fftdim_elec"] = grid_fftdim_elec;
+
+    SetFFTDimensionElectrostatics(grid_fftdim_elec);
+
+    // Try to get FFT grid for dispersion
+    // Default: no user-specified grid (empty vector)
+    std::vector<int> grid_fftdim_disp;
+    try {
+        std::vector<int> grid_fftdim_disp2 = j["MBX"]["grid_fftdim_disp"];
+        grid_fftdim_disp = grid_fftdim_disp2;
+        //        if(grid_fftdim_disp.size()) std::cerr << "**WARNING** \"grid_fftdim_disp\" is defined in json
+        //        file.\n";
+    } catch (...) {
+        grid_fftdim_disp.clear();
+    }
+
+    grid_fftdim_disp_ = grid_fftdim_disp;
+
+    mbx_j_["MBX"]["grid_fftdim_disp"] = grid_fftdim_disp;
+
+    SetFFTDimensionDispersion(grid_fftdim_disp);
 
     // Try to get 2b cutoff
     // Default: 100 Angstrom if empty box, 9 Angstrom if box
@@ -1077,9 +1124,11 @@ void System::SetUpFromJson(char *json_file) {
        "dipole_method"     : "cg",
        "alpha_ewald_elec" : 0.6,
        "grid_density_elec" : 2.5,
+       "grid_fftdim_elec" : [],
        "spline_order_elec" : 6,
        "alpha_ewald_disp" : 0.6,
        "grid_density_disp" : 2.5,
+       "grid_fftdim_disp" : [],
        "spline_order_disp" : 6,
        "ttm_pairs" : [],
        "ff_mons" : [],
@@ -1108,9 +1157,11 @@ void System::SetUpFromJson(char *json_file) {
                                   {"dipole_method", "cg"},
                                   {"alpha_ewald_elec", 0.0},
                                   {"grid_density_elec", 2.5},
+                                  {"grid_fftdim_elec", nlohmann::json::array()},
                                   {"spline_order_elec", 6},
                                   {"alpha_ewald_disp", 0.0},
                                   {"grid_density_disp", 2.5},
+                                  {"grid_fftdim_disp", nlohmann::json::array()},
                                   {"spline_order_disp", 6},
                                   {"ttm_pairs", nlohmann::json::array()},
                                   {"ff_mons", nlohmann::json::array()},
@@ -1198,6 +1249,18 @@ std::string System::GetCurrentSystemConfig() {
             ss << ignore_3b_poly_[i][j] << " ";
         }
         ss << "} ";
+    }
+    ss << std::endl;
+
+    ss << std::left << std::setw(25) << "FFT grid electrostatics:";
+    for (size_t i = 0; i < grid_fftdim_elec_.size(); i++) {
+        ss << grid_fftdim_elec_[i] << " ";
+    }
+    ss << std::endl;
+
+    ss << std::left << std::setw(25) << "FFT grid dispersion:";
+    for (size_t i = 0; i < grid_fftdim_disp_.size(); i++) {
+        ss << grid_fftdim_disp_[i] << " ";
     }
     ss << std::endl;
 

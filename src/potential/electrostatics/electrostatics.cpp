@@ -187,6 +187,8 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     nn_first = true;
     nn_first_neigh = std::vector<size_t>(nsites_, -1);
     nn_num_neighs = std::vector<size_t>(nsites_, 0);
+
+    user_fft_grid_ = std::vector<int>{};
 }
 
 void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
@@ -693,6 +695,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 
     if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
         double A, B, C, alpha, beta, gamma;
         if (use_ghost) {
@@ -719,6 +722,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         } else {
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
+
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
@@ -1231,6 +1235,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
         double A, B, C, alpha, beta, gamma;
         A = box_ABCabc_[0];
@@ -2802,6 +2807,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         }
 
         helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
         double A, B, C, alpha, beta, gamma;
         if (use_ghost) {
@@ -3368,6 +3374,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }
 
         helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         double A, B, C, alpha, beta, gamma;
         A = box_ABCabc_[0];
         B = box_ABCabc_[1];
@@ -4055,6 +4062,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         }
 
         helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
 
         double A, B, C, alpha, beta, gamma;
@@ -4792,6 +4800,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         }
 
         helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
         double A = box_ABCabc_[0];
         double B = box_ABCabc_[1];
@@ -5276,5 +5285,77 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
 
 std::vector<size_t> Electrostatics::GetInfoCounts() { return mbxt_ele_count_; }
 std::vector<double> Electrostatics::GetInfoTimings() { return mbxt_ele_time_; }
+
+std::vector<int> Electrostatics::GetFFTDimension(int box_id) {
+    double A, B, C, alpha, beta, gamma;
+    bool compute_pme = true;
+    if (box_id == 0) {
+        if (box_ABCabc_.size()) {
+            A = box_ABCabc_[0];
+            B = box_ABCabc_[1];
+            C = box_ABCabc_[2];
+            alpha = box_ABCabc_[3];
+            beta = box_ABCabc_[4];
+            gamma = box_ABCabc_[5];
+        } else
+            compute_pme = false;
+
+    } else if (box_id == 1) {
+        if (box_ABCabc_PMElocal_.size()) {
+            A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
+        } else
+            compute_pme = false;
+    }
+
+    std::vector<int> fft_grid(3, -1);
+
+    if (compute_pme) {
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+
+        fft_grid = pme_solver_.GetFFTDimension();
+    }
+
+    return fft_grid;
+}
+
+void Electrostatics::SetFFTDimension(std::vector<int> grid) {
+    // Easy things to check
+    // If not, throw exception
+
+    // vector of size 3
+
+    if (grid.size() > 0 && grid.size() != 3) {
+        std::string text = std::string("FFT grid != 3");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    // elements are positive
+
+    for (int i = 0; i < grid.size(); ++i)
+        if (grid[i] < 1) {
+            std::string text = std::string("FFT grid dimensions must be positive");
+            throw CUException(__func__, __FILE__, __LINE__, text);
+        }
+
+    user_fft_grid_ = grid;
+}
 
 }  // namespace elec

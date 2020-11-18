@@ -72,6 +72,8 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
         proc_grid_z_ = 1;
     }
 
+    user_fft_grid_ = std::vector<int>{};
+
     ReorderData();
 }
 
@@ -534,6 +536,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
         double A = box_ABCabc_[0];
         double B = box_ABCabc_[1];
@@ -628,8 +631,15 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
 
     if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
-        double A = box_[0], B = box_[4], C = box_[8];
+        double A = box_ABCabc_[0];
+        double B = box_ABCabc_[1];
+        double C = box_ABCabc_[2];
+        double alpha = box_ABCabc_[3];
+        double beta = box_ABCabc_[4];
+        double gamma = box_ABCabc_[5];
+
         int grid_A = pme_grid_density_ * A;
         int grid_B = pme_grid_density_ * B;
         int grid_C = pme_grid_density_ * C;
@@ -641,51 +651,10 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
             pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
         }
 
-        pme_solver_.setLatticeVectors(A, B, C, 90, 90, 90, PMEInstanceD::LatticeType::XAligned);
-
-        // Zero property of particles outside local region
-
-        // double xlo = 0.0;
-        // double xhi = 20.0;
-        // double ylo = 0.0;
-        // double yhi = 20.0;
-        // double zlo, zhi;
-
-        // int me;
-        // MPI_Comm_rank(MPI_COMM_WORLD,&me);
-
-        // if(proc_grid_z_ == 2) {
-
-        //   if(me == 0) {
-        //     zlo = 0.0;
-        //     zhi = 10.0;
-        //   } else {
-        //     zlo =  9.9; // padding
-        //     zhi = 20.0;
-        //   }
-        // } else {
-        //   zlo = 0.0;
-        //   zhi = 20.0;
-        // }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-
-        // std::vector<double> sys_c6_long_range_local_(sys_c6_long_range_.size(),0.0);
-        // for(int i=0; i<natoms_; ++i) sys_c6_long_range_local_[i] = sys_c6_long_range_[i];
-
-        // for(int i=0; i<natoms_; ++i) {
-        //   double x = coords(i,0);
-        //   double y = coords(i,1);
-        //   double z = coords(i,2);
-
-        //   bool local = true;
-        //   if(x <= xlo || x > xhi) local = false;
-        //   if(y <= ylo || y > yhi) local = false;
-        //   if(z <= zlo || z > zhi) local = false;
-
-        //   if(!local) sys_c6_long_range_local_[i] = 0.0;
-        // }
 
         auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
         // auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
@@ -696,17 +665,6 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
         double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
 
         const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
-        // for(int j=0; j<num_procs; ++j) {
-
-        //   if(me == j) {
-        //     for(int i=0; i<natoms_; ++i) {
-        //       std::cout << "(" << me << ") sys_xyz_= " << coords(i,0) << " " << coords(i,1) << " " << coords(i,2) <<
-        // 	"  c6= " << params(i,0) << std::endl;
-        //     }
-        //   }
-        //   MPI_Barrier(world_);
-
-        // }
 
         // get virial
         if (calc_virial_) {
@@ -750,16 +708,6 @@ void Dispersion::CalculateDispersionPME(bool use_ghost) {
         // With the entire system duplicated on all ranks, this over-counts by Nproc
         self_energy /= (double)num_procs;
         disp_energy_ += rec_energy + self_energy;
-
-        // for(int j=0; j<num_procs; ++j) {
-
-        //   if(me == j) {
-
-        //     std::cout << "(" << me << "(  rec_energy= " << rec_energy << "  self_energy= " << self_energy <<
-        //     std::endl;
-        //   }
-        //   MPI_Barrier(world_);
-        // }
     }
 }
 
@@ -799,6 +747,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
     //    if (compute_pme) {
     helpme::PMEInstance<double> pme_solver_;
+    if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
     // Compute the reciprocal space terms, using PME
     double A = box_ABCabc_PMElocal_[0];
     double B = box_ABCabc_PMElocal_[1];
@@ -806,6 +755,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     double alpha = box_ABCabc_PMElocal_[3];
     double beta = box_ABCabc_PMElocal_[4];
     double gamma = box_ABCabc_PMElocal_[5];
+
     int grid_A = pme_grid_density_ * A;
     int grid_B = pme_grid_density_ * B;
     int grid_C = pme_grid_density_ * C;
@@ -923,6 +873,78 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     disp_energy_ += rec_energy + self_energy;
 
     //} // if(compute_pme)
+}
+
+std::vector<int> Dispersion::GetFFTDimension(int box_id) {
+    double A, B, C, alpha, beta, gamma;
+    bool compute_pme = true;
+    if (box_id == 0) {
+        if (box_ABCabc_.size()) {
+            A = box_ABCabc_[0];
+            B = box_ABCabc_[1];
+            C = box_ABCabc_[2];
+            alpha = box_ABCabc_[3];
+            beta = box_ABCabc_[4];
+            gamma = box_ABCabc_[5];
+        } else
+            compute_pme = false;
+
+    } else if (box_id == 1) {
+        if (box_ABCabc_PMElocal_.size()) {
+            A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
+        } else
+            compute_pme = false;
+    }
+
+    std::vector<int> fft_grid(3, -1);
+
+    if (compute_pme) {
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+
+        fft_grid = pme_solver_.GetFFTDimension();
+    }
+
+    return fft_grid;
+}
+
+void Dispersion::SetFFTDimension(std::vector<int> grid) {
+    // Easy things to check
+    // If not, throw exception
+
+    // vector of size 3
+
+    if (grid.size() > 0 && grid.size() != 3) {
+        std::string text = std::string("FFT grid != 3");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    // elements are positive
+
+    for (int i = 0; i < grid.size(); ++i)
+        if (grid[i] < 1) {
+            std::string text = std::string("FFT grid dimensions must be positive");
+            throw CUException(__func__, __FILE__, __LINE__, text);
+        }
+
+    user_fft_grid_ = grid;
 }
 
 }  // namespace disp
