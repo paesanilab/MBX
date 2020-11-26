@@ -20,6 +20,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-topology.cpp
     unittest-connectivity.cpp
     unittest-ffcalculators.cpp
+    unittest-energyff.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
