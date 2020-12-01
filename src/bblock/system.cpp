@@ -801,6 +801,35 @@ void System::InitializePME() {
     initialized_ = true;
 }
 
+void System::SetUpFromJsonDispersionRepulsion(char *json_file = 0) {
+    nlohmann::json j_default = {};
+    std::ifstream ifjson;
+    nlohmann::json j;
+    if (json_file != 0) {
+        try {
+            ifjson.open(json_file);
+            j = nlohmann::json::parse(ifjson);
+        } catch (...) {
+            j = j_default;
+            std::cerr << "There has been a problem loading your json file: " + std::string(json_file) +
+                             "... using defaults";
+        }
+    } else {
+        j = j_default;
+    }
+
+    SetUpFromJsonDispersionRepulsion(j);
+
+    ifjson.close();
+}
+
+void SetUpFromJsonDispersionRepulsion(std::string json_text) {
+    nlohmann::json j = nlohmann::json::parse(json_text);
+    SetUpFromJsonDispersionRepulsion(j);
+}
+
+void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) { repdisp_j_ = j; }
+
 void System::SetUpFromJson(nlohmann::json j) {
     // Try to get box
     // Default: no box (empty vector)

@@ -580,6 +580,24 @@ class System {
      * Sets up all the parameters that are specified in a json file
      * @param[in] json_file Is the json formatted file with the system specifications
      **/
+    void SetUpFromJsonDispersionRepulsion(char *json_file = 0);
+
+    /**
+     * Sets up the json configuration through a string.
+     * @param[in] json_text Literal string with the json configuration
+     **/
+    void SetUpFromJsonDispersionRepulsion(std::string json_text);
+
+    /**
+     * Sets up all the parameters that are specified in a json object
+     * @param[in] j Json object with the system specifications
+     **/
+    void SetUpFromJsonDispersionRepulsion(nlohmann::json j);
+
+    /**
+     * Sets up all the parameters that are specified in a json file
+     * @param[in] json_file Is the json formatted file with the system specifications
+     **/
     void SetUpFromJson(char *json_file = 0);
 
     /**
@@ -599,6 +617,12 @@ class System {
      * @return Json object in the system
      */
     nlohmann::json GetJsonConfig();
+
+    /**
+     * Gets the json object conatining the dispersion and repulsion
+     * @return Json object in system that has the dispersion and repulsion parameters
+     */
+    nlohmann::json GetJsonConfigDispersionRepulsion();
 
     /**
      * Sets the two-body cutoff for dispersion and polynomials.
@@ -1339,6 +1363,11 @@ to be the same.
      * Vector that contains the virial tensor
      */
     std::vector<double> virial_;
+
+    /**
+     * Json object with the dispersion and repulsion parameters
+     */
+    nlohmann::json repdisp_j_;
 
     /**
      * Json configuration object
