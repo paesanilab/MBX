@@ -52,6 +52,7 @@ constexpr double TOL = 1E-6;
 TEST_CASE("energyff::get_ff_energy(no grad)") {
     SETUP_LINKER
 
+    std::vector<double> box, box_inv;
     // Create bond vector
     std::vector<eff::Bond> bonds(bon_idxs.size());
     for (size_t i = 0; i < bon_idxs.size(); i++) {
@@ -82,7 +83,7 @@ TEST_CASE("energyff::get_ff_energy(no grad)") {
 
     SECTION("Normal behavior") {
         bool good = true;
-        double e_nograd = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms);
+        double e_nograd = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms, box, box_inv);
         double e_nograd_expected = 1.7422580421e+01;
         REQUIRE(e_nograd == Approx(e_nograd_expected).margin(TOL));
 
@@ -91,19 +92,19 @@ TEST_CASE("energyff::get_ff_energy(no grad)") {
 
         std::vector<double> expected_virial = {};
         std::vector<double> expected_grad = {};
-        double e_grad = eff::get_ff_energy(connectivity, 1, coords, grad, good, n_atoms, &virial);
+        double e_grad = eff::get_ff_energy(connectivity, 1, coords, grad, good, n_atoms, box, box_inv, &virial);
 
         // Numerical gradients
         double s = 0.0001;
         for (size_t j = 0; j < coords.size(); j++) {
             coords[j] += s;
-            double ep = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms);
+            double ep = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms, box, box_inv);
             coords[j] += s;
-            double epp = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms);
+            double epp = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms, box, box_inv);
             coords[j] -= 4 * s;
-            double emm = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms);
+            double emm = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms, box, box_inv);
             coords[j] += s;
-            double em = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms);
+            double em = eff::get_ff_energy(connectivity, 1, coords, good, n_atoms, box, box_inv);
             coords[j] += s;
 
             double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;

@@ -38,7 +38,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace eff {
 
-double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, bool &good, int nat) {
+double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, bool &good, int nat,
+                     std::vector<double> box, std::vector<double> box_inv) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -62,6 +63,8 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
     double dihedralEnergy = 0;
     double inversionEnergy = 0;
 
+    bool use_pbc = box.size();
+
     for (int mon_num = 0; mon_num < nm; mon_num++) {
         std::vector<double> xyz(3 * nat, 0.0);
         std::copy(xyz1.begin() + 3 * nat * mon_num, xyz1.begin() + 3 * nat * (mon_num + 1), xyz.begin());
@@ -73,6 +76,11 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             // fill coordinate vectors
             std::vector<double> coor1(xyz.begin() + (indexes[0] - 1) * 3, xyz.begin() + (indexes[0]) * 3);
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+            }
 
             double distance = CalculateDistance(coor1, coor2);
 
@@ -87,6 +95,12 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor1(xyz.begin() + (indexes[0] - 1) * 3, xyz.begin() + (indexes[0]) * 3);
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+                tools::GetClosePoint(coor1, coor3, box, box_inv);
+            }
 
             // calculate the angle between three coordinates in degrees
             double theta = CalculateAngle(coor1, coor2, coor3);
@@ -106,6 +120,14 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
             std::vector<double> coor4(xyz.begin() + (indexes[3] - 1) * 3, xyz.begin() + (indexes[3]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+                tools::GetClosePoint(coor1, coor3, box, box_inv);
+                tools::GetClosePoint(coor1, coor4, box, box_inv);
+            }
+
             double phi = CalculateDihedralAngle(coor1, coor2, coor3, coor4);
 
             dihedralEnergy += dihedral->GetEnergy(phi);
@@ -120,6 +142,13 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
             std::vector<double> coor4(xyz.begin() + (indexes[3] - 1) * 3, xyz.begin() + (indexes[3]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(centralCoor, coor2, box, box_inv);
+                tools::GetClosePoint(centralCoor, coor3, box, box_inv);
+                tools::GetClosePoint(centralCoor, coor4, box, box_inv);
+            }
 
             // calculate the set of inversion angles between 4 coordinates
             std::vector<double> phis = CalculateInversionAngle(centralCoor, coor2, coor3, coor4);
@@ -161,7 +190,8 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
 }
 
 double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1,
-                     bool &good, int nat, std::vector<double> *virial) {
+                     bool &good, int nat, std::vector<double> box, std::vector<double> box_inv,
+                     std::vector<double> *virial) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -199,6 +229,8 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
     double dihedralEnergy = 0;
     double inversionEnergy = 0;
 
+    bool use_pbc = box.size();
+
     for (int mon_num = 0; mon_num < nm; mon_num++) {
         std::vector<double> xyz(3 * nat, 0.0);
         std::copy(xyz1.begin() + 3 * nat * mon_num, xyz1.begin() + 3 * nat * (mon_num + 1), xyz.begin());
@@ -210,6 +242,11 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             // fill coordinate vectors
             std::vector<double> coor1(xyz.begin() + (indexes[0] - 1) * 3, xyz.begin() + (indexes[0]) * 3);
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+            }
 
             double distance = CalculateDistance(coor1, coor2);
 
@@ -287,6 +324,12 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor1(xyz.begin() + (indexes[0] - 1) * 3, xyz.begin() + (indexes[0]) * 3);
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+                tools::GetClosePoint(coor1, coor3, box, box_inv);
+            }
 
             // calculate the angle between three coordinates in degrees
             double theta = CalculateAngle(coor1, coor2, coor3);
@@ -403,6 +446,14 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
             std::vector<double> coor4(xyz.begin() + (indexes[3] - 1) * 3, xyz.begin() + (indexes[3]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+                tools::GetClosePoint(coor1, coor3, box, box_inv);
+                tools::GetClosePoint(coor1, coor4, box, box_inv);
+            }
+
             double phi = CalculateDihedralAngle(coor1, coor2, coor3, coor4);
 
             dihedralEnergy += dihedral->GetEnergy(phi);
@@ -488,6 +539,13 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
             std::vector<double> coor4(xyz.begin() + (indexes[3] - 1) * 3, xyz.begin() + (indexes[3]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(centralCoor, coor2, box, box_inv);
+                tools::GetClosePoint(centralCoor, coor3, box, box_inv);
+                tools::GetClosePoint(centralCoor, coor4, box, box_inv);
+            }
 
             // calculate the set of inversion angles between 4 coordinates
             std::vector<double> phis = CalculateInversionAngle(centralCoor, coor2, coor3, coor4);

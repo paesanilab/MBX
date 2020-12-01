@@ -50,6 +50,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/force_field/dihedral.h"
 #include "potential/force_field/inversion.h"
 #include "tools/definitions.h"
+#include "tools/pbctools.h"
 
 /**
  * @file energyff.h
@@ -77,7 +78,8 @@ namespace eff {
  * (TO_BE_FIXED )
  * @return Sum of the classical potential energies of all the monomers passed as arguments
  */
-double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, bool &good, int nat);
+double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, bool &good, int nat,
+                     std::vector<double> box, std::vector<double> box_inv);
 
 /**
  * @brief Gets the classical force field potential energy for a given set of monomers of
@@ -96,6 +98,7 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
  * @return Sum of the classical potential energies of all the monomers passed as arguments
  */
 double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1,
-                     bool &good, int nat, std::vector<double> *virial = 0);
+                     bool &good, int nat, std::vector<double> box, std::vector<double> box_inv,
+                     std::vector<double> *virial = 0);
 }  // namespace eff
 #endif

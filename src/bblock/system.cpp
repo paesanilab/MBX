@@ -1681,7 +1681,7 @@ double System::GetFF(bool do_grads) {
                 // EY: Note: grad2 is passed by reference.
                 try {
                     eff += eff::get_ff_energy(bblock::System::connectivity_map_.at(mon), nmon, xyz, grad2, allMonGood_,
-                                              nat_[curr_mon_type], &virial_);
+                                              nat_[curr_mon_type], box_, box_inverse_, &virial_);
                 } catch (const std::exception &e) {
                     std::string text =
                         std::string("Monomer id not contained in connectivity map. System monomer id given is: ") +
@@ -1701,7 +1701,7 @@ double System::GetFF(bool do_grads) {
                 try {
                     // EY: ONLY get the energy
                     eff += eff::get_ff_energy(bblock::System::connectivity_map_.at(mon), nmon, xyz, allMonGood_,
-                                              nat_[curr_mon_type]);
+                                              nat_[curr_mon_type], box_, box_inverse_);
                 } catch (const std::exception &e) {
                     std::string text =
                         std::string("Monomer id not contained in connectivity map. System monomer id given is: ") +
