@@ -1565,6 +1565,7 @@ double System::Energy(bool do_grads) {
 #ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(10) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
+              << "FF = " << eff << std::endl
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
               << "Disp = " << edisp << std::endl
