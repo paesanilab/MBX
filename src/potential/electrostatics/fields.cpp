@@ -79,92 +79,18 @@ void ElectricFieldHolder::CalcPermanentElecField(
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
     // Fill vectors with zeros in the desired range
-    std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-    std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-    std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-    std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-    std::fill(v4_.begin() + mon2_index_start, v4_.begin() + mon2_index_end, 0.0);
-    std::fill(v5_.begin() + mon2_index_start, v5_.begin() + mon2_index_end, 0.0);
-    std::fill(v6_.begin() + mon2_index_start, v6_.begin() + mon2_index_end, 0.0);
-    std::fill(v7_.begin() + mon2_index_start, v7_.begin() + mon2_index_end, 0.0);
-    std::fill(v8_.begin() + mon2_index_start, v8_.begin() + mon2_index_end, 0.0);
-    std::fill(v9_.begin() + mon2_index_start, v9_.begin() + mon2_index_end, 0.0);
-    std::fill(v10_.begin() + mon2_index_start, v10_.begin() + mon2_index_end, 0.0);
     // temporary virial holder
     std::fill(v11_.begin(), v11_.end(), 0.0);
 
-// Store rijx, rijy and rijz in vectors
-#pragma omp simd
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v0_[m] = xyzmon1_x - xyz2[site_jnmon23 + m];           // rijx
-        v1_[m] = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];   // rijy
-        v2_[m] = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];  // rijz
-    }
-
-    // Apply the minimum image convention via fractional coordinates
-    // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-    if (use_pbc) {
-        // Convert to fractional coordinates
-        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            v3_[m] = box_inverse[0] * v0_[m] + box_inverse[3] * v1_[m] + box_inverse[6] * v2_[m];
-            v4_[m] = box_inverse[1] * v0_[m] + box_inverse[4] * v1_[m] + box_inverse[7] * v2_[m];
-            v5_[m] = box_inverse[2] * v0_[m] + box_inverse[5] * v1_[m] + box_inverse[8] * v2_[m];
-        }
-        // Put in the range 0 to 1
-        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            v3_[m] -= std::floor(v3_[m] + 0.5);
-            v4_[m] -= std::floor(v4_[m] + 0.5);
-            v5_[m] -= std::floor(v5_[m] + 0.5);
-        }
-        // Convert back to cartesian coordinates
-        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            v0_[m] = box[0] * v3_[m] + box[3] * v4_[m] + box[6] * v5_[m];
-            v1_[m] = box[1] * v3_[m] + box[4] * v4_[m] + box[7] * v5_[m];
-            v2_[m] = box[2] * v3_[m] + box[5] * v4_[m] + box[8] * v5_[m];
-        }
-    }
-
-    // Store r2 in vector
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v3_[m] = v0_[m] * v0_[m] + v1_[m] * v1_[m] + v2_[m] * v2_[m];  // r2
-    }
-
-    // Store a*(r/A)^4 in vector
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v5_[m] = aCC * v3_[m] * v3_[m] * Asqsqi;  // a*(r/A)^4
-    }
-
-    // Convert r2 -> 1/r
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v3_[m] = 1 / std::sqrt(v3_[m]);
-    }
-
-    // Cheesy way to apply cutoffs, for now!
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v3_[m] *= (v3_[m] < 1.0 / cutoff ? 0 : 1);
-    }
-
-    // Store the attenuated coulomb operator in vector
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v4_[m] = (elec_scale_factor - erf(ewald_alpha / (v3_[m] + 1e-30))) * v3_[m];  // (1-erf(alpha r))/r
-    }
-
-    if (!use_pbc) {
-        // Rescale v3 to ensure right behavior in no PBC conditions
-        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            v3_[m] *= elec_scale_factor;
-            v4_[m] = v3_[m];
-        }
-    }
-
-    // Compute gammq and store result in vector. This loop is not vectorizable
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v6_[m] = gammq(0.75, v5_[m]) * elec_scale_factor;  // gammq
-    }
-
-    // Finalize computation of electric field
     const double PIQSRT = std::sqrt(M_PI);
-#pragma omp simd
+
+    double v7 = 0.0;
+    double v8 = 0.0;
+    double v9 = 0.0;
+    double v10 = 0.0;
+
+// Store rijx, rijy and rijz in vectors
+#pragma omp simd reduction(+ : v7, v8, v9, v10)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = false;
         if (!use_ghost) accum2 = true;
@@ -175,82 +101,120 @@ void ElectricFieldHolder::CalcPermanentElecField(
             double scale = 1.0;
             if (use_ghost && (isls == 1)) scale = 0.5;
 
+            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];           // rijx
+            double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];   // rijy
+            double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];  // rijz
+
+            // Apply the minimum image convention via fractional coordinates
+            // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+            if (use_pbc) {
+                // Convert to fractional coordinates
+                double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
+                double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
+                double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
+
+                // Put in the range 0 to 1
+                fracrijx -= std::floor(fracrijx + 0.5);
+                fracrijy -= std::floor(fracrijy + 0.5);
+                fracrijz -= std::floor(fracrijz + 0.5);
+
+                // Convert back to cartesian coordinates
+                rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
+                rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
+                rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
+            }
+
+            double v3 = rijx * rijx + rijy * rijy + rijz * rijz;  // r2
+
+            // Store a*(r/A)^4 in vector
+            double v5 = aCC * v3 * v3 * Asqsqi;  // a*(r/A)^4
+
+            // Convert r2 -> 1/r
+            v3 = 1 / std::sqrt(v3);
+
+            // Cheesy way to apply cutoffs, for now!
+            v3 *= (v3 < 1.0 / cutoff ? 0 : 1);
+
+            // Store the attenuated coulomb operator in vector
+            double v4 = (elec_scale_factor - erf(ewald_alpha / (v3 + 1e-30))) * v3;  // (1-erf(alpha r))/r
+
+            if (!use_pbc) {
+                // Rescale v3 to ensure right behavior in no PBC conditions
+                v3 *= elec_scale_factor;
+                v4 = v3;
+            }
+
+            // Compute gammq and store result in vector. This loop is not vectorizable
+            double v6 = gammq(0.75, v5) * elec_scale_factor;  // gammq
+
+            // Finalize computation of electric field
+
 #if NO_THOLE
             const double exp1 = 0;
-            v6_[m] = 0;
+            v6 = 0;
 #else
-            const double exp1 = elec_scale_factor * std::exp(-v5_[m]);
+            const double exp1 = elec_scale_factor * std::exp(-v5);
 #endif
             // Terms needed for the Ewald direct space field, see equation 2.8 of
             // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
-            const double exp_alpha2r2 = std::exp(-ewald_alpha * ewald_alpha / (v3_[m] * v3_[m]));
+            const double exp_alpha2r2 = std::exp(-ewald_alpha * ewald_alpha / (v3 * v3));
             const bool use_ewald = use_pbc;
             const double ewaldterm = use_ewald ? 2 * exp_alpha2r2 * ewald_alpha / PIQSRT : 0;
 
             // Screening functions
-            const double s1r = v4_[m] - exp1 * v3_[m];
-            const double s0r = (s1r + aCC1_4 * Ai * g34 * v6_[m]);
-            const double s1r3 = (s1r + ewaldterm) * v3_[m] * v3_[m];
+            const double s1r = v4 - exp1 * v3;
+            const double s0r = (s1r + aCC1_4 * Ai * g34 * v6);
+            const double s1r3 = (s1r + ewaldterm) * v3 * v3;
 
             // Compute contribution to the field phi
             // Storing the contrib to mon 1 in vector to make it vectorizable
 
             // Assuming phi will be at1mon1_index at1m2 at1m3 .. for same type of mons
-            // phi[finsts1 + site_inmon1 + mon1_index]
-            //                           += s0r *chg[finsts2 + site_jnmon2 + m];
-            v7_[m] = scale * s0r * chg2[site_jnmon2 + m];
+            v7 += scale * s0r * chg2[site_jnmon2 + m];
             phi2[site_jnmon2 + m] += scale * s0r * chg1[site_inmon1 + mon1_index];
 
             // Field will be as xyz xxxxyyyyzzzzat1 xxxxxyyyyzzzz at2...
-            const double s1r3ci = s1r3 * chg1[site_inmon1 + mon1_index];
-            const double s1r3cj = s1r3 * chg2[site_jnmon2 + m];
+            const double s1r3ci = scale * s1r3 * chg1[site_inmon1 + mon1_index];
+            const double s1r3cj = scale * s1r3 * chg2[site_jnmon2 + m];
 
             // Compute the three components of the permanent electric field
             // Storing contributions to mon1 in vectors to make the loop vectorizable
 
-            // Efq[fincrd1 + site_inmon13 + mon1_index] += s1r3cj * v0_[m];
-            v8_[m] = scale * s1r3cj * v0_[m];
-            Efq2[site_jnmon23 + m] -= scale * s1r3ci * v0_[m];
+            v8 += s1r3cj * rijx;
+            v9 += s1r3cj * rijy;
+            v10 += s1r3cj * rijz;
 
-            // Efq[fincrd1 + site_inmon13 + nmon1 + mon1_index] += s1r3cj * v1_[m];
-            v9_[m] = scale * s1r3cj * v1_[m];
-            Efq2[site_jnmon23 + nmon2 + m] -= scale * s1r3ci * v1_[m];
-
-            // Efq[fincrd1 + site_inmon13 + nmon12 + mon1_index] += s1r3cj * v2_[m];
-            v10_[m] = scale * s1r3cj * v2_[m];
-            Efq2[site_jnmon23 + nmon22 + m] -= scale * s1r3ci * v2_[m];
+            Efq2[site_jnmon23 + m] -= s1r3ci * rijx;
+            Efq2[site_jnmon23 + nmon2 + m] -= s1r3ci * rijy;
+            Efq2[site_jnmon23 + nmon22 + m] -= s1r3ci * rijz;
 
             // update virial
             if (virial != 0) {
-                double dvr = chg2[site_jnmon2 + m] * chg1[site_inmon1 + mon1_index] * s1r3;
-                double dvx = scale * dvr * v0_[m];
-                double dvy = scale * dvr * v1_[m];
-                double dvz = scale * dvr * v2_[m];
+                double dvr = scale * chg2[site_jnmon2 + m] * chg1[site_inmon1 + mon1_index] * s1r3 * constants::COULOMB;
+                double dvx = dvr * rijx;
+                double dvy = dvr * rijy;
+                double dvz = dvr * rijz;
 
-                v11_[0 * maxnmon + m] = v0_[m] * dvx * constants::COULOMB;
-                v11_[1 * maxnmon + m] = v0_[m] * dvy * constants::COULOMB;
-                v11_[2 * maxnmon + m] = v0_[m] * dvz * constants::COULOMB;
-                v11_[3 * maxnmon + m] = v1_[m] * dvy * constants::COULOMB;
-                v11_[4 * maxnmon + m] = v1_[m] * dvz * constants::COULOMB;
-                v11_[5 * maxnmon + m] = v2_[m] * dvz * constants::COULOMB;
+                v11_[0 * maxnmon + m] = rijx * dvx;
+                v11_[1 * maxnmon + m] = rijx * dvy;
+                v11_[2 * maxnmon + m] = rijx * dvz;
+                v11_[3 * maxnmon + m] = rijy * dvy;
+                v11_[4 * maxnmon + m] = rijy * dvz;
+                v11_[5 * maxnmon + m] = rijz * dvz;
             }
 
         }  // if(accum2)
     }
 
     // Add up the contributions to the mon1 site
-    *phi1 = 0.0;
-    *Efqx_mon1 = 0.0;
-    *Efqy_mon1 = 0.0;
-    *Efqz_mon1 = 0.0;
+    *phi1 = v7;
+    *Efqx_mon1 = v8;
+    *Efqy_mon1 = v9;
+    *Efqz_mon1 = v10;
 
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        *phi1 += v7_[m];
-        *Efqx_mon1 += v8_[m];
-        *Efqy_mon1 += v9_[m];
-        *Efqz_mon1 += v10_[m];
-        // condensate virial
-        if (virial != 0) {
+    if (virial != 0) {
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            // condensate virial
             (*virial)[0] += v11_[0 * maxnmon + m];
             (*virial)[1] += v11_[1 * maxnmon + m];
             (*virial)[2] += v11_[2 * maxnmon + m];
@@ -290,149 +254,114 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
-    // Fill vectors with zeros in the desired range
-    std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-    std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-    std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
+    double v0 = 0.0;
+    double v1 = 0.0;
+    double v2 = 0.0;
 
-#pragma omp simd
+    double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+    double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
+    alpha_pi_term *= two_alpha_squared;
+
+    const double cutoffsq = cutoff * cutoff;
+#pragma omp simd reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        bool accum2 = false;
-        if (!use_ghost) accum2 = true;
+        bool accum2 = !use_ghost;
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         if (use_ghost && isls) accum2 = true;
 
         if (accum2) {
-            double scale = 1.0;
-            if (use_ghost && (isls == 1)) scale = 0.5;
+            double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
 
             // Distances between sites i and j from mon1 and mon2
-            const double rawrijx = xyzmon1_x - xyz2[site_jnmon23 + m];
-            const double rawrijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-            const double rawrijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
+            double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+            double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
 
             // Apply the minimum image convention via fractional coordinates
             // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-            double minrijx, minrijy, minrijz;
             if (use_pbc) {
                 // Convert to fractional coordinates
-                const double fracrijx = box_inverse[0] * rawrijx + box_inverse[3] * rawrijy + box_inverse[6] * rawrijz;
-                const double fracrijy = box_inverse[1] * rawrijx + box_inverse[4] * rawrijy + box_inverse[7] * rawrijz;
-                const double fracrijz = box_inverse[2] * rawrijx + box_inverse[5] * rawrijy + box_inverse[8] * rawrijz;
+                double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
+                double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
+                double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
                 // Put in the range 0 to 1
-                const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
-                const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
-                const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
+                fracrijx -= std::floor(fracrijx + 0.5);
+                fracrijy -= std::floor(fracrijy + 0.5);
+                fracrijz -= std::floor(fracrijz + 0.5);
                 // Convert back to Cartesian coordinates
-                minrijx = box[0] * minfracrijx + box[3] * minfracrijy + box[6] * minfracrijz;
-                minrijy = box[1] * minfracrijx + box[4] * minfracrijy + box[7] * minfracrijz;
-                minrijz = box[2] * minfracrijx + box[5] * minfracrijy + box[8] * minfracrijz;
+                rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
+                rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
+                rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
             }
-            const double rijx = use_pbc ? minrijx : rawrijx;
-            const double rijy = use_pbc ? minrijy : rawrijy;
-            const double rijz = use_pbc ? minrijz : rawrijz;
 
             const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
-            const double r = std::sqrt(rsq);
-            const double ri = r < cutoff ? 1 / r : 0;
-            const double risq = ri * ri;
-            const double rsqsq = rsq * rsq;
+            if (rsq < cutoffsq) {
+                const double ri = 1 / sqrt(rsq);
+                const double risq = ri * ri;
 
-            // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
-            // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
-            // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
-            // r^-1, r^-3, r^-5
-            double r_alpha = ewald_alpha * r;
-            double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
-            double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
-            double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
-            double bn0 = erfc(r_alpha) * ri;
-            alpha_pi_term *= two_alpha_squared;
-            double bn1 = (bn0 + alpha_pi_term * exp_alpha2_r2) * risq;
-            alpha_pi_term *= two_alpha_squared;
-            double bn2 = (3 * bn1 + alpha_pi_term * exp_alpha2_r2) * risq;
+                // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
+                // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
+                // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
+                // r^-1, r^-3, r^-5
+                double r_alpha = ewald_alpha * sqrt(rsq);
+                double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
+                double bn1 = (erfc(r_alpha) * ri + alpha_pi_term * exp_alpha2_r2) * risq;
+                double bn2 = (3 * bn1 + alpha_pi_term * two_alpha_squared * exp_alpha2_r2) * risq;
 
-            // Some values that will be used in the screening functions
-            const double rA4 = rsqsq * Asqsqi;
-            const double arA4 = aDD * rA4;
+                // Some values that will be used in the screening functions
+                const double rA4 = rsq * rsq * Asqsqi;
 // TODO look at the exponential function intel vec
 #if NO_THOLE
-            const double exp1 = 0;
+                const double exp1 = 0;
 #else
-            const double exp1 = std::exp(-arA4);
+                const double exp1 = std::exp(-aDD * rA4);
 #endif
 
-            // Get screening functions
-            const double s1r3 = bn1 - exp1 * ri * risq;
-            const double s2r5_3 = bn2 - (3 + 4 * aDD * rA4) * exp1 * ri * risq * risq;
-            const double ts2x = s2r5_3 * rijx;
-            const double ts2y = s2r5_3 * rijy;
-            const double ts2z = s2r5_3 * rijz;
+                // Get screening functions
+                const double s1r3 = scale * (bn1 - exp1 * ri * risq);
+                const double s2r5_3 = scale * (bn2 - (3 + 4 * aDD * rA4) * exp1 * ri * risq * risq);
+                const double ts2x = s2r5_3 * rijx;
+                const double ts2y = s2r5_3 * rijy;
+                const double ts2z = s2r5_3 * rijz;
 
-            // Contributions to the dipole electric field to site i of mon1
-            // Stored in vectors to make the loop vectorizable
+                // Contributions to the dipole electric field to site i of mon1
+                // Stored in vectors to make the loop vectorizable
 
-            // Component x
-            // Efd[fincrd1 + site_inmon13 + mon1_index] +=
-            v0_[m] =
-                scale * ((ts2x * rijx - s1r3) * mu2[site_jnmon23 + m] + ts2x * rijy * mu2[site_jnmon23 + nmon2 + m] +
-                         ts2x * rijz * mu2[site_jnmon23 + nmon22 + m]);
+                // Component x
+                v0 += (ts2x * rijx - s1r3) * mu2[site_jnmon23 + m] + ts2x * rijy * mu2[site_jnmon23 + nmon2 + m] +
+                      ts2x * rijz * mu2[site_jnmon23 + nmon22 + m];
 
-            // Component y
-            // Efd[fincrd1 + site_inmon13 + nmon1 + mon1_index] +=
-            v1_[m] =
-                scale * (ts2y * rijx * mu2[site_jnmon23 + m] + (ts2y * rijy - s1r3) * mu2[site_jnmon23 + nmon2 + m] +
-                         ts2y * rijz * mu2[site_jnmon23 + nmon22 + m]);
+                // Component y
+                v1 += ts2y * rijx * mu2[site_jnmon23 + m] + (ts2y * rijy - s1r3) * mu2[site_jnmon23 + nmon2 + m] +
+                      ts2y * rijz * mu2[site_jnmon23 + nmon22 + m];
 
-            // Component z
-            // Efd[fincrd1 + site_inmon13 + nmon12 + mon1_index] +=
-            v2_[m] = scale * (ts2z * rijx * mu2[site_jnmon23 + m] + ts2z * rijy * mu2[site_jnmon23 + nmon2 + m] +
-                              (ts2z * rijz - s1r3) * mu2[site_jnmon23 + nmon22 + m]);
+                // Component z
+                v2 += ts2z * rijx * mu2[site_jnmon23 + m] + ts2z * rijy * mu2[site_jnmon23 + nmon2 + m] +
+                      (ts2z * rijz - s1r3) * mu2[site_jnmon23 + nmon22 + m];
 
-            // Contributions to the dipole electric field to site j of mon2
-            // Component x
-            double tmpx = scale * ((ts2x * rijx - s1r3) * mu1[site_inmon13 + mon1_index] +
-                                   ts2x * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                   ts2x * rijz * mu1[site_inmon13 + nmon12 + mon1_index]);
-            Efd2[site_jnmon23 + m] += tmpx;
+                // Contributions to the dipole electric field to site j of mon2
+                // Component x
+                Efd2[site_jnmon23 + m] += (ts2x * rijx - s1r3) * mu1[site_inmon13 + mon1_index] +
+                                          ts2x * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                          ts2x * rijz * mu1[site_inmon13 + nmon12 + mon1_index];
 
-            // Component y
-            double tmpy = scale * ((ts2y * rijx) * mu1[site_inmon13 + mon1_index] +
-                                   (ts2y * rijy - s1r3) * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                   ts2y * rijz * mu1[site_inmon13 + nmon12 + mon1_index]);
-            Efd2[site_jnmon23 + nmon2 + m] += tmpy;
+                // Component y
+                Efd2[site_jnmon23 + nmon2 + m] += (ts2y * rijx) * mu1[site_inmon13 + mon1_index] +
+                                                  (ts2y * rijy - s1r3) * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                                  ts2y * rijz * mu1[site_inmon13 + nmon12 + mon1_index];
 
-            // Component z
-            double tmpz = scale * ((ts2z * rijx) * mu1[site_inmon13 + mon1_index] +
-                                   ts2z * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                   (ts2z * rijz - s1r3) * mu1[site_inmon13 + nmon12 + mon1_index]);
-            Efd2[site_jnmon23 + nmon22 + m] += tmpz;
-
-#if 0
-	// debug output
-	std::cout << "xyz1= " << xyzmon1_x << " " << xyzmon1_y << " " << xyzmon1_z <<
-	  " xyz2= " << xyz2[site_jnmon23 + m] << " " << xyz2[site_jnmon23 + nmon2 + m] << " " << xyz2[site_jnmon23 + nmon22 + m] <<
-	  " Efd1= " << v0_[m] << " " << v1_[m] << " " << v2_[m] <<
-	  " Efd2= " << tmpx << " " << tmpy << " " << tmpz <<
-	  std::endl;
-	std::cout << "          mu1= " << mu1[site_inmon13 + mon1_index] << " " <<
-	  mu1[site_inmon13 + nmon1 + mon1_index] << " " << mu1[site_inmon13 + nmon12 + mon1_index] <<
-	  "  mu2= " << mu2[site_jnmon23 + m] << " " << mu2[site_jnmon23 + nmon2 + m] << " " <<
-	  mu2[site_jnmon23 + nmon22 + m] << std::endl;
-	// debug output
-#endif
-        }  // if(accum2)
+                // Component z
+                Efd2[site_jnmon23 + nmon22 + m] += (ts2z * rijx) * mu1[site_inmon13 + mon1_index] +
+                                                   ts2z * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                                   (ts2z * rijz - s1r3) * mu1[site_inmon13 + nmon12 + mon1_index];
+            }  // if(r<cutoff)
+        }      // if(accum2)
     }
 
     // Setting the values to the output
-    *Efdx_mon1 = 0.0;
-    *Efdy_mon1 = 0.0;
-    *Efdz_mon1 = 0.0;
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        *Efdx_mon1 += v0_[m];
-        *Efdy_mon1 += v1_[m];
-        *Efdz_mon1 += v2_[m];
-    }
+    *Efdx_mon1 = v0;
+    *Efdy_mon1 = v1;
+    *Efdz_mon1 = v2;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
