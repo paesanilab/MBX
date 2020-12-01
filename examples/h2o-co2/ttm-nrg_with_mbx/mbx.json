@@ -17,6 +17,7 @@
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
        "ff_mons"   : ["co2"],
+       "connectivity_file" : "connectivity.dat", 
        "ttm_pairs" : [["co2","h2o"]],
        "ignore_1b_poly" : ["co2"],
        "ignore_2b_poly" : [["co2","h2o"]],
