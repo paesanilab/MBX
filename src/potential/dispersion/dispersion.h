@@ -67,7 +67,8 @@ class Dispersion {
     void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                    const std::vector<size_t> &islocal_, const bool do_grads, const std::vector<double> &box);
+                    const std::vector<size_t> &islocal_, const bool do_grads = true,
+                    const std::vector<double> &box = {});
 
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
 
@@ -77,6 +78,8 @@ class Dispersion {
 
     void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
+
+    void SetJsonDispersionRepulsion(nlohmann::json repdisp_j);
 
     /**
      * @brief Sets the Ewald attenuation parameter (in units of 1/Angstrom)
@@ -204,6 +207,9 @@ class Dispersion {
     size_t proc_grid_z_;
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
+
+    // Json object with extra user-defined dispersion coefficients
+    nlohmann::json repdisp_j_;
 };
 
 }  // namespace disp

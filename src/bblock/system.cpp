@@ -801,11 +801,11 @@ void System::InitializePME() {
     initialized_ = true;
 }
 
-void System::SetUpFromJsonDispersionRepulsion(char *json_file = 0) {
+void System::SetUpFromJsonDispersionRepulsion(char *json_file) {
     nlohmann::json j_default = {};
     std::ifstream ifjson;
     nlohmann::json j;
-    if (json_file != 0) {
+    if (json_file != 0 && std::string(json_file) != "") {
         try {
             ifjson.open(json_file);
             j = nlohmann::json::parse(ifjson);
@@ -817,7 +817,7 @@ void System::SetUpFromJsonDispersionRepulsion(char *json_file = 0) {
     } else {
         j = j_default;
     }
-
+    // MRRRR
     SetUpFromJsonDispersionRepulsion(j);
 
     ifjson.close();
@@ -828,8 +828,10 @@ void SetUpFromJsonDispersionRepulsion(std::string json_text) {
     SetUpFromJsonDispersionRepulsion(j);
 }
 
-void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) { repdisp_j_ = j; }
-
+void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) {
+    repdisp_j_ = j;
+    dispersionE_.SetJsonDispersionRepulsion(repdisp_j_);
+}
 void System::SetUpFromJson(nlohmann::json j) {
     // Try to get box
     // Default: no box (empty vector)
@@ -1117,15 +1119,25 @@ void System::SetUpFromJson(nlohmann::json j) {
     std::string connectivity_file = "";
     try {
         connectivity_file = j["MBX"]["connectivity_file"];
-        // Set the connectivity map in system
-        // FIXME MRR Get connectivity from the file
-        // FIXME MRR Set up connectivity in system
         tools::ReadConnectivity(connectivity_file.c_str(), connectivity_map_);
     } catch (...) {
         connectivity_file = "";
         std::cerr << "**WARNING** \"connectivity_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
     }
     mbx_j_["MBX"]["connectivity_file"] = connectivity_file;
+
+    std::string repdisp_file = "";
+    try {
+        repdisp_file = j["MBX"]["nonbonded_file"];
+        char f[repdisp_file.length() + 1];
+        strcpy(f, repdisp_file.c_str());
+        SetUpFromJsonDispersionRepulsion(f);
+    } catch (...) {
+        repdisp_file = "";
+        SetUpFromJsonDispersionRepulsion();
+        std::cerr << "**WARNING** \"nonbonded_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
+    }
+    mbx_j_["MBX"]["nonbonded_file"] = repdisp_file;
 
     SetPBC(box_);
 }

@@ -41,6 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <cstddef>
 
 #include "tools/math_tools.h"
+#include "json/json.h"
 
 /**
  * @file bucktools.h
@@ -158,7 +159,8 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
  * @param[out] out_c6 Contains the parameter C6 corresponding to the atoms i,j of monomers 1 and 2.
  * @param[out] out_d6 Contains the parameter d6 corresponding to the atoms i,j of monomers 1 and 2.
  */
-void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6);
+void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6,
+           nlohmann::json repdisp_j = {});
 
 }  // namespace disp
 

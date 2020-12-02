@@ -40,8 +40,7 @@ namespace disp {
 void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                            const std::vector<size_t> &islocal, const bool do_grads = true,
-                            const std::vector<double> &box = {}) {
+                            const std::vector<size_t> &islocal, const bool do_grads, const std::vector<double> &box) {
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
     islocal_ = islocal;
@@ -76,6 +75,8 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 
     ReorderData();
 }
+
+void Dispersion::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
 
 void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
     mpi_initialized_ = true;
@@ -361,7 +362,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 double c6, d6;
                 double c6i = c6_long_range_[fi_sites + i * nmon];
                 double c6j = c6_long_range_[fi_sites + j * nmon];
-                GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6);
+                GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, repdisp_j_);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -485,7 +486,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         size_t jnmon23 = jnmon2 * 3;
                         double c6j = c6_long_range_[fi_sites2 + j * nmon2];
                         double c6, d6;
-                        GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6);
+                        GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, repdisp_j_);
                         energy_pool[rank] +=
                             disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
                                   grad2_pool[rank].data(), phi_i, phi2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
