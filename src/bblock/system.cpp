@@ -817,7 +817,7 @@ void System::SetUpFromJsonDispersionRepulsion(char *json_file) {
     } else {
         j = j_default;
     }
-    // MRRRR
+
     SetUpFromJsonDispersionRepulsion(j);
 
     ifjson.close();
@@ -831,6 +831,7 @@ void SetUpFromJsonDispersionRepulsion(std::string json_text) {
 void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) {
     repdisp_j_ = j;
     dispersionE_.SetJsonDispersionRepulsion(repdisp_j_);
+    buckinghamE_.SetJsonDispersionRepulsion(repdisp_j_);
 }
 void System::SetUpFromJson(nlohmann::json j) {
     // Try to get box

@@ -41,6 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <cstddef>
 
 #include "tools/math_tools.h"
+#include "json/json.h"
 
 /**
  * @file bucktools.h
@@ -108,7 +109,8 @@ double Repulsion(const double a, const double b, const double* p1, const double*
  * @return True if the pair was found, false otherwise
  */
 bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2,
-                   std::vector<std::pair<std::string, std::string> > buck_pairs, double& out_a, double& out_b);
+                   std::vector<std::pair<std::string, std::string> > buck_pairs, double& out_a, double& out_b,
+                   nlohmann::json repdisp_j = {});
 
 }  // namespace buck
 
