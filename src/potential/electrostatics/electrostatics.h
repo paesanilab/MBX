@@ -290,6 +290,8 @@ class Electrostatics {
 
     void ReorderData();
 
+    void nncomm_setup();
+
     // PME solver
     // helpme::PMEInstance<double> pme_solver_;
     // Charges of each site. Order has to follow mon_type_count.

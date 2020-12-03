@@ -2186,6 +2186,23 @@ void Electrostatics::CalculateDipolesAspc() {
     }  // end if (hist_num_aspc_ < k_aspc_ + 2)
 }
 
+#if 1
+
+void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+    // setup proc neighbors and buffers
+    
+    if(nn_first) nncomm_setup();
+
+    std::string text = std::string("Early termination from reverse_forward_comm()");
+    throw CUException(__func__, __FILE__, __LINE__, text);
+}
+  
+#else
+
 void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
@@ -2447,6 +2464,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
     mbxt_ele_time_[ELE_COMM_REVFOR] += time2 - time1;
 #endif
 }
+#endif
 
 void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
     // Parallelization
@@ -5358,4 +5376,81 @@ void Electrostatics::SetFFTDimension(std::vector<int> grid) {
     user_fft_grid_ = grid;
 }
 
+void Electrostatics::nncomm_setup() {
+
+  // find my proc grid location ; order hardcoded to match PME solver order ZYX
+
+  int myloc_x = mpi_rank_ % proc_grid_x_;
+  int myloc_y = (mpi_rank_ % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
+  int myloc_z = mpi_rank_ / (proc_grid_x_ * proc_grid_y_);
+
+  // find mpi ranks for 6-stencil neighbors
+  // +/- x dimension
+  
+  int x = myloc_x + 1;
+  int y = myloc_y;
+  int z = myloc_z;
+
+  if(x == proc_grid_x_)
+    if(simcell_periodic_) x = 0;
+    else x = myloc_x;
+  
+  int rpx = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
+
+  x = myloc_x - 1;
+  if(x == -1)
+    if(simcell_periodic_) x = proc_grid_x_ - 1;
+    else x = myloc_x;
+
+  int rmx = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
+
+  // +/- y dimension
+  
+  x = myloc_x;
+  y = myloc_y + 1;
+  
+  if(y == proc_grid_y_)
+    if(simcell_periodic_) y = 0;
+    else y = myloc_y;
+  
+  int rpy = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
+
+  y = myloc_y - 1;
+  if(y == -1)
+    if(simcell_periodic_) y = proc_grid_y_ - 1;
+    else y = myloc_y;
+
+  int rmy = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
+
+  // +/- z dimension
+
+  y = myloc_y;
+  z = myloc_z + 1;
+  
+  if(z == proc_grid_z_)
+    if(simcell_periodic_) z = 0;
+    else z = myloc_z;
+  
+  int rpz = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
+
+  z = myloc_z - 1;
+  if(z == -1)
+    if(simcell_periodic_) z = proc_grid_z_ - 1;
+    else z = myloc_z;
+
+  int rmz = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
+
+  for(int i=0; i<num_mpi_ranks_; ++i) {
+
+    if(mpi_rank_ == i) {
+      if(i == 0) std::cout << "proc_grid_= " << proc_grid_x_ << " " << proc_grid_y_ << " " << proc_grid_z_ << std::endl;
+      std::cout << "(" << i << ") myloc_= " << myloc_x << " " << myloc_y << " " << myloc_z <<
+	" neigh_procs= " << rmx << " " << rpx << "   " << rmy << " " << rpy << "   " << rmz << " " <<
+	rpz << std::endl;
+    }
+    MPI_Barrier(world_);
+
+  }
+}
+  
 }  // namespace elec
