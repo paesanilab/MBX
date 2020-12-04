@@ -131,7 +131,7 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
 }
 
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
-                     std::vector<size_t> &fi_at) {
+                     std::vector<size_t> &fi_at, nlohmann::json mon_j) {
     // Make sure that mon is not empty
     if (mon.size() < 1) {
         std::string text = "Monomer vector cannot be empty.";
@@ -151,52 +151,65 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
     size_t count = 0;
     size_t ats = 0;
     for (size_t i = 0; i < mon.size(); i++) {
-        if (mon[i] == "h2o") {
-            // Filling things for water.
-            // Site Info
-            // TODO Maybe we can read this from a database
-            sites.push_back(4);
-            nat.push_back(3);
+        bool is_in_json = false;
+        try {
+            size_t ns = mon_j[mon[i]]["sites"];
+            size_t na = mon_j[mon[i]]["nat"];
+            sites.push_back(ns);
+            nat.push_back(na);
+            is_in_json = true;
+        } catch (...) {
+            is_in_json = false;
+        }
 
-            // =====>> BEGIN SECTION SITES <<=====
-            // ==> PASTE YOUR CODE BELOW <==
+        if (!is_in_json) {
+            if (mon[i] == "h2o") {
+                // Filling things for water.
+                // Site Info
+                // TODO Maybe we can read this from a database
+                sites.push_back(4);
+                nat.push_back(3);
 
-        } else if (mon[i] == "ch4") {
-            sites.push_back(5);
-            nat.push_back(5);
-        } else if (mon[i] == "co2") {
-            sites.push_back(3);
-            nat.push_back(3);
-        } else if (mon[i] == "h4_dummy") {
-            sites.push_back(4);
-            nat.push_back(4);
+                // =====>> BEGIN SECTION SITES <<=====
+                // ==> PASTE YOUR CODE BELOW <==
 
-        } else if (mon[i] == "ar") {
-            sites.push_back(1);
-            nat.push_back(1);
-        } else if (mon[i] == "he") {
-            sites.push_back(1);
-            nat.push_back(1);
-        } else if (mon[i] == "dummy") {
-            sites.push_back(1);
-            nat.push_back(1);
+            } else if (mon[i] == "ch4") {
+                sites.push_back(5);
+                nat.push_back(5);
+            } else if (mon[i] == "co2") {
+                sites.push_back(3);
+                nat.push_back(3);
+            } else if (mon[i] == "h4_dummy") {
+                sites.push_back(4);
+                nat.push_back(4);
 
-            // Halides and alkali metal ions
-        } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
-                   mon[i] == "br" || mon[i] == "i" || mon[i] == "li" || mon[i] == "na" ||  // Alkali metal ions
-                   mon[i] == "k" || mon[i] == "rb" || mon[i] == "cs") {
-            sites.push_back(1);
-            nat.push_back(1);
-            // END SECTION SITES
-        } else {
-            // If monomer not found, throw exception
-            std::string text = "No data in the dataset for monomer: " + mon[i];
-            // Reset vectors
-            sites = sites_cp;
-            nat = nat_cp;
-            fi_at = fi_at_cp;
-            // Throw exception
-            throw CUException(__func__, __FILE__, __LINE__, text);
+            } else if (mon[i] == "ar") {
+                sites.push_back(1);
+                nat.push_back(1);
+            } else if (mon[i] == "he") {
+                sites.push_back(1);
+                nat.push_back(1);
+            } else if (mon[i] == "dummy") {
+                sites.push_back(1);
+                nat.push_back(1);
+
+                // Halides and alkali metal ions
+            } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
+                       mon[i] == "br" || mon[i] == "i" || mon[i] == "li" || mon[i] == "na" ||  // Alkali metal ions
+                       mon[i] == "k" || mon[i] == "rb" || mon[i] == "cs") {
+                sites.push_back(1);
+                nat.push_back(1);
+                // END SECTION SITES
+            } else {
+                // If monomer not found, throw exception
+                std::string text = "No data in the dataset for monomer: " + mon[i];
+                // Reset vectors
+                sites = sites_cp;
+                nat = nat_cp;
+                fi_at = fi_at_cp;
+                // Throw exception
+                throw CUException(__func__, __FILE__, __LINE__, text);
+            }
         }
 
         fi_at.push_back(ats);
@@ -607,11 +620,39 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
     }
 }
 
-void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &exc13, excluded_set_type &exc14) {
+void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,
+                 excluded_set_type &exc14) {
     // Clearing excluded pairs just in case
     exc12.clear();
     exc13.clear();
     exc14.clear();
+
+    bool is_in_json = false;
+    try {
+        excluded_set_type e12 = mon_j[mon]["exc12"];
+        exc12 = e12;
+        is_in_json = true;
+    } catch (...) {
+        exc12.clear();
+    }
+
+    try {
+        excluded_set_type e13 = mon_j[mon]["exc13"];
+        exc13 = e13;
+        is_in_json = true;
+    } catch (...) {
+        exc13.clear();
+    }
+
+    try {
+        excluded_set_type e14 = mon_j[mon]["exc14"];
+        exc14 = e14;
+        is_in_json = true;
+    } catch (...) {
+        exc14.clear();
+    }
+
+    if (is_in_json) return;
 
     // MBX v0.1.0a
     if (mon == "h2o") {
@@ -765,11 +806,24 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
 }
 
 void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
-                size_t fst_ind, std::vector<double> &chg_der) {
+                size_t fst_ind, std::vector<double> &chg_der, nlohmann::json mon_j) {
     // Constant that calculates charge
     const double CHARGECON = 1.0;
     // const double CHARGECON = constants::CHARGECON;
 
+    bool is_in_json = false;
+    try {
+        std::vector<double> chg = mon_j[mon_id]["charges"];
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                charges[fst_ind + nv * nsites + j] = chg[j] * CHARGECON;
+            }
+        }
+        is_in_json = true;
+    } catch (...) {
+    }
+
+    if (is_in_json) return;
     // Halide charges
     if (mon_id == "f" || mon_id == "cl" || mon_id == "br" || mon_id == "i") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -888,7 +942,22 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
     }
 }
 
-void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind) {
+void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind,
+               nlohmann::json mon_j) {
+    bool is_in_json = false;
+    try {
+        std::vector<double> pf = mon_j[mon_id]["polfac"];
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                polfac[fst_ind + nv * nsites + j] = pf[j];
+            }
+        }
+        is_in_json = true;
+    } catch (...) {
+    }
+
+    if (is_in_json) return;
+
     // Halides
     if (mon_id == "f") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.4669;
@@ -976,7 +1045,22 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     }
 }
 
-void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind) {
+void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind,
+            nlohmann::json mon_j) {
+    bool is_in_json = false;
+    try {
+        std::vector<double> p = mon_j[mon_id]["pol"];
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                pol[fst_ind + nv * nsites + j] = p[j];
+            }
+        }
+        is_in_json = true;
+    } catch (...) {
+    }
+
+    if (is_in_json) return;
+
     // Halides
     if (mon_id == "f") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.4669;
@@ -1062,7 +1146,22 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     }
 }
 
-void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind) {
+void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
+                    nlohmann::json mon_j) {
+    bool is_in_json = false;
+    try {
+        std::vector<double> c6lr = mon_j[mon_id]["c6lr"];
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < natoms; j++) {
+                c6_lr[fst_ind + nv * natoms + j] = c6lr[j];
+            }
+        }
+        is_in_json = true;
+    } catch (...) {
+    }
+
+    if (is_in_json) return;
+
     // All these C6 come from Qchem/avtz. We put two molecules at 50 A and get the c6 of the atoms.
     if (mon_id == "f") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 25.56412750183350184739;

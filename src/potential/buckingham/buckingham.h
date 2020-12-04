@@ -104,6 +104,7 @@ class Buckingham {
     double GetRepulsion(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
 
     void SetJsonDispersionRepulsion(nlohmann::json repdisp_j);
+    void SetJsonMonomers(nlohmann::json mon_j);
 
     /**
      * @brief Updates the information of the system in the class.
@@ -210,6 +211,9 @@ class Buckingham {
 
     // Json object with extra user-defined buckingham coefficients
     nlohmann::json repdisp_j_;
+
+    // Json object with extra monomer properties
+    nlohmann::json mon_j_;
 };
 
 }  // namespace buck

@@ -80,6 +80,7 @@ class Dispersion {
                           const std::vector<double> &box);
 
     void SetJsonDispersionRepulsion(nlohmann::json repdisp_j);
+    void SetJsonMonomers(nlohmann::json mon_j);
 
     /**
      * @brief Sets the Ewald attenuation parameter (in units of 1/Angstrom)
@@ -210,6 +211,9 @@ class Dispersion {
 
     // Json object with extra user-defined dispersion coefficients
     nlohmann::json repdisp_j_;
+
+    // Json object with extra user-defined monomer properties
+    nlohmann::json mon_j_;
 };
 
 }  // namespace disp

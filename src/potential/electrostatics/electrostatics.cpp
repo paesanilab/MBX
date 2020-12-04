@@ -79,6 +79,8 @@ void Electrostatics::SetDipoleMaxIt(size_t maxit) { maxit_ = maxit; }
 
 void Electrostatics::SetPeriodicity(bool periodic) { simcell_periodic_ = periodic; }
 
+void Electrostatics::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
+
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
                                 const std::vector<double> &polfac, const std::vector<double> &pol,
                                 const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
@@ -367,7 +369,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         size_t nmon2 = 2 * nmon;
 
         // Obtain excluded pairs for monomer type mt
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
 
         // Loop over each pair of sites
         for (size_t i = 0; i < ns - 1; i++) {
@@ -914,7 +916,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
         size_t nmon2 = 2 * nmon;
 
         // Obtain excluded pairs for monomer type mt
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
 
         // Loop over each pair of sites
         for (size_t i = 0; i < ns - 1; i++) {
@@ -2539,7 +2541,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
         for (size_t i = 0; i < ns - 1; i++) {
             size_t inmon3 = 3 * i * nmon;
             for (size_t j = i + 1; j < ns; j++) {
@@ -3118,7 +3120,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
         for (size_t i = 0; i < ns - 1; i++) {
             size_t inmon3 = 3 * i * nmon;
             for (size_t j = i + 1; j < ns; j++) {
@@ -3774,7 +3776,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         size_t ns = sites_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
         for (size_t i = 0; i < ns - 1; i++) {
             size_t inmon = i * nmon;
             size_t inmon3 = 3 * inmon;
@@ -4526,7 +4528,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         size_t ns = sites_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
         for (size_t i = 0; i < ns - 1; i++) {
             size_t inmon = i * nmon;
             size_t inmon3 = 3 * inmon;

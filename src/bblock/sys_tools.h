@@ -45,6 +45,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "kdtree/nanoflann.hpp"
 #include "kdtree/kdtree_utils.h"
 #include "tools/definitions.h"
+#include "json/json.h"
 
 #include "potential/1b/ps.h"
 #include "tools/constants.h"
@@ -153,10 +154,11 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
  * of atoms of the monomers in the same order as the mon vector
  * @param[out] fi_at Vector with same length as mon than contains the first
  * index of the monomers in the same order as the mon vector
+ * @param[in] mon_j Json object with extra monomer info
  * @return Total number of sites
  */
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
-                     std::vector<size_t> &fi_at);
+                     std::vector<size_t> &fi_at, nlohmann::json mon_j = {});
 
 /**
  * @brief Makes sure that the coordinates of all atoms of the same monomer
@@ -272,11 +274,13 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
  * of pairs, in which each pair specifies the two atoms that are
  * excluded.
  * @param[in] mon Monomer id
+ * @param[in] mon_j Json object with monomer information
  * @param[out] exc12 Set of pairs with the 1-2 excluded atoms
  * @param[out] exc13 Set of pairs with the 1-3 excluded atoms
  * @param[out] exc14 Set of pairs with the 1-4 excluded atoms
  */
-void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &exc13, excluded_set_type &exc14);
+void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,
+                 excluded_set_type &exc14);
 
 /**
  * @brief Helper function to compare a pair of an unsigned integer and a
@@ -440,9 +444,10 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
  * @param[in] fst_ind First index of first monomer of type mon_id
  * @param[out] chg_der Vector of doubles that will be filled with the charge
  * gradients of the position dependent charges
+ * @param[in] mon_j Json object with extra charge definitions
  */
 void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
-                size_t fst_ind, std::vector<double> &chg_der);
+                size_t fst_ind, std::vector<double> &chg_der, nlohmann::json mon_j = {});
 
 /**
  * @brief Sets the polarizability factors of a system.
@@ -456,7 +461,8 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
  * @param[in] nsites Number of sites of monomer type mon_id
  * @param[in] fst_ind First index of first monomer of type mon_id
  */
-void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
+void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind,
+               nlohmann::json mon_j = {});
 
 /**
  * @brief Sets the polarizabilities of a system.
@@ -470,7 +476,8 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
  * @param[in] nsites Number of sites of monomer type mon_id
  * @param[in] fst_ind First index of first monomer of type mon_id
  */
-void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
+void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind,
+            nlohmann::json mon_j = {});
 
 /**
  * @brief Sets the C6 "charge" for each atom of a system.
@@ -484,7 +491,8 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
  * @param[in] natoms Number of real atoms of monomer type mon_id
  * @param[in] fst_ind First index of first monomer of type mon_id
  */
-void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind);
+void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
+                    nlohmann::json mon_j = {});
 
 /**
  * @brief Redistributes the virtual site gradients into the real atoms

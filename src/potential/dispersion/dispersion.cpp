@@ -77,6 +77,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 }
 
 void Dispersion::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
+void Dispersion::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
 
 void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
     mpi_initialized_ = true;
@@ -336,7 +337,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         size_t nmon2 = 2 * nmon;
 
         // Obtain excluded pairs for monomer type mt
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
 
         // For parallel region
         std::vector<std::vector<double> > phi_pool;

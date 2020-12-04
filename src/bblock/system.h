@@ -578,9 +578,15 @@ class System {
 
     /**
      * Sets up all the parameters that are specified in a json file
-     * @param[in] json_file Is the json formatted file with the system specifications
+     * @param[in] json_file Is the json formatted file with the dispersion repulsion information
      **/
     void SetUpFromJsonDispersionRepulsion(char *json_file = 0);
+
+    /**
+     * Sets up all the monomer parameters that are specified in a json file
+     * @param[in] json_file Is the json formatted file with the monomer information
+     **/
+    void SetUpFromJsonMonomers(char *json_file = 0);
 
     /**
      * Sets up the json configuration through a string.
@@ -589,10 +595,22 @@ class System {
     void SetUpFromJsonDispersionRepulsion(std::string json_text);
 
     /**
+     * Sets up the json configuration through a string.
+     * @param[in] json_text literal string with the json monomer information
+     **/
+    void SetUpFromJsonMonomers(std::string json_text);
+
+    /**
      * Sets up all the parameters that are specified in a json object
-     * @param[in] j Json object with the system specifications
+     * @param[in] j Json object with the dispersion repulsion parameters
      **/
     void SetUpFromJsonDispersionRepulsion(nlohmann::json j);
+
+    /**
+     * Sets up all the parameters that are specified in a json object
+     * @param[in] j Json object with the monomer information
+     **/
+    void SetUpFromJsonMonomers(nlohmann::json j);
 
     /**
      * Sets up all the parameters that are specified in a json file
@@ -1132,6 +1150,11 @@ to be the same.
     bool initialized_;
 
     /**
+     * Set to true when the json file for monomer info has been read.
+     */
+    bool monomer_json_read_;
+
+    /**
      * If set to tru, the box and periodic boundary conditions will be used and
      * taken into account for the clusters, energy calculations, and any
      * other operation within the system.
@@ -1373,6 +1396,11 @@ to be the same.
      * Json configuration object
      */
     nlohmann::json mbx_j_;
+
+    /**
+     * Json configuration for monomer information
+     */
+    nlohmann::json monomers_j_;
 
     /**
      * Set to true when driver has intialized MPI

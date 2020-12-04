@@ -63,6 +63,7 @@ void Buckingham::Initialize(const std::vector<double> &sys_xyz, const std::vecto
 }
 
 void Buckingham::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
+void Buckingham::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
 
 void Buckingham::SetNewParameters(const std::vector<double> &xyz,
                                   const std::vector<std::pair<std::string, std::string> > &buck_pairs,
@@ -192,7 +193,7 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
         bool do_buck = GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, buck_pairs_, dummy_a, dummy_b, repdisp_j_);
         if (do_buck) {
             // Obtain excluded pairs for monomer type mt
-            systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+            systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
 
             std::vector<std::vector<double> > grad_pool(nthreads, std::vector<double>(nmon * ns * 3, 0.0));
             std::vector<double> energy_pool(nthreads, 0.0);

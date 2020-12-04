@@ -58,6 +58,7 @@ namespace bblock {  // Building Block :: System
 
 System::System() {
     initialized_ = false;
+    monomer_json_read_ = false;
     mpi_initialized_ = false;
     simcell_periodic_ = false;
 }
@@ -618,6 +619,9 @@ void System::Initialize() {
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
+    // Do not attempt to initiaize if monomers json file has not been read.
+    if (!monomer_json_read_) return;
+
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cout << std::scientific << std::setprecision(10);
@@ -658,6 +662,32 @@ void System::Initialize() {
     // Retrieves all the monomer information given the coordinates
     // and monomer id, such as number of sites, and orders the monomers
     AddMonomerInfo();
+
+    //    // First try to do it. If Json file is not loaded, monomer info will not be there and need to wait.
+    //
+    //    // Copy data inc ase initialization is supposed to fail because monomer is in json instead of hardcoded
+    //    std::vector<double> xyz_cp = xyz_;
+    //    std::vector<std::string> atoms_cp = atoms_;
+    //    std::vector<int> atom_tag_cp = atom_tag_;
+    //    std::vector<std::string> monomers_cp = monomers_;
+    //    std::vector<size_t> sites_cp = sites_;
+    //    std::vector<size_t> nat_cp = nat_;
+    //    try {
+    //        AddMonomerInfo();
+    //    } catch (CUException e) {
+    //        if (monomer_json_read_) {
+    //            std::string text = std::string(e.what()) + std::string("\nMonomer id not found in json file or
+    //            hardcoded"); throw CUException(__func__, __FILE__, __LINE__, text);
+    //        }
+    //        // Revert back possible changes
+    //        xyz_ = xyz_cp;
+    //        atoms_ = atoms_cp;
+    //        atom_tag_ = atom_tag_cp;
+    //        monomers_ = monomers_cp;
+    //        sites_ = sites_cp;
+    //        nat_ = nat_cp;
+    //        return;
+    //    }
 
     // Setting the number of molecules and number of monomers
     nummol = molecules_.size();
@@ -823,9 +853,36 @@ void System::SetUpFromJsonDispersionRepulsion(char *json_file) {
     ifjson.close();
 }
 
+void System::SetUpFromJsonMonomers(char *json_file) {
+    nlohmann::json j_default = {};
+    std::ifstream ifjson;
+    nlohmann::json j;
+    if (json_file != 0 && std::string(json_file) != "") {
+        try {
+            ifjson.open(json_file);
+            j = nlohmann::json::parse(ifjson);
+        } catch (...) {
+            j = j_default;
+            std::cerr << "There has been a problem loading your json file: " + std::string(json_file) +
+                             "... using defaults";
+        }
+    } else {
+        j = j_default;
+    }
+
+    SetUpFromJsonMonomers(j);
+
+    ifjson.close();
+}
+
 void SetUpFromJsonDispersionRepulsion(std::string json_text) {
     nlohmann::json j = nlohmann::json::parse(json_text);
     SetUpFromJsonDispersionRepulsion(j);
+}
+
+void SetUpFromJsonMonomers(std::string json_text) {
+    nlohmann::json j = nlohmann::json::parse(json_text);
+    SetUpFromJsonMonomers(j);
 }
 
 void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) {
@@ -833,6 +890,16 @@ void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) {
     dispersionE_.SetJsonDispersionRepulsion(repdisp_j_);
     buckinghamE_.SetJsonDispersionRepulsion(repdisp_j_);
 }
+
+void System::SetUpFromJsonMonomers(nlohmann::json j) {
+    monomers_j_ = j;
+    monomer_json_read_ = true;
+    Initialize();
+    electrostaticE_.SetJsonMonomers(monomers_j_);
+    dispersionE_.SetJsonMonomers(monomers_j_);
+    buckinghamE_.SetJsonMonomers(monomers_j_);
+}
+
 void System::SetUpFromJson(nlohmann::json j) {
     // Try to get box
     // Default: no box (empty vector)
@@ -1136,9 +1203,22 @@ void System::SetUpFromJson(nlohmann::json j) {
     } catch (...) {
         repdisp_file = "";
         SetUpFromJsonDispersionRepulsion();
-        std::cerr << "**WARNING** \"nonbonded_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
+        std::cerr << "**WARNING** \"nonbonded_file\" is not defined in json file.\n";
     }
     mbx_j_["MBX"]["nonbonded_file"] = repdisp_file;
+
+    std::string monomers_json_file = "";
+    try {
+        monomers_json_file = j["MBX"]["monomers_file"];
+        char f[monomers_json_file.length() + 1];
+        strcpy(f, monomers_json_file.c_str());
+        SetUpFromJsonMonomers(f);
+    } catch (...) {
+        monomers_json_file = "";
+        SetUpFromJsonMonomers();
+        std::cerr << "**WARNING** \"monomers_file\" is not defined in json file.\n";
+    }
+    mbx_j_["MBX"]["monomers_file"] = monomers_json_file;
 
     SetPBC(box_);
 }
@@ -1341,7 +1421,7 @@ void System::AddMonomerInfo() {
 
     // Adding the number of sites of each monomer and storing the first index
     std::vector<size_t> fi_at;
-    numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at);
+    numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at, monomers_j_);
 
 #ifdef DEBUG
     std::cerr << "Finished SetUpMonomers.\n";

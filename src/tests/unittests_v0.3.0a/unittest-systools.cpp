@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/math_tools.h"
 #include "setup_co2_2_h2o_2.h"
 #include "setup_monomer_mix.h"
+#include "json/json.h"
 
 #include <vector>
 #include <iostream>
@@ -991,6 +992,7 @@ TEST_CASE("systools::AddClusters") {
 }
 
 TEST_CASE("systools::GetExcluded") {
+    nlohmann::json empty_j;
     SECTION("h2o") {
         excluded_set_type exc12, exc12_expected;
         excluded_set_type exc13, exc13_expected;
@@ -1007,7 +1009,7 @@ TEST_CASE("systools::GetExcluded") {
         exc13_expected.insert(std::make_pair(1, 3));
         exc13_expected.insert(std::make_pair(2, 3));
 
-        systools::GetExcluded(mon, exc12, exc13, exc14);
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
 
         REQUIRE(exc12 == exc12_expected);
         REQUIRE(exc13 == exc13_expected);
@@ -1027,7 +1029,7 @@ TEST_CASE("systools::GetExcluded") {
         // 13 distances
         exc13_expected.insert(std::make_pair(1, 2));
 
-        systools::GetExcluded(mon, exc12, exc13, exc14);
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
 
         REQUIRE(exc12 == exc12_expected);
         REQUIRE(exc13 == exc13_expected);
@@ -1054,7 +1056,7 @@ TEST_CASE("systools::GetExcluded") {
         exc13_expected.insert(std::make_pair(3, 4));
         exc13_expected.insert(std::make_pair(2, 4));
 
-        systools::GetExcluded(mon, exc12, exc13, exc14);
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
 
         REQUIRE(exc12 == exc12_expected);
         REQUIRE(exc13 == exc13_expected);
@@ -1077,7 +1079,7 @@ TEST_CASE("systools::GetExcluded") {
         exc13_expected.insert(std::make_pair(1, 3));
         exc13_expected.insert(std::make_pair(2, 3));
 
-        systools::GetExcluded(mon, exc12, exc13, exc14);
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
 
         REQUIRE(exc12 == exc12_expected);
         REQUIRE(exc13 == exc13_expected);
