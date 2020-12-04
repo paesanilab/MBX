@@ -448,6 +448,10 @@ class Electrostatics {
     std::vector<double> mbxt_ele_time_;
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
+
+    size_t nncomm_nswap;
+    std::vector<int> nncomm_sendproc;
+    std::vector<int> nncomm_recvproc;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
