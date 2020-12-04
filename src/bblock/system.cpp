@@ -894,7 +894,9 @@ void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) {
 void System::SetUpFromJsonMonomers(nlohmann::json j) {
     monomers_j_ = j;
     monomer_json_read_ = true;
+
     Initialize();
+
     electrostaticE_.SetJsonMonomers(monomers_j_);
     dispersionE_.SetJsonMonomers(monomers_j_);
     buckinghamE_.SetJsonMonomers(monomers_j_);
@@ -2481,7 +2483,7 @@ void System::SetCharges() {
         size_t nmon = mon_type_count_[k].second;
         size_t nsites = sites_[fi_mon];
 
-        systools::SetCharges(xyz_, chg_, mon, nmon, nsites, first_index_[fi_mon], chggrad_);
+        systools::SetCharges(xyz_, chg_, mon, nmon, nsites, first_index_[fi_mon], chggrad_, monomers_j_);
         fi_mon += nmon;
     }
 
@@ -2516,7 +2518,7 @@ void System::SetPols() {
         size_t nmon = mon_type_count_[k].second;
         size_t nsites = sites_[fi_mon];
 
-        systools::SetPol(pol_, mon, nmon, nsites, first_index_[fi_mon]);
+        systools::SetPol(pol_, mon, nmon, nsites, first_index_[fi_mon], monomers_j_);
         fi_mon += nmon;
     }
 
@@ -2548,7 +2550,7 @@ void System::SetPolfacs() {
         size_t nmon = mon_type_count_[k].second;
         size_t nsites = sites_[fi_mon];
 
-        systools::SetPolfac(polfac_, mon, nmon, nsites, first_index_[fi_mon]);
+        systools::SetPolfac(polfac_, mon, nmon, nsites, first_index_[fi_mon], monomers_j_);
         fi_mon += nmon;
     }
 
@@ -2582,7 +2584,7 @@ void System::SetC6LongRange() {
         size_t nmon = mon_type_count_[k].second;
         size_t natoms = nat_[fi_mon];
 
-        systools::SetC6LongRange(c6_lr_, mon, nmon, natoms, fi_atoms);
+        systools::SetC6LongRange(c6_lr_, mon, nmon, natoms, fi_atoms, monomers_j_);
         fi_mon += nmon;
         fi_atoms += nmon * natoms;
     }

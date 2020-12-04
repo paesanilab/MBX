@@ -58,9 +58,10 @@ TEST_CASE("systools::SetupMonomers") {
         std::vector<size_t> sites_out;
         std::vector<size_t> nat_out;
         std::vector<size_t> first_index_out;
+        nlohmann::json empty_j;
         // Run SetUpMonomers
         try {
-            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_out);
+            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_out, empty_j);
         } catch (CUException &e) {
             std::cerr << e.what();
         }
@@ -79,9 +80,10 @@ TEST_CASE("systools::SetupMonomers") {
         std::vector<size_t> sites_out;
         std::vector<size_t> nat_out;
         std::vector<size_t> first_index_out;
+        nlohmann::json empty_j;
         // Run SetUpMonomers
         try {
-            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_out);
+            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_out, empty_j);
         } catch (CUException &e) {
             std::cerr << e.what();
         }
@@ -98,12 +100,13 @@ TEST_CASE("systools::SetupMonomers") {
         std::vector<size_t> tmpsites;
         std::vector<size_t> tmpnat;
         std::vector<size_t> tmpfirst_index;
+        nlohmann::json empty_j;
 
         SECTION("Set up an empty monomer list") {
             std::vector<std::string> monomers_empty;
             bool not_possible_to_setup_monomers = false;
             try {
-                systools::SetUpMonomers(monomers_empty, tmpsites, tmpnat, tmpfirst_index);
+                systools::SetUpMonomers(monomers_empty, tmpsites, tmpnat, tmpfirst_index, empty_j);
             } catch (CUException &e) {
                 not_possible_to_setup_monomers = true;
             }
@@ -114,7 +117,7 @@ TEST_CASE("systools::SetupMonomers") {
             std::vector<std::string> monomers_not_in_db = {"not", "in", "data", "base", "at", "all"};
             bool monomer_not_in_database = false;
             try {
-                systools::SetUpMonomers(monomers_not_in_db, tmpsites, tmpnat, tmpfirst_index);
+                systools::SetUpMonomers(monomers_not_in_db, tmpsites, tmpnat, tmpfirst_index, empty_j);
             } catch (CUException &e) {
                 monomer_not_in_database = true;
             }
@@ -1392,6 +1395,7 @@ TEST_CASE("systools::SetVSites") {
 
 TEST_CASE("systools::SetCharges") {
     SETUP_MONMIX
+    nlohmann::json empty_j;
     for (size_t i = 0; i < n_monomers; i++) {
         std::string monname = monomer_names[i];
         SECTION(monname) {
@@ -1401,7 +1405,7 @@ TEST_CASE("systools::SetCharges") {
             std::vector<double> chg_der(27 * n_mon, 0.0);
             std::vector<double> chg(n_sites, 0.0);
 
-            systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der);
+            systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der, empty_j);
 
             for (size_t k = 0; k < nsites; k++) {
                 REQUIRE(chg[k + fi] == Approx(charges[k + fi]).margin(TOL));
@@ -1443,14 +1447,14 @@ TEST_CASE("systools::SetCharges") {
         std::vector<double> chg(charges_expected.size(), 0.0);
         std::vector<double> chg_der(charge_der_expected.size(), 0.0);
 
-        systools::SetCharges(xyz, chg, monname, nmon, nsites, fi, chg_der);
+        systools::SetCharges(xyz, chg, monname, nmon, nsites, fi, chg_der, empty_j);
 
         fi = 8;
         nsites = 5;
         nmon = 1;
         monname = "ch4";
 
-        systools::SetCharges(xyz, chg, monname, nmon, nsites, fi, chg_der);
+        systools::SetCharges(xyz, chg, monname, nmon, nsites, fi, chg_der, empty_j);
 
         for (size_t i = 0; i < charges_expected.size(); i++) {
             REQUIRE(chg[i] == Approx(charges_expected[i]).margin(TOL));
@@ -1464,6 +1468,7 @@ TEST_CASE("systools::SetCharges") {
 
 TEST_CASE("systools::SetPol") {
     SETUP_MONMIX
+    nlohmann::json empty_j;
     for (size_t i = 0; i < n_monomers; i++) {
         std::string monname = monomer_names[i];
         SECTION(monname) {
@@ -1472,7 +1477,7 @@ TEST_CASE("systools::SetPol") {
             size_t fi = first_index[i];
             std::vector<double> pol_out(n_sites, 0.0);
 
-            systools::SetPol(pol_out, monname, n_mon, nsites, fi);
+            systools::SetPol(pol_out, monname, n_mon, nsites, fi, empty_j);
 
             for (size_t k = 0; k < nsites; k++) {
                 REQUIRE(pol_out[k + fi] == Approx(pol[k + fi]).margin(TOL));
@@ -1483,6 +1488,7 @@ TEST_CASE("systools::SetPol") {
 
 TEST_CASE("systools::SetPolfac") {
     SETUP_MONMIX
+    nlohmann::json empty_j;
     for (size_t i = 0; i < n_monomers; i++) {
         std::string monname = monomer_names[i];
         SECTION(monname) {
@@ -1491,7 +1497,7 @@ TEST_CASE("systools::SetPolfac") {
             size_t fi = first_index[i];
             std::vector<double> polfac_out(n_sites, 0.0);
 
-            systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi);
+            systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi, empty_j);
 
             for (size_t k = 0; k < nsites; k++) {
                 REQUIRE(polfac_out[k + fi] == Approx(polfac[k + fi]).margin(TOL));
@@ -1502,6 +1508,7 @@ TEST_CASE("systools::SetPolfac") {
 
 TEST_CASE("systools::SetC6LongRange") {
     SETUP_MONMIX
+    nlohmann::json empty_j;
     for (size_t i = 0; i < n_monomers; i++) {
         std::string monname = monomer_names[i];
         SECTION(monname) {
@@ -1510,7 +1517,7 @@ TEST_CASE("systools::SetC6LongRange") {
             size_t fi = first_index_realSites[i];
             std::vector<double> c6_out(n_atoms, 0.0);
 
-            systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi);
+            systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi, empty_j);
 
             for (size_t k = 0; k < natoms; k++) {
                 REQUIRE(c6_out[k + fi] == Approx(C6_long_range[k + fi]).margin(TOL));

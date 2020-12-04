@@ -158,7 +158,7 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
  * @return Total number of sites
  */
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
-                     std::vector<size_t> &fi_at, nlohmann::json mon_j = {});
+                     std::vector<size_t> &fi_at, nlohmann::json mon_j);
 
 /**
  * @brief Makes sure that the coordinates of all atoms of the same monomer
@@ -444,10 +444,10 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
  * @param[in] fst_ind First index of first monomer of type mon_id
  * @param[out] chg_der Vector of doubles that will be filled with the charge
  * gradients of the position dependent charges
- * @param[in] mon_j Json object with extra charge definitions
+ * @param[in] mon_j Json object with extra monomer definitions
  */
 void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
-                size_t fst_ind, std::vector<double> &chg_der, nlohmann::json mon_j = {});
+                size_t fst_ind, std::vector<double> &chg_der, nlohmann::json mon_j);
 
 /**
  * @brief Sets the polarizability factors of a system.
@@ -460,9 +460,10 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
  * @param[in] n_mon Number of monomers of type mon_id
  * @param[in] nsites Number of sites of monomer type mon_id
  * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[in] mon_j Json object with extra monomer definitions
  */
 void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind,
-               nlohmann::json mon_j = {});
+               nlohmann::json mon_j);
 
 /**
  * @brief Sets the polarizabilities of a system.
@@ -475,9 +476,10 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
  * @param[in] n_mon Number of monomers of type mon_id
  * @param[in] nsites Number of sites of monomer type mon_id
  * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[in] mon_j Json object with extra monomer definitions
  */
 void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind,
-            nlohmann::json mon_j = {});
+            nlohmann::json mon_j);
 
 /**
  * @brief Sets the C6 "charge" for each atom of a system.
@@ -490,9 +492,10 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
  * @param[in] n_mon Number of monomers of type mon_id
  * @param[in] natoms Number of real atoms of monomer type mon_id
  * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[in] mon_j Json object with extra monomer definitions
  */
 void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
-                    nlohmann::json mon_j = {});
+                    nlohmann::json mon_j);
 
 /**
  * @brief Redistributes the virtual site gradients into the real atoms
