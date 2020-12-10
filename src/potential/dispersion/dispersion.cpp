@@ -335,6 +335,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         size_t ns = num_atoms_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
+        std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
 
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
@@ -377,17 +378,16 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
 
                     if (include_monomer) {
-                        double p1[3], g1[3];
+                        std::vector<double> p1(3, 0.0);
+                        std::vector<double> g1(3, 0.0);
                         double phi_i = 0.0;
-                        p1[0] = xyz_[fi_crd + inmon3 + m];
-                        p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
-                        p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
-                        std::fill(g1, g1 + 3, 0.0);
+                        p1[0] = xyz_mt[inmon3 + m];
+                        p1[1] = xyz_mt[inmon3 + nmon + m];
+                        p1[2] = xyz_mt[inmon3 + nmon2 + m];
                         energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
-                                  phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor, do_grads_,
-                                  cutoff_, ewald_alpha_, box_, box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon,
-                                  &virial_pool[rank]);
+                            disp6(c6, d6, c6i, c6j, p1, xyz_mt, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
+                                  m, m + 1, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
+                                  box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank]);
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
                         grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
@@ -441,6 +441,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
+            std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
 
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
@@ -489,10 +490,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         double c6, d6;
                         GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, repdisp_j_);
                         energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
-                                  grad2_pool[rank].data(), phi_i, phi2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
-                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_, use_ghost, islocal_,
-                                  fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                            disp6(c6, d6, c6i, c6j, xyz_sitei, xyz_mt2, g1, grad2_pool[rank], phi_i, phi2_pool[rank],
+                                  nmon1, nmon2, m2init, nmon2, i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_,
+                                  box_inverse_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
