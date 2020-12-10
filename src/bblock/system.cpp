@@ -1290,6 +1290,8 @@ void System::SetUpFromJson(char *json_file) {
                                   {"ttm_pairs", nlohmann::json::array()},
                                   {"ff_mons", nlohmann::json::array()},
                                   {"connectivity_file", ""},
+                                  {"nonbonded_file", ""},
+                                  {"monomers_file", ""},
                                   {"ignore_1b_poly", nlohmann::json::array()},
                                   {"ignore_2b_poly", nlohmann::json::array()},
                                   {"ignore_3b_poly", nlohmann::json::array()}}},
@@ -1612,6 +1614,10 @@ void System::SetConnectivity(std::unordered_map<std::string, eff::Conn> connecti
 double System::Energy(bool do_grads) {
     // Check if system has been initialized
     // If not, throw exception
+    if (!initialized_) {
+        SetUpFromJson();
+    }
+
     if (!initialized_) {
         std::string text =
             std::string("System has not been initialized. ") + std::string("Energy calculation not possible.");
