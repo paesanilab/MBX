@@ -21,6 +21,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-connectivity.cpp
     unittest-ffcalculators.cpp
     unittest-energyff.cpp
+    unittest-disptools.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
