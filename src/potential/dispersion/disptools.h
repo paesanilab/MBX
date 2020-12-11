@@ -39,6 +39,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <iostream>
+#include <iomanip>
 
 #include "tools/math_tools.h"
 #include "json/json.h"
@@ -135,7 +137,7 @@ double tang_toennies(int n, const double& x);
  * @param[in] islocal
  * @param[in] isl1_offset
  * @param[in] isl2_offset
- * @param[in,out] virial Virial tensor of teh system
+ * @param[in,out] virial Virial tensor of the system
  * @return Sum of all the dispersion energies for all the atoms involved in the pair i,j
  */
 double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,

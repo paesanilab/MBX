@@ -52,7 +52,6 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     use_pbc_ = box.size();
-
     natoms_ = sys_c6_long_range_.size();
     size_t natoms3 = 3 * natoms_;
     phi_ = std::vector<double>(natoms_, 0.0);

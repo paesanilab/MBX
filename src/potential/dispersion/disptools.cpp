@@ -84,6 +84,80 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
              const double cutoff, const double ewald_alpha, const std::vector<double>& box,
              const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
              const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "C6 = " << C6 << " , d6 = " << d6 << " , c6i = " << c6i << " , c6j = " << c6j << std::endl;
+
+    std::cerr << "p1:\n ";
+    for (size_t i = 0; i < p1.size(); i++) {
+        std::cerr << p1[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "xyz2:\n ";
+    for (size_t i = 0; i < xyz2.size(); i++) {
+        std::cerr << xyz2[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "grad1:\n ";
+    for (size_t i = 0; i < grad1.size(); i++) {
+        std::cerr << grad1[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "grad2:\n ";
+    for (size_t i = 0; i < grad2.size(); i++) {
+        std::cerr << grad2[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "phi1 = " << phi1 << std::endl;
+
+    std::cerr << "phi2:\n ";
+    for (size_t i = 0; i < phi2.size(); i++) {
+        std::cerr << phi2[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "nmon1 = " << nmon1 << " , nmon2 = " << nmon2 << " , start2 = " << start2 << " , end2 = " << end2
+              << std::endl;
+    std::cerr << "atom_index1 = " << atom_index1 << " , atom_index2 = " << atom_index2
+              << " , dip_scale_factor = " << disp_scale_factor << " , do_grads = " << do_grads << std::endl;
+    std::cerr << "cutoff = " << cutoff << " , ewald_alpha = " << ewald_alpha << " , use_ghost = " << use_ghost
+              << std::endl;
+
+    std::cerr << "box:\n ";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "box inverse:\n ";
+    for (size_t i = 0; i < box_inverse.size(); i++) {
+        std::cerr << box_inverse[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "islocal:\n ";
+    for (size_t i = 0; i < islocal.size(); i++) {
+        std::cerr << islocal[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n ";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "isl1_offset = " << isl1_offset << " , isl2_offset = " << isl2_offset << std::endl;
+
+#endif
+
     double disp = 0.0;
     double disp_lr_below_cutoff = 0.0;
 
@@ -222,6 +296,41 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             grad2[shift2 + nmon22 + i] += g2[nmon22 + i];
         }
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "grad1:\n ";
+    for (size_t i = 0; i < grad1.size(); i++) {
+        std::cerr << grad1[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "grad2:\n ";
+    for (size_t i = 0; i < grad2.size(); i++) {
+        std::cerr << grad2[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "phi1 = " << phi1 << std::endl;
+
+    std::cerr << "phi2:\n ";
+    for (size_t i = 0; i < phi2.size(); i++) {
+        std::cerr << phi2[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n ";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "dispersion_energy = " << dispersion_energy << std::endl;
+#endif
 
     return dispersion_energy;
 }

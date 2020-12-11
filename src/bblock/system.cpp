@@ -61,6 +61,47 @@ System::System() {
     monomer_json_read_ = false;
     mpi_initialized_ = false;
     simcell_periodic_ = false;
+
+    // Define some of the parameters
+
+    /////////////
+    // CUTOFFS //
+    /////////////
+
+    // Setting 2B cutoff
+    // Affects the 2B dispersion and 2B polynomials
+    // TODO make it effective for electrostatics too
+    cutoff2b_ = 50.0;
+
+    // Setting 3B cutoff
+    // Affects the 3B polynomials
+    cutoff3b_ = 5.0;
+
+    ////////////////////////
+    // Evaluation batches //
+    ////////////////////////
+
+    // Maximum number in the batch for the 1B evaluation
+    maxNMonEval_ = 1024;
+    // Maximum number in the batch for the 2B evaluation
+    maxNDimEval_ = 1024;
+    // Maximum number in the batch for the 3B evaluation
+    maxNTriEval_ = 1024;
+
+    // Setting dipole tolerance to a consrvative value
+    // TODO make it be error/dipole, not total error as it is now
+    diptol_ = 1E-16;
+    // Sets the maximum number of iteartions in the induced dipole
+    // calculation. Will assume no convergence if this number is reached
+    maxItDip_ = 100;
+    // Sets the default method to calculate induced dipoles to ASPC
+    dipole_method_ = "cg";
+
+    // Define the virial vector
+    virial_ = std::vector<double>(9, 0.0);
+
+    grid_fftdim_elec_ = std::vector<int>{};
+    grid_fftdim_disp_ = std::vector<int>{};
 }
 System::~System() {}
 
@@ -627,34 +668,6 @@ void System::Initialize() {
     std::cout << std::scientific << std::setprecision(10);
 #endif
 
-    /////////////
-    // CUTOFFS //
-    /////////////
-
-    // Setting 2B cutoff
-    // Affects the 2B dispersion and 2B polynomials
-    // TODO make it effective for electrostatics too
-    cutoff2b_ = 50.0;
-
-    // Setting 3B cutoff
-    // Affects the 3B polynomials
-    cutoff3b_ = 5.0;
-
-    ////////////////////////
-    // Evaluation batches //
-    ////////////////////////
-
-    // Maximum number in the batch for the 1B evaluation
-    maxNMonEval_ = 1024;
-    // Maximum number in the batch for the 2B evaluation
-    maxNDimEval_ = 1024;
-    // Maximum number in the batch for the 3B evaluation
-    maxNTriEval_ = 1024;
-
-    //////////////////////////////////
-    // Periodic boundary conditions //
-    //////////////////////////////////
-
     /////////////////////////////
     // Add monomer information //
     /////////////////////////////
@@ -663,57 +676,15 @@ void System::Initialize() {
     // and monomer id, such as number of sites, and orders the monomers
     AddMonomerInfo();
 
-    //    // First try to do it. If Json file is not loaded, monomer info will not be there and need to wait.
-    //
-    //    // Copy data inc ase initialization is supposed to fail because monomer is in json instead of hardcoded
-    //    std::vector<double> xyz_cp = xyz_;
-    //    std::vector<std::string> atoms_cp = atoms_;
-    //    std::vector<int> atom_tag_cp = atom_tag_;
-    //    std::vector<std::string> monomers_cp = monomers_;
-    //    std::vector<size_t> sites_cp = sites_;
-    //    std::vector<size_t> nat_cp = nat_;
-    //    try {
-    //        AddMonomerInfo();
-    //    } catch (CUException e) {
-    //        if (monomer_json_read_) {
-    //            std::string text = std::string(e.what()) + std::string("\nMonomer id not found in json file or
-    //            hardcoded"); throw CUException(__func__, __FILE__, __LINE__, text);
-    //        }
-    //        // Revert back possible changes
-    //        xyz_ = xyz_cp;
-    //        atoms_ = atoms_cp;
-    //        atom_tag_ = atom_tag_cp;
-    //        monomers_ = monomers_cp;
-    //        sites_ = sites_cp;
-    //        nat_ = nat_cp;
-    //        return;
-    //    }
-
     // Setting the number of molecules and number of monomers
     nummol = molecules_.size();
     nummon_ = monomers_.size();
 
-    ////////////////////
-    // ELECTROSTATICS //
-    ////////////////////
-
-    // Setting dipole tolerance to a consrvative value
-    // TODO make it be error/dipole, not total error as it is now
-    diptol_ = 1E-16;
-    // Sets the maximum number of iteartions in the induced dipole
-    // calculation. Will assume no convergence if this number is reached
-    maxItDip_ = 100;
-    // Sets the default method to calculate induced dipoles to ASPC
-    dipole_method_ = "cg";
-
     // Setting PBC to false by default
-    SetPBC();
+    SetPBC(box_);
 
     // Set C6 for long range pme
     SetC6LongRange();
-
-    // Define the virial vector
-    virial_ = std::vector<double>(9, 0.0);
 
     // With the information previously set, we initialize the
     // electrostatics class
@@ -728,9 +699,6 @@ void System::Initialize() {
     if (mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
     buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, enforce_ttm_for_idx_, islocal_, true, box_);
-
-    grid_fftdim_elec_ = std::vector<int>{};
-    grid_fftdim_disp_ = std::vector<int>{};
 
     // We are done. Setting initialized_ to true
     initialized_ = true;
@@ -749,38 +717,6 @@ void System::InitializePME() {
     std::cout << std::scientific << std::setprecision(10);
 #endif
 
-    /////////////
-    // CUTOFFS //
-    /////////////
-
-    // Setting 2B cutoff
-    // Affects the 2B dispersion and 2B polynomials
-    // TODO make it effective for electrostatics too
-    cutoff2b_ = 50.0;
-
-    // Setting 3B cutoff
-    // Affects the 3B polynomials
-    cutoff3b_ = 5.0;
-
-    ////////////////////////
-    // Evaluation batches //
-    ////////////////////////
-
-    // Maximum number in the batch for the 1B evaluation
-    maxNMonEval_ = 1024;
-    // Maximum number in the batch for the 2B evaluation
-    maxNDimEval_ = 1024;
-    // Maximum number in the batch for the 3B evaluation
-    maxNTriEval_ = 1024;
-
-    //////////////////////////////////
-    // Periodic boundary conditions //
-    //////////////////////////////////
-
-    /////////////////////////////
-    // Add monomer information //
-    /////////////////////////////
-
     // Retrieves all the monomer information given the coordinates
     // and monomer id, such as number of sites, and orders the monomers
     numat_ = 0;
@@ -790,27 +726,11 @@ void System::InitializePME() {
     nummol = 0;
     nummon_ = 0;
 
-    ////////////////////
-    // ELECTROSTATICS //
-    ////////////////////
-
-    // Setting dipole tolerance to a consrvative value
-    // TODO make it be error/dipole, not total error as it is now
-    diptol_ = 1E-16;
-    // Sets the maximum number of iteartions in the induced dipole
-    // calculation. Will assume no convergence if this number is reached
-    maxItDip_ = 100;
-    // Sets the default method to calculate induced dipoles to ASPC
-    dipole_method_ = "cg";
-
     // Setting PBC to false by default
-    SetPBC();
+    SetPBC(box_);
 
     // Set C6 for long range pme
     SetC6LongRange();
-
-    // Define the virial vector
-    virial_ = std::vector<double>(9, 0.0);
 
     // With the information previously set, we initialize the
     // electrostatics class
@@ -907,8 +827,10 @@ void System::SetUpFromJson(nlohmann::json j) {
     // Default: no box (empty vector)
     std::vector<double> box;
     try {
+        std::cout << j << std::endl;
         std::vector<double> box2 = j["MBX"]["box"];
         box = box2;
+        std::cout << j << std::endl;
     } catch (...) {
         box.clear();
         std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
@@ -1614,6 +1536,7 @@ void System::SetConnectivity(std::unordered_map<std::string, eff::Conn> connecti
 double System::Energy(bool do_grads) {
     // Check if system has been initialized
     // If not, throw exception
+
     if (!initialized_) {
         SetUpFromJson();
     }
@@ -2885,7 +2808,6 @@ double System::GetDispersion(bool do_grads, bool use_ghost) {
         }
         count += 3 * nat_[i];
     }
-
     dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersion(real_grad, &virial_, use_ghost);
