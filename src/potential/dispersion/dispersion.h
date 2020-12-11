@@ -50,36 +50,112 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
 
-//#include "helpme.h"
-
 #ifndef MPI_VERSION
 // typedef struct ompi_communicator_t *MPI_Comm;
 typedef int MPI_Comm;
 #endif
 
+/**
+ * @file dispersion.h
+ * @brief Dispersion class definition, along with all its member functions
+ * and variables
+ */
+
+/**
+ * @namespace disp
+ * @brief Contains all the dispersion related functions
+ */
 namespace disp {
 
+/**
+ * @class Dispersion
+ * @brief Class that calculates the dispersion energy of a system given its information
+ */
 class Dispersion {
    public:
+    /**
+     * @brief Default constructor for the class
+     */
     Dispersion(){};
+
+    /**
+     * @brief Default destructor for the class
+     */
     ~Dispersion(){};
 
+    /**
+     * @brief Initializes the class with the relevant information to know the system
+     * @param[in] C6_long_range Vector of doubles with the "dispersion charge" of each atom
+     * @param[in] sys_xyz Vector of doubles with the xyz coordinates in system order
+     * @param[in] mon_id Vector of stings witht he monomer ids of each monomer
+     * @param[in] num_atoms Vector of size_t witht he number of atoms of each monomer
+     * @param[in] mon_type_count Vector of pairs with a count on how many monomers of each type are there
+     * @param[in] islocal_ Vector of size_t specifying which monomers are own by this process (1) and which are not (0)
+     * @param[in] do_grads Bool specifying if grads must be calculated or not
+     * @param[in] box Vector of 9 elements (or 0) containing the box vectors (v1x,v1y,v1z,v2x..)
+     */
     void Initialize(const std::vector<double> C6_long_range, const std::vector<double> &sys_xyz,
                     const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
                     const std::vector<size_t> &islocal_, const bool do_grads = true,
                     const std::vector<double> &box = {});
 
+    /**
+     * @brief Sets the grids __CHRIS_HELP_DOCS__
+     * @param[in] world_
+     * @param[in] proc_grid_x
+     * @param[in] proc_grid_y
+     * @param[in] proc_grid_z
+     */
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
 
+    /**
+     * @brief Calculates the dispersion energy
+     * @param[in,out] grad Gradients of the system. Will be updated on exit.
+     * @param[in,out] virial Pointer to a vector containing the virial. Will be updated on exit
+     * @param[in] use_ghost Indicates if ghost monomers will be used or not
+     * @return Dispersion energy
+     */
     double GetDispersion(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
+
+    /**
+     * @brief Calculates the dispersion energy __CHRIS_HELP_DOCS__
+     * @param[in,out] grad Gradients of the system. Will be updated on exit.
+     * @param[in,out] virial Pointer to a vector containing the virial. Will be updated on exit
+     * @param[in] use_ghost Indicates if ghost monomers will be used or not
+     * @return Dispersion energy
+     */
     double GetDispersionPME(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
+
+    /**
+     * @brief Calculates the dispersion energy __CHRIS_HELP_DOCS__
+     * @param[in,out] grad Gradients of the system. Will be updated on exit.
+     * @param[in,out] virial Pointer to a vector containing the virial. Will be updated on exit
+     * @param[in] use_ghost Indicates if ghost monomers will be used or not
+     * @return Dispersion energy
+     */
     double GetDispersionPMElocal(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
 
+    /**
+     * @brief Updates the dynamic system information
+     * @param[in] xyz Vector with the coordinates in system order
+     * @param[in] do_grads Indicates if gradient swill be calculated or not
+     * @param[in] cutoff Cutoff of the real space
+     * @param[in] box Vector of 9 elements (or 0) containing the box vectors (v1x,v1y,v1z,v2x..)
+     */
     void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
 
+    /**
+     * @brief Sets the json object containing extra info about non-bonded parameters in the class
+     * @param[in] repdisp_j Json object with the parameters
+     */
     void SetJsonDispersionRepulsion(nlohmann::json repdisp_j);
+
+    /**
+     * @brief Sets the json object containing extra info about monomers
+     * @param[in] mon_j Json object with the parameters
+     */
     void SetJsonMonomers(nlohmann::json mon_j);
 
     /**
