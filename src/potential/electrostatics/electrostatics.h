@@ -452,6 +452,9 @@ class Electrostatics {
     size_t nncomm_nswap;
     std::vector<int> nncomm_sendproc;
     std::vector<int> nncomm_recvproc;
+
+    std::vector<double> nncomm_boxlo;
+    std::vector<double> nncomm_boxhi;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

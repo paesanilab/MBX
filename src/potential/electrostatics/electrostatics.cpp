@@ -2516,9 +2516,9 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	  
 	  // is monomer local?
 	  if(!islocal_[fi_mon + m]) {
-	    // in_v[fi_crd + inmon3 +         m] = 0.0;
-	    // in_v[fi_crd + inmon3 + nmon +  m] = 0.0;
-	    // in_v[fi_crd + inmon3 + nmon2 + m] = 0.0;
+	    in_v[fi_crd + inmon3 +         m] = 0.0;
+	    in_v[fi_crd + inmon3 + nmon +  m] = 0.0;
+	    in_v[fi_crd + inmon3 + nmon2 + m] = 0.0;
 	  }
 	    
 	}
@@ -5930,20 +5930,38 @@ void Electrostatics::nncomm_setup() {
   nncomm_nswap = 0;
   nncomm_sendproc = std::vector<int>{};
   nncomm_recvproc = std::vector<int>{};
+
+  nncomm_boxlo = std::vector<double>{};
+  nncomm_boxhi = std::vector<double>{};
   
   // find my proc grid location ; order hardcoded to match PME solver order ZYX
 
   int myloc_x = mpi_rank_ % proc_grid_x_;
   int myloc_y = (mpi_rank_ % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
   int myloc_z = mpi_rank_ / (proc_grid_x_ * proc_grid_y_);
-
-  // find mpi ranks for 6-stencil neighbors
-  // +/- x dimension
   
   int x = myloc_x + 1;
   int y = myloc_y;
   int z = myloc_z;
 
+  // bounding box of sub-domain
+
+  double fracx = 1.0 / (double) proc_grid_x_;
+  double fracy = 1.0 / (double) proc_grid_y_;
+  double fracz = 1.0 / (double) proc_grid_z_;
+  
+  nncomm_boxlo.push_back( (double) myloc_x * fracx );
+  nncomm_boxhi.push_back( (double) (myloc_x + 1) * fracx);
+  
+  nncomm_boxlo.push_back( (double) myloc_y * fracy );
+  nncomm_boxhi.push_back( (double) (myloc_y + 1) * fracy);
+  
+  nncomm_boxlo.push_back( (double) myloc_z * fracz );
+  nncomm_boxhi.push_back( (double) (myloc_z + 1) * fracz);
+  
+  // find mpi ranks for 6-stencil neighbors
+  // +/- x dimension
+  
   if(x == proc_grid_x_)
     if(simcell_periodic_) x = 0;
     else x = myloc_x;
@@ -6032,6 +6050,14 @@ void Electrostatics::nncomm_setup() {
 	" neigh_procs= " << rmx << " " << rpx << "   " << rmy << " " << rpy << "   " << rmz << " " <<
 	rpz << "  nswap= " << nncomm_nswap << std::endl;
 
+      std::cout << "          boxlo= ";
+      for(int j=0; j<3; ++j) std::cout << " " << nncomm_boxlo[j];
+      std::cout << std::endl;
+      
+      std::cout << "          boxhi= ";
+      for(int j=0; j<3; ++j) std::cout << " " << nncomm_boxhi[j];
+      std::cout << std::endl;
+      
       std::cout << "          sendproc= ";
       for(int j=0; j<nncomm_nswap; ++j) std::cout << " " << nncomm_sendproc[j];
       std::cout << std::endl;
