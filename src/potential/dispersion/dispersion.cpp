@@ -37,6 +37,26 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace disp {
 
+std::vector<size_t> Dispersion::GetIsLocal() { return islocal_; }
+std::vector<std::string> Dispersion::GetMonIds() { return mon_id_; }
+std::vector<size_t> Dispersion::GetNumAtomsVector() { return num_atoms_; }
+std::vector<std::pair<std::string, size_t> > Dispersion::GetMonTypeCount() { return mon_type_count_; }
+bool Dispersion::GetDoGrads() { return do_grads_; }
+std::vector<double> Dispersion::GetBox() { return box_; }
+std::vector<double> Dispersion::GetBoxAbc() { return box_ABCabc_; }
+std::vector<double> Dispersion::GetBoxInverse() { return box_inverse_; }
+std::vector<double> Dispersion::GetSystemDispersionField() { return sys_phi_; }
+std::vector<double> Dispersion::GetInternalDispersionField() { return phi_; }
+std::vector<double> Dispersion::GetSystemXyz() { return sys_xyz_; }
+std::vector<double> Dispersion::GetInternalXyz() { return xyz_; }
+std::vector<double> Dispersion::GetInternalGrads() { return grad_; }
+std::vector<double> Dispersion::GetSystemGrads() { return sys_grad_; }
+std::vector<double> Dispersion::GetSystemC6LongRange() { return sys_c6_long_range_; }
+std::vector<double> Dispersion::GetInternalC6LongRange() { return c6_long_range_; }
+std::vector<double> Dispersion::GetVirial() { return virial_; }
+std::vector<size_t> Dispersion::GetIsLocalAtom() { return islocal_atom_; }
+std::vector<int> Dispersion::GetUserFFTGrid() { return user_fft_grid_; }
+
 void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,

@@ -207,6 +207,84 @@ class Dispersion {
      */
     void SetFFTDimension(std::vector<int> grid);
 
+    // Getters
+    /**
+     * @brief Returns the IsLocal variable in the class
+     */
+    std::vector<size_t> GetIsLocal();
+    /**
+     * @brief Returns the monomers ids variable in the class
+     */
+    std::vector<std::string> GetMonIds();
+    /**
+     * @brief Returns the vector with number of atoms in the class
+     */
+    std::vector<size_t> GetNumAtomsVector();
+    /**
+     * @brief Returns the count of monomers of each type variable in the class
+     */
+    std::vector<std::pair<std::string, size_t> > GetMonTypeCount();
+    /**
+     * @brief Returns the do_grads variable in the class
+     */
+    bool GetDoGrads();
+    /**
+     * @brief Returns the box variable in the class
+     */
+    std::vector<double> GetBox();
+    /**
+     * @brief Returns the box in ABCabc notation variable in the class
+     */
+    std::vector<double> GetBoxAbc();
+    /**
+     * @brief Returns the box inverse variable in the class
+     */
+    std::vector<double> GetBoxInverse();
+    /**
+     * @brief Returns the dispersion field variable in system order in the class
+     */
+    std::vector<double> GetSystemDispersionField();
+    /**
+     * @brief Returns the dispersion field variable in internal in the class
+     */
+    std::vector<double> GetInternalDispersionField();
+    /**
+     * @brief Returns the xyz variable in system order in the class
+     */
+    std::vector<double> GetSystemXyz();
+    /**
+     * @brief Returns the xyz variable in internal order in the class
+     */
+    std::vector<double> GetInternalXyz();
+    /**
+     * @brief Returns the gradients in internal order in the class
+     */
+    std::vector<double> GetInternalGrads();
+    /**
+     * @brief Returns the gradients in system order in the class
+     */
+    std::vector<double> GetSystemGrads();
+    /**
+     * @brief Returns the c6 charge variable in system order in the class
+     */
+    std::vector<double> GetSystemC6LongRange();
+    /**
+     * @brief Returns the c6 charge variable internal order in the class
+     */
+    std::vector<double> GetInternalC6LongRange();
+    /**
+     * @brief Returns the  variable in the class
+     */
+    std::vector<double> GetVirial();
+    /**
+     * @brief Returns the IsLocal variable in the class
+     */
+    std::vector<size_t> GetIsLocalAtom();
+    /**
+     * @brief Returns the IsLocal variable in the class
+     */
+    std::vector<int> GetUserFFTGrid();
+
    private:
     void ReorderData();
     void CalculateDispersion(bool use_ghost = 0);
