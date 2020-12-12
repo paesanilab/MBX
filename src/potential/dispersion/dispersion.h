@@ -46,6 +46,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #endif
 
 #include "potential/dispersion/disptools.h"
+#include "potential/electrostatics/helpme.h"
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
@@ -284,6 +285,10 @@ class Dispersion {
      * @brief Returns the IsLocal variable in the class
      */
     std::vector<int> GetUserFFTGrid();
+    /**
+     * @brief Gets the cutoff for real space interactions
+     */
+    double GetCutoff();
 
    private:
     void ReorderData();

@@ -33,7 +33,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "potential/dispersion/dispersion.h"
-#include "potential/electrostatics/helpme.h"
 
 namespace disp {
 
@@ -56,11 +55,61 @@ std::vector<double> Dispersion::GetInternalC6LongRange() { return c6_long_range_
 std::vector<double> Dispersion::GetVirial() { return virial_; }
 std::vector<size_t> Dispersion::GetIsLocalAtom() { return islocal_atom_; }
 std::vector<int> Dispersion::GetUserFFTGrid() { return user_fft_grid_; }
+double Dispersion::GetCutoff() { return cutoff_; }
 
 void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
                             const std::vector<size_t> &islocal, const bool do_grads, const std::vector<double> &box) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "SysC6LongRange:\n";
+    for (size_t i = 0; i < sys_c6_long_range.size(); i++) {
+        std::cerr << sys_c6_long_range[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < sys_xyz.size(); i++) {
+        std::cerr << sys_xyz[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "mon_id:\n";
+    for (size_t i = 0; i < mon_id.size(); i++) {
+        std::cerr << mon_id[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "num_atoms:\n";
+    for (size_t i = 0; i < num_atoms.size(); i++) {
+        std::cerr << num_atoms[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "mon_type_count:\n";
+    for (size_t i = 0; i < mon_type_count.size(); i++) {
+        std::cerr << " { " << mon_type_count[i].first << " , " << mon_type_count[i].second << " } , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "islocal:\n";
+    for (size_t i = 0; i < islocal.size(); i++) {
+        std::cerr << islocal[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "box:\n";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "doGrads = " << do_grads << std::endl;
+#endif
+
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
     islocal_ = islocal;
@@ -93,6 +142,29 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     user_fft_grid_ = std::vector<int>{};
 
     ReorderData();
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "c6_long_range_ internal:\n";
+    for (size_t i = 0; i < c6_long_range_.size(); i++) {
+        std::cerr << c6_long_range_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "xyz internal:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "is_local_atom internal:\n";
+    for (size_t i = 0; i < islocal_atom_.size(); i++) {
+        std::cerr << islocal_atom_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 void Dispersion::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
@@ -108,6 +180,26 @@ void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, 
 
 void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads = true, const double cutoff = 100.0,
                                   const std::vector<double> &box = {}) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < xyz.size(); i++) {
+        std::cerr << xyz[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "box:\n";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "doGrads = " << do_grads << std::endl;
+    std::cerr << "cutoff = " << cutoff << std::endl;
+#endif
+
     sys_xyz_ = xyz;
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
@@ -122,6 +214,17 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     box_PMElocal_ = {};
 
     ReorderData();
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "xyz internal:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 void Dispersion::SetBoxPMElocal(std::vector<double> box) {
