@@ -170,6 +170,9 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 void Dispersion::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
 void Dispersion::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
 
+nlohmann::json Dispersion::GetJsonDispersionRepulsion() { return repdisp_j_; }
+nlohmann::json Dispersion::GetJsonMonomers() { return mon_j_; }
+
 void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
     mpi_initialized_ = true;
     world_ = world;
@@ -269,6 +272,27 @@ void Dispersion::ReorderData() {
 }
 
 double Dispersion::GetDispersion(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "grad:\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "use_ghost = " << use_ghost << std::endl;
+#endif
+
     calc_virial_ = false;
 
     if (virial != 0) {
@@ -316,6 +340,27 @@ double Dispersion::GetDispersion(std::vector<double> &grad, std::vector<double> 
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "grad:\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "Dispersion energy = " << disp_energy_ << std::endl;
+#endif
 
     return disp_energy_;
 }

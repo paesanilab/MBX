@@ -289,6 +289,14 @@ class Dispersion {
      * @brief Gets the cutoff for real space interactions
      */
     double GetCutoff();
+    /**
+     * @brief Gets the current dispersion repulsion json
+     */
+    nlohmann::json GetJsonDispersionRepulsion();
+    /**
+     * @brief Gets the current monomer info json
+     */
+    nlohmann::json GetJsonMonomers();
 
    private:
     void ReorderData();
