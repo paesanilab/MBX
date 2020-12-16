@@ -32,8 +32,8 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef LJTOOLS_NEW_H
-#define LJTOOLS_NEW_H
+#ifndef LJTOOLS_H
+#define LJTOOLS_H
 
 #include <cmath>
 #include <algorithm>
@@ -47,7 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 /**
  * @file ljtools.h
- * @brief Contains the helper functions for the dispersion class
+ * @brief Contains the helper functions definition for the LennardJones class
  */
 
 /**
@@ -63,6 +63,8 @@ namespace lj {
  * involving atom 1 and all the atoms of type 2. The coordinates of the second atom are in vectorized form.
  * @param[in] eps Epsilon coefficient for the expression 4*eps*( (sigma/r)^12 - (sigma/r)^6 )
  * @param[in] sigma Sigma coefficient for the expression 4*eps*( (sigma/r)^12 - (sigma/r)^6 )
+ * @param[in] ljchgi Lennard-Jones "charge" for atom i, only for attractive part
+ * @param[in] ljchgj Lennard-Jones "charge" for atom j, only for attractive part
  * @param[in] p1 Pointer to double array with the coordinates of atom1. Length is 3.
  * @param[in] xyz2 Pointer to double array with the coordinates of atom2. The origin of the pointer is the first
  * coordinate of the monomer type 2, and will be in xxxxx[at1]yyyyy[at1]zzzzzz[at1]xxxx[at2]... and so on. See the
@@ -95,13 +97,13 @@ namespace lj {
  * @param[in,out] virial Virial tensor of the system
  * @return Sum of all the LJ energies for all the atoms involved in the pair i,j
  */
-double lj(const double eps, const double sigma, const std::vector<double>& p1,
-             const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
-             std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
-             const size_t atom_index1, const size_t atom_index2, const double lj_scale_factor, bool do_grads,
-             const double cutoff, const double ewald_alpha, const std::vector<double>& box,
-             const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
-             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial = 0);
+double lj(const double eps, const double sigma, double ljchgi, double ljchgj, const std::vector<double>& p1,
+          const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
+          std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
+          const size_t atom_index1, const size_t atom_index2, const double lj_scale_factor, bool do_grads,
+          const double cutoff, const double ewald_alpha, const std::vector<double>& box,
+          const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
+          const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial = 0);
 
 /**
  * @brief Retrieves the parameters for lj energy
@@ -117,9 +119,9 @@ double lj(const double eps, const double sigma, const std::vector<double>& p1,
  * @param[out] out_sigma Contains the parameter sigma corresponding to the atoms i,j of monomers 1 and 2.
  * @param[in] lj_j JSON object witht the extra nonbonded pair information
  */
-void GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon, double& out_sigma,
-           nlohmann::json lj_j = {});
+void GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon,
+                 double& out_sigma, nlohmann::json lj_j = {});
 
-}  // namespace disp
+}  // namespace lj
 
 #endif  // LJTOOLS_H

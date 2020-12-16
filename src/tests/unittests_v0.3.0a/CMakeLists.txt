@@ -23,6 +23,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-energyff.cpp
     unittest-disptools.cpp
     unittest-dispersion.cpp
+    unittest-ljtools.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
