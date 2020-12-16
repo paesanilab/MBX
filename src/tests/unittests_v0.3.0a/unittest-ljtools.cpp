@@ -99,7 +99,6 @@ TEST_CASE("ljtools::lj") {
                                    end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
 
-            std::cerr << " MRRRRR GREP HERE energy = " << energy << std::endl;
             REQUIRE(energy == Approx(expected_energy).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, expected_grad1, TOL));
             REQUIRE(VectorsAreEqual(grad2, expected_grad2, TOL));
@@ -157,6 +156,204 @@ TEST_CASE("ljtools::lj") {
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
                 REQUIRE(numgrad == Approx(expected_grad2_ndiff[i]).margin(TOL));
             }
+        }
+        SECTION("PBC") {
+            double eps = 0.120984;
+            double sigma = 3.325000;
+            double ljchgi = 2 * std::sqrt(0.170100) * 3.250000 * 3.250000 * 3.250000;
+            double ljchgj = 2 * std::sqrt(0.086050) * 3.400000 * 3.400000 * 3.400000;
+            std::vector<double> p1 = {4.5278490461619709E+00, 6.1779461427431679E+00, 3.9068784243576893E+00};
+            std::vector<double> xyz2 = {5.1292456840248581E+00, 7.3641793429207905E+00, 3.8284728828715551E+00};
+
+            std::vector<double> grad1(3, 0.0);
+
+            std::vector<double> grad2(3, 0.0);
+            double phi1 = 0.0;
+            std::vector<double> phi2 = {0.0};
+            size_t nmon1 = 1;
+            size_t nmon2 = 1;
+            size_t start2 = 0;
+            size_t end2 = 1;
+            size_t atom_index1 = 0;
+            size_t atom_index2 = 0;
+            double lj_scale_factor = 1.0000000000e+00;
+            bool do_grads = true;
+            double cutoff = 9.0;
+            double ewald_alpha = 0.6;
+            bool use_ghost = false;
+            std::vector<double> box = {20.0, 0.0, 0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 20.0};
+            std::vector<double> box_inverse = {0.05, 0.0, 0.0, 0.0, 0.05, 0.0, 0.0, 0.0, 0.05};
+            std::vector<size_t> islocal = {1, 1};
+            std::vector<double> virial(9, 0.0);
+            size_t isl1_offset = 0;
+            size_t isl2_offset = 1;
+
+            std::vector<double> expected_grad1 = {1.1465401332e+05, 2.2615091035e+05, -1.4947722405e+04};
+            std::vector<double> expected_grad2 = {-1.1465401332e+05, -2.2615091035e+05, 1.4947722405e+04};
+            std::vector<double> expected_phi2 = {-5.0635586424e+00};
+            double expected_phi1 = -4.1234980425e+00;
+            std::vector<double> expected_virial = {6.8952538129e+04,  1.3600639714e+05,  -8.9895099981e+03,
+                                                   1.3600639714e+05,  2.6826771811e+05,  -1.7731484584e+04,
+                                                   -8.9895099981e+03, -1.7731484584e+04, 1.1719842691e+03};
+            double expected_energy = 2.8143808123e+04;
+
+            std::vector<double> expected_grad1_ndiff(grad1.size());
+            for (size_t i = 0; i < grad1.size(); i++) expected_grad1_ndiff[i] = expected_grad1[i] - grad1[i];
+
+            std::vector<double> expected_grad2_ndiff(grad2.size());
+            for (size_t i = 0; i < grad2.size(); i++) expected_grad2_ndiff[i] = expected_grad2[i] - grad2[i];
+
+            double energy = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+
+            REQUIRE(energy == Approx(expected_energy).margin(TOL));
+            REQUIRE(VectorsAreEqual(grad1, expected_grad1, TOL));
+            REQUIRE(VectorsAreEqual(grad2, expected_grad2, TOL));
+            REQUIRE(phi1 == Approx(expected_phi1).margin(TOL));
+            REQUIRE(VectorsAreEqual(phi2, expected_phi2, TOL));
+            REQUIRE(VectorsAreEqual(virial, expected_virial, TOL));
+
+            //// Check numerical gradients
+            do_grads = false;
+            double s = 0.0001;
+            for (size_t i = 0; i < p1.size(); i++) {
+                p1[i] += s;
+                double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+                p1[i] += s;
+                double epp =
+                    lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+                p1[i] -= 4 * s;
+                double emm =
+                    lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+                p1[i] += s;
+                double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+                p1[i] += s;
+                double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+                REQUIRE(numgrad == Approx(expected_grad1_ndiff[i]).margin(TOL));
+            }
+
+            for (size_t i = 0; i < xyz2.size(); i++) {
+                xyz2[i] += s;
+                double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+                xyz2[i] += s;
+                double epp =
+                    lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+                xyz2[i] -= 4 * s;
+                double emm =
+                    lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+                xyz2[i] += s;
+                double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+                xyz2[i] += s;
+                double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+                REQUIRE(numgrad == Approx(expected_grad2_ndiff[i]).margin(TOL));
+            }
+        }
+    }
+
+    SECTION("Scan") {
+        double eps = 0.120984;
+        double sigma = 3.325000;
+        double ljchgi = 2 * std::sqrt(0.170100) * 3.250000 * 3.250000 * 3.250000;
+        double ljchgj = 2 * std::sqrt(0.086050) * 3.400000 * 3.400000 * 3.400000;
+        std::vector<double> p1 = {0.001, 0.001, 0.001};
+        std::vector<double> xyz2(60, 0.0);
+
+        size_t nmon1 = 1;
+        size_t nmon2 = xyz2.size() / 3;
+        ;
+
+        // fill in xyz2
+        for (size_t i = 0; i < xyz2.size() / 3; i++) {
+            size_t idx = (i + 1) % 3;
+            xyz2[i + nmon2 * idx] = double(i) / 2.0 + 2.3;
+        }
+
+        std::vector<double> grad1(3, 0.0);
+
+        std::vector<double> grad2(xyz2.size(), 0.0);
+        double phi1 = 0.0;
+        std::vector<double> phi2(xyz2.size() / 3, 0.0);
+        size_t start2 = 0;
+        size_t end2 = nmon2;
+        size_t atom_index1 = 0;
+        size_t atom_index2 = 0;
+        double lj_scale_factor = 1.0000000000e+00;
+        bool do_grads = true;
+        double cutoff = 8.0;
+        double ewald_alpha = 0.6;
+        bool use_ghost = false;
+        std::vector<double> box = {20.0, 0.0, 0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 20.0};
+        std::vector<double> box_inverse = {0.05, 0.0, 0.0, 0.0, 0.05, 0.0, 0.0, 0.0, 0.05};
+        std::vector<size_t> islocal(nmon1 + nmon2, 1);
+        std::vector<double> virial(9, 0.0);
+        size_t isl1_offset = 0;
+        size_t isl2_offset = 1;
+
+        double energy = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+
+        do_grads = false;
+        double s = 0.0001;
+        for (size_t i = 0; i < p1.size(); i++) {
+            p1[i] += s;
+            double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+            p1[i] += s;
+            double epp = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+            p1[i] -= 4 * s;
+            double emm = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+            p1[i] += s;
+            double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+            p1[i] += s;
+            double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+            REQUIRE(numgrad == Approx(grad1[i]).margin(TOL));
+        }
+
+        for (size_t i = 0; i < xyz2.size(); i++) {
+            xyz2[i] += s;
+            double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+            xyz2[i] += s;
+            double epp = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+            xyz2[i] -= 4 * s;
+            double emm = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+            xyz2[i] += s;
+            double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
+            xyz2[i] += s;
+            double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+            REQUIRE(numgrad == Approx(grad2[i]).margin(TOL));
         }
     }
 }

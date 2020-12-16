@@ -164,7 +164,6 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
 
         const double rsq = dx * dx + dy * dy + dz * dz;
         const double r = std::sqrt(rsq);
-
         const double inv_rsq = 1.0 / rsq;
         const double inv_r6 = inv_rsq * inv_rsq * inv_rsq;
         const double inv_r12 = inv_r6 * inv_r6;
@@ -228,7 +227,7 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
             if (do_grads) {
                 const double lj_attr_grad = 6 * sigma6 * inv_r6 * 4 * eps * inv_rsq;
                 const double lj_rep_grad = -12 * sigma12 * inv_r12 * 4 * eps * inv_rsq;
-                const double chg_attr_grad = 6 * ljchgi * ljchgj * inv_r6 * 4 * eps * inv_rsq;
+                const double chg_attr_grad = 6 * ljchgi * ljchgj * inv_r6 * inv_rsq;
 
                 // const double e6term_grad = 6 * e6 * inv_rsq - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r) / r;
                 // const double c6term_grad = 6 * c6term * inv_rsq;
