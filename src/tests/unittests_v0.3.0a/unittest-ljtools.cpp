@@ -358,94 +358,59 @@ TEST_CASE("ljtools::lj") {
     }
 }
 
-// TEST_CASE("disptools::GetC6") {
-//    nlohmann::json jsonDisp = {
-//        {"pairs", nlohmann::json::array(
-//                      {nlohmann::json::array({"mon_t", "test_mon"}), nlohmann::json::array({"mon_t", "mon_t"})})},
-//        {"types1", nlohmann::json::array({{"a", "b"}, {"a", "b"}})},
-//        {"types2", nlohmann::json::array({{"c"}, {"a", "b"}})},
-//        {"c6",
-//         nlohmann::json::array({nlohmann::json::array({{{"a", "c"}, 10.0}, {{"b", "c"}, 20.0}}),
-//                                nlohmann::json::array({{{"a", "a"}, 15.0}, {{"a", "b"}, 25.0}, {{"b",
-//                                "b"}, 50.0}})})},
-//        {"d6",
-//         nlohmann::json::array({nlohmann::json::array({{{"a", "c"}, 1.0}, {{"b", "c"}, 2.0}}),
-//                                nlohmann::json::array({{{"a", "a"}, 1.5}, {{"a", "b"}, 2.5}, {{"b", "b"}, 5.0}})})},
-//        {"a", nlohmann::json::array(
-//                  {nlohmann::json::array({{{"a", "c"}, 100.0}, {{"b", "c"}, 200.0}}),
-//                   nlohmann::json::array({{{"a", "a"}, 150.0}, {{"a", "b"}, 250.0}, {{"b", "b"}, 500.0}})})}};
-//
-//    std::vector<std::string> mon1 = {"mon_t", "mon_t", "h2o", "f",  "cl", "br",  "i",   "li",  "na",  "k",
-//                                     "rb",    "cs",    "he",  "he", "ar", "co2", "ch4", "co2", "ch4", "ar"};
-//    std::vector<std::string> mon2 = {"test_mon", "mon_t", "h2o", "h2o", "h2o", "h2o", "h2o", "h2o", "h2o", "h2o",
-//                                     "h2o",      "h2o",   "he",  "h2o", "h2o", "co2", "ch4", "h2o", "h2o", "cs"};
-//    std::vector<size_t> index1 = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 0, 0, 0};
-//    std::vector<size_t> index2 = {0, 0, 1, 0, 1, 0, 1, 2, 1, 2, 1, 0, 0, 2, 1, 1, 0, 1, 1, 0};
-//    std::vector<double> expected_out_c6 = {20.0,
-//                                           25.0,
-//                                           8.349556669872743e+01,
-//                                           3.488640000000000e+02,
-//                                           3.068900000000000e+02,
-//                                           9.426500000000000e+02,
-//                                           5.681559999999999e+02,
-//                                           1.871220000000000e+01,
-//                                           8.578690000000000e+01,
-//                                           2.181920000000000e+02,
-//                                           2.861310000000000e+02,
-//                                           7.045400000000000e+02,
-//                                           24.348011,
-//                                           26.208221,
-//                                           170.8771,
-//                                           170.09525896,
-//                                           104.10825,
-//                                           130.8452,
-//                                           105.979,
-//                                           1857.467};
-//    std::vector<double> expected_out_d6 = {2.0,
-//                                           2.5,
-//                                           9.775202425217957e+00,
-//                                           3.586190000000000e+00,
-//                                           2.782260000000000e+00,
-//                                           3.058250000000000e+00,
-//                                           2.799110000000000e+00,
-//                                           4.006630000000000e+00,
-//                                           3.822550000000000e+00,
-//                                           3.321390000000000e+00,
-//                                           3.313640000000000e+00,
-//                                           3.028640000000000e+00,
-//                                           4.02693,
-//                                           3.9707,
-//                                           3.45707,
-//                                           3.52744,
-//                                           3.25885,
-//                                           3.7359,
-//                                           3.68542,
-//                                           3.19908};
-//
-//    for (size_t i = 0; i < mon1.size(); i++) {
-//        SECTION(mon1[i] + " -- " + mon2[i]) {
-//            double c6 = 0.0;
-//            double d6 = 0.0;
-//            disp::GetC6(mon1[i], mon2[i], index1[i], index2[i], c6, d6, jsonDisp);
-//
-//            REQUIRE(c6 == Approx(expected_out_c6[i]).margin(TOL));
-//            REQUIRE(d6 == Approx(expected_out_d6[i]).margin(TOL));
-//
-//            c6 = 0.0;
-//            d6 = 0.0;
-//            disp::GetC6(mon2[i], mon1[i], index2[i], index1[i], c6, d6, jsonDisp);
-//
-//            REQUIRE(c6 == Approx(expected_out_c6[i]).margin(TOL));
-//            REQUIRE(d6 == Approx(expected_out_d6[i]).margin(TOL));
-//        }
-//    }
-//
-//    SECTION("Unkonwn pair") {
-//        double c6 = 100.0;
-//        double d6 = 1.0;
-//        disp::GetC6("notAmon", "NeitherAMon", 0, 2, c6, d6, jsonDisp);
-//
-//        REQUIRE(c6 == Approx(0.0).margin(TOL));
-//        REQUIRE(d6 == Approx(0.0).margin(TOL));
-//    }
-//}
+TEST_CASE("ljtools::GetLjParams") {
+    nlohmann::json jsonDisp = {
+        {"pairs", nlohmann::json::array(
+                      {nlohmann::json::array({"mon_t", "test_mon"}), nlohmann::json::array({"mon_t", "mon_t"})})},
+        {"types1", nlohmann::json::array({{"a", "b"}, {"a", "b"}})},
+        {"types2", nlohmann::json::array({{"c"}, {"a", "b"}})},
+        {"c6",
+         nlohmann::json::array({nlohmann::json::array({{{"a", "c"}, 10.0}, {{"b", "c"}, 20.0}}),
+                                nlohmann::json::array({{{"a", "a"}, 15.0}, {{"a", "b"}, 25.0}, {{"b", "b"}, 50.0}})})},
+        {"d6",
+         nlohmann::json::array({nlohmann::json::array({{{"a", "c"}, 1.0}, {{"b", "c"}, 2.0}}),
+                                nlohmann::json::array({{{"a", "a"}, 1.5}, {{"a", "b"}, 2.5}, {{"b", "b"}, 5.0}})})},
+        {"a", nlohmann::json::array(
+                  {nlohmann::json::array({{{"a", "c"}, 100.0}, {{"b", "c"}, 200.0}}),
+                   nlohmann::json::array({{{"a", "a"}, 150.0}, {{"a", "b"}, 250.0}, {{"b", "b"}, 500.0}})})},
+        {"sigma",
+         nlohmann::json::array({nlohmann::json::array({{{"a", "c"}, 0.2}, {{"b", "c"}, 0.3}}),
+                                nlohmann::json::array({{{"a", "a"}, 0.6}, {{"a", "b"}, 0.8}, {{"b", "b"}, 1.23}})})},
+        {"epsilon",
+         nlohmann::json::array({nlohmann::json::array({{{"a", "c"}, 12.0}, {{"b", "c"}, 22.0}}),
+                                nlohmann::json::array({{{"a", "a"}, 12.5}, {{"a", "b"}, 22.5}, {{"b", "b"}, 52.0}})})}};
+
+    std::vector<std::string> mon1 = {"mon_t", "mon_t"};
+    std::vector<std::string> mon2 = {"test_mon", "mon_t"};
+    std::vector<size_t> index1 = {1, 1};
+    std::vector<size_t> index2 = {0, 0};
+    std::vector<double> expected_out_epsilon = {22.0, 22.5};
+    std::vector<double> expected_out_sigma = {0.3, 0.8};
+
+    for (size_t i = 0; i < mon1.size(); i++) {
+        SECTION(mon1[i] + " -- " + mon2[i]) {
+            double eps = 0.0;
+            double sigma = 0.0;
+            lj::GetLjParams(mon1[i], mon2[i], index1[i], index2[i], eps, sigma, jsonDisp);
+
+            REQUIRE(eps == Approx(expected_out_epsilon[i]).margin(TOL));
+            REQUIRE(sigma == Approx(expected_out_sigma[i]).margin(TOL));
+
+            eps = 0.0;
+            sigma = 0.0;
+            lj::GetLjParams(mon2[i], mon1[i], index2[i], index1[i], eps, sigma, jsonDisp);
+
+            REQUIRE(eps == Approx(expected_out_epsilon[i]).margin(TOL));
+            REQUIRE(sigma == Approx(expected_out_sigma[i]).margin(TOL));
+        }
+    }
+
+    SECTION("Unkonwn pair") {
+        double c6 = 100.0;
+        double d6 = 1.0;
+        lj::GetLjParams("notAmon", "NeitherAMon", 0, 2, c6, d6, jsonDisp);
+
+        REQUIRE(c6 == Approx(0.0).margin(TOL));
+        REQUIRE(d6 == Approx(0.0).margin(TOL));
+    }
+}
