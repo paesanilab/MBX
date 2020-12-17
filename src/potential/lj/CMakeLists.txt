@@ -1,6 +1,7 @@
-set(REP_SOURCES ljtools.cpp)
+set(REP_SOURCES lj.cpp ljtools.cpp)
 
 add_library(lennardjones OBJECT ${REP_SOURCES})
+target_link_libraries(lennardjones PUBLIC fftw::fftw)
 target_include_directories(lennardjones PRIVATE ${CMAKE_SOURCE_DIR}) 
 target_include_directories(lennardjones PRIVATE ${CMAKE_SOURCE_DIR}/../external/)
 
