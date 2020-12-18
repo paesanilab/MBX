@@ -334,7 +334,6 @@ void GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t
     }
 
     std::vector<double> eps, sigma;
-    std::vector<size_t> types1, types2;
     size_t nt2, i, j;
 
     out_epsilon = 0.0;
@@ -379,6 +378,7 @@ void GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t
     }
 
     if (done_with_it) return;
+    std::vector<size_t> types1, types2;
 
     // TODO Maybe add also hardcoded values, but don't see the need.
 }

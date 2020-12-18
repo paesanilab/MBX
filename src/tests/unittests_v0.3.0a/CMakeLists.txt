@@ -24,6 +24,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-disptools.cpp
     unittest-dispersion.cpp
     unittest-ljtools.cpp
+    unittest-lj.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )

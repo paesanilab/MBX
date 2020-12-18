@@ -350,7 +350,6 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     }
 
     std::vector<double> C6, d6;
-    std::vector<size_t> types1, types2;
     size_t nt2, i, j;
 
     out_C6 = 0.0;
@@ -395,6 +394,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     }
 
     if (done_with_it) return;
+    std::vector<size_t> types1, types2;
 
     // Monomers here have to be in alphabetical order: mon1 < mon2 ALWAYS
     if (mon_id1 == "h2o" && mon_id2 == "h2o") {
