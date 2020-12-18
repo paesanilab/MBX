@@ -269,7 +269,6 @@ TEST_CASE("lj::Gas Phase") {
     SECTION("Energy") {
         double expected_energy = 2.1380674525e+00;
         double energy = d.GetLennardJones(grad, &virial, use_ghost);
-        std::cerr << "MRRRRR " << energy << std::endl;
 
         double s = 0.001;
         for (size_t j = 0; j < sys_xyz.size(); j++) {
@@ -296,7 +295,7 @@ TEST_CASE("lj::Gas Phase") {
 TEST_CASE("lj::PBC") {
     double ljlr_nc = 2 * std::sqrt(0.170100) * 3.250000 * 3.250000 * 3.250000;
     double ljlr_cd = 2 * std::sqrt(0.086050) * 3.400000 * 3.400000 * 3.400000;
-    size_t ntot_ats = 2;
+    size_t ntot_ats = 21;
     std::vector<double> sys_xyz(ntot_ats * 3, 0.0);
 
     for (size_t i = 1; i < ntot_ats; i++) {
@@ -379,8 +378,29 @@ TEST_CASE("lj::PBC") {
     d.SetEwaldGridDensity(2.5);
     d.SetEwaldSplineOrder(6);
     SECTION("Energy") {
-        double expected_energy = 2.8140638986e+04;
+        double expected_energy = 1.0684359220e+05;
         double energy = d.GetLennardJones(grad, &virial, use_ghost);
+        std::vector<double> expected_grad = {
+            -7.0581607315e-02, 1.3298917810e+01,  9.4469655912e-01,  -4.7626968186e-02, 5.0451502512e+04,
+            -6.4042987472e-02, -3.2970954395e-02, -6.0109397479e-02, 5.0463902514e+04,  5.0464936258e+04,
+            -4.0896502641e-02, -3.0188833449e-02, -1.4243616520e-02, 4.7774772788e+00,  -1.8959670335e-02,
+            -9.2243067120e-03, -1.5414877757e-02, 4.7423908063e+00,  4.7147243826e+00,  -9.4254956037e-03,
+            -7.3998794902e-03, -3.9367526853e-03, -3.4631031572e-02, -4.6898320627e-03, -2.6241515778e-03,
+            -3.7171616811e-03, -4.3960014399e-02, -3.9491383522e-02, -2.4166256918e-03, -1.9866242737e-03,
+            -1.2207938743e-03, 8.1648798839e-03,  -1.3368199480e-03, -8.5735821773e-04, -1.0963238802e-03,
+            5.8197017357e-03,  5.7720682860e-02,  -7.7526138310e-04, -6.5186566707e-04, -4.7533258828e-04,
+            6.6481094801e-02,  -4.8824232224e-04, -3.8976523914e-04, -4.6615122149e-04, 6.5514910212e-02,
+            -4.6591216156e+00, -4.1721647636e-04, -3.5358969123e-04, -3.5616378584e-04, -4.6577325711e+00,
+            -3.5803686235e-04, -4.0272753906e-04, -4.8304906483e-04, -4.6587282219e+00, -5.0464823583e+04,
+            -6.1001451278e-04, -5.1460367755e-04, -6.6170876822e-04, -5.0464824172e+04, -6.9541276653e-04,
+            -9.1800041091e-04, -1.1807816966e-03, -5.0464826572e+04};
+        std::vector<double> expected_virial = {3.7850605137e+05, 2.2291029674e-01, 1.6836523149e-01,
+                                               2.2291029674e-01, 4.5424751553e+05, 2.9423070555e-01,
+                                               1.6836523149e-01, 2.9423070555e-01, 4.5421340125e+05};
+
+        REQUIRE(energy == Approx(expected_energy).margin(TOL));
+        REQUIRE(VectorsAreEqual(grad, expected_grad, TOL));
+        REQUIRE(VectorsAreEqual(virial, expected_virial, TOL));
 
         double s = 0.001;
         for (size_t j = 0; j < sys_xyz.size(); j++) {
@@ -399,7 +419,7 @@ TEST_CASE("lj::PBC") {
             sys_xyz[j] += s;
 
             double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
-            REQUIRE(numgrad == Approx(grad[j]).margin(TOL));
+            REQUIRE(numgrad == Approx(expected_grad[j]).margin(TOL));
         }
     }
 }
