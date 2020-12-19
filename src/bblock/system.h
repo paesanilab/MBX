@@ -66,6 +66,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/3b/energy3b.h"
 // DISPERSION
 #include "potential/dispersion/dispersion.h"
+// LENNARD-JONES
+#include "potential/lj/lj.h"
 // BUCKINGHAM
 #include "potential/buckingham/buckingham.h"
 // ELECTROSTATICS
@@ -433,6 +435,14 @@ class System {
      */
     void GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order);
 
+    /**
+     * Gets the Ewald parameters for Lennard-Jones
+     * @param[out] alpha Ewald alpha
+     * @param[out] grid_density Lennard-Jones ewald grid density
+     * @param[out] spline_order Lennard-Jones Ewald spline order for interpolation
+     */
+    void GetEwaldParamsLennardJones(double &alpha, double &grid_density, size_t &spline_order);
+
     /////////////////////////////////////////////////////////////////////////////
     // Modifiers ////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
@@ -728,8 +738,8 @@ class System {
 
     /**
      * Sets the values for alpha, the grid density and the spline order when using PME to get
-the reciprocal space contribution, only for electrostatics.
-to be the same.
+     * the reciprocal space contribution, only for electrostatics.
+     * to be the same.
      * @param[in] alpha Value for the Ewald alpha
      * @param[in] grid_density Grid density in the PME calculation
      * @param[in] spline_order Order of the splines used for interpolation
@@ -738,13 +748,23 @@ to be the same.
 
     /**
      * Sets the values for alpha, the grid density and the spline order when using PME to get
-the reciprocal space contribution, only for dispersion.
-to be the same.
+     * the reciprocal space contribution, only for dispersion.
+     * to be the same.
      * @param[in] alpha Value for the Ewald alpha
      * @param[in] grid_density Grid density in the PME calculation
      * @param[in] spline_order Order of the splines used for interpolation
      */
     void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
+
+    /**
+     * Sets the values for alpha, the grid density and the spline order when using PME to get
+     * the reciprocal space contribution, only for Lennard-Jones.
+     * to be the same.
+     * @param[in] alpha Value for the Ewald alpha
+     * @param[in] grid_density Grid density in the PME calculation
+     * @param[in] spline_order Order of the splines used for interpolation
+     */
+    void SetEwaldLennardJones(double alpha, double grid_density, int spline_order);
 
     /**
      * Sets MPI environment from driver code
@@ -780,6 +800,12 @@ to be the same.
     std::vector<int> GetFFTDimensionDispersion(int box_id = 0);
 
     /**
+     * Get FFT grid from Lennard-Jones pme solver
+     * @param[in] 0 for default box / 1 for PMElocal box
+     */
+    std::vector<int> GetFFTDimensionLennardJones(int box_id = 0);
+
+    /**
      * Set FFT grid for electrostatic pme solver
      */
     void SetFFTDimensionElectrostatics(std::vector<int> grid);
@@ -788,6 +814,11 @@ to be the same.
      * Set FFT grid for dispersion pme solver
      */
     void SetFFTDimensionDispersion(std::vector<int> grid);
+
+    /**
+     * Set FFT grid for Lennard-Jones pme solver
+     */
+    void SetFFTDimensionLennardJones(std::vector<int> grid);
 
     /**
      * @param[in] connectivity_map A map with monomer id as values and
@@ -875,6 +906,16 @@ to be the same.
      * @return Dispersion energy of the system
      */
     double Dispersion(bool do_grads, bool use_ghost = 0);
+
+    /**
+     * Obtains the Lennard-Jones energy for the whole system.
+     * Gradients will be ONLY for the lennard-jones part.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, then ghost monomers present
+     * @return Lennard-Jones energy of the system
+     */
+    double LennardJones(bool do_grads, bool use_ghost = 0);
 
     /**
      * Obtains only the k-space dispersion energy for the whole system.
@@ -1012,6 +1053,29 @@ to be the same.
     double GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
     /**
+     * Private function to internally get the lennard-jones energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return  Lennard-Jones energy of the system
+     */
+    double GetLennardJones(bool do_grads, bool use_ghost = 0);
+
+    /**
+     * Private function to internally get the k-space portion of lennard-jones energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return Lennard-Jones energy of the system
+     */
+    double GetLennardJonesPME(bool do_grads, bool use_ghost = 0);
+    double GetLennardJonesPMElocal(bool do_grads, bool use_ghost = 0);
+
+    /**
      * Private function to internally get the dispersion energy.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
@@ -1124,6 +1188,21 @@ to be the same.
     size_t disp_spline_order_;
 
     /**
+     * Ewald alpha for dispersion
+     */
+    double lj_alpha_;
+
+    /**
+     * Grid density for dispersion
+     */
+    double lj_grid_density_;
+
+    /**
+     * Spline order for interpolation for dispersion
+     */
+    size_t lj_spline_order_;
+
+    /**
      * Cutoff in the search for clusters for the dimers.
      * Molecules which first atoms are at a larger distance than this cutoff
      * will not be considered a 2b cluster
@@ -1172,6 +1251,11 @@ to be the same.
      * Dispersion class that will be used to get the dispersion energy
      */
     disp::Dispersion dispersionE_;
+
+    /**
+     * Dispersion class that will be used to get the dispersion energy
+     */
+    lj::LennardJones lennardJonesE_;
 
     /**
      * Buckingham class for the buckingham calculation
@@ -1269,6 +1353,12 @@ to be the same.
      * Vector that stores the individual atomic C6 to be used as combination rules at distances larger than the cutoff
      */
     std::vector<double> c6_lr_;
+
+    /**
+     * Vector that stores the individual atomic lj charge to be used as combination rules at distances larger than the
+     * cutoff
+     */
+    std::vector<double> lj_lr_;
 
     /**
      * Vector that stores the simulation box.
