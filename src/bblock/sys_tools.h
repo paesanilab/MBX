@@ -45,6 +45,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "kdtree/nanoflann.hpp"
 #include "kdtree/kdtree_utils.h"
 #include "tools/definitions.h"
+#include "potential/lj/ljtools.h"
 #include "json/json.h"
 
 #include "potential/1b/ps.h"
@@ -496,6 +497,22 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
  */
 void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
                     nlohmann::json mon_j);
+
+/**
+ * @brief Sets the LJ "charge" for each atom of a system.
+ *
+ * Given the first index of the monomer type we are
+ * filling in, it will set the long range lennard jones charge. For an atom A, lj_lr = 2*sqrt(eps_AA)*sigma_AA^3.
+ * @param[out] lj_lr Vector with the LJ charges for long range of the monomer type filled.
+ * Can contain lj_chg for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] natoms Number of real atoms of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[in] repdisp_j Json object with lennard jones coefficients
+ */
+void SetLJLongRange(std::vector<double> &lj_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
+                    nlohmann::json repdisp_j);
 
 /**
  * @brief Redistributes the virtual site gradients into the real atoms

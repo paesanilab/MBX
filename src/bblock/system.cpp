@@ -608,6 +608,28 @@ void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string>> ttm
     }
 }
 
+void System::SetLennardJonesPairs(std::vector<std::pair<std::string, std::string>> use_lennard_jones) {
+    lj_pairs_.clear();
+
+    for (auto it = use_lennard_jones.begin(); it != use_lennard_jones.end(); it++) {
+        std::string s1 = (*it).first;
+        std::string s2 = (*it).second;
+        std::pair<std::string, std::string> p = s2 < s1 ? std::make_pair(s2, s1) : std::make_pair(s1, s2);
+        lj_pairs_.push_back(p);
+    }
+}
+
+void System::SetIgnoreDispersionPairs(std::vector<std::pair<std::string, std::string>> ignore_dispersion) {
+    ignore_disp_.clear();
+
+    for (auto it = ignore_dispersion.begin(); it != ignore_dispersion.end(); it++) {
+        std::string s1 = (*it).first;
+        std::string s2 = (*it).second;
+        std::pair<std::string, std::string> p = s2 < s1 ? std::make_pair(s2, s1) : std::make_pair(s1, s2);
+        ignore_disp_.push_back(p);
+    }
+}
+
 void System::SetFFMons(std::vector<std::string> ff_mons) { ff_mons_ = ff_mons; }
 
 void System::AddFFMon(std::string mon) {
@@ -696,6 +718,9 @@ void System::Initialize() {
     // Set C6 for long range pme
     SetC6LongRange();
 
+    // Set LJ for long range pme
+    SetLJLongRange();
+
     // With the information previously set, we initialize the
     // electrostatics class
     if (mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
@@ -746,6 +771,8 @@ void System::InitializePME() {
     // Set C6 for long range pme
     SetC6LongRange();
 
+    // Set LJ for long range pme
+    SetLJLongRange();
     // With the information previously set, we initialize the
     // electrostatics class
     if (mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
@@ -1080,6 +1107,28 @@ void System::SetUpFromJson(nlohmann::json j) {
     SetTTMnrgPairs(ttm_pairs);
     mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
 
+    std::vector<std::pair<std::string, std::string>> ignore_dispersion;
+    try {
+        std::vector<std::pair<std::string, std::string>> ignore_dispersion2 = j["MBX"]["ignore_dispersion"];
+        ignore_dispersion = ignore_dispersion2;
+    } catch (...) {
+        ignore_dispersion.clear();
+        std::cerr << "**WARNING** \"ignore_dispersion\" is not defined in json file. Using empty list.\n";
+    }
+    SetIgnoreDispersionPairs(ignore_dispersion);
+    mbx_j_["MBX"]["ignore_dispersion"] = ignore_disp_;
+
+    std::vector<std::pair<std::string, std::string>> use_lennard_jones;
+    try {
+        std::vector<std::pair<std::string, std::string>> use_lennard_jones2 = j["MBX"]["use_lennard_jones"];
+        use_lennard_jones = use_lennard_jones2;
+    } catch (...) {
+        use_lennard_jones.clear();
+        std::cerr << "**WARNING** \"use_lennard_jones\" is not defined in json file. Using empty list.\n";
+    }
+    SetLennardJonesPairs(use_lennard_jones);
+    mbx_j_["MBX"]["ttm_pairs"] = lj_pairs_;
+
     std::vector<std::string> ff_mons;
     try {
         std::vector<std::string> ff_mons2 = j["MBX"]["ff_mons"];
@@ -1194,6 +1243,8 @@ void System::SetUpFromJson(char *json_file) {
        "spline_order_disp" : 6,
        "ttm_pairs" : [],
        "ff_mons" : [],
+       "ignore_dispersion" : [],
+       "use_lennard_jones" : [],
        "ignore_1b_poly" : [],
        "ignore_2b_poly" : [],
        "ignore_3b_poly" : [],
@@ -1226,6 +1277,8 @@ void System::SetUpFromJson(char *json_file) {
                                   {"grid_fftdim_disp", nlohmann::json::array()},
                                   {"spline_order_disp", 6},
                                   {"ttm_pairs", nlohmann::json::array()},
+                                  {"ignore_dispersion", nlohmann::json::array()},
+                                  {"use_lennard_jones", nlohmann::json::array()},
                                   {"ff_mons", nlohmann::json::array()},
                                   {"connectivity_file", ""},
                                   {"nonbonded_file", ""},
@@ -1616,6 +1669,13 @@ double System::Energy(bool do_grads) {
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
 
+    double elj = 0.0;
+    if (lj_pairs_.size() > 0) elj = GetLennardJones(do_grads);
+
+#ifdef TIMING
+    auto t31 = std::chrono::high_resolution_clock::now();
+#endif
+
     // double e3b = 0.0;
     double e3b = Get3B(do_grads);
 
@@ -1632,7 +1692,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Set up energy with the new value
-    energy_ = eff + e1b + e2b + e3b + edisp + ebuck + Eelec;
+    energy_ = eff + e1b + e2b + e3b + edisp + ebuck + elj + Eelec;
 
 #ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(10) << std::scientific;
@@ -1642,6 +1702,7 @@ double System::Energy(bool do_grads) {
               << "3B = " << e3b << std::endl
               << "Disp = " << edisp << std::endl
               << "Buck = " << ebuck << std::endl
+              << "LJ = " << elj << std::endl
               << "Elec = " << Eelec << std::endl
               << "Total = " << energy_ << std::endl;
 #endif
@@ -1654,8 +1715,10 @@ double System::Energy(bool do_grads) {
               << std::chrono::duration_cast<std::chrono::milliseconds>(t2b - t2a).count() << " milliseconds\n";
     std::cerr << "System::rep(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2b).count() << " milliseconds\n";
+    std::cerr << "System::LJ(grad=" << do_grads << ") "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t31 - t3).count() << " milliseconds\n";
     std::cerr << "System::3b(grad=" << do_grads << ") "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds\n";
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t31).count() << " milliseconds\n";
     std::cerr << "System::electrostatics(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() << " milliseconds\n";
     std::cerr << "TotalEnergy(grad=" << do_grads << ") "
@@ -2542,6 +2605,30 @@ void System::SetC6LongRange() {
     std::cerr << "All c6_lr after setting them\n";
     std::cerr << c6_lr_[0];
     for (size_t i = 1; i < c6_lr_.size(); i++) std::cerr << ", " << c6_lr_[i];
+    std::cerr << std::endl;
+#endif  // DEBUG
+}
+
+void System::SetLJLongRange() {
+    // Set virtual sites for each monomer type
+    size_t fi_mon = 0;
+    size_t fi_atoms = 0;
+    lj_lr_ = std::vector<double>(numat_, 0.0);
+    for (size_t k = 0; k < mon_type_count_.size(); k++) {
+        std::string mon = mon_type_count_[k].first;
+        size_t nmon = mon_type_count_[k].second;
+        size_t natoms = nat_[fi_mon];
+
+        systools::SetLJLongRange(lj_lr_, mon, nmon, natoms, fi_atoms, repdisp_j_);
+        fi_mon += nmon;
+        fi_atoms += nmon * natoms;
+    }
+
+#ifdef DEBUG
+    std::cerr << "Entered " << __func__ << std::endl;
+    std::cerr << "All lj_lr after setting them\n";
+    std::cerr << lj_lr_[0];
+    for (size_t i = 1; i < lj_lr_.size(); i++) std::cerr << ", " << lj_lr_[i];
     std::cerr << std::endl;
 #endif  // DEBUG
 }

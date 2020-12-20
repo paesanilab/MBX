@@ -525,6 +525,19 @@ class System {
     void SetTTMnrgPairs(std::vector<std::pair<std::string, std::string> > ttm_pairs);
 
     /**
+     * Sets the pairs vector as a whole for which the lennard jones term is going to be calculated. Will overwrite the
+     * previous one.
+     * @param[in] use_lennard_jones Vector of pairs of the monomer pairs for which LJ will be calculated
+     */
+    void SetLennardJonesPairs(std::vector<std::pair<std::string, std::string> > use_lennard_jones);
+
+    /**
+     * Sets the pairs vector as a whole for which dispersion will be ignored. Will overwrite the previous one.
+     * @param[in] ignore_dispersion Vector of pairs of the monomer pairs for which dispersion will be ignored
+     */
+    void SetIgnoreDispersionPairs(std::vector<std::pair<std::string, std::string> > ignore_dispersion);
+
+    /**
      * Adds a pair that will be ignored in the 1b polynomials
      * @param[in] mon Is the id of the monomer
      */
@@ -999,6 +1012,11 @@ class System {
      * Sets the C6 that will be used in combination rules at a distance beyond the 2b cutoff
      */
     void SetC6LongRange();
+
+    /**
+     * Sets the LJ charges that will be used in combination rules at a distance beyond the 2b cutoff
+     */
+    void SetLJLongRange();
 
     /**
      * Private function to internally get the 1b energy.
