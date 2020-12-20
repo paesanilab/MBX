@@ -335,8 +335,8 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     return dispersion_energy;
 }
 
-void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6,
-           nlohmann::json repdisp_j) {
+bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6,
+           std::vector<std::pair<std::string, std::string> > ignore_disp, nlohmann::json repdisp_j) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon_id2 < mon_id1) {
@@ -354,6 +354,13 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
     out_C6 = 0.0;
     out_d6 = 0.0;
+
+    if (std::find(ignore_disp.begin(), ignore_disp.end(), std::make_pair(mon_id1, mon_id2)) != ignore_disp.end() ||
+        std::find(ignore_disp.begin(), ignore_disp.end(), std::make_pair(mon_id2, mon_id1)) != ignore_disp.end()) {
+        out_C6 = 0.0;
+        out_d6 = 0.0;
+        return false;
+    }
 
     bool done_with_it = false;
 
@@ -393,7 +400,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         out_d6 = 0.0;
     }
 
-    if (done_with_it) return;
+    if (done_with_it) return true;
     std::vector<size_t> types1, types2;
 
     // Monomers here have to be in alphabetical order: mon1 < mon2 ALWAYS
@@ -736,7 +743,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     } else {
         out_C6 = 0.0;
         out_d6 = 0.0;
-        return;
+        return false;
     }
 
     i = types1[index1];
@@ -744,6 +751,8 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
     out_C6 = C6[i * nt2 + j];
     out_d6 = d6[i * nt2 + j];
+
+    return true;
 }
 
 }  // namespace disp

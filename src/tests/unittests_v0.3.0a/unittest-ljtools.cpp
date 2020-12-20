@@ -359,6 +359,8 @@ TEST_CASE("ljtools::lj") {
 }
 
 TEST_CASE("ljtools::GetLjParams") {
+    std::vector<std::pair<std::string, std::string> > lj_pairs = {{"mon_t", "test_mon"}, {"mon_t", "mon_t"}};
+
     nlohmann::json jsonDisp = {
         {"pairs", nlohmann::json::array(
                       {nlohmann::json::array({"mon_t", "test_mon"}), nlohmann::json::array({"mon_t", "mon_t"})})},
@@ -391,14 +393,14 @@ TEST_CASE("ljtools::GetLjParams") {
         SECTION(mon1[i] + " -- " + mon2[i]) {
             double eps = 0.0;
             double sigma = 0.0;
-            lj::GetLjParams(mon1[i], mon2[i], index1[i], index2[i], eps, sigma, jsonDisp);
+            lj::GetLjParams(mon1[i], mon2[i], index1[i], index2[i], eps, sigma, lj_pairs, jsonDisp);
 
             REQUIRE(eps == Approx(expected_out_epsilon[i]).margin(TOL));
             REQUIRE(sigma == Approx(expected_out_sigma[i]).margin(TOL));
 
             eps = 0.0;
             sigma = 0.0;
-            lj::GetLjParams(mon2[i], mon1[i], index2[i], index1[i], eps, sigma, jsonDisp);
+            lj::GetLjParams(mon2[i], mon1[i], index2[i], index1[i], eps, sigma, lj_pairs, jsonDisp);
 
             REQUIRE(eps == Approx(expected_out_epsilon[i]).margin(TOL));
             REQUIRE(sigma == Approx(expected_out_sigma[i]).margin(TOL));
@@ -408,7 +410,7 @@ TEST_CASE("ljtools::GetLjParams") {
     SECTION("Unkonwn pair") {
         double c6 = 100.0;
         double d6 = 1.0;
-        lj::GetLjParams("notAmon", "NeitherAMon", 0, 2, c6, d6, jsonDisp);
+        lj::GetLjParams("notAmon", "NeitherAMon", 0, 2, c6, d6, lj_pairs, jsonDisp);
 
         REQUIRE(c6 == Approx(0.0).margin(TOL));
         REQUIRE(d6 == Approx(0.0).margin(TOL));

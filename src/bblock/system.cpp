@@ -2861,7 +2861,7 @@ double System::GetDispersion(bool do_grads, bool use_ghost) {
         }
         count += 3 * nat_[i];
     }
-    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersion(real_grad, &virial_, use_ghost);
 
@@ -2887,7 +2887,7 @@ double System::GetLennardJones(bool do_grads, bool use_ghost) {
         }
         count += 3 * nat_[i];
     }
-    lennardJonesE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = lennardJonesE_.GetLennardJones(real_grad, &virial_, use_ghost);
 
@@ -2914,7 +2914,7 @@ double System::GetDispersionPME(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersionPME(real_grad, &virial_, use_ghost);
 
@@ -2941,7 +2941,7 @@ double System::GetDispersionPMElocal(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    dispersionE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersionPMElocal(real_grad, &virial_, use_ghost);
 
@@ -2968,7 +2968,7 @@ double System::GetLennardJonesPME(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    lennardJonesE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = lennardJonesE_.GetLennardJonesPME(real_grad, &virial_, use_ghost);
 
@@ -2995,7 +2995,7 @@ double System::GetLennardJonesPMElocal(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    lennardJonesE_.SetNewParameters(xyz_real, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = lennardJonesE_.GetLennardJonesPMElocal(real_grad, &virial_, use_ghost);
 

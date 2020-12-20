@@ -190,8 +190,9 @@ void LennardJones::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y
     proc_grid_z_ = proc_grid_z;
 }
 
-void LennardJones::SetNewParameters(const std::vector<double> &xyz, bool do_grads = true, const double cutoff = 100.0,
-                                    const std::vector<double> &box = {}) {
+void LennardJones::SetNewParameters(const std::vector<double> &xyz,
+                                    std::vector<std::pair<std::string, std::string> > use_lj, bool do_grads = true,
+                                    const double cutoff = 100.0, const std::vector<double> &box = {}) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -213,6 +214,7 @@ void LennardJones::SetNewParameters(const std::vector<double> &xyz, bool do_grad
 #endif
 
     sys_xyz_ = xyz;
+    use_lj_ = use_lj;
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
@@ -511,6 +513,9 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
         size_t ns = num_atoms_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
+        double dummy_eps, dummy_sigma;
+        bool do_lj = GetLjParams(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, dummy_eps, dummy_sigma, use_lj_, repdisp_j_);
+
         std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
 
         // Obtain excluded pairs for monomer type mt
@@ -536,11 +541,11 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                 bool is12 = systools::IsExcluded(exc12, i, j);
                 bool is13 = systools::IsExcluded(exc13, i, j);
                 bool is14 = systools::IsExcluded(exc14, i, j);
-                double lj_scale_factor = (is12 || is13 || is14) ? 0 : 1;
+                double lj_scale_factor = (is12 || is13 || is14 || !do_lj) ? 0 : 1;
                 double sigma, eps;
                 double ljchgi = lj_long_range_[fi_sites + i * nmon];
                 double ljchgj = lj_long_range_[fi_sites + j * nmon];
-                GetLjParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, eps, sigma, repdisp_j_);
+                GetLjParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, eps, sigma, use_lj_, repdisp_j_);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -617,8 +622,12 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
-            std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
 
+            double dummy_eps, dummy_sigma;
+            bool do_lj =
+                GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, dummy_eps, dummy_sigma, use_lj_, repdisp_j_);
+            std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
+            double lj_scale_factor = do_lj ? 1.0 : 0.0;
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
             // previous loop.
@@ -664,11 +673,11 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                         size_t jnmon23 = jnmon2 * 3;
                         double ljchgj = lj_long_range_[fi_sites2 + j * nmon2];
                         double eps, sigma;
-                        GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, eps, sigma, repdisp_j_);
+                        GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, eps, sigma, use_lj_, repdisp_j_);
                         energy_pool[rank] += lj(eps, sigma, ljchgi, ljchgj, xyz_sitei, xyz_mt2, g1, grad2_pool[rank],
-                                                phi_i, phi2_pool[rank], nmon1, nmon2, m2init, nmon2, i, j, 1.0,
-                                                do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_, use_ghost,
-                                                islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                                                phi_i, phi2_pool[rank], nmon1, nmon2, m2init, nmon2, i, j,
+                                                lj_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
+                                                use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];

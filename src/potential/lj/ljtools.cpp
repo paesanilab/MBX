@@ -319,8 +319,8 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
     return lj_energy;
 }
 
-void GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon,
-                 double& out_sigma, nlohmann::json lj_j) {
+bool GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon,
+                 double& out_sigma, std::vector<std::pair<std::string, std::string> > use_lj, nlohmann::json lj_j) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon_id2 < mon_id1) {
@@ -338,6 +338,13 @@ void GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t
 
     out_epsilon = 0.0;
     out_sigma = 0.0;
+
+    if (std::find(use_lj.begin(), use_lj.end(), std::make_pair(mon_id1, mon_id2)) == use_lj.end() &&
+        std::find(use_lj.begin(), use_lj.end(), std::make_pair(mon_id2, mon_id1)) == use_lj.end()) {
+        out_epsilon = 0.0;
+        out_sigma = 0.0;
+        return false;
+    }
 
     bool done_with_it = false;
 
@@ -377,10 +384,12 @@ void GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t
         out_epsilon = 0.0;
     }
 
-    if (done_with_it) return;
+    if (done_with_it) return true;
     std::vector<size_t> types1, types2;
 
     // TODO Maybe add also hardcoded values, but don't see the need.
+
+    return false;
 }
 
 }  // namespace lj

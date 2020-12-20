@@ -1424,6 +1424,16 @@ class System {
     std::vector<std::pair<std::string, std::string> > buck_pairs_;
 
     /**
+     * This vector contains the pairs that will use LennardJones potential
+     */
+    std::vector<std::pair<std::string, std::string> > lj_pairs_;
+
+    /**
+     * This vector contains the pairs that will have the dispersion ignored
+     */
+    std::vector<std::pair<std::string, std::string> > ignore_disp_;
+
+    /**
      * This vector of vectors contains the pairs of monomer types that will be ignored when
      * when calculating the 1b polynomials.
      */

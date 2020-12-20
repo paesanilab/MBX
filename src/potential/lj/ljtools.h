@@ -117,10 +117,12 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
  * is not there, sigma and epsilon will be set to 0.
  * @param[out] out_eps Contains the parameter epsilon corresponding to the atoms i,j of monomers 1 and 2.
  * @param[out] out_sigma Contains the parameter sigma corresponding to the atoms i,j of monomers 1 and 2.
+ * @param[in] use_lj Vector of pairs with the pairs that will use the LJ potential
  * @param[in] lj_j JSON object witht the extra nonbonded pair information
+ * @return True if pair found or used, false otherwise
  */
-void GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon,
-                 double& out_sigma, nlohmann::json lj_j = {});
+bool GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon,
+                 double& out_sigma, std::vector<std::pair<std::string, std::string> > use_lj, nlohmann::json lj_j = {});
 
 }  // namespace lj
 

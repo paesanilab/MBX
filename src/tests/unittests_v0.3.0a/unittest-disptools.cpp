@@ -369,6 +369,8 @@ TEST_CASE("disptools::disp6") {
 }
 
 TEST_CASE("disptools::GetC6") {
+    std::vector<std::pair<std::string, std::string> > ignore_disp;
+
     nlohmann::json jsonDisp = {
         {"pairs", nlohmann::json::array(
                       {nlohmann::json::array({"mon_t", "test_mon"}), nlohmann::json::array({"mon_t", "mon_t"})})},
@@ -435,14 +437,14 @@ TEST_CASE("disptools::GetC6") {
         SECTION(mon1[i] + " -- " + mon2[i]) {
             double c6 = 0.0;
             double d6 = 0.0;
-            disp::GetC6(mon1[i], mon2[i], index1[i], index2[i], c6, d6, jsonDisp);
+            disp::GetC6(mon1[i], mon2[i], index1[i], index2[i], c6, d6, ignore_disp, jsonDisp);
 
             REQUIRE(c6 == Approx(expected_out_c6[i]).margin(TOL));
             REQUIRE(d6 == Approx(expected_out_d6[i]).margin(TOL));
 
             c6 = 0.0;
             d6 = 0.0;
-            disp::GetC6(mon2[i], mon1[i], index2[i], index1[i], c6, d6, jsonDisp);
+            disp::GetC6(mon2[i], mon1[i], index2[i], index1[i], c6, d6, ignore_disp, jsonDisp);
 
             REQUIRE(c6 == Approx(expected_out_c6[i]).margin(TOL));
             REQUIRE(d6 == Approx(expected_out_d6[i]).margin(TOL));
@@ -452,7 +454,7 @@ TEST_CASE("disptools::GetC6") {
     SECTION("Unkonwn pair") {
         double c6 = 100.0;
         double d6 = 1.0;
-        disp::GetC6("notAmon", "NeitherAMon", 0, 2, c6, d6, jsonDisp);
+        disp::GetC6("notAmon", "NeitherAMon", 0, 2, c6, d6, ignore_disp, jsonDisp);
 
         REQUIRE(c6 == Approx(0.0).margin(TOL));
         REQUIRE(d6 == Approx(0.0).margin(TOL));

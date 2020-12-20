@@ -159,7 +159,8 @@ TEST_CASE("dispersion::SetNewParameters") {
         4.4476623515e+00,  1.4736631160e+00,  5.4082633370e-02,  -2.5478516399e+00, -9.4978063800e-01,
         -4.4857147405e+00, -3.2178997190e+00, 1.7542588920e+00};
 
-    d.SetNewParameters(sys_xyz, do_grads, cutoff, box);
+    std::vector<std::pair<std::string, std::string> > ignore_disp;
+    d.SetNewParameters(sys_xyz, ignore_disp, do_grads, cutoff, box);
 
     std::vector<double> getbox = d.GetBox();
     std::vector<double> getsysxyz = d.GetSystemXyz();
@@ -295,7 +296,9 @@ TEST_CASE("dispersion::GetDispersion") {
 
     double energy_expected = -6.6842876953e+01;
 
-    d.SetNewParameters(sys_xyz, true, cutoff, box);
+    std::vector<std::pair<std::string, std::string> > ignore_disp;
+
+    d.SetNewParameters(sys_xyz, ignore_disp, true, cutoff, box);
     d.setEwaldAlpha(0.60);
     d.SetEwaldGridDensity(2.5);
     d.SetEwaldSplineOrder(6);
@@ -308,16 +311,16 @@ TEST_CASE("dispersion::GetDispersion") {
     double s = 0.001;
     for (size_t j = 0; j < sys_xyz.size(); j++) {
         sys_xyz[j] += s;
-        d.SetNewParameters(sys_xyz, false, cutoff, box);
+        d.SetNewParameters(sys_xyz, ignore_disp, false, cutoff, box);
         double ep = d.GetDispersion(grad);
         sys_xyz[j] += s;
-        d.SetNewParameters(sys_xyz, false, cutoff, box);
+        d.SetNewParameters(sys_xyz, ignore_disp, false, cutoff, box);
         double epp = d.GetDispersion(grad);
         sys_xyz[j] -= 4 * s;
-        d.SetNewParameters(sys_xyz, false, cutoff, box);
+        d.SetNewParameters(sys_xyz, ignore_disp, false, cutoff, box);
         double emm = d.GetDispersion(grad);
         sys_xyz[j] += s;
-        d.SetNewParameters(sys_xyz, false, cutoff, box);
+        d.SetNewParameters(sys_xyz, ignore_disp, false, cutoff, box);
         double em = d.GetDispersion(grad);
         sys_xyz[j] += s;
 

@@ -143,9 +143,11 @@ class Dispersion {
      * @param[in] do_grads Indicates if gradient swill be calculated or not
      * @param[in] cutoff Cutoff of the real space
      * @param[in] box Vector of 9 elements (or 0) containing the box vectors (v1x,v1y,v1z,v2x..)
+     * @param[in] ignore_disp Pairs for which dispersion will be ignored
      */
-    void SetNewParameters(const std::vector<double> &xyz, bool do_grads, const double cutoff,
-                          const std::vector<double> &box);
+    void SetNewParameters(const std::vector<double> &xyz,
+                          std::vector<std::pair<std::string, std::string> > &ignore_disp, bool do_grads,
+                          const double cutoff, const std::vector<double> &box);
 
     /**
      * @brief Sets the json object containing extra info about non-bonded parameters in the class
@@ -381,6 +383,9 @@ class Dispersion {
 
     // Json object with extra user-defined monomer properties
     nlohmann::json mon_j_;
+
+    // Pairs for which dispersion will be ignored
+    std::vector<std::pair<std::string, std::string> > ignore_disp_;
 };
 
 }  // namespace disp

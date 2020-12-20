@@ -58,6 +58,7 @@ TEST_CASE("lj::No Long Range") {
     std::vector<size_t> islocal = {1, 1};
     std::vector<std::string> mon_id = {"nc", "cd"};
     bool do_grads = true;
+    std::vector<std::pair<std::string, std::string> > lj_pairs = {{"nc", "nc"}, {"cd", "nc"}, {"cd", "cd"}};
 
     std::vector<double> internal_ljlr_expected(2, 0.0);
     std::vector<double> internal_xyz_expected = sys_xyz;
@@ -107,7 +108,7 @@ TEST_CASE("lj::No Long Range") {
     std::vector<double> grad(sys_xyz.size(), 0.0);
     bool use_ghost = false;
 
-    d.SetNewParameters(sys_xyz, do_grads, cutoff, box);
+    d.SetNewParameters(sys_xyz, lj_pairs, do_grads, cutoff, box);
     nlohmann::json jsonMon = {
         {"nc",
          {{"sites", 1},
@@ -157,16 +158,16 @@ TEST_CASE("lj::No Long Range") {
         double s = 0.001;
         for (size_t j = 0; j < sys_xyz.size(); j++) {
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double ep = d.GetLennardJones(grad);
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double epp = d.GetLennardJones(grad);
             sys_xyz[j] -= 4 * s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double emm = d.GetLennardJones(grad);
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double em = d.GetLennardJones(grad);
             sys_xyz[j] += s;
 
@@ -177,10 +178,9 @@ TEST_CASE("lj::No Long Range") {
 }
 
 TEST_CASE("lj::Gas Phase") {
+    std::vector<std::pair<std::string, std::string> > lj_pairs = {{"nc", "nc"}, {"cd", "nc"}, {"cd", "cd"}};
     double ljlr_nc = 2 * std::sqrt(0.170100) * 3.250000 * 3.250000 * 3.250000;
     double ljlr_cd = 2 * std::sqrt(0.086050) * 3.400000 * 3.400000 * 3.400000;
-    // double ljlr_nc = 0.01;
-    // double ljlr_cd = 0.01;
     size_t ntot_ats = 21;
     std::vector<double> sys_xyz(ntot_ats * 3, 0.0);
 
@@ -210,7 +210,7 @@ TEST_CASE("lj::Gas Phase") {
     std::vector<double> grad(sys_xyz.size(), 0.0);
     bool use_ghost = false;
 
-    d.SetNewParameters(sys_xyz, do_grads, cutoff, box);
+    d.SetNewParameters(sys_xyz, lj_pairs, do_grads, cutoff, box);
     nlohmann::json jsonMon = {
         {"nc",
          {{"sites", 1},
@@ -273,16 +273,16 @@ TEST_CASE("lj::Gas Phase") {
         double s = 0.001;
         for (size_t j = 0; j < sys_xyz.size(); j++) {
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double ep = d.GetLennardJones(grad);
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double epp = d.GetLennardJones(grad);
             sys_xyz[j] -= 4 * s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double emm = d.GetLennardJones(grad);
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double em = d.GetLennardJones(grad);
             sys_xyz[j] += s;
 
@@ -293,6 +293,7 @@ TEST_CASE("lj::Gas Phase") {
 }
 
 TEST_CASE("lj::PBC") {
+    std::vector<std::pair<std::string, std::string> > lj_pairs = {{"nc", "nc"}, {"cd", "nc"}, {"cd", "cd"}};
     double ljlr_nc = 2 * std::sqrt(0.170100) * 3.250000 * 3.250000 * 3.250000;
     double ljlr_cd = 2 * std::sqrt(0.086050) * 3.400000 * 3.400000 * 3.400000;
     size_t ntot_ats = 21;
@@ -322,7 +323,7 @@ TEST_CASE("lj::PBC") {
     std::vector<double> grad(sys_xyz.size(), 0.0);
     bool use_ghost = false;
 
-    d.SetNewParameters(sys_xyz, do_grads, cutoff, box);
+    d.SetNewParameters(sys_xyz, lj_pairs, do_grads, cutoff, box);
     nlohmann::json jsonMon = {
         {"nc",
          {{"sites", 1},
@@ -405,16 +406,16 @@ TEST_CASE("lj::PBC") {
         double s = 0.001;
         for (size_t j = 0; j < sys_xyz.size(); j++) {
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double ep = d.GetLennardJones(grad);
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double epp = d.GetLennardJones(grad);
             sys_xyz[j] -= 4 * s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double emm = d.GetLennardJones(grad);
             sys_xyz[j] += s;
-            d.SetNewParameters(sys_xyz, false, cutoff, box);
+            d.SetNewParameters(sys_xyz, lj_pairs, false, cutoff, box);
             double em = d.GetLennardJones(grad);
             sys_xyz[j] += s;
 

@@ -181,8 +181,9 @@ void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, 
     proc_grid_z_ = proc_grid_z;
 }
 
-void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads = true, const double cutoff = 100.0,
-                                  const std::vector<double> &box = {}) {
+void Dispersion::SetNewParameters(const std::vector<double> &xyz,
+                                  std::vector<std::pair<std::string, std::string> > &ignore_disp, bool do_grads = true,
+                                  const double cutoff = 100.0, const std::vector<double> &box = {}) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -208,6 +209,7 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     use_pbc_ = box.size();
+    ignore_disp_ = ignore_disp;
     do_grads_ = do_grads;
     cutoff_ = cutoff;
     std::fill(grad_.begin(), grad_.end(), 0.0);
@@ -502,6 +504,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         size_t ns = num_atoms_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
+
+        double dummy_c6, dummy_d6;
+        bool do_disp = GetC6(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, dummy_c6, dummy_d6, ignore_disp_, repdisp_j_);
         std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
 
         // Obtain excluded pairs for monomer type mt
@@ -527,11 +532,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 bool is12 = systools::IsExcluded(exc12, i, j);
                 bool is13 = systools::IsExcluded(exc13, i, j);
                 bool is14 = systools::IsExcluded(exc14, i, j);
-                double disp_scale_factor = (is12 || is13 || is14) ? 0 : 1;
+                double disp_scale_factor = (is12 || is13 || is14 || !do_disp) ? 0 : 1;
                 double c6, d6;
                 double c6i = c6_long_range_[fi_sites + i * nmon];
                 double c6j = c6_long_range_[fi_sites + j * nmon];
-                GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, repdisp_j_);
+                GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -608,6 +613,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
+
+            double dummy_c6, dummy_d6;
+            bool do_disp =
+                GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, dummy_c6, dummy_d6, ignore_disp_, repdisp_j_);
+            double disp_scale_factor = do_disp ? 1.0 : 0.0;
             std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
 
             // Check if monomer types 1 and 2 are the same
@@ -655,11 +665,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         size_t jnmon23 = jnmon2 * 3;
                         double c6j = c6_long_range_[fi_sites2 + j * nmon2];
                         double c6, d6;
-                        GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, repdisp_j_);
-                        energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, xyz_sitei, xyz_mt2, g1, grad2_pool[rank], phi_i, phi2_pool[rank],
-                                  nmon1, nmon2, m2init, nmon2, i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_,
-                                  box_inverse_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                        GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                        energy_pool[rank] += disp6(
+                            c6, d6, c6i, c6j, xyz_sitei, xyz_mt2, g1, grad2_pool[rank], phi_i, phi2_pool[rank], nmon1,
+                            nmon2, m2init, nmon2, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
+                            box_inverse_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];
