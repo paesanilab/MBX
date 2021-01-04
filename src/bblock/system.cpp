@@ -870,10 +870,8 @@ void System::SetUpFromJson(nlohmann::json j) {
     // Default: no box (empty vector)
     std::vector<double> box;
     try {
-        std::cout << j << std::endl;
         std::vector<double> box2 = j["MBX"]["box"];
         box = box2;
-        std::cout << j << std::endl;
     } catch (...) {
         box.clear();
         std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
