@@ -2619,7 +2619,7 @@ void System::SetLJLongRange() {
         size_t nmon = mon_type_count_[k].second;
         size_t natoms = nat_[fi_mon];
 
-        systools::SetLJLongRange(lj_lr_, mon, nmon, natoms, fi_atoms, repdisp_j_);
+        systools::SetLJLongRange(lj_lr_, mon, nmon, natoms, fi_atoms, lj_pairs_, repdisp_j_);
         fi_mon += nmon;
         fi_atoms += nmon * natoms;
     }

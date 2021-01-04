@@ -1147,11 +1147,11 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
 }
 
 void SetLJLongRange(std::vector<double> &lj_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
-                    nlohmann::json repdisp_j) {
+                    std::vector<std::pair<std::string, std::string>> use_lj, nlohmann::json repdisp_j) {
     std::vector<double> ljlr_i(natoms, 0.0);
     for (size_t i = 0; i < natoms; i++) {
         double eps, sigma;
-        lj::GetLjParams(mon_id, mon_id, i, i, eps, sigma, repdisp_j);
+        lj::GetLjParams(mon_id, mon_id, i, i, eps, sigma, use_lj, repdisp_j);
         ljlr_i[i] = 2 * std::sqrt(eps) * sigma * sigma * sigma;
     }
 

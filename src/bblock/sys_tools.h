@@ -512,7 +512,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
  * @param[in] repdisp_j Json object with lennard jones coefficients
  */
 void SetLJLongRange(std::vector<double> &lj_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
-                    nlohmann::json repdisp_j);
+                    std::vector<std::pair<std::string, std::string>> use_lj, nlohmann::json repdisp_j);
 
 /**
  * @brief Redistributes the virtual site gradients into the real atoms
