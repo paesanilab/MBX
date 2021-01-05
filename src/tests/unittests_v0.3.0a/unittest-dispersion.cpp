@@ -299,7 +299,7 @@ TEST_CASE("dispersion::GetDispersion") {
     std::vector<std::pair<std::string, std::string> > ignore_disp;
 
     d.SetNewParameters(sys_xyz, ignore_disp, true, cutoff, box);
-    d.setEwaldAlpha(0.60);
+    d.SetEwaldAlpha(0.60);
     d.SetEwaldGridDensity(2.5);
     d.SetEwaldSplineOrder(6);
     double energy = d.GetDispersion(grad, &virial, use_ghost);

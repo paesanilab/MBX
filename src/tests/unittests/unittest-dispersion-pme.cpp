@@ -73,7 +73,7 @@ TEST_CASE("Test the dispersion class.") {
         }
         //        real_coords[9] = start;
         my_disp.SetNewParameters(real_coords, false, CUTOFF, box2);
-        my_disp.setEwaldAlpha(alpha);
+        my_disp.SetEwaldAlpha(alpha);
         my_disp.SetEwaldGridDensity(grid_density);
         my_disp.SetEwaldSplineOrder(spline_order);
         double old_energy = my_disp.GetDispersion(dummy);
@@ -86,7 +86,7 @@ TEST_CASE("Test the dispersion class.") {
                 real_coords[3 * i] += coord;
             }
             my_disp.SetNewParameters(real_coords, false, CUTOFF, box2);
-            my_disp.setEwaldAlpha(alpha);
+            my_disp.SetEwaldAlpha(alpha);
             my_disp.SetEwaldGridDensity(grid_density);
             my_disp.SetEwaldSplineOrder(spline_order);
             double energy = my_disp.GetDispersion(dummy);
@@ -106,7 +106,7 @@ TEST_CASE("Test the dispersion class.") {
         ewald_disp.Initialize(C6_long_range, real_coords, monomer_names, n_atoms_vector, internal_mon_type_count,
                               islocal, true, box2);
         ewald_disp.SetNewParameters(real_coords, true, CUTOFF, box2);
-        ewald_disp.setEwaldAlpha(0.3);
+        ewald_disp.SetEwaldAlpha(0.3);
         ewald_disp.SetEwaldGridDensity(2);
         ewald_disp.SetEwaldSplineOrder(6);
         double energy3 = ewald_disp.GetDispersion(forces3);
@@ -114,7 +114,7 @@ TEST_CASE("Test the dispersion class.") {
 
         std::vector<double> forces4(3 * n_atoms, 0.0);
         ewald_disp.SetNewParameters(real_coords, true, CUTOFF, box2);
-        ewald_disp.setEwaldAlpha(0.4);
+        ewald_disp.SetEwaldAlpha(0.4);
         ewald_disp.SetEwaldGridDensity(3);
         ewald_disp.SetEwaldSplineOrder(7);
         double energy4 = ewald_disp.GetDispersion(forces4);
@@ -122,7 +122,7 @@ TEST_CASE("Test the dispersion class.") {
 
         std::vector<double> forces5(3 * n_atoms, 0.0);
         ewald_disp.SetNewParameters(real_coords, true, CUTOFF, box2);
-        ewald_disp.setEwaldAlpha(0.5);
+        ewald_disp.SetEwaldAlpha(0.5);
         ewald_disp.SetEwaldGridDensity(4);
         ewald_disp.SetEwaldSplineOrder(8);
         double energy5 = ewald_disp.GetDispersion(forces5);
@@ -141,7 +141,7 @@ TEST_CASE("Test the dispersion class.") {
         // Get dispersion with no grads
         std::vector<double> dummy(3 * n_atoms, 0.0);
         my_disp.SetNewParameters(real_coords, true, CUTOFF, box2);
-        my_disp.setEwaldAlpha(0.3);
+        my_disp.SetEwaldAlpha(0.3);
         my_disp.SetEwaldGridDensity(2);
         my_disp.SetEwaldSplineOrder(6);
         std::vector<double> grad(3 * n_atoms, 0.0);

@@ -166,7 +166,7 @@ class Dispersion {
      *
      * @param[in] cutoff New cutoff value
      */
-    void setEwaldAlpha(const double alpha) { ewald_alpha_ = alpha; }
+    void SetEwaldAlpha(const double alpha) { ewald_alpha_ = alpha; }
 
     /**
      * @brief Sets the PME grid density.

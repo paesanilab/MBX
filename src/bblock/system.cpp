@@ -2855,7 +2855,7 @@ void System::SetEwaldDispersion(double alpha, double grid_density, int spline_or
     disp_alpha_ = alpha;
     disp_grid_density_ = grid_density;
     disp_spline_order_ = spline_order;
-    dispersionE_.setEwaldAlpha(alpha);
+    dispersionE_.SetEwaldAlpha(alpha);
     dispersionE_.SetEwaldGridDensity(grid_density);
     dispersionE_.SetEwaldSplineOrder(spline_order);
 }
@@ -2866,7 +2866,7 @@ void System::SetEwaldLennardJones(double alpha, double grid_density, int spline_
     lj_alpha_ = alpha;
     lj_grid_density_ = grid_density;
     lj_spline_order_ = spline_order;
-    lennardJonesE_.setEwaldAlpha(alpha);
+    lennardJonesE_.SetEwaldAlpha(alpha);
     lennardJonesE_.SetEwaldGridDensity(grid_density);
     lennardJonesE_.SetEwaldSplineOrder(spline_order);
 }
@@ -2922,6 +2922,9 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
+    electrostaticE_.SetEwaldAlpha(elec_alpha_);
+    electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
+    electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
 
     return electrostaticE_.GetElectrostatics(grad_, &virial_, use_ghost);
 }
@@ -2930,6 +2933,9 @@ double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
+    electrostaticE_.SetEwaldAlpha(elec_alpha_);
+    electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
+    electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
 
     return electrostaticE_.GetElectrostaticsMPIlocal(grad_, &virial_, use_ghost);
 }
@@ -2947,6 +2953,9 @@ double System::GetDispersion(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
     dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
+    dispersionE_.SetEwaldAlpha(disp_alpha_);
+    dispersionE_.SetEwaldGridDensity(disp_grid_density_);
+    dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersion(real_grad, &virial_, use_ghost);
 
@@ -2973,6 +2982,9 @@ double System::GetLennardJones(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
     lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetEwaldAlpha(lj_alpha_);
+    lennardJonesE_.SetEwaldGridDensity(lj_grid_density_);
+    lennardJonesE_.SetEwaldSplineOrder(lj_spline_order_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = lennardJonesE_.GetLennardJones(real_grad, &virial_, use_ghost);
 
@@ -3000,6 +3012,9 @@ double System::GetDispersionPME(bool do_grads, bool use_ghost) {
     }
 
     dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
+    dispersionE_.SetEwaldAlpha(disp_alpha_);
+    dispersionE_.SetEwaldGridDensity(disp_grid_density_);
+    dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersionPME(real_grad, &virial_, use_ghost);
 
@@ -3027,6 +3042,9 @@ double System::GetDispersionPMElocal(bool do_grads, bool use_ghost) {
     }
 
     dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
+    dispersionE_.SetEwaldAlpha(disp_alpha_);
+    dispersionE_.SetEwaldGridDensity(disp_grid_density_);
+    dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersionPMElocal(real_grad, &virial_, use_ghost);
 
@@ -3054,6 +3072,9 @@ double System::GetLennardJonesPME(bool do_grads, bool use_ghost) {
     }
 
     lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetEwaldAlpha(lj_alpha_);
+    lennardJonesE_.SetEwaldGridDensity(lj_grid_density_);
+    lennardJonesE_.SetEwaldSplineOrder(lj_spline_order_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = lennardJonesE_.GetLennardJonesPME(real_grad, &virial_, use_ghost);
 
@@ -3081,6 +3102,9 @@ double System::GetLennardJonesPMElocal(bool do_grads, bool use_ghost) {
     }
 
     lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetEwaldAlpha(lj_alpha_);
+    lennardJonesE_.SetEwaldGridDensity(lj_grid_density_);
+    lennardJonesE_.SetEwaldSplineOrder(lj_spline_order_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = lennardJonesE_.GetLennardJonesPMElocal(real_grad, &virial_, use_ghost);
 

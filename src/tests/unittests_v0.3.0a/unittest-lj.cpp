@@ -144,7 +144,7 @@ TEST_CASE("lj::No Long Range") {
 
     d.SetJsonLennardJones(jsonDisp);
     d.SetJsonMonomers(jsonMon);
-    d.setEwaldAlpha(0.0);
+    d.SetEwaldAlpha(0.0);
     d.SetEwaldGridDensity(1.0);
     d.SetEwaldSplineOrder(6);
     SECTION("Energy") {
@@ -263,7 +263,7 @@ TEST_CASE("lj::Gas Phase") {
 
     d.SetJsonLennardJones(jsonDisp);
     d.SetJsonMonomers(jsonMon);
-    d.setEwaldAlpha(0.0);
+    d.SetEwaldAlpha(0.0);
     d.SetEwaldGridDensity(2.5);
     d.SetEwaldSplineOrder(6);
     SECTION("Energy") {
@@ -375,7 +375,7 @@ TEST_CASE("lj::PBC") {
                                            nlohmann::json::array({{nlohmann::json::array({"cd", "cd"}), 0.086050}})})}};
     d.SetJsonLennardJones(jsonDisp);
     d.SetJsonMonomers(jsonMon);
-    d.setEwaldAlpha(0.6);
+    d.SetEwaldAlpha(0.6);
     d.SetEwaldGridDensity(2.5);
     d.SetEwaldSplineOrder(6);
     SECTION("Energy") {
@@ -674,7 +674,7 @@ TEST_CASE("lj::PBC") {
 //    double energy_expected = -6.6842876953e+01;
 //
 //    d.SetNewParameters(sys_xyz, true, cutoff, box);
-//    d.setEwaldAlpha(0.60);
+//    d.SetEwaldAlpha(0.60);
 //    d.SetEwaldGridDensity(2.5);
 //    d.SetEwaldSplineOrder(6);
 //    double energy = d.GetDispersion(grad, &virial, use_ghost);
