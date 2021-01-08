@@ -54,6 +54,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "kdtree/kdtree_utils.h"
 #include "helpme.h"
+#include "json/json.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -73,6 +74,8 @@ enum {
     ELE_GRAD_REAL,
     ELE_GRAD_PME,
     ELE_GRAD_FIN,
+
+    ELE_COMM_REVFOR,
 
     ELE_NUM_TIMERS
 };
@@ -118,9 +121,11 @@ class Electrostatics {
                     const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
                     const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                    const std::vector<size_t> &islocal_, const bool do_grads = true, const double tolerance = 1E-16,
-                    const size_t maxit = 100, const std::string dip_method = "iter",
-                    const std::vector<double> &box = {});
+                    const std::vector<size_t> &islocal_, const std::vector<int> &sys_atom_tag_,
+                    const bool do_grads = true, const double tolerance = 1E-16, const size_t maxit = 100,
+                    const std::string dip_method = "iter", const std::vector<double> &box = {});
+
+    void SetJsonMonomers(nlohmann::json mon_j);
 
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
 
@@ -229,8 +234,33 @@ class Electrostatics {
      */
     double GetInducedElectrostaticEnergy();
 
+    /**
+     * @brief Returns timing section call counts.
+     *
+     * @return Array of call counts for timing statistics
+     */
     std::vector<size_t> GetInfoCounts();
+
+    /**
+     * @brief Returns timing section call times.
+     *
+     * @return Array of call times for timing statistics
+     */
     std::vector<double> GetInfoTimings();
+
+    /**
+     * @brief Returns FFT grid used by PME solver
+     *
+     * @return Array of three integers
+     */
+    std::vector<int> GetFFTDimension(int box_id = 0);
+
+    /**
+     * @brief Provides FFT grid used by PME solver
+     *
+     * @param[in] Array of three integers
+     */
+    void SetFFTDimension(std::vector<int> grid);
 
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
@@ -238,6 +268,7 @@ class Electrostatics {
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
     void SetBoxPMElocal(std::vector<double> box);
+    void SetPeriodicity(bool periodic);
 
    private:
     void CalculatePermanentElecField(bool use_ghost = 0);
@@ -255,11 +286,10 @@ class Electrostatics {
     void CalculateDipolesMPIlocal(bool use_ghost = 0);
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
-    void CalculateGradients(std::vector<double> &grad);
+    void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
     void reverse_forward_comm(std::vector<double> &in_v);
-    void reverse_comm(std::vector<double> &in_v);
 
     void ReorderData();
 
@@ -287,6 +317,15 @@ class Electrostatics {
     std::vector<size_t> islocal_atom_;
     // local/ghost descriptor for xyz of atoms
     std::vector<size_t> islocal_atom_xyz_;
+    // Atom tags for real and virtual sites, unordered
+    std::vector<int> sys_atom_tag_;
+    // Atom tags for real and virtual sites, ordered
+    std::vector<int> atom_tag_;
+    // Nearest Neighbor Look-up table: first neighbor, num neighbors, neighbor list
+    std::vector<size_t> nn_first_neigh;
+    std::vector<size_t> nn_num_neighs;
+    std::vector<size_t> nn_neighs;
+    bool nn_first;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
@@ -369,6 +408,7 @@ class Electrostatics {
     std::vector<double> box_inverse_;
     // box in ABCabc format
     std::vector<double> box_ABCabc_;
+    std::vector<double> box_ABCabc_PMElocal_;
     // box of the domain-decomposed system
     std::vector<double> box_PMElocal_;
     std::vector<double> box_inverse_PMElocal_;
@@ -400,11 +440,17 @@ class Electrostatics {
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;
+    // periodicity of simulation cell
+    bool simcell_periodic_;
 
     bool first;
 
     std::vector<size_t> mbxt_ele_count_;
     std::vector<double> mbxt_ele_time_;
+    // User-specified FFT grid
+    std::vector<int> user_fft_grid_;
+
+    nlohmann::json mon_j_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

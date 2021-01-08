@@ -1,28 +1,28 @@
 #Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
-    unittest-h2o-f-dimer.cpp
-    unittest-h2o-cl-dimer.cpp
-    unittest-h2o-br-dimer.cpp
-    unittest-h2o-i-dimer.cpp
+#    unittest-h2o-f-dimer.cpp
+#    unittest-h2o-cl-dimer.cpp
+#    unittest-h2o-br-dimer.cpp
+#    unittest-h2o-i-dimer.cpp
     unittest-h2o-li-dimer.cpp
-    unittest-h2o-na-dimer.cpp
-    unittest-h2o-k-dimer.cpp
-    unittest-h2o-rb-dimer.cpp
-    unittest-h2o-cs-dimer.cpp
-    unittest-h2o-h2o-li-trimer.cpp
-    unittest-h2o-h2o-na-trimer.cpp
-    unittest-h2o-h2o-k-trimer.cpp
-    unittest-h2o-h2o-rb-trimer.cpp
-    unittest-h2o-h2o-cs-trimer.cpp
-    unittest-ch4-monomer.cpp
-    unittest-bond.cpp
-    unittest-angle.cpp
-    unittest-dihedral.cpp
-    unittest-inversion.cpp
-    unittest-connectivity.cpp
-    unittest-io-connectivity.cpp
-    unittest-h4-dummy.cpp
-    unittest-box-shapes.cpp
+#    unittest-h2o-na-dimer.cpp
+#    unittest-h2o-k-dimer.cpp
+#    unittest-h2o-rb-dimer.cpp
+#    unittest-h2o-cs-dimer.cpp
+#    unittest-h2o-h2o-li-trimer.cpp
+#    unittest-h2o-h2o-na-trimer.cpp
+#    unittest-h2o-h2o-k-trimer.cpp
+#    unittest-h2o-h2o-rb-trimer.cpp
+#    unittest-h2o-h2o-cs-trimer.cpp
+#    unittest-ch4-monomer.cpp
+#    unittest-bond.cpp
+#    unittest-angle.cpp
+#    unittest-dihedral.cpp
+#    unittest-inversion.cpp
+#    unittest-connectivity.cpp
+#    unittest-io-connectivity.cpp
+#    unittest-h4-dummy.cpp
+#    unittest-box-shapes.cpp
 )
 
 # Stuff below shouldn't need to be modified

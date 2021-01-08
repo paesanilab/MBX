@@ -1395,7 +1395,9 @@ namespace helpme {
 
 #define SQRTTWO std::sqrt(static_cast<Real>(2))
 #define SQRTPI static_cast<Real>(1.77245385090551602729816748334114518279754945612238712821381L)
-#define PI static_cast<Real>(3.14159265358979323846264338327950288419716939937510582097494L)
+#ifndef M_PI
+#define M_PI static_cast<Real>(3.14159265358979323846264338327950288419716939937510582097494L)
+#endif
 
 /*!
  * Compute upper incomplete gamma functions for positive half-integral s values using the recursion
@@ -2515,6 +2517,8 @@ class PMEInstance {
    protected:
     /// The FFT grid dimensions in the {A,B,C} grid dimensions.
     int gridDimensionA_ = 0, gridDimensionB_ = 0, gridDimensionC_ = 0;
+    /// User-specified FFT grid dimensions in the {A,B,C} grid dimensions.
+    int user_gridDimensionA_ = 0, user_gridDimensionB_ = 0, user_gridDimensionC_ = 0;
     /// The number of K vectors in the {A,B,C} dimensions.  Equal to dim{A,B,C} for PME, lower for cPME.
     int numKSumTermsA_ = 0, numKSumTermsB_ = 0, numKSumTermsC_ = 0;
     /// The number of K vectors in the {A,B,C} dimensions to be handled by this node in a parallel setup.
@@ -3169,15 +3173,15 @@ class PMEInstance {
         if (rPower > 3 && nodeZero) {
             // Kernels with rPower>3 are absolutely convergent and should have the m=0 term present.
             // To compute it we need sum_ij c(i)c(j), which can be obtained from the structure factor norm.
-            Real prefac = 2 * scaleFactor * PI * SQRTPI * pow(kappa, rPower - 3) /
+            Real prefac = 2 * scaleFactor * M_PI * SQRTPI * pow(kappa, rPower - 3) /
                           ((rPower - 3) * gammaComputer<Real, rPower>::value * volume);
             energy += prefac * (gridPtr[0].real() * gridPtr[0].real() + gridPtr[0].imag() * gridPtr[0].imag());
         }
         // Ensure the m=0 term convolution product is zeroed for the backtransform; it's been accounted for above.
         if (nodeZero) gridPtr[0] = Complex(0, 0);
 
-        Real bPrefac = PI * PI / (kappa * kappa);
-        Real volPrefac = scaleFactor * pow(PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
+        Real bPrefac = M_PI * M_PI / (kappa * kappa);
+        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
         size_t nxz = (size_t)myNx * myNz;
         Real Vxx = 0, Vxy = 0, Vyy = 0, Vxz = 0, Vyz = 0, Vzz = 0;
         const Real *boxPtr = boxInv[0];
@@ -3275,15 +3279,15 @@ class PMEInstance {
         if (rPower > 3 && nodeZero) {
             // Kernels with rPower>3 are absolutely convergent and should have the m=0 term present.
             // To compute it we need sum_ij c(i)c(j), which can be obtained from the structure factor norm.
-            Real prefac = 2 * scaleFactor * PI * SQRTPI * pow(kappa, rPower - 3) /
+            Real prefac = 2 * scaleFactor * M_PI * SQRTPI * pow(kappa, rPower - 3) /
                           ((rPower - 3) * gammaComputer<Real, rPower>::value * volume);
             energy += prefac * gridPtrIn[0] * gridPtrIn[0];
         }
         // Ensure the m=0 term convolution product is zeroed for the backtransform; it's been accounted for above.
         if (nodeZero) gridPtrOut[0] = 0;
 
-        Real bPrefac = PI * PI / (kappa * kappa);
-        Real volPrefac = scaleFactor * pow(PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
+        Real bPrefac = M_PI * M_PI / (kappa * kappa);
+        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
         size_t nxz = (size_t)myNx * myNz;
         size_t nyxz = myNy * nxz;
         Real Vxx = 0, Vxy = 0, Vyy = 0, Vxz = 0, Vyz = 0, Vzz = 0;
@@ -3412,8 +3416,8 @@ class PMEInstance {
         Real *gridPtr = influenceFunction.data();
         if (nodeZero) gridPtr[0] = 0;
 
-        Real bPrefac = PI * PI / (kappa * kappa);
-        Real volPrefac = scaleFactor * pow(PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
+        Real bPrefac = M_PI * M_PI / (kappa * kappa);
+        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
         const Real *boxPtr = boxInv[0];
         // Exclude m=0 cell.
         int start = (nodeZero ? 1 : 0);
@@ -3621,10 +3625,14 @@ class PMEInstance {
             size_t scratchSize;
             int gridPaddingA = 0, gridPaddingB = 0, gridPaddingC = 0;
             if (algorithm == AlgorithmType::CompressedPME) {
-                //	      std::cout << "algorithm= CompressedPME" << std::endl;
                 gridDimensionA_ = numNodesA * std::ceil(dimA / (float)numNodesA);
                 gridDimensionB_ = numNodesB * std::ceil(dimB / (float)numNodesB);
                 gridDimensionC_ = numNodesC * std::ceil(dimC / (float)numNodesC);
+                if (user_gridDimensionA_ > 0) {
+                    gridDimensionA_ = user_gridDimensionA_;
+                    gridDimensionB_ = user_gridDimensionB_;
+                    gridDimensionC_ = user_gridDimensionC_;
+                }
                 gridPaddingA = (numNodesA > 1 ? splineOrder - 1 : 0);
                 gridPaddingB = (numNodesB > 1 ? splineOrder - 1 : 0);
                 gridPaddingC = (numNodesC > 1 ? splineOrder - 1 : 0);
@@ -3652,10 +3660,14 @@ class PMEInstance {
                 scratchSize = (size_t)std::max(myGridDimensionA_, numKSumTermsA) *
                               std::max(myGridDimensionB_, numKSumTermsB) * std::max(myGridDimensionC_, numKSumTermsC);
             } else {
-                //	      std::cout << "algorithm= PME" << std::endl;
                 gridDimensionA_ = findGridSize(dimA, {numNodesA_});
                 gridDimensionB_ = findGridSize(dimB, {numNodesB_ * numNodesC_});
                 gridDimensionC_ = findGridSize(dimC, {numNodesA_ * numNodesC_, numNodesB_ * numNodesC_});
+                if (user_gridDimensionA_ > 0) {
+                    gridDimensionA_ = user_gridDimensionA_;
+                    gridDimensionB_ = user_gridDimensionB_;
+                    gridDimensionC_ = user_gridDimensionC_;
+                }
                 gridPaddingA = gridPaddingB = gridPaddingC = 0;
                 myGridDimensionA_ = gridDimensionA_ / numNodesA_;
                 myGridDimensionB_ = gridDimensionB_ / numNodesB_;
@@ -3752,7 +3764,7 @@ class PMEInstance {
                         int fullM = m + node * myNumKSumTermsA_ / 2;
                         Real *rowPtr = compressionCoefficientsA_[offset + 2 * (fullM - offset)];
                         for (int n = 0; n < myGridDimensionA_; ++n) {
-                            Real exponent = 2 * PI * fullM * (n + myFirstGridPointA_) / gridDimensionA_;
+                            Real exponent = 2 * M_PI * fullM * (n + myFirstGridPointA_) / gridDimensionA_;
                             rowPtr[n] = std::sqrt(2) * std::cos(exponent);
                             rowPtr[n + myGridDimensionA_] = std::sqrt(2) * std::sin(exponent);
                         }
@@ -3765,7 +3777,7 @@ class PMEInstance {
                         int fullM = m + node * myNumKSumTermsB_ / 2;
                         Real *rowPtr = compressionCoefficientsB_[offset + 2 * (fullM - offset)];
                         for (int n = 0; n < myGridDimensionB_; ++n) {
-                            Real exponent = 2 * PI * fullM * (n + myFirstGridPointB_) / gridDimensionB_;
+                            Real exponent = 2 * M_PI * fullM * (n + myFirstGridPointB_) / gridDimensionB_;
                             rowPtr[n] = std::sqrt(2) * std::cos(exponent);
                             rowPtr[n + myGridDimensionB_] = std::sqrt(2) * std::sin(exponent);
                         }
@@ -3778,7 +3790,7 @@ class PMEInstance {
                         int fullM = m + node * myNumKSumTermsC_ / 2;
                         Real *rowPtr = compressionCoefficientsC_[offset + 2 * (fullM - offset)];
                         for (int n = 0; n < myGridDimensionC_; ++n) {
-                            Real exponent = 2 * PI * fullM * (n + myFirstGridPointC_) / gridDimensionC_;
+                            Real exponent = 2 * M_PI * fullM * (n + myFirstGridPointC_) / gridDimensionC_;
                             rowPtr[n] = std::sqrt(2) * std::cos(exponent);
                             rowPtr[n + myGridDimensionC_] = std::sqrt(2) * std::sin(exponent);
                         }
@@ -4084,9 +4096,9 @@ class PMEInstance {
                 HtH(2, 2) = C * C;
                 const float TOL = 1e-4f;
                 // Check for angles very close to 90, to avoid noise from the eigensolver later on.
-                HtH(0, 1) = HtH(1, 0) = std::abs(gamma - 90) < TOL ? 0 : A * B * std::cos(PI * gamma / 180);
-                HtH(0, 2) = HtH(2, 0) = std::abs(beta - 90) < TOL ? 0 : A * C * std::cos(PI * beta / 180);
-                HtH(1, 2) = HtH(2, 1) = std::abs(alpha - 90) < TOL ? 0 : B * C * std::cos(PI * alpha / 180);
+                HtH(0, 1) = HtH(1, 0) = std::abs(gamma - 90) < TOL ? 0 : A * B * std::cos(M_PI * gamma / 180);
+                HtH(0, 2) = HtH(2, 0) = std::abs(beta - 90) < TOL ? 0 : A * C * std::cos(M_PI * beta / 180);
+                HtH(1, 2) = HtH(2, 1) = std::abs(alpha - 90) < TOL ? 0 : B * C * std::cos(M_PI * alpha / 180);
 
                 auto eigenTuple = HtH.diagonalize();
                 RealMat evalsReal = std::get<0>(eigenTuple);
@@ -4105,11 +4117,11 @@ class PMEInstance {
                 boxVecs_(0, 0) = A;
                 boxVecs_(0, 1) = 0;
                 boxVecs_(0, 2) = 0;
-                boxVecs_(1, 0) = B * std::cos(PI / 180 * gamma);
-                boxVecs_(1, 1) = B * std::sin(PI / 180 * gamma);
+                boxVecs_(1, 0) = B * std::cos(M_PI / 180 * gamma);
+                boxVecs_(1, 1) = B * std::sin(M_PI / 180 * gamma);
                 boxVecs_(1, 2) = 0;
-                boxVecs_(2, 0) = C * std::cos(PI / 180 * beta);
-                boxVecs_(2, 1) = (B * C * cos(PI / 180 * alpha) - boxVecs_(2, 0) * boxVecs_(1, 0)) / boxVecs_(1, 1);
+                boxVecs_(2, 0) = C * std::cos(M_PI / 180 * beta);
+                boxVecs_(2, 1) = (B * C * cos(M_PI / 180 * alpha) - boxVecs_(2, 0) * boxVecs_(1, 0)) / boxVecs_(1, 1);
                 boxVecs_(2, 2) = std::sqrt(C * C - boxVecs_(2, 0) * boxVecs_(2, 0) - boxVecs_(2, 1) * boxVecs_(2, 1));
             } else {
                 throw std::runtime_error("Unknown lattice type in setLatticeVectors");
@@ -4130,6 +4142,27 @@ class PMEInstance {
         } else {
             unitCellHasChanged_ = false;
         }
+    }
+
+    /*!
+     * \return FFT grid dimension used; must be called after setup.
+     */
+    std::vector<int> GetFFTDimension() {
+        std::vector<int> dim(3);
+        dim[0] = gridDimensionA_;
+        dim[1] = gridDimensionB_;
+        dim[2] = gridDimensionC_;
+
+        return dim;
+    }
+
+    /*!
+     * \ User-specified FFT grid dimension
+     */
+    void SetFFTDimension(std::vector<int> grid) {
+        user_gridDimensionA_ = grid[0];
+        user_gridDimensionB_ = grid[1];
+        user_gridDimensionC_ = grid[2];
     }
 
     /*!
@@ -4572,7 +4605,7 @@ class PMEInstance {
         if (rPower_ > 3 && iAmNodeZero) {
             // Kernels with rPower>3 are absolutely convergent and should have the m=0 term present.
             // To compute it we need sum_ij c(i)c(j), which can be obtained from the structure factor norm.
-            Real prefac = 2 * scaleFactor_ * PI * SQRTPI * pow(kappa_, rPower_ - 3) /
+            Real prefac = 2 * scaleFactor_ * M_PI * SQRTPI * pow(kappa_, rPower_ - 3) /
                           ((rPower_ - 3) * nonTemplateGammaComputer<Real>(rPower_) * cellVolume());
             energy += prefac * transformedGrid[0] * transformedGrid[0];
         }
@@ -4603,7 +4636,7 @@ class PMEInstance {
         if (rPower_ > 3 && iAmNodeZero) {
             // Kernels with rPower>3 are absolutely convergent and should have the m=0 term present.
             // To compute it we need sum_ij c(i)c(j), which can be obtained from the structure factor norm.
-            Real prefac = 2 * scaleFactor_ * PI * SQRTPI * pow(kappa_, rPower_ - 3) /
+            Real prefac = 2 * scaleFactor_ * M_PI * SQRTPI * pow(kappa_, rPower_ - 3) /
                           ((rPower_ - 3) * nonTemplateGammaComputer<Real>(rPower_) * cellVolume());
             energy += prefac * std::norm(transformedGrid[0]);
         }

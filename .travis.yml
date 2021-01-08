@@ -132,17 +132,17 @@ before_script:
   - mv install install_OpenMP
 
 script:
-  - export OMP_NUM_THREADS=1
-  - cp -r install_noOpenMP install
-  - cd tests
-  - ./run_tests.sh
-  - cd ../
-  - rm -rf install
+#  - export OMP_NUM_THREADS=1
+#  - cp -r install_noOpenMP install
+#  - cd tests
+#  - ./run_tests.sh
+#  - cd ../
+#  - rm -rf install
   - export OMP_NUM_THREADS=2
   - cp -r install_OpenMP install
-  - cd tests
-  - ./run_tests.sh
-  - cd ../
+#  - cd tests
+#  - ./run_tests.sh
+#  - cd ../
   - cd install/bin/unittests
   - ctest
 

@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "x2b_A1B2Z2_C1D2_v1x.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -122,42 +156,6 @@ void monomer::grads(const double* g1, const double* g2, const double& in_plane_g
         grd[i + 6] += gh2;                 // H2
     }
 }
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-
-// struct vsites {
-//    //void TwoParticleAverageSite() {}
-//    //void ThreeParticleAverageSite() {}
-//    void OutOfPlaneSite(const double& w12, const double& w13,
-//                        const double& wcross, const double x1[3],
-//                        const double y1[3], const double y2[3],
-//                        double vs[3]);
-//    //void LocalCoordinatesSite{}
-//};
-//
-// void vsites::OutOfPlaneSite(const double& w12,
-//                            const double& w13,
-//                            const double& wcross,
-//                            const double x1[3],
-//                            const double y1[3],
-//                            const double y2[3],
-//                            double vs[3]) {
-//    double r12[3], r13[3];
-//
-//    for (int i = 0; i < 3; ++i) {
-//        r12[i] = y1[i] - x1[i];
-//        r13[i] = y2[i] - x1[i];
-//    }
-//
-//    double rc[3];
-//    rc[0] = r12[1]*r13[2] - r12[2]*r13[1];
-//    rc[1] = r12[2]*r13[0] - r12[0]*r13[2];
-//    rc[2] = r12[0]*r13[1] - r12[1]*r13[0];
-//
-//    vs[0] = x1[0] + w12 * r12[0] + w13 * r13[0] + wcross * rc[0];
-//    vs[1] = x1[1] + w12 * r12[1] + w13 * r13[1] + wcross * rc[1];
-//    vs[2] = x1[2] + w12 * r12[2] + w13 * r13[2] + wcross * rc[2];
-//}
 
 }  // namespace
 
@@ -1864,6 +1862,10 @@ double x2b_A1B2Z2_C1D2_v1x::f_switch(const double& r, double& g) const {
 //----------------------------------------------------------------------------//
 
 double x2b_A1B2Z2_C1D2_v1x::eval(const double* xyz1, const double* xyz2, const size_t ndim) const {
+#ifdef DEBUG
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+#endif
+
     std::vector<double> energies(ndim, 0.0);
 
     for (size_t j = 0; j < ndim; j++) {
@@ -1951,11 +1953,69 @@ double x2b_A1B2Z2_C1D2_v1x::eval(const double* xyz1, const double* xyz2, const s
         energy += energies[i];
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates (1) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << xyz1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input coordinates (2) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << xyz2[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output energy: " << energy << std::endl;
+#endif
+
     return energy;
 }
 
 double x2b_A1B2Z2_C1D2_v1x::eval(const double* xyz1, const double* xyz2, double* grad1, double* grad2,
                                  const size_t ndim, std::vector<double>* virial) const {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates (1) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << xyz1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input coordinates (2) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << xyz2[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input gradients (1) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << grad1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input gradients (2) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << grad2[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input virial:\n";
+    for (size_t i = 0; i < 9; i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     std::vector<double> energies(ndim, 0.0);
 
     for (size_t j = 0; j < ndim; j++) {
@@ -2141,6 +2201,31 @@ double x2b_A1B2Z2_C1D2_v1x::eval(const double* xyz1, const double* xyz2, double*
     for (size_t i = 0; i < ndim; i++) {
         energy += energies[i];
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Output energy: " << energy << std::endl;
+    std::cerr << "Output gradients (1) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << grad1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output gradients (2) for " << ndim << " monomers:\n";
+    for (size_t i = 0; i < ndim; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << grad2[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output virial:\n";
+    for (size_t i = 0; i < 9; i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 
     return energy;
 }

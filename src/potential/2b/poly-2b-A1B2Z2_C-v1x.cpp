@@ -1575,6 +1575,30 @@ std::vector<double> poly_2b_h2o_ion_v1x::eval(const size_t nd, const double a[42
                      (t373 + t392 + t434 + t747 + t760 + t847 + t861) * t852 +
                      (t874 + t893 + t935 + t1008 + t1050 + t1207 + t1264 + t1425) * t1415;
     }
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 429; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x) [vectorizable order!]:\n";
+    for (size_t j = 0; j < 8 * nd; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g) [vectorizable order!]:\n";
+    for (size_t j = 0; j < 8 * nd; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output energies:\n";
+    for (size_t j = 0; j < energy.size(); j++) {
+        std::cerr << energy[j] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
     return energy;
 }
 

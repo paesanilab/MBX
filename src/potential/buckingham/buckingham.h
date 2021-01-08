@@ -45,29 +45,82 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
+#include "json/json.h"
 
-//#include "helpme.h"
+/**
+ * @file buckingham.h
+ * @brief Contains the class Buckingham, that calculates the classical repulsion.
+ */
+
+/**
+ * @namespace buck
+ * @brief Encloses the functions related to classical repulsion.
+ */
 
 namespace buck {
 
 class Buckingham {
    public:
+    // Default constructor
     Buckingham(){};
+
+    // Default destructor
     ~Buckingham(){};
 
-    void Initialize(const std::vector<double> &sys_xyz,
-                    const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count, 
-                    const std::vector<size_t> force_ttm_for_idx,
-                    const std::vector<size_t> &islocal_, const bool do_grads,
-		    const std::vector<double> &box);
+    /**
+     * @brief Initializes the Buckingham class
+     *
+     * Initializes the class with some control parameters and the system itself. The documentation and the code refers
+     * to system order and internal order. System order is the standard order for a normal system. This is
+     * at1,at2,at3... and if xyz or gradients, x_at1,y_at1,z_at1,x_at2,y_at2..., The vectorized order resorts the data
+     * to allow vectorization in the operations.
+     * @param[in] sys_xyz Vector of doubles with the coordinates of the system in system order, of the full system.
+     * @param[in] mon_id Vector with the monomer ids of the full system.
+     * @param[in] num_atoms Vector with the number of atoms of each of the monomers
+     * @param[in] mon_type_count Vector of pairs in which each pair contains the monomer id and the number of monomers
+     * of that type.
+     * @param[in] force_ttm_for_idx Vector with th monomer indexes for which TTM-nrg will be forced, typically because
+     * that monomer is highly distorted.
+     * @param[in] islocal
+     * @param[in] do_grads Gradients will be calculated if set to true
+     * @param[in] box Contains the box of the system
+     */
+    void Initialize(const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
+                    const std::vector<size_t> &num_atoms,
+                    const std::vector<std::pair<std::string, size_t> > &mon_type_count,
+                    const std::vector<size_t> force_ttm_for_idx, const std::vector<size_t> &islocal,
+                    const bool do_grads, const std::vector<double> &box);
 
-    double GetRepulsion(std::vector<double> &grad,std::vector<double> *virial = 0, bool use_ghost = 0);
+    /**
+     * @brief Calculates the repulsion energy of the system
+     *
+     * With the information stored in the class from initialization or setting new parameters, this function will
+     * calculate the buckingham energy for the system.
+     * @param[in,out] grad Gradients of the system. they will be updated.
+     * @param[in,out] virial Contains teh virial tensor
+     * @param[in] use_ghost Will use ghost atoms if true
+     * @return Total repulsion energy
+     */
+    double GetRepulsion(std::vector<double> &grad, std::vector<double> *virial = 0, bool use_ghost = 0);
 
-    void SetNewParameters(const std::vector<double> &xyz, 
-                          const std::vector<std::pair<std::string,std::string> > &buck_pairs, 
-                          const std::vector<size_t> force_ttm_for_idx,
-                          bool do_grads, const double cutoff,
+    void SetJsonDispersionRepulsion(nlohmann::json repdisp_j);
+    void SetJsonMonomers(nlohmann::json mon_j);
+
+    /**
+     * @brief Updates the information of the system in the class.
+     *
+     * This function is used to update coordinates and other information in the class, to be able to recalculate the
+     * energy without having to initialize it all over again
+     * @param[in] xyz Coordinates of the system in system order
+     * @param[in] buck_pairs Pairs of monomers for which the buckingham must be calculated
+     * @param[in] force_ttm_for_idx Vector with th monomer indexes for which TTM-nrg will be forced, typically because
+     * that monomer is highly distorted.
+     * @param[in] do_grads Gradients will be calculated if set to true
+     * box Contains the box of the system
+     */
+    void SetNewParameters(const std::vector<double> &xyz,
+                          const std::vector<std::pair<std::string, std::string> > &buck_pairs,
+                          const std::vector<size_t> force_ttm_for_idx, bool do_grads, const double cutoff,
                           const std::vector<double> &box);
 
     /**
@@ -78,8 +131,35 @@ class Buckingham {
     void SetCutoff(double cutoff);
 
    private:
+    /**
+     * @brief Reorganizes data from system order to vectorized order
+     *
+     * Organize xyz so we have
+     * x1_1 x1_2 ... y1_1 y1_2... z1_1 z1_2 ... x2_1 x2_2 ...
+     * where xN_M is read as coordinate x of site N of monomer M
+     * for the first monomer type. Then follows the second, and so on.
+     * As an example, for a water dimer (OHHM), the system xyz would be
+     * sys_xyz = {Ox, Oy, Oz, Hx, Hy, Hz, Hx, Hy, ...}
+     * And after reordering,
+     * xyz = {Ox, Ox, Oy, Oy, Oz, Oz, Hx, Hx, Hy, Hy, Hz, Hz, Hx, Hx, ... ...}
+     */
     void ReorderData();
+
+    /**
+     * @brief Calculates the repulsion for the system
+     *
+     * Once the system is initialized, this function calculates the repulsion energy
+     * @param[in] use_ghost Will use ghost atoms if true
+     */
     void CalculateRepulsion(bool use_ghost = 0);
+
+    /**
+     * @brief Calculates the repulsion for the system only for the enforced monomers
+     *
+     * Once the system is initialized, this function calculates the repulsion energy for the pairs involving monoemrs
+     * for which TTM is enforced.
+     * @param[in] use_ghost Will use ghost atoms if true
+     */
     void CalculateEnforcedRepulsion(bool use_ghost = 0);
 
     // System xyz, not ordered XYZ. xyzxyz...(mon1)xyzxyz...(mon2) ...
@@ -96,7 +176,7 @@ class Buckingham {
     std::vector<std::pair<std::string, size_t> > mon_type_count_;
 
     // pairs that will use the buckingham
-    std::vector<std::pair<std::string,std::string> > buck_pairs_;
+    std::vector<std::pair<std::string, std::string> > buck_pairs_;
 
     // Indexes of the monomers for which TTM is forced
     std::vector<size_t> force_ttm_for_idx_;
@@ -128,8 +208,14 @@ class Buckingham {
     bool use_pbc_;
     // dispersion cutoff
     double cutoff_;
+
+    // Json object with extra user-defined buckingham coefficients
+    nlohmann::json repdisp_j_;
+
+    // Json object with extra monomer properties
+    nlohmann::json mon_j_;
 };
 
-}  // namespace disp
+}  // namespace buck
 
 #endif

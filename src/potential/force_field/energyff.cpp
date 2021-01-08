@@ -38,7 +38,22 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace eff {
 
-double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, bool &good, int nat) {
+double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, bool &good, int nat,
+                     std::vector<double> box, std::vector<double> box_inv) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Coords:\n";
+    for (size_t i = 0; i < xyz1.size(); i++) {
+        std::cerr << xyz1[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "nmon: " << nm << std::endl;
+    std::cerr << "good: " << good << std::endl;
+    std::cerr << "nat: " << nat << std::endl;
+#endif
+
     std::vector<eff::Bond> bonds = connectivity.GetBondVec();
     std::vector<eff::Angles> angles = connectivity.GetAnglesVec();
     std::vector<eff::Dihedral> dihedrals = connectivity.GetDihedralVec();
@@ -47,6 +62,8 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
     double angleEnergy = 0;
     double dihedralEnergy = 0;
     double inversionEnergy = 0;
+
+    bool use_pbc = box.size();
 
     for (int mon_num = 0; mon_num < nm; mon_num++) {
         std::vector<double> xyz(3 * nat, 0.0);
@@ -59,6 +76,11 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             // fill coordinate vectors
             std::vector<double> coor1(xyz.begin() + (indexes[0] - 1) * 3, xyz.begin() + (indexes[0]) * 3);
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+            }
 
             double distance = CalculateDistance(coor1, coor2);
 
@@ -73,6 +95,12 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor1(xyz.begin() + (indexes[0] - 1) * 3, xyz.begin() + (indexes[0]) * 3);
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+                tools::GetClosePoint(coor1, coor3, box, box_inv);
+            }
 
             // calculate the angle between three coordinates in degrees
             double theta = CalculateAngle(coor1, coor2, coor3);
@@ -92,6 +120,14 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
             std::vector<double> coor4(xyz.begin() + (indexes[3] - 1) * 3, xyz.begin() + (indexes[3]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+                tools::GetClosePoint(coor1, coor3, box, box_inv);
+                tools::GetClosePoint(coor1, coor4, box, box_inv);
+            }
+
             double phi = CalculateDihedralAngle(coor1, coor2, coor3, coor4);
 
             dihedralEnergy += dihedral->GetEnergy(phi);
@@ -106,6 +142,13 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
             std::vector<double> coor4(xyz.begin() + (indexes[3] - 1) * 3, xyz.begin() + (indexes[3]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(centralCoor, coor2, box, box_inv);
+                tools::GetClosePoint(centralCoor, coor3, box, box_inv);
+                tools::GetClosePoint(centralCoor, coor4, box, box_inv);
+            }
 
             // calculate the set of inversion angles between 4 coordinates
             std::vector<double> phis = CalculateInversionAngle(centralCoor, coor2, coor3, coor4);
@@ -131,11 +174,52 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
     }
 
     double tot_E = bondEnergy + angleEnergy + dihedralEnergy + inversionEnergy;
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "bond: " << bondEnergy << std::endl;
+    std::cerr << "angle: " << angleEnergy << std::endl;
+    std::cerr << "dihedral: " << dihedralEnergy << std::endl;
+    std::cerr << "inversion: " << inversionEnergy << std::endl;
+    std::cerr << "total: " << tot_E << std::endl;
+#endif
+
     return (tot_E);
 }
 
 double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1,
-                     bool &good, int nat, std::vector<double> *virial) {
+                     bool &good, int nat, std::vector<double> box, std::vector<double> box_inv,
+                     std::vector<double> *virial) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Coords:\n";
+    for (size_t i = 0; i < xyz1.size(); i++) {
+        std::cerr << xyz1[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Grads:\n";
+    for (size_t i = 0; i < grad1.size(); i++) {
+        std::cerr << grad1[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "Virial:\n";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "nmon: " << nm << std::endl;
+    std::cerr << "good: " << good << std::endl;
+    std::cerr << "nat: " << nat << std::endl;
+#endif
+
     std::vector<eff::Bond> bonds = connectivity.GetBondVec();
     std::vector<eff::Angles> angles = connectivity.GetAnglesVec();
     std::vector<eff::Dihedral> dihedrals = connectivity.GetDihedralVec();
@@ -144,6 +228,8 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
     double angleEnergy = 0;
     double dihedralEnergy = 0;
     double inversionEnergy = 0;
+
+    bool use_pbc = box.size();
 
     for (int mon_num = 0; mon_num < nm; mon_num++) {
         std::vector<double> xyz(3 * nat, 0.0);
@@ -156,6 +242,11 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             // fill coordinate vectors
             std::vector<double> coor1(xyz.begin() + (indexes[0] - 1) * 3, xyz.begin() + (indexes[0]) * 3);
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+            }
 
             double distance = CalculateDistance(coor1, coor2);
 
@@ -233,6 +324,12 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor1(xyz.begin() + (indexes[0] - 1) * 3, xyz.begin() + (indexes[0]) * 3);
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+                tools::GetClosePoint(coor1, coor3, box, box_inv);
+            }
 
             // calculate the angle between three coordinates in degrees
             double theta = CalculateAngle(coor1, coor2, coor3);
@@ -349,6 +446,14 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor2(xyz.begin() + (indexes[1] - 1) * 3, xyz.begin() + (indexes[1]) * 3);
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
             std::vector<double> coor4(xyz.begin() + (indexes[3] - 1) * 3, xyz.begin() + (indexes[3]) * 3);
+
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(coor1, coor2, box, box_inv);
+                tools::GetClosePoint(coor1, coor3, box, box_inv);
+                tools::GetClosePoint(coor1, coor4, box, box_inv);
+            }
+
             double phi = CalculateDihedralAngle(coor1, coor2, coor3, coor4);
 
             dihedralEnergy += dihedral->GetEnergy(phi);
@@ -361,7 +466,7 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
 
             // Multiply by minus 1 because we want gradient not force. Check Dlpoly
             // manual equation 2.42 to see why
-            cummu_grad += (-1) * (1.0 / sin(phi)) * delta_grad;
+            cummu_grad += (-1.0 / sin(phi)) * delta_grad;
 
             // Used to store the current force for this dihedral to be used in
             // virial calculation
@@ -435,6 +540,13 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             std::vector<double> coor3(xyz.begin() + (indexes[2] - 1) * 3, xyz.begin() + (indexes[2]) * 3);
             std::vector<double> coor4(xyz.begin() + (indexes[3] - 1) * 3, xyz.begin() + (indexes[3]) * 3);
 
+            // Put all coordinates in the same region of space
+            if (use_pbc) {
+                tools::GetClosePoint(centralCoor, coor2, box, box_inv);
+                tools::GetClosePoint(centralCoor, coor3, box, box_inv);
+                tools::GetClosePoint(centralCoor, coor4, box, box_inv);
+            }
+
             // calculate the set of inversion angles between 4 coordinates
             std::vector<double> phis = CalculateInversionAngle(centralCoor, coor2, coor3, coor4);
 
@@ -466,7 +578,7 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
             // Compute derivative of functional form for each contributing
             // inversion angle
             for (int i = 0; i < 3; i++) {
-                double delta_grad = inversion->GetTopologyGradient(phis[i]);
+                double delta_grad = (1.0 / (3.0 * sin(phis[i]))) * inversion->GetTopologyGradient(phis[i]);
                 cummu_grad[i] += -1 * delta_grad;
             }
 
@@ -518,52 +630,30 @@ double get_ff_energy(eff::Conn &connectivity, size_t nm, std::vector<double> xyz
     }
 
     double tot_E = bondEnergy + angleEnergy + dihedralEnergy + inversionEnergy;
+
 #ifdef DEBUG
-    std::cout << "total energy is: " << tot_E << std::endl;
-    std::cout << " bond energy is : " << bondEnergy << std::endl;
-    std::cout << " angle energy is : " << angleEnergy << std::endl;
-    std::cout << " dihedral energy is : " << dihedralEnergy << std::endl;
-    std::cout << " inversion energy is : " << inversionEnergy << std::endl;
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
 
-    int count = 0;
+    std::cerr << "bond: " << bondEnergy << std::endl;
+    std::cerr << "angle: " << angleEnergy << std::endl;
+    std::cerr << "dihedral: " << dihedralEnergy << std::endl;
+    std::cerr << "inversion: " << inversionEnergy << std::endl;
+    std::cerr << "total: " << tot_E << std::endl;
 
-    std::cout << std::endl;
-    std::cout << "gradients in kcal/mol are: " << std::endl;
-    for (auto it = grad1.begin(); it != grad1.end(); it++) {
-        if (count != 0 && count % 3 == 0) {
-            std::cout << std::endl;
-        }
-        count++;
-        std::cout << *it << " ";
+    std::cerr << "Grads:\n";
+    for (size_t i = 0; i < grad1.size(); i++) {
+        std::cerr << grad1[i] << " , ";
     }
-    std::cout << std::endl;
-    std::cout << std::endl;
+    std::cerr << std::endl;
 
-    count = 0;
-
-    std::cout << "gradients in dlpoly units are: " << std::endl;
-    for (auto it = grad1.begin(); it != grad1.end(); it++) {
-        if (count != 0 && count % 3 == 0) {
-            std::cout << std::endl;
+    if (virial != 0) {
+        std::cerr << "Virial:\n";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
         }
-        count++;
-        std::cout << (*it * 100 * 4.184) << " ";
+        std::cerr << std::endl;
     }
-    std::cout << std::endl;
-    std::cout << std::endl;
-
-    count = 0;
-
-    std::cout << "Forces in dlpoly units are: " << std::endl;
-    for (auto it = grad1.begin(); it != grad1.end(); it++) {
-        if (count != 0 && count % 3 == 0) {
-            std::cout << std::endl;
-        }
-        count++;
-        std::cout << (*it * 100 * 4.184 * -1) << " ";
-    }
-    std::cout << std::endl;
-    std::cout << std::endl;
 #endif
 
     return (tot_E);

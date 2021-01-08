@@ -40,6 +40,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
+
 #include "topology.h"
 #include "tools/custom_exceptions.h"
 #include "tools/definitions.h"
@@ -123,6 +125,15 @@ class Dihedral : public Topology {
      * Default Destructor
      */
     ~Dihedral();
+
+    /**
+     * @brief Used to set the linear and nonlinear parameters
+     * @param[in] linear_parameters The vector containing the set of
+     *            linear parameters
+     * @param[in] nonlinear_parameters The vector containing the set of
+     *            nonlinear parameters
+     */
+    void SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters);
 
     /**
      * @brief Calculates the potential energy using the nonlinear and linear

@@ -47,6 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // =====>> BEGIN SECTION INCLUDE3B <<=====
 // ===>> PASTE YOUR CODE BELOW <<===
 #include "potential/3b/mbnrg_3b_A1B4_C1D2_C1D2_deg3_v1.h"
+#include "potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_v1.h"
 // =====>> END SECTION INCLUDE3B <<=====
 /**
  * @file energy3b.h
@@ -60,11 +61,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace e3b {
 
 /**
- * @brief Gets the two body energy for a given set of dimers
+ * @brief Gets the two body energy for a given set of trimers
  *
  * Given the monomer ids of the trimer
  * and the number of monomers, will return the total sum
- * of the 3b energy of those dimers. A trimer will be mon1-mon2-mon3.
+ * of the 3b energy of those trimers. A trimer will be mon1-mon2-mon3.
  * @param[in] m1 Monomer 1 id
  * @param[in] m2 Monomer 2 id
  * @param[in] m3 Monomer 3 id
@@ -82,7 +83,7 @@ double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, 
  *
  * Given the monomer ids of the trimer
  * and the number of monomers, will return the total sum
- * of the 3b energy of those dimers. A trimer will be mon1-mon2-mon3.
+ * of the 3b energy of those trimers. A trimer will be mon1-mon2-mon3.
  * @param[in] m1 Monomer 1 id
  * @param[in] m2 Monomer 2 id
  * @param[in] m3 Monomer 3 id

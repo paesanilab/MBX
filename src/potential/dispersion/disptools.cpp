@@ -33,12 +33,16 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "potential/dispersion/disptools.h"
-#include <string>
-#include <vector>
 
 namespace disp {
 
 double tang_toennies(int n, const double& x) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "n = " << n << " , x = " << x << std::endl;
+#endif
+
     assert(n >= 0);
     int nn = n;
     double sum = 1.0 + x / nn;
@@ -62,96 +66,98 @@ double tang_toennies(int n, const double& x) {
         tt = sum * std::exp(-x);
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "tt = " << tt << std::endl;
+#endif
+
     return tt;
 }
 
 //----------------------------------------------------------------------------//
 
-/* Block commented since C8 is not used for now.
+double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,
+             const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
+             std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
+             const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
+             const double cutoff, const double ewald_alpha, const std::vector<double>& box,
+             const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
+             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "C6 = " << C6 << " , d6 = " << d6 << " , c6i = " << c6i << " , c6j = " << c6j << std::endl;
 
-double disp68(const double& C6, const double& d6,
-               const double& C8, const double& d8,
-               const double* p1, const double* p2,
-                     double* g1,       double* g2, bool do_grads) {
+    std::cerr << "p1:\n ";
+    for (size_t i = 0; i < p1.size(); i++) {
+        std::cerr << p1[i] << " , ";
+    }
+    std::cerr << std::endl;
 
-  const double dx = p1[0] - p2[0];
-  const double dy = p1[1] - p2[1];
-  const double dz = p1[2] - p2[2];
+    std::cerr << "xyz2:\n ";
+    for (size_t i = 0; i < xyz2.size(); i++) {
+        std::cerr << xyz2[i] << " , ";
+    }
+    std::cerr << std::endl;
 
-  const double rsq = dx*dx + dy*dy + dz*dz;
-  const double r = std::sqrt(rsq);
+    std::cerr << "grad1:\n ";
+    for (size_t i = 0; i < grad1.size(); i++) {
+        std::cerr << grad1[i] << " , ";
+    }
+    std::cerr << std::endl;
 
-  const double d6r = d6*r;
-  const double tt6 = disp::tang_toennies(6, d6r);
+    std::cerr << "grad2:\n ";
+    for (size_t i = 0; i < grad2.size(); i++) {
+        std::cerr << grad2[i] << " , ";
+    }
+    std::cerr << std::endl;
 
-  const double d8r = d8*r;
-  const double tt8 = disp::tang_toennies(8, d8r);
+    std::cerr << "phi1 = " << phi1 << std::endl;
 
+    std::cerr << "phi2:\n ";
+    for (size_t i = 0; i < phi2.size(); i++) {
+        std::cerr << phi2[i] << " , ";
+    }
+    std::cerr << std::endl;
 
-  const double inv_rsq = 1.0/rsq;
-  const double inv_r6 = inv_rsq*inv_rsq*inv_rsq;
-  const double inv_r8 = inv_r6*inv_rsq;
+    std::cerr << "nmon1 = " << nmon1 << " , nmon2 = " << nmon2 << " , start2 = " << start2 << " , end2 = " << end2
+              << std::endl;
+    std::cerr << "atom_index1 = " << atom_index1 << " , atom_index2 = " << atom_index2
+              << " , dip_scale_factor = " << disp_scale_factor << " , do_grads = " << do_grads << std::endl;
+    std::cerr << "cutoff = " << cutoff << " , ewald_alpha = " << ewald_alpha << " , use_ghost = " << use_ghost
+              << std::endl;
 
-  const double e6 = C6*tt6*inv_r6;
-  const double e8 = C8*tt8*inv_r8;
+    std::cerr << "box:\n ";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
 
-  const double grd = (6*e6 + 8*e8)*inv_rsq
-      - (C6*std::pow(d6, 7)*if6*std::exp(-d6r)
-      +  C8*std::pow(d8, 9)*if8*std::exp(-d8r))/r;
+    std::cerr << "box inverse:\n ";
+    for (size_t i = 0; i < box_inverse.size(); i++) {
+        std::cerr << box_inverse[i] << " , ";
+    }
+    std::cerr << std::endl;
 
-  g1[0] += dx*grd;
-  g2[0] -= dx*grd;
+    std::cerr << "islocal:\n ";
+    for (size_t i = 0; i < islocal.size(); i++) {
+        std::cerr << islocal[i] << " , ";
+    }
+    std::cerr << std::endl;
 
-  g1[1] += dy*grd;
-  g2[1] -= dy*grd;
+    if (virial != 0) {
+        std::cerr << "virial:\n ";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
 
-  g1[2] += dz*grd;
-  g2[2] -= dz*grd;
+    std::cerr << "isl1_offset = " << isl1_offset << " , isl2_offset = " << isl2_offset << std::endl;
 
-  return - (e6 + e8);
-}
+#endif
 
-//----------------------------------------------------------------------------//
-
-double disp68(const double& C6, const double& d6,
-              const double& C8, const double& d8,
-              const double* p1, const double* p2) {
-
-  const double dx = p1[0] - p2[0];
-  const double dy = p1[1] - p2[1];
-  const double dz = p1[2] - p2[2];
-
-  const double rsq = dx*dx + dy*dy + dz*dz;
-  const double r = std::sqrt(rsq);
-
-  const double d6r = d6*r;
-  const double tt6 = disp::tang_toennies(6, d6r);
-
-  const double d8r = d8*r;
-  const double tt8 = disp::tang_toennies(8, d8r);
-
-
-  const double inv_rsq = 1.0/rsq;
-  const double inv_r6 = inv_rsq*inv_rsq*inv_rsq;
-  const double inv_r8 = inv_r6*inv_rsq;
-
-  const double e6 = C6*tt6*inv_r6;
-  const double e8 = C8*tt8*inv_r8;
-
-  return - (e6 + e8);
-}
-
-******************************************************************************/
-
-//----------------------------------------------------------------------------//
-
-double disp6(const double C6, const double d6, const double c6i, const double c6j, const double* p1, const double* xyz2,
-             double* grad1, double* grad2, double& phi1, double* phi2, const size_t nmon1, const size_t nmon2,
-             const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
-             const double disp_scale_factor, bool do_grads, const double cutoff, const double ewald_alpha,
-             const std::vector<double>& box, const std::vector<double>& box_inverse, bool use_ghost,
-             const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
-             std::vector<double>* virial) {
     double disp = 0.0;
     double disp_lr_below_cutoff = 0.0;
 
@@ -291,10 +297,46 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         }
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "grad1:\n ";
+    for (size_t i = 0; i < grad1.size(); i++) {
+        std::cerr << grad1[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "grad2:\n ";
+    for (size_t i = 0; i < grad2.size(); i++) {
+        std::cerr << grad2[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "phi1 = " << phi1 << std::endl;
+
+    std::cerr << "phi2:\n ";
+    for (size_t i = 0; i < phi2.size(); i++) {
+        std::cerr << phi2[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n ";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "dispersion_energy = " << dispersion_energy << std::endl;
+#endif
+
     return dispersion_energy;
 }
 
-void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6) {
+bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6,
+           std::vector<std::pair<std::string, std::string> > ignore_disp, nlohmann::json repdisp_j) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon_id2 < mon_id1) {
@@ -308,8 +350,58 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     }
 
     std::vector<double> C6, d6;
-    std::vector<size_t> types1, types2;
     size_t nt2, i, j;
+
+    out_C6 = 0.0;
+    out_d6 = 0.0;
+
+    if (std::find(ignore_disp.begin(), ignore_disp.end(), std::make_pair(mon_id1, mon_id2)) != ignore_disp.end() ||
+        std::find(ignore_disp.begin(), ignore_disp.end(), std::make_pair(mon_id2, mon_id1)) != ignore_disp.end()) {
+        out_C6 = 0.0;
+        out_d6 = 0.0;
+        return false;
+    }
+
+    bool done_with_it = false;
+
+    // Check if pair is in json object
+    try {
+        std::vector<std::vector<std::string> > pairs = repdisp_j["pairs"];
+        for (size_t k = 0; k < pairs.size(); k++) {
+            if (mon_id1 == pairs[k][0] && mon_id2 == pairs[k][1]) {
+                std::vector<std::vector<std::string> > types1 = repdisp_j["types1"];
+                std::vector<std::vector<std::string> > types2 = repdisp_j["types2"];
+                std::vector<std::vector<std::pair<std::vector<std::string>, double> > > c6_v = repdisp_j["c6"];
+                std::vector<std::vector<std::pair<std::vector<std::string>, double> > > d6_v = repdisp_j["d6"];
+                std::string si = types1[k][index1];
+                std::string sj = types2[k][index2];
+
+                for (size_t k2 = 0; k2 < c6_v[k].size(); k2++) {
+                    if ((si == c6_v[k][k2].first[0] && sj == c6_v[k][k2].first[1]) ||
+                        (si == c6_v[k][k2].first[1] && sj == c6_v[k][k2].first[0])) {
+                        out_C6 = c6_v[k][k2].second;
+                        done_with_it = true;
+                        break;
+                    }
+                }
+
+                for (size_t k2 = 0; k2 < d6_v[k].size(); k2++) {
+                    if ((si == d6_v[k][k2].first[0] && sj == d6_v[k][k2].first[1]) ||
+                        (si == d6_v[k][k2].first[1] && sj == d6_v[k][k2].first[0])) {
+                        out_d6 = d6_v[k][k2].second;
+                        done_with_it = true;
+                        break;
+                    }
+                }
+            }
+        }
+    } catch (...) {
+        out_C6 = 0.0;
+        out_d6 = 0.0;
+    }
+
+    if (done_with_it) return true;
+    std::vector<size_t> types1, types2;
 
     // Monomers here have to be in alphabetical order: mon1 < mon2 ALWAYS
     if (mon_id1 == "h2o" && mon_id2 == "h2o") {
@@ -651,7 +743,7 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     } else {
         out_C6 = 0.0;
         out_d6 = 0.0;
-        return;
+        return false;
     }
 
     i = types1[index1];
@@ -659,6 +751,8 @@ void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
     out_C6 = C6[i * nt2 + j];
     out_d6 = d6[i * nt2 + j];
+
+    return true;
 }
 
 }  // namespace disp

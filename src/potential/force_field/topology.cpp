@@ -53,27 +53,25 @@ size_t Topology::GetNumNonLinear() { return num_nonlinear_params_; }
 
 size_t Topology::GetNumLinear() { return num_linear_params_; }
 
-void Topology::SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters) {
-    linear_parameters_ = linear_parameters;
-    nonlinear_parameters_ = nonlinear_parameters;
-}
+void Topology::SetNumNonLinear(size_t num_nonlinear) { num_nonlinear_params_ = num_nonlinear; }
 
-void Topology::SetParameters(std::vector<double> parameters) {
-    linear_parameters_.resize(num_linear_params_);
-    nonlinear_parameters_.resize(num_nonlinear_params_);
-    std::copy(parameters.begin(), parameters.begin() + num_linear_params_, linear_parameters_.begin());
-    std::copy(parameters.begin() + num_linear_params_, parameters.end(), nonlinear_parameters_.begin());
-}
+void Topology::SetNumLinear(size_t num_linear) { num_linear_params_ = num_linear; }
 
 void Topology::SetIndexes(std::vector<size_t> indexes) { indexes_ = indexes; }
 
 std::vector<size_t> Topology::GetIndexes() { return indexes_; }
 
-void Topology::SetFunctionalForm(std::string functional_form) { functional_form_ = functional_form; }
+void Topology::SetFunctionalForm(std::string functional_form) {
+    functional_form_ = functional_form;
+    std::transform(functional_form_.begin(), functional_form_.end(), functional_form_.begin(), ::tolower);
+}
 
 std::string Topology::GetFunctionalForm() { return functional_form_; }
 
-void Topology::SetTopology(std::string topology) { topology_ = topology; }
+void Topology::SetTopology(std::string topology) {
+    topology_ = topology;
+    std::transform(topology_.begin(), topology_.end(), topology_.begin(), ::tolower);
+}
 
 std::string Topology::GetTopology() { return topology_; }
 }  // namespace eff

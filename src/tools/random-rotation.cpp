@@ -20,15 +20,14 @@
  *                                                                         *
  *=========================================================================*/
 
-void random_rotation(const double* x, double* result)
-{
+void random_rotation(const double* x, double* result) {
     using namespace std;
 
-    const double PITIMES2 = 2*M_PI;
+    const double PITIMES2 = 2 * M_PI;
 
     double theta = x[0] * PITIMES2; /* Rotation about the pole (Z).      */
-    double phi   = x[1] * PITIMES2; /* For direction of pole deflection. */
-    double z     = x[2] * 2.0;      /* For magnitude of pole deflection. */
+    double phi = x[1] * PITIMES2;   /* For direction of pole deflection. */
+    double z = x[2] * 2.0;          /* For magnitude of pole deflection. */
 
     /* Compute a vector V used for distributing points over the sphere  */
     /* via the reflection I - V Transpose(V).  This formulation of V    */
@@ -36,24 +35,24 @@ void random_rotation(const double* x, double* result)
     /* the reflected points will be uniform on the sphere.  Note that V */
     /* has length sqrt(2) to eliminate the 2 in the Householder matrix. */
 
-    double r  = sqrt( z );
-    double Vx = sin( phi ) * r;
-    double Vy = cos( phi ) * r;
-    double Vz = sqrt( 2.0 - z );
+    double r = sqrt(z);
+    double Vx = sin(phi) * r;
+    double Vy = cos(phi) * r;
+    double Vz = sqrt(2.0 - z);
 
     /* Compute the row vector S = Transpose(V) * R, where R is a simple */
     /* rotation by theta about the z-axis.  No need to compute Sz since */
     /* it's just Vz.                                                    */
 
-    double st = sin( theta );
-    double ct = cos( theta );
+    double st = sin(theta);
+    double ct = cos(theta);
     double Sx = Vx * ct - Vy * st;
     double Sy = Vx * st + Vy * ct;
 
     /* Construct the rotation matrix  ( V Transpose(V) - I ) R, which   */
     /* is equivalent to V S - R.                                        */
 
-#define M(i,j) result[3*i + j]
+#define M(i, j) result[3 * i + j]
 
     M(0, 0) = Vx * Sx - ct;
     M(0, 1) = Vx * Sy - st;
@@ -65,5 +64,5 @@ void random_rotation(const double* x, double* result)
 
     M(2, 0) = Vz * Sx;
     M(2, 1) = Vz * Sy;
-    M(2, 2) = 1.0 - z;   /* This equals Vz * Vz - 1.0 */
+    M(2, 2) = 1.0 - z; /* This equals Vz * Vz - 1.0 */
 }

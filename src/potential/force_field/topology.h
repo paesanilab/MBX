@@ -40,6 +40,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
+
+#include "tools/custom_exceptions.h"
+#include "tools/definitions.h"
+
 /**
  * @file topology.h
  * @brief Contains all of the methods common to all of the topology types.
@@ -77,6 +82,15 @@ class Topology {
     virtual double GetEnergy(double x) = 0;
 
     /**
+     * @brief Used to set the linear and nonlinear parameters
+     * @param[in] linear_parameters The vector containing the set of
+     *            linear parameters
+     * @param[in] nonlinear_parameters The vector containing the set of
+     *            nonlinear parameters
+     */
+    virtual void SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters) = 0;
+
+    /**
      * @brief Gets the current nonlinear and linear parameters
      * @param[in,out] linear_parameters Variables to hold the obtained
      *                linear_parameters
@@ -89,6 +103,18 @@ class Topology {
      * @brief Obtain the number of nonlinear parameters
      * @return The number of nonlinear parameters
      */
+    void SetNumNonLinear(size_t num_nonlinear);
+
+    /**
+     * @brief Obtain the number of linear parameters
+     * @return The number of linear parameters
+     */
+    void SetNumLinear(size_t num_linear);
+
+    /**
+     * @brief Obtain the number of nonlinear parameters
+     * @return The number of nonlinear parameters
+     */
     size_t GetNumNonLinear();
 
     /**
@@ -96,21 +122,6 @@ class Topology {
      * @return The number of linear parameters
      */
     size_t GetNumLinear();
-
-    /**
-     * @brief Used to set the linear and nonlinear parameters
-     * @param[in] linear_parameters The vector containing the set of
-     *            linear parameters
-     * @param[in] nonlinear_parameters The vector containing the set of
-     *            nonlinear parameters
-     */
-    void SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters);
-
-    /**
-     * @brief Used to set the nonlinear parameters. Only used to fit linear as nonlinear
-     * @param parameters [description]
-     */
-    void SetParameters(std::vector<double> parameters);
 
     /**
      * @brief Sets the current indexes for the given topology type

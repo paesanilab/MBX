@@ -46,20 +46,20 @@ Inversion::Inversion(){};
 Inversion::Inversion(std::string topology, std::vector<size_t> indexes, std::string functional_form) {
     topology_ = topology;
     functional_form_ = functional_form;
+    std::transform(topology_.begin(), topology_.end(), topology_.begin(), ::tolower);
+    std::transform(functional_form_.begin(), functional_form_.end(), functional_form_.begin(), ::tolower);
     indexes_ = indexes;
 
-    if (functional_form == "none") {
+    if (functional_form_ == "none") {
         num_linear_params_ = 0;
         num_nonlinear_params_ = 0;
-        std::cerr << "Inversion has none functional form. Its energy and gradients are not being evaluated"
-                  << std::endl;
     }
 
-    else if (functional_form == "harm") {
+    else if (functional_form_ == "harm") {
         num_linear_params_ = 1;
         num_nonlinear_params_ = 1;
     } else {
-        std::string text = "Undefined or missing functional form for inversion";
+        std::string text = "Undefined or missing functional form for inversion: " + functional_form_;
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
@@ -68,6 +68,38 @@ Inversion::Inversion(std::string topology, std::vector<size_t> indexes, std::str
 }
 
 Inversion::~Inversion(){};
+
+void Inversion::SetParameters(std::vector<double> linear_parameters, std::vector<double> nonlinear_parameters) {
+    if (functional_form_ == "none") {
+        num_linear_params_ = 0;
+        num_nonlinear_params_ = 0;
+    }
+
+    else if (functional_form_ == "harm") {
+        num_linear_params_ = 1;
+        num_nonlinear_params_ = 1;
+    } else {
+        std::string text = "Undefined or missing functional form for inversion: " + functional_form_;
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    if (num_linear_params_ != linear_parameters.size()) {
+        std::string text = "Expected number of linear parameters for functional form " + functional_form_ + " is " +
+                           std::to_string(num_linear_params_) + " while the number of parameters passed is " +
+                           std::to_string(linear_parameters.size());
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    if (num_nonlinear_params_ != nonlinear_parameters.size()) {
+        std::string text = "Expected number of nonlinear parameters for functional form " + functional_form_ + " is " +
+                           std::to_string(num_nonlinear_params_) + " while the number of parameters passed is " +
+                           std::to_string(nonlinear_parameters.size());
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    linear_parameters_ = linear_parameters;
+    nonlinear_parameters_ = nonlinear_parameters;
+}
 
 double Inversion::GetEnergy(double x) {
     double energy = 0.0;
@@ -85,12 +117,16 @@ double Inversion::GetTopologyGradient(double x) {
     if (functional_form_ == "none") {
         val = 0.0;
     } else if (functional_form_ == "harm") {
-        if (fabs(x) > 1.0e-12) {
-            val = linear_parameters_[0] * (x - nonlinear_parameters_[0]);
-            val = val * (1.0 / (3.0 * sin(x)));
-        } else {
-            val = 0.0;
-        }
+        val = linear_parameters_[0] * (x - nonlinear_parameters_[0]);
+        /* Eric had this, but not sure if it is correct TODO FIXME
+        } else if (functional_form_ == "harm") {
+            if (fabs(x) > 1.0e-12) {
+                val = linear_parameters_[0] * (x - nonlinear_parameters_[0]);
+                val = val * (1.0 / (3.0 * sin(x)));
+            } else {
+                val = 0.0;
+            }
+        */
     }
 
     return val;

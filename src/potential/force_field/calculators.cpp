@@ -40,9 +40,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace eff {
 
-const double pi = M_PI;
-
 double CalculateDistance(std::vector<double> coor1, std::vector<double> coor2) {
+    if (coor1.size() != 3 or coor2.size() != 3) {
+        std::string text = "The points must belong to R3, but they have " + std::to_string(coor1.size()) + " and " +
+                           std::to_string(coor2.size()) + " coordinates";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
     double distance = 0.0;
     for (size_t i = 0; i < 3; i++) {
         distance += (coor2[i] - coor1[i]) * (coor2[i] - coor1[i]);
@@ -52,6 +56,12 @@ double CalculateDistance(std::vector<double> coor1, std::vector<double> coor2) {
 }
 
 double CalculateDistance(std::vector<double> directional_vec) {
+    if (directional_vec.size() != 3) {
+        std::string text =
+            "The vector must belong to R3, but it has " + std::to_string(directional_vec.size()) + " coordinates";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
     return sqrt(directional_vec[0] * directional_vec[0] + directional_vec[1] * directional_vec[1] +
                 directional_vec[2] * directional_vec[2]);
 }
@@ -72,7 +82,7 @@ double CalculateAngle(std::vector<double> coor1, std::vector<double> centerCoord
         inner = -1.0;
     }
 
-    if (inner > 1.0 + EPSILON || inner < -1.0 - EPSILON) {
+    if (inner > 1.0 + EPSILON || inner < -1.0 - EPSILON || std::isnan(inner)) {
         std::stringstream ss;
         ss << "Domain error. Attempting to arccos a value of " << inner << std::endl;
         std::string text = ss.str();
@@ -116,87 +126,73 @@ double CalculateDihedralAngle(std::vector<double> coor1, std::vector<double> coo
     // calculate the normal vector using the calculateCrossProduct function
     std::vector<double> n1 = CalculateCrossProduct(fvector, svector);
     std::vector<double> n2 = CalculateCrossProduct(svector, tvector);
+    double modulus_n1 = CalculateDistance(n1);
+    double modulus_n2 = CalculateDistance(n2);
+
+    // If three points are aligned, making n1 or n2 the 0 vector, the dihedral angle is not defined, and is set to 0.0
+    if (modulus_n1 < EPSILON || modulus_n2 < EPSILON) return 0.0;
 
     // From dlpoly manual, cross product of the two normal vectors will allow you
     // to obtain the sign for phi. Edge case: only when n1 and n2 are parallel
     // does the phi_sign_vector become the 0 vector. In which case, we use the
     // directions above to determine the sign for phi.
-    std::vector<double> phi_sign_vector = CalculateCrossProduct(n1, n2);
+    // std::vector<double> phi_sign_vector = CalculateCrossProduct(n1, n2);
 
-    // This is the angle between the two vectors phi_sign_vector and svector.
-    double theta;
+    // double modulus_sign_vector = CalculateDistance(phi_sign_vector);
 
-    // Check if the phi_sign_vector is the zero vector. If it is, then we can't
-    // calculate theta because it is not defined
-    if (!((fabs(phi_sign_vector[0]) <= EPSILON) && (fabs(phi_sign_vector[1]) <= EPSILON) &&
-          (fabs(phi_sign_vector[2]) <= EPSILON))) {
-        // Using the normal dot product formula to calculate the angle
-        double trig_val = CalculateDotProduct(phi_sign_vector, svector) /
-                          (CalculateDistance(phi_sign_vector) * CalculateDistance(svector));
-
-        // Check if trig_val > 1 or < -1 since cos is bound b/t -1 & 1.
-        // If slightly over, then just set to be 1 or -1
-        if (trig_val > 1.0 && fabs(trig_val - 1.0) < EPSILON) {
-            trig_val = 1.0;
-        }
-
-        if (trig_val < -1.0 && fabs(trig_val + 1.0) < EPSILON) {
-            trig_val = -1.0;
-        }
-
-        if (trig_val > 1.0 || trig_val < -1.0) {
-            std::stringstream ss;
-            ss << "Domain error. Attempting to arccos a value of " << trig_val << std::endl;
-            std::string text = ss.str();
-            throw CUException(__func__, __FILE__, __LINE__, text);
-        }
-
-        theta = acos(trig_val);
-
-    }
-
-    // If phi_sign_vector is the 0 vector, we know that n1 and n2 are parallel.
-    // we need to assign theta through the convention above.
-    else {
-        // we check if n1 and n2 are the same vector. If they are, we define this to
-        // have a theta of 0. Meaning that phi is positive.
-        int count = 0;
-        for (int i = 0; i < n1.size(); i++) {
-            if (fabs(n1[0] - n2[0]) < EPSILON) {
-                count++;
-            }
-        }
-
-        // If n1 equals n2, then set theta to be 0.
-        if (count == 3) {
-            theta = 0;
-        }
-
-        // else if n1 and n2 are parallel, but with opposite signs, then we define
-        // theta to be 180 or pi. This implies that phi is negative
-        else {
-            theta = pi;
-        }
-    }
-
-    // Check n1 and n2 are not the zero vector.
-    if ((fabs(n1[0]) < EPSILON && fabs(n1[1]) < EPSILON && fabs(n1[2]) < EPSILON) ||
-        (fabs(n2[0]) < EPSILON && fabs(n2[1]) < EPSILON && fabs(n2[2]) < EPSILON)) {
-        return 0.0;
-    }
-
-    double phi = acos((CalculateDotProduct(n1, n2) / (CalculateDistance(n1) * CalculateDistance(n2))));
-
-    if (theta <= pi / 2 && theta >= -pi / 2) {
-        return phi;
-    } else {
-        return -phi;
-    }
+    // double phi = acos(CalculateDotProduct(n1, n2) / (modulus_n1 * modulus_n2) );
+    double phi = atan2(((CalculateDistance(svector) * CalculateDotProduct(fvector, n2))) / (modulus_n1 * modulus_n2),
+                       (CalculateDotProduct(n1, n2) / (modulus_n1 * modulus_n2)));
+    return phi;
 }
 
 void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::vector<double> coor3,
                     std::vector<double> coor4, std::vector<size_t> indexes, double cummu_grad, double phi,
                     std::vector<double>& gradients, int mon_num, int nat, std::vector<double>& curr_force) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "coord1:\n";
+    for (size_t i = 0; i < coor1.size(); i++) {
+        std::cerr << coor1[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord2:\n";
+    for (size_t i = 0; i < coor2.size(); i++) {
+        std::cerr << coor2[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord3:\n";
+    for (size_t i = 0; i < coor3.size(); i++) {
+        std::cerr << coor3[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord4:\n";
+    for (size_t i = 0; i < coor4.size(); i++) {
+        std::cerr << coor4[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Indexes:\n";
+    for (size_t i = 0; i < indexes.size(); i++) {
+        std::cerr << indexes[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "cummu_grad: " << cummu_grad << std::endl;
+    std::cerr << "phi: " << phi << std::endl;
+    std::cerr << "Gradients:\n";
+    for (size_t i = 0; i < gradients.size(); i++) {
+        std::cerr << gradients[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "mon_num: " << mon_num << std::endl;
+    std::cerr << "nat: " << nat << std::endl;
+    std::cerr << "Curr_force:\n";
+    for (size_t i = 0; i < curr_force.size(); i++) {
+        std::cerr << curr_force[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     // store the coordinates of the 4 atoms.
     double x1 = coor1[0];
     double x2 = coor2[0];
@@ -286,22 +282,37 @@ void CalculateGradB(std::vector<double> coor1, std::vector<double> coor2, std::v
                                fd1y,
                                fd1z};
     std::vector<double> virial_constants = {fax, fay, faz, fb1x, fb1y, fb1z, fcx, fcy, fcz, fd1x, fd1y, fd1z};
-    for (int i = 0; i < curr_force.size(); i++) {
+    for (size_t i = 0; i < curr_force.size(); i++) {
         curr_force[i] = -1 * virial_constants[i];
     }
 
-    for (int index = 0; index < indexes.size(); index++) {
+    for (size_t index = 0; index < indexes.size(); index++) {
         gradients[(indexes[index] - 1) * 3 + (mon_num * nat * 3)] += ans[index * 3];
         gradients[(indexes[index] - 1) * 3 + 1 + (mon_num * nat * 3)] += ans[index * 3 + 1];
         gradients[(indexes[index] - 1) * 3 + 2 + (mon_num * nat * 3)] += ans[index * 3 + 2];
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Gradients:\n";
+    for (size_t i = 0; i < gradients.size(); i++) {
+        std::cerr << gradients[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Curr_force:\n";
+    for (size_t i = 0; i < curr_force.size(); i++) {
+        std::cerr << curr_force[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 std::vector<double> CalculateCrossProduct(std::vector<double> v1, std::vector<double> v2) {
-    std::vector<double> normal;
-    normal.push_back(v1[1] * v2[2] - v1[2] * v2[1]);
-    normal.push_back(-(v1[0] * v2[2] - v1[2] * v2[0]));
-    normal.push_back(v1[0] * v2[1] - v1[1] * v2[0]);
+    std::vector<double> normal(3);
+    normal[0] = v1[1] * v2[2] - v1[2] * v2[1];
+    normal[1] = -v1[0] * v2[2] + v1[2] * v2[0];
+    normal[2] = v1[0] * v2[1] - v1[1] * v2[0];
 
     return normal;
 }
@@ -397,6 +408,58 @@ void CalculateInversionGrad(std::vector<double> centralCoor, std::vector<double>
                             std::vector<double> coor4, std::vector<size_t> indexes, std::vector<double> cummu_grad,
                             std::vector<double> phis, std::vector<double>& gradients, int mon_num, int nat,
                             std::vector<double>& curr_force) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "CentralCoor:\n";
+    for (size_t i = 0; i < centralCoor.size(); i++) {
+        std::cerr << centralCoor[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord2:\n";
+    for (size_t i = 0; i < coor2.size(); i++) {
+        std::cerr << coor2[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord3:\n";
+    for (size_t i = 0; i < coor3.size(); i++) {
+        std::cerr << coor3[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "coord4:\n";
+    for (size_t i = 0; i < coor4.size(); i++) {
+        std::cerr << coor4[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Indexes:\n";
+    for (size_t i = 0; i < indexes.size(); i++) {
+        std::cerr << indexes[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "cummu_grad:\n";
+    for (size_t i = 0; i < cummu_grad.size(); i++) {
+        std::cerr << cummu_grad[i] << ", ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "phis:\n";
+    for (size_t i = 0; i < phis.size(); i++) {
+        std::cerr << phis[i] << ", ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Gradients:\n";
+    for (size_t i = 0; i < gradients.size(); i++) {
+        std::cerr << gradients[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "mon_num: " << mon_num << std::endl;
+    std::cerr << "nat: " << nat << std::endl;
+    std::cerr << "Curr_force:\n";
+    for (size_t i = 0; i < curr_force.size(); i++) {
+        std::cerr << curr_force[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     // store the coordinates of the 4 atoms.
     double x1 = centralCoor[0];
     double x2 = coor2[0];
@@ -660,15 +723,30 @@ void CalculateInversionGrad(std::vector<double> centralCoor, std::vector<double>
     double faz = -(fbz + fcz + fdz);
 
     std::vector<double> ans = {fax, fay, faz, fbx, fby, fbz, fcx, fcy, fcz, fdx, fdy, fdz};
-    for (int i = 0; i < curr_force.size(); i++) {
+    for (size_t i = 0; i < curr_force.size(); i++) {
         curr_force[i] = -1 * ans[i];
     }
 
-    for (int index = 0; index < indexes.size(); index++) {
+    for (size_t index = 0; index < indexes.size(); index++) {
         gradients[(indexes[index] - 1) * 3 + (mon_num * nat * 3)] += ans[index * 3];
         gradients[(indexes[index] - 1) * 3 + 1 + (mon_num * nat * 3)] += ans[index * 3 + 1];
         gradients[(indexes[index] - 1) * 3 + 2 + (mon_num * nat * 3)] += ans[index * 3 + 2];
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Gradients:\n";
+    for (size_t i = 0; i < gradients.size(); i++) {
+        std::cerr << gradients[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Curr_force:\n";
+    for (size_t i = 0; i < curr_force.size(); i++) {
+        std::cerr << curr_force[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 void GetVecUVecV(std::vector<double> rix_norm, std::vector<double> riy_norm, std::vector<double>& u_vec,
@@ -680,12 +758,12 @@ void GetVecUVecV(std::vector<double> rix_norm, std::vector<double> riy_norm, std
     std::vector<double> diff_ix_iy = {rix_norm[0] - riy_norm[0], rix_norm[1] - riy_norm[1], rix_norm[2] - riy_norm[2]};
 
     // Copy the results into ukn vector
-    for (int i = 0; i < sum_ix_iy.size(); i++) {
+    for (size_t i = 0; i < sum_ix_iy.size(); i++) {
         u_vec.push_back(sum_ix_iy[i]);
     }
 
     // Copy the results into vkn vector
-    for (int i = 0; i < diff_ix_iy.size(); i++) {
+    for (size_t i = 0; i < diff_ix_iy.size(); i++) {
         v_vec.push_back(diff_ix_iy[i]);
     }
 }
