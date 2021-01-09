@@ -1,0 +1,35 @@
+{
+   "Note" : "This is a cofiguration file",
+   "MBX" : { 
+       "box" : [],
+       "twobody_cutoff"   : 100.0,
+       "threebody_cutoff" : 7.0, 
+       "max_n_eval_1b"    : 500,
+       "max_n_eval_2b"    : 500,
+       "max_n_eval_3b"    : 500,
+       "dipole_tolerance" : 1E-16,
+       "dipole_max_it"    : 100,
+       "dipole_method"     : "cg",
+       "alpha_ewald_elec" : 0.0,
+       "grid_density_elec" : 2.5,
+       "spline_order_elec" : 6,
+       "alpha_ewald_disp" : 0.0, 
+       "grid_density_disp" : 2.5,
+       "spline_order_disp" : 6,
+       "ff_mons"   : ["zif90"],
+       "connectivity_file" : "connectivity.dat", 
+       "ttm_pairs" : [],
+       "ignore_dispersion" : [["zif90","zif90"]],
+       "use_lennard_jones" : [["zif90","zif90"]],
+       "nonbonded_file" : "repdisp.json",
+       "monomers_file" : "monomers.json",
+       "ignore_1b_poly" : [],
+       "ignore_2b_poly" : [],
+       "ignore_3b_poly" : []
+   } ,  
+   "i-pi" : {
+       "port" : 34543,
+       "localhost" : "localhost"
+   }
+}
+

@@ -1,4 +1,10 @@
 import sys, os
+import math
+
+# Some useful constants
+pi = math.pi
+deg2rad = pi/180.0
+rad2deg = 1.0/deg2rad
 
 # Create dictionaries
 # Dictionary with number of parameters per functional form
@@ -10,6 +16,28 @@ nparams["cos"] = 3
 mbxname = {}
 mbxname["harm"] = "harm"
 mbxname["cos"] = "cos"
+
+# Dictionary with convertion factors from params in DLPOLY to MBX units.
+#    Functional form is dlpoly name!
+tombxunits = {}
+tombxunits["bonds"] = {}
+tombxunits["bonds"]["harm"] = [1.0,1.0]
+
+tombxunits["angles"] = {}
+tombxunits["angles"]["harm"] = [1.0,deg2rad]
+
+tombxunits["dihedrals"] = {}
+tombxunits["dihedrals"]["cos"] = [1.0,deg2rad,1.0]
+
+# Dictionary with reordering indexes.
+#    Functional form is dlpoly name!
+tombxorder = {}
+tombxorder["harm"] = [0,1]
+
+tombxorder["harm"] = [0,1]
+
+tombxorder["cos"] = [0,2,1]
+
 
 # Ensure a FIELD file is present
 if not os.path.isfile("FIELD"):
@@ -162,8 +190,13 @@ with open("connectivity.dat",'w') as ff:
       
       np = nparams[funcform]
       mbxn = mbxname[funcform]
+      d2mbx = tombxunits["bonds"][funcform]
+      d2mbxorder = tombxorder[funcform]
 
-      constants_string = " ".join(bond[3:3+np])
+      constants_converted = [str(k*l) for k,l in zip([float(m) for m in bond[3:3+np]],d2mbx)]
+      constants_ordered = [constants_converted[d2mbxorder[k]] for k in range(np)]
+
+      constants_string = " ".join(constants_ordered)
 
       ff.write("{} {} {} {} {}\n".format("bond",idxs[0],idxs[1],mbxn,constants_string))
 
@@ -174,8 +207,13 @@ with open("connectivity.dat",'w') as ff:
 
       np = nparams[funcform]
       mbxn = mbxname[funcform]
+      d2mbx = tombxunits["angles"][funcform]
+      d2mbxorder = tombxorder[funcform]
 
-      constants_string = " ".join(ang[4:4+np])
+      constants_converted = [str(k*l) for k,l in zip([float(m) for m in ang[4:4+np]],d2mbx)]
+      constants_ordered = [constants_converted[d2mbxorder[k]] for k in range(np)]
+
+      constants_string = " ".join(constants_ordered)
 
       ff.write("{} {} {} {} {} {}\n".format("angle",idxs[0],idxs[1],idxs[2],mbxn,constants_string))    
 
@@ -186,8 +224,13 @@ with open("connectivity.dat",'w') as ff:
 
       np = nparams[funcform]
       mbxn = mbxname[funcform]
+      d2mbx = tombxunits["dihedrals"][funcform]
+      d2mbxorder = tombxorder[funcform]
 
-      constants_string = " ".join(dh[5:5+np])
+      constants_converted = [str(k*l) for k,l in zip([float(m) for m in dh[5:5+np]],d2mbx)]
+      constants_ordered = [constants_converted[d2mbxorder[k]] for k in range(np)]
+
+      constants_string = " ".join(constants_ordered)
 
       ff.write("{} {} {} {} {} {} {}\n".format("dihedral",idxs[0],idxs[1],idxs[2],idxs[3],mbxn,constants_string))
 
@@ -223,12 +266,15 @@ with open("monomers.json",'w') as ff:
     ff.write("{}{} : {},\n".format(spaces2,'"nat"',num_atoms[i]))
 
     # Write excluded pair list
+    list_of_excluded = []
     # Excluded 12
     excl = "["
     for j in range(len(bonds[i])):
       c = bonds[i][j]
-      idxs = [int(k) for k in c[1:3]]
-      excl += "[{},{}],".format(idxs[0],idxs[-1])
+      idxs = sorted([int(k)-1 for k in [c[1],c[2]]])
+      if idxs not in list_of_excluded:
+        excl += "[{},{}],".format(idxs[0],idxs[1])
+        list_of_excluded.append(idxs)
 
     if len(excl) != 1:
       excl = excl[:-1] 
@@ -240,8 +286,10 @@ with open("monomers.json",'w') as ff:
     excl = "["
     for j in range(len(angles[i])):
       c = angles[i][j]
-      idxs = [int(k) for k in c[1:4]]
-      excl += "[{},{}],".format(idxs[0],idxs[-1])
+      idxs = sorted([int(k)-1 for k in [c[1],c[3]]])
+      if idxs not in list_of_excluded:
+        list_of_excluded.append(idxs)
+        excl += "[{},{}],".format(idxs[0],idxs[1])
 
     if len(excl) != 1:
       excl = excl[:-1] 
@@ -253,10 +301,11 @@ with open("monomers.json",'w') as ff:
     excl = "["
     for j in range(len(dihedrals[i])):
       c = dihedrals[i][j]
-      idxs = [int(k) for k in c[1:5]]
+      idxs = sorted([int(k)-1 for k in [c[1],c[4]]])
       scale_factor = int(float(c[-1]) + 1E-20)
-      if scale_factor == 0:
-        excl += "[{},{}],".format(idxs[0],idxs[-1])
+      if idxs not in list_of_excluded and scale_factor == 0:
+        list_of_excluded.append(idxs)
+        excl += "[{},{}],".format(idxs[0],idxs[1])
 
     if len(excl) != 1:
       excl = excl[:-1]
