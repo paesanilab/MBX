@@ -2,8 +2,8 @@ DLTTM CONTROL
 
 # TYPE OF SIMULATION: PIMD, CMD, TRPMD
 iseed -19857579    ! seed for the random number generator
-#pimd              ! PIMD simulation (NVT or NPT if pressure is defined)
-cmd               ! CMD simulation (NVE or NVT if cmdnvt is defined)
+pimd              ! PIMD simulation (NVT or NPT if pressure is defined)
+#cmd               ! CMD simulation (NVE or NVT if cmdnvt is defined)
 #trpmd             ! TRPMD simulation 
 
 # SYSTEM TARGET TEMPERATURE & PRESSURE
@@ -16,7 +16,7 @@ temperature               0.0000001   ! Kelvin
 #setvel            ! new initial velocities 
 
 # FOR CMD
-rstrt             ! restarting from a previous configuration
+#rstrt             ! restarting from a previous configuration
 #rstdip            ! restarting from previous dipoles if Car-Parrinello
 #setvel            ! new initial velocities 
 #rstcmd            ! for CMD restart
@@ -40,8 +40,8 @@ stats                   1      ! printing STATIS.IBEAD
 traj                    0 1 1   
 
 # SYSTEM CUTOFFS
-cutoff           15.00        ! electrostatics cutoff
-rvdw             15.00        ! nonbonded cutoff
+cutoff           50.00        ! electrostatics cutoff
+rvdw             50.00        ! nonbonded cutoff
 delr width       0.00        ! for Verlet list
 
 # EWALD
