@@ -6007,6 +6007,15 @@ void Electrostatics::nncomm_setup() {
   
   nncomm_boxlo.push_back( (double) myloc_z * fracz );
   nncomm_boxhi.push_back( (double) (myloc_z + 1) * fracz);
+
+  // pairwise cutoff for ghost
+
+  //  double padding = 2.0; // FIXME:: hard-coded value, but set from LAMMPS
+  double padding = 0.0;
+  
+  double cut_fracx = (cutoff_ + padding) / box_PMElocal_[0];
+  double cut_fracy = (cutoff_ + padding) / box_PMElocal_[4];
+  double cut_fracz = (cutoff_ + padding) / box_PMElocal_[8];
   
   // find mpi ranks for 6-stencil neighbors
   // +/- x dimension
@@ -6021,7 +6030,8 @@ void Electrostatics::nncomm_setup() {
   
   int rpx = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
-  nncomm_cutlo.push_back( nncomm_boxlo[0] + 0.5 * fracx );
+  //  nncomm_cutlo.push_back( nncomm_boxlo[0] + 0.5 * fracx );
+  nncomm_cutlo.push_back( nncomm_boxhi[0] - cut_fracx );
   nncomm_cuthi.push_back( nncomm_boxhi[0] + 100.0 );
   
   x = myloc_x - 1;
@@ -6032,7 +6042,8 @@ void Electrostatics::nncomm_setup() {
   int rmx = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   nncomm_cutlo.push_back( nncomm_boxlo[0] - 100.0 );
-  nncomm_cuthi.push_back( nncomm_boxhi[0] - 0.5 * fracx );
+  //  nncomm_cuthi.push_back( nncomm_boxhi[0] - 0.5 * fracx );
+  nncomm_cuthi.push_back( nncomm_boxlo[0] + cut_fracx );
   
   nncomm_nswap++;
   nncomm_sendproc.push_back(rpx);
@@ -6055,7 +6066,8 @@ void Electrostatics::nncomm_setup() {
   
   int rpy = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
-  nncomm_cutlo.push_back( nncomm_boxlo[1] + 0.5 * fracy );
+  //  nncomm_cutlo.push_back( nncomm_boxlo[1] + 0.5 * fracy );
+  nncomm_cutlo.push_back( nncomm_boxhi[1] - cut_fracy );
   nncomm_cuthi.push_back( nncomm_boxhi[1] + 100.0 );
   
   y = myloc_y - 1;
@@ -6066,7 +6078,8 @@ void Electrostatics::nncomm_setup() {
   int rmy = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   nncomm_cutlo.push_back( nncomm_boxlo[1] - 100.0 );
-  nncomm_cuthi.push_back( nncomm_boxhi[1] - 0.5 * fracy );
+  //  nncomm_cuthi.push_back( nncomm_boxhi[1] - 0.5 * fracy );
+  nncomm_cuthi.push_back( nncomm_boxlo[1] + cut_fracy );
   
   nncomm_nswap++;
   nncomm_sendproc.push_back(rpy);
@@ -6089,7 +6102,8 @@ void Electrostatics::nncomm_setup() {
   
   int rpz = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
-  nncomm_cutlo.push_back( nncomm_boxlo[2] + 0.5 * fracz );
+  //  nncomm_cutlo.push_back( nncomm_boxlo[2] + 0.5 * fracz );
+  nncomm_cutlo.push_back( nncomm_boxhi[2] - cut_fracz );
   nncomm_cuthi.push_back( nncomm_boxhi[2] + 100.0 );
   
   z = myloc_z - 1;
@@ -6100,7 +6114,8 @@ void Electrostatics::nncomm_setup() {
   int rmz = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   nncomm_cutlo.push_back( nncomm_boxlo[2] - 100.0 );
-  nncomm_cuthi.push_back( nncomm_boxhi[2] - 0.5 * fracz );
+  //  nncomm_cuthi.push_back( nncomm_boxhi[2] - 0.5 * fracz );
+  nncomm_cuthi.push_back( nncomm_boxlo[2] + cut_fracz );
   
   nncomm_nswap++;
   nncomm_sendproc.push_back(rpz);
