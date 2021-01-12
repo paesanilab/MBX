@@ -455,6 +455,9 @@ class Electrostatics {
 
     std::vector<double> nncomm_boxlo;
     std::vector<double> nncomm_boxhi;
+
+    std::vector<double> nncomm_cutlo;
+    std::vector<double> nncomm_cuthi;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
