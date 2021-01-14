@@ -1057,6 +1057,41 @@ void System::SetUpFromJson(nlohmann::json j) {
 
     SetEwaldDispersion(alpha_disp, grid_density_disp, spline_order_disp);
 
+    // Try to get dispersion PME alpha
+    // Default: 0.6
+    double alpha_lj;
+    try {
+        alpha_lj = j["MBX"]["alpha_ewald_lj"];
+    } catch (...) {
+        alpha_lj = box_.size() ? 0.6 : 0.0;
+        std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << alpha_lj << "\n";
+    }
+    mbx_j_["MBX"]["alpha_ewald_lj"] = alpha_lj;
+
+    // Try to get dispertion PME grid density
+    // Default: 2.5
+    double grid_density_lj;
+    try {
+        grid_density_lj = j["MBX"]["grid_density_lj"];
+    } catch (...) {
+        grid_density_lj = 2.5;
+        std::cerr << "**WARNING** \"grid_density_lj\" is not defined in json file. Using " << grid_density_lj << "\n";
+    }
+    mbx_j_["MBX"]["grid_density_lj"] = grid_density_lj;
+
+    // Try to get dispersion PME spline order
+    // Default: 6
+    size_t spline_order_lj;
+    try {
+        spline_order_lj = j["MBX"]["spline_order_lj"];
+    } catch (...) {
+        spline_order_lj = 6;
+        std::cerr << "**WARNING** \"spline_order_lj\" is not defined in json file. Using " << spline_order_lj << "\n";
+    }
+    mbx_j_["MBX"]["spline_order_lj"] = spline_order_lj;
+
+    SetEwaldLennardJones(alpha_lj, grid_density_lj, spline_order_lj);
+
     // Try to get electrostatics PME alpha
     // Default: 0.6
     double alpha_elec;
