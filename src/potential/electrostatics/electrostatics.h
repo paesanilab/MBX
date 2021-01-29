@@ -452,12 +452,16 @@ class Electrostatics {
     size_t nncomm_nswap;
     std::vector<int> nncomm_sendproc;
     std::vector<int> nncomm_recvproc;
+    std::vector<int> nncomm_dim;
+    std::vector<int> nncomm_dir;
 
     std::vector<double> nncomm_boxlo;
     std::vector<double> nncomm_boxhi;
 
     std::vector<double> nncomm_cutlo;
     std::vector<double> nncomm_cuthi;
+
+    std::vector<int> nncomm_maxneed;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

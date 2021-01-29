@@ -49,8 +49,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define _DEBUG_PERM
 //#define _DEBUG_DIPOLE
-//#define _DEBUG_ITERATION 1
-//#define _DEBUG_COMM
+#define _DEBUG_ITERATION 1
+#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
 //#define _DEBUG_GRAD
 //#define _DEBUG_PRINT_ENERGY
@@ -2323,36 +2323,39 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
     int ncount;
     int * ptr_buf_int;
     double * ptr_buf_double;
-    for(size_t iswap=0; iswap<nncomm_nswap; ++iswap) {
 
+    for(int iswap=0; iswap<nncomm_nswap; ++iswap) {
+
+      int idim = nncomm_dim[iswap];
+      
       // pack ghost monomers
       
       fi_mon = 0;
       fi_crd = 0;
       fi_sites = 0;
-
+      
       indx = 0;
       indx3 = 0;
       // Loop over each monomer type
       for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
+	size_t ns = sites_[fi_mon];
+	size_t nmon = mon_type_count_[mt].second;
+	size_t nmon2 = 2 * nmon;
 	
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
+	// Loop over each pair of sites
+	for (size_t i = 0; i < ns; i++) {
 	  size_t inmon = i * nmon;
 	  size_t inmon3 = inmon * 3;
 	  for (size_t m = 0; m < nmon; m++) {
-
+	    
 	    double coord;
-	    if(iswap < 2) coord = xyz_[fi_crd + inmon3 + m];
-	    else if(iswap < 4) coord = xyz_[fi_crd + inmon3 + nmon + m];
+	    if(idim == 0) coord = xyz_[fi_crd + inmon3 + m];
+	    else if(idim == 1) coord = xyz_[fi_crd + inmon3 + nmon + m];
 	    else coord = xyz_[fi_crd + inmon3 + nmon2 + m];
-
-	    //	    if( !islocal_[fi_mon+m] && atom_tag_[fi_sites + m + inmon] == 10)
-	      // std::cout << "mpi_rank_= " << mpi_rank_ << "iswap= " << iswap << " pack tag 10?  coord= " << coord <<
-	      // 	" cut= " << nncomm_cutlo[iswap] << " " << nncomm_cuthi[iswap] << std::endl;
+	    
+	    // if( !islocal_[fi_mon+m] && atom_tag_[fi_sites + m + inmon] == 1)
+	    //   std::cout << "mpi_rank_= " << mpi_rank_ << "iswap= " << iswap << " pack tag 1?  coord= " << coord <<
+	    //    	" cut= " << nncomm_cutlo[iswap] << " " << nncomm_cuthi[iswap] << std::endl;
 	    
 	    if(!islocal_[fi_mon+m] && (coord >= nncomm_cutlo[iswap]) && (coord < nncomm_cuthi[iswap])) {
 	      buf_send_double[indx3    ] = in_v[fi_crd + inmon3 + m];
@@ -2360,20 +2363,20 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	      buf_send_double[indx3 + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
 	      
 	      buf_send_int[indx] = atom_tag_[fi_sites + m + inmon];
-
-	      // if(buf_send_int[indx] == 10)
-	      // 	std::cout << "    mpi_rank_= " << mpi_rank_ << " packed tag 10" << std::endl;
+	      
+	      // if(buf_send_int[indx] == 1)
+	      //  	std::cout << "    mpi_rank_= " << mpi_rank_ << " packed tag 1" << std::endl;
 	      
 	      indx++;
 	      indx3 += 3;
 	    }
 	  }
-        }
+	}
 	
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
+	// Update first indexes
+	fi_mon += nmon;
+	fi_sites += nmon * ns;
+	fi_crd += nmon * ns * 3;
       }    
       
       // need to handle multiple cases: 1) send+recv, 2) only send, 3) only recv
@@ -2386,12 +2389,12 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
       } else {
 	MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 0, world_, &request[0]);
       }
-
+      
       if(nncomm_sendproc[iswap] != mpi_rank_) {
 	//	MPI_Send(&size_ghost_send_3d, 1, MPI_INT, nncomm_sendproc[iswap], 0, world_);
 	MPI_Send(&indx3, 1, MPI_INT, nncomm_sendproc[iswap], 0, world_);
       }
-
+      
       if(nncomm_recvproc[iswap] != mpi_rank_) {
 	MPI_Wait(&request[0], MPI_STATUS_IGNORE);
       }
@@ -2406,7 +2409,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	MPI_Irecv(buf_recv_int.data(),    ncount, MPI_INT,    nncomm_recvproc[iswap], 0, world_, &request[0]);
 	MPI_Irecv(buf_recv_double.data(), nrecv,  MPI_DOUBLE, nncomm_recvproc[iswap], 1, world_, &request[1]);	
       }
-
+      
       if(nncomm_sendproc[iswap] != mpi_rank_) {
 	// MPI_Send(buf_send_int.data(),    size_ghost_send_1d, MPI_INT,    nncomm_sendproc[iswap], 0, world_);
 	// MPI_Send(buf_send_double.data(), size_ghost_send_3d, MPI_DOUBLE, nncomm_sendproc[iswap], 1, world_);
@@ -2423,57 +2426,57 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
       // unpack ghost monomers from neighbor procs and accumulate
       
       if(nncomm_recvproc[iswap] == mpi_rank_) {
-
+	
 	//	if(!self_unpacked) {
+	
+	fi_mon = 0;
+	fi_crd = 0;
+	fi_sites = 0;
+	
+	// Loop over each monomer type
+	for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+	  size_t ns = sites_[fi_mon];
+	  size_t nmon = mon_type_count_[mt].second;
+	  size_t nmon2 = 2 * nmon;
 	  
-	  fi_mon = 0;
-	  fi_crd = 0;
-	  fi_sites = 0;
-	  
-	  // Loop over each monomer type
-	  for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-	    size_t ns = sites_[fi_mon];
-	    size_t nmon = mon_type_count_[mt].second;
-	    size_t nmon2 = 2 * nmon;
-	    
-	    // Loop over each pair of sites
-	    for (size_t i = 0; i < ns; i++) {
-	      size_t inmon = i * nmon;
-	      size_t inmon3 = inmon * 3;
-	      for (size_t m = 0; m < nmon; m++) {
-		
-		// is monomer local?
-		if(islocal_[fi_mon + m]) {
-		  // test for same position in global list and tally
-		  int tagi = atom_tag_[fi_sites + m + inmon];
-		  
-		  // if(tagi == 10)
-		  //   std::cout << "mpi_rank_= " << mpi_rank_ << " searching for tag 10" << std::endl;
+	  // Loop over each pair of sites
+	  for (size_t i = 0; i < ns; i++) {
+	    size_t inmon = i * nmon;
+	    size_t inmon3 = inmon * 3;
+	    for (size_t m = 0; m < nmon; m++) {
 	      
-		  // loop over neighbor procs ghost monomers
-		  for (int j = 0; j < ncount; ++j)
-		    if (tagi == ptr_buf_int[j]) {
-		      in_v[fi_crd + inmon3 +         m] += ptr_buf_double[j*3  ];
-		      in_v[fi_crd + inmon3 + nmon +  m] += ptr_buf_double[j*3+1];
-		      in_v[fi_crd + inmon3 + nmon2 + m] += ptr_buf_double[j*3+2];
-
-		      
-		      // if(tagi == 10)
-		      // 	std::cout << "mpi_rank_= " << mpi_rank_ << " unpacked tag 10" << std::endl;
-		    }
-		  
-		}
+	      // is monomer local?
+	      if(islocal_[fi_mon + m]) {
+		// test for same position in global list and tally
+		int tagi = atom_tag_[fi_sites + m + inmon];
+		
+		// if(tagi == 1)
+		//   std::cout << "mpi_rank_= " << mpi_rank_ << " searching for tag 1" << std::endl;
+		
+		// loop over neighbor procs ghost monomers
+		for (int j = 0; j < ncount; ++j)
+		  if (tagi == ptr_buf_int[j]) {
+		    in_v[fi_crd + inmon3 +         m] += ptr_buf_double[j*3  ];
+		    in_v[fi_crd + inmon3 + nmon +  m] += ptr_buf_double[j*3+1];
+		    in_v[fi_crd + inmon3 + nmon2 + m] += ptr_buf_double[j*3+2];
+		    
+		    
+		    // if(tagi == 1)
+		    //  	std::cout << "mpi_rank_= " << mpi_rank_ << " unpacked tag 1" << std::endl;
+		  }
+		
 	      }
 	    }
-	    
-	    // Update first indexes
-	    fi_mon += nmon;
-	    fi_sites += nmon * ns;
-	    fi_crd += nmon * ns * 3;
-	  } // for(monomers)
-
+	  }
+	  
+	  // Update first indexes
+	  fi_mon += nmon;
+	  fi_sites += nmon * ns;
+	  fi_crd += nmon * ns * 3;
+	} // for(monomers)
+	
 	  //	}
-	//	self_unpacked = true;
+	  //	self_unpacked = true;
 	
       } else {
 	
@@ -2498,9 +2501,9 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	      // test for same position in global list and tally
 	      int tagi = atom_tag_[fi_sites + m + inmon];
 	      
-	      // if(tagi == 10)
-	      // 	std::cout << "mpi_rank_= " << mpi_rank_ << " searching for tag 10" << std::endl;
-		  
+	      // if(tagi == 1)
+	      //  	std::cout << "mpi_rank_= " << mpi_rank_ << " searching for tag 1" << std::endl;
+	      
 	      // loop over neighbor procs ghost monomers
 	      for (int j = 0; j < ncount; ++j)
 		if (tagi == ptr_buf_int[j]) {
@@ -2508,8 +2511,8 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 		  in_v[fi_crd + inmon3 + nmon +  m] += ptr_buf_double[j*3+1];
 		  in_v[fi_crd + inmon3 + nmon2 + m] += ptr_buf_double[j*3+2];
 		  
-		  // if(tagi == 10)
-		  //   std::cout << "mpi_rank_= " << mpi_rank_ << " unpacked tag 10" << std::endl;
+		  // if(tagi == 1)
+		  //   std::cout << "mpi_rank_= " << mpi_rank_ << " unpacked tag 1" << std::endl;
 		}
 	      
 	      //}
@@ -2524,10 +2527,10 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	
       }
       
-    } // for(i<nswap)
-
+    } // for(iswap < nswap)
+    
     // zero ghost monomers
-
+#if 1
     fi_mon = 0;
     fi_crd = 0;
     fi_sites = 0;
@@ -2559,11 +2562,13 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
       fi_sites += nmon * ns;
       fi_crd += nmon * ns * 3;
     } // for(monomers)
-    
+#endif
     // 2nd nearest-neighbor comm pass
 #if 1
-    for(size_t iswap=0; iswap<nncomm_nswap; ++iswap) {
+    for(int iswap=0; iswap<nncomm_nswap; ++iswap) {
 
+      int idim = nncomm_dim[iswap];
+      
       // need to pack all monomers in this version
       // pack ghost monomers first
       
@@ -2574,24 +2579,23 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
       indx = 0;
       indx3 = 0;
       
-#if 1
       // Loop over each monomer type
       for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
+	size_t ns = sites_[fi_mon];
+	size_t nmon = mon_type_count_[mt].second;
+	size_t nmon2 = 2 * nmon;
 	
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
+	// Loop over each pair of sites
+	for (size_t i = 0; i < ns; i++) {
 	  size_t inmon = i * nmon;
 	  size_t inmon3 = inmon * 3;
 	  for (size_t m = 0; m < nmon; m++) {
 	    
 	    double coord;
-	    if(iswap < 2) coord = xyz_[fi_crd + inmon3 + m];
-	    else if(iswap < 4) coord = xyz_[fi_crd + inmon3 + nmon + m];
+	    if(idim == 0) coord = xyz_[fi_crd + inmon3 + m];
+	    else if(idim == 1) coord = xyz_[fi_crd + inmon3 + nmon + m];
 	    else coord = xyz_[fi_crd + inmon3 + nmon2 + m];
-	      
+	    
 	    if(!islocal_[fi_mon+m] && (coord >= nncomm_cutlo[iswap]) && (coord < nncomm_cuthi[iswap])) {
 	      buf_send_double[indx3    ] = in_v[fi_crd + inmon3 + m];
 	      buf_send_double[indx3 + 1] = in_v[fi_crd + inmon3 + nmon + m];
@@ -2603,40 +2607,39 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	      indx3 += 3;
 	    }
 	  }
-        }
+	}
 	
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
+	// Update first indexes
+	fi_mon += nmon;
+	fi_sites += nmon * ns;
+	fi_crd += nmon * ns * 3;
       }
       
       // now pack local monomers
-    
+      
       fi_mon = 0;
       fi_crd = 0;
       fi_sites = 0;
-#endif
       
       // Loop over each monomer type
       for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = 2 * nmon;
+	size_t ns = sites_[fi_mon];
+	size_t nmon = mon_type_count_[mt].second;
+	size_t nmon2 = 2 * nmon;
 	
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns; i++) {
+	// Loop over each pair of sites
+	for (size_t i = 0; i < ns; i++) {
 	  size_t inmon = i * nmon;
 	  size_t inmon3 = inmon * 3;
 	  for (size_t m = 0; m < nmon; m++) {
 	    
 	    double coord;
-	    if(iswap < 2) coord = xyz_[fi_crd + inmon3 + m];
-	    else if(iswap < 4) coord = xyz_[fi_crd + inmon3 + nmon + m];
+	    if(idim == 0) coord = xyz_[fi_crd + inmon3 + m];
+	    else if(idim == 1) coord = xyz_[fi_crd + inmon3 + nmon + m];
 	    else coord = xyz_[fi_crd + inmon3 + nmon2 + m];
-	      
-	    if(islocal_[fi_mon+m] && (coord >= nncomm_cutlo[iswap]) && (coord < nncomm_cuthi[iswap])) {
-	    //if(islocal_[fi_mon+m]) {
+	    
+	    //	    if(islocal_[fi_mon+m] && (coord >= nncomm_cutlo[iswap]) && (coord < nncomm_cuthi[iswap])) {
+	    if(islocal_[fi_mon+m]) {
 	      buf_send_double[indx3    ] = in_v[fi_crd + inmon3 + m];
 	      buf_send_double[indx3 + 1] = in_v[fi_crd + inmon3 + nmon + m];
 	      buf_send_double[indx3 + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
@@ -2647,14 +2650,14 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	      indx3 += 3;
 	    }
 	  }
-        }
+	}
 	
-        // Update first indexes
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
+	// Update first indexes
+	fi_mon += nmon;
+	fi_sites += nmon * ns;
+	fi_crd += nmon * ns * 3;
       }
-
+      
       // need to handle multiple cases: 1) send+recv, 2) only send, 3) only recv
       // exchange counts with neighbor procs
       
@@ -2668,7 +2671,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
       } else {
 	MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 0, world_, &request[0]);
       }
-
+      
       if(nncomm_sendproc[iswap] != mpi_rank_) {
 	MPI_Send(&nsend,  1, MPI_INT, nncomm_sendproc[iswap], 0, world_);
       }
@@ -2676,7 +2679,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
       if(nncomm_recvproc[iswap] != mpi_rank_) {
 	MPI_Wait(&request[0], MPI_STATUS_IGNORE);	
       }
-
+      
       // exchange data with neighbor procs
       
       if(nncomm_recvproc[iswap] == mpi_rank_) {
@@ -2692,15 +2695,15 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	MPI_Send(buf_send_int.data(),    nsend_1d, MPI_INT,    nncomm_sendproc[iswap], 0, world_);
 	MPI_Send(buf_send_double.data(), nsend,    MPI_DOUBLE, nncomm_sendproc[iswap], 1, world_);
       }
-
+      
       if(nncomm_recvproc[iswap] != mpi_rank_) {
 	MPI_Waitall(2, request, MPI_STATUS_IGNORE);
 	ptr_buf_int = buf_recv_int.data();
 	ptr_buf_double = buf_recv_double.data();
       }
-     
+      
       // set values of ghost monomers on proc
-	
+      
       fi_mon = 0;
       fi_crd = 0;
       fi_sites = 0;
@@ -2741,7 +2744,7 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 	fi_crd += nmon * ns * 3;
       } // if(rank)
       
-    } // for(i<nswap)
+    } // for(iswap < nncomm_nswap)
 #endif
     
 #ifdef _DEBUG_COMM
@@ -5980,6 +5983,8 @@ void Electrostatics::nncomm_setup() {
   nncomm_nswap = 0;
   nncomm_sendproc = std::vector<int>{};
   nncomm_recvproc = std::vector<int>{};
+  nncomm_dim = std::vector<int>{};
+  nncomm_dir = std::vector<int>{};
 
   nncomm_boxlo = std::vector<double>{};
   nncomm_boxhi = std::vector<double>{};
@@ -5987,11 +5992,40 @@ void Electrostatics::nncomm_setup() {
   nncomm_cutlo = std::vector<double>{};
   nncomm_cuthi = std::vector<double>{};
   
-  // find my proc grid location ; order hardcoded to match PME solver order ZYX
+  // pairwise cutoff for ghost
 
-  int myloc_x = mpi_rank_ % proc_grid_x_;
-  int myloc_y = (mpi_rank_ % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
-  int myloc_z = mpi_rank_ / (proc_grid_x_ * proc_grid_y_);
+  double padding = 2.0; // FIXME:: hard-coded value, but set from LAMMPS
+
+  double cutoff_ghost = cutoff_ + padding;
+
+  std::vector<double> len_(3);
+  len_[0] = box_PMElocal_[0];
+  len_[1] = box_PMElocal_[4];
+  len_[2] = box_PMElocal_[8];
+
+  std::vector<double> cut_frac(3);
+  cut_frac[0] = cutoff_ghost / box_PMElocal_[0];
+  cut_frac[1] = cutoff_ghost / box_PMElocal_[4];
+  cut_frac[2] = cutoff_ghost / box_PMElocal_[8];
+
+  // # of neigh procs needed in each dimension
+  // -- borrowing from LAMMPS since that's how data is distributed
+
+  nncomm_maxneed = std::vector<int>(3, 0);
+  nncomm_maxneed[0] = static_cast<int>( cutoff_ghost * proc_grid_x_ / len_[0]) + 1;
+  nncomm_maxneed[1] = static_cast<int>( cutoff_ghost * proc_grid_y_ / len_[1]) + 1;
+  nncomm_maxneed[2] = static_cast<int>( cutoff_ghost * proc_grid_z_ / len_[2]) + 1;
+
+  if(nncomm_maxneed[0] > proc_grid_x_) nncomm_maxneed[0] = proc_grid_x_;
+  if(nncomm_maxneed[1] > proc_grid_y_) nncomm_maxneed[1] = proc_grid_y_;
+  if(nncomm_maxneed[2] > proc_grid_z_) nncomm_maxneed[2] = proc_grid_z_;
+  
+  // find my proc grid location ; order hardcoded to match PME solver order ZYX
+  
+  std::vector<int> myloc(3);
+  myloc[0] = mpi_rank_ % proc_grid_x_;
+  myloc[1] = (mpi_rank_ % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
+  myloc[2] = mpi_rank_ / (proc_grid_x_ * proc_grid_y_);
 
   // bounding box of sub-domain
 
@@ -5999,51 +6033,138 @@ void Electrostatics::nncomm_setup() {
   double fracy = 1.0 / (double) proc_grid_y_;
   double fracz = 1.0 / (double) proc_grid_z_;
   
-  nncomm_boxlo.push_back( (double) myloc_x * fracx );
-  nncomm_boxhi.push_back( (double) (myloc_x + 1) * fracx);
+  nncomm_boxlo.push_back( (double) myloc[0] * fracx );
+  nncomm_boxhi.push_back( (double) (myloc[0] + 1) * fracx);
   
-  nncomm_boxlo.push_back( (double) myloc_y * fracy );
-  nncomm_boxhi.push_back( (double) (myloc_y + 1) * fracy);
+  nncomm_boxlo.push_back( (double) myloc[1] * fracy );
+  nncomm_boxhi.push_back( (double) (myloc[1] + 1) * fracy);
   
-  nncomm_boxlo.push_back( (double) myloc_z * fracz );
-  nncomm_boxhi.push_back( (double) (myloc_z + 1) * fracz);
+  nncomm_boxlo.push_back( (double) myloc[2] * fracz );
+  nncomm_boxhi.push_back( (double) (myloc[2] + 1) * fracz);
 
-  // pairwise cutoff for ghost
+  std::vector<int> proc(3);
+  std::vector<int> proc_grid(3);
 
-  //  double padding = 2.0; // FIXME:: hard-coded value, but set from LAMMPS
-  double padding = 0.0;
+  proc_grid[0] = proc_grid_x_;
+  proc_grid[1] = proc_grid_y_;
+  proc_grid[2] = proc_grid_z_;
   
-  double cut_fracx = (cutoff_ + padding) / box_PMElocal_[0];
-  double cut_fracy = (cutoff_ + padding) / box_PMElocal_[4];
-  double cut_fracz = (cutoff_ + padding) / box_PMElocal_[8];
+#if 1
+  for(int idim=0; idim<3; ++idim) {
+    for(int ineed=0; ineed<nncomm_maxneed[idim]; ++ineed) {
+
+      // neighboring proc in + direction
+      
+      proc[0] = myloc[0];
+      proc[1] = myloc[1];
+      proc[2] = myloc[2];
+
+      proc[idim]+= ineed + 1;
+
+      if(proc[idim] >= proc_grid[idim])
+	if(simcell_periodic_) proc[idim] -= proc_grid[idim];
+	else proc[idim] = myloc[idim];
+
+      int p = proc[2] * proc_grid[0] * proc_grid[1] + proc[1] * proc_grid[0] + proc[0];
+      
+      // neighboring proc in - direction
+
+      proc[0] = myloc[0];
+      proc[1] = myloc[1];
+      proc[2] = myloc[2];
+
+      proc[idim]-= ineed + 1;
+
+      if(proc[idim] < 0)
+	if(simcell_periodic_) proc[idim] += proc_grid[idim];
+	else proc[idim] = myloc[idim];
+
+      int m = proc[2] * proc_grid[0] * proc_grid[1] + proc[1] * proc_grid[0] + proc[0];
+
+      bool include_swap = true;
+
+      for(int iswap=0; iswap<nncomm_nswap; ++iswap)
+      	if(p == nncomm_sendproc[iswap] && m == nncomm_recvproc[iswap] &&
+	   nncomm_dir[iswap] == 1) include_swap = false;
+      
+      if(include_swap) {
+	
+	if(mpi_rank_ == 0)
+	  std::cout << "idim= " << idim << " ineed= " << ineed <<
+	    "  dir= 1  proc= " << proc[0] << " " << proc[1] << " " << proc[2] <<
+	    "  p= " << p << std::endl;
+      
+	nncomm_sendproc.push_back(p);
+	nncomm_recvproc.push_back(m);
+	nncomm_dim.push_back(idim);
+	nncomm_dir.push_back(1);
+	
+	//nncomm_cutlo.push_back( (nncomm_boxhi[idim] - cut_frac[idim]) * len_[idim] );
+        nncomm_cutlo.push_back( 0.5 * (nncomm_boxlo[idim] + nncomm_boxhi[idim]) * len_[idim] );
+	nncomm_cuthi.push_back( (nncomm_boxhi[idim] + 100.0) * len_[idim] );
+	
+	nncomm_nswap++;
+      }
+
+      include_swap = true;
+      
+      for(int iswap=0; iswap<nncomm_nswap; ++iswap)
+      	if(m == nncomm_sendproc[iswap] && p == nncomm_recvproc[iswap] &&
+	   nncomm_dir[iswap] == -1) include_swap = false;
+	   
+      if(include_swap) {
+	
+	if(mpi_rank_ == 0)
+	  std::cout << "idim= " << idim << " ineed= " << ineed <<
+	    "  dir= -1  proc= " << proc[0] << " " << proc[1] << " " << proc[2] <<
+	    "  m= " << m << std::endl;
+	
+	nncomm_sendproc.push_back(m);
+	nncomm_recvproc.push_back(p);
+	nncomm_dim.push_back(idim);
+	nncomm_dir.push_back(-1);
+	
+	nncomm_cutlo.push_back( (nncomm_boxlo[idim] - 100.0) * len_[idim] );
+	//nncomm_cuthi.push_back( (nncomm_boxlo[idim] + cut_frac[idim]) * len_[idim] );
+	nncomm_cuthi.push_back( 0.5 * (nncomm_boxlo[idim] + nncomm_boxhi[idim]) * len_[idim] );
+
+	nncomm_nswap++;
+      }
+      
+    }
+  }
+
+  //  nncomm_nswap = 5;
+  
+#else
   
   // find mpi ranks for 6-stencil neighbors
   // +/- x dimension
   
-  int x = myloc_x + 1;
-  int y = myloc_y;
-  int z = myloc_z;
+  int x = myloc[0] + 1;
+  int y = myloc[1];
+  int z = myloc[2];
 
   if(x == proc_grid_x_)
     if(simcell_periodic_) x = 0;
-    else x = myloc_x;
+    else x = myloc[0];
   
   int rpx = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   //  nncomm_cutlo.push_back( nncomm_boxlo[0] + 0.5 * fracx );
-  nncomm_cutlo.push_back( nncomm_boxhi[0] - cut_fracx );
+  nncomm_cutlo.push_back( nncomm_boxhi[0] - cut_frac[0] );
   nncomm_cuthi.push_back( nncomm_boxhi[0] + 100.0 );
   
-  x = myloc_x - 1;
+  x = myloc[0] - 1;
   if(x == -1)
     if(simcell_periodic_) x = proc_grid_x_ - 1;
-    else x = myloc_x;
+    else x = myloc[0];
 
   int rmx = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   nncomm_cutlo.push_back( nncomm_boxlo[0] - 100.0 );
   //  nncomm_cuthi.push_back( nncomm_boxhi[0] - 0.5 * fracx );
-  nncomm_cuthi.push_back( nncomm_boxlo[0] + cut_fracx );
+  nncomm_cuthi.push_back( nncomm_boxlo[0] + cut_frac[0] );
   
   nncomm_nswap++;
   nncomm_sendproc.push_back(rpx);
@@ -6057,29 +6178,29 @@ void Electrostatics::nncomm_setup() {
   
   // +/- y dimension
   
-  x = myloc_x;
-  y = myloc_y + 1;
+  x = myloc[0];
+  y = myloc[1] + 1;
   
   if(y == proc_grid_y_)
     if(simcell_periodic_) y = 0;
-    else y = myloc_y;
+    else y = myloc[1];
   
   int rpy = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   //  nncomm_cutlo.push_back( nncomm_boxlo[1] + 0.5 * fracy );
-  nncomm_cutlo.push_back( nncomm_boxhi[1] - cut_fracy );
+  nncomm_cutlo.push_back( nncomm_boxhi[1] - cut_frac[1] );
   nncomm_cuthi.push_back( nncomm_boxhi[1] + 100.0 );
   
-  y = myloc_y - 1;
+  y = myloc[1] - 1;
   if(y == -1)
     if(simcell_periodic_) y = proc_grid_y_ - 1;
-    else y = myloc_y;
+    else y = myloc[1];
 
   int rmy = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   nncomm_cutlo.push_back( nncomm_boxlo[1] - 100.0 );
   //  nncomm_cuthi.push_back( nncomm_boxhi[1] - 0.5 * fracy );
-  nncomm_cuthi.push_back( nncomm_boxlo[1] + cut_fracy );
+  nncomm_cuthi.push_back( nncomm_boxlo[1] + cut_frac[1] );
   
   nncomm_nswap++;
   nncomm_sendproc.push_back(rpy);
@@ -6093,29 +6214,29 @@ void Electrostatics::nncomm_setup() {
   
   // +/- z dimension
 
-  y = myloc_y;
-  z = myloc_z + 1;
+  y = myloc[1];
+  z = myloc[2] + 1;
   
   if(z == proc_grid_z_)
     if(simcell_periodic_) z = 0;
-    else z = myloc_z;
+    else z = myloc[2];
   
   int rpz = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   //  nncomm_cutlo.push_back( nncomm_boxlo[2] + 0.5 * fracz );
-  nncomm_cutlo.push_back( nncomm_boxhi[2] - cut_fracz );
+  nncomm_cutlo.push_back( nncomm_boxhi[2] - cut_frac[2] );
   nncomm_cuthi.push_back( nncomm_boxhi[2] + 100.0 );
   
-  z = myloc_z - 1;
+  z = myloc[2] - 1;
   if(z == -1)
     if(simcell_periodic_) z = proc_grid_z_ - 1;
-    else z = myloc_z;
+    else z = myloc[2];
 
   int rmz = z * proc_grid_x_ * proc_grid_y_ + y * proc_grid_x_ + x;
 
   nncomm_cutlo.push_back( nncomm_boxlo[2] - 100.0 );
   //  nncomm_cuthi.push_back( nncomm_boxhi[2] - 0.5 * fracz );
-  nncomm_cuthi.push_back( nncomm_boxlo[2] + cut_fracz );
+  nncomm_cuthi.push_back( nncomm_boxlo[2] + cut_frac[2] );
   
   nncomm_nswap++;
   nncomm_sendproc.push_back(rpz);
@@ -6128,7 +6249,7 @@ void Electrostatics::nncomm_setup() {
     //  }
 
   // FIXME:: temporary hard-code for orthogonal lattices
-
+    
   nncomm_cutlo[0] *= box_PMElocal_[0];
   nncomm_cutlo[1] *= box_PMElocal_[0];
   nncomm_cutlo[2] *= box_PMElocal_[4];
@@ -6142,15 +6263,21 @@ void Electrostatics::nncomm_setup() {
   nncomm_cuthi[3] *= box_PMElocal_[4];
   nncomm_cuthi[4] *= box_PMElocal_[8];
   nncomm_cuthi[5] *= box_PMElocal_[8];
+#endif
   
 #ifdef _DEBUG_COMM
   for(int i=0; i<num_mpi_ranks_; ++i) {
 
     if(mpi_rank_ == i) {
-      if(i == 0) std::cout << "proc_grid_= " << proc_grid_x_ << " " << proc_grid_y_ << " " << proc_grid_z_ << std::endl;
-      std::cout << "(" << i << ") myloc_= " << myloc_x << " " << myloc_y << " " << myloc_z <<
-	" neigh_procs= " << rmx << " " << rpx << "   " << rmy << " " << rpy << "   " << rmz << " " <<
-	rpz << "  nswap= " << nncomm_nswap << std::endl;
+      if(i == 0) {
+	std::cout << "proc_grid_= " << proc_grid_x_ << " " << proc_grid_y_ << " " << proc_grid_z_ << std::endl;
+	std::cout << "maxneed= " << nncomm_maxneed[0] << " " << nncomm_maxneed[1] << " " << nncomm_maxneed[2] << "  cutoff_ghost= "
+		  << cutoff_ghost << std::endl;
+      }
+
+      std::cout << "(" << i << ") myloc_= " << myloc[0] << " " << myloc[1] << " " << myloc[2] << std::endl;
+      
+      std::cout << "  nswap= " << nncomm_nswap << std::endl;
 
       std::cout << "          boxlo= ";
       for(int j=0; j<3; ++j) std::cout << " " << nncomm_boxlo[j];
@@ -6176,6 +6303,13 @@ void Electrostatics::nncomm_setup() {
       for(int j=0; j<nncomm_nswap; ++j) std::cout << " " << nncomm_recvproc[j];
       std::cout << std::endl;
       
+      std::cout << "          nncomm_dim= ";
+      for(int i=0; i<nncomm_nswap; ++i) std::cout << " " << nncomm_dim[i];
+      std::cout << std::endl;
+      
+      std::cout << "          nncomm_dir= ";
+      for(int i=0; i<nncomm_nswap; ++i) std::cout << " " << nncomm_dir[i];
+      std::cout << std::endl;
     }
     MPI_Barrier(world_);
 
