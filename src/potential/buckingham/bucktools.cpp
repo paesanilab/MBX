@@ -387,6 +387,30 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         b.push_back(3.64236);  // A^(-1)
         b.push_back(3.64236);  // A^(-1)
         b.push_back(3.52744);  // A^(-1)
+
+    } else if (mon_id1 == "nh3" and mon_id2 == "nh3") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(20413.5);  // kcal/mol A--A
+        a.push_back(3259.49);  // kcal/mol A--B
+        a.push_back(3259.49);  // kcal/mol A--B
+        a.push_back(965.289);  // kcal/mol B--B
+        b.push_back(3.11493);  // A^(-1) A--A
+        b.push_back(3.4174);   // A^(-1) A--B
+        b.push_back(3.4174);   // A^(-1) A--B
+        b.push_back(3.78007);  // A^(-1) B--B
+
     } else if (mon_id1 == "ch4" && mon_id2 == "ch4") {
         // Define the type of atom in each mon
         types1.push_back(0);
