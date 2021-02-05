@@ -49,8 +49,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define _DEBUG_PERM
 //#define _DEBUG_DIPOLE
-#define _DEBUG_ITERATION 1
-#define _DEBUG_COMM
+//#define _DEBUG_ITERATION 2
+//#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
 //#define _DEBUG_GRAD
 //#define _DEBUG_PRINT_ENERGY
@@ -6088,11 +6088,13 @@ void Electrostatics::nncomm_setup() {
 	   nncomm_dir[iswap] == 1) include_swap = false;
       
       if(include_swap) {
-	
+
+#ifdef _DEBUG_COMM
 	if(mpi_rank_ == 0)
 	  std::cout << "idim= " << idim << " ineed= " << ineed <<
 	    "  dir= 1  proc= " << proc[0] << " " << proc[1] << " " << proc[2] <<
 	    "  p= " << p << std::endl;
+#endif
       
 	nncomm_sendproc.push_back(p);
 	nncomm_recvproc.push_back(m);
@@ -6114,10 +6116,12 @@ void Electrostatics::nncomm_setup() {
 	   
       if(include_swap) {
 	
+#ifdef _DEBUG_COMM
 	if(mpi_rank_ == 0)
 	  std::cout << "idim= " << idim << " ineed= " << ineed <<
 	    "  dir= -1  proc= " << proc[0] << " " << proc[1] << " " << proc[2] <<
 	    "  m= " << m << std::endl;
+#endif
 	
 	nncomm_sendproc.push_back(m);
 	nncomm_recvproc.push_back(p);
