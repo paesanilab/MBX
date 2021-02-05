@@ -745,6 +745,8 @@ void System::Initialize() {
 
 void System::InitializePME() {
     // If we try to reinitialize the system, we will get an exception
+    isPME_ = true;
+
     if (initialized_) {
         std::string text =
             std::string("The system has already been initialized. ") + std::string("Reinitialization is not possible");
@@ -755,6 +757,9 @@ void System::InitializePME() {
     std::cerr << std::scientific << std::setprecision(10);
     std::cout << std::scientific << std::setprecision(10);
 #endif
+
+    // Do not attempt to initiaize if monomers json file has not been read.
+    if (!monomer_json_read_) return;
 
     // Retrieves all the monomer information given the coordinates
     // and monomer id, such as number of sites, and orders the monomers
@@ -857,7 +862,11 @@ void System::SetUpFromJsonMonomers(nlohmann::json j) {
     monomers_j_ = j;
     monomer_json_read_ = true;
 
-    Initialize();
+    if (isPME_) {
+        InitializePME();
+    } else {
+        Initialize();
+    }
 
     electrostaticE_.SetJsonMonomers(monomers_j_);
     dispersionE_.SetJsonMonomers(monomers_j_);
