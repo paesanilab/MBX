@@ -706,11 +706,19 @@ void System::Initialize() {
 
     // Retrieves all the monomer information given the coordinates
     // and monomer id, such as number of sites, and orders the monomers
-    AddMonomerInfo();
+    if (xyz_.size() > 0) {
+        AddMonomerInfo();
+    }
 
     // Setting the number of molecules and number of monomers
-    nummol = molecules_.size();
-    nummon_ = monomers_.size();
+    if (xyz_.size() == 0) {
+        numat_ = 0;
+        nummol = 0;
+        nummon_ = 0;
+    } else {
+        nummol = molecules_.size();
+        nummon_ = monomers_.size();
+    }
 
     // Setting PBC to false by default
     SetPBC(box_);
@@ -728,7 +736,7 @@ void System::Initialize() {
                                islocal_, atom_tag_, true, diptol_, maxItDip_, dipole_method_);
 
     // And the dispersion class
-    std::vector<double> xyz_real = GetRealXyz();
+    std::vector<double> xyz_real = numat_ == 0 ? xyz_ : GetRealXyz();
     if (mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
     dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
 
@@ -737,60 +745,63 @@ void System::Initialize() {
     lennardJonesE_.Initialize(lj_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
 
     // And buckingham class
-    buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, enforce_ttm_for_idx_, islocal_, true, box_);
-
-    // We are done. Setting initialized_ to true
-    initialized_ = true;
-}
-
-void System::InitializePME() {
-    // If we try to reinitialize the system, we will get an exception
-    if (initialized_) {
-        std::string text =
-            std::string("The system has already been initialized. ") + std::string("Reinitialization is not possible");
-        throw CUException(__func__, __FILE__, __LINE__, text);
+    if (numat_ > 0) {
+        buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, enforce_ttm_for_idx_, islocal_, true, box_);
     }
 
-#ifdef DEBUG
-    std::cerr << std::scientific << std::setprecision(10);
-    std::cout << std::scientific << std::setprecision(10);
-#endif
-
-    // Retrieves all the monomer information given the coordinates
-    // and monomer id, such as number of sites, and orders the monomers
-    numat_ = 0;
-    // AddMonomerInfo();
-
-    // Setting the number of molecules and number of monomers
-    nummol = 0;
-    nummon_ = 0;
-
-    // Setting PBC to false by default
-    SetPBC(box_);
-
-    // Set C6 for long range pme
-    SetC6LongRange();
-
-    // Set LJ for long range pme
-    SetLJLongRange();
-    // With the information previously set, we initialize the
-    // electrostatics class
-    if (mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
-                               islocal_, atom_tag_, true, diptol_, maxItDip_, dipole_method_);
-
-    // std::vector<double> xyz_real = GetRealXyz();
-    std::vector<double> xyz_real = {};
-    if (mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
-
-    if (mpi_initialized_) lennardJonesE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    lennardJonesE_.Initialize(lj_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
-    // buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
-
     // We are done. Setting initialized_ to true
     initialized_ = true;
 }
+
+// void System::InitializePME() {
+//    // If we try to reinitialize the system, we will get an exception
+//    if (initialized_) {
+//        std::string text =
+//            std::string("The system has already been initialized. ") + std::string("Reinitialization is not
+//            possible");
+//        throw CUException(__func__, __FILE__, __LINE__, text);
+//    }
+//
+//#ifdef DEBUG
+//    std::cerr << std::scientific << std::setprecision(10);
+//    std::cout << std::scientific << std::setprecision(10);
+//#endif
+//
+//    // Retrieves all the monomer information given the coordinates
+//    // and monomer id, such as number of sites, and orders the monomers
+//    numat_ = 0;
+//    // AddMonomerInfo();
+//
+//    // Setting the number of molecules and number of monomers
+//    nummol = 0;
+//    nummon_ = 0;
+//
+//    // Setting PBC to false by default
+//    SetPBC(box_);
+//
+//    // Set C6 for long range pme
+//    SetC6LongRange();
+//
+//    // Set LJ for long range pme
+//    SetLJLongRange();
+//    // With the information previously set, we initialize the
+//    // electrostatics class
+//    if (mpi_initialized_) electrostaticE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+//    electrostaticE_.Initialize(chg_, chggrad_, polfac_, pol_, xyz_, monomers_, sites_, first_index_, mon_type_count_,
+//                               islocal_, atom_tag_, true, diptol_, maxItDip_, dipole_method_);
+//
+//    // std::vector<double> xyz_real = GetRealXyz();
+//    std::vector<double> xyz_real = {};
+//    if (mpi_initialized_) dispersionE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+//    dispersionE_.Initialize(c6_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
+//
+//    if (mpi_initialized_) lennardJonesE_.SetMPI(world_, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+//    lennardJonesE_.Initialize(lj_lr_, xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
+//    // buckinghamE_.Initialize(xyz_real, monomers_, nat_, mon_type_count_, islocal_, true, box_);
+//
+//    // We are done. Setting initialized_ to true
+//    initialized_ = true;
+//}
 
 void System::SetUpFromJsonDispersionRepulsion(char *json_file) {
     nlohmann::json j_default = {};
