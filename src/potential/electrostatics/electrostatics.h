@@ -454,6 +454,7 @@ class Electrostatics {
     std::vector<int> nncomm_recvproc;
     std::vector<int> nncomm_dim;
     std::vector<int> nncomm_dir;
+    std::vector<int> nncomm_send;
 
     std::vector<double> nncomm_boxlo;
     std::vector<double> nncomm_boxhi;
