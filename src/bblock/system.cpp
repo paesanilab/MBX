@@ -867,13 +867,15 @@ void System::SetUpFromJsonDispersionRepulsion(nlohmann::json j) {
 void System::SetUpFromJsonMonomers(nlohmann::json j) {
     monomers_j_ = j;
     monomer_json_read_ = true;
-
+#if 0
     if (isPME_) {
         InitializePME();
     } else {
         Initialize();
     }
-
+#else
+    Initialize();
+#endif
     electrostaticE_.SetJsonMonomers(monomers_j_);
     dispersionE_.SetJsonMonomers(monomers_j_);
     buckinghamE_.SetJsonMonomers(monomers_j_);
@@ -1327,6 +1329,9 @@ void System::SetUpFromJson(char *json_file) {
                                   {"ttm_pairs", nlohmann::json::array()},
                                   {"ignore_dispersion", nlohmann::json::array()},
                                   {"use_lennard_jones", nlohmann::json::array()},
+				  {"alpha_ewald_lj", 0},
+				  {"grid_density_lj", 2.5},
+				  {"spline_order_lj", 6},
                                   {"ff_mons", nlohmann::json::array()},
                                   {"connectivity_file", ""},
                                   {"nonbonded_file", ""},
