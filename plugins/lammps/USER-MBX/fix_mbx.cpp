@@ -780,13 +780,15 @@ void FixMBX::mbx_init() {
         ptr_mbx->SetUpFromJson();
 
         ptr_mbx->SetDipoleMethod("cg");
-        ptr_mbx->Set2bCutoff(pair_mbx->cut_global);
-
         if (!domain->nonperiodic) {
             ptr_mbx->SetEwaldElectrostatics(0.6, 2.5, 6);
             ptr_mbx->SetEwaldDispersion(0.5, 2.5, 6);
         }
     }
+
+    // LAMMPS always sets pair cutoff
+
+    ptr_mbx->Set2bCutoff(pair_mbx->cut_global);  // why no gas-phase cutoff of 100 here?
 
     ptr_mbx->SetPBC(box);
 
@@ -998,12 +1000,17 @@ void FixMBX::mbx_init_local() {
 
         if (!domain->nonperiodic) {
             ptr_mbx_local->SetDipoleMethod("cg");
-            ptr_mbx_local->Set2bCutoff(pair_mbx->cut_global);
             ptr_mbx_local->SetEwaldElectrostatics(0.6, 2.5, 6);
             ptr_mbx_local->SetEwaldDispersion(0.5, 2.5, 6);
-        } else {
-            ptr_mbx_local->Set2bCutoff(100.0);
         }
+    }
+
+    // LAMMPS always sets pair cutoff
+
+    if (!domain->nonperiodic) {
+        ptr_mbx_local->Set2bCutoff(pair_mbx->cut_global);
+    } else {
+        ptr_mbx_local->Set2bCutoff(100.0);  // this is problematic for new p2p comm in lammps_nncomm branch
     }
 
     ptr_mbx_local->SetPBC(box);
@@ -1405,12 +1412,17 @@ void FixMBX::mbx_init_full() {
 
         ptr_mbx_full->SetDipoleMethod("cg");
         if (box.size()) {
-            ptr_mbx_full->Set2bCutoff(pair_mbx->cut_global);
             ptr_mbx_full->SetEwaldElectrostatics(0.6, 2.5, 6);
             ptr_mbx_full->SetEwaldDispersion(0.5, 2.5, 6);
-        } else {
-            ptr_mbx_full->Set2bCutoff(100.0);
         }
+    }
+
+    // LAMMPS always sets pair cutoff
+
+    if (box.size()) {
+        ptr_mbx_full->Set2bCutoff(pair_mbx->cut_global);
+    } else {
+        ptr_mbx_full->Set2bCutoff(100.0);
     }
 
     ptr_mbx_full->SetPBC(box);
