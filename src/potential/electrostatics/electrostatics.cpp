@@ -6052,16 +6052,17 @@ void Electrostatics::nncomm_setup() {
   double cutoff_ghost = cutoff_ + padding;
 
   // FIXME:: hard-coded for orthogonal lattices
+  // -- cuts below should remain in fractional coordinates and used for tests
   
   std::vector<double> len_(3);
-  len_[0] = box_PMElocal_[0];
-  len_[1] = box_PMElocal_[4];
-  len_[2] = box_PMElocal_[8];
+  len_[0] = box_ABCabc_PMElocal_[0];
+  len_[1] = box_ABCabc_PMElocal_[1];
+  len_[2] = box_ABCabc_PMElocal_[2];
 
   std::vector<double> cut_frac(3);
-  cut_frac[0] = cutoff_ghost / box_PMElocal_[0];
-  cut_frac[1] = cutoff_ghost / box_PMElocal_[4];
-  cut_frac[2] = cutoff_ghost / box_PMElocal_[8];
+  cut_frac[0] = cutoff_ghost / box_ABCabc_PMElocal_[0];
+  cut_frac[1] = cutoff_ghost / box_ABCabc_PMElocal_[1];
+  cut_frac[2] = cutoff_ghost / box_ABCabc_PMElocal_[2];
 
   // # of neigh procs needed in each dimension
   // -- borrowing from LAMMPS since that's how data is distributed
