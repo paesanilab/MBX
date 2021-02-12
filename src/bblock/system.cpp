@@ -891,7 +891,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         box = box2;
     } catch (...) {
         box.clear();
-        std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
+        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
     }
 
     box_ = box;
@@ -948,7 +948,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         cutoff_2b = j["MBX"]["twobody_cutoff"];
     } catch (...) {
         cutoff_2b = box_.size() ? 9.0 : 100.0;
-        std::cerr << "**WARNING** \"twobody_cutoff\" is not defined in json file. Using " << cutoff_2b << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"twobody_cutoff\" is not defined in json file. Using " << cutoff_2b << "\n";
     }
     cutoff2b_ = cutoff_2b;
     mbx_j_["MBX"]["twobody_cutoff"] = cutoff_2b;
@@ -960,7 +961,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         cutoff_3b = j["MBX"]["threebody_cutoff"];
     } catch (...) {
         cutoff_3b = 6.5;
-        std::cerr << "**WARNING** \"threebody_cutoff\" is not defined in json file. Using " << cutoff_3b << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"threebody_cutoff\" is not defined in json file. Using " << cutoff_3b << "\n";
     }
     cutoff3b_ = cutoff_3b;
     mbx_j_["MBX"]["threebody_cutoff"] = cutoff_3b;
@@ -972,7 +974,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         max_eval_1b = j["MBX"]["max_n_eval_1b"];
     } catch (...) {
         max_eval_1b = 1000;
-        std::cerr << "**WARNING** \"max_n_eval_1b\" is not defined in json file. Using " << max_eval_1b << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"max_n_eval_1b\" is not defined in json file. Using " << max_eval_1b << "\n";
     }
     maxNMonEval_ = max_eval_1b;
     mbx_j_["MBX"]["max_n_eval_1b"] = max_eval_1b;
@@ -984,7 +987,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         max_eval_2b = j["MBX"]["max_n_eval_2b"];
     } catch (...) {
         max_eval_2b = 1000;
-        std::cerr << "**WARNING** \"max_n_eval_2b\" is not defined in json file. Using " << max_eval_2b << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"max_n_eval_2b\" is not defined in json file. Using " << max_eval_2b << "\n";
     }
     maxNDimEval_ = max_eval_2b;
     mbx_j_["MBX"]["max_n_eval_2b"] = max_eval_2b;
@@ -996,7 +1000,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         max_eval_3b = j["MBX"]["max_n_eval_3b"];
     } catch (...) {
         max_eval_3b = 1000;
-        std::cerr << "**WARNING** \"max_n_eval_3b\" is not defined in json file. Using " << max_eval_3b << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"max_n_eval_3b\" is not defined in json file. Using " << max_eval_3b << "\n";
     }
     maxNTriEval_ = max_eval_3b;
     mbx_j_["MBX"]["max_n_eval_3b"] = max_eval_3b;
@@ -1008,7 +1013,9 @@ void System::SetUpFromJson(nlohmann::json j) {
         dipole_tolerance = j["MBX"]["dipole_tolerance"];
     } catch (...) {
         dipole_tolerance = 1E-16;
-        std::cerr << "**WARNING** \"dipole_tolerance\" is not defined in json file. Using " << dipole_tolerance << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"dipole_tolerance\" is not defined in json file. Using " << dipole_tolerance
+                      << "\n";
     }
     diptol_ = dipole_tolerance;
     mbx_j_["MBX"]["dipole_tolerance"] = dipole_tolerance;
@@ -1020,7 +1027,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         dipole_method = j["MBX"]["dipole_method"];
     } catch (...) {
         dipole_method = "cg";
-        std::cerr << "**WARNING** \"dipole_method\" is not defined in json file. Using " << dipole_method << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"dipole_method\" is not defined in json file. Using " << dipole_method << "\n";
     }
     dipole_method_ = dipole_method;
     mbx_j_["MBX"]["dipole_method"] = dipole_method;
@@ -1032,7 +1040,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         dipole_max_it = j["MBX"]["dipole_max_it"];
     } catch (...) {
         dipole_max_it = 100;
-        std::cerr << "**WARNING** \"dipole_max_it\" is not defined in json file. Using " << dipole_max_it << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"dipole_max_it\" is not defined in json file. Using " << dipole_max_it << "\n";
     }
     maxItDip_ = dipole_max_it;
     mbx_j_["MBX"]["dipole_max_it"] = dipole_max_it;
@@ -1044,7 +1053,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         alpha_disp = j["MBX"]["alpha_ewald_disp"];
     } catch (...) {
         alpha_disp = box_.size() ? 0.6 : 0.0;
-        std::cerr << "**WARNING** \"alpha_ewald_disp\" is not defined in json file. Using " << alpha_disp << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"alpha_ewald_disp\" is not defined in json file. Using " << alpha_disp << "\n";
     }
     mbx_j_["MBX"]["alpha_ewald_disp"] = alpha_disp;
 
@@ -1055,8 +1065,9 @@ void System::SetUpFromJson(nlohmann::json j) {
         grid_density_disp = j["MBX"]["grid_density_disp"];
     } catch (...) {
         grid_density_disp = 2.5;
-        std::cerr << "**WARNING** \"grid_density_disp\" is not defined in json file. Using " << grid_density_disp
-                  << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"grid_density_disp\" is not defined in json file. Using " << grid_density_disp
+                      << "\n";
     }
     mbx_j_["MBX"]["grid_density_disp"] = grid_density_disp;
 
@@ -1067,8 +1078,9 @@ void System::SetUpFromJson(nlohmann::json j) {
         spline_order_disp = j["MBX"]["spline_order_disp"];
     } catch (...) {
         spline_order_disp = 6;
-        std::cerr << "**WARNING** \"spline_order_disp\" is not defined in json file. Using " << spline_order_disp
-                  << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"spline_order_disp\" is not defined in json file. Using " << spline_order_disp
+                      << "\n";
     }
     mbx_j_["MBX"]["spline_order_disp"] = spline_order_disp;
 
@@ -1081,7 +1093,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         alpha_lj = j["MBX"]["alpha_ewald_lj"];
     } catch (...) {
         alpha_lj = box_.size() ? 0.6 : 0.0;
-        std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << alpha_lj << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << alpha_lj << "\n";
     }
     mbx_j_["MBX"]["alpha_ewald_lj"] = alpha_lj;
 
@@ -1092,7 +1105,9 @@ void System::SetUpFromJson(nlohmann::json j) {
         grid_density_lj = j["MBX"]["grid_density_lj"];
     } catch (...) {
         grid_density_lj = 2.5;
-        std::cerr << "**WARNING** \"grid_density_lj\" is not defined in json file. Using " << grid_density_lj << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"grid_density_lj\" is not defined in json file. Using " << grid_density_lj
+                      << "\n";
     }
     mbx_j_["MBX"]["grid_density_lj"] = grid_density_lj;
 
@@ -1103,7 +1118,9 @@ void System::SetUpFromJson(nlohmann::json j) {
         spline_order_lj = j["MBX"]["spline_order_lj"];
     } catch (...) {
         spline_order_lj = 6;
-        std::cerr << "**WARNING** \"spline_order_lj\" is not defined in json file. Using " << spline_order_lj << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"spline_order_lj\" is not defined in json file. Using " << spline_order_lj
+                      << "\n";
     }
     mbx_j_["MBX"]["spline_order_lj"] = spline_order_lj;
 
@@ -1116,7 +1133,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         alpha_elec = j["MBX"]["alpha_ewald_elec"];
     } catch (...) {
         alpha_elec = box.size() ? 0.6 : 0.0;
-        std::cerr << "**WARNING** \"alpha_ewald_elec\" is not defined in json file. Using " << alpha_elec << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"alpha_ewald_elec\" is not defined in json file. Using " << alpha_elec << "\n";
     }
     mbx_j_["MBX"]["alpha_ewald_elec"] = alpha_elec;
 
@@ -1127,8 +1145,9 @@ void System::SetUpFromJson(nlohmann::json j) {
         grid_density_elec = j["MBX"]["grid_density_elec"];
     } catch (...) {
         grid_density_elec = 2.5;
-        std::cerr << "**WARNING** \"grid_density_elec\" is not defined in json file. Using " << grid_density_elec
-                  << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"grid_density_elec\" is not defined in json file. Using " << grid_density_elec
+                      << "\n";
     }
     mbx_j_["MBX"]["grid_density_elec"] = grid_density_elec;
 
@@ -1139,8 +1158,9 @@ void System::SetUpFromJson(nlohmann::json j) {
         spline_order_elec = j["MBX"]["spline_order_elec"];
     } catch (...) {
         spline_order_elec = 6;
-        std::cerr << "**WARNING** \"spline_order_elec\" is not defined in json file. Using " << spline_order_elec
-                  << "\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"spline_order_elec\" is not defined in json file. Using " << spline_order_elec
+                      << "\n";
     }
     mbx_j_["MBX"]["spline_order_elec"] = spline_order_elec;
 
@@ -1152,7 +1172,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         ttm_pairs = ttm_pairs2;
     } catch (...) {
         ttm_pairs.clear();
-        std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty list.\n";
+        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty list.\n";
     }
     SetTTMnrgPairs(ttm_pairs);
     mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
@@ -1163,7 +1183,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         ignore_dispersion = ignore_dispersion2;
     } catch (...) {
         ignore_dispersion.clear();
-        std::cerr << "**WARNING** \"ignore_dispersion\" is not defined in json file. Using empty list.\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"ignore_dispersion\" is not defined in json file. Using empty list.\n";
     }
     SetIgnoreDispersionPairs(ignore_dispersion);
     mbx_j_["MBX"]["ignore_dispersion"] = ignore_disp_;
@@ -1174,7 +1195,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         use_lennard_jones = use_lennard_jones2;
     } catch (...) {
         use_lennard_jones.clear();
-        std::cerr << "**WARNING** \"use_lennard_jones\" is not defined in json file. Using empty list.\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"use_lennard_jones\" is not defined in json file. Using empty list.\n";
     }
     SetLennardJonesPairs(use_lennard_jones);
     mbx_j_["MBX"]["ttm_pairs"] = lj_pairs_;
@@ -1185,7 +1207,7 @@ void System::SetUpFromJson(nlohmann::json j) {
         ff_mons = ff_mons2;
     } catch (...) {
         ff_mons.clear();
-        std::cerr << "**WARNING** \"ff_mons\" is not defined in json file. Using empty list.\n";
+        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"ff_mons\" is not defined in json file. Using empty list.\n";
     }
     SetFFMons(ff_mons);
     mbx_j_["MBX"]["ff_mons"] = ff_mons_;
@@ -1196,7 +1218,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         ignore_1b_poly = ignore_1b_poly2;
     } catch (...) {
         ignore_1b_poly.clear();
-        std::cerr << "**WARNING** \"ignore_1b_poly\" is not defined in json file. Using empty list.\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"ignore_1b_poly\" is not defined in json file. Using empty list.\n";
     }
     Set1bIgnorePoly(ignore_1b_poly);
     mbx_j_["MBX"]["ignore_1b_poly"] = ignore_1b_poly_;
@@ -1207,7 +1230,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         ignore_2b_poly = ignore_2b_poly2;
     } catch (...) {
         ignore_2b_poly.clear();
-        std::cerr << "**WARNING** \"ignore_2b_poly\" is not defined in json file. Using empty list.\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"ignore_2b_poly\" is not defined in json file. Using empty list.\n";
     }
     Set2bIgnorePoly(ignore_2b_poly);
     mbx_j_["MBX"]["ignore_2b_poly"] = ignore_2b_poly_;
@@ -1218,7 +1242,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         ignore_3b_poly = ignore_3b_poly2;
     } catch (...) {
         ignore_3b_poly.clear();
-        std::cerr << "**WARNING** \"ignore_3b_poly\" is not defined in json file. Using empty list.\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"ignore_3b_poly\" is not defined in json file. Using empty list.\n";
     }
     Set3bIgnorePoly(ignore_3b_poly);
     mbx_j_["MBX"]["ignore_3b_poly"] = ignore_3b_poly_;
@@ -1229,7 +1254,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         tools::ReadConnectivity(connectivity_file.c_str(), connectivity_map_);
     } catch (...) {
         connectivity_file = "";
-        std::cerr << "**WARNING** \"connectivity_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
+        if (mpi_rank_ == 0)
+            std::cerr << "**WARNING** \"connectivity_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
     }
     mbx_j_["MBX"]["connectivity_file"] = connectivity_file;
 
@@ -1242,7 +1268,7 @@ void System::SetUpFromJson(nlohmann::json j) {
     } catch (...) {
         repdisp_file = "";
         SetUpFromJsonDispersionRepulsion();
-        std::cerr << "**WARNING** \"nonbonded_file\" is not defined in json file.\n";
+        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"nonbonded_file\" is not defined in json file.\n";
     }
     mbx_j_["MBX"]["nonbonded_file"] = repdisp_file;
 
@@ -1255,7 +1281,7 @@ void System::SetUpFromJson(nlohmann::json j) {
     } catch (...) {
         monomers_json_file = "";
         SetUpFromJsonMonomers();
-        std::cerr << "**WARNING** \"monomers_file\" is not defined in json file.\n";
+        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"monomers_file\" is not defined in json file.\n";
     }
     mbx_j_["MBX"]["monomers_file"] = monomers_json_file;
 
@@ -1329,9 +1355,9 @@ void System::SetUpFromJson(char *json_file) {
                                   {"ttm_pairs", nlohmann::json::array()},
                                   {"ignore_dispersion", nlohmann::json::array()},
                                   {"use_lennard_jones", nlohmann::json::array()},
-				  {"alpha_ewald_lj", 0},
-				  {"grid_density_lj", 2.5},
-				  {"spline_order_lj", 6},
+                                  {"alpha_ewald_lj", 0},
+                                  {"grid_density_lj", 2.5},
+                                  {"spline_order_lj", 6},
                                   {"ff_mons", nlohmann::json::array()},
                                   {"connectivity_file", ""},
                                   {"nonbonded_file", ""},
@@ -2940,11 +2966,13 @@ void System::SetMPI(MPI_Comm comm, int nx, int ny, int nz) {
 #if HAVE_MPI == 1
     mpi_initialized_ = true;
     world_ = comm;
+    MPI_Comm_rank(world_, &mpi_rank_);
     proc_grid_x_ = nx;
     proc_grid_y_ = ny;
     proc_grid_z_ = nz;
 #else
     world_ = 0;
+    mpi_rank_ = 0;
     proc_grid_x_ = 1;
     proc_grid_y_ = 1;
     proc_grid_z_ = 1;
