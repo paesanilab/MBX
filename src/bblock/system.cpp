@@ -2962,6 +2962,7 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     electrostaticE_.SetEwaldAlpha(elec_alpha_);
     electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
     electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
+    electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
 
     return electrostaticE_.GetElectrostatics(grad_, &virial_, use_ghost);
 }
@@ -2973,6 +2974,7 @@ double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     electrostaticE_.SetEwaldAlpha(elec_alpha_);
     electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
     electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
+    electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
 
     return electrostaticE_.GetElectrostaticsMPIlocal(grad_, &virial_, use_ghost);
 }
@@ -2993,6 +2995,7 @@ double System::GetDispersion(bool do_grads, bool use_ghost) {
     dispersionE_.SetEwaldAlpha(disp_alpha_);
     dispersionE_.SetEwaldGridDensity(disp_grid_density_);
     dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
+    dispersionE_.SetFFTDimension(grid_fftdim_disp_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersion(real_grad, &virial_, use_ghost);
 
@@ -3022,6 +3025,7 @@ double System::GetLennardJones(bool do_grads, bool use_ghost) {
     lennardJonesE_.SetEwaldAlpha(lj_alpha_);
     lennardJonesE_.SetEwaldGridDensity(lj_grid_density_);
     lennardJonesE_.SetEwaldSplineOrder(lj_spline_order_);
+    lennardJonesE_.SetFFTDimension(grid_fftdim_lj_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = lennardJonesE_.GetLennardJones(real_grad, &virial_, use_ghost);
 
@@ -3052,6 +3056,7 @@ double System::GetDispersionPME(bool do_grads, bool use_ghost) {
     dispersionE_.SetEwaldAlpha(disp_alpha_);
     dispersionE_.SetEwaldGridDensity(disp_grid_density_);
     dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
+    dispersionE_.SetFFTDimension(grid_fftdim_disp_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersionPME(real_grad, &virial_, use_ghost);
 
@@ -3082,6 +3087,7 @@ double System::GetDispersionPMElocal(bool do_grads, bool use_ghost) {
     dispersionE_.SetEwaldAlpha(disp_alpha_);
     dispersionE_.SetEwaldGridDensity(disp_grid_density_);
     dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
+    lennardJonesE_.SetFFTDimension(grid_fftdim_lj_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = dispersionE_.GetDispersionPMElocal(real_grad, &virial_, use_ghost);
 
