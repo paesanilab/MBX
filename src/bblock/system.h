@@ -1560,6 +1560,7 @@ class System {
      */
     std::vector<int> grid_fftdim_elec_;
     std::vector<int> grid_fftdim_disp_;
+    std::vector<int> grid_fftdim_lj_;
 
     /**
      * States if the initialization is PME only or not"

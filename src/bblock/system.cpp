@@ -71,7 +71,7 @@ System::System() {
     // Setting 2B cutoff
     // Affects the 2B dispersion and 2B polynomials
     // TODO make it effective for electrostatics too
-    cutoff2b_ = 50.0;
+    cutoff2b_ = 100.0;
 
     // Setting 3B cutoff
     // Affects the 3B polynomials
@@ -97,11 +97,17 @@ System::System() {
     // Sets the default method to calculate induced dipoles to ASPC
     dipole_method_ = "cg";
 
+    // Sets default ewald parameters for elec, disp and lj
+    elec_alpha_ = disp_alpha_ = lj_alpha_ = 0.0;
+    elec_grid_density_ = disp_grid_density_ = lj_grid_density_ = 2.5;
+    elec_spline_order_ = disp_spline_order_ = lj_spline_order_ = 6;
+
     // Define the virial vector
     virial_ = std::vector<double>(9, 0.0);
 
     grid_fftdim_elec_ = std::vector<int>{};
     grid_fftdim_disp_ = std::vector<int>{};
+    grid_fftdim_lj_ = std::vector<int>{};
 }
 System::~System() {}
 
@@ -884,368 +890,319 @@ void System::SetUpFromJsonMonomers(nlohmann::json j) {
 
 void System::SetUpFromJson(nlohmann::json j) {
     // Try to get box
-    // Default: no box (empty vector)
-    std::vector<double> box;
+    // Default at initialization: no box (empty vector)
     try {
-        std::vector<double> box2 = j["MBX"]["box"];
-        box = box2;
-    } catch (...) {
-        box.clear();
-        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
-    }
-
-    box_ = box;
-    if (box.size() == 9) {
+        std::vector<double> box = j["MBX"]["box"];
         box_ = box;
-        box_ABCabc_ = BoxVecToBoxABCabc(box);
-    } else if (box.size() == 6) {
-        box_ABCabc_ = box;
-        box_ = BoxABCabcToBoxVec(box);
+    } catch (...) {
+        // if (mpi_rank_ == 0) std::cerr << "**WARNING** \"box\" is not defined in json file. Using empty box.\n";
     }
 
-    mbx_j_["MBX"]["box"] = box;
+    if (box_.size() == 9) {
+        box_ABCabc_ = BoxVecToBoxABCabc(box_);
+    } else if (box_.size() == 6) {
+        box_ABCabc_ = box_;
+        box_ = BoxABCabcToBoxVec(box_ABCabc_);
+    }
+
+    mbx_j_["MBX"]["box"] = box_;
 
     // Try to get FFT grid for electrostatics
-    // Default: no user-specified grid (empty vector)
-    std::vector<int> grid_fftdim_elec;
+    // Default at initialization: no user-specified grid (empty vector)
     try {
-        std::vector<int> grid_fftdim_elec2 = j["MBX"]["grid_fftdim_elec"];
-        grid_fftdim_elec = grid_fftdim_elec2;
-        //        if(grid_fftdim_elec.size()) std::cerr << "**WARNING** \"grid_fftdim_elec\" is defined in json
-        //        file.\n";
+        std::vector<int> grid_fftdim_elec = j["MBX"]["grid_fftdim_elec"];
+        grid_fftdim_elec_ = grid_fftdim_elec;
     } catch (...) {
-        grid_fftdim_elec.clear();
+        // if(mpi_rank_ == 0) std::cerr << "**WARNING** \"grid_fftdim_elec\" is not defined in json file.\n";
     }
 
-    grid_fftdim_elec_ = grid_fftdim_elec;
+    mbx_j_["MBX"]["grid_fftdim_elec"] = grid_fftdim_elec_;
 
-    mbx_j_["MBX"]["grid_fftdim_elec"] = grid_fftdim_elec;
-
-    SetFFTDimensionElectrostatics(grid_fftdim_elec);
+    SetFFTDimensionElectrostatics(grid_fftdim_elec_);
 
     // Try to get FFT grid for dispersion
     // Default: no user-specified grid (empty vector)
-    std::vector<int> grid_fftdim_disp;
     try {
-        std::vector<int> grid_fftdim_disp2 = j["MBX"]["grid_fftdim_disp"];
-        grid_fftdim_disp = grid_fftdim_disp2;
-        //        if(grid_fftdim_disp.size()) std::cerr << "**WARNING** \"grid_fftdim_disp\" is defined in json
-        //        file.\n";
+        std::vector<int> grid_fftdim_disp = j["MBX"]["grid_fftdim_disp"];
+        grid_fftdim_disp_ = grid_fftdim_disp;
     } catch (...) {
-        grid_fftdim_disp.clear();
+        // if(mpi_rank_ == 0) std::cerr << "**WARNING** \"grid_fftdim_disp\" is not defined in json file.\n";
     }
 
-    grid_fftdim_disp_ = grid_fftdim_disp;
+    mbx_j_["MBX"]["grid_fftdim_disp"] = grid_fftdim_disp_;
 
-    mbx_j_["MBX"]["grid_fftdim_disp"] = grid_fftdim_disp;
+    SetFFTDimensionDispersion(grid_fftdim_disp_);
 
-    SetFFTDimensionDispersion(grid_fftdim_disp);
+    // Try to get FFT grid for LJ
+    // Default: no user-specified grid (empty vector)
+    try {
+        std::vector<int> grid_fftdim_lj = j["MBX"]["grid_fftdim_lj"];
+        grid_fftdim_lj_ = grid_fftdim_lj;
+    } catch (...) {
+        // if(mpi_rank_ == 0) std::cerr << "**WARNING** \"grid_fftdim_lj\" is not defined in json file.\n";
+    }
+
+    mbx_j_["MBX"]["grid_fftdim_lj"] = grid_fftdim_lj_;
+
+    SetFFTDimensionLennardJones(grid_fftdim_lj_);
 
     // Try to get 2b cutoff
     // Default: 100 Angstrom if empty box, 9 Angstrom if box
-    double cutoff_2b;
     try {
-        cutoff_2b = j["MBX"]["twobody_cutoff"];
+        cutoff2b_ = j["MBX"]["twobody_cutoff"];
     } catch (...) {
-        cutoff_2b = box_.size() ? 9.0 : 100.0;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"twobody_cutoff\" is not defined in json file. Using " << cutoff_2b << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"twobody_cutoff\" is not defined in json file. Using " << cutoff2b_ << "\n";
     }
-    cutoff2b_ = cutoff_2b;
-    mbx_j_["MBX"]["twobody_cutoff"] = cutoff_2b;
+    mbx_j_["MBX"]["twobody_cutoff"] = cutoff2b_;
 
     // Try to get 3b cutoff
-    // Default: 6.5 Angstrom
-    double cutoff_3b;
+    // Default: 5.0 Angstrom
     try {
-        cutoff_3b = j["MBX"]["threebody_cutoff"];
+        cutoff3b_ = j["MBX"]["threebody_cutoff"];
     } catch (...) {
-        cutoff_3b = 6.5;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"threebody_cutoff\" is not defined in json file. Using " << cutoff_3b << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"threebody_cutoff\" is not defined in json file. Using " << cutoff3b_ << "\n";
     }
-    cutoff3b_ = cutoff_3b;
-    mbx_j_["MBX"]["threebody_cutoff"] = cutoff_3b;
+    mbx_j_["MBX"]["threebody_cutoff"] = cutoff3b_;
 
     // Try to get maximum number of evaluations for 1b
-    // Default: 1000
-    size_t max_eval_1b;
+    // Default: 1024
     try {
-        max_eval_1b = j["MBX"]["max_n_eval_1b"];
+        maxNMonEval_ = j["MBX"]["max_n_eval_1b"];
     } catch (...) {
-        max_eval_1b = 1000;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"max_n_eval_1b\" is not defined in json file. Using " << max_eval_1b << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"max_n_eval_1b\" is not defined in json file. Using " << maxNMonEval_ << "\n";
     }
-    maxNMonEval_ = max_eval_1b;
-    mbx_j_["MBX"]["max_n_eval_1b"] = max_eval_1b;
+    mbx_j_["MBX"]["max_n_eval_1b"] = maxNMonEval_;
 
     // Try to get maximum number of evaluations for 2b
-    // Default: 1000
-    size_t max_eval_2b;
+    // Default: 1024
     try {
-        max_eval_2b = j["MBX"]["max_n_eval_2b"];
+        maxNDimEval_ = j["MBX"]["max_n_eval_2b"];
     } catch (...) {
-        max_eval_2b = 1000;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"max_n_eval_2b\" is not defined in json file. Using " << max_eval_2b << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"max_n_eval_2b\" is not defined in json file. Using " << maxNDimEval_ << "\n";
     }
-    maxNDimEval_ = max_eval_2b;
-    mbx_j_["MBX"]["max_n_eval_2b"] = max_eval_2b;
+    mbx_j_["MBX"]["max_n_eval_2b"] = maxNDimEval_;
 
     // Try to get maximum number of evaluations for 3b
-    // Default: 1000
-    size_t max_eval_3b;
+    // Default: 1024
     try {
-        max_eval_3b = j["MBX"]["max_n_eval_3b"];
+        maxNTriEval_ = j["MBX"]["max_n_eval_3b"];
     } catch (...) {
-        max_eval_3b = 1000;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"max_n_eval_3b\" is not defined in json file. Using " << max_eval_3b << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"max_n_eval_3b\" is not defined in json file. Using " << maxNTriEval_ << "\n";
     }
-    maxNTriEval_ = max_eval_3b;
-    mbx_j_["MBX"]["max_n_eval_3b"] = max_eval_3b;
+    mbx_j_["MBX"]["max_n_eval_3b"] = maxNTriEval_;
 
     // Try to get dipole convergence criteria
     // Default: 1E-16
-    double dipole_tolerance;
     try {
-        dipole_tolerance = j["MBX"]["dipole_tolerance"];
+        diptol_ = j["MBX"]["dipole_tolerance"];
     } catch (...) {
-        dipole_tolerance = 1E-16;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"dipole_tolerance\" is not defined in json file. Using " << dipole_tolerance
-                      << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"dipole_tolerance\" is not defined in json file. Using " << diptol_
+        //               << "\n";
     }
-    diptol_ = dipole_tolerance;
-    mbx_j_["MBX"]["dipole_tolerance"] = dipole_tolerance;
+    mbx_j_["MBX"]["dipole_tolerance"] = diptol_;
 
     // Try to get dipole convergence criteria
     // Default: Conjugate gradient cg
-    std::string dipole_method;
     try {
-        dipole_method = j["MBX"]["dipole_method"];
+        dipole_method_ = j["MBX"]["dipole_method"];
     } catch (...) {
-        dipole_method = "cg";
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"dipole_method\" is not defined in json file. Using " << dipole_method << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"dipole_method\" is not defined in json file. Using " << dipole_method_ <<
+        //     "\n";
     }
-    dipole_method_ = dipole_method;
-    mbx_j_["MBX"]["dipole_method"] = dipole_method;
+    mbx_j_["MBX"]["dipole_method"] = dipole_method_;
 
     // Try to get dipole max number of iterations
     // Default: 100
-    size_t dipole_max_it;
     try {
-        dipole_max_it = j["MBX"]["dipole_max_it"];
+        maxItDip_ = j["MBX"]["dipole_max_it"];
     } catch (...) {
-        dipole_max_it = 100;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"dipole_max_it\" is not defined in json file. Using " << dipole_max_it << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"dipole_max_it\" is not defined in json file. Using " << maxItDip_ << "\n";
     }
-    maxItDip_ = dipole_max_it;
-    mbx_j_["MBX"]["dipole_max_it"] = dipole_max_it;
+    mbx_j_["MBX"]["dipole_max_it"] = maxItDip_;
 
     // Try to get dispersion PME alpha
-    // Default: 0.6
-    double alpha_disp;
+    // Default: 0.0
     try {
-        alpha_disp = j["MBX"]["alpha_ewald_disp"];
+        disp_alpha_ = j["MBX"]["alpha_ewald_disp"];
     } catch (...) {
-        alpha_disp = box_.size() ? 0.6 : 0.0;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"alpha_ewald_disp\" is not defined in json file. Using " << alpha_disp << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"alpha_ewald_disp\" is not defined in json file. Using " << disp_alpha_ <<
+        //     "\n";
     }
-    mbx_j_["MBX"]["alpha_ewald_disp"] = alpha_disp;
+    mbx_j_["MBX"]["alpha_ewald_disp"] = disp_alpha_;
 
     // Try to get dispertion PME grid density
     // Default: 2.5
-    double grid_density_disp;
     try {
-        grid_density_disp = j["MBX"]["grid_density_disp"];
+        disp_grid_density_ = j["MBX"]["grid_density_disp"];
     } catch (...) {
-        grid_density_disp = 2.5;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"grid_density_disp\" is not defined in json file. Using " << grid_density_disp
-                      << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"grid_density_disp\" is not defined in json file. Using " <<
+        //     disp_grid_density_
+        //               << "\n";
     }
-    mbx_j_["MBX"]["grid_density_disp"] = grid_density_disp;
+    mbx_j_["MBX"]["grid_density_disp"] = disp_grid_density_;
 
     // Try to get dispersion PME spline order
     // Default: 6
-    size_t spline_order_disp;
     try {
-        spline_order_disp = j["MBX"]["spline_order_disp"];
+        disp_spline_order_ = j["MBX"]["spline_order_disp"];
     } catch (...) {
-        spline_order_disp = 6;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"spline_order_disp\" is not defined in json file. Using " << spline_order_disp
-                      << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"spline_order_disp\" is not defined in json file. Using " <<
+        //     disp_spline_order_
+        //               << "\n";
     }
-    mbx_j_["MBX"]["spline_order_disp"] = spline_order_disp;
+    mbx_j_["MBX"]["spline_order_disp"] = disp_spline_order_;
 
-    SetEwaldDispersion(alpha_disp, grid_density_disp, spline_order_disp);
+    SetEwaldDispersion(disp_alpha_, disp_grid_density_, disp_spline_order_);
 
     // Try to get dispersion PME alpha
-    // Default: 0.6
-    double alpha_lj;
+    // Default: 0.0
     try {
-        alpha_lj = j["MBX"]["alpha_ewald_lj"];
+        lj_alpha_ = j["MBX"]["alpha_ewald_lj"];
     } catch (...) {
-        alpha_lj = box_.size() ? 0.6 : 0.0;
         if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << alpha_lj << "\n";
+            std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << lj_alpha_ << "\n";
     }
-    mbx_j_["MBX"]["alpha_ewald_lj"] = alpha_lj;
+    mbx_j_["MBX"]["alpha_ewald_lj"] = lj_alpha_;
 
     // Try to get dispertion PME grid density
     // Default: 2.5
-    double grid_density_lj;
     try {
-        grid_density_lj = j["MBX"]["grid_density_lj"];
+        lj_grid_density_ = j["MBX"]["grid_density_lj"];
     } catch (...) {
-        grid_density_lj = 2.5;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"grid_density_lj\" is not defined in json file. Using " << grid_density_lj
-                      << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"grid_density_lj\" is not defined in json file. Using " << lj_grid_density_
+        //               << "\n";
     }
-    mbx_j_["MBX"]["grid_density_lj"] = grid_density_lj;
+    mbx_j_["MBX"]["grid_density_lj"] = lj_grid_density_;
 
     // Try to get dispersion PME spline order
     // Default: 6
-    size_t spline_order_lj;
     try {
-        spline_order_lj = j["MBX"]["spline_order_lj"];
+        lj_spline_order_ = j["MBX"]["spline_order_lj"];
     } catch (...) {
-        spline_order_lj = 6;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"spline_order_lj\" is not defined in json file. Using " << spline_order_lj
-                      << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"spline_order_lj\" is not defined in json file. Using " << lj_spline_order_
+        //               << "\n";
     }
-    mbx_j_["MBX"]["spline_order_lj"] = spline_order_lj;
+    mbx_j_["MBX"]["spline_order_lj"] = lj_spline_order_;
 
-    SetEwaldLennardJones(alpha_lj, grid_density_lj, spline_order_lj);
+    SetEwaldLennardJones(lj_alpha_, lj_grid_density_, lj_spline_order_);
 
     // Try to get electrostatics PME alpha
-    // Default: 0.6
-    double alpha_elec;
+    // Default: 0.0
     try {
-        alpha_elec = j["MBX"]["alpha_ewald_elec"];
+        elec_alpha_ = j["MBX"]["alpha_ewald_elec"];
     } catch (...) {
-        alpha_elec = box.size() ? 0.6 : 0.0;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"alpha_ewald_elec\" is not defined in json file. Using " << alpha_elec << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"alpha_ewald_elec\" is not defined in json file. Using " << elec_alpha_ <<
+        //     "\n";
     }
-    mbx_j_["MBX"]["alpha_ewald_elec"] = alpha_elec;
+    mbx_j_["MBX"]["alpha_ewald_elec"] = elec_alpha_;
 
     // Try to get electrostatics PME grid density
     // Default: 2.5
-    double grid_density_elec;
     try {
-        grid_density_elec = j["MBX"]["grid_density_elec"];
+        elec_grid_density_ = j["MBX"]["grid_density_elec"];
     } catch (...) {
-        grid_density_elec = 2.5;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"grid_density_elec\" is not defined in json file. Using " << grid_density_elec
-                      << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"grid_density_elec\" is not defined in json file. Using " <<
+        //     elec_grid_density_
+        //               << "\n";
     }
-    mbx_j_["MBX"]["grid_density_elec"] = grid_density_elec;
+    mbx_j_["MBX"]["grid_density_elec"] = elec_grid_density_;
 
     // Try to get electrostatics PME spline order
     // Default: 6
-    size_t spline_order_elec;
     try {
-        spline_order_elec = j["MBX"]["spline_order_elec"];
+        elec_spline_order_ = j["MBX"]["spline_order_elec"];
     } catch (...) {
-        spline_order_elec = 6;
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"spline_order_elec\" is not defined in json file. Using " << spline_order_elec
-                      << "\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"spline_order_elec\" is not defined in json file. Using " <<
+        //     elec_spline_order_
+        //               << "\n";
     }
-    mbx_j_["MBX"]["spline_order_elec"] = spline_order_elec;
+    mbx_j_["MBX"]["spline_order_elec"] = elec_spline_order_;
 
-    SetEwaldElectrostatics(alpha_elec, grid_density_elec, spline_order_elec);
+    SetEwaldElectrostatics(elec_alpha_, elec_grid_density_, elec_spline_order_);
 
-    std::vector<std::pair<std::string, std::string>> ttm_pairs;
     try {
-        std::vector<std::pair<std::string, std::string>> ttm_pairs2 = j["MBX"]["ttm_pairs"];
-        ttm_pairs = ttm_pairs2;
+        std::vector<std::pair<std::string, std::string>> ttm_pairs = j["MBX"]["ttm_pairs"];
+        buck_pairs_ = ttm_pairs;
     } catch (...) {
-        ttm_pairs.clear();
-        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty list.\n";
+        // if (mpi_rank_ == 0) std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty
+        // list.\n";
     }
-    SetTTMnrgPairs(ttm_pairs);
+    SetTTMnrgPairs(buck_pairs_);
     mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
 
-    std::vector<std::pair<std::string, std::string>> ignore_dispersion;
     try {
-        std::vector<std::pair<std::string, std::string>> ignore_dispersion2 = j["MBX"]["ignore_dispersion"];
-        ignore_dispersion = ignore_dispersion2;
+        std::vector<std::pair<std::string, std::string>> ignore_dispersion = j["MBX"]["ignore_dispersion"];
+        ignore_disp_ = ignore_dispersion;
     } catch (...) {
-        ignore_dispersion.clear();
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"ignore_dispersion\" is not defined in json file. Using empty list.\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"ignore_dispersion\" is not defined in json file. Using empty list.\n";
     }
-    SetIgnoreDispersionPairs(ignore_dispersion);
+    SetIgnoreDispersionPairs(ignore_disp_);
     mbx_j_["MBX"]["ignore_dispersion"] = ignore_disp_;
 
-    std::vector<std::pair<std::string, std::string>> use_lennard_jones;
     try {
-        std::vector<std::pair<std::string, std::string>> use_lennard_jones2 = j["MBX"]["use_lennard_jones"];
-        use_lennard_jones = use_lennard_jones2;
+        std::vector<std::pair<std::string, std::string>> use_lennard_jones = j["MBX"]["use_lennard_jones"];
+        lj_pairs_ = use_lennard_jones;
     } catch (...) {
-        use_lennard_jones.clear();
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"use_lennard_jones\" is not defined in json file. Using empty list.\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"use_lennard_jones\" is not defined in json file. Using empty list.\n";
     }
-    SetLennardJonesPairs(use_lennard_jones);
+    SetLennardJonesPairs(lj_pairs_);
     mbx_j_["MBX"]["ttm_pairs"] = lj_pairs_;
 
-    std::vector<std::string> ff_mons;
     try {
-        std::vector<std::string> ff_mons2 = j["MBX"]["ff_mons"];
-        ff_mons = ff_mons2;
+        std::vector<std::string> ff_mons = j["MBX"]["ff_mons"];
+        ff_mons_ = ff_mons;
     } catch (...) {
-        ff_mons.clear();
-        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"ff_mons\" is not defined in json file. Using empty list.\n";
+        // if (mpi_rank_ == 0) std::cerr << "**WARNING** \"ff_mons\" is not defined in json file. Using empty list.\n";
     }
-    SetFFMons(ff_mons);
+    SetFFMons(ff_mons_);
     mbx_j_["MBX"]["ff_mons"] = ff_mons_;
 
-    std::vector<std::string> ignore_1b_poly;
     try {
-        std::vector<std::string> ignore_1b_poly2 = j["MBX"]["ignore_1b_poly"];
-        ignore_1b_poly = ignore_1b_poly2;
+        std::vector<std::string> ignore_1b_poly = j["MBX"]["ignore_1b_poly"];
+        ignore_1b_poly_ = ignore_1b_poly;
     } catch (...) {
-        ignore_1b_poly.clear();
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"ignore_1b_poly\" is not defined in json file. Using empty list.\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"ignore_1b_poly\" is not defined in json file. Using empty list.\n";
     }
-    Set1bIgnorePoly(ignore_1b_poly);
+    Set1bIgnorePoly(ignore_1b_poly_);
     mbx_j_["MBX"]["ignore_1b_poly"] = ignore_1b_poly_;
 
-    std::vector<std::vector<std::string>> ignore_2b_poly;
     try {
-        std::vector<std::vector<std::string>> ignore_2b_poly2 = j["MBX"]["ignore_2b_poly"];
-        ignore_2b_poly = ignore_2b_poly2;
+        std::vector<std::vector<std::string>> ignore_2b_poly = j["MBX"]["ignore_2b_poly"];
+        ignore_2b_poly = ignore_2b_poly;
     } catch (...) {
-        ignore_2b_poly.clear();
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"ignore_2b_poly\" is not defined in json file. Using empty list.\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"ignore_2b_poly\" is not defined in json file. Using empty list.\n";
     }
-    Set2bIgnorePoly(ignore_2b_poly);
+    Set2bIgnorePoly(ignore_2b_poly_);
     mbx_j_["MBX"]["ignore_2b_poly"] = ignore_2b_poly_;
 
-    std::vector<std::vector<std::string>> ignore_3b_poly;
     try {
-        std::vector<std::vector<std::string>> ignore_3b_poly2 = j["MBX"]["ignore_3b_poly"];
-        ignore_3b_poly = ignore_3b_poly2;
+        std::vector<std::vector<std::string>> ignore_3b_poly = j["MBX"]["ignore_3b_poly"];
+        ignore_3b_poly_ = ignore_3b_poly;
     } catch (...) {
-        ignore_3b_poly.clear();
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"ignore_3b_poly\" is not defined in json file. Using empty list.\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"ignore_3b_poly\" is not defined in json file. Using empty list.\n";
     }
-    Set3bIgnorePoly(ignore_3b_poly);
+    Set3bIgnorePoly(ignore_3b_poly_);
     mbx_j_["MBX"]["ignore_3b_poly"] = ignore_3b_poly_;
 
     std::string connectivity_file = "";
@@ -1253,9 +1210,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         connectivity_file = j["MBX"]["connectivity_file"];
         tools::ReadConnectivity(connectivity_file.c_str(), connectivity_map_);
     } catch (...) {
-        connectivity_file = "";
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"connectivity_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"connectivity_file\" is not defined in json file. Not using 1B TTM-nrg.\n";
     }
     mbx_j_["MBX"]["connectivity_file"] = connectivity_file;
 
@@ -1266,9 +1222,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         strcpy(f, repdisp_file.c_str());
         SetUpFromJsonDispersionRepulsion(f);
     } catch (...) {
-        repdisp_file = "";
         SetUpFromJsonDispersionRepulsion();
-        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"nonbonded_file\" is not defined in json file.\n";
+        // if (mpi_rank_ == 0) std::cerr << "**WARNING** \"nonbonded_file\" is not defined in json file.\n";
     }
     mbx_j_["MBX"]["nonbonded_file"] = repdisp_file;
 
@@ -1279,9 +1234,8 @@ void System::SetUpFromJson(nlohmann::json j) {
         strcpy(f, monomers_json_file.c_str());
         SetUpFromJsonMonomers(f);
     } catch (...) {
-        monomers_json_file = "";
         SetUpFromJsonMonomers();
-        if (mpi_rank_ == 0) std::cerr << "**WARNING** \"monomers_file\" is not defined in json file.\n";
+        // if (mpi_rank_ == 0) std::cerr << "**WARNING** \"monomers_file\" is not defined in json file.\n";
     }
     mbx_j_["MBX"]["monomers_file"] = monomers_json_file;
 
@@ -1355,7 +1309,7 @@ void System::SetUpFromJson(char *json_file) {
                                   {"ttm_pairs", nlohmann::json::array()},
                                   {"ignore_dispersion", nlohmann::json::array()},
                                   {"use_lennard_jones", nlohmann::json::array()},
-                                  {"alpha_ewald_lj", 0},
+                                  {"alpha_ewald_lj", 0.0},
                                   {"grid_density_lj", 2.5},
                                   {"spline_order_lj", 6},
                                   {"ff_mons", nlohmann::json::array()},
