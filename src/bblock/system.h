@@ -590,7 +590,7 @@ class System {
      * To see the default values of the initialization,
      * please read the documentation.
      */
-    void InitializePME();
+    // void InitializePME();
 
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
@@ -1531,6 +1531,11 @@ class System {
     MPI_Comm world_;
 
     /**
+     * MPI rank
+     */
+    MPI_Comm mpi_rank_;
+
+    /**
      * MPI processor grid
      */
     size_t proc_grid_x_;
@@ -1555,6 +1560,11 @@ class System {
      */
     std::vector<int> grid_fftdim_elec_;
     std::vector<int> grid_fftdim_disp_;
+
+    /**
+     * States if the initialization is PME only or not"
+     */
+    // bool isPME_;
 };
 
 }  // namespace bblock
