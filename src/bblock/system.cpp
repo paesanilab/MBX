@@ -1187,7 +1187,7 @@ void System::SetUpFromJson(nlohmann::json j) {
 
     try {
         std::vector<std::vector<std::string>> ignore_2b_poly = j["MBX"]["ignore_2b_poly"];
-        ignore_2b_poly = ignore_2b_poly;
+        ignore_2b_poly_ = ignore_2b_poly;
     } catch (...) {
         // if (mpi_rank_ == 0)
         //     std::cerr << "**WARNING** \"ignore_2b_poly\" is not defined in json file. Using empty list.\n";
