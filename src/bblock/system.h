@@ -66,6 +66,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/3b/energy3b.h"
 // DISPERSION
 #include "potential/dispersion/dispersion.h"
+// LENNARD-JONES
+#include "potential/lj/lj.h"
 // BUCKINGHAM
 #include "potential/buckingham/buckingham.h"
 // ELECTROSTATICS
@@ -433,6 +435,14 @@ class System {
      */
     void GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order);
 
+    /**
+     * Gets the Ewald parameters for Lennard-Jones
+     * @param[out] alpha Ewald alpha
+     * @param[out] grid_density Lennard-Jones ewald grid density
+     * @param[out] spline_order Lennard-Jones Ewald spline order for interpolation
+     */
+    void GetEwaldParamsLennardJones(double &alpha, double &grid_density, size_t &spline_order);
+
     /////////////////////////////////////////////////////////////////////////////
     // Modifiers ////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
@@ -515,6 +525,19 @@ class System {
     void SetTTMnrgPairs(std::vector<std::pair<std::string, std::string> > ttm_pairs);
 
     /**
+     * Sets the pairs vector as a whole for which the lennard jones term is going to be calculated. Will overwrite the
+     * previous one.
+     * @param[in] use_lennard_jones Vector of pairs of the monomer pairs for which LJ will be calculated
+     */
+    void SetLennardJonesPairs(std::vector<std::pair<std::string, std::string> > use_lennard_jones);
+
+    /**
+     * Sets the pairs vector as a whole for which dispersion will be ignored. Will overwrite the previous one.
+     * @param[in] ignore_dispersion Vector of pairs of the monomer pairs for which dispersion will be ignored
+     */
+    void SetIgnoreDispersionPairs(std::vector<std::pair<std::string, std::string> > ignore_dispersion);
+
+    /**
      * Adds a pair that will be ignored in the 1b polynomials
      * @param[in] mon Is the id of the monomer
      */
@@ -567,7 +590,7 @@ class System {
      * To see the default values of the initialization,
      * please read the documentation.
      */
-    void InitializePME();
+    // void InitializePME();
 
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
@@ -575,6 +598,42 @@ class System {
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
     void SetBoxPMElocal(std::vector<double> box);
+
+    /**
+     * Sets up all the parameters that are specified in a json file
+     * @param[in] json_file Is the json formatted file with the dispersion repulsion information
+     **/
+    void SetUpFromJsonDispersionRepulsion(char *json_file = 0);
+
+    /**
+     * Sets up all the monomer parameters that are specified in a json file
+     * @param[in] json_file Is the json formatted file with the monomer information
+     **/
+    void SetUpFromJsonMonomers(char *json_file = 0);
+
+    /**
+     * Sets up the json configuration through a string.
+     * @param[in] json_text Literal string with the json configuration
+     **/
+    void SetUpFromJsonDispersionRepulsion(std::string json_text);
+
+    /**
+     * Sets up the json configuration through a string.
+     * @param[in] json_text literal string with the json monomer information
+     **/
+    void SetUpFromJsonMonomers(std::string json_text);
+
+    /**
+     * Sets up all the parameters that are specified in a json object
+     * @param[in] j Json object with the dispersion repulsion parameters
+     **/
+    void SetUpFromJsonDispersionRepulsion(nlohmann::json j);
+
+    /**
+     * Sets up all the parameters that are specified in a json object
+     * @param[in] j Json object with the monomer information
+     **/
+    void SetUpFromJsonMonomers(nlohmann::json j);
 
     /**
      * Sets up all the parameters that are specified in a json file
@@ -599,6 +658,12 @@ class System {
      * @return Json object in the system
      */
     nlohmann::json GetJsonConfig();
+
+    /**
+     * Gets the json object conatining the dispersion and repulsion
+     * @return Json object in system that has the dispersion and repulsion parameters
+     */
+    nlohmann::json GetJsonConfigDispersionRepulsion();
 
     /**
      * Sets the two-body cutoff for dispersion and polynomials.
@@ -686,8 +751,8 @@ class System {
 
     /**
      * Sets the values for alpha, the grid density and the spline order when using PME to get
-the reciprocal space contribution, only for electrostatics.
-to be the same.
+     * the reciprocal space contribution, only for electrostatics.
+     * to be the same.
      * @param[in] alpha Value for the Ewald alpha
      * @param[in] grid_density Grid density in the PME calculation
      * @param[in] spline_order Order of the splines used for interpolation
@@ -696,13 +761,23 @@ to be the same.
 
     /**
      * Sets the values for alpha, the grid density and the spline order when using PME to get
-the reciprocal space contribution, only for dispersion.
-to be the same.
+     * the reciprocal space contribution, only for dispersion.
+     * to be the same.
      * @param[in] alpha Value for the Ewald alpha
      * @param[in] grid_density Grid density in the PME calculation
      * @param[in] spline_order Order of the splines used for interpolation
      */
     void SetEwaldDispersion(double alpha, double grid_density, int spline_order);
+
+    /**
+     * Sets the values for alpha, the grid density and the spline order when using PME to get
+     * the reciprocal space contribution, only for Lennard-Jones.
+     * to be the same.
+     * @param[in] alpha Value for the Ewald alpha
+     * @param[in] grid_density Grid density in the PME calculation
+     * @param[in] spline_order Order of the splines used for interpolation
+     */
+    void SetEwaldLennardJones(double alpha, double grid_density, int spline_order);
 
     /**
      * Sets MPI environment from driver code
@@ -738,6 +813,12 @@ to be the same.
     std::vector<int> GetFFTDimensionDispersion(int box_id = 0);
 
     /**
+     * Get FFT grid from Lennard-Jones pme solver
+     * @param[in] 0 for default box / 1 for PMElocal box
+     */
+    std::vector<int> GetFFTDimensionLennardJones(int box_id = 0);
+
+    /**
      * Set FFT grid for electrostatic pme solver
      */
     void SetFFTDimensionElectrostatics(std::vector<int> grid);
@@ -746,6 +827,11 @@ to be the same.
      * Set FFT grid for dispersion pme solver
      */
     void SetFFTDimensionDispersion(std::vector<int> grid);
+
+    /**
+     * Set FFT grid for Lennard-Jones pme solver
+     */
+    void SetFFTDimensionLennardJones(std::vector<int> grid);
 
     /**
      * @param[in] connectivity_map A map with monomer id as values and
@@ -835,6 +921,16 @@ to be the same.
     double Dispersion(bool do_grads, bool use_ghost = 0);
 
     /**
+     * Obtains the Lennard-Jones energy for the whole system.
+     * Gradients will be ONLY for the lennard-jones part.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, then ghost monomers present
+     * @return Lennard-Jones energy of the system
+     */
+    double LennardJones(bool do_grads, bool use_ghost = 0);
+
+    /**
      * Obtains only the k-space dispersion energy for the whole system.
      * Gradients will be ONLY for the dispersion part.
      * @param[in] do_grads If true, the gradients will be computed. Otherwise,
@@ -918,6 +1014,11 @@ to be the same.
     void SetC6LongRange();
 
     /**
+     * Sets the LJ charges that will be used in combination rules at a distance beyond the 2b cutoff
+     */
+    void SetLJLongRange();
+
+    /**
      * Private function to internally get the 1b energy.
      * Gradients of the system will be updated.
      * @param[in] do_grads Boolean. If true, gradients will be computed.
@@ -968,6 +1069,29 @@ to be the same.
      */
     double GetElectrostatics(bool do_grads, bool use_ghost = 0);
     double GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
+
+    /**
+     * Private function to internally get the lennard-jones energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return  Lennard-Jones energy of the system
+     */
+    double GetLennardJones(bool do_grads, bool use_ghost = 0);
+
+    /**
+     * Private function to internally get the k-space portion of lennard-jones energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return Lennard-Jones energy of the system
+     */
+    double GetLennardJonesPME(bool do_grads, bool use_ghost = 0);
+    double GetLennardJonesPMElocal(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the dispersion energy.
@@ -1082,6 +1206,21 @@ to be the same.
     size_t disp_spline_order_;
 
     /**
+     * Ewald alpha for dispersion
+     */
+    double lj_alpha_;
+
+    /**
+     * Grid density for dispersion
+     */
+    double lj_grid_density_;
+
+    /**
+     * Spline order for interpolation for dispersion
+     */
+    size_t lj_spline_order_;
+
+    /**
      * Cutoff in the search for clusters for the dimers.
      * Molecules which first atoms are at a larger distance than this cutoff
      * will not be considered a 2b cluster
@@ -1108,6 +1247,11 @@ to be the same.
     bool initialized_;
 
     /**
+     * Set to true when the json file for monomer info has been read.
+     */
+    bool monomer_json_read_;
+
+    /**
      * If set to tru, the box and periodic boundary conditions will be used and
      * taken into account for the clusters, energy calculations, and any
      * other operation within the system.
@@ -1125,6 +1269,11 @@ to be the same.
      * Dispersion class that will be used to get the dispersion energy
      */
     disp::Dispersion dispersionE_;
+
+    /**
+     * Dispersion class that will be used to get the dispersion energy
+     */
+    lj::LennardJones lennardJonesE_;
 
     /**
      * Buckingham class for the buckingham calculation
@@ -1224,6 +1373,12 @@ to be the same.
     std::vector<double> c6_lr_;
 
     /**
+     * Vector that stores the individual atomic lj charge to be used as combination rules at distances larger than the
+     * cutoff
+     */
+    std::vector<double> lj_lr_;
+
+    /**
      * Vector that stores the simulation box.
      * The center of the box is origin of coordinates
      */
@@ -1287,6 +1442,16 @@ to be the same.
     std::vector<std::pair<std::string, std::string> > buck_pairs_;
 
     /**
+     * This vector contains the pairs that will use LennardJones potential
+     */
+    std::vector<std::pair<std::string, std::string> > lj_pairs_;
+
+    /**
+     * This vector contains the pairs that will have the dispersion ignored
+     */
+    std::vector<std::pair<std::string, std::string> > ignore_disp_;
+
+    /**
      * This vector of vectors contains the pairs of monomer types that will be ignored when
      * when calculating the 1b polynomials.
      */
@@ -1341,9 +1506,19 @@ to be the same.
     std::vector<double> virial_;
 
     /**
+     * Json object with the dispersion and repulsion parameters
+     */
+    nlohmann::json repdisp_j_;
+
+    /**
      * Json configuration object
      */
     nlohmann::json mbx_j_;
+
+    /**
+     * Json configuration for monomer information
+     */
+    nlohmann::json monomers_j_;
 
     /**
      * Set to true when driver has intialized MPI
@@ -1354,6 +1529,11 @@ to be the same.
      * MPI Communicator from driver code
      */
     MPI_Comm world_;
+
+    /**
+     * MPI rank
+     */
+    MPI_Comm mpi_rank_;
 
     /**
      * MPI processor grid
@@ -1380,6 +1560,12 @@ to be the same.
      */
     std::vector<int> grid_fftdim_elec_;
     std::vector<int> grid_fftdim_disp_;
+    std::vector<int> grid_fftdim_lj_;
+
+    /**
+     * States if the initialization is PME only or not"
+     */
+    // bool isPME_;
 };
 
 }  // namespace bblock

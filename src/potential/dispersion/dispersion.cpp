@@ -33,15 +33,83 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "potential/dispersion/dispersion.h"
-#include "potential/electrostatics/helpme.h"
 
 namespace disp {
+
+std::vector<size_t> Dispersion::GetIsLocal() { return islocal_; }
+std::vector<std::string> Dispersion::GetMonIds() { return mon_id_; }
+std::vector<size_t> Dispersion::GetNumAtomsVector() { return num_atoms_; }
+std::vector<std::pair<std::string, size_t> > Dispersion::GetMonTypeCount() { return mon_type_count_; }
+bool Dispersion::GetDoGrads() { return do_grads_; }
+std::vector<double> Dispersion::GetBox() { return box_; }
+std::vector<double> Dispersion::GetBoxAbc() { return box_ABCabc_; }
+std::vector<double> Dispersion::GetBoxInverse() { return box_inverse_; }
+std::vector<double> Dispersion::GetSystemDispersionField() { return sys_phi_; }
+std::vector<double> Dispersion::GetInternalDispersionField() { return phi_; }
+std::vector<double> Dispersion::GetSystemXyz() { return sys_xyz_; }
+std::vector<double> Dispersion::GetInternalXyz() { return xyz_; }
+std::vector<double> Dispersion::GetInternalGrads() { return grad_; }
+std::vector<double> Dispersion::GetSystemGrads() { return sys_grad_; }
+std::vector<double> Dispersion::GetSystemC6LongRange() { return sys_c6_long_range_; }
+std::vector<double> Dispersion::GetInternalC6LongRange() { return c6_long_range_; }
+std::vector<double> Dispersion::GetVirial() { return virial_; }
+std::vector<size_t> Dispersion::GetIsLocalAtom() { return islocal_atom_; }
+std::vector<int> Dispersion::GetUserFFTGrid() { return user_fft_grid_; }
+double Dispersion::GetCutoff() { return cutoff_; }
 
 void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const std::vector<double> &sys_xyz,
                             const std::vector<std::string> &mon_id, const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                            const std::vector<size_t> &islocal, const bool do_grads = true,
-                            const std::vector<double> &box = {}) {
+                            const std::vector<size_t> &islocal, const bool do_grads, const std::vector<double> &box) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "SysC6LongRange:\n";
+    for (size_t i = 0; i < sys_c6_long_range.size(); i++) {
+        std::cerr << sys_c6_long_range[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < sys_xyz.size(); i++) {
+        std::cerr << sys_xyz[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "mon_id:\n";
+    for (size_t i = 0; i < mon_id.size(); i++) {
+        std::cerr << mon_id[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "num_atoms:\n";
+    for (size_t i = 0; i < num_atoms.size(); i++) {
+        std::cerr << num_atoms[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "mon_type_count:\n";
+    for (size_t i = 0; i < mon_type_count.size(); i++) {
+        std::cerr << " { " << mon_type_count[i].first << " , " << mon_type_count[i].second << " } , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "islocal:\n";
+    for (size_t i = 0; i < islocal.size(); i++) {
+        std::cerr << islocal[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "box:\n";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "doGrads = " << do_grads << std::endl;
+#endif
+
     sys_c6_long_range_ = sys_c6_long_range;
     sys_xyz_ = sys_xyz;
     islocal_ = islocal;
@@ -53,7 +121,6 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     use_pbc_ = box.size();
-
     natoms_ = sys_c6_long_range_.size();
     size_t natoms3 = 3 * natoms_;
     phi_ = std::vector<double>(natoms_, 0.0);
@@ -75,7 +142,36 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     user_fft_grid_ = std::vector<int>{};
 
     ReorderData();
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "c6_long_range_ internal:\n";
+    for (size_t i = 0; i < c6_long_range_.size(); i++) {
+        std::cerr << c6_long_range_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "xyz internal:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "is_local_atom internal:\n";
+    for (size_t i = 0; i < islocal_atom_.size(); i++) {
+        std::cerr << islocal_atom_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
+
+void Dispersion::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
+void Dispersion::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
+
+nlohmann::json Dispersion::GetJsonDispersionRepulsion() { return repdisp_j_; }
+nlohmann::json Dispersion::GetJsonMonomers() { return mon_j_; }
 
 void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
     mpi_initialized_ = true;
@@ -85,13 +181,35 @@ void Dispersion::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, 
     proc_grid_z_ = proc_grid_z;
 }
 
-void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads = true, const double cutoff = 100.0,
-                                  const std::vector<double> &box = {}) {
+void Dispersion::SetNewParameters(const std::vector<double> &xyz,
+                                  std::vector<std::pair<std::string, std::string> > &ignore_disp, bool do_grads = true,
+                                  const double cutoff = 100.0, const std::vector<double> &box = {}) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < xyz.size(); i++) {
+        std::cerr << xyz[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "box:\n";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "doGrads = " << do_grads << std::endl;
+    std::cerr << "cutoff = " << cutoff << std::endl;
+#endif
+
     sys_xyz_ = xyz;
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     use_pbc_ = box.size();
+    ignore_disp_ = ignore_disp;
     do_grads_ = do_grads;
     cutoff_ = cutoff;
     std::fill(grad_.begin(), grad_.end(), 0.0);
@@ -101,6 +219,17 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz, bool do_grads 
     box_PMElocal_ = {};
 
     ReorderData();
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "xyz internal:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 void Dispersion::SetBoxPMElocal(std::vector<double> box) {
@@ -145,6 +274,27 @@ void Dispersion::ReorderData() {
 }
 
 double Dispersion::GetDispersion(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "grad:\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "use_ghost = " << use_ghost << std::endl;
+#endif
+
     calc_virial_ = false;
 
     if (virial != 0) {
@@ -192,6 +342,27 @@ double Dispersion::GetDispersion(std::vector<double> &grad, std::vector<double> 
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "grad:\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "Dispersion energy = " << disp_energy_ << std::endl;
+#endif
 
     return disp_energy_;
 }
@@ -334,8 +505,12 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
 
+        double dummy_c6, dummy_d6;
+        bool do_disp = GetC6(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, dummy_c6, dummy_d6, ignore_disp_, repdisp_j_);
+        std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
+
         // Obtain excluded pairs for monomer type mt
-        systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
 
         // For parallel region
         std::vector<std::vector<double> > phi_pool;
@@ -357,11 +532,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 bool is12 = systools::IsExcluded(exc12, i, j);
                 bool is13 = systools::IsExcluded(exc13, i, j);
                 bool is14 = systools::IsExcluded(exc14, i, j);
-                double disp_scale_factor = (is12 || is13 || is14) ? 0 : 1;
+                double disp_scale_factor = (is12 || is13 || is14 || !do_disp) ? 0 : 1;
                 double c6, d6;
                 double c6i = c6_long_range_[fi_sites + i * nmon];
                 double c6j = c6_long_range_[fi_sites + j * nmon];
-                GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6);
+                GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -375,17 +550,16 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
 
                     if (include_monomer) {
-                        double p1[3], g1[3];
+                        std::vector<double> p1(3, 0.0);
+                        std::vector<double> g1(3, 0.0);
                         double phi_i = 0.0;
-                        p1[0] = xyz_[fi_crd + inmon3 + m];
-                        p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
-                        p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
-                        std::fill(g1, g1 + 3, 0.0);
+                        p1[0] = xyz_mt[inmon3 + m];
+                        p1[1] = xyz_mt[inmon3 + nmon + m];
+                        p1[2] = xyz_mt[inmon3 + nmon2 + m];
                         energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, p1, xyz_.data() + fi_crd, g1, grad_pool[rank].data(), phi_i,
-                                  phi_pool[rank].data(), nmon, nmon, m, m + 1, i, j, disp_scale_factor, do_grads_,
-                                  cutoff_, ewald_alpha_, box_, box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon,
-                                  &virial_pool[rank]);
+                            disp6(c6, d6, c6i, c6j, p1, xyz_mt, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
+                                  m, m + 1, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
+                                  box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank]);
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
                         grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
@@ -440,6 +614,12 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
 
+            double dummy_c6, dummy_d6;
+            bool do_disp =
+                GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, dummy_c6, dummy_d6, ignore_disp_, repdisp_j_);
+            double disp_scale_factor = do_disp ? 1.0 : 0.0;
+            std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
+
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
             // previous loop.
@@ -485,12 +665,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         size_t jnmon23 = jnmon2 * 3;
                         double c6j = c6_long_range_[fi_sites2 + j * nmon2];
                         double c6, d6;
-                        GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6);
-                        energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
-                                  grad2_pool[rank].data(), phi_i, phi2_pool[rank].data(), nmon1, nmon2, m2init, nmon2,
-                                  i, j, 1.0, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_, use_ghost, islocal_,
-                                  fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                        GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                        energy_pool[rank] += disp6(
+                            c6, d6, c6i, c6j, xyz_sitei, xyz_mt2, g1, grad2_pool[rank], phi_i, phi2_pool[rank], nmon1,
+                            nmon2, m2init, nmon2, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
+                            box_inverse_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];

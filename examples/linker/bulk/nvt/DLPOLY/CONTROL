@@ -1,0 +1,90 @@
+DLTTM CONTROL
+
+# TYPE OF SIMULATION: PIMD, CMD, TRPMD
+iseed -19857579    ! seed for the random number generator
+pimd              ! PIMD simulation (NVT or NPT if pressure is defined)
+#cmd               ! CMD simulation (NVE or NVT if cmdnvt is defined)
+#trpmd             ! TRPMD simulation 
+
+# SYSTEM TARGET TEMPERATURE & PRESSURE
+#pressure                 0.001    ! katm (must be defined for NPT simulations)
+temperature             300.0000000   ! Kelvin
+
+# FOR PIMD
+#rstrt             ! restarting from a previous configuration
+#rstdip            ! restarting from previous dipoles if Car-Parrinello
+#setvel            ! new initial velocities 
+
+# FOR CMD
+#rstrt             ! restarting from a previous configuration
+#rstdip            ! restarting from previous dipoles if Car-Parrinello
+#setvel            ! new initial velocities 
+#rstcmd            ! for CMD restart
+#cmdnvt            ! NVT for CMD
+#w_bead            ! write cartesian variables for beads
+#gamcmd 0.100      ! adiabaticity parameter -> 0.1 ~12000 cm-1; 0.15 ~8000 cm-1, 0.2 ~6000 cm-1
+#fac_nm 0.010      ! scaling factor for normal-mode frequencies 
+
+# SIMULATION PARAMETERS
+steps                    500000 ! number of steps
+timestep                 0.002    ! time step in ps
+
+# TRAJECTORY PARAMETERS
+stats                   100    ! printing STATIS.IBEAD
+# for PIMD: prints positions in HISTORY.IBEAD (0 ndump 0)
+#traj                    0 100 0   
+# for CMD: 
+# (0 ndump 0) prints centroid positions in POSITION_CMD
+# (0 ndump 1) prints centroid positions & velocities 
+#             in POSITION_CMD and VELOCITY_CMD
+traj                    0 100 100   
+
+# SYSTEM CUTOFFS
+cutoff           12.00        ! electrostatics cutoff
+rvdw             12.00        ! nonbonded cutoff
+delr width       0.00        ! for Verlet list
+
+# EWALD
+#ewald sum 0.45 12 12 12      ! alpha & k-vectors for bulk simulations 
+#ewald sum 1.0e-16 0 0 0      ! alpha & k-vectors for clusters simulations 
+ewald precision  1.0E-6    ! dlpoly define alpha & k-vectors based on the precision
+
+# POLARIZABLE SIMULATIONS.
+#polarizability           ! define a polarizable model
+#aspc                     ! always stable predictor-corrector algorithm
+#iteration 1.0e-8         ! iterative (self-consistent) algorithm 
+#car-parrinello 5.0e-8    ! Car-Parrinello type propagation for the dipoles 
+
+# PREDEFINED MODELS.
+#qtip4p            ! qTIP4P/F (does not require polarizability)
+#vttm2             ! TTM2-F (requires polarizability)
+#vttm3             ! TTM3-F (requires polarizability)
+#vttm4             ! TTM4-F (requires polarizability)
+#vmbpol            ! MB-pol (requires polarizability)
+#vmbnrg            ! MB-nrg (requires polarizability)
+
+# SPECIFIC ION PARAMETERS
+#thlion     0.055    ! Thole attenuating factor for ion-ion
+#ithole     4        ! Thole type (3=ttm3, 4=ttm4/mbpol)
+#n_ions     1        ! Total number of ions
+
+# NOSE-HOOVER CHAINS
+nchain 4
+
+# ISOTOPIC MIXTURES
+#hod_in_h2o       ! HOD in H2O
+#hod_in_d2o       ! HOD in D2O
+#n_hod  1         ! number of HOD molecules
+#h2o_in_d2o       ! H2O in D2O
+#n_h2o  1         ! number of H2O molecules
+#d2o_in_h2o       ! D2O in H2O
+#n_d2o  1         ! number of D2O molecules
+
+#plumed            1 
+
+# CLOSING FILES
+job time           1.0D+9
+close time         1.0D+2
+
+finish
+

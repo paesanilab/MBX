@@ -4,6 +4,7 @@ set (TOOLS_SOURCES math_tools.cpp
                    variable.cpp
                    water_monomer_lp.cpp
                    xmin.cpp
+                   pbctools.cpp
                    random-rotation.cpp)
 
 add_library(tools OBJECT ${TOOLS_SOURCES})

@@ -70,6 +70,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    for (size_t i = 0; i < systems.size(); i++) systems[i].SetUpFromJson();
+
     const char* fname = argv[2];
     tools::WriteNrg(fname, systems);
 

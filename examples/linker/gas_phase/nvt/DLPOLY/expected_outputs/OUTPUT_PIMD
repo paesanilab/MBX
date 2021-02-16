@@ -1,0 +1,13 @@
+ *****************************************
+ PAESANI GROUP - DL_TTM
+ *****************************************
+this is a PIMD run
+number of beads =    1
+this is a new run
+NVT ensemble
+using Nose-Hoover chains
+  number of chains =      4
+trajectory saved every  100 steps
+ 
+ Initial temperature =    300.000000000000     
+                       

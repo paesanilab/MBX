@@ -54,6 +54,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "kdtree/kdtree_utils.h"
 #include "helpme.h"
+#include "json/json.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -123,6 +124,8 @@ class Electrostatics {
                     const std::vector<size_t> &islocal_, const std::vector<int> &sys_atom_tag_,
                     const bool do_grads = true, const double tolerance = 1E-16, const size_t maxit = 100,
                     const std::string dip_method = "iter", const std::vector<double> &box = {});
+
+    void SetJsonMonomers(nlohmann::json mon_j);
 
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
 
@@ -463,6 +466,8 @@ class Electrostatics {
     std::vector<double> nncomm_cuthi;
 
     std::vector<int> nncomm_maxneed;
+  
+    nlohmann::json mon_j_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

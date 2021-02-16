@@ -39,8 +39,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <iostream>
+#include <iomanip>
 
 #include "tools/math_tools.h"
+#include "json/json.h"
 
 /**
  * @file bucktools.h
@@ -134,16 +137,16 @@ double tang_toennies(int n, const double& x);
  * @param[in] islocal
  * @param[in] isl1_offset
  * @param[in] isl2_offset
- * @param[in,out] virial Virial tensor of teh system
+ * @param[in,out] virial Virial tensor of the system
  * @return Sum of all the dispersion energies for all the atoms involved in the pair i,j
  */
-double disp6(const double C6, const double d6, const double c6i, const double c6j, const double* p1, const double* xyz2,
-             double* grad1, double* grad2, double& phi1, double* phi2, const size_t nmon1, const size_t nmon2,
-             const size_t start2, const size_t end2, const size_t atom_index1, const size_t atom_index2,
-             const double disp_scale_factor, bool do_grads, const double cutoff, const double ewald_alpha,
-             const std::vector<double>& box, const std::vector<double>& box_inverse, bool use_ghost,
-             const std::vector<size_t>& islocal, const size_t isl1_offset, const size_t isl2_offset,
-             std::vector<double>* virial = 0);
+double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,
+             const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
+             std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
+             const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
+             const double cutoff, const double ewald_alpha, const std::vector<double>& box,
+             const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
+             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial = 0);
 
 /**
  * @brief Retrieves the parameters for dispersion energy
@@ -157,8 +160,10 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
  * is not there, a and b will be set to 0.
  * @param[out] out_c6 Contains the parameter C6 corresponding to the atoms i,j of monomers 1 and 2.
  * @param[out] out_d6 Contains the parameter d6 corresponding to the atoms i,j of monomers 1 and 2.
+ * @param[in] repdisp_j JSON object witht the extra nonbonded pair information
  */
-void GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6);
+bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6,
+           std::vector<std::pair<std::string, std::string> > ignore_disp, nlohmann::json repdisp_j = {});
 
 }  // namespace disp
 

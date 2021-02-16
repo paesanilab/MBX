@@ -62,6 +62,9 @@ void Buckingham::Initialize(const std::vector<double> &sys_xyz, const std::vecto
     ReorderData();
 }
 
+void Buckingham::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
+void Buckingham::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
+
 void Buckingham::SetNewParameters(const std::vector<double> &xyz,
                                   const std::vector<std::pair<std::string, std::string> > &buck_pairs,
                                   const std::vector<size_t> force_ttm_for_idx, bool do_grads = true,
@@ -187,10 +190,10 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
         // Check if buckingham needs to be done. Otherwise, skip.
         double dummy_a;
         double dummy_b;
-        bool do_buck = GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, buck_pairs_, dummy_a, dummy_b);
+        bool do_buck = GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, buck_pairs_, dummy_a, dummy_b, repdisp_j_);
         if (do_buck) {
             // Obtain excluded pairs for monomer type mt
-            systools::GetExcluded(mon_id_[fi_mon], exc12, exc13, exc14);
+            systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
 
             std::vector<std::vector<double> > grad_pool(nthreads, std::vector<double>(nmon * ns * 3, 0.0));
             std::vector<double> energy_pool(nthreads, 0.0);
@@ -210,7 +213,7 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
                     if (is_excluded) continue;
 
                     double a, b;
-                    GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, buck_pairs_, a, b);
+                    GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, buck_pairs_, a, b, repdisp_j_);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -287,7 +290,8 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
 
             double dummy_a;
             double dummy_b;
-            bool do_buck = GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, buck_pairs_, dummy_a, dummy_b);
+            bool do_buck =
+                GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, buck_pairs_, dummy_a, dummy_b, repdisp_j_);
             if (do_buck) {
                 // Check if monomer types 1 and 2 are the same
                 // If so, same monomer won't be done, since it has been done in
@@ -318,7 +322,7 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
 
                         for (size_t j = 0; j < ns2; j++) {
                             double a, b;
-                            GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs_, a, b);
+                            GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs_, a, b, repdisp_j_);
                             energy_pool[rank] += Repulsion(a, b, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
                                                            grad2_pool[rank].data(), nmon1, nmon2, m2init, nmon2, i, j,
                                                            do_grads_, cutoff_, box_, box_inverse_, use_ghost, islocal_,
@@ -396,7 +400,8 @@ void Buckingham::CalculateEnforcedRepulsion(bool use_ghost) {
 
             double dummy_a;
             double dummy_b;
-            bool do_buck = GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, buck_pairs_, dummy_a, dummy_b);
+            bool do_buck =
+                GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, buck_pairs_, dummy_a, dummy_b, repdisp_j_);
             if (!do_buck) {
                 // Check if monomer types 1 and 2 are the same
                 // If so, same monomer won't be done, since it has been done in
@@ -433,7 +438,7 @@ void Buckingham::CalculateEnforcedRepulsion(bool use_ghost) {
                             std::make_pair(mon_id_[fi_mon2], mon_id_[fi_mon1])};
                         for (size_t j = 0; j < ns2; j++) {
                             double a, b;
-                            GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs, a, b);
+                            GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs, a, b, repdisp_j_);
                             for (size_t m2 = m2init; m2 < nmon2; m2++) {
                                 size_t mon2_idx = fi_mon2 + m2;
                                 bool do_mon2 = (std::find(force_ttm_for_idx_.begin(), force_ttm_for_idx_.end(),
