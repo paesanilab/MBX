@@ -766,30 +766,24 @@ void FixMBX::mbx_init() {
     int *pg = comm->procgrid;
     ptr_mbx->SetMPI(world, pg[0], pg[1], pg[2]);
 
-    ptr_mbx->Initialize();
-
-    // setup MBX solver(s); need to keep pbc turned off, which currently disables electrostatic solver
-
-    std::vector<double> box;
-
     // set MBX solvers
 
     if (use_json) {
         ptr_mbx->SetUpFromJson(json_settings);
-    } else {
-        ptr_mbx->SetUpFromJson();
 
-        ptr_mbx->SetDipoleMethod("cg");
-        if (!domain->nonperiodic) {
-            ptr_mbx->SetEwaldElectrostatics(0.6, 2.5, 6);
-            ptr_mbx->SetEwaldDispersion(0.5, 2.5, 6);
-        }
+        // make sure cutoffs are consistent
+
+        double mbx_cut = ptr_mbx->Get2bCutoff();
+        double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
+        if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
+    } else {
+        ptr_mbx->Set2bCutoff(pair_mbx->cut_global);
+        ptr_mbx->SetUpFromJson();
     }
 
-    // LAMMPS always sets pair cutoff
+    // setup MBX solver(s); need to keep pbc turned off, which currently disables electrostatic solver
 
-    ptr_mbx->Set2bCutoff(pair_mbx->cut_global);  // why no gas-phase cutoff of 100 here?
-
+    std::vector<double> box;
     ptr_mbx->SetPBC(box);
 
     std::vector<int> egrid = ptr_mbx->GetFFTDimensionElectrostatics(0);
@@ -982,37 +976,24 @@ void FixMBX::mbx_init_local() {
         mbx_mpi_enabled = false;
     }
 
-    // MRR
-    // if(mbx_num_atoms_local == 0) ptr_mbx_local->InitializePME();
-    // else ptr_mbx_local->Initialize();
-    ptr_mbx_local->Initialize();
-
     // setup MBX solver(s); need to keep pbc turned off, which currently disables electrostatic solver
-
-    std::vector<double> box;
 
     // set MBX solvers
 
     if (use_json) {
         ptr_mbx_local->SetUpFromJson(json_settings);
+
+        // make sure cutoffs are consistent
+
+        double mbx_cut = ptr_mbx_local->Get2bCutoff();
+        double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
+        if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
     } else {
-        ptr_mbx_local->SetUpFromJson();
-
-        if (!domain->nonperiodic) {
-            ptr_mbx_local->SetDipoleMethod("cg");
-            ptr_mbx_local->SetEwaldElectrostatics(0.6, 2.5, 6);
-            ptr_mbx_local->SetEwaldDispersion(0.5, 2.5, 6);
-        }
-    }
-
-    // LAMMPS always sets pair cutoff
-
-    if (!domain->nonperiodic) {
         ptr_mbx_local->Set2bCutoff(pair_mbx->cut_global);
-    } else {
-        ptr_mbx_local->Set2bCutoff(100.0);  // this is problematic for new p2p comm in lammps_nncomm branch
+        ptr_mbx_local->SetUpFromJson();
     }
 
+    std::vector<double> box;
     ptr_mbx_local->SetPBC(box);
 
     if (!domain->nonperiodic) {
@@ -1132,7 +1113,6 @@ void FixMBX::mbx_init_full() {
 
             int is_local = 1;
 
-#if 1
             int na;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
@@ -1213,178 +1193,24 @@ void FixMBX::mbx_init_full() {
                 mbx_num_atoms_full += na;
             }
 
-#else  // block to be removed...
-            if (strcmp("h2o", mol_names[mtype]) == 0) {
-                // add water molecule
-
-                tagint anchor = tag_full[i];
-                names.push_back("O");
-                xyz.push_back(x_full[i][0] - xlo);
-                xyz.push_back(x_full[i][1] - ylo);
-                xyz.push_back(x_full[i][2] - zlo);
-
-                int ii = atom_map_full[anchor + 1];
-                if (ii < 0) error->one(FLERR, "H2O molecule not intact");
-
-                names.push_back("H");
-                xyz.push_back(x_full[ii][0] - xlo);
-                xyz.push_back(x_full[ii][1] - ylo);
-                xyz.push_back(x_full[ii][2] - zlo);
-
-                ii = atom_map_full[anchor + 2];
-                if (ii < 0) error->one(FLERR, "H2O molecule not intact");
-
-                names.push_back("H");
-                xyz.push_back(x_full[ii][0] - xlo);
-                xyz.push_back(x_full[ii][1] - ylo);
-                xyz.push_back(x_full[ii][2] - zlo);
-
-                molec.push_back(nm);
-                nm++;
-
-                ptr_mbx_full->AddMonomer(xyz, names, "h2o", is_local, anchor);
-                ptr_mbx_full->AddMolecule(molec);
-
-                mbx_num_atoms_full += 3;
-
-            } else if (strcmp("na", mol_names[mtype]) == 0) {
-                // add sodium ion
-
-                tagint anchor = tag_full[i];
-                names.push_back("Na");
-                xyz.push_back(x_full[i][0] - xlo);
-                xyz.push_back(x_full[i][1] - ylo);
-                xyz.push_back(x_full[i][2] - zlo);
-
-                molec.push_back(nm++);
-
-                ptr_mbx_full->AddMonomer(xyz, names, "na", is_local, anchor);
-                ptr_mbx_full->AddMolecule(molec);
-
-                mbx_num_atoms_full++;
-
-            } else if (strcmp("cl", mol_names[mtype]) == 0) {
-                // add chloride ion
-
-                tagint anchor = tag_full[i];
-                names.push_back("Cl");
-                xyz.push_back(x_full[i][0] - xlo);
-                xyz.push_back(x_full[i][1] - ylo);
-                xyz.push_back(x_full[i][2] - zlo);
-
-                molec.push_back(nm++);
-
-                ptr_mbx_full->AddMonomer(xyz, names, "cl", is_local, anchor);
-                ptr_mbx_full->AddMolecule(molec);
-
-                mbx_num_atoms_full++;
-
-            } else if (strcmp("he", mol_names[mtype]) == 0) {
-                // add helium atom
-
-                tagint anchor = tag_full[i];
-                names.push_back("He");
-                xyz.push_back(x_full[i][0] - xlo);
-                xyz.push_back(x_full[i][1] - ylo);
-                xyz.push_back(x_full[i][2] - zlo);
-
-                molec.push_back(nm++);
-
-                ptr_mbx_full->AddMonomer(xyz, names, "he", is_local, anchor);
-                ptr_mbx_full->AddMolecule(molec);
-
-                mbx_num_atoms_full++;
-
-            } else if (strcmp("co2", mol_names[mtype]) == 0) {
-                // add CO2 molecule
-
-                tagint anchor = tag_full[i];
-                names.push_back("C");
-                xyz.push_back(x_full[i][0] - xlo);
-                xyz.push_back(x_full[i][1] - ylo);
-                xyz.push_back(x_full[i][2] - zlo);
-
-                int ii = atom_map_full[anchor + 1];
-                if (ii < 0) error->one(FLERR, "CO2 molecule not intact");
-
-                names.push_back("O");
-                xyz.push_back(x_full[ii][0] - xlo);
-                xyz.push_back(x_full[ii][1] - ylo);
-                xyz.push_back(x_full[ii][2] - zlo);
-
-                ii = atom_map_full[anchor + 2];
-                if (ii < 0) error->one(FLERR, "CO2 molecule not intact");
-
-                names.push_back("O");
-                xyz.push_back(x_full[ii][0] - xlo);
-                xyz.push_back(x_full[ii][1] - ylo);
-                xyz.push_back(x_full[ii][2] - zlo);
-
-                molec.push_back(nm++);
-
-                ptr_mbx_full->AddMonomer(xyz, names, "co2", is_local, anchor);
-                ptr_mbx_full->AddMolecule(molec);
-
-                mbx_num_atoms_full += 3;
-
-            } else if (strcmp("ch4", mol_names[mtype]) == 0) {
-                // add CH4 molecule
-
-                tagint anchor = tag_full[i];
-                names.push_back("C");
-                xyz.push_back(x_full[i][0] - xlo);
-                xyz.push_back(x_full[i][1] - ylo);
-                xyz.push_back(x_full[i][2] - zlo);
-
-                int ii = atom_map_full[anchor + 1];
-                if (ii < 0) error->one(FLERR, "CH4 molecule not intact");
-
-                names.push_back("H");
-                xyz.push_back(x_full[ii][0] - xlo);
-                xyz.push_back(x_full[ii][1] - ylo);
-                xyz.push_back(x_full[ii][2] - zlo);
-
-                ii = atom_map_full[anchor + 2];
-                if (ii < 0) error->one(FLERR, "CH4 molecule not intact");
-
-                names.push_back("H");
-                xyz.push_back(x_full[ii][0] - xlo);
-                xyz.push_back(x_full[ii][1] - ylo);
-                xyz.push_back(x_full[ii][2] - zlo);
-
-                ii = atom_map_full[anchor + 3];
-                if (ii < 0) error->one(FLERR, "CH4 molecule not intact");
-
-                names.push_back("H");
-                xyz.push_back(x_full[ii][0] - xlo);
-                xyz.push_back(x_full[ii][1] - ylo);
-                xyz.push_back(x_full[ii][2] - zlo);
-
-                ii = atom_map_full[anchor + 4];
-                if (ii < 0) error->one(FLERR, "CH4 molecule not intact");
-
-                names.push_back("H");
-                xyz.push_back(x_full[ii][0] - xlo);
-                xyz.push_back(x_full[ii][1] - ylo);
-                xyz.push_back(x_full[ii][2] - zlo);
-
-                molec.push_back(nm++);
-
-                ptr_mbx_full->AddMonomer(xyz, names, "ch4", is_local, anchor);
-                ptr_mbx_full->AddMolecule(molec);
-
-                mbx_num_atoms_full += 5;
-
-            } else
-                error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
-#endif
         }  // if(mol_anchor)
 
     }  // for(i<nall)
 
-    ptr_mbx_full->Initialize();
+    // set MBX solvers
 
-    // setup MBX solver(s)
+    if (use_json) {
+        ptr_mbx_full->SetUpFromJson(json_settings);
+
+        // make sure cutoffs are consistent
+
+        double mbx_cut = ptr_mbx_full->Get2bCutoff();
+        double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
+        if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
+    } else {
+        ptr_mbx_full->Set2bCutoff(pair_mbx->cut_global);
+        ptr_mbx_full->SetUpFromJson();
+    }
 
     std::vector<double> box;
 
@@ -1402,28 +1228,6 @@ void FixMBX::mbx_init_full() {
 
     } else if (domain->xperiodic || domain->yperiodic || domain->zperiodic)
         error->one(FLERR, "System must be fully periodic or non-periodic with MBX");
-
-    // set MBX solvers
-
-    if (use_json) {
-        ptr_mbx_full->SetUpFromJson(json_settings);
-    } else {
-        ptr_mbx_full->SetUpFromJson();
-
-        ptr_mbx_full->SetDipoleMethod("cg");
-        if (box.size()) {
-            ptr_mbx_full->SetEwaldElectrostatics(0.6, 2.5, 6);
-            ptr_mbx_full->SetEwaldDispersion(0.5, 2.5, 6);
-        }
-    }
-
-    // LAMMPS always sets pair cutoff
-
-    if (box.size()) {
-        ptr_mbx_full->Set2bCutoff(pair_mbx->cut_global);
-    } else {
-        ptr_mbx_full->Set2bCutoff(100.0);
-    }
 
     ptr_mbx_full->SetPBC(box);
 
