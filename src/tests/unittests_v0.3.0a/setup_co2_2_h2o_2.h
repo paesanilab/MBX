@@ -64,7 +64,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                     2.1439525102e+00,  1.6639051316e+00,  8.0501784870e-01,  2.7574021582e+00,        \
                                     2.3791378598e+00,  1.6203025410e+00,  1.4960194683e+00,  2.0291893372e+00};       \
     std::vector<std::string> atom_names{"C", "O", "O", "C", "O", "O", "O", "H", "H", "O", "H", "H"};                  \
-    std::vector<std::string> monomer_names = {"co2", "co2", "h2o", "h2o"};                                            \
+    std::vector<std::string> monomer_names = {"co2_archive", "co2_archive", "h2o", "h2o"};                            \
     std::vector<size_t> islocal = {1, 1, 1, 1};                                                                       \
     std::vector<size_t> n_atoms_vector = {3, 3, 3, 3};                                                                \
     std::vector<size_t> n_sites_vector = {3, 3, 4, 4};                                                                \
@@ -92,12 +92,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<double> real_charges{7.0602700000e-01,  -3.5301350000e-01, -3.5301350000e-01, 7.0602700000e-01,       \
                                      -3.5301350000e-01, -3.5301350000e-01, 0.0000000000e+00,  5.7199974482e-01,       \
                                      5.7203329069e-01,  0.0000000000e+00,  5.7636979828e-01,  5.7479892955e-01};      \
-    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"co2", 2}, {"h2o", 2}};                      \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"co2_archive", 2}, {"h2o", 2}};              \
     std::vector<size_t> internal_original_to_current_order{0, 1, 2, 3};                                               \
     std::vector<std::pair<size_t, size_t>> internal_original_order{{0, 0}, {1, 3}, {2, 6}, {3, 10}};                  \
     std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}, {1, 3}, {2, 6}, {3, 9}};         \
     std::vector<double> C6_long_range{1.7916733202e+01, 1.3042057313e+01, 1.3042057313e+01, 1.7916733202e+01,         \
                                       1.3042057313e+01, 1.3042057313e+01, 1.5405233572e+01, 4.4825869765e+00,         \
                                       4.4825869765e+00, 1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00};        \
-    std::vector<std::string> internal_monomer_names{"co2", "co2", "h2o", "h2o"};
+    std::vector<std::string> internal_monomer_names{"co2_archive", "co2_archive", "h2o", "h2o"};
 #endif

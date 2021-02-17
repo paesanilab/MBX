@@ -44,8 +44,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
         1.007825032,   12.0000000,   15.994914619, 15.994914619, 0.0,          4.00260325413, 39.9623831237,          \
         18.998403162,  34.968852682, 78.9183376,   126.9044719,  7.0160034366, 22.989769282,  38.9637064864,          \
         84.9114977282, 132.905429,   1.007825032,  1.007825032,  1.007825032,  1.007825032};                          \
-    std::vector<std::string> monomer_names = {"ch4", "h2o", "co2", "dummy", "he", "ar", "f",  "cl",                   \
-                                              "br",  "i",   "li",  "na",    "k",  "rb", "cs", "h4_dummy"};            \
+    std::vector<std::string> monomer_names = {"ch4", "h2o", "co2_archive", "dummy", "he", "ar", "f",  "cl",           \
+                                              "br",  "i",   "li",          "na",    "k",  "rb", "cs", "h4_dummy"};    \
     const int n_monomers = monomer_names.size();                                                                      \
     std::vector<size_t> islocal = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};                                   \
     std::vector<size_t> n_atoms_vector = {5, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4};                            \
@@ -129,8 +129,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                      1.0000000000e+00,  1.0000000000e+00,  1.0000000000e+00,  0.0000000000e+00,       \
                                      0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00};                         \
     std::vector<std::pair<std::string, size_t>> internal_mon_type_count{                                              \
-        {"ch4", 1}, {"h2o", 1}, {"co2", 1}, {"dummy", 1}, {"he", 1}, {"ar", 1}, {"f", 1},  {"cl", 1},                 \
-        {"br", 1},  {"i", 1},   {"li", 1},  {"na", 1},    {"k", 1},  {"rb", 1}, {"cs", 1}, {"h4_dummy", 1}};          \
+        {"ch4", 1}, {"h2o", 1}, {"co2_archive", 1}, {"dummy", 1}, {"he", 1}, {"ar", 1}, {"f", 1},  {"cl", 1},         \
+        {"br", 1},  {"i", 1},   {"li", 1},          {"na", 1},    {"k", 1},  {"rb", 1}, {"cs", 1}, {"h4_dummy", 1}};  \
     std::vector<size_t> internal_original_to_current_order{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};     \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{                                                    \
         {0, 0},  {1, 5},  {2, 9},   {3, 12},  {4, 13},  {5, 14},  {6, 15},  {7, 16},                                  \
@@ -165,6 +165,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                       0.00000,                                                                        \
                                       0.00000,                                                                        \
                                       0.00000};                                                                       \
-    std::vector<std::string> internal_monomer_names{"ch4", "h2o", "co2", "dummy", "he", "ar", "f",  "cl",             \
-                                                    "br",  "i",   "li",  "na",    "k",  "rb", "cs", "h4_dummy"};
+    std::vector<std::string> internal_monomer_names{                                                                  \
+        "ch4", "h2o", "co2_archive", "dummy", "he", "ar", "f",  "cl",                                                 \
+        "br",  "i",   "li",          "na",    "k",  "rb", "cs", "h4_dummy"};
 #endif

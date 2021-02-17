@@ -69,7 +69,7 @@ TEST_CASE("x1b_A1B2_deg4_v1x::struct") {
                                            -4.8505477006e+01, 1.0935575241e+01,  -8.1542367248e+00,
                                            1.8683238846e+01,  -8.1542367248e+00, -1.4018906261e+00};
 
-    x1b_A1B2_deg4::x1b_A1B2_v1x ph("co2");
+    x1b_A1B2_deg4::x1b_A1B2_v1x ph("co2_archive");
     std::vector<double> e_nograd = ph.eval(xyz.data(), nmon);
     std::vector<double> e = ph.eval(xyz.data(), grad.data(), nmon, &virial);
 

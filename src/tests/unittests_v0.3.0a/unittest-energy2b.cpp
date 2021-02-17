@@ -116,8 +116,8 @@ TEST_CASE("energy2b::get_2b_energy") {
                                     3.8303951459e+00,  -4.0222969886e+00, -3.7522694700e-01, 3.2992897240e+00,
                                     -3.4756612500e+00, 1.3973748074e+00,  4.3616623515e+00,  -4.5737147405e+00};
         size_t nm = 4;
-        std::string mon1 = "co2";
-        std::string mon2 = "co2";
+        std::string mon1 = "co2_archive";
+        std::string mon2 = "co2_archive";
 
         std::vector<double> grad1(xyz1.size(), 0.0);
         std::vector<double> grad2(xyz2.size(), 0.0);
@@ -441,7 +441,7 @@ TEST_CASE("energy2b::get_2b_energy") {
                                     1.1236431040e+00,  -7.5808708930e-01, 3.9350777550e-01,  1.4232346440e+00,
                                     -2.2258007790e+00, -6.7917366630e-02, 1.6302588920e+00};
         size_t nm = 3;
-        std::string mon1 = "co2";
+        std::string mon1 = "co2_archive";
         std::string mon2 = "h2o";
 
         std::vector<double> grad1(xyz1.size(), 0.0);

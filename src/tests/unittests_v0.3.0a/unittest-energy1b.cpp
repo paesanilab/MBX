@@ -103,7 +103,7 @@ std::vector<std::vector<double> > virial = {
 };
 
 std::vector<size_t> nmon = {2, 3, 6};
-std::vector<std::string> monid = {"ch4", "co2", "h2o"};
+std::vector<std::string> monid = {"ch4", "co2_archive", "h2o"};
 
 // Expected data
 std::vector<std::vector<double> > grad_expected = {

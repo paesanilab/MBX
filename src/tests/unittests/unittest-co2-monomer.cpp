@@ -55,8 +55,8 @@ TEST_CASE("Test co2 monomer energy terms") {
     co2_angle1.SetParameters(angle_harm_linear_parameters1, angle_harm_nonlinear_parameters1);
     std::vector<eff::Angles> angle_vec = {co2_angle1};
     eff::Conn connectivity =
-        eff::Conn("co2", bond_vec, angle_vec, std::vector<eff::Dihedral>{}, std::vector<eff::Inversion>{});
-    std::unordered_map<std::string, eff::Conn> connectivity_map = {std::make_pair("co2", connectivity)};
+        eff::Conn("co2_archive", bond_vec, angle_vec, std::vector<eff::Dihedral>{}, std::vector<eff::Inversion>{});
+    std::unordered_map<std::string, eff::Conn> connectivity_map = {std::make_pair("co2_archive", connectivity)};
 
     // Now we create a system that will be the same as the one read
     bblock::System my_system;

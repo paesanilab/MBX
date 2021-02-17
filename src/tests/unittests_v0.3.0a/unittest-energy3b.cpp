@@ -607,9 +607,9 @@ TEST_CASE("energy3b::get_3b_energy") {
             5.1568113210e-01,  3.8303951459e+00,  -4.0222969886e+00, -3.7522694700e-01, 3.2992897240e+00,
             -3.4756612500e+00, 1.3973748074e+00,  4.3616623515e+00,  -4.5737147405e+00};
         size_t nm = 6;
-        std::string mon1 = "co2";
-        std::string mon2 = "co2";
-        std::string mon3 = "co2";
+        std::string mon1 = "co2_archive";
+        std::string mon2 = "co2_archive";
+        std::string mon3 = "co2_archive";
 
         std::vector<double> grad1(xyz1.size(), 0.0);
         std::vector<double> grad2(xyz2.size(), 0.0);
