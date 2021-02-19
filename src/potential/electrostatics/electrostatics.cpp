@@ -2611,6 +2611,11 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 #endif
 
 void Electrostatics::reverse_comm(std::vector<double> &in_v) {
+  
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+    
     MPI_Request request[2];
     MPI_Status status[2];
 
@@ -2882,9 +2887,21 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
         }
 
     }  // for(iswap < nswap)
+    
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_COMM_REVERSE]++;
+    mbxt_ele_time_[ELE_COMM_REVERSE] += time2 - time1;
+#endif
 }
 
 void Electrostatics::forward_comm(std::vector<double> &in_v) {
+  
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+    
     MPI_Request request[2];
     MPI_Status status[2];
 
@@ -3093,6 +3110,13 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
         }      // if(ncount > 0)
 
     }  // for(iswap < nncomm_nswap)
+    
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_COMM_FORWARD]++;
+    mbxt_ele_time_[ELE_COMM_FORWARD] += time2 - time1;
+#endif
 }
 
 void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {

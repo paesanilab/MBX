@@ -1683,4 +1683,6 @@ void FixMBX::mbxt_write_summary() {
     mbxt_print_time("ELE_GRAD_PME", MBXT_ELE_GRAD_PME, t);
     mbxt_print_time("ELE_GRAD_FIN", MBXT_ELE_GRAD_FIN, t);
     mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
+    mbxt_print_time("ELE_COMM_REVERSE", MBXT_ELE_COMM_REVERSE, t);
+    mbxt_print_time("ELE_COMM_FORWARD", MBXT_ELE_COMM_FORWARD, t);
 }

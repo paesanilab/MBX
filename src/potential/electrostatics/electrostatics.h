@@ -76,6 +76,8 @@ enum {
     ELE_GRAD_FIN,
 
     ELE_COMM_REVFOR,
+    ELE_COMM_REVERSE,
+    ELE_COMM_FORWARD,
 
     ELE_NUM_TIMERS
 };

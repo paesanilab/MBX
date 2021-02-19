@@ -57,6 +57,8 @@ enum {
       MBXT_ELE_GRAD_FIN,
 
       MBXT_ELE_COMM_REVFOR,
+      MBXT_ELE_COMM_REVERSE,
+      MBXT_ELE_COMM_FORWARD,
       
       MBXT_NUM_TIMERS
 };
