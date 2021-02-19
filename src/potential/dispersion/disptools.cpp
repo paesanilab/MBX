@@ -782,6 +782,52 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.7359);   // A^(-1)
         d6.push_back(3.53045);  // A^(-1)
         d6.push_back(3.89503);  // A^(-1)
+    } else if (mon_id1 == "co2" && mon_id2 == "h2o") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(223.8723);  // kcal/mol * A^(-6) C -- O
+        C6.push_back(106.2522);  // kcal/mol * A^(-6) C -- H
+        C6.push_back(176.5128);  // kcal/mol * A^(-6) O -- O
+        C6.push_back(77.9633);   // kcal/mol * A^(-6) O -- H
+
+        d6.push_back(3.54868);  // A^(-1)
+        d6.push_back(3.1436);   // A^(-1)
+        d6.push_back(3.87591);  // A^(-1)
+        d6.push_back(3.71826);  // A^(-1)
+    } else if (mon_id1 == "co2cm5" && mon_id2 == "h2o") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(223.8723);  // kcal/mol * A^(-6) C -- O
+        C6.push_back(106.2522);  // kcal/mol * A^(-6) C -- H
+        C6.push_back(176.5128);  // kcal/mol * A^(-6) O -- O
+        C6.push_back(77.9633);   // kcal/mol * A^(-6) O -- H
+
+        d6.push_back(3.54868);  // A^(-1)
+        d6.push_back(3.1436);   // A^(-1)
+        d6.push_back(3.87591);  // A^(-1)
+        d6.push_back(3.71826);  // A^(-1)
 
     } else if (mon_id1 == "ar" and mon_id2 == "cs") {
         types1.push_back(0);

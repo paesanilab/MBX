@@ -515,6 +515,52 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         b.push_back(3.7359);   // A^(-1)
         b.push_back(3.53045);  // A^(-1)
         b.push_back(3.89503);  // A^(-1)
+    } else if (mon_id1 == "co2" && mon_id2 == "h2o") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(13541.2);  // kcal/mol * A^(-6) C -- O
+        a.push_back(2084.24);  // kcal/mol * A^(-6) C -- H
+        a.push_back(60176.5);  // kcal/mol * A^(-6) O -- O
+        a.push_back(2935.79);  // kcal/mol * A^(-6) O -- H
+
+        b.push_back(3.54868);  // A^(-1)
+        b.push_back(3.1436);   // A^(-1)
+        b.push_back(3.87591);  // A^(-1)
+        b.push_back(3.71826);  // A^(-1)
+    } else if (mon_id1 == "co2cm5" && mon_id2 == "h2o") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(13541.2);  // kcal/mol * A^(-6) C -- O
+        a.push_back(2084.24);  // kcal/mol * A^(-6) C -- H
+        a.push_back(60176.5);  // kcal/mol * A^(-6) O -- O
+        a.push_back(2935.79);  // kcal/mol * A^(-6) O -- H
+
+        b.push_back(3.54868);  // A^(-1)
+        b.push_back(3.1436);   // A^(-1)
+        b.push_back(3.87591);  // A^(-1)
+        b.push_back(3.71826);  // A^(-1)
         // =====>> BEGIN SECTION BUCKINGHAM <<=====
         // ======>> PASTE CODE BELOW <<======
         // =====>> END SECTION BUCKINGHAM <<=====
