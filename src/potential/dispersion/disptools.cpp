@@ -635,8 +635,8 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.43864);  // A^(-1)
         d6.push_back(3.45707);  // A^(-1)
-        // =====>> BEGIN SECTION DISPERSION <<=====
-        // ======>> PASTE CODE BELOW <<======
+                                // =====>> BEGIN SECTION DISPERSION <<=====
+                                // ======>> PASTE CODE BELOW <<======
     } else if (mon_id1 == "co2_archive" && mon_id2 == "co2_archive") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -839,7 +839,29 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(1857.467);  // kcal/mol * A^(-6)  A--B
         d6.push_back(3.19908);   // A^(-1) A--B
-        // =====>> END SECTION DISPERSION <<=====
+    } else if (mon_id1 == "ch4" and mon_id2 == "co2") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(306.4929);  // kcal/mol * A^(-6)  A--C
+        C6.push_back(215.0259);  // kcal/mol * A^(-6)  A--D
+        C6.push_back(104.5401);  // kcal/mol * A^(-6)  B--C
+        C6.push_back(77.8082);   // kcal/mol * A^(-6)  B--D
+        d6.push_back(3.2644);    // A^(-1) A--C
+        d6.push_back(3.55762);   // A^(-1) A--D
+        d6.push_back(3.37636);   // A^(-1) B--C
+        d6.push_back(3.5529);    // A^(-1) B--D
+                                 // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;
         out_d6 = 0.0;

@@ -129,6 +129,9 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "ch4" and mon2 == "h2o") {
         x2b_A1B2Z2_C1D4_deg3_exp0::x2b_A1B2Z2_C1D4_v1x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
+    } else if (mon1 == "ch4" and mon2 == "co2") {
+        mbnrg_A1B4_C1D2_deg4::mbnrg_A1B4_C1D2_deg4_v1 pot(mon1, mon2);
+        return pot.eval(xyz1.data(), xyz2.data(), nm);
         // =====>> END SECTION 2B_NO_GRADIENT <<=====
 
     } else {
@@ -252,6 +255,9 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "ch4" and mon2 == "h2o") {
         x2b_A1B2Z2_C1D4_deg3_exp0::x2b_A1B2Z2_C1D4_v1x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
+    } else if (mon1 == "ch4" and mon2 == "co2") {
+        mbnrg_A1B4_C1D2_deg4::mbnrg_A1B4_C1D2_deg4_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
         // =====>> END SECTION 2B_GRADIENT <<=====
     } else {
         energy = 0.0;
