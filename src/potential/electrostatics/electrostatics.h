@@ -289,11 +289,13 @@ class Electrostatics {
     void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
-    void reverse_forward_comm(std::vector<double> &in_v);
-
     void ReorderData();
 
-    void nncomm_setup();
+    void reverse_forward_comm(std::vector<double> &in_v);
+    void reverse_comm(std::vector<double> &in_v);
+    void forward_comm(std::vector<double> &in_v);
+
+    void setup_comm();
 
     // PME solver
     // helpme::PMEInstance<double> pme_solver_;
@@ -466,7 +468,16 @@ class Electrostatics {
     std::vector<double> nncomm_cuthi;
 
     std::vector<int> nncomm_maxneed;
-  
+
+    int nncomm_max_send_size;
+    int nncomm_max_recv_size;
+
+    std::vector<int> nncomm_buf_send_i;
+    std::vector<double> nncomm_buf_send_d;
+
+    std::vector<int> nncomm_buf_recv_i;
+    std::vector<double> nncomm_buf_recv_d;
+
     nlohmann::json mon_j_;
 };
 
