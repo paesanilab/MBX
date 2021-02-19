@@ -76,8 +76,10 @@ enum {
     ELE_GRAD_FIN,
 
     ELE_COMM_REVFOR,
-    ELE_COMM_REVERSE,
-    ELE_COMM_FORWARD,
+    ELE_COMM_REVSET,
+    ELE_COMM_REV,
+    ELE_COMM_FORSET,
+    ELE_COMM_FOR,
 
     ELE_NUM_TIMERS
 };
@@ -294,7 +296,9 @@ class Electrostatics {
     void ReorderData();
 
     void reverse_forward_comm(std::vector<double> &in_v);
+    void reverse_comm_setup(std::vector<double> &in_v);
     void reverse_comm(std::vector<double> &in_v);
+    void forward_comm_setup(std::vector<double> &in_v);
     void forward_comm(std::vector<double> &in_v);
 
     void setup_comm();
