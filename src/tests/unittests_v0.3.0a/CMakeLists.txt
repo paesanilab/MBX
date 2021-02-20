@@ -12,6 +12,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-poly-3b.cpp
     unittest-poly-holder-3b.cpp
     unittest-energy3b.cpp
+    unittest-buckingham.cpp
     unittest-bucktools.cpp
     unittest-bond.cpp
     unittest-angle.cpp
