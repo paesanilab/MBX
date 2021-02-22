@@ -26,6 +26,10 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-dispersion.cpp
     unittest-ljtools.cpp
     unittest-lj.cpp
+    unittest-pme-nopolarization.cpp
+    unittest-pme-nopolarization-findif.cpp
+    unittest-pme-withpolarization.cpp
+    unittest-pme-withpolarization-findif.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
