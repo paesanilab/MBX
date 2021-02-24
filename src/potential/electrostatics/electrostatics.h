@@ -120,7 +120,7 @@ class Electrostatics {
                     const std::vector<double> &polfac, const std::vector<double> &pol,
                     const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count,
+                    const std::vector<std::pair<std::string, size_t>> &mon_type_count,
                     const std::vector<size_t> &islocal_, const std::vector<int> &sys_atom_tag_,
                     const bool do_grads = true, const double tolerance = 1E-16, const size_t maxit = 100,
                     const std::string dip_method = "iter", const std::vector<double> &box = {});
@@ -262,6 +262,138 @@ class Electrostatics {
      */
     void SetFFTDimension(std::vector<int> grid);
 
+    // Getters
+
+    /**
+     * @brief Gets the coordinates in system order
+     */
+    std::vector<double> GetSysXyz();
+
+    /**
+     * @brief Gets the charges in system order
+     */
+    std::vector<double> GetSysChg();
+
+    /**
+     * @brief Gets the polfacs in system order
+     */
+    std::vector<double> GetSysPolfacs();
+
+    /**
+     * @brief Gets the pols in system order
+     */
+    std::vector<double> GetSysPols();
+
+    /**
+     * @brief Gets the charge gradients in system order
+     */
+    std::vector<double> GetSysChgGrad();
+
+    /**
+     * @brief Gets the sites vecotr with the number of sites of each monomer
+     */
+    std::vector<size_t> GetSitesVector();
+
+    /**
+     * @brief Gets the vector with the monoemr ids
+     */
+    std::vector<std::string> GetMonIds();
+
+    /**
+     * @brief Gets the first index vector
+     */
+    std::vector<size_t> GetFirstIndex();
+
+    /**
+     * @brief Gets the types and number of monomers of each type
+     */
+    std::vector<std::pair<std::string, size_t>> GetMonTypeCount();
+
+    /**
+     * @brief Gets the islocal vector
+     */
+    std::vector<size_t> GetSysIsLocal();
+
+    /**
+     * @brief Gets the vector with the system atom tags
+     */
+    std::vector<int> GetSysAtomTag();
+
+    /**
+     * @brief Gets the varibale do_grads
+     */
+    bool GetDoGrads();
+
+    /**
+     * @brief Gets the dipole tolerance
+     */
+    double GetDipoleTolerance();
+
+    /**
+     * @brief Gets the maximum number of iterations allowed in the dipole convergence
+     */
+    size_t GetDipoleMaxIt();
+
+    /**
+     * @brief Gets the convergence method for the dipoles
+     */
+    std::string GetDipoleConvergenceMethod();
+
+    /**
+     * @brief Gets the box
+     */
+    std::vector<double> GetBox();
+
+    /**
+     * @brief Gets the box in A B C aplha beta gamma format
+     */
+    std::vector<double> GetBoxAbc();
+
+    /**
+     * @brief Gets the box inverse
+     */
+    std::vector<double> GetBoxInverse();
+
+    /**
+     * @brief Gets the internal xyz after reordering
+     */
+    std::vector<double> GetInternalXyz();
+
+    /**
+     * @brief Gets the chrages in internal order
+     */
+    std::vector<double> GetInternalChg();
+
+    /**
+     * @brief Gets the sqrt of the polarizability in internal order
+     */
+    std::vector<double> GetInternalPolSqrt();
+
+    /**
+     * @brief Gets the internal islocal_atom
+     */
+    std::vector<size_t> GetInternalIsLocalAtom();
+
+    /**
+     * @brief Gets the internal islocal_atom_xyz()
+     */
+    std::vector<size_t> GetInternalIsLocalAtomXyz();
+
+    /**
+     * @brief Gets the internal atom tag
+     */
+    std::vector<int> GetInternalAtomTag();
+
+    /**
+     * @brief Gets the real space cutoff
+     */
+    double GetCutoff();
+
+    /**
+     * @brief Gets the real space cutoff
+     */
+    nlohmann::json GetJsonMonomers();
+
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
      * @param[in] box is a 9 component vector of double with
@@ -334,7 +466,7 @@ class Electrostatics {
     std::vector<size_t> first_ind_;
     // Vector that contains all different monomer types and the number of
     // monomers of each type.
-    std::vector<std::pair<std::string, size_t> > mon_type_count_;
+    std::vector<std::pair<std::string, size_t>> mon_type_count_;
     // Tolerance in the iterative calculation of the dipoles
     // Tolerance refers to the maximum squared difference overall the dipoles
     double tolerance_;

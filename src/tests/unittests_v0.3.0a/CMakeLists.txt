@@ -30,6 +30,8 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-pme-nopolarization-findif.cpp
     unittest-pme-withpolarization.cpp
     unittest-pme-withpolarization-findif.cpp
+    unittest-electrostatics.cpp
+    unittest-gamma.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
