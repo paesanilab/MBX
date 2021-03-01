@@ -484,6 +484,12 @@ class Electrostatics {
     std::vector<int> nncomm_buf_recv_i;
     std::vector<double> nncomm_buf_recv_d;
 
+    std::vector<std::vector<int>> nncomm_rev_sendlist;
+    std::vector<std::vector<int>> nncomm_rev_recvlist;
+
+    std::vector<std::vector<int>> nncomm_for_sendlist;
+    std::vector<std::vector<int>> nncomm_for_recvlist;
+  
     nlohmann::json mon_j_;
 };
 
