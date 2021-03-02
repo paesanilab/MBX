@@ -1015,7 +1015,7 @@ void FixMBX::mbx_init_local() {
     ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
 
     std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
-    std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1);
+    std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1); // will return mesh even for gas-phase
 
     if (print_settings && first_step) {
         std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
