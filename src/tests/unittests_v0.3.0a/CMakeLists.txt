@@ -32,6 +32,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-pme-withpolarization-findif.cpp
     unittest-electrostatics.cpp
     unittest-gamma.cpp
+    unittest-system.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
