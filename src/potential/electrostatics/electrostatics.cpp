@@ -2950,8 +2950,8 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
     double time1 = MPI_Wtime();
 #endif
 
-    MPI_Request request[2];
-    MPI_Status status[2];
+    MPI_Request request;
+    MPI_Status status;
 
     size_t fi_mon;
     size_t fi_crd;
@@ -3010,7 +3010,7 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
             else
                 nrecv = indx_m;
         } else {
-            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 1, world_, &(request[0]));
+            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 1, world_, &request);
         }
 
         int nsend = 0;
@@ -3025,7 +3025,7 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
             MPI_Send(&nsend, 1, MPI_INT, nncomm_sendproc[iswap], 1, world_);
         }
 
-        if (nncomm_recvproc[iswap] != mpi_rank_) MPI_Wait(&(request[0]), &(status[0]));
+        if (nncomm_recvproc[iswap] != mpi_rank_) MPI_Wait(&request, &status);
 
         // exchange data with neighbor procs
 
@@ -3038,8 +3038,7 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
 
         } else {
             if (nrecv > 0) {
-                MPI_Irecv(nncomm_buf_recv_d.data(), nrecv * 3, MPI_DOUBLE, nncomm_recvproc[iswap], 3, world_,
-                          &(request[1]));
+                MPI_Irecv(nncomm_buf_recv_d.data(), nrecv * 3, MPI_DOUBLE, nncomm_recvproc[iswap], 3, world_, &request);
             }
         }
 
@@ -3053,7 +3052,7 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
         }
 
         if (nncomm_recvproc[iswap] != mpi_rank_) {
-            if (nrecv > 0) MPI_Wait(&(request[1]), &(status[1]));
+            if (nrecv > 0) MPI_Wait(&request, &status);
             ptr_buf_double = nncomm_buf_recv_d.data();
         }
 
@@ -3285,8 +3284,8 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
     double time1 = MPI_Wtime();
 #endif
 
-    MPI_Request request[2];
-    MPI_Status status[2];
+    MPI_Request request;
+    MPI_Status status;
 
     size_t fi_mon;
     size_t fi_crd;
@@ -3319,11 +3318,11 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
         if (nncomm_recvproc[iswap] == mpi_rank_)
             nrecv = nsend;
         else
-            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 4, world_, &(request[0]));
+            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 4, world_, &request);
 
         if (nncomm_sendproc[iswap] != mpi_rank_) MPI_Send(&nsend, 1, MPI_INT, nncomm_sendproc[iswap], 4, world_);
 
-        if (nncomm_recvproc[iswap] != mpi_rank_) MPI_Wait(&(request[0]), &(status[0]));
+        if (nncomm_recvproc[iswap] != mpi_rank_) MPI_Wait(&request, &status);
 
         // exchange data with neighbor procs
 
@@ -3331,8 +3330,7 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
             ptr_buf_double = nncomm_buf_send_d.data();
         } else {
             if (nrecv > 0) {
-                MPI_Irecv(nncomm_buf_recv_d.data(), nrecv * 3, MPI_DOUBLE, nncomm_recvproc[iswap], 6, world_,
-                          &(request[1]));
+                MPI_Irecv(nncomm_buf_recv_d.data(), nrecv * 3, MPI_DOUBLE, nncomm_recvproc[iswap], 6, world_, &request);
             }
         }
 
@@ -3343,7 +3341,7 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
         }
 
         if (nncomm_recvproc[iswap] != mpi_rank_) {
-            if (nrecv > 0) MPI_Wait(&(request[1]), &(status[1]));
+            if (nrecv > 0) MPI_Wait(&request, &status);
             ptr_buf_double = nncomm_buf_recv_d.data();
         }
 
