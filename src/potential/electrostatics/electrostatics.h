@@ -124,7 +124,7 @@ class Electrostatics {
                     const std::vector<double> &polfac, const std::vector<double> &pol,
                     const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count,
+                    const std::vector<std::pair<std::string, size_t>> &mon_type_count,
                     const std::vector<size_t> &islocal_, const std::vector<int> &sys_atom_tag_,
                     const bool do_grads = true, const double tolerance = 1E-16, const size_t maxit = 100,
                     const std::string dip_method = "iter", const std::vector<double> &box = {});
@@ -344,7 +344,7 @@ class Electrostatics {
     std::vector<size_t> first_ind_;
     // Vector that contains all different monomer types and the number of
     // monomers of each type.
-    std::vector<std::pair<std::string, size_t> > mon_type_count_;
+    std::vector<std::pair<std::string, size_t>> mon_type_count_;
     // Tolerance in the iterative calculation of the dipoles
     // Tolerance refers to the maximum squared difference overall the dipoles
     double tolerance_;
@@ -489,7 +489,7 @@ class Electrostatics {
 
     std::vector<std::vector<int>> nncomm_for_sendlist;
     std::vector<std::vector<int>> nncomm_for_recvlist;
-  
+
     nlohmann::json mon_j_;
 };
 
