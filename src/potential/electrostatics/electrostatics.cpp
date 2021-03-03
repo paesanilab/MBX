@@ -56,6 +56,15 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 //#define _DEBUG_PRINT_ENERGY
 //#define _DEBUG_PRINT_GRAD
 
+#if HAVE_MPI == 1
+#define MBX_ELEC_P2P_COMM 1
+#else
+#define MBX_ELEC_P2P_COMM 0
+#endif
+
+// let expert users test this first
+#define MBX_ELEC_P2P_COMM 0
+
 // When turning polarization off, don't set the 1/polarity value to max_dbl because it gets
 // added to the potential and field values, generating inf values that result in NaN energies.
 // Any large value will do; it doesn't enter the energy or forces below about 1e-12 anyway
@@ -2188,7 +2197,7 @@ void Electrostatics::CalculateDipolesAspc() {
     }  // end if (hist_num_aspc_ < k_aspc_ + 2)
 }
 
-#if 1
+#if MBX_ELEC_P2P_COMM == 1
 
 void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 #if HAVE_MPI == 1
