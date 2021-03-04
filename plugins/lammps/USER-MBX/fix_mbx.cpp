@@ -995,28 +995,27 @@ void FixMBX::mbx_init_local() {
 
     std::vector<double> box;
     ptr_mbx_local->SetPBC(box);
+    
+    if (domain->nonperiodic && (domain->xperiodic || domain->yperiodic || domain->zperiodic))
+      error->all(FLERR, "System must be fully periodic or non-periodic with MBX");
 
-    if (!domain->nonperiodic) {
-        box = std::vector<double>(9, 0.0);
-
-        box[0] = domain->xprd;
-
-        box[3] = domain->xy;
-        box[4] = domain->yprd;
-
-        box[6] = domain->xz;
-        box[7] = domain->yz;
-        box[8] = domain->zprd;
-
-    } else if (domain->xperiodic || domain->yperiodic || domain->zperiodic)
-        error->all(FLERR, "System must be fully periodic or non-periodic with MBX");
-
+    box = std::vector<double>(9, 0.0);
+    
+    box[0] = domain->xprd;
+    
+    box[3] = domain->xy;
+    box[4] = domain->yprd;
+    
+    box[6] = domain->xz;
+    box[7] = domain->yz;
+    box[8] = domain->zprd;
+    
     ptr_mbx_local->SetBoxPMElocal(box);
 
     ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
 
     std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
-    std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1);
+    std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1); // will return mesh even for gas-phase
 
     if (print_settings && first_step) {
         std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
@@ -1684,4 +1683,8 @@ void FixMBX::mbxt_write_summary() {
     mbxt_print_time("ELE_GRAD_PME", MBXT_ELE_GRAD_PME, t);
     mbxt_print_time("ELE_GRAD_FIN", MBXT_ELE_GRAD_FIN, t);
     mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
+    mbxt_print_time("ELE_COMM_REVSET", MBXT_ELE_COMM_REVSET, t);
+    mbxt_print_time("ELE_COMM_REV", MBXT_ELE_COMM_REV, t);
+    mbxt_print_time("ELE_COMM_FORSET", MBXT_ELE_COMM_FORSET, t);
+    mbxt_print_time("ELE_COMM_FOR", MBXT_ELE_COMM_FOR, t);
 }

@@ -49,12 +49,21 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define _DEBUG_PERM
 //#define _DEBUG_DIPOLE
-//#define _DEBUG_ITERATION 2
+//#define _DEBUG_ITERATION 1
 //#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
 //#define _DEBUG_GRAD
 //#define _DEBUG_PRINT_ENERGY
 //#define _DEBUG_PRINT_GRAD
+
+#if HAVE_MPI == 1
+#define MBX_ELEC_P2P_COMM 1
+#else
+#define MBX_ELEC_P2P_COMM 0
+#endif
+
+// let expert users test this first
+#define MBX_ELEC_P2P_COMM 0
 
 // When turning polarization off, don't set the 1/polarity value to max_dbl because it gets
 // added to the potential and field values, generating inf values that result in NaN energies.
@@ -2432,6 +2441,144 @@ void Electrostatics::CalculateDipolesAspc() {
     }  // end if (hist_num_aspc_ < k_aspc_ + 2)
 }
 
+#if MBX_ELEC_P2P_COMM == 1
+
+void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+#ifdef _DEBUG_COMM
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") REVFORCOMM IN LOCAL: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m]
+                                      << " tag= " << atom_tag_[fi_sites + m + inmon] << " indx= " << fi_crd + inmon3 + m
+                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
+                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
+                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
+                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
+                                      << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+
+                std::cout << "atom_tag_= ";
+                for (int i = 0; i < nsites_; ++i) std::cout << " " << atom_tag_[i];
+                std::cout << std::endl;
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+    // setup proc neighbors and buffers
+
+    if (nn_first) setup_comm();
+
+    if (nn_first)
+        reverse_comm_setup(in_v);
+    else
+        reverse_comm(in_v);
+
+    // zero ghost monomers
+
+    for (int i = 0; i < nsites_ * 3; ++i)
+        if (!islocal_atom_xyz_[i]) in_v[i] = 0.0;
+
+    // 2nd nearest-neighbor comm pass
+
+    if (nn_first)
+        forward_comm_setup(in_v);
+    else
+        forward_comm(in_v);
+
+#ifdef _DEBUG_COMM
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") REVFORCOMM OUT LOCAL: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m]
+                                      << " tag= " << atom_tag_[fi_sites + m + inmon] << " indx= " << fi_crd + inmon3 + m
+                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
+                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
+                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
+                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
+                                      << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_COMM_REVFOR]++;
+    mbxt_ele_time_[ELE_COMM_REVFOR] += time2 - time1;
+#endif
+
+    nn_first = false;
+}
+
+#else
+
 void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
@@ -2691,6 +2838,797 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 
     mbxt_ele_count_[ELE_COMM_REVFOR]++;
     mbxt_ele_time_[ELE_COMM_REVFOR] += time2 - time1;
+#endif
+}
+#endif
+
+void Electrostatics::reverse_comm_setup(std::vector<double> &in_v) {
+#if MBX_ELEC_P2P_COMM == 1
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+    MPI_Request request[2];
+    MPI_Status status[2];
+
+    size_t fi_mon;
+    size_t fi_crd;
+    size_t fi_sites;
+
+    size_t indx, indx_m;
+    size_t offset_m = nncomm_max_send_size / 3;
+
+    // accumulate ghost monomers on neighbor procs my local monomers
+
+    int ncount;
+    int *ptr_buf_int;
+    double *ptr_buf_double;
+
+    int idim_last = -1;
+
+    for (int iswap = 0; iswap < nncomm_nswap; ++iswap) {
+        int idim = nncomm_dim[iswap];
+
+        // pack ghost monomers
+        // -- on first transfer along a dimension
+
+        if (idim != idim_last) {
+            fi_mon = 0;
+            fi_crd = 0;
+            fi_sites = 0;
+
+            indx = 0;
+            indx_m = offset_m;
+
+            int sl1 = idim * 2;
+            int sl2 = sl1 + 1;
+
+            int sl1_indx = 0;
+            int sl2_indx = 0;
+
+            // Loop over each monomer type
+            for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                size_t ns = sites_[fi_mon];
+                size_t nmon = mon_type_count_[mt].second;
+                size_t nmon2 = 2 * nmon;
+
+                // Loop over each pair of sites
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = inmon * 3;
+                    for (size_t m = 0; m < nmon; m++) {
+                        double x = xyz_[fi_crd + inmon3 + m];
+                        double y = xyz_[fi_crd + inmon3 + nmon + m];
+                        double z = xyz_[fi_crd + inmon3 + nmon2 + m];
+
+                        double coord;
+                        if (idim == 0)
+                            coord = x * box_inverse_PMElocal_[0] + y * box_inverse_PMElocal_[3] +
+                                    z * box_inverse_PMElocal_[6];
+                        else if (idim == 1)
+                            coord = x * box_inverse_PMElocal_[1] + y * box_inverse_PMElocal_[4] +
+                                    z * box_inverse_PMElocal_[7];
+                        else
+                            coord = x * box_inverse_PMElocal_[2] + y * box_inverse_PMElocal_[5] +
+                                    z * box_inverse_PMElocal_[8];
+
+                        if (!islocal_[fi_mon + m] && (coord >= nncomm_cutlo[iswap]) && (coord < nncomm_cuthi[iswap])) {
+                            // positive side of sub-domain
+
+                            // pack data for MPI
+
+                            nncomm_buf_send_d[indx * 3] = in_v[fi_crd + inmon3 + m];
+                            nncomm_buf_send_d[indx * 3 + 1] = in_v[fi_crd + inmon3 + nmon + m];
+                            nncomm_buf_send_d[indx * 3 + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
+
+                            nncomm_buf_send_i[indx] = atom_tag_[fi_sites + m + inmon];
+
+                            // record mapping
+
+                            nncomm_rev_sendlist[sl1].push_back(fi_crd + inmon3 + m);
+                            nncomm_rev_sendlist[sl1].push_back(fi_crd + inmon3 + nmon + m);
+                            nncomm_rev_sendlist[sl1].push_back(fi_crd + inmon3 + nmon2 + m);
+
+                            indx++;
+                        } else if (!islocal_[fi_mon + m] && (coord >= nncomm_cutlo[iswap + 1]) &&
+                                   (coord < nncomm_cuthi[iswap + 1])) {
+                            // negative side of sub-domain
+
+                            // pack data for MPI
+
+                            nncomm_buf_send_d[indx_m * 3] = in_v[fi_crd + inmon3 + m];
+                            nncomm_buf_send_d[indx_m * 3 + 1] = in_v[fi_crd + inmon3 + nmon + m];
+                            nncomm_buf_send_d[indx_m * 3 + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
+
+                            nncomm_buf_send_i[indx_m] = atom_tag_[fi_sites + m + inmon];
+
+                            // record mapping
+
+                            nncomm_rev_sendlist[sl2].push_back(fi_crd + inmon3 + m);
+                            nncomm_rev_sendlist[sl2].push_back(fi_crd + inmon3 + nmon + m);
+                            nncomm_rev_sendlist[sl2].push_back(fi_crd + inmon3 + nmon2 + m);
+
+                            indx_m++;
+                        }
+                    }
+                }
+
+                // Update first indexes
+                fi_mon += nmon;
+                fi_sites += nmon * ns;
+                fi_crd += nmon * ns * 3;
+            }  // for(monomer types)
+
+            indx_m -= offset_m;
+
+            idim_last = idim;
+        }
+
+#ifdef _DEBUG_COMM
+        for (int i = 0; i < num_mpi_ranks_; ++i) {
+            if (mpi_rank_ == i) {
+                std::cout << "(" << i << ") iswap= " << iswap << "  indx= " << indx << " " << indx_m << std::endl;
+            }
+            MPI_Barrier(world_);
+        }
+#endif
+
+        // need to handle multiple cases: 1) send+recv, 2) only send, 3) only recv
+        // exchange counts with neighbor procs
+
+        int nrecv;
+        if (nncomm_recvproc[iswap] == mpi_rank_) {
+            if (nncomm_dir[iswap] == 1)
+                nrecv = indx;
+            else
+                nrecv = indx_m;
+        } else {
+            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 1, world_, &(request[0]));
+        }
+
+        int nsend = 0;
+        if (nncomm_sendproc[iswap] != mpi_rank_) {
+            if (nncomm_send[iswap]) {
+                if (nncomm_dir[iswap] == 1)
+                    nsend = indx;
+                else
+                    nsend = indx_m;
+            }
+
+            MPI_Send(&nsend, 1, MPI_INT, nncomm_sendproc[iswap], 1, world_);
+        }
+
+        if (nncomm_recvproc[iswap] != mpi_rank_) MPI_Wait(&(request[0]), &(status[0]));
+
+        // exchange data with neighbor procs
+
+        if (nncomm_recvproc[iswap] == mpi_rank_) {
+            if (nncomm_dir[iswap] == 1) {
+                ptr_buf_int = nncomm_buf_send_i.data();
+                ptr_buf_double = nncomm_buf_send_d.data();
+            } else {
+                ptr_buf_int = nncomm_buf_send_i.data() + offset_m;
+                ptr_buf_double = nncomm_buf_send_d.data() + offset_m * 3;
+            }
+
+        } else {
+            if (nrecv > 0) {
+                MPI_Irecv(nncomm_buf_recv_i.data(), nrecv, MPI_INT, nncomm_recvproc[iswap], 2, world_, &(request[0]));
+                MPI_Irecv(nncomm_buf_recv_d.data(), nrecv * 3, MPI_DOUBLE, nncomm_recvproc[iswap], 3, world_,
+                          &(request[1]));
+            }
+        }
+
+        if (nsend > 0) {
+            if (nncomm_dir[iswap] == 1) {
+                MPI_Send(nncomm_buf_send_i.data(), indx, MPI_INT, nncomm_sendproc[iswap], 2, world_);
+                MPI_Send(nncomm_buf_send_d.data(), indx * 3, MPI_DOUBLE, nncomm_sendproc[iswap], 3, world_);
+            } else {
+                MPI_Send(nncomm_buf_send_i.data() + offset_m, indx_m, MPI_INT, nncomm_sendproc[iswap], 2, world_);
+                MPI_Send(nncomm_buf_send_d.data() + offset_m * 3, indx_m * 3, MPI_DOUBLE, nncomm_sendproc[iswap], 3,
+                         world_);
+            }
+        }
+
+        if (nncomm_recvproc[iswap] != mpi_rank_) {
+            if (nrecv > 0) MPI_Waitall(2, request, status);
+            ptr_buf_int = nncomm_buf_recv_i.data();
+            ptr_buf_double = nncomm_buf_recv_d.data();
+        }
+
+#ifdef _DEBUG_COMM
+        for (int i = 0; i < num_mpi_ranks_; ++i) {
+            if (mpi_rank_ == i) {
+                std::cout << "(" << i << ") iswap= " << iswap << "  comm finished" << std::endl;
+            }
+            MPI_Barrier(world_);
+        }
+#endif
+
+        // unpack ghost monomers from neighbor procs and accumulate
+
+        int rl_indx = 0;
+
+        if (nncomm_recvproc[iswap] == mpi_rank_) {
+            fi_mon = 0;
+            fi_crd = 0;
+            fi_sites = 0;
+
+            // Loop over each monomer type
+            for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                size_t ns = sites_[fi_mon];
+                size_t nmon = mon_type_count_[mt].second;
+                size_t nmon2 = 2 * nmon;
+
+                // Loop over each pair of sites
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = inmon * 3;
+                    for (size_t m = 0; m < nmon; m++) {
+                        // is monomer local?
+                        if (islocal_[fi_mon + m]) {
+                            // test for same position in global list and tally
+                            int tagi = atom_tag_[fi_sites + m + inmon];
+
+                            // loop over neighbor procs ghost monomers
+                            for (int j = 0; j < nrecv; ++j)
+                                if (tagi == ptr_buf_int[j]) {
+                                    // accumulate from buffer
+
+                                    in_v[fi_crd + inmon3 + m] += ptr_buf_double[j * 3];
+                                    in_v[fi_crd + inmon3 + nmon + m] += ptr_buf_double[j * 3 + 1];
+                                    in_v[fi_crd + inmon3 + nmon2 + m] += ptr_buf_double[j * 3 + 2];
+
+                                    // record mapping
+
+                                    nncomm_rev_recvlist[iswap].push_back(fi_crd + inmon3 + m);
+                                    nncomm_rev_recvlist[iswap].push_back(fi_crd + inmon3 + nmon + m);
+                                    nncomm_rev_recvlist[iswap].push_back(fi_crd + inmon3 + nmon2 + m);
+                                    nncomm_rev_recvlist[iswap].push_back(j);
+                                }
+                        }
+                    }
+                }
+
+                // Update first indexes
+                fi_mon += nmon;
+                fi_sites += nmon * ns;
+                fi_crd += nmon * ns * 3;
+            }  // for(monomers)
+
+        } else {
+            if (nrecv > 0) {
+                fi_mon = 0;
+                fi_crd = 0;
+                fi_sites = 0;
+
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            // test for same position in global list and tally
+                            int tagi = atom_tag_[fi_sites + m + inmon];
+
+                            // loop over neighbor procs ghost monomers
+                            for (int j = 0; j < nrecv; ++j)
+                                if (tagi == ptr_buf_int[j]) {
+                                    // accumulate from buffer
+
+                                    in_v[fi_crd + inmon3 + m] += ptr_buf_double[j * 3];
+                                    in_v[fi_crd + inmon3 + nmon + m] += ptr_buf_double[j * 3 + 1];
+                                    in_v[fi_crd + inmon3 + nmon2 + m] += ptr_buf_double[j * 3 + 2];
+
+                                    // record mapping
+
+                                    nncomm_rev_recvlist[iswap].push_back(fi_crd + inmon3 + m);
+                                    nncomm_rev_recvlist[iswap].push_back(fi_crd + inmon3 + nmon + m);
+                                    nncomm_rev_recvlist[iswap].push_back(fi_crd + inmon3 + nmon2 + m);
+                                    nncomm_rev_recvlist[iswap].push_back(j);
+                                }
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }  // for(monomers)
+            }      // if(ncount > 0)
+        }
+
+    }  // for(iswap < nswap)
+
+#ifdef _DEBUG_COMM
+    for (int i = 0; i < num_mpi_ranks_; ++i) {
+        if (mpi_rank_ == i) {
+            if (i == 0) {
+                std::cout << "\nreverse_comm_setup()::sendlist" << std::endl;
+            }
+
+            std::cout << "\n" << std::endl;
+            for (int idim = 0; idim < 6; ++idim) {
+                std::cout << "(" << i << ") idim= " << idim
+                          << " rev_sendlist.size()= " << nncomm_rev_sendlist[idim].size() << std::endl;
+
+                for (int j = 0; j < nncomm_rev_sendlist[idim].size(); j += 3) {
+                    std::cout << "   j= " << j / 4 << "  sendlist= " << nncomm_rev_sendlist[idim][j] << " "
+                              << nncomm_rev_sendlist[idim][j + 1] << " " << nncomm_rev_sendlist[idim][j + 2] << " "
+                              << std::endl;
+                    ;
+                }
+            }
+        }
+        MPI_Barrier(world_);
+    }
+
+    for (int i = 0; i < num_mpi_ranks_; ++i) {
+        if (mpi_rank_ == i) {
+            if (i == 0) {
+                std::cout << "\nreverse_comm_setup()::recvlist" << std::endl;
+            }
+
+            std::cout << "\n" << std::endl;
+            for (int iswap = 0; iswap < nncomm_nswap; ++iswap) {
+                std::cout << "(" << i << ") iswap= " << iswap
+                          << " rev_recvlist.size()= " << nncomm_rev_recvlist[iswap].size() << std::endl;
+
+                for (int j = 0; j < nncomm_rev_recvlist[iswap].size(); j += 4) {
+                    std::cout << "   j= " << j / 4 << "  recvlist= " << nncomm_rev_recvlist[iswap][j] << " "
+                              << nncomm_rev_recvlist[iswap][j + 1] << " " << nncomm_rev_recvlist[iswap][j + 2] << " "
+                              << nncomm_rev_recvlist[iswap][j + 3] << std::endl;
+                    ;
+                }
+            }
+        }
+        MPI_Barrier(world_);
+    }
+#endif
+
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_COMM_REVSET]++;
+    mbxt_ele_time_[ELE_COMM_REVSET] += time2 - time1;
+#endif
+
+#endif
+}
+
+void Electrostatics::reverse_comm(std::vector<double> &in_v) {
+#if MBX_ELEC_P2P_COMM == 1
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+    MPI_Request request;
+    MPI_Status status;
+
+    size_t fi_mon;
+    size_t fi_crd;
+    size_t fi_sites;
+
+    size_t indx, indx_m;
+    size_t offset_m = nncomm_max_send_size / 3;
+
+    // accumulate ghost monomers on neighbor procs my local monomers
+
+    int ncount;
+    int *ptr_buf_int;
+    double *ptr_buf_double;
+
+    int idim_last = -1;
+
+    for (int iswap = 0; iswap < nncomm_nswap; ++iswap) {
+        int idim = nncomm_dim[iswap];
+
+        // pack ghost monomers
+        // -- on first transfer along a dimension
+
+        if (idim != idim_last) {
+            int sl1 = idim * 2;
+            int sl2 = sl1 + 1;
+
+            indx = nncomm_rev_sendlist[sl1].size() / 3;
+            for (int i = 0; i < nncomm_rev_sendlist[sl1].size(); ++i) {
+                nncomm_buf_send_d[i] = in_v[nncomm_rev_sendlist[sl1][i]];
+            }
+
+            indx_m = nncomm_rev_sendlist[sl2].size() / 3;
+            for (int i = 0; i < nncomm_rev_sendlist[sl2].size(); ++i) {
+                nncomm_buf_send_d[offset_m * 3 + i] = in_v[nncomm_rev_sendlist[sl2][i]];
+            }
+
+            idim_last = idim;
+        }
+
+#ifdef _DEBUG_COMM
+        for (int i = 0; i < num_mpi_ranks_; ++i) {
+            if (mpi_rank_ == i) {
+                std::cout << "(" << i << ") iswap= " << iswap << "  indx= " << indx << " " << indx_m << std::endl;
+            }
+            MPI_Barrier(world_);
+        }
+#endif
+
+        // need to handle multiple cases: 1) send+recv, 2) only send, 3) only recv
+        // exchange counts with neighbor procs
+
+        int nrecv;
+        if (nncomm_recvproc[iswap] == mpi_rank_) {
+            if (nncomm_dir[iswap] == 1)
+                nrecv = indx;
+            else
+                nrecv = indx_m;
+        } else {
+            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 1, world_, &request);
+        }
+
+        int nsend = 0;
+        if (nncomm_sendproc[iswap] != mpi_rank_) {
+            if (nncomm_send[iswap]) {
+                if (nncomm_dir[iswap] == 1)
+                    nsend = indx;
+                else
+                    nsend = indx_m;
+            }
+
+            MPI_Send(&nsend, 1, MPI_INT, nncomm_sendproc[iswap], 1, world_);
+        }
+
+        if (nncomm_recvproc[iswap] != mpi_rank_) MPI_Wait(&request, &status);
+
+        // exchange data with neighbor procs
+
+        if (nncomm_recvproc[iswap] == mpi_rank_) {
+            if (nncomm_dir[iswap] == 1) {
+                ptr_buf_double = nncomm_buf_send_d.data();
+            } else {
+                ptr_buf_double = nncomm_buf_send_d.data() + offset_m * 3;
+            }
+
+        } else {
+            if (nrecv > 0) {
+                MPI_Irecv(nncomm_buf_recv_d.data(), nrecv * 3, MPI_DOUBLE, nncomm_recvproc[iswap], 3, world_, &request);
+            }
+        }
+
+        if (nsend > 0) {
+            if (nncomm_dir[iswap] == 1) {
+                MPI_Send(nncomm_buf_send_d.data(), indx * 3, MPI_DOUBLE, nncomm_sendproc[iswap], 3, world_);
+            } else {
+                MPI_Send(nncomm_buf_send_d.data() + offset_m * 3, indx_m * 3, MPI_DOUBLE, nncomm_sendproc[iswap], 3,
+                         world_);
+            }
+        }
+
+        if (nncomm_recvproc[iswap] != mpi_rank_) {
+            if (nrecv > 0) MPI_Wait(&request, &status);
+            ptr_buf_double = nncomm_buf_recv_d.data();
+        }
+
+#ifdef _DEBUG_COMM
+        for (int i = 0; i < num_mpi_ranks_; ++i) {
+            if (mpi_rank_ == i) {
+                std::cout << "(" << i << ") iswap= " << iswap << "  comm finished" << std::endl;
+            }
+            MPI_Barrier(world_);
+        }
+#endif
+
+        // unpack ghost monomers from neighbor procs and accumulate
+
+        if (nncomm_recvproc[iswap] == mpi_rank_) {
+            for (int i = 0; i < nncomm_rev_recvlist[iswap].size(); i += 4) {
+                int j = nncomm_rev_recvlist[iswap][i + 3];
+                in_v[nncomm_rev_recvlist[iswap][i]] += ptr_buf_double[j * 3];
+                in_v[nncomm_rev_recvlist[iswap][i + 1]] += ptr_buf_double[j * 3 + 1];
+                in_v[nncomm_rev_recvlist[iswap][i + 2]] += ptr_buf_double[j * 3 + 2];
+            }
+
+        } else {
+            if (nrecv > 0) {
+                for (int i = 0; i < nncomm_rev_recvlist[iswap].size(); i += 4) {
+                    int j = nncomm_rev_recvlist[iswap][i + 3];
+                    in_v[nncomm_rev_recvlist[iswap][i]] += ptr_buf_double[j * 3];
+                    in_v[nncomm_rev_recvlist[iswap][i + 1]] += ptr_buf_double[j * 3 + 1];
+                    in_v[nncomm_rev_recvlist[iswap][i + 2]] += ptr_buf_double[j * 3 + 2];
+                }
+
+            }  // if(ncount > 0)
+        }
+
+    }  // for(iswap < nswap)
+
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_COMM_REV]++;
+    mbxt_ele_time_[ELE_COMM_REV] += time2 - time1;
+#endif
+
+#endif
+}
+
+void Electrostatics::forward_comm_setup(std::vector<double> &in_v) {
+#if MBX_ELEC_P2P_COMM == 1
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+    MPI_Request request[2];
+    MPI_Status status[2];
+
+    size_t fi_mon;
+    size_t fi_crd;
+    size_t fi_sites;
+
+    size_t indx, indx_m;
+    size_t offset_m = nncomm_max_send_size / 3;
+
+    // accumulate ghost monomers on neighbor procs my local monomers
+
+    int ncount;
+    int *ptr_buf_int;
+    double *ptr_buf_double;
+
+    for (int iswap = 0; iswap < nncomm_nswap; ++iswap) {
+        int idim = nncomm_dim[iswap];
+
+        // need to pack ghost+local monomers in this version
+
+        fi_mon = 0;
+        fi_crd = 0;
+        fi_sites = 0;
+
+        indx = 0;
+
+        // Loop over each monomer type
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = 2 * nmon;
+
+            // Loop over each pair of sites
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = inmon * 3;
+                for (size_t m = 0; m < nmon; m++) {
+                    double x = xyz_[fi_crd + inmon3 + m];
+                    double y = xyz_[fi_crd + inmon3 + nmon + m];
+                    double z = xyz_[fi_crd + inmon3 + nmon2 + m];
+
+                    double coord;
+                    if (idim == 0)
+                        coord =
+                            x * box_inverse_PMElocal_[0] + y * box_inverse_PMElocal_[3] + z * box_inverse_PMElocal_[6];
+                    else if (idim == 1)
+                        coord =
+                            x * box_inverse_PMElocal_[1] + y * box_inverse_PMElocal_[4] + z * box_inverse_PMElocal_[7];
+                    else
+                        coord =
+                            x * box_inverse_PMElocal_[2] + y * box_inverse_PMElocal_[5] + z * box_inverse_PMElocal_[8];
+
+                    if ((coord >= nncomm_cutlo[iswap]) && (coord < nncomm_cuthi[iswap])) {
+                        nncomm_buf_send_d[indx * 3] = in_v[fi_crd + inmon3 + m];
+                        nncomm_buf_send_d[indx * 3 + 1] = in_v[fi_crd + inmon3 + nmon + m];
+                        nncomm_buf_send_d[indx * 3 + 2] = in_v[fi_crd + inmon3 + nmon2 + m];
+
+                        nncomm_buf_send_i[indx] = atom_tag_[fi_sites + m + inmon];
+
+                        // record mapping
+
+                        nncomm_for_sendlist[iswap].push_back(fi_crd + inmon3 + m);
+                        nncomm_for_sendlist[iswap].push_back(fi_crd + inmon3 + nmon + m);
+                        nncomm_for_sendlist[iswap].push_back(fi_crd + inmon3 + nmon2 + m);
+
+                        indx++;
+                    }
+                }
+            }
+
+            // Update first indexes
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
+
+        // need to handle multiple cases: 1) send+recv, 2) only send, 3) only recv
+        // exchange counts with neighbor procs
+
+        int nsend = 0;
+        if (nncomm_send[iswap]) nsend = indx;
+
+        int nrecv;
+        if (nncomm_recvproc[iswap] == mpi_rank_)
+            nrecv = nsend;
+        else
+            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 4, world_, &(request[0]));
+
+        if (nncomm_sendproc[iswap] != mpi_rank_) MPI_Send(&nsend, 1, MPI_INT, nncomm_sendproc[iswap], 4, world_);
+
+        if (nncomm_recvproc[iswap] != mpi_rank_) MPI_Wait(&(request[0]), &(status[0]));
+
+        // exchange data with neighbor procs
+
+        if (nncomm_recvproc[iswap] == mpi_rank_) {
+            ptr_buf_int = nncomm_buf_send_i.data();
+            ptr_buf_double = nncomm_buf_send_d.data();
+        } else {
+            if (nrecv > 0) {
+                MPI_Irecv(nncomm_buf_recv_i.data(), nrecv, MPI_INT, nncomm_recvproc[iswap], 5, world_, &(request[0]));
+                MPI_Irecv(nncomm_buf_recv_d.data(), nrecv * 3, MPI_DOUBLE, nncomm_recvproc[iswap], 6, world_,
+                          &(request[1]));
+            }
+        }
+
+        if (nncomm_sendproc[iswap] != mpi_rank_) {
+            if (nsend > 0) {
+                MPI_Send(nncomm_buf_send_i.data(), nsend, MPI_INT, nncomm_sendproc[iswap], 5, world_);
+                MPI_Send(nncomm_buf_send_d.data(), nsend * 3, MPI_DOUBLE, nncomm_sendproc[iswap], 6, world_);
+            }
+        }
+
+        if (nncomm_recvproc[iswap] != mpi_rank_) {
+            if (nrecv > 0) MPI_Waitall(2, request, status);
+            ptr_buf_int = nncomm_buf_recv_i.data();
+            ptr_buf_double = nncomm_buf_recv_d.data();
+        }
+
+        if (nrecv > 0) {
+            // set values of ghost monomers on proc
+
+            fi_mon = 0;
+            fi_crd = 0;
+            fi_sites = 0;
+
+            // Loop over each monomer type
+            for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                size_t ns = sites_[fi_mon];
+                size_t nmon = mon_type_count_[mt].second;
+                size_t nmon2 = 2 * nmon;
+
+                // Loop over each pair of sites
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = inmon * 3;
+                    for (size_t m = 0; m < nmon; m++) {
+                        // is monomer local?
+                        if (!islocal_[fi_mon + m]) {
+                            // test for same position in global list and tally
+                            int tagi = atom_tag_[fi_sites + m + inmon];
+
+                            // loop over neighbor procs ghost monomers
+                            for (int j = 0; j < nrecv; ++j)
+                                if (tagi == ptr_buf_int[j] && fabs(in_v[fi_crd + inmon3 + m]) < 1e-9) {
+                                    in_v[fi_crd + inmon3 + m] = ptr_buf_double[j * 3];
+                                    in_v[fi_crd + inmon3 + nmon + m] = ptr_buf_double[j * 3 + 1];
+                                    in_v[fi_crd + inmon3 + nmon2 + m] = ptr_buf_double[j * 3 + 2];
+
+                                    // record mapping
+
+                                    nncomm_for_recvlist[iswap].push_back(fi_crd + inmon3 + m);
+                                    nncomm_for_recvlist[iswap].push_back(fi_crd + inmon3 + nmon + m);
+                                    nncomm_for_recvlist[iswap].push_back(fi_crd + inmon3 + nmon2 + m);
+                                    nncomm_for_recvlist[iswap].push_back(j);
+                                }
+                        }
+                    }
+                }
+
+                // Update first indexes
+                fi_mon += nmon;
+                fi_sites += nmon * ns;
+                fi_crd += nmon * ns * 3;
+            }  // for(monomer types)
+        }      // if(ncount > 0)
+
+    }  // for(iswap < nncomm_nswap)
+
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_COMM_FORSET]++;
+    mbxt_ele_time_[ELE_COMM_FORSET] += time2 - time1;
+#endif
+#endif
+}
+
+void Electrostatics::forward_comm(std::vector<double> &in_v) {
+#if MBX_ELEC_P2P_COMM == 1
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+    MPI_Request request;
+    MPI_Status status;
+
+    size_t fi_mon;
+    size_t fi_crd;
+    size_t fi_sites;
+
+    size_t indx, indx_m;
+    size_t offset_m = nncomm_max_send_size / 3;
+
+    // accumulate ghost monomers on neighbor procs my local monomers
+
+    int ncount;
+    int *ptr_buf_int;
+    double *ptr_buf_double;
+
+    for (int iswap = 0; iswap < nncomm_nswap; ++iswap) {
+        int idim = nncomm_dim[iswap];
+
+        indx = nncomm_for_sendlist[iswap].size() / 3;
+        for (int i = 0; i < nncomm_for_sendlist[iswap].size(); ++i) {
+            nncomm_buf_send_d[i] = in_v[nncomm_for_sendlist[iswap][i]];
+        }
+
+        // need to handle multiple cases: 1) send+recv, 2) only send, 3) only recv
+        // exchange counts with neighbor procs
+
+        int nsend = 0;
+        if (nncomm_send[iswap]) nsend = indx;
+
+        int nrecv;
+        if (nncomm_recvproc[iswap] == mpi_rank_)
+            nrecv = nsend;
+        else
+            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[iswap], 4, world_, &request);
+
+        if (nncomm_sendproc[iswap] != mpi_rank_) MPI_Send(&nsend, 1, MPI_INT, nncomm_sendproc[iswap], 4, world_);
+
+        if (nncomm_recvproc[iswap] != mpi_rank_) MPI_Wait(&request, &status);
+
+        // exchange data with neighbor procs
+
+        if (nncomm_recvproc[iswap] == mpi_rank_) {
+            ptr_buf_double = nncomm_buf_send_d.data();
+        } else {
+            if (nrecv > 0) {
+                MPI_Irecv(nncomm_buf_recv_d.data(), nrecv * 3, MPI_DOUBLE, nncomm_recvproc[iswap], 6, world_, &request);
+            }
+        }
+
+        if (nncomm_sendproc[iswap] != mpi_rank_) {
+            if (nsend > 0) {
+                MPI_Send(nncomm_buf_send_d.data(), nsend * 3, MPI_DOUBLE, nncomm_sendproc[iswap], 6, world_);
+            }
+        }
+
+        if (nncomm_recvproc[iswap] != mpi_rank_) {
+            if (nrecv > 0) MPI_Wait(&request, &status);
+            ptr_buf_double = nncomm_buf_recv_d.data();
+        }
+
+        if (nrecv > 0) {
+            for (int i = 0; i < nncomm_for_recvlist[iswap].size(); i += 4) {
+                int j = nncomm_for_recvlist[iswap][i + 3];
+                in_v[nncomm_for_recvlist[iswap][i]] += ptr_buf_double[j * 3];
+                in_v[nncomm_for_recvlist[iswap][i + 1]] += ptr_buf_double[j * 3 + 1];
+                in_v[nncomm_for_recvlist[iswap][i + 2]] += ptr_buf_double[j * 3 + 2];
+            }
+
+        }  // if(nrecv > 0)
+
+    }  // for(iswap < nncomm_nswap)
+
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_COMM_FOR]++;
+    mbxt_ele_time_[ELE_COMM_FOR] += time2 - time1;
+#endif
 #endif
 }
 
@@ -5604,6 +6542,8 @@ std::vector<int> Electrostatics::GetFFTDimension(int box_id) {
             compute_pme = false;
     }
 
+    if (!simcell_periodic_) compute_pme = false;
+
     std::vector<int> fft_grid(3, -1);
 
     if (compute_pme) {
@@ -5648,6 +6588,261 @@ void Electrostatics::SetFFTDimension(std::vector<int> grid) {
         }
 
     user_fft_grid_ = grid;
+}
+
+void Electrostatics::setup_comm() {
+#if MBX_ELEC_P2P_COMM == 1
+    nncomm_nswap = 0;
+    nncomm_sendproc = std::vector<int>{};
+    nncomm_recvproc = std::vector<int>{};
+    nncomm_dim = std::vector<int>{};
+    nncomm_dir = std::vector<int>{};
+    nncomm_send = std::vector<int>{};
+
+    nncomm_boxlo = std::vector<double>{};
+    nncomm_boxhi = std::vector<double>{};
+
+    nncomm_cutlo = std::vector<double>{};
+    nncomm_cuthi = std::vector<double>{};
+
+    // pairwise cutoff for ghost
+
+    double padding = 2.0;  // FIXME:: hard-coded value, but set from LAMMPS
+
+    double cutoff_ghost = cutoff_ + padding;
+
+    // FIXME:: hard-coded for orthogonal lattices
+    // -- cuts below should remain in fractional coordinates and used for tests
+
+    std::vector<double> len_(3);
+    len_[0] = box_ABCabc_PMElocal_[0];
+    len_[1] = box_ABCabc_PMElocal_[1];
+    len_[2] = box_ABCabc_PMElocal_[2];
+
+    std::vector<double> cut_frac(3);
+    cut_frac[0] = cutoff_ghost / box_ABCabc_PMElocal_[0];
+    cut_frac[1] = cutoff_ghost / box_ABCabc_PMElocal_[1];
+    cut_frac[2] = cutoff_ghost / box_ABCabc_PMElocal_[2];
+
+    // # of neigh procs needed in each dimension
+    // -- borrowing from LAMMPS since that's how data is distributed
+
+    nncomm_maxneed = std::vector<int>(3, 0);
+    nncomm_maxneed[0] = static_cast<int>(cutoff_ghost * proc_grid_x_ / len_[0]) + 1;
+    nncomm_maxneed[1] = static_cast<int>(cutoff_ghost * proc_grid_y_ / len_[1]) + 1;
+    nncomm_maxneed[2] = static_cast<int>(cutoff_ghost * proc_grid_z_ / len_[2]) + 1;
+
+    if (nncomm_maxneed[0] > proc_grid_x_) nncomm_maxneed[0] = proc_grid_x_;
+    if (nncomm_maxneed[1] > proc_grid_y_) nncomm_maxneed[1] = proc_grid_y_;
+    if (nncomm_maxneed[2] > proc_grid_z_) nncomm_maxneed[2] = proc_grid_z_;
+
+    // find my proc grid location ; order hardcoded to match PME solver order ZYX
+
+    std::vector<int> myloc(3);
+    myloc[0] = mpi_rank_ % proc_grid_x_;
+    myloc[1] = (mpi_rank_ % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
+    myloc[2] = mpi_rank_ / (proc_grid_x_ * proc_grid_y_);
+
+    // bounding box of sub-domain
+
+    double fracx = 1.0 / (double)proc_grid_x_;
+    double fracy = 1.0 / (double)proc_grid_y_;
+    double fracz = 1.0 / (double)proc_grid_z_;
+
+    nncomm_boxlo.push_back((double)myloc[0] * fracx);
+    nncomm_boxhi.push_back((double)(myloc[0] + 1) * fracx);
+
+    nncomm_boxlo.push_back((double)myloc[1] * fracy);
+    nncomm_boxhi.push_back((double)(myloc[1] + 1) * fracy);
+
+    nncomm_boxlo.push_back((double)myloc[2] * fracz);
+    nncomm_boxhi.push_back((double)(myloc[2] + 1) * fracz);
+
+    std::vector<int> proc(3);
+    std::vector<int> proc_grid(3);
+
+    proc_grid[0] = proc_grid_x_;
+    proc_grid[1] = proc_grid_y_;
+    proc_grid[2] = proc_grid_z_;
+
+    for (int idim = 0; idim < 3; ++idim) {
+        for (int ineed = 0; ineed < nncomm_maxneed[idim]; ++ineed) {
+            // neighboring proc in + direction
+
+            proc[0] = myloc[0];
+            proc[1] = myloc[1];
+            proc[2] = myloc[2];
+
+            proc[idim] += ineed + 1;
+
+            nncomm_send.push_back(1);
+            if (proc[idim] >= proc_grid[idim]) {
+                if (!simcell_periodic_) nncomm_send[nncomm_nswap] = 0;
+                proc[idim] -= proc_grid[idim];
+            }
+
+            int p = proc[2] * proc_grid[0] * proc_grid[1] + proc[1] * proc_grid[0] + proc[0];
+
+            // neighboring proc in - direction
+
+            proc[0] = myloc[0];
+            proc[1] = myloc[1];
+            proc[2] = myloc[2];
+
+            proc[idim] -= ineed + 1;
+
+            nncomm_send.push_back(1);
+            if (proc[idim] < 0) {
+                if (!simcell_periodic_) nncomm_send[nncomm_nswap + 1] = 0;
+                proc[idim] += proc_grid[idim];
+            }
+
+            int m = proc[2] * proc_grid[0] * proc_grid[1] + proc[1] * proc_grid[0] + proc[0];
+
+            bool include_swap = true;
+
+            for (int iswap = 0; iswap < nncomm_nswap; ++iswap)
+                if (p == nncomm_sendproc[iswap] && m == nncomm_recvproc[iswap] && nncomm_dim[idim] == idim &&
+                    nncomm_dir[iswap] == 1)
+                    include_swap = false;
+
+            if (include_swap) {
+#ifdef _DEBUG_COMM
+                if (mpi_rank_ == 0)
+                    std::cout << "idim= " << idim << " ineed= " << ineed << "  dir= 1  proc= " << proc[0] << " "
+                              << proc[1] << " " << proc[2] << "  p= " << p << std::endl;
+#endif
+
+                nncomm_sendproc.push_back(p);
+                nncomm_recvproc.push_back(m);
+                nncomm_dim.push_back(idim);
+                nncomm_dir.push_back(1);
+
+                nncomm_cutlo.push_back(0.5 * (nncomm_boxlo[idim] + nncomm_boxhi[idim]));
+                nncomm_cuthi.push_back((nncomm_boxhi[idim] + 100.0));
+
+                nncomm_nswap++;
+
+#ifdef _DEBUG_COMM
+                if (mpi_rank_ == 0)
+                    std::cout << "idim= " << idim << " ineed= " << ineed << "  dir= -1  proc= " << proc[0] << " "
+                              << proc[1] << " " << proc[2] << "  m= " << m << std::endl;
+#endif
+
+                nncomm_sendproc.push_back(m);
+                nncomm_recvproc.push_back(p);
+                nncomm_dim.push_back(idim);
+                nncomm_dir.push_back(-1);
+
+                nncomm_cutlo.push_back((nncomm_boxlo[idim] - 100.0));
+                nncomm_cuthi.push_back(0.5 * (nncomm_boxlo[idim] + nncomm_boxhi[idim]));
+
+                nncomm_nswap++;
+            }
+        }
+    }
+
+    // maximum size of send arrays
+
+    nncomm_max_send_size = 3 * nsites_;  // over-estimate
+
+    // loop over neighbors to determine largest recv array
+
+    MPI_Request request;
+    MPI_Status status;
+
+    nncomm_max_recv_size = 0;
+    for (size_t i = 0; i < nncomm_nswap; ++i) {
+        int nrecv = 0;
+        if (nncomm_recvproc[i] == mpi_rank_)
+            nrecv = nncomm_max_send_size;
+        else
+            MPI_Irecv(&nrecv, 1, MPI_INT, nncomm_recvproc[i], 0, world_, &request);
+
+        if (nncomm_sendproc[i] != mpi_rank_) MPI_Send(&nncomm_max_send_size, 1, MPI_INT, nncomm_sendproc[i], 0, world_);
+
+        if (nncomm_recvproc[i] != mpi_rank_) MPI_Wait(&request, &status);
+
+        if (nrecv > nncomm_max_recv_size) nncomm_max_recv_size = nrecv;
+    }
+
+    // buffers for MPI comm
+
+    nncomm_buf_send_i = std::vector<int>(nncomm_max_send_size / 3 * 2);
+    nncomm_buf_send_d = std::vector<double>(nncomm_max_send_size * 2);
+
+    nncomm_buf_recv_i = std::vector<int>(nncomm_max_recv_size / 3);
+    nncomm_buf_recv_d = std::vector<double>(nncomm_max_recv_size);
+
+    // maps for un/packing data
+
+    nncomm_rev_sendlist = std::vector<std::vector<int>>(6);
+    nncomm_rev_recvlist = std::vector<std::vector<int>>(nncomm_nswap);
+
+    nncomm_for_sendlist = std::vector<std::vector<int>>(nncomm_nswap);
+    nncomm_for_recvlist = std::vector<std::vector<int>>(nncomm_nswap);
+
+#ifdef _DEBUG_COMM
+    for (int i = 0; i < num_mpi_ranks_; ++i) {
+        if (mpi_rank_ == i) {
+            if (i == 0) {
+                std::cout << "proc_grid_= " << proc_grid_x_ << " " << proc_grid_y_ << " " << proc_grid_z_ << std::endl;
+                std::cout << "maxneed= " << nncomm_maxneed[0] << " " << nncomm_maxneed[1] << " " << nncomm_maxneed[2]
+                          << "  cutoff_ghost= " << cutoff_ghost << std::endl;
+            }
+
+            std::cout << "(" << i << ") myloc_= " << myloc[0] << " " << myloc[1] << " " << myloc[2] << std::endl;
+
+            std::cout << "  nswap= " << nncomm_nswap << std::endl;
+
+            std::cout << "          boxlo= ";
+            for (int j = 0; j < 3; ++j) std::cout << " " << nncomm_boxlo[j];
+            std::cout << std::endl;
+
+            std::cout << "          boxhi= ";
+            for (int j = 0; j < 3; ++j) std::cout << " " << nncomm_boxhi[j];
+            std::cout << std::endl;
+
+            std::cout << "          cutlo= ";
+            for (int j = 0; j < nncomm_nswap; ++j) std::cout << " " << nncomm_cutlo[j];
+            std::cout << std::endl;
+
+            std::cout << "          cuthi= ";
+            for (int j = 0; j < nncomm_nswap; ++j) std::cout << " " << nncomm_cuthi[j];
+            std::cout << std::endl;
+
+            std::cout << "          sendproc= ";
+            for (int j = 0; j < nncomm_nswap; ++j) std::cout << " " << nncomm_sendproc[j];
+            std::cout << std::endl;
+
+            std::cout << "          recvproc= ";
+            for (int j = 0; j < nncomm_nswap; ++j) std::cout << " " << nncomm_recvproc[j];
+            std::cout << std::endl;
+
+            std::cout << "          nncomm_dim= ";
+            for (int i = 0; i < nncomm_nswap; ++i) std::cout << " " << nncomm_dim[i];
+            std::cout << std::endl;
+
+            std::cout << "          nncomm_dir= ";
+            for (int i = 0; i < nncomm_nswap; ++i) std::cout << " " << nncomm_dir[i];
+            std::cout << std::endl;
+
+            std::cout << "          nncomm_send= ";
+            for (int i = 0; i < nncomm_nswap; ++i) std::cout << " " << nncomm_send[i];
+            std::cout << std::endl;
+        }
+        MPI_Barrier(world_);
+    }
+
+    for (int i = 0; i < num_mpi_ranks_; ++i) {
+        if (mpi_rank_ == i) {
+            std::cout << "(" << i << ") max_send_size= " << nncomm_max_send_size
+                      << "  nncomm_max_recv_size= " << nncomm_max_recv_size << std::endl;
+        }
+        MPI_Barrier(world_);
+    }
+#endif
+#endif
 }
 
 }  // namespace elec
