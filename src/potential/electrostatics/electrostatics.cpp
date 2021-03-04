@@ -74,6 +74,58 @@ namespace elec {
 
 const double PIQSRT = sqrt(M_PI);
 
+std::vector<double> Electrostatics::GetSysXyz() { return sys_xyz_; }
+
+std::vector<double> Electrostatics::GetSysChg() { return sys_chg_; }
+
+std::vector<double> Electrostatics::GetSysPolfacs() { return polfac_; }
+
+std::vector<double> Electrostatics::GetSysPols() { return pol_; }
+
+std::vector<double> Electrostatics::GetSysChgGrad() { return sys_chg_grad_; }
+
+std::vector<size_t> Electrostatics::GetSitesVector() { return sites_; }
+
+std::vector<std::string> Electrostatics::GetMonIds() { return mon_id_; }
+
+std::vector<size_t> Electrostatics::GetFirstIndex() { return first_ind_; }
+
+std::vector<std::pair<std::string, size_t>> Electrostatics::GetMonTypeCount() { return mon_type_count_; }
+
+std::vector<size_t> Electrostatics::GetSysIsLocal() { return islocal_; }
+
+std::vector<int> Electrostatics::GetSysAtomTag() { return sys_atom_tag_; }
+
+bool Electrostatics::GetDoGrads() { return do_grads_; }
+
+double Electrostatics::GetDipoleTolerance() { return tolerance_; }
+
+size_t Electrostatics::GetDipoleMaxIt() { return maxit_; }
+
+std::string Electrostatics::GetDipoleConvergenceMethod() { return dip_method_; }
+
+std::vector<double> Electrostatics::GetBox() { return box_; }
+
+std::vector<double> Electrostatics::GetBoxAbc() { return box_ABCabc_; }
+
+std::vector<double> Electrostatics::GetBoxInverse() { return box_inverse_; }
+
+std::vector<double> Electrostatics::GetInternalXyz() { return xyz_; }
+
+std::vector<double> Electrostatics::GetInternalChg() { return chg_; }
+
+std::vector<double> Electrostatics::GetInternalPolSqrt() { return pol_sqrt_; }
+
+std::vector<size_t> Electrostatics::GetInternalIsLocalAtomXyz() { return islocal_atom_xyz_; }
+
+std::vector<size_t> Electrostatics::GetInternalIsLocalAtom() { return islocal_atom_; }
+
+std::vector<int> Electrostatics::GetInternalAtomTag() { return atom_tag_; }
+
+double Electrostatics::GetCutoff() { return cutoff_; }
+
+nlohmann::json Electrostatics::GetJsonMonomers() { return mon_j_; }
+
 void Electrostatics::SetCutoff(double cutoff) { cutoff_ = cutoff; }
 
 void Electrostatics::SetEwaldAlpha(double alpha) { ewald_alpha_ = alpha; }
@@ -98,6 +150,88 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
                                 const std::vector<size_t> &islocal, const std::vector<int> &sys_atom_tag,
                                 const bool do_grads, const double tolerance, const size_t maxit,
                                 const std::string dip_method, const std::vector<double> &box) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Charges:\n";
+    for (size_t i = 0; i < chg.size(); i++) {
+        std::cerr << chg[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Charge derivatives:\n";
+    for (size_t i = 0; i < chg_grad.size(); i++) {
+        std::cerr << chg_grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Polfacs:\n";
+    for (size_t i = 0; i < polfac.size(); i++) {
+        std::cerr << polfac[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Pols:\n";
+    for (size_t i = 0; i < pol.size(); i++) {
+        std::cerr << pol[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < sys_xyz.size(); i++) {
+        std::cerr << sys_xyz[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "mon_id:\n";
+    for (size_t i = 0; i < mon_id.size(); i++) {
+        std::cerr << "\"" << mon_id[i] << "\" , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Sites:\n";
+    for (size_t i = 0; i < sites.size(); i++) {
+        std::cerr << sites[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "First Index:\n";
+    for (size_t i = 0; i < first_ind.size(); i++) {
+        std::cerr << first_ind[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "mon_type_count:\n";
+    for (size_t i = 0; i < mon_type_count.size(); i++) {
+        std::cerr << " { \"" << mon_type_count[i].first << "\" , " << mon_type_count[i].second << " } , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "islocal:\n";
+    for (size_t i = 0; i < islocal.size(); i++) {
+        std::cerr << islocal[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "sys_atom_tag:\n";
+    for (size_t i = 0; i < sys_atom_tag.size(); i++) {
+        std::cerr << sys_atom_tag[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "do grads: " << do_grads << std::endl;
+    std::cerr << "tolerance: " << tolerance << std::endl;
+    std::cerr << "maxit: " << maxit << std::endl;
+    std::cerr << "dipole method: " << dip_method << std::endl;
+
+    std::cerr << "box:\n";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+#endif
     pme_spline_order_ = 5;
     pme_grid_density_ = 1.2;
     ewald_alpha_ = 0;
@@ -200,6 +334,47 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     nn_num_neighs = std::vector<size_t>(nsites_, 0);
 
     user_fft_grid_ = std::vector<int>{};
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Internal xyz:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Internal charge:\n";
+    for (size_t i = 0; i < chg_.size(); i++) {
+        std::cerr << chg_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Internal pol_sqrt:\n";
+    for (size_t i = 0; i < pol_sqrt_.size(); i++) {
+        std::cerr << pol_sqrt_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Internal islocal_atom:\n";
+    for (size_t i = 0; i < islocal_atom_.size(); i++) {
+        std::cerr << islocal_atom_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Internal islocal_atom_xyz:\n";
+    for (size_t i = 0; i < islocal_atom_xyz_.size(); i++) {
+        std::cerr << islocal_atom_xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Internal Atom tag:\n";
+    for (size_t i = 0; i < atom_tag_.size(); i++) {
+        std::cerr << atom_tag_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z) {
@@ -220,6 +395,51 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
                                       const bool do_grads, const std::vector<double> &box, const double cutoff) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Charges:\n";
+    for (size_t i = 0; i < chg.size(); i++) {
+        std::cerr << chg[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Charge derivatives:\n";
+    for (size_t i = 0; i < chg_grad.size(); i++) {
+        std::cerr << chg_grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Polfacs:\n";
+    for (size_t i = 0; i < polfac.size(); i++) {
+        std::cerr << polfac[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Pols:\n";
+    for (size_t i = 0; i < pol.size(); i++) {
+        std::cerr << pol[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < xyz.size(); i++) {
+        std::cerr << xyz[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "do grads: " << do_grads << std::endl;
+    std::cerr << "cutoff: " << cutoff << std::endl;
+    std::cerr << "dipole method: " << dip_method << std::endl;
+
+    std::cerr << "box:\n";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     sys_chg_ = chg;
     sys_chg_grad_ = chg_grad;
     polfac_ = polfac;
@@ -253,6 +473,30 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     ReorderData();
 
     has_energy_ = false;
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Internal xyz:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Internal charge:\n";
+    for (size_t i = 0; i < chg_.size(); i++) {
+        std::cerr << chg_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Internal pol_sqrt:\n";
+    for (size_t i = 0; i < pol_sqrt_.size(); i++) {
+        std::cerr << pol_sqrt_[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+#endif
 }
 
 void Electrostatics::SetBoxPMElocal(std::vector<double> box) {
@@ -6177,6 +6421,27 @@ double Electrostatics::GetPermanentElectrostaticEnergy() { return Eperm_; }
 double Electrostatics::GetInducedElectrostaticEnergy() { return Eind_; }
 
 double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Grads:\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Virial:\n";
+    if (virial != 0) {
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Use ghost: " << use_ghost << std::endl;
+#endif
+
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField(use_ghost);
     CalculateDipoles();
@@ -6189,6 +6454,31 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
         }
     }
     has_energy_ = true;
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Grads:\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Virial:\n";
+    if (virial != 0) {
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Elec tot energy: " << Eperm_ + Eind_ << std::endl;
+    std::cerr << "Eperm: " << Eperm_ << std::endl;
+    std::cerr << "Eind: " << Eind_ << std::endl;
+
+#endif
+
     return Eperm_ + Eind_;
 }
 

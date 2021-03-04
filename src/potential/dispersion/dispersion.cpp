@@ -79,7 +79,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 
     std::cerr << "mon_id:\n";
     for (size_t i = 0; i < mon_id.size(); i++) {
-        std::cerr << mon_id[i] << " , ";
+        std::cerr << "\"" << mon_id[i] << "\" , ";
     }
     std::cerr << std::endl;
 
@@ -91,7 +91,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 
     std::cerr << "mon_type_count:\n";
     for (size_t i = 0; i < mon_type_count.size(); i++) {
-        std::cerr << " { " << mon_type_count[i].first << " , " << mon_type_count[i].second << " } , ";
+        std::cerr << " { \"" << mon_type_count[i].first << "\" , " << mon_type_count[i].second << " } , ";
     }
     std::cerr << std::endl;
 
