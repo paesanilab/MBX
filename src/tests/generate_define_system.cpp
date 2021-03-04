@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     }  // Total Energy
 
     {  // 1B Energy
-        double e = systems[0].Energy(true);
+        double e = systems[0].OneBodyEnergy(true);
         std::vector<double> real_grad = systems[0].GetRealGrads();
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
     }  // 1B Energy
 
     {  // 2B Energy
-        double e = systems[0].Energy(true);
+        double e = systems[0].TwoBodyEnergy(true);
         std::vector<double> real_grad = systems[0].GetRealGrads();
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
     }  // 2B Energy
 
     {  // 3B Energy
-        double e = systems[0].Energy(true);
+        double e = systems[0].ThreeBodyEnergy(true);
         std::vector<double> real_grad = systems[0].GetRealGrads();
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
     }  // 3B Energy
 
     {  // Dispersion Energy
-        double e = systems[0].Energy(true);
+        double e = systems[0].Dispersion(true);
         std::vector<double> real_grad = systems[0].GetRealGrads();
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
     }  // Dispersion Energy
 
     {  // Buckingham Energy
-        double e = systems[0].Energy(true);
+        double e = systems[0].Buckingham(true);
         std::vector<double> real_grad = systems[0].GetRealGrads();
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
@@ -180,7 +180,7 @@ int main(int argc, char** argv) {
     }  // Buckingham Energy
 
     {  // LJ Energy
-        double e = systems[0].Energy(true);
+        double e = systems[0].LennardJones(true);
         std::vector<double> real_grad = systems[0].GetRealGrads();
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
     }  // LJ Energy
 
     {  // Classical 1B Energy
-        double e = systems[0].Energy(true);
+        double e = systems[0].ClassicPotential(true);
         std::vector<double> real_grad = systems[0].GetRealGrads();
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
