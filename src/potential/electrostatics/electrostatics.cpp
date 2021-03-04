@@ -2843,6 +2843,8 @@ void Electrostatics::reverse_forward_comm(std::vector<double> &in_v) {
 #endif
 
 void Electrostatics::reverse_comm_setup(std::vector<double> &in_v) {
+#if MBX_ELEC_P2P_COMM == 1
+
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
 #endif
@@ -3196,9 +3198,13 @@ void Electrostatics::reverse_comm_setup(std::vector<double> &in_v) {
     mbxt_ele_count_[ELE_COMM_REVSET]++;
     mbxt_ele_time_[ELE_COMM_REVSET] += time2 - time1;
 #endif
+
+#endif
 }
 
 void Electrostatics::reverse_comm(std::vector<double> &in_v) {
+#if MBX_ELEC_P2P_COMM == 1
+
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
 #endif
@@ -3348,9 +3354,13 @@ void Electrostatics::reverse_comm(std::vector<double> &in_v) {
     mbxt_ele_count_[ELE_COMM_REV]++;
     mbxt_ele_time_[ELE_COMM_REV] += time2 - time1;
 #endif
+
+#endif
 }
 
 void Electrostatics::forward_comm_setup(std::vector<double> &in_v) {
+#if MBX_ELEC_P2P_COMM == 1
+
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
 #endif
@@ -3530,9 +3540,12 @@ void Electrostatics::forward_comm_setup(std::vector<double> &in_v) {
     mbxt_ele_count_[ELE_COMM_FORSET]++;
     mbxt_ele_time_[ELE_COMM_FORSET] += time2 - time1;
 #endif
+#endif
 }
 
 void Electrostatics::forward_comm(std::vector<double> &in_v) {
+#if MBX_ELEC_P2P_COMM == 1
+
 #if HAVE_MPI == 1
     double time1 = MPI_Wtime();
 #endif
@@ -3615,6 +3628,7 @@ void Electrostatics::forward_comm(std::vector<double> &in_v) {
 
     mbxt_ele_count_[ELE_COMM_FOR]++;
     mbxt_ele_time_[ELE_COMM_FOR] += time2 - time1;
+#endif
 #endif
 }
 
@@ -6577,6 +6591,7 @@ void Electrostatics::SetFFTDimension(std::vector<int> grid) {
 }
 
 void Electrostatics::setup_comm() {
+#if MBX_ELEC_P2P_COMM == 1
     nncomm_nswap = 0;
     nncomm_sendproc = std::vector<int>{};
     nncomm_recvproc = std::vector<int>{};
@@ -6826,6 +6841,7 @@ void Electrostatics::setup_comm() {
         }
         MPI_Barrier(world_);
     }
+#endif
 #endif
 }
 
