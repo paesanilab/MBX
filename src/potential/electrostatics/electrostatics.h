@@ -76,6 +76,10 @@ enum {
     ELE_GRAD_FIN,
 
     ELE_COMM_REVFOR,
+    ELE_COMM_REVSET,
+    ELE_COMM_REV,
+    ELE_COMM_FORSET,
+    ELE_COMM_FOR,
 
     ELE_NUM_TIMERS
 };
@@ -421,9 +425,15 @@ class Electrostatics {
     void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
-    void reverse_forward_comm(std::vector<double> &in_v);
-
     void ReorderData();
+
+    void reverse_forward_comm(std::vector<double> &in_v);
+    void reverse_comm_setup(std::vector<double> &in_v);
+    void reverse_comm(std::vector<double> &in_v);
+    void forward_comm_setup(std::vector<double> &in_v);
+    void forward_comm(std::vector<double> &in_v);
+
+    void setup_comm();
 
     // PME solver
     // helpme::PMEInstance<double> pme_solver_;
@@ -581,6 +591,36 @@ class Electrostatics {
     std::vector<double> mbxt_ele_time_;
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
+
+    size_t nncomm_nswap;
+    std::vector<int> nncomm_sendproc;
+    std::vector<int> nncomm_recvproc;
+    std::vector<int> nncomm_dim;
+    std::vector<int> nncomm_dir;
+    std::vector<int> nncomm_send;
+
+    std::vector<double> nncomm_boxlo;
+    std::vector<double> nncomm_boxhi;
+
+    std::vector<double> nncomm_cutlo;
+    std::vector<double> nncomm_cuthi;
+
+    std::vector<int> nncomm_maxneed;
+
+    int nncomm_max_send_size;
+    int nncomm_max_recv_size;
+
+    std::vector<int> nncomm_buf_send_i;
+    std::vector<double> nncomm_buf_send_d;
+
+    std::vector<int> nncomm_buf_recv_i;
+    std::vector<double> nncomm_buf_recv_d;
+
+    std::vector<std::vector<int>> nncomm_rev_sendlist;
+    std::vector<std::vector<int>> nncomm_rev_recvlist;
+
+    std::vector<std::vector<int>> nncomm_for_sendlist;
+    std::vector<std::vector<int>> nncomm_for_recvlist;
 
     nlohmann::json mon_j_;
 };
