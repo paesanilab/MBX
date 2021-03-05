@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 
     std::ofstream ofs("system_data.cpp");
 
-    std::string s = "#ifndef UNITTESTS_SETUP_XXX_H\n#define UNITTESTS_SETUP_XXX_H\n\n#define SETUP_XXX \\\n";
+    std::string s = "#define SETUP_XXX \\\nTestEnergyData testData;\\\n";
     ofs << s;
 
     ofs << std::scientific << std::setprecision(10);
@@ -65,16 +65,16 @@ int main(int argc, char** argv) {
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
 
-        ofs << "double total_energy = " << e << ";\\\n";
-        ofs << "std::vector<double> real_grad = {";
+        ofs << "testData.total_energy = " << e << ";\\\n";
+        ofs << "testData.real_grad = {";
         for (size_t i = 0; i < real_grad.size() - 1; i++) ofs << real_grad[i] << " , ";
         ofs << real_grad[real_grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> grad = {";
+        ofs << "testData.grad = {";
         for (size_t i = 0; i < grad.size() - 1; i++) ofs << grad[i] << " , ";
         ofs << grad[grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> virial = {";
+        ofs << "testData.virial = {";
         for (size_t i = 0; i < virial.size() - 1; i++) ofs << virial[i] << " , ";
         ofs << virial[virial.size() - 1] << "}; \\\n";
     }  // Total Energy
@@ -85,16 +85,16 @@ int main(int argc, char** argv) {
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
 
-        ofs << "double energy_1b = " << e << ";\\\n";
-        ofs << "std::vector<double> real_grad_1b = {";
+        ofs << "testData.energy_1b = " << e << ";\\\n";
+        ofs << "testData.real_grad_1b = {";
         for (size_t i = 0; i < real_grad.size() - 1; i++) ofs << real_grad[i] << " , ";
         ofs << real_grad[real_grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> grad_1b = {";
+        ofs << "testData.grad_1b = {";
         for (size_t i = 0; i < grad.size() - 1; i++) ofs << grad[i] << " , ";
         ofs << grad[grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> virial_1b = {";
+        ofs << "testData.virial_1b = {";
         for (size_t i = 0; i < virial.size() - 1; i++) ofs << virial[i] << " , ";
         ofs << virial[virial.size() - 1] << "}; \\\n";
     }  // 1B Energy
@@ -105,16 +105,16 @@ int main(int argc, char** argv) {
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
 
-        ofs << "double energy_2b = " << e << ";\\\n";
-        ofs << "std::vector<double> real_grad_2b = {";
+        ofs << "testData.energy_2b = " << e << ";\\\n";
+        ofs << "testData.real_grad_2b = {";
         for (size_t i = 0; i < real_grad.size() - 1; i++) ofs << real_grad[i] << " , ";
         ofs << real_grad[real_grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> grad_2b = {";
+        ofs << "testData.grad_2b = {";
         for (size_t i = 0; i < grad.size() - 1; i++) ofs << grad[i] << " , ";
         ofs << grad[grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> virial_2b = {";
+        ofs << "testData.virial_2b = {";
         for (size_t i = 0; i < virial.size() - 1; i++) ofs << virial[i] << " , ";
         ofs << virial[virial.size() - 1] << "}; \\\n";
     }  // 2B Energy
@@ -125,16 +125,16 @@ int main(int argc, char** argv) {
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
 
-        ofs << "double energy_3b = " << e << ";\\\n";
-        ofs << "std::vector<double> real_grad_3b = {";
+        ofs << "testData.energy_3b = " << e << ";\\\n";
+        ofs << "testData.real_grad_3b = {";
         for (size_t i = 0; i < real_grad.size() - 1; i++) ofs << real_grad[i] << " , ";
         ofs << real_grad[real_grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> grad_3b = {";
+        ofs << "testData.grad_3b = {";
         for (size_t i = 0; i < grad.size() - 1; i++) ofs << grad[i] << " , ";
         ofs << grad[grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> virial_3b = {";
+        ofs << "testData.virial_3b = {";
         for (size_t i = 0; i < virial.size() - 1; i++) ofs << virial[i] << " , ";
         ofs << virial[virial.size() - 1] << "}; \\\n";
     }  // 3B Energy
@@ -145,16 +145,16 @@ int main(int argc, char** argv) {
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
 
-        ofs << "double energy_disp = " << e << ";\\\n";
-        ofs << "std::vector<double> real_grad_disp = {";
+        ofs << "testData.energy_disp = " << e << ";\\\n";
+        ofs << "testData.real_grad_disp = {";
         for (size_t i = 0; i < real_grad.size() - 1; i++) ofs << real_grad[i] << " , ";
         ofs << real_grad[real_grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> grad_disp = {";
+        ofs << "testData.grad_disp = {";
         for (size_t i = 0; i < grad.size() - 1; i++) ofs << grad[i] << " , ";
         ofs << grad[grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> virial_disp = {";
+        ofs << "testData.virial_disp = {";
         for (size_t i = 0; i < virial.size() - 1; i++) ofs << virial[i] << " , ";
         ofs << virial[virial.size() - 1] << "}; \\\n";
     }  // Dispersion Energy
@@ -165,16 +165,16 @@ int main(int argc, char** argv) {
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
 
-        ofs << "double energy_buck = " << e << ";\\\n";
-        ofs << "std::vector<double> real_grad_buck = {";
+        ofs << "testData.energy_buck = " << e << ";\\\n";
+        ofs << "testData.real_grad_buck = {";
         for (size_t i = 0; i < real_grad.size() - 1; i++) ofs << real_grad[i] << " , ";
         ofs << real_grad[real_grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> grad_buck = {";
+        ofs << "testData.grad_buck = {";
         for (size_t i = 0; i < grad.size() - 1; i++) ofs << grad[i] << " , ";
         ofs << grad[grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> virial_buck = {";
+        ofs << "testData.virial_buck = {";
         for (size_t i = 0; i < virial.size() - 1; i++) ofs << virial[i] << " , ";
         ofs << virial[virial.size() - 1] << "}; \\\n";
     }  // Buckingham Energy
@@ -185,16 +185,16 @@ int main(int argc, char** argv) {
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
 
-        ofs << "double energy_lj = " << e << ";\\\n";
-        ofs << "std::vector<double> real_grad_lj = {";
+        ofs << "testData.energy_lj = " << e << ";\\\n";
+        ofs << "testData.real_grad_lj = {";
         for (size_t i = 0; i < real_grad.size() - 1; i++) ofs << real_grad[i] << " , ";
         ofs << real_grad[real_grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> grad_lj = {";
+        ofs << "testData.grad_lj = {";
         for (size_t i = 0; i < grad.size() - 1; i++) ofs << grad[i] << " , ";
         ofs << grad[grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> virial_lj = {";
+        ofs << "testData.virial_lj = {";
         for (size_t i = 0; i < virial.size() - 1; i++) ofs << virial[i] << " , ";
         ofs << virial[virial.size() - 1] << "}; \\\n";
     }  // LJ Energy
@@ -205,16 +205,16 @@ int main(int argc, char** argv) {
         std::vector<double> grad = systems[0].GetGrads();
         std::vector<double> virial = systems[0].GetVirial();
 
-        ofs << "double energy_ff = " << e << ";\\\n";
-        ofs << "std::vector<double> real_grad_ff = {";
+        ofs << "testData.energy_ff = " << e << ";\\\n";
+        ofs << "testData.real_grad_ff = {";
         for (size_t i = 0; i < real_grad.size() - 1; i++) ofs << real_grad[i] << " , ";
         ofs << real_grad[real_grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> grad_ff = {";
+        ofs << "testData.grad_ff = {";
         for (size_t i = 0; i < grad.size() - 1; i++) ofs << grad[i] << " , ";
         ofs << grad[grad.size() - 1] << "};\\\n";
 
-        ofs << "std::vector<double> virial_ff = {";
+        ofs << "testData.virial_ff = {";
         for (size_t i = 0; i < virial.size() - 1; i++) ofs << virial[i] << " , ";
         ofs << virial[virial.size() - 1] << "}; \\\n";
     }  // Classical 1B Energy
@@ -225,18 +225,18 @@ int main(int argc, char** argv) {
     std::string json_mon = systems[0].GetJsonMonomersText();
     std::string json_repdisp = systems[0].GetJsonDispersionRepulsionText();
 
-    ofs << "std::string json_mbx = R\"(" << json_mbx << ")\";\\\n";
-    ofs << "std::string json_mon = R\"(" << json_mon << ")\";\\\n";
-    ofs << "std::string json_repdisp = R\"(" << json_repdisp << ")\";\\\n";
+    ofs << "testData.json_mbx = R\"(" << json_mbx << ")\";\\\n";
+    ofs << "testData.json_mon = R\"(" << json_mon << ")\";\\\n";
+    ofs << "testData.json_repdisp = R\"(" << json_repdisp << ")\";\\\n";
 
     std::vector<double> real_xyz = systems[0].GetRealXyz();
     std::vector<double> xyz = systems[0].GetXyz();
 
-    ofs << "std::vector<double> coords = {";
+    ofs << "testData.coords = {";
     for (size_t i = 0; i < xyz.size() - 1; i++) ofs << xyz[i] << " , ";
     ofs << xyz[xyz.size() - 1] << "};\\\n";
 
-    ofs << "std::vector<double> real_coords = {";
+    ofs << "testData.real_coords = {";
     for (size_t i = 0; i < real_xyz.size() - 1; i++) ofs << real_xyz[i] << " , ";
     ofs << real_xyz[real_xyz.size() - 1] << "};\\\n";
 
@@ -244,45 +244,45 @@ int main(int argc, char** argv) {
     std::vector<std::string> real_atom_names = systems[0].GetRealAtomNames();
     std::vector<std::string> monomer_names = systems[0].GetMonId();
 
-    ofs << "std::vector<std::string> atom_names = {";
+    ofs << "testData.atom_names = {";
     for (size_t i = 0; i < atom_names.size() - 1; i++) ofs << "\"" << atom_names[i] << "\" , ";
     ofs << "\"" << atom_names[atom_names.size() - 1] << "\"};\\\n";
 
-    ofs << "std::vector<std::string> real_atom_names = {";
+    ofs << "testData.real_atom_names = {";
     for (size_t i = 0; i < real_atom_names.size() - 1; i++) ofs << "\"" << real_atom_names[i] << "\" , ";
     ofs << "\"" << real_atom_names[real_atom_names.size() - 1] << "\"};\\\n";
 
-    ofs << "std::vector<std::string> monomer_names = {";
+    ofs << "testData.monomer_names = {";
     for (size_t i = 0; i < monomer_names.size() - 1; i++) ofs << "\"" << monomer_names[i] << "\" , ";
     ofs << "\"" << monomer_names[monomer_names.size() - 1] << "\"};\\\n";
 
     std::vector<size_t> first_index = systems[0].GetFirstInd();
     std::vector<size_t> real_first_index = systems[0].GetFirstIndRealSites();
 
-    ofs << "std::vector<size_t> first_index = {";
+    ofs << "testData.first_index = {";
     for (size_t i = 0; i < first_index.size() - 1; i++) ofs << first_index[i] << " , ";
     ofs << first_index[first_index.size() - 1] << "};\\\n";
 
-    ofs << "std::vector<size_t> real_first_index = {";
+    ofs << "testData.real_first_index = {";
     for (size_t i = 0; i < real_first_index.size() - 1; i++) ofs << real_first_index[i] << " , ";
     ofs << real_first_index[real_first_index.size() - 1] << "};\\\n";
 
     std::vector<size_t> nsites = systems[0].GetSitesVector();
     std::vector<size_t> natoms = systems[0].GetAtomsVector();
 
-    ofs << "std::vector<size_t> natoms = {";
+    ofs << "testData.natoms = {";
     for (size_t i = 0; i < natoms.size() - 1; i++) ofs << natoms[i] << " , ";
     ofs << natoms[natoms.size() - 1] << "};\\\n";
 
-    ofs << "std::vector<size_t> nsites = {";
+    ofs << "testData.nsites = {";
     for (size_t i = 0; i < nsites.size() - 1; i++) ofs << nsites[i] << " , ";
     ofs << nsites[nsites.size() - 1] << "};\\\n";
 
     size_t tot_sites = systems[0].GetNumSites();
     size_t tot_atoms = systems[0].GetNumRealSites();
 
-    ofs << "size_t tot_sites = " << tot_sites << ";\\\n";
-    ofs << "size_t tot_atoms = " << tot_atoms << ";\n";
+    ofs << "testData.tot_sites = " << tot_sites << ";\\\n";
+    ofs << "testData.tot_atoms = " << tot_atoms << ";\n";
 
     ofs << "#endif \n";
 }

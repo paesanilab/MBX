@@ -48,21 +48,136 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 constexpr double TOL = 1E-6;
 
+void TestEnergy(bblock::System &s, TestEnergyData &testData) {
+    SECTION("Total Energy") {
+        double e_nograd = s.Energy(false);
+        double e = s.Energy(true);
+        std::vector<double> g = s.GetGrads();
+        std::vector<double> g_real = s.GetRealGrads();
+        std::vector<double> v = s.GetVirial();
+
+        REQUIRE(e_nograd == Approx(testData.total_energy).margin(TOL));
+        REQUIRE(e == Approx(testData.total_energy).margin(TOL));
+        REQUIRE(VectorsAreEqual(g, testData.grad, TOL));
+        REQUIRE(VectorsAreEqual(g_real, testData.real_grad, TOL));
+        REQUIRE(VectorsAreEqual(v, testData.virial, TOL));
+    }
+
+    SECTION("One Body Polynomials") {
+        double e_nograd = s.OneBodyEnergy(false);
+        double e = s.OneBodyEnergy(true);
+        std::vector<double> g = s.GetGrads();
+        std::vector<double> g_real = s.GetRealGrads();
+        std::vector<double> v = s.GetVirial();
+
+        REQUIRE(e_nograd == Approx(testData.energy_1b).margin(TOL));
+        REQUIRE(e == Approx(testData.energy_1b).margin(TOL));
+        REQUIRE(VectorsAreEqual(g, testData.grad_1b, TOL));
+        REQUIRE(VectorsAreEqual(g_real, testData.real_grad_1b, TOL));
+        REQUIRE(VectorsAreEqual(v, testData.virial_1b, TOL));
+    }
+
+    SECTION("Two Body Polynomials") {
+        double e_nograd = s.TwoBodyEnergy(false);
+        double e = s.TwoBodyEnergy(true);
+        std::vector<double> g = s.GetGrads();
+        std::vector<double> g_real = s.GetRealGrads();
+        std::vector<double> v = s.GetVirial();
+
+        REQUIRE(e_nograd == Approx(testData.energy_2b).margin(TOL));
+        REQUIRE(e == Approx(testData.energy_2b).margin(TOL));
+        REQUIRE(VectorsAreEqual(g, testData.grad_2b, TOL));
+        REQUIRE(VectorsAreEqual(g_real, testData.real_grad_2b, TOL));
+        REQUIRE(VectorsAreEqual(v, testData.virial_2b, TOL));
+    }
+
+    SECTION("Three Body Polynomials") {
+        double e_nograd = s.ThreeBodyEnergy(false);
+        double e = s.ThreeBodyEnergy(true);
+        std::vector<double> g = s.GetGrads();
+        std::vector<double> g_real = s.GetRealGrads();
+        std::vector<double> v = s.GetVirial();
+
+        REQUIRE(e_nograd == Approx(testData.energy_3b).margin(TOL));
+        REQUIRE(e == Approx(testData.energy_3b).margin(TOL));
+        REQUIRE(VectorsAreEqual(g, testData.grad_3b, TOL));
+        REQUIRE(VectorsAreEqual(g_real, testData.real_grad_3b, TOL));
+        REQUIRE(VectorsAreEqual(v, testData.virial_3b, TOL));
+    }
+
+    SECTION("Dispersion") {
+        double e_nograd = s.Dispersion(false);
+        double e = s.Dispersion(true);
+        std::vector<double> g = s.GetGrads();
+        std::vector<double> g_real = s.GetRealGrads();
+        std::vector<double> v = s.GetVirial();
+
+        REQUIRE(e_nograd == Approx(testData.energy_disp).margin(TOL));
+        REQUIRE(e == Approx(testData.energy_disp).margin(TOL));
+        REQUIRE(VectorsAreEqual(g, testData.grad_disp, TOL));
+        REQUIRE(VectorsAreEqual(g_real, testData.real_grad_disp, TOL));
+        REQUIRE(VectorsAreEqual(v, testData.virial_disp, TOL));
+    }
+
+    SECTION("Buckingham") {
+        double e_nograd = s.Buckingham(false);
+        double e = s.Buckingham(true);
+        std::vector<double> g = s.GetGrads();
+        std::vector<double> g_real = s.GetRealGrads();
+        std::vector<double> v = s.GetVirial();
+
+        REQUIRE(e_nograd == Approx(testData.energy_buck).margin(TOL));
+        REQUIRE(e == Approx(testData.energy_buck).margin(TOL));
+        REQUIRE(VectorsAreEqual(g, testData.grad_buck, TOL));
+        REQUIRE(VectorsAreEqual(g_real, testData.real_grad_buck, TOL));
+        REQUIRE(VectorsAreEqual(v, testData.virial_buck, TOL));
+    }
+
+    SECTION("Lennard Jones") {
+        double e_nograd = s.LennardJones(false);
+        double e = s.LennardJones(true);
+        std::vector<double> g = s.GetGrads();
+        std::vector<double> g_real = s.GetRealGrads();
+        std::vector<double> v = s.GetVirial();
+
+        REQUIRE(e_nograd == Approx(testData.energy_lj).margin(TOL));
+        REQUIRE(e == Approx(testData.energy_lj).margin(TOL));
+        REQUIRE(VectorsAreEqual(g, testData.grad_lj, TOL));
+        REQUIRE(VectorsAreEqual(g_real, testData.real_grad_lj, TOL));
+        REQUIRE(VectorsAreEqual(v, testData.virial_lj, TOL));
+    }
+
+    SECTION("Classical One Body") {
+        double e_nograd = s.ClassicPotential(false);
+        double e = s.ClassicPotential(true);
+        std::vector<double> g = s.GetGrads();
+        std::vector<double> g_real = s.GetRealGrads();
+        std::vector<double> v = s.GetVirial();
+
+        REQUIRE(e_nograd == Approx(testData.energy_ff).margin(TOL));
+        REQUIRE(e == Approx(testData.energy_ff).margin(TOL));
+        REQUIRE(VectorsAreEqual(g, testData.grad_ff, TOL));
+        REQUIRE(VectorsAreEqual(g_real, testData.real_grad_ff, TOL));
+        REQUIRE(VectorsAreEqual(v, testData.virial_ff, TOL));
+    }
+}
+
 TEST_CASE("system::setup") {
     SETUP_H2O_2_CH4_1
 
     // Set up system
     bblock::System s;
-    for (size_t i = 0; i < monomer_names.size(); i++) {
-        size_t numat = natoms[i];
-        size_t fi = real_first_index[i];
-        std::vector<double> xyz(real_coords.begin() + 3 * fi, real_coords.begin() + 3 * (fi + numat));
-        std::vector<std::string> atoms(real_atom_names.begin() + fi, real_atom_names.begin() + fi + numat);
-        s.AddMonomer(xyz, atoms, monomer_names[i]);
+    for (size_t i = 0; i < testData.monomer_names.size(); i++) {
+        size_t numat = testData.natoms[i];
+        size_t fi = testData.real_first_index[i];
+        std::vector<double> xyz(testData.real_coords.begin() + 3 * fi, testData.real_coords.begin() + 3 * (fi + numat));
+        std::vector<std::string> atoms(testData.real_atom_names.begin() + fi,
+                                       testData.real_atom_names.begin() + fi + numat);
+        s.AddMonomer(xyz, atoms, testData.monomer_names[i]);
     }
 
     s.Initialize();
-    nlohmann::json j(json_mbx);
+    nlohmann::json j(testData.json_mbx);
     s.SetUpFromJson(j);
 
     // Assert that coordinates, atoms, mon ids are properly set
@@ -73,10 +188,10 @@ TEST_CASE("system::setup") {
     std::vector<std::string> mon_ids = s.GetMonId();
 
     // REQUIRE(VectorsAreEqual(xyz,coords,TOL));
-    REQUIRE(VectorsAreEqual(real_xyz, real_coords, TOL));
-    REQUIRE(VectorsAreEqual(atoms, atom_names));
-    REQUIRE(VectorsAreEqual(real_atoms, real_atom_names));
-    REQUIRE(VectorsAreEqual(mon_ids, monomer_names));
+    REQUIRE(VectorsAreEqual(real_xyz, testData.real_coords, TOL));
+    REQUIRE(VectorsAreEqual(atoms, testData.atom_names));
+    REQUIRE(VectorsAreEqual(real_atoms, testData.real_atom_names));
+    REQUIRE(VectorsAreEqual(mon_ids, testData.monomer_names));
 }
 
 TEST_CASE("system::energy") {
@@ -84,127 +199,18 @@ TEST_CASE("system::energy") {
 
     // Set up system
     bblock::System s;
-    for (size_t i = 0; i < monomer_names.size(); i++) {
-        size_t numat = natoms[i];
-        size_t fi = real_first_index[i];
-        std::vector<double> xyz(real_coords.begin() + 3 * fi, real_coords.begin() + 3 * (fi + numat));
-        std::vector<std::string> atoms(real_atom_names.begin() + fi, real_atom_names.begin() + fi + numat);
-        s.AddMonomer(xyz, atoms, monomer_names[i]);
+    for (size_t i = 0; i < testData.monomer_names.size(); i++) {
+        size_t numat = testData.natoms[i];
+        size_t fi = testData.real_first_index[i];
+        std::vector<double> xyz(testData.real_coords.begin() + 3 * fi, testData.real_coords.begin() + 3 * (fi + numat));
+        std::vector<std::string> atoms(testData.real_atom_names.begin() + fi,
+                                       testData.real_atom_names.begin() + fi + numat);
+        s.AddMonomer(xyz, atoms, testData.monomer_names[i]);
     }
 
     s.Initialize();
-    nlohmann::json j(json_mbx);
+    nlohmann::json j(testData.json_mbx);
     s.SetUpFromJson(j);
 
-    SECTION("Total Energy") {
-        double e_nograd = s.Energy(false);
-        double e = s.Energy(true);
-        std::vector<double> g = s.GetGrads();
-        std::vector<double> g_real = s.GetRealGrads();
-        std::vector<double> v = s.GetVirial();
-
-        REQUIRE(e_nograd == Approx(total_energy).margin(TOL));
-        REQUIRE(e == Approx(total_energy).margin(TOL));
-        REQUIRE(VectorsAreEqual(g, grad, TOL));
-        REQUIRE(VectorsAreEqual(g_real, real_grad, TOL));
-        REQUIRE(VectorsAreEqual(v, virial, TOL));
-    }
-
-    SECTION("One Body Polynomials") {
-        double e_nograd = s.OneBodyEnergy(false);
-        double e = s.OneBodyEnergy(true);
-        std::vector<double> g = s.GetGrads();
-        std::vector<double> g_real = s.GetRealGrads();
-        std::vector<double> v = s.GetVirial();
-
-        REQUIRE(e_nograd == Approx(energy_1b).margin(TOL));
-        REQUIRE(e == Approx(energy_1b).margin(TOL));
-        REQUIRE(VectorsAreEqual(g, grad_1b, TOL));
-        REQUIRE(VectorsAreEqual(g_real, real_grad_1b, TOL));
-        REQUIRE(VectorsAreEqual(v, virial_1b, TOL));
-    }
-
-    SECTION("Two Body Polynomials") {
-        double e_nograd = s.TwoBodyEnergy(false);
-        double e = s.TwoBodyEnergy(true);
-        std::vector<double> g = s.GetGrads();
-        std::vector<double> g_real = s.GetRealGrads();
-        std::vector<double> v = s.GetVirial();
-
-        REQUIRE(e_nograd == Approx(energy_2b).margin(TOL));
-        REQUIRE(e == Approx(energy_2b).margin(TOL));
-        REQUIRE(VectorsAreEqual(g, grad_2b, TOL));
-        REQUIRE(VectorsAreEqual(g_real, real_grad_2b, TOL));
-        REQUIRE(VectorsAreEqual(v, virial_2b, TOL));
-    }
-
-    SECTION("Three Body Polynomials") {
-        double e_nograd = s.ThreeBodyEnergy(false);
-        double e = s.ThreeBodyEnergy(true);
-        std::vector<double> g = s.GetGrads();
-        std::vector<double> g_real = s.GetRealGrads();
-        std::vector<double> v = s.GetVirial();
-
-        REQUIRE(e_nograd == Approx(energy_3b).margin(TOL));
-        REQUIRE(e == Approx(energy_3b).margin(TOL));
-        REQUIRE(VectorsAreEqual(g, grad_3b, TOL));
-        REQUIRE(VectorsAreEqual(g_real, real_grad_3b, TOL));
-        REQUIRE(VectorsAreEqual(v, virial_3b, TOL));
-    }
-
-    SECTION("Dispersion") {
-        double e_nograd = s.Dispersion(false);
-        double e = s.Dispersion(true);
-        std::vector<double> g = s.GetGrads();
-        std::vector<double> g_real = s.GetRealGrads();
-        std::vector<double> v = s.GetVirial();
-
-        REQUIRE(e_nograd == Approx(energy_disp).margin(TOL));
-        REQUIRE(e == Approx(energy_disp).margin(TOL));
-        REQUIRE(VectorsAreEqual(g, grad_disp, TOL));
-        REQUIRE(VectorsAreEqual(g_real, real_grad_disp, TOL));
-        REQUIRE(VectorsAreEqual(v, virial_disp, TOL));
-    }
-
-    SECTION("Buckingham") {
-        double e_nograd = s.Buckingham(false);
-        double e = s.Buckingham(true);
-        std::vector<double> g = s.GetGrads();
-        std::vector<double> g_real = s.GetRealGrads();
-        std::vector<double> v = s.GetVirial();
-
-        REQUIRE(e_nograd == Approx(energy_buck).margin(TOL));
-        REQUIRE(e == Approx(energy_buck).margin(TOL));
-        REQUIRE(VectorsAreEqual(g, grad_buck, TOL));
-        REQUIRE(VectorsAreEqual(g_real, real_grad_buck, TOL));
-        REQUIRE(VectorsAreEqual(v, virial_buck, TOL));
-    }
-
-    SECTION("Lennard Jones") {
-        double e_nograd = s.LennardJones(false);
-        double e = s.LennardJones(true);
-        std::vector<double> g = s.GetGrads();
-        std::vector<double> g_real = s.GetRealGrads();
-        std::vector<double> v = s.GetVirial();
-
-        REQUIRE(e_nograd == Approx(energy_lj).margin(TOL));
-        REQUIRE(e == Approx(energy_lj).margin(TOL));
-        REQUIRE(VectorsAreEqual(g, grad_lj, TOL));
-        REQUIRE(VectorsAreEqual(g_real, real_grad_lj, TOL));
-        REQUIRE(VectorsAreEqual(v, virial_lj, TOL));
-    }
-
-    SECTION("Classical One Body") {
-        double e_nograd = s.ClassicPotential(false);
-        double e = s.ClassicPotential(true);
-        std::vector<double> g = s.GetGrads();
-        std::vector<double> g_real = s.GetRealGrads();
-        std::vector<double> v = s.GetVirial();
-
-        REQUIRE(e_nograd == Approx(energy_ff).margin(TOL));
-        REQUIRE(e == Approx(energy_ff).margin(TOL));
-        REQUIRE(VectorsAreEqual(g, grad_ff, TOL));
-        REQUIRE(VectorsAreEqual(g_real, real_grad_ff, TOL));
-        REQUIRE(VectorsAreEqual(v, virial_ff, TOL));
-    }
+    TestEnergy(s, testData);
 }
