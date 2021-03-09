@@ -6,6 +6,7 @@
 
 #Libraries
 import sys,os
+import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
@@ -65,11 +66,32 @@ for j in range(len(folders)):
     for i in range(len(all_times)): # num_cores
       reordered_times[j][k-1].append(all_times[i][j][k])
 
+# copy it 
+scalings = copy.deepcopy(reordered_times)
+
+for j in range(len(folders)):
+  for k in range(1,len(all_times[0][0])):   # each contribution
+    for i in range(len(all_times)): # num_cores
+      if reordered_times[j][k-1][i] < 0.00001:
+        scalings[j][k-1][i] = 1.0
+      else:
+        scalings[j][k-1][i] = reordered_times[j][k-1][0] / reordered_times[j][k-1][i]
+
 # Make it cumulative
 for i in range(len(reordered_times)):
   for j in range(1,len(reordered_times[i])):  
     for k in range(len(reordered_times[i][j])): 
       reordered_times[i][j][k] += reordered_times[i][j-1][k]
+
+tot_scaling = []
+for i in range(len(reordered_times)):
+  tot_scaling.append([])
+  for k in range(len(reordered_times[i][-1])): # num_cores
+    if reordered_times[i][-1][k] < 0.00001:
+      tot_scaling[-1].append(1.0)
+    else:
+      tot_scaling[-1].append(reordered_times[i][-1][0] / reordered_times[i][-1][k])
+  
 
 ### Figure
 xi = np.linspace(-100, 100 ,1000, endpoint = True)
@@ -108,6 +130,45 @@ for i in range(len(folders)):
   os.system("cp " + name +".png $HOME")
   
 
+# Now going for the scaling plot
+
+for i in range(len(folders)):
+
+  #Creationg of figure
+  fig, axs = plt.subplots(1, 1, figsize=(6,6))
+  rcParams['font.family'] = 'Helvetica'
+
+  for j in range(len(scalings[i])):
+    axs.plot(nprocs, scalings[i][j],marker='o', color = colors[j],linestyle='-')
+  
+  axs.plot(nprocs,tot_scaling[i],marker='s',color='black',linestyle='-')
+  
+  a = copy.deepcopy(legend_contrib)
+  a.append("Total")
+  axs.legend(a, fontsize=12, loc=0, frameon=False)
+
+  axs.tick_params(top='on', bottom='on', left='on', right='on', direction='in', labelsize=15, length=6)
+  axs.tick_params(which='minor', top='on', bottom='on', left='on', right='on', direction='in', labelsize=15, length=4)
+  axs.set_xlabel('Number of Cores', fontsize=16)
+  axs.set_ylabel('Time (ms)', fontsize=16)
+
+  axs.set_xlim([0.5,max(nprocs) + 0.5])
+  axs.set_ylim([0.5,max(nprocs) + 0.5])
+
+  axs.plot(xi,yi, '--',color ='grey')
+
+  #Tight layout
+  plt.tight_layout()
+
+  #Save images
+  name = 'scaling_' + folders[i]
+
+  figName = name +'.png'
+  plt.savefig(figName, format='png', dpi=1000)
+  figName = name +'.pdf'
+  plt.savefig(figName, format='pdf', dpi=1000)
+
+  os.system("cp " + name +".png $HOME")
 
 
 

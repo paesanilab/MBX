@@ -11,9 +11,10 @@ add_executable(mbd mbd.cpp)
 add_executable(test_virial test_virial.cpp)
 add_executable(test_virial_dimer_scan test_virial_dimer_scan.cpp)
 add_executable(generate_define_system generate_define_system.cpp)
+add_executable(get_timings get_timings.cpp)
 
 #foreach(t combinations-test energy_wograd-test energy_wgrad-test io-test timing elec_tools-test getset-test pbc-test sys-test generate_define_system)
-foreach(t n_single_point test_single_point energy_wograd-test energy_wgrad-test io-test getset-test system-test bad_inputs-test get_2b_energies_list mbd test_virial test_virial_dimer_scan generate_define_system)
+foreach(t n_single_point test_single_point energy_wograd-test energy_wgrad-test io-test getset-test system-test bad_inputs-test get_2b_energies_list mbd test_virial test_virial_dimer_scan generate_define_system get_timings)
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR})
 target_include_directories(${t} PRIVATE ${CMAKE_SOURCE_DIR}/../external/)
 
