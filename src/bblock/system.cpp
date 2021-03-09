@@ -1125,8 +1125,8 @@ void System::SetUpFromJson(nlohmann::json j) {
     try {
         lj_alpha_ = j["MBX"]["alpha_ewald_lj"];
     } catch (...) {
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << lj_alpha_ << "\n";
+        // if (mpi_rank_ == 0)
+        //    std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << lj_alpha_ << "\n";
     }
     mbx_j_["MBX"]["alpha_ewald_lj"] = lj_alpha_;
 

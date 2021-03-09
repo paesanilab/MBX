@@ -1573,7 +1573,7 @@ class System {
     /**
      * MPI rank
      */
-    MPI_Comm mpi_rank_;
+    int mpi_rank_;
 
     /**
      * MPI processor grid
