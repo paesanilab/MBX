@@ -130,6 +130,76 @@ class Buckingham {
      */
     void SetCutoff(double cutoff);
 
+    // Getters
+    /**
+     * @brief Returns the IsLocal variable in the class
+     */
+    std::vector<size_t> GetIsLocal();
+    /**
+     * @brief Returns the vector with the indexes for which ttm will be enforced due to high distorsions
+     */
+    std::vector<size_t> GetEnforceTTMForIndex();
+    /**
+     * @brief Returns the vector with the pairs for which TTM must be computed.
+     */
+    std::vector<std::pair<std::string, std::string> > GetBuckPairs();
+    /**
+     * @brief Returns the monomers ids variable in the class
+     */
+    std::vector<std::string> GetMonIds();
+    /**
+     * @brief Returns the vector with number of atoms in the class
+     */
+    std::vector<size_t> GetNumAtomsVector();
+    /**
+     * @brief Returns the count of monomers of each type variable in the class
+     */
+    std::vector<std::pair<std::string, size_t> > GetMonTypeCount();
+    /**
+     * @brief Returns the do_grads variable in the class
+     */
+    bool GetDoGrads();
+    /**
+     * @brief Returns the box variable in the class
+     */
+    std::vector<double> GetBox();
+    /**
+     * @brief Returns the box inverse variable in the class
+     */
+    std::vector<double> GetBoxInverse();
+    /**
+     * @brief Returns the xyz variable in system order in the class
+     */
+    std::vector<double> GetSystemXyz();
+    /**
+     * @brief Returns the xyz variable in internal order in the class
+     */
+    std::vector<double> GetInternalXyz();
+    /**
+     * @brief Returns the gradients in internal order in the class
+     */
+    std::vector<double> GetInternalGrads();
+    /**
+     * @brief Returns the gradients in system order in the class
+     */
+    std::vector<double> GetSystemGrads();
+    /**
+     * @brief Returns the  variable in the class
+     */
+    std::vector<double> GetVirial();
+    /**
+     * @brief Gets the cutoff for real space interactions
+     */
+    double GetCutoff();
+    /**
+     * @brief Gets the current dispersion repulsion json
+     */
+    nlohmann::json GetJsonDispersionRepulsion();
+    /**
+     * @brief Gets the current monomer info json
+     */
+    nlohmann::json GetJsonMonomers();
+
    private:
     /**
      * @brief Reorganizes data from system order to vectorized order

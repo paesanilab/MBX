@@ -12,6 +12,7 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-poly-3b.cpp
     unittest-poly-holder-3b.cpp
     unittest-energy3b.cpp
+    unittest-buckingham.cpp
     unittest-bucktools.cpp
     unittest-bond.cpp
     unittest-angle.cpp
@@ -25,6 +26,13 @@ set( SOURCES_UNITTESTS_TESTS
     unittest-dispersion.cpp
     unittest-ljtools.cpp
     unittest-lj.cpp
+    unittest-pme-nopolarization.cpp
+    unittest-pme-nopolarization-findif.cpp
+    unittest-pme-withpolarization.cpp
+    unittest-pme-withpolarization-findif.cpp
+    unittest-electrostatics.cpp
+    unittest-gamma.cpp
+    unittest-system.cpp
 )
     
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )

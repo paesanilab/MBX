@@ -199,6 +199,28 @@ class System {
     size_t GetFirstInd(size_t n);
 
     /**
+     * Gets the position of the first site of each monomer in the atoms vector
+     * @return Vector with first index of all monomers
+     */
+    std::vector<size_t> GetFirstInd();
+
+    /**
+     * Gets the position of the first site of each monomer in the atoms vector
+     * @return Vector with first index of all monomers, not counting the virtual sites
+     */
+    std::vector<size_t> GetFirstIndRealSites();
+
+    /**
+     * Gets the vector with the number of sites of each monomer
+     */
+    std::vector<size_t> GetSitesVector();
+
+    /**
+     * Gets the vector with the number of atoms of each monomer
+     */
+    std::vector<size_t> GetAtomsVector();
+
+    /**
      * Gets the pairs involving, as the first index, the monomers specified.
      * It will return dimers or trimers depending on nmax.
      * @param[in] nmax Maximum order of the pairs. 2 will calculate dimers.
@@ -652,6 +674,24 @@ class System {
      * @param[in] j Json object with the system specifications
      **/
     void SetUpFromJson(nlohmann::json j);
+
+    /**
+     * Gets the json specifications
+     * @return Json object in the system
+     */
+    std::string GetJsonText();
+
+    /**
+     * Gets the json specifications
+     * @return Json object in for dispersion repulsion
+     */
+    std::string GetJsonDispersionRepulsionText();
+
+    /**
+     * Gets the json specifications
+     * @return Json object for monoemr info
+     */
+    std::string GetJsonMonomersText();
 
     /**
      * Gets the json specifications
@@ -1533,7 +1573,7 @@ class System {
     /**
      * MPI rank
      */
-    MPI_Comm mpi_rank_;
+    int mpi_rank_;
 
     /**
      * MPI processor grid
