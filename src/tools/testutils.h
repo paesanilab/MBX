@@ -66,3 +66,55 @@ bool VectorsAreEqual(const std::vector<T>& computed, const std::vector<T>& expec
         return x == y;
     });
 }
+
+class TestEnergyData {
+   public:
+    TestEnergyData() {}
+    ~TestEnergyData() {}
+    double total_energy;
+    std::vector<double> real_grad;
+    std::vector<double> grad;
+    std::vector<double> virial;
+    double energy_1b;
+    std::vector<double> real_grad_1b;
+    std::vector<double> grad_1b;
+    std::vector<double> virial_1b;
+    double energy_2b;
+    std::vector<double> real_grad_2b;
+    std::vector<double> grad_2b;
+    std::vector<double> virial_2b;
+    double energy_3b;
+    std::vector<double> real_grad_3b;
+    std::vector<double> grad_3b;
+    std::vector<double> virial_3b;
+    double energy_disp;
+    std::vector<double> real_grad_disp;
+    std::vector<double> grad_disp;
+    std::vector<double> virial_disp;
+    double energy_buck;
+    std::vector<double> real_grad_buck;
+    std::vector<double> grad_buck;
+    std::vector<double> virial_buck;
+    double energy_lj;
+    std::vector<double> real_grad_lj;
+    std::vector<double> grad_lj;
+    std::vector<double> virial_lj;
+    double energy_ff;
+    std::vector<double> real_grad_ff;
+    std::vector<double> grad_ff;
+    std::vector<double> virial_ff;
+    std::string json_mbx;
+    std::string json_mon;
+    std::string json_repdisp;
+    std::vector<double> coords;
+    std::vector<double> real_coords;
+    std::vector<std::string> atom_names;
+    std::vector<std::string> real_atom_names;
+    std::vector<std::string> monomer_names;
+    std::vector<size_t> first_index;
+    std::vector<size_t> real_first_index;
+    std::vector<size_t> natoms;
+    std::vector<size_t> nsites;
+    size_t tot_sites;
+    size_t tot_atoms;
+};

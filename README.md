@@ -155,6 +155,15 @@ cd LAMMPS_HOME/src/
 make yes-USER-MBX yes-MOLECULE
 make mpi_mbx -j 4
 ```
+It is possible that there is a compilation error at this point regarding an undefined reference to `FIX_MBX`.
+If so, while being in the src folder in LAMMPS, do the following:
+```
+rm style_fix.h style_pair.h 
+make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID
+touch fix_mbx.* pair_mbx.*
+make mpi_mbx -j 8
+```
+
 After this, a new executable `lmp_mpi_mbx` in `src` should apear, and that is the executable you want to use for LAMMPS.
 
 Further doucmentation will follow up. For now, look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. 
