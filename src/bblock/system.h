@@ -199,6 +199,28 @@ class System {
     size_t GetFirstInd(size_t n);
 
     /**
+     * Gets the position of the first site of each monomer in the atoms vector
+     * @return Vector with first index of all monomers
+     */
+    std::vector<size_t> GetFirstInd();
+
+    /**
+     * Gets the position of the first site of each monomer in the atoms vector
+     * @return Vector with first index of all monomers, not counting the virtual sites
+     */
+    std::vector<size_t> GetFirstIndRealSites();
+
+    /**
+     * Gets the vector with the number of sites of each monomer
+     */
+    std::vector<size_t> GetSitesVector();
+
+    /**
+     * Gets the vector with the number of atoms of each monomer
+     */
+    std::vector<size_t> GetAtomsVector();
+
+    /**
      * Gets the pairs involving, as the first index, the monomers specified.
      * It will return dimers or trimers depending on nmax.
      * @param[in] nmax Maximum order of the pairs. 2 will calculate dimers.
@@ -590,7 +612,7 @@ class System {
      * To see the default values of the initialization,
      * please read the documentation.
      */
-    void InitializePME();
+    // void InitializePME();
 
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
@@ -652,6 +674,24 @@ class System {
      * @param[in] j Json object with the system specifications
      **/
     void SetUpFromJson(nlohmann::json j);
+
+    /**
+     * Gets the json specifications
+     * @return Json object in the system
+     */
+    std::string GetJsonText();
+
+    /**
+     * Gets the json specifications
+     * @return Json object in for dispersion repulsion
+     */
+    std::string GetJsonDispersionRepulsionText();
+
+    /**
+     * Gets the json specifications
+     * @return Json object for monoemr info
+     */
+    std::string GetJsonMonomersText();
 
     /**
      * Gets the json specifications
@@ -1531,6 +1571,11 @@ class System {
     MPI_Comm world_;
 
     /**
+     * MPI rank
+     */
+    int mpi_rank_;
+
+    /**
      * MPI processor grid
      */
     size_t proc_grid_x_;
@@ -1555,6 +1600,12 @@ class System {
      */
     std::vector<int> grid_fftdim_elec_;
     std::vector<int> grid_fftdim_disp_;
+    std::vector<int> grid_fftdim_lj_;
+
+    /**
+     * States if the initialization is PME only or not"
+     */
+    // bool isPME_;
 };
 
 }  // namespace bblock

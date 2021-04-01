@@ -60,6 +60,7 @@ TEST_CASE("disptools::tang_toennies") {
     REQUIRE(disp::tang_toennies(6, 7.7861960823e+00) == Approx(6.5982125868e-01).margin(TOL));
     REQUIRE(disp::tang_toennies(6, 2.0237085301e+01) == Approx(9.9978489638e-01).margin(TOL));
     REQUIRE(disp::tang_toennies(6, 2.4523130297e+01) == Approx(9.9999118823e-01).margin(TOL));
+    REQUIRE(disp::tang_toennies(6, 1.0) == Approx(8.3241149288e-05).margin(TOL));
 }
 
 TEST_CASE("disptools::disp6") {

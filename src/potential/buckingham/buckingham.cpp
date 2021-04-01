@@ -36,11 +36,76 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace buck {
 
+std::vector<size_t> Buckingham::GetIsLocal() { return islocal_; }
+std::vector<size_t> Buckingham::GetEnforceTTMForIndex() { return force_ttm_for_idx_; }
+std::vector<std::string> Buckingham::GetMonIds() { return mon_id_; }
+std::vector<size_t> Buckingham::GetNumAtomsVector() { return num_atoms_; }
+std::vector<std::pair<std::string, size_t> > Buckingham::GetMonTypeCount() { return mon_type_count_; }
+bool Buckingham::GetDoGrads() { return do_grads_; }
+std::vector<double> Buckingham::GetBox() { return box_; }
+std::vector<double> Buckingham::GetBoxInverse() { return box_inverse_; }
+std::vector<double> Buckingham::GetSystemXyz() { return sys_xyz_; }
+std::vector<double> Buckingham::GetInternalXyz() { return xyz_; }
+std::vector<double> Buckingham::GetInternalGrads() { return grad_; }
+std::vector<double> Buckingham::GetSystemGrads() { return sys_grad_; }
+std::vector<double> Buckingham::GetVirial() { return virial_; }
+std::vector<std::pair<std::string, std::string> > Buckingham::GetBuckPairs() { return buck_pairs_; }
+double Buckingham::GetCutoff() { return cutoff_; }
+
 void Buckingham::Initialize(const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                             const std::vector<size_t> &num_atoms,
                             const std::vector<std::pair<std::string, size_t> > &mon_type_count,
                             const std::vector<size_t> force_ttm_for_idx, const std::vector<size_t> &islocal,
                             const bool do_grads = true, const std::vector<double> &box = {}) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < sys_xyz.size(); i++) {
+        std::cerr << sys_xyz[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "mon_id:\n";
+    for (size_t i = 0; i < mon_id.size(); i++) {
+        std::cerr << mon_id[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "num_atoms:\n";
+    for (size_t i = 0; i < num_atoms.size(); i++) {
+        std::cerr << num_atoms[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "mon_type_count:\n";
+    for (size_t i = 0; i < mon_type_count.size(); i++) {
+        std::cerr << " { " << mon_type_count[i].first << " , " << mon_type_count[i].second << " } , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "force_ttm_for_idx:\n";
+    for (size_t i = 0; i < force_ttm_for_idx.size(); i++) {
+        std::cerr << force_ttm_for_idx[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "islocal:\n";
+    for (size_t i = 0; i < islocal.size(); i++) {
+        std::cerr << islocal[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "box:\n";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "doGrads = " << do_grads << std::endl;
+#endif
+
     sys_xyz_ = sys_xyz;
     islocal_ = islocal;
     mon_id_ = mon_id;
@@ -60,15 +125,61 @@ void Buckingham::Initialize(const std::vector<double> &sys_xyz, const std::vecto
     virial_ = std::vector<double>(9, 0.0);
 
     ReorderData();
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "xyz internal:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 void Buckingham::SetJsonDispersionRepulsion(nlohmann::json repdisp_j) { repdisp_j_ = repdisp_j; }
 void Buckingham::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
 
+nlohmann::json Buckingham::GetJsonDispersionRepulsion() { return repdisp_j_; }
+nlohmann::json Buckingham::GetJsonMonomers() { return mon_j_; }
+
 void Buckingham::SetNewParameters(const std::vector<double> &xyz,
                                   const std::vector<std::pair<std::string, std::string> > &buck_pairs,
                                   const std::vector<size_t> force_ttm_for_idx, bool do_grads = true,
                                   const double cutoff = 100.0, const std::vector<double> &box = {}) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "Sys Xyz:\n";
+    for (size_t i = 0; i < xyz.size(); i++) {
+        std::cerr << xyz[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "buck_pairs:\n";
+    for (size_t i = 0; i < buck_pairs.size(); i++) {
+        std::cerr << "{" << buck_pairs[i].first << " , " << buck_pairs[i].second << "} ,";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "force_ttm_for_idx:\n";
+    for (size_t i = 0; i < force_ttm_for_idx.size(); i++) {
+        std::cerr << force_ttm_for_idx[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "box:\n";
+    for (size_t i = 0; i < box.size(); i++) {
+        std::cerr << box[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "doGrads = " << do_grads << std::endl;
+    std::cerr << "cutoff = " << cutoff << std::endl;
+#endif
+
     sys_xyz_ = xyz;
     box_ = box;
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
@@ -80,6 +191,17 @@ void Buckingham::SetNewParameters(const std::vector<double> &xyz,
     std::fill(grad_.begin(), grad_.end(), 0.0);
 
     ReorderData();
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "xyz internal:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 }
 
 void Buckingham::ReorderData() {
@@ -108,6 +230,27 @@ void Buckingham::ReorderData() {
 }
 
 double Buckingham::GetRepulsion(std::vector<double> &grad, std::vector<double> *virial, bool use_ghost) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "grad:\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "use_ghost = " << use_ghost << std::endl;
+#endif
+
     calc_virial_ = false;
 
     if (virial != 0) {
@@ -154,6 +297,27 @@ double Buckingham::GetRepulsion(std::vector<double> &grad, std::vector<double> *
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+
+    std::cerr << "grad:\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    if (virial != 0) {
+        std::cerr << "virial:\n";
+        for (size_t i = 0; i < (*virial).size(); i++) {
+            std::cerr << (*virial)[i] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+
+    std::cerr << "Repulsion energy = " << rep_energy_ << std::endl;
+#endif
 
     return rep_energy_;
 }
