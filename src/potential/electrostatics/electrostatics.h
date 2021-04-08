@@ -81,6 +81,11 @@ enum {
     ELE_COMM_FORSET,
     ELE_COMM_FOR,
 
+    ELE_PME_SETUP,
+    ELE_PME_PRC,
+    ELE_PME_PRD,
+    ELE_PME_PRE,
+    
     ELE_NUM_TIMERS
 };
 

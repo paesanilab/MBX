@@ -1052,7 +1052,7 @@ void FixMBX::mbx_init_full() {
 
     // gather data from other MPI ranks
 
-    const int nlocal = atom->nlocal;
+    int nlocal = atom->nlocal;
     const int nall = nlocal + atom->nghost;
     const int natoms = atom->natoms;
     tagint *tag = atom->tag;
@@ -1682,6 +1682,12 @@ void FixMBX::mbxt_write_summary() {
     mbxt_print_time("ELE_GRAD_REAL", MBXT_ELE_GRAD_REAL, t);
     mbxt_print_time("ELE_GRAD_PME", MBXT_ELE_GRAD_PME, t);
     mbxt_print_time("ELE_GRAD_FIN", MBXT_ELE_GRAD_FIN, t);
+
+    mbxt_print_time("ELE_PME_SETUP", MBXT_ELE_PME_SETUP, t);
+    mbxt_print_time("ELE_PME_C", MBXT_ELE_PME_C, t);
+    mbxt_print_time("ELE_PME_D", MBXT_ELE_PME_D, t);
+    mbxt_print_time("ELE_PME_E", MBXT_ELE_PME_E, t);
+    
     mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
     mbxt_print_time("ELE_COMM_REVSET", MBXT_ELE_COMM_REVSET, t);
     mbxt_print_time("ELE_COMM_REV", MBXT_ELE_COMM_REV, t);
