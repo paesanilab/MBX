@@ -594,6 +594,7 @@ class Electrostatics {
 
     std::vector<size_t> mbxt_ele_count_;
     std::vector<double> mbxt_ele_time_;
+  
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
 

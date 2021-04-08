@@ -981,62 +981,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
-	mbxt_ele_count_[ELE_PME_SETUP] ++;
+	mbxt_ele_count_[ELE_PME_SETUP]++;
 	mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
 	
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
-
-#if 0
-        // Zero property of particles outside local region
-
-        // proc grid order hard-coded (as above) for ZYX NodeOrder
-
-        int proc_x = me % proc_grid_x_;
-        int proc_y = (me % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
-        int proc_z = me / (proc_grid_x_ * proc_grid_y_);
-
-        // include particles within local sub-domain and small halo region
-        // this allows the full ghost region to be included for pairwise calculations,
-        // but should exclude ghost monomers that are periodic images of local monomer
-
-	double padding = cutoff_ * 0.5;
-        double dx = A / (double)proc_grid_x_;
-        double dy = B / (double)proc_grid_y_;
-        double dz = C / (double)proc_grid_z_;
-
-        double xlo = proc_x * dx - padding;
-        double xhi = (proc_x + 1) * dx + padding;
-
-        double ylo = proc_y * dy - padding;
-        double yhi = (proc_y + 1) * dy + padding;
-
-        double zlo = proc_z * dz - padding;
-        double zhi = (proc_z + 1) * dz + padding;
-
-        std::vector<double> sys_chg_local_(sys_chg_.size(), 0.0);
-        for (int i = 0; i < nsites_; ++i) sys_chg_local_[i] = sys_chg_[i];
-
-        const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
-
-        for (int i = 0; i < nsites_; ++i) {
-            double x = coords(i, 0);
-            double y = coords(i, 1);
-            double z = coords(i, 2);
-
-            bool local = true;
-            if (x <= xlo || x > xhi) local = false;
-            if (y <= ylo || y > yhi) local = false;
-            if (z <= zlo || z > zhi) local = false;
-
-            if (!local) sys_chg_local_[i] = 0.0;
-        }
-
-        auto charges = helpme::Matrix<double>(sys_chg_local_.data(), nsites_, 1);
-#else
         auto charges = helpme::Matrix<double>(sys_chg_.data(), nsites_, 1);
-#endif
-
         auto result = helpme::Matrix<double>(rec_phi_and_field_.data(), nsites_, 4);
         std::fill(rec_phi_and_field_.begin(), rec_phi_and_field_.end(), 0);
 
@@ -1065,12 +1015,8 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
             fi_mon += nmon;
             fi_sites += nmon * ns;
         }
+	
         // The Ewald self potential
-        // double *phi_ptr = phi_.data();
-        // for (const auto &q : chg_) {
-        //     *phi_ptr -= 2 * ewald_alpha_ / PIQSRT * q;
-        //     ++phi_ptr;
-        // }
 
         for (int i = 0; i < nsites_; ++i) phi_[i] -= 2 * ewald_alpha_ / PIQSRT * chg_[i] * islocal_atom_[i];
     }

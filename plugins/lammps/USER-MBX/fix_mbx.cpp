@@ -273,7 +273,7 @@ FixMBX::~FixMBX() {
     if (ptr_mbx_full) delete ptr_mbx_full;
 
     if (ptr_mbx_local) {
-        // accumulate timing info from pme electrostatics
+        // accumulate timing info from electrostatics pme
 
         std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
         std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
@@ -283,6 +283,16 @@ FixMBX::~FixMBX() {
             mbxt_time[MBXT_ELE_PERMDIP_REAL + i] += tmpd[i];
         }
 
+	// accumulate timing info from dispersion pme
+	
+        std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
+        std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
+
+        for (int i = 0; i < tmpi_d.size(); ++i) {
+            mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
+            mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
+        }
+	
         delete ptr_mbx_local;
     }
 
@@ -423,7 +433,7 @@ void FixMBX::post_neighbor() {
     if (ptr_mbx) delete ptr_mbx;
     if (ptr_mbx_full) delete ptr_mbx_full;
     if (ptr_mbx_local) {
-        // accumulate timing info from pme electrostatics
+        // accumulate timing info from electrostatics pme
 
         std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
         std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
@@ -433,6 +443,16 @@ void FixMBX::post_neighbor() {
             mbxt_time[MBXT_ELE_PERMDIP_REAL + i] += tmpd[i];
         }
 
+	// accumulate timing info from dispersion pme
+	
+        std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
+        std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
+
+        for (int i = 0; i < tmpi_d.size(); ++i) {
+            mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
+            mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
+        }
+	
         delete ptr_mbx_local;
     }
 
@@ -1687,6 +1707,9 @@ void FixMBX::mbxt_write_summary() {
     mbxt_print_time("ELE_PME_C", MBXT_ELE_PME_C, t);
     mbxt_print_time("ELE_PME_D", MBXT_ELE_PME_D, t);
     mbxt_print_time("ELE_PME_E", MBXT_ELE_PME_E, t);
+
+    mbxt_print_time("DISP_PME_SETUP", MBXT_DISP_PME_SETUP, t);
+    mbxt_print_time("DISP_PME_E", MBXT_DISP_PME_E, t);
     
     mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
     mbxt_print_time("ELE_COMM_REVSET", MBXT_ELE_COMM_REVSET, t);

@@ -66,6 +66,9 @@ enum {
       MBXT_ELE_PME_C,
       MBXT_ELE_PME_D,
       MBXT_ELE_PME_E,
+
+      MBXT_DISP_PME_SETUP,
+      MBXT_DISP_PME_E,
       
       MBXT_NUM_TIMERS
 };

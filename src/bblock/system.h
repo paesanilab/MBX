@@ -952,6 +952,9 @@ class System {
 
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
+  
+    std::vector<size_t> GetInfoDispersionCounts();
+    std::vector<double> GetInfoDispersionTimings();
 
    private:
     /**
