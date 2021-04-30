@@ -140,6 +140,15 @@ void Electrostatics::SetDipoleMaxIt(size_t maxit) { maxit_ = maxit; }
 
 void Electrostatics::SetPeriodicity(bool periodic) { simcell_periodic_ = periodic; }
 
+void Electrostatics::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
+    external_charge_ = chg;
+    external_charge_xyz_ = xyz;
+}
+
+std::vector<double> Electrostatics::GetExternalCharges() { return external_charge_; }
+
+std::vector<double> Electrostatics::GetExternalChargesPositions() { return external_charge_xyz_; }
+
 void Electrostatics::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
 
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
@@ -280,6 +289,8 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     islocal_atom_ = std::vector<size_t>(nsites_, 0.0);
     islocal_atom_xyz_ = std::vector<size_t>(nsites3, 0.0);
     atom_tag_ = std::vector<int>(nsites_, 0);
+    external_charge_.clear();
+    external_charge_xyz_.clear();
     aCC_ = 0.4;
     aCD_ = 0.4;
     aDD_ = 0.055;
@@ -469,6 +480,10 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
 
         std::fill(mu_pred_.begin(), mu_pred_.end(), 0.0);
     }
+
+    // MRR TODO Is this needed?
+    external_charge_.clear();
+    external_charge_xyz_.clear();
 
     ReorderData();
 
@@ -6458,6 +6473,8 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField(use_ghost);
+    CalculateExternalPermanentElectricField();
+    UpdatePermanentElectricField();
     CalculateDipoles();
     CalculateElecEnergy();
     if (do_grads_) CalculateGradients(grad);
@@ -6843,6 +6860,40 @@ void Electrostatics::setup_comm() {
     }
 #endif
 #endif
+}
+
+void Electrostatics::CalculateExternalPermanentElectricField() {
+    // We have xyz and q of external field
+    // external_charge_ and external_charge_xyz_
+    // positions of the system atoms -> sys_xyz
+
+    size_t nsites = sys_xyz_.size() / 3;
+    Efq_external_ = std::vector<double>(sys_xyz_.size(), 0.0);
+
+    for (size_t i = 0; i < external_charge_.size(); i++) {
+        for (size_t j = 0; j < nsites; j++) {
+            // E = 1 / (4piE0) /r^2 * r
+            std::vector<double> r(3, 0.0);
+            double r2 = 0.0;
+            for (size_t k = 0; k < 3; k++) {
+                // extrnal charge pos - system charge pos
+                r[k] = external_charge_xyz_[3 * i + k] - sys_xyz_[3 * j + k];
+                r2 += r[k] * r[k];
+            }
+
+            for (size_t k = 0; k < 3; k++) {
+                // TODO check unit conversion
+                double unit_conversion = 1.0;
+                Efq_external_[3 * j + k] += unit_conversion * external_charge_[i] / r2 * r[k];
+            }
+        }
+    }
+}
+
+void Electrostatics::UpdatePermanentElectricField() {
+    for (size_t i = 0; i < Efq_.size(); i++) {
+        Efq_[i] += Efq_external_[i];
+    }
 }
 
 }  // namespace elec

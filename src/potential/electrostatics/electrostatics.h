@@ -220,6 +220,26 @@ class Electrostatics {
     void SetEwaldSplineOrder(int order);
 
     /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
+
+    /**
+     * @brief Gets the external charges that are currently in the class
+     * @return External charges in the class
+     */
+    std::vector<double> GetExternalCharges();
+
+    /**
+     * @brief Gets the external charges XYZ that are currently in the class
+     * @return External charges XYZ in the class
+     */
+    std::vector<double> GetExternalChargesPositions();
+
+    /**
      * @brief Returns permanent electrostatic energy.
      *
      * @return Permanent electrostatic energy. Undefined if energy has not yet been calculated
@@ -407,6 +427,8 @@ class Electrostatics {
     void SetPeriodicity(bool periodic);
 
    private:
+    void CalculateExternalPermanentElectricField();
+    void UpdatePermanentElectricField();
     void CalculatePermanentElecField(bool use_ghost = 0);
     void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
     void CalculateDipolesIterative();
@@ -623,6 +645,21 @@ class Electrostatics {
     std::vector<std::vector<int>> nncomm_for_recvlist;
 
     nlohmann::json mon_j_;
+
+    /*
+     * External charges treated as point charges without smearing
+     */
+    std::vector<double> external_charge_;
+
+    /*
+     * External charge positions
+     */
+    std::vector<double> external_charge_xyz_;
+
+    /*
+     * Electric field due to external atoms in each of the positions of the real atoms
+     */
+    std::vector<double> Efq_external_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
