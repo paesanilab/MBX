@@ -649,7 +649,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                 bool is13 = systools::IsExcluded(exc13, i, j);
                 bool is14 = systools::IsExcluded(exc14, i, j);
                 double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
-
+                aCC = systools::GetAcc(mon_type_count_[mt].first);
                 // Get a1a2 and check if is not 0.
                 double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
                 double Ai = 0.0;

@@ -122,6 +122,18 @@ size_t System::GetNumRealSites() { return numat_; }
 
 size_t System::GetMonNumAt(size_t n) { return nat_[original2current_order_[n]]; }
 
+ std::vector<double> System::GetExternalCharges() {
+  return electrostaticE_.GetExternalCharges();
+}
+
+ std::vector<double> System::GetExternalChargesPositions() {
+  return electrostaticE_.GetExternalChargesPositions();
+}
+
+void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
+  electrostaticE_.SetExternalChargesAndPositions(chg,xyz);
+}
+
 std::vector<size_t> System::GetMonNumAt() {
     std::vector<size_t> monnumat(nat_.size(), 0);
     for (size_t i = 0; i < nat_.size(); i++) {

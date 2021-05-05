@@ -172,6 +172,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
 
                 // =====>> BEGIN SECTION SITES <<=====
                 // ==> PASTE YOUR CODE BELOW <==
+            } else if (mon[i] == "dp1") {
+                sites.push_back(1);
+                nat.push_back(1);
 
             } else if (mon[i] == "ch4") {
                 sites.push_back(5);
@@ -720,6 +723,8 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
             aDD = 0.055;
         }
         // Any other molecule (as for 01/10/2018)
+    } else if ( mon == "dp1") {
+        aDD = 1.0E24;
     } else {
         if (is12 || is13) {
             aDD = 0.3;
@@ -729,6 +734,16 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
     }
 
     return aDD;
+}
+
+double GetAcc(std::string mon) {
+    double aCC = 0.4;
+    // For water
+    if ( mon == "dp1") {
+        aCC = 1.0E24;
+    }
+
+    return aCC;
 }
 
 std::vector<double> ResetOrder3N(std::vector<double> coords, std::vector<std::pair<size_t, size_t>> original_order,
@@ -846,6 +861,10 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv * nsites + 2] = 0.13464325 * CHARGECON;
             charges[fst_ind + nv * nsites + 3] = 0.13464325 * CHARGECON;
             charges[fst_ind + nv * nsites + 4] = 0.13464325 * CHARGECON;
+        }
+    } else if (mon_id == "dp1") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites] = 1.0 * CHARGECON;
         }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -991,6 +1010,10 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 3] = 0.38978363;
             polfac[fst_ind + nv * nsites + 4] = 0.38978363;
         }
+    } else if (mon_id == "dp1") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites ] = 0.0;
+        }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites + 0] = 1.471677;
@@ -1094,6 +1117,10 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv * nsites + 2] = 0.38978363;
             pol[fst_ind + nv * nsites + 3] = 0.38978363;
             pol[fst_ind + nv * nsites + 4] = 0.38978363;
+        }
+    } else if (mon_id == "dp1") {
+        for (size_t nv = 0; nv < n_mon; nv++) { 
+            pol[fst_ind + nv * nsites ] = 0.0;
         }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1228,6 +1255,10 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 4] = 6.064748037;  // H
         }
 
+    } else if (mon_id == "dp1") {
+        for (size_t nv = 0; nv < n_mon; nv++) { 
+            c6_lr[nv * natoms + fst_ind] = 0.0;
+        }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 17.91673320223304547491;      // C
