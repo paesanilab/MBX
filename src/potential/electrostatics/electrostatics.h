@@ -427,8 +427,6 @@ class Electrostatics {
     void SetPeriodicity(bool periodic);
 
    private:
-    void CalculateExternalPermanentElectricField();
-    void UpdatePermanentElectricField();
     void CalculatePermanentElecField(bool use_ghost = 0);
     void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
     void CalculateDipolesIterative();
@@ -657,9 +655,32 @@ class Electrostatics {
     std::vector<double> external_charge_xyz_;
 
     /*
-     * Electric field due to external atoms in each of the positions of the real atoms
+     * External charge electrostatic gradients
      */
-    std::vector<double> Efq_external_;
+    std::vector<double> external_charge_grads_;
+
+    std::vector<double> Efq_all_;
+    std::vector<double> xyz_all_;
+    std::vector<double> phi_all_;
+    std::vector<double> chg_all_;
+    std::vector<double> polfac_all_;
+    std::vector<size_t> sites_all_;
+    std::vector<std::string> mon_id_all_;
+    std::vector<size_t> islocal_all_;
+    std::vector<double> sys_xyz_all_;
+    std::vector<double> sys_chg_all_;
+    size_t nsites_all_;
+    std::vector<double> rec_phi_and_field_all_;
+
+    std::vector<double> mu_all_;
+    std::vector<double> sys_mu_all_;
+    std::vector<double> sys_Efq_all_;
+    std::vector<double> sys_Efd_all_;
+    std::vector<double> sys_phi_all_;
+    std::vector<double> Efd_all_;
+    std::vector<double> sys_grad_all_;
+
+    std::vector<std::pair<std::string, size_t>> mon_type_count_all_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

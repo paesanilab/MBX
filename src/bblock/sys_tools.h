@@ -318,6 +318,7 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
  * intermolecular damping (non-bonded damping).
  */
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
+double GetAcc(std::string mon);
 
 /**
  * @brief Reorders a vector of 3N coordinates, where N is the number

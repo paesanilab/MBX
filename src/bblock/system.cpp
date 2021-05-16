@@ -61,6 +61,7 @@ System::System() {
     monomer_json_read_ = false;
     mpi_initialized_ = false;
     simcell_periodic_ = false;
+    std::cerr << std::setprecision(20);
 
     // Define some of the parameters
 
@@ -122,16 +123,12 @@ size_t System::GetNumRealSites() { return numat_; }
 
 size_t System::GetMonNumAt(size_t n) { return nat_[original2current_order_[n]]; }
 
- std::vector<double> System::GetExternalCharges() {
-  return electrostaticE_.GetExternalCharges();
-}
+std::vector<double> System::GetExternalCharges() { return electrostaticE_.GetExternalCharges(); }
 
- std::vector<double> System::GetExternalChargesPositions() {
-  return electrostaticE_.GetExternalChargesPositions();
-}
+std::vector<double> System::GetExternalChargesPositions() { return electrostaticE_.GetExternalChargesPositions(); }
 
 void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
-  electrostaticE_.SetExternalChargesAndPositions(chg,xyz);
+    electrostaticE_.SetExternalChargesAndPositions(chg, xyz);
 }
 
 std::vector<size_t> System::GetMonNumAt() {
@@ -1816,7 +1813,7 @@ double System::Energy(bool do_grads) {
     energy_ = eff + e1b + e2b + e3b + edisp + ebuck + elj + Eelec;
 
 #ifdef PRINT_INDIVIDUAL_TERMS
-    std::cerr << std::setprecision(10) << std::scientific;
+    std::cerr << std::setprecision(20) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "FF = " << eff << std::endl
               << "2B = " << e2b << std::endl
