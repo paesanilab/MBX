@@ -346,6 +346,58 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
 
     user_fft_grid_ = std::vector<int>{};
 
+    if (nsites_ > 0) {
+        size_t nExtChg = external_charge_.size();
+
+        // Define sizes.
+        Efq_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        xyz_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        phi_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        chg_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        polfac_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        sites_all_ = std::vector<size_t>(nExtChg + mon_id_.size(), 1);
+        mon_id_all_ = std::vector<std::string>(nExtChg + mon_id_.size(), "ext");
+        islocal_all_ = std::vector<size_t>(nExtChg + nsites_, 1);
+        sys_xyz_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        sys_chg_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        rec_phi_and_field_all_ = std::vector<double>((nExtChg + nsites_) * 4, 0.0);
+        external_charge_grads_ = std::vector<double>(3 * nExtChg, 0.0);
+
+        nsites_all_ = nsites_ + nExtChg;
+
+        // Fill the vectors. NOTE. All of them in internal order
+        for (size_t i = 0; i < 3 * nsites_; i++) {
+            xyz_all_[i] = xyz_[i];
+            sys_xyz_all_[i] = sys_xyz_[i];
+        }
+
+        for (size_t i = 0; i < nsites_; i++) {
+            chg_all_[i] = chg_[i];
+            sys_chg_all_[i] = sys_chg_[i];
+            polfac_all_[i] = polfac_[i];
+            islocal_all_[i] = islocal_[i];
+        }
+
+        for (size_t i = 0; i < mon_id_.size(); i++) {
+            sites_all_[i] = sites_[i];
+            mon_id_all_[i] = mon_id_[i];
+        }
+
+        for (size_t i = 0; i < nExtChg; i++) {
+            xyz_all_[3 * nsites_ + i] = external_charge_xyz_[3 * i];
+            xyz_all_[3 * nsites_ + nExtChg + i] = external_charge_xyz_[3 * i + 1];
+            xyz_all_[3 * nsites_ + 2 * nExtChg + i] = external_charge_xyz_[3 * i + 2];
+            sys_xyz_all_[3 * nsites_ + 3 * i] = external_charge_xyz_[3 * i];
+            sys_xyz_all_[3 * nsites_ + 3 * i + 1] = external_charge_xyz_[3 * i + 1];
+            sys_xyz_all_[3 * nsites_ + 3 * i + 2] = external_charge_xyz_[3 * i + 2];
+        }
+
+        for (size_t i = 0; i < nExtChg; i++) {
+            sys_chg_all_[nsites_ + i] = external_charge_[i];
+            chg_all_[nsites_ + i] = external_charge_[i];
+        }
+    }
+
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
