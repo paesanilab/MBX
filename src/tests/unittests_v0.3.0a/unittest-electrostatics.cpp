@@ -407,3 +407,149 @@ TEST_CASE("electrostatics::GetElectrostatics") {
     REQUIRE(VectorsAreEqual(grad, grad_expected, TOL));
     REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
 }
+
+TEST_CASE("ExternalCharges") {
+    dip_method = "cg";
+    std::vector<double> sys_xyz_all = {
+        0.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00, 3.0044591000e+00, -5.1342579600e-02, 1.5813800000e-05,
+        3.9861302100e+00, -7.4573098400e-02, 5.4324000000e-06, 3.1597470900e+00, 8.9671808900e-01,  -1.6493200000e-05,
+        3.2470332363e+00, 1.4597311520e-01,  6.7060829692e-06, 2.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00,
+        0.0000000000e+00, 1.0000000000e+00,  3.0000000000e+00};
+    std::vector<double> chg_all = {1.0000000000e+00,  0.0000000000e+00, 5.3405543676e-01, 5.3891425634e-01,
+                                   -1.0729696931e+00, 1.0000000000e+00, 1.0000000000e+00};
+    std::vector<double> chg_grad_all = {-2.3089648119e-01, -3.6697391856e-02, 3.8002183414e-06, -3.3725442002e-03,
+                                        -3.7193800125e-02, 1.2366163166e-06,  2.3426902539e-01, 7.3891191981e-02,
+                                        -5.0368346580e-06, -4.3543257123e-02, 6.8881684316e-04, 4.7148643171e-07,
+                                        -7.5773440682e-02, -2.2698081049e-01, 8.1723883886e-06, 1.1931669781e-01,
+                                        2.2629199365e-01,  -8.6438748203e-06, 2.7443973832e-01, 3.6008575013e-02,
+                                        -4.2717047731e-06, 7.9145984882e-02,  2.6417461062e-01, -9.4090047051e-06,
+                                        -3.5358572320e-01, -3.0018318563e-01, 1.3680709478e-05};
+    std::vector<double> polfac_all = {1.4760000000e-01, 1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01,
+                                      1.3100000000e+00, 0.0000000000e+00, 0.0000000000e+00};
+    std::vector<double> pol_all = {1.4760000000e-01, 1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01,
+                                   0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
+    std::vector<std::string> mon_id_all = {"na", "h2o", "dp1p", "dp1p"};
+    std::vector<size_t> sites_all = {1, 4, 1, 1};
+    std::vector<size_t> first_index_all = {0, 1, 5, 6};
+    std::vector<std::pair<std::string, size_t>> mon_type_count_all = {{"na", 1}, {"h2o", 1}, {"dp1p", 2}};
+    std::vector<size_t> islocal_all = {1, 1, 1, 1};
+    std::vector<int> sys_atom_tag_all = {0, 0, 1, 2, 0, 0, 0};
+
+    std::vector<double> virial_all = {-1.0068305812e+01, -4.1978585410e+01, 1.5619838891e-03,
+                                      -4.1978585410e+01, 2.2581153762e+01,  -2.5196491692e-04,
+                                      1.5619838891e-03,  -2.5196491692e-04, -2.0864410781e-04};
+
+    std::vector<double> grad_all_expected = {
+        3.8018962724e+01,  1.4752868085e+01,  3.0360755813e+01, 1.3056125408e+03,  -1.2470246801e+02, 1.6007274562e-01,
+        -4.8928699275e+01, 6.1198399574e+01,  3.0093577006e-01, 1.0181171220e+01,  -3.0373550539e+01, 5.9160857131e+00,
+        0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00, -1.3132986576e+03, 9.0509262073e+01,  2.5667167724e+00,
+        8.4049811676e+00,  -1.1383981341e+01, -3.9304192541e+01};
+    std::vector<double> virial_all_expected = {-1.1918770525e+03, 3.1178322905e+01,  -3.0930936944e+01,
+                                               3.1178322905e+01,  -3.3133926848e+01, 3.3360330199e+01,
+                                               -3.0930936944e+01, 3.3360330199e+01,  5.3654968725e+01};
+
+    double energy_expected = -2.4446970924e+02;
+    double eperm_expected = 6.6022974651e+01;
+    double eind_expected = -3.1049268389e+02;
+
+    bool use_ghost = false;
+    bool do_grads = true;
+
+    std::vector<double> box_all = {2.0000000000e+01, 0.0000000000e+00, 0.0000000000e+00,
+                                   0.0000000000e+00, 2.0000000000e+01, 0.0000000000e+00,
+                                   0.0000000000e+00, 0.0000000000e+00, 2.0000000000e+01};
+
+    double cutoff = 9.0;
+
+    std::vector<double> grad_all = {
+        1.9760485636e+00, -6.9738792387e-03, 3.0370468725e-05,  -5.5655279829e+01, -2.3639323578e+01, 1.2771003793e-03,
+        9.2804631466e+00, 4.6329172345e+01,  -1.5340154102e-03, 4.4398758761e+01,  -2.2682891571e+01, 2.2653219276e-04,
+        0.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,
+        0.0000000000e+00, 0.0000000000e+00,  0.0000000000e+00};
+
+    elec::Electrostatics d;
+    d.Initialize(chg_all, chg_grad_all, polfac_all, pol_all, sys_xyz_all, mon_id_all, sites_all, first_index_all,
+                 mon_type_count_all, islocal_all, sys_atom_tag_all, do_grads, tol, maxit, dip_method, box_all);
+
+    d.SetNewParameters(sys_xyz_all, chg_all, chg_grad_all, pol_all, polfac_all, dip_method, do_grads, box_all, cutoff);
+    d.SetEwaldAlpha(0.60);
+    d.SetEwaldGridDensity(2.5);
+    d.SetEwaldSplineOrder(6);
+
+    double energy = d.GetElectrostatics(grad_all, &virial_all, use_ghost);
+    double eind = d.GetInducedElectrostaticEnergy();
+    double eperm = d.GetPermanentElectrostaticEnergy();
+
+    REQUIRE(energy == Approx(energy_expected).margin(TOL));
+    REQUIRE(eperm == Approx(eperm_expected).margin(TOL));
+    REQUIRE(eind == Approx(eind_expected).margin(TOL));
+
+    REQUIRE(VectorsAreEqual(grad_all, grad_all_expected, TOL));
+    REQUIRE(VectorsAreEqual(virial_all, virial_all_expected, TOL));
+
+    std::vector<double> sys_xyz_system = {0.0000000000e+00,  0.0000000000e+00, 0.0000000000e+00, 3.0044591000e+00,
+                                          -5.1342579600e-02, 1.5813800000e-05, 3.9861302100e+00, -7.4573098400e-02,
+                                          5.4324000000e-06,  3.1597470900e+00, 8.9671808900e-01, -1.6493200000e-05,
+                                          3.2470332363e+00,  1.4597311520e-01, 6.7060829692e-06};
+    std::vector<double> chg_system = {1.0000000000e+00, 0.0000000000e+00, 5.3405543676e-01, 5.3891425634e-01,
+                                      -1.0729696931e+00};
+    std::vector<double> polfac_system = {1.4760000000e-01, 1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01,
+                                         1.3100000000e+00};
+    std::vector<double> pol_system = {1.4760000000e-01, 1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01,
+                                      0.0000000000e+00};
+
+    std::vector<std::string> mon_id_system = {"na", "h2o"};
+    std::vector<size_t> sites_system = {1, 4};
+    std::vector<size_t> first_index_system = {0, 1};
+    std::vector<std::pair<std::string, size_t>> mon_type_count_system = {{"na", 1}, {"h2o", 1}};
+    std::vector<size_t> islocal_system = {1, 1};
+    std::vector<int> sys_atom_tag_system = {0, 0, 1, 2, 0};
+
+    std::vector<double> sys_xyz_ext = {2.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00,
+                                       0.0000000000e+00, 1.0000000000e+00, 3.0000000000e+00};
+    std::vector<double> chg_ext = {1.0, 1.0};
+
+    std::vector<double> grad_system = {1.9760485636e+00,  -6.9738792387e-03, 3.0370468725e-05,  -5.5655279829e+01,
+                                       -2.3639323578e+01, 1.2771003793e-03,  9.2804631466e+00,  4.6329172345e+01,
+                                       -1.5340154102e-03, 4.4398758761e+01,  -2.2682891571e+01, 2.2653219276e-04,
+                                       0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00};
+
+    std::vector<double> virial_system = {-1.0068305812e+01, -4.1978585410e+01, 1.5619838891e-03,
+                                         -4.1978585410e+01, 2.2581153762e+01,  -2.5196491692e-04,
+                                         1.5619838891e-03,  -2.5196491692e-04, -2.0864410781e-04};
+
+    std::vector<double> grad_system_expected = {
+        3.8018962724e+01,  1.4752868085e+01,  3.0360755813e+01, 1.3056125408e+03, -1.2470246801e+02,
+        1.6007274562e-01,  -4.8928699275e+01, 6.1198399574e+01, 3.0093577006e-01, 1.0181171220e+01,
+        -3.0373550539e+01, 5.9160857131e+00,  0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
+
+    std::vector<double> grad_external_expected = {-1.3132986576e+03, 9.0509262073e+01,  2.5667167724e+00,
+                                                  8.4049811676e+00,  -1.1383981341e+01, -3.9304192541e+01};
+
+    elec::Electrostatics d2;
+    d2.Initialize(chg_system, chg_grad_all, polfac_system, pol_system, sys_xyz_system, mon_id_system, sites_system,
+                  first_index_system, mon_type_count_system, islocal_system, sys_atom_tag_system, do_grads, tol, maxit,
+                  dip_method, box_all);
+
+    d2.SetExternalChargesAndPositions(chg_ext, sys_xyz_ext);
+
+    d2.SetNewParameters(sys_xyz_system, chg_system, chg_grad_all, pol_system, polfac_system, dip_method, do_grads,
+                        box_all, cutoff);
+    d2.SetEwaldAlpha(0.60);
+    d2.SetEwaldGridDensity(2.5);
+    d2.SetEwaldSplineOrder(6);
+
+    double energy2 = d2.GetElectrostatics(grad_system, &virial_system, use_ghost);
+    double eind2 = d2.GetInducedElectrostaticEnergy();
+    double eperm2 = d2.GetPermanentElectrostaticEnergy();
+
+    std::vector<double> grad_external = d2.GetExternalChargesGradients();
+
+    REQUIRE(energy2 == Approx(energy_expected).margin(TOL));
+    REQUIRE(eperm2 == Approx(eperm_expected).margin(TOL));
+    REQUIRE(eind2 == Approx(eind_expected).margin(TOL));
+
+    REQUIRE(VectorsAreEqual(grad_system, grad_system_expected, TOL));
+    REQUIRE(VectorsAreEqual(grad_external, grad_external_expected, TOL));
+    REQUIRE(VectorsAreEqual(virial_system, virial_all_expected, TOL));
+}

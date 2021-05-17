@@ -240,6 +240,12 @@ class Electrostatics {
     std::vector<double> GetExternalChargesPositions();
 
     /**
+     * @brief Gets the gradients on the external charge sites
+     * @return Vector of doubles with the external charge gradients
+     */
+    std::vector<double> GetExternalChargesGradients();
+
+    /**
      * @brief Returns permanent electrostatic energy.
      *
      * @return Permanent electrostatic energy. Undefined if energy has not yet been calculated

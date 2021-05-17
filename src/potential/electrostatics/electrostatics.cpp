@@ -149,6 +149,8 @@ std::vector<double> Electrostatics::GetExternalCharges() { return external_charg
 
 std::vector<double> Electrostatics::GetExternalChargesPositions() { return external_charge_xyz_; }
 
+std::vector<double> Electrostatics::GetExternalChargesGradients() { return external_charge_grads_; }
+
 void Electrostatics::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
 
 void Electrostatics::Initialize(const std::vector<double> &chg, const std::vector<double> &chg_grad,
@@ -6654,9 +6656,15 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
 
-    std::cerr << "Grads:\n";
+    std::cerr << "Grads (system atoms):\n";
     for (size_t i = 0; i < grad.size(); i++) {
         std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Grads (external charges):\n";
+    for (size_t i = 0; i < external_charge_grads_.size(); i++) {
+        std::cerr << external_charge_grads_[i] << " , ";
     }
     std::cerr << std::endl;
 
