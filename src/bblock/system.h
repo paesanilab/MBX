@@ -351,6 +351,12 @@ class System {
     std::vector<double> GetExternalChargesPositions();
 
     /**
+     * @brief Gets the external charges gradients that are currently in the class
+     * @return External charges gradients in the class
+     */
+    std::vector<double> GetExternalChargesGradients();
+
+    /**
      * Gets the id string of the n-th monomer
      * @param[in] n The index of the monomer which ID is wanted
      * @return A string with the ID of the n-th monomer

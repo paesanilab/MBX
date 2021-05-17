@@ -127,6 +127,8 @@ std::vector<double> System::GetExternalCharges() { return electrostaticE_.GetExt
 
 std::vector<double> System::GetExternalChargesPositions() { return electrostaticE_.GetExternalChargesPositions(); }
 
+std::vector<double> System::GetExternalChargesGradients() { return electrostaticE_.GetExternalChargesGradients(); }
+
 void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
     electrostaticE_.SetExternalChargesAndPositions(chg, xyz);
 }
