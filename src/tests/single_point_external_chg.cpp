@@ -13,7 +13,7 @@
 
 #include "bblock/system.h"
 
-//#define NUMGRADS
+#define NUMGRADS
 //#define PRINT_GRADS
 //#define PRINT_VIRIAL
 namespace {
@@ -24,8 +24,10 @@ static std::vector<bblock::System> systems;
 
 int main(int argc, char** argv) {
 
-    std::vector<double> extern_chg = {1.0};
-    std::vector<double> extern_xyz = {0.0,0.0,0.0};
+    //std::vector<double> extern_chg = {1.0};
+    //std::vector<double> extern_xyz = {2.0,0.0,0.0};
+    std::vector<double> extern_chg = {1.0,1.0};
+    std::vector<double> extern_xyz = {2.0,0.0,0.0,0.0,1.0,3.0};
 
 
     if (argc < 2) {
@@ -61,8 +63,6 @@ int main(int argc, char** argv) {
     double en = systems[0].Energy(true);
 
     std::cout << "Energy= " << en << std::endl;
-
-    tools::WriteNrg("input_out.nrg", systems);
 
 #ifdef PRINT_GRADS
     {
