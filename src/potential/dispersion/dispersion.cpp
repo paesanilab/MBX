@@ -143,7 +143,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 
     mbxt_disp_count_ = std::vector<size_t>(DISP_NUM_TIMERS, 0);
     mbxt_disp_time_ = std::vector<double>(DISP_NUM_TIMERS, 0.0);
-    
+
     ReorderData();
 
 #ifdef DEBUG
@@ -947,7 +947,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
     mbxt_disp_count_[DISP_PME_SETUP]++;
     mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
-    
+
     // N.B. these do not make copies; they just wrap the memory with some metadata
     auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
     auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
@@ -1008,7 +1008,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
 std::vector<size_t> Dispersion::GetInfoCounts() { return mbxt_disp_count_; }
 std::vector<double> Dispersion::GetInfoTimings() { return mbxt_disp_time_; }
-  
+
 std::vector<int> Dispersion::GetFFTDimension(int box_id) {
     double A, B, C, alpha, beta, gamma;
     bool compute_pme = true;

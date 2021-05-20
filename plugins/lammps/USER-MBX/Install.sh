@@ -28,7 +28,7 @@ action () {
 
 # list of files with optional dependencies
 
-action pair_mbx.cpp pair_mbx.h
 action pair_mbx.h
-action fix_mbx.cpp fix_mbx.h
+action pair_mbx.cpp pair_mbx.h
 action fix_mbx.h
+action fix_mbx.cpp fix_mbx.h

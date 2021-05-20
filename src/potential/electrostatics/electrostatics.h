@@ -85,7 +85,7 @@ enum {
     ELE_PME_PRC,
     ELE_PME_PRD,
     ELE_PME_PRE,
-    
+
     ELE_NUM_TIMERS
 };
 
@@ -594,7 +594,7 @@ class Electrostatics {
 
     std::vector<size_t> mbxt_ele_count_;
     std::vector<double> mbxt_ele_time_;
-  
+
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
 

@@ -54,7 +54,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 enum {
     DISP_PME_SETUP = 0,
     DISP_PME_PRE,
-    
+
     DISP_NUM_TIMERS
 };
 
@@ -399,7 +399,7 @@ class Dispersion {
 
     std::vector<size_t> mbxt_disp_count_;
     std::vector<double> mbxt_disp_time_;
-  
+
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
 

@@ -283,8 +283,8 @@ FixMBX::~FixMBX() {
             mbxt_time[MBXT_ELE_PERMDIP_REAL + i] += tmpd[i];
         }
 
-	// accumulate timing info from dispersion pme
-	
+        // accumulate timing info from dispersion pme
+
         std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
         std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
 
@@ -292,7 +292,7 @@ FixMBX::~FixMBX() {
             mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
             mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
         }
-	
+
         delete ptr_mbx_local;
     }
 
@@ -443,8 +443,8 @@ void FixMBX::post_neighbor() {
             mbxt_time[MBXT_ELE_PERMDIP_REAL + i] += tmpd[i];
         }
 
-	// accumulate timing info from dispersion pme
-	
+        // accumulate timing info from dispersion pme
+
         std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
         std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
 
@@ -452,7 +452,7 @@ void FixMBX::post_neighbor() {
             mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
             mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
         }
-	
+
         delete ptr_mbx_local;
     }
 
@@ -1015,27 +1015,27 @@ void FixMBX::mbx_init_local() {
 
     std::vector<double> box;
     ptr_mbx_local->SetPBC(box);
-    
+
     if (domain->nonperiodic && (domain->xperiodic || domain->yperiodic || domain->zperiodic))
-      error->all(FLERR, "System must be fully periodic or non-periodic with MBX");
+        error->all(FLERR, "System must be fully periodic or non-periodic with MBX");
 
     box = std::vector<double>(9, 0.0);
-    
+
     box[0] = domain->xprd;
-    
+
     box[3] = domain->xy;
     box[4] = domain->yprd;
-    
+
     box[6] = domain->xz;
     box[7] = domain->yz;
     box[8] = domain->zprd;
-    
+
     ptr_mbx_local->SetBoxPMElocal(box);
 
     ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
 
     std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
-    std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1); // will return mesh even for gas-phase
+    std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1);  // will return mesh even for gas-phase
 
     if (print_settings && first_step) {
         std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
@@ -1710,7 +1710,7 @@ void FixMBX::mbxt_write_summary() {
 
     mbxt_print_time("DISP_PME_SETUP", MBXT_DISP_PME_SETUP, t);
     mbxt_print_time("DISP_PME_E", MBXT_DISP_PME_E, t);
-    
+
     mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
     mbxt_print_time("ELE_COMM_REVSET", MBXT_ELE_COMM_REVSET, t);
     mbxt_print_time("ELE_COMM_REV", MBXT_ELE_COMM_REV, t);
