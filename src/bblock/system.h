@@ -953,6 +953,9 @@ class System {
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
 
+    std::vector<size_t> GetInfoDispersionCounts();
+    std::vector<double> GetInfoDispersionTimings();
+
    private:
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
