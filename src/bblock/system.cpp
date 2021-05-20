@@ -108,6 +108,10 @@ System::System() {
     grid_fftdim_elec_ = std::vector<int>{};
     grid_fftdim_disp_ = std::vector<int>{};
     grid_fftdim_lj_ = std::vector<int>{};
+
+    mbx_j_ = {};
+    monomers_j_ = {};
+    repdisp_j_ = {};
 }
 System::~System() {}
 
@@ -133,6 +137,57 @@ size_t System::GetFirstInd(size_t n) {
 
     // Get the first index that this monomer had in the input order
     return initial_order_[current_pos].second;
+}
+
+std::vector<size_t> System::GetFirstInd() {
+    std::vector<size_t> fi(monomers_.size());
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        size_t current_pos = original2current_order_[i];
+        fi[i] = initial_order_[current_pos].second;
+    }
+
+    // Get the first index that this monomer had in the input order
+    return fi;
+}
+
+std::vector<size_t> System::GetFirstIndRealSites() {
+    std::vector<size_t> fi(monomers_.size());
+    size_t count = 0;
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        size_t current_pos = original2current_order_[i];
+        size_t nat = nat_[current_pos];
+        fi[i] = count;
+        count += nat;
+    }
+
+    // Get the first index that this monomer had in the input order
+    return fi;
+}
+
+std::vector<size_t> System::GetSitesVector() {
+    std::vector<size_t> sites(sites_.size());
+    size_t count = 0;
+    for (size_t i = 0; i < sites_.size(); i++) {
+        size_t current_pos = original2current_order_[i];
+        size_t nat = sites_[current_pos];
+        sites[i] = nat;
+    }
+
+    // Get the first index that this monomer had in the input order
+    return sites;
+}
+
+std::vector<size_t> System::GetAtomsVector() {
+    std::vector<size_t> sites(sites_.size());
+    size_t count = 0;
+    for (size_t i = 0; i < sites_.size(); i++) {
+        size_t current_pos = original2current_order_[i];
+        size_t nat = nat_[current_pos];
+        sites[i] = nat;
+    }
+
+    // Get the first index that this monomer had in the input order
+    return sites;
 }
 
 std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend) {
@@ -1070,8 +1125,8 @@ void System::SetUpFromJson(nlohmann::json j) {
     try {
         lj_alpha_ = j["MBX"]["alpha_ewald_lj"];
     } catch (...) {
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << lj_alpha_ << "\n";
+        // if (mpi_rank_ == 0)
+        //    std::cerr << "**WARNING** \"alpha_ewald_lj\" is not defined in json file. Using " << lj_alpha_ << "\n";
     }
     mbx_j_["MBX"]["alpha_ewald_lj"] = lj_alpha_;
 
@@ -1240,6 +1295,24 @@ void System::SetUpFromJson(nlohmann::json j) {
     mbx_j_["MBX"]["monomers_file"] = monomers_json_file;
 
     SetPBC(box_);
+}
+
+std::string System::GetJsonText() {
+    std::ostringstream ss;
+    ss << mbx_j_;
+    return ss.str();
+}
+
+std::string System::GetJsonDispersionRepulsionText() {
+    std::ostringstream ss;
+    ss << repdisp_j_;
+    return ss.str();
+}
+
+std::string System::GetJsonMonomersText() {
+    std::ostringstream ss;
+    ss << monomers_j_;
+    return ss.str();
 }
 
 nlohmann::json System::GetJsonConfig() { return mbx_j_; }
