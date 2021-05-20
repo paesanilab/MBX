@@ -422,6 +422,7 @@ class Electrostatics {
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
     void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesAspc();
+    void CalculateDipolesAspcMPIlocal(bool use_ghost = 0);
     void SetAspcParameters(size_t k);
     void CalculateDipoles();
     void CalculateDipolesMPIlocal(bool use_ghost = 0);
