@@ -5,7 +5,7 @@
 #include <cstddef>
 
 #ifdef ENABLE_FFTW3
-#  include <fftw3.h>
+#include <fftw3.h>
 #endif /* ENABLE_FFTW3 */
 
 namespace kit {
@@ -16,7 +16,6 @@ namespace kit {
 //
 
 struct necklace {
-
     necklace();
     ~necklace();
 
@@ -25,8 +24,7 @@ struct necklace {
 
     inline const double& lambda(size_t) const;
 
-private:
-
+   private:
     necklace(const necklace&);
     necklace& operator=(const necklace&);
 
@@ -46,8 +44,7 @@ private:
 
     double* m_lambda;
 
-protected:
-
+   protected:
     void setup(size_t natoms, size_t nbeads);
 
     void pos_c2n();
@@ -67,23 +64,16 @@ protected:
     double* m_frc_nmode;
 };
 
-inline size_t necklace::natom() const
-{
-    return m_natom;
-}
+inline size_t necklace::natom() const { return m_natom; }
 
-inline size_t necklace::nbead() const
-{
-    return m_nbead;
-}
+inline size_t necklace::nbead() const { return m_nbead; }
 
-inline const double& necklace::lambda(size_t b) const
-{
+inline const double& necklace::lambda(size_t b) const {
     assert(b < nbead());
 
     return m_lambda[b];
 }
 
-} // namespace kit
+}  // namespace kit
 
-#endif // NECKLACE_H
+#endif  // NECKLACE_H
