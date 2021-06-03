@@ -63,6 +63,9 @@ void ReadXYZ(char *filename, std::vector<std::vector<std::string> > &atom_names,
     coords.clear();
     boxes.clear();
 
+    // If file is empty, return
+    if (ifs.peek() == std::ifstream::traits_type::eof()) return;
+
     // Read trajectory til the end
     std::vector<double> crd;
     std::vector<double> box;

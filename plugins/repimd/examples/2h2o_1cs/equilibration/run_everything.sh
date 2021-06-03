@@ -39,11 +39,38 @@ for i in `seq 1 1 $NREPLICAS`; do
   mv optimized.xyz optimized_unmixed_trajectory.${j}.xyz
 
   # Try converging the ones that did not
-  if [ -f "unconverged.xyz" ]; then
+  if [ -s "unconverged.xyz" ]; then
     ${MBX_HOME}/install/bin/main/optimize  input.nrg mbx.json 500 0.000001 unconverged.xyz 1
     cat optimized.xyz >> optimized_unmixed_trajectory.${j}.xyz
   fi
   
 done
+
+# Get the permutations
+
+# TODO
+cat << EOF > permutations.txt
+0 1 2 3 4 5 6
+0 1 3 2 4 5 6
+0 1 2 3 4 6 5
+0 1 3 2 4 6 5
+0 4 5 6 1 2 3
+0 4 5 6 1 3 2
+0 4 6 5 1 2 3
+0 4 6 5 1 3 2
+EOF
+
+# Get Unique isomers in a single file
+rm unique_isomers.xyz
+for i in `seq 1 1 $NREPLICAS`; do
+  printf -v j "%02d" $i
+  ${MBX_HOME}/scripts/remd_analysis/rmsd_tools/bin/rsc input.nrg optimized_unmixed_trajectory.${j}.xyz rsc.json
+  cat configs_rsc.xyz >> unique_isomers.xyz
+done
+
+${MBX_HOME}/scripts/remd_analysis/rmsd_tools/bin/rsc input.nrg unique_isomers.xyz rsc.json
+mv configs_rsc.xyz unique_isomers.xyz
+
+
 
 
