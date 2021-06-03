@@ -18,15 +18,18 @@ for i in range(nrep):
 
 # Read first frame for all to find all T
 ft = open("temperatures.dat",'w')
+tdat = []
 for i in range(nrep):
   index = i+1
   traj = tpref + "." + str(index).zfill(2)
   end_code, temp, frame_string = read_trajectory_frame_to_string(iffs[i])
   offs[temp] = open("unmixed_" + traj,'w')
   offs[temp].write(frame_string)
-  ft.write("{} {}\n".format(index,temp))
-
+  ft.write("{0:8.4f} {1:6}\n".format(float(temp), index))
+  
 ft.close()
+
+os.system("sort -n -k 1 temperatures.dat > sorted_temperatures.dat")
 
 temps = [""]*nrep
 strings = [""]*nrep
