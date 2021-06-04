@@ -119,10 +119,11 @@ double CalculateRmsd(std::vector<double> xyz1, std::vector<double> xyz2, std::ve
         }
     }
 
-    for (size_t i = 0; i < 3; i++) {
-        com1[i] /= total_mass;
-        com2[i] /= total_mass;
-    }
+    // Masses are already scaled. No need to divide again
+    // for (size_t i = 0; i < 3; i++) {
+    //    com1[i] /= total_mass;
+    //    com2[i] /= total_mass;
+    //}
 
     // CoM won't be affected by permutations
     std::vector<double> y1(3 * nat, 0.0);
@@ -155,9 +156,12 @@ double CalculateRmsd(std::vector<double> xyz1, std::vector<double> xyz2, std::ve
         double lambda(0.0), q[4];
         rmsd_q(nat, mass.data(), y1.data(), z2.data(), lambda, q);
 
-        double rmsd = std::sqrt(std::max(0.0, ((y1n + y2n) - 2 * lambda)) / total_mass);
+        // Masses were scaled (m/mtot) so no need to divide by total_mass
+        double rmsd = std::sqrt(std::max(0.0, (y1n + y2n) - 2 * lambda));
+        // double rmsd = std::sqrt(std::max(0.0, ((y1n + y2n) - 2 * lambda)) / total_mass);
 
         result = std::min(rmsd, result);
+        if (result < threshold) return result;
 
         // If inversion is activated, also do it
         if (use_inversion) {
@@ -168,7 +172,7 @@ double CalculateRmsd(std::vector<double> xyz1, std::vector<double> xyz2, std::ve
             double lambda2, q2[4];
             rmsd_q(nat, mass.data(), y1.data(), z2.data(), lambda2, q2);
 
-            double rmsd2 = std::sqrt(std::max(0.0, ((y1n + y2n) - 2 * lambda2)) / total_mass);
+            double rmsd2 = std::sqrt(std::max(0.0, (y1n + y2n) - 2 * lambda2));
 
             result = std::min(rmsd2, result);
         }

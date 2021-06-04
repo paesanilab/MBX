@@ -15,7 +15,7 @@ AR = /usr/bin/ar
 
 RSC_OBJ = json_tools.o rmsd_tools.o rmsd.o
 
-all: librsc.a rsc
+all: librsc.a rsc pops
 
 librsc.a: $(addprefix $(OBJ_INSTALL)/, $(RSC_OBJ))
 	echo $(INCLUDEDIR)
@@ -26,6 +26,10 @@ librsc.a: $(addprefix $(OBJ_INSTALL)/, $(RSC_OBJ))
 rsc: rsc.cpp $(BIN_INSTALL)/.sentinel
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) rsc.cpp $(LIBS) -o $@
 	mv rsc $(BIN_INSTALL)/rsc
+
+pops: pops.cpp $(BIN_INSTALL)/.sentinel
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) pops.cpp $(LIBS) -o $@
+	mv pops $(BIN_INSTALL)/pops
 
 $(OBJ_INSTALL)/%.o: %.cpp $(OBJ_INSTALL)/.sentinel
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) -c $< $(LIBS) -o $@

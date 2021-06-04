@@ -129,12 +129,12 @@ int main(int argc, char** argv) {
     }
 
     // Vector to count matches to each isomer
-    std::vector<double> counts(xyz_ref.size(),0.0);
+    std::vector<double> counts(xyz_ref.size(), 0.0);
 
     // Loop over the configurations and adds count to the minimum rmsd isomer
-    double min_rmsd = 1.0E10;
-    size_t min_index = 0;
     for (size_t i = 0; i < xyz.size(); i++) {
+        double min_rmsd = 1.0E10;
+        size_t min_index = 0;
         for (size_t j = 0; j < xyz_ref.size(); j++) {
             double rmsd = rmsd_tools::CalculateRmsd(xyz[i], xyz_ref[j], perms, masses, use_inversion, threshold);
             if (rmsd < min_rmsd) {
