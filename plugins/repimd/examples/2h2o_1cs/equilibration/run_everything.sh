@@ -74,3 +74,6 @@ mv ordered.xyz unique_isomers_ordered.xyz
 
 # Get populations
 python3 ${MBX_HOME}/scripts/remd_analysis/post-processing/generate_population_data.py unmixed_trajectory $NREPLICAS sorted_temperatures.dat pops.json
+
+# Plot populations
+python3 ${MBX_HOME}/scripts/remd_analysis/post-processing/plot_populations.py pops.dat
