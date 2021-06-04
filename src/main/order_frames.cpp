@@ -28,8 +28,7 @@ std::vector<bblock::System> s;
 
 int main(int argc, char **argv) {
     if (argc < 3) {
-        std::cout << "Usage: " << argv[0]
-                  << " <config.nrg> <configs.xyz> [<mbx.json>] \n";
+        std::cout << "Usage: " << argv[0] << " <config.nrg> <configs.xyz> [<mbx.json>] \n";
         return 0;
     }
 
@@ -57,22 +56,22 @@ int main(int argc, char **argv) {
 
     std::vector<std::string> atoms = s[0].GetRealAtomNames();
 
-    std::vector<std::pair<size_t,double> > energies;
+    std::vector<std::pair<size_t, double> > energies;
 
     // Check if we need to do the xyz or just the nrg file
     for (size_t i = 0; i < coords.size(); i++) {
         s[0].SetRealXyz(coords[i]);
         double energy = s[0].Energy(false);
-        energies.push_back(std::make_pair(i,energy));
+        energies.push_back(std::make_pair(i, energy));
     }
 
     for (size_t i = 0; i < coords.size() - 1; i++) {
         double e_min = energies[i].second;
-        for (size_t j = i+1; j < coords.size() ; j++) {
+        for (size_t j = i + 1; j < coords.size(); j++) {
             double e = energies[j].second;
             if (e < e_min) {
                 e_min = e;
-                std::swap(energies[i],energies[j]);
+                std::swap(energies[i], energies[j]);
             }
         }
     }
@@ -84,7 +83,7 @@ int main(int argc, char **argv) {
     for (size_t i = 0; i < coords.size(); i++) {
         std::stringstream ss;
         ss << std::setprecision(8) << std::scientific << energies[i].second;
-        tools::WriteXYZ(off, atoms, opt_coords[energies[i].first], box, ss.str());
+        tools::WriteXYZ(off, atoms, coords[energies[i].first], box, ss.str());
     }
     off.close();
 

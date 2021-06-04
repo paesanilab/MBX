@@ -65,6 +65,8 @@ done
 ${MBX_HOME}/scripts/remd_analysis/rmsd_tools/bin/rsc input.nrg unique_isomers.xyz rsc.json
 mv configs_rsc.xyz unique_isomers.xyz
 
-
+# Order the isomers
+${MBX_HOME}/install/bin/main/order_frames input.nrg unique_isomers.xyz mbx.json
+mv ordered.xyz unique_isomers_ordered.xyz
 
 
