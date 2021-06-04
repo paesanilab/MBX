@@ -15,6 +15,7 @@ source ${MBFIT_HOME}/sourceme.sh
 NREPLICAS=16
 NBEADS=1
 
+# Symmetry of the system after taking out the ingonred atoms
 SYMMETRY="A1_B1C2_B1C2"
 
 # Generate initial frames from xyz
@@ -52,6 +53,8 @@ for i in `seq 1 1 $NREPLICAS`; do
 done
 
 # Get the permutations
+# Note: The permutations should only be for the atoms to consider 
+# (i.e. the atoms not in the ignore lis in the rsc.json file.
 python3 ${MBX_HOME}/scripts/remd_analysis/post-processing/generate_permutations.py $SYMMETRY
 
 # Get Unique isomers in a single file
@@ -69,4 +72,5 @@ mv configs_rsc.xyz unique_isomers.xyz
 ${MBX_HOME}/install/bin/main/order_frames input.nrg unique_isomers.xyz mbx.json
 mv ordered.xyz unique_isomers_ordered.xyz
 
-
+# Get populations
+python3 ${MBX_HOME}/scripts/remd_analysis/post-processing/generate_population_data.py unmixed_trajectory $NREPLICAS sorted_temperatures.dat pops.json
