@@ -1,16 +1,21 @@
 #!/bin/bash
 
 export MBX_HOME=$HOME/codes/MBX
+export MBFIT_HOME=$HOME/codes/potential_fitting
 export OMP_NUM_THREADS=1
-export PYTHONPATH=$PYTHONPATH:${MBX_HOME}/scripts/remd_analysis/post-processing/processing_tools
+export PYTHONPATH=$PYTHONPATH:${MBX_HOME}/scripts/remd_analysis/processing_tools
 
 module load gcc
 module load intel
 module unload mpi
 module load intel/mpi
 
+source ${MBFIT_HOME}/sourceme.sh
+
 NREPLICAS=16
 NBEADS=1
+
+SYMMETRY="A1_B1C2_B1C2"
 
 # Generate initial frames from xyz
 python3 ${MBX_HOME}/scripts/remd_analysis/pre-processing/s1-generate_initial_frames.py 100 150 $NREPLICAS $NBEADS input.xyz
@@ -47,18 +52,7 @@ for i in `seq 1 1 $NREPLICAS`; do
 done
 
 # Get the permutations
-
-# TODO
-cat << EOF > permutations.txt
-0 1 2 3 4 5 6
-0 1 3 2 4 5 6
-0 1 2 3 4 6 5
-0 1 3 2 4 6 5
-0 4 5 6 1 2 3
-0 4 5 6 1 3 2
-0 4 6 5 1 2 3
-0 4 6 5 1 3 2
-EOF
+python3 ${MBX_HOME}/scripts/remd_analysis/post-processing/generate_permutations.py $SYMMETRY
 
 # Get Unique isomers in a single file
 rm unique_isomers.xyz
