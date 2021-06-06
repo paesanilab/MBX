@@ -12,11 +12,15 @@ OBJDIR = ../../obj
 
 AR = /usr/bin/ar
 
-all:  repimd 
+all:  repimd xyz2frame
 
 repimd: repimd.cpp $(BINDIR)/.sentinel
 	$(MPICXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) repimd.cpp $(LIBS) -o $@
 	mv repimd $(BINDIR)/repimd
+
+xyz2frame: xyz-to-pimd-2.cpp $(BINDIR)/.sentinel
+	$(MPICXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) xyz-to-pimd-2.cpp $(LIBS) -o $@
+	mv xyz2frame $(BINDIR)/xyz2frame
 
 $(BINDIR)/.sentinel:
 	mkdir -p $(BINDIR)
