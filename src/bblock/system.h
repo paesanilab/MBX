@@ -339,6 +339,24 @@ class System {
     std::vector<std::string> GetRealAtomNames();
 
     /**
+     * @brief Gets the external charges that are currently in the class
+     * @return External charges in the class
+     */
+    std::vector<double> GetExternalCharges();
+
+    /**
+     * @brief Gets the external charges XYZ that are currently in the class
+     * @return External charges XYZ in the class
+     */
+    std::vector<double> GetExternalChargesPositions();
+
+    /**
+     * @brief Gets the external charges gradients that are currently in the class
+     * @return External charges gradients in the class
+     */
+    std::vector<double> GetExternalChargesGradients();
+
+    /**
      * Gets the id string of the n-th monomer
      * @param[in] n The index of the monomer which ID is wanted
      * @return A string with the ID of the n-th monomer
@@ -533,6 +551,23 @@ class System {
      * @param[in] mon2 Is the id of the second monomer
      **/
     void AddTTMnrgPair(std::string mon1, std::string mon2);
+
+    /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
+  
+    /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     * @param[in] local/ghost of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal);
 
     /**
      * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
@@ -947,6 +982,7 @@ class System {
      * @return Electrostatic energy of the system
      */
     double Electrostatics(bool do_grads, bool use_ghost = 0);
+    double ElectrostaticsTest(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPI(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
@@ -992,9 +1028,6 @@ class System {
 
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
-
-    std::vector<size_t> GetInfoDispersionCounts();
-    std::vector<double> GetInfoDispersionTimings();
 
    private:
     /**
@@ -1111,6 +1144,7 @@ class System {
      * @return  Electrostatic energy of the system
      */
     double GetElectrostatics(bool do_grads, bool use_ghost = 0);
+    double GetElectrostaticsTest(bool do_grads, bool use_ghost = 0);
     double GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
     /**

@@ -81,11 +81,6 @@ enum {
     ELE_COMM_FORSET,
     ELE_COMM_FOR,
 
-    ELE_PME_SETUP,
-    ELE_PME_PRC,
-    ELE_PME_PRD,
-    ELE_PME_PRE,
-
     ELE_NUM_TIMERS
 };
 
@@ -223,6 +218,41 @@ class Electrostatics {
      * @param[in] order the order of the B-Spline used to spread charges
      */
     void SetEwaldSplineOrder(int order);
+
+    /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
+
+    /**
+     * @brief Sets the external charges, positions, and local/ghost.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     * @param[in] local/ghost  of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal);
+
+    /**
+     * @brief Gets the external charges that are currently in the class
+     * @return External charges in the class
+     */
+    std::vector<double> GetExternalCharges();
+
+    /**
+     * @brief Gets the external charges XYZ that are currently in the class
+     * @return External charges XYZ in the class
+     */
+    std::vector<double> GetExternalChargesPositions();
+
+    /**
+     * @brief Gets the gradients on the external charge sites
+     * @return Vector of doubles with the external charge gradients
+     */
+    std::vector<double> GetExternalChargesGradients();
 
     /**
      * @brief Returns permanent electrostatic energy.
@@ -594,7 +624,6 @@ class Electrostatics {
 
     std::vector<size_t> mbxt_ele_count_;
     std::vector<double> mbxt_ele_time_;
-
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
 
@@ -629,6 +658,50 @@ class Electrostatics {
     std::vector<std::vector<int>> nncomm_for_recvlist;
 
     nlohmann::json mon_j_;
+
+    /*
+     * External charges treated as point charges without smearing
+     */
+    std::vector<double> external_charge_;
+
+    /*
+     * External charge positions
+     */
+    std::vector<double> external_charge_xyz_;
+
+    /*
+     * External charge electrostatic gradients
+     */
+    std::vector<double> external_charge_grads_;
+
+    /*
+     * External charges local/ghost
+     */
+    std::vector<size_t> external_islocal_;
+  
+    std::vector<double> Efq_all_;
+    std::vector<double> xyz_all_;
+    std::vector<double> phi_all_;
+    std::vector<double> chg_all_;
+    std::vector<double> polfac_all_;
+    std::vector<size_t> sites_all_;
+    std::vector<std::string> mon_id_all_;
+    std::vector<size_t> islocal_all_;
+    std::vector<size_t> islocal_atom_all_; // why need this? because of reordering?
+    std::vector<double> sys_xyz_all_;
+    std::vector<double> sys_chg_all_;
+    size_t nsites_all_;
+    std::vector<double> rec_phi_and_field_all_;
+
+    std::vector<double> mu_all_;
+    std::vector<double> sys_mu_all_;
+    std::vector<double> sys_Efq_all_;
+    std::vector<double> sys_Efd_all_;
+    std::vector<double> sys_phi_all_;
+    std::vector<double> Efd_all_;
+    std::vector<double> sys_grad_all_;
+
+    std::vector<std::pair<std::string, size_t>> mon_type_count_all_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

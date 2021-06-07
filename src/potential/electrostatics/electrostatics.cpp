@@ -47,13 +47,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #endif
 
-//#define _DEBUG_PERM
+#define _DEBUG_PERM
 //#define _DEBUG_DIPOLE
 //#define _DEBUG_ITERATION 1
 //#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
-//#define _DEBUG_GRAD
-//#define _DEBUG_PRINT_ENERGY
+#define _DEBUG_GRAD
+#define _DEBUG_PRINT_ENERGY
 //#define _DEBUG_PRINT_GRAD
 
 #if HAVE_MPI == 1
@@ -63,7 +63,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #endif
 
 // let expert users test this first
-//#define MBX_ELEC_P2P_COMM 0
+#define MBX_ELEC_P2P_COMM 0
 
 // When turning polarization off, don't set the 1/polarity value to max_dbl because it gets
 // added to the potential and field values, generating inf values that result in NaN energies.
@@ -139,6 +139,24 @@ void Electrostatics::SetDipoleTolerance(double tol) { tolerance_ = tol; }
 void Electrostatics::SetDipoleMaxIt(size_t maxit) { maxit_ = maxit; }
 
 void Electrostatics::SetPeriodicity(bool periodic) { simcell_periodic_ = periodic; }
+
+void Electrostatics::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
+    external_charge_ = chg;
+    external_charge_xyz_ = xyz;
+    for (size_t i=0; i<chg.size(); i++) external_islocal_.push_back(1);
+}
+
+void Electrostatics::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal) {
+    external_charge_ = chg;
+    external_charge_xyz_ = xyz;
+    external_islocal_ = islocal;
+}
+  
+std::vector<double> Electrostatics::GetExternalCharges() { return external_charge_; }
+
+std::vector<double> Electrostatics::GetExternalChargesPositions() { return external_charge_xyz_; }
+
+std::vector<double> Electrostatics::GetExternalChargesGradients() { return external_charge_grads_; }
 
 void Electrostatics::SetJsonMonomers(nlohmann::json mon_j) { mon_j_ = mon_j; }
 
@@ -280,6 +298,9 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     islocal_atom_ = std::vector<size_t>(nsites_, 0.0);
     islocal_atom_xyz_ = std::vector<size_t>(nsites3, 0.0);
     atom_tag_ = std::vector<int>(nsites_, 0);
+    external_charge_.clear();
+    external_charge_xyz_.clear();
+    external_islocal_.clear();
     aCC_ = 0.4;
     aCD_ = 0.4;
     aDD_ = 0.055;
@@ -334,6 +355,65 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
     nn_num_neighs = std::vector<size_t>(nsites_, 0);
 
     user_fft_grid_ = std::vector<int>{};
+
+    if (nsites_ > 0) {
+        size_t nExtChg = external_charge_.size();
+
+        // Define sizes.
+        Efq_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        xyz_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        phi_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        chg_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        polfac_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        sites_all_ = std::vector<size_t>(nExtChg + mon_id_.size(), 1);
+        mon_id_all_ = std::vector<std::string>(nExtChg + mon_id_.size(), "ext");
+        islocal_all_ = std::vector<size_t>(nExtChg + nmon_total_, 1);
+        islocal_atom_all_ = std::vector<size_t>(nExtChg + nsites_, 1);
+        sys_xyz_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        sys_chg_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        rec_phi_and_field_all_ = std::vector<double>((nExtChg + nsites_) * 4, 0.0);
+        external_charge_grads_ = std::vector<double>(3 * nExtChg, 0.0);
+
+        nsites_all_ = nsites_ + nExtChg;
+
+        // Fill the vectors. NOTE. All of them in internal order
+        for (size_t i = 0; i < 3 * nsites_; i++) {
+            xyz_all_[i] = xyz_[i];
+            sys_xyz_all_[i] = sys_xyz_[i];
+        }
+
+        for (size_t i = 0; i < nsites_; i++) {
+            chg_all_[i] = chg_[i];
+            sys_chg_all_[i] = sys_chg_[i];
+            polfac_all_[i] = polfac_[i];
+	    islocal_atom_all_[i] = islocal_atom_[i];
+        }
+
+	for(size_t i=0; i<nmon_total_; ++i) {
+	  islocal_all_[i] = islocal_[i];
+	}
+	
+        for (size_t i = 0; i < mon_id_.size(); i++) {
+            sites_all_[i] = sites_[i];
+            mon_id_all_[i] = mon_id_[i];
+        }
+
+        for (size_t i = 0; i < nExtChg; i++) {
+            xyz_all_[3 * nsites_ + i] = external_charge_xyz_[3 * i];
+            xyz_all_[3 * nsites_ + nExtChg + i] = external_charge_xyz_[3 * i + 1];
+            xyz_all_[3 * nsites_ + 2 * nExtChg + i] = external_charge_xyz_[3 * i + 2];
+            sys_xyz_all_[3 * nsites_ + 3 * i] = external_charge_xyz_[3 * i];
+            sys_xyz_all_[3 * nsites_ + 3 * i + 1] = external_charge_xyz_[3 * i + 1];
+            sys_xyz_all_[3 * nsites_ + 3 * i + 2] = external_charge_xyz_[3 * i + 2];
+        }
+
+        for (size_t i = 0; i < nExtChg; i++) {
+            sys_chg_all_[nsites_ + i] = external_charge_[i];
+            chg_all_[nsites_ + i] = external_charge_[i];
+	    islocal_all_[nmon_total_ + i] = external_islocal_[i];
+	    islocal_atom_all_[nsites_ + i] = external_islocal_[i];
+        }
+    }
 
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
@@ -472,6 +552,77 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
 
     ReorderData();
 
+    if (nsites_ > 0) {
+        size_t nExtChg = external_charge_.size();
+
+        // Define sizes.
+        Efq_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        xyz_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        phi_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        chg_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        polfac_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        sites_all_ = std::vector<size_t>(nExtChg + mon_id_.size(), 1);
+        mon_id_all_ = std::vector<std::string>(nExtChg + mon_id_.size(), "ext");
+        islocal_all_ = std::vector<size_t>(nExtChg + nmon_total_, 1);
+        islocal_atom_all_ = std::vector<size_t>(nExtChg + nsites_, 1);
+        sys_xyz_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+        sys_chg_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+        rec_phi_and_field_all_ = std::vector<double>((nExtChg + nsites_) * 4, 0.0);
+        external_charge_grads_ = std::vector<double>(3 * nExtChg, 0.0);
+
+        nsites_all_ = nsites_ + nExtChg;
+
+        // Fill the vectors. NOTE. All of them in internal order
+        for (size_t i = 0; i < 3 * nsites_; i++) {
+            xyz_all_[i] = xyz_[i];
+            sys_xyz_all_[i] = sys_xyz_[i];
+        }
+
+        for (size_t i = 0; i < nsites_; i++) {
+            chg_all_[i] = chg_[i];
+            sys_chg_all_[i] = sys_chg_[i];
+            polfac_all_[i] = polfac_[i];
+	    islocal_atom_all_[i] = islocal_atom_[i];
+        }
+
+	for(size_t i=0; i<nmon_total_; ++i) {
+	  islocal_all_[i] = islocal_[i];
+	}
+	
+        for (size_t i = 0; i < mon_id_.size(); i++) {
+            sites_all_[i] = sites_[i];
+            mon_id_all_[i] = mon_id_[i];
+        }
+	
+        for (size_t i = 0; i < nExtChg; i++) {
+            xyz_all_[3 * nsites_ + i] = external_charge_xyz_[3 * i];
+            xyz_all_[3 * nsites_ + nExtChg + i] = external_charge_xyz_[3 * i + 1];
+            xyz_all_[3 * nsites_ + 2 * nExtChg + i] = external_charge_xyz_[3 * i + 2];
+            sys_xyz_all_[3 * nsites_ + 3 * i] = external_charge_xyz_[3 * i];
+            sys_xyz_all_[3 * nsites_ + 3 * i + 1] = external_charge_xyz_[3 * i + 1];
+            sys_xyz_all_[3 * nsites_ + 3 * i + 2] = external_charge_xyz_[3 * i + 2];
+        }
+
+        for (size_t i = 0; i < nExtChg; i++) {
+            sys_chg_all_[nsites_ + i] = external_charge_[i];
+            chg_all_[nsites_ + i] = external_charge_[i];
+	    islocal_all_[nmon_total_ + i] = external_islocal_[i];
+	    islocal_atom_all_[nsites_ + i] = external_islocal_[i];
+        }
+    }
+
+    std::cout << "external_islocal.size()= " << external_islocal_.size() << "  islocal_all_.size()= " <<
+      islocal_all_.size() << " islocal_.size()= " << islocal_.size() << std::endl;
+    std::cout << "islocal_= ";
+    for(int i=0; i<islocal_.size(); ++i) std::cout << islocal_[i] << " ";
+    std::cout << std::endl;
+    std::cout << "islocal_all_= ";
+    for(int i=0; i<islocal_all_.size(); ++i) std::cout << islocal_all_[i] << " ";
+    std::cout << std::endl;
+    std::cout << "external_islocal_= ";
+    for(int i=0; i<external_islocal_.size(); ++i) std::cout << external_islocal_[i] << " ";
+    std::cout << std::endl;
+    
     has_energy_ = false;
 
 #ifdef DEBUG
@@ -568,8 +719,19 @@ void Electrostatics::ReorderData() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
+    // MRR modification for external charges
+    // MRR EXT
+    size_t nExtChg = external_charge_.size();
+    std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
+    if (nExtChg > 0) {
+        mon_type_count_.push_back(std::make_pair("ext", nExtChg));
+    }
+
     // Max number of monomers
-    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
+    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+    
+  // Max number of monomers
+  //    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
 
     int me;
@@ -605,9 +767,9 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     double ez = 0.0;
     double phi1 = 0.0;
 
-    if (nsites_ > 0) {
-        std::fill(phi_.begin(), phi_.end(), 0);
-        std::fill(Efq_.begin(), Efq_.end(), 0);
+    if (nsites_all_ > 0) {
+        std::fill(phi_all_.begin(), phi_all_.end(), 0);
+        std::fill(Efq_all_.begin(), Efq_all_.end(), 0);
     }
 
     // Excluded sets
@@ -617,12 +779,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
 
         // Obtain excluded pairs for monomer type mt
-        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
 
         // Loop over each pair of sites
         for (size_t i = 0; i < ns - 1; i++) {
@@ -634,9 +796,8 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                 bool is13 = systools::IsExcluded(exc13, i, j);
                 bool is14 = systools::IsExcluded(exc14, i, j);
                 double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
-
                 // Get a1a2 and check if is not 0.
-                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+                double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
                 double Ai = 0.0;
                 double Asqsqi = 0.0;
                 if (A > constants::EPS) {
@@ -650,19 +811,19 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                 for (size_t m = 0; m < nmon; m++) {
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
-                    if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
+                    if (use_ghost && islocal_all_[fi_mon + m]) include_monomer = true;
 
                     if (include_monomer) {
                         elec_field.CalcPermanentElecField(
-                            xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data() + fi_sites, chg_.data() + fi_sites,
+                            xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites, chg_all_.data() + fi_sites,
                             m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
-                            phi_.data() + fi_sites, Efq_.data() + fi_crd, elec_scale_factor, ewald_alpha_,
-                            simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_,
+                            phi_all_.data() + fi_sites, Efq_all_.data() + fi_crd, elec_scale_factor, ewald_alpha_,
+                            simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_all_,
                             fi_mon + m, fi_mon, 0, &virial_);
-                        phi_[fi_sites + inmon + m] += phi1;
-                        Efq_[fi_crd + inmon3 + m] += ex;
-                        Efq_[fi_crd + inmon3 + nmon + m] += ey;
-                        Efq_[fi_crd + inmon3 + nmon2 + m] += ez;
+                        phi_all_[fi_sites + inmon + m] += phi1;
+                        Efq_all_[fi_crd + inmon3 + m] += ex;
+                        Efq_all_[fi_crd + inmon3 + nmon + m] += ey;
+                        Efq_all_[fi_crd + inmon3 + nmon2 + m] += ez;
                     }
                 }
             }
@@ -689,7 +850,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                 std::cout << "\n" << std::endl;
                 // Loop over each monomer type
                 for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
+                    size_t ns = sites_all_[fi_mon];
                     size_t nmon = mon_type_count_[mt].second;
                     size_t nmon2 = 2 * nmon;
 
@@ -699,11 +860,11 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") 1B LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_[fi_sites + inmon + m]
-                                      << " Efq_= " << Efq_[fi_crd + inmon3 + m] << " "
-                                      << Efq_[fi_crd + inmon3 + nmon + m] << " " << Efq_[fi_crd + inmon3 + nmon2 + m]
+                                      << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
+                                      << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_all_[fi_sites + inmon + m]
+                                      << " Efq_= " << Efq_all_[fi_crd + inmon3 + m] << " "
+                                      << Efq_all_[fi_crd + inmon3 + nmon + m] << " " << Efq_all_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
                         }
                     }
@@ -730,7 +891,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 
     // Loop over all monomer types
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        size_t ns1 = sites_[fi_mon1];
+        size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
         fi_mon2 = fi_mon1;
@@ -740,7 +901,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         // For each monomer type mt1, loop over all the other monomer types
         // mt2 >= mt1 to avoid double counting
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-            size_t ns2 = sites_[fi_mon2];
+            size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
 
             // Check if monomer types 1 and 2 are the same
@@ -785,9 +946,9 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                     size_t inmon13 = inmon1 * 3;
 
                     std::vector<double> xyz_sitei(3);
-                    xyz_sitei[0] = xyz_[fi_crd1 + inmon13 + m1];
-                    xyz_sitei[1] = xyz_[fi_crd1 + inmon13 + nmon1 + m1];
-                    xyz_sitei[2] = xyz_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
+                    xyz_sitei[0] = xyz_all_[fi_crd1 + inmon13 + m1];
+                    xyz_sitei[1] = xyz_all_[fi_crd1 + inmon13 + nmon1 + m1];
+                    xyz_sitei[2] = xyz_all_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
 
                     for (size_t j = 0; j < ns2; j++) {
                         size_t jnmon2 = j * nmon2;
@@ -800,12 +961,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         size_t size_j = nmon2 - m2init;
                         std::vector<double> xyz_sitej(3 * size_j);
                         // Copy x
-                        std::copy(xyz_.begin() + start_j + m2init, xyz_.begin() + start_j + nmon2, xyz_sitej.begin());
+                        std::copy(xyz_all_.begin() + start_j + m2init, xyz_all_.begin() + start_j + nmon2, xyz_sitej.begin());
                         // Copy y
-                        std::copy(xyz_.begin() + start_j + nmon2 + m2init, xyz_.begin() + start_j + 2 * nmon2,
+                        std::copy(xyz_all_.begin() + start_j + nmon2 + m2init, xyz_all_.begin() + start_j + 2 * nmon2,
                                   xyz_sitej.begin() + size_j);
                         // Copy y
-                        std::copy(xyz_.begin() + start_j + 2 * nmon2 + m2init, xyz_.begin() + start_j + 3 * nmon2,
+                        std::copy(xyz_all_.begin() + start_j + 2 * nmon2 + m2init, xyz_all_.begin() + start_j + 3 * nmon2,
                                   xyz_sitej.begin() + 2 * size_j);
 
                         // Vector that will tell the original position of the new sites
@@ -815,11 +976,11 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         // declare temporary virial for each pair
                         std::vector<double> virial_thread(9, 0.0);
 
-                        std::copy(chg_.begin() + fi_sites2 + nmon2 * j + m2init,
-                                  chg_.begin() + fi_sites2 + nmon2 * (j + 1), chg_sitej.begin());
+                        std::copy(chg_all_.begin() + fi_sites2 + nmon2 * j + m2init,
+                                  chg_all_.begin() + fi_sites2 + nmon2 * (j + 1), chg_sitej.begin());
 
                         // Check if A = 0 and call the proper field calculation
-                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+                        double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
                         double Asqsqi = 0.0;
                         if (A > constants::EPS) {
@@ -832,11 +993,11 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         }
                         double elec_scale_factor = 1;
                         local_field->CalcPermanentElecField(
-                            xyz_.data() + fi_crd1, xyz_sitej.data(), chg_.data() + fi_sites1, chg_sitej.data(), m1, 0,
+                            xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(), m1, 0,
                             size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
                             ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost,
-                            islocal_, fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
+                            islocal_all_, fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
 
                         // Put proper data in field and electric field of j
                         for (size_t ind = 0; ind < size_j; ind++) {
@@ -864,18 +1025,18 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                 size_t kend1 = Efq_1_pool[rank].size();
                 size_t kend2 = Efq_2_pool[rank].size();
                 for (size_t k = 0; k < kend1; k++) {
-                    Efq_[fi_crd1 + k] += Efq_1_pool[rank][k];
+                    Efq_all_[fi_crd1 + k] += Efq_1_pool[rank][k];
                 }
                 for (size_t k = 0; k < kend2; k++) {
-                    Efq_[fi_crd2 + k] += Efq_2_pool[rank][k];
+                    Efq_all_[fi_crd2 + k] += Efq_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 for (size_t k = 0; k < kend1; k++) {
-                    phi_[fi_sites1 + k] += phi_1_pool[rank][k];
+                    phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 for (size_t k = 0; k < kend2; k++) {
-                    phi_[fi_sites2 + k] += phi_2_pool[rank][k];
+                    phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
@@ -907,7 +1068,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                 std::cout << "\n" << std::endl;
                 // Loop over each monomer type
                 for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
+                    size_t ns = sites_all_[fi_mon];
                     size_t nmon = mon_type_count_[mt].second;
                     size_t nmon2 = 2 * nmon;
 
@@ -917,12 +1078,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") 2B LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_[fi_sites + inmon + m]
-                                      << " chg_= " << sys_chg_[fi_sites + inmon + m] << " "
-                                      << " Efq_= " << Efq_[fi_crd + inmon3 + m] << " "
-                                      << Efq_[fi_crd + inmon3 + nmon + m] << " " << Efq_[fi_crd + inmon3 + nmon2 + m]
+                                      << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
+                                      << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_all_[fi_sites + inmon + m]
+                                      << " chg_= " << sys_chg_all_[fi_sites + inmon + m] << " "
+                                      << " Efq_= " << Efq_all_[fi_crd + inmon3 + m] << " "
+                                      << Efq_all_[fi_crd + inmon3 + nmon + m] << " " << Efq_all_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
                         }
                     }
@@ -949,7 +1110,6 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     if (!simcell_periodic_) compute_pme = false;
 
     if (compute_pme) {
-        double _time0 = MPI_Wtime();
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -981,44 +1141,41 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
-        mbxt_ele_count_[ELE_PME_SETUP]++;
-        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
-
         // N.B. these do not make copies; they just wrap the memory with some metadata
-        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
-        auto charges = helpme::Matrix<double>(sys_chg_.data(), nsites_, 1);
-        auto result = helpme::Matrix<double>(rec_phi_and_field_.data(), nsites_, 4);
-        std::fill(rec_phi_and_field_.begin(), rec_phi_and_field_.end(), 0);
-
-        double _time1 = MPI_Wtime();
+        auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
+        auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
+        auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), nsites_all_, 4);
+        std::fill(rec_phi_and_field_all_.begin(), rec_phi_and_field_all_.end(), 0);
         pme_solver_.computePRec(0, charges, coords, coords, 1, result);
-        mbxt_ele_count_[ELE_PME_PRC]++;
-        mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
 
         // Resort phi from system order
         fi_mon = 0;
         fi_sites = 0;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = sites_[fi_mon];
+            size_t ns = sites_all_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
             for (size_t m = 0; m < nmon; m++) {
                 size_t mns = m * ns;
                 for (size_t i = 0; i < ns; i++) {
                     size_t inmon = i * nmon;
                     const double *result_ptr = result[fi_sites + mns + i];
-                    phi_[fi_sites + inmon + m] += result_ptr[0];
-                    Efq_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[1];
-                    Efq_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[2];
-                    Efq_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[3];
+                    phi_all_[fi_sites + inmon + m] += result_ptr[0];
+                    Efq_all_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[1];
+                    Efq_all_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[2];
+                    Efq_all_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[3];
                 }
             }
             fi_mon += nmon;
             fi_sites += nmon * ns;
         }
-
         // The Ewald self potential
-
-        for (int i = 0; i < nsites_; ++i) phi_[i] -= 2 * ewald_alpha_ / PIQSRT * chg_[i] * islocal_atom_[i];
+        // double *phi_ptr = phi_.data();
+        // for (const auto &q : chg_) {
+        //     *phi_ptr -= 2 * ewald_alpha_ / PIQSRT * q;
+        //     ++phi_ptr;
+        // }
+    
+        for (int i = 0; i < nsites_all_; ++i) phi_all_[i] -= 2 * ewald_alpha_ / PIQSRT * chg_all_[i] * islocal_atom_all_[i];
     }
 
 #ifdef _DEBUG_PERM
@@ -1036,7 +1193,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                 std::cout << "\n" << std::endl;
                 // Loop over each monomer type
                 for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
+                    size_t ns = sites_all_[fi_mon];
                     size_t nmon = mon_type_count_[mt].second;
                     size_t nmon2 = 2 * nmon;
 
@@ -1046,11 +1203,11 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") PERMDIP PME LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_[fi_sites + inmon + m]
-                                      << " Efq_= " << Efq_[fi_crd + inmon3 + m] << " "
-                                      << Efq_[fi_crd + inmon3 + nmon + m] << " " << Efq_[fi_crd + inmon3 + nmon2 + m]
+                                      << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
+                                      << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_all_[fi_sites + inmon + m]
+                                      << " Efq_= " << Efq_all_[fi_crd + inmon3 + m] << " "
+                                      << Efq_all_[fi_crd + inmon3 + nmon + m] << " " << Efq_all_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
                         }
                     }
@@ -1066,6 +1223,11 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     }  // debug print
 #endif
 
+    // Copy back improtant imformation
+    mon_type_count_ = mon_type_count_cp;
+    for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
+    for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
+
 #if HAVE_MPI == 1
     double time3 = MPI_Wtime();
 
@@ -1078,8 +1240,16 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 }
 
 void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
+    // MRR modification for external charges
+    // MRR EXT
+    size_t nExtChg = external_charge_.size();
+    std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
+    if (nExtChg > 0) {
+        mon_type_count_.push_back(std::make_pair("ext", nExtChg));
+    }
+
     // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
+    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -1108,8 +1278,8 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
     double ez = 0.0;
     double phi1 = 0.0;
 
-    std::fill(phi_.begin(), phi_.end(), 0);
-    std::fill(Efq_.begin(), Efq_.end(), 0);
+    std::fill(phi_all_.begin(), phi_all_.end(), 0);
+    std::fill(Efq_all_.begin(), Efq_all_.end(), 0);
 
     // Excluded sets
     excluded_set_type exc12;
@@ -1118,12 +1288,12 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
 
         // Obtain excluded pairs for monomer type mt
-        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
 
         // Loop over each pair of sites
         for (size_t i = 0; i < ns - 1; i++) {
@@ -1152,14 +1322,15 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                 size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
                 for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
                     elec_field.CalcPermanentElecField(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data() + fi_sites, chg_.data() + fi_sites, m,
-                        m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex, &ey, &ez, &phi1,
-                        phi_.data() + fi_sites, Efq_.data() + fi_crd, elec_scale_factor, ewald_alpha_, use_pbc_, box_,
-                        box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon, fi_mon, &virial_);
-                    phi_[fi_sites + inmon + m] += phi1;
-                    Efq_[fi_crd + inmon3 + m] += ex;
-                    Efq_[fi_crd + inmon3 + nmon + m] += ey;
-                    Efq_[fi_crd + inmon3 + nmon2 + m] += ez;
+                        xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,
+                        chg_all_.data() + fi_sites, m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex,
+                        &ey, &ez, &phi1, phi_all_.data() + fi_sites, Efq_all_.data() + fi_crd, elec_scale_factor,
+                        ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon,
+                        fi_mon, &virial_);
+                    phi_all_[fi_sites + inmon + m] += phi1;
+                    Efq_all_[fi_crd + inmon3 + m] += ex;
+                    Efq_all_[fi_crd + inmon3 + nmon + m] += ey;
+                    Efq_all_[fi_crd + inmon3 + nmon2 + m] += ez;
                 }
             }
         }
@@ -1226,7 +1397,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 
     // Loop over all monomer types
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        size_t ns1 = sites_[fi_mon1];
+        size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
         fi_mon2 = fi_mon1;
@@ -1236,7 +1407,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
         // For each monomer type mt1, loop over all the other monomer types
         // mt2 >= mt1 to avoid double counting
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-            size_t ns2 = sites_[fi_mon2];
+            size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
 
             // Check if monomer types 1 and 2 are the same
@@ -1283,9 +1454,9 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                     size_t inmon13 = inmon1 * 3;
 
                     std::vector<double> xyz_sitei(3);
-                    xyz_sitei[0] = xyz_[fi_crd1 + inmon13 + m1];
-                    xyz_sitei[1] = xyz_[fi_crd1 + inmon13 + nmon1 + m1];
-                    xyz_sitei[2] = xyz_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
+                    xyz_sitei[0] = xyz_all_[fi_crd1 + inmon13 + m1];
+                    xyz_sitei[1] = xyz_all_[fi_crd1 + inmon13 + nmon1 + m1];
+                    xyz_sitei[2] = xyz_all_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
 
                     for (size_t j = 0; j < ns2; j++) {
                         size_t jnmon2 = j * nmon2;
@@ -1298,13 +1469,14 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                         size_t size_j = nmon2 - m2init;
                         std::vector<double> xyz_sitej(3 * size_j);
                         // Copy x
-                        std::copy(xyz_.begin() + start_j + m2init, xyz_.begin() + start_j + nmon2, xyz_sitej.begin());
+                        std::copy(xyz_all_.begin() + start_j + m2init, xyz_all_.begin() + start_j + nmon2,
+                                  xyz_sitej.begin());
                         // Copy y
-                        std::copy(xyz_.begin() + start_j + nmon2 + m2init, xyz_.begin() + start_j + 2 * nmon2,
+                        std::copy(xyz_all_.begin() + start_j + nmon2 + m2init, xyz_all_.begin() + start_j + 2 * nmon2,
                                   xyz_sitej.begin() + size_j);
                         // Copy y
-                        std::copy(xyz_.begin() + start_j + 2 * nmon2 + m2init, xyz_.begin() + start_j + 3 * nmon2,
-                                  xyz_sitej.begin() + 2 * size_j);
+                        std::copy(xyz_all_.begin() + start_j + 2 * nmon2 + m2init,
+                                  xyz_all_.begin() + start_j + 3 * nmon2, xyz_sitej.begin() + 2 * size_j);
 
                         // Vector that will tell the original position of the new sites
                         std::vector<double> chg_sitej(size_j);
@@ -1313,11 +1485,11 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                         // declare temporary virial for each pair
                         std::vector<double> virial_thread(9, 0.0);
 
-                        std::copy(chg_.begin() + fi_sites2 + nmon2 * j + m2init,
-                                  chg_.begin() + fi_sites2 + nmon2 * (j + 1), chg_sitej.begin());
+                        std::copy(chg_all_.begin() + fi_sites2 + nmon2 * j + m2init,
+                                  chg_all_.begin() + fi_sites2 + nmon2 * (j + 1), chg_sitej.begin());
 
                         // Check if A = 0 and call the proper field calculation
-                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+                        double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
                         double Asqsqi = 0.0;
                         if (A > constants::EPS) {
@@ -1330,10 +1502,10 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                         }
                         double elec_scale_factor = 1;
                         local_field->CalcPermanentElecField(
-                            xyz_.data() + fi_crd1, xyz_sitej.data(), chg_.data() + fi_sites1, chg_sitej.data(), m1, 0,
-                            size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
+                            xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(),
+                            m1, 0, size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
-                            ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_, fi_mon1 + m1,
+                            ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1,
                             fi_mon2, m2init, &virial_thread);
 
                         // Put proper data in field and electric field of j
@@ -1361,18 +1533,18 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                 size_t kend1 = Efq_1_pool[rank].size();
                 size_t kend2 = Efq_2_pool[rank].size();
                 for (size_t k = 0; k < kend1; k++) {
-                    Efq_[fi_crd1 + k] += Efq_1_pool[rank][k];
+                    Efq_all_[fi_crd1 + k] += Efq_1_pool[rank][k];
                 }
                 for (size_t k = 0; k < kend2; k++) {
-                    Efq_[fi_crd2 + k] += Efq_2_pool[rank][k];
+                    Efq_all_[fi_crd2 + k] += Efq_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 for (size_t k = 0; k < kend1; k++) {
-                    phi_[fi_sites1 + k] += phi_1_pool[rank][k];
+                    phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 for (size_t k = 0; k < kend2; k++) {
-                    phi_[fi_sites2 + k] += phi_2_pool[rank][k];
+                    phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
@@ -1443,7 +1615,6 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 #endif
 
     if (ewald_alpha_ > 0 && use_pbc_) {
-        double _time0 = MPI_Wtime();
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -1465,20 +1636,12 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
-
-        mbxt_ele_count_[ELE_PME_SETUP]++;
-        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
-
         // N.B. these do not make copies; they just wrap the memory with some metadata
-        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
-        auto charges = helpme::Matrix<double>(sys_chg_.data(), nsites_, 1);
-        auto result = helpme::Matrix<double>(rec_phi_and_field_.data(), nsites_, 4);
-        std::fill(rec_phi_and_field_.begin(), rec_phi_and_field_.end(), 0);
-
-        double _time1 = MPI_Wtime();
+        auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
+        auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
+        auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), nsites_all_, 4);
+        std::fill(rec_phi_and_field_all_.begin(), rec_phi_and_field_all_.end(), 0);
         pme_solver_.computePRec(0, charges, coords, coords, 1, result);
-        mbxt_ele_count_[ELE_PME_PRC]++;
-        mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
 
 #if HAVE_MPI == 1
         MPI_Allreduce(MPI_IN_PLACE, rec_phi_and_field_.data(), rec_phi_and_field_.size(), MPI_DOUBLE, MPI_SUM, world_);
@@ -1488,25 +1651,25 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
         fi_mon = 0;
         fi_sites = 0;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = sites_[fi_mon];
+            size_t ns = sites_all_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
             for (size_t m = 0; m < nmon; m++) {
                 size_t mns = m * ns;
                 for (size_t i = 0; i < ns; i++) {
                     size_t inmon = i * nmon;
                     const double *result_ptr = result[fi_sites + mns + i];
-                    phi_[fi_sites + inmon + m] += result_ptr[0];
-                    Efq_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[1];
-                    Efq_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[2];
-                    Efq_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[3];
+                    phi_all_[fi_sites + inmon + m] += result_ptr[0];
+                    Efq_all_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[1];
+                    Efq_all_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[2];
+                    Efq_all_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[3];
                 }
             }
             fi_mon += nmon;
             fi_sites += nmon * ns;
         }
         // The Ewald self potential
-        double *phi_ptr = phi_.data();
-        for (const auto &q : chg_) {
+        double *phi_ptr = phi_all_.data();
+        for (const auto &q : chg_all_) {
             *phi_ptr -= 2 * ewald_alpha_ / PIQSRT * q;
             ++phi_ptr;
         }
@@ -1566,6 +1729,11 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
     mbxt_ele_count_[ELE_PERMDIP_PME]++;
     mbxt_ele_time_[ELE_PERMDIP_PME] += time3 - time2;
 #endif
+
+    // Copy back improtant imformation
+    mon_type_count_ = mon_type_count_cp;
+    for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
+    for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3953,7 +4121,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             fi_crd += nmon * ns * 3;
         }
 
-        double _time0 = MPI_Wtime();
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -3983,9 +4150,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
-
-        mbxt_ele_count_[ELE_PME_SETUP]++;
-        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -4067,10 +4231,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         }  // debug print
 #endif
 
-        double _time1 = MPI_Wtime();
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
-        mbxt_ele_count_[ELE_PME_PRD]++;
-        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
 
 #ifdef _DEBUG_DIPFIELD
         {  // debug print
@@ -4527,7 +4688,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             fi_crd += nmon * ns * 3;
         }
 
-        double _time0 = MPI_Wtime();
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         double A, B, C, alpha, beta, gamma;
@@ -4549,10 +4709,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
-
-        mbxt_ele_count_[ELE_PME_SETUP]++;
-        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
-
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
@@ -4580,10 +4736,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }  // debug print
 #endif
 
-        double _time1 = MPI_Wtime();
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
-        mbxt_ele_count_[ELE_PME_PRD]++;
-        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
 
 #ifdef _DEBUG_DIPFIELD
         {  // debug print
@@ -4772,9 +4925,14 @@ void Electrostatics::CalculateDipolesIterative() {
 
 void Electrostatics::CalculateElecEnergyMPIlocal() {
     Eperm_ = 0.0;
-    for (size_t i = 0; i < nsites_; i++) Eperm_ += phi_[i] * chg_[i];
+    for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
     Eperm_ *= 0.5 * constants::COULOMB;
 
+    if (mpi_rank_ == 0) {
+      for(int i=0; i<nsites_all_; ++i)
+	std::cout << "i= " << i << " phi_all= " << phi_all_[i] << "  chg_all= " << chg_all_[i] << "  Eperm= " << Eperm_ << std::endl;
+    }
+    
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;
     for (size_t i = 0; i < 3 * nsites_; i++) Eind_ -= mu_[i] * Efq_[i] * islocal_atom_xyz_[i];
@@ -4784,11 +4942,25 @@ void Electrostatics::CalculateElecEnergyMPIlocal() {
     {  // debug_output
         double Eperm_total = 0.0;
         double Eind_total = 0.0;
+
+	MPI_Barrier(world_);
+	int nprocs;
+	MPI_Comm_size(world_, &nprocs);
+	for(int ip=0; ip<nprocs; ++ip) {
+	  if(ip == mpi_rank_) {
+	    std::cout << "(" << mpi_rank_ << ") Eperm(LOCAL)= " << Eperm_ << "  Eind_= " << Eind_
+                      << std::endl;
+	  }
+	  MPI_Barrier(world_);
+	}
+	
         MPI_Reduce(&Eperm_, &Eperm_total, 1, MPI_DOUBLE, MPI_SUM, 0, world_);
         MPI_Reduce(&Eind_, &Eind_total, 1, MPI_DOUBLE, MPI_SUM, 0, world_);
-        if (0 == mpi_rank_)
-            std::cout << "(" << mpi_rank_ << ") Eperm(LOCAL)= " << Eperm_total << "  Eind_= " << Eind_total
-                      << std::endl;
+        if (mpi_rank_ == 0) {
+	  std::cout << std::endl;
+	  std::cout << "(" << mpi_rank_ << ") TOTAL:: Eperm= " << Eperm_total << "  Eind_= " << Eind_total
+		    << std::endl;
+	}
     }  // debug_output
 #endif
 
@@ -4799,7 +4971,7 @@ void Electrostatics::CalculateElecEnergyMPIlocal() {
 
 void Electrostatics::CalculateElecEnergy() {
     Eperm_ = 0.0;
-    for (size_t i = 0; i < nsites_; i++) Eperm_ += phi_[i] * chg_[i];
+    for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
     Eperm_ *= 0.5 * constants::COULOMB;
 
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
@@ -4820,11 +4992,39 @@ void Electrostatics::CalculateElecEnergy() {
 }
 
 void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost) {
+    // MRR EXT
+    size_t nExtChg = external_charge_.size();
+    std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
+    std::vector<double> grad_cp = grad;
+
+    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+
+    if (nExtChg > 0) {
+        mon_type_count_.push_back(std::make_pair("ext", nExtChg));
+    }
+    grad = std::vector<double>((nExtChg + nsites_) * 3, 0.0);
+
+    sys_grad_all_ = std::vector<double>((nsites_ + nExtChg) * 3, 0.0);
+
+    // FIx the mu vectors
+    mu_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    sys_mu_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    sys_Efq_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    sys_Efd_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    Efd_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    sys_phi_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+
+    for (size_t i = 0; i < 3 * nsites_; i++) {
+        mu_all_[i] = mu_[i];
+        sys_mu_all_[i] = sys_mu_[i];
+        Efd_all_[i] = Efd_[i];
+    }
+    
     // Reset grad
-    grad_ = std::vector<double>(3 * nsites_, 0.0);
+    //    grad_ = std::vector<double>(3 * nsites_, 0.0);
 
     // Max number of monomers
-    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
+    //    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -4861,7 +5061,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     size_t fi_crd = 0;
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t i = 0; i < ns; i++) {
@@ -4869,10 +5069,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             size_t inmon3 = 3 * inmon;
             for (size_t m = 0; m < nmon; m++) {
                 if (islocal_atom_[fi_sites + m + inmon]) {
-                    grad_[fi_crd + inmon3 + m] -= chg_[fi_sites + inmon + m] * Efq_[fi_crd + inmon3 + m];
-                    grad_[fi_crd + inmon3 + nmon + m] -= chg_[fi_sites + inmon + m] * Efq_[fi_crd + inmon3 + nmon + m];
+                    grad_[fi_crd + inmon3 + m] -= chg_all_[fi_sites + inmon + m] * Efq_all_[fi_crd + inmon3 + m];
+                    grad_[fi_crd + inmon3 + nmon + m] -= chg_all_[fi_sites + inmon + m] * Efq_all_[fi_crd + inmon3 + nmon + m];
                     grad_[fi_crd + inmon3 + nmon2 + m] -=
-                        chg_[fi_sites + inmon + m] * Efq_[fi_crd + inmon3 + nmon2 + m];
+                        chg_all_[fi_sites + inmon + m] * Efq_all_[fi_crd + inmon3 + nmon2 + m];
                 }
             }
         }
@@ -4897,7 +5097,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 std::cout << "\n" << std::endl;
                 // Loop over each monomer type
                 for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
+                    size_t ns = sites_all_[fi_mon];
                     size_t nmon = mon_type_count_[mt].second;
                     size_t nmon2 = 2 * nmon;
 
@@ -4907,9 +5107,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") GRAD CHG-CHG LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_[fi_sites + inmon + m]
+                                      << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
+                                      << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_all_[fi_sites + inmon + m]
                                       << " grad_= " << grad_[fi_crd + inmon3 + m] << " "
                                       << grad_[fi_crd + inmon3 + nmon + m] << " " << grad_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
@@ -4933,10 +5133,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     fi_crd = 0;
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
-        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
         for (size_t i = 0; i < ns - 1; i++) {
             size_t inmon = i * nmon;
             size_t inmon3 = 3 * inmon;
@@ -4948,8 +5148,8 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 // Don't do charge-dipole and modify phi if pair is excluded
                 // TODO check this for distances more than 1-4
                 double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
-                aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
-                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+                aDD = systools::GetAdd(is12, is13, is14, mon_id_all_[fi_mon]);
+                double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
                 double Ai = 0.0;
                 double Asqsqi = 0.0;
                 if (A > constants::EPS) {
@@ -4963,16 +5163,16 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 for (size_t m = 0; m < nmon; m++) {
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
-                    if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
+                    if (use_ghost && islocal_all_[fi_mon + m]) include_monomer = true;
 
                     if (include_monomer) {
                         elec_field.CalcElecFieldGrads(
-                            xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data() + fi_sites, chg_.data() + fi_sites,
-                            mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1, nmon, nmon, i, j, aDD, aCD_, Asqsqi,
-                            &ex, &ey, &ez, &phi1, phi_.data() + fi_sites, grad_.data() + fi_crd, elec_scale_factor,
+                            xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites, chg_all_.data() + fi_sites,
+                            mu_all_.data() + fi_crd, mu_all_.data() + fi_crd, m, m, m + 1, nmon, nmon, i, j, aDD, aCD_, Asqsqi,
+                            &ex, &ey, &ez, &phi1, phi_all_.data() + fi_sites, grad_.data() + fi_crd, elec_scale_factor,
                             ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost,
-                            islocal_, fi_mon + m, fi_mon, &virial_);
-                        phi_[fi_sites + inmon + m] += phi1;
+                            islocal_all_, fi_mon + m, fi_mon, &virial_);
+                        phi_all_[fi_sites + inmon + m] += phi1;
                         grad_[fi_crd + inmon3 + m] += ex;
                         grad_[fi_crd + inmon3 + nmon + m] += ey;
                         grad_[fi_crd + inmon3 + nmon2 + m] += ez;
@@ -5001,7 +5201,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 std::cout << "\n" << std::endl;
                 // Loop over each monomer type
                 for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
+                    size_t ns = sites_all_[fi_mon];
                     size_t nmon = mon_type_count_[mt].second;
                     size_t nmon2 = 2 * nmon;
 
@@ -5011,9 +5211,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") GRAD DIP-DIP LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_[fi_sites + inmon + m]
+                                      << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
+                                      << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_all_[fi_sites + inmon + m]
                                       << " grad_= " << grad_[fi_crd + inmon3 + m] << " "
                                       << grad_[fi_crd + inmon3 + nmon + m] << " " << grad_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
@@ -5040,14 +5240,14 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     // aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        size_t ns1 = sites_[fi_mon1];
+        size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-            size_t ns2 = sites_[fi_mon2];
+            size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
             // TODO add neighbour list here
@@ -5081,7 +5281,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = 3 * inmon1;
                     for (size_t j = 0; j < ns2; j++) {
-                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+                        double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
                         double Asqsqi = 0.0;
                         if (A > constants::EPS) {
@@ -5093,11 +5293,11 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                             Asqsqi = Ai;
                         }
                         local_field->CalcElecFieldGrads(
-                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() + fi_sites1,
-                            chg_.data() + fi_sites2, mu_.data() + fi_crd1, mu_.data() + fi_crd2, m1, m2init, nmon2,
+                            xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, chg_all_.data() + fi_sites1,
+                            chg_all_.data() + fi_sites2, mu_all_.data() + fi_crd1, mu_all_.data() + fi_crd2, m1, m2init, nmon2,
                             nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread, &phi1_thread,
                             phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, simcell_periodic_,
-                            box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2,
+                            box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2,
                             &virial_pool[rank]);
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
@@ -5119,10 +5319,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 for (size_t k = 0; k < kend1; k++) {
-                    phi_[fi_sites1 + k] += phi_1_pool[rank][k];
+                    phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 for (size_t k = 0; k < kend2; k++) {
-                    phi_[fi_sites2 + k] += phi_2_pool[rank][k];
+                    phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
@@ -5154,7 +5354,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 std::cout << "\n" << std::endl;
                 // Loop over each monomer type
                 for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
+                    size_t ns = sites_all_[fi_mon];
                     size_t nmon = mon_type_count_[mt].second;
                     size_t nmon2 = 2 * nmon;
 
@@ -5164,9 +5364,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") GRAD INTER LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_[fi_sites + inmon + m]
+                                      << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
+                                      << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_all_[fi_sites + inmon + m]
                                       << " grad_= " << grad_[fi_crd + inmon3 + m] << " "
                                       << grad_[fi_crd + inmon3 + nmon + m] << " " << grad_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
@@ -5203,7 +5403,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         fi_sites = 0;
         fi_crd = 0;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = sites_[fi_mon];
+            size_t ns = sites_all_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
             size_t nmon2 = nmon * 2;
             for (size_t m = 0; m < nmon; m++) {
@@ -5212,10 +5412,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 for (size_t i = 0; i < ns; i++) {
                     size_t inmon = i * nmon;
                     size_t inmon3 = 3 * inmon;
-                    sys_chg_[fi_sites + mns + i] = chg_[fi_sites + m + inmon];
-                    sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
-                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
-                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
+                    sys_chg_all_[fi_sites + mns + i] = chg_all_[fi_sites + m + inmon];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i] = mu_all_[inmon3 + m + fi_crd];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i + 1] = mu_all_[inmon3 + m + fi_crd + nmon];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i + 2] = mu_all_[inmon3 + m + fi_crd + nmon2];
                 }
             }
             fi_mon += nmon;
@@ -5223,7 +5423,6 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             fi_crd += nmon * ns * 3;
         }
 
-        double _time0 = MPI_Wtime();
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -5254,15 +5453,11 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
-
-        mbxt_ele_count_[ELE_PME_SETUP]++;
-        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
-
         // N.B. these do not make copies; they just wrap the memory with some metadata
-        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
-        auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
-        auto charges = helpme::Matrix<double>(sys_chg_.data(), nsites_, 1);
-        auto result = helpme::Matrix<double>(nsites_, 10);
+        auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_all_.data(), nsites_all_, 3);
+        auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
+        auto result = helpme::Matrix<double>(nsites_all_, 10);
 
 #ifdef _DEBUG_GRAD
         {  // debug print
@@ -5275,7 +5470,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             for (int ip = 0; ip < nprocs; ++ip) {
                 if (ip == me) {
                     std::cout << "\n" << std::endl;
-                    for (int i = 0; i < nsites_; ++i) {
+                    for (int i = 0; i < nsites_all_; ++i) {
                         std::cout << "(" << me << ") GRAD 1 LOCAL: i= " << i << " coords= " << coords(i, 0) << " "
                                   << coords(i, 1) << " " << coords(i, 2) << " charges= " << charges(0, i)
                                   << " dipoles= " << dipoles(i, 0) << " " << dipoles(i, 1) << " " << dipoles(i, 2)
@@ -5289,17 +5484,15 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 
         if (calc_virial_) {
             std::vector<double> trecvir(6, 0.0);
-            std::vector<double> tforcevec(sys_grad_.size(), 0.0);
+            std::vector<double> tforcevec(sys_grad_all_.size(), 0.0);
 
             auto drecvirial = helpme::Matrix<double>(trecvir.data(), 6, 1);
-            int ns_ = (nsites_ == 0) ? 1 : nsites_;
+	    //            int ns_ = (nsites_ + nExtChg == 0) ? 1 : nsites_ + nExtChg;
+	    int ns_ = nsites_ + nExtChg;
             auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), ns_, 3);
 
-            double _time1 = MPI_Wtime();
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(
                 0, charges, dipoles, PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
-            mbxt_ele_count_[ELE_PME_PRE]++;
-            mbxt_ele_time_[ELE_PME_PRE] += MPI_Wtime() - _time1;
 
             virial_[0] += (*drecvirial[0]) * constants::COULOMB;
             virial_[1] += (*drecvirial[1]) * constants::COULOMB;
@@ -5313,10 +5506,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             virial_[7] = virial_[5];
         }
 
-        double _time1 = MPI_Wtime();
         pme_solver_.computePRec(-1, dipoles, coords, coords, 2, result);
-        mbxt_ele_count_[ELE_PME_PRD]++;
-        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
 
         double *ptr = result[0];
 
@@ -5326,14 +5516,14 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         fi_crd = 0;
         double fac = constants::COULOMB;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = sites_[fi_mon];
+            size_t ns = sites_all_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
             for (size_t m = 0; m < nmon; m++) {
                 size_t mns = m * ns;
                 for (size_t i = 0; i < ns; i++) {
                     const double *result_ptr = result[fi_sites + mns + i];
-                    const double chg = sys_chg_[fi_sites + mns + i];
-                    const double *mu = &sys_mu_[fi_crd + 3 * mns + 3 * i];
+                    const double chg = sys_chg_all_[fi_sites + mns + i];
+                    const double *mu = &sys_mu_all_[fi_crd + 3 * mns + 3 * i];
                     double Phi = result_ptr[0];
                     double Erec_x = result_ptr[1];
                     double Erec_y = result_ptr[2];
@@ -5347,7 +5537,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                     double Grad_x = chg * Erec_x;
                     double Grad_y = chg * Erec_y;
                     double Grad_z = chg * Erec_z;
-                    phi_[fi_sites + i * nmon + m] += Phi;
+                    phi_all_[fi_sites + i * nmon + m] += Phi;
 #if !DIRECT_ONLY
                     Grad_x += Erec_xx * mu[0] + Erec_xy * mu[1] + Erec_xz * mu[2];
                     Grad_y += Erec_xy * mu[0] + Erec_yy * mu[1] + Erec_yz * mu[2];
@@ -5364,10 +5554,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         }
         // Now grid up the charges
         result.setZero();
-        _time1 = MPI_Wtime();
         pme_solver_.computePRec(0, charges, coords, coords, -2, result);
-        mbxt_ele_count_[ELE_PME_PRC]++;
-        mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
 
         // Resort field from system order
         fi_mon = 0;
@@ -5375,13 +5562,13 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         fi_crd = 0;
         fac = constants::COULOMB;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = sites_[fi_mon];
+            size_t ns = sites_all_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
             for (size_t m = 0; m < nmon; m++) {
                 size_t mns = m * ns;
                 for (size_t i = 0; i < ns; i++) {
                     const double *result_ptr = result[fi_sites + mns + i];
-                    const double *mu = &sys_mu_[fi_crd + 3 * mns + 3 * i];
+                    const double *mu = &sys_mu_all_[fi_crd + 3 * mns + 3 * i];
                     double Erec_xx = result_ptr[0];
                     double Erec_xy = result_ptr[1];
                     double Erec_yy = result_ptr[2];
@@ -5419,7 +5606,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     fi_crd = 0;
     fi_sites = 0;
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
@@ -5428,19 +5615,19 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             for (size_t i = 0; i < ns; i++) {
                 size_t inmon = i * nmon;
                 size_t inmon3 = 3 * inmon;
-                sys_Efq_[fi_crd + mns3 + 3 * i] = Efq_[inmon3 + m + fi_crd];
-                sys_Efq_[fi_crd + mns3 + 3 * i + 1] = Efq_[inmon3 + m + fi_crd + nmon];
-                sys_Efq_[fi_crd + mns3 + 3 * i + 2] = Efq_[inmon3 + m + fi_crd + nmon2];
+                sys_Efq_all_[fi_crd + mns3 + 3 * i] = Efq_all_[inmon3 + m + fi_crd];
+                sys_Efq_all_[fi_crd + mns3 + 3 * i + 1] = Efq_all_[inmon3 + m + fi_crd + nmon];
+                sys_Efq_all_[fi_crd + mns3 + 3 * i + 2] = Efq_all_[inmon3 + m + fi_crd + nmon2];
 
-                sys_Efd_[fi_crd + mns3 + 3 * i] = Efd_[inmon3 + m + fi_crd];
-                sys_Efd_[fi_crd + mns3 + 3 * i + 1] = Efd_[inmon3 + m + fi_crd + nmon];
-                sys_Efd_[fi_crd + mns3 + 3 * i + 2] = Efd_[inmon3 + m + fi_crd + nmon2];
+                sys_Efd_all_[fi_crd + mns3 + 3 * i] = Efd_all_[inmon3 + m + fi_crd];
+                sys_Efd_all_[fi_crd + mns3 + 3 * i + 1] = Efd_all_[inmon3 + m + fi_crd + nmon];
+                sys_Efd_all_[fi_crd + mns3 + 3 * i + 2] = Efd_all_[inmon3 + m + fi_crd + nmon2];
 
-                sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
-                sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
-                sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
+                sys_mu_all_[fi_crd + mns3 + 3 * i] = mu_all_[inmon3 + m + fi_crd];
+                sys_mu_all_[fi_crd + mns3 + 3 * i + 1] = mu_all_[inmon3 + m + fi_crd + nmon];
+                sys_mu_all_[fi_crd + mns3 + 3 * i + 2] = mu_all_[inmon3 + m + fi_crd + nmon2];
 
-                sys_phi_[fi_sites + mns + i] = phi_[fi_sites + m + inmon];
+                sys_phi_all_[fi_sites + mns + i] = phi_all_[fi_sites + m + inmon];
 
                 grad[fi_crd + mns3 + 3 * i] += constants::COULOMB * grad_[inmon3 + m + fi_crd];
                 grad[fi_crd + mns3 + 3 * i + 1] += constants::COULOMB * grad_[inmon3 + m + fi_crd + nmon];
@@ -5471,7 +5658,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 std::cout << "\n" << std::endl;
                 // Loop over each monomer type
                 for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
+                    size_t ns = sites_all_[fi_mon];
                     size_t nmon = mon_type_count_[mt].second;
                     size_t nmon2 = 2 * nmon;
 
@@ -5481,10 +5668,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") GRAD PME LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << "  phi_= " << sys_phi_[fi_sites + m + inmon]
+                                      << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
+                                      << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m]
+                                      << "  phi_= " << sys_phi_all_[fi_sites + m + inmon]
                                       << " grad= " << grad[fi_crd + inmon3 + m] << " "
                                       << grad[fi_crd + inmon3 + nmon + m] << " " << grad[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
@@ -5506,19 +5693,19 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     fi_sites = 0;
     fi_crd = 0;
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
-        std::string id = mon_id_[fi_mon];
+        std::string id = mon_id_all_[fi_mon];
 
         // Redistribute gradients
         systools::RedistributeVirtGrads2Real(id, nmon, fi_crd, grad);
 
         // // Gradients due to position dependant charges
         if (calc_virial_) {  // calculate virial if need be
-            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_,
-                                            xyz_.data() + fi_crd, &virial_);
+            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_all_, grad, sys_chg_grad_,
+                                            xyz_all_.data() + fi_crd, &virial_);
         } else {
-            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_);
+            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_all_, grad, sys_chg_grad_);
         }
         // Update first indexes
         fi_mon += nmon;
@@ -5541,7 +5728,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                 std::cout << "\n" << std::endl;
                 // Loop over each monomer type
                 for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
+                    size_t ns = sites_all_[fi_mon];
                     size_t nmon = mon_type_count_[mt].second;
                     size_t nmon2 = 2 * nmon;
 
@@ -5551,12 +5738,12 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                         size_t inmon3 = inmon * 3;
                         for (size_t m = 0; m < nmon; m++) {
                             std::cout << "(" << me << ") GRAD FINAL LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m]
-                                      << "  phi_= " << sys_phi_[fi_sites + m + inmon]
-                                      << " grad_= " << grad_[fi_crd + inmon3 + m] << " "
-                                      << grad_[fi_crd + inmon3 + nmon + m] << " " << grad_[fi_crd + inmon3 + nmon2 + m]
+                                      << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
+                                      << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m]
+                                      << "  phi_= " << sys_phi_all_[fi_sites + m + inmon]
+                                      << " grad_= " << grad_all_[fi_crd + inmon3 + m] << " "
+                                      << grad_all_[fi_crd + inmon3 + nmon + m] << " " << grad_all_[fi_crd + inmon3 + nmon2 + m]
                                       << " grad= " << grad[fi_crd + inmon3 + m] << " "
                                       << grad[fi_crd + inmon3 + nmon + m] << " " << grad[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
@@ -5574,6 +5761,27 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     }  // debug print
 #endif
 
+    // Reset mon_type_count_
+    mon_type_count_ = mon_type_count_cp;
+
+    // Add gradients to right place
+    for (size_t i = 0; i < nsites_ * 3; i++) {
+        grad_cp[i] += grad[i];
+        mu_[i] = mu_all_[i];
+        sys_mu_[i] = sys_mu_all_[i];
+    }
+
+    for (size_t i = 0; i < 3 * nExtChg; i++) {
+        external_charge_grads_[i] = grad[3 * nsites_ + i];
+    }
+
+    for (size_t i = 0; i < nsites_; i++) {
+        phi_[i] = phi_all_[i];
+        sys_phi_[i] = sys_phi_all_[i];
+    }
+
+    grad = grad_cp;
+
 #if HAVE_MPI == 1
     double time4 = MPI_Wtime();
 
@@ -5589,11 +5797,38 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 }
 
 void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghost) {
+    // MRR EXT
+    size_t nExtChg = external_charge_.size();
+    std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
+    std::vector<double> grad_cp = grad;
+
+    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+
+    if (nExtChg > 0) {
+        mon_type_count_.push_back(std::make_pair("ext", nExtChg));
+    }
+    grad = std::vector<double>((nExtChg + nsites_) * 3, 0.0);
+
+    sys_grad_all_ = std::vector<double>((nsites_ + nExtChg) * 3, 0.0);
+
+    // FIx the mu vectors
+    mu_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    sys_mu_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    sys_Efq_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    sys_Efd_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    Efd_all_ = std::vector<double>(3 * (nExtChg + nsites_), 0.0);
+    sys_phi_all_ = std::vector<double>(nExtChg + nsites_, 0.0);
+
+    for (size_t i = 0; i < 3 * nsites_; i++) {
+        mu_all_[i] = mu_[i];
+        sys_mu_all_[i] = sys_mu_[i];
+        Efd_all_[i] = Efd_[i];
+    }
+
     // Reset grad
-    grad_ = std::vector<double>(3 * nsites_, 0.0);
+    grad_ = std::vector<double>(3 * (nsites_ + nExtChg), 0.0);
 
     // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -5630,16 +5865,18 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
     size_t fi_crd = 0;
 #if 1
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t i = 0; i < ns; i++) {
             size_t inmon = i * nmon;
             size_t inmon3 = 3 * inmon;
             for (size_t m = 0; m < nmon; m++) {
-                grad_[fi_crd + inmon3 + m] -= chg_[fi_sites + inmon + m] * Efq_[fi_crd + inmon3 + m];
-                grad_[fi_crd + inmon3 + nmon + m] -= chg_[fi_sites + inmon + m] * Efq_[fi_crd + inmon3 + nmon + m];
-                grad_[fi_crd + inmon3 + nmon2 + m] -= chg_[fi_sites + inmon + m] * Efq_[fi_crd + inmon3 + nmon2 + m];
+                grad_[fi_crd + inmon3 + m] -= chg_all_[fi_sites + inmon + m] * Efq_all_[fi_crd + inmon3 + m];
+                grad_[fi_crd + inmon3 + nmon + m] -=
+                    chg_all_[fi_sites + inmon + m] * Efq_all_[fi_crd + inmon3 + nmon + m];
+                grad_[fi_crd + inmon3 + nmon2 + m] -=
+                    chg_all_[fi_sites + inmon + m] * Efq_all_[fi_crd + inmon3 + nmon2 + m];
             }
         }
         // Update first indexes
@@ -5699,10 +5936,10 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
     fi_crd = 0;
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
-        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+        systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
         for (size_t i = 0; i < ns - 1; i++) {
             size_t inmon = i * nmon;
             size_t inmon3 = 3 * inmon;
@@ -5714,8 +5951,8 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                 // Don't do charge-dipole and modify phi if pair is excluded
                 // TODO check this for distances more than 1-4
                 double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
-                aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
-                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+                aDD = systools::GetAdd(is12, is13, is14, mon_id_all_[fi_mon]);
+                double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
                 double Ai = 0.0;
                 double Asqsqi = 0.0;
                 if (A > constants::EPS) {
@@ -5728,11 +5965,12 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                 }
                 for (size_t m = 0; m < nmon; m++) {
                     elec_field.CalcElecFieldGrads(
-                        xyz_.data() + fi_crd, xyz_.data() + fi_crd, chg_.data() + fi_sites, chg_.data() + fi_sites,
-                        mu_.data() + fi_crd, mu_.data() + fi_crd, m, m, m + 1, nmon, nmon, i, j, aDD, aCD_, Asqsqi, &ex,
-                        &ey, &ez, &phi1, phi_.data() + fi_sites, grad_.data() + fi_crd, elec_scale_factor, ewald_alpha_,
-                        use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_);
-                    phi_[fi_sites + inmon + m] += phi1;
+                        xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,
+                        chg_all_.data() + fi_sites, mu_all_.data() + fi_crd, mu_all_.data() + fi_crd, m, m, m + 1, nmon,
+                        nmon, i, j, aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1, phi_all_.data() + fi_sites,
+                        grad_.data() + fi_crd, elec_scale_factor, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_,
+                        use_ghost, islocal_all_, fi_mon + m, fi_mon, &virial_);
+                    phi_all_[fi_sites + inmon + m] += phi1;
                     grad_[fi_crd + inmon3 + m] += ex;
                     grad_[fi_crd + inmon3 + nmon + m] += ey;
                     grad_[fi_crd + inmon3 + nmon2 + m] += ez;
@@ -5799,14 +6037,14 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
     // aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        size_t ns1 = sites_[fi_mon1];
+        size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-            size_t ns2 = sites_[fi_mon2];
+            size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
             // TODO add neighbour list here
@@ -5840,7 +6078,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = 3 * inmon1;
                     for (size_t j = 0; j < ns2; j++) {
-                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+                        double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
                         double Asqsqi = 0.0;
                         if (A > constants::EPS) {
@@ -5852,11 +6090,12 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                             Asqsqi = Ai;
                         }
                         local_field->CalcElecFieldGrads(
-                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, chg_.data() + fi_sites1,
-                            chg_.data() + fi_sites2, mu_.data() + fi_crd1, mu_.data() + fi_crd2, m1, m2init, nmon2,
-                            nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread, &phi1_thread,
-                            phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_, box_,
-                            box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m1, fi_mon2, &virial_pool[rank]);
+                            xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, chg_all_.data() + fi_sites1,
+                            chg_all_.data() + fi_sites2, mu_all_.data() + fi_crd1, mu_all_.data() + fi_crd2, m1, m2init,
+                            nmon2, nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
+                            &phi1_thread, phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_,
+                            box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon + m1, fi_mon2,
+                            &virial_pool[rank]);
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -5877,10 +6116,10 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 for (size_t k = 0; k < kend1; k++) {
-                    phi_[fi_sites1 + k] += phi_1_pool[rank][k];
+                    phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 for (size_t k = 0; k < kend2; k++) {
-                    phi_[fi_sites2 + k] += phi_2_pool[rank][k];
+                    phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
@@ -5955,7 +6194,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         fi_sites = 0;
         fi_crd = 0;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = sites_[fi_mon];
+            size_t ns = sites_all_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
             size_t nmon2 = nmon * 2;
             for (size_t m = 0; m < nmon; m++) {
@@ -5964,10 +6203,10 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                 for (size_t i = 0; i < ns; i++) {
                     size_t inmon = i * nmon;
                     size_t inmon3 = 3 * inmon;
-                    sys_chg_[fi_sites + mns + i] = chg_[fi_sites + m + inmon];
-                    sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
-                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
-                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
+                    sys_chg_all_[fi_sites + mns + i] = chg_all_[fi_sites + m + inmon];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i] = mu_all_[inmon3 + m + fi_crd];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i + 1] = mu_all_[inmon3 + m + fi_crd + nmon];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i + 2] = mu_all_[inmon3 + m + fi_crd + nmon2];
                 }
             }
             fi_mon += nmon;
@@ -5995,10 +6234,10 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         // N.B. these do not make copies; they just wrap the memory with some metadata
-        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
-        auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
-        auto charges = helpme::Matrix<double>(sys_chg_.data(), nsites_, 1);
-        auto result = helpme::Matrix<double>(nsites_, 10);
+        auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_all_.data(), nsites_all_, 3);
+        auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
+        auto result = helpme::Matrix<double>(nsites_all_, 10);
 
 #ifdef _DEBUG_GRAD
         {  // debug print
@@ -6025,16 +6264,13 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
 
         if (calc_virial_) {
             std::vector<double> trecvir(6, 0.0);
-            std::vector<double> tforcevec(sys_grad_.size(), 0.0);
+            std::vector<double> tforcevec(sys_grad_all_.size(), 0.0);
 
             auto drecvirial = helpme::Matrix<double>(trecvir.data(), 6, 1);
-            auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), nsites_, 3);
+            auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), nsites_ + nExtChg, 3);
 
-            double _time1 = MPI_Wtime();
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(
                 0, charges, dipoles, PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
-            mbxt_ele_count_[ELE_PME_PRE]++;
-            mbxt_ele_time_[ELE_PME_PRE] += MPI_Wtime() - _time1;
 
 #if HAVE_MPI == 1
             MPI_Allreduce(MPI_IN_PLACE, trecvir.data(), trecvir.size(), MPI_DOUBLE, MPI_SUM, world_);
@@ -6052,10 +6288,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             virial_[7] = virial_[5];
         }
 
-        double _time1 = MPI_Wtime();
         pme_solver_.computePRec(-1, dipoles, coords, coords, 2, result);
-        mbxt_ele_count_[ELE_PME_PRD]++;
-        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
 
         double *ptr = result[0];
 #if HAVE_MPI == 1
@@ -6068,14 +6301,14 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         fi_crd = 0;
         double fac = constants::COULOMB;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = sites_[fi_mon];
+            size_t ns = sites_all_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
             for (size_t m = 0; m < nmon; m++) {
                 size_t mns = m * ns;
                 for (size_t i = 0; i < ns; i++) {
                     const double *result_ptr = result[fi_sites + mns + i];
-                    const double chg = sys_chg_[fi_sites + mns + i];
-                    const double *mu = &sys_mu_[fi_crd + 3 * mns + 3 * i];
+                    const double chg = sys_chg_all_[fi_sites + mns + i];
+                    const double *mu = &sys_mu_all_[fi_crd + 3 * mns + 3 * i];
                     double Phi = result_ptr[0];
                     double Erec_x = result_ptr[1];
                     double Erec_y = result_ptr[2];
@@ -6089,7 +6322,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                     double Grad_x = chg * Erec_x;
                     double Grad_y = chg * Erec_y;
                     double Grad_z = chg * Erec_z;
-                    phi_[fi_sites + i * nmon + m] += Phi;
+                    phi_all_[fi_sites + i * nmon + m] += Phi;
 #if !DIRECT_ONLY
                     Grad_x += Erec_xx * mu[0] + Erec_xy * mu[1] + Erec_xz * mu[2];
                     Grad_y += Erec_xy * mu[0] + Erec_yy * mu[1] + Erec_yz * mu[2];
@@ -6106,10 +6339,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         }
         // Now grid up the charges
         result.setZero();
-        _time1 = MPI_Wtime();
         pme_solver_.computePRec(0, charges, coords, coords, -2, result);
-        mbxt_ele_count_[ELE_PME_PRC]++;
-        mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
 
 #if HAVE_MPI == 1
         MPI_Allreduce(MPI_IN_PLACE, ptr, nsites_ * 10, MPI_DOUBLE, MPI_SUM, world_);
@@ -6121,13 +6351,13 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         fi_crd = 0;
         fac = constants::COULOMB;
         for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-            size_t ns = sites_[fi_mon];
+            size_t ns = sites_all_[fi_mon];
             size_t nmon = mon_type_count_[mt].second;
             for (size_t m = 0; m < nmon; m++) {
                 size_t mns = m * ns;
                 for (size_t i = 0; i < ns; i++) {
                     const double *result_ptr = result[fi_sites + mns + i];
-                    const double *mu = &sys_mu_[fi_crd + 3 * mns + 3 * i];
+                    const double *mu = &sys_mu_all_[fi_crd + 3 * mns + 3 * i];
                     double Erec_xx = result_ptr[0];
                     double Erec_xy = result_ptr[1];
                     double Erec_yy = result_ptr[2];
@@ -6165,7 +6395,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
     fi_crd = 0;
     fi_sites = 0;
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
@@ -6174,19 +6404,19 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             for (size_t i = 0; i < ns; i++) {
                 size_t inmon = i * nmon;
                 size_t inmon3 = 3 * inmon;
-                sys_Efq_[fi_crd + mns3 + 3 * i] = Efq_[inmon3 + m + fi_crd];
-                sys_Efq_[fi_crd + mns3 + 3 * i + 1] = Efq_[inmon3 + m + fi_crd + nmon];
-                sys_Efq_[fi_crd + mns3 + 3 * i + 2] = Efq_[inmon3 + m + fi_crd + nmon2];
+                sys_Efq_all_[fi_crd + mns3 + 3 * i] = Efq_all_[inmon3 + m + fi_crd];
+                sys_Efq_all_[fi_crd + mns3 + 3 * i + 1] = Efq_all_[inmon3 + m + fi_crd + nmon];
+                sys_Efq_all_[fi_crd + mns3 + 3 * i + 2] = Efq_all_[inmon3 + m + fi_crd + nmon2];
 
-                sys_Efd_[fi_crd + mns3 + 3 * i] = Efd_[inmon3 + m + fi_crd];
-                sys_Efd_[fi_crd + mns3 + 3 * i + 1] = Efd_[inmon3 + m + fi_crd + nmon];
-                sys_Efd_[fi_crd + mns3 + 3 * i + 2] = Efd_[inmon3 + m + fi_crd + nmon2];
+                sys_Efd_all_[fi_crd + mns3 + 3 * i] = Efd_all_[inmon3 + m + fi_crd];
+                sys_Efd_all_[fi_crd + mns3 + 3 * i + 1] = Efd_all_[inmon3 + m + fi_crd + nmon];
+                sys_Efd_all_[fi_crd + mns3 + 3 * i + 2] = Efd_all_[inmon3 + m + fi_crd + nmon2];
 
-                sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
-                sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
-                sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
+                sys_mu_all_[fi_crd + mns3 + 3 * i] = mu_all_[inmon3 + m + fi_crd];
+                sys_mu_all_[fi_crd + mns3 + 3 * i + 1] = mu_all_[inmon3 + m + fi_crd + nmon];
+                sys_mu_all_[fi_crd + mns3 + 3 * i + 2] = mu_all_[inmon3 + m + fi_crd + nmon2];
 
-                sys_phi_[fi_sites + mns + i] = phi_[fi_sites + m + inmon];
+                sys_phi_all_[fi_sites + mns + i] = phi_all_[fi_sites + m + inmon];
 
                 grad[fi_crd + mns3 + 3 * i] += constants::COULOMB * grad_[inmon3 + m + fi_crd];
                 grad[fi_crd + mns3 + 3 * i + 1] += constants::COULOMB * grad_[inmon3 + m + fi_crd + nmon];
@@ -6254,19 +6484,19 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
     fi_sites = 0;
     fi_crd = 0;
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
+        size_t ns = sites_all_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
-        std::string id = mon_id_[fi_mon];
+        std::string id = mon_id_all_[fi_mon];
 
         // Redistribute gradients
         systools::RedistributeVirtGrads2Real(id, nmon, fi_crd, grad);
 
         // // Gradients due to position dependant charges
         if (calc_virial_) {  // calculate virial if need be
-            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_,
-                                            xyz_.data() + fi_crd, &virial_);
+            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_all_, grad, sys_chg_grad_,
+                                            xyz_all_.data() + fi_crd, &virial_);
         } else {
-            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_, grad, sys_chg_grad_);
+            systools::ChargeDerivativeForce(id, nmon, fi_crd, fi_sites, sys_phi_all_, grad, sys_chg_grad_);
         }
         // Update first indexes
         fi_mon += nmon;
@@ -6321,6 +6551,27 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         }
     }  // debug print
 #endif
+
+    // Reset mon_type_count_
+    mon_type_count_ = mon_type_count_cp;
+
+    // Add gradients to right place
+    for (size_t i = 0; i < nsites_ * 3; i++) {
+        grad_cp[i] += grad[i];
+        mu_[i] = mu_all_[i];
+        sys_mu_[i] = sys_mu_all_[i];
+    }
+
+    for (size_t i = 0; i < 3 * nExtChg; i++) {
+        external_charge_grads_[i] = grad[3 * nsites_ + i];
+    }
+
+    for (size_t i = 0; i < nsites_; i++) {
+        phi_[i] = phi_all_[i];
+        sys_phi_[i] = sys_phi_all_[i];
+    }
+
+    grad = grad_cp;
 
 #if HAVE_MPI == 1
     double time4 = MPI_Wtime();
@@ -6474,9 +6725,15 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
 
-    std::cerr << "Grads:\n";
+    std::cerr << "Grads (system atoms):\n";
     for (size_t i = 0; i < grad.size(); i++) {
         std::cerr << grad[i] << " , ";
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "Grads (external charges):\n";
+    for (size_t i = 0; i < external_charge_grads_.size(); i++) {
+        std::cerr << external_charge_grads_[i] << " , ";
     }
     std::cerr << std::endl;
 

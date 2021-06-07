@@ -61,6 +61,7 @@ System::System() {
     monomer_json_read_ = false;
     mpi_initialized_ = false;
     simcell_periodic_ = false;
+    std::cerr << std::setprecision(20);
 
     // Define some of the parameters
 
@@ -121,6 +122,20 @@ size_t System::GetNumSites() { return numsites_; }
 size_t System::GetNumRealSites() { return numat_; }
 
 size_t System::GetMonNumAt(size_t n) { return nat_[original2current_order_[n]]; }
+
+std::vector<double> System::GetExternalCharges() { return electrostaticE_.GetExternalCharges(); }
+
+std::vector<double> System::GetExternalChargesPositions() { return electrostaticE_.GetExternalChargesPositions(); }
+
+std::vector<double> System::GetExternalChargesGradients() { return electrostaticE_.GetExternalChargesGradients(); }
+
+void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
+    electrostaticE_.SetExternalChargesAndPositions(chg, xyz);
+}
+  
+void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal) {
+    electrostaticE_.SetExternalChargesAndPositions(chg, xyz, islocal);
+}
 
 std::vector<size_t> System::GetMonNumAt() {
     std::vector<size_t> monnumat(nat_.size(), 0);
@@ -1804,7 +1819,7 @@ double System::Energy(bool do_grads) {
     energy_ = eff + e1b + e2b + e3b + edisp + ebuck + elj + Eelec;
 
 #ifdef PRINT_INDIVIDUAL_TERMS
-    std::cerr << std::setprecision(10) << std::scientific;
+    std::cerr << std::setprecision(20) << std::scientific;
     std::cerr << "1B = " << e1b << std::endl
               << "FF = " << eff << std::endl
               << "2B = " << e2b << std::endl
@@ -3285,9 +3300,6 @@ void System::ResetDipoleHistory() { electrostaticE_.ResetAspcHistory(); }
 
 std::vector<size_t> System::GetInfoElectrostaticsCounts() { return electrostaticE_.GetInfoCounts(); }
 std::vector<double> System::GetInfoElectrostaticsTimings() { return electrostaticE_.GetInfoTimings(); }
-
-std::vector<size_t> System::GetInfoDispersionCounts() { return dispersionE_.GetInfoCounts(); }
-std::vector<double> System::GetInfoDispersionTimings() { return dispersionE_.GetInfoTimings(); }
 
 ////////////////////////////////////////////////////////////////////////////////
 
