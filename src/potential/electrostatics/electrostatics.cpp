@@ -356,7 +356,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
 
     user_fft_grid_ = std::vector<int>{};
 
-    if (nsites_ > 0) {
+    if (nsites_ + external_charge_.size() > 0) {
         size_t nExtChg = external_charge_.size();
 
         // Define sizes.
@@ -552,7 +552,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
 
     ReorderData();
 
-    if (nsites_ > 0) {
+    if (nsites_ + external_charge_.size() > 0) {
         size_t nExtChg = external_charge_.size();
 
         // Define sizes.
@@ -731,7 +731,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
     
   // Max number of monomers
-  //    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
+    if(maxnmon == 0) maxnmon = 1;
     ElectricFieldHolder elec_field(maxnmon);
 
     int me;
@@ -1250,6 +1250,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 
     // Max number of monomers
     size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+    if(maxnmon == 0) maxnmon = 1;
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -5487,8 +5488,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             std::vector<double> tforcevec(sys_grad_all_.size(), 0.0);
 
             auto drecvirial = helpme::Matrix<double>(trecvir.data(), 6, 1);
-	    //            int ns_ = (nsites_ + nExtChg == 0) ? 1 : nsites_ + nExtChg;
-	    int ns_ = nsites_ + nExtChg;
+	    int ns_ = (nsites_ + nExtChg == 0) ? 1 : nsites_ + nExtChg;
             auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), ns_, 3);
 
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(
