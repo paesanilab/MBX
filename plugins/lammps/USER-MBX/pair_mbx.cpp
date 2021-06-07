@@ -183,6 +183,7 @@ void PairMBX::compute(int eflag, int vflag) {
             accumulate_f(false);
         }
 
+    if (mbx_parallel) {
 #ifdef _DEBUG
         printf("[MBX] (%i) -- Computing buck\n", me);
 #endif
