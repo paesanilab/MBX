@@ -47,14 +47,14 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #endif
 
-#define _DEBUG_PERM
+//#define _DEBUG_PERM
 //#define _DEBUG_DIPOLE
 //#define _DEBUG_ITERATION 1
 //#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
 #define _DEBUG_GRAD
-#define _DEBUG_PRINT_ENERGY
-//#define _DEBUG_PRINT_GRAD
+//#define _DEBUG_PRINT_ENERGY
+#define _DEBUG_PRINT_GRAD
 
 #if HAVE_MPI == 1
 #define MBX_ELEC_P2P_COMM 1
@@ -5022,7 +5022,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     }
     
     // Reset grad
-    //    grad_ = std::vector<double>(3 * nsites_, 0.0);
+    grad_ = std::vector<double>(3 * nsites_, 0.0);
 
     // Max number of monomers
     //    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
@@ -5042,6 +5042,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     double time1 = MPI_Wtime();
 #endif
 
+    if(nExtChg > 0) {
+      // call to reverse_comm() for Efq_all_ of size nsites_all_ * 3 ???
+    }
+    
     // Excluded sets
     excluded_set_type exc12;
     excluded_set_type exc13;
@@ -5069,7 +5073,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             size_t inmon = i * nmon;
             size_t inmon3 = 3 * inmon;
             for (size_t m = 0; m < nmon; m++) {
-                if (islocal_atom_[fi_sites + m + inmon]) {
+                if (islocal_atom_all_[fi_sites + m + inmon]) {
                     grad_[fi_crd + inmon3 + m] -= chg_all_[fi_sites + inmon + m] * Efq_all_[fi_crd + inmon3 + m];
                     grad_[fi_crd + inmon3 + nmon + m] -= chg_all_[fi_sites + inmon + m] * Efq_all_[fi_crd + inmon3 + nmon + m];
                     grad_[fi_crd + inmon3 + nmon2 + m] -=
@@ -5110,7 +5114,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                             std::cout << "(" << me << ") GRAD CHG-CHG LOCAL: mt= " << mt << " i= " << i << " m= " << m
                                       << "  islocal= " << islocal_all_[fi_mon + m] << " xyz= " << xyz_all_[fi_crd + inmon3 + m]
                                       << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m] << "  phi_= " << phi_all_[fi_sites + inmon + m]
+                                      << xyz_all_[fi_crd + inmon3 + nmon2 + m] << "  chg_all_= " << chg_all_[fi_sites + inmon + m]
+				      << "  phi_= " << phi_all_[fi_sites + inmon + m]
+				      << " Efq_all_= " << Efq_all_[fi_crd + inmon3 + m] << " "
+                                      << Efq_all_[fi_crd + inmon3 + nmon + m] << " " << Efq_all_[fi_crd + inmon3 + nmon2 + m]
                                       << " grad_= " << grad_[fi_crd + inmon3 + m] << " "
                                       << grad_[fi_crd + inmon3 + nmon + m] << " " << grad_[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
@@ -5742,8 +5749,6 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                                       << " " << xyz_all_[fi_crd + inmon3 + nmon + m] << " "
                                       << xyz_all_[fi_crd + inmon3 + nmon2 + m]
                                       << "  phi_= " << sys_phi_all_[fi_sites + m + inmon]
-                                      << " grad_= " << grad_all_[fi_crd + inmon3 + m] << " "
-                                      << grad_all_[fi_crd + inmon3 + nmon + m] << " " << grad_all_[fi_crd + inmon3 + nmon2 + m]
                                       << " grad= " << grad[fi_crd + inmon3 + m] << " "
                                       << grad[fi_crd + inmon3 + nmon + m] << " " << grad[fi_crd + inmon3 + nmon2 + m]
                                       << std::endl;
