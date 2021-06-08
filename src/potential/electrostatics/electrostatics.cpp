@@ -143,8 +143,6 @@ void Electrostatics::SetPeriodicity(bool periodic) { simcell_periodic_ = periodi
 void Electrostatics::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
     external_charge_ = chg;
     external_charge_xyz_ = xyz;
-    for (size_t i = 0; i < chg.size(); i++) external_islocal_.push_back(1);
-    for (size_t i = 0; i < chg.size(); i++) external_tag_.push_back(i);
 }
 
 void Electrostatics::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz,
