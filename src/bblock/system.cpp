@@ -132,9 +132,10 @@ std::vector<double> System::GetExternalChargesGradients() { return electrostatic
 void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
     electrostaticE_.SetExternalChargesAndPositions(chg, xyz);
 }
-  
-void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal) {
-    electrostaticE_.SetExternalChargesAndPositions(chg, xyz, islocal);
+
+void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz,
+                                            std::vector<size_t> islocal, std::vector<int> tag) {
+    electrostaticE_.SetExternalChargesAndPositions(chg, xyz, islocal, tag);
 }
 
 std::vector<size_t> System::GetMonNumAt() {

@@ -35,10 +35,10 @@
 
 #include "domain.h"
 
-#define _DEBUG
+//#define _DEBUG
 //#define _DEBUG_VIRIAL
 
-#define _DEBUG_EFIELD
+//#define _DEBUG_EFIELD
 
 // subject for removal
 // Systems::DispersionPME()
@@ -183,7 +183,6 @@ void PairMBX::compute(int eflag, int vflag) {
             accumulate_f(false);
         }
 
-    if (mbx_parallel) {
 #ifdef _DEBUG
         printf("[MBX] (%i) -- Computing buck\n", me);
 #endif
@@ -468,13 +467,13 @@ void PairMBX::accumulate_f(bool include_ext) {
     char **mol_names = fix_mbx->mol_names;
 
     std::vector<double> grads = ptr_mbx->GetRealGrads();
-    
-    std::vector<double> grads_ext;
-    if(include_ext) grads_ext = ptr_mbx->GetExternalChargesGradients();
-    else grads_ext = std::vector<double>(fix_mbx->mbx_num_ext*3, 0.0);
 
-    printf("(%i)  mbx_num_ext= %i  grads.size()= %lu  grads_ext.size()= %lu\n",me,fix_mbx->mbx_num_ext,grads.size(),grads_ext.size());
-    
+    std::vector<double> grads_ext;
+    if (include_ext)
+        grads_ext = ptr_mbx->GetExternalChargesGradients();
+    else
+        grads_ext = std::vector<double>(fix_mbx->mbx_num_ext * 3, 0.0);
+
     // accumulate forces on local particles
     // -- forces on ghost particles ignored/not needed
     // -- should use a map created from earlier loop loading particles into mbx
@@ -489,7 +488,7 @@ void PairMBX::accumulate_f(bool include_ext) {
             // to be replaced with integer comparison
 
             bool include_monomer = true;
-	    bool is_ext = false;
+            bool is_ext = false;
             tagint anchor = atom->tag[i];
 
             int na = 0;
@@ -503,11 +502,10 @@ void PairMBX::accumulate_f(bool include_ext) {
             else if (strcmp("dp1", mol_names[mtype]) == 0) {
                 na = 1;
 #ifndef _DEBUG_EFIELD
-		include_monomer = false;
-		is_ext = true;
+                include_monomer = false;
+                is_ext = true;
 #endif
-	    }
-            else if (strcmp("he", mol_names[mtype]) == 0)
+            } else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("cl", mol_names[mtype]) == 0)
                 na = 1;
@@ -533,12 +531,12 @@ void PairMBX::accumulate_f(bool include_ext) {
                     f[ii][2] -= grads[indx++];
                 }
 #ifndef _DEBUG_EFIELD
-            } else if(is_ext) {
-	      f[i][0] -= grads_ext[indx_ext++];
-	      f[i][1] -= grads_ext[indx_ext++];
-	      f[i][2] -= grads_ext[indx_ext++];
+            } else if (is_ext) {
+                f[i][0] -= grads_ext[indx_ext++];
+                f[i][1] -= grads_ext[indx_ext++];
+                f[i][2] -= grads_ext[indx_ext++];
 #endif
-	    }
+            }
 
         }  // if(anchor)
     }
@@ -594,13 +592,13 @@ void PairMBX::accumulate_f_local(bool include_ext) {
     char **mol_names = fix_mbx->mol_names;
 
     std::vector<double> grads = ptr_mbx->GetRealGrads();
-    
-    std::vector<double> grads_ext;
-    if(include_ext) grads_ext = ptr_mbx->GetExternalChargesGradients();
-    else grads_ext = std::vector<double>(fix_mbx->mbx_num_ext_local*3, 0.0);
 
-    //printf("(%i)  grads= %f %f %f %f %f %f\n",me,grads_ext[0],grads_ext[1],grads_ext[2],grads_ext[3],grads_ext[4],grads_ext[5]);
-    
+    std::vector<double> grads_ext;
+    if (include_ext)
+        grads_ext = ptr_mbx->GetExternalChargesGradients();
+    else
+        grads_ext = std::vector<double>(fix_mbx->mbx_num_ext_local * 3, 0.0);
+
     // accumulate forces on monomers with at least one local particle
     // -- forces on ghost particles ignored/not needed ??
     // -- should use a map created from earlier loop loading particles into mbx
@@ -615,7 +613,7 @@ void PairMBX::accumulate_f_local(bool include_ext) {
             // to be replaced with integer comparison
 
             bool include_monomer = true;
-	    bool is_ext = false;
+            bool is_ext = false;
             tagint anchor = atom->tag[i];
 
             int na = 0;
@@ -629,11 +627,10 @@ void PairMBX::accumulate_f_local(bool include_ext) {
             else if (strcmp("dp1", mol_names[mtype]) == 0) {
                 na = 1;
 #ifndef _DEBUG_EFIELD
-		include_monomer = false;
-		is_ext = true;
+                include_monomer = false;
+                is_ext = true;
 #endif
-	    }
-            else if (strcmp("cl", mol_names[mtype]) == 0)
+            } else if (strcmp("cl", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
@@ -659,12 +656,12 @@ void PairMBX::accumulate_f_local(bool include_ext) {
                     f[ii][2] -= grads[indx++];
                 }
 #ifndef _DEBUG_EFIELD
-            } else if(is_ext) {
-	      f[i][0] -= grads_ext[indx_ext++];
-	      f[i][1] -= grads_ext[indx_ext++];
-	      f[i][2] -= grads_ext[indx_ext++];
+            } else if (is_ext) {
+                f[i][0] -= grads_ext[indx_ext++];
+                f[i][1] -= grads_ext[indx_ext++];
+                f[i][2] -= grads_ext[indx_ext++];
 #endif
-	    }
+            }
 
         }  // if(anchor)
     }
@@ -724,24 +721,26 @@ void PairMBX::accumulate_f_full(bool include_ext) {
         char **mol_names = fix_mbx->mol_names;
 
         std::vector<double> grads = ptr_mbx->GetRealGrads();
-	
-	std::vector<double> grads_ext;
-	if(include_ext) grads_ext = ptr_mbx->GetExternalChargesGradients();
-	else grads_ext = std::vector<double>(fix_mbx->mbx_num_ext_full*3, 0.0);
+
+        std::vector<double> grads_ext;
+        if (include_ext)
+            grads_ext = ptr_mbx->GetExternalChargesGradients();
+        else
+            grads_ext = std::vector<double>(fix_mbx->mbx_num_ext_full * 3, 0.0);
 
         // accumulate forces on local particles
         // -- forces on ghost particles ignored/not needed
         // -- should use a map created from earlier loop loading particles into mbx
 
         int indx = 0;
-	int indx_ext = 0;
+        int indx_ext = 0;
 
         for (int i = 0; i < natoms; ++i) {
             if (mol_anchor_full[i]) {
                 const int mtype = mol_type_full[i];
 
-		bool is_ext = false;
-	    
+                bool is_ext = false;
+
                 // to be replaced with integer comparison
 
                 int na = 0;
@@ -752,10 +751,9 @@ void PairMBX::accumulate_f_full(bool include_ext) {
                 else if (strcmp("dp1", mol_names[mtype]) == 0) {
                     na = 1;
 #ifndef _DEBUG_EFIELD
-		    is_ext = true;
+                    is_ext = true;
 #endif
-		}
-                else if (strcmp("cl", mol_names[mtype]) == 0)
+                } else if (strcmp("cl", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("he", mol_names[mtype]) == 0)
                     na = 1;
@@ -765,22 +763,22 @@ void PairMBX::accumulate_f_full(bool include_ext) {
                     na = 3;
 
 #ifndef _DEBUG_EFIELD
-		if(is_ext) {
-		  f_full[i][0] -= grads_ext[indx_ext++];
-		  f_full[i][1] -= grads_ext[indx_ext++];
-		  f_full[i][2] -= grads_ext[indx_ext++];
-		} else {
+                if (is_ext) {
+                    f_full[i][0] -= grads_ext[indx_ext++];
+                    f_full[i][1] -= grads_ext[indx_ext++];
+                    f_full[i][2] -= grads_ext[indx_ext++];
+                } else {
 #endif
-		  tagint anchor = tag_full[i];
+                    tagint anchor = tag_full[i];
 
-		  for (int j = 0; j < na; ++j) {
-                    const int ii = atom_map_full[anchor + j];
-                    f_full[ii][0] = -grads[indx++];
-                    f_full[ii][1] = -grads[indx++];
-                    f_full[ii][2] = -grads[indx++];
-		  }
+                    for (int j = 0; j < na; ++j) {
+                        const int ii = atom_map_full[anchor + j];
+                        f_full[ii][0] = -grads[indx++];
+                        f_full[ii][1] = -grads[indx++];
+                        f_full[ii][2] = -grads[indx++];
+                    }
 #ifndef _DEBUG_EFIELD
-		}
+                }
 #endif
 
             }  // if(anchor)
