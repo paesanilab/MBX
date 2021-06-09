@@ -561,6 +561,17 @@ class System {
     void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
 
     /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     * @param[in] local/ghost of each one the the charges in chg
+     * @param[in] unique tag of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
+                                        std::vector<int> tag);
+
+    /**
      * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
      * @param[in] ff_mons Vector of monomers for which classical forcefield energy will be calculated
      */

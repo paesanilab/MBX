@@ -116,9 +116,9 @@ class FixMBX : public Fix {
   int * mol_anchor;   // per-atom array 1/0 if anchor atom of a molecule
   int * mol_local;    // per-molecule array 1/0 if molecule has at least one local particle
 
-  int mbx_num_atoms;
-  int mbx_num_atoms_full;
-  int mbx_num_atoms_local;
+  int mbx_num_atoms, mbx_num_ext;
+  int mbx_num_atoms_full, mbx_num_ext_full;
+  int mbx_num_atoms_local, mbx_num_ext_local;
 
   int * mbxt_count;
   double * mbxt_time;

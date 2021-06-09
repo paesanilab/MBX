@@ -228,6 +228,17 @@ class Electrostatics {
     void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
 
     /**
+     * @brief Sets the external charges, positions, and local/ghost.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     * @param[in] local/ghost of each one the the charges in chg
+     * @param[in] unique tag of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
+                                        std::vector<int> tag);
+
+    /**
      * @brief Gets the external charges that are currently in the class
      * @return External charges in the class
      */
@@ -454,6 +465,7 @@ class Electrostatics {
     void ReorderData();
 
     void reverse_forward_comm(std::vector<double> &in_v);
+    void reverse_forward_comm_ext(std::vector<double> &in_v);
     void reverse_comm_setup(std::vector<double> &in_v);
     void reverse_comm(std::vector<double> &in_v);
     void forward_comm_setup(std::vector<double> &in_v);
@@ -494,6 +506,10 @@ class Electrostatics {
     std::vector<size_t> nn_num_neighs;
     std::vector<size_t> nn_neighs;
     bool nn_first;
+    std::vector<size_t> nn_first_neigh_ext;
+    std::vector<size_t> nn_num_neighs_ext;
+    std::vector<size_t> nn_neighs_ext;
+    bool nn_first_ext;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
@@ -665,6 +681,16 @@ class Electrostatics {
      */
     std::vector<double> external_charge_grads_;
 
+    /*
+     * External charges local/ghost
+     */
+    std::vector<size_t> external_islocal_;
+
+    /*
+     * External charges tags
+     */
+    std::vector<int> external_tag_;
+
     std::vector<double> Efq_all_;
     std::vector<double> xyz_all_;
     std::vector<double> phi_all_;
@@ -673,6 +699,8 @@ class Electrostatics {
     std::vector<size_t> sites_all_;
     std::vector<std::string> mon_id_all_;
     std::vector<size_t> islocal_all_;
+    std::vector<size_t> islocal_atom_all_;  // why need this? because of reordering?
+    std::vector<int> atom_tag_all_;
     std::vector<double> sys_xyz_all_;
     std::vector<double> sys_chg_all_;
     size_t nsites_all_;

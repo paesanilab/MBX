@@ -37,6 +37,8 @@
 
 //#define _DEBUG
 
+//#define _DEBUG_EFIELD
+
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
@@ -162,11 +164,13 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     atom->add_callback(1);
 
     mbx_num_atoms = 0;
+    mbx_num_ext = 0;
 
     // for terms not yet LAMMPS-parallelized
 
     ptr_mbx_full = NULL;
     mbx_num_atoms_full = 0;
+    mbx_num_ext_full = 0;
 
     mol_anchor_full = NULL;
     mol_type_full = NULL;
@@ -184,6 +188,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
 
     ptr_mbx_local = NULL;
     mbx_num_atoms_local = 0;
+    mbx_num_ext_local = 0;
 
     // check that LAMMPS proc mapping matches PME solver
 
@@ -649,20 +654,40 @@ void FixMBX::mbx_init() {
     const int nall = nlocal + atom->nghost;
     tagint *tag = atom->tag;
     double **x = atom->x;
+    double *q = atom->q;
+
+#ifdef _DEBUG
+    MPI_Barrier(universe->uworld);
+    for (int i = 0; i < comm->nprocs; ++i) {
+        if (me == i) {
+            printf("(%i, %i)  nlocal= %i  nghost= %i  nall= %i\n", universe->iworld, me, nlocal, atom->nghost, nall);
+            for (int j = 0; j < nall; ++j)
+                printf("(%i, %i) j= %i  tag= %i  islocal= %i  mtype= %s  xyz= %f %f %f\n", universe->iworld, me, j,
+                       atom->tag[j], j < nlocal, mol_names[mol_type[j]], x[j][0], x[j][1], x[j][2]);
+        }
+        MPI_Barrier(universe->uworld);
+    }
+#endif
 
     mbx_num_atoms = 0;
+    mbx_num_ext = 0;
 
     std::vector<size_t> molec;
 
     double ximage[3];
-
-    // loop over all atoms on proc (local + ghost)
 
     int nm = 0;
 
     const double xlo = domain->boxlo[0];
     const double ylo = domain->boxlo[1];
     const double zlo = domain->boxlo[2];
+
+    std::vector<double> xyz_ext;
+    std::vector<double> chg_ext;
+    std::vector<size_t> islocal_ext;
+    std::vector<int> tag_ext;
+
+    // loop over all atoms on proc (local + ghost)
 
     for (int i = 0; i < nall; ++i) {
         // if anchor-atom, then add to MBX (currently assume molecule is intact)
@@ -704,9 +729,26 @@ void FixMBX::mbx_init() {
                 if (amap[j] == -1) add_monomer = false;
             }
 
-            // add info
+            // test if external charged particle
+#ifndef _DEBUG_EFIELD
+            if (strcmp("dp1", mol_names[mtype]) == 0) {
+                add_monomer = false;
 
+                xyz_ext.push_back(x[i][0] - xlo);
+                xyz_ext.push_back(x[i][1] - ylo);
+                xyz_ext.push_back(x[i][2] - zlo);
+                chg_ext.push_back(q[i]);
+                islocal_ext.push_back(is_local);
+                tag_ext.push_back(anchor);
+
+                mbx_num_ext++;
+
+                // add info for monomer
+
+            } else if (add_monomer) {
+#else
             if (add_monomer) {
+#endif
                 // add coordinates
 
                 xyz.push_back(x[i][0] - xlo);
@@ -728,8 +770,10 @@ void FixMBX::mbx_init() {
                     names.push_back("H");
                 } else if (strcmp("na", mol_names[mtype]) == 0) {
                     names.push_back("Na");
+#ifdef _DEBUG_EFIELD
                 } else if (strcmp("dp1", mol_names[mtype]) == 0) {
                     names.push_back("X");
+#endif
                 } else if (strcmp("cl", mol_names[mtype]) == 0) {
                     names.push_back("Cl");
                 } else if (strcmp("he", mol_names[mtype]) == 0) {
@@ -761,7 +805,12 @@ void FixMBX::mbx_init() {
 
     }  // for(i<nall)
 
-    if (mbx_num_atoms == 0) {
+#ifdef _DEBUG
+    printf("(%i,%i) mbx_num_atoms= %i  mbx_num_ext= %i  chg_ext.size()= %lu\n", universe->iworld, me, mbx_num_atoms,
+           mbx_num_ext, chg_ext.size());
+#endif
+
+    if (mbx_num_atoms + mbx_num_ext == 0) {
         mbxt_stop(MBXT_INIT);
 #ifdef _DEBUG
         printf("[MBX] (%i,%i) Leaving mbx_init()\n", universe->iworld, me);
@@ -786,6 +835,13 @@ void FixMBX::mbx_init() {
         ptr_mbx->Set2bCutoff(pair_mbx->cut_global);
         ptr_mbx->SetUpFromJson();
     }
+
+    // load external charged particles
+#ifndef _DEBUG_EFIELD
+    if (mbx_num_ext > 0) {
+        ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
+    }
+#endif
 
     // setup MBX solver(s); need to keep pbc turned off, which currently disables electrostatic solver
 
@@ -831,8 +887,10 @@ void FixMBX::mbx_init_local() {
     const int nall = nlocal + atom->nghost;
     tagint *tag = atom->tag;
     double **x = atom->x;
+    double *q = atom->q;
 
     mbx_num_atoms_local = 0;
+    mbx_num_ext_local = 0;
 
     for (int i = 0; i < nall; ++i) mol_local[i] = 0;
 
@@ -879,6 +937,11 @@ void FixMBX::mbx_init_local() {
     const double ylo = domain->boxlo[1];
     const double zlo = domain->boxlo[2];
 
+    std::vector<double> xyz_ext;
+    std::vector<double> chg_ext;
+    std::vector<size_t> islocal_ext;
+    std::vector<int> tag_ext;
+
     // loop over all atoms on proc
 
     int nm = 0;
@@ -923,9 +986,26 @@ void FixMBX::mbx_init_local() {
                 if (amap[j] == -1) add_monomer = false;
             }
 
-            // add info
+            // test if external charged particle
+#ifndef _DEBUG_EFIELD
+            if (strcmp("dp1", mol_names[mtype]) == 0) {
+                add_monomer = false;
 
+                xyz_ext.push_back(x[i][0] - xlo);
+                xyz_ext.push_back(x[i][1] - ylo);
+                xyz_ext.push_back(x[i][2] - zlo);
+                chg_ext.push_back(q[i]);
+                islocal_ext.push_back(is_local);
+                tag_ext.push_back(anchor);
+
+                mbx_num_ext_local++;
+
+                // add info for monomer
+
+            } else if (add_monomer) {
+#else
             if (add_monomer) {
+#endif
                 // add coordinates
 
                 xyz.push_back(x[i][0] - xlo);
@@ -945,8 +1025,10 @@ void FixMBX::mbx_init_local() {
                     names.push_back("H");
                 } else if (strcmp("na", mol_names[mtype]) == 0) {
                     names.push_back("Na");
+#ifdef _DEBUG_EFIELD
                 } else if (strcmp("dp1", mol_names[mtype]) == 0) {
                     names.push_back("H");
+#endif
                 } else if (strcmp("cl", mol_names[mtype]) == 0) {
                     names.push_back("Cl");
                 } else if (strcmp("he", mol_names[mtype]) == 0) {
@@ -975,6 +1057,13 @@ void FixMBX::mbx_init_local() {
 
     }  // for(i<nall)
 
+#ifdef _DEBUG
+    printf("(%i,%i) mbx_num_atoms_local= %i  mbx_num_ext_local= %i  chg_ext.size()= %lu\n", universe->iworld, me,
+           mbx_num_atoms_local, mbx_num_ext_local, chg_ext.size());
+#endif
+
+    // setup MPI in MBX solver
+
     int *pg = comm->procgrid;
     ptr_mbx_local->SetMPI(world, pg[0], pg[1], pg[2]);
 
@@ -1002,6 +1091,13 @@ void FixMBX::mbx_init_local() {
         ptr_mbx_local->Set2bCutoff(pair_mbx->cut_global);
         ptr_mbx_local->SetUpFromJson();
     }
+
+    // load external charged particles
+#ifndef _DEBUG_EFIELD
+    if (mbx_num_ext_local > 0) {
+        ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
+    }
+#endif
 
     std::vector<double> box;
     ptr_mbx_local->SetPBC(box);
@@ -1062,11 +1158,12 @@ void FixMBX::mbx_init_full() {
 
     // gather data from other MPI ranks
 
-    const int nlocal = atom->nlocal;
+    int nlocal = atom->nlocal;
     const int nall = nlocal + atom->nghost;
     const int natoms = atom->natoms;
     tagint *tag = atom->tag;
     double **x = atom->x;
+    double *q = atom->q;
 
     MPI_Gather(&nlocal, 1, MPI_INT, nlocal_rank, 1, MPI_INT, 0, world);
 
@@ -1107,9 +1204,15 @@ void FixMBX::mbx_init_full() {
     const double ylo = domain->boxlo[1];
     const double zlo = domain->boxlo[2];
 
+    std::vector<double> xyz_ext;
+    std::vector<double> chg_ext;
+    std::vector<size_t> islocal_ext;
+    std::vector<int> tag_ext;
+
     int nm = 0;
 
     mbx_num_atoms_full = 0;
+    mbx_num_ext_full = 0;
 
     for (int i = 0; i < natoms; ++i) {
         // if anchor-atom, then add to MBX (currently assume molecule is intact)
@@ -1154,9 +1257,27 @@ void FixMBX::mbx_init_full() {
                 }
             }
 
-            // add info
+            // test if external charged particle
+#ifndef _DEBUG_EFIELD
+            if (strcmp("dp1", mol_names[mtype]) == 0) {
+                add_monomer = false;
 
+                xyz_ext.push_back(x[i][0] - xlo);
+                xyz_ext.push_back(x[i][1] - ylo);
+                xyz_ext.push_back(x[i][2] - zlo);
+                chg_ext.push_back(q[i]);
+                islocal_ext.push_back(is_local);
+                tag_ext.push_back(anchor);
+
+                mbx_num_ext_full++;
+
+                // add info for monomer
+
+            } else if (add_monomer) {
+#else
             if (add_monomer) {
+#endif
+
                 // add coordinates
 
                 xyz.push_back(x_full[i][0] - xlo);
@@ -1175,8 +1296,10 @@ void FixMBX::mbx_init_full() {
                     names.push_back("O");
                     names.push_back("H");
                     names.push_back("H");
+#ifdef _DEBUG_EFIELD
                 } else if (strcmp("dp1", mol_names[mtype]) == 0) {
                     names.push_back("H");
+#endif
                 } else if (strcmp("na", mol_names[mtype]) == 0) {
                     names.push_back("Na");
                 } else if (strcmp("cl", mol_names[mtype]) == 0) {
@@ -1224,6 +1347,13 @@ void FixMBX::mbx_init_full() {
         ptr_mbx_full->Set2bCutoff(pair_mbx->cut_global);
         ptr_mbx_full->SetUpFromJson();
     }
+
+    // load external charged particles
+#ifndef _DEBUG_EFIELD
+    if (mbx_num_ext_full > 0) {
+        ptr_mbx_full->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
+    }
+#endif
 
     std::vector<double> box;
 
@@ -1285,8 +1415,9 @@ void FixMBX::mbx_update_xyz() {
     const int nall = nlocal + atom->nghost;
     tagint *tag = atom->tag;
     double **x = atom->x;
+    double *q = atom->q;
 
-    if (mbx_num_atoms == 0) {
+    if (mbx_num_atoms + mbx_num_ext == 0) {
         mbxt_stop(MBXT_UPDATE_XYZ);
         return;
     }
@@ -1299,7 +1430,11 @@ void FixMBX::mbx_update_xyz() {
 
     std::vector<double> xyz(mbx_num_atoms * 3);
 
+    std::vector<double> xyz_ext(mbx_num_ext * 3);
+    std::vector<double> chg_ext(mbx_num_ext);
+
     int indx = 0;
+    int indx_ext = 0;
     for (int i = 0; i < nall; ++i) {
         if (mol_anchor[i]) {
             const int mtype = mol_type[i];
@@ -1333,9 +1468,24 @@ void FixMBX::mbx_update_xyz() {
                 if (amap[j] == -1) add_monomer = false;
             }
 
-            // add info
+            // test if external charged particle
+#ifndef _DEBUG_EFIELD
+            if (strcmp("dp1", mol_names[mtype]) == 0) {
+                add_monomer = false;
 
+                xyz_ext[indx_ext * 3] = x[i][0] - xlo;
+                xyz_ext[indx_ext * 3 + 1] = x[i][1] - ylo;
+                xyz_ext[indx_ext * 3 + 2] = x[i][2] - zlo;
+                chg_ext[indx_ext] = q[i];
+
+                indx_ext++;
+
+                // add info for monomer
+
+            } else if (add_monomer) {
+#else
             if (add_monomer) {
+#endif
                 // add coordinates
 
                 xyz[indx * 3] = x[i][0] - xlo;
@@ -1358,6 +1508,11 @@ void FixMBX::mbx_update_xyz() {
 
     if (xyz.size() != indx * 3) error->one(FLERR, "Inconsistent # of atoms");
     ptr_mbx->SetRealXyz(xyz);
+
+    if (xyz_ext.size() != indx_ext * 3) error->one(FLERR, "Inconsistent # of external charges");
+    if (mbx_num_ext > 0) {
+        ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext);
+    }
 
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Leaving mbx_update_xyz()\n", universe->iworld, me);
@@ -1407,8 +1562,9 @@ void FixMBX::mbx_update_xyz_local() {
     const int nall = nlocal + atom->nghost;
     tagint *tag = atom->tag;
     double **x = atom->x;
+    double *q = atom->q;
 
-    if (mbx_num_atoms_local == 0) {
+    if (mbx_num_atoms_local + mbx_num_ext_local == 0) {
         mbxt_stop(MBXT_UPDATE_XYZ);
         return;
     }
@@ -1421,7 +1577,11 @@ void FixMBX::mbx_update_xyz_local() {
 
     std::vector<double> xyz(mbx_num_atoms_local * 3);
 
+    std::vector<double> xyz_ext(mbx_num_ext_local * 3);
+    std::vector<double> chg_ext(mbx_num_ext_local);
+
     int indx = 0;
+    int indx_ext = 0;
     for (int i = 0; i < nall; ++i) {
         if (mol_anchor[i] && mol_local[i]) {
             const int mtype = mol_type[i];
@@ -1455,9 +1615,24 @@ void FixMBX::mbx_update_xyz_local() {
                 if (amap[j] == -1) add_monomer = false;
             }
 
-            // add info
+            // test if external charged particle
+#ifndef _DEBUG_EFIELD
+            if (strcmp("dp1", mol_names[mtype]) == 0) {
+                add_monomer = false;
 
+                xyz_ext[indx_ext * 3] = x[i][0] - xlo;
+                xyz_ext[indx_ext * 3 + 1] = x[i][1] - ylo;
+                xyz_ext[indx_ext * 3 + 2] = x[i][2] - zlo;
+                chg_ext[indx_ext] = q[i];
+
+                indx_ext++;
+
+                // add info for monomer
+
+            } else if (add_monomer) {
+#else
             if (add_monomer) {
+#endif
                 // add coordinates
 
                 xyz[indx * 3] = x[i][0] - xlo;
@@ -1480,6 +1655,11 @@ void FixMBX::mbx_update_xyz_local() {
 
     if (xyz.size() != indx * 3) error->one(FLERR, "Inconsistent # of atoms");
     ptr_mbx_local->SetRealXyz(xyz);
+
+    if (xyz_ext.size() != indx_ext * 3) error->one(FLERR, "Inconsistent # of external charges");
+    if (mbx_num_ext_local > 0) {
+        ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext);
+    }
 
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Leaving mbx_update_xyz_local()\n", universe->iworld, me);
@@ -1505,6 +1685,7 @@ void FixMBX::mbx_update_xyz_full() {
     const int natoms = atom->natoms;
     tagint *tag = atom->tag;
     double **x = atom->x;
+    double *q = atom->q;
 
     // update coordinates
 
@@ -1548,7 +1729,11 @@ void FixMBX::mbx_update_xyz_full() {
 
     std::vector<double> xyz(natoms * 3);
 
+    std::vector<double> xyz_ext(mbx_num_ext * 3);
+    std::vector<double> chg_ext(mbx_num_ext);
+
     int indx = 0;
+    int indx_ext = 0;
     for (int i = 0; i < natoms; ++i) {
         if (mol_anchor_full[i]) {
             const int mtype = mol_type_full[i];
@@ -1570,21 +1755,36 @@ void FixMBX::mbx_update_xyz_full() {
             else if (strcmp("ch4", mol_names[mtype]) == 0)
                 na = 5;
 
-            tagint anchor = tag_full[i];
+                // test if external charged particle
+#ifndef _DEBUG_EFIELD
+            if (strcmp("dp1", mol_names[mtype]) == 0) {
+                xyz_ext[indx_ext * 3] = x[i][0] - xlo;
+                xyz_ext[indx_ext * 3 + 1] = x[i][1] - ylo;
+                xyz_ext[indx_ext * 3 + 2] = x[i][2] - zlo;
+                chg_ext[indx_ext] = q[i];
 
-            xyz[indx * 3] = x_full[i][0] - xlo;
-            xyz[indx * 3 + 1] = x_full[i][1] - ylo;
-            xyz[indx * 3 + 2] = x_full[i][2] - zlo;
+                indx_ext++;
 
-            for (int j = 1; j < na; ++j) {
-                int ii = atom_map_full[anchor + j];
-                int jndx = 3 * j;
-                xyz[indx * 3 + jndx] = x_full[ii][0] - xlo;
-                xyz[indx * 3 + jndx + 1] = x_full[ii][1] - ylo;
-                xyz[indx * 3 + jndx + 2] = x_full[ii][2] - zlo;
+            } else {
+#endif
+                tagint anchor = tag_full[i];
+
+                xyz[indx * 3] = x_full[i][0] - xlo;
+                xyz[indx * 3 + 1] = x_full[i][1] - ylo;
+                xyz[indx * 3 + 2] = x_full[i][2] - zlo;
+
+                for (int j = 1; j < na; ++j) {
+                    int ii = atom_map_full[anchor + j];
+                    int jndx = 3 * j;
+                    xyz[indx * 3 + jndx] = x_full[ii][0] - xlo;
+                    xyz[indx * 3 + jndx + 1] = x_full[ii][1] - ylo;
+                    xyz[indx * 3 + jndx + 2] = x_full[ii][2] - zlo;
+                }
+
+                indx += na;
+#ifndef _DEBUG_EFIELD
             }
-
-            indx += na;
+#endif
 
         }  // if(mol_anchor)
 
@@ -1592,6 +1792,9 @@ void FixMBX::mbx_update_xyz_full() {
 
     if (xyz.size() != indx * 3) error->one(FLERR, "Inconsistent # of atoms");
     ptr_mbx_full->SetRealXyz(xyz);
+
+    if (xyz_ext.size() != indx_ext * 3) error->one(FLERR, "Inconsistent # of external charges");
+    ptr_mbx_full->SetExternalChargesAndPositions(chg_ext, xyz_ext);
 
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Leaving mbx_update_xyz_full()\n", universe->iworld, me);

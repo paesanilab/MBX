@@ -133,6 +133,11 @@ void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector
     electrostaticE_.SetExternalChargesAndPositions(chg, xyz);
 }
 
+void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz,
+                                            std::vector<size_t> islocal, std::vector<int> tag) {
+    electrostaticE_.SetExternalChargesAndPositions(chg, xyz, islocal, tag);
+}
+
 std::vector<size_t> System::GetMonNumAt() {
     std::vector<size_t> monnumat(nat_.size(), 0);
     for (size_t i = 0; i < nat_.size(); i++) {
