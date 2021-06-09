@@ -93,6 +93,9 @@ class FixMBX : public Fix {
     void min_setup_pre_force(int);
     void min_pre_force(int);
 
+    void pre_exchange();
+    void post_exchange();
+
    protected:
     class PairMBX *pair_mbx;  // pointer to MBX pair_style
 
@@ -104,6 +107,7 @@ class FixMBX : public Fix {
     bigint ngroup;
 
     bool mbx_mpi_enabled;
+    bool mbx_aspc_enabled;
 
     bool first_step;
 
@@ -137,6 +141,12 @@ class FixMBX : public Fix {
     void mbxt_write_summary();
     void mbxt_print_time(const char *, int, double *);
 
+    int aspc_order;
+    int aspc_num_hist;
+    int aspc_max_num_hist;
+    int aspc_per_atom_size;
+    double **aspc_dip_hist;
+
     // rank 0's copy of all atoms in simulation cell
 
     int *mol_anchor_full;
@@ -158,6 +168,8 @@ class FixMBX : public Fix {
     void mbx_update_xyz();
     void mbx_update_xyz_full();
     void mbx_update_xyz_local();
+
+    void mbx_init_dipole_history_local();
 
     virtual int pack_forward_comm(int, int *, double *, int, int *);
     virtual void unpack_forward_comm(int, int, double *);

@@ -49,13 +49,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define _DEBUG_PERM
 //#define _DEBUG_DIPOLE
+//#define _DEBUG_ASPC
 //#define _DEBUG_ITERATION 1
 //#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
 //#define _DEBUG_GRAD
 //#define _DEBUG_PRINT_ENERGY
 //#define _DEBUG_PRINT_GRAD
-//#define _DEBUG_ASPC
 
 #if HAVE_MPI == 1
 #define MBX_ELEC_P2P_COMM 1
@@ -2324,6 +2324,84 @@ void Electrostatics::SetAspcParameters(size_t k) {
 }
 
 void Electrostatics::ResetAspcHistory() { hist_num_aspc_ = 0; }
+
+std::vector<double> Electrostatics::GetDipoleHistory(size_t indx) {
+    // Return selected history of dipoles
+    // The internal dipole history needs to be reordered
+    // external charges don't have dipoles
+
+    std::vector<double> sys_mu_hist = std::vector<double>(mu_.size(), 0.0);
+
+    if (indx >= hist_num_aspc_) {
+        // Exit with error
+        std::cerr << "GetDipoleHistory requested indx too large" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    size_t offset_h = indx * mu_.size();
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+
+                sys_mu_hist[fi_crd + mns3 + 3 * i] = mu_hist_[offset_h + inmon3 + m + fi_crd];
+                sys_mu_hist[fi_crd + mns3 + 3 * i + 1] = mu_hist_[offset_h + inmon3 + m + fi_crd + nmon];
+                sys_mu_hist[fi_crd + mns3 + 3 * i + 2] = mu_hist_[offset_h + inmon3 + m + fi_crd + nmon2];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+    return sys_mu_hist;
+}
+
+void Electrostatics::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) {
+    // Reorder dipoles for internal use
+    // external charges don't have dipoles
+
+    if (indx >= hist_num_aspc_) {
+        // Exit with error
+        std::cerr << "SetDipoleHistory requested indx too large" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    size_t offset_h = indx * mu_.size();
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                mu_hist_[offset_h + inmon3 + m + fi_crd] = mu_hist[fi_crd + mns3 + 3 * i];
+                mu_hist_[offset_h + inmon3 + m + fi_crd + nmon] = mu_hist[fi_crd + mns3 + 3 * i + 1];
+                mu_hist_[offset_h + inmon3 + m + fi_crd + nmon2] = mu_hist[fi_crd + mns3 + 3 * i + 2];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+}
 
 void Electrostatics::CalculateDipolesAspc() {
     if (hist_num_aspc_ < k_aspc_ + 2) {
