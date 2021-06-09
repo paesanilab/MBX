@@ -105,6 +105,9 @@ struct poly_A1_B1C2X2_deg5_v1 {
      * @return Value of the polynomial
      */
     double eval_direct(const double x[8], const double a[496], double g[8]);
+
+    unsigned report_nvars() { return n_vars; };
+    unsigned report_size() { return size; };
 };
 
 }  // namespace mbnrg_A1_B1C2X2_deg5
