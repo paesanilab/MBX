@@ -154,6 +154,37 @@ class Electrostatics {
     void ResetAspcHistory();
 
     /**
+     * @brief Get the number of ASPC dipole histories
+     *
+     * Return number of dipoles histories saved
+     */
+    double GetNumDipoleHistory() { return hist_num_aspc_; };
+
+    /**
+     * @brief Get the number of ASPC dipole histories
+     *
+     * Set number of dipoles histories to initially use
+     */
+    void SetNumDipoleHistory(size_t num_hist) { hist_num_aspc_ = num_hist; };
+
+    /**
+     * @brief Get the ASPC dipole history
+     *
+     * Return history of dipoles
+     * @param[in] indx of selected history to retrieve
+     */
+    std::vector<double> GetDipoleHistory(size_t indx);
+
+    /**
+     * @brief Set the ASPC dipole history
+     *
+     * Return history of dipoles
+     * @param[in] indx of selected history to set
+     * @param[in] mu_hist dipoles to initialize history
+     */
+    void SetDipoleHistory(size_t indx, std::vector<double> mu_hist);
+
+    /**
      * @brief "Reinitializes" the electrostatics class.
      *
      * If the system changes (coordinates, charges, and so on) it is
@@ -454,6 +485,7 @@ class Electrostatics {
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
     void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesAspc();
+    void CalculateDipolesAspcMPIlocal(bool use_ghost = 0);
     void SetAspcParameters(size_t k);
     void CalculateDipoles();
     void CalculateDipolesMPIlocal(bool use_ghost = 0);

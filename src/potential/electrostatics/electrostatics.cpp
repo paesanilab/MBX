@@ -49,6 +49,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define _DEBUG_PERM
 //#define _DEBUG_DIPOLE
+//#define _DEBUG_ASPC
 //#define _DEBUG_ITERATION 1
 //#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
@@ -1785,10 +1786,7 @@ void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
     } else if (dip_method_ == "cg") {
         CalculateDipolesCGMPIlocal(use_ghost);
     } else if (dip_method_ == "aspc") {
-        // CalculateDipolesAspc();
-
-        std::string text = std::string("CalculateDipolesAspcMPIlocal missing. ");
-        throw CUException(__func__, __FILE__, __LINE__, text);
+        CalculateDipolesAspcMPIlocal(use_ghost);
     }
 }
 
@@ -2507,6 +2505,84 @@ void Electrostatics::SetAspcParameters(size_t k) {
 
 void Electrostatics::ResetAspcHistory() { hist_num_aspc_ = 0; }
 
+std::vector<double> Electrostatics::GetDipoleHistory(size_t indx) {
+    // Return selected history of dipoles
+    // The internal dipole history needs to be reordered
+    // external charges don't have dipoles
+
+    std::vector<double> sys_mu_hist = std::vector<double>(mu_.size(), 0.0);
+
+    if (indx >= hist_num_aspc_) {
+        // Exit with error
+        std::cerr << "GetDipoleHistory requested indx too large" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    size_t offset_h = indx * mu_.size();
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+
+                sys_mu_hist[fi_crd + mns3 + 3 * i] = mu_hist_[offset_h + inmon3 + m + fi_crd];
+                sys_mu_hist[fi_crd + mns3 + 3 * i + 1] = mu_hist_[offset_h + inmon3 + m + fi_crd + nmon];
+                sys_mu_hist[fi_crd + mns3 + 3 * i + 2] = mu_hist_[offset_h + inmon3 + m + fi_crd + nmon2];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+    return sys_mu_hist;
+}
+
+void Electrostatics::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) {
+    // Reorder dipoles for internal use
+    // external charges don't have dipoles
+
+    if (indx >= hist_num_aspc_) {
+        // Exit with error
+        std::cerr << "SetDipoleHistory requested indx too large" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    size_t offset_h = indx * mu_.size();
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                mu_hist_[offset_h + inmon3 + m + fi_crd] = mu_hist[fi_crd + mns3 + 3 * i];
+                mu_hist_[offset_h + inmon3 + m + fi_crd + nmon] = mu_hist[fi_crd + mns3 + 3 * i + 1];
+                mu_hist_[offset_h + inmon3 + m + fi_crd + nmon2] = mu_hist[fi_crd + mns3 + 3 * i + 2];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+}
+
 void Electrostatics::CalculateDipolesAspc() {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
@@ -2532,6 +2608,130 @@ void Electrostatics::CalculateDipolesAspc() {
 
         // Now we run a single iteration to get the new Efd
         ComputeDipoleField(mu_, Efd_);
+
+        // Now the Electric dipole field is computed, and we update
+        // the dipoles to get the corrector
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+        double alpha = 0.8;
+        double alpha_i = 0.2;
+        std::vector<double> mu_old = mu_;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t i = 0; i < ns; i++) {
+                // TODO assuming pol not site dependant
+                double p = pol_[fi_sites + i];
+                size_t inmon3 = 3 * i * nmon;
+                for (size_t m = 0; m < nmon; m++) {
+                    mu_[fi_crd + inmon3 + m] = alpha_i * mu_old[fi_crd + inmon3 + m] +
+                                               alpha * p * (Efq_[fi_crd + inmon3 + m] + Efd_[fi_crd + inmon3 + m]);
+                    mu_[fi_crd + inmon3 + nmon + m] =
+                        alpha_i * mu_old[fi_crd + inmon3 + nmon + m] +
+                        alpha * p * (Efq_[fi_crd + inmon3 + nmon + m] + Efd_[fi_crd + inmon3 + nmon + m]);
+                    mu_[fi_crd + inmon3 + nmon2 + m] =
+                        alpha_i * mu_old[fi_crd + inmon3 + nmon2 + m] +
+                        alpha * p * (Efq_[fi_crd + inmon3 + nmon2 + m] + Efd_[fi_crd + inmon3 + nmon2 + m]);
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
+
+        // Now we have the corrector in mu_
+        // We get the final dipole
+
+        for (size_t j = 0; j < 3 * nsites_; j++) {
+            mu_[j] = omega_aspc_ * mu_[j] + (1 - omega_aspc_) * mu_pred_[j];
+        }
+
+        // And we update the history
+
+        // Add the new dipole at the end
+        std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
+        // Shift the dipoles one position in the history
+        std::copy(mu_hist_.begin() + nsites_ * 3, mu_hist_.end(), mu_hist_.begin());
+
+        // hist_num_aspc_ must not be touched here, so we are done
+
+    }  // end if (hist_num_aspc_ < k_aspc_ + 2)
+}
+
+void Electrostatics::CalculateDipolesAspcMPIlocal(bool use_ghost) {
+    if (hist_num_aspc_ < k_aspc_ + 2) {
+        // TODO do we want to allow iteration?
+        CalculateDipolesCGMPIlocal(use_ghost);
+        std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
+        hist_num_aspc_++;
+    } else {
+        // If we have enough history of the dipoles,
+        // we will use the predictor corrector step
+
+        // First we get the predictor
+        std::fill(mu_pred_.begin(), mu_pred_.end(), 0.0);
+        for (size_t i = 0; i < b_consts_aspc_.size(); i++) {
+            size_t shift = 3 * nsites_ * (b_consts_aspc_.size() - i - 1);
+            for (size_t j = 0; j < 3 * nsites_; j++) {
+                mu_pred_[j] += b_consts_aspc_[i] * mu_hist_[shift + j];
+            }
+        }
+
+#ifdef _DEBUG_ASPC
+        {  // debug print
+            int me, nprocs;
+            MPI_Comm_size(world_, &nprocs);
+            MPI_Comm_rank(world_, &me);
+            size_t fi_mon = 0;
+            size_t fi_crd = 0;
+            size_t fi_sites = 0;
+
+            MPI_Barrier(world_);
+            for (int ip = 0; ip < nprocs; ++ip) {
+                if (ip == me) {
+                    std::cout << "\n" << std::endl;
+                    // Loop over each monomer type
+                    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                        size_t ns = sites_[fi_mon];
+                        size_t nmon = mon_type_count_[mt].second;
+                        size_t nmon2 = 2 * nmon;
+
+                        // Loop over each pair of sites
+                        for (size_t i = 0; i < ns; i++) {
+                            size_t inmon = i * nmon;
+                            size_t inmon3 = inmon * 3;
+                            for (size_t m = 0; m < nmon; m++) {
+                                std::cout << "(" << me << ") ASPC PREDICT: mt= " << mt << " i= " << i << " m= " << m
+                                          << "  islocal= " << islocal_[fi_mon + m]
+                                          << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
+                                          << xyz_[fi_crd + inmon3 + nmon + m] << " "
+                                          << xyz_[fi_crd + inmon3 + nmon2 + m]
+                                          << " mu_pred_= " << mu_pred_[fi_crd + inmon3 + m] << " "
+                                          << mu_pred_[fi_crd + inmon3 + nmon + m] << " "
+                                          << mu_pred_[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                            }
+                        }
+
+                        // Update first indexes
+                        fi_mon += nmon;
+                        fi_sites += nmon * ns;
+                        fi_crd += nmon * ns * 3;
+                    }
+                }
+                MPI_Barrier(world_);
+            }
+        }  // debug print
+#endif
+
+        // Now we get the corrector
+        // First we set the dipoles to the predictor
+        std::copy(mu_pred_.begin(), mu_pred_.end(), mu_.begin());
+
+        // Now we run a single iteration to get the new Efd
+        reverse_forward_comm(Efq_);
+        ComputeDipoleFieldMPIlocal(mu_, Efd_, use_ghost);
 
         // Now the Electric dipole field is computed, and we update
         // the dipoles to get the corrector

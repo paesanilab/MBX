@@ -13,7 +13,7 @@
 
 #ifdef PAIR_CLASS
 
-PairStyle(mbx,PairMBX)
+PairStyle(mbx, PairMBX)
 
 #else
 
@@ -72,26 +72,26 @@ class PairMBX : public Pair {
   void accumulate_f_local(bool);
 };
 
-}
+}  // namespace LAMMPS_NS
 
 #endif
 #endif
 
-/* ERROR/WARNING messages:
+    /* ERROR/WARNING messages:
 
-E: Illegal ... command
+    E: Illegal ... command
 
-Self-explanatory.  Check the input script syntax and compare to the
-documentation for the command.  You can use -echo screen as a
-command-line option when running LAMMPS to see the offending line.
+    Self-explanatory.  Check the input script syntax and compare to the
+    documentation for the command.  You can use -echo screen as a
+    command-line option when running LAMMPS to see the offending line.
 
-E: Incorrect args for pair coefficients
+    E: Incorrect args for pair coefficients
 
-Self-explanatory.  Check the input script or data file.
+    Self-explanatory.  Check the input script or data file.
 
-E: Pair cutoff < Respa interior cutoff
+    E: Pair cutoff < Respa interior cutoff
 
-One or more pairwise cutoffs are too short to use with the specified
-rRESPA cutoffs.
+    One or more pairwise cutoffs are too short to use with the specified
+    rRESPA cutoffs.
 
-*/
+    */
