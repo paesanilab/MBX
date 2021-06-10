@@ -51,6 +51,13 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
 
+enum {
+    DISP_PME_SETUP = 0,
+    DISP_PME_PRE,
+
+    DISP_NUM_TIMERS
+};
+
 #ifndef MPI_VERSION
 // typedef struct ompi_communicator_t *MPI_Comm;
 typedef int MPI_Comm;
@@ -196,6 +203,20 @@ class Dispersion {
      */
     void SetBoxPMElocal(std::vector<double> box);
 
+    /**
+     * @brief Returns timing section call counts.
+     *
+     * @return Array of call counts for timing statistics
+     */
+    std::vector<size_t> GetInfoCounts();
+
+    /**
+     * @brief Returns timing section call times.
+     *
+     * @return Array of call times for timing statistics
+     */
+    std::vector<double> GetInfoTimings();
+  
     /**
      * @brief Returns FFT grid used by PME solver
      *
@@ -375,6 +396,10 @@ class Dispersion {
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;
+
+    std::vector<size_t> mbxt_disp_count_;
+    std::vector<double> mbxt_disp_time_;
+  
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
 

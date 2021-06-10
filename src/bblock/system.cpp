@@ -3333,6 +3333,9 @@ void System::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) {
 std::vector<size_t> System::GetInfoElectrostaticsCounts() { return electrostaticE_.GetInfoCounts(); }
 std::vector<double> System::GetInfoElectrostaticsTimings() { return electrostaticE_.GetInfoTimings(); }
 
+std::vector<size_t> System::GetInfoDispersionCounts() { return dispersionE_.GetInfoCounts(); }
+std::vector<double> System::GetInfoDispersionTimings() { return dispersionE_.GetInfoTimings(); }
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 }  // namespace bblock
