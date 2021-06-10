@@ -13,7 +13,7 @@
 
 #ifdef FIX_CLASS
 
-FixStyle(mbx,FixMBX)
+FixStyle(mbx, FixMBX)
 
 #else
 
@@ -27,42 +27,42 @@ FixStyle(mbx,FixMBX)
 #include "bblock/system.h"
 
 enum {
-      MBXT_INIT=0,
-      MBXT_UPDATE_XYZ,
-      MBXT_INIT_FULL,
-      MBXT_UPDATE_XYZ_FULL,
-      MBXT_INIT_LOCAL,
-      MBXT_UPDATE_XYZ_LOCAL,
-      MBXT_E1B,
-      MBXT_E2B_LOCAL,
-      MBXT_E2B_GHOST,
-      MBXT_E3B_LOCAL,
-      MBXT_E3B_GHOST,
-      MBXT_DISP,
-      MBXT_DISP_PME,
-      MBXT_BUCK,
-      MBXT_ELE,
-      MBXT_ACCUMULATE_F,
-      MBXT_ACCUMULATE_F_FULL,
-      MBXT_ACCUMULATE_F_LOCAL,
+    MBXT_INIT = 0,
+    MBXT_UPDATE_XYZ,
+    MBXT_INIT_FULL,
+    MBXT_UPDATE_XYZ_FULL,
+    MBXT_INIT_LOCAL,
+    MBXT_UPDATE_XYZ_LOCAL,
+    MBXT_E1B,
+    MBXT_E2B_LOCAL,
+    MBXT_E2B_GHOST,
+    MBXT_E3B_LOCAL,
+    MBXT_E3B_GHOST,
+    MBXT_DISP,
+    MBXT_DISP_PME,
+    MBXT_BUCK,
+    MBXT_ELE,
+    MBXT_ACCUMULATE_F,
+    MBXT_ACCUMULATE_F_FULL,
+    MBXT_ACCUMULATE_F_LOCAL,
 
-      MBXT_ELE_PERMDIP_REAL,
-      MBXT_ELE_PERMDIP_PME,
-      
-      MBXT_ELE_DIPFIELD_REAL,
-      MBXT_ELE_DIPFIELD_PME,
-      
-      MBXT_ELE_GRAD_REAL,
-      MBXT_ELE_GRAD_PME,
-      MBXT_ELE_GRAD_FIN,
+    MBXT_ELE_PERMDIP_REAL,
+    MBXT_ELE_PERMDIP_PME,
 
-      MBXT_ELE_COMM_REVFOR,
-      MBXT_ELE_COMM_REVSET,
-      MBXT_ELE_COMM_REV,
-      MBXT_ELE_COMM_FORSET,
-      MBXT_ELE_COMM_FOR,
-      
-      MBXT_NUM_TIMERS
+    MBXT_ELE_DIPFIELD_REAL,
+    MBXT_ELE_DIPFIELD_PME,
+
+    MBXT_ELE_GRAD_REAL,
+    MBXT_ELE_GRAD_PME,
+    MBXT_ELE_GRAD_FIN,
+
+    MBXT_ELE_COMM_REVFOR,
+    MBXT_ELE_COMM_REVSET,
+    MBXT_ELE_COMM_REV,
+    MBXT_ELE_COMM_FORSET,
+    MBXT_ELE_COMM_FOR,
+
+    MBXT_NUM_TIMERS
 };
 
 namespace LAMMPS_NS {
@@ -174,7 +174,7 @@ class FixMBX : public Fix {
     virtual int unpack_exchange(int, double *);
 };
 
-}
+}  // namespace LAMMPS_NS
 
 #endif
 #endif
