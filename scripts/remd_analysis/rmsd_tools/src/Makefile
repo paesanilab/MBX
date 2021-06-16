@@ -7,9 +7,9 @@ BIN_INSTALL = ../bin
 
 LIBS_LIB = -lmbxlib -fopenmp -lfftw3
 LIBS = -lmbxlib -fopenmp -lfftw3 -lrsc
-LIBDIR = -L$(MBX_HOME)/install/lib/static -L$(LIB_INSTALL)
+LIBDIR = -L$(MBX_HOME)/install/lib/static -L$(LIB_INSTALL) -L$(FFTWHOME)/lib
 
-INCLUDEDIR = -I$(MBX_HOME)/install/include 
+INCLUDEDIR = -I$(MBX_HOME)/install/include -I$(FFTWHOME)/include
 
 AR = /usr/bin/ar
 
