@@ -79,7 +79,7 @@ void run_opt(std::vector<double> xyz, std::vector<double> &xyz_opt, double &grms
 int main(int argc, char **argv) {
     if (argc < 2) {
         std::cout << "Usage: " << argv[0]
-                  << " <config.nrg> [<mbx.json>] [<max iterations>] [<tolerance>] [<configs.xyz>]\n";
+                  << " <config.nrg> [<mbx.json>] [<max iterations>] [<tolerance>] [<configs.xyz>] [<step>]\n";
         return 0;
     }
 
@@ -89,6 +89,7 @@ int main(int argc, char **argv) {
     std::vector<std::vector<double> > boxes;
     size_t maxit = 1000;
     double tol = 1E-06;
+    double step = 1;
 
     try {
         // Read the NRG file
@@ -115,6 +116,11 @@ int main(int argc, char **argv) {
             tools::ReadXYZ(argv[5], ats, coords, boxes);
         }
 
+        // read the step
+        if (argc > 6) {
+            step = atoi(argv[6]);
+        }
+
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
     }
@@ -134,6 +140,7 @@ int main(int argc, char **argv) {
     double grad2;
     double e0;
     double e1;
+    std::vector<double> e1_all;
 
     // Check if we need to do the xyz or just the nrg file
     if (coords.size() < 1) {
@@ -146,12 +153,13 @@ int main(int argc, char **argv) {
         } else {
             std::cout << "Optimization Converged!\n";
             opt_coords.push_back(xyz_opt);
+            e1_all.push_back(e1);
         }
 
         std::cout << "E = " << e0 << " -> " << e1 << ", |g| = " << std::sqrt(grad2) << std::endl;
 
     } else {
-        for (size_t i = 0; i < coords.size(); i++) {
+        for (size_t i = 0; i < coords.size(); i += step) {
             run_opt(coords[i], xyz_opt, grms, grad2, tol, maxit, number_of_atoms, e0, e1);
             if (grms > tol) {
                 std::cout << "**WARNING** Optimization did not converge. Try running with more iterations!\n";
@@ -159,6 +167,7 @@ int main(int argc, char **argv) {
             } else {
                 std::cout << "Optimization Converged!\n";
                 opt_coords.push_back(xyz_opt);
+                e1_all.push_back(e1);
             }
 
             std::cout << "E = " << e0 << " -> " << e1 << ", |g| = " << std::sqrt(grad2) << std::endl;
@@ -170,13 +179,16 @@ int main(int argc, char **argv) {
     std::vector<double> box;
     off.open("optimized.xyz");
     for (size_t i = 0; i < opt_coords.size(); i++) {
-        tools::WriteXYZ(off, atoms, opt_coords[i], box);
+        std::stringstream ss;
+        ss << std::setprecision(8) << std::scientific << e1_all[i];
+        std::cout << ss.str() << "   ++++!!!\n";
+        tools::WriteXYZ(off, atoms, opt_coords[i], box, ss.str());
     }
     off.close();
 
     off.open("unconverged.xyz");
     for (size_t i = 0; i < not_converged_coords.size(); i++) {
-        tools::WriteXYZ(off, atoms, not_converged_coords[i], box);
+        tools::WriteXYZ(off, atoms, not_converged_coords[i], box, "unconverged");
     }
     off.close();
 
