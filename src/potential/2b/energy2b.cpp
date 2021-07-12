@@ -91,6 +91,12 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "ch4" && mon2 == "ch4") {
         x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "nh3" and mon2 == "nh3") {
+        mbnrg_A1B3_A1B3_deg4::mbnrg_A1B3_A1B3_deg4_v1 pot(mon1, mon2);
+        return pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "nh3pbe0d3bj" and mon2 == "nh3pbe0d3bj") {
+        mbnrg_A1B3_A1B3_deg4::mbnrg_A1B3_A1B3_deg4_v1 pot(mon1, mon2);
+        return pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -184,6 +190,12 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // ====>> PASTE YOUR CODE BELOW <<====
     } else if (mon1 == "ch4" && mon2 == "ch4") {
         x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "nh3" and mon2 == "nh3") {
+        mbnrg_A1B3_A1B3_deg4::mbnrg_A1B3_A1B3_deg4_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "nh3pbe0d3bj" and mon2 == "nh3pbe0d3bj") {
+        mbnrg_A1B3_A1B3_deg4::mbnrg_A1B3_A1B3_deg4_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);

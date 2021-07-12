@@ -179,6 +179,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             } else if (mon[i] == "co2") {
                 sites.push_back(3);
                 nat.push_back(3);
+            } else if (mon[i] == "nh3" || mon[i] == "nh3pbe0d3bj") {
+                sites.push_back(4);
+                nat.push_back(4);
             } else if (mon[i] == "h4_dummy") {
                 sites.push_back(4);
                 nat.push_back(4);
@@ -687,6 +690,18 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         exc13.insert(std::make_pair(2, 4));
     }
 
+    if (mon == "nh3" || mon == "nh3pbe0d3bj") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(0, 3));
+        exc12.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13.insert(std::make_pair(1, 2));
+        exc13.insert(std::make_pair(1, 3));
+        exc13.insert(std::make_pair(2, 3));
+        // 14 distances
+    }
+
     // =====>> BEGIN SECTION EXCLUDED <<=====
     // =====>> PASTE CODE BELOW <<=====
 
@@ -839,6 +854,14 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
         // =====>> BEGIN SECTION CHARGES <<=====
         // =======>> PASTE BELOW <<=======
+    } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites + 0] = -0.8205 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = 0.2735 * CHARGECON;
+            charges[fst_ind + nv * nsites + 2] = 0.2735 * CHARGECON;
+            charges[fst_ind + nv * nsites + 3] = 0.2735 * CHARGECON;
+        }
+
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv * nsites + 0] = -0.538573 * CHARGECON;
@@ -997,6 +1020,13 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 1] = 0.769790;
             polfac[fst_ind + nv * nsites + 2] = 0.769790;
         }
+    } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites + 0] = 0.9556;
+            polfac[fst_ind + nv * nsites + 1] = 0.3624;
+            polfac[fst_ind + nv * nsites + 2] = 0.3624;
+            polfac[fst_ind + nv * nsites + 3] = 0.3624;
+        }
     } else if (mon_id == "h4_dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites + 0] = 0.00000;
@@ -1094,6 +1124,13 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv * nsites + 2] = 0.38978363;
             pol[fst_ind + nv * nsites + 3] = 0.38978363;
             pol[fst_ind + nv * nsites + 4] = 0.38978363;
+        }
+    } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites + 0] = 0.9556;
+            pol[fst_ind + nv * nsites + 1] = 0.3624;
+            pol[fst_ind + nv * nsites + 2] = 0.3624;
+            pol[fst_ind + nv * nsites + 3] = 0.3624;
         }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1219,6 +1256,13 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 65.76255818916154320248;
         // BEGIN SECTION C6_LONG_RANGE
         // ==> PASTE YOUR CODE BELOW <==
+    } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 15.618415412582673;  // A
+            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
+            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
+            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
+        }
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 17.41398863;      // N
