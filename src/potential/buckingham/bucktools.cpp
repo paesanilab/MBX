@@ -388,6 +388,29 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         b.push_back(3.64236);  // A^(-1)
         b.push_back(3.52744);  // A^(-1)
 
+    } else if (mon_id1 == "nh3pbe0d3bj" and mon_id2 == "nh3pbe0d3bj") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(19267.3);  // kcal/mol A--A
+        a.push_back(3232.98);  // kcal/mol A--B
+        a.push_back(3232.98);  // kcal/mol A--B
+        a.push_back(980.337);  // kcal/mol B--B
+        b.push_back(3.09382);  // A^(-1) A--A
+        b.push_back(3.44698);  // A^(-1) A--B
+        b.push_back(3.44698);  // A^(-1) A--B
+        b.push_back(3.83901);  // A^(-1) B--B
+
     } else if (mon_id1 == "nh3" and mon_id2 == "nh3") {
         types1.push_back(0);
         types1.push_back(1);
