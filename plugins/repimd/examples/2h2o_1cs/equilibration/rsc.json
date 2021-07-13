@@ -1,0 +1,7 @@
+{
+  "threshold" : 0.05,
+  "permutation_file" : "permutations.txt",
+  "use_inversion" : true,
+  "output_file" : "configs_rsc.xyz",
+  "indexes_to_ignore" : []
+}

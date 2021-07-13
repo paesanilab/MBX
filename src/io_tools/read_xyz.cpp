@@ -41,7 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace tools {
 
-void ReadXYZ(char *filename, std::vector<std::vector<std::string> > &atom_names,
+void ReadXYZ(const char *filename, std::vector<std::vector<std::string> > &atom_names,
              std::vector<std::vector<double> > &coords, std::vector<std::vector<double> > &boxes, bool read_box,
              double to_angstrom) {
     // Check that filename is not empty
@@ -62,6 +62,9 @@ void ReadXYZ(char *filename, std::vector<std::vector<std::string> > &atom_names,
     atom_names.clear();
     coords.clear();
     boxes.clear();
+
+    // If file is empty, return
+    if (ifs.peek() == std::ifstream::traits_type::eof()) return;
 
     // Read trajectory til the end
     std::vector<double> crd;

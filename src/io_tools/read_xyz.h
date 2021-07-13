@@ -71,7 +71,7 @@ namespace tools {
  * @param[in] read_box Bool that states if the box will be read (i-pi format)
  * @param[in] to_angstrom Conversion factor to convert from the units to angstrom
  */
-void ReadXYZ(char *filename, std::vector<std::vector<std::string> > &atom_names,
+void ReadXYZ(const char *filename, std::vector<std::vector<std::string> > &atom_names,
              std::vector<std::vector<double> > &coords, std::vector<std::vector<double> > &boxes, bool read_box = false,
              double to_angstrom = 1.0);
 

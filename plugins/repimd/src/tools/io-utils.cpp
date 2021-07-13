@@ -5,12 +5,12 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace kit { namespace io {
+namespace kit {
+namespace io {
 
 //----------------------------------------------------------------------------//
 
-int to_int(const std::string& s)
-{
+int to_int(const std::string& s) {
     int res;
 
     std::istringstream iss(s);
@@ -27,8 +27,7 @@ int to_int(const std::string& s)
 
 //----------------------------------------------------------------------------//
 
-size_t to_uint(const std::string& s)
-{
+size_t to_uint(const std::string& s) {
     int res;
 
     res = to_int(s);
@@ -44,8 +43,7 @@ size_t to_uint(const std::string& s)
 
 //----------------------------------------------------------------------------//
 
-double to_double(const std::string& s)
-{
+double to_double(const std::string& s) {
     double res;
 
     std::istringstream iss(s);
@@ -62,6 +60,7 @@ double to_double(const std::string& s)
 
 //----------------------------------------------------------------------------//
 
-}} // namespace kit::io
+}  // namespace io
+}  // namespace kit
 
 ////////////////////////////////////////////////////////////////////////////////
