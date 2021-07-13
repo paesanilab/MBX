@@ -509,6 +509,80 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         b.push_back(3.7359);   // A^(-1)
         b.push_back(3.53045);  // A^(-1)
         b.push_back(3.89503);  // A^(-1)
+
+    } else if (mon_id1 == "n2o5" and mon_id2 == "n2o5") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(2);
+        types1.push_back(2);
+        types1.push_back(2);
+        types1.push_back(2);
+
+        // Set the number of different types
+        nt2 = 3;
+
+        // Fill in (in order) the A and b coefficients
+        a.push_back(52582.5);  // kcal/mol  A--A
+        a.push_back(7849.47);  // kcal/mol  A--B
+        a.push_back(34641.1);  // kcal/mol  A--C
+        a.push_back(7849.47);  // kcal/mol  B--A
+        a.push_back(2692.58);  // kcal/mol  B--B
+        a.push_back(49876.0);  // kcal/mol  B--C
+        a.push_back(34641.1);  // kcal/mol  C--A
+        a.push_back(49876.0);  // kcal/mol  C--B
+        a.push_back(31773.9);  // kcal/mol  C--C
+
+        b.push_back(3.86891);  // A^(-1) A--A
+        b.push_back(3.19945);  // A^(-1) A--B
+        b.push_back(3.60907);  // A^(-1) A--C
+        b.push_back(3.19945);  // A^(-1) B--A
+        b.push_back(2.33813);  // A^(-1) B--B
+        b.push_back(4.19428);  // A^(-1) B--C
+        b.push_back(3.60907);  // A^(-1) C--A
+        b.push_back(4.19428);  // A^(-1) C--B
+        b.push_back(3.56601);  // A^(-1) C--C
+
+    } else if (mon_id1 == "h2o" and mon_id2 == "n2o5") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        // Set the number of different types
+        nt2 = 3;
+
+        // Fill in (in order) the A and b coefficients
+        a.push_back(93032.9);   // kcal/mol  D--A
+        a.push_back(12989.0);   // kcal/mol  D--B
+        a.push_back(153274.0);  // kcal/mol  D--C
+        a.push_back(2460.89);   // kcal/mol  E--A
+        a.push_back(514436.0);  // kcal/mol  E--B
+        a.push_back(1251.73);   // kcal/mol  E--C
+
+        b.push_back(4.1869);   // A^(-1) D--A
+        b.push_back(3.22662);  // A^(-1) D--B
+        b.push_back(4.455);    // A^(-1) D--C
+        b.push_back(3.24055);  // A^(-1) E--A
+        b.push_back(6.4749);   // A^(-1) E--B
+        b.push_back(3.03227);  // A^(-1) E--C
         // =====>> BEGIN SECTION BUCKINGHAM <<=====
         // ======>> PASTE CODE BELOW <<======
         // =====>> END SECTION BUCKINGHAM <<=====
