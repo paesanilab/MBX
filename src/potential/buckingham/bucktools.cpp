@@ -505,6 +505,16 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         a.push_back(5733.11);  // kcal/mol A--C
         b.push_back(3.48054);  // A^(-1) A--B
         b.push_back(3.46238);  // A^(-1) A--C
+    } else if (mon_id1 == "ar" and mon_id2 == "ar") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(102057.0);  // kcal/mol * A^(-6)  A--B
+        b.push_back(3.41808);   // A^(-1) A--B
     } else if (mon_id1 == "cs" and mon_id2 == "h2") {
         types1.push_back(0);
 

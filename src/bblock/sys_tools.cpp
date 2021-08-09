@@ -1025,7 +1025,7 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
         }
     } else if (mon_id == "ar") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            polfac[fst_ind + nv] = 1.6446;
+            polfac[fst_ind + nv] = 1.645;
         }
     } else if (mon_id == "he") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1133,7 +1133,7 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
         }
     } else if (mon_id == "ar") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            pol[fst_ind + nv] = 1.6446;
+            pol[fst_ind + nv] = 1.645;
         }
     } else if (mon_id == "he") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1271,7 +1271,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         }
     } else if (mon_id == "ar") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[fst_ind + nv] = 28.243298171393334;
+            c6_lr[fst_ind + nv] = 27.83030183091804;
         }
     } else if (mon_id == "he") {
         for (size_t nv = 0; nv < n_mon; nv++) {

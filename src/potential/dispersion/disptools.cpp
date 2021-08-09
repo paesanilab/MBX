@@ -739,6 +739,16 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(1857.467);  // kcal/mol * A^(-6)  A--B
         d6.push_back(3.19908);   // A^(-1) A--B
+    } else if (mon_id1 == "ar" and mon_id2 == "ar") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(774.5257);  // kcal/mol * A^(-6)  A--B
+        d6.push_back(3.41808);   // A^(-1) A--B
     } else if (mon_id1 == "h2" and mon_id2 == "h2") {
         types1.push_back(0);
         types1.push_back(0);
