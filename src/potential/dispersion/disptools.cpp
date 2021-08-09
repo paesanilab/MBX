@@ -737,8 +737,8 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         nt2 = 1;
 
         // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(1857.467);  // kcal/mol * A^(-6)  A--B
-        d6.push_back(3.19908);   // A^(-1) A--B
+        C6.push_back(1500.0914);  // kcal/mol * A^(-6)  A--B
+        d6.push_back(3.28039);  // A^(-1) A--B
     } else if (mon_id1 == "ar" and mon_id2 == "ar") {
         types1.push_back(0);
 
