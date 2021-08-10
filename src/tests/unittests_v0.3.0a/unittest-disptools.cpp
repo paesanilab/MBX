@@ -412,7 +412,7 @@ TEST_CASE("disptools::GetC6") {
                                            104.10825,
                                            130.8452,
                                            105.979,
-                                           1857.467};
+                                           1500.0914};
     std::vector<double> expected_out_d6 = {2.0,
                                            2.5,
                                            9.775202425217957e+00,
@@ -432,7 +432,7 @@ TEST_CASE("disptools::GetC6") {
                                            3.25885,
                                            3.7359,
                                            3.68542,
-                                           3.19908};
+                                           3.28039};
 
     for (size_t i = 0; i < mon1.size(); i++) {
         SECTION(mon1[i] + " -- " + mon2[i]) {
