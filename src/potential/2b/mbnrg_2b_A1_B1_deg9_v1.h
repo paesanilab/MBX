@@ -43,8 +43,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/constants.h"
 #include "tools/variable.h"
 #include "tools/water_monomer_lp.h"
-#include "poly_2b_A1_B1_deg9_v1.h" 
-
+#include "poly_2b_A1_B1_deg9_v1.h"
 
 /**
  * @file mbnrg_2b_A1_B1_deg9_v1.h
@@ -62,7 +61,7 @@ namespace mbnrg_A1_B1_deg9 {
 
 struct mbnrg_A1_B1_deg9_v1 {
     // Creates an empty class
-    mbnrg_A1_B1_deg9_v1() {};
+    mbnrg_A1_B1_deg9_v1(){};
 
     /**
      * @brief Creates a class and initializes the parameters corresponding to mon
@@ -73,8 +72,8 @@ struct mbnrg_A1_B1_deg9_v1 {
     mbnrg_A1_B1_deg9_v1(const std::string mon1, const std::string mon2);
 
     // Destroys the class
-    ~mbnrg_A1_B1_deg9_v1() {};
-    
+    ~mbnrg_A1_B1_deg9_v1(){};
+
     // Polynomial for this symmetry
     typedef poly_A1_B1_deg9_v1 polynomial;
 
@@ -85,7 +84,7 @@ struct mbnrg_A1_B1_deg9_v1 {
 urns a vector with them.
      * @param[in] xyz0 Pointer to a double array with the coordinates of monomer 0 of the n-mer.
      * @param[in] xyz1 Pointer to a double array with the coordinates of monomer 1 of the n-mer.
-     
+
      * @param[in] n Number of monomers passed in the xyz array.
      * @return Double with the energy.
      */
@@ -100,25 +99,26 @@ urns a vector with them.
      * @param[in] xyz1 Pointer to a double array with the coordinates of monomer 1 of the n-mer.
      * @param[out] grad0 Pointer to a double array with the gradients of monomer 0 of the n-mer.
      * @param[out] grad1 Pointer to a double array with the gradients of monomer 1 of the n-mer.
-    
+
      * @param[in] n Number of monomers passed in the xyz array.
      * @return Double with the energy.
      */
-    double eval(const double *xyz1, const double *xyz2, double *grad1, double *grad2 , const size_t n, std::vector<double> *virial=0);
+    double eval(const double *xyz1, const double *xyz2, double *grad1, double *grad2, const size_t n,
+                std::vector<double> *virial = 0);
 
-  private:
+   private:
     // Non-linear constants
     double m_k_x_inter_A_B_0;
     double m_d_x_inter_A_B_0;
 
     // Inner cutoff
     double m_ri = 7.0;
-    
+
     // Outer cutoff
     double m_ro = 9.0;
 
     // Switch function
-    double f_switch(const double, double&);
+    double f_switch(const double, double &);
 
     // Vector with the coefficients of the polynomials
     std::vector<double> coefficients;
@@ -126,7 +126,7 @@ urns a vector with them.
 
 //----------------------------------------------------------------------------//
 
-} // namespace mbnrg_A1_B1_deg9
+}  // namespace mbnrg_A1_B1_deg9
 
 ////////////////////////////////////////////////////////////////////////////////
 

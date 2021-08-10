@@ -238,22 +238,22 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "ar" and mon2 == "ar") {
         mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 pot(mon1, mon2);
-        energy =  pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "cs" and mon2 == "h2") {
         mbnrg_A1_B2_deg7::mbnrg_A1_B2_deg7_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "na" and mon2 == "na") {
         mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 pot(mon1, mon2);
-        energy =  pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "cl" and mon2 == "cl") {
         mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 pot(mon1, mon2);
-        energy =  pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "cl" and mon2 == "na") {
         mbnrg_A1_B1_deg9::mbnrg_A1_B1_deg9_v1 pot(mon2, mon1);
-        energy =  pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
+        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
     } else if (mon1 == "ar" and mon2 == "cs") {
         mbnrg_A1_B1_deg9::mbnrg_A1_B1_deg9_v1 pot(mon2, mon1);
-        energy =  pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
+        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
         // =====>> END SECTION 2B_GRADIENT <<=====
     } else {
         energy = 0.0;

@@ -47,11 +47,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace mbnrg_A1_A1_deg9 {
 
-double poly_A1_A1_deg9_v1::eval(const double x[1],
-            const double a[9]) {
+double poly_A1_A1_deg9_v1::eval(const double x[1], const double a[9]) {
     const double t9 = x[0];
-    return((a[0]+(a[1]+(a[2]+(a[3]+(a[4]+(a[5]+(a[6]+(a[8]*t9+a[7])*t9)*t9)*t9)*t9)*t9)*t9)*t9)*t9);
+    return (
+        (a[0] +
+         (a[1] + (a[2] + (a[3] + (a[4] + (a[5] + (a[6] + (a[8] * t9 + a[7]) * t9) * t9) * t9) * t9) * t9) * t9) * t9) *
+        t9);
 }
 
-} // namespace mbnrg_A1_A1_deg9
-
+}  // namespace mbnrg_A1_A1_deg9

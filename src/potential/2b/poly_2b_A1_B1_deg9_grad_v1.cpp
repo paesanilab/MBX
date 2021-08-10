@@ -46,9 +46,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 namespace mbnrg_A1_B1_deg9 {
 
-double poly_A1_B1_deg9_v1::eval(const double x[1],
-            const double a[9],
-                  double g[1]) {
+double poly_A1_B1_deg9_v1::eval(const double x[1], const double a[9], double g[1]) {
     const double t1 = a[0];
     const double t2 = a[1];
     const double t3 = a[2];
@@ -57,19 +55,22 @@ double poly_A1_B1_deg9_v1::eval(const double x[1],
     const double t6 = a[5];
     const double t7 = a[6];
     const double t11 = x[0];
-    const double t9 = a[8]*t11;
+    const double t9 = a[8] * t11;
     const double t10 = a[7];
-    const double t12 = (t9+t10)*t11;
-    const double t14 = (t7+t12)*t11;
-    const double t16 = (t6+t14)*t11;
-    const double t18 = (t5+t16)*t11;
-    const double t20 = (t4+t18)*t11;
-    const double t22 = (t3+t20)*t11;
-    const double t24 = (t2+t22)*t11;
-    g[0] = (((((((2.0*t9+t10)*t11+t7+t12)*t11+t6+t14)*t11+t5+t16)*t11+t4
-+t18)*t11+t3+t20)*t11+t2+t22)*t11+t1+t24;
-    return (t1+t24)*t11;
+    const double t12 = (t9 + t10) * t11;
+    const double t14 = (t7 + t12) * t11;
+    const double t16 = (t6 + t14) * t11;
+    const double t18 = (t5 + t16) * t11;
+    const double t20 = (t4 + t18) * t11;
+    const double t22 = (t3 + t20) * t11;
+    const double t24 = (t2 + t22) * t11;
+    g[0] = (((((((2.0 * t9 + t10) * t11 + t7 + t12) * t11 + t6 + t14) * t11 + t5 + t16) * t11 + t4 + t18) * t11 + t3 +
+             t20) *
+                t11 +
+            t2 + t22) *
+               t11 +
+           t1 + t24;
+    return (t1 + t24) * t11;
 }
 
-} // namespace mbnrg_A1_B1_deg9
-
+}  // namespace mbnrg_A1_B1_deg9

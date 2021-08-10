@@ -33,8 +33,6 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-
-
 #ifndef POLY_2B_MBNRG_A1_B1_DEG9_H
 #define POLY_2B_MBNRG_A1_B1_DEG9_H
 
@@ -63,46 +61,42 @@ struct poly_A1_B1_deg9_v1 {
     /**
      * @brief Evaluates the polynomial of degree 9 for A1_B1 symmetry.
      *
-     * Given the linear parameters and the value of the polynomial variables, 
+     * Given the linear parameters and the value of the polynomial variables,
      * evaluates the polynomial for the A1_B1 symmetry.
      * @param[in] x Double array of length 1 with the variable values
      * @param[in] a Double array of 9 elements with the linear parameters of the polynomial
      * @return Value of the polynomial
      */
-    double eval(const double x[1],
-              const double a[9]);
+    double eval(const double x[1], const double a[9]);
 
     /**
      * @brief Evaluates the polynomial of degree 9 for A1_B1 symmetry.
      *
-     * Given the linear parameters and the value of the polynomial variables, 
+     * Given the linear parameters and the value of the polynomial variables,
      * evaluates the polynomial for the A1_B1 symmetry.
      * It uses the direct, non optimized polynomial
      * @param[in] x Double array of length 1 with the variable values
      * @param[in] a Double array of 9 elements with the linear parameters of the polynomial
      * @return Value of the polynomial
      */
-    double eval_direct(const double x[1],
-                     const double a[9]);
+    double eval_direct(const double x[1], const double a[9]);
 
     /**
      * @brief Evaluates the polynomial of degree 9 for A1_B1 symmetry.
      *
-     * Given the linear parameters and the value of the polynomial variables, 
+     * Given the linear parameters and the value of the polynomial variables,
      * evaluates the polynomial for the A1_B1 symmetry.
      * @param[in] x Double array of length 1 with the variable values
      * @param[in] a Double array of 9 elements with the linear parameters of the polynomial
      * @param[out] g Double array of length 1 that will store the gradients dP/dxi
      * @return Value of the polynomial
      */
-    double eval(const double x[1],
-              const double a[9],
-                    double g[1]);
-    
+    double eval(const double x[1], const double a[9], double g[1]);
+
     /**
      * @brief Evaluates the polynomial of degree 9 for A1_B1 symmetry.
      *
-     * Given the linear parameters and the value of the polynomial variables, 
+     * Given the linear parameters and the value of the polynomial variables,
      * evaluates the polynomial for the A1_B1 symmetry.
      * It uses the direct, non optimized polynomial
      * @param[in] x Double array of length 1 with the variable values
@@ -110,22 +104,18 @@ struct poly_A1_B1_deg9_v1 {
      * @param[out] g Double array of length 1 that will store the gradients dP/dxi
      * @return Value of the polynomial
      */
-    double eval_direct(const double x[1],
-                     const double a[9],
-                           double g[1]);
+    double eval_direct(const double x[1], const double a[9], double g[1]);
 };
 
-} // namespace mbnrg_A1_B1_deg9
+}  // namespace mbnrg_A1_B1_deg9
 
-#endif // POLY_2B_MBNRG_A1_B1_DEG9_H
+#endif  // POLY_2B_MBNRG_A1_B1_DEG9_H
 
-
-
-//Polynomial input used to generate these files:
+// Polynomial input used to generate these files:
 
 //  add_molecule['A1']
 //  add_molecule['B1']
-//  
+//
 //  add_variable['A', '1', 'a', 'B', '1', 'b', 'x-inter-A+B-0']
-//  
+//
 //  add_filter['sum-degree', 'x-inter-*+*-*', '0']

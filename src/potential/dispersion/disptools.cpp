@@ -738,7 +738,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(1500.0914);  // kcal/mol * A^(-6)  A--B
-        d6.push_back(3.28039);  // A^(-1) A--B
+        d6.push_back(3.28039);    // A^(-1) A--B
     } else if (mon_id1 == "ar" and mon_id2 == "ar") {
         types1.push_back(0);
 
@@ -809,7 +809,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         nt2 = 1;
 
         // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(251.48);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(251.48);   // kcal/mol * A^(-6)  A--A
         d6.push_back(4.42822);  // A^(-1) A--A
     } else if (mon_id1 == "cl" and mon_id2 == "cl") {
         types1.push_back(0);
@@ -820,7 +820,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(3066.2919);  // kcal/mol * A^(-6)  A--A
-        d6.push_back(1.82786);  // A^(-1) A--A
+        d6.push_back(1.82786);    // A^(-1) A--A
     } else if (mon_id1 == "cl" and mon_id2 == "na") {
         types1.push_back(0);
 
@@ -830,7 +830,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(784.5853);  // kcal/mol * A^(-6)  A--B
-        d6.push_back(2.85113);  // A^(-1) A--B
+        d6.push_back(2.85113);   // A^(-1) A--B
         // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;
