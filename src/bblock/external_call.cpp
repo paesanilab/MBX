@@ -73,6 +73,34 @@ void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], c
 }
 
 /**
+ * Initializes the system in the heap.
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat_monomers Pointer to an array of the number of atoms in each monomer
+ * @param[in] at_names Pointer to an array with the atom names of all the whole system
+ * @param[in] monomers Pointer to the list of monomer ids in your system
+ * @param[in] nmon Number of monomers
+ * @param[in] json_file Name of the json configuration file
+ */
+void initialize_system_py_(double* coords, int* nat_monomers, char **at_names, char **monomers, int* nmon,
+                        char *json_file) {
+    my_s = new bblock::System();
+    int count = 0;
+    for (int i = 0; i < *nmon; i++) {
+        std::vector<double> xyz(3 * nat_monomers[i]);
+        std::vector<std::string> vAtNames(nat_monomers[i]);
+
+        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
+        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
+        std::string id = monomers[i];
+        my_s->AddMonomer(xyz, vAtNames, id);
+        count += nat_monomers[i];
+    }
+
+    my_s->Initialize();
+    my_s->SetUpFromJson(json_file);
+}
+
+/**
  * Given the coordinates, calculates the energy for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
  * @param[in] nat Number of atoms in he system
