@@ -363,6 +363,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
 
     user_fft_grid_ = std::vector<int>{};
 
+    nsites_all_ = nsites_;
     if (nsites_ + external_charge_.size() > 0) {
         size_t nExtChg = external_charge_.size();
 
@@ -562,6 +563,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
 
     ReorderData();
 
+    nsites_all_ = nsites_;
     if (nsites_ + external_charge_.size() > 0) {
         size_t nExtChg = external_charge_.size();
 
