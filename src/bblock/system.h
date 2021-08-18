@@ -571,6 +571,13 @@ class System {
     void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
                                         std::vector<int> tag);
 
+void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef);
+void SetNewParamsElec(bool do_grads);
+void Hack1EfqPhi();
+void Hack2CgIter();
+void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef);
+
     /**
      * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
      * @param[in] ff_mons Vector of monomers for which classical forcefield energy will be calculated
