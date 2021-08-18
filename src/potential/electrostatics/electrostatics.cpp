@@ -486,6 +486,84 @@ void Electrostatics::SetExternalElectrostaticPotentialAndFieldInSites(std::vecto
 }
 
 
+void Electrostatics::CalculateOneCgDipoleIter() {
+    size_t nsites3 = nsites_ * 3;
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    // Permanent electric field is computed
+    // Now start computation of dipole through conjugate gradient
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            // TODO assuming pol not site dependant
+            double p = pol_[fi_sites + i];
+            size_t inmon3 = 3 * i * nmon;
+#ifdef _OPENMP
+#pragma omp simd
+#endif
+            for (size_t m = 0; m < nmon; m++) {
+                mu_[fi_crd + inmon3 + m] = p * Efq_[fi_crd + inmon3 + m];
+                mu_[fi_crd + inmon3 + nmon + m] = p * Efq_[fi_crd + inmon3 + nmon + m];
+                mu_[fi_crd + inmon3 + nmon2 + m] = p * Efq_[fi_crd + inmon3 + nmon2 + m];
+            }
+        }
+
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+    std::vector<double> ts2v(nsites3);
+
+    DipolesCGIteration(mu_, ts2v);
+
+    std::vector<double> rv(nsites3);
+    std::vector<double> pv(nsites3);
+    std::vector<double> r_new(nsites3);
+
+    for (size_t i = 0; i < nsites3; i++) {
+        pv[i] = Efq_[i] * pol_sqrt_[i] - ts2v[i];
+    }
+    for (size_t i = 0; i < nsites3; i++) {
+        rv[i] = pv[i];
+    }
+
+    // Start iterations
+    size_t iter = 1;
+    double rvrv = DotProduct(rv, rv);
+    double residual = 0.0;
+    while (true) {
+        DipolesCGIteration(pv, ts2v);
+        double pvts2pv = DotProduct(pv, ts2v);
+
+        if (rvrv < tolerance_) break;
+        double alphak = rvrv / pvts2pv;
+        residual = 0.0;
+        for (size_t i = 0; i < nsites3; i++) {
+            mu_[i] = mu_[i] + alphak * pv[i];
+        }
+        for (size_t i = 0; i < nsites3; i++) {
+            r_new[i] = rv[i] - alphak * ts2v[i];
+        }
+        for (size_t i = 0; i < nsites3; i++) {
+            residual += r_new[i] * r_new[i];
+        }
+
+        double rvrv_new = residual;
+
+        break;
+    }
+
+    // Dipoles are computed
+    // Need to recalculate dipole and Efd due to the multiplication of polsqrt
+    for (size_t i = 0; i < nsites3; i++) {
+        mu_[i] *= pol_sqrt_[i];
+    }
+}
+
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
