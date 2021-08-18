@@ -48,6 +48,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/x2b_A1B2Z2_C1D4_deg3_exp0_v1x.h"
 #include "potential/2b/x2b_A1B2_A1B2_v1x.h"
 #include "potential/2b/x2b_A1B2Z2_C1D2_v1x.h"
+#include "potential/2b/x2b_A1B2C4_D1E2_deg3_v1x.h"
+#include "potential/2b/mbnrg_2b_A1B3_A1B3_deg4_v1.h"
 // =====>> END SECTION INCLUDE2B <<=====
 
 /**

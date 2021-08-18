@@ -8,6 +8,9 @@ mbnrg_3b_A1B4_C1D2_C1D2_deg3_v1.cpp
                  mbnrg_3b_A1B2_A1B2_A1B2_deg4_v1.cpp
                  poly_3b_A1B2_A1B2_A1B2_deg4_nograd_v1.cpp
                  poly_3b_A1B2_A1B2_A1B2_deg4_grad_v1.cpp
+mbnrg_3b_A1B2C4_D1E2_D1E2_deg3_v1.cpp
+poly_3b_A1B2C4_D1E2_D1E2_deg3_grad_v1.cpp
+poly_3b_A1B2C4_D1E2_D1E2_deg3_nograd_v1.cpp
 # END SECTION CMAKELISTS
 )
 
