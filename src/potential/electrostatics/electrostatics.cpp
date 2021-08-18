@@ -7006,6 +7006,13 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField(use_ghost);
+
+    std::cout << "Phi in Main GetElectrostatics" << std::endl;
+    for (size_t i = 0; i <  phi_all_.size(); i++) {
+        std::cout << phi_all_[i] << " ";
+    }
+    std::cout << std::endl;
+
     CalculateDipoles();
     CalculateElecEnergy();
     if (do_grads_) CalculateGradients(grad);

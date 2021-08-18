@@ -268,6 +268,14 @@ class Electrostatics {
     std::vector<double> GetMolecularInducedDipoles();
     std::vector<double> GetMolecularPermanentDipoles();
 
+    void CalculateOneCgDipoleIter();
+    void Hack1EfqPhi();
+    void Hack2CgIter() ;
+    void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+    void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef);
+    void UpdatePhiAndEf();
+
+
     /**
      * @brief Returns induced electrostatic energy.
      *
