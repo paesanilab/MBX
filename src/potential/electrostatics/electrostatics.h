@@ -715,6 +715,12 @@ class Electrostatics {
     std::vector<double> sys_grad_all_;
 
     std::vector<std::pair<std::string, size_t>> mon_type_count_all_;
+
+     std::vector<double> external_phi_;
+     std::vector<double> external_ef_;
+
+     std::vector<double> phi_x_;
+     std::vector<double> ef_x_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
