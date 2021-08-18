@@ -274,6 +274,7 @@ class Electrostatics {
     void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
     void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef);
     void UpdatePhiAndEf();
+    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef);
 
 
     /**

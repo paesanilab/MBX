@@ -480,6 +480,12 @@ void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid
     num_mpi_ranks_ = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
 }
 
+void Electrostatics::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef) {
+  external_phi_ = phi;
+  external_ef_ = ef;
+}
+
+
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
