@@ -104,7 +104,7 @@ def get_xyz(number_of_electrostatic_sites):
   xyzl = [0.0]*(number_of_electrostatic_sites*3)
   xyz = (ctypes.c_double * (3*number_of_electrostatic_sites)) (*xyzl)
 
-  mbxlib.get_xyz_(xyz,ctypes.byref(ns))
+  mbxlib.get_xyz_(xyz)
 
   xyz_out = [xyz[i] for i in range(len(xyz))]
   return xyz_out
@@ -115,6 +115,17 @@ def set_box(box):
   boxv = (ctypes.c_double * len(box)) (*box)
 
   mbxlib.set_box_(ctypes.byref(l),boxv)
+
+def get_charges(number_of_electrostatic_sites):
+  ns = ctypes.c_int(number_of_electrostatic_sites)
+  chgl = [0.0]*(number_of_electrostatic_sites)
+  chg = (ctypes.c_double * (number_of_electrostatic_sites)) (*chgl)
+
+  mbxlib.get_charges_(chg)
+
+  chg_out = [chg[i] for i in range(len(chg))]
+  return chg_out
+
 
 def finalize_system():
   mbxlib.finalize_system_()

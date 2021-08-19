@@ -49,4 +49,8 @@ xyz = mbx.get_xyz(9)
 
 print(xyz)
 
+chg = mbx.get_charges(9)
+
+print(chg)
+
 mbx.finalize_system()

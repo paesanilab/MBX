@@ -194,7 +194,7 @@ void set_real_xyz_(double *coords, int *nat) {
     my_s->SetRealXyz(xyz);
 }
 
-void get_xyz_(double *coords, int *nsites) {
+void get_xyz_(double *coords) {
     std::vector<double> xyz = my_s->GetXyz();
     std::copy(xyz.begin(),xyz.end(),coords);
 }
@@ -223,6 +223,11 @@ void set_potential_and_electric_field_on_sites_(double *phi, double *ef,int *nsi
     std::vector<double> phiv(phi,phi + (*nsites));
     std::vector<double> efv(ef,ef + 3*(*nsites));
     my_s->SetExternalElectrostaticPotentialAndFieldInSites(phiv,efv);
+}
+
+void get_charges_(double *charges) {
+    std::vector<double> chg = my_s->GetCharges();
+    std::copy(chg.begin(),chg.end(),charges);
 }
 
 /**
