@@ -69,6 +69,35 @@ def get_energy_pbc_grad(coordinates,number_of_atoms,cell_vectors):
 
   return energy.value, grad_out
 
+def set_coordinates(coordinates,number_of_atoms):
+  crd = (ctypes.c_double * len(coordinates)) (*coordinates)
+  nat = ctypes.c_int(number_of_atoms)
+
+  mbxlib.set_real_xyz_(crd,ctypes.byref(nat))
+
+def get_potential_and_electric_field_on_points(coordinates, number_of_atoms):
+  crd = (ctypes.c_double * len(coordinates)) (*coordinates)
+  nat = ctypes.c_int(number_of_atoms)
+  
+  phil = [0.0]*number_of_atoms
+  phi = (ctypes.c_double * number_of_atoms) (*phil)
+  
+  efl = [0.0]*len(coordinates)
+  ef = (ctypes.c_double * len(coordinates)) (*efl)
+  
+  mbxlib.get_potential_and_electric_field_on_points_(crd,phi,ef,ctypes.byref(nat))
+
+  phi_out = [phi[i] for i in range(len(phi))]
+  ef_out = [ef[i] for i in range(len(ef))]
+  
+  return phi_out,ef_out
+
+def set_box(box):
+  length = len(box)
+  l = ctypes.c_int(length)
+  boxv = (ctypes.c_double * len(box)) (*box)
+
+  mbxlib.set_box_(ctypes.byref(l),boxv)
 
 def finalize_system():
   mbxlib.finalize_system_()

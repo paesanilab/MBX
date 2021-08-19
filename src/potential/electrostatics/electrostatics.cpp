@@ -625,7 +625,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
       coordinates_vectorized[i + 2*np] = coordinates[3*i+2] ;
     }
 
-    size_t maxnmon = mon_type_count_.back().second; 
+    size_t maxnmon = mon_type_count_.back().second > np ?  mon_type_count_.back().second : np; 
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -705,11 +705,6 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                 size_t inmon1 = i * nmon1;
                 size_t inmon13 = inmon1 * 3;
 
-                std::vector<double> xyz_sitei(3);
-                xyz_sitei[0] = xyz_all_[fi_crd1 + inmon13 + m1];
-                xyz_sitei[1] = xyz_all_[fi_crd1 + inmon13 + nmon1 + m1];
-                xyz_sitei[2] = xyz_all_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
-
                 // If PBC is activated, get the xyz in vectorized form for
                 // all the monomer2 sites j
                 // What we are going to do here is to get all sites j of all m2
@@ -763,21 +758,21 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                     virial_pool[rank][k] += virial_thread[k];
                 }
             }
-            // Compress data in Efq and phi
-            for (size_t rank = 0; rank < nthreads; rank++) {
-                size_t kend1 = Efq_1_pool[rank].size();
-                size_t kend2 = Efq_2_pool[rank].size();
-                for (size_t k = 0; k < kend2; k++) {
-                    ef_x_[fi_crd2 + k] += Efq_2_pool[rank][k];
-                }
-                kend1 = phi_1_pool[rank].size();
-                kend2 = phi_2_pool[rank].size();
-                for (size_t k = 0; k < kend2; k++) {
-                    phi_x_[fi_sites2 + k] += phi_2_pool[rank][k];
-                }
-                for (size_t k = 0; k < 9; k++) {
-                    virial_[k] += virial_pool[rank][k];
-                }
+        }
+        // Compress data in Efq and phi
+        for (size_t rank = 0; rank < nthreads; rank++) {
+            size_t kend1 = Efq_1_pool[rank].size();
+            size_t kend2 = Efq_2_pool[rank].size();
+            for (size_t k = 0; k < kend2; k++) {
+                ef_x_[k] += Efq_2_pool[rank][k];
+            }
+            kend1 = phi_1_pool[rank].size();
+            kend2 = phi_2_pool[rank].size();
+            for (size_t k = 0; k < kend2; k++) {
+                phi_x_[k] += phi_2_pool[rank][k];
+            }
+            for (size_t k = 0; k < 9; k++) {
+                virial_[k] += virial_pool[rank][k];
             }
         }
         // Update first indexes
@@ -829,12 +824,6 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
             ef_x_[2 * np + i] -= result_ptr[3];
         }
     }
-
-    std::cout << "Phi_x after hack 3 in points" << std::endl;
-    for (size_t i = 0; i < phi_x_.size(); i++) {
-        std::cout << phi_x_[i] << " ";
-    }
-    std::cout << std::endl;
 }
 
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
@@ -7363,13 +7352,6 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField(use_ghost);
-
-    std::cout << "Phi in Main GetElectrostatics" << std::endl;
-    for (size_t i = 0; i <  phi_all_.size(); i++) {
-        std::cout << phi_all_[i] << " ";
-    }
-    std::cout << std::endl;
-
     CalculateDipoles();
     CalculateElecEnergy();
     if (do_grads_) CalculateGradients(grad);
