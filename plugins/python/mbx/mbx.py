@@ -92,6 +92,23 @@ def get_potential_and_electric_field_on_points(coordinates, number_of_atoms):
   
   return phi_out,ef_out
 
+def set_potential_and_electric_field_on_sites(phi,ef):
+  phiv = (ctypes.c_double * len(phi)) (*phi)
+  efv = (ctypes.c_double * len(ef)) (*ef)
+  nsites = ctypes.c_int(len(phi))
+  
+  mbxlib.set_potential_and_electric_field_on_sites_(phiv,efv,ctypes.byref(nsites))
+
+def get_xyz(number_of_electrostatic_sites):
+  ns = ctypes.c_int(number_of_electrostatic_sites)
+  xyzl = [0.0]*(number_of_electrostatic_sites*3)
+  xyz = (ctypes.c_double * (3*number_of_electrostatic_sites)) (*xyzl)
+
+  mbxlib.get_xyz_(xyz,ctypes.byref(ns))
+
+  xyz_out = [xyz[i] for i in range(len(xyz))]
+  return xyz_out
+
 def set_box(box):
   length = len(box)
   l = ctypes.c_int(length)

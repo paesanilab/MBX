@@ -45,4 +45,8 @@ phi, ef = mbx.get_potential_and_electric_field_on_points(p,3)
 
 print(phi)
 
+xyz = mbx.get_xyz(9)
+
+print(xyz)
+
 mbx.finalize_system()

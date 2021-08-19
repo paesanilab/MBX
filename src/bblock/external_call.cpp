@@ -194,8 +194,12 @@ void set_real_xyz_(double *coords, int *nat) {
     my_s->SetRealXyz(xyz);
 }
 
+void get_xyz_(double *coords, int *nsites) {
+    std::vector<double> xyz = my_s->GetXyz();
+    std::copy(xyz.begin(),xyz.end(),coords);
+}
+
 void get_potential_and_electric_field_on_points_(double *coords, double *phi, double *ef,int *nat) {
-    std::cout << coords[0] << " " << coords[1] << std::endl;
     std::vector<double> xyz(coords,coords + 3*(*nat));
     my_s->Hack3GetPotentialAtPoints(xyz);
     std::vector<double> p,e;
@@ -215,6 +219,11 @@ void set_box_(int * length, double *box) {
     my_s->SetNewParamsElec(false);
 }
 
+void set_potential_and_electric_field_on_sites_(double *phi, double *ef,int *nsites) {
+    std::vector<double> phiv(phi,phi + (*nsites));
+    std::vector<double> efv(ef,ef + 3*(*nsites));
+    my_s->SetExternalElectrostaticPotentialAndFieldInSites(phiv,efv);
+}
 
 /**
  * Deletes the pointer to the system
