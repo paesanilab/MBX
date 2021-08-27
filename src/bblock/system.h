@@ -808,6 +808,30 @@ class System {
     void ResetDipoleHistory();
 
     /**
+     * Return number of dipole histories
+     */
+    double GetNumDipoleHistory();
+
+    /**
+     * Return history of dipols
+     * @param[in] indx of history to retrieve
+     */
+    std::vector<double> GetDipoleHistory(size_t indx);
+
+    /**
+     * Set current number of dipole histories
+     * @param[in] num_hist number of histories to use initially
+     */
+    void SetNumDipoleHistory(size_t num_hist);
+
+    /**
+     * Set history of dipoles
+     * @param[in] indx of history to initialize
+     * @param[in] mu_hist dipoles to initialize history
+     */
+    void SetDipoleHistory(size_t indx, std::vector<double> mu_hist);
+
+    /**
      * Tells the system if we are in Periodic Boundary Conditions (PBC)
      * or not. If the box is not passed as argument, it is set to
      * a cubic box of 1000 Angstrom of side length
@@ -1030,6 +1054,9 @@ class System {
 
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
+  
+    std::vector<size_t> GetInfoDispersionCounts();
+    std::vector<double> GetInfoDispersionTimings();
 
    private:
     /**

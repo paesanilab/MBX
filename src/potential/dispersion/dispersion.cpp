@@ -141,6 +141,9 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 
     user_fft_grid_ = std::vector<int>{};
 
+    mbxt_disp_count_ = std::vector<size_t>(DISP_NUM_TIMERS, 0);
+    mbxt_disp_time_ = std::vector<double>(DISP_NUM_TIMERS, 0.0);
+    
     ReorderData();
 
 #ifdef DEBUG
@@ -918,6 +921,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     size_t fi_crd = 0;
     size_t fi_sites = 0;
 
+    double _time0 = MPI_Wtime();
     bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
 
     // override settings if ghost particles (big assumption?)
@@ -948,65 +952,22 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
     pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
+    mbxt_disp_count_[DISP_PME_SETUP]++;
+    mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
+    
     // N.B. these do not make copies; they just wrap the memory with some metadata
     auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-
-#if 0
-	// Zero property of particles outside local region
-
-	// proc grid order hard-coded (as above) for ZYX NodeOrder
-	
-	int proc_x = me % proc_grid_x_;
-	int proc_y = (me % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
-	int proc_z = me / (proc_grid_x_ * proc_grid_y_);
-
-	// include particles within local sub-domain and small halo region
-	// this allows the full ghost region to be included for pairwise calculations,
-	// but should exclude ghost monomers that are periodic images of local monomer
-
-	double padding = cutoff_ * 0.5;
-	double dx = A / (double) proc_grid_x_;
-	double dy = B / (double) proc_grid_y_;
-	double dz = C / (double) proc_grid_z_;
-
-	double xlo =  proc_x    * dx - padding;
-	double xhi = (proc_x+1) * dx + padding;
-	
-	double ylo =  proc_y    * dy - padding;
-	double yhi = (proc_y+1) * dy + padding;
-	
-	double zlo =  proc_z    * dz - padding;
-	double zhi = (proc_z+1) * dz + padding;
-
-        std::vector<double> sys_c6_long_range_local_(sys_c6_long_range_.size(),0.0);
-	for(int i=0; i<natoms_; ++i) sys_c6_long_range_local_[i] = sys_c6_long_range_[i];
-
-	const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
-
-	for(int i=0; i<natoms_; ++i) {
-	  double x = coords(i,0);
-	  double y = coords(i,1);
-	  double z = coords(i,2);
-	  
-	  bool local = true;
-	  if(x <= xlo || x > xhi) local = false;
-	  if(y <= ylo || y > yhi) local = false;
-	  if(z <= zlo || z > zhi) local = false;
-	  
-	  if(!local) sys_c6_long_range_local_[i] = 0.0;
-	}
-	
-        auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
-#else
     auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
-#endif
-
     auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
     std::vector<double> dummy_6vec(6, 0.0);
     auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
     std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
-    double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
 
+    _time0 = MPI_Wtime();
+    double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
+    mbxt_disp_count_[DISP_PME_PRE]++;
+    mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
+    
     // get virial
     if (calc_virial_) {
         virial_[0] += *rec_virial[0];
@@ -1053,7 +1014,10 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
     //} // if(compute_pme)
 }
-
+  
+std::vector<size_t> Dispersion::GetInfoCounts() { return mbxt_disp_count_; }
+std::vector<double> Dispersion::GetInfoTimings() { return mbxt_disp_time_; }
+  
 std::vector<int> Dispersion::GetFFTDimension(int box_id) {
     double A, B, C, alpha, beta, gamma;
     bool compute_pme = true;

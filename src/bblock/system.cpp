@@ -3299,9 +3299,43 @@ double System::GetBuckingham(bool do_grads, bool use_ghost) {
 
 void System::ResetDipoleHistory() { electrostaticE_.ResetAspcHistory(); }
 
+double System::GetNumDipoleHistory() { return electrostaticE_.GetNumDipoleHistory(); }
+
+void System::SetNumDipoleHistory(size_t num_hist) { electrostaticE_.SetNumDipoleHistory(num_hist); }
+
+std::vector<double> System::GetDipoleHistory(size_t indx) {
+    return systools::ResetOrderReal3N(electrostaticE_.GetDipoleHistory(indx), initial_order_realSites_, numat_,
+                                      first_index_, nat_);
+}
+void System::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) {
+    // need to reorder dipoles first; copied from SetRealXYZ()
+    // Make sure that the xyz of input has the right size
+    if (mu_hist.size() != 3 * numat_) {
+        std::string text =
+            "Sizes " + std::to_string(mu_hist.size()) + " and " + std::to_string(3 * numat_) + " don't match.";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    std::vector<double> mu_hist_ = std::vector<double>(3 * numsites_, 0.0);
+
+    // Copy each coordinate in the apropriate place in the internal
+    // xyz vector
+    for (size_t i = 0; i < nat_.size(); i++) {
+        size_t ini = 3 * initial_order_realSites_[i].second;
+        size_t fin = ini + 3 * nat_[i];
+        size_t ini_new = 3 * first_index_[i];
+        std::copy(mu_hist.begin() + ini, mu_hist.begin() + fin, mu_hist_.begin() + ini_new);
+    }
+
+    electrostaticE_.SetDipoleHistory(indx, mu_hist_);
+}
+
 std::vector<size_t> System::GetInfoElectrostaticsCounts() { return electrostaticE_.GetInfoCounts(); }
 std::vector<double> System::GetInfoElectrostaticsTimings() { return electrostaticE_.GetInfoTimings(); }
 
+std::vector<size_t> System::GetInfoDispersionCounts() { return dispersionE_.GetInfoCounts(); }
+std::vector<double> System::GetInfoDispersionTimings() { return dispersionE_.GetInfoTimings(); }
+  
 ////////////////////////////////////////////////////////////////////////////////
 
 }  // namespace bblock
