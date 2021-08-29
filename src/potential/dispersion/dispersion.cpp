@@ -921,7 +921,9 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     size_t fi_crd = 0;
     size_t fi_sites = 0;
 
+#if HAVE_MPI == 1
     double _time0 = MPI_Wtime();
+#endif
     bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
 
     // override settings if ghost particles (big assumption?)
@@ -953,7 +955,9 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
     mbxt_disp_count_[DISP_PME_SETUP]++;
+#if HAVE_MPI == 1
     mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
     
     // N.B. these do not make copies; they just wrap the memory with some metadata
     auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
@@ -963,10 +967,14 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
     std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
 
+#if HAVE_MPI == 1
     _time0 = MPI_Wtime();
+#endif
     double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
     mbxt_disp_count_[DISP_PME_PRE]++;
+#if HAVE_MPI == 1
     mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
+#endif
     
     // get virial
     if (calc_virial_) {

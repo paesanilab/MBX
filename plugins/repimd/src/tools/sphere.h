@@ -11,24 +11,22 @@ namespace kit {
 //
 
 struct sphere {
-
     sphere();
     sphere(const double& cR, const double& cU);
 
     // returns energy; adds to gradients
-    double operator()(size_t natom, const double* mass,
-                      const double* x, double* g = 0) const;
+    double operator()(size_t natom, const double* mass, const double* x, double* g = 0) const;
 
     const double& R() const { return m_R; }
     const double& U() const { return m_U; }
 
     void setup(const double& nR, const double& nU);
 
-private:
-    double m_R; // A
-    double m_U; // kcal mol
+   private:
+    double m_R;  // A
+    double m_U;  // kcal mol
 };
 
-} // namespace kit
+}  // namespace kit
 
-#endif // SPHERE_H
+#endif  // SPHERE_H

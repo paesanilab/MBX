@@ -18,32 +18,26 @@ const char endmark[] = "-------------------end-of-frame-------------------";
 
 //----------------------------------------------------------------------------//
 
-} // namespace
+}  // namespace
 
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace kit { namespace io {
+namespace kit {
+namespace io {
 
 //----------------------------------------------------------------------------//
 
-sec::sec(const char* name, const double& data)
-: m_name(name), m_ndata(1), m_data(&data)
-{
-    assert(name && name[0]);
-}
+sec::sec(const char* name, const double& data) : m_name(name), m_ndata(1), m_data(&data) { assert(name && name[0]); }
 
 //----------------------------------------------------------------------------//
 
-sec::sec(const char* name, size_t ndata, const double* data)
-: m_name(name), m_ndata(ndata), m_data(data)
-{
+sec::sec(const char* name, size_t ndata, const double* data) : m_name(name), m_ndata(ndata), m_data(data) {
     assert(name && name[0] && ndata > 0);
 }
 
 //----------------------------------------------------------------------------//
 
-std::ostream& operator<<(std::ostream& os, const sec& s)
-{
+std::ostream& operator<<(std::ostream& os, const sec& s) {
     using std::ios;
     using std::setw;
 
@@ -57,16 +51,12 @@ std::ostream& operator<<(std::ostream& os, const sec& s)
     size_t i(0);
 
     for (; i + 2 < s.m_ndata; i += 3)
-        os << setw(16) << s.m_data[i] << ' '
-           << setw(16) << s.m_data[i + 1] << ' '
-           << setw(16) << s.m_data[i + 2] << '\n';
+        os << setw(16) << s.m_data[i] << ' ' << setw(16) << s.m_data[i + 1] << ' ' << setw(16) << s.m_data[i + 2]
+           << '\n';
 
-    for (; i + 1 < s.m_ndata; i += 2)
-        os << setw(16) << s.m_data[i] << ' '
-           << setw(16) << s.m_data[i + 1] << '\n';
+    for (; i + 1 < s.m_ndata; i += 2) os << setw(16) << s.m_data[i] << ' ' << setw(16) << s.m_data[i + 1] << '\n';
 
-    for (; i < s.m_ndata; ++i)
-        os << setw(16) << s.m_data[i] << '\n';
+    for (; i < s.m_ndata; ++i) os << setw(16) << s.m_data[i] << '\n';
 
     os.flags(saved_flags);
 
@@ -75,22 +65,15 @@ std::ostream& operator<<(std::ostream& os, const sec& s)
 
 //----------------------------------------------------------------------------//
 
-std::ostream& operator<<(std::ostream& os, const endframe& ef)
-{
-    return os << endmark << '\n';
-}
+std::ostream& operator<<(std::ostream& os, const endframe& ef) { return os << endmark << '\n'; }
 
 //----------------------------------------------------------------------------//
 
-void frame::clear()
-{
-    m_contents.clear();
-}
+void frame::clear() { m_contents.clear(); }
 
 //----------------------------------------------------------------------------//
 
-void frame::require(const char* name)
-{
+void frame::require(const char* name) {
     assert(name);
 
     m_contents.insert(std::make_pair(name, std::vector<double>()));
@@ -98,8 +81,7 @@ void frame::require(const char* name)
 
 //----------------------------------------------------------------------------//
 
-const std::vector<double>* frame::get(const char* name) const
-{
+const std::vector<double>* frame::get(const char* name) const {
     assert(name);
 
     map_type::const_iterator i = m_contents.find(name);
@@ -109,8 +91,7 @@ const std::vector<double>* frame::get(const char* name) const
 
 //----------------------------------------------------------------------------//
 
-std::istream& operator>>(std::istream& is, frame& f)
-{
+std::istream& operator>>(std::istream& is, frame& f) {
     using namespace std;
 
     frame::map_type sections;
@@ -121,31 +102,28 @@ std::istream& operator>>(std::istream& is, frame& f)
     while (getline(is, line)) {
         size_t pos = line.find_first_not_of(" \t");
 
-        if (pos == string::npos) // empty line
+        if (pos == string::npos)  // empty line
             continue;
 
-        if (line[pos] == '#') // a comment
+        if (line[pos] == '#')  // a comment
             continue;
 
-        if (line.find("end-of-frame") != string::npos) // end of frame
+        if (line.find("end-of-frame") != string::npos)  // end of frame
             break;
 
         // the line must be either data (for current section) or a title
 
-        if (line[pos] == '{') { // possibly a title
+        if (line[pos] == '{') {  // possibly a title
 
             size_t endpos = line.find('}', pos + 1);
-            if (endpos == string::npos)
-                throw runtime_error("unterminated {title}");
+            if (endpos == string::npos) throw runtime_error("unterminated {title}");
 
-            if (pos + 1 == endpos)
-                throw runtime_error("empty {title}");
+            if (pos + 1 == endpos) throw runtime_error("empty {title}");
 
             string title = line.substr(pos + 1, endpos - pos - 1);
 
             pos = title.find_first_not_of(" \t");
-            if (pos == string::npos)
-                throw runtime_error("empty {title}");
+            if (pos == string::npos) throw runtime_error("empty {title}");
 
             endpos = title.find_last_not_of(" \t");
             assert(endpos + 1 > pos);
@@ -158,8 +136,7 @@ std::istream& operator>>(std::istream& is, frame& f)
                 throw runtime_error(oss.str());
             }
 
-            pair<frame::map_type::iterator, bool> ret
-                = sections.insert(make_pair(title, vector<double>()));
+            pair<frame::map_type::iterator, bool> ret = sections.insert(make_pair(title, vector<double>()));
 
             if (!ret.second) {
                 ostringstream oss;
@@ -169,10 +146,9 @@ std::istream& operator>>(std::istream& is, frame& f)
 
             curr = ret.first;
 
-        } else { // not a title
+        } else {  // not a title
 
-            if (curr == sections.end())
-                throw runtime_error("unexpected text instead of a {title}");
+            if (curr == sections.end()) throw runtime_error("unexpected text instead of a {title}");
 
             while (pos != string::npos) {
                 size_t endpos = line.find_first_of(" \t", pos);
@@ -218,10 +194,8 @@ std::istream& operator>>(std::istream& is, frame& f)
 
 //----------------------------------------------------------------------------//
 
-void load_time_temp_mass_pos_vel
-    (const char* filename, double& time, double& temperature,
-    size_t& natom, double*& mass, double*& pos, double*& vel)
-{
+void load_time_temp_mass_pos_vel(const char* filename, double& time, double& temperature, size_t& natom, double*& mass,
+                                 double*& pos, double*& vel) {
     assert(filename);
 
     std::ifstream ifs(filename);
@@ -248,7 +222,7 @@ void load_time_temp_mass_pos_vel
     }
 
     const std::vector<double>* ptr = f.get("time");
-    assert(ptr); // required
+    assert(ptr);  // required
     if (ptr->size() > 1) {
         std::ostringstream oss;
         oss << "'" << filename << "': too many elements in {time} section";
@@ -257,26 +231,25 @@ void load_time_temp_mass_pos_vel
     time = ptr->operator[](0);
 
     ptr = f.get("temperature");
-    assert(ptr); // required
+    assert(ptr);  // required
     if (ptr->size() > 1) {
         std::ostringstream oss;
-        oss << "'" << filename
-            << "': too many elements in {temperature} section";
+        oss << "'" << filename << "': too many elements in {temperature} section";
         throw std::runtime_error(oss.str());
     }
     temperature = ptr->operator[](0);
 
     const std::vector<double>* mptr = f.get("mass");
-    assert(mptr); // required
+    assert(mptr);  // required
     natom = mptr->size();
 
     const std::vector<double>* posptr = f.get("positions");
-    assert(posptr); // required
+    assert(posptr);  // required
 
     const std::vector<double>* velptr = f.get("velocities");
-    assert(velptr); // required
+    assert(velptr);  // required
 
-    if (3*natom != posptr->size() || 3*natom != velptr->size()) {
+    if (3 * natom != posptr->size() || 3 * natom != velptr->size()) {
         std::ostringstream oss;
         oss << "'" << filename
             << "': incommensurate number of elements"
@@ -286,13 +259,13 @@ void load_time_temp_mass_pos_vel
 
     mass = new double[natom];
 
-    pos = new double[3*natom];
-    vel = new double[3*natom];
+    pos = new double[3 * natom];
+    vel = new double[3 * natom];
 
     for (size_t n = 0; n < natom; ++n) {
         mass[n] = mptr->operator[](n);
         for (size_t k = 0; k < 3; ++k) {
-            size_t j = 3*n + k;
+            size_t j = 3 * n + k;
 
             pos[j] = posptr->operator[](j);
             vel[j] = velptr->operator[](j);
@@ -302,6 +275,7 @@ void load_time_temp_mass_pos_vel
 
 //----------------------------------------------------------------------------//
 
-}} // namespace kit::io
+}  // namespace io
+}  // namespace kit
 
 ////////////////////////////////////////////////////////////////////////////////

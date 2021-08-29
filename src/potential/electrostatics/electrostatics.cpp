@@ -1122,7 +1122,9 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     if (!simcell_periodic_) compute_pme = false;
 
     if (compute_pme) {
+#if HAVE_MPI == 1
         double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -1155,17 +1157,23 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
         mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
         auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
         auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), nsites_all_, 4);
         std::fill(rec_phi_and_field_all_.begin(), rec_phi_and_field_all_.end(), 0);
+#if HAVE_MPI == 1
         double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(0, charges, coords, coords, 1, result);
         mbxt_ele_count_[ELE_PME_PRC]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
+#endif
 
         // Resort phi from system order
         fi_mon = 0;
@@ -1640,7 +1648,9 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 #endif
 
     if (ewald_alpha_ > 0 && use_pbc_) {
+#if HAVE_MPI == 1
         double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -1663,7 +1673,9 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
@@ -1671,10 +1683,14 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
         auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), nsites_all_, 4);
         std::fill(rec_phi_and_field_all_.begin(), rec_phi_and_field_all_.end(), 0);
 
+#if HAVE_MPI == 1
         double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(0, charges, coords, coords, 1, result);
         mbxt_ele_count_[ELE_PME_PRC]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
+#endif
 
 #if HAVE_MPI == 1
         MPI_Allreduce(MPI_IN_PLACE, rec_phi_and_field_.data(), rec_phi_and_field_.size(), MPI_DOUBLE, MPI_SUM, world_);
@@ -4630,7 +4646,9 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             fi_crd += nmon * ns * 3;
         }
 
+#if HAVE_MPI == 1
         double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -4661,7 +4679,9 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -4689,10 +4709,14 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             }
         }  // debug print
 #endif
+#if HAVE_MPI == 1
         double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
         mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
 
 #ifdef _DEBUG_DIPFIELD
         {  // debug print
@@ -5149,7 +5173,9 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             fi_crd += nmon * ns * 3;
         }
 
+#if HAVE_MPI == 1
         double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         double A, B, C, alpha, beta, gamma;
@@ -5172,7 +5198,9 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
@@ -5201,10 +5229,14 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }  // debug print
 #endif
 
+#if HAVE_MPI == 1
         double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
         mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
 
 #ifdef _DEBUG_DIPFIELD
         {  // debug print
@@ -5900,7 +5932,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             fi_crd += nmon * ns * 3;
         }
 
+#if HAVE_MPI == 1
         double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -5932,7 +5966,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
@@ -5971,11 +6007,15 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             int ns_ = (nsites_ + nExtChg == 0) ? 1 : nsites_ + nExtChg;
             auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), ns_, 3);
 
+#if HAVE_MPI == 1
             double _time1 = MPI_Wtime();
+#endif
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(
                 0, charges, dipoles, PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
             mbxt_ele_count_[ELE_PME_PRE]++;
+#if HAVE_MPI == 1
             mbxt_ele_time_[ELE_PME_PRE] += MPI_Wtime() - _time1;
+#endif
 
             virial_[0] += (*drecvirial[0]) * constants::COULOMB;
             virial_[1] += (*drecvirial[1]) * constants::COULOMB;
@@ -5989,10 +6029,14 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             virial_[7] = virial_[5];
         }
 
+#if HAVE_MPI == 1
         double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(-1, dipoles, coords, coords, 2, result);
         mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
 
         double *ptr = result[0];
 
@@ -6040,10 +6084,14 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         }
         // Now grid up the charges
         result.setZero();
+#if HAVE_MPI == 1
         _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(0, charges, coords, coords, -2, result);
         mbxt_ele_count_[ELE_PME_PRC]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
+#endif
 
         // Resort field from system order
         fi_mon = 0;
@@ -6705,7 +6753,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             fi_crd += nmon * ns * 3;
         }
 
+#if HAVE_MPI == 1
         double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -6726,7 +6776,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
         mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
@@ -6764,11 +6816,15 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             auto drecvirial = helpme::Matrix<double>(trecvir.data(), 6, 1);
             auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), nsites_ + nExtChg, 3);
 
+#if HAVE_MPI == 1
             double _time1 = MPI_Wtime();
+#endif
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(
                 0, charges, dipoles, PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
             mbxt_ele_count_[ELE_PME_PRE]++;
+#if HAVE_MPI == 1
             mbxt_ele_time_[ELE_PME_PRE] += MPI_Wtime() - _time1;
+#endif
 
 #if HAVE_MPI == 1
             MPI_Allreduce(MPI_IN_PLACE, trecvir.data(), trecvir.size(), MPI_DOUBLE, MPI_SUM, world_);
@@ -6786,10 +6842,14 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             virial_[7] = virial_[5];
         }
 
+#if HAVE_MPI == 1
         double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(-1, dipoles, coords, coords, 2, result);
         mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
 
         double *ptr = result[0];
 #if HAVE_MPI == 1
@@ -6840,10 +6900,14 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         }
         // Now grid up the charges
         result.setZero();
+#if HAVE_MPI == 1
         _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(0, charges, coords, coords, -2, result);
         mbxt_ele_count_[ELE_PME_PRC]++;
+#if HAVE_MPI == 1
         mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
+#endif
 
 #if HAVE_MPI == 1
         MPI_Allreduce(MPI_IN_PLACE, ptr, nsites_ * 10, MPI_DOUBLE, MPI_SUM, world_);

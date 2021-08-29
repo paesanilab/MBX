@@ -1,0 +1,7 @@
+{
+  "threshold" : 0.00001,
+  "permutation_file" : "permutations.txt",
+  "use_inversion" : true,
+  "reference_file" : "unique_isomers_ordered.xyz",
+  "indexes_to_ignore" : []
+}
