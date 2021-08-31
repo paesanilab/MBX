@@ -43,7 +43,7 @@ mbx.set_coordinates(xyz,7)
 mbx.set_box(box)
 phi, ef = mbx.get_potential_and_electric_field_on_points(p,3)
 
-print(phi)
+print("Potential",phi)
 
 xyz = mbx.get_xyz(9)
 

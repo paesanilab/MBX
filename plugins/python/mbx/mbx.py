@@ -1,7 +1,13 @@
 import ctypes
 from ctypes import cdll
+import numpy as np
 
 mbxlib = cdll.LoadLibrary('../../../install/lib/libmbx.so')
+
+c_double_array = np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
+int_pointer = ctypes.POINTER(ctypes.c_int)
+
+mbxlib.get_potential_and_electric_field_on_points_.argtypes = [c_double_array,c_double_array,c_double_array,int_pointer]
 
 def initialize_system(coordinates,numer_of_atoms_of_monomers,atom_names,monomer_names,json_file):
   crd = (ctypes.c_double * len(coordinates)) (*coordinates)
@@ -76,21 +82,32 @@ def set_coordinates(coordinates,number_of_atoms):
   mbxlib.set_real_xyz_(crd,ctypes.byref(nat))
 
 def get_potential_and_electric_field_on_points(coordinates, number_of_atoms):
-  crd = (ctypes.c_double * len(coordinates)) (*coordinates)
+  crd = np.array(coordinates,dtype=np.float64)
   nat = ctypes.c_int(number_of_atoms)
   
-  phil = [0.0]*number_of_atoms
-  phi = (ctypes.c_double * number_of_atoms) (*phil)
-  
-  efl = [0.0]*len(coordinates)
-  ef = (ctypes.c_double * len(coordinates)) (*efl)
+  phi = np.zeros(number_of_atoms,dtype=np.float64)
+  ef = np.zeros(3*number_of_atoms,dtype=np.float64)
   
   mbxlib.get_potential_and_electric_field_on_points_(crd,phi,ef,ctypes.byref(nat))
 
-  phi_out = [phi[i] for i in range(len(phi))]
-  ef_out = [ef[i] for i in range(len(ef))]
-  
-  return phi_out,ef_out
+  return phi,ef
+
+#def get_potential_and_electric_field_on_points(coordinates, number_of_atoms):
+#  crd = (ctypes.c_double * len(coordinates)) (*coordinates)
+#  nat = ctypes.c_int(number_of_atoms)
+#
+#  phil = [0.0]*number_of_atoms
+#  phi = (ctypes.c_double * number_of_atoms) (*phil)
+#
+#  efl = [0.0]*len(coordinates)
+#  ef = (ctypes.c_double * len(coordinates)) (*efl)
+#
+#  mbxlib.get_potential_and_electric_field_on_points_(crd,phi,ef,ctypes.byref(nat))
+#
+#  phi_out = [phi[i] for i in range(len(phi))]
+#  ef_out = [ef[i] for i in range(len(ef))]
+#
+#  return phi_out,ef_out
 
 def set_potential_and_electric_field_on_sites(phi,ef):
   phiv = (ctypes.c_double * len(phi)) (*phi)
