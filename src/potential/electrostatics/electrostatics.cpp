@@ -49,6 +49,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define _DEBUG_PERM
 //#define _DEBUG_DIPOLE
+//#define _DEBUG_ASPC
 //#define _DEBUG_ITERATION 1
 //#define _DEBUG_COMM
 //#define _DEBUG_DIPFIELD
@@ -62,8 +63,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define MBX_ELEC_P2P_COMM 0
 #endif
 
-// let expert users test this first
-#define MBX_ELEC_P2P_COMM 0
+// let expert users test this first; now using defaults
+//#define MBX_ELEC_P2P_COMM 0
 
 // When turning polarization off, don't set the 1/polarity value to max_dbl because it gets
 // added to the potential and field values, generating inf values that result in NaN energies.
@@ -362,6 +363,7 @@ void Electrostatics::Initialize(const std::vector<double> &chg, const std::vecto
 
     user_fft_grid_ = std::vector<int>{};
 
+    nsites_all_ = nsites_;
     if (nsites_ + external_charge_.size() > 0) {
         size_t nExtChg = external_charge_.size();
 
@@ -907,6 +909,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
 
     ReorderData();
 
+    nsites_all_ = nsites_;
     if (nsites_ + external_charge_.size() > 0) {
         size_t nExtChg = external_charge_.size();
 
@@ -1077,10 +1080,11 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     }
 
     // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+    size_t maxnmon = (mon_type_count_.size() > 0) ? mon_type_count_.back().second : 1;
+    if (nExtChg > maxnmon) maxnmon = nExtChg;
+    //    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
 
     // Max number of monomers
-    if (maxnmon == 0) maxnmon = 1;
     ElectricFieldHolder elec_field(maxnmon);
 
     int me;
@@ -1464,6 +1468,9 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     if (!simcell_periodic_) compute_pme = false;
 
     if (compute_pme) {
+#if HAVE_MPI == 1
+        double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -1495,12 +1502,24 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
+        mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
+
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
         auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
         auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), nsites_all_, 4);
         std::fill(rec_phi_and_field_all_.begin(), rec_phi_and_field_all_.end(), 0);
+#if HAVE_MPI == 1
+        double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(0, charges, coords, coords, 1, result);
+        mbxt_ele_count_[ELE_PME_PRC]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
+#endif
 
         // Resort phi from system order
         fi_mon = 0;
@@ -1606,8 +1625,10 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
     }
 
     // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
-    if (maxnmon == 0) maxnmon = 1;
+    size_t maxnmon = (mon_type_count_.size() > 0) ? mon_type_count_.back().second : 1;
+    if (nExtChg > maxnmon) maxnmon = nExtChg;
+    //    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+    //    if (maxnmon == 0) maxnmon = 1;
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -1973,6 +1994,9 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 #endif
 
     if (ewald_alpha_ > 0 && use_pbc_) {
+#if HAVE_MPI == 1
+        double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -1994,12 +2018,25 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
+
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
         auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
         auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), nsites_all_, 4);
         std::fill(rec_phi_and_field_all_.begin(), rec_phi_and_field_all_.end(), 0);
+
+#if HAVE_MPI == 1
+        double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(0, charges, coords, coords, 1, result);
+        mbxt_ele_count_[ELE_PME_PRC]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
+#endif
 
 #if HAVE_MPI == 1
         MPI_Allreduce(MPI_IN_PLACE, rec_phi_and_field_.data(), rec_phi_and_field_.size(), MPI_DOUBLE, MPI_SUM, world_);
@@ -2131,10 +2168,7 @@ void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
     } else if (dip_method_ == "cg") {
         CalculateDipolesCGMPIlocal(use_ghost);
     } else if (dip_method_ == "aspc") {
-        // CalculateDipolesAspc();
-
-        std::string text = std::string("CalculateDipolesAspcMPIlocal missing. ");
-        throw CUException(__func__, __FILE__, __LINE__, text);
+        CalculateDipolesAspcMPIlocal(use_ghost);
     }
 }
 
@@ -2853,6 +2887,84 @@ void Electrostatics::SetAspcParameters(size_t k) {
 
 void Electrostatics::ResetAspcHistory() { hist_num_aspc_ = 0; }
 
+std::vector<double> Electrostatics::GetDipoleHistory(size_t indx) {
+    // Return selected history of dipoles
+    // The internal dipole history needs to be reordered
+    // external charges don't have dipoles
+
+    std::vector<double> sys_mu_hist = std::vector<double>(mu_.size(), 0.0);
+
+    if (indx >= hist_num_aspc_) {
+        // Exit with error
+        std::cerr << "GetDipoleHistory requested indx too large" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    size_t offset_h = indx * mu_.size();
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+
+                sys_mu_hist[fi_crd + mns3 + 3 * i] = mu_hist_[offset_h + inmon3 + m + fi_crd];
+                sys_mu_hist[fi_crd + mns3 + 3 * i + 1] = mu_hist_[offset_h + inmon3 + m + fi_crd + nmon];
+                sys_mu_hist[fi_crd + mns3 + 3 * i + 2] = mu_hist_[offset_h + inmon3 + m + fi_crd + nmon2];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+    return sys_mu_hist;
+}
+
+void Electrostatics::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) {
+    // Reorder dipoles for internal use
+    // external charges don't have dipoles
+
+    if (indx >= hist_num_aspc_) {
+        // Exit with error
+        std::cerr << "SetDipoleHistory requested indx too large" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    size_t offset_h = indx * mu_.size();
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                mu_hist_[offset_h + inmon3 + m + fi_crd] = mu_hist[fi_crd + mns3 + 3 * i];
+                mu_hist_[offset_h + inmon3 + m + fi_crd + nmon] = mu_hist[fi_crd + mns3 + 3 * i + 1];
+                mu_hist_[offset_h + inmon3 + m + fi_crd + nmon2] = mu_hist[fi_crd + mns3 + 3 * i + 2];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+}
+
 void Electrostatics::CalculateDipolesAspc() {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
@@ -2878,6 +2990,130 @@ void Electrostatics::CalculateDipolesAspc() {
 
         // Now we run a single iteration to get the new Efd
         ComputeDipoleField(mu_, Efd_);
+
+        // Now the Electric dipole field is computed, and we update
+        // the dipoles to get the corrector
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+        double alpha = 0.8;
+        double alpha_i = 0.2;
+        std::vector<double> mu_old = mu_;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t i = 0; i < ns; i++) {
+                // TODO assuming pol not site dependant
+                double p = pol_[fi_sites + i];
+                size_t inmon3 = 3 * i * nmon;
+                for (size_t m = 0; m < nmon; m++) {
+                    mu_[fi_crd + inmon3 + m] = alpha_i * mu_old[fi_crd + inmon3 + m] +
+                                               alpha * p * (Efq_[fi_crd + inmon3 + m] + Efd_[fi_crd + inmon3 + m]);
+                    mu_[fi_crd + inmon3 + nmon + m] =
+                        alpha_i * mu_old[fi_crd + inmon3 + nmon + m] +
+                        alpha * p * (Efq_[fi_crd + inmon3 + nmon + m] + Efd_[fi_crd + inmon3 + nmon + m]);
+                    mu_[fi_crd + inmon3 + nmon2 + m] =
+                        alpha_i * mu_old[fi_crd + inmon3 + nmon2 + m] +
+                        alpha * p * (Efq_[fi_crd + inmon3 + nmon2 + m] + Efd_[fi_crd + inmon3 + nmon2 + m]);
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
+
+        // Now we have the corrector in mu_
+        // We get the final dipole
+
+        for (size_t j = 0; j < 3 * nsites_; j++) {
+            mu_[j] = omega_aspc_ * mu_[j] + (1 - omega_aspc_) * mu_pred_[j];
+        }
+
+        // And we update the history
+
+        // Add the new dipole at the end
+        std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
+        // Shift the dipoles one position in the history
+        std::copy(mu_hist_.begin() + nsites_ * 3, mu_hist_.end(), mu_hist_.begin());
+
+        // hist_num_aspc_ must not be touched here, so we are done
+
+    }  // end if (hist_num_aspc_ < k_aspc_ + 2)
+}
+
+void Electrostatics::CalculateDipolesAspcMPIlocal(bool use_ghost) {
+    if (hist_num_aspc_ < k_aspc_ + 2) {
+        // TODO do we want to allow iteration?
+        CalculateDipolesCGMPIlocal(use_ghost);
+        std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
+        hist_num_aspc_++;
+    } else {
+        // If we have enough history of the dipoles,
+        // we will use the predictor corrector step
+
+        // First we get the predictor
+        std::fill(mu_pred_.begin(), mu_pred_.end(), 0.0);
+        for (size_t i = 0; i < b_consts_aspc_.size(); i++) {
+            size_t shift = 3 * nsites_ * (b_consts_aspc_.size() - i - 1);
+            for (size_t j = 0; j < 3 * nsites_; j++) {
+                mu_pred_[j] += b_consts_aspc_[i] * mu_hist_[shift + j];
+            }
+        }
+
+#ifdef _DEBUG_ASPC
+        {  // debug print
+            int me, nprocs;
+            MPI_Comm_size(world_, &nprocs);
+            MPI_Comm_rank(world_, &me);
+            size_t fi_mon = 0;
+            size_t fi_crd = 0;
+            size_t fi_sites = 0;
+
+            MPI_Barrier(world_);
+            for (int ip = 0; ip < nprocs; ++ip) {
+                if (ip == me) {
+                    std::cout << "\n" << std::endl;
+                    // Loop over each monomer type
+                    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                        size_t ns = sites_[fi_mon];
+                        size_t nmon = mon_type_count_[mt].second;
+                        size_t nmon2 = 2 * nmon;
+
+                        // Loop over each pair of sites
+                        for (size_t i = 0; i < ns; i++) {
+                            size_t inmon = i * nmon;
+                            size_t inmon3 = inmon * 3;
+                            for (size_t m = 0; m < nmon; m++) {
+                                std::cout << "(" << me << ") ASPC PREDICT: mt= " << mt << " i= " << i << " m= " << m
+                                          << "  islocal= " << islocal_[fi_mon + m]
+                                          << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
+                                          << xyz_[fi_crd + inmon3 + nmon + m] << " "
+                                          << xyz_[fi_crd + inmon3 + nmon2 + m]
+                                          << " mu_pred_= " << mu_pred_[fi_crd + inmon3 + m] << " "
+                                          << mu_pred_[fi_crd + inmon3 + nmon + m] << " "
+                                          << mu_pred_[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                            }
+                        }
+
+                        // Update first indexes
+                        fi_mon += nmon;
+                        fi_sites += nmon * ns;
+                        fi_crd += nmon * ns * 3;
+                    }
+                }
+                MPI_Barrier(world_);
+            }
+        }  // debug print
+#endif
+
+        // Now we get the corrector
+        // First we set the dipoles to the predictor
+        std::copy(mu_pred_.begin(), mu_pred_.end(), mu_.begin());
+
+        // Now we run a single iteration to get the new Efd
+        reverse_forward_comm(Efq_);
+        ComputeDipoleFieldMPIlocal(mu_, Efd_, use_ghost);
 
         // Now the Electric dipole field is computed, and we update
         // the dipoles to get the corrector
@@ -4756,6 +4992,9 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             fi_crd += nmon * ns * 3;
         }
 
+#if HAVE_MPI == 1
+        double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -4785,63 +5024,14 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
-
-#if 0
-        // Zero property of particles outside local region
-
-        // proc grid order hard-coded (as above) for ZYX NodeOrder
-
-        int proc_x = me % proc_grid_x_;
-        int proc_y = (me % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
-        int proc_z = me / (proc_grid_x_ * proc_grid_y_);
-
-        // include particles within local sub-domain and small halo region
-        // this allows the full ghost region to be included for pairwise calculations,
-        // but should exclude ghost monomers that are periodic images of local monomer
-
-        double padding = cutoff_ * 0.5;
-        double dx = A / (double)proc_grid_x_;
-        double dy = B / (double)proc_grid_y_;
-        double dz = C / (double)proc_grid_z_;
-
-        double xlo = proc_x * dx - padding;
-        double xhi = (proc_x + 1) * dx + padding;
-
-        double ylo = proc_y * dy - padding;
-        double yhi = (proc_y + 1) * dy + padding;
-
-        double zlo = proc_z * dz - padding;
-        double zhi = (proc_z + 1) * dz + padding;
-
-        const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
-
-        std::vector<double> sys_mu_local_(sys_mu_.size(), 0.0);
-        for (int i = 0; i < nsites_ * 3; ++i) sys_mu_local_[i] = sys_mu_[i];
-
-        for (int i = 0; i < nsites_; ++i) {
-            double x = coords(i, 0);
-            double y = coords(i, 1);
-            double z = coords(i, 2);
-
-            bool local = true;
-            if (x <= xlo || x > xhi) local = false;
-            if (y <= ylo || y > yhi) local = false;
-            if (z <= zlo || z > zhi) local = false;
-
-            if (!local) {
-                sys_mu_local_[i * 3] = 0.0;
-                sys_mu_local_[i * 3 + 1] = 0.0;
-                sys_mu_local_[i * 3 + 2] = 0.0;
-            }
-        }
-
-        auto dipoles = helpme::Matrix<double>(sys_mu_local_.data(), nsites_, 3);
-#else
         auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
-#endif
         auto result = helpme::Matrix<double>(sys_Efd_.data(), nsites_, 3);
         std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
 
@@ -4865,8 +5055,14 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             }
         }  // debug print
 #endif
-
+#if HAVE_MPI == 1
+        double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
+        mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
 
 #ifdef _DEBUG_DIPFIELD
         {  // debug print
@@ -5039,7 +5235,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 #endif
 
     // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
+    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
 
     std::fill(out_v.begin(), out_v.end(), 0);
@@ -5323,6 +5519,9 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             fi_crd += nmon * ns * 3;
         }
 
+#if HAVE_MPI == 1
+        double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         double A, B, C, alpha, beta, gamma;
@@ -5344,6 +5543,11 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
+
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
@@ -5371,7 +5575,14 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
         }  // debug print
 #endif
 
+#if HAVE_MPI == 1
+        double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
+        mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
 
 #ifdef _DEBUG_DIPFIELD
         {  // debug print
@@ -5626,7 +5837,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
     std::vector<double> grad_cp = grad;
 
-    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+    size_t maxnmon = (mon_type_count_.size() > 0) ? mon_type_count_.back().second : 1;
+    if (nExtChg > maxnmon) maxnmon = nExtChg;
+    //    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
 
     if (nExtChg > 0) {
         mon_type_count_.push_back(std::make_pair("ext", nExtChg));
@@ -5653,7 +5866,6 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     grad_ = std::vector<double>(3 * (nsites_ + nExtChg), 0.0);
 
     // Max number of monomers
-    //    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -6066,6 +6278,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             fi_crd += nmon * ns * 3;
         }
 
+#if HAVE_MPI == 1
+        double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -6096,6 +6311,11 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
+
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_all_.data(), nsites_all_, 3);
@@ -6133,8 +6353,15 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             int ns_ = (nsites_ + nExtChg == 0) ? 1 : nsites_ + nExtChg;
             auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), ns_, 3);
 
+#if HAVE_MPI == 1
+            double _time1 = MPI_Wtime();
+#endif
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(
                 0, charges, dipoles, PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
+            mbxt_ele_count_[ELE_PME_PRE]++;
+#if HAVE_MPI == 1
+            mbxt_ele_time_[ELE_PME_PRE] += MPI_Wtime() - _time1;
+#endif
 
             virial_[0] += (*drecvirial[0]) * constants::COULOMB;
             virial_[1] += (*drecvirial[1]) * constants::COULOMB;
@@ -6148,7 +6375,14 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             virial_[7] = virial_[5];
         }
 
+#if HAVE_MPI == 1
+        double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(-1, dipoles, coords, coords, 2, result);
+        mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
 
         double *ptr = result[0];
 
@@ -6196,7 +6430,14 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
         }
         // Now grid up the charges
         result.setZero();
+#if HAVE_MPI == 1
+        _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(0, charges, coords, coords, -2, result);
+        mbxt_ele_count_[ELE_PME_PRC]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
+#endif
 
         // Resort field from system order
         fi_mon = 0;
@@ -6444,7 +6685,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
     std::vector<double> grad_cp = grad;
 
-    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+    //    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
+    size_t maxnmon = (mon_type_count_.size() > 0) ? mon_type_count_.back().second : 1;
+    if (nExtChg > maxnmon) maxnmon = nExtChg;
 
     if (nExtChg > 0) {
         mon_type_count_.push_back(std::make_pair("ext", nExtChg));
@@ -6856,6 +7099,9 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             fi_crd += nmon * ns * 3;
         }
 
+#if HAVE_MPI == 1
+        double _time0 = MPI_Wtime();
+#endif
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
@@ -6875,6 +7121,11 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
         }
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
+
         // N.B. these do not make copies; they just wrap the memory with some metadata
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_all_.data(), nsites_all_, 3);
@@ -6911,8 +7162,15 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             auto drecvirial = helpme::Matrix<double>(trecvir.data(), 6, 1);
             auto tmpforces2 = helpme::Matrix<double>(tforcevec.data(), nsites_ + nExtChg, 3);
 
+#if HAVE_MPI == 1
+            double _time1 = MPI_Wtime();
+#endif
             double fulldummy_rec_energy = pme_solver_.computeEFVRecIsotropicInducedDipoles(
                 0, charges, dipoles, PMEInstanceD::PolarizationType::Mutual, coords, tmpforces2, drecvirial);
+            mbxt_ele_count_[ELE_PME_PRE]++;
+#if HAVE_MPI == 1
+            mbxt_ele_time_[ELE_PME_PRE] += MPI_Wtime() - _time1;
+#endif
 
 #if HAVE_MPI == 1
             MPI_Allreduce(MPI_IN_PLACE, trecvir.data(), trecvir.size(), MPI_DOUBLE, MPI_SUM, world_);
@@ -6930,7 +7188,14 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             virial_[7] = virial_[5];
         }
 
+#if HAVE_MPI == 1
+        double _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(-1, dipoles, coords, coords, 2, result);
+        mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
 
         double *ptr = result[0];
 #if HAVE_MPI == 1
@@ -6981,7 +7246,14 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
         }
         // Now grid up the charges
         result.setZero();
+#if HAVE_MPI == 1
+        _time1 = MPI_Wtime();
+#endif
         pme_solver_.computePRec(0, charges, coords, coords, -2, result);
+        mbxt_ele_count_[ELE_PME_PRC]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRC] += MPI_Wtime() - _time1;
+#endif
 
 #if HAVE_MPI == 1
         MPI_Allreduce(MPI_IN_PLACE, ptr, nsites_ * 10, MPI_DOUBLE, MPI_SUM, world_);

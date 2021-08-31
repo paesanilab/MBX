@@ -150,6 +150,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     if (na != atom->natoms) error->all(FLERR, "Inconsistent # of atoms");
 
     mbx_mpi_enabled = true;
+    mbx_aspc_enabled = false;
 
     pair_mbx = NULL;
     pair_mbx = (PairMBX *)force->pair_match("^mbx", 0);
@@ -256,12 +257,21 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
 
     if (sizeof(tagint) != sizeof(int)) error->all(FLERR, "[MBX] Tagints required to be of type int.");
 
+    aspc_dip_hist = NULL;
+    aspc_order = 6;  // hard-coded in MBX
+    aspc_max_num_hist = aspc_order + 2;
+    aspc_per_atom_size = aspc_max_num_hist * 3;  // (# of histories) * (# of dimensions)
+
+    comm_forward = aspc_per_atom_size;
+
     mbxt_initial_time = MPI_Wtime();
 }
 
 /* ---------------------------------------------------------------------- */
 
 FixMBX::~FixMBX() {
+    if (mbx_aspc_enabled) memory->destroy(aspc_dip_hist);
+
     memory->destroy(mol_offset);
     memory->destroy(mol_names);
     memory->destroy(num_mols);
@@ -288,6 +298,16 @@ FixMBX::~FixMBX() {
         for (int i = 0; i < tmpi.size(); ++i) {
             mbxt_count[MBXT_ELE_PERMDIP_REAL + i] += tmpi[i];
             mbxt_time[MBXT_ELE_PERMDIP_REAL + i] += tmpd[i];
+        }
+
+        // accumulate timing info from dispersion pme
+
+        std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
+        std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
+
+        for (int i = 0; i < tmpi_d.size(); ++i) {
+            mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
+            mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
         }
 
         delete ptr_mbx_local;
@@ -325,6 +345,9 @@ int FixMBX::setmask() {
     mask |= PRE_FORCE;
     //  mask |= PRE_FORCE_RESPA;
     mask |= MIN_PRE_FORCE;
+
+    mask |= PRE_EXCHANGE;  // only needs to be set when using ASPC integrator
+
     return mask;
 }
 
@@ -377,6 +400,17 @@ void FixMBX::setup_post_neighbor() {
 
     post_neighbor();
 
+    // check if using cg or aspc integrator for MBX dipoles
+
+    std::string dip_method = ptr_mbx->GetDipoleMethod();
+    if (dip_method == "aspc") {
+        mbx_aspc_enabled = true;
+
+        memory->create(aspc_dip_hist, atom->nmax, aspc_per_atom_size, "fixmbx::aspc_dip_hist");
+    } else if (!(dip_method == "cg")) {
+        error->one(FLERR, "[MBX] requested dip_method not supported with LAMMPS");
+    }
+
     first_step = false;
 
 #ifdef _DEBUG
@@ -425,6 +459,8 @@ void FixMBX::post_neighbor() {
             mol_anchor[i] = 0;
     }
 
+    //    printf("\n[MBX] Deleting and Recreating MBX objects\n\n");
+
     // tear down existing MBX objects
 
     if (ptr_mbx) delete ptr_mbx;
@@ -438,6 +474,16 @@ void FixMBX::post_neighbor() {
         for (int i = 0; i < tmpi.size(); ++i) {
             mbxt_count[MBXT_ELE_PERMDIP_REAL + i] += tmpi[i];
             mbxt_time[MBXT_ELE_PERMDIP_REAL + i] += tmpd[i];
+        }
+
+        // accumulate timing info from dispersion pme
+
+        std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
+        std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
+
+        for (int i = 0; i < tmpi_d.size(); ++i) {
+            mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
+            mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
         }
 
         delete ptr_mbx_local;
@@ -460,6 +506,8 @@ void FixMBX::post_neighbor() {
         ptr_mbx_full = new bblock::System();
 
     // initialize all MBX instances
+
+    //    printf("[MBX] calling mbx_init functions\n");
 
     mbx_init();
     if (mbx_mpi_enabled)
@@ -502,51 +550,125 @@ void FixMBX::min_pre_force(int vflag) { pre_force(vflag); }
 
 /* ---------------------------------------------------------------------- */
 
-int FixMBX::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, int * /*pbc*/) {
-    int m;
+void FixMBX::pre_exchange() {
+    if (!mbx_aspc_enabled) return;
 
-    // if (pack_flag == 1)
-    //   for(m = 0; m < n; m++) buf[m] = d[list[m]];
-    // else if (pack_flag == 2)
-    //   for(m = 0; m < n; m++) buf[m] = s[list[m]];
-    // else if (pack_flag == 3)
-    //   for(m = 0; m < n; m++) buf[m] = t[list[m]];
-    // else if (pack_flag == 4)
-    //   for(m = 0; m < n; m++) buf[m] = atom->q[list[m]];
-    // else if (pack_flag == 5) {
-    //   m = 0;
-    //   for(int i = 0; i < n; i++) {
-    //     int j = 2 * list[i];
-    //     buf[m++] = d[j  ];
-    //     buf[m++] = d[j+1];
-    //   }
-    //   return m;
+#ifdef _DEBUG
+    printf("\n[MBX] (%i,%i) Inside pre_exchange()\n", universe->iworld, me);
+#endif
+
+    // save copy of dipole history
+
+    if (!mbx_mpi_enabled) error->all(FLERR, "Need to add support for mbx_full");
+
+    aspc_num_hist = ptr_mbx_local->GetNumDipoleHistory();
+
+    //  printf("# of histories= %i\n",aspc_num_hist);
+
+    if (aspc_num_hist > aspc_max_num_hist) error->all(FLERR, "Inconsistent # of ASPC histories");
+
+    // dipole history includes particles and additional sites (e.g. 4 dipoles per water monomer)
+
+    const int nlocal = atom->nlocal;
+    const int nall = nlocal + atom->nghost;
+    tagint *tag = atom->tag;
+    double **x = atom->x;
+
+    if (mbx_num_atoms_local == 0) {
+        return;
+    }
+
+    // for(int i=0; i<nlocal; ++i) {
+    //   printf("i= %i  tag= %i  xyz= %f %f %f\n",i,atom->tag[i],x[i][0]+10.,x[i][1]+10.,x[i][2]+10.);
     // }
-    return n;
+
+    for (int h = 0; h < aspc_num_hist; ++h) {
+        std::vector<double> mbx_dip_history = ptr_mbx_local->GetDipoleHistory(h);
+
+        // printf("\nh= %i  mbx_dip_history.size()= %lu\n",h,mbx_dip_history.size());
+        // for(int i=0; i<mbx_num_atoms_local; ++i) {
+        //   printf("i= %i  mbx_dip_history= %f %f
+        //   %f\n",i,mbx_dip_history[i*3],mbx_dip_history[i*3+1],mbx_dip_history[i*3+2]);
+        // }
+
+        int indx = 0;
+        for (int i = 0; i < nall; ++i) {
+            if (mol_anchor[i] && mol_local[i]) {
+                const int mtype = mol_type[i];
+
+                // to be replaced with integer comparison
+
+                bool include_monomer = true;
+                tagint anchor = atom->tag[i];
+
+                // this will save history for both local and ghost particles
+                // comm->exchange() will sync ghost histories w/ local particles in new decomposition
+
+                int na = 0;
+                if (strcmp("h2o", mol_names[mtype]) == 0) {
+                    na = 3;
+                    const int ii1 = atom->map(anchor + 1);
+                    const int ii2 = atom->map(anchor + 2);
+                    if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
+                } else if (strcmp("na", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("cl", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("he", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("co2", mol_names[mtype]) == 0) {
+                    na = 3;
+                    const int ii1 = atom->map(anchor + 1);
+                    const int ii2 = atom->map(anchor + 2);
+                    if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
+                } else if (strcmp("ch4", mol_names[mtype]) == 0) {
+                    na = 5;
+                    const int ii1 = atom->map(anchor + 1);
+                    const int ii2 = atom->map(anchor + 2);
+                    const int ii3 = atom->map(anchor + 3);
+                    const int ii4 = atom->map(anchor + 4);
+                    if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
+                }
+
+                // add info
+
+                if (include_monomer) {
+                    for (int j = 0; j < na; ++j) {
+                        const int ii = atom->map(anchor + j);
+                        aspc_dip_hist[ii][h * 3] = mbx_dip_history[indx++];
+                        aspc_dip_hist[ii][h * 3 + 1] = mbx_dip_history[indx++];
+                        aspc_dip_hist[ii][h * 3 + 2] = mbx_dip_history[indx++];
+                    }
+                }
+            }  // if(anchor)
+
+        }  // for(nall)
+
+    }  // for(num_hist)
+
+    // pack dipole history into arrays for exchange
+
+#ifdef _DEBUG
+    printf("\n[MBX] (%i,%i) Leaving pre_exchange()\n", universe->iworld, me);
+#endif
+}
+
+/* ---------------------------------------------------------------------- */
+
+int FixMBX::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, int * /*pbc*/) {
+    int m = 0;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < 3 * aspc_num_hist; ++j) buf[m++] = aspc_dip_hist[list[i]][j];
+
+    return m;
 }
 
 /* ---------------------------------------------------------------------- */
 
 void FixMBX::unpack_forward_comm(int n, int first, double *buf) {
-    int i, m;
-
-    // if (pack_flag == 1)
-    //   for(m = 0, i = first; m < n; m++, i++) d[i] = buf[m];
-    // else if (pack_flag == 2)
-    //   for(m = 0, i = first; m < n; m++, i++) s[i] = buf[m];
-    // else if (pack_flag == 3)
-    //   for(m = 0, i = first; m < n; m++, i++) t[i] = buf[m];
-    // else if (pack_flag == 4)
-    //   for(m = 0, i = first; m < n; m++, i++) atom->q[i] = buf[m];
-    // else if (pack_flag == 5) {
-    //   int last = first + n;
-    //   m = 0;
-    //   for(i = first; i < last; i++) {
-    //     int j = 2 * i;
-    //     d[j  ] = buf[m++];
-    //     d[j+1] = buf[m++];
-    //   }
-    // }
+    int m = 0;
+    for (int i = first; i < first + n; ++i)
+        for (int j = 0; j < 3 * aspc_num_hist; ++j) aspc_dip_hist[i][j] = buf[m++];
 }
 
 /* ---------------------------------------------------------------------- */
@@ -603,6 +725,8 @@ void FixMBX::grow_arrays(int nmax) {
     memory->grow(mol_type, nmax, "fixmbx:mol_type");
     memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
     memory->grow(mol_local, nmax, "fixmbx:mol_local");
+
+    if (mbx_aspc_enabled) memory->grow(aspc_dip_hist, nmax, aspc_per_atom_size, "fixmbx:mbx_dip_hist");
 }
 
 /* ----------------------------------------------------------------------
@@ -624,6 +748,10 @@ int FixMBX::pack_exchange(int i, double *buf) {
     buf[n++] = mol_type[i];
     buf[n++] = mol_anchor[i];
     buf[n++] = mol_local[i];
+
+    if (mbx_aspc_enabled)
+        for (int j = 0; j < aspc_per_atom_size; ++j) buf[n++] = aspc_dip_hist[i][j];
+
     return n;
 }
 
@@ -636,6 +764,10 @@ int FixMBX::unpack_exchange(int nlocal, double *buf) {
     mol_type[nlocal] = buf[n++];
     mol_anchor[nlocal] = buf[n++];
     mol_local[nlocal] = buf[n++];
+
+    if (mbx_aspc_enabled)
+        for (int j = 0; j < aspc_per_atom_size; ++j) aspc_dip_hist[nlocal][j] = buf[n++];
+
     return n;
 }
 
@@ -1119,6 +1251,8 @@ void FixMBX::mbx_init_local() {
     ptr_mbx_local->SetBoxPMElocal(box);
 
     ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
+
+    if (mbx_aspc_enabled) mbx_init_dipole_history_local();
 
     std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
     std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1);  // will return mesh even for gas-phase
@@ -1804,6 +1938,117 @@ void FixMBX::mbx_update_xyz_full() {
 }
 
 /* ----------------------------------------------------------------------
+   Initialize dipole history for local molecules + plus halo
+------------------------------------------------------------------------- */
+
+void FixMBX::mbx_init_dipole_history_local() {
+    //    mbxt_start(MBXT_INIT_DIPOLE_LOCAL);
+
+#ifdef _DEBUG
+    printf("[MBX] (%i,%i) Inside mbx_init_dipole_history_local()\n", universe->iworld, me);
+#endif
+
+    // sync dipole histories of ghost particles
+
+    comm->forward_comm_fix(this);
+
+    // update coordinates
+
+    const int nlocal = atom->nlocal;
+    const int nall = nlocal + atom->nghost;
+    tagint *tag = atom->tag;
+    double **x = atom->x;
+
+    if (mbx_num_atoms_local == 0) {
+        //        mbxt_stop(MBXT_INIT_DIPOLE_LOCAL);
+        return;
+    }
+
+    const double xlo = domain->boxlo[0];
+    const double ylo = domain->boxlo[1];
+    const double zlo = domain->boxlo[2];
+
+    double ximage[3];
+
+    ptr_mbx_local->SetNumDipoleHistory(aspc_num_hist);
+
+    std::vector<double> mbx_dip_history = std::vector<double>(mbx_num_atoms_local * 3);
+
+    for (int h = 0; h < aspc_num_hist; ++h) {
+        // printf("setting history h= %i / %i  mbx_num_atoms_local= %i  nall=
+        // %i\n",h,aspc_num_hist,mbx_num_atoms_local,nall);
+
+        // for(int i=0; i<nall; ++i) {
+        // 	printf("  i= %i  local= %i  aspc_dip_hist= %f %f
+        // %f\n",i,i<nlocal,aspc_dip_hist[i][h*3],aspc_dip_hist[i][h*3+1],aspc_dip_hist[i][h*3+2]);
+        // }
+
+        int indx = 0;
+        for (int i = 0; i < nall; ++i) {
+            if (mol_anchor[i] && mol_local[i]) {
+                const int mtype = mol_type[i];
+
+                int na = 0;
+                if (strcmp("h2o", mol_names[mtype]) == 0)
+                    na = 3;
+                else if (strcmp("na", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("cl", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("he", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("co2", mol_names[mtype]) == 0)
+                    na = 3;
+                else if (strcmp("ch4", mol_names[mtype]) == 0)
+                    na = 5;
+                else
+                    error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
+
+                // ids of particles in molecule on proc
+
+                tagint anchor = tag[i];
+
+                int amap[5];
+                bool add_monomer = true;
+                for (int j = 1; j < na; ++j) {
+                    amap[j] = atom->map(anchor + j);
+                    if (amap[j] == -1) add_monomer = false;
+                }
+
+                // add info
+
+                if (add_monomer) {
+                    // add coordinates
+
+                    for (int j = 0; j < na; ++j) {
+                        const int ii = atom->map(anchor + j);
+                        mbx_dip_history[indx * 3] = aspc_dip_hist[ii][h * 3];
+                        mbx_dip_history[indx * 3 + 1] = aspc_dip_hist[ii][h * 3 + 1];
+                        mbx_dip_history[indx * 3 + 2] = aspc_dip_hist[ii][h * 3 + 2];
+
+                        indx++;
+                    }  // for(na)
+
+                }  // if(add_monomer)
+
+            }  // if(mol_anchor)
+
+        }  // for(i<nall)
+
+        if (mbx_num_atoms_local != indx) error->one(FLERR, "Inconsistent # of atoms");
+        //      printf("calling SetDipoleHistory");
+        ptr_mbx_local->SetDipoleHistory(h, mbx_dip_history);
+
+    }  // for(hist)
+
+#ifdef _DEBUG
+    printf("[MBX] (%i,%i) Leaving mbx_init_dipole_history_local()\n", universe->iworld, me);
+#endif
+
+    //    mbxt_stop(MBXT_UPDATE_INIT_DIPOLE_LOCAL);
+}
+
+/* ----------------------------------------------------------------------
    Helper functions for timing
 ------------------------------------------------------------------------- */
 
@@ -1905,6 +2150,15 @@ void FixMBX::mbxt_write_summary() {
     mbxt_print_time("ELE_GRAD_REAL", MBXT_ELE_GRAD_REAL, t);
     mbxt_print_time("ELE_GRAD_PME", MBXT_ELE_GRAD_PME, t);
     mbxt_print_time("ELE_GRAD_FIN", MBXT_ELE_GRAD_FIN, t);
+
+    mbxt_print_time("ELE_PME_SETUP", MBXT_ELE_PME_SETUP, t);
+    mbxt_print_time("ELE_PME_C", MBXT_ELE_PME_C, t);
+    mbxt_print_time("ELE_PME_D", MBXT_ELE_PME_D, t);
+    mbxt_print_time("ELE_PME_E", MBXT_ELE_PME_E, t);
+
+    mbxt_print_time("DISP_PME_SETUP", MBXT_DISP_PME_SETUP, t);
+    mbxt_print_time("DISP_PME_E", MBXT_DISP_PME_E, t);
+
     mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
     mbxt_print_time("ELE_COMM_REVSET", MBXT_ELE_COMM_REVSET, t);
     mbxt_print_time("ELE_COMM_REV", MBXT_ELE_COMM_REV, t);
