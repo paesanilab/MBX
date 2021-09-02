@@ -653,6 +653,52 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.64236);  // A^(-1)
         d6.push_back(3.52744);  // A^(-1)
 
+    } else if (mon_id1 == "nh3pbe0d3bj" and mon_id2 == "nh3pbe0d3bj") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(243.7007);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(39.9906);   // kcal/mol * A^(-6)  B--B
+        d6.push_back(3.09382);   // A^(-1) A--A
+        d6.push_back(3.44698);   // A^(-1) A--B
+        d6.push_back(3.44698);   // A^(-1) A--B
+        d6.push_back(3.83901);   // A^(-1) B--B
+
+    } else if (mon_id1 == "nh3" and mon_id2 == "nh3") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(243.7007);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(39.9906);   // kcal/mol * A^(-6)  B--B
+        d6.push_back(3.11493);   // A^(-1) A--A
+        d6.push_back(3.4174);    // A^(-1) A--B
+        d6.push_back(3.4174);    // A^(-1) A--B
+        d6.push_back(3.78007);   // A^(-1) B--B
+
     } else if (mon_id1 == "ch4" && mon_id2 == "ch4") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -831,6 +877,79 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(784.5853);  // kcal/mol * A^(-6)  A--B
         d6.push_back(2.85113);   // A^(-1) A--B
+
+    } else if (mon_id1 == "n2o5" and mon_id2 == "n2o5") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(2);
+        types1.push_back(2);
+        types1.push_back(2);
+        types1.push_back(2);
+
+        // Set the number of different types
+        nt2 = 3;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(169.526699905518);    // kcal/mol * A^(-6)  A--A
+        C6.push_back(165.351572694970);    // kcal/mol * A^(-6)  A--B
+        C6.push_back(174.39423682672617);  // kcal/mol * A^(-6)  A--C
+        C6.push_back(165.351572694970);    // kcal/mol * A^(-6)  B--A
+        C6.push_back(171.35934650288723);  // kcal/mol * A^(-6)  B--B
+        C6.push_back(165.351572694970);    // kcal/mol * A^(-6)  B--C
+        C6.push_back(174.39423682672617);  // kcal/mol * A^(-6)  C--A
+        C6.push_back(165.351572694970);    // kcal/mol * A^(-6)  C--B
+        C6.push_back(179.62003548877342);  // kcal/mol * A^(-6)  C--C
+
+        d6.push_back(3.86891);  // A^(-1) A--A
+        d6.push_back(3.19945);  // A^(-1) A--B
+        d6.push_back(3.60907);  // A^(-1) A--C
+        d6.push_back(3.19945);  // A^(-1) B--A
+        d6.push_back(2.33813);  // A^(-1) B--B
+        d6.push_back(4.19428);  // A^(-1) B--C
+        d6.push_back(3.60907);  // A^(-1) C--A
+        d6.push_back(4.19428);  // A^(-1) C--B
+        d6.push_back(3.56601);  // A^(-1) C--C
+    } else if (mon_id1 == "h2o" and mon_id2 == "n2o5") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        // Set the number of different types
+        nt2 = 3;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(176.36123157691006);  // kcal/mol * A^(-6)  D--A
+        C6.push_back(170.03653392132748);  // kcal/mol * A^(-6)  D--B
+        C6.push_back(181.7351576894966);   // kcal/mol * A^(-6)  D--C
+        C6.push_back(78.55577632783532);   // kcal/mol * A^(-6)  E--A
+        C6.push_back(79.65812014580179);   // kcal/mol * A^(-6)  E--B
+        C6.push_back(80.37292121526443);   // kcal/mol * A^(-6)  E--C
+
+        d6.push_back(4.1869);   // A^(-1) D--A
+        d6.push_back(3.22662);  // A^(-1) D--B
+        d6.push_back(4.455);    // A^(-1) D--C
+        d6.push_back(3.24055);  // A^(-1) E--A
+        d6.push_back(6.4749);   // A^(-1) E--B
+        d6.push_back(3.03227);  // A^(-1) E--C
         // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;

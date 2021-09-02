@@ -339,6 +339,24 @@ class System {
     std::vector<std::string> GetRealAtomNames();
 
     /**
+     * @brief Gets the external charges that are currently in the class
+     * @return External charges in the class
+     */
+    std::vector<double> GetExternalCharges();
+
+    /**
+     * @brief Gets the external charges XYZ that are currently in the class
+     * @return External charges XYZ in the class
+     */
+    std::vector<double> GetExternalChargesPositions();
+
+    /**
+     * @brief Gets the external charges gradients that are currently in the class
+     * @return External charges gradients in the class
+     */
+    std::vector<double> GetExternalChargesGradients();
+
+    /**
      * Gets the id string of the n-th monomer
      * @param[in] n The index of the monomer which ID is wanted
      * @return A string with the ID of the n-th monomer
@@ -533,6 +551,25 @@ class System {
      * @param[in] mon2 Is the id of the second monomer
      **/
     void AddTTMnrgPair(std::string mon1, std::string mon2);
+
+    /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
+
+    /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     * @param[in] local/ghost of each one the the charges in chg
+     * @param[in] unique tag of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
+                                        std::vector<int> tag);
 
     /**
      * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
@@ -771,6 +808,30 @@ class System {
     void ResetDipoleHistory();
 
     /**
+     * Return number of dipole histories
+     */
+    double GetNumDipoleHistory();
+
+    /**
+     * Return history of dipols
+     * @param[in] indx of history to retrieve
+     */
+    std::vector<double> GetDipoleHistory(size_t indx);
+
+    /**
+     * Set current number of dipole histories
+     * @param[in] num_hist number of histories to use initially
+     */
+    void SetNumDipoleHistory(size_t num_hist);
+
+    /**
+     * Set history of dipoles
+     * @param[in] indx of history to initialize
+     * @param[in] mu_hist dipoles to initialize history
+     */
+    void SetDipoleHistory(size_t indx, std::vector<double> mu_hist);
+
+    /**
      * Tells the system if we are in Periodic Boundary Conditions (PBC)
      * or not. If the box is not passed as argument, it is set to
      * a cubic box of 1000 Angstrom of side length
@@ -947,6 +1008,7 @@ class System {
      * @return Electrostatic energy of the system
      */
     double Electrostatics(bool do_grads, bool use_ghost = 0);
+    double ElectrostaticsTest(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPI(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
@@ -992,6 +1054,9 @@ class System {
 
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
+  
+    std::vector<size_t> GetInfoDispersionCounts();
+    std::vector<double> GetInfoDispersionTimings();
 
    private:
     /**
@@ -1108,6 +1173,7 @@ class System {
      * @return  Electrostatic energy of the system
      */
     double GetElectrostatics(bool do_grads, bool use_ghost = 0);
+    double GetElectrostaticsTest(bool do_grads, bool use_ghost = 0);
     double GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
     /**

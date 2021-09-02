@@ -172,6 +172,13 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
 
                 // =====>> BEGIN SECTION SITES <<=====
                 // ==> PASTE YOUR CODE BELOW <==
+            } else if (mon[i] == "dp1") {
+                sites.push_back(1);
+                nat.push_back(1);
+
+            } else if (mon[i] == "dp1p") {
+                sites.push_back(1);
+                nat.push_back(1);
 
             } else if (mon[i] == "ch4") {
                 sites.push_back(5);
@@ -179,9 +186,15 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             } else if (mon[i] == "co2") {
                 sites.push_back(3);
                 nat.push_back(3);
+            } else if (mon[i] == "nh3" || mon[i] == "nh3pbe0d3bj") {
+                sites.push_back(4);
+                nat.push_back(4);
             } else if (mon[i] == "h4_dummy") {
                 sites.push_back(4);
                 nat.push_back(4);
+            } else if (mon[i] == "n2o5") {
+                sites.push_back(7);
+                nat.push_back(7);
 
             } else if (mon[i] == "ar") {
                 sites.push_back(1);
@@ -690,6 +703,43 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         exc13.insert(std::make_pair(2, 4));
     }
 
+
+    if (mon == "n2o5") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(1, 3));
+        exc12.insert(std::make_pair(2, 6));
+        exc12.insert(std::make_pair(1, 4));
+        exc12.insert(std::make_pair(2, 5));
+        exc12.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13.insert(std::make_pair(1, 2));
+        exc13.insert(std::make_pair(5, 6));
+        exc13.insert(std::make_pair(0, 6));
+        exc13.insert(std::make_pair(0, 5));
+        exc13.insert(std::make_pair(0, 4));
+        exc13.insert(std::make_pair(0, 3));
+        exc13.insert(std::make_pair(3, 4));
+        // 14 distances
+        exc14.insert(std::make_pair(1, 5));
+        exc14.insert(std::make_pair(1, 6));
+        exc14.insert(std::make_pair(2, 3));
+        exc14.insert(std::make_pair(2, 4));
+    }
+
+    if (mon == "nh3" || mon == "nh3pbe0d3bj") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(0, 3));
+        exc12.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13.insert(std::make_pair(1, 2));
+        exc13.insert(std::make_pair(1, 3));
+        exc13.insert(std::make_pair(2, 3));
+        // 14 distances
+
+    }
+
     // =====>> BEGIN SECTION EXCLUDED <<=====
     // =====>> PASTE CODE BELOW <<=====
 
@@ -729,6 +779,8 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
             aDD = 0.055;
         }
         // Any other molecule (as for 01/10/2018)
+    } else if (mon == "dp1") {
+        aDD = 1.0E24;
     } else {
         if (is12 || is13) {
             aDD = 0.3;
@@ -738,6 +790,16 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
     }
 
     return aDD;
+}
+
+double GetAcc(std::string mon) {
+    double aCC = 0.4;
+    // For water
+    if (mon == "dp1") {
+        aCC = 1.0E24;
+    }
+
+    return aCC;
 }
 
 std::vector<double> ResetOrder3N(std::vector<double> coords, std::vector<std::pair<size_t, size_t>> original_order,
@@ -848,6 +910,14 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
         // =====>> BEGIN SECTION CHARGES <<=====
         // =======>> PASTE BELOW <<=======
+    } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites + 0] = -0.8205 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = 0.2735 * CHARGECON;
+            charges[fst_ind + nv * nsites + 2] = 0.2735 * CHARGECON;
+            charges[fst_ind + nv * nsites + 3] = 0.2735 * CHARGECON;
+        }
+
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv * nsites + 0] = -0.538573 * CHARGECON;
@@ -855,6 +925,14 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv * nsites + 2] = 0.13464325 * CHARGECON;
             charges[fst_ind + nv * nsites + 3] = 0.13464325 * CHARGECON;
             charges[fst_ind + nv * nsites + 4] = 0.13464325 * CHARGECON;
+        }
+    } else if (mon_id == "dp1p") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites] = 1.0 * CHARGECON;
+        }
+    } else if (mon_id == "dp1") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites] = 1.0 * CHARGECON;
         }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -869,7 +947,16 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv * nsites + 2] = 0.00000;
             charges[fst_ind + nv * nsites + 3] = 0.00000;
         }
-
+    } else if (mon_id == "n2o5") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites + 0] = -0.316592 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = 0.703783 * CHARGECON;
+            charges[fst_ind + nv * nsites + 2] = 0.703783 * CHARGECON;
+            charges[fst_ind + nv * nsites + 3] = -0.27274349999999997 * CHARGECON;
+            charges[fst_ind + nv * nsites + 4] = -0.27274349999999997 * CHARGECON;
+            charges[fst_ind + nv * nsites + 5] = -0.27274349999999997 * CHARGECON;
+            charges[fst_ind + nv * nsites + 6] = -0.27274349999999997 * CHARGECON;
+        }
     } else if (mon_id == "dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = 0.0;
@@ -1005,11 +1092,26 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 3] = 0.38978363;
             polfac[fst_ind + nv * nsites + 4] = 0.38978363;
         }
+    } else if (mon_id == "dp1p") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites] = 0.0;
+        }
+    } else if (mon_id == "dp1") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites] = 0.0;
+        }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites + 0] = 1.471677;
             polfac[fst_ind + nv * nsites + 1] = 0.769790;
             polfac[fst_ind + nv * nsites + 2] = 0.769790;
+        }
+    } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites + 0] = 0.9556;
+            polfac[fst_ind + nv * nsites + 1] = 0.3624;
+            polfac[fst_ind + nv * nsites + 2] = 0.3624;
+            polfac[fst_ind + nv * nsites + 3] = 0.3624;
         }
     } else if (mon_id == "h4_dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1019,6 +1121,16 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 3] = 0.00000;
         }
 
+    } else if (mon_id == "n2o5") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites + 0] = 0.7292804719246812;
+            polfac[fst_ind + nv * nsites + 1] = 0.9556760793256731;
+            polfac[fst_ind + nv * nsites + 2] = 0.9556760793256731;
+            polfac[fst_ind + nv * nsites + 3] = 0.7251064765496543;
+            polfac[fst_ind + nv * nsites + 4] = 0.7251064765496543;
+            polfac[fst_ind + nv * nsites + 5] = 0.7251064765496543;
+            polfac[fst_ind + nv * nsites + 6] = 0.7251064765496543;
+        }
     } else if (mon_id == "dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv] = 0.0;
@@ -1114,6 +1226,21 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv * nsites + 3] = 0.38978363;
             pol[fst_ind + nv * nsites + 4] = 0.38978363;
         }
+    } else if (mon_id == "dp1p") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites] = 0.0;
+        }
+    } else if (mon_id == "dp1") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites] = 0.0;
+        }
+    } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites + 0] = 0.9556;
+            pol[fst_ind + nv * nsites + 1] = 0.3624;
+            pol[fst_ind + nv * nsites + 2] = 0.3624;
+            pol[fst_ind + nv * nsites + 3] = 0.3624;
+        }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             pol[fst_ind + nv * nsites + 0] = 1.471677;
@@ -1126,6 +1253,16 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv * nsites + 1] = 0.00000;
             pol[fst_ind + nv * nsites + 2] = 0.00000;
             pol[fst_ind + nv * nsites + 3] = 0.00000;
+        }
+    } else if (mon_id == "n2o5") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites + 0] = 0.7292804719246812;
+            pol[fst_ind + nv * nsites + 1] = 0.9556760793256731;
+            pol[fst_ind + nv * nsites + 2] = 0.9556760793256731;
+            pol[fst_ind + nv * nsites + 3] = 0.7251064765496543;
+            pol[fst_ind + nv * nsites + 4] = 0.7251064765496543;
+            pol[fst_ind + nv * nsites + 5] = 0.7251064765496543;
+            pol[fst_ind + nv * nsites + 6] = 0.7251064765496543;
         }
     } else if (mon_id == "dummy") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1243,6 +1380,13 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 65.76255818916154320248;
         // BEGIN SECTION C6_LONG_RANGE
         // ==> PASTE YOUR CODE BELOW <==
+    } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 15.618415412582673;  // A
+            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
+            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
+            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
+        }
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 17.41398863;      // N
@@ -1252,6 +1396,14 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 4] = 6.064748037;  // H
         }
 
+    } else if (mon_id == "dp1p") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 0.0;
+        }
+    } else if (mon_id == "dp1") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 0.0;
+        }
     } else if (mon_id == "co2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 17.91673320223304547491;      // C
@@ -1281,6 +1433,16 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 6.740200293759822;  // A
             c6_lr[nv * natoms + fst_ind] = 6.740200293759822;  // A
+        }
+    } else if (mon_id == "n2o5") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[fst_ind + nv] = 13.020241929607836;               // O
+            c6_lr[nv * natoms + fst_ind + 1] = 13.09042957671318;   // N
+            c6_lr[nv * natoms + fst_ind + 2] = 13.09042957671318;   // N
+            c6_lr[nv * natoms + fst_ind + 3] = 13.402239942963767;  // O
+            c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
+            c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
+            c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
         }
         // END SECTION C6_LONG_RANGE
         // Water is the only monomer which C6 does not come from qchem.
@@ -1320,8 +1482,8 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             // Declaring shfts for coordinates and fields
             const size_t shift = fi_crd + 12 * mm;
             const size_t sphi = fi_sites + 4 * mm;
-            // Size of gradq is 27: derivative of charge in each site (3) with respect of the position of each site (3)
-            // in each of the xyz components (3); 3x3x3 OHH reign
+            // Size of gradq is 27: derivative of charge in each site (3) with respect of the position of each site
+            // (3) in each of the xyz components (3); 3x3x3 OHH reign
             double gradq[27];
             std::fill(gradq, gradq + 27, 0.0);
             // Derivatives of the charges in HHM reign
@@ -1400,8 +1562,8 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
 
                 double tmp = gamma / 2.0 / (1.0 - gamma);
 
-                // adding M-site contribution to the derivatives -> converting from p (3 point charge fropm PS) to q (4
-                // point charge)
+                // adding M-site contribution to the derivatives -> converting from p (3 point charge fropm PS) to q
+                // (4 point charge)
                 dqdr12[1] = dp1dr12 + (dp1dr12 + dp2dr12) * tmp;  // h1
                 dqdr13[1] = dp1dr13 + (dp1dr13 + dp2dr13) * tmp;
                 dqdcos[1] = dp1dcos + (dp1dcos + dp2dcos) * tmp;
@@ -1434,8 +1596,8 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
 
                     // We could remove l loop, and set m=1 and m=2, or delete the m part.
 
-                    for (int l = 0; l < 3; l++) {  // double loop for charge derivatives with respect to each internal
-                                                   // bond coordinate (ie r12 and r13) for each atom.
+                    for (int l = 0; l < 3; l++) {  // double loop for charge derivatives with respect to each
+                                                   // internal bond coordinate (ie r12 and r13) for each atom.
 
                         for (int m = l + 1; m < 4; m++) {
                             double rx;
