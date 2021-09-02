@@ -130,23 +130,25 @@ std::vector<double> System::GetExternalChargesPositions() { return electrostatic
 std::vector<double> System::GetExternalChargesGradients() { return electrostaticE_.GetExternalChargesGradients(); }
 
 void System::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef) {
-  electrostaticE_.GetPhiXAndEfX(phi,ef);
+    electrostaticE_.GetPhiXAndEfX(phi, ef);
 }
 
-void System::Hack1EfqPhi() {
-  electrostaticE_.Hack1EfqPhi();
+void System::GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd) {
+    phi = electrostaticE_.GetSysPhi();
+    efq = electrostaticE_.GetSysEfq();
+    efd = electrostaticE_.GetSysEfd();
 }
 
-void System::Hack2CgIter() {
-  electrostaticE_.Hack2CgIter();
-}
+void System::Hack1EfqPhi() { electrostaticE_.Hack1EfqPhi(); }
+
+void System::Hack2CgIter() { electrostaticE_.Hack2CgIter(); }
 
 void System::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
-  electrostaticE_.Hack3GetPotentialAtPoints(coordinates);
+    electrostaticE_.Hack3GetPotentialAtPoints(coordinates);
 }
 
 void System::SetNewParamsElec(bool do_grads) {
-  electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
     electrostaticE_.SetEwaldAlpha(elec_alpha_);
@@ -156,7 +158,7 @@ void System::SetNewParamsElec(bool do_grads) {
 }
 
 void System::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef) {
-  electrostaticE_.SetExternalElectrostaticPotentialAndFieldInSites(phi,ef);
+    electrostaticE_.SetExternalElectrostaticPotentialAndFieldInSites(phi, ef);
 }
 
 void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
@@ -3365,7 +3367,7 @@ std::vector<double> System::GetInfoElectrostaticsTimings() { return electrostati
 
 std::vector<size_t> System::GetInfoDispersionCounts() { return dispersionE_.GetInfoCounts(); }
 std::vector<double> System::GetInfoDispersionTimings() { return dispersionE_.GetInfoTimings(); }
-  
+
 ////////////////////////////////////////////////////////////////////////////////
 
 }  // namespace bblock

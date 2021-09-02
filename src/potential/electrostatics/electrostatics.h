@@ -80,7 +80,7 @@ enum {
     ELE_COMM_REV,
     ELE_COMM_FORSET,
     ELE_COMM_FOR,
-    
+
     ELE_PME_SETUP,
     ELE_PME_PRC,
     ELE_PME_PRD,
@@ -306,12 +306,15 @@ class Electrostatics {
 
     void CalculateOneCgDipoleIter();
     void Hack1EfqPhi();
-    void Hack2CgIter() ;
+    void Hack2CgIter();
     void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
     void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef);
     void UpdatePhiAndEf();
     void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef);
 
+    std::vector<double> GetSysPhi();
+    std::vector<double> GetSysEfq();
+    std::vector<double> GetSysEfd();
 
     /**
      * @brief Returns induced electrostatic energy.
@@ -762,11 +765,11 @@ class Electrostatics {
 
     std::vector<std::pair<std::string, size_t>> mon_type_count_all_;
 
-     std::vector<double> external_phi_;
-     std::vector<double> external_ef_;
+    std::vector<double> external_phi_;
+    std::vector<double> external_ef_;
 
-     std::vector<double> phi_x_;
-     std::vector<double> ef_x_;
+    std::vector<double> phi_x_;
+    std::vector<double> ef_x_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

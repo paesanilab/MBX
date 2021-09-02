@@ -483,8 +483,8 @@ void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid
 }
 
 void Electrostatics::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef) {
-  external_phi_ = phi;
-  external_ef_ = ef;
+    external_phi_ = phi;
+    external_ef_ = ef;
 }
 
 void Electrostatics::CalculateOneCgDipoleIter() {
@@ -565,12 +565,33 @@ void Electrostatics::CalculateOneCgDipoleIter() {
     }
 }
 
-
 void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef) {
-  phi = phi_x_;
-  ef = ef_x_;
+    phi = phi_x_;
+    ef = ef_x_;
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                ef[fi_crd + mns3 + 3 * i] = ef_x_[inmon3 + m + fi_crd];
+                ef[fi_crd + mns3 + 3 * i + 1] = ef_x_[inmon3 + m + fi_crd + nmon];
+                ef[fi_crd + mns3 + 3 * i + 2] = ef_x_[inmon3 + m + fi_crd + nmon2];
+                phi[fi_sites + mns + i] = phi_x_[fi_sites + m + inmon];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
 }
-
 
 void Electrostatics::Hack1EfqPhi() {
     std::fill(virial_.begin(), virial_.end(), 0.0);
@@ -581,9 +602,9 @@ void Electrostatics::Hack1EfqPhi() {
 }
 
 void Electrostatics::Hack2CgIter() {
-   CalculateOneCgDipoleIter(); 
-   std::vector<double> grad(3*nsites_,0.0);
-   CalculateGradients(grad);
+    CalculateOneCgDipoleIter();
+    std::vector<double> grad(3 * nsites_, 0.0);
+    CalculateGradients(grad);
 }
 
 void Electrostatics::UpdatePhiAndEf() {
@@ -600,34 +621,38 @@ void Electrostatics::UpdatePhiAndEf() {
             for (size_t i = 0; i < ns; i++) {
                 size_t inmon = i * nmon;
                 size_t inmon3 = 3 * inmon;
-                Efq_[inmon3 + m + fi_crd] += external_ef_[fi_crd + mns3 + 3 * i];
-                Efq_[inmon3 + m + fi_crd + nmon] += external_ef_[fi_crd + mns3 + 3 * i + 1];
-                Efq_[inmon3 + m + fi_crd + nmon2] += external_ef_[fi_crd + mns3 + 3 * i + 2];
-                phi_[fi_sites + m + inmon] += external_phi_[fi_sites + mns + i];
+                Efq_all_[inmon3 + m + fi_crd] += external_ef_[fi_crd + mns3 + 3 * i];
+                Efq_all_[inmon3 + m + fi_crd + nmon] += external_ef_[fi_crd + mns3 + 3 * i + 1];
+                Efq_all_[inmon3 + m + fi_crd + nmon2] += external_ef_[fi_crd + mns3 + 3 * i + 2];
+                phi_all_[fi_sites + m + inmon] += external_phi_[fi_sites + mns + i];
             }
         }
         fi_mon += nmon;
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
-
 }
 
+std::vector<double> Electrostatics::GetSysPhi() { return sys_phi_all_; }
+
+std::vector<double> Electrostatics::GetSysEfq() { return sys_Efq_all_; }
+
+std::vector<double> Electrostatics::GetSysEfd() { return sys_Efd_all_; }
+
 void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
-    
     size_t np3 = coordinates.size();
-    size_t np = np3/3;
+    size_t np = np3 / 3;
 
     bool use_ghost = false;
 
-    std::vector<double> coordinates_vectorized(np3,0.0);
+    std::vector<double> coordinates_vectorized(np3, 0.0);
     for (size_t i = 0; i < np; i++) {
-      coordinates_vectorized[i] = coordinates[3*i];
-      coordinates_vectorized[i + np] = coordinates[3*i + 1];
-      coordinates_vectorized[i + 2*np] = coordinates[3*i+2] ;
+        coordinates_vectorized[i] = coordinates[3 * i];
+        coordinates_vectorized[i + np] = coordinates[3 * i + 1];
+        coordinates_vectorized[i + 2 * np] = coordinates[3 * i + 2];
     }
 
-    size_t maxnmon = mon_type_count_.back().second > np ?  mon_type_count_.back().second : np; 
+    size_t maxnmon = mon_type_count_.back().second > np ? mon_type_count_.back().second : np;
     ElectricFieldHolder elec_field(maxnmon);
 
     // Parallelization
@@ -640,8 +665,8 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     }
 #endif
 
-    phi_x_ = std::vector<double>(np,0.0);
-    ef_x_ = std::vector<double>(np3,0.0);
+    phi_x_ = std::vector<double>(np, 0.0);
+    ef_x_ = std::vector<double>(np3, 0.0);
 
     // Auxiliary variables
     double ex = 0.0;
@@ -716,7 +741,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                 std::vector<double> xyz_sitej = coordinates_vectorized;
 
                 // Vector that will tell the original position of the new sites
-                std::vector<double> chg_sitej(size_j,0.0);
+                std::vector<double> chg_sitej(size_j, 0.0);
                 std::vector<double> phi_sitej(size_j, 0.0);
                 std::vector<double> Efq_sitej(3 * size_j, 0.0);
                 // declare temporary virial for each pair
@@ -736,11 +761,10 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                 }
                 double elec_scale_factor = 1;
                 local_field->CalcPermanentElecField(
-                    xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(),
-                    m1, 0, size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
-                    &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
-                    ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1,
-                    fi_mon2, m2init, &virial_thread);
+                    xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(), m1, 0,
+                    size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread, &ez_thread,
+                    &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor, ewald_alpha_, use_pbc_, box_,
+                    box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
 
                 // Put proper data in field and electric field of j
                 for (size_t ind = 0; ind < size_j; ind++) {

@@ -571,12 +571,13 @@ class System {
     void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
                                         std::vector<int> tag);
 
-void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef);
-void SetNewParamsElec(bool do_grads);
-void Hack1EfqPhi();
-void Hack2CgIter();
-void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
-void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef);
+    void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef);
+    void SetNewParamsElec(bool do_grads);
+    void Hack1EfqPhi();
+    void Hack2CgIter();
+    void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef);
+    void GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd);
 
     /**
      * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
@@ -1061,7 +1062,7 @@ void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, s
 
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
-  
+
     std::vector<size_t> GetInfoDispersionCounts();
     std::vector<double> GetInfoDispersionTimings();
 
