@@ -568,28 +568,21 @@ void Electrostatics::CalculateOneCgDipoleIter() {
 void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef) {
     phi = phi_x_;
     ef = ef_x_;
-    size_t fi_mon = 0;
-    size_t fi_crd = 0;
-    size_t fi_sites = 0;
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = nmon * 2;
-        for (size_t m = 0; m < nmon; m++) {
-            size_t mns = m * ns;
-            size_t mns3 = mns * 3;
-            for (size_t i = 0; i < ns; i++) {
-                size_t inmon = i * nmon;
-                size_t inmon3 = 3 * inmon;
-                ef[fi_crd + mns3 + 3 * i] = ef_x_[inmon3 + m + fi_crd];
-                ef[fi_crd + mns3 + 3 * i + 1] = ef_x_[inmon3 + m + fi_crd + nmon];
-                ef[fi_crd + mns3 + 3 * i + 2] = ef_x_[inmon3 + m + fi_crd + nmon2];
-                phi[fi_sites + mns + i] = phi_x_[fi_sites + m + inmon];
-            }
+
+    size_t nmon = phi_x_.size();
+    size_t ns = 1;
+    size_t nmon2 = nmon * 2;
+    for (size_t m = 0; m < nmon; m++) {
+        size_t mns = m * ns;
+        size_t mns3 = mns * 3;
+        for (size_t i = 0; i < ns; i++) {
+            size_t inmon = i * nmon;
+            size_t inmon3 = 3 * inmon;
+            ef[mns3 + 3 * i] = ef_x_[inmon3 + m];
+            ef[mns3 + 3 * i + 1] = ef_x_[inmon3 + m + nmon];
+            ef[mns3 + 3 * i + 2] = ef_x_[inmon3 + m + nmon2];
+            phi[mns + i] = phi_x_[m + inmon];
         }
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
     }
 }
 
