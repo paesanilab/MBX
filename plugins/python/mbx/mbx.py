@@ -1,7 +1,13 @@
 import ctypes
 from ctypes import cdll
+import os,sys
 
-mbxlib = cdll.LoadLibrary('../../../install/lib/libmbx.so')
+MBX_HOME = os.getenv('MBX_HOME')
+if MBX_HOME == "":
+  print("MBX_HOME is not set.")
+  sys.exit()
+
+mbxlib = cdll.LoadLibrary(MBX_HOME + '/install/lib/libmbx.so')
 
 def initialize_system(coordinates,numer_of_atoms_of_monomers,atom_names,monomer_names,json_file):
   crd = (ctypes.c_double * len(coordinates)) (*coordinates)
