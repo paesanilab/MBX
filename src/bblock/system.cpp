@@ -2063,7 +2063,7 @@ double System::Get1B(bool do_grads) {
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
         curr_mon_type += mon_type_count_[k].second;
-        indx = iend;
+        indx += iend;
     }
 
     return e1b;
