@@ -353,11 +353,45 @@ std::vector<int> System::GetFFTDimensionDispersion(int box_id) { return dispersi
 
 std::vector<int> System::GetFFTDimensionLennardJones(int box_id) { return lennardJonesE_.GetFFTDimension(box_id); }
 
-void System::SetFFTDimensionElectrostatics(std::vector<int> grid) { electrostaticE_.SetFFTDimension(grid); }
+void System::CheckFFTDimension(std::vector<int> grid) {
+    // grid points evenly distributed across ranks in each dimension
 
-void System::SetFFTDimensionDispersion(std::vector<int> grid) { dispersionE_.SetFFTDimension(grid); }
+    if (!mpi_initialized_) {
+        std::string text = std::string("MPI not initialized yet");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
 
-void System::SetFFTDimensionLennardJones(std::vector<int> grid) { lennardJonesE_.SetFFTDimension(grid); }
+    if (grid.size() == 3) {
+        size_t err = 0;
+        if ((grid[0] / proc_grid_x_) * proc_grid_x_ != grid[0]) err += 1;
+        if ((grid[1] / proc_grid_y_) * proc_grid_y_ != grid[1]) err += 1;
+        if ((grid[2] / proc_grid_z_) * proc_grid_z_ != grid[2]) err += 1;
+
+        if ((grid[0] / proc_grid_x_) % 2 == 1) err += 1;
+        if ((grid[1] / proc_grid_y_) % 2 == 1) err += 1;
+        if ((grid[2] / proc_grid_z_) % 2 == 1) err += 1;
+
+        if (err > 0) {
+            std::string text = std::string("FFT grid dimensions must be evenly divisible by processor grid");
+            throw CUException(__func__, __FILE__, __LINE__, text);
+        }
+    }
+}
+
+void System::SetFFTDimensionElectrostatics(std::vector<int> grid) {
+    CheckFFTDimension(grid);
+    electrostaticE_.SetFFTDimension(grid);
+}
+
+void System::SetFFTDimensionDispersion(std::vector<int> grid) {
+    CheckFFTDimension(grid);
+    dispersionE_.SetFFTDimension(grid);
+}
+
+void System::SetFFTDimensionLennardJones(std::vector<int> grid) {
+    CheckFFTDimension(grid);
+    lennardJonesE_.SetFFTDimension(grid);
+}
 
 void System::GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order) {
     alpha = disp_alpha_;
@@ -579,7 +613,7 @@ void System::SetPBC(std::vector<double> box) {
     // close to the central atom (1st atom of each monomer)
     if (use_pbc_) {
         // Fix monomer coordinates
-        systools::FixMonomerCoordinates(xyz_, box_, box_inverse_, nat_, first_index_);
+        if (xyz_.size() > 0) systools::FixMonomerCoordinates(xyz_, box_, box_inverse_, nat_, first_index_);
     }
 
 #ifdef DEBUG
@@ -3335,7 +3369,7 @@ std::vector<double> System::GetInfoElectrostaticsTimings() { return electrostati
 
 std::vector<size_t> System::GetInfoDispersionCounts() { return dispersionE_.GetInfoCounts(); }
 std::vector<double> System::GetInfoDispersionTimings() { return dispersionE_.GetInfoTimings(); }
-  
+
 ////////////////////////////////////////////////////////////////////////////////
 
 }  // namespace bblock

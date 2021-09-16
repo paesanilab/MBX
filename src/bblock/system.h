@@ -920,6 +920,11 @@ class System {
     std::vector<int> GetFFTDimensionLennardJones(int box_id = 0);
 
     /**
+     * Check FFT grid for MPI proc grid
+     */
+    void CheckFFTDimension(std::vector<int> grid);
+
+    /**
      * Set FFT grid for electrostatic pme solver
      */
     void SetFFTDimensionElectrostatics(std::vector<int> grid);
@@ -1054,7 +1059,7 @@ class System {
 
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
-  
+
     std::vector<size_t> GetInfoDispersionCounts();
     std::vector<double> GetInfoDispersionTimings();
 
