@@ -980,22 +980,22 @@ void FixMBX::mbx_init() {
     std::vector<double> box;
     ptr_mbx->SetPBC(box);
 
-    std::vector<int> egrid = ptr_mbx->GetFFTDimensionElectrostatics(0);
-    std::vector<int> dgrid = ptr_mbx->GetFFTDimensionDispersion(0);
+    // std::vector<int> egrid = ptr_mbx->GetFFTDimensionElectrostatics(0);
+    // std::vector<int> dgrid = ptr_mbx->GetFFTDimensionDispersion(0);
 
-    if (print_settings && first_step) {
-        std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();
-        if (screen) {
-            fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
-            fprintf(screen, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
-            fprintf(screen, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
-        }
-        if (logfile) {
-            fprintf(logfile, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
-            fprintf(logfile, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
-            fprintf(logfile, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
-        }
-    }
+    // if (print_settings && first_step) {
+    //     std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();
+    //     if (screen) {
+    //         fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+    //         fprintf(screen, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
+    //         fprintf(screen, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
+    //     }
+    //     if (logfile) {
+    //         fprintf(logfile, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+    //         fprintf(logfile, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
+    //         fprintf(logfile, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
+    //     }
+    // }
 
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Leaving mbx_init()\n", universe->iworld, me);
