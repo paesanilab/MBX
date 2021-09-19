@@ -507,7 +507,13 @@ void PairMBX::accumulate_f(bool include_ext) {
 #endif
             } else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
+            else if (strcmp("f", mol_names[mtype]) == 0)
+                na = 1;
             else if (strcmp("cl", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("br", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("i", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("co2", mol_names[mtype]) == 0) {
                 na = 3;
@@ -630,7 +636,13 @@ void PairMBX::accumulate_f_local(bool include_ext) {
                 include_monomer = false;
                 is_ext = true;
 #endif
+            } else if (strcmp("f", mol_names[mtype]) == 0)
+                na = 1;
             } else if (strcmp("cl", mol_names[mtype]) == 0)
+                na = 1;
+            } else if (strcmp("br", mol_names[mtype]) == 0)
+                na = 1;
+            } else if (strcmp("i", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
@@ -753,7 +765,13 @@ void PairMBX::accumulate_f_full(bool include_ext) {
 #ifndef _DEBUG_EFIELD
                     is_ext = true;
 #endif
+                } else if (strcmp("f", mol_names[mtype]) == 0)
+                    na = 1;
                 } else if (strcmp("cl", mol_names[mtype]) == 0)
+                    na = 1;
+                } else if (strcmp("br", mol_names[mtype]) == 0)
+                    na = 1;
+                } else if (strcmp("i", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("he", mol_names[mtype]) == 0)
                     na = 1;
