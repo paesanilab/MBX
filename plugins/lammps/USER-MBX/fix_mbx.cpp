@@ -618,13 +618,13 @@ void FixMBX::pre_exchange() {
                     if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
                 } else if (strcmp("na", mol_names[mtype]) == 0)
                     na = 1;
-                } else if (strcmp("f", mol_names[mtype]) == 0)
+                else if (strcmp("f", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("cl", mol_names[mtype]) == 0)
                     na = 1;
-                } else if (strcmp("br", mol_names[mtype]) == 0)
+                else if (strcmp("br", mol_names[mtype]) == 0)
                     na = 1;
-                } else if (strcmp("i", mol_names[mtype]) == 0)
+                else if (strcmp("i", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("he", mol_names[mtype]) == 0)
                     na = 1;
