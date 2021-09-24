@@ -85,6 +85,8 @@ class FixMBX : public Fix {
     virtual void post_constructor();
     virtual void init();
     virtual void init_storage();
+    void setup(int);
+    void min_setup(int);
     virtual void setup_post_neighbor();
     virtual void post_neighbor();
     void setup_pre_force(int);
@@ -95,6 +97,8 @@ class FixMBX : public Fix {
 
     void pre_exchange();
     void post_exchange();
+
+    void post_force(int);
 
    protected:
     class PairMBX *pair_mbx;  // pointer to MBX pair_style
@@ -108,6 +112,7 @@ class FixMBX : public Fix {
 
     bool mbx_mpi_enabled;
     bool mbx_aspc_enabled;
+    bool print_dipoles;
 
     bool first_step;
 
@@ -147,6 +152,8 @@ class FixMBX : public Fix {
     int aspc_per_atom_size;
     double **aspc_dip_hist;
 
+    double **mbx_dip;
+
     // rank 0's copy of all atoms in simulation cell
 
     int *mol_anchor_full;
@@ -170,6 +177,8 @@ class FixMBX : public Fix {
     void mbx_update_xyz_local();
 
     void mbx_init_dipole_history_local();
+
+    void mbx_get_dipoles_local();
 
     virtual int pack_forward_comm(int, int *, double *, int, int *);
     virtual void unpack_forward_comm(int, int, double *);
