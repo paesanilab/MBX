@@ -407,50 +407,50 @@ void System::GetEwaldParamsLennardJones(double &alpha, double &grid_density, siz
 
 // FIXME As for today, these functions are not used. // MRR 20191022
 // Will need to activate them and use them whenever we need them for MB-Spec
-// void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
-//    std::vector<double> tmp_perm = electrostaticE_.GetMolecularPermanentDipoles();
-//    std::vector<double> tmp_ind = electrostaticE_.GetMolecularInducedDipoles();
-//
-//    mu_perm = std::vector<double>(tmp_perm.size(), 0.0);
-//    mu_ind = std::vector<double>(tmp_ind.size(), 0.0);
-//    // Reorder to match input order
-//    for (size_t i = 0; i < nummon_; i++) {
-//        size_t current_pos = original2current_order_[i];
-//        for (size_t j = 0; j < 3; j++) {
-//            mu_perm[3 * i + j] = tmp_perm[3 * current_pos + j];
-//            mu_ind[3 * i + j] = tmp_ind[3 * current_pos + j];
-//        }
-//    }
-//}
-//
-// void System::GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
-//    mu_perm = electrostaticE_.GetPermanentDipoles();
-//    mu_ind = electrostaticE_.GetInducedDipoles();
-//
-//    systools::ResetOrderReal3N(mu_perm, initial_order_realSites_, numat_, first_index_, nat_);
-//    systools::ResetOrderReal3N(mu_ind, initial_order_realSites_, numat_, first_index_, nat_);
-//}
-//
-// void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot) {
-//    std::vector<double> all_mu_perm = electrostaticE_.GetPermanentDipoles();
-//    std::vector<double> all_mu_ind = electrostaticE_.GetInducedDipoles();
-//
-//    mu_perm = std::vector<double>(3, 0.0);
-//    mu_ind = std::vector<double>(3, 0.0);
-//
-//    mu_tot = std::vector<double>(3, 0.0);
-//
-//    for (size_t i = 0; i < numsites_; i++) {
-//        for (size_t j = 0; j < 3; j++) {
-//            mu_perm[j] += all_mu_perm[3 * i + j];
-//            mu_ind[j] += all_mu_ind[3 * i + j];
-//        }
-//    }
-//    for (size_t j = 0; j < 3; j++) {
-//        mu_tot[j] = mu_perm[j] + mu_ind[j];
-//    }
-//}
-//
+void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
+    std::vector<double> tmp_perm = electrostaticE_.GetMolecularPermanentDipoles();
+    std::vector<double> tmp_ind = electrostaticE_.GetMolecularInducedDipoles();
+
+    mu_perm = std::vector<double>(tmp_perm.size(), 0.0);
+    mu_ind = std::vector<double>(tmp_ind.size(), 0.0);
+    // Reorder to match input order
+    for (size_t i = 0; i < nummon_; i++) {
+        size_t current_pos = original2current_order_[i];
+        for (size_t j = 0; j < 3; j++) {
+            mu_perm[3 * i + j] = tmp_perm[3 * current_pos + j];
+            mu_ind[3 * i + j] = tmp_ind[3 * current_pos + j];
+        }
+    }
+}
+
+void System::GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
+    mu_perm = electrostaticE_.GetPermanentDipoles();
+    mu_ind = electrostaticE_.GetInducedDipoles();
+
+    systools::ResetOrderReal3N(mu_perm, initial_order_realSites_, numat_, first_index_, nat_);
+    systools::ResetOrderReal3N(mu_ind, initial_order_realSites_, numat_, first_index_, nat_);
+}
+
+void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot) {
+    std::vector<double> all_mu_perm = electrostaticE_.GetPermanentDipoles();
+    std::vector<double> all_mu_ind = electrostaticE_.GetInducedDipoles();
+
+    mu_perm = std::vector<double>(3, 0.0);
+    mu_ind = std::vector<double>(3, 0.0);
+
+    mu_tot = std::vector<double>(3, 0.0);
+
+    for (size_t i = 0; i < numsites_; i++) {
+        for (size_t j = 0; j < 3; j++) {
+            mu_perm[j] += all_mu_perm[3 * i + j];
+            mu_ind[j] += all_mu_ind[3 * i + j];
+        }
+    }
+    for (size_t j = 0; j < 3; j++) {
+        mu_tot[j] = mu_perm[j] + mu_ind[j];
+    }
+}
+
 // std::vector<double> System::GetChargeDerivativesOHH() {
 //    std::vector<double> chg_der(numat_ * numat_ * 3, 0.0);
 //
