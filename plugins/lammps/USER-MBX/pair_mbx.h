@@ -65,7 +65,6 @@ class PairMBX : public Pair {
     double mbx_virial[6];
 
     virtual void allocate();
-    void setup();
 
     void accumulate_f(bool);
     void accumulate_f_full(bool);

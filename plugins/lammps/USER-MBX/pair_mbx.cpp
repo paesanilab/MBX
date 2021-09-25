@@ -79,16 +79,6 @@ PairMBX::~PairMBX() {
 
 /* ---------------------------------------------------------------------- */
 
-void PairMBX::setup() {
-    fix_mbx = NULL;
-    int ifix = modify->find_fix_by_style("mbx");
-    if (ifix < 0) error->all(FLERR, "Fix MBX not found");
-
-    fix_mbx = (FixMBX *)modify->fix[ifix];
-}
-
-/* ---------------------------------------------------------------------- */
-
 void PairMBX::compute(int eflag, int vflag) {
 #ifdef _DEBUG
     MPI_Barrier(world);
@@ -413,6 +403,12 @@ void PairMBX::init_style() {
     // currently request neighbor list, but we don't use it for anything...
 
     irequest = neighbor->request(this, instance_me);
+
+    fix_mbx = NULL;
+    int ifix = modify->find_fix_by_style("mbx");
+    if (ifix < 0) error->all(FLERR, "Fix MBX not found");
+
+    fix_mbx = (FixMBX *)modify->fix[ifix];
 }
 
 /* ----------------------------------------------------------------------

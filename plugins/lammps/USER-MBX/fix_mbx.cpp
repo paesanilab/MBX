@@ -576,6 +576,10 @@ void FixMBX::min_pre_force(int vflag) { pre_force(vflag); }
 
 /* ---------------------------------------------------------------------- */
 
+void FixMBX::setup_pre_exchange() { pre_exchange(); }
+
+/* ---------------------------------------------------------------------- */
+
 void FixMBX::pre_exchange() {
     if (!mbx_aspc_enabled) return;
 
@@ -1031,18 +1035,19 @@ void FixMBX::mbx_init() {
     double **x = atom->x;
     double *q = atom->q;
 
-#ifdef _DEBUG
-    MPI_Barrier(universe->uworld);
-    for (int i = 0; i < comm->nprocs; ++i) {
-        if (me == i) {
-            printf("(%i, %i)  nlocal= %i  nghost= %i  nall= %i\n", universe->iworld, me, nlocal, atom->nghost, nall);
-            for (int j = 0; j < nall; ++j)
-                printf("(%i, %i) j= %i  tag= %i  islocal= %i  mtype= %s  xyz= %f %f %f\n", universe->iworld, me, j,
-                       atom->tag[j], j < nlocal, mol_names[mol_type[j]], x[j][0], x[j][1], x[j][2]);
-        }
-        MPI_Barrier(universe->uworld);
-    }
-#endif
+    // #ifdef _DEBUG
+    //     MPI_Barrier(universe->uworld);
+    //     for (int i = 0; i < comm->nprocs; ++i) {
+    //         if (me == i) {
+    //             printf("(%i, %i)  nlocal= %i  nghost= %i  nall= %i\n", universe->iworld, me, nlocal, atom->nghost,
+    //             nall); for (int j = 0; j < nall; ++j)
+    //                 printf("(%i, %i) j= %i  tag= %i  islocal= %i  mtype= %s  xyz= %f %f %f\n", universe->iworld, me,
+    //                 j,
+    //                        atom->tag[j], j < nlocal, mol_names[mol_type[j]], x[j][0], x[j][1], x[j][2]);
+    //         }
+    //         MPI_Barrier(universe->uworld);
+    //     }
+    // #endif
 
     mbx_num_atoms = 0;
     mbx_num_ext = 0;

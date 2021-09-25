@@ -95,8 +95,8 @@ class FixMBX : public Fix {
     void min_setup_pre_force(int);
     void min_pre_force(int);
 
+    void setup_pre_exchange();
     void pre_exchange();
-    void post_exchange();
 
     void post_force(int);
 
