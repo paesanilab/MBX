@@ -527,7 +527,6 @@ void FixMBX::post_neighbor() {
     //    printf("[MBX] calling mbx_init functions\n");
 
     mbx_init();
-    MPI_Barrier(MPI_COMM_WORLD);
     if (mbx_mpi_enabled)
         mbx_init_local();
     else
