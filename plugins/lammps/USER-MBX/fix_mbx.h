@@ -180,6 +180,10 @@ class FixMBX : public Fix {
 
     void mbx_get_dipoles_local();
 
+    int get_num_atoms_per_monomer(char *);
+    int get_include_monomer(char *, int, bool &);
+    void add_monomer_atom_types(char *, std::vector<std::string> &);
+
     virtual int pack_forward_comm(int, int *, double *, int, int *);
     virtual void unpack_forward_comm(int, int, double *);
     virtual int pack_reverse_comm(int, int, double *);
