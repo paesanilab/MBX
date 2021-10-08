@@ -1,0 +1,31 @@
+{
+   "Note" : "This is a cofiguration file",
+   "MBX" : { 
+       "box" : [],
+       "twobody_cutoff"   : 100.0,
+       "threebody_cutoff" : 7.0, 
+       "dipole_tolerance" : 1E-16,
+       "dipole_method"     : "cg",
+       "alpha_ewald_elec" : 0.0,
+       "grid_density_elec" : 2.5,
+       "spline_order_elec" : 6,
+       "alpha_ewald_disp" : 0.0, 
+       "grid_density_disp" : 2.5,
+       "spline_order_disp" : 6,
+       "ff_mons"   : [],
+       "connectivity_file" : "", 
+       "ttm_pairs" : [["na","h2o"]],
+       "ignore_dispersion" : [],
+       "use_lennard_jones" : [],
+       "nonbonded_file" : "",
+       "monomers_file" : "",
+       "ignore_1b_poly" : [],
+       "ignore_2b_poly" : [["na","h2o"]],
+       "ignore_3b_poly" : [["na","h2o","h2o"]]
+   } ,  
+   "i-pi" : {
+       "port" : 34543,
+       "localhost" : "localhost"
+   }
+}
+
