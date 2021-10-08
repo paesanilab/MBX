@@ -90,6 +90,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     json_file = NULL;
     print_settings = 0;
     print_dipoles = false;
+    aspc_step_reset = 5000;
 
     while (iarg < narg) {
         if (strcmp(arg[iarg], "json") == 0) {
@@ -101,6 +102,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
             if (me == 0) print_settings = 1;
         } else if (strcmp(arg[iarg], "print/dipoles") == 0) {
             print_dipoles = 1;
+        } else if (strcmp(arg[iarg], "aspc/reset") == 0) {
+            aspc_step_reset = atoi(arg[++iarg]);
         }
 
         iarg++;
@@ -290,6 +293,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     aspc_max_num_hist = aspc_order + 2;
     aspc_per_atom_size = aspc_max_num_hist * 3;  // (# of histories) * (# of dimensions)
     aspc_num_hist = 0;
+    aspc_step = 0;
 
     peratom_flag = 1;
     size_peratom_cols = 9;
@@ -546,13 +550,18 @@ void FixMBX::post_neighbor() {
 
     // initialize all MBX instances
 
-    //    printf("[MBX] calling mbx_init functions\n");
+    if (aspc_step == aspc_step_reset) {
+        ptr_mbx_local->ResetDipoleHistory();
+        aspc_step = 0;
+    }
 
     mbx_init();
     if (mbx_mpi_enabled)
         mbx_init_local();
     else
         mbx_init_full();
+
+    if (mbx_aspc_enabled) aspc_step++;
 
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Leaving post_neighbor()\n", universe->iworld, me);
@@ -2349,6 +2358,8 @@ void FixMBX::mbx_init_dipole_history_local() {
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Inside mbx_init_dipole_history_local()\n", universe->iworld, me);
 #endif
+
+    if (aspc_num_hist == 0) return;
 
     // sync dipole histories of ghost particles
 
