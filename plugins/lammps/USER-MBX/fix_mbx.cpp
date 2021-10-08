@@ -33,7 +33,10 @@
 #include "universe.h"
 
 #define _MAX_SIZE_MOL_NAME 10
+#define _MAX_ATOMS_PER_MONOMER 5
 #define SMALL 1.0e-4
+
+#define _NEW_MONOMER_OPS
 
 //#define _DEBUG
 
@@ -86,6 +89,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     use_json = 0;
     json_file = NULL;
     print_settings = 0;
+    print_dipoles = false;
 
     while (iarg < narg) {
         if (strcmp(arg[iarg], "json") == 0) {
@@ -95,6 +99,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
             strcpy(json_file, arg[iarg]);
         } else if (strcmp(arg[iarg], "print/settings") == 0) {
             if (me == 0) print_settings = 1;
+        } else if (strcmp(arg[iarg], "print/dipoles") == 0) {
+            print_dipoles = 1;
         }
 
         iarg++;
@@ -106,6 +112,9 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     // assign # of atoms per molecule based on molecule name
     // -- use this as first pass whether molecule supported by MBX
 
+#ifdef _NEW_MONOMER_OPS
+    for (int i = 0; i < num_mol_types; ++i) num_atoms_per_mol[i] = get_num_atoms_per_monomer(mol_names[i]);
+#else
     for (int i = 0; i < num_mol_types; ++i) {
         if (strcmp("h2o", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 3;
@@ -130,6 +139,15 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
         else
             error->all(FLERR, "Unsupported molecule type in MBX");
     }
+#endif
+
+    int err = 0;
+    for (int i = 0; i < num_mol_types; ++i)
+        if (num_atoms_per_mol[i] > _MAX_ATOMS_PER_MONOMER) err++;
+
+    if (err)
+        error->all(FLERR,
+                   "num_atoms_per_mol > _MAX_ATOMS_PER_MONOMER : did developer correctly add support for monomer?");
 
     // check that total number of atoms matches what is expected
 
@@ -163,10 +181,14 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
 
     ptr_mbx = NULL;
 
+    array_atom = NULL;
+    mbx_dip = NULL;
     mol_type = NULL;
     mol_anchor = NULL;
     mol_local = NULL;
+
     grow_arrays(atom->nmax);
+
     atom->add_callback(0);
     atom->add_callback(1);
 
@@ -268,6 +290,10 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     aspc_max_num_hist = aspc_order + 2;
     aspc_per_atom_size = aspc_max_num_hist * 3;  // (# of histories) * (# of dimensions)
 
+    peratom_flag = 1;
+    size_peratom_cols = 9;
+    peratom_freq = 1;
+
     comm_forward = aspc_per_atom_size;
 
     mbxt_initial_time = MPI_Wtime();
@@ -277,6 +303,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
 
 FixMBX::~FixMBX() {
     if (mbx_aspc_enabled) memory->destroy(aspc_dip_hist);
+
+    if (print_dipoles) memory->destroy(mbx_dip);
 
     memory->destroy(mol_offset);
     memory->destroy(mol_names);
@@ -354,6 +382,8 @@ int FixMBX::setmask() {
 
     mask |= PRE_EXCHANGE;  // only needs to be set when using ASPC integrator
 
+    mask |= POST_FORCE;  // only needs to be set when printing dipoles
+
     return mask;
 }
 
@@ -416,6 +446,8 @@ void FixMBX::setup_post_neighbor() {
     } else if (!(dip_method == "cg")) {
         error->one(FLERR, "[MBX] requested dip_method not supported with LAMMPS");
     }
+
+    if (print_dipoles) memory->create(mbx_dip, atom->nmax, 9, "fixmbx::mbx_dip");
 
     first_step = false;
 
@@ -528,6 +560,14 @@ void FixMBX::post_neighbor() {
 
 /* ---------------------------------------------------------------------- */
 
+void FixMBX::setup(int vflag) { mbx_get_dipoles_local(); }
+
+/* ---------------------------------------------------------------------- */
+
+void FixMBX::min_setup(int vflag) { mbx_get_dipoles_local(); }
+
+/* ---------------------------------------------------------------------- */
+
 void FixMBX::setup_pre_force(int vflag) { pre_force(vflag); }
 
 /* ---------------------------------------------------------------------- */
@@ -553,6 +593,10 @@ void FixMBX::pre_force(int /*vflag*/) {
 /* ---------------------------------------------------------------------- */
 
 void FixMBX::min_pre_force(int vflag) { pre_force(vflag); }
+
+/* ---------------------------------------------------------------------- */
+
+void FixMBX::setup_pre_exchange() { pre_exchange(); }
 
 /* ---------------------------------------------------------------------- */
 
@@ -610,6 +654,9 @@ void FixMBX::pre_exchange() {
                 // this will save history for both local and ghost particles
                 // comm->exchange() will sync ghost histories w/ local particles in new decomposition
 
+#ifdef _NEW_MONOMER_OPS
+                int na = get_include_monomer(mol_names[mtype], anchor, include_monomer);
+#else
                 int na = 0;
                 if (strcmp("h2o", mol_names[mtype]) == 0) {
                     na = 3;
@@ -641,6 +688,7 @@ void FixMBX::pre_exchange() {
                     const int ii4 = atom->map(anchor + 4);
                     if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
                 }
+#endif
 
                 // add info
 
@@ -667,10 +715,223 @@ void FixMBX::pre_exchange() {
 
 /* ---------------------------------------------------------------------- */
 
+void FixMBX::post_force(int vflag) {
+    if (!print_dipoles) return;
+
+    mbx_get_dipoles_local();
+}
+
+/* ---------------------------------------------------------------------- */
+
+void FixMBX::mbx_get_dipoles_local() {
+    if (!print_dipoles) return;
+
+#ifdef _DEBUG
+    printf("Inside FixMBX::mbx_get_dipoles_local()\n");
+#endif
+
+    // only need to grab dipoles on step where output is written
+
+    const int nlocal = atom->nlocal;
+    const int nall = nlocal + atom->nghost;
+    tagint *tag = atom->tag;
+
+    // conversion factor for e*Anstrom --> Debye
+
+    const double qe_Debye = 1.0 / 0.2081943;
+
+#if 1
+    {
+        std::vector<double> mu_perm;
+        std::vector<double> mu_ind;
+        std::vector<double> mu_tot;
+
+        ptr_mbx_local->GetMolecularDipoles(mu_perm, mu_ind);
+
+        // printf("GetMolecularDipoles: sizes:: mu_perm= %lu  mu_ind= %lu\n",mu_perm.size(), mu_ind.size());
+
+        // for(int i=0; i<mu_perm.size()/3; ++i) {
+        //   printf("  -- i= %i  mu_perm= %f %f %f   mu_ind= %f %f
+        //   %f\n",i,mu_perm[i*3],mu_perm[i*3+1],mu_perm[i*3+2],mu_ind[i*3],mu_ind[i*3+1],mu_ind[i*3+2]);
+        // }
+
+        int indx = 0;
+        for (int i = 0; i < nall; ++i) {
+            if (mol_anchor[i] && mol_local[i]) {
+                const int mtype = mol_type[i];
+
+                // to be replaced with integer comparison
+
+                bool include_monomer = true;
+                tagint anchor = atom->tag[i];
+
+                // this will save history for both local and ghost particles
+                // comm->exchange() will sync ghost histories w/ local particles in new decomposition
+
+#ifdef _NEW_MONOMER_OPS
+                int na = get_include_monomer(mol_names[mtype], anchor, include_monomer);
+#else
+                int na = 0;
+                if (strcmp("h2o", mol_names[mtype]) == 0) {
+                    na = 3;
+                    const int ii1 = atom->map(anchor + 1);
+                    const int ii2 = atom->map(anchor + 2);
+                    if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
+                } else if (strcmp("na", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("cl", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("he", mol_names[mtype]) == 0)
+                    na = 1;
+                else if (strcmp("co2", mol_names[mtype]) == 0) {
+                    na = 3;
+                    const int ii1 = atom->map(anchor + 1);
+                    const int ii2 = atom->map(anchor + 2);
+                    if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
+                } else if (strcmp("ch4", mol_names[mtype]) == 0) {
+                    na = 5;
+                    const int ii1 = atom->map(anchor + 1);
+                    const int ii2 = atom->map(anchor + 2);
+                    const int ii3 = atom->map(anchor + 3);
+                    const int ii4 = atom->map(anchor + 4);
+                    if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
+                }
+#endif
+
+                // add info
+
+                if (include_monomer) {
+                    for (int j = 0; j < 1; ++j) {
+                        const int ii = atom->map(anchor + j);
+                        mbx_dip[ii][0] = mu_perm[indx * 3];
+                        mbx_dip[ii][1] = mu_perm[indx * 3 + 1];
+                        mbx_dip[ii][2] = mu_perm[indx * 3 + 2];
+
+                        mbx_dip[ii][3] = mu_ind[indx * 3];
+                        mbx_dip[ii][4] = mu_ind[indx * 3 + 1];
+                        mbx_dip[ii][5] = mu_ind[indx * 3 + 2];
+
+                        mbx_dip[ii][6] = mbx_dip[ii][0] + mbx_dip[ii][3];
+                        mbx_dip[ii][7] = mbx_dip[ii][1] + mbx_dip[ii][4];
+                        mbx_dip[ii][8] = mbx_dip[ii][2] + mbx_dip[ii][5];
+
+                        // printf("  -- ii= %i  tag= %i  indx= %i  mu_perm= %f %f %f   mu_ind= %f %f
+                        // %f\n",ii,anchor+j,indx,mu_perm[indx*3],mu_perm[indx*3+1],mu_perm[indx*3+2],mu_ind[indx*3],mu_ind[indx*3+1],mu_ind[indx*3+2]);
+                        indx++;
+                    }
+                }
+            }  // if(anchor)
+
+        }  // for(nall)
+    }
+#endif
+
+#if 0
+  {
+    std::vector<double> mu_perm;
+    std::vector<double> mu_ind;
+    std::vector<double> mu_tot;
+    
+    ptr_mbx_local->GetDipoles(mu_perm, mu_ind); // problem with this one is how to handle 
+    
+    printf("GetDipoles: sizes:: mu_perm= %lu  mu_ind= %lu\n",mu_perm.size(), mu_ind.size());
+    
+    // for(int i=0; i<mu_perm.size()/3; ++i) {
+    //   printf("  -- i= %i  mu_perm= %f %f %f   mu_ind= %f %f %f\n",i,mu_perm[i*3],mu_perm[i*3+1],mu_perm[i*3+2],mu_ind[i*3],mu_ind[i*3+1],mu_ind[i*3+2]);
+    // }
+    
+    int indx = 0;
+    for (int i = 0; i < nall; ++i) {
+      if (mol_anchor[i] && mol_local[i]) {
+	const int mtype = mol_type[i];
+	
+	// to be replaced with integer comparison
+	
+	bool include_monomer = true;
+	tagint anchor = atom->tag[i];
+	
+	// this will save history for both local and ghost particles
+	// comm->exchange() will sync ghost histories w/ local particles in new decomposition
+
+#ifdef _NEW_MONOMER_OPS
+	int na = get_include_monomer(mol_names[mtype], anchor, include_monomer);
+#else
+	int na = 0;
+	if (strcmp("h2o", mol_names[mtype]) == 0) {
+	  na = 3;
+	  const int ii1 = atom->map(anchor + 1);
+	  const int ii2 = atom->map(anchor + 2);
+	  if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
+	} else if (strcmp("na", mol_names[mtype]) == 0)
+	  na = 1;
+	else if (strcmp("cl", mol_names[mtype]) == 0)
+	  na = 1;
+	else if (strcmp("he", mol_names[mtype]) == 0)
+	  na = 1;
+	else if (strcmp("co2", mol_names[mtype]) == 0) {
+	  na = 3;
+	  const int ii1 = atom->map(anchor + 1);
+	  const int ii2 = atom->map(anchor + 2);
+	  if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
+	} else if (strcmp("ch4", mol_names[mtype]) == 0) {
+	  na = 5;
+	  const int ii1 = atom->map(anchor + 1);
+	  const int ii2 = atom->map(anchor + 2);
+	  const int ii3 = atom->map(anchor + 3);
+	  const int ii4 = atom->map(anchor + 4);
+	  if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
+	}
+#endif
+	
+	// add info
+	
+	if (include_monomer) {
+	  for (int j = 0; j < na; ++j) {
+	    const int ii = atom->map(anchor + j);
+	    // aspc_dip_hist[ii][h * 3] = mbx_dip_history[indx++];
+	    // aspc_dip_hist[ii][h * 3 + 1] = mbx_dip_history[indx++];
+	    // aspc_dip_hist[ii][h * 3 + 2] = mbx_dip_history[indx++];
+	    printf("  -- ii= %i  tag= %i  mu_perm= %f %f %f   mu_ind= %f %f %f\n",ii,anchor+j,mu_perm[indx*3],mu_perm[indx*3+1],mu_perm[indx*3+2],mu_ind[indx*3],mu_ind[indx*3+1],mu_ind[indx*3+2]);
+	    indx++;
+	  }
+	}
+      }  // if(anchor)
+      
+    }  // for(nall)
+  }
+#endif
+
+#if 0
+  {
+    std::vector<double> mu_perm;
+    std::vector<double> mu_ind;
+    std::vector<double> mu_tot;
+    
+    ptr_mbx_local->GetTotalDipole(mu_perm, mu_ind, mu_tot);
+    
+    printf("GetTotalDipole: sizes:: mu_perm= %lu  mu_ind= %lu  mu_tot= %lu\n",mu_perm.size(), mu_ind.size(), mu_tot.size());
+    
+    for(int i=0; i<mu_perm.size()/3; ++i) {
+      printf("  -- i= %i  mu_perm= %f %f %f   mu_ind= %f %f %f  mu_tot= %f %f %f\n",i,mu_perm[i*3],mu_perm[i*3+1],mu_perm[i*3+2],mu_ind[i*3],mu_ind[i*3+1],mu_ind[i*3+2],mu_tot[i*3],mu_tot[i*3+1],mu_tot[i*3+2]);
+    }
+  }
+#endif
+
+    array_atom = mbx_dip;
+
+#ifdef _DEBUG
+    printf("Leaving FixMBX::post_force()\n");
+#endif
+}
+
+/* ---------------------------------------------------------------------- */
+
 int FixMBX::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, int * /*pbc*/) {
     int m = 0;
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < n; ++i) {
         for (int j = 0; j < 3 * aspc_num_hist; ++j) buf[m++] = aspc_dip_hist[list[i]][j];
+        //	for (int j = 0; j < 9; ++j) buf[m++] = mbx_dip[list[i]][j];
+    }
 
     return m;
 }
@@ -679,8 +940,10 @@ int FixMBX::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, i
 
 void FixMBX::unpack_forward_comm(int n, int first, double *buf) {
     int m = 0;
-    for (int i = first; i < first + n; ++i)
+    for (int i = first; i < first + n; ++i) {
         for (int j = 0; j < 3 * aspc_num_hist; ++j) aspc_dip_hist[i][j] = buf[m++];
+        //	for (int j = 0; j < 9; ++j) mbx_dip[i][j] = buf[m++];
+    }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -739,6 +1002,8 @@ void FixMBX::grow_arrays(int nmax) {
     memory->grow(mol_local, nmax, "fixmbx:mol_local");
 
     if (mbx_aspc_enabled) memory->grow(aspc_dip_hist, nmax, aspc_per_atom_size, "fixmbx:mbx_dip_hist");
+
+    if (print_dipoles) memory->grow(mbx_dip, nmax, 9, "fixmbx:mbx_dip");
 }
 
 /* ----------------------------------------------------------------------
@@ -764,6 +1029,10 @@ int FixMBX::pack_exchange(int i, double *buf) {
     if (mbx_aspc_enabled)
         for (int j = 0; j < aspc_per_atom_size; ++j) buf[n++] = aspc_dip_hist[i][j];
 
+    // don't need to exchange dipoles that will be written to dump file
+    // if (print_dipoles)
+    //   for(int j = 0; j<9; ++j) buf[n++] = mbx_dip[i][j];
+
     return n;
 }
 
@@ -779,6 +1048,10 @@ int FixMBX::unpack_exchange(int nlocal, double *buf) {
 
     if (mbx_aspc_enabled)
         for (int j = 0; j < aspc_per_atom_size; ++j) aspc_dip_hist[nlocal][j] = buf[n++];
+
+    // don't need to exchange dipoles that will be written to dump file
+    // if (print_dipoles)
+    //   for (int j=0; j<9; ++j) mbx_dip[nlocal][j] = buf[n++];
 
     return n;
 }
@@ -800,18 +1073,19 @@ void FixMBX::mbx_init() {
     double **x = atom->x;
     double *q = atom->q;
 
-#ifdef _DEBUG
-    MPI_Barrier(universe->uworld);
-    for (int i = 0; i < comm->nprocs; ++i) {
-        if (me == i) {
-            printf("(%i, %i)  nlocal= %i  nghost= %i  nall= %i\n", universe->iworld, me, nlocal, atom->nghost, nall);
-            for (int j = 0; j < nall; ++j)
-                printf("(%i, %i) j= %i  tag= %i  islocal= %i  mtype= %s  xyz= %f %f %f\n", universe->iworld, me, j,
-                       atom->tag[j], j < nlocal, mol_names[mol_type[j]], x[j][0], x[j][1], x[j][2]);
-        }
-        MPI_Barrier(universe->uworld);
-    }
-#endif
+    // #ifdef _DEBUG
+    //     MPI_Barrier(universe->uworld);
+    //     for (int i = 0; i < comm->nprocs; ++i) {
+    //         if (me == i) {
+    //             printf("(%i, %i)  nlocal= %i  nghost= %i  nall= %i\n", universe->iworld, me, nlocal, atom->nghost,
+    //             nall); for (int j = 0; j < nall; ++j)
+    //                 printf("(%i, %i) j= %i  tag= %i  islocal= %i  mtype= %s  xyz= %f %f %f\n", universe->iworld, me,
+    //                 j,
+    //                        atom->tag[j], j < nlocal, mol_names[mol_type[j]], x[j][0], x[j][1], x[j][2]);
+    //         }
+    //         MPI_Barrier(universe->uworld);
+    //     }
+    // #endif
 
     mbx_num_atoms = 0;
     mbx_num_ext = 0;
@@ -844,6 +1118,9 @@ void FixMBX::mbx_init() {
 
             int is_local = (i < nlocal);
 
+#ifdef _NEW_MONOMER_OPS
+            int na = get_num_atoms_per_monomer(mol_names[mtype]);
+#else
             int na;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
@@ -867,12 +1144,13 @@ void FixMBX::mbx_init() {
                 na = 5;
             else
                 error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
+#endif
 
             // ids of particles in molecule on proc
 
             tagint anchor = tag[i];
 
-            int amap[5];
+            int amap[_MAX_ATOMS_PER_MONOMER];
             bool add_monomer = true;
             for (int j = 1; j < na; ++j) {
                 amap[j] = atom->map(anchor + j);
@@ -913,7 +1191,9 @@ void FixMBX::mbx_init() {
                 }
 
                 // add types
-
+#ifdef _NEW_MONOMER_OPS
+                add_monomer_atom_types(mol_names[mtype], names);
+#else
                 if (strcmp("h2o", mol_names[mtype]) == 0) {
                     names.push_back("O");
                     names.push_back("H");
@@ -945,6 +1225,7 @@ void FixMBX::mbx_init() {
                     names.push_back("H");
                     names.push_back("H");
                 }
+#endif
 
                 // add monomer
 
@@ -1004,22 +1285,22 @@ void FixMBX::mbx_init() {
     std::vector<double> box;
     ptr_mbx->SetPBC(box);
 
-    std::vector<int> egrid = ptr_mbx->GetFFTDimensionElectrostatics(0);
-    std::vector<int> dgrid = ptr_mbx->GetFFTDimensionDispersion(0);
+    // std::vector<int> egrid = ptr_mbx->GetFFTDimensionElectrostatics(0);
+    // std::vector<int> dgrid = ptr_mbx->GetFFTDimensionDispersion(0);
 
-    if (print_settings && first_step) {
-        std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();
-        if (screen) {
-            fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
-            fprintf(screen, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
-            fprintf(screen, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
-        }
-        if (logfile) {
-            fprintf(logfile, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
-            fprintf(logfile, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
-            fprintf(logfile, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
-        }
-    }
+    // if (print_settings && first_step) {
+    //     std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();
+    //     if (screen) {
+    //         fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+    //         fprintf(screen, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
+    //         fprintf(screen, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
+    //     }
+    //     if (logfile) {
+    //         fprintf(logfile, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
+    //         fprintf(logfile, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
+    //         fprintf(logfile, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
+    //     }
+    // }
 
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Leaving mbx_init()\n", universe->iworld, me);
@@ -1113,6 +1394,9 @@ void FixMBX::mbx_init_local() {
 
             int is_local = (i < nlocal);
 
+#ifdef _NEW_MONOMER_OPS
+            int na = get_num_atoms_per_monomer(mol_names[mtype]);
+#else
             int na;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
@@ -1136,12 +1420,13 @@ void FixMBX::mbx_init_local() {
                 na = 5;
             else
                 error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
+#endif
 
             // ids of particles in molecule on proc
 
             tagint anchor = tag[i];
 
-            int amap[5];
+            int amap[_MAX_ATOMS_PER_MONOMER];
             bool add_monomer = true;
             for (int j = 1; j < na; ++j) {
                 amap[j] = atom->map(anchor + j);
@@ -1181,6 +1466,9 @@ void FixMBX::mbx_init_local() {
                     xyz.push_back(ximage[2] - zlo);
                 }
 
+#ifdef _NEW_MONOMER_OPS
+                add_monomer_atom_types(mol_names[mtype], names);
+#else
                 if (strcmp("h2o", mol_names[mtype]) == 0) {
                     names.push_back("O");
                     names.push_back("H");
@@ -1212,6 +1500,7 @@ void FixMBX::mbx_init_local() {
                     names.push_back("H");
                     names.push_back("H");
                 }
+#endif
 
                 molec.push_back(nm++);
 
@@ -1395,6 +1684,9 @@ void FixMBX::mbx_init_full() {
 
             int is_local = 1;
 
+#ifdef _NEW_MONOMER_OPS
+            int na = get_num_atoms_per_monomer(mol_names[mtype]);
+#else
             int na;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
@@ -1418,12 +1710,13 @@ void FixMBX::mbx_init_full() {
                 na = 5;
             else
                 error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
+#endif
 
             // ids of particles in molecule on proc
 
             tagint anchor = tag_full[i];
 
-            int amap[5];
+            int amap[_MAX_ATOMS_PER_MONOMER];
             bool add_monomer = true;
             for (int j = 1; j < na; ++j) {
                 amap[j] = atom_map_full[anchor + j];
@@ -1468,6 +1761,9 @@ void FixMBX::mbx_init_full() {
 
                 // add types
 
+#ifdef _NEW_MONOMER_OPS
+                add_monomer_atom_types(mol_names[mtype], names);
+#else
                 if (strcmp("h2o", mol_names[mtype]) == 0) {
                     names.push_back("O");
                     names.push_back("H");
@@ -1499,6 +1795,7 @@ void FixMBX::mbx_init_full() {
                     names.push_back("H");
                     names.push_back("H");
                 }
+#endif
 
                 // add monomer
 
@@ -1621,6 +1918,9 @@ void FixMBX::mbx_update_xyz() {
         if (mol_anchor[i]) {
             const int mtype = mol_type[i];
 
+#ifdef _NEW_MONOMER_OPS
+            int na = get_num_atoms_per_monomer(mol_names[mtype]);
+#else
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
@@ -1644,12 +1944,13 @@ void FixMBX::mbx_update_xyz() {
                 na = 5;
             else
                 error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
+#endif
 
             // ids of particles in molecule on proc
 
             tagint anchor = tag[i];
 
-            int amap[5];
+            int amap[_MAX_ATOMS_PER_MONOMER];
             bool add_monomer = true;
             for (int j = 1; j < na; ++j) {
                 amap[j] = atom->map(anchor + j);
@@ -1774,6 +2075,9 @@ void FixMBX::mbx_update_xyz_local() {
         if (mol_anchor[i] && mol_local[i]) {
             const int mtype = mol_type[i];
 
+#ifdef _NEW_MONOMER_OPS
+            int na = get_num_atoms_per_monomer(mol_names[mtype]);
+#else
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
@@ -1797,12 +2101,13 @@ void FixMBX::mbx_update_xyz_local() {
                 na = 5;
             else
                 error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
+#endif
 
             // ids of particles in molecule on proc
 
             tagint anchor = tag[i];
 
-            int amap[5];
+            int amap[_MAX_ATOMS_PER_MONOMER];
             bool add_monomer = true;
             for (int j = 1; j < na; ++j) {
                 amap[j] = atom->map(anchor + j);
@@ -1932,8 +2237,10 @@ void FixMBX::mbx_update_xyz_full() {
         if (mol_anchor_full[i]) {
             const int mtype = mol_type_full[i];
 
+#ifdef _NEW_MONOMER_OPS
+            int na = get_num_atoms_per_monomer(mol_names[mtype]);
+#else
             int na = 0;
-
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
             else if (strcmp("na", mol_names[mtype]) == 0)
@@ -1954,8 +2261,9 @@ void FixMBX::mbx_update_xyz_full() {
                 na = 3;
             else if (strcmp("ch4", mol_names[mtype]) == 0)
                 na = 5;
+#endif
 
-                // test if external charged particle
+            // test if external charged particle
 #ifndef _DEBUG_EFIELD
             if (strcmp("dp1", mol_names[mtype]) == 0) {
                 xyz_ext[indx_ext * 3] = x[i][0] - xlo;
@@ -2054,6 +2362,9 @@ void FixMBX::mbx_init_dipole_history_local() {
             if (mol_anchor[i] && mol_local[i]) {
                 const int mtype = mol_type[i];
 
+#ifdef _NEW_MONOMER_OPS
+                int na = get_num_atoms_per_monomer(mol_names[mtype]);
+#else
                 int na = 0;
                 if (strcmp("h2o", mol_names[mtype]) == 0)
                     na = 3;
@@ -2075,12 +2386,13 @@ void FixMBX::mbx_init_dipole_history_local() {
                     na = 5;
                 else
                     error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
+#endif
 
                 // ids of particles in molecule on proc
 
                 tagint anchor = tag[i];
 
-                int amap[5];
+                int amap[_MAX_ATOMS_PER_MONOMER];
                 bool add_monomer = true;
                 for (int j = 1; j < na; ++j) {
                     amap[j] = atom->map(anchor + j);
@@ -2236,4 +2548,115 @@ void FixMBX::mbxt_write_summary() {
     mbxt_print_time("ELE_COMM_REV", MBXT_ELE_COMM_REV, t);
     mbxt_print_time("ELE_COMM_FORSET", MBXT_ELE_COMM_FORSET, t);
     mbxt_print_time("ELE_COMM_FOR", MBXT_ELE_COMM_FOR, t);
+}
+
+/* ----------------------------------------------------------------------
+   Helper functions for monomers
+------------------------------------------------------------------------- */
+
+int FixMBX::get_num_atoms_per_monomer(char *name) {
+    int na;
+
+    if (strcmp("h2o", name) == 0)
+        na = 3;
+    else if (strcmp("na", name) == 0)
+        na = 1;
+    else if (strcmp("dp1", name) == 0)
+        na = 1;
+    else if (strcmp("f", name) == 0)
+        na = 1;
+    else if (strcmp("cl", name) == 0)
+        na = 1;
+    else if (strcmp("br", name) == 0)
+        na = 1;
+    else if (strcmp("i", name) == 0)
+        na = 1;
+    else if (strcmp("co2", name) == 0)
+        na = 3;
+    else if (strcmp("ch4", name) == 0)
+        na = 5;
+    else if (strcmp("he", name) == 0)
+        na = 1;
+    else
+        error->one(FLERR, "Unsupported molecule type in MBX");
+
+    return na;
+}
+
+/* ----------------------------------------------------------------------
+------------------------------------------------------------------------- */
+
+int FixMBX::get_include_monomer(char *name, int anchor, bool &inc) {
+    int na;
+    inc = true;
+
+    if (strcmp("h2o", name) == 0) {
+        na = 3;
+        const int ii1 = atom->map(anchor + 1);
+        const int ii2 = atom->map(anchor + 2);
+        if ((ii1 < 0) || (ii2 < 0)) inc = false;
+    } else if (strcmp("na", name) == 0)
+        na = 1;
+    else if (strcmp("f", name) == 0)
+        na = 1;
+    else if (strcmp("cl", name) == 0)
+        na = 1;
+    else if (strcmp("br", name) == 0)
+        na = 1;
+    else if (strcmp("i", name) == 0)
+        na = 1;
+    else if (strcmp("he", name) == 0)
+        na = 1;
+    else if (strcmp("co2", name) == 0) {
+        na = 3;
+        const int ii1 = atom->map(anchor + 1);
+        const int ii2 = atom->map(anchor + 2);
+        if ((ii1 < 0) || (ii2 < 0)) inc = false;
+    } else if (strcmp("ch4", name) == 0) {
+        na = 5;
+        const int ii1 = atom->map(anchor + 1);
+        const int ii2 = atom->map(anchor + 2);
+        const int ii3 = atom->map(anchor + 3);
+        const int ii4 = atom->map(anchor + 4);
+        if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) inc = false;
+    }
+
+    return na;
+}
+
+/* ----------------------------------------------------------------------
+------------------------------------------------------------------------- */
+
+void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
+    if (strcmp("h2o", name) == 0) {
+        n.push_back("O");
+        n.push_back("H");
+        n.push_back("H");
+    } else if (strcmp("na", name) == 0) {
+        n.push_back("Na");
+#ifdef _DEBUG_EFIELD
+    } else if (strcmp("dp1", name) == 0) {
+        n.push_back("X");
+#endif
+    } else if (strcmp("f", name) == 0) {
+        n.push_back("F");
+    } else if (strcmp("cl", name) == 0) {
+        n.push_back("Cl");
+    } else if (strcmp("br", name) == 0) {
+        n.push_back("Br");
+    } else if (strcmp("i", name) == 0) {
+        n.push_back("I");
+    } else if (strcmp("he", name) == 0) {
+        n.push_back("He");
+    } else if (strcmp("co2", name) == 0) {
+        n.push_back("C");
+        n.push_back("O");
+        n.push_back("O");
+    } else if (strcmp("ch4", name) == 0) {
+        n.push_back("C");
+        n.push_back("H");
+        n.push_back("H");
+        n.push_back("H");
+        n.push_back("H");
+    }
 }

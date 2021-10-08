@@ -35,6 +35,8 @@
 
 #include "domain.h"
 
+#define _NEW_MONOMER_OPS
+
 //#define _DEBUG
 //#define _DEBUG_VIRIAL
 
@@ -75,16 +77,6 @@ PairMBX::~PairMBX() {
     }
 
     delete[] pvector;
-}
-
-/* ---------------------------------------------------------------------- */
-
-void PairMBX::setup() {
-    fix_mbx = NULL;
-    int ifix = modify->find_fix_by_style("mbx");
-    if (ifix < 0) error->all(FLERR, "Fix MBX not found");
-
-    fix_mbx = (FixMBX *)modify->fix[ifix];
 }
 
 /* ---------------------------------------------------------------------- */
@@ -413,6 +405,12 @@ void PairMBX::init_style() {
     // currently request neighbor list, but we don't use it for anything...
 
     irequest = neighbor->request(this, instance_me);
+
+    fix_mbx = NULL;
+    int ifix = modify->find_fix_by_style("mbx");
+    if (ifix < 0) error->all(FLERR, "Fix MBX not found");
+
+    fix_mbx = (FixMBX *)modify->fix[ifix];
 }
 
 /* ----------------------------------------------------------------------
@@ -491,6 +489,9 @@ void PairMBX::accumulate_f(bool include_ext) {
             bool is_ext = false;
             tagint anchor = atom->tag[i];
 
+#ifdef _NEW_MONOMER_OPS
+            int na = get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
+#else
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0) {
                 na = 3;
@@ -528,6 +529,7 @@ void PairMBX::accumulate_f(bool include_ext) {
                 const int ii4 = atom->map(anchor + 4);
                 if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
             }
+#endif
 
             if (include_monomer) {
                 for (int j = 0; j < na; ++j) {
@@ -622,6 +624,9 @@ void PairMBX::accumulate_f_local(bool include_ext) {
             bool is_ext = false;
             tagint anchor = atom->tag[i];
 
+#ifdef _NEW_MONOMER_OPS
+            int na = get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
+#else
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0) {
                 na = 3;
@@ -659,6 +664,7 @@ void PairMBX::accumulate_f_local(bool include_ext) {
                 const int ii4 = atom->map(anchor + 4);
                 if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
             }
+#endif
 
             if (include_monomer) {
                 for (int j = 0; j < na; ++j) {
@@ -755,6 +761,9 @@ void PairMBX::accumulate_f_full(bool include_ext) {
 
                 // to be replaced with integer comparison
 
+#ifdef _NEW_MONOMER_OPS
+                int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
+#else
                 int na = 0;
                 if (strcmp("h2o", mol_names[mtype]) == 0)
                     na = 3;
@@ -779,6 +788,7 @@ void PairMBX::accumulate_f_full(bool include_ext) {
                     na = 5;
                 else if (strcmp("co2", mol_names[mtype]) == 0)
                     na = 3;
+#endif
 
 #ifndef _DEBUG_EFIELD
                 if (is_ext) {
@@ -848,4 +858,87 @@ void PairMBX::accumulate_f_full(bool include_ext) {
 #ifdef _DEBUG
     printf("[MBX] (%i) Leaving pair accumulate_f_full()\n", me);
 #endif
+}
+
+/* ----------------------------------------------------------------------
+   Helper functions for monomers
+------------------------------------------------------------------------- */
+
+int PairMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
+    int na;
+    inc_e = false;
+
+    if (strcmp("h2o", name) == 0)
+        na = 3;
+    else if (strcmp("na", name) == 0)
+        na = 1;
+    else if (strcmp("dp1", name) == 0) {
+        na = 1;
+        inc_e = true;
+    } else if (strcmp("f", name) == 0)
+        na = 1;
+    else if (strcmp("cl", name) == 0)
+        na = 1;
+    else if (strcmp("br", name) == 0)
+        na = 1;
+    else if (strcmp("i", name) == 0)
+        na = 1;
+    else if (strcmp("co2", name) == 0)
+        na = 3;
+    else if (strcmp("ch4", name) == 0)
+        na = 5;
+    else if (strcmp("he", name) == 0)
+        na = 1;
+    else
+        error->one(FLERR, "Unsupported molecule type in MBX");
+
+    return na;
+}
+
+/* ----------------------------------------------------------------------
+------------------------------------------------------------------------- */
+
+int PairMBX::get_include_monomer(char *name, int anchor, bool &inc_m, bool &inc_e) {
+    int na;
+    inc_m = true;
+    inc_e = false;
+
+    if (strcmp("h2o", name) == 0) {
+        na = 3;
+        const int ii1 = atom->map(anchor + 1);
+        const int ii2 = atom->map(anchor + 2);
+        if ((ii1 < 0) || (ii2 < 0)) inc_m = false;
+    } else if (strcmp("na", name) == 0)
+        na = 1;
+    else if (strcmp("dp1", name) == 0) {
+        na = 1;
+#ifndef _DEBUG_EFIELD
+        inc_m = false;
+        inc_e = true;
+#endif
+    } else if (strcmp("f", name) == 0)
+        na = 1;
+    else if (strcmp("cl", name) == 0)
+        na = 1;
+    else if (strcmp("br", name) == 0)
+        na = 1;
+    else if (strcmp("i", name) == 0)
+        na = 1;
+    else if (strcmp("he", name) == 0)
+        na = 1;
+    else if (strcmp("co2", name) == 0) {
+        na = 3;
+        const int ii1 = atom->map(anchor + 1);
+        const int ii2 = atom->map(anchor + 2);
+        if ((ii1 < 0) || (ii2 < 0)) inc_m = false;
+    } else if (strcmp("ch4", name) == 0) {
+        na = 5;
+        const int ii1 = atom->map(anchor + 1);
+        const int ii2 = atom->map(anchor + 2);
+        const int ii3 = atom->map(anchor + 3);
+        const int ii4 = atom->map(anchor + 4);
+        if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) inc_m = false;
+    }
+
+    return na;
 }
