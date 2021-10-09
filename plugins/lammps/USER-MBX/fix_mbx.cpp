@@ -552,6 +552,7 @@ void FixMBX::post_neighbor() {
 
     if (aspc_step == aspc_step_reset) {
         ptr_mbx_local->ResetDipoleHistory();
+        aspc_num_hist = 0;
         aspc_step = 0;
     }
 
