@@ -113,6 +113,13 @@ System::System() {
     mbx_j_ = {};
     monomers_j_ = {};
     repdisp_j_ = {};
+
+    // Defaults for when MBX built w/o MPI
+    world_ = 0;
+    mpi_rank_ = 0;
+    proc_grid_x_ = 1;
+    proc_grid_y_ = 1;
+    proc_grid_z_ = 1;    
 }
 System::~System() {}
 
@@ -354,13 +361,18 @@ std::vector<int> System::GetFFTDimensionDispersion(int box_id) { return dispersi
 std::vector<int> System::GetFFTDimensionLennardJones(int box_id) { return lennardJonesE_.GetFFTDimension(box_id); }
 
 void System::CheckFFTDimension(std::vector<int> grid) {
-    // grid points evenly distributed across ranks in each dimension
 
+    if(grid.size() == 0) return;
+
+#if HAVE_MPI == 1
     if (!mpi_initialized_) {
         std::string text = std::string("MPI not initialized yet");
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
+#endif
 
+    // grid points evenly distributed across ranks in each dimension
+    
     if (grid.size() == 3) {
         size_t err = 0;
         if ((grid[0] / proc_grid_x_) * proc_grid_x_ != grid[0]) err += 1;
@@ -3050,12 +3062,6 @@ void System::SetMPI(MPI_Comm comm, int nx, int ny, int nz) {
     proc_grid_x_ = nx;
     proc_grid_y_ = ny;
     proc_grid_z_ = nz;
-#else
-    world_ = 0;
-    mpi_rank_ = 0;
-    proc_grid_x_ = 1;
-    proc_grid_y_ = 1;
-    proc_grid_z_ = 1;
 #endif
 }
 
