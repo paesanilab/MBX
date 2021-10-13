@@ -28,4 +28,4 @@ $(BINDIR)/.sentinel:
 	touch $@
 
 clean:
-	rm -rf sp
+	rm -rf example example_pbc
