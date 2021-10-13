@@ -2684,6 +2684,12 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc) {
         if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) inc = false;
     }
 
+    // check if na matches output from get_num_atoms_per_monomer()
+#ifdef _DEBUG
+    int _na = get_num_atoms_per_monomer(name);
+    if (na != _na) error->one(FLERR, "Atom count mismatch in get_include_monomer()");
+#endif
+
     return na;
 }
 
@@ -2691,6 +2697,10 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc) {
 ------------------------------------------------------------------------- */
 
 void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
+#ifdef _DEBUG
+    int na = n.size();
+#endif
+
     if (strcmp("h2o", name) == 0) {
         n.push_back("O");
         n.push_back("H");
@@ -2722,4 +2732,11 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
         n.push_back("H");
         n.push_back("H");
     }
+
+    // check if na matches output from get_num_atoms_per_monomer()
+#ifdef _DEBUG
+    na = n.size() - na;  // # of elements added
+    int _na = get_num_atoms_per_monomer(name);
+    if (na != _na) error->one(FLERR, "Atom count mismatch in add_monomer_atom_types()");
+#endif
 }

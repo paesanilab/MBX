@@ -871,6 +871,9 @@ void PairMBX::accumulate_f_full(bool include_ext) {
 
 /* ----------------------------------------------------------------------
    Helper functions for monomers
+
+   This helper function could be merged with FixMBX::get_num_atoms_per_monomer()
+   -- argument inc_e is only needed by PairMBX instance
 ------------------------------------------------------------------------- */
 
 int PairMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
@@ -901,10 +904,17 @@ int PairMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
     else
         error->one(FLERR, "Unsupported molecule type in MBX");
 
+#ifdef _DEBUG
+    int _na = fix_mbx->get_num_atoms_per_monomer(name);
+    if (na != _na) error->one(FLERR, "Atom count mismatch in get_include_monomer()");
+#endif
+
     return na;
 }
 
 /* ----------------------------------------------------------------------
+ This helper function could be merged with FixMBX::get_include_monomer()
+   -- arguments inc_m and inc_e are only needed by PairMBX instance
 ------------------------------------------------------------------------- */
 
 int PairMBX::get_include_monomer(char *name, int anchor, bool &inc_m, bool &inc_e) {
@@ -948,6 +958,13 @@ int PairMBX::get_include_monomer(char *name, int anchor, bool &inc_m, bool &inc_
         const int ii4 = atom->map(anchor + 4);
         if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) inc_m = false;
     }
+
+    // check if na matches output from get_num_atoms_per_monomer()
+#ifdef _DEBUG
+    bool _dummy = false;
+    int _na = get_num_atoms_per_monomer(name, _dummy);
+    if (na != _na) error->one(FLERR, "Atom count mismatch in get_include_monomer()");
+#endif
 
     return na;
 }
