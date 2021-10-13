@@ -406,8 +406,17 @@ void PairMBX::init_style() {
 
     irequest = neighbor->request(this, instance_me);
 
+    // find id of MBX fix; ensure only one is found
+
     fix_mbx = NULL;
-    int ifix = modify->find_fix_by_style("mbx");
+    int ifix = -1;
+    for (int i = 0; i < modify->nfix; ++i)
+        if (strcmp(modify->fix[i]->style, "mbx") == 0) {
+            if (ifix == -1)
+                ifix = i;
+            else
+                error->all(FLERR, "Only one MBX fix instance allowed to be active");
+        }
     if (ifix < 0) error->all(FLERR, "Fix MBX not found");
 
     fix_mbx = (FixMBX *)modify->fix[ifix];
