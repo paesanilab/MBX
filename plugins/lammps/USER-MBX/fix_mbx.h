@@ -152,6 +152,9 @@ class FixMBX : public Fix {
     int aspc_per_atom_size;
     double **aspc_dip_hist;
 
+    int aspc_step;
+    int aspc_step_reset;
+
     double **mbx_dip;
 
     // rank 0's copy of all atoms in simulation cell
