@@ -20,6 +20,7 @@ monomers['i'] = ['I']
 monomers['ar'] = ['Ar']
 monomers['he'] = ['He']
 monomers['h2'] = ['H','H']
+monomers['n2o5'] = ['O','N','N','O','O','O','O']
 
 #H2O
 monomers['h2o'] = ['O','H','H']

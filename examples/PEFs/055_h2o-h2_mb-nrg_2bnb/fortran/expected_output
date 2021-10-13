@@ -1,0 +1,14 @@
+ System initialized.
+ 
+forrtl: severe (174): SIGSEGV, segmentation fault occurred
+Image              PC                Routine            Line        Source             
+example            0000000003075D13  Unknown               Unknown  Unknown
+libpthread-2.17.s  00007F82C11115F0  Unknown               Unknown  Unknown
+example            00000000004A89FB  Unknown               Unknown  Unknown
+example            000000000041B5E5  Unknown               Unknown  Unknown
+example            0000000000419736  Unknown               Unknown  Unknown
+example            000000000040A764  Unknown               Unknown  Unknown
+example            00000000004097BD  Unknown               Unknown  Unknown
+example            00000000004088F2  Unknown               Unknown  Unknown
+libc-2.17.so       00007F82C0D56505  __libc_start_main     Unknown  Unknown
+example            00000000004087E9  Unknown               Unknown  Unknown

@@ -27,6 +27,7 @@ def get_system_info(xyz_file):
   monomers['he'] = ['He']
   monomers['h2'] = ['H','H']
   monomers['h2o'] = ['O','H','H']
+  monomers['n2o5'] = ['O','N','N','O','O','O','O']
 
   # Data that will be returned
   mon_id = []
