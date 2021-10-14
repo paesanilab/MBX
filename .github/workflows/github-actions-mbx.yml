@@ -23,6 +23,11 @@ jobs:
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
 
+      - name: install-dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y fftw3
+
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
