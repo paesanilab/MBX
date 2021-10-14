@@ -33,4 +33,6 @@ install(TARGETS ${t}
 endforeach()
 
 #add_subdirectory(unittests)
-add_subdirectory(unittests_v0.3.0a)
+if(${CMAKE_COMPILE_TESTS})
+    add_subdirectory(unittests_v0.3.0a)
+endif()
