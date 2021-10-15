@@ -16,7 +16,7 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-  compile-mbx:
+  compile-and-test-mbx:
     runs-on: ubuntu-latest
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
@@ -47,10 +47,6 @@ jobs:
           cd ../
       - run: echo "This job's status is ${{ job.status }}."
 
-  run-tests:
-    needs: compile-mbx
-    runs-on: ubuntu-latest
-    steps:
       - run: echo "Running unittests"
       - run: ls ${{ github.workspace }}
       - name: ctest
