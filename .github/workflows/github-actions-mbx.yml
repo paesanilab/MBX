@@ -54,6 +54,7 @@ jobs:
       - run: echo "Running unittests"
       - name: ctest
         run: |
+          ls ${{ github.workspace }}
           cd ${{ github.workspace }}/install/bin/unittests
           ctest
           
