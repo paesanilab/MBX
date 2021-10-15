@@ -31,7 +31,7 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo " The workflow is now ready to test your code on the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
 
       - name: run-cmake
         run: |
@@ -45,4 +45,15 @@ jobs:
           make -j 2 CXX=g++ CC=gcc
           make install
           cd ../
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+      - run: echo "This job's status is ${{ job.status }}."
+
+  run-tests:
+    needs: compile-mbx
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Running unittests"
+      - name: ctest
+        run: |
+          cd ${{ github.workspace }}/install/bin/unittests
+          ctest
+          
