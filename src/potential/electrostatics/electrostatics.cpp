@@ -623,9 +623,9 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
         for (size_t i = 0; i < nExtChg; i++) {
             sys_chg_all_[nsites_ + i] = external_charge_[i];
             chg_all_[nsites_ + i] = external_charge_[i];
-            islocal_all_[nmon_total_ + i] = external_islocal_[i];
-            islocal_atom_all_[nsites_ + i] = external_islocal_[i];
-            atom_tag_all_[nsites_ + i] = external_tag_[i];
+            islocal_all_[nmon_total_ + i] = external_islocal_.size() ? external_islocal_[i] : 1;
+            islocal_atom_all_[nsites_ + i] = external_islocal_.size() ? external_islocal_[i] : 1;
+            atom_tag_all_[nsites_ + i] = external_tag_.size() ? external_tag_[i] : 1;
         }
     }
 
