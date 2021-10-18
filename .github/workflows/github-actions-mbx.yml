@@ -38,8 +38,7 @@ jobs:
         run: |
           ls ${{ github.workspace }}
           rm -rf build install
-          cmake --preset=ci-coverage
-          cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=False -DCMAKE_COMPILE_TESTS=TRUE -DCMAKE_CXX_FLAGS=" -fPIC -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
+          cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=False -DCMAKE_COMPILE_TESTS=TRUE -DCMAKE_CXX_FLAGS=" -fPIC --coverage -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
 
       - name: run-make
         run: |
@@ -57,7 +56,10 @@ jobs:
           ctest --output-on-failure
 
       - name: Submit to codecov.io
-        uses: codecov/codecov-action@v2
-        with:
-          file: build/coverage.info
+        run: |
+          cd ${{ github.workspace }}
+          lcov --directory . --capture --output-file coverage.info # capture coverage info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+          lcov --list coverage.info #debug info
+          bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
           
