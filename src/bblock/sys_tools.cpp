@@ -703,7 +703,6 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         exc13.insert(std::make_pair(2, 4));
     }
 
-
     if (mon == "n2o5") {
         // 12 distances
         exc12.insert(std::make_pair(0, 1));
@@ -737,7 +736,6 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         exc13.insert(std::make_pair(1, 3));
         exc13.insert(std::make_pair(2, 3));
         // 14 distances
-
     }
 
     // =====>> BEGIN SECTION EXCLUDED <<=====
@@ -1441,8 +1439,8 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 2] = 13.09042957671318;   // N
             c6_lr[nv * natoms + fst_ind + 3] = 13.402239942963767;  // O
             c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
-            c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
-            c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
+            c6_lr[nv * natoms + fst_ind + 5] = 13.402239942963767;  // O
+            c6_lr[nv * natoms + fst_ind + 6] = 13.402239942963767;  // O
         }
         // END SECTION C6_LONG_RANGE
         // Water is the only monomer which C6 does not come from qchem.
