@@ -365,7 +365,7 @@ TEST_CASE("properties::GetMass") {
     atom_names.push_back("D");
     atom_masses.push_back(2.01410178);
     atom_names.push_back("N");
-    atom_masses.push_back(14.0);
+    atom_masses.push_back(14.0030740044);
     for (size_t i = 0; i < atom_masses.size(); i++) {
         std::string at = atom_names[i];
         SECTION(at) {
