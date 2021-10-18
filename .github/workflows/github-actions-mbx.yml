@@ -27,6 +27,7 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y fftw3-dev
+          sudo apt-get install lcov -y
 
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -37,6 +38,7 @@ jobs:
         run: |
           ls ${{ github.workspace }}
           rm -rf build install
+          cmake --preset=ci-coverage
           cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=False -DCMAKE_COMPILE_TESTS=TRUE -DCMAKE_CXX_FLAGS=" -fPIC -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
 
       - name: run-make
@@ -52,5 +54,10 @@ jobs:
       - name: ctest
         run: |
           cd ${{ github.workspace }}/install/bin/unittests
-          ctest
+          ctest --output-on-failure
+
+      - name: Submit to codecov.io
+        uses: codecov/codecov-action@v2
+        with:
+          file: build/coverage.info
           
