@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/math_tools.h"
 #include "setup_co2_2_h2o_2.h"
 #include "setup_monomer_mix.h"
+#include "setup_monomer_custom_json.h"
 #include "json/json.h"
 
 #include <vector>
@@ -84,6 +85,28 @@ TEST_CASE("systools::SetupMonomers") {
         // Run SetUpMonomers
         try {
             systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_out, empty_j);
+        } catch (CUException &e) {
+            std::cerr << e.what();
+        }
+
+        SECTION("Sites Vector") { REQUIRE(VectorsAreEqual(sites_out, n_sites_vector)); }
+
+        SECTION("Number of Atoms Vector") { REQUIRE(VectorsAreEqual(nat_out, n_atoms_vector)); }
+
+        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_out, first_index_realSites)); }
+    }
+
+    SECTION("Monomer from json") {
+        SETUP_MON_JSON
+
+        // Prepare variables for SetUpMonomers
+        std::vector<size_t> sites_out;
+        std::vector<size_t> nat_out;
+        std::vector<size_t> first_index_out;
+
+        // Run SetUpMonomers
+        try {
+            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_out, user_j);
         } catch (CUException &e) {
             std::cerr << e.what();
         }
