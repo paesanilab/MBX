@@ -1423,6 +1423,15 @@ class System {
     std::vector<size_t> first_index_;
 
     /**
+     * Vector that contains the first index of the first atom of the
+     * monomers in the atom list. As an example, first_index_[4]
+     * will be the position of the first atom of the 5th monomer
+     * in the atom list. This first index only accounts for
+     * real sites
+     */
+    std::vector<size_t> first_index_real_sites_;
+
+    /**
      * Vector that stores the dimers computed by the AddClusters functions.
      * The vector stores the two indeces of a dimer, one after the other one,
      * in the internal order of the system.

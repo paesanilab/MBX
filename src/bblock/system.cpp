@@ -1589,7 +1589,8 @@ void System::AddMonomerInfo() {
 
     // Adding the number of sites of each monomer and storing the first index
     std::vector<size_t> fi_at;
-    numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at, monomers_j_);
+    std::vector<size_t> fi_sites;
+    numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at, fi_sites, monomers_j_);
 
 #ifdef DEBUG
     std::cerr << "Finished SetUpMonomers.\n";
@@ -1685,6 +1686,7 @@ void System::AddMonomerInfo() {
     atom_tag_ = std::vector<int>(numsites_, 0);
 
     size_t count = 0;
+    size_t count_real = 0;
     first_index_.clear();
     std::vector<size_t> tmpsites;
     std::vector<size_t> tmpnats;
@@ -1703,8 +1705,11 @@ void System::AddMonomerInfo() {
         for (size_t j = 0; j < (sites_[k] - nat_[k]); ++j) atom_tag_[count + nat_[k] + j] = -atom_tag[fi_at[k] + j];
         // Adding the first index of sites
         first_index_.push_back(count);
+        // Adding the first index of real sites
+        first_index_real_sites_.push_back(count);
         // Update count
         count += sites_[k];
+        count_real += nat_[k];
         // Updating the sites and nat vectors
         tmpsites.push_back(sites_[k]);
         tmpnats.push_back(nat_[k]);
