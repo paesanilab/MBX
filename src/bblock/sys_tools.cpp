@@ -1382,10 +1382,10 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         // ==> PASTE YOUR CODE BELOW <==
     } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[nv * natoms + fst_ind] = 15.618415412582673;  // A
-            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
-            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
-            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
+            c6_lr[nv * natoms + fst_ind] = 15.618415412582673;     // A
+            c6_lr[nv * natoms + fst_ind + 1] = 6.328530635147467;  // B
+            c6_lr[nv * natoms + fst_ind + 2] = 6.328530635147467;  // B
+            c6_lr[nv * natoms + fst_ind + 3] = 6.328530635147467;  // B
         }
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1431,8 +1431,8 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         }
     } else if (mon_id == "h2") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[nv * natoms + fst_ind] = 6.740200293759822;  // A
-            c6_lr[nv * natoms + fst_ind] = 6.740200293759822;  // A
+            c6_lr[nv * natoms + fst_ind] = 6.740200293759822;      // A
+            c6_lr[nv * natoms + fst_ind + 1] = 6.740200293759822;  // A
         }
     } else if (mon_id == "n2o5") {
         for (size_t nv = 0; nv < n_mon; nv++) {

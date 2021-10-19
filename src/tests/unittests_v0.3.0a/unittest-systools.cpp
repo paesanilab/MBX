@@ -73,8 +73,8 @@ TEST_CASE("systools::SetupMonomers") {
 
         SECTION("Number of Atoms Vector") { REQUIRE(VectorsAreEqual(nat_out, n_atoms_vector)); }
 
-        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index)); }
-        SECTION("First Index Vector Real Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index_realSites)); }
+        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index_realSites)); }
+        SECTION("First Index Vector all Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index)); }
     }
 
     SECTION("General behavior monomer mix") {
@@ -98,8 +98,8 @@ TEST_CASE("systools::SetupMonomers") {
 
         SECTION("Number of Atoms Vector") { REQUIRE(VectorsAreEqual(nat_out, n_atoms_vector)); }
 
-        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index)); }
-        SECTION("First Index Vector Real Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index_realSites)); }
+        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index_realSites)); }
+        SECTION("First Index Vector all Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index)); }
     }
 
     SECTION("Monomer from json") {
@@ -123,8 +123,8 @@ TEST_CASE("systools::SetupMonomers") {
 
         SECTION("Number of Atoms Vector") { REQUIRE(VectorsAreEqual(nat_out, n_atoms_vector)); }
 
-        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index)); }
-        SECTION("First Index Vector Real Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index_realSites)); }
+        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index_realSites)); }
+        SECTION("First Index Vector all Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index)); }
     }
 
     SECTION("Assertions") {
