@@ -131,7 +131,7 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
 }
 
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
-                     std::vector<size_t> &fi_at, nlohmann::json mon_j) {
+                     std::vector<size_t> &fi_at, std::vector<size_t> &fi_sites, nlohmann::json mon_j) {
     // Make sure that mon is not empty
     if (mon.size() < 1) {
         std::string text = "Monomer vector cannot be empty.";
@@ -147,6 +147,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
     sites.clear();
     nat.clear();
     fi_at.clear();
+    fi_sites.clear();
 
     size_t count = 0;
     size_t ats = 0;
@@ -229,6 +230,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
         }
 
         fi_at.push_back(ats);
+        fi_sites.push_back(count);
         ats += nat[i];
         count += sites[i];
     }
