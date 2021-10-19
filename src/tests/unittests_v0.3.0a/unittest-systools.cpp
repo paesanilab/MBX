@@ -1619,26 +1619,50 @@ TEST_CASE("systools::SetVSites") {
 }
 
 TEST_CASE("systools::SetCharges") {
-    SETUP_MONMIX
-    nlohmann::json empty_j;
-    for (size_t i = 0; i < n_monomers; i++) {
-        std::string monname = monomer_names[i];
-        SECTION(monname) {
-            size_t n_mon = 1;
-            size_t nsites = n_sites_vector[i];
-            size_t fi = first_index[i];
-            std::vector<double> chg_der(27 * n_mon, 0.0);
-            std::vector<double> chg(n_sites, 0.0);
+    SECTION("Individual monomers") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> chg_der(27 * n_mon, 0.0);
+                std::vector<double> chg(n_sites, 0.0);
 
-            systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der, empty_j);
+                systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der, empty_j);
 
-            for (size_t k = 0; k < nsites; k++) {
-                REQUIRE(chg[k + fi] == Approx(charges[k + fi]).margin(TOL));
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(chg[k + fi] == Approx(charges[k + fi]).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Monomer from JSON") {
+        SETUP_MON_JSON
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> chg_der(27 * n_mon, 0.0);
+                std::vector<double> chg(n_sites, 0.0);
+
+                systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der, user_j);
+
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(chg[k + fi] == Approx(charges[k + fi]).margin(TOL));
+                }
             }
         }
     }
 
     SECTION("Multiple water molecules") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
         std::vector<double> xyz = {
             -4.4590985000e-03, -5.1342579600e-02, 1.5813800000e-05,  9.8613021140e-01,  -7.4573098400e-02,
             5.4324000000e-06,  -1.5974709230e-01, 8.9671808950e-01,  -1.6493200000e-05, 1.7375531156e-01,
@@ -1692,60 +1716,123 @@ TEST_CASE("systools::SetCharges") {
 }
 
 TEST_CASE("systools::SetPol") {
-    SETUP_MONMIX
-    nlohmann::json empty_j;
-    for (size_t i = 0; i < n_monomers; i++) {
-        std::string monname = monomer_names[i];
-        SECTION(monname) {
-            size_t n_mon = 1;
-            size_t nsites = n_sites_vector[i];
-            size_t fi = first_index[i];
-            std::vector<double> pol_out(n_sites, 0.0);
+    SECTION("Individual monomers") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> pol_out(n_sites, 0.0);
 
-            systools::SetPol(pol_out, monname, n_mon, nsites, fi, empty_j);
+                systools::SetPol(pol_out, monname, n_mon, nsites, fi, empty_j);
 
-            for (size_t k = 0; k < nsites; k++) {
-                REQUIRE(pol_out[k + fi] == Approx(pol[k + fi]).margin(TOL));
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(pol_out[k + fi] == Approx(pol[k + fi]).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Monomer from JSON") {
+        SETUP_MON_JSON
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> pol_out(n_sites, 0.0);
+
+                systools::SetPol(pol_out, monname, n_mon, nsites, fi, user_j);
+
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(pol_out[k + fi] == Approx(pol[k + fi]).margin(TOL));
+                }
             }
         }
     }
 }
 
 TEST_CASE("systools::SetPolfac") {
-    SETUP_MONMIX
-    nlohmann::json empty_j;
-    for (size_t i = 0; i < n_monomers; i++) {
-        std::string monname = monomer_names[i];
-        SECTION(monname) {
-            size_t n_mon = 1;
-            size_t nsites = n_sites_vector[i];
-            size_t fi = first_index[i];
-            std::vector<double> polfac_out(n_sites, 0.0);
+    SECTION("Individual monomers") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> polfac_out(n_sites, 0.0);
 
-            systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi, empty_j);
+                systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi, empty_j);
 
-            for (size_t k = 0; k < nsites; k++) {
-                REQUIRE(polfac_out[k + fi] == Approx(polfac[k + fi]).margin(TOL));
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(polfac_out[k + fi] == Approx(polfac[k + fi]).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Monomer from JSON") {
+        SETUP_MON_JSON
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> polfac_out(n_sites, 0.0);
+
+                systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi, user_j);
+
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(polfac_out[k + fi] == Approx(polfac[k + fi]).margin(TOL));
+                }
             }
         }
     }
 }
 
 TEST_CASE("systools::SetC6LongRange") {
-    SETUP_MONMIX
-    nlohmann::json empty_j;
-    for (size_t i = 0; i < n_monomers; i++) {
-        std::string monname = monomer_names[i];
-        SECTION(monname) {
-            size_t n_mon = 1;
-            size_t natoms = n_atoms_vector[i];
-            size_t fi = first_index_realSites[i];
-            std::vector<double> c6_out(n_atoms, 0.0);
+    SECTION("Individual monomers") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t natoms = n_atoms_vector[i];
+                size_t fi = first_index_realSites[i];
+                std::vector<double> c6_out(n_atoms, 0.0);
 
-            systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi, empty_j);
+                systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi, empty_j);
 
-            for (size_t k = 0; k < natoms; k++) {
-                REQUIRE(c6_out[k + fi] == Approx(C6_long_range[k + fi]).margin(TOL));
+                for (size_t k = 0; k < natoms; k++) {
+                    REQUIRE(c6_out[k + fi] == Approx(C6_long_range[k + fi]).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Monomer from JSON") {
+        SETUP_MON_JSON
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t natoms = n_atoms_vector[i];
+                size_t fi = first_index_realSites[i];
+                std::vector<double> c6_out(n_atoms, 0.0);
+
+                systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi, user_j);
+
+                for (size_t k = 0; k < natoms; k++) {
+                    REQUIRE(c6_out[k + fi] == Approx(C6_long_range[k + fi]).margin(TOL));
+                }
             }
         }
     }
