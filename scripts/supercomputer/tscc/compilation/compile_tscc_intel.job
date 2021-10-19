@@ -13,7 +13,7 @@
 
 export MBX_HOME=$HOME/software/MBX
 
-module load gsl openmpi_ib fftw
+module loadgnu intel gsl openmpi_ib fftw
 export PATH=$FFTWHOME/lib:$FFTWHOME/include:$PATH
 
 cd $MBX_HOME 

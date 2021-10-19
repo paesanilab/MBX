@@ -54,6 +54,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "kdtree/kdtree_utils.h"
 #include "helpme.h"
+#include "json/json.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -73,6 +74,17 @@ enum {
     ELE_GRAD_REAL,
     ELE_GRAD_PME,
     ELE_GRAD_FIN,
+
+    ELE_COMM_REVFOR,
+    ELE_COMM_REVSET,
+    ELE_COMM_REV,
+    ELE_COMM_FORSET,
+    ELE_COMM_FOR,
+    
+    ELE_PME_SETUP,
+    ELE_PME_PRC,
+    ELE_PME_PRD,
+    ELE_PME_PRE,
 
     ELE_NUM_TIMERS
 };
@@ -117,10 +129,12 @@ class Electrostatics {
                     const std::vector<double> &polfac, const std::vector<double> &pol,
                     const std::vector<double> &sys_xyz, const std::vector<std::string> &mon_id,
                     const std::vector<size_t> &sites, const std::vector<size_t> &first_ind,
-                    const std::vector<std::pair<std::string, size_t> > &mon_type_count,
-                    const std::vector<size_t> &islocal_, const bool do_grads = true, const double tolerance = 1E-16,
-                    const size_t maxit = 100, const std::string dip_method = "iter",
-                    const std::vector<double> &box = {});
+                    const std::vector<std::pair<std::string, size_t>> &mon_type_count,
+                    const std::vector<size_t> &islocal_, const std::vector<int> &sys_atom_tag_,
+                    const bool do_grads = true, const double tolerance = 1E-16, const size_t maxit = 100,
+                    const std::string dip_method = "iter", const std::vector<double> &box = {});
+
+    void SetJsonMonomers(nlohmann::json mon_j);
 
     void SetMPI(MPI_Comm world_, size_t proc_grid_x, size_t proc_grid_y, size_t proc_grid_z);
 
@@ -143,6 +157,37 @@ class Electrostatics {
      * recalculate the dipoles iteratively to get a new history.
      */
     void ResetAspcHistory();
+
+    /**
+     * @brief Get the number of ASPC dipole histories
+     *
+     * Return number of dipoles histories saved
+     */
+    double GetNumDipoleHistory() { return hist_num_aspc_; };
+
+    /**
+     * @brief Get the number of ASPC dipole histories
+     *
+     * Set number of dipoles histories to initially use
+     */
+    void SetNumDipoleHistory(size_t num_hist) { hist_num_aspc_ = num_hist; };
+
+    /**
+     * @brief Get the ASPC dipole history
+     *
+     * Return history of dipoles
+     * @param[in] indx of selected history to retrieve
+     */
+    std::vector<double> GetDipoleHistory(size_t indx);
+
+    /**
+     * @brief Set the ASPC dipole history
+     *
+     * Return history of dipoles
+     * @param[in] indx of selected history to set
+     * @param[in] mu_hist dipoles to initialize history
+     */
+    void SetDipoleHistory(size_t indx, std::vector<double> mu_hist);
 
     /**
      * @brief "Reinitializes" the electrostatics class.
@@ -211,6 +256,43 @@ class Electrostatics {
     void SetEwaldSplineOrder(int order);
 
     /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
+
+    /**
+     * @brief Sets the external charges, positions, and local/ghost.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     * @param[in] local/ghost of each one the the charges in chg
+     * @param[in] unique tag of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
+                                        std::vector<int> tag);
+
+    /**
+     * @brief Gets the external charges that are currently in the class
+     * @return External charges in the class
+     */
+    std::vector<double> GetExternalCharges();
+
+    /**
+     * @brief Gets the external charges XYZ that are currently in the class
+     * @return External charges XYZ in the class
+     */
+    std::vector<double> GetExternalChargesPositions();
+
+    /**
+     * @brief Gets the gradients on the external charge sites
+     * @return Vector of doubles with the external charge gradients
+     */
+    std::vector<double> GetExternalChargesGradients();
+
+    /**
      * @brief Returns permanent electrostatic energy.
      *
      * @return Permanent electrostatic energy. Undefined if energy has not yet been calculated
@@ -229,8 +311,165 @@ class Electrostatics {
      */
     double GetInducedElectrostaticEnergy();
 
+    /**
+     * @brief Returns timing section call counts.
+     *
+     * @return Array of call counts for timing statistics
+     */
     std::vector<size_t> GetInfoCounts();
+
+    /**
+     * @brief Returns timing section call times.
+     *
+     * @return Array of call times for timing statistics
+     */
     std::vector<double> GetInfoTimings();
+
+    /**
+     * @brief Returns FFT grid used by PME solver
+     *
+     * @return Array of three integers
+     */
+    std::vector<int> GetFFTDimension(int box_id = 0);
+
+    /**
+     * @brief Provides FFT grid used by PME solver
+     *
+     * @param[in] Array of three integers
+     */
+    void SetFFTDimension(std::vector<int> grid);
+
+    // Getters
+
+    /**
+     * @brief Gets the coordinates in system order
+     */
+    std::vector<double> GetSysXyz();
+
+    /**
+     * @brief Gets the charges in system order
+     */
+    std::vector<double> GetSysChg();
+
+    /**
+     * @brief Gets the polfacs in system order
+     */
+    std::vector<double> GetSysPolfacs();
+
+    /**
+     * @brief Gets the pols in system order
+     */
+    std::vector<double> GetSysPols();
+
+    /**
+     * @brief Gets the charge gradients in system order
+     */
+    std::vector<double> GetSysChgGrad();
+
+    /**
+     * @brief Gets the sites vecotr with the number of sites of each monomer
+     */
+    std::vector<size_t> GetSitesVector();
+
+    /**
+     * @brief Gets the vector with the monoemr ids
+     */
+    std::vector<std::string> GetMonIds();
+
+    /**
+     * @brief Gets the first index vector
+     */
+    std::vector<size_t> GetFirstIndex();
+
+    /**
+     * @brief Gets the types and number of monomers of each type
+     */
+    std::vector<std::pair<std::string, size_t>> GetMonTypeCount();
+
+    /**
+     * @brief Gets the islocal vector
+     */
+    std::vector<size_t> GetSysIsLocal();
+
+    /**
+     * @brief Gets the vector with the system atom tags
+     */
+    std::vector<int> GetSysAtomTag();
+
+    /**
+     * @brief Gets the varibale do_grads
+     */
+    bool GetDoGrads();
+
+    /**
+     * @brief Gets the dipole tolerance
+     */
+    double GetDipoleTolerance();
+
+    /**
+     * @brief Gets the maximum number of iterations allowed in the dipole convergence
+     */
+    size_t GetDipoleMaxIt();
+
+    /**
+     * @brief Gets the convergence method for the dipoles
+     */
+    std::string GetDipoleConvergenceMethod();
+
+    /**
+     * @brief Gets the box
+     */
+    std::vector<double> GetBox();
+
+    /**
+     * @brief Gets the box in A B C aplha beta gamma format
+     */
+    std::vector<double> GetBoxAbc();
+
+    /**
+     * @brief Gets the box inverse
+     */
+    std::vector<double> GetBoxInverse();
+
+    /**
+     * @brief Gets the internal xyz after reordering
+     */
+    std::vector<double> GetInternalXyz();
+
+    /**
+     * @brief Gets the chrages in internal order
+     */
+    std::vector<double> GetInternalChg();
+
+    /**
+     * @brief Gets the sqrt of the polarizability in internal order
+     */
+    std::vector<double> GetInternalPolSqrt();
+
+    /**
+     * @brief Gets the internal islocal_atom
+     */
+    std::vector<size_t> GetInternalIsLocalAtom();
+
+    /**
+     * @brief Gets the internal islocal_atom_xyz()
+     */
+    std::vector<size_t> GetInternalIsLocalAtomXyz();
+
+    /**
+     * @brief Gets the internal atom tag
+     */
+    std::vector<int> GetInternalAtomTag();
+
+    /**
+     * @brief Gets the real space cutoff
+     */
+    double GetCutoff();
+
+    /**
+     * @brief Gets the real space cutoff
+     */
+    nlohmann::json GetJsonMonomers();
 
     /**
      * Sets global box dimensions for PME solver; does not alter original PBC settings
@@ -238,6 +477,7 @@ class Electrostatics {
      * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
      */
     void SetBoxPMElocal(std::vector<double> box);
+    void SetPeriodicity(bool periodic);
 
    private:
     void CalculatePermanentElecField(bool use_ghost = 0);
@@ -250,18 +490,25 @@ class Electrostatics {
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
     void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesAspc();
+    void CalculateDipolesAspcMPIlocal(bool use_ghost = 0);
     void SetAspcParameters(size_t k);
     void CalculateDipoles();
     void CalculateDipolesMPIlocal(bool use_ghost = 0);
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
-    void CalculateGradients(std::vector<double> &grad);
+    void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
-    void reverse_forward_comm(std::vector<double> &in_v);
-    void reverse_comm(std::vector<double> &in_v);
-
     void ReorderData();
+
+    void reverse_forward_comm(std::vector<double> &in_v);
+    void reverse_forward_comm_ext(std::vector<double> &in_v);
+    void reverse_comm_setup(std::vector<double> &in_v);
+    void reverse_comm(std::vector<double> &in_v);
+    void forward_comm_setup(std::vector<double> &in_v);
+    void forward_comm(std::vector<double> &in_v);
+
+    void setup_comm();
 
     // PME solver
     // helpme::PMEInstance<double> pme_solver_;
@@ -287,6 +534,19 @@ class Electrostatics {
     std::vector<size_t> islocal_atom_;
     // local/ghost descriptor for xyz of atoms
     std::vector<size_t> islocal_atom_xyz_;
+    // Atom tags for real and virtual sites, unordered
+    std::vector<int> sys_atom_tag_;
+    // Atom tags for real and virtual sites, ordered
+    std::vector<int> atom_tag_;
+    // Nearest Neighbor Look-up table: first neighbor, num neighbors, neighbor list
+    std::vector<size_t> nn_first_neigh;
+    std::vector<size_t> nn_num_neighs;
+    std::vector<size_t> nn_neighs;
+    bool nn_first;
+    std::vector<size_t> nn_first_neigh_ext;
+    std::vector<size_t> nn_num_neighs_ext;
+    std::vector<size_t> nn_neighs_ext;
+    bool nn_first_ext;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
@@ -295,7 +555,7 @@ class Electrostatics {
     std::vector<size_t> first_ind_;
     // Vector that contains all different monomer types and the number of
     // monomers of each type.
-    std::vector<std::pair<std::string, size_t> > mon_type_count_;
+    std::vector<std::pair<std::string, size_t>> mon_type_count_;
     // Tolerance in the iterative calculation of the dipoles
     // Tolerance refers to the maximum squared difference overall the dipoles
     double tolerance_;
@@ -369,6 +629,7 @@ class Electrostatics {
     std::vector<double> box_inverse_;
     // box in ABCabc format
     std::vector<double> box_ABCabc_;
+    std::vector<double> box_ABCabc_PMElocal_;
     // box of the domain-decomposed system
     std::vector<double> box_PMElocal_;
     std::vector<double> box_inverse_PMElocal_;
@@ -400,11 +661,97 @@ class Electrostatics {
     size_t proc_grid_x_;
     size_t proc_grid_y_;
     size_t proc_grid_z_;
+    // periodicity of simulation cell
+    bool simcell_periodic_;
 
     bool first;
 
     std::vector<size_t> mbxt_ele_count_;
     std::vector<double> mbxt_ele_time_;
+    // User-specified FFT grid
+    std::vector<int> user_fft_grid_;
+
+    size_t nncomm_nswap;
+    std::vector<int> nncomm_sendproc;
+    std::vector<int> nncomm_recvproc;
+    std::vector<int> nncomm_dim;
+    std::vector<int> nncomm_dir;
+    std::vector<int> nncomm_send;
+
+    std::vector<double> nncomm_boxlo;
+    std::vector<double> nncomm_boxhi;
+
+    std::vector<double> nncomm_cutlo;
+    std::vector<double> nncomm_cuthi;
+
+    std::vector<int> nncomm_maxneed;
+
+    int nncomm_max_send_size;
+    int nncomm_max_recv_size;
+
+    std::vector<int> nncomm_buf_send_i;
+    std::vector<double> nncomm_buf_send_d;
+
+    std::vector<int> nncomm_buf_recv_i;
+    std::vector<double> nncomm_buf_recv_d;
+
+    std::vector<std::vector<int>> nncomm_rev_sendlist;
+    std::vector<std::vector<int>> nncomm_rev_recvlist;
+
+    std::vector<std::vector<int>> nncomm_for_sendlist;
+    std::vector<std::vector<int>> nncomm_for_recvlist;
+
+    nlohmann::json mon_j_;
+
+    /*
+     * External charges treated as point charges without smearing
+     */
+    std::vector<double> external_charge_;
+
+    /*
+     * External charge positions
+     */
+    std::vector<double> external_charge_xyz_;
+
+    /*
+     * External charge electrostatic gradients
+     */
+    std::vector<double> external_charge_grads_;
+
+    /*
+     * External charges local/ghost
+     */
+    std::vector<size_t> external_islocal_;
+
+    /*
+     * External charges tags
+     */
+    std::vector<int> external_tag_;
+
+    std::vector<double> Efq_all_;
+    std::vector<double> xyz_all_;
+    std::vector<double> phi_all_;
+    std::vector<double> chg_all_;
+    std::vector<double> polfac_all_;
+    std::vector<size_t> sites_all_;
+    std::vector<std::string> mon_id_all_;
+    std::vector<size_t> islocal_all_;
+    std::vector<size_t> islocal_atom_all_;  // why need this? because of reordering?
+    std::vector<int> atom_tag_all_;
+    std::vector<double> sys_xyz_all_;
+    std::vector<double> sys_chg_all_;
+    size_t nsites_all_;
+    std::vector<double> rec_phi_and_field_all_;
+
+    std::vector<double> mu_all_;
+    std::vector<double> sys_mu_all_;
+    std::vector<double> sys_Efq_all_;
+    std::vector<double> sys_Efd_all_;
+    std::vector<double> sys_phi_all_;
+    std::vector<double> Efd_all_;
+    std::vector<double> sys_grad_all_;
+
+    std::vector<std::pair<std::string, size_t>> mon_type_count_all_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

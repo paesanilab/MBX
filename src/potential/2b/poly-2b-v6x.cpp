@@ -14029,6 +14029,30 @@ std::vector<double> poly_2b_v6x::eval(const size_t nd, const double* a, const do
 
         energy[nv] = t4988 + t7682;
     }
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 1153; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x) [vectorizable order!]:\n";
+    for (size_t j = 0; j < 31 * nd; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g) [vectorizable order!]:\n";
+    for (size_t j = 0; j < 31 * nd; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output energies:\n";
+    for (size_t j = 0; j < energy.size(); j++) {
+        std::cerr << energy[j] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
     return energy;
 }
 

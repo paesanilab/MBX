@@ -344,6 +344,34 @@ static double c5z[245];
 namespace ps {
 
 std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vector<double>* virial) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntered " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates (rr) for " << nw << " water molecules:\n";
+    for (size_t i = 0; i < nw; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << rr[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    if (dr != 0) {
+        std::cerr << "Input gradients (dr) for " << nw << " water molecules:\n";
+        for (size_t i = 0; i < nw; i++) {
+            for (size_t j = 0; j < 9; j++) {
+                std::cerr << dr[9 * i + j] << " , ";
+            }
+            std::cerr << std::endl;
+        }
+    }
+    if (virial != 0) {
+        std::cerr << "Input virial:\n";
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << (*virial)[j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+#endif
+
     // Declare vectors with the distances, and grads
     double ROH1[3 * nw], ROH2[3 * nw], RHH[3 * nw];
     double dROH1[nw], dROH2[nw], dRHH[nw];
@@ -582,130 +610,62 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vecto
     std::vector<double> tot_e(nw);
     std::copy(e1, e1 + nw, tot_e.begin());
 
+#ifdef DEBUG
+    std::cerr << "Exiting " << __func__ << " in " << __FILE__ << std::endl;
+    if (dr != 0) {
+        std::cerr << "Output gradients (dr) for " << nw << " water molecules:\n";
+        for (size_t i = 0; i < nw; i++) {
+            for (size_t j = 0; j < 9; j++) {
+                std::cerr << dr[9 * i + j] << " , ";
+            }
+            std::cerr << std::endl;
+        }
+    }
+    std::cerr << "Output energies for " << nw << " water molecules:\n";
+    for (size_t j = 0; j < nw; j++) {
+        std::cerr << tot_e[j] << " , ";
+    }
+    std::cerr << std::endl;
+    if (virial != 0) {
+        std::cerr << "Output virial:\n";
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << (*virial)[j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+#endif
+
     return tot_e;
 }
 
-// double pot_nasa(const double* RESTRICT rr, double* RESTRICT dr)
-//{
-//    double ROH1[3], ROH2[3], RHH[3], dROH1(0), dROH2(0), dRHH(0);
-//
-//    for (size_t i = 0; i < 3; ++i) {
-//        ROH1[i] = rr[3 + i] - rr[i]; // H1 - O
-//        ROH2[i] = rr[6 + i] - rr[i]; // H2 - O
-//        RHH[i] = rr[3 + i] - rr[6 + i]; // H1 - H2
-//
-//        dROH1 += ROH1[i]*ROH1[i];
-//        dROH2 += ROH2[i]*ROH2[i];
-//        dRHH += RHH[i]*RHH[i];
-//    }
-//
-//    dROH1 = std::sqrt(dROH1);
-//    dROH2 = std::sqrt(dROH2);
-//    dRHH = std::sqrt(dRHH);
-//
-//    const double costh =
-//        (ROH1[0]*ROH2[0] + ROH1[1]*ROH2[1] + ROH1[2]*ROH2[2])/(dROH1*dROH2);
-//
-//    if (!c5z_ready) {
-//        for (size_t i = 0; i < 245; ++i)
-//            c5z[i] = f5z*c5zA[i] + fbasis*cbasis[i]
-//                   + fcore*ccore[i] + frest*crest[i];
-//        c5z_ready = true;
-//    }
-//
-//    const double deoh = f5z*deohA;
-//    const double phh1 = f5z*phh1A*std::exp(phh2);
-//
-//    const double costhe = -.24780227221366464506;
-//
-//    const double exp1 = std::exp(-alphaoh*(dROH1 - roh));
-//    const double exp2 = std::exp(-alphaoh*(dROH2 - roh));
-//
-//    const double Va = deoh*(exp1*(exp1 - 2.0) + exp2*(exp2 - 2.0));
-//    const double Vb = phh1*std::exp(-phh2*dRHH);
-//
-//    const double dVa1= 2.0*alphaoh*deoh*exp1*(1.0 - exp1)/dROH1;
-//    const double dVa2= 2.0*alphaoh*deoh*exp2*(1.0 - exp2)/dROH2;
-//    const double dVb = -phh2*Vb/dRHH;
-//
-//    const double x1 = (dROH1 - reoh)/reoh;
-//    const double x2 = (dROH2 - reoh)/reoh;
-//    const double x3 = costh - costhe;
-//
-//    double fmat[3][16];
-//
-//    for (size_t i = 0; i < 3; ++i) {
-//        fmat[i][0] = 0.0;
-//        fmat[i][1] = 1.0;
-//    }
-//
-//    for (size_t j = 2; j < 16; ++j) {
-//        fmat[0][j] = fmat[0][j - 1]*x1;
-//        fmat[1][j] = fmat[1][j - 1]*x2;
-//        fmat[2][j] = fmat[2][j - 1]*x3;
-//    }
-//
-//    const double efac = std::exp(-b1*(std::pow((dROH1 - reoh), 2)
-//                                    + std::pow((dROH2 - reoh), 2)));
-//
-//    double sum0(0), sum1(0), sum2(0), sum3(0);
-//
-//    for (size_t j = 1; j < 245; ++j) {
-//        const size_t inI = idx1[j];
-//        const size_t inJ = idx2[j];
-//        const size_t inK = idx3[j];
-//
-//        sum0 += c5z[j]*(fmat[0][inI]*fmat[1][inJ]
-//                      + fmat[0][inJ]*fmat[1][inI])*fmat[2][inK];
-//
-//        sum1 += c5z[j]*((inI - 1)*fmat[0][inI - 1]*fmat[1][inJ]
-//                      + (inJ - 1)*fmat[0][inJ - 1]*fmat[1][inI])*fmat[2][inK];
-//
-//        sum2 += c5z[j]*((inJ - 1)*fmat[0][inI]*fmat[1][inJ - 1]
-//                      + (inI - 1)*fmat[0][inJ]*fmat[1][inI - 1])*fmat[2][inK];
-//
-//        sum3 += c5z[j]*(fmat[0][inI]*fmat[1][inJ] + fmat[0][inJ]*fmat[1][inI])
-//                      *(inK - 1)*fmat[2][inK - 1];
-//    }
-//
-//    // energy
-//    const double Vc = 2*c5z[0] + efac*sum0;
-//    double e1 = Va + Vb + Vc;
-//
-//    e1 += 0.44739574026257; // correction
-//    e1 *= constants::cm1_kcalmol; // cm-1 --> Kcal/mol
-//
-//    if (dr) {
-//        // derivatives
-//
-//        const double dVcdr1 =
-//            (-2*b1*efac*(dROH1 - reoh)*sum0 + efac*sum1/reoh)/dROH1;
-//
-//        const double dVcdr2 =
-//            (-2*b1*efac*(dROH2 - reoh)*sum0 + efac*sum2/reoh)/dROH2;
-//
-//        const double dVcdcth = efac*sum3;
-//
-//        for (size_t i = 0; i < 3; ++i) {
-//            // H1
-//            dr[3 + i] = dVa1*ROH1[i] + dVb*RHH[i] + dVcdr1*ROH1[i]
-//            + dVcdcth*(ROH2[i]/(dROH1*dROH2) - costh*ROH1[i]/(dROH1*dROH1));
-//            // H2
-//            dr[6 + i] = dVa2*ROH2[i] - dVb*RHH[i] + dVcdr2*ROH2[i]
-//            + dVcdcth*(ROH1[i]/(dROH1*dROH2) - costh*ROH2[i]/(dROH2*dROH2));
-//            // O
-//            dr[0 + i] = -(dr[3 + i] + dr[6 + i]);
-//        }
-//
-//        for (size_t i = 0; i < 9; ++i)
-//            dr[i] *= constants::cm1_kcalmol; // cm-1 --> Kcal/mol
-//    } // dr
-//
-//    return e1;
-//}
-//
 void dms_nasa(const double& RESTRICT dms_param1, const double& RESTRICT dms_param2, const double& RESTRICT dms_param3,
               const double* RESTRICT rr, double* RESTRICT q3, double* RESTRICT dq3, std::vector<double>* aux_data) {
+#ifdef DEBUG
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates (rr):\n";
+    for (size_t j = 0; j < 9; j++) {
+        std::cerr << rr[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input charges (q3):\n";
+    for (size_t j = 0; j < 3; j++) {
+        std::cerr << q3[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input charge_gradients (dq3):\n";
+    for (size_t j = 0; j < 27; j++) {
+        std::cerr << dq3[j] << " , ";
+    }
+    std::cerr << std::endl;
+    if (aux_data != 0) {
+        std::cerr << "Input virial (aux_data):\n";
+        for (size_t j = 0; j < (*aux_data).size(); j++) {
+            std::cerr << aux_data->at(j) << " , ";
+        }
+        std::cerr << std::endl;
+    }
+#endif
+
     const double ath0 = 1.82400520401572996557;
     const double costhe = -0.24780227221366464506;
     bool ttm3 = false;  // This is not used I think, but just for safety...
@@ -815,41 +775,6 @@ void dms_nasa(const double& RESTRICT dms_param1, const double& RESTRICT dms_para
     dp2dr1 /= xx;
     dp2dr2 /= xx;
 
-    //    if (ttm3) {
-    //
-    //        //---------------------------------------------------------------------
-    //        //........ Modification of the gas-phase dipole moment surface.........
-    //        //---------------------------------------------------------------------
-    //
-    //        double AxB[3];
-    //
-    //        AxB[0] = ROH1[1]*ROH2[2] - ROH1[2]*ROH2[1];
-    //        AxB[1] =-ROH1[0]*ROH2[2] + ROH1[2]*ROH2[0];
-    //        AxB[2] = ROH1[0]*ROH2[1] - ROH1[1]*ROH2[0];
-    //
-    //        double sum0(0);
-    //        for (size_t i = 0; i < 3; ++i)
-    //            sum0 += std::pow((AxB[i]), 2);
-    //
-    //        const double dAxB = std::sqrt(sum0);
-    //
-    //        const double sinth = dAxB/(dROH1*dROH2);
-    //        const double ang = std::atan2(sinth, costh);
-    //
-    //        p1 = dms_param1*(dROH1 - dms_param2) + dms_param3*(ang - ath0);
-    //        p2 = dms_param1*(dROH2 - dms_param2) + dms_param3*(ang - ath0);
-    //
-    //        q3[0] = q3[0] - (p1 + p2);
-    //        q3[1] = q3[1] + p1;
-    //        q3[2] = q3[2] + p2;
-    //
-    //        dp1dr1 += dms_param1;
-    //        dp2dr2 += dms_param1;
-    //        dp1dcabc -= dms_param3/sinth;
-    //        dp2dcabc -= dms_param3/sinth;
-    //
-    //    } // ttm3
-
     if (dq3 == 0) return;
 
     if (aux_data != 0) {
@@ -920,12 +845,25 @@ void dms_nasa(const double& RESTRICT dms_param1, const double& RESTRICT dms_para
     GRADQ(2, 2, 1) = -(GRADQ(2, 0, 1) + GRADQ(2, 1, 1));
     GRADQ(2, 2, 2) = -(GRADQ(2, 0, 2) + GRADQ(2, 1, 2));
 
-#if 0
-    for (size_t i(0); i < 3; ++i)
-        for (size_t j(0); j < 3; ++j)
-            for (size_t k(0); k < 3; ++k)
-                std::cout << i << ' ' << j << ' ' << k << ' '
-                          << GRADQ(i, j, k) << std::endl;
+#ifdef DEBUG
+    std::cerr << "Exiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Output charges (q3):\n";
+    for (size_t j = 0; j < 9; j++) {
+        std::cerr << q3[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output charge_gradients (dq3):\n";
+    for (size_t j = 0; j < 27; j++) {
+        std::cerr << dq3[j] << " , ";
+    }
+    std::cerr << std::endl;
+    if (aux_data != 0) {
+        std::cerr << "Output virial (aux_data):\n";
+        for (size_t j = 0; j < aux_data->size(); j++) {
+            std::cerr << aux_data->at(j) << " , ";
+        }
+        std::cerr << std::endl;
+    }
 #endif
 }
 

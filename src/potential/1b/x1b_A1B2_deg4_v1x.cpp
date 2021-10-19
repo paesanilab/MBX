@@ -1,3 +1,37 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "x1b_A1B2_deg4_v1x.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -22,34 +56,6 @@ void g_intra(const double& g, const double& k, const double& r0, const double* a
     const double dsq = dx[0] * dx[0] + dx[1] * dx[1] + dx[2] * dx[2];
     const double d = std::sqrt(dsq);
 
-    const double gg = -k * g * std::exp(-k * (d - r0)) / d;
-
-    for (int i = 0; i < 3; ++i) {
-        g1[i] += gg * dx[i];
-        g2[i] -= gg * dx[i];
-    }
-}
-
-//----------------------------------------------------------------------------//
-
-double v_main(const double& k, const double& r0, const double* a1, const double* a2) {
-    const double dx[3] = {a1[0] - a2[0], a1[1] - a2[1], a1[2] - a2[2]};
-    const double dsq = dx[0] * dx[0] + dx[1] * dx[1] + dx[2] * dx[2];
-    const double d = std::sqrt(dsq);
-
-    //    return std::exp(-k*(d - r0))*d;
-    return std::exp(-k * (d - r0));
-}
-
-//----------------------------------------------------------------------------//
-
-void g_main(const double& g, const double& k, const double& r0, const double* a1, const double* a2, double* g1,
-            double* g2) {
-    const double dx[3] = {a1[0] - a2[0], a1[1] - a2[1], a1[2] - a2[2]};
-    const double dsq = dx[0] * dx[0] + dx[1] * dx[1] + dx[2] * dx[2];
-    const double d = std::sqrt(dsq);
-
-    //    const double gg = g*(1.0/d - k)*std::exp(-k*(d - r0));
     const double gg = -k * g * std::exp(-k * (d - r0)) / d;
 
     for (int i = 0; i < 3; ++i) {
@@ -101,12 +107,53 @@ std::vector<double> x1b_A1B2_v1x::eval(const double* xyz, const size_t nmon) con
         energies[j] = polynomial::eval(coefficients.data(), x, g);
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates for " << nmon << " monomers:\n";
+    for (size_t i = 0; i < nmon; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << xyz[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output energies for " << nmon << " monomers:\n";
+    for (size_t i = 0; i < nmon; i++) {
+        std::cerr << energies[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     return energies;
 }
 
 //----------------------------------------------------------------------------//
 std::vector<double> x1b_A1B2_v1x::eval(const double* xyz, double* grad, const size_t nmon,
                                        std::vector<double>* virial) const {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates for " << nmon << " monomers:\n";
+    for (size_t i = 0; i < nmon; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << xyz[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input gradients for " << nmon << " monomers:\n";
+    for (size_t i = 0; i < nmon; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << grad[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input virial:\n";
+    for (size_t i = 0; i < 9; i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
     std::vector<double> energies(nmon, 0.0);
 
     for (size_t j = 0; j < nmon; j++) {
@@ -148,6 +195,28 @@ std::vector<double> x1b_A1B2_v1x::eval(const double* xyz, double* grad, const si
             (*virial)[7] = (*virial)[5];
         }
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Output energies for " << nmon << " monomers:\n";
+    for (size_t i = 0; i < nmon; i++) {
+        std::cerr << energies[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output gradients for " << nmon << " monomers:\n";
+    for (size_t i = 0; i < nmon; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << grad[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output virial:\n";
+    for (size_t i = 0; i < 9; i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 
     return energies;
 }

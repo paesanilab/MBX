@@ -1,8 +1,46 @@
+/******************************************************************************
+Copyright 2019 The Regents of the University of California.
+All Rights Reserved.
+
+Permission to copy, modify and distribute any part of this Software for
+educational, research and non-profit purposes, without fee, and without
+a written agreement is hereby granted, provided that the above copyright
+notice, this paragraph and the following three paragraphs appear in all
+copies.
+
+Those desiring to incorporate this Software into commercial products or
+use for commercial purposes should contact the:
+Office of Innovation & Commercialization
+University of California, San Diego
+9500 Gilman Drive, Mail Code 0910
+La Jolla, CA 92093-0910
+Ph: (858) 534-5815
+FAX: (858) 534-7345
+E-MAIL: invent@ucsd.edu
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE UNIVERSITY
+OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+THE SOFTWARE PROVIDED HEREIN IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS. THE UNIVERSITY OF CALIFORNIA MAKES NO
+REPRESENTATIONS AND EXTENDS NO WARRANTIES OF ANY KIND, EITHER IMPLIED OR
+EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
+SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
+******************************************************************************/
+
 #include "poly-3b-h2o-ion-v1x_deg4_filtered.h"
 
 namespace h2o_ion {
 
 double poly_3b_h2o_ion_v1x_deg4_filtered::eval(const double a[1016], const double x[21], double g[21]) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+#endif
     const double t1 = a[128];
     const double t4 = x[20];
     const double t2 = t4 * t1;
@@ -8012,7 +8050,29 @@ double poly_3b_h2o_ion_v1x_deg4_filtered::eval(const double a[1016], const doubl
     g[18] = t8825;
     g[19] = t10774;
     g[20] = t10761;
-    return t5786;
+    double e = t5786;
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(20);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input linear constants (a):\n";
+    for (size_t j = 0; j < 1016; j++) {
+        std::cerr << a[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Input polynomial variables (x):\n";
+    for (size_t j = 0; j < 21; j++) {
+        std::cerr << x[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial gradients (g):\n";
+    for (size_t j = 0; j < 21; j++) {
+        std::cerr << g[j] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Output polynomial energy: " << e << std::endl;
+#endif
+
+    return e;
 }
 
 }  // namespace h2o_ion

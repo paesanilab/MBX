@@ -72,7 +72,7 @@ namespace tools {
  * @param[in] to_angstrom Conversion factor to convert from the units to angstrom
  */
 void WriteXYZ(std::ofstream &off, std::vector<std::string> &atom_names, std::vector<double> &coords,
-              std::vector<double> &boxes, bool write_box = false, double to_angstrom = 1.0);
+              std::vector<double> &boxes, std::string comment, bool write_box = false, double to_angstrom = 1.0);
 
 }  // namespace tools
 

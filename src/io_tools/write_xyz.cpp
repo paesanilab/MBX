@@ -41,7 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace tools {
 void WriteXYZ(std::ofstream &off, std::vector<std::string> &atom_names, std::vector<double> &coords,
-              std::vector<double> &boxes, bool write_box, double to_angstrom) {
+              std::vector<double> &boxes, std::string comment, bool write_box, double to_angstrom) {
     off << atom_names.size() << std::endl;
     if (write_box) {
         if (boxes.size() != 9) {
@@ -53,7 +53,7 @@ void WriteXYZ(std::ofstream &off, std::vector<std::string> &atom_names, std::vec
             off << std::endl;
         }
     } else {
-        off << "0.0\n";
+        off << comment << "\n";
     }
 
     for (size_t i = 0; i < atom_names.size(); i++) {
