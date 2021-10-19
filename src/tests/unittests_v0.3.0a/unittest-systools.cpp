@@ -1327,8 +1327,8 @@ TEST_CASE("systools::GetAcc") {
     double aCC = 0.4;
     double aCC_big = 1.0E24;
 
-    REQUIRE(systools::GetAcc("dp1") == Approx(aCC_big).margin(TOL))
-    REQUIRE(systools::GetAcc("other") == Approx(aCC).margin(TOL))
+    REQUIRE(systools::GetAcc("dp1") == Approx(aCC_big).margin(TOL));
+    REQUIRE(systools::GetAcc("other") == Approx(aCC).margin(TOL));
 }
 
 TEST_CASE("systools::GetAdd") {
