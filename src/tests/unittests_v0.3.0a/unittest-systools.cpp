@@ -1023,6 +1023,90 @@ TEST_CASE("systools::AddClusters") {
                     REQUIRE(trimers.size() == expected_number_of_trimers * 3);
                 }
             }
+
+            // FIXME
+            // SECTION("Using ghost monomers") {
+            //    SECTION("Cutoff short, no dimers or trimers") {
+            //        size_t n_max = 3;
+            //        double cutoff = 0.5 * length;
+            //        size_t istart = 0;
+            //        size_t iend = nmon;
+            //        bool use_pbc = box.size();
+            //        std::vector<size_t> dimers;
+            //        std::vector<size_t> trimers;
+            //        bool use_ghost = true;
+
+            //        systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
+            //                              dimers, trimers, use_ghost);
+            //        REQUIRE(dimers.size() == 0);
+            //        REQUIRE(trimers.size() == 0);
+            //    }
+
+            //    SECTION("Cutoff long, all possible dimers and trimers") {
+            //        size_t n_max = 3;
+            //        double cutoff = 10 * length;
+            //        size_t istart = 0;
+            //        size_t iend = nmon;
+            //        bool use_pbc = box.size();
+            //        std::vector<size_t> dimers;
+            //        std::vector<size_t> trimers;
+            //        bool use_ghost = true;
+
+            //        systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
+            //                              dimers, trimers, use_ghost);
+            //        REQUIRE(dimers.size() ==
+            //                nmon * (nmon - 1));  // Combinations of nmon elements in groups of 2 n!/(n-2)!/2! * 2
+            //        REQUIRE(trimers.size() == nmon * (nmon - 1) * (nmon - 2) /
+            //                                      2);  // Combinations of nmon elements in groups of 3 n!/(n-3)!/3! *
+            //                                      2
+            //    }
+
+            //    SECTION("Cutoff to get all the dimers and trimers below 1.1") {
+            //        size_t n_max = 3;
+            //        double cutoff = 1.01 * length;
+            //        size_t istart = 0;
+            //        size_t iend = nmon;
+            //        bool use_pbc = box.size();
+            //        std::vector<size_t> dimers;
+            //        std::vector<size_t> trimers;
+            //        bool use_ghost = true;
+
+            //        size_t expected_number_of_dimers = 0;
+            //        for (size_t i = 0; i < nmon - 1; i++) {
+            //            for (size_t j = i + 1; j < nmon; j++) {
+            //                double s = 0.0;
+            //                for (size_t k = 0; k < 3; k++) {
+            //                    s += fabs(xyz[3 * fi[i] + k] - xyz[3 * fi[j] + k]);
+            //                }
+            //                if (s < cutoff) expected_number_of_dimers++;
+            //            }
+            //        }
+
+            //        size_t expected_number_of_trimers = 0;
+            //        for (size_t i = 0; i < nmon - 2; i++) {
+            //            for (size_t j = i + 1; j < nmon - 1; j++) {
+            //                for (size_t k = j + 1; k < nmon; k++) {
+            //                    double sij = 0.0;
+            //                    double sik = 0.0;
+            //                    double sjk = 0.0;
+            //                    for (size_t l = 0; l < 3; l++) {
+            //                        sij += fabs(xyz[3 * fi[i] + l] - xyz[3 * fi[j] + l]);
+            //                        sik += fabs(xyz[3 * fi[i] + l] - xyz[3 * fi[k] + l]);
+            //                        sjk += fabs(xyz[3 * fi[j] + l] - xyz[3 * fi[k] + l]);
+            //                    }
+            //                    if ((sij < cutoff && sik < cutoff) || (sij < cutoff && sjk < cutoff) ||
+            //                        (sik < cutoff && sjk < cutoff))
+            //                        expected_number_of_trimers++;
+            //                }
+            //            }
+            //        }
+
+            //        systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
+            //                              dimers, trimers, use_ghost);
+            //        REQUIRE(dimers.size() == expected_number_of_dimers * 2);
+            //        REQUIRE(trimers.size() == expected_number_of_trimers * 3);
+            //    }
+            //}
         }
     }
 }
@@ -1121,6 +1205,106 @@ TEST_CASE("systools::GetExcluded") {
         REQUIRE(exc13 == exc13_expected);
         REQUIRE(exc14 == exc14_expected);
     }
+
+    SECTION("n2o5") {
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "n2o5";
+
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+        exc12_expected.insert(std::make_pair(1, 3));
+        exc12_expected.insert(std::make_pair(2, 6));
+        exc12_expected.insert(std::make_pair(1, 4));
+        exc12_expected.insert(std::make_pair(2, 5));
+        exc12_expected.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13_expected.insert(std::make_pair(1, 2));
+        exc13_expected.insert(std::make_pair(5, 6));
+        exc13_expected.insert(std::make_pair(0, 6));
+        exc13_expected.insert(std::make_pair(0, 5));
+        exc13_expected.insert(std::make_pair(0, 4));
+        exc13_expected.insert(std::make_pair(0, 3));
+        exc13_expected.insert(std::make_pair(3, 4));
+        // 14 distances
+        exc14_expected.insert(std::make_pair(1, 5));
+        exc14_expected.insert(std::make_pair(1, 6));
+        exc14_expected.insert(std::make_pair(2, 3));
+        exc14_expected.insert(std::make_pair(2, 4));
+
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
+
+    SECTION("h2") {
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "h2";
+
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
+
+    SECTION("nh3") {
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "nh3";
+
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+        exc12_expected.insert(std::make_pair(0, 3));
+        exc12_expected.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13_expected.insert(std::make_pair(1, 2));
+        exc13_expected.insert(std::make_pair(1, 3));
+        exc13_expected.insert(std::make_pair(2, 3));
+
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
+
+    SECTION("custom mymon from json") {
+        SETUP_MON_JSON
+
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "mymon";
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+        exc12_expected.insert(std::make_pair(2, 3));
+        // 13 distances
+        exc13_expected.insert(std::make_pair(0, 2));
+        exc13_expected.insert(std::make_pair(1, 4));
+        // 14 distances
+        exc14_expected.insert(std::make_pair(0, 3));
+        exc14_expected.insert(std::make_pair(1, 5));
+
+        systools::GetExcluded(mon, user_j, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
 }
 
 TEST_CASE("systools::IsExcluded") {
@@ -1137,6 +1321,14 @@ TEST_CASE("systools::IsExcluded") {
     REQUIRE(!systools::IsExcluded(exc, 10, 99));
     REQUIRE(!systools::IsExcluded(exc, 9999, 2));
     REQUIRE(!systools::IsExcluded(exc, 0, 0));
+}
+
+TEST_CASE("systools::GetAcc") {
+    double aCC = 0.4;
+    double aCC_big = 1.0E24;
+
+    REQUIRE(systools::GetAcc("dp1") == Approx(aCC_big).margin(TOL))
+    REQUIRE(systools::GetAcc("other") == Approx(aCC).margin(TOL))
 }
 
 TEST_CASE("systools::GetAdd") {
