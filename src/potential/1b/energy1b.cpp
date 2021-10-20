@@ -92,6 +92,11 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         std::cerr << bad_idxs[i] << " , ";
     }
     std::cerr << std::endl;
+    std::cerr << "Individual energies:\n";
+    for (size_t i = 0; i < energies.size(); i++) {
+        std::cerr << energies[i] << " , ";
+    }
+    std::cerr << std::endl;
     std::cerr << "Output energy: " << e << std::endl;
 #endif
 
@@ -174,6 +179,11 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
     std::cerr << "Output virial:" << std::endl;
     for (size_t i = 0; i < (*virial).size(); i++) {
         std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+    std::cerr << "Individual energies:\n";
+    for (size_t i = 0; i < energies.size(); i++) {
+        std::cerr << energies[i] << " , ";
     }
     std::cerr << std::endl;
     std::cerr << "Output energy: " << e << std::endl;
