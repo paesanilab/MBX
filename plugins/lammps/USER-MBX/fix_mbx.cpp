@@ -1657,6 +1657,14 @@ void FixMBX::mbx_init_full() {
         memory->create(nlocal_disp, comm->nprocs, "fixmbx::nlocal_disp");
         memory->create(nlocal_rank3, comm->nprocs, "fixmbx::nlocal_rank3");
         memory->create(nlocal_disp3, comm->nprocs, "fixmbx::nlocal_disp3");
+
+        memory->grow(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
+        memory->grow(mol_type_full, atom->natoms, "fixmbx:mol_type_full");
+        memory->grow(x_full, atom->natoms, 3, "fixmbx:x_full");
+        memory->grow(f_full, atom->natoms, 3, "fixmbx:f_full");
+        memory->grow(f_local, atom->natoms, 3, "fixmbx:f_local");  // lazy allocation...
+        memory->grow(tag_full, atom->natoms, "fixmbx:tag_full");
+        memory->grow(atom_map_full, atom->natoms + 1, "fixmbx:atom_map_full");
     }
 
     // gather data from other MPI ranks
