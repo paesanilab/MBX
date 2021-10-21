@@ -28,23 +28,6 @@ mbnrg_A2_deg8_v1::mbnrg_A2_deg8_v1(const std::string mon1) {
 
 //----------------------------------------------------------------------------//
 
-double mbnrg_A2_deg8_v1::f_switch(const double r, double& g) {
-    if (r > m_ro) {
-        g = 0.0;
-        return 0.0;
-    } else if (r > m_ri) {
-        const double t1 = M_PI / (m_ro - m_ri);
-        const double x = (r - m_ri) * t1;
-        g = -std::sin(x) * t1 / 2.0;
-        return (1.0 + std::cos(x)) / 2.0;
-    } else {
-        g = 0.0;
-        return 1.0;
-    }
-}
-
-//----------------------------------------------------------------------------//
-
 std::vector<double> mbnrg_A2_deg8_v1::eval(const double* xyz1, const size_t n) {
     std::vector<double> energies(n, 0.0);
     std::vector<double> energies_sw(n, 0.0);
