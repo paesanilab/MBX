@@ -40,6 +40,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/x2b_A1B4_A1B4_deg4_exp0_v1x.h"
 #include "potential/2b/x2b-v9x.h"
 #include "potential/2b/mbnrg_2b_A1_B1C2X2_deg5_v1.h"
+#include "potential/2b/mbnrg_2b_A2_A2_deg6_v1.h"
+#include "potential/2b/mbnrg_2b_A1B2Z2_C2_deg5_v1.h"
 
 #include <vector>
 #include <iostream>
@@ -749,3 +751,121 @@ TEST_CASE("x2b_v9x::struct") {
         REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
     }
 }
+
+TEST_CASE("mbnrg_A2_A2_deg6_v1::struct") {
+    SECTION("h2-h2") {
+        std::vector<double> xyz1 = {1.6216168900e+00,  -1.0270244000e+00, 3.9469574100e+00,  2.0831958000e+00,
+                                    -4.4599113500e-01, 4.0238165600e+00,  1.6216168900e+00,  -1.0270244000e+00,
+                                    3.9469574100e+00,  2.0831958000e+00,  -4.4599113500e-01, 4.0238165600e+00,
+                                    1.6216168900e+00,  -1.0270244000e+00, 3.9469574100e+00,  2.0831958000e+00,
+                                    -4.4599113500e-01, 4.0238165600e+00};
+        std::vector<double> xyz2 = {1.6216168900e+00,  -1.0270244000e+00, 2.9469574100e+00,  2.0831958000e+00,
+                                    -4.4599113500e-01, 3.0238165600e+00,  1.6216168900e+00,  -2.0270244000e+00,
+                                    2.9469574100e+00,  2.0831958000e+00,  -1.4459911350e+00, 3.0238165600e+00,
+                                    3.6216168900e+00,  -1.0270244000e+00, 2.9469574100e+00,  4.0831958000e+00,
+                                    -4.4599113500e-01, 3.0238165600e+00};
+        std::vector<double> grad1(xyz1.size(), 0.0);
+        std::vector<double> grad2(xyz2.size(), 0.0);
+        size_t ndim = 3;
+        std::vector<double> virial(9, 0.0);
+
+        double energy_expected = 1.9131884042e+02;
+        std::vector<double> grad1_expected = {
+            1.1566673697e+01,  1.4560072044e+01,  -1.7549929466e+02, -1.4456889935e+01, -1.8198262049e+01,
+            -1.8609415745e+02, -2.1664885000e+00, -5.7985224487e+01, -5.5618809128e+01, 8.2435952827e+00,
+            -3.1715151290e+01, -4.0719478104e+01, 3.3894878258e+00,  -1.7135445904e+00, -2.6020406799e+00,
+            6.8961347895e+00,  1.4173926142e+00,  -2.6975787622e+00};
+        std::vector<double> grad2_expected = {
+            1.4456889935e+01,  1.8198262049e+01,  1.8609415745e+02,  -1.1566673697e+01, -1.4560072044e+01,
+            1.7549929466e+02,  -8.2435952827e+00, 3.1715151290e+01,  4.0719478104e+01,  2.1664885000e+00,
+            5.7985224487e+01,  5.5618809128e+01,  -6.8961347895e+00, -1.4173926142e+00, 2.6975787622e+00,
+            -3.3894878258e+00, 1.7135445904e+00,  2.6020406799e+00};
+        std::vector<double> virial_expected = {2.6159503957e+01,  9.5736585762e-01, -1.2541992275e+01,
+                                               9.5736585762e-01,  9.1651092523e+01, 9.3892758805e+01,
+                                               -1.2541992275e+01, 9.3892758805e+01, 4.6290786399e+02};
+
+        mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 ph;
+        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
+        double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
+
+        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+        REQUIRE(e == Approx(energy_expected).margin(TOL));
+        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+    }
+}
+
+TEST_CASE("mbnrg_A2_A2_deg6_v1::struct") {
+    SECTION("h2-h2o") {
+        std::vector<double> xyz1 = {1.6216168900e+00,  -1.0270244000e+00, 2.9469574100e+00,  2.0831958000e+00,
+                                    -4.4599113500e-01, 3.0238165600e+00,  1.6216168900e+00,  -1.0270244000e+00,
+                                    2.9469574100e+00,  2.0831958000e+00,  -4.4599113500e-01, 3.0238165600e+00,
+                                    1.6216168900e+00,  -1.0270244000e+00, 2.9469574100e+00,  2.0831958000e+00,
+                                    -4.4599113500e-01, 3.0238165600e+00};
+        std::vector<double> xyz2 = {3.1323791000e+00,  -2.6311071100e-01, 1.8748945900e-01,  3.5927079900e+00,
+                                    -8.4084266700e-01, 8.0129372700e-01,  3.8147658100e+00,  2.4972866800e-02,
+                                    -4.2299288300e-01, -7.8557467500e-01, -2.1325879200e+00, 1.6833544100e+00,
+                                    -1.1221514300e+00, -1.6953293900e+00, 2.4726422100e+00,  -1.0730754800e+00,
+                                    -3.0449198500e+00, 1.7376520600e+00,  -9.8569402700e-01, 3.2822858700e-01,
+                                    3.1375299800e+00,  -1.7998662700e+00, 7.4937353100e-01,  3.4245516000e+00,
+                                    -3.9361521900e-01, 4.1803592100e-01,  3.8895249900e+00};
+        std::vector<double> grad1(xyz1.size(), 0.0);
+        std::vector<double> grad2(xyz2.size(), 0.0);
+        size_t ndim = 3;
+        std::vector<double> virial(9, 0.0);
+
+        double energy_expected = 8.0018869775e-02;
+        std::vector<double> grad1_expected = {
+            1.9563051090e-01,  5.3600625777e-01,  -2.9712212276e-01, 3.4817708562e-02, -3.8367616321e-01,
+            -1.3228330247e-01, 2.3535406972e-01,  3.0232899640e-01,  7.0798928942e-01, -6.6314083307e-01,
+            -5.9856884365e-01, -6.3254599220e-01, 3.4748117153e-01,  2.7200712286e-01, 1.0159058328e-01,
+            -8.8628823116e-01, -1.3593498655e-01, -1.1662706381e-01};
+        std::vector<double> grad2_expected = {
+            -1.3583223167e-01, -9.4623797467e-01, 8.4341226749e-01, -2.1338579945e-01, 5.9821214955e-01,
+            -5.8520347814e-01, 1.1876981165e-01,  1.9569573056e-01, 1.7119663588e-01,  -4.5705378103e-01,
+            8.8347957964e-01,  -1.0139155241e-02, 6.3378031315e-01, -2.1159406192e-01, -2.8393538660e-01,
+            2.5106023123e-01,  -3.7564567047e-01, 2.1863124463e-01, 1.1509731779e+00,  -1.8189820361e-01,
+            3.8776108724e-01,  1.2204921723e-01,  8.4231663748e-02, 1.2004492707e-01,  -7.3421533551e-01,
+            -3.8405596441e-02, -4.9276953378e-01};
+        std::vector<double> virial_expected = {4.3186262096e+00, 6.0777419434e-01, 1.2508049898e-01,
+                                               6.0777419434e-01, 1.2850036373e+00, 1.0246940769e-02,
+                                               1.2508049898e-01, 1.0246940769e-02, 2.1665358086e+00};
+
+        mbnrg_A1B2Z2_C2_deg5::mbnrg_A1B2Z2_C2_deg5_v1 ph;
+        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
+        double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
+
+        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+        REQUIRE(e == Approx(energy_expected).margin(TOL));
+        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+    }
+}
+
+// TEST_CASE("mbnrg_A2_A2_deg6_v1::struct") {
+//    SECTION("h2-h2") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        size_t ndim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 ph;
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
+//        double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}
