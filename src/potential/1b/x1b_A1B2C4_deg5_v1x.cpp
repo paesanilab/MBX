@@ -2924,7 +2924,8 @@ std::vector<double> x1b_A1B2C4_v1x::eval(const double* xyz, const size_t nmon) c
     return energies;
 }
 
-std::vector<double> x1b_A1B2C4_v1x::eval(const double* xyz, double* grad, const size_t nmon) const {
+std::vector<double> x1b_A1B2C4_v1x::eval(const double* xyz, double* grad, const size_t nmon,
+                                         std::vector<double>* virial) const {
     std::vector<double> energies(nmon, 0.0);
 
     for (size_t j = 0; j < nmon; j++) {
@@ -3004,6 +3005,36 @@ std::vector<double> x1b_A1B2C4_v1x::eval(const double* xyz, double* grad, const 
         vr[20].grads(g[20], B_2_a_g, C_4_a_g, B_2_a, C_4_a);
 
         for (size_t i = 0; i < 21; i++) grad[i + j * 21] = xgrd[i];
+
+        if (virial != 0) {
+            (*virial)[0] += -A_1_a[0] * A_1_a_g[0] - B_1_a[0] * B_1_a_g[0] - B_2_a[0] * B_2_a_g[0] -
+                            C_1_a[0] * C_1_a_g[0] - C_2_a[0] * C_2_a_g[0] - C_3_a[0] * C_3_a_g[0] -
+                            C_4_a[0] * C_4_a_g[0];
+
+            (*virial)[1] += -A_1_a[0] * A_1_a_g[1] - B_1_a[0] * B_1_a_g[1] - B_2_a[0] * B_2_a_g[1] -
+                            C_1_a[0] * C_1_a_g[1] - C_2_a[0] * C_2_a_g[1] - C_3_a[0] * C_3_a_g[1] -
+                            C_4_a[0] * C_4_a_g[1];
+
+            (*virial)[2] += -A_1_a[0] * A_1_a_g[2] - B_1_a[0] * B_1_a_g[2] - B_2_a[0] * B_2_a_g[2] -
+                            C_1_a[0] * C_1_a_g[2] - C_2_a[0] * C_2_a_g[2] - C_3_a[0] * C_3_a_g[2] -
+                            C_4_a[0] * C_4_a_g[2];
+
+            (*virial)[4] += -A_1_a[1] * A_1_a_g[1] - B_1_a[1] * B_1_a_g[1] - B_2_a[1] * B_2_a_g[1] -
+                            C_1_a[1] * C_1_a_g[1] - C_2_a[1] * C_2_a_g[1] - C_3_a[1] * C_3_a_g[1] -
+                            C_4_a[1] * C_4_a_g[1];
+
+            (*virial)[5] += -A_1_a[1] * A_1_a_g[2] - B_1_a[1] * B_1_a_g[2] - B_2_a[1] * B_2_a_g[2] -
+                            C_1_a[1] * C_1_a_g[2] - C_2_a[1] * C_2_a_g[2] - C_3_a[1] * C_3_a_g[2] -
+                            C_4_a[1] * C_4_a_g[2];
+
+            (*virial)[8] += -A_1_a[2] * A_1_a_g[2] - B_1_a[2] * B_1_a_g[2] - B_2_a[2] * B_2_a_g[2] -
+                            C_1_a[2] * C_1_a_g[2] - C_2_a[2] * C_2_a_g[2] - C_3_a[2] * C_3_a_g[2] -
+                            C_4_a[2] * C_4_a_g[2];
+
+            (*virial)[3] = (*virial)[1];
+            (*virial)[6] = (*virial)[2];
+            (*virial)[7] = (*virial)[5];
+        }
     }
 
     return energies;

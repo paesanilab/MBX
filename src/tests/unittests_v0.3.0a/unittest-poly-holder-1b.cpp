@@ -37,6 +37,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/1b/x1b_A1B2_deg4_v1x.h"
 #include "potential/1b/x1b_A1B4_deg5_exp0_v1x.cpp"
 #include "potential/1b/mbnrg_1b_A1B3_deg5_v1.h"
+#include "potential/1b/x1b_A1B2C4_deg5_v1x.h"
 
 #include <vector>
 #include <iostream>
@@ -191,6 +192,39 @@ TEST_CASE("x1b_A1B3_deg5_v1::struct") {
                                                2.0177069593e+00,  4.5259112292e+00,  4.4265282154e+00};
 
         mbnrg_A1B3_deg5::mbnrg_A1B3_deg5_v1 ph("nh3pbe0d3bj");
+        std::vector<double> e_nograd = ph.eval(xyz.data(), nmon);
+        std::vector<double> e = ph.eval(xyz.data(), grad.data(), nmon, &virial);
+
+        REQUIRE(VectorsAreEqual(e_nograd, energies_expected, TOL));
+        REQUIRE(VectorsAreEqual(e, energies_expected, TOL));
+        REQUIRE(VectorsAreEqual(grad, grad_expected, TOL));
+        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+    }
+}
+
+TEST_CASE("x1b_A1B2C4_v1x::struct") {
+    SECTION("n2o5") {
+        std::vector<double> xyz = {
+            8.2680440000e+00, 1.0783073000e+01, 1.0117501000e+01, 9.3865410000e+00, 1.1620399000e+01, 1.0436688000e+01,
+            8.3598230000e+00, 9.4073400000e+00, 9.8844810000e+00, 1.0525770000e+01, 1.1253619000e+01, 1.0065799000e+01,
+            9.0863690000e+00, 1.2796432000e+01, 1.0771404000e+01, 9.3304000000e+00, 8.9002400000e+00, 1.0425331000e+01,
+            7.2746500000e+00, 8.8236580000e+00, 9.7258010000e+00};
+        std::vector<double> grad(21, 0.0);
+        size_t nmon = 1;
+        std::vector<double> virial(9, 0.0);
+
+        std::vector<double> energies_expected = {3.0520836360e+00};
+        std::vector<double> grad_expected = {6.4721152873e+01,  -5.6750540373e+01, 1.3809257371e+01,  -1.0879045174e+02,
+                                             -7.7943593170e+01, 3.8767109843e+01,  4.3847440598e+00,  1.0526926787e+02,
+                                             -1.0500917482e+02, 8.0355635182e+01,  6.5964729876e+00,  -3.2521396713e+01,
+                                             9.9285069042e+00,  9.9556285185e+01,  8.7403410272e+00,  -8.7982126475e+00,
+                                             -1.7472027514e+01, 4.3057689850e+01,  -4.1801374631e+01, -5.9255864990e+01,
+                                             3.3156173436e+01};
+        std::vector<double> virial_expected = {-1.0044478649e+02, -5.9147166137e+01, 1.9743252937e+01,
+                                               -5.9147166137e+01, -1.4246362465e+02, -3.3182784319e+01,
+                                               1.9743252937e+01,  -3.3182784319e+01, -4.4507127408e+01};
+
+        x1b_A1B2C4_deg5::x1b_A1B2C4_v1x ph("n2o5");
         std::vector<double> e_nograd = ph.eval(xyz.data(), nmon);
         std::vector<double> e = ph.eval(xyz.data(), grad.data(), nmon, &virial);
 
