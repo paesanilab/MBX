@@ -784,7 +784,7 @@ TEST_CASE("mbnrg_A2_A2_deg6_v1::struct") {
                                                9.5736585762e-01,  9.1651092523e+01, 9.3892758805e+01,
                                                -1.2541992275e+01, 9.3892758805e+01, 4.6290786399e+02};
 
-        mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 ph;
+        mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 ph("h2", "h2");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
         double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 
@@ -796,7 +796,7 @@ TEST_CASE("mbnrg_A2_A2_deg6_v1::struct") {
     }
 }
 
-TEST_CASE("mbnrg_A2_A2_deg6_v1::struct") {
+TEST_CASE("mbnrg_2b_A1B2Z2_C2_deg5_v1::struct") {
     SECTION("h2-h2o") {
         std::vector<double> xyz1 = {1.6216168900e+00,  -1.0270244000e+00, 2.9469574100e+00,  2.0831958000e+00,
                                     -4.4599113500e-01, 3.0238165600e+00,  1.6216168900e+00,  -1.0270244000e+00,
@@ -832,9 +832,9 @@ TEST_CASE("mbnrg_A2_A2_deg6_v1::struct") {
                                                6.0777419434e-01, 1.2850036373e+00, 1.0246940769e-02,
                                                1.2508049898e-01, 1.0246940769e-02, 2.1665358086e+00};
 
-        mbnrg_A1B2Z2_C2_deg5::mbnrg_A1B2Z2_C2_deg5_v1 ph;
-        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
-        double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
+        mbnrg_A1B2Z2_C2_deg5::mbnrg_A1B2Z2_C2_deg5_v1 ph("h2o", "h2");
+        double e_nograd = ph.eval(xyz2.data(), xyz1.data(), ndim);
+        double e = ph.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), ndim, &virial);
 
         REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
         REQUIRE(e == Approx(energy_expected).margin(TOL));
@@ -858,7 +858,7 @@ TEST_CASE("mbnrg_A2_A2_deg6_v1::struct") {
 //        std::vector<double> grad2_expected = {};
 //        std::vector<double> virial_expected = {};
 //
-//        mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 ph;
+//        mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 ph(",");
 //        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
 //        double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 //
