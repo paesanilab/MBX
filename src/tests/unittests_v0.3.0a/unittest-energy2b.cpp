@@ -735,7 +735,7 @@ TEST_CASE("energy2b::get_2b_energy") {
                                     1.4996742515e+00,  -1.5117612237e+00, 1.4924089150e-01,  2.0687387995e+00,
                                     -1.7073176192e+00, 9.6405578870e-01,  1.5595189444e+00,  -5.0555055410e-01,
                                     -2.2826688700e-02, 1.9547066131e+00,  -1.9730283747e+00, -6.2933263920e-01};
-        size_t nm = 3;
+        size_t nm = 2;
         std::string mon1 = "nh3";
         std::string mon2 = "nh3";
 
@@ -868,50 +868,56 @@ TEST_CASE("energy2b::get_2b_energy") {
         }
     }
 
-    //    SECTION("h2o-h2o") {
-    //        std::vector<double> xyz1 = {};
-    //        std::vector<double> xyz2 = {};
-    //        size_t nm = ;
-    //        std::string mon1 = ;
-    //        std::string mon2 = ;
-    //
-    //        std::vector<double> grad1(xyz1.size(),0.0);
-    //        std::vector<double> grad2(xyz2.size(),0.0);
-    //        std::vector<double> virial(9,0.0);
-    //
-    //        double expected_energy = ;
-    //
-    //        std::vector<double> grad1_expected = {};
-    //        std::vector<double> grad2_expected = {};
-    //        std::vector<double> virial_expected = {};
-    //
-    //        SECTION("No gradients") {
-    //            double e = e2b::get_2b_energy(mon1,mon2,nm,xyz1,xyz2);
-    //            double e2 = e2b::get_2b_energy(mon2,mon1,nm,xyz2,xyz1);
-    //            REQUIRE(e == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-    //        }
-    //
-    //        SECTION("With gradients") {
-    //            double e = e2b::get_2b_energy(mon1,mon2,nm,xyz1,xyz2,grad1,grad2,&virial);
-    //            REQUIRE(e == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(VectorsAreEqual(grad1,grad1_expected,TOL));
-    //            REQUIRE(VectorsAreEqual(grad2,grad2_expected,TOL));
-    //            REQUIRE(VectorsAreEqual(virial,virial_expected,TOL));
-    //
-    //            if (mon1 != mon2) {
-    //                std::fill(grad1.begin(),grad1.end(),0.0);
-    //                std::fill(grad2.begin(),grad2.end(),0.0);
-    //                std::fill(virial.begin(),virial.end(),0.0);
-    //
-    //                double e2 = e2b::get_2b_energy(mon2,mon1,nm,xyz2,xyz1,grad2,grad1,&virial);
-    //                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-    //                REQUIRE(VectorsAreEqual(grad1,grad1_expected,TOL));
-    //                REQUIRE(VectorsAreEqual(grad2,grad2_expected,TOL));
-    //                REQUIRE(VectorsAreEqual(virial,virial_expected,TOL));
-    //            }
-    //        }
-    //    }
+    SECTION("ar-ar") {
+        std::vector<double> xyz1 = {1.6216168900e+00, -1.0270244000e+00, 2.9469574100e+00,
+                                    1.6216168900e+00, -1.0270244000e+00, 2.9469574100e+00};
+        std::vector<double> xyz2 = {2.0831958000e+00, -1.4459911350e+00, 3.0238165600e+00,
+                                    3.6216168900e+00, -1.0270244000e+00, 2.9469574100e+00};
+        size_t nm = 2;
+        std::string mon1 = "ar";
+        std::string mon2 = "ar";
+
+        std::vector<double> grad1(xyz1.size(), 0.0);
+        std::vector<double> grad2(xyz2.size(), 0.0);
+        std::vector<double> virial(9, 0.0);
+
+        double expected_energy = -2.6455183439e+04;
+
+        std::vector<double> grad1_expected = {-1.2179058127e+05, 1.1054708325e+05, -2.0279783915e+04,
+                                              -1.1681346080e+01, 0.0000000000e+00, 0.0000000000e+00};
+        std::vector<double> grad2_expected = {1.2179058127e+05, -1.1054708325e+05, 2.0279783915e+04,
+                                              1.1681346080e+01, 0.0000000000e+00,  0.0000000000e+00};
+        std::vector<double> virial_expected = {-5.6239326443e+04, 5.1026202189e+04,  -9.3607205545e+03,
+                                               5.1026202189e+04,  -4.6315550532e+04, 8.4965548533e+03,
+                                               -9.3607205545e+03, 8.4965548533e+03,  -1.5586869539e+03};
+
+        SECTION("No gradients") {
+            double e = e2b::get_2b_energy(mon1, mon2, nm, xyz1, xyz2);
+            double e2 = e2b::get_2b_energy(mon2, mon1, nm, xyz2, xyz1);
+            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+        }
+
+        SECTION("With gradients") {
+            double e = e2b::get_2b_energy(mon1, mon2, nm, xyz1, xyz2, grad1, grad2, &virial);
+            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+            REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+            REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+
+            if (mon1 != mon2) {
+                std::fill(grad1.begin(), grad1.end(), 0.0);
+                std::fill(grad2.begin(), grad2.end(), 0.0);
+                std::fill(virial.begin(), virial.end(), 0.0);
+
+                double e2 = e2b::get_2b_energy(mon2, mon1, nm, xyz2, xyz1, grad2, grad1, &virial);
+                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+                REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+            }
+        }
+    }
 
     //    SECTION("h2o-h2o") {
     //        std::vector<double> xyz1 = {};
