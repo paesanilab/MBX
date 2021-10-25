@@ -34,8 +34,6 @@ struct mbnrg_A1B3_deg5_v1 {
     double m_ri = 7.0;
     double m_ro = 8.0;
 
-    double f_switch(const double, double &);
-
     std::vector<double> coefficients;
 };
 
