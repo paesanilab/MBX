@@ -352,13 +352,16 @@ FixMBX::~FixMBX() {
         delete ptr_mbx_local;
     }
 
-    memory->destroy(mol_anchor_full);
-    memory->destroy(mol_type_full);
-    memory->destroy(x_full);
-    memory->destroy(f_full);
-    memory->destroy(f_local);
-    memory->destroy(tag_full);
-    memory->destroy(atom_map_full);
+    if (!mbx_mpi_enabled) {
+        memory->destroy(mol_anchor_full);
+        memory->destroy(mol_type_full);
+        memory->destroy(x_full);
+        memory->destroy(f_full);
+        memory->destroy(f_local);
+        memory->destroy(tag_full);
+        memory->destroy(atom_map_full);
+    }
+
     memory->destroy(nlocal_rank);
     memory->destroy(nlocal_disp);
     memory->destroy(nlocal_rank3);
@@ -419,40 +422,7 @@ void FixMBX::setup_post_neighbor() {
     printf("\n[MBX] (%i,%i) Inside setup_post_neighbor()\n", universe->iworld, me);
 #endif
 
-    // setup after first neighbor build completes
-
-    // allocate memory on rank 0 to hold full system data
-
-    memory->create(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
-    memory->create(mol_type_full, atom->natoms, "fixmbx:mol_type_full");
-    memory->create(x_full, atom->natoms, 3, "fixmbx:x_full");
-    memory->create(f_full, atom->natoms, 3, "fixmbx:f_full");
-    memory->create(f_local, atom->natoms, 3, "fixmbx:f_local");  // lazy allocation...
-    memory->create(tag_full, atom->natoms, "fixmbx:tag_full");
-    memory->create(atom_map_full, atom->natoms + 1, "fixmbx:atom_map_full");
-    memory->create(nlocal_rank, comm->nprocs, "fixmbx::nlocal_rank");
-    memory->create(nlocal_disp, comm->nprocs, "fixmbx::nlocal_disp");
-    memory->create(nlocal_rank3, comm->nprocs, "fixmbx::nlocal_rank3");
-    memory->create(nlocal_disp3, comm->nprocs, "fixmbx::nlocal_disp3");
-
-    //  printf("\n[MBX] Inside setup_post_neighbor()\n");
-
-    const int nall = atom->nlocal + atom->nghost;
-
     post_neighbor();
-
-    // check if using cg or aspc integrator for MBX dipoles
-
-    std::string dip_method = ptr_mbx->GetDipoleMethod();
-    if (dip_method == "aspc") {
-        mbx_aspc_enabled = true;
-
-        memory->create(aspc_dip_hist, atom->nmax, aspc_per_atom_size, "fixmbx::aspc_dip_hist");
-    } else if (!(dip_method == "cg")) {
-        error->one(FLERR, "[MBX] requested dip_method not supported with LAMMPS");
-    }
-
-    if (print_dipoles) memory->create(mbx_dip, atom->nmax, 9, "fixmbx::mbx_dip");
 
     first_step = false;
 
@@ -773,7 +743,12 @@ void FixMBX::mbx_get_dipoles_local() {
 
     // conversion factor for e*Anstrom --> Debye
 
-    const double qe_Debye = 1.0 / 0.2081943;
+    //    const double qe_Debye = 1.0 / 0.2081943;
+
+    // zero dipole array
+
+    for (int i = 0; i < atom->nmax; ++i)
+        for (int j = 0; j < 9; ++j) mbx_dip[i][j] = 0.0;
 
 #if 1
     {
@@ -1035,6 +1010,16 @@ void FixMBX::grow_arrays(int nmax) {
     memory->grow(mol_type, nmax, "fixmbx:mol_type");
     memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
     memory->grow(mol_local, nmax, "fixmbx:mol_local");
+
+    if (!mbx_mpi_enabled) {
+        memory->grow(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
+        memory->grow(mol_type_full, atom->natoms, "fixmbx:mol_type_full");
+        memory->grow(x_full, atom->natoms, 3, "fixmbx:x_full");
+        memory->grow(f_full, atom->natoms, 3, "fixmbx:f_full");
+        memory->grow(f_local, atom->natoms, 3, "fixmbx:f_local");  // lazy allocation...
+        memory->grow(tag_full, atom->natoms, "fixmbx:tag_full");
+        memory->grow(atom_map_full, atom->natoms + 1, "fixmbx:atom_map_full");
+    }
 
     if (mbx_aspc_enabled) memory->grow(aspc_dip_hist, nmax, aspc_per_atom_size, "fixmbx:mbx_dip_hist");
 
@@ -1615,8 +1600,6 @@ void FixMBX::mbx_init_local() {
 
     ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
 
-    if (mbx_aspc_enabled) mbx_init_dipole_history_local();
-
     std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
     std::vector<int> dgrid = ptr_mbx_local->GetFFTDimensionDispersion(1);  // will return mesh even for gas-phase
 
@@ -1633,6 +1616,22 @@ void FixMBX::mbx_init_local() {
             fprintf(logfile, "[MBX] LOCAL dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
         }
     }
+
+    // check if using cg or aspc integrator for MBX dipoles
+
+    if (first_step) {
+        std::string dip_method = ptr_mbx->GetDipoleMethod();
+
+        if (dip_method == "aspc") {
+            mbx_aspc_enabled = true;
+
+            memory->create(aspc_dip_hist, atom->nmax, aspc_per_atom_size, "fixmbx::aspc_dip_hist");
+        } else if (!(dip_method == "cg")) {
+            error->one(FLERR, "[MBX] requested dip_method not supported with LAMMPS");
+        }
+    }
+
+    if (mbx_aspc_enabled) mbx_init_dipole_history_local();
 
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Leaving mbx_init_local()\n", universe->iworld, me);
@@ -1652,6 +1651,21 @@ void FixMBX::mbx_init_full() {
 #ifdef _DEBUG
     printf("[MBX] (%i,%i) Inside mbx_init_full()\n", universe->iworld, me);
 #endif
+
+    if (first_step) {
+        memory->create(nlocal_rank, comm->nprocs, "fixmbx::nlocal_rank");
+        memory->create(nlocal_disp, comm->nprocs, "fixmbx::nlocal_disp");
+        memory->create(nlocal_rank3, comm->nprocs, "fixmbx::nlocal_rank3");
+        memory->create(nlocal_disp3, comm->nprocs, "fixmbx::nlocal_disp3");
+
+        memory->grow(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
+        memory->grow(mol_type_full, atom->natoms, "fixmbx:mol_type_full");
+        memory->grow(x_full, atom->natoms, 3, "fixmbx:x_full");
+        memory->grow(f_full, atom->natoms, 3, "fixmbx:f_full");
+        memory->grow(f_local, atom->natoms, 3, "fixmbx:f_local");  // lazy allocation...
+        memory->grow(tag_full, atom->natoms, "fixmbx:tag_full");
+        memory->grow(atom_map_full, atom->natoms + 1, "fixmbx:atom_map_full");
+    }
 
     // gather data from other MPI ranks
 
@@ -1906,6 +1920,25 @@ void FixMBX::mbx_init_full() {
             fprintf(logfile, "[MBX] FULL electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
             fprintf(logfile, "[MBX] FULL dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
         }
+    }
+
+    // check if using cg or aspc integrator for MBX dipoles
+
+    if (first_step) {
+        std::string dip_method = ptr_mbx->GetDipoleMethod();
+
+        if (dip_method == "aspc") {
+            mbx_aspc_enabled = true;
+
+            memory->create(aspc_dip_hist, atom->nmax, aspc_per_atom_size, "fixmbx::aspc_dip_hist");
+        } else if (!(dip_method == "cg")) {
+            error->one(FLERR, "[MBX] requested dip_method not supported with LAMMPS");
+        }
+    }
+
+    if (mbx_aspc_enabled) {
+        error->one(FLERR, "mbx_init_dipole_history_full() not yet implemented. Why are you using serial MBX?");
+        // mbx_init_dipole_history_full();
     }
 
 #ifdef _DEBUG
