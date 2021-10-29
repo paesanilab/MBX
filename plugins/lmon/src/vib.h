@@ -1,0 +1,12 @@
+void eigsrt(double* d, double* v, int n);
+void jacobi(double* a, double* d, double* v, int n);
+void diagon(double* a, double* d, double* v, int n);
+void matmultAB(double* a, double* b, double* c, int dim);
+void matmultAtB(double* a, double* b, double* c, int dim);
+void matmultABt(double* a, double* b, double* c, int dim);
+void matadd(double* a, double* b, double* c, int dim);
+void mataddinc(double* a, double* b, double* c, int dim);
+void matcopy(double* a, double* b, int dim);
+double trace(double* a, int dim);
+void printmat(double* a, int N);
+double* AllocDouble(int size);
