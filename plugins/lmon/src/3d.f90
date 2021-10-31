@@ -107,6 +107,8 @@ write(*,*) "Located ", nwater, " water molecules."
 open(unit=23,file="1_locmonomer.txt")
 10 format(f15.4)
 
+open(unit=122,file="line_spectra.dat")
+
 open(unit=1,file="redmass.dat")
 read(1,*) (m(j),j=1,nmode)
 close(1)
@@ -278,7 +280,7 @@ do n =1,natom
 enddo
       
       call get_energy_g(tempV1, natom, V(j,k,l), grad)
-      call get_total_dipole(tempV1, at_name, natom, D3(j,k,l,:))
+      call get_total_dipole(D3(j,k,l,:))
       !call calcpot(2,V(j,k,l),tempV1)
       !call calcdip(6,tempV1,D3(j,k,l,:))
 
@@ -582,16 +584,19 @@ write(23,'(3A20)') 'frequencies (cm^-1)','Intensity (km/mol)','bend overtone?'
 if (k==1) then 
         do j=2,5
                 write(23,'(3f20.4)') eigen(j)-eigen(1),int(j),H((2*n2*n3+1),j)
+                write(122,'(3f20.4)') eigen(j)-eigen(1),int(j)
         end do!j
 end if 
 if (k==2) then 
         do j=2,5
                 write(23,'(3f20.4)') eigen(j)-eigen(1),int(j),H((2*n3+1),j)
+                write(122,'(3f20.4)') eigen(j)-eigen(1),int(j)
         end do!j
 end if 
 if (k==3) then 
         do j=2,5
                 write(23,'(3f20.4)') eigen(j)-eigen(1),int(j),H((2+1),j)
+                write(122,'(3f20.4)') eigen(j)-eigen(1),int(j)
         end do!j
 end if
  
@@ -604,6 +609,7 @@ call finalize_system()
 
 
 close(23)
+close(122)
 
 CONTAINS
   FUNCTION atom_mass(atom)
