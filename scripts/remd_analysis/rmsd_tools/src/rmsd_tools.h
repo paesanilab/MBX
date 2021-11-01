@@ -9,6 +9,7 @@
 #include <sstream>
 #include <algorithm>
 #include <limits>
+#include <cmath>
 
 #include "rmsd.h"
 

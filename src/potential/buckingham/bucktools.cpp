@@ -585,6 +585,108 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         b.push_back(3.03227);  // A^(-1) E--C
         // =====>> BEGIN SECTION BUCKINGHAM <<=====
         // ======>> PASTE CODE BELOW <<======
+    } else if (mon_id1 == "h2" and mon_id2 == "h2") {
+        types1.push_back(0);
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(822.645);  // kcal/mol A--A
+        b.push_back(3.11276);  // A^(-1) A--A
+    } else if (mon_id1 == "h2" and mon_id2 == "h2o") {
+        types1.push_back(0);
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(2651.63);  // kcal/mol A--C
+        a.push_back(839.321);  // kcal/mol B--C
+        b.push_back(3.05339);  // A^(-1) A--C
+        b.push_back(3.62823);  // A^(-1) B--C
+    } else if (mon_id1 == "ar" and mon_id2 == "h2o") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(55341.7);  // kcal/mol A--B
+        a.push_back(5733.11);  // kcal/mol A--C
+        b.push_back(3.48054);  // A^(-1) A--B
+        b.push_back(3.46238);  // A^(-1) A--C
+    } else if (mon_id1 == "ar" and mon_id2 == "ar") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(102057.0);  // kcal/mol * A^(-6)  A--B
+        b.push_back(3.41808);   // A^(-1) A--B
+    } else if (mon_id1 == "cs" and mon_id2 == "h2") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(18116.1);  // kcal/mol A--B
+        b.push_back(3.24781);  // A^(-1) A--B
+    } else if (mon_id1 == "na" and mon_id2 == "na") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(33569.6);  // kcal/mol A--A
+        b.push_back(4.42822);  // A^(-1) A--A
+    } else if (mon_id1 == "cl" and mon_id2 == "cl") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(2943.76);  // kcal/mol A--A
+        b.push_back(1.82786);  // A^(-1) A--A
+    } else if (mon_id1 == "cl" and mon_id2 == "na") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(33676.8);  // kcal/mol A--B
+        b.push_back(2.85113);  // A^(-1) A--B
+    } else if (mon_id1 == "ar" and mon_id2 == "cs") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        a.push_back(157654.0);  // kcal/mol A--B
+        b.push_back(3.28039);   // A^(-1) A--B
         // =====>> END SECTION BUCKINGHAM <<=====
     } else {
         out_a = 0.0;

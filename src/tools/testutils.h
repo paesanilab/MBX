@@ -40,6 +40,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <iomanip>
 
+#ifndef TESTUTILS_H
+#define TESTUTILS_H
 bool VectorsAreEqual(const std::vector<double>& computed, const std::vector<double>& expected,
                      double tolerance = 1e-6) {
     return std::equal(computed.begin(), computed.end(), expected.begin(), [&](double x, double y) -> bool {
@@ -118,3 +120,4 @@ class TestEnergyData {
     size_t tot_sites;
     size_t tot_atoms;
 };
+#endif

@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
     mass_map["Ar"] = 39.948;
     mass_map["C"] = 12.0107;
     mass_map["S"] = 32.065;
+    mass_map["N"] = 14.00307400443;
 
     if (argc != 4) {
         std::cerr << "usage: xyz-to-pimd-2 T nbead file.xyz" << std::endl;

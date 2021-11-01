@@ -1,5 +1,7 @@
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 
 #include "bblock/system.h"
 #include "io_tools/read_nrg.h"
@@ -128,6 +130,20 @@ int main(int argc, char** argv) {
         rmsd_tools::GetRelevantCoordinates(indexes_to_ignore, coords_ref[i], xyz_ref[i]);
     }
 
+    // Output file streams
+    // They contain the configurations of each structure assign to each isomer
+    std::vector<std::ofstream*> offs;
+    for (size_t i = 0; i < xyz_ref.size(); i++) {
+        std::ostringstream ss;
+        ss << std::setw(4) << std::setfill('0') << i;
+        std::string number(ss.str());
+
+        std::string outfile = "isomer_" + number + "_" + std::string(argv[2]);
+
+        std::ofstream of(outfile);
+        offs.push_back(&of);
+    }
+
     // Vector to count matches to each isomer
     std::vector<double> counts(xyz_ref.size(), 0.0);
 
@@ -143,10 +159,22 @@ int main(int argc, char** argv) {
             }
         }
         counts[min_index] += 1.0;
+
+        // Write XYZ in corresponding file
+        *(offs[min_index]) << ats[i].size() << std::endl;
+        *(offs[min_index]) << counts[min_index] << std::endl;
+        for (size_t j = 0; j < ats[0].size(); j++) {
+          *(offs[min_index]) << std::scientific << std::setprecision(8) 
+                          << std::setw(10) << ats[0][j] 
+                          << std::setw(20) << coords[i][3 * j + 0] 
+                          << std::setw(20) << coords[i][3 * j + 1] 
+                          << std::setw(20) << coords[i][3 * j + 2] << std::endl; 
+        }
     }
 
     for (size_t i = 0; i < counts.size(); i++) {
         counts[i] /= xyz.size();
+        offs[i]->close();
     }
 
     std::stringstream ss(argv[2]);

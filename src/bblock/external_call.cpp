@@ -81,8 +81,8 @@ void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], c
  * @param[in] nmon Number of monomers
  * @param[in] json_file Name of the json configuration file
  */
-void initialize_system_py_(double* coords, int* nat_monomers, char **at_names, char **monomers, int* nmon,
-                        char *json_file) {
+void initialize_system_py_(double* coords, int* nat_monomers, char** at_names, char** monomers, int* nmon,
+                           char* json_file) {
     my_s = new bblock::System();
     int count = 0;
     for (int i = 0; i < *nmon; i++) {
@@ -170,6 +170,12 @@ void get_energy_pbc_g_(double* coords, int* nat, double* box, double* energy, do
 
     std::vector<double> gradv = my_s->GetRealGrads();
     std::copy(gradv.begin(), gradv.end(), grads);
+}
+
+void get_total_dipole_(double* dip) {
+    std::vector<double> dtot(3, 0.0), dperm(3, 0.0), dind(3, 0.0);
+    my_s->GetTotalDipole(dperm, dind, dtot);
+    std::copy(dtot.begin(), dtot.end(), dip);
 }
 
 /**

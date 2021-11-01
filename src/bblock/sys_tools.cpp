@@ -131,7 +131,7 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
 }
 
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
-                     std::vector<size_t> &fi_at, nlohmann::json mon_j) {
+                     std::vector<size_t> &fi_at, std::vector<size_t> &fi_sites, nlohmann::json mon_j) {
     // Make sure that mon is not empty
     if (mon.size() < 1) {
         std::string text = "Monomer vector cannot be empty.";
@@ -147,6 +147,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
     sites.clear();
     nat.clear();
     fi_at.clear();
+    fi_sites.clear();
 
     size_t count = 0;
     size_t ats = 0;
@@ -212,6 +213,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                        mon[i] == "k" || mon[i] == "rb" || mon[i] == "cs") {
                 sites.push_back(1);
                 nat.push_back(1);
+            } else if (mon[i] == "h2") {
+                sites.push_back(2);
+                nat.push_back(2);
                 // END SECTION SITES
             } else {
                 // If monomer not found, throw exception
@@ -226,6 +230,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
         }
 
         fi_at.push_back(ats);
+        fi_sites.push_back(count);
         ats += nat[i];
         count += sites[i];
     }
@@ -700,7 +705,6 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         exc13.insert(std::make_pair(2, 4));
     }
 
-
     if (mon == "n2o5") {
         // 12 distances
         exc12.insert(std::make_pair(0, 1));
@@ -734,7 +738,6 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         exc13.insert(std::make_pair(1, 3));
         exc13.insert(std::make_pair(2, 3));
         // 14 distances
-
     }
 
     // =====>> BEGIN SECTION EXCLUDED <<=====
@@ -752,6 +755,12 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         // 14 distances
     }
 
+    if (mon == "h2") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        // 13 distances
+        // 14 distances
+    }
     // =====>> END SECTION EXCLUDED <<=====
 }
 
@@ -961,6 +970,11 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv] = 0.0;
         }
 
+    } else if (mon_id == "h2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites + 0] = 0.0 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = 0.0 * CHARGECON;
+        }
         // END SECTION CHARGES
 
         // Note, for now, assuming only water has site dependant charges
@@ -1130,6 +1144,11 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv] = 0.20493754;
         }
 
+    } else if (mon_id == "h2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites + 0] = 0.3198;
+            polfac[fst_ind + nv * nsites + 1] = 0.3198;
+        }
         // =====>> END SECTION POLFACS <<=====
 
     } else if (mon_id == "h2o") {
@@ -1258,6 +1277,11 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv] = 0.20493754;
         }
 
+    } else if (mon_id == "h2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites + 0] = 0.3198;
+            pol[fst_ind + nv * nsites + 1] = 0.3198;
+        }
         // =====>> END SECTION POLS <<=====
 
     } else if (mon_id == "h2o") {
@@ -1358,10 +1382,10 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         // ==> PASTE YOUR CODE BELOW <==
     } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[nv * natoms + fst_ind] = 15.618415412582673;  // A
-            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
-            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
-            c6_lr[nv * natoms + fst_ind] = 6.328530635147467;   // B
+            c6_lr[nv * natoms + fst_ind] = 15.618415412582673;     // A
+            c6_lr[nv * natoms + fst_ind + 1] = 6.328530635147467;  // B
+            c6_lr[nv * natoms + fst_ind + 2] = 6.328530635147467;  // B
+            c6_lr[nv * natoms + fst_ind + 3] = 6.328530635147467;  // B
         }
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1399,11 +1423,16 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         }
     } else if (mon_id == "ar") {
         for (size_t nv = 0; nv < n_mon; nv++) {
-            c6_lr[fst_ind + nv] = 43.09834;
+            c6_lr[fst_ind + nv] = 27.83030183091804;
         }
     } else if (mon_id == "he") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[fst_ind + nv] = 4.93437037524;
+        }
+    } else if (mon_id == "h2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 6.740200293759822;      // A
+            c6_lr[nv * natoms + fst_ind + 1] = 6.740200293759822;  // A
         }
     } else if (mon_id == "n2o5") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1412,8 +1441,8 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 2] = 13.09042957671318;   // N
             c6_lr[nv * natoms + fst_ind + 3] = 13.402239942963767;  // O
             c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
-            c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
-            c6_lr[nv * natoms + fst_ind + 4] = 13.402239942963767;  // O
+            c6_lr[nv * natoms + fst_ind + 5] = 13.402239942963767;  // O
+            c6_lr[nv * natoms + fst_ind + 6] = 13.402239942963767;  // O
         }
         // END SECTION C6_LONG_RANGE
         // Water is the only monomer which C6 does not come from qchem.

@@ -50,7 +50,8 @@ fig, axs = plt.subplots(1, 1, figsize=(6,6))
 legends = []
 for i in range(nisomers):
   if plot_isomer[i]:
-    axs.plot(popdat[0],popdat[i+1],marker=markers[i],color=colors[i],linestyle='-',linewidth=1.5)
+    #axs.plot(popdat[0],popdat[i+1],marker=markers[i],color=colors[i],linestyle='-',linewidth=1.5)
+    axs.plot(popdat[0],popdat[i+1],marker="",color=colors[i],linestyle='-',linewidth=1.5)
     legends.append("Isomer {}".format(i+1))
 
 axs.set_xlim(min(popdat[0]) - 5, max(popdat[0]) + 5)

@@ -113,6 +113,13 @@ System::System() {
     mbx_j_ = {};
     monomers_j_ = {};
     repdisp_j_ = {};
+
+    // Defaults for when MBX built w/o MPI
+    world_ = 0;
+    mpi_rank_ = 0;
+    proc_grid_x_ = 1;
+    proc_grid_y_ = 1;
+    proc_grid_z_ = 1;
 }
 System::~System() {}
 
@@ -407,11 +414,49 @@ std::vector<int> System::GetFFTDimensionDispersion(int box_id) { return dispersi
 
 std::vector<int> System::GetFFTDimensionLennardJones(int box_id) { return lennardJonesE_.GetFFTDimension(box_id); }
 
-void System::SetFFTDimensionElectrostatics(std::vector<int> grid) { electrostaticE_.SetFFTDimension(grid); }
+void System::CheckFFTDimension(std::vector<int> grid) {
+    if (grid.size() == 0) return;
 
-void System::SetFFTDimensionDispersion(std::vector<int> grid) { dispersionE_.SetFFTDimension(grid); }
+#if HAVE_MPI == 1
+    if (!mpi_initialized_) {
+        std::string text = std::string("MPI not initialized yet");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+#endif
 
-void System::SetFFTDimensionLennardJones(std::vector<int> grid) { lennardJonesE_.SetFFTDimension(grid); }
+    // grid points evenly distributed across ranks in each dimension
+
+    if (grid.size() == 3) {
+        size_t err = 0;
+        if ((grid[0] / proc_grid_x_) * proc_grid_x_ != grid[0]) err += 1;
+        if ((grid[1] / proc_grid_y_) * proc_grid_y_ != grid[1]) err += 1;
+        if ((grid[2] / proc_grid_z_) * proc_grid_z_ != grid[2]) err += 1;
+
+        if ((grid[0] / proc_grid_x_) % 2 == 1) err += 1;
+        if ((grid[1] / proc_grid_y_) % 2 == 1) err += 1;
+        if ((grid[2] / proc_grid_z_) % 2 == 1) err += 1;
+
+        if (err > 0) {
+            std::string text = std::string("FFT grid dimensions must be evenly divisible by processor grid");
+            throw CUException(__func__, __FILE__, __LINE__, text);
+        }
+    }
+}
+
+void System::SetFFTDimensionElectrostatics(std::vector<int> grid) {
+    CheckFFTDimension(grid);
+    electrostaticE_.SetFFTDimension(grid);
+}
+
+void System::SetFFTDimensionDispersion(std::vector<int> grid) {
+    CheckFFTDimension(grid);
+    dispersionE_.SetFFTDimension(grid);
+}
+
+void System::SetFFTDimensionLennardJones(std::vector<int> grid) {
+    CheckFFTDimension(grid);
+    lennardJonesE_.SetFFTDimension(grid);
+}
 
 void System::GetEwaldParamsDispersion(double &alpha, double &grid_density, size_t &spline_order) {
     alpha = disp_alpha_;
@@ -427,50 +472,50 @@ void System::GetEwaldParamsLennardJones(double &alpha, double &grid_density, siz
 
 // FIXME As for today, these functions are not used. // MRR 20191022
 // Will need to activate them and use them whenever we need them for MB-Spec
-// void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
-//    std::vector<double> tmp_perm = electrostaticE_.GetMolecularPermanentDipoles();
-//    std::vector<double> tmp_ind = electrostaticE_.GetMolecularInducedDipoles();
-//
-//    mu_perm = std::vector<double>(tmp_perm.size(), 0.0);
-//    mu_ind = std::vector<double>(tmp_ind.size(), 0.0);
-//    // Reorder to match input order
-//    for (size_t i = 0; i < nummon_; i++) {
-//        size_t current_pos = original2current_order_[i];
-//        for (size_t j = 0; j < 3; j++) {
-//            mu_perm[3 * i + j] = tmp_perm[3 * current_pos + j];
-//            mu_ind[3 * i + j] = tmp_ind[3 * current_pos + j];
-//        }
-//    }
-//}
-//
-// void System::GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
-//    mu_perm = electrostaticE_.GetPermanentDipoles();
-//    mu_ind = electrostaticE_.GetInducedDipoles();
-//
-//    systools::ResetOrderReal3N(mu_perm, initial_order_realSites_, numat_, first_index_, nat_);
-//    systools::ResetOrderReal3N(mu_ind, initial_order_realSites_, numat_, first_index_, nat_);
-//}
-//
-// void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot) {
-//    std::vector<double> all_mu_perm = electrostaticE_.GetPermanentDipoles();
-//    std::vector<double> all_mu_ind = electrostaticE_.GetInducedDipoles();
-//
-//    mu_perm = std::vector<double>(3, 0.0);
-//    mu_ind = std::vector<double>(3, 0.0);
-//
-//    mu_tot = std::vector<double>(3, 0.0);
-//
-//    for (size_t i = 0; i < numsites_; i++) {
-//        for (size_t j = 0; j < 3; j++) {
-//            mu_perm[j] += all_mu_perm[3 * i + j];
-//            mu_ind[j] += all_mu_ind[3 * i + j];
-//        }
-//    }
-//    for (size_t j = 0; j < 3; j++) {
-//        mu_tot[j] = mu_perm[j] + mu_ind[j];
-//    }
-//}
-//
+void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
+    std::vector<double> tmp_perm = electrostaticE_.GetMolecularPermanentDipoles();
+    std::vector<double> tmp_ind = electrostaticE_.GetMolecularInducedDipoles();
+
+    mu_perm = std::vector<double>(tmp_perm.size(), 0.0);
+    mu_ind = std::vector<double>(tmp_ind.size(), 0.0);
+    // Reorder to match input order
+    for (size_t i = 0; i < nummon_; i++) {
+        size_t current_pos = original2current_order_[i];
+        for (size_t j = 0; j < 3; j++) {
+            mu_perm[3 * i + j] = tmp_perm[3 * current_pos + j];
+            mu_ind[3 * i + j] = tmp_ind[3 * current_pos + j];
+        }
+    }
+}
+
+void System::GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
+    mu_perm = electrostaticE_.GetPermanentDipoles();
+    mu_ind = electrostaticE_.GetInducedDipoles();
+
+    systools::ResetOrderReal3N(mu_perm, initial_order_realSites_, numat_, first_index_, nat_);
+    systools::ResetOrderReal3N(mu_ind, initial_order_realSites_, numat_, first_index_, nat_);
+}
+
+void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot) {
+    std::vector<double> all_mu_perm = electrostaticE_.GetPermanentDipoles();
+    std::vector<double> all_mu_ind = electrostaticE_.GetInducedDipoles();
+
+    mu_perm = std::vector<double>(3, 0.0);
+    mu_ind = std::vector<double>(3, 0.0);
+
+    mu_tot = std::vector<double>(3, 0.0);
+
+    for (size_t i = 0; i < numsites_; i++) {
+        for (size_t j = 0; j < 3; j++) {
+            mu_perm[j] += all_mu_perm[3 * i + j];
+            mu_ind[j] += all_mu_ind[3 * i + j];
+        }
+    }
+    for (size_t j = 0; j < 3; j++) {
+        mu_tot[j] = mu_perm[j] + mu_ind[j];
+    }
+}
+
 // std::vector<double> System::GetChargeDerivativesOHH() {
 //    std::vector<double> chg_der(numat_ * numat_ * 3, 0.0);
 //
@@ -633,7 +678,7 @@ void System::SetPBC(std::vector<double> box) {
     // close to the central atom (1st atom of each monomer)
     if (use_pbc_) {
         // Fix monomer coordinates
-        systools::FixMonomerCoordinates(xyz_, box_, box_inverse_, nat_, first_index_);
+        if (xyz_.size() > 0) systools::FixMonomerCoordinates(xyz_, box_, box_inverse_, nat_, first_index_);
     }
 
 #ifdef DEBUG
@@ -1598,7 +1643,8 @@ void System::AddMonomerInfo() {
 
     // Adding the number of sites of each monomer and storing the first index
     std::vector<size_t> fi_at;
-    numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at, monomers_j_);
+    std::vector<size_t> fi_sites;
+    numsites_ = systools::SetUpMonomers(monomers_, sites_, nat_, fi_at, fi_sites, monomers_j_);
 
 #ifdef DEBUG
     std::cerr << "Finished SetUpMonomers.\n";
@@ -1694,6 +1740,7 @@ void System::AddMonomerInfo() {
     atom_tag_ = std::vector<int>(numsites_, 0);
 
     size_t count = 0;
+    size_t count_real = 0;
     first_index_.clear();
     std::vector<size_t> tmpsites;
     std::vector<size_t> tmpnats;
@@ -1712,8 +1759,11 @@ void System::AddMonomerInfo() {
         for (size_t j = 0; j < (sites_[k] - nat_[k]); ++j) atom_tag_[count + nat_[k] + j] = -atom_tag[fi_at[k] + j];
         // Adding the first index of sites
         first_index_.push_back(count);
+        // Adding the first index of real sites
+        first_index_real_sites_.push_back(count);
         // Update count
         count += sites_[k];
+        count_real += nat_[k];
         // Updating the sites and nat vectors
         tmpsites.push_back(sites_[k]);
         tmpnats.push_back(nat_[k]);
@@ -2117,7 +2167,7 @@ double System::Get1B(bool do_grads) {
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
         curr_mon_type += mon_type_count_[k].second;
-        indx = iend;
+        indx += iend;
     }
 
     return e1b;
@@ -3070,12 +3120,6 @@ void System::SetMPI(MPI_Comm comm, int nx, int ny, int nz) {
     proc_grid_x_ = nx;
     proc_grid_y_ = ny;
     proc_grid_z_ = nz;
-#else
-    world_ = 0;
-    mpi_rank_ = 0;
-    proc_grid_x_ = 1;
-    proc_grid_y_ = 1;
-    proc_grid_z_ = 1;
 #endif
 }
 
