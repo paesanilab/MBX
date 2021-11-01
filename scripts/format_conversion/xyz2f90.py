@@ -44,8 +44,9 @@ for i in range(nat):
 
 fin.close()
 
-fou = open(name + ".nrg",'w')
-fou.write("SYSTEM NRG\n")
+nmon = 0
+monomers_f90 = []
+nats_f90 = []
 
 # Find smallest number of atoms and largest number of atoms in dic
 minat = 100000
@@ -69,22 +70,24 @@ while True:
         if my_mon == "":
             continue
 
-        fou.write("MOLECULE\nMONOMER " + my_mon + "\n")
+        monomers_f90.append(my_mon)
         my_nat = len(monomers[my_mon])
-        for j in range(my_nat):
-            fou.write("{} {} {} {}\n".format(ats[first_index + j],xyz[first_index + j][0],xyz[first_index + j][1],xyz[first_index + j][2]))
-
-        fou.write("ENDMON\nENDMOL\n")
+        nats_f90.append(my_nat)
 
         first_index += my_nat
         break
 
     if first_index == nat:
-        fou.write("ENDSYS\n")
         break
 
     if first_index > nat:
         print("ERROR......")
         break
+
+fou = open("input_f90",'w')
+
+fou.write("{}\n".format(len(monomers_f90)))
+fou.write("{}\n".format(" ".join(monomers_f90)))
+fou.write("{}\n".format(" ".join([str(i) for i in nats_f90])))
 
 fou.close()
