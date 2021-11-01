@@ -3,6 +3,11 @@ from ctypes import cdll
 import numpy as np
 import os,sys
 
+MBXLENGTH2AU = 1.8897259886
+MBXENERGY2AU = 1.0 / 627.50956
+AULENGTH2MBX = 1.0 / MBXLENGTH2AU
+AUENERGY2MBX = 627.50956
+
 MBX_HOME = os.getenv('MBX_HOME')
 if MBX_HOME == "":
   print("MBX_HOME is not set.")
