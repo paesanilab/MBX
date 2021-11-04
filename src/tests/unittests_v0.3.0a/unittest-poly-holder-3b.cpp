@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/3b/x3b-h2o-ion-v2x-deg4-filtered.h"
 #include "potential/3b/x3b-v2x.h"
 #include "potential/3b/mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.h"
+#include "potential/3b/mbnrg_3b_A1B2C4_D1E2_D1E2_deg3_v1.h"
 
 #include <vector>
 #include <iostream>
@@ -825,3 +826,301 @@ TEST_CASE("x3b-v2x::class") {
         REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
     }
 }
+
+TEST_CASE("::struct") {
+    SECTION("n2o5-h2o-h2o") {
+        std::vector<double> xyz1 = {
+            8.2680440000e+00, 1.0783073000e+01, 1.0117501000e+01, 9.3865410000e+00, 1.1620399000e+01, 1.0436688000e+01,
+            8.3598230000e+00, 9.4073400000e+00, 9.8844810000e+00, 1.0525770000e+01, 1.1253619000e+01, 1.0065799000e+01,
+            9.0863690000e+00, 1.2796432000e+01, 1.0771404000e+01, 9.3304000000e+00, 8.9002400000e+00, 1.0425331000e+01,
+            7.2746500000e+00, 8.8236580000e+00, 9.7258010000e+00};
+        std::vector<double> xyz2 = {9.7496420000e+00, 1.2183527000e+01, 7.3906700000e+00,
+                                    1.0555377000e+01, 1.2319729000e+01, 7.8897220000e+00,
+                                    1.0049082000e+01, 1.1915591000e+01, 6.5216610000e+00};
+        std::vector<double> xyz3 = {1.0785064000e+01, 1.1798443000e+01, 4.9853560000e+00,
+                                    1.1395789000e+01, 1.2325561000e+01, 4.4696820000e+00,
+                                    1.1168816000e+01, 1.0921351000e+01, 4.9884520000e+00};
+        std::vector<double> grad1(xyz1.size(), 0.0);
+        std::vector<double> grad2(xyz2.size(), 0.0);
+        std::vector<double> grad3(xyz3.size(), 0.0);
+        size_t ntrim = 1;
+        std::vector<double> virial(9, 0.0);
+
+        double energy_expected = 1.0921723601e-01;
+        std::vector<double> grad1_expected = {
+            3.9701702165e-01,  9.4431286256e-01,  2.0926085554e-01,  -1.1828330492e+00, -7.5752865090e-01,
+            7.8722268986e-02,  1.5378708673e-01,  -7.6324429739e-01, -1.5487215470e-02, 7.6341424588e-01,
+            -4.8991523254e-02, -5.3912408360e-01, -8.0314024289e-02, 4.8484244070e-01,  6.2249357440e-02,
+            -2.4951303751e-01, 1.9111069701e-01,  -1.4695459655e-01, 1.8166461704e-01,  1.2171179892e-01,
+            2.5973864427e-02};
+        std::vector<double> grad2_expected = {4.7213081029e-01,  -1.2240936809e-01, 1.4206921778e-01,
+                                              -3.2017368720e-01, -8.0366275159e-02, 2.3370971053e-01,
+                                              -1.5245445036e-03, 6.5278184907e-03,  -1.8892500660e-01};
+        std::vector<double> grad3_expected = {-1.2445776493e-01, 1.2407444297e-01,  1.6663883134e-01,
+                                              -1.1136017363e-02, 6.2086985547e-02,  -6.6824398270e-02,
+                                              1.9383434216e-03,  -1.6212693141e-01, 3.8691194443e-02};
+        std::vector<double> virial_expected = {4.7458144898e-01, 8.6643700793e-01,  5.3030869973e-01,
+                                               8.6643700793e-01, -6.8231777999e-01, -6.0027372468e-01,
+                                               5.3030869973e-01, -6.0027372468e-01, 8.6305601307e-01};
+
+        mbnrg_A1B2C4_D1E2_D1E2_deg3::mbnrg_A1B2C4_D1E2_D1E2_deg3_v1 ph("n2o5", "h2o", "h2o");
+        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+        double e =
+            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+
+        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+        REQUIRE(e == Approx(energy_expected).margin(TOL));
+        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+    }
+}
+
+// TEST_CASE("::struct") {
+//    SECTION("- -") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> xyz3 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        std::vector<double> grad3(xyz3.size(), 0.0);
+//        size_t ntrim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> grad3_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        XX ph("","","");
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+//        double e =
+//            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}
+
+// TEST_CASE("::struct") {
+//    SECTION("- -") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> xyz3 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        std::vector<double> grad3(xyz3.size(), 0.0);
+//        size_t ntrim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> grad3_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        XX ph("","","");
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+//        double e =
+//            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}
+
+// TEST_CASE("::struct") {
+//    SECTION("- -") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> xyz3 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        std::vector<double> grad3(xyz3.size(), 0.0);
+//        size_t ntrim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> grad3_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        XX ph("","","");
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+//        double e =
+//            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}
+
+// TEST_CASE("::struct") {
+//    SECTION("- -") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> xyz3 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        std::vector<double> grad3(xyz3.size(), 0.0);
+//        size_t ntrim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> grad3_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        XX ph("","","");
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+//        double e =
+//            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}
+
+// TEST_CASE("::struct") {
+//    SECTION("- -") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> xyz3 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        std::vector<double> grad3(xyz3.size(), 0.0);
+//        size_t ntrim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> grad3_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        XX ph("","","");
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+//        double e =
+//            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}
+
+// TEST_CASE("::struct") {
+//    SECTION("- -") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> xyz3 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        std::vector<double> grad3(xyz3.size(), 0.0);
+//        size_t ntrim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> grad3_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        XX ph("","","");
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+//        double e =
+//            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}
+
+// TEST_CASE("::struct") {
+//    SECTION("- -") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> xyz3 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        std::vector<double> grad3(xyz3.size(), 0.0);
+//        size_t ntrim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> grad3_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        XX ph("","","");
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+//        double e =
+//            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}
+
+// TEST_CASE("::struct") {
+//    SECTION("- -") {
+//        std::vector<double> xyz1 = {};
+//        std::vector<double> xyz2 = {};
+//        std::vector<double> xyz3 = {};
+//        std::vector<double> grad1(xyz1.size(), 0.0);
+//        std::vector<double> grad2(xyz2.size(), 0.0);
+//        std::vector<double> grad3(xyz3.size(), 0.0);
+//        size_t ntrim = ;
+//        std::vector<double> virial(9, 0.0);
+//
+//        double energy_expected = ;
+//        std::vector<double> grad1_expected = {};
+//        std::vector<double> grad2_expected = {};
+//        std::vector<double> grad3_expected = {};
+//        std::vector<double> virial_expected = {};
+//
+//        XX ph("","","");
+//        double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
+//        double e =
+//            ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
+//
+//        REQUIRE(e_nograd == Approx(energy_expected).margin(TOL));
+//        REQUIRE(e == Approx(energy_expected).margin(TOL));
+//        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
+//        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
+//        REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
+//    }
+//}

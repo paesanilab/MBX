@@ -7,58 +7,12 @@
 namespace {
 
 struct variable {
-    double v_exp0(const double& r0, const double& k, const double* p1, const double* p2);
-
     double v_exp(const double& k, const double* p1, const double* p2);
-
-    double v_coul0(const double& r0, const double& k, const double* p1, const double* p2);
-
-    double v_coul(const double& k, const double* p1, const double* p2);
-
-    double v_gau0(const double& r0, const double& k, const double* p1, const double* p2);
 
     void grads(const double& gg, double* grd1, double* grd2, const double* p1, const double* p2);
 
     double g[3];  // diff(value, p1 - p2)
 };
-
-//----------------------------------------------------------------------------//
-
-double variable::v_gau0(const double& r0, const double& k, const double* p1, const double* p2) {
-    g[0] = p1[0] - p2[0];
-    g[1] = p1[1] - p2[1];
-    g[2] = p1[2] - p2[2];
-
-    const double r = std::sqrt(g[0] * g[0] + g[1] * g[1] + g[2] * g[2]);
-
-    const double exp1 = std::exp(-k * (r0 - r) * (r0 - r));
-    const double gg = 2 * k * (r0 - r) * exp1 / r;
-
-    g[0] *= gg;
-    g[1] *= gg;
-    g[2] *= gg;
-
-    return exp1;
-}
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-
-double variable::v_exp0(const double& r0, const double& k, const double* p1, const double* p2) {
-    g[0] = p1[0] - p2[0];
-    g[1] = p1[1] - p2[1];
-    g[2] = p1[2] - p2[2];
-
-    const double r = std::sqrt(g[0] * g[0] + g[1] * g[1] + g[2] * g[2]);
-
-    const double exp1 = std::exp(k * (r0 - r));
-    const double gg = -k * exp1 / r;
-
-    g[0] *= gg;
-    g[1] *= gg;
-    g[2] *= gg;
-
-    return exp1;
-}
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 
@@ -80,52 +34,6 @@ double variable::v_exp(const double& k, const double* p1, const double* p2) {
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-
-double variable::v_coul(const double& k, const double* p1, const double* p2) {
-    g[0] = p1[0] - p2[0];
-    g[1] = p1[1] - p2[1];
-    g[2] = p1[2] - p2[2];
-
-    const double rsq = g[0] * g[0] + g[1] * g[1] + g[2] * g[2];
-    const double r = std::sqrt(rsq);
-
-    const double exp1 = std::exp(k * (-r));
-    const double rinv = 1.0 / r;
-    const double val = exp1 * rinv;
-
-    const double gg = -(k + rinv) * val * rinv;
-
-    g[0] *= gg;
-    g[1] *= gg;
-    g[2] *= gg;
-
-    return val;
-}
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-
-double variable::v_coul0(const double& r0, const double& k, const double* p1, const double* p2) {
-    g[0] = p1[0] - p2[0];
-    g[1] = p1[1] - p2[1];
-    g[2] = p1[2] - p2[2];
-
-    const double rsq = g[0] * g[0] + g[1] * g[1] + g[2] * g[2];
-    const double r = std::sqrt(rsq);
-
-    const double exp1 = std::exp(k * (r0 - r));
-    const double rinv = 1.0 / r;
-    const double val = exp1 * rinv;
-
-    const double gg = -(k + rinv) * val * rinv;
-
-    g[0] *= gg;
-    g[1] *= gg;
-    g[2] *= gg;
-
-    return val;
-}
-
-//----------------------------------------------------------------------------//
 
 void variable::grads(const double& gg, double* grd1, double* grd2, const double* p1, const double* p2) {
     for (size_t i = 0; i < 3; i++) {
@@ -193,40 +101,6 @@ void monomer::grads(const double* g1, const double* g2, const double& in_plane_g
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
-
-// struct vsites {
-//    //void TwoParticleAverageSite() {}
-//    //void ThreeParticleAverageSite() {}
-//    void OutOfPlaneSite(const double& w12, const double& w13,
-//                        const double& wcross, const double x1[3],
-//                        const double y1[3], const double y2[3],
-//                        double vs[3]);
-//    //void LocalCoordinatesSite{}
-//};
-//
-// void vsites::OutOfPlaneSite(const double& w12,
-//                            const double& w13,
-//                            const double& wcross,
-//                            const double x1[3],
-//                            const double y1[3],
-//                            const double y2[3],
-//                            double vs[3]) {
-//    double r12[3], r13[3];
-//
-//    for (int i = 0; i < 3; ++i) {
-//        r12[i] = y1[i] - x1[i];
-//        r13[i] = y2[i] - x1[i];
-//    }
-//
-//    double rc[3];
-//    rc[0] = r12[1]*r13[2] - r12[2]*r13[1];
-//    rc[1] = r12[2]*r13[0] - r12[0]*r13[2];
-//    rc[2] = r12[0]*r13[1] - r12[1]*r13[0];
-//
-//    vs[0] = x1[0] + w12 * r12[0] + w13 * r13[0] + wcross * rc[0];
-//    vs[1] = x1[1] + w12 * r12[1] + w13 * r13[1] + wcross * rc[1];
-//    vs[2] = x1[2] + w12 * r12[2] + w13 * r13[2] + wcross * rc[2];
-//}
 
 }  // namespace
 
@@ -1364,7 +1238,7 @@ double x2b_A1B2C4_D1E2_v1x::eval(const double* xyz1, const double* xyz2, const s
 }
 
 double x2b_A1B2C4_D1E2_v1x::eval(const double* xyz1, const double* xyz2, double* grad1, double* grad2,
-                                 const size_t ndim) const {
+                                 const size_t ndim, std::vector<double>* virial) const {
     std::vector<double> energies(ndim, 0.0);
 
     for (size_t j = 0; j < ndim; j++) {
@@ -1539,6 +1413,42 @@ double x2b_A1B2C4_D1E2_v1x::eval(const double* xyz1, const double* xyz2, double*
             grad2[i + j * 9] -= d;
         }
         energies[j] *= sw;
+
+        if (virial != 0) {
+            (*virial)[0] += -A_1_a[0] * A_1_a_g[0] - B_1_a[0] * B_1_a_g[0] - B_2_a[0] * B_2_a_g[0] -
+                            C_1_a[0] * C_1_a_g[0] - C_2_a[0] * C_2_a_g[0] - C_3_a[0] * C_3_a_g[0] -
+                            C_4_a[0] * C_4_a_g[0] - D_1_b[0] * D_1_b_g[0] - E_1_b[0] * E_1_b_g[0] -
+                            E_2_b[0] * E_2_b_g[0];
+
+            (*virial)[1] += -A_1_a[0] * A_1_a_g[1] - B_1_a[0] * B_1_a_g[1] - B_2_a[0] * B_2_a_g[1] -
+                            C_1_a[0] * C_1_a_g[1] - C_2_a[0] * C_2_a_g[1] - C_3_a[0] * C_3_a_g[1] -
+                            C_4_a[0] * C_4_a_g[1] - D_1_b[0] * D_1_b_g[1] - E_1_b[0] * E_1_b_g[1] -
+                            E_2_b[0] * E_2_b_g[1];
+
+            (*virial)[2] += -A_1_a[0] * A_1_a_g[2] - B_1_a[0] * B_1_a_g[2] - B_2_a[0] * B_2_a_g[2] -
+                            C_1_a[0] * C_1_a_g[2] - C_2_a[0] * C_2_a_g[2] - C_3_a[0] * C_3_a_g[2] -
+                            C_4_a[0] * C_4_a_g[2] - D_1_b[0] * D_1_b_g[2] - E_1_b[0] * E_1_b_g[2] -
+                            E_2_b[0] * E_2_b_g[2];
+
+            (*virial)[4] += -A_1_a[1] * A_1_a_g[1] - B_1_a[1] * B_1_a_g[1] - B_2_a[1] * B_2_a_g[1] -
+                            C_1_a[1] * C_1_a_g[1] - C_2_a[1] * C_2_a_g[1] - C_3_a[1] * C_3_a_g[1] -
+                            C_4_a[1] * C_4_a_g[1] - D_1_b[1] * D_1_b_g[1] - E_1_b[1] * E_1_b_g[1] -
+                            E_2_b[1] * E_2_b_g[1];
+
+            (*virial)[5] += -A_1_a[1] * A_1_a_g[2] - B_1_a[1] * B_1_a_g[2] - B_2_a[1] * B_2_a_g[2] -
+                            C_1_a[1] * C_1_a_g[2] - C_2_a[1] * C_2_a_g[2] - C_3_a[1] * C_3_a_g[2] -
+                            C_4_a[1] * C_4_a_g[2] - D_1_b[1] * D_1_b_g[2] - E_1_b[1] * E_1_b_g[2] -
+                            E_2_b[1] * E_2_b_g[2];
+
+            (*virial)[8] += -A_1_a[2] * A_1_a_g[2] - B_1_a[2] * B_1_a_g[2] - B_2_a[2] * B_2_a_g[2] -
+                            C_1_a[2] * C_1_a_g[2] - C_2_a[2] * C_2_a_g[2] - C_3_a[2] * C_3_a_g[2] -
+                            C_4_a[2] * C_4_a_g[2] - D_1_b[2] * D_1_b_g[2] - E_1_b[2] * E_1_b_g[2] -
+                            E_2_b[2] * E_2_b_g[2];
+
+            (*virial)[3] = (*virial)[1];
+            (*virial)[6] = (*virial)[2];
+            (*virial)[7] = (*virial)[5];
+        }
     }
 
     double energy = 0.0;
