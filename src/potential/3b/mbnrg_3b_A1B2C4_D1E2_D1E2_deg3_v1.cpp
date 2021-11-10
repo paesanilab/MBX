@@ -2273,7 +2273,7 @@ double mbnrg_A1B2C4_D1E2_D1E2_deg3_v1::eval(const double* xyz1, const double* xy
 //----------------------------------------------------------------------------//
 
 double mbnrg_A1B2C4_D1E2_D1E2_deg3_v1::eval(const double* xyz1, const double* xyz2, const double* xyz3, double* grad1,
-                                            double* grad2, double* grad3, const size_t n) {
+                                            double* grad2, double* grad3, const size_t n, std::vector<double>* virial) {
     std::vector<double> energies(n, 0.0);
     std::vector<double> energies_sw(n, 0.0);
 
@@ -2586,6 +2586,60 @@ double mbnrg_A1B2C4_D1E2_D1E2_deg3_v1::eval(const double* xyz1, const double* xy
 
         for (size_t i = 0; i < 9; i++) {
             grad3[i + j * 9] += gradients[30 + i];
+        }
+
+        if (virial != 0) {
+            (*virial)[0] += -coords_A_1_a[0] * coords_A_1_a_g[0] - coords_B_1_a[0] * coords_B_1_a_g[0] -
+                            coords_B_2_a[0] * coords_B_2_a_g[0] - coords_C_1_a[0] * coords_C_1_a_g[0] -
+                            coords_C_2_a[0] * coords_C_2_a_g[0] - coords_C_3_a[0] * coords_C_3_a_g[0] -
+                            coords_C_4_a[0] * coords_C_4_a_g[0] - coords_D_1_b[0] * coords_D_1_b_g[0] -
+                            coords_E_1_b[0] * coords_E_1_b_g[0] - coords_E_2_b[0] * coords_E_2_b_g[0] -
+                            coords_D_2_c[0] * coords_D_2_c_g[0] - coords_E_3_c[0] * coords_E_3_c_g[0] -
+                            coords_E_4_c[0] * coords_E_4_c_g[0];
+
+            (*virial)[1] += -coords_A_1_a[0] * coords_A_1_a_g[1] - coords_B_1_a[0] * coords_B_1_a_g[1] -
+                            coords_B_2_a[0] * coords_B_2_a_g[1] - coords_C_1_a[0] * coords_C_1_a_g[1] -
+                            coords_C_2_a[0] * coords_C_2_a_g[1] - coords_C_3_a[0] * coords_C_3_a_g[1] -
+                            coords_C_4_a[0] * coords_C_4_a_g[1] - coords_D_1_b[0] * coords_D_1_b_g[1] -
+                            coords_E_1_b[0] * coords_E_1_b_g[1] - coords_E_2_b[0] * coords_E_2_b_g[1] -
+                            coords_D_2_c[0] * coords_D_2_c_g[1] - coords_E_3_c[0] * coords_E_3_c_g[1] -
+                            coords_E_4_c[0] * coords_E_4_c_g[1];
+
+            (*virial)[2] += -coords_A_1_a[0] * coords_A_1_a_g[2] - coords_B_1_a[0] * coords_B_1_a_g[2] -
+                            coords_B_2_a[0] * coords_B_2_a_g[2] - coords_C_1_a[0] * coords_C_1_a_g[2] -
+                            coords_C_2_a[0] * coords_C_2_a_g[2] - coords_C_3_a[0] * coords_C_3_a_g[2] -
+                            coords_C_4_a[0] * coords_C_4_a_g[2] - coords_D_1_b[0] * coords_D_1_b_g[2] -
+                            coords_E_1_b[0] * coords_E_1_b_g[2] - coords_E_2_b[0] * coords_E_2_b_g[2] -
+                            coords_D_2_c[0] * coords_D_2_c_g[2] - coords_E_3_c[0] * coords_E_3_c_g[2] -
+                            coords_E_4_c[0] * coords_E_4_c_g[2];
+
+            (*virial)[4] += -coords_A_1_a[1] * coords_A_1_a_g[1] - coords_B_1_a[1] * coords_B_1_a_g[1] -
+                            coords_B_2_a[1] * coords_B_2_a_g[1] - coords_C_1_a[1] * coords_C_1_a_g[1] -
+                            coords_C_2_a[1] * coords_C_2_a_g[1] - coords_C_3_a[1] * coords_C_3_a_g[1] -
+                            coords_C_4_a[1] * coords_C_4_a_g[1] - coords_D_1_b[1] * coords_D_1_b_g[1] -
+                            coords_E_1_b[1] * coords_E_1_b_g[1] - coords_E_2_b[1] * coords_E_2_b_g[1] -
+                            coords_D_2_c[1] * coords_D_2_c_g[1] - coords_E_3_c[1] * coords_E_3_c_g[1] -
+                            coords_E_4_c[1] * coords_E_4_c_g[1];
+
+            (*virial)[5] += -coords_A_1_a[1] * coords_A_1_a_g[2] - coords_B_1_a[1] * coords_B_1_a_g[2] -
+                            coords_B_2_a[1] * coords_B_2_a_g[2] - coords_C_1_a[1] * coords_C_1_a_g[2] -
+                            coords_C_2_a[1] * coords_C_2_a_g[2] - coords_C_3_a[1] * coords_C_3_a_g[2] -
+                            coords_C_4_a[1] * coords_C_4_a_g[2] - coords_D_1_b[1] * coords_D_1_b_g[2] -
+                            coords_E_1_b[1] * coords_E_1_b_g[2] - coords_E_2_b[1] * coords_E_2_b_g[2] -
+                            coords_D_2_c[1] * coords_D_2_c_g[2] - coords_E_3_c[1] * coords_E_3_c_g[2] -
+                            coords_E_4_c[1] * coords_E_4_c_g[2];
+
+            (*virial)[8] += -coords_A_1_a[2] * coords_A_1_a_g[2] - coords_B_1_a[2] * coords_B_1_a_g[2] -
+                            coords_B_2_a[2] * coords_B_2_a_g[2] - coords_C_1_a[2] * coords_C_1_a_g[2] -
+                            coords_C_2_a[2] * coords_C_2_a_g[2] - coords_C_3_a[2] * coords_C_3_a_g[2] -
+                            coords_C_4_a[2] * coords_C_4_a_g[2] - coords_D_1_b[2] * coords_D_1_b_g[2] -
+                            coords_E_1_b[2] * coords_E_1_b_g[2] - coords_E_2_b[2] * coords_E_2_b_g[2] -
+                            coords_D_2_c[2] * coords_D_2_c_g[2] - coords_E_3_c[2] * coords_E_3_c_g[2] -
+                            coords_E_4_c[2] * coords_E_4_c_g[2];
+
+            (*virial)[3] = (*virial)[1];
+            (*virial)[6] = (*virial)[2];
+            (*virial)[7] = (*virial)[5];
         }
     }
 
