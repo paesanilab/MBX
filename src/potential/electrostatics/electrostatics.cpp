@@ -586,20 +586,6 @@ void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double>
     }
 }
 
-void Electrostatics::Hack1EfqPhi() {
-    std::fill(virial_.begin(), virial_.end(), 0.0);
-    CalculatePermanentElecField(false);
-    if (external_phi_.size() and external_ef_.size()) {
-        UpdatePhiAndEf();
-    }
-}
-
-void Electrostatics::Hack2CgIter() {
-    CalculateOneCgDipoleIter();
-    std::vector<double> grad(3 * nsites_, 0.0);
-    CalculateGradients(grad);
-}
-
 void Electrostatics::UpdatePhiAndEf() {
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -1642,7 +1628,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
     }
 
     // Max number of monomers
-    size_t maxnmon = (mon_type_count_.size() > 0) ? mon_type_count_.back().second : 1;
+    size_t maxnmon = (mon_type_count_cp.size() > 0) ? mon_type_count_cp.back().second : 1;
     if (nExtChg > maxnmon) maxnmon = nExtChg;
     //    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
     //    if (maxnmon == 0) maxnmon = 1;
@@ -2146,6 +2132,10 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
     mon_type_count_ = mon_type_count_cp;
     for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
     for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
+
+    if (external_phi_.size() and external_ef_.size()) {
+        UpdatePhiAndEf();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

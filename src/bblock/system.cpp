@@ -146,9 +146,9 @@ void System::GetElectrostaticFields(std::vector<double> &phi, std::vector<double
     efd = systools::ResetOrder3N(electrostaticE_.GetSysEfd(), initial_order_, first_index_, sites_);
 }
 
-void System::Hack1EfqPhi() { electrostaticE_.Hack1EfqPhi(); }
-
-void System::Hack2CgIter() { electrostaticE_.Hack2CgIter(); }
+// void System::Hack1EfqPhi() { electrostaticE_.Hack1EfqPhi(); }
+//
+// void System::Hack2CgIter() { electrostaticE_.Hack2CgIter(); }
 
 void System::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
     electrostaticE_.Hack3GetPotentialAtPoints(coordinates);
@@ -166,14 +166,14 @@ void System::SetNewParamsElec(bool do_grads) {
 
 void System::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef) {
     // Make sure that the xyz of input has the right size
-    if (ef.size() != 3 * numsites_ or phi.size() != numsites_)  {
+    if (ef.size() != 3 * numsites_ or phi.size() != numsites_) {
         std::string text =
             "Sizes " + std::to_string(ef.size()) + " and " + std::to_string(3 * numsites_) + " don't match.";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
 
     // Copy each coordinate in the apropriate place in the internal
-    std::vector<double> phi_ord(numsites_,0.0), ef_ord(3*numsites_,0.0);
+    std::vector<double> phi_ord(numsites_, 0.0), ef_ord(3 * numsites_, 0.0);
     for (size_t i = 0; i < sites_.size(); i++) {
         size_t ini = 3 * initial_order_[i].second;
         size_t fin = ini + 3 * sites_[i];
