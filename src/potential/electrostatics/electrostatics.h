@@ -770,6 +770,7 @@ class Electrostatics {
 
     std::vector<double> phi_x_;
     std::vector<double> ef_x_;
+    std::vector<double> grad_x_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
