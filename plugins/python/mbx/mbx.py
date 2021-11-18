@@ -154,6 +154,15 @@ def get_charges(number_of_electrostatic_sites):
   chg_out = [chg[i] for i in range(len(chg))]
   return chg_out
 
+def get_polarizabilities(number_of_electrostatic_sites):
+  ns = ctypes.c_int(number_of_electrostatic_sites)
+  poll = [0.0]*(number_of_electrostatic_sites)
+  pol = (ctypes.c_double * (number_of_electrostatic_sites)) (*poll)
+
+  mbxlib.get_polarizabilities_(pol)
+
+  pol_out = [pol[i] for i in range(len(pol))]
+  return pol_out
 
 def finalize_system():
   mbxlib.finalize_system_()
