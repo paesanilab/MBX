@@ -387,12 +387,18 @@ TEST_CASE("disptools::GetC6") {
                   {nlohmann::json::array({{{"a", "c"}, 100.0}, {{"b", "c"}, 200.0}}),
                    nlohmann::json::array({{{"a", "a"}, 150.0}, {{"a", "b"}, 250.0}, {{"b", "b"}, 500.0}})})}};
 
-    std::vector<std::string> mon1 = {"mon_t", "mon_t", "h2o", "f",  "cl", "br",  "i",   "li",  "na",  "k",
-                                     "rb",    "cs",    "he",  "he", "ar", "co2", "ch4", "co2", "ch4", "ar"};
-    std::vector<std::string> mon2 = {"test_mon", "mon_t", "h2o", "h2o", "h2o", "h2o", "h2o", "h2o", "h2o", "h2o",
-                                     "h2o",      "h2o",   "he",  "h2o", "h2o", "co2", "ch4", "h2o", "h2o", "cs"};
-    std::vector<size_t> index1 = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 0, 0, 0};
-    std::vector<size_t> index2 = {0, 0, 1, 0, 1, 0, 1, 2, 1, 2, 1, 0, 0, 2, 1, 1, 0, 1, 1, 0};
+    std::vector<std::string> mon1 = {"mon_t", "mon_t", "h2o", "f",  "cl",          "br",  "i",    "li",
+                                     "na",    "k",     "rb",  "cs", "he",          "he",  "ar",   "co2",
+                                     "ch4",   "co2",   "ch4", "ar", "nh3pbe0d3bj", "nh3", "ar",   "h2",
+                                     "h2",    "ar",    "cs",  "na", "cl",          "cl",  "n2o5", "h2o"};
+    std::vector<std::string> mon2 = {"test_mon", "mon_t", "h2o", "h2o", "h2o",         "h2o", "h2o",  "h2o",
+                                     "h2o",      "h2o",   "h2o", "h2o", "he",          "h2o", "h2o",  "co2",
+                                     "ch4",      "h2o",   "h2o", "cs",  "nh3pbe0d3bj", "nh3", "ar",   "h2",
+                                     "h2o",      "h2o",   "h2",  "na",  "cl",          "na",  "n2o5", "n2o5"};
+    std::vector<size_t> index1 = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+                                  4, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1};
+    std::vector<size_t> index2 = {0, 0, 1, 0, 1, 0, 1, 2, 1, 2, 1, 0, 0, 2, 1, 1,
+                                  0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 3, 1};
     std::vector<double> expected_out_c6 = {20.0,
                                            25.0,
                                            8.349556669872743e+01,
@@ -412,7 +418,19 @@ TEST_CASE("disptools::GetC6") {
                                            104.10825,
                                            130.8452,
                                            105.979,
-                                           1500.0914};
+                                           1500.0914,
+                                           39.9906,
+                                           98.6092,
+                                           774.5257,
+                                           45.4166,
+                                           40.6489,
+                                           382.031,
+                                           372.8086,
+                                           251.48,
+                                           3066.2919,
+                                           784.5853,
+                                           165.351572694970,
+                                           79.65812014580179};
     std::vector<double> expected_out_d6 = {2.0,
                                            2.5,
                                            9.775202425217957e+00,
@@ -432,7 +450,19 @@ TEST_CASE("disptools::GetC6") {
                                            3.25885,
                                            3.7359,
                                            3.68542,
-                                           3.28039};
+                                           3.28039,
+                                           3.83901,
+                                           3.4174,
+                                           3.41808,
+                                           3.11276,
+                                           3.62823,
+                                           3.48054,
+                                           3.24781,
+                                           4.42822,
+                                           1.82786,
+                                           2.85113,
+                                           4.19428,
+                                           6.4749};
 
     for (size_t i = 0; i < mon1.size(); i++) {
         SECTION(mon1[i] + " -- " + mon2[i]) {
@@ -459,5 +489,23 @@ TEST_CASE("disptools::GetC6") {
 
         REQUIRE(c6 == Approx(0.0).margin(TOL));
         REQUIRE(d6 == Approx(0.0).margin(TOL));
+    }
+
+    SECTION("Ignore dispersion") {
+        double c6 = 100.0;
+        double d6 = 1.0;
+
+        std::vector<std::pair<std::string, std::string> > ignore_disp_filled = {{"h2o", "h2o"}, {"mon_t", "mon_t"}};
+        for (size_t i = 0; i < ignore_disp_filled.size(); i++) {
+            disp::GetC6(ignore_disp_filled[i].first, ignore_disp_filled[i].second, 0, 1, c6, d6, ignore_disp_filled,
+                        jsonDisp);
+            REQUIRE(c6 == Approx(0.0).margin(TOL));
+            REQUIRE(d6 == Approx(0.0).margin(TOL));
+
+            disp::GetC6(ignore_disp_filled[i].second, ignore_disp_filled[i].first, 0, 1, c6, d6, ignore_disp_filled,
+                        jsonDisp);
+            REQUIRE(c6 == Approx(0.0).margin(TOL));
+            REQUIRE(d6 == Approx(0.0).margin(TOL));
+        }
     }
 }

@@ -148,27 +148,27 @@ class System {
 
     // FIXME As for today, these functions are not used. // MRR 20191022
     // Will need to activate them and use them whenever we need them for MB-Spec
-    //    /**
-    //     * Gets the molecular dipoles for the system.
-    //     * @param[out] mu_perm Permanent dipole moments
-    //     * @param[out] mu_ind Induced dipole moments
-    //     */
-    //    void GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
-    //
-    //    /**
-    //     * Gets the point dipole moments in each atom.
-    //     * @param[out] mu_perm Permanent dipole moments
-    //     * @param[out] mu_ind Induced dipole moments
-    //     */
-    //    void GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
-    //
-    //    /**
-    //     * Gets the total dipole moment for the system.
-    //     * @param[out] mu_perm Permanent dipole moments
-    //     * @param[out] mu_ind Induced dipole moments
-    //     * @param[out] mu_tot Total dipole moment
-    //     */
-    //    void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
+    /**
+     * Gets the molecular dipoles for the system.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     */
+    void GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+
+    /**
+     * Gets the point dipole moments in each atom.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     */
+    void GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+
+    /**
+     * Gets the total dipole moment for the system.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     * @param[out] mu_tot Total dipole moment
+     */
+    void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
     //
     //    /**
     //     * Returns the charge derivatives for the whole system
@@ -920,6 +920,11 @@ class System {
     std::vector<int> GetFFTDimensionLennardJones(int box_id = 0);
 
     /**
+     * Check FFT grid for MPI proc grid
+     */
+    void CheckFFTDimension(std::vector<int> grid);
+
+    /**
      * Set FFT grid for electrostatic pme solver
      */
     void SetFFTDimensionElectrostatics(std::vector<int> grid);
@@ -1054,7 +1059,7 @@ class System {
 
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
-  
+
     std::vector<size_t> GetInfoDispersionCounts();
     std::vector<double> GetInfoDispersionTimings();
 
@@ -1416,6 +1421,15 @@ class System {
      * electrostatic virtual sites
      */
     std::vector<size_t> first_index_;
+
+    /**
+     * Vector that contains the first index of the first atom of the
+     * monomers in the atom list. As an example, first_index_[4]
+     * will be the position of the first atom of the 5th monomer
+     * in the atom list. This first index only accounts for
+     * real sites
+     */
+    std::vector<size_t> first_index_real_sites_;
 
     /**
      * Vector that stores the dimers computed by the AddClusters functions.

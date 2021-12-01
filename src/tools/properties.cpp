@@ -50,7 +50,7 @@ double GetMass(const std::string atom) {
     } else if (atom == "C") {
         mass = 12.0000000;
     } else if (atom == "N") {
-        mass = 14.0;
+        mass = 14.0030740044;
     } else if (atom == "O") {
         mass = 15.994914619;
     } else if (atom == "F") {

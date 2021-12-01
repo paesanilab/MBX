@@ -155,11 +155,13 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
  * of atoms of the monomers in the same order as the mon vector
  * @param[out] fi_at Vector with same length as mon than contains the first
  * index of the monomers in the same order as the mon vector
+ * @param[out] fi_sites Vector with same length as mon than contains the first
+ * index of the monomers in the same order as the mon vector, but also accounting for virtual sites
  * @param[in] mon_j Json object with extra monomer info
  * @return Total number of sites
  */
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
-                     std::vector<size_t> &fi_at, nlohmann::json mon_j);
+                     std::vector<size_t> &fi_at, std::vector<size_t> &fi_sites, nlohmann::json mon_j);
 
 /**
  * @brief Makes sure that the coordinates of all atoms of the same monomer

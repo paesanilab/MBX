@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/math_tools.h"
 #include "setup_co2_2_h2o_2.h"
 #include "setup_monomer_mix.h"
+#include "setup_monomer_custom_json.h"
 #include "json/json.h"
 
 #include <vector>
@@ -58,10 +59,12 @@ TEST_CASE("systools::SetupMonomers") {
         std::vector<size_t> sites_out;
         std::vector<size_t> nat_out;
         std::vector<size_t> first_index_out;
+        std::vector<size_t> first_index_real_sites_out;
         nlohmann::json empty_j;
         // Run SetUpMonomers
         try {
-            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_out, empty_j);
+            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_real_sites_out, first_index_out,
+                                    empty_j);
         } catch (CUException &e) {
             std::cerr << e.what();
         }
@@ -70,7 +73,8 @@ TEST_CASE("systools::SetupMonomers") {
 
         SECTION("Number of Atoms Vector") { REQUIRE(VectorsAreEqual(nat_out, n_atoms_vector)); }
 
-        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_out, first_index_realSites)); }
+        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index_realSites)); }
+        SECTION("First Index Vector all Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index)); }
     }
 
     SECTION("General behavior monomer mix") {
@@ -80,10 +84,12 @@ TEST_CASE("systools::SetupMonomers") {
         std::vector<size_t> sites_out;
         std::vector<size_t> nat_out;
         std::vector<size_t> first_index_out;
+        std::vector<size_t> first_index_real_sites_out;
         nlohmann::json empty_j;
         // Run SetUpMonomers
         try {
-            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_out, empty_j);
+            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_real_sites_out, first_index_out,
+                                    empty_j);
         } catch (CUException &e) {
             std::cerr << e.what();
         }
@@ -92,7 +98,33 @@ TEST_CASE("systools::SetupMonomers") {
 
         SECTION("Number of Atoms Vector") { REQUIRE(VectorsAreEqual(nat_out, n_atoms_vector)); }
 
-        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_out, first_index_realSites)); }
+        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index_realSites)); }
+        SECTION("First Index Vector all Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index)); }
+    }
+
+    SECTION("Monomer from json") {
+        SETUP_MON_JSON
+
+        // Prepare variables for SetUpMonomers
+        std::vector<size_t> sites_out;
+        std::vector<size_t> nat_out;
+        std::vector<size_t> first_index_out;
+        std::vector<size_t> first_index_real_sites_out;
+
+        // Run SetUpMonomers
+        try {
+            systools::SetUpMonomers(monomer_names, sites_out, nat_out, first_index_real_sites_out, first_index_out,
+                                    user_j);
+        } catch (CUException &e) {
+            std::cerr << e.what();
+        }
+
+        SECTION("Sites Vector") { REQUIRE(VectorsAreEqual(sites_out, n_sites_vector)); }
+
+        SECTION("Number of Atoms Vector") { REQUIRE(VectorsAreEqual(nat_out, n_atoms_vector)); }
+
+        SECTION("First Index Vector") { REQUIRE(VectorsAreEqual(first_index_real_sites_out, first_index_realSites)); }
+        SECTION("First Index Vector all Sites") { REQUIRE(VectorsAreEqual(first_index_out, first_index)); }
     }
 
     SECTION("Assertions") {
@@ -100,13 +132,14 @@ TEST_CASE("systools::SetupMonomers") {
         std::vector<size_t> tmpsites;
         std::vector<size_t> tmpnat;
         std::vector<size_t> tmpfirst_index;
+        std::vector<size_t> tmpfirst_index2;
         nlohmann::json empty_j;
 
         SECTION("Set up an empty monomer list") {
             std::vector<std::string> monomers_empty;
             bool not_possible_to_setup_monomers = false;
             try {
-                systools::SetUpMonomers(monomers_empty, tmpsites, tmpnat, tmpfirst_index, empty_j);
+                systools::SetUpMonomers(monomers_empty, tmpsites, tmpnat, tmpfirst_index2, tmpfirst_index, empty_j);
             } catch (CUException &e) {
                 not_possible_to_setup_monomers = true;
             }
@@ -117,7 +150,7 @@ TEST_CASE("systools::SetupMonomers") {
             std::vector<std::string> monomers_not_in_db = {"not", "in", "data", "base", "at", "all"};
             bool monomer_not_in_database = false;
             try {
-                systools::SetUpMonomers(monomers_not_in_db, tmpsites, tmpnat, tmpfirst_index, empty_j);
+                systools::SetUpMonomers(monomers_not_in_db, tmpsites, tmpnat, tmpfirst_index2, tmpfirst_index, empty_j);
             } catch (CUException &e) {
                 monomer_not_in_database = true;
             }
@@ -990,6 +1023,90 @@ TEST_CASE("systools::AddClusters") {
                     REQUIRE(trimers.size() == expected_number_of_trimers * 3);
                 }
             }
+
+            // FIXME
+            // SECTION("Using ghost monomers") {
+            //    SECTION("Cutoff short, no dimers or trimers") {
+            //        size_t n_max = 3;
+            //        double cutoff = 0.5 * length;
+            //        size_t istart = 0;
+            //        size_t iend = nmon;
+            //        bool use_pbc = box.size();
+            //        std::vector<size_t> dimers;
+            //        std::vector<size_t> trimers;
+            //        bool use_ghost = true;
+
+            //        systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
+            //                              dimers, trimers, use_ghost);
+            //        REQUIRE(dimers.size() == 0);
+            //        REQUIRE(trimers.size() == 0);
+            //    }
+
+            //    SECTION("Cutoff long, all possible dimers and trimers") {
+            //        size_t n_max = 3;
+            //        double cutoff = 10 * length;
+            //        size_t istart = 0;
+            //        size_t iend = nmon;
+            //        bool use_pbc = box.size();
+            //        std::vector<size_t> dimers;
+            //        std::vector<size_t> trimers;
+            //        bool use_ghost = true;
+
+            //        systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
+            //                              dimers, trimers, use_ghost);
+            //        REQUIRE(dimers.size() ==
+            //                nmon * (nmon - 1));  // Combinations of nmon elements in groups of 2 n!/(n-2)!/2! * 2
+            //        REQUIRE(trimers.size() == nmon * (nmon - 1) * (nmon - 2) /
+            //                                      2);  // Combinations of nmon elements in groups of 3 n!/(n-3)!/3! *
+            //                                      2
+            //    }
+
+            //    SECTION("Cutoff to get all the dimers and trimers below 1.1") {
+            //        size_t n_max = 3;
+            //        double cutoff = 1.01 * length;
+            //        size_t istart = 0;
+            //        size_t iend = nmon;
+            //        bool use_pbc = box.size();
+            //        std::vector<size_t> dimers;
+            //        std::vector<size_t> trimers;
+            //        bool use_ghost = true;
+
+            //        size_t expected_number_of_dimers = 0;
+            //        for (size_t i = 0; i < nmon - 1; i++) {
+            //            for (size_t j = i + 1; j < nmon; j++) {
+            //                double s = 0.0;
+            //                for (size_t k = 0; k < 3; k++) {
+            //                    s += fabs(xyz[3 * fi[i] + k] - xyz[3 * fi[j] + k]);
+            //                }
+            //                if (s < cutoff) expected_number_of_dimers++;
+            //            }
+            //        }
+
+            //        size_t expected_number_of_trimers = 0;
+            //        for (size_t i = 0; i < nmon - 2; i++) {
+            //            for (size_t j = i + 1; j < nmon - 1; j++) {
+            //                for (size_t k = j + 1; k < nmon; k++) {
+            //                    double sij = 0.0;
+            //                    double sik = 0.0;
+            //                    double sjk = 0.0;
+            //                    for (size_t l = 0; l < 3; l++) {
+            //                        sij += fabs(xyz[3 * fi[i] + l] - xyz[3 * fi[j] + l]);
+            //                        sik += fabs(xyz[3 * fi[i] + l] - xyz[3 * fi[k] + l]);
+            //                        sjk += fabs(xyz[3 * fi[j] + l] - xyz[3 * fi[k] + l]);
+            //                    }
+            //                    if ((sij < cutoff && sik < cutoff) || (sij < cutoff && sjk < cutoff) ||
+            //                        (sik < cutoff && sjk < cutoff))
+            //                        expected_number_of_trimers++;
+            //                }
+            //            }
+            //        }
+
+            //        systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
+            //                              dimers, trimers, use_ghost);
+            //        REQUIRE(dimers.size() == expected_number_of_dimers * 2);
+            //        REQUIRE(trimers.size() == expected_number_of_trimers * 3);
+            //    }
+            //}
         }
     }
 }
@@ -1088,6 +1205,106 @@ TEST_CASE("systools::GetExcluded") {
         REQUIRE(exc13 == exc13_expected);
         REQUIRE(exc14 == exc14_expected);
     }
+
+    SECTION("n2o5") {
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "n2o5";
+
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+        exc12_expected.insert(std::make_pair(1, 3));
+        exc12_expected.insert(std::make_pair(2, 6));
+        exc12_expected.insert(std::make_pair(1, 4));
+        exc12_expected.insert(std::make_pair(2, 5));
+        exc12_expected.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13_expected.insert(std::make_pair(1, 2));
+        exc13_expected.insert(std::make_pair(5, 6));
+        exc13_expected.insert(std::make_pair(0, 6));
+        exc13_expected.insert(std::make_pair(0, 5));
+        exc13_expected.insert(std::make_pair(0, 4));
+        exc13_expected.insert(std::make_pair(0, 3));
+        exc13_expected.insert(std::make_pair(3, 4));
+        // 14 distances
+        exc14_expected.insert(std::make_pair(1, 5));
+        exc14_expected.insert(std::make_pair(1, 6));
+        exc14_expected.insert(std::make_pair(2, 3));
+        exc14_expected.insert(std::make_pair(2, 4));
+
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
+
+    SECTION("h2") {
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "h2";
+
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
+
+    SECTION("nh3") {
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "nh3";
+
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+        exc12_expected.insert(std::make_pair(0, 3));
+        exc12_expected.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13_expected.insert(std::make_pair(1, 2));
+        exc13_expected.insert(std::make_pair(1, 3));
+        exc13_expected.insert(std::make_pair(2, 3));
+
+        systools::GetExcluded(mon, empty_j, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
+
+    SECTION("custom mymon from json") {
+        SETUP_MON_JSON
+
+        excluded_set_type exc12, exc12_expected;
+        excluded_set_type exc13, exc13_expected;
+        excluded_set_type exc14, exc14_expected;
+
+        std::string mon = "mymon";
+        // 12 distances
+        exc12_expected.insert(std::make_pair(0, 1));
+        exc12_expected.insert(std::make_pair(2, 3));
+        // 13 distances
+        exc13_expected.insert(std::make_pair(0, 2));
+        exc13_expected.insert(std::make_pair(1, 4));
+        // 14 distances
+        exc14_expected.insert(std::make_pair(0, 3));
+        exc14_expected.insert(std::make_pair(1, 5));
+
+        systools::GetExcluded(mon, user_j, exc12, exc13, exc14);
+
+        REQUIRE(exc12 == exc12_expected);
+        REQUIRE(exc13 == exc13_expected);
+        REQUIRE(exc14 == exc14_expected);
+    }
 }
 
 TEST_CASE("systools::IsExcluded") {
@@ -1104,6 +1321,14 @@ TEST_CASE("systools::IsExcluded") {
     REQUIRE(!systools::IsExcluded(exc, 10, 99));
     REQUIRE(!systools::IsExcluded(exc, 9999, 2));
     REQUIRE(!systools::IsExcluded(exc, 0, 0));
+}
+
+TEST_CASE("systools::GetAcc") {
+    double aCC = 0.4;
+    double aCC_big = 1.0E24;
+
+    REQUIRE(systools::GetAcc("dp1") == Approx(aCC_big).margin(TOL));
+    REQUIRE(systools::GetAcc("other") == Approx(aCC).margin(TOL));
 }
 
 TEST_CASE("systools::GetAdd") {
@@ -1394,26 +1619,50 @@ TEST_CASE("systools::SetVSites") {
 }
 
 TEST_CASE("systools::SetCharges") {
-    SETUP_MONMIX
-    nlohmann::json empty_j;
-    for (size_t i = 0; i < n_monomers; i++) {
-        std::string monname = monomer_names[i];
-        SECTION(monname) {
-            size_t n_mon = 1;
-            size_t nsites = n_sites_vector[i];
-            size_t fi = first_index[i];
-            std::vector<double> chg_der(27 * n_mon, 0.0);
-            std::vector<double> chg(n_sites, 0.0);
+    SECTION("Individual monomers") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> chg_der(27 * n_mon, 0.0);
+                std::vector<double> chg(n_sites, 0.0);
 
-            systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der, empty_j);
+                systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der, empty_j);
 
-            for (size_t k = 0; k < nsites; k++) {
-                REQUIRE(chg[k + fi] == Approx(charges[k + fi]).margin(TOL));
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(chg[k + fi] == Approx(charges[k + fi]).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Monomer from JSON") {
+        SETUP_MON_JSON
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> chg_der(27 * n_mon, 0.0);
+                std::vector<double> chg(n_sites, 0.0);
+
+                systools::SetCharges(coords, chg, monname, n_mon, nsites, fi, chg_der, user_j);
+
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(chg[k + fi] == Approx(charges[k + fi]).margin(TOL));
+                }
             }
         }
     }
 
     SECTION("Multiple water molecules") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
         std::vector<double> xyz = {
             -4.4590985000e-03, -5.1342579600e-02, 1.5813800000e-05,  9.8613021140e-01,  -7.4573098400e-02,
             5.4324000000e-06,  -1.5974709230e-01, 8.9671808950e-01,  -1.6493200000e-05, 1.7375531156e-01,
@@ -1467,60 +1716,123 @@ TEST_CASE("systools::SetCharges") {
 }
 
 TEST_CASE("systools::SetPol") {
-    SETUP_MONMIX
-    nlohmann::json empty_j;
-    for (size_t i = 0; i < n_monomers; i++) {
-        std::string monname = monomer_names[i];
-        SECTION(monname) {
-            size_t n_mon = 1;
-            size_t nsites = n_sites_vector[i];
-            size_t fi = first_index[i];
-            std::vector<double> pol_out(n_sites, 0.0);
+    SECTION("Individual monomers") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> pol_out(n_sites, 0.0);
 
-            systools::SetPol(pol_out, monname, n_mon, nsites, fi, empty_j);
+                systools::SetPol(pol_out, monname, n_mon, nsites, fi, empty_j);
 
-            for (size_t k = 0; k < nsites; k++) {
-                REQUIRE(pol_out[k + fi] == Approx(pol[k + fi]).margin(TOL));
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(pol_out[k + fi] == Approx(pol[k + fi]).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Monomer from JSON") {
+        SETUP_MON_JSON
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> pol_out(n_sites, 0.0);
+
+                systools::SetPol(pol_out, monname, n_mon, nsites, fi, user_j);
+
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(pol_out[k + fi] == Approx(pol[k + fi]).margin(TOL));
+                }
             }
         }
     }
 }
 
 TEST_CASE("systools::SetPolfac") {
-    SETUP_MONMIX
-    nlohmann::json empty_j;
-    for (size_t i = 0; i < n_monomers; i++) {
-        std::string monname = monomer_names[i];
-        SECTION(monname) {
-            size_t n_mon = 1;
-            size_t nsites = n_sites_vector[i];
-            size_t fi = first_index[i];
-            std::vector<double> polfac_out(n_sites, 0.0);
+    SECTION("Individual monomers") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> polfac_out(n_sites, 0.0);
 
-            systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi, empty_j);
+                systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi, empty_j);
 
-            for (size_t k = 0; k < nsites; k++) {
-                REQUIRE(polfac_out[k + fi] == Approx(polfac[k + fi]).margin(TOL));
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(polfac_out[k + fi] == Approx(polfac[k + fi]).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Monomer from JSON") {
+        SETUP_MON_JSON
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t nsites = n_sites_vector[i];
+                size_t fi = first_index[i];
+                std::vector<double> polfac_out(n_sites, 0.0);
+
+                systools::SetPolfac(polfac_out, monname, n_mon, nsites, fi, user_j);
+
+                for (size_t k = 0; k < nsites; k++) {
+                    REQUIRE(polfac_out[k + fi] == Approx(polfac[k + fi]).margin(TOL));
+                }
             }
         }
     }
 }
 
 TEST_CASE("systools::SetC6LongRange") {
-    SETUP_MONMIX
-    nlohmann::json empty_j;
-    for (size_t i = 0; i < n_monomers; i++) {
-        std::string monname = monomer_names[i];
-        SECTION(monname) {
-            size_t n_mon = 1;
-            size_t natoms = n_atoms_vector[i];
-            size_t fi = first_index_realSites[i];
-            std::vector<double> c6_out(n_atoms, 0.0);
+    SECTION("Individual monomers") {
+        SETUP_MONMIX
+        nlohmann::json empty_j;
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t natoms = n_atoms_vector[i];
+                size_t fi = first_index_realSites[i];
+                std::vector<double> c6_out(n_atoms, 0.0);
 
-            systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi, empty_j);
+                systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi, empty_j);
 
-            for (size_t k = 0; k < natoms; k++) {
-                REQUIRE(c6_out[k + fi] == Approx(C6_long_range[k + fi]).margin(TOL));
+                for (size_t k = 0; k < natoms; k++) {
+                    REQUIRE(c6_out[k + fi] == Approx(C6_long_range[k + fi]).margin(TOL));
+                }
+            }
+        }
+    }
+
+    SECTION("Monomer from JSON") {
+        SETUP_MON_JSON
+        for (size_t i = 0; i < n_monomers; i++) {
+            std::string monname = monomer_names[i];
+            SECTION(monname) {
+                size_t n_mon = 1;
+                size_t natoms = n_atoms_vector[i];
+                size_t fi = first_index_realSites[i];
+                std::vector<double> c6_out(n_atoms, 0.0);
+
+                systools::SetC6LongRange(c6_out, monname, n_mon, natoms, fi, user_j);
+
+                for (size_t k = 0; k < natoms; k++) {
+                    REQUIRE(c6_out[k + fi] == Approx(C6_long_range[k + fi]).margin(TOL));
+                }
             }
         }
     }

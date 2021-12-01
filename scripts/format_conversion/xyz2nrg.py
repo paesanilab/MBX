@@ -20,6 +20,7 @@ monomers['i'] = ['I']
 monomers['ar'] = ['Ar']
 monomers['he'] = ['He']
 monomers['h2'] = ['H','H']
+monomers['n2o5'] = ['O','N','N','O','O','O','O']
 
 #H2O
 monomers['h2o'] = ['O','H','H']
@@ -58,7 +59,7 @@ for i in monomers:
 # Start Checking for our monomers
 first_index = 0
 while True:
-    for i in range(minat,maxat+1):
+    for i in range(maxat, minat-1,-1):
         my_ats = ats[first_index:first_index + i]
         my_mon = ""
         for j in monomers:

@@ -29,12 +29,7 @@ make install
 If you have intel compilers in your machine, it is highly recommended to replace g++/gcc by icpc/icc
 
 ## Testing
-In order to make sure that the installations has been done properly, run the tests. In the home directory of the software:
-```
-cd tests
-./run_tests.sh 2> out
-```
-If all tests are passing, you are good to go!
+WIP
 
 ## Json File
 To make life easier for you, a json configuration file can be used to pass all the information that MBX needs. Usually, one does not need to change anything except a couple of options. In any case, all the options of the json file are explained below.
@@ -91,8 +86,8 @@ After installation, there will be the main executables in `$MBX_HOME/install/bin
 - `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If the flag to print gradients is activated (`PRINT_GRADS`; see source code in `$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
 
-## Run TTM-nrg with MBX
-It is possible to use the classical polarizable model TTM-nrg with MB-pol using MBX. An example is provided in `MBX_HOME/examples/h2o-co2/ttm-nrg_with_mbx`. To do so, just prepare a json file as usual, but add the pairs that you want to calculate with TTM-nrg in the `ttm_pairs` section of the `mbx.json` file. It is recommended to add also the pairs in `ignore_2b_poly` and the trimers involving that species in `ignore_3b_poly` sections (see example), unless your MB-model has been fitted over a TTM-model. In this case, none of our potentials are fitted over the buckingham repulsion.
+## PEFs implemented
+All the PEFs implemented and an example of input files and run scripts are provided in `$MBX_HOME/examples/PEFs`. If a surface is not there, its usage is not recommended because it is either not tested or not finalized. Example calls with C++, fortran and python are located inside each of the corresponding folders.
 
 ## Interface
 ### Fortran90

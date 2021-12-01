@@ -99,10 +99,10 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "nh3" and mon2 == "nh3") {
         mbnrg_A1B3_A1B3_deg4::mbnrg_A1B3_A1B3_deg4_v1 pot(mon1, mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "nh3pbe0d3bj" and mon2 == "nh3pbe0d3bj") {
         mbnrg_A1B3_A1B3_deg4::mbnrg_A1B3_A1B3_deg4_v1 pot(mon1, mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -114,31 +114,31 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "h2" and mon2 == "h2") {
         mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 pot(mon1, mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "h2" and mon2 == "h2o") {
         mbnrg_A1B2Z2_C2_deg5::mbnrg_A1B2Z2_C2_deg5_v1 pot(mon2, mon1);
-        return pot.eval(xyz2.data(), xyz1.data(), nm);
+        energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "ar" and mon2 == "h2o") {
         mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "cs" and mon2 == "h2") {
         mbnrg_A1_B2_deg7::mbnrg_A1_B2_deg7_v1 pot(mon1, mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "na" and mon2 == "na") {
         mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 pot(mon1, mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "cl" and mon2 == "cl") {
         mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 pot(mon1, mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "cl" and mon2 == "na") {
         mbnrg_A1_B1_deg9::mbnrg_A1_B1_deg9_v1 pot(mon2, mon1);
-        return pot.eval(xyz2.data(), xyz1.data(), nm);
+        energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "ar" and mon2 == "ar") {
         mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 pot(mon1, mon2);
-        return pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "ar" and mon2 == "cs") {
         mbnrg_A1_B1_deg9::mbnrg_A1_B1_deg9_v1 pot(mon2, mon1);
-        return pot.eval(xyz2.data(), xyz1.data(), nm);
+        energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "h2o" && mon2 == "n2o5") {
         x2b_A1B2C4_D1E2_deg3::x2b_A1B2C4_D1E2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
@@ -288,6 +288,9 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         std::vector<double> tmp2 = std::move(grad2);
         grad2 = std::move(grad1);
         grad1 = std::move(tmp2);
+        std::string tmps = mon1;
+        mon1 = mon2;
+        mon2 = tmps;
     }
 
 #ifdef DEBUG
