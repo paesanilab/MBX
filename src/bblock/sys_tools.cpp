@@ -424,8 +424,8 @@ bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { ret
 
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
-                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
-                 std::vector<size_t> &trimers, bool use_ghost) {
+                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
+                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost) {
     // istart is the monomer position for which we will look all dimers and
     // trimers that contain it. iend is the last monomer position.
     // This means, if istart is 0 and iend is 2, we will look for all dimers
@@ -458,43 +458,45 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
     size_t nmon2 = 0;
 
     std::vector<size_t> mon_index;
+    std::vector<size_t> tag_index;
     for (size_t i = istart; i < nmon; i++) {
-        size_t islsum = is_local[istart] + is_local[i];
+        // size_t islsum = is_local[istart] + is_local[i];
 
-        bool include_monomer = false;
-        if (n_max == 2) {
-            if (i == istart) {
-                if (use_ghost)
-                    include_monomer = true;
-                else if (!use_ghost && islsum == 2)
-                    include_monomer = true;
-            } else {
-                if (use_ghost && islsum == 1)
-                    include_monomer = true;
-                else if (!use_ghost && islsum == 2)
-                    include_monomer = true;
-            }
-        } else {  // trimer
-            if (i == istart) {
-                if (use_ghost)
-                    include_monomer = true;
-                else if (!use_ghost && islsum == 2)
-                    include_monomer = true;
-            } else {
-                if (use_ghost)
-                    include_monomer = true;
-                else if (!use_ghost && islsum == 2)
-                    include_monomer = true;
-            }
-        }
+        // bool include_monomer = false;
+        // if (n_max == 2) {
+        //    if (i == istart) {
+        //        if (use_ghost)
+        //            include_monomer = true;
+        //        else if (!use_ghost && islsum == 2)
+        //            include_monomer = true;
+        //    } else {
+        //        if (use_ghost && islsum == 1)
+        //            include_monomer = true;
+        //        else if (!use_ghost && islsum == 2)
+        //            include_monomer = true;
+        //    }
+        //} else {  // trimer
+        //    if (i == istart) {
+        //        if (use_ghost)
+        //            include_monomer = true;
+        //        else if (!use_ghost && islsum == 2)
+        //            include_monomer = true;
+        //    } else {
+        //        if (use_ghost)
+        //            include_monomer = true;
+        //        else if (!use_ghost && islsum == 2)
+        //            include_monomer = true;
+        //    }
+        //}
 
-        if (include_monomer) {
-            xyz.push_back(xyz_orig[3 * first_index[i]]);
-            xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
-            xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
-            mon_index.push_back(i);
-            nmon2++;
-        }
+        // if (include_monomer) {
+        xyz.push_back(xyz_orig[3 * first_index[i]]);
+        xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
+        xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
+        mon_index.push_back(i);
+        tag_index.push_back(tag[first_index[i]]);
+        nmon2++;
+        //}
     }
 
     if (nmon2 < 2) return;
@@ -543,11 +545,22 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                     // ghost-local == 1 for all permutations
                     // local-local == 2
 
-                    size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
+                    // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
 
                     bool include_dimer = false;
-                    if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
-                    if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
+                    // if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
+                    // if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
+                    size_t tag1 = tag_index[i];
+                    size_t tag2 = tag_index[ret_matches[j].first];
+                    size_t tagmin = tag1;
+                    size_t idxmin = mon_index[i];
+
+                    if (tagmin > tag2) {
+                        tagmin = tag2;
+                        idxmin = mon_index[ret_matches[j].first];
+                    }
+
+                    if (is_local[idxmin] == 1) include_dimer = true;
 
                     if (include_dimer) {
                         dimers.push_back(mon_index[i]);
@@ -567,12 +580,29 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                                 // ghost-ghost-local == 1 for all permutations
                                 // ghost-local-local == 2 for all permutations
                                 // local-local-local == 3
-                                size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
-                                                is_local[mon_index[ret_matches[k].first]];
+                                // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
+                                //                is_local[mon_index[ret_matches[k].first]];
 
                                 bool include_trimer = false;
-                                if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-                                if (!use_ghost && islsum == 3) include_trimer = true;
+                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+                                // if (!use_ghost && islsum == 3) include_trimer = true;
+                                size_t tag1 = tag_index[i];
+                                size_t tag2 = tag_index[ret_matches[j].first];
+                                size_t tag3 = tag_index[ret_matches[k].first];
+                                size_t tagmin = tag1;
+                                size_t idxmin = mon_index[i];
+
+                                if (tagmin > tag2) {
+                                    tagmin = tag2;
+                                    idxmin = mon_index[ret_matches[j].first];
+                                }
+
+                                if (tagmin > tag3) {
+                                    tagmin = tag3;
+                                    idxmin = mon_index[ret_matches[k].first];
+                                }
+
+                                if (is_local[idxmin] == 1) include_trimer = true;
 
                                 if (include_trimer) {
                                     trimers.push_back(mon_index[i]);
@@ -617,12 +647,30 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                                 // ghost-ghost-local == 1 for all permutations
                                 // ghost-local-local == 2 for all permutations
                                 // local-local-local == 3
-                                size_t islsum =
-                                    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
+                                // size_t islsum =
+                                //    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
 
                                 bool include_trimer = false;
-                                if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-                                if (!use_ghost && islsum == 3) include_trimer = true;
+                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+                                // if (!use_ghost && islsum == 3) include_trimer = true;
+
+                                size_t tag1 = tag_index[i];
+                                size_t tag2 = tag_index[ret_matches[j].first];
+                                size_t tag3 = tag_index[ret_matches2[k].first];
+                                size_t tagmin = tag1;
+                                size_t idxmin = mon_index[i];
+
+                                if (tagmin > tag2) {
+                                    tagmin = tag2;
+                                    idxmin = mon_index[ret_matches[j].first];
+                                }
+
+                                if (tagmin > tag3) {
+                                    tagmin = tag3;
+                                    idxmin = mon_index[ret_matches2[k].first];
+                                }
+
+                                if (is_local[idxmin] == 1) include_trimer = true;
 
                                 if (include_trimer) {
                                     trimers.push_back(mon_index[i]);

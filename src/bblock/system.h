@@ -146,8 +146,6 @@ class System {
      */
     std::vector<size_t> GetMonNumAt();
 
-    // FIXME As for today, these functions are not used. // MRR 20191022
-    // Will need to activate them and use them whenever we need them for MB-Spec
     /**
      * Gets the molecular dipoles for the system.
      * @param[out] mu_perm Permanent dipole moments
@@ -235,7 +233,7 @@ class System {
      * @warning Order is not guaranteed. This means that the n-mers
      * can come in any order
      */
-    std::vector<size_t> GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend);
+    std::vector<size_t> GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
 
     /**
      * Gets a vector with the indexes that form a molecule.
@@ -1681,6 +1679,11 @@ class System {
     std::vector<int> grid_fftdim_elec_;
     std::vector<int> grid_fftdim_disp_;
     std::vector<int> grid_fftdim_lj_;
+
+    /**
+     * Auxiliary tag counter
+     */
+    int tag_counter_;
 
     /**
      * States if the initialization is PME only or not"

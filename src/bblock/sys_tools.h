@@ -266,8 +266,8 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
  */
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
-                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
-                 std::vector<size_t> &trimers, bool use_ghost = false);
+                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
+                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost = false);
 
 /**
  * @brief Sets the excluded pairs for a given monomer

@@ -62,6 +62,7 @@ System::System() {
     mpi_initialized_ = false;
     simcell_periodic_ = false;
     std::cerr << std::setprecision(20);
+    tag_counter_ = 1;
 
     // Define some of the parameters
 
@@ -213,7 +214,7 @@ std::vector<size_t> System::GetAtomsVector() {
     return sites;
 }
 
-std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend) {
+std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost) {
     // Make sure that nmax is 2 or 3
     // Throw exception otherwise
     if (nmax != 2 and nmax != 3) {
@@ -222,7 +223,7 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
     }
 
     // Call the add clusters function to get all the pairs
-    AddClusters(nmax, cutoff, 0, monomers_.size());
+    AddClusters(nmax, cutoff, 0, monomers_.size(), use_ghost);
 
     // Change the monomer indexes of dimers_ or trimers_
     // to match the input order
@@ -696,7 +697,10 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
     // Adding local/ghost descriptor
     islocal_.push_back(islocal);
     // Adding unique ids
-    for (int i = 0; i < atoms.size(); ++i) atom_tag_.push_back(tag + i);
+    for (int i = 0; i < atoms.size(); ++i) {
+        atom_tag_.push_back(tag == 0 ? tag_counter_ + i : tag + i);
+    }
+    tag_counter_ += atoms.size();
 }
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
@@ -1751,7 +1755,7 @@ void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend,
 
     size_t nmon = monomers_.size();
     systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_,
-                          dimers_, trimers_, use_ghost_);
+                          atom_tag_, dimers_, trimers_, use_ghost_);
 }
 
 std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
@@ -1771,7 +1775,7 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size
     size_t nmon = monomers_.size();
     std::vector<size_t> dimers, trimers;
     systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_,
-                          dimers, trimers, use_ghost_);
+                          atom_tag_, dimers, trimers, use_ghost_);
     if (nmax == 2) return dimers;
     return trimers;
 }
@@ -2372,9 +2376,10 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         e2b_t += e2b_pool[i];
     }
 
-    if (use_ghost) e2b_t *= 0.5;
+    // if (use_ghost) e2b_t *= 0.5;
     // Condensate virial
-    const double scalev = use_ghost ? 0.5 : 1.0;
+    const double scalev = 1.0;
+    // const double scalev = use_ghost ? 0.5 : 1.0;
     for (int i = 0; i < num_threads; i++) {
         for (size_t j = 0; j < 9; j++) {
             virial_[j] += scalev * virial_pool[i][j];
@@ -2567,9 +2572,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                         double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
 
                         double escale = 1.0;
-                        if (use_ghost)
-                            escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
-                                     one_third;
+                        // if (use_ghost)
+                        //    escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
+                        //             one_third;
                         e3b_pool[rank] += escale * e;
 
                         // Update gradients
@@ -2600,9 +2605,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                         // POLYNOMIALS
                         double e = e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
                         double escale = 1.0;
-                        if (use_ghost)
-                            escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
-                                     one_third;
+                        // if (use_ghost)
+                        //    escale = (islocal_[trimers[i]] + islocal_[trimers[i + 1]] + islocal_[trimers[i + 2]]) *
+                        //             one_third;
                         e3b_pool[rank] += escale * e;
                     }
                 }
