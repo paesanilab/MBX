@@ -68,6 +68,7 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         energies = pot.eval(xyz1.data(), nm);
     } else if (mon1 == "h2") {
         mbnrg_A2_deg8::mbnrg_A2_deg8_v1 pot(mon1);
+        energies = pot.eval(xyz1.data(), nm);
     } else if (mon1 == "n2o5") {
         x1b_A1B2C4_deg5::x1b_A1B2C4_v1x pot(mon1);
         energies = pot.eval(xyz1.data(), nm);
