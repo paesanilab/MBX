@@ -117,7 +117,11 @@ class ElectricFieldHolder {
                                 bool use_pbc,              // Whether to enforce periodic boundary conditions
                                 const std::vector<double> &box,          // The lattice vectors
                                 const std::vector<double> &box_inverse,  // The inverse lattice vectors
-                                double cutoff);                          // The real space cutoff for pairs
+                                double cutoff,                           // The real space cutoff for pairs
+                                bool use_ghost,                          // use ghost monomers
+                                const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
+                                const size_t m2_offset,
+                                std::vector<double> *virial = 0);  // The virial);
 
     ////////////////////////////////////////////////////////////////////////////////
     // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
@@ -143,7 +147,9 @@ class ElectricFieldHolder {
                              bool use_pbc,                            // Whether to enforce periodic boundary conditions
                              const std::vector<double> &box,          // The lattice vectors
                              const std::vector<double> &box_inverse,  // The inverse lattice vectors
-                             double cutoff);                          // The real space cutoff for pairs
+                             double cutoff,                           // The real space cutoff for pairs
+                             bool use_ghost,                          // use ghost monomers
+                             const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset);
 
     ////////////////////////////////////////////////////////////////////////////////
     // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////
@@ -175,7 +181,10 @@ class ElectricFieldHolder {
                             bool use_pbc,                    // Whether to enforce periodic boundary conditions
                             const std::vector<double> &box,  // The lattice vectors
                             const std::vector<double> &box_inverse,  // The inverse lattice vectors
-                            double cutoff                            // The real space cutoff for pairs
+                            double cutoff,                           // The real space cutoff for pairs
+                            bool use_ghost,                          // use ghost monomers
+                            const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
+                            std::vector<double> *virial = 0  // the virial
     );
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -198,6 +207,7 @@ class ElectricFieldHolder {
     std::vector<double> v8_;
     std::vector<double> v9_;
     std::vector<double> v10_;
+    std::vector<double> v11_;
 };
 
 }  // namespace elec

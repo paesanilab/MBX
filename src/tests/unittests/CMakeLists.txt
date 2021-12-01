@@ -1,26 +1,35 @@
-# Add any new tests to this list or the one below!
+#Add any new tests to this list or the one below!
 set( SOURCES_UNITTESTS_TESTS
-    unittest-gas-electrostatics-mbpol.cpp
-    unittest-dispersion-gas-cutoff.cpp
-    unittest-dispersion-pme.cpp
-    unittest-gas-nbodyterms-mbpol.cpp
-    unittest-systools.cpp
-    unittest-system.cpp
-    unittest-gas-nopolarization-findif.cpp
-    unittest-gas-withpolarization-findif.cpp
-    unittest-pme-nopolarization.cpp
-    unittest-pme-nopolarization-findif.cpp
-    unittest-pme-withpolarization.cpp
-    unittest-pme-withpolarization-findif.cpp
-    unittest-gamma.cpp
+#    unittest-h2o-f-dimer.cpp
+#    unittest-h2o-cl-dimer.cpp
+#    unittest-h2o-br-dimer.cpp
+#    unittest-h2o-i-dimer.cpp
+    unittest-h2o-li-dimer.cpp
+#    unittest-h2o-na-dimer.cpp
+#    unittest-h2o-k-dimer.cpp
+#    unittest-h2o-rb-dimer.cpp
+#    unittest-h2o-cs-dimer.cpp
+#    unittest-h2o-h2o-li-trimer.cpp
+#    unittest-h2o-h2o-na-trimer.cpp
+#    unittest-h2o-h2o-k-trimer.cpp
+#    unittest-h2o-h2o-rb-trimer.cpp
+#    unittest-h2o-h2o-cs-trimer.cpp
+#    unittest-ch4-monomer.cpp
+#    unittest-bond.cpp
+#    unittest-angle.cpp
+#    unittest-dihedral.cpp
+#    unittest-inversion.cpp
+#    unittest-connectivity.cpp
+#    unittest-io-connectivity.cpp
+#    unittest-h4-dummy.cpp
+#    unittest-box-shapes.cpp
 )
 
-#
 # Stuff below shouldn't need to be modified
 #
 
 include_directories(${PROJECT_SOURCE_DIR}
-                    ${PROJECT_SOURCE_DIR}/../external/kdtree
+                    ${PROJECT_SOURCE_DIR}/../external/
                     ${PROJECT_SOURCE_DIR}/potential/electrostatics )
 
 set( SOURCES_UNITTESTS_MAIN unittest-main.cpp )
@@ -55,15 +64,15 @@ CheckFileList( SOURCES_ALL_PATH ${UNITTEST_DIR} )
 string( REPLACE ".cpp" "" BASENAMES_UNITTESTS_TESTS "${SOURCES_UNITTESTS_TESTS}" )
 set( TARGETS_UNITTESTS_TESTS ${BASENAMES_UNITTESTS_TESTS} )
 
-set( TARGETS_ALL ${TARGETS_UNITTESTS_TESTS} CatchMain )
+set( TARGETS_ALL ${TARGETS_UNITTESTS_TESTS} CatchMain_dev )
 
 # Define program targets:
-add_library( CatchMain OBJECT ${UNITTEST_DIR}/${SOURCES_UNITTESTS_MAIN} ${HEADER_DIR}/catch.hpp )
+add_library( CatchMain_dev OBJECT ${UNITTEST_DIR}/${SOURCES_UNITTESTS_MAIN} ${HEADER_DIR}/catch.hpp )
 
 foreach( name ${TARGETS_UNITTESTS_TESTS} )
-    add_executable( ${name} ${name}.cpp $<TARGET_OBJECTS:CatchMain> ${HEADER_DIR}/catch.hpp )
-    target_link_libraries( ${name} PRIVATE mbnrglib fftw::fftw)
-    add_dependencies( ${name} mbnrglib )
+    add_executable( ${name} ${name}.cpp $<TARGET_OBJECTS:CatchMain_dev> ${HEADER_DIR}/catch.hpp )
+    target_link_libraries( ${name} PRIVATE mbxlib fftw::fftw)
+    add_dependencies( ${name} mbxlib )
     add_test(NAME ${name}
              COMMAND ${name})
 endforeach()

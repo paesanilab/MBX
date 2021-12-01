@@ -31,7 +31,6 @@ EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
-
 #include "potential/2b/x2b-v9x.h"
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1365,7 +1364,10 @@ double x2b_v9x::f_switch(const double& r, double& g) {
 //----------------------------------------------------------------------------//
 
 double x2b_v9x::eval(const double* w1, const double* w2, const size_t nd) {
-    // the switch
+#ifdef DEBUG
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+#endif
+
     std::vector<size_t> dimers_todo;
     std::vector<double> energy(nd, 0.0);
     double rOOsq[nd];
@@ -1484,13 +1486,70 @@ double x2b_v9x::eval(const double* w1, const double* w2, const size_t nd) {
         e += sw * energy[i];
     }
 
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates (1) for " << nd << " monomers:\n";
+    for (size_t i = 0; i < nd; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << w1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input coordinates (2) for " << nd << " monomers:\n";
+    for (size_t i = 0; i < nd; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << w2[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output energy: " << e << std::endl;
+#endif
+
     return e;
 }
 
 //----------------------------------------------------------------------------//
 
-double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2, const size_t nd) {
-    // the switch
+double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2, const size_t nd,
+                     std::vector<double>* virial) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Input coordinates (1) for " << nd << " monomers:\n";
+    for (size_t i = 0; i < nd; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << w1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input coordinates (2) for " << nd << " monomers:\n";
+    for (size_t i = 0; i < nd; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << w2[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input gradients (1) for " << nd << " monomers:\n";
+    for (size_t i = 0; i < nd; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << g1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input gradients (2) for " << nd << " monomers:\n";
+    for (size_t i = 0; i < nd; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << g2[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Input virial:\n";
+    for (size_t i = 0; i < 9; i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 
     std::vector<size_t> dimers_todo;
     std::vector<double> energy(nd, 0.0);
@@ -1687,7 +1746,64 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
         }
 
         e += sw * e2b[i];
+
+        // Calculate virial
+
+        if (virial != 0) {
+            (*virial)[0] -= w1[0 + 0 + sh9] * g1[0 + 0 + sh9] + w1[0 + 3 + sh9] * g1[0 + 3 + sh9] +
+                            w1[0 + 6 + sh9] * g1[0 + 6 + sh9] + w2[0 + 0 + sh9] * g2[0 + 0 + sh9] +
+                            w2[0 + 3 + sh9] * g2[0 + 3 + sh9] + w2[0 + 6 + sh9] * g2[0 + 6 + sh9];
+
+            (*virial)[1] -= w1[0 + 0 + sh9] * g1[0 + 1 + sh9] + w1[0 + 3 + sh9] * g1[0 + 4 + sh9] +
+                            w1[0 + 6 + sh9] * g1[0 + 7 + sh9] + w2[0 + 0 + sh9] * g2[0 + 1 + sh9] +
+                            w2[0 + 3 + sh9] * g2[0 + 4 + sh9] + w2[0 + 6 + sh9] * g2[0 + 7 + sh9];
+
+            (*virial)[2] -= w1[0 + 0 + sh9] * g1[0 + 2 + sh9] + w1[0 + 3 + sh9] * g1[0 + 5 + sh9] +
+                            w1[0 + 6 + sh9] * g1[0 + 8 + sh9] + w2[0 + 0 + sh9] * g2[0 + 2 + sh9] +
+                            w2[0 + 3 + sh9] * g2[0 + 5 + sh9] + w2[0 + 6 + sh9] * g2[0 + 8 + sh9];
+
+            (*virial)[4] -= w1[0 + 1 + sh9] * g1[0 + 1 + sh9] + w1[0 + 4 + sh9] * g1[0 + 4 + sh9] +
+                            w1[0 + 7 + sh9] * g1[0 + 7 + sh9] + w2[0 + 1 + sh9] * g2[0 + 1 + sh9] +
+                            w2[0 + 4 + sh9] * g2[0 + 4 + sh9] + w2[0 + 7 + sh9] * g2[0 + 7 + sh9];
+
+            (*virial)[5] -= w1[0 + 1 + sh9] * g1[0 + 2 + sh9] + w1[0 + 4 + sh9] * g1[0 + 5 + sh9] +
+                            w1[0 + 7 + sh9] * g1[0 + 8 + sh9] + w2[0 + 1 + sh9] * g2[0 + 2 + sh9] +
+                            w2[0 + 4 + sh9] * g2[0 + 5 + sh9] + w2[0 + 7 + sh9] * g2[0 + 8 + sh9];
+
+            (*virial)[8] -= w1[0 + 2 + sh9] * g1[0 + 2 + sh9] + w1[0 + 5 + sh9] * g1[0 + 5 + sh9] +
+                            w1[0 + 8 + sh9] * g1[0 + 8 + sh9] + w2[0 + 2 + sh9] * g2[0 + 2 + sh9] +
+                            w2[0 + 5 + sh9] * g2[0 + 5 + sh9] + w2[0 + 8 + sh9] * g2[0 + 8 + sh9];
+
+            (*virial)[3] = (*virial)[1];
+            (*virial)[6] = (*virial)[2];
+            (*virial)[7] = (*virial)[5];
+        }
     }
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Output energy: " << e << std::endl;
+    std::cerr << "Output gradients (1) for " << nd << " monomers:\n";
+    for (size_t i = 0; i < nd; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << g1[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output gradients (2) for " << nd << " monomers:\n";
+    for (size_t i = 0; i < nd; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            std::cerr << g2[9 * i + j] << " , ";
+        }
+        std::cerr << std::endl;
+    }
+    std::cerr << "Output virial:\n";
+    for (size_t i = 0; i < 9; i++) {
+        std::cerr << (*virial)[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
 
     return e;
 }

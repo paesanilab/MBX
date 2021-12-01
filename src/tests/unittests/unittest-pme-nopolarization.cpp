@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "catch.hpp"
+#include "Catch2/single_include/catch.hpp"
 
-#include "electrostatics.h"
-#include "setupwaterbox216.h"
+#include "potential/electrostatics/electrostatics.h"
+#include "setup_h2o_216.h"
 
 #include <vector>
 #include <iostream>
@@ -51,7 +51,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     double polfacO = 0;
     double polfacH = 0;
     double polfacM = 0;
-    SETUP_WATERBOX_216
+    SETUP_H2O_216
     double ref_energy = -1820.686249;
 
     elec::Electrostatics elec;
@@ -63,8 +63,9 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
      * Ensure that computed properties are invariant to changes in the Ewald attenuation parameter
      */
     // alpha = 0.3
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, method, box_vectors);
+
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, method, box_vectors);
     elec.SetCutoff(16.5);
     elec.SetEwaldAlpha(0.25);
     elec.SetEwaldGridDensity(2.5);
@@ -74,8 +75,8 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     REQUIRE(energy3 == Approx(ref_energy).epsilon(TOL));
 
     // alpha = 0.4
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, method, box_vectors);
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, method, box_vectors);
     elec.SetCutoff(13);
     elec.SetEwaldAlpha(0.35);
     elec.SetEwaldGridDensity(2.5);
@@ -86,8 +87,8 @@ TEST_CASE("test the electrostatics class for only coulomb terms (PME) - ewald al
     for (int n = 0; n < 3 * n_atoms; ++n) REQUIRE(forces3[n] == Approx(forces4[n]).epsilon(TOL));
 
     // alpha = 0.5
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, method, box_vectors);
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, method, box_vectors);
     elec.SetCutoff(10);
     elec.SetEwaldAlpha(0.45);
     elec.SetEwaldGridDensity(3.5);

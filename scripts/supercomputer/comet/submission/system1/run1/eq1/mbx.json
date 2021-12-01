@@ -1,0 +1,28 @@
+{
+   "Note" : "This is a cofiguration file",
+   "MBX" : { 
+       "box" : [1.9729500000000002E+01,0.0,0.0,0.0,1.9729500000000002E+01,0.0,0.0,0.0,1.9729500000000002E+01],
+       "twobody_cutoff"   : 9.0,
+       "threebody_cutoff" : 4.6, 
+       "max_n_eval_1b"    : 500,
+       "max_n_eval_2b"    : 500,
+       "max_n_eval_3b"    : 500,
+       "dipole_tolerance" : 1E-16,
+       "dipole_max_it"    : 100,
+       "dipole_method"    : "aspc",
+       "alpha_ewald_elec" : 0.60,
+       "grid_density_elec" : 2.0,
+       "spline_order_elec" : 6,
+       "alpha_ewald_disp" : 0.60,
+       "grid_density_disp" : 2.0,
+       "spline_order_disp" : 6,
+       "ttm_pairs" : [],
+       "ignore_2b_poly" : [],
+       "ignore_3b_poly" : []
+   } ,  
+   "i-pi" : {
+       "port" : 34601,
+       "localhost" : "localhost01"
+   }
+}
+

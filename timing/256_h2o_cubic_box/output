@@ -1,0 +1,11 @@
+**WARNING** "ff_mons" is not defined in json file. Using empty list.
+**WARNING** "ignore_1b_poly" is not defined in json file. Using empty list.
+**WARNING** "connectivity_file" is not defined in json file. Not using 1B TTM-nrg.
+1B = 3.0996035371e+02
+2B = 2.6514750304e+03
+3B = 6.4908027075e+01
+Disp = -1.6285751703e+03
+Buck = 0.0000000000e+00
+Elec = -3.8527084112e+03
+Total = -2.4549401703e+03
+Energy= -2454.94

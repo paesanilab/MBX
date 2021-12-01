@@ -1,0 +1,65 @@
+name: MBX testing suite
+
+on:
+  push:
+    branches:
+      - "master"
+      - "master-dev"
+  pull_request:
+    branches:
+      - "master"
+      - "master-dev"
+  schedule:
+    # Nightly tests run on master by default:
+    #   Scheduled workflows run on the latest commit on the default or base branch.
+    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
+    - cron: "0 0 * * *"
+
+jobs:
+  compile-and-test-mbx:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: install-dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y fftw3-dev
+          sudo apt-get install lcov -y
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
+
+      - name: run-cmake
+        run: |
+          ls ${{ github.workspace }}
+          rm -rf build install
+          cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=False -DCMAKE_COMPILE_TESTS=TRUE -DCMAKE_CXX_FLAGS=" -fPIC --coverage -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
+
+      - name: run-make
+        run: |
+          cd build
+          make -j 2 CXX=g++ CC=gcc
+          make install
+          cd ../
+      - run: echo "This job's status is ${{ job.status }}."
+
+      - run: echo "Running unittests"
+      - run: ls ${{ github.workspace }}
+      - name: ctest
+        run: |
+          cd ${{ github.workspace }}/install/bin/unittests
+          ctest --output-on-failure
+
+      - name: Submit to codecov.io
+        run: |
+          cd ${{ github.workspace }}
+          lcov --directory . --capture --output-file coverage.info # capture coverage info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+          lcov --list coverage.info #debug info
+          bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+          

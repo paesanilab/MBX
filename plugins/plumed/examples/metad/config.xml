@@ -1,0 +1,49 @@
+<simulation>
+  <output prefix="data">
+    <trajectory stride="10" filename="pos" format="xyz" cell_units="angstrom">positions{angstrom}</trajectory>
+    <properties stride="10" filename="out"> [ step, time{picosecond}, conserved{kilocal/mol}, temperature{kelvin}, kinetic_cv{kelvin}, potential{kelvin}, pressure_cv{megapascal}, kinetic_cv(H), kinetic_cv(O), ensemble_bias ] </properties>
+    <properties stride='10' filename='pot'>  [ time{picosecond}, potential{kilocal/mol}] </properties>
+    <properties stride='10' filename='temperature'>  [ time{picosecond}, temperature{kelvin}] </properties>
+    <checkpoint stride='10' filename='checkpoint' overwrite=''/>
+  </output>
+  <total_steps>5000000</total_steps>
+  <prng>
+    <seed>3348</seed>
+  </prng>
+  <ffsocket mode='unix' name='driver'>
+    <address>localhost101</address>
+  </ffsocket>
+  <ffplumed name="plumed">
+         <init_file mode="xyz">./cl-h2o.xyz</init_file>
+         <plumeddat> plumed/plumed.dat </plumeddat>
+   </ffplumed>
+  <system>
+    <initialize nbeads='1'>
+      <file mode='xyz' units='angstrom'> cl-h2o.xyz </file>
+      <cell mode='abc' units='angstrom'>
+        [100.0,100.0,100.0]
+      </cell>
+      <velocities mode='thermal' units='kelvin'>10.0</velocities>
+    </initialize>
+    <forces>
+      <force forcefield='driver'/>
+    </forces>
+    <ensemble>
+        <temperature units='kelvin'>100.0</temperature>
+        <bias>
+            <force forcefield="plumed" nbeads="1"></force>
+        </bias>
+    </ensemble>
+    <motion mode='dynamics'>
+      <dynamics mode='nvt'>
+        <thermostat mode='langevin'>
+          <tau units='femtosecond'>25</tau>
+        </thermostat>
+        <timestep units='femtosecond'>0.200</timestep>
+      </dynamics>                                                                           
+    </motion>
+  </system>
+  <smotion mode="metad">
+     <metad> <metaff> [ plumed ] </metaff> </metad>
+  </smotion>
+</simulation>

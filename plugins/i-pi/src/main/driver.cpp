@@ -48,6 +48,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/system.h"
 
 #include "../external/sockets.h"
+#include "json/json.h"
 
 //#define PRINT_GRADS
 //#define NUM_GRADS
@@ -71,10 +72,13 @@ const std::string INIT = "INIT        ";
 ////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv) {
-    if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <input.nrg> <port> <host>" << std::endl;
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <input.nrg> <mbx.json> " << std::endl;
         return 0;
     }
+    
+    std::ifstream ifjson;
+    nlohmann::json j;
 
     try {
         std::ifstream ifs(argv[1]);
@@ -84,16 +88,46 @@ int main(int argc, char** argv) {
         }
 
         tools::ReadNrg(argv[1], systems);
+
+        systems[0].SetUpFromJson(argv[2]);
+        ifjson.open(argv[2]);
+        j = nlohmann::json::parse(ifjson);
+
     } catch (const std::exception& e) {
         std::cerr << " ** Error ** : " << e.what() << std::endl;
         return 1;
     }
 
+    std::vector<double> json_box;
+    try {
+        std::vector<double> box2 = j["MBX"]["box"];
+        json_box = box2;
+    } catch(...) {
+        json_box.clear();
+    }
+
     // Initialize defaults
     int socket = 0;
     int inet = 0;
-    int port = atoi(argv[2]);
-    char* host = argv[3];
+
+    int port;
+    try {
+        port = j["i-pi"]["port"];
+    } catch(...) {
+        port = 34543;
+    }
+
+    std::string host_s;
+    try {
+        host_s = j["i-pi"]["localhost"];
+    } catch(...) {
+        host_s = "localhost";
+    }
+
+    ifjson.close();
+
+    char host[host_s.size() + 1];
+    strcpy(host,host_s.c_str());
 
     open_socket(&socket, &inet, &port, host);
 
@@ -109,10 +143,7 @@ int main(int argc, char** argv) {
     int buffl = LENMSG;
     bool isinit = false;
     bool hasdata = false;
-
-    // Set method to aspc (by default) for now
-    systems[0].SetDipoleMethod("aspc");
-    //  systems[0].SetDipoleMethod("cg");
+    size_t dipole_count = 0;
 
     int nat = int(systems[0].GetNumRealSites());
     double energy = 0.0;
@@ -163,17 +194,30 @@ int main(int argc, char** argv) {
                 throw std::runtime_error("Wrapper did not send the positions");
             }
 
+            for (size_t i = 0; i < box.size(); i++) {
+                box[i] /= 1.8897259886;
+            }
+
             // Get forces here and store them in buffer
             for (size_t i = 0; i < buffer.size(); i++) {
                 buffer[i] /= 1.8897259886;
             }
 
-            if (rid != rid_old) {
+            dipole_count++;
+            if (rid != rid_old || dipole_count > 5000) {
                 systems[0].ResetDipoleHistory();
+                dipole_count = 0;
             }
 
             rid_old = rid;
             systems[0].SetRealXyz(buffer);
+
+            if (json_box.size()) {
+                systems[0].SetPBC(box);
+            } else {
+                systems[0].SetPBC();
+            }
+
             energy = systems[0].Energy(true) / 627.509;
             buffer = systems[0].GetRealGrads();
             for (size_t i = 0; i < buffer.size(); i++) {
@@ -181,7 +225,10 @@ int main(int argc, char** argv) {
                 buffer[i] = -buffer[i] / 1.8897259886 / 627.509;
             }
             // TODO check virial
-            virial = std::vector<double>(9, 0.0);
+            virial = systems[0].GetVirial();
+            for (size_t i=0; i<9; i++) {
+                virial[i] /= 627.509;
+            }
 
             hasdata = true;
             header[0] = '\0';

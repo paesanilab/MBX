@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#PBS -N jobname
+#PBS -q glean
+##PBS -q condo
+##PBS -q home
+#PBS -l walltime=08:00:00,nodes=1:ppn=16
+#PBS -e stderr 
+#PBS -o stdout 
+#PBS -M your_email@ucsd.edu
+#PBS -m abe
+#PBS -m n 
+#PBS -V
+
+# Define your environment variables
+export MBX_HOME=$HOME/software/MBX-master
+export IPI_HOME=$HOME/software/i-pi-master
+export INPUT_NRG="config.nrg"
+export INPUT_XML="input.xml"
+export INPUT_JSON="mbx.json"
+
+# Load modules
+module load intel gsl openmpi_ib fftw
+module load gnu
+module load python
+
+export OMP_NUM_THREADS=16
+export LD_LIBRARY_PATH=$FFTWHOME/lib:$LD_LIBRARY_PATH
+
+# Define driver executable path
+export EXE=$MBX_HOME/plugins/i-pi/bin/driver
+
+# Load environment for i-pi
+cd $IPI_HOME
+source env.sh
+cd $PBS_O_WORKDIR
+
+# Print the current jobid in output folder
+echo $PBS_JOBID > jobid.dat
+
+# Clean localhost
+rm -f /tmp/ipi_localhost*
+
+# Run i-pi to initialize communication
+i-pi $INPUT_XML > i-pi.out &
+sleep 10
+
+# Run driver to start energy calculations
+$EXE $INPUT_NRG $INPUT_JSON > driver.out
+
+ 

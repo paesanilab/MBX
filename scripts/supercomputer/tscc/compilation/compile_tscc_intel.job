@@ -1,0 +1,31 @@
+#!/bin/bash
+
+#PBS -N compile_intel_MBX
+#PBS -q condo
+#PBS -l walltime=01:00:00,nodes=1:ppn=16
+#PBS -e stderr 
+#PBS -o stdout 
+#PBS -M your_email_address
+#PBS -m abe
+##PBS -m ae
+#PBS -m n 
+#PBS -V
+
+export MBX_HOME=$HOME/software/MBX
+
+module loadgnu intel gsl openmpi_ib fftw
+export PATH=$FFTWHOME/lib:$FFTWHOME/include:$PATH
+
+cd $MBX_HOME 
+rm -rf build install
+cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=True -DCMAKE_CXX_FLAGS=" -fPIC -O2 -Wall -L$FFTWHOME/lib -I$FFTWHOME/include" -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc -H. -Bbuild
+cd build
+make -j 8 CXX=icpc CC=icc
+make install
+cd ../
+
+# Compile the driver
+cd plugins/i-pi/src/main
+cp Makefile_tscc_intel Makefile
+make
+cd -

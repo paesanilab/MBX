@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "catch.hpp"
+#include "Catch2/single_include/catch.hpp"
 
-#include "electrostatics.h"
-#include "setupwaterbox2.h"
+#include "potential/electrostatics/electrostatics.h"
+#include "setup_h2o_2.h"
 
 #include <vector>
 #include <iostream>
@@ -51,7 +51,7 @@ void run_test(const char *method) {
     double polfacO = 1.310;
     double polfacH = 0.294;
     double polfacM = 0;
-    SETUP_WATERBOX_2
+    SETUP_H2O_2
     double ref_energy = -0.1752818171;
 
     elec::Electrostatics elec;
@@ -64,8 +64,8 @@ void run_test(const char *method) {
     double grid_density = 2;
     int spline_order = 6;
     double cutoff = 10;
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, method, box_vectors);
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, method, box_vectors);
     elec.SetCutoff(cutoff);
     elec.SetEwaldAlpha(alpha);
     elec.SetEwaldGridDensity(grid_density);
@@ -82,16 +82,16 @@ void run_test(const char *method) {
     std::cout << " DoF      Analytic         Numerical       Difference" << std::endl;
     for (int degreeOfFreedom = 0; degreeOfFreedom < 3 * n_atoms; ++degreeOfFreedom) {
         coords[degreeOfFreedom] += stepSize;
-        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
-                        1E-16, 100, method, box_vectors);
+        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count,
+                        islocal, false, 1E-16, 100, method, box_vectors);
         elec.SetCutoff(cutoff);
         elec.SetEwaldAlpha(alpha);
         elec.SetEwaldGridDensity(grid_density);
         elec.SetEwaldSplineOrder(spline_order);
         double plusEnergy = elec.GetElectrostatics(ignoredForces);
         coords[degreeOfFreedom] -= 2 * stepSize;
-        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
-                        1E-16, 100, method, box_vectors);
+        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count,
+                        islocal, false, 1E-16, 100, method, box_vectors);
         elec.SetCutoff(cutoff);
         elec.SetEwaldAlpha(alpha);
         elec.SetEwaldGridDensity(grid_density);

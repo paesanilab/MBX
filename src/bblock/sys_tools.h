@@ -42,9 +42,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <utility>
 #include <algorithm>
 
-#include "nanoflann.hpp"
-#include "kdtree_utils.h"
+#include "kdtree/nanoflann.hpp"
+#include "kdtree/kdtree_utils.h"
 #include "tools/definitions.h"
+#include "potential/lj/ljtools.h"
+#include "json/json.h"
 
 #include "potential/1b/ps.h"
 #include "tools/constants.h"
@@ -100,6 +102,8 @@ const double gamma21 = gamma2 / gamma1;
  * more frequent.
  * @param[in,out] mon List of monomers in the input order that will be
  * cleared and replaced by the list of monomers in the internal order.
+ * @param[in,out] local/ghost descriptor of monomers in the input order
+ * that will be cleared and replaced by the descriptros in the internal order
  * @param[in] sites Vector of size_t with the number of sites of each
  * monomer in the input order
  * @param[in] nats Vector of size_t with the number of real sites of each
@@ -133,7 +137,7 @@ const double gamma21 = gamma2 / gamma1;
  * number of monomers.
  */
 std::vector<std::pair<std::string, size_t>> OrderMonomers(
-    std::vector<std::string> &mon, std::vector<size_t> sites, std::vector<size_t> nats,
+    std::vector<std::string> &mon, std::vector<size_t> &islocal, std::vector<size_t> sites, std::vector<size_t> nats,
     std::vector<size_t> &original2current_order, std::vector<std::pair<size_t, size_t>> &original_order,
     std::vector<std::pair<size_t, size_t>> &original_order_realSites);
 
@@ -151,10 +155,13 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
  * of atoms of the monomers in the same order as the mon vector
  * @param[out] fi_at Vector with same length as mon than contains the first
  * index of the monomers in the same order as the mon vector
+ * @param[out] fi_sites Vector with same length as mon than contains the first
+ * index of the monomers in the same order as the mon vector, but also accounting for virtual sites
+ * @param[in] mon_j Json object with extra monomer info
  * @return Total number of sites
  */
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
-                     std::vector<size_t> &fi_at);
+                     std::vector<size_t> &fi_at, std::vector<size_t> &fi_sites, nlohmann::json mon_j);
 
 /**
  * @brief Makes sure that the coordinates of all atoms of the same monomer
@@ -170,8 +177,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
  * @param[in] nat Vector with the number of atoms of each monomer
  * @param[in] first_index Vector with the first index of each monomer
  */
-void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<size_t> nat,
-                           std::vector<size_t> first_index);
+void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, std::vector<double> box_inv,
+                           std::vector<size_t> nat, std::vector<size_t> first_index);
 
 /**
  * @brief This function finds the monomer 2 mirror image that is closer to
@@ -194,7 +201,8 @@ void FixMonomerCoordinates(std::vector<double> &xyz, std::vector<double> box, st
  * the other one. At output, it will be modified so the coordinates
  * of monomer 2 are the closer image to monomer 1.
  */
-void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nd, double *xyz1, double *xyz2);
+void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nd,
+                        double *xyz1, double *xyz2);
 
 /**
  * @brief This function finds the monomers 2 and 3 mirror image that is
@@ -223,11 +231,8 @@ void GetCloseDimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_
  * the other one. At output, it will be modified so the coordinates
  * of monomer 3 are the closer image to monomer 1.
  */
-void GetCloseTrimerImage(std::vector<double> box, size_t nat1, size_t nat2, size_t nat3, size_t nt, double *xyz1,
-                         double *xyz2, double *xyz3);
-
-void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> reference, double cutoff,
-                       std::vector<double> &xyz_out, std::vector<size_t> &indexes);
+void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,
+                         size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3);
 
 /**
  * @brief Gets the dimers and/or trimers of a system in which the first
@@ -252,14 +257,17 @@ void GetCloseNeighbors(kdtutils::PointCloud<double> ptc, std::vector<double> ref
  * of the box
  * @param[in] xyz_orig Coordinates of the system
  * @param[in] first_index First index of the monomers in the system
+ * @param[in] is_local is local/ghost descriptor for monomers in system
  * @param[out] dimers Vector of unsigned integers with the dimers
  * @param[out] trimers Vector of unsigned integers with the trimers
+ * @param[in] use_ghost whether or not to include ghost monomers in clusters; this is optional
  * @warning The distance between monomers is computed as the distance
  * between the first atom of both monomers
  */
 void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
-                 std::vector<double> box, std::vector<double> xyz_orig, std::vector<size_t> first_index,
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers);
+                 std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
+                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
+                 std::vector<size_t> &trimers, bool use_ghost = false);
 
 /**
  * @brief Sets the excluded pairs for a given monomer
@@ -269,11 +277,13 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
  * of pairs, in which each pair specifies the two atoms that are
  * excluded.
  * @param[in] mon Monomer id
+ * @param[in] mon_j Json object with monomer information
  * @param[out] exc12 Set of pairs with the 1-2 excluded atoms
  * @param[out] exc13 Set of pairs with the 1-3 excluded atoms
  * @param[out] exc14 Set of pairs with the 1-4 excluded atoms
  */
-void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &exc13, excluded_set_type &exc14);
+void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,
+                 excluded_set_type &exc14);
 
 /**
  * @brief Helper function to compare a pair of an unsigned integer and a
@@ -282,19 +292,9 @@ void GetExcluded(std::string mon, excluded_set_type &exc12, excluded_set_type &e
  * Function that compares the pairs used in AddCLusters
  * @param[in] a First pair
  * @param[in] b Second pair
- * @return True if a.second > b.second, False otherwise
+ * @return True if a.first < b.first, False otherwise
  */
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b);
-
-///**
-// * @brief Helper function that compares the unsigned integer of a pair
-// *
-// * This function is used in AddClusters. Not for any other purpose
-// * @param[in] a First pair
-// * @param[in] b Second pair
-// * @return True if a.second > b.second, False otherwise
-// */
-// bool CompareMonomerType(std::pair<std::string, size_t> a, std::pair<std::string, size_t> b);
 
 /**
  * @brief Checks if the pair a,b or b,a is in the excluded set exc
@@ -320,6 +320,7 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
  * intermolecular damping (non-bonded damping).
  */
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
+double GetAcc(std::string mon);
 
 /**
  * @brief Reorders a vector of 3N coordinates, where N is the number
@@ -435,7 +436,7 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
  * @brief Sets the charges of a system. If there are osition dependent charges,
  * it also calculates them.
  *
- * Given the xyz of the system, and the first index of the monoemr type we are
+ * Given the xyz of the system, and the first index of the monomer type we are
  * filling in teh charges, it will set the vector charges with the (position
  * dependent) charges.
  * @param[in] xyz Coordinates of the system
@@ -447,14 +448,15 @@ void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_
  * @param[in] fst_ind First index of first monomer of type mon_id
  * @param[out] chg_der Vector of doubles that will be filled with the charge
  * gradients of the position dependent charges
+ * @param[in] mon_j Json object with extra monomer definitions
  */
 void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::string mon_id, size_t n_mon, size_t nsites,
-                size_t fst_ind, std::vector<double> &chg_der);
+                size_t fst_ind, std::vector<double> &chg_der, nlohmann::json mon_j);
 
 /**
  * @brief Sets the polarizability factors of a system.
  *
- * Given the first index of the monoemr type we are
+ * Given the first index of the monomer type we are
  * filling in, it will set the polarizability factors
  * @param[out] polfac Vector with the polarizability factor of the monomer type filled.
  * Can contain polarizability factors for other monomer types. They won't be overwritten
@@ -462,13 +464,15 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
  * @param[in] n_mon Number of monomers of type mon_id
  * @param[in] nsites Number of sites of monomer type mon_id
  * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[in] mon_j Json object with extra monomer definitions
  */
-void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
+void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind,
+               nlohmann::json mon_j);
 
 /**
  * @brief Sets the polarizabilities of a system.
  *
- * Given the first index of the monoemr type we are
+ * Given the first index of the monomer type we are
  * filling in, it will set the polarizabilities
  * @param[out] pol Vector with the polarizabilities of the monomer type filled.
  * Can contain polarizabilities for other monomer types. They won't be overwritten
@@ -476,10 +480,42 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
  * @param[in] n_mon Number of monomers of type mon_id
  * @param[in] nsites Number of sites of monomer type mon_id
  * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[in] mon_j Json object with extra monomer definitions
  */
-void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind);
+void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind,
+            nlohmann::json mon_j);
 
-void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t nsites, size_t natoms);
+/**
+ * @brief Sets the C6 "charge" for each atom of a system.
+ *
+ * Given the first index of the monomer type we are
+ * filling in, it will set the long range C6. For an atom A, C6_lr = sqrt(C6_AA).
+ * @param[out] c6_lr Vector with the C6 coefficients for long range of the monomer type filled.
+ * Can contain C6s for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] natoms Number of real atoms of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[in] mon_j Json object with extra monomer definitions
+ */
+void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
+                    nlohmann::json mon_j);
+
+/**
+ * @brief Sets the LJ "charge" for each atom of a system.
+ *
+ * Given the first index of the monomer type we are
+ * filling in, it will set the long range lennard jones charge. For an atom A, lj_lr = 2*sqrt(eps_AA)*sigma_AA^3.
+ * @param[out] lj_lr Vector with the LJ charges for long range of the monomer type filled.
+ * Can contain lj_chg for other monomer types. They won't be overwritten
+ * @param[in] mon_id Id of the monomer we are filling the charges for
+ * @param[in] n_mon Number of monomers of type mon_id
+ * @param[in] natoms Number of real atoms of monomer type mon_id
+ * @param[in] fst_ind First index of first monomer of type mon_id
+ * @param[in] repdisp_j Json object with lennard jones coefficients
+ */
+void SetLJLongRange(std::vector<double> &lj_lr, std::string mon_id, size_t n_mon, size_t natoms, size_t fst_ind,
+                    std::vector<std::pair<std::string, std::string>> use_lj, nlohmann::json repdisp_j);
 
 /**
  * @brief Redistributes the virtual site gradients into the real atoms
@@ -510,8 +546,8 @@ void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const 
  * @param[in] chg_grad Charge derivatives
  */
 void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_t fi_crd, const size_t fi_sites,
-                           const std::vector<double> phi, std::vector<double> &grad,
-                           const std::vector<double> chg_grad);
+                           const std::vector<double> phi, std::vector<double> &grad, const std::vector<double> chg_grad,
+                           double *crd = 0, std::vector<double> *qdvirial = 0);
 
 }  // namespace systools
 #endif  // SYS_TOOLS_H

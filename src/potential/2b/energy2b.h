@@ -42,8 +42,21 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // 2B
 #include "potential/2b/x2b-v9x.h"
 #include "potential/2b/x2b-A1B2Z2_C-v1x.h"
-// =====>> SECTION INCLUDE2B <<=====
+// =====>> BEGIN SECTION INCLUDE2B <<=====
 // ===>> PASTE YOUR CODE BELOW <<===
+#include "potential/2b/x2b_A1B4_A1B4_deg4_exp0_v1x.h"
+#include "potential/2b/x2b_A1B2Z2_C1D4_deg3_exp0_v1x.h"
+#include "potential/2b/x2b_A1B2_A1B2_v1x.h"
+#include "potential/2b/x2b_A1B2Z2_C1D2_v1x.h"
+#include "potential/2b/mbnrg_2b_A2_A2_deg6_v1.h"
+#include "potential/2b/mbnrg_2b_A1B2Z2_C2_deg5_v1.h"
+#include "potential/2b/mbnrg_2b_A1_B1C2X2_deg5_v1.h"
+#include "potential/2b/mbnrg_2b_A1_B2_deg7_v1.h"
+#include "potential/2b/mbnrg_2b_A1_A1_deg9_v1.h"
+#include "potential/2b/mbnrg_2b_A1_B1_deg9_v1.h"
+#include "potential/2b/x2b_A1B2C4_D1E2_deg3_v1x.h"
+#include "potential/2b/mbnrg_2b_A1B3_A1B3_deg4_v1.h"
+// =====>> END SECTION INCLUDE2B <<=====
 
 /**
  * @file energy2b.h
@@ -84,10 +97,11 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
  * @param[in] xyz2 coordinates of the monomer 2
  * @param[in,out] grad1 gradients of the monomer 1. Gradients will be updated
  * @param[in,out] grad2 gradients of the monomer 2. Gradients will be updated
+ * @param[in,out] virial. Virial will be updated
  * @return Sum of the two-body energies of all the dimers passed as arguments
  */
 double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
-                     std::vector<double> &grad1, std::vector<double> &grad2);
+                     std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial = 0);
 
 }  // namespace e2b
 #endif

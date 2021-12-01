@@ -32,10 +32,10 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "catch.hpp"
+#include "Catch2/single_include/catch.hpp"
 
-#include "electrostatics.h"
-#include "setupwaterbox2.h"
+#include "potential/electrostatics/electrostatics.h"
+#include "setup_h2o_2.h"
 
 #include <vector>
 #include <iostream>
@@ -51,7 +51,7 @@ TEST_CASE("test the electrostatics class for only coulomb terms (GAS) - finite d
     double polfacO = 0;
     double polfacH = 0;
     double polfacM = 0;
-    SETUP_WATERBOX_2
+    SETUP_H2O_2
     double ref_energy = -0.162541;
 
     elec::Electrostatics elec;
@@ -59,8 +59,8 @@ TEST_CASE("test the electrostatics class for only coulomb terms (GAS) - finite d
 
     int spline_order = 6;
     const char *method = "cg";
-    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, true,
-                    1E-16, 100, method, box_vectors);
+    elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, islocal,
+                    true, 1E-16, 100, method, box_vectors);
     elec.SetCutoff(12);
     std::vector<double> forces(3 * n_atoms);
     double energy = elec.GetElectrostatics(forces);
@@ -73,12 +73,12 @@ TEST_CASE("test the electrostatics class for only coulomb terms (GAS) - finite d
     std::cout << " DoF      Analytic         Numerical       Difference" << std::endl;
     for (int degreeOfFreedom = 0; degreeOfFreedom < 3 * n_atoms; ++degreeOfFreedom) {
         coords[degreeOfFreedom] += stepSize;
-        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
-                        1E-16, 100, method, box_vectors);
+        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count,
+                        islocal, false, 1E-16, 100, method, box_vectors);
         double plusEnergy = elec.GetElectrostatics(ignoredForces);
         coords[degreeOfFreedom] -= 2 * stepSize;
-        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count, false,
-                        1E-16, 100, method, box_vectors);
+        elec.Initialize(charges, chg_grad, polfac, pol, coords, monomer_names, sites, first_ind, mon_type_count,
+                        islocal, false, 1E-16, 100, method, box_vectors);
         double minusEnergy = elec.GetElectrostatics(ignoredForces);
         coords[degreeOfFreedom] += stepSize;
         double finiteDifferenceForce = (plusEnergy - minusEnergy) / (2 * stepSize);

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+#SBATCH --job-name="liq_10MPa_273K"
+#SBATCH --output="simulation.out"
+#SBATCH --partition=shared
+##SBATCH --partition=compute
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=12
+#SBATCH --export=ALL
+#SBATCH -t 48:00:00
+
+# Define your environment variables
+export MBX_HOME=$HOME/software/MBX-master
+export IPI_HOME=$HOME/software/i-pi-master
+export INPUT_NRG="config.nrg"
+export INPUT_XML="input.xml"
+export INPUT_JSON="mbx.json"
+
+WORKDIR=$PWD
+
+# Load modules
+module load python
+
+export OMP_NUM_THREADS=12
+
+# Define driver executable path
+export EXE=$MBX_HOME/plugins/i-pi/bin/driver
+
+# Load environment for i-pi
+cd $IPI_HOME
+source env.sh
+cd $WORKDIR
+
+# Print the current jobid in output folder
+echo $SLURM_JOBID > jobid.dat
+
+# Clean localhost
+rm -f /tmp/ipi_localhost*
+
+# Run i-pi to initialize communication
+i-pi $INPUT_XML > i-pi.out &
+sleep 10
+
+# Run driver to start energy calculations
+$EXE $INPUT_NRG $INPUT_JSON > driver.out
+

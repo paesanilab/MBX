@@ -747,12 +747,12 @@ class CArray {
     }
 };  // end of CArray
 
-/** Used to declare fixed-size arrays when DIM>0, dynamically-allocated vectors when DIM=-1.
- * Fixed size version for a generic DIM:
+/** Used to declare fixed-size arrays when KDDIM>0, dynamically-allocated vectors when KDDIM=-1.
+ * Fixed size version for a generic KDDIM:
  */
-template <int DIM, typename T>
+template <int KDDIM, typename T>
 struct array_or_vector_selector {
-    typedef CArray<T, DIM> container_t;
+    typedef CArray<T, KDDIM> container_t;
 };
 /** Dynamic size version */
 template <typename T>
@@ -769,11 +769,11 @@ struct array_or_vector_selector<-1, T> {
  * \tparam Derived The name of the class which inherits this class.
  * \tparam DatasetAdaptor The user-provided adaptor (see comments above).
  * \tparam Distance The distance metric to use, these are all classes derived from nanoflann::Metric
- * \tparam DIM Dimensionality of data points (e.g. 3 for 3D points)
+ * \tparam KDDIM Dimensionality of data points (e.g. 3 for 3D points)
  * \tparam IndexType Will be typically size_t or int
  */
 
-template <class Derived, typename Distance, class DatasetAdaptor, int DIM = -1, typename IndexType = size_t>
+template <class Derived, typename Distance, class DatasetAdaptor, int KDDIM = -1, typename IndexType = size_t>
 class KDTreeBaseClass {
    public:
     /** Frees the previously-built index. Automatically called within buildIndex(). */
@@ -821,11 +821,11 @@ class KDTreeBaseClass {
     size_t m_size_at_index_build;  //!< Number of points in the dataset when the index was built
     int dim;                       //!< Dimensionality of each data point
 
-    /** Define "BoundingBox" as a fixed-size or variable-size container depending on "DIM" */
-    typedef typename array_or_vector_selector<DIM, Interval>::container_t BoundingBox;
+    /** Define "BoundingBox" as a fixed-size or variable-size container depending on "KDDIM" */
+    typedef typename array_or_vector_selector<KDDIM, Interval>::container_t BoundingBox;
 
-    /** Define "distance_vector_t" as a fixed-size or variable-size container depending on "DIM" */
-    typedef typename array_or_vector_selector<DIM, DistanceType>::container_t distance_vector_t;
+    /** Define "distance_vector_t" as a fixed-size or variable-size container depending on "KDDIM" */
+    typedef typename array_or_vector_selector<KDDIM, DistanceType>::container_t distance_vector_t;
 
     /** The KD-tree used to find neighbours */
 
@@ -844,7 +844,7 @@ class KDTreeBaseClass {
     size_t size(const Derived& obj) const { return obj.m_size; }
 
     /** Returns the length of each point in the dataset */
-    size_t veclen(const Derived& obj) { return static_cast<size_t>(DIM > 0 ? DIM : obj.dim); }
+    size_t veclen(const Derived& obj) { return static_cast<size_t>(KDDIM > 0 ? KDDIM : obj.dim); }
 
     /// Helper accessor to the dataset points:
     inline ElementType dataset_get(const Derived& obj, size_t idx, int component) const {
@@ -888,12 +888,12 @@ class KDTreeBaseClass {
             node->node_type.lr.right = right;
 
             // compute bounding-box of leaf points
-            for (int i = 0; i < (DIM > 0 ? DIM : obj.dim); ++i) {
+            for (int i = 0; i < (KDDIM > 0 ? KDDIM : obj.dim); ++i) {
                 bbox[i].low = dataset_get(obj, obj.vind[left], i);
                 bbox[i].high = dataset_get(obj, obj.vind[left], i);
             }
             for (IndexType k = left + 1; k < right; ++k) {
-                for (int i = 0; i < (DIM > 0 ? DIM : obj.dim); ++i) {
+                for (int i = 0; i < (KDDIM > 0 ? KDDIM : obj.dim); ++i) {
                     if (bbox[i].low > dataset_get(obj, obj.vind[k], i)) bbox[i].low = dataset_get(obj, obj.vind[k], i);
                     if (bbox[i].high < dataset_get(obj, obj.vind[k], i))
                         bbox[i].high = dataset_get(obj, obj.vind[k], i);
@@ -918,7 +918,7 @@ class KDTreeBaseClass {
             node->node_type.sub.divlow = left_bbox[cutfeat].high;
             node->node_type.sub.divhigh = right_bbox[cutfeat].low;
 
-            for (int i = 0; i < (DIM > 0 ? DIM : obj.dim); ++i) {
+            for (int i = 0; i < (KDDIM > 0 ? KDDIM : obj.dim); ++i) {
                 bbox[i].low = std::min(left_bbox[i].low, right_bbox[i].low);
                 bbox[i].high = std::max(left_bbox[i].high, right_bbox[i].high);
             }
@@ -931,7 +931,7 @@ class KDTreeBaseClass {
                       DistanceType& cutval, const BoundingBox& bbox) {
         const DistanceType EPS = static_cast<DistanceType>(0.00001);
         ElementType max_span = bbox[0].high - bbox[0].low;
-        for (int i = 1; i < (DIM > 0 ? DIM : obj.dim); ++i) {
+        for (int i = 1; i < (KDDIM > 0 ? KDDIM : obj.dim); ++i) {
             ElementType span = bbox[i].high - bbox[i].low;
             if (span > max_span) {
                 max_span = span;
@@ -939,7 +939,7 @@ class KDTreeBaseClass {
         }
         ElementType max_spread = -1;
         cutfeat = 0;
-        for (int i = 0; i < (DIM > 0 ? DIM : obj.dim); ++i) {
+        for (int i = 0; i < (KDDIM > 0 ? KDDIM : obj.dim); ++i) {
             ElementType span = bbox[i].high - bbox[i].low;
             if (span > (1 - EPS) * max_span) {
                 ElementType min_elem, max_elem;
@@ -1017,7 +1017,7 @@ class KDTreeBaseClass {
         assert(vec);
         DistanceType distsq = DistanceType();
 
-        for (int i = 0; i < (DIM > 0 ? DIM : obj.dim); ++i) {
+        for (int i = 0; i < (KDDIM > 0 ? KDDIM : obj.dim); ++i) {
             if (vec[i] < obj.root_bbox[i].low) {
                 dists[i] = obj.distance.accum_dist(vec[i], obj.root_bbox[i].low, i);
                 distsq += dists[i];
@@ -1113,16 +1113,16 @@ class KDTreeBaseClass {
  *
  * \tparam DatasetAdaptor The user-provided adaptor (see comments above).
  * \tparam Distance The distance metric to use: nanoflann::metric_L1, nanoflann::metric_L2, nanoflann::metric_L2_Simple,
- * etc. \tparam DIM Dimensionality of data points (e.g. 3 for 3D points) \tparam IndexType Will be typically size_t or
+ * etc. \tparam KDDIM Dimensionality of data points (e.g. 3 for 3D points) \tparam IndexType Will be typically size_t or
  * int
  */
-template <typename Distance, class DatasetAdaptor, int DIM = -1, typename IndexType = size_t>
+template <typename Distance, class DatasetAdaptor, int KDDIM = -1, typename IndexType = size_t>
 class KDTreeSingleIndexAdaptor
-    : public KDTreeBaseClass<KDTreeSingleIndexAdaptor<Distance, DatasetAdaptor, DIM, IndexType>, Distance,
-                             DatasetAdaptor, DIM, IndexType> {
+    : public KDTreeBaseClass<KDTreeSingleIndexAdaptor<Distance, DatasetAdaptor, KDDIM, IndexType>, Distance,
+                             DatasetAdaptor, KDDIM, IndexType> {
    public:
     /** Deleted copy constructor*/
-    KDTreeSingleIndexAdaptor(const KDTreeSingleIndexAdaptor<Distance, DatasetAdaptor, DIM, IndexType>&) = delete;
+    KDTreeSingleIndexAdaptor(const KDTreeSingleIndexAdaptor<Distance, DatasetAdaptor, KDDIM, IndexType>&) = delete;
 
     /**
      * The dataset used by this index
@@ -1134,8 +1134,8 @@ class KDTreeSingleIndexAdaptor
     Distance distance;
 
     typedef typename nanoflann::KDTreeBaseClass<
-        nanoflann::KDTreeSingleIndexAdaptor<Distance, DatasetAdaptor, DIM, IndexType>, Distance, DatasetAdaptor, DIM,
-        IndexType>
+        nanoflann::KDTreeSingleIndexAdaptor<Distance, DatasetAdaptor, KDDIM, IndexType>, Distance, DatasetAdaptor,
+        KDDIM, IndexType>
         BaseClassRef;
 
     typedef typename BaseClassRef::ElementType ElementType;
@@ -1145,10 +1145,10 @@ class KDTreeSingleIndexAdaptor
     typedef Node* NodePtr;
 
     typedef typename BaseClassRef::Interval Interval;
-    /** Define "BoundingBox" as a fixed-size or variable-size container depending on "DIM" */
+    /** Define "BoundingBox" as a fixed-size or variable-size container depending on "KDDIM" */
     typedef typename BaseClassRef::BoundingBox BoundingBox;
 
-    /** Define "distance_vector_t" as a fixed-size or variable-size container depending on "DIM" */
+    /** Define "distance_vector_t" as a fixed-size or variable-size container depending on "KDDIM" */
     typedef typename BaseClassRef::distance_vector_t distance_vector_t;
 
     /**
@@ -1158,7 +1158,7 @@ class KDTreeSingleIndexAdaptor
      *
      * The KD-Tree point dimension (the length of each point in the datase, e.g. 3 for 3D points)
      * is determined by means of:
-     *  - The \a DIM template parameter if >0 (highest priority)
+     *  - The \a KDDIM template parameter if >0 (highest priority)
      *  - Otherwise, the \a dimensionality parameter of this constructor.
      *
      * @param inputData Dataset with the input features
@@ -1171,7 +1171,7 @@ class KDTreeSingleIndexAdaptor
         BaseClassRef::m_size = dataset.kdtree_get_point_count();
         BaseClassRef::m_size_at_index_build = BaseClassRef::m_size;
         BaseClassRef::dim = dimensionality;
-        if (DIM > 0) BaseClassRef::dim = DIM;
+        if (KDDIM > 0) BaseClassRef::dim = KDDIM;
         BaseClassRef::m_leaf_max_size = params.leaf_max_size;
 
         // Create a permutable array of indices to the input vectors.
@@ -1216,8 +1216,8 @@ class KDTreeSingleIndexAdaptor
             throw std::runtime_error("[nanoflann] findNeighbors() called before building the index.");
         float epsError = 1 + searchParams.eps;
 
-        distance_vector_t dists;                               // fixed or variable-sized container (depending on DIM)
-        dists.assign((DIM > 0 ? DIM : BaseClassRef::dim), 0);  // Fill it with zeros.
+        distance_vector_t dists;  // fixed or variable-sized container (depending on KDDIM)
+        dists.assign((KDDIM > 0 ? KDDIM : BaseClassRef::dim), 0);  // Fill it with zeros.
         DistanceType distsq = this->computeInitialDistances(*this, vec, dists);
         searchLevel(result, vec, BaseClassRef::root_node, distsq, dists,
                     epsError);  // "count_leaf" parameter removed since was neither used nor returned to the user.
@@ -1288,17 +1288,17 @@ class KDTreeSingleIndexAdaptor
     }
 
     void computeBoundingBox(BoundingBox& bbox) {
-        bbox.resize((DIM > 0 ? DIM : BaseClassRef::dim));
+        bbox.resize((KDDIM > 0 ? KDDIM : BaseClassRef::dim));
         if (dataset.kdtree_get_bbox(bbox)) {
             // Done! It was implemented in derived class
         } else {
             const size_t N = dataset.kdtree_get_point_count();
             if (!N) throw std::runtime_error("[nanoflann] computeBoundingBox() called but no data points found.");
-            for (int i = 0; i < (DIM > 0 ? DIM : BaseClassRef::dim); ++i) {
+            for (int i = 0; i < (KDDIM > 0 ? KDDIM : BaseClassRef::dim); ++i) {
                 bbox[i].low = bbox[i].high = this->dataset_get(*this, 0, i);
             }
             for (size_t k = 1; k < N; ++k) {
-                for (int i = 0; i < (DIM > 0 ? DIM : BaseClassRef::dim); ++i) {
+                for (int i = 0; i < (KDDIM > 0 ? KDDIM : BaseClassRef::dim); ++i) {
                     if (this->dataset_get(*this, k, i) < bbox[i].low) bbox[i].low = this->dataset_get(*this, k, i);
                     if (this->dataset_get(*this, k, i) > bbox[i].high) bbox[i].high = this->dataset_get(*this, k, i);
                 }
@@ -1321,7 +1321,7 @@ class KDTreeSingleIndexAdaptor
             DistanceType worst_dist = result_set.worstDist();
             for (IndexType i = node->node_type.lr.left; i < node->node_type.lr.right; ++i) {
                 const IndexType index = BaseClassRef::vind[i];  // reorder... : i;
-                DistanceType dist = distance.evalMetric(vec, index, (DIM > 0 ? DIM : BaseClassRef::dim));
+                DistanceType dist = distance.evalMetric(vec, index, (KDDIM > 0 ? KDDIM : BaseClassRef::dim));
                 if (dist < worst_dist) {
                     if (!result_set.addPoint(dist, BaseClassRef::vind[i])) {
                         // the resultset doesn't want to receive any more points, we're done searching!
@@ -1416,13 +1416,13 @@ class KDTreeSingleIndexAdaptor
  *
  * \tparam DatasetAdaptor The user-provided adaptor (see comments above).
  * \tparam Distance The distance metric to use: nanoflann::metric_L1, nanoflann::metric_L2, nanoflann::metric_L2_Simple,
- * etc. \tparam DIM Dimensionality of data points (e.g. 3 for 3D points) \tparam IndexType Will be typically size_t or
+ * etc. \tparam KDDIM Dimensionality of data points (e.g. 3 for 3D points) \tparam IndexType Will be typically size_t or
  * int
  */
-template <typename Distance, class DatasetAdaptor, int DIM = -1, typename IndexType = size_t>
+template <typename Distance, class DatasetAdaptor, int KDDIM = -1, typename IndexType = size_t>
 class KDTreeSingleIndexDynamicAdaptor_
-    : public KDTreeBaseClass<KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, DIM, IndexType>, Distance,
-                             DatasetAdaptor, DIM, IndexType> {
+    : public KDTreeBaseClass<KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, KDDIM, IndexType>, Distance,
+                             DatasetAdaptor, KDDIM, IndexType> {
    public:
     /**
      * The dataset used by this index
@@ -1436,8 +1436,8 @@ class KDTreeSingleIndexDynamicAdaptor_
     Distance distance;
 
     typedef typename nanoflann::KDTreeBaseClass<
-        nanoflann::KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, DIM, IndexType>, Distance, DatasetAdaptor,
-        DIM, IndexType>
+        nanoflann::KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, KDDIM, IndexType>, Distance,
+        DatasetAdaptor, KDDIM, IndexType>
         BaseClassRef;
 
     typedef typename BaseClassRef::ElementType ElementType;
@@ -1447,10 +1447,10 @@ class KDTreeSingleIndexDynamicAdaptor_
     typedef Node* NodePtr;
 
     typedef typename BaseClassRef::Interval Interval;
-    /** Define "BoundingBox" as a fixed-size or variable-size container depending on "DIM" */
+    /** Define "BoundingBox" as a fixed-size or variable-size container depending on "KDDIM" */
     typedef typename BaseClassRef::BoundingBox BoundingBox;
 
-    /** Define "distance_vector_t" as a fixed-size or variable-size container depending on "DIM" */
+    /** Define "distance_vector_t" as a fixed-size or variable-size container depending on "KDDIM" */
     typedef typename BaseClassRef::distance_vector_t distance_vector_t;
 
     /**
@@ -1460,7 +1460,7 @@ class KDTreeSingleIndexDynamicAdaptor_
      *
      * The KD-Tree point dimension (the length of each point in the datase, e.g. 3 for 3D points)
      * is determined by means of:
-     *  - The \a DIM template parameter if >0 (highest priority)
+     *  - The \a KDDIM template parameter if >0 (highest priority)
      *  - Otherwise, the \a dimensionality parameter of this constructor.
      *
      * @param inputData Dataset with the input features
@@ -1474,7 +1474,7 @@ class KDTreeSingleIndexDynamicAdaptor_
         BaseClassRef::m_size = 0;
         BaseClassRef::m_size_at_index_build = 0;
         BaseClassRef::dim = dimensionality;
-        if (DIM > 0) BaseClassRef::dim = DIM;
+        if (KDDIM > 0) BaseClassRef::dim = KDDIM;
         BaseClassRef::m_leaf_max_size = params.leaf_max_size;
     }
 
@@ -1528,8 +1528,8 @@ class KDTreeSingleIndexDynamicAdaptor_
         if (!BaseClassRef::root_node) return false;
         float epsError = 1 + searchParams.eps;
 
-        distance_vector_t dists;                               // fixed or variable-sized container (depending on DIM)
-        dists.assign((DIM > 0 ? DIM : BaseClassRef::dim), 0);  // Fill it with zeros.
+        distance_vector_t dists;  // fixed or variable-sized container (depending on KDDIM)
+        dists.assign((KDDIM > 0 ? KDDIM : BaseClassRef::dim), 0);  // Fill it with zeros.
         DistanceType distsq = this->computeInitialDistances(*this, vec, dists);
         searchLevel(result, vec, BaseClassRef::root_node, distsq, dists,
                     epsError);  // "count_leaf" parameter removed since was neither used nor returned to the user.
@@ -1591,17 +1591,17 @@ class KDTreeSingleIndexDynamicAdaptor_
 
    public:
     void computeBoundingBox(BoundingBox& bbox) {
-        bbox.resize((DIM > 0 ? DIM : BaseClassRef::dim));
+        bbox.resize((KDDIM > 0 ? KDDIM : BaseClassRef::dim));
         if (dataset.kdtree_get_bbox(bbox)) {
             // Done! It was implemented in derived class
         } else {
             const size_t N = BaseClassRef::m_size;
             if (!N) throw std::runtime_error("[nanoflann] computeBoundingBox() called but no data points found.");
-            for (int i = 0; i < (DIM > 0 ? DIM : BaseClassRef::dim); ++i) {
+            for (int i = 0; i < (KDDIM > 0 ? KDDIM : BaseClassRef::dim); ++i) {
                 bbox[i].low = bbox[i].high = this->dataset_get(*this, BaseClassRef::vind[0], i);
             }
             for (size_t k = 1; k < N; ++k) {
-                for (int i = 0; i < (DIM > 0 ? DIM : BaseClassRef::dim); ++i) {
+                for (int i = 0; i < (KDDIM > 0 ? KDDIM : BaseClassRef::dim); ++i) {
                     if (this->dataset_get(*this, BaseClassRef::vind[k], i) < bbox[i].low)
                         bbox[i].low = this->dataset_get(*this, BaseClassRef::vind[k], i);
                     if (this->dataset_get(*this, BaseClassRef::vind[k], i) > bbox[i].high)
@@ -1626,7 +1626,7 @@ class KDTreeSingleIndexDynamicAdaptor_
             for (IndexType i = node->node_type.lr.left; i < node->node_type.lr.right; ++i) {
                 const IndexType index = BaseClassRef::vind[i];  // reorder... : i;
                 if (treeIndex[index] == -1) continue;
-                DistanceType dist = distance.evalMetric(vec, index, (DIM > 0 ? DIM : BaseClassRef::dim));
+                DistanceType dist = distance.evalMetric(vec, index, (KDDIM > 0 ? KDDIM : BaseClassRef::dim));
                 if (dist < worst_dist) {
                     result_set.addPoint(dist, BaseClassRef::vind[i]);
                 }
@@ -1689,10 +1689,10 @@ class KDTreeSingleIndexDynamicAdaptor_
  *
  * \tparam DatasetAdaptor The user-provided adaptor (see comments above).
  * \tparam Distance The distance metric to use: nanoflann::metric_L1, nanoflann::metric_L2, nanoflann::metric_L2_Simple,
- * etc. \tparam DIM Dimensionality of data points (e.g. 3 for 3D points) \tparam IndexType Will be typically size_t or
+ * etc. \tparam KDDIM Dimensionality of data points (e.g. 3 for 3D points) \tparam IndexType Will be typically size_t or
  * int
  */
-template <typename Distance, class DatasetAdaptor, int DIM = -1, typename IndexType = size_t>
+template <typename Distance, class DatasetAdaptor, int KDDIM = -1, typename IndexType = size_t>
 class KDTreeSingleIndexDynamicAdaptor {
    public:
     typedef typename Distance::ElementType ElementType;
@@ -1715,7 +1715,7 @@ class KDTreeSingleIndexDynamicAdaptor {
 
     int dim;  //!< Dimensionality of each data point
 
-    typedef KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, DIM> index_container_t;
+    typedef KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, KDDIM> index_container_t;
     std::vector<index_container_t> index;
 
    public:
@@ -1736,7 +1736,7 @@ class KDTreeSingleIndexDynamicAdaptor {
 
     /** Creates multiple empty trees to handle dynamic support */
     void init() {
-        typedef KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, DIM> my_kd_tree_t;
+        typedef KDTreeSingleIndexDynamicAdaptor_<Distance, DatasetAdaptor, KDDIM> my_kd_tree_t;
         std::vector<my_kd_tree_t> index_(treeCount, my_kd_tree_t(dim /*dim*/, dataset, treeIndex, index_params));
         index = index_;
     }
@@ -1751,7 +1751,7 @@ class KDTreeSingleIndexDynamicAdaptor {
      *
      * The KD-Tree point dimension (the length of each point in the datase, e.g. 3 for 3D points)
      * is determined by means of:
-     *  - The \a DIM template parameter if >0 (highest priority)
+     *  - The \a KDDIM template parameter if >0 (highest priority)
      *  - Otherwise, the \a dimensionality parameter of this constructor.
      *
      * @param inputData Dataset with the input features
@@ -1765,7 +1765,7 @@ class KDTreeSingleIndexDynamicAdaptor {
         pointCount = 0U;
         dim = dimensionality;
         treeIndex.clear();
-        if (DIM > 0) dim = DIM;
+        if (KDDIM > 0) dim = KDDIM;
         m_leaf_max_size = params.leaf_max_size;
         init();
         int num_initial_points = dataset.kdtree_get_point_count();
@@ -1775,8 +1775,8 @@ class KDTreeSingleIndexDynamicAdaptor {
     }
 
     /** Deleted copy constructor*/
-    KDTreeSingleIndexDynamicAdaptor(const KDTreeSingleIndexDynamicAdaptor<Distance, DatasetAdaptor, DIM, IndexType>&) =
-        delete;
+    KDTreeSingleIndexDynamicAdaptor(
+        const KDTreeSingleIndexDynamicAdaptor<Distance, DatasetAdaptor, KDDIM, IndexType>&) = delete;
 
     /** Add points to the set, Inserts all points from [start, end] */
     void addPoints(IndexType start, IndexType end) {
@@ -1842,9 +1842,9 @@ class KDTreeSingleIndexDynamicAdaptor {
  * 	mat_index.index->...
  * \endcode
  *
- *  \tparam DIM If set to >0, it specifies a compile-time fixed dimensionality for the points in the data set, allowing
- * more compiler optimizations. \tparam Distance The distance metric to use: nanoflann::metric_L1, nanoflann::metric_L2,
- * nanoflann::metric_L2_Simple, etc.
+ *  \tparam KDDIM If set to >0, it specifies a compile-time fixed dimensionality for the points in the data set,
+ * allowing more compiler optimizations. \tparam Distance The distance metric to use: nanoflann::metric_L1,
+ * nanoflann::metric_L2, nanoflann::metric_L2_Simple, etc.
  */
 template <class MatrixType, class Distance = nanoflann::metric_L2>
 struct KDTreeEigenMatrixAdaptor {
@@ -1906,7 +1906,7 @@ struct KDTreeEigenMatrixAdaptor {
     /** @} */
 
 };  // end of KDTreeEigenMatrixAdaptor
-    /** @} */
+/** @} */
 
 /** @} */  // end of grouping
 }  // namespace nanoflann

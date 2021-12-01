@@ -32,13 +32,13 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "testutils.h"
+#include "tools/testutils.h"
 
 #include "potential/1b/energy1b.h"
 #include "potential/2b/energy2b.h"
 #include "potential/3b/energy3b.h"
 #include "potential/dispersion/dispersion.h"
-#include "setupwaterbox3mbpol.h"
+#include "setup_h2o_3.h"
 
 #include <vector>
 #include <iostream>
@@ -67,9 +67,9 @@ void GetDimers(const std::vector<double> xyz, const size_t nmon, std::vector<dou
 
 TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
     // MB-pol test
-    SETUP_WATERBOX_3_MBPOL
+    SETUP_H2O_3
     size_t nmon = 3;
-    bool good = true;
+    std::vector<size_t> good;
     std::string monomer_name = "h2o";
 
     // Obtain coordinates without virtual sites
@@ -167,7 +167,7 @@ TEST_CASE("Test the n-body terms for mbpol (gas phase).") {
         // C6 vector that is useless but needed
         std::vector<double> c6_long_range(n_atoms, 0.0);
         disp::Dispersion dispersion_class;
-        dispersion_class.Initialize(c6_long_range, real_xyz, monomer_names, nats, mon_type_count, false, box);
+        dispersion_class.Initialize(c6_long_range, real_xyz, monomer_names, nats, mon_type_count, islocal, false, box);
 
         std::vector<double> grad_dummy(3 * n_atoms, 0.0);
         dispersion_class.SetNewParameters(real_xyz, false, 100.0, box);

@@ -38,11 +38,18 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <string>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 // 1B
 #include "potential/1b/ps.h"
-// ====>> SECTION INCLUDE1B <<====
+// ====>> BEGIN SECTION INCLUDE1B <<====
 // ===>> PASTE INCLUDE BELOW <<===
+#include "potential/1b/x1b_A1B4_deg5_exp0_v1x.h"
+#include "potential/1b/x1b_A1B2_deg4_v1x.h"
+#include "potential/1b/mbnrg_1b_A2_deg8_v1.h"
+#include "potential/1b/x1b_A1B2C4_deg5_v1x.h"
+#include "potential/1b/mbnrg_1b_A1B3_deg5_v1.h"
+// ====>> END SECTION INCLUDE1B <<====
 
 #include "tools/definitions.h"
 
@@ -66,11 +73,11 @@ namespace e1b {
  * @param[in] mon Monomer id
  * @param[in] nm number of monomers of monomer type "mon"
  * @param[in] xyz coordinates of the monomer
- * @param[in,out] good Boolean that will be set to false if any of the monomers
+ * @param[in,out] bad_idxs Vector with the indexes o extremely distorted monomers
  * has an energy larger than the value set in definitions.h (EMAX1B)
  * @return Sum of the one-body energies of all the monomers passed as arguments
  */
-double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &good);
+double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz1, std::vector<size_t> &bad_idxs);
 
 /**
  * @brief Gets the one body energy for a given set of monomers of the same
@@ -82,11 +89,12 @@ double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, bool &
  * @param[in] nm number of monomers of monomer type "mon"
  * @param[in] xyz coordinates of the monomer
  * @param[in,out] grad Gradients of the one-body energy
- * @param[in,out] good Boolean that will be set to false if any of the monomers
+ * @param[in,out] bad_idxs Vector with the indexes o extremely distorted monomers
  * has an energy larger than the value set in definitions.h (EMAX1B)
  * @return Sum of the one-body energies of all the monomers passed as arguments
  */
-double get_1b_energy(std::string mon, size_t nm, std::vector<double> xyz, std::vector<double> &grad, bool &good);
+double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std::vector<double> &grad1,
+                     std::vector<size_t> &bad_idxs, std::vector<double> *virial = 0);
 
 }  // namespace e1b
 #endif

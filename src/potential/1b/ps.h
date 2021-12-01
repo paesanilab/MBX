@@ -37,6 +37,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <algorithm>
 #include <vector>
+#include <iomanip>
+#include <iostream>
 
 /**
  * @file ps.h
@@ -70,7 +72,7 @@ namespace ps {
  * @param[in] nw Number of water molecules
  * @return Deformation energy of all the water molecules in a vector
  */
-std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw);
+std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw, std::vector<double>* virial = 0);
 
 /**
  * @brief Computes the dipole surface and the charges
@@ -87,7 +89,7 @@ std::vector<double> pot_nasa(const double* rr, double* dr, size_t nw);
  * Should be set to false in this software.
  */
 void dms_nasa(const double& dms_param1, const double& dms_param2, const double& dms_param3, const double* rr,
-              double* q3, double* dq3, bool ttm3);
+              double* q3, double* dq3, std::vector<double>* aux_data = 0);
 
 }  // namespace ps
 
