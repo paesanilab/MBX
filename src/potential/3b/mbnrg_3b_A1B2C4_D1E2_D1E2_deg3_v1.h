@@ -26,7 +26,7 @@ struct mbnrg_A1B2C4_D1E2_D1E2_deg3_v1 {
 
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n);
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3,
-                const size_t n);
+                const size_t n, std::vector<double> *virial = 0);
 
    private:
     double m_k_x_intra_A_B_1;

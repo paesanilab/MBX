@@ -235,7 +235,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
 
     } else if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "n2o5") {
         mbnrg_A1B2C4_D1E2_D1E2_deg3::mbnrg_A1B2C4_D1E2_D1E2_deg3_v1 pot(mon3, mon1, mon2);
-        energy = pot.eval(xyz3.data(), xyz1.data(), xyz2.data(), grad3.data(), grad1.data(), grad2.data(), nm);
+        energy = pot.eval(xyz3.data(), xyz1.data(), xyz2.data(), grad3.data(), grad1.data(), grad2.data(), nm, virial);
         // =====>> END SECTION 3B_GRADIENT <<=====
     } else {
         energy = 0.0;
