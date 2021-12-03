@@ -605,7 +605,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         types2.push_back(1);
         types2.push_back(1);
 
-        nt2 = 1;
+        nt2 = 2;
 
         // Fill in (in order) the C6 and d6 coefficients
         a.push_back(2651.63);  // kcal/mol A--C
