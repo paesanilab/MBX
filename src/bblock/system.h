@@ -235,7 +235,7 @@ class System {
      * @warning Order is not guaranteed. This means that the n-mers
      * can come in any order
      */
-    std::vector<size_t> GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend);
+    std::vector<size_t> GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
 
     /**
      * Gets a vector with the indexes that form a molecule.
