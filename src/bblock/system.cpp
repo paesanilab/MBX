@@ -213,7 +213,7 @@ std::vector<size_t> System::GetAtomsVector() {
     return sites;
 }
 
-std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend) {
+std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost) {
     // Make sure that nmax is 2 or 3
     // Throw exception otherwise
     if (nmax != 2 and nmax != 3) {
@@ -222,7 +222,7 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
     }
 
     // Call the add clusters function to get all the pairs
-    AddClusters(nmax, cutoff, 0, monomers_.size());
+    AddClusters(nmax, cutoff, 0, monomers_.size(), use_ghost);
 
     // Change the monomer indexes of dimers_ or trimers_
     // to match the input order

@@ -34,6 +34,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "tools/testutils.h"
 #include "potential/buckingham/bucktools.h"
+#include "setup_dimer_custom_json.h"
 
 #include <vector>
 #include <iostream>
@@ -228,71 +229,145 @@ TEST_CASE("bucktools::Repulsion") {
 }
 
 TEST_CASE("GetBuckParams") {
-    std::vector<std::pair<std::string, std::string> > pairs = {
-        {"f", "h2o"},  {"cl", "h2o"}, {"br", "h2o"},  {"h2o", "i"},   {"h2o", "li"},  {"h2o", "na"}, {"h2o", "k"},
-        {"h2o", "rb"}, {"cs", "h2o"}, {"co2", "h2o"}, {"ch4", "h2o"}, {"co2", "co2"}, {"ch4", "ch4"}};
+    std::vector<std::pair<std::string, std::string> > pairs = {{"f", "h2o"},    {"cl", "h2o"},
+                                                               {"br", "h2o"},   {"h2o", "i"},
+                                                               {"h2o", "li"},   {"h2o", "na"},
+                                                               {"h2o", "k"},    {"h2o", "rb"},
+                                                               {"cs", "h2o"},   {"co2", "h2o"},
+                                                               {"ch4", "h2o"},  {"co2", "co2"},
+                                                               {"ch4", "ch4"},  {"nh3pbe0d3bj", "nh3pbe0d3bj"},
+                                                               {"nh3", "nh3"},  {"n2o5", "n2o5"},
+                                                               {"h2o", "n2o5"}, {"h2", "h2"},
+                                                               {"h2", "h2o"},   {"ar", "h2o"},
+                                                               {"ar", "ar"},    {"cs", "h2"},
+                                                               {"na", "na"},    {"cl", "cl"},
+                                                               {"cl", "na"},    {"ar", "cs"}};
 
-    std::vector<std::pair<std::string, std::string> > buck_pairs = {
-        {"f", "h2o"},  {"cl", "h2o"}, {"br", "h2o"},  {"i", "h2o"},   {"li", "h2o"},  {"na", "h2o"}, {"k", "h2o"},
-        {"rb", "h2o"}, {"cs", "h2o"}, {"co2", "h2o"}, {"ch4", "h2o"}, {"co2", "co2"}, {"ch4", "ch4"}};
+    std::vector<std::pair<std::string, std::string> > buck_pairs = {{"f", "h2o"},    {"cl", "h2o"},
+                                                                    {"br", "h2o"},   {"i", "h2o"},
+                                                                    {"li", "h2o"},   {"na", "h2o"},
+                                                                    {"k", "h2o"},    {"rb", "h2o"},
+                                                                    {"cs", "h2o"},   {"co2", "h2o"},
+                                                                    {"ch4", "h2o"},  {"co2", "co2"},
+                                                                    {"ch4", "ch4"},  {"nh3pbe0d3bj", "nh3pbe0d3bj"},
+                                                                    {"nh3", "nh3"},  {"n2o5", "n2o5"},
+                                                                    {"h2o", "n2o5"}, {"h2", "h2"},
+                                                                    {"h2", "h2o"},   {"ar", "h2o"},
+                                                                    {"ar", "ar"},    {"cs", "h2"},
+                                                                    {"na", "na"},    {"cl", "cl"},
+                                                                    {"cl", "na"},    {"ar", "cs"}};
 
-    std::vector<std::vector<double> > a_expected = {{35920.3, 800.553},                    // {"f","h2o"}
-                                                    {50180.4, 2594.28},                    // {"cl","h2o"}
-                                                    {37682.2, 3804.53},                    // {"br","h2o"}
-                                                    {22210.0, 6215.10},                    // {"i","h2o"}
-                                                    {32318.0, 3245.78},                    // {"li","h2o"}
-                                                    {47827.7, 4992.61},                    // {"na","h2o"}
-                                                    {49986.5, 4951.5},                     // {"k","h2o"}
-                                                    {48456.3, 6794.51},                    // {"rb","h2o"}
-                                                    {42431.0, 9403.73},                    // {"cs","h2o"}
-                                                    {4735.44, 4956.27, 30678.4, 4559.97},  // {"co2","h2o"}
-                                                    {11447.5, 4887.62, 6182.32, 1480.08},  // {"ch4","h2o"}
-                                                    {9038.48, 12608.9, 12608.9, 24274.7},  // {"co2","co2"}
-                                                    {42713.9, 3258.86, 3258.86, 2594.4}};  // {"ch4","ch4"}
+    std::vector<std::vector<double> > a_expected = {
+        {35920.3, 800.553},                    // {"f","h2o"}
+        {50180.4, 2594.28},                    // {"cl","h2o"}
+        {37682.2, 3804.53},                    // {"br","h2o"}
+        {22210.0, 6215.10},                    // {"i","h2o"}
+        {32318.0, 3245.78},                    // {"li","h2o"}
+        {47827.7, 4992.61},                    // {"na","h2o"}
+        {49986.5, 4951.5},                     // {"k","h2o"}
+        {48456.3, 6794.51},                    // {"rb","h2o"}
+        {42431.0, 9403.73},                    // {"cs","h2o"}
+        {4735.44, 4956.27, 30678.4, 4559.97},  // {"co2","h2o"}
+        {11447.5, 4887.62, 6182.32, 1480.08},  // {"ch4","h2o"}
+        {9038.48, 12608.9, 12608.9, 24274.7},  // {"co2","co2"}
+        {42713.9, 3258.86, 3258.86, 2594.4},   // {"ch4","ch4"}
+        {19267.3, 3232.98, 3232.98, 980.337},  // {"nh3pbe0d3bj","nh3pbe0d3bj"}
+        {20413.5, 3259.49, 3259.49, 965.289},  // {"nh3","nh3"}
+        {52582.5, 7849.47, 34641.1, 7849.47, 2692.58, 49876.0, 34641.1, 49876.0, 31773.9},  // {"n2o5","n2o5"}
+        {93032.9, 12989.0, 153274.0, 2460.89, 514436.0, 1251.73},                           // {"h2o","n2o5"}
+        {822.645},                                                                          // {"h2","h2"}
+        {2651.63, 839.321},                                                                 // {"h2","h2o"}
+        {55341.7, 5733.11},                                                                 // {"ar","h2o"}
+        {102057.0},                                                                         // {"ar","ar"}
+        {18116.1},                                                                          // {"cs","h2"}
+        {33569.6},                                                                          // {"na","na"}
+        {2943.76},                                                                          // {"cl","cl"}
+        {33676.8},                                                                          // {"cl","na"}
+        {157654.0}};                                                                        // {"ar","cs"}
 
-    std::vector<std::vector<double> > b_expected = {{3.586190000000000e+00, 2.697680000000000e+00},  // {"f","h2o"}
-                                                    {3.275420000000000e+00, 2.782260000000000e+00},  // {"cl","h2o"}
-                                                    {3.058250000000000e+00, 2.798040000000000e+00},  // {"br","h2o"}
-                                                    {2.723140000000000e+00, 2.799110000000000e+00},  // {"i","h2o"}
-                                                    {4.023330000000000e+00, 4.006630000000000e+00},  // {"li","h2o"}
-                                                    {3.769530000000000e+00, 3.822550000000000e+00},  // {"na","h2o"}
-                                                    {3.401250000000000e+00, 3.321390000000000e+00},  // {"k","h2o"}
-                                                    {3.236530000000000e+00, 3.313640000000000e+00},  // {"rb","h2o"}
-                                                    {3.028640000000000e+00, 3.271530000000000e+00},  // {"cs","h2o"}
-                                                    {2.93819, 3.7359, 3.53045, 3.89503},             // {"co2","h2o"}
-                                                    {2.87176, 3.68542, 3.79757, 4.01558},            // {"ch4","h2o"}
-                                                    {3.12663, 3.64236, 3.64236, 3.52744},            // {"co2","co2"}
-                                                    {3.37925, 3.25885, 3.25885, 4.05972}};           // {"ch4","ch4"}
+    std::vector<std::vector<double> > b_expected = {
+        {3.58619, 2.69768},                    // {"f","h2o"}
+        {3.27542, 2.78226},                    // {"cl","h2o"}
+        {3.05825, 2.79804},                    // {"br","h2o"}
+        {2.72314, 2.79911},                    // {"i","h2o"}
+        {4.02333, 4.00663},                    // {"li","h2o"}
+        {3.76953, 3.82255},                    // {"na","h2o"}
+        {3.40125, 3.32139},                    // {"k","h2o"}
+        {3.23653, 3.31364},                    // {"rb","h2o"}
+        {3.02864, 3.27153},                    // {"cs","h2o"}
+        {2.93819, 3.7359, 3.53045, 3.89503},   // {"co2","h2o"}
+        {2.87176, 3.68542, 3.79757, 4.01558},  // {"ch4","h2o"}
+        {3.12663, 3.64236, 3.64236, 3.52744},  // {"co2","co2"}
+        {3.37925, 3.25885, 3.25885, 4.05972},  // {"ch4","ch4"}
+        {3.09382, 3.44698, 3.44698, 3.83901},  // {"nh3pbe0d3bj","nh3pbe0d3bj"}
+        {3.11493, 3.4174, 3.4174, 3.78007},    // {"nh3","nh3"}
+        {3.86891, 3.19945, 3.60907, 3.19945, 2.33813, 4.19428, 3.60907, 4.19428, 3.56601},  // {"n2o5","n2o5"}
+        {4.1869, 3.22662, 4.455, 3.24055, 6.4749, 3.03227},                                 // {"h2o","n2o5"}
+        {3.11276},                                                                          // {"h2","h2"}
+        {3.05339, 3.62823},                                                                 // {"h2","h2o"}
+        {3.48054, 3.46238},                                                                 // {"ar","h2o"}
+        {3.41808},                                                                          // {"ar","ar"}
+        {3.24781},                                                                          // {"cs","h2"}
+        {4.42822},                                                                          // {"na","na"}
+        {1.82786},                                                                          // {"cl","cl"}
+        {2.85113},                                                                          // {"cl","na"}
+        {3.28039}};                                                                         // {"ar","cs"}
 
-    std::vector<size_t> ntypes2 = {2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2};
+    std::vector<size_t> ntypes2 = {2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 1, 2, 2, 1, 1, 1, 1, 1, 1};
 
-    std::vector<std::vector<size_t> > types1 = {{0},               // {"f","h2o"}
-                                                {0},               // {"cl","h2o"}
-                                                {0},               // {"br","h2o"}
-                                                {0, 1, 1},         // {"h2o","i"}
-                                                {0, 1, 1},         // {"h2o","li"}
-                                                {0, 1, 1},         // {"h2o","na"}
-                                                {0, 1, 1},         // {"h2o","k"}
-                                                {0, 1, 1},         // {"h2o","rb"}
-                                                {0},               // {"cs","h2o"}
-                                                {0, 1, 1},         // {"co2","h2o"}
-                                                {0, 1, 1, 1, 1},   // {"ch4","h2o"}
-                                                {0, 1, 1},         // {"co2","co2"}
-                                                {0, 1, 1, 1, 1}};  // {"ch4","ch4"}
+    std::vector<std::vector<size_t> > types1 = {{0},                    // {"f","h2o"}
+                                                {0},                    // {"cl","h2o"}
+                                                {0},                    // {"br","h2o"}
+                                                {0, 1, 1},              // {"h2o","i"}
+                                                {0, 1, 1},              // {"h2o","li"}
+                                                {0, 1, 1},              // {"h2o","na"}
+                                                {0, 1, 1},              // {"h2o","k"}
+                                                {0, 1, 1},              // {"h2o","rb"}
+                                                {0},                    // {"cs","h2o"}
+                                                {0, 1, 1},              // {"co2","h2o"}
+                                                {0, 1, 1, 1, 1},        // {"ch4","h2o"}
+                                                {0, 1, 1},              // {"co2","co2"}
+                                                {0, 1, 1, 1, 1},        // {"ch4","ch4"}
+                                                {0, 1, 1, 1},           // {"nh3pbe0d3bj","nh3pbe0d3bj"}
+                                                {0, 1, 1, 1},           // {"nh3","nh3"}
+                                                {0, 1, 1, 2, 2, 2, 2},  // {"n2o5","n2o5"}
+                                                {0, 1, 1},              // {"h2o","n2o5"}
+                                                {0, 0},                 // {"h2","h2"}
+                                                {0, 0},                 // {"h2","h2o"}
+                                                {0},                    // {"ar","h2o"}
+                                                {0},                    // {"ar","ar"}
+                                                {0},                    // {"cs","h2"}
+                                                {0},                    // {"na","na"}
+                                                {0},                    // {"cl","cl"}
+                                                {0},                    // {"cl","na"}
+                                                {0}};                   // {"ar","cs"}
 
-    std::vector<std::vector<size_t> > types2 = {{0, 1, 1},         // {"f","h2o"}
-                                                {0, 1, 1},         // {"cl","h2o"}
-                                                {0, 1, 1},         // {"br","h2o"}
-                                                {0},               // {"h2o","i"}
-                                                {0},               // {"h2o","li"}
-                                                {0},               // {"h2o","na"}
-                                                {0},               // {"h2o","k"}
-                                                {0},               // {"h2o","rb"}
-                                                {0},               // {"cs","h2o"}
-                                                {0, 1, 1},         // {"co2","h2o"}
-                                                {0, 1, 1},         // {"ch4","h2o"}
-                                                {0, 1, 1},         // {"co2","co2"}
-                                                {0, 1, 1, 1, 1}};  // {"ch4","ch4"}
+    std::vector<std::vector<size_t> > types2 = {{0, 1, 1},              // {"f","h2o"}
+                                                {0, 1, 1},              // {"cl","h2o"}
+                                                {0, 1, 1},              // {"br","h2o"}
+                                                {0},                    // {"h2o","i"}
+                                                {0},                    // {"h2o","li"}
+                                                {0},                    // {"h2o","na"}
+                                                {0},                    // {"h2o","k"}
+                                                {0},                    // {"h2o","rb"}
+                                                {0},                    // {"cs","h2o"}
+                                                {0, 1, 1},              // {"co2","h2o"}
+                                                {0, 1, 1},              // {"ch4","h2o"}
+                                                {0, 1, 1},              // {"co2","co2"}
+                                                {0, 1, 1, 1, 1},        // {"ch4","ch4"}
+                                                {0, 1, 1, 1},           // {"nh3pbe0d3bj","nh3pbe0d3bj"}
+                                                {0, 1, 1, 1},           // {"nh3","nh3"}
+                                                {0, 1, 1, 2, 2, 2, 2},  // {"n2o5","n2o5"}
+                                                {0, 1, 1, 2, 2, 2, 2},  // {"h2o","n2o5"}
+                                                {0, 0},                 // {"h2","h2"}
+                                                {0, 1, 1},              // {"h2","h2o"}
+                                                {0, 1, 1},              // {"ar","h2o"}
+                                                {0},                    // {"ar","ar"}
+                                                {0, 0},                 // {"cs","h2"}
+                                                {0},                    // {"na","na"}
+                                                {0},                    // {"cl","cl"}
+                                                {0},                    // {"cl","na"}
+                                                {0}};                   // {"ar","cs"}
 
     for (size_t i = 0; i < pairs.size(); i++) {
         SECTION("Pair " + pairs[i].first + "," + pairs[i].second) {
@@ -315,6 +390,51 @@ TEST_CASE("GetBuckParams") {
                     REQUIRE(b == Approx(b_exp).margin(TOL));
                     REQUIRE(a_swapped == Approx(a_exp).margin(TOL));
                     REQUIRE(b_swapped == Approx(b_exp).margin(TOL));
+                    REQUIRE(found);
+                    REQUIRE(found_swapped);
+                }
+            }
+        }
+    }
+
+    SECTION("User-defined json parameters") {
+        SETUP_DIM_JSON
+        std::vector<std::pair<std::string, std::string> > jpairs = {{"mymon1", "mymon2"}, {"mymon1", "mymon3"}};
+
+        std::vector<std::pair<std::string, std::string> > jbuck_pairs = {{"mymon1", "mymon2"}, {"mymon1", "mymon3"}};
+
+        std::vector<std::vector<double> > ja_expected = {{1000.0, 2000.0, 3000.0, 4000.0},
+                                                         {5000.0, 6000.0, 7000.0, 8000.0}};
+        std::vector<std::vector<double> > jb_expected = {{1.0, 2.0, 3.0, 4.0}, {5.0, 6.0, 7.0, 8.0}};
+        std::vector<size_t> jntypes2 = {2, 2};
+        std::vector<std::vector<size_t> > jtypes1 = {{0, 1}, {0, 1}};
+        std::vector<std::vector<size_t> > jtypes2 = {{0, 1}, {0, 1}};
+
+        for (size_t i = 0; i < jpairs.size(); i++) {
+            SECTION("Pair " + jpairs[i].first + "," + jpairs[i].second) {
+                std::string m1 = jpairs[i].first;
+                std::string m2 = jpairs[i].second;
+                for (size_t at1 = 0; at1 < jtypes1[i].size(); at1++) {
+                    for (size_t at2 = 0; at2 < jtypes2[i].size(); at2++) {
+                        double a = -1.0;
+                        double b = -1.0;
+                        double a_swapped = -1.0;
+                        double b_swapped = -1.0;
+                        bool found = buck::GetBuckParams(m1, m2, at1, at2, jbuck_pairs, a, b, user_j);
+                        bool found_swapped =
+                            buck::GetBuckParams(m2, m1, at2, at1, jbuck_pairs, a_swapped, b_swapped, user_j);
+                        size_t ii = jtypes1[i][at1];
+                        size_t jj = jtypes2[i][at2];
+                        size_t nt2 = jntypes2[i];
+                        double a_exp = ja_expected[i][ii * nt2 + jj];
+                        double b_exp = jb_expected[i][ii * nt2 + jj];
+                        REQUIRE(a == Approx(a_exp).margin(TOL));
+                        REQUIRE(b == Approx(b_exp).margin(TOL));
+                        REQUIRE(a_swapped == Approx(a_exp).margin(TOL));
+                        REQUIRE(b_swapped == Approx(b_exp).margin(TOL));
+                        REQUIRE(found);
+                        REQUIRE(found_swapped);
+                    }
                 }
             }
         }

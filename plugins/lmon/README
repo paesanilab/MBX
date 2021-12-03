@@ -1,0 +1,8 @@
+Note for the user:
+
+This code assumes that 
+1) all the water molecules are at the begining
+2) the water bending and stretching freqs are always the highest
+
+This means that systems that have frequencies higher than 1500cm-1 will not 
+work in this framework.

@@ -29,7 +29,7 @@ struct x1b_A1B2C4_v1x {
     // xyz will be the coordinates of the nmon monomers, one after the other one
 
     std::vector<double> eval(const double* xyz, const size_t nmon) const;
-    std::vector<double> eval(const double* xyz, double* grad, const size_t nmon) const;
+    std::vector<double> eval(const double* xyz, double* grad, const size_t nmon, std::vector<double>* virial = 0) const;
 
    private:
     double m_k_BB;

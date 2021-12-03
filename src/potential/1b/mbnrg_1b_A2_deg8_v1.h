@@ -112,9 +112,6 @@ urns a vector with them.
     // Outer cutoff
     double m_ro = 8.0;
 
-    // Switch function
-    double f_switch(const double, double &);
-
     // Vector with the coefficients of the polynomials
     std::vector<double> coefficients;
 };

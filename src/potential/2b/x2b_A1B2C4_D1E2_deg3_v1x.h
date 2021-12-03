@@ -29,7 +29,8 @@ struct x2b_A1B2C4_D1E2_v1x {
     // XYZ is for the real sites
 
     double eval(const double* xyz1, const double* xyz2, const size_t ndim) const;
-    double eval(const double* xyz1, const double* xyz2, double* grad1, double* grad2, const size_t ndim) const;
+    double eval(const double* xyz1, const double* xyz2, double* grad1, double* grad2, const size_t ndim,
+                std::vector<double>* virial = 0) const;
 
    private:
     double m_k_AD;
