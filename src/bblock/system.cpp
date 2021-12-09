@@ -223,7 +223,15 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
     }
 
     // Call the add clusters function to get all the pairs
-    AddClusters(nmax, cutoff, 0, monomers_.size(), use_ghost);
+    std::vector<size_t> d, t;
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        AddClusters(nmax, cutoff, i, i + 1, use_ghost);
+        for (size_t j = 0; j < dimers_.size(); j++) d.push_back(dimers_[i]);
+        for (size_t j = 0; j < trimers_.size(); j++) t.push_back(trimers_[i]);
+    }
+
+    dimers_ = d;
+    trimers_ = t;
 
     // Change the monomer indexes of dimers_ or trimers_
     // to match the input order
@@ -2164,7 +2172,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     }
     // Define variables to be used later in the condensation of data
     int grad_step = 3 * numsites_ / num_threads;
-    step = std::max(size_t(1), std::min(nummon_ / num_threads, step));
+    // Step will be always 1 for now
+    // step = std::max(size_t(1), std::min(nummon_ / num_threads, step));
 #endif  // _OPENMP
 
     // Variables to be used for both serial and parallel implementation

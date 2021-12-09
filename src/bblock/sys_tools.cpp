@@ -451,52 +451,40 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
 
     // if first monomer is ghost and we're not computing local-ghost interactions, then skip
 
-    if (!use_ghost && !is_local[istart]) return;
+    // if (!use_ghost && !is_local[istart]) return;
 
     // Obtain xyz vector with the positions of first atom of each monomer
-    std::vector<double> xyz(3 * (nmon - istart));
+    std::vector<double> xyz;
     // std::vector<double> xyz;
-    size_t nmon2 = nmon - istart;
+    size_t nmon2 = 0;
 
-    std::vector<size_t> mon_index(nmon - istart);
-    std::vector<size_t> tag_index(nmon - istart);
+    std::vector<size_t> mon_index;
+    std::vector<size_t> tag_index;
     for (size_t i = istart; i < nmon; i++) {
-        // size_t islsum = is_local[istart] + is_local[i];
+        size_t islsum = is_local[istart] + is_local[i];
 
-        // bool include_monomer = false;
-        // if (n_max == 2) {
-        //    if (i == istart) {
-        //        if (use_ghost)
-        //            include_monomer = true;
-        //        else if (!use_ghost && islsum == 2)
-        //            include_monomer = true;
-        //    } else {
-        //        if (use_ghost && islsum == 1)
-        //            include_monomer = true;
-        //        else if (!use_ghost && islsum == 2)
-        //            include_monomer = true;
-        //    }
-        //} else {  // trimer
-        //    if (i == istart) {
-        //        if (use_ghost)
-        //            include_monomer = true;
-        //        else if (!use_ghost && islsum == 2)
-        //            include_monomer = true;
-        //    } else {
-        //        if (use_ghost)
-        //            include_monomer = true;
-        //        else if (!use_ghost && islsum == 2)
-        //            include_monomer = true;
-        //    }
-        //}
+        bool include_monomer = false;
+        if (!use_ghost) {
+            if (is_local[istart] == 0) {
+                istart++;
+                if (istart >= iend) return;
+                continue;
+            }
+            if (is_local[i]) include_monomer = true;
+        } else {
+            if (n_max == 2 && islsum < 2) include_monomer = true;
+        }
 
-        // if (include_monomer) {
-        xyz[3 * (i - istart)] = xyz_orig[3 * first_index[i]];
-        xyz[3 * (i - istart) + 1] = xyz_orig[3 * first_index[i] + 1];
-        xyz[3 * (i - istart) + 2] = xyz_orig[3 * first_index[i] + 2];
-        mon_index[i - istart] = i;
-        tag_index[i - istart] = tag[first_index[i]];
-        //}
+        if (istart == i && is_local[i] == 1 && n_max == 2) include_monomer = true;
+
+        if (include_monomer) {
+            xyz.push_back(xyz_orig[3 * first_index[i]]);
+            xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
+            xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
+            mon_index.push_back(i);
+            tag_index.push_back(tag[first_index[i]]);
+            nmon2++;
+        }
     }
 
     if (nmon2 < 2) return;
