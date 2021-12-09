@@ -454,11 +454,12 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
     if (!use_ghost && !is_local[istart]) return;
 
     // Obtain xyz vector with the positions of first atom of each monomer
-    std::vector<double> xyz;
-    size_t nmon2 = 0;
+    std::vector<double> xyz(3 * (nmon - istart));
+    // std::vector<double> xyz;
+    size_t nmon2 = nmon - istart;
 
-    std::vector<size_t> mon_index;
-    std::vector<size_t> tag_index;
+    std::vector<size_t> mon_index(nmon - istart);
+    std::vector<size_t> tag_index(nmon - istart);
     for (size_t i = istart; i < nmon; i++) {
         // size_t islsum = is_local[istart] + is_local[i];
 
@@ -490,12 +491,11 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
         //}
 
         // if (include_monomer) {
-        xyz.push_back(xyz_orig[3 * first_index[i]]);
-        xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
-        xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
-        mon_index.push_back(i);
-        tag_index.push_back(tag[first_index[i]]);
-        nmon2++;
+        xyz[3 * (i - istart)] = xyz_orig[3 * first_index[i]];
+        xyz[3 * (i - istart) + 1] = xyz_orig[3 * first_index[i] + 1];
+        xyz[3 * (i - istart) + 2] = xyz_orig[3 * first_index[i] + 2];
+        mon_index[i - istart] = i;
+        tag_index[i - istart] = tag[first_index[i]];
         //}
     }
 
@@ -1538,7 +1538,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             double chgdev[27];
             std::copy(chg_grad.begin() + 27 * mm, chg_grad.begin() + 27 * (mm + 1), chgdev);
 
-            // Fast way to access the derivatives
+// Fast way to access the derivatives
 #define DQ3(l, m, k) chgdev[k + 3 * (m + 3 * l)]
 #define GRADQ(l, m, k) gradq[k + 3 * (m + 3 * l)]
 
