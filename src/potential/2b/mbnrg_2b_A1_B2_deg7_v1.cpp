@@ -8,7 +8,7 @@ mbnrg_A1_B2_deg7_v1::mbnrg_A1_B2_deg7_v1(const std::string mon1, const std::stri
     // =====>> BEGIN SECTION CONSTRUCTOR <<=====
     // =>> PASTE RIGHT BELOW THIS LINE <==
 
-    if (mon1 == "cs" and mon2 == "h2") {
+    if (mon1 == "cs+" and mon2 == "h2") {
         coefficients = std::vector<double>{2.525111079619635e+01,   // 0
                                            -1.541529715447551e+01,  // 1
                                            7.546371184796263e+01,   // 2
@@ -76,7 +76,7 @@ mbnrg_A1_B2_deg7_v1::mbnrg_A1_B2_deg7_v1(const std::string mon1, const std::stri
         m_ri = 6.000000000000000e+00;                               // A
         m_ro = 8.000000000000000e+00;                               // A
 
-    }  // end if mon1 == "cs" and mon2 == "h2"
+    }  // end if mon1 == "cs+" and mon2 == "h2"
     // =====>> END SECTION CONSTRUCTOR <<=====
 }
 

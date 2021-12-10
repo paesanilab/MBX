@@ -89,11 +89,11 @@ std::vector<double> sys_xyz = {
     -6.1315209000e-01, 2.4697633600e+00, 2.0700508600e+00,  3.4684791000e-01,  2.4697633600e+00, 2.0700508600e+00,
     -9.3360667000e-01, 3.3746991900e+00, 2.0700508600e+00,  -4.7670287397e-01, 2.6628345332e+00, 2.0700508600e+00};
 
-std::vector<std::string> mon_id = {"co2", "f", "h2o", "h2o", "h2o"};
+std::vector<std::string> mon_id = {"co2", "f-", "h2o", "h2o", "h2o"};
 
 std::vector<size_t> sites = {3, 1, 4, 4, 4};
 
-std::vector<std::pair<std::string, size_t>> mon_type_count = {{"co2", 1}, {"f", 1}, {"h2o", 3}};
+std::vector<std::pair<std::string, size_t>> mon_type_count = {{"co2", 1}, {"f-", 1}, {"h2o", 3}};
 
 std::vector<size_t> first_ind = {0, 3, 4, 8, 12};
 
@@ -428,10 +428,10 @@ TEST_CASE("ExternalCharges") {
                                       1.3100000000e+00, 0.0000000000e+00, 0.0000000000e+00};
     std::vector<double> pol_all = {1.4760000000e-01, 1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01,
                                    0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
-    std::vector<std::string> mon_id_all = {"na", "h2o", "dp1p", "dp1p"};
+    std::vector<std::string> mon_id_all = {"na+", "h2o", "dp1p", "dp1p"};
     std::vector<size_t> sites_all = {1, 4, 1, 1};
     std::vector<size_t> first_index_all = {0, 1, 5, 6};
-    std::vector<std::pair<std::string, size_t>> mon_type_count_all = {{"na", 1}, {"h2o", 1}, {"dp1p", 2}};
+    std::vector<std::pair<std::string, size_t>> mon_type_count_all = {{"na+", 1}, {"h2o", 1}, {"dp1p", 2}};
     std::vector<size_t> islocal_all = {1, 1, 1, 1};
     std::vector<int> sys_atom_tag_all = {0, 0, 1, 2, 0, 0, 0};
 
@@ -498,10 +498,10 @@ TEST_CASE("ExternalCharges") {
     std::vector<double> pol_system = {1.4760000000e-01, 1.3100000000e+00, 2.9400000000e-01, 2.9400000000e-01,
                                       0.0000000000e+00};
 
-    std::vector<std::string> mon_id_system = {"na", "h2o"};
+    std::vector<std::string> mon_id_system = {"na+", "h2o"};
     std::vector<size_t> sites_system = {1, 4};
     std::vector<size_t> first_index_system = {0, 1};
-    std::vector<std::pair<std::string, size_t>> mon_type_count_system = {{"na", 1}, {"h2o", 1}};
+    std::vector<std::pair<std::string, size_t>> mon_type_count_system = {{"na+", 1}, {"h2o", 1}};
     std::vector<size_t> islocal_system = {1, 1};
     std::vector<int> sys_atom_tag_system = {0, 0, 1, 2, 0};
 

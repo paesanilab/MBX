@@ -96,7 +96,7 @@ TEST_CASE("mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::struct") {
                                                -1.9576964049e-05, -1.9938278881e+00, 1.1066670256e-03,
                                                -1.2457461202e-04, 1.1066670256e-03,  -3.8870924575e+00};
 
-        mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 ph("cl", "h2o", "h2o");
+        mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 ph("cl-", "h2o", "h2o");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
         double e =
             ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
@@ -401,7 +401,7 @@ TEST_CASE("x3b-3b-h2o-ion-v1x_deg4_filtered::class") {
                                                1.8255055693e+00,  -4.2971634514e+00, 4.7780827979e-01,
                                                -4.3344338955e-01, 4.7780827979e-01,  -4.6681227881e+00};
 
-        x3b_h2o_ion_v1x_deg4_filtered ph("li");
+        x3b_h2o_ion_v1x_deg4_filtered ph("li+");
         double e_nograd = ph(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
         double e = ph(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
 
@@ -483,7 +483,7 @@ TEST_CASE("x3b-3b-h2o-ion-v1x_deg4_filtered::class") {
                                                -1.0386415637e+00, 7.6760651908e-01,  -1.7212173922e+00,
                                                6.0754488203e-01,  -1.7212173922e+00, -1.5895108310e+00};
 
-        x3b_h2o_ion_v1x_deg4_filtered ph("na");
+        x3b_h2o_ion_v1x_deg4_filtered ph("na+");
         double e_nograd = ph(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
         double e = ph(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
 
@@ -597,7 +597,7 @@ TEST_CASE("x3b-3b-h2o-ion-v1x_deg4_filtered::class") {
                                                2.6660612739e+00,  1.4097937260e+00,  -2.0762806803e-01,
                                                -1.5226653399e-01, -2.0762806803e-01, -7.6441171691e-01};
 
-        x3b_h2o_ion_v1x_deg4_filtered ph("k");
+        x3b_h2o_ion_v1x_deg4_filtered ph("k+");
         double e_nograd = ph(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
         double e = ph(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
 
@@ -711,7 +711,7 @@ TEST_CASE("x3b-3b-h2o-ion-v1x_deg4_filtered::class") {
                                                -4.9488125217e-01, -5.5216998736e-01, 4.4564577774e-02,
                                                -3.3916786994e-02, 4.4564577774e-02,  -8.2287579237e-03};
 
-        x3b_h2o_ion_v1x_deg4_filtered ph("rb");
+        x3b_h2o_ion_v1x_deg4_filtered ph("rb+");
         double e_nograd = ph(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
         double e = ph(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
 
@@ -769,7 +769,7 @@ TEST_CASE("x3b-3b-h2o-ion-v1x_deg4_filtered::class") {
                                                2.9266789438e-02, 3.8385024531e-01,  -3.0490577546e-01,
                                                3.6296393155e-02, -3.0490577546e-01, 7.1979561287e-01};
 
-        x3b_h2o_ion_v1x_deg4_filtered ph("cs");
+        x3b_h2o_ion_v1x_deg4_filtered ph("cs+");
         double e_nograd = ph(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
         double e = ph(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);
 

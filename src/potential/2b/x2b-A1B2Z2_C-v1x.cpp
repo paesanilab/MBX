@@ -178,7 +178,7 @@ x2b_h2o_ion_v2x::x2b_h2o_ion_v2x(std::string mon1, std::string mon2) {
 
     // Alkali metals
     // Lithium
-    if (mon1 == "h2o" && mon2 == "li") {
+    if (mon1 == "h2o" && mon2 == "li+") {
         twobodyfit = std::vector<double>{-1.292432048444890e+02,  // 0
                                          6.609147346235141e+02,   // 1
                                          -3.982962335916822e+01,  // 2
@@ -625,7 +625,7 @@ x2b_h2o_ion_v2x::x2b_h2o_ion_v2x(std::string mon1, std::string mon2) {
     }
 
     // Sodium
-    if (mon1 == "h2o" && mon2 == "na") {
+    if (mon1 == "h2o" && mon2 == "na+") {
         twobodyfit = std::vector<double>{7.062376199607463e+00,   // 0
                                          7.876779442419362e+00,   // 1
                                          -2.540666047566872e+01,  // 2
@@ -1072,7 +1072,7 @@ x2b_h2o_ion_v2x::x2b_h2o_ion_v2x(std::string mon1, std::string mon2) {
     }
 
     // Potassium
-    if (mon1 == "h2o" && mon2 == "k") {
+    if (mon1 == "h2o" && mon2 == "k+") {
         twobodyfit = std::vector<double>{6.065254497692316e-01,   // 0
                                          -6.114096481270298e+02,  // 1
                                          -9.305075757462014e+00,  // 2
@@ -1519,7 +1519,7 @@ x2b_h2o_ion_v2x::x2b_h2o_ion_v2x(std::string mon1, std::string mon2) {
     }
 
     // Rubidium
-    if (mon1 == "h2o" && mon2 == "rb") {
+    if (mon1 == "h2o" && mon2 == "rb+") {
         twobodyfit = std::vector<double>{-2.243283187216157e+02,   // 0
                                          -2.449441044507246e+02,   // 1
                                          1.258440679196070e+02,    // 2
@@ -1966,7 +1966,7 @@ x2b_h2o_ion_v2x::x2b_h2o_ion_v2x(std::string mon1, std::string mon2) {
     }
 
     // Cesium
-    if (mon1 == "h2o" && mon2 == "cs") {
+    if (mon1 == "h2o" && mon2 == "cs+") {
         twobodyfit = std::vector<double>{-1.774422452872845e+02,   // 0
                                          -9.485590806465954e+01,   // 1
                                          1.126405084950678e+01,    // 2
