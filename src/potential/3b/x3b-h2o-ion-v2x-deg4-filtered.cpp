@@ -1519,7 +1519,7 @@ x3b_h2o_ion_v1x_deg4_filtered::x3b_h2o_ion_v1x_deg4_filtered(std::string m3) {
 
         std::copy(the_poly, the_poly + ncoeffs, m_coeffs);
 
-    } else if (m3 == "na") {
+    } else if (m3 == "na+") {
         const double the_poly[] = {
             4.308868375740903e+02,   // 0
             -3.191775434204529e+02,  // 1

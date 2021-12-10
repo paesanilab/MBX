@@ -68,7 +68,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
         -2.130729533e-01, 1.844059568e+00,  1.366935547e+00,  5.104601172e-01,  2.693542675e+00,  3.706992464e-01};   \
     std::vector<std::string> atom_names{"O", "H", "H", "Br", "O", "H", "H", "O",                                      \
                                         "H", "H", "O", "H",  "H", "O", "H", "H"};                                     \
-    std::vector<std::string> monomer_names = {"h2o", "br", "h2o", "h2o", "h2o", "h2o"};                               \
+    std::vector<std::string> monomer_names = {"h2o", "br-", "h2o", "h2o", "h2o", "h2o"};                               \
     std::vector<size_t> n_atoms_vector = {3, 1, 3, 3, 3, 3};                                                          \
     std::vector<size_t> n_sites_vector = {4, 1, 4, 4, 4, 4};                                                          \
     std::vector<size_t> first_index = {0, 4, 5, 9, 13, 17};                                                           \
@@ -104,10 +104,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                      0.0000000000e+00, 5.6770589454e-01, 5.6767184419e-01, 0.0000000000e+00,          \
                                      5.6873442599e-01, 5.6908414806e-01, 0.0000000000e+00, 5.6842486717e-01,          \
                                      5.6768445681e-01, 0.0000000000e+00, 5.6708114045e-01, 5.6727943429e-01};         \
-    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"br", 1}, {"h2o", 5}};                       \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"br-", 1}, {"h2o", 5}};                       \
     std::vector<size_t> internal_original_to_current_order{1, 0, 2, 3, 4, 5};                                         \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{{1, 4}, {0, 0}, {2, 5}, {3, 9}, {4, 13}, {5, 17}};  \
     std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{1, 3}, {0, 0},  {2, 4},                 \
                                                                              {3, 7}, {4, 10}, {5, 13}};               \
-    std::vector<std::string> internal_monomer_names{"br", "h2o", "h2o", "h2o", "h2o", "h2o"};
+    std::vector<std::string> internal_monomer_names{"br-", "h2o", "h2o", "h2o", "h2o", "h2o"};
 #endif

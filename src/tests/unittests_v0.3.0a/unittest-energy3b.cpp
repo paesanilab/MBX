@@ -64,7 +64,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                                     -1.1603278036e+00, -1.1957504615e+00, -8.3804995530e-01, -2.2275387400e-01,
                                     -1.3288712563e+00, 8.0703453000e-03,  -1.4412466488e+00};
         size_t nm = 3;
-        std::string mon1 = "cl";
+        std::string mon1 = "cl-";
         std::string mon2 = "h2o";
         std::string mon3 = "h2o";
 

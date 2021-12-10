@@ -509,7 +509,7 @@ void PairMBX::accumulate_f(bool include_ext) {
                 if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
             } else if (strcmp("li+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("na", mol_names[mtype]) == 0)
+            else if (strcmp("na+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("k+", mol_names[mtype]) == 0)
                 na = 1;
@@ -525,13 +525,13 @@ void PairMBX::accumulate_f(bool include_ext) {
 #endif
             } else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("f", mol_names[mtype]) == 0)
+            else if (strcmp("f-", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("cl", mol_names[mtype]) == 0)
+            else if (strcmp("cl-", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("br", mol_names[mtype]) == 0)
+            else if (strcmp("br-", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("i", mol_names[mtype]) == 0)
+            else if (strcmp("i-", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("co2", mol_names[mtype]) == 0) {
                 na = 3;
@@ -652,7 +652,7 @@ void PairMBX::accumulate_f_local(bool include_ext) {
                 if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
             } else if (strcmp("li+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("na", mol_names[mtype]) == 0)
+            else if (strcmp("na+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("k+", mol_names[mtype]) == 0)
                 na = 1;
@@ -666,13 +666,13 @@ void PairMBX::accumulate_f_local(bool include_ext) {
                 include_monomer = false;
                 is_ext = true;
 #endif
-            } else if (strcmp("f", mol_names[mtype]) == 0)
+            } else if (strcmp("f-", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("cl", mol_names[mtype]) == 0)
+            else if (strcmp("cl-", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("br", mol_names[mtype]) == 0)
+            else if (strcmp("br-", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("i", mol_names[mtype]) == 0)
+            else if (strcmp("i-", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("he", mol_names[mtype]) == 0)
                 na = 1;
@@ -794,7 +794,7 @@ void PairMBX::accumulate_f_full(bool include_ext) {
                     na = 3;
                 else if (strcmp("li+", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("na", mol_names[mtype]) == 0)
+                else if (strcmp("na+", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("k+", mol_names[mtype]) == 0)
                     na = 1;
@@ -807,13 +807,13 @@ void PairMBX::accumulate_f_full(bool include_ext) {
 #ifndef _DEBUG_EFIELD
                     is_ext = true;
 #endif
-                } else if (strcmp("f", mol_names[mtype]) == 0)
+                } else if (strcmp("f-", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("cl", mol_names[mtype]) == 0)
+                else if (strcmp("cl-", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("br", mol_names[mtype]) == 0)
+                else if (strcmp("br-", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("i", mol_names[mtype]) == 0)
+                else if (strcmp("i-", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("he", mol_names[mtype]) == 0)
                     na = 1;
@@ -908,7 +908,7 @@ int PairMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
         na = 3;
     else if (strcmp("li+", name) == 0)
         na = 1;
-    else if (strcmp("na", name) == 0)
+    else if (strcmp("na+", name) == 0)
         na = 1;
     else if (strcmp("k+", name) == 0)
         na = 1;
@@ -919,13 +919,13 @@ int PairMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
     else if (strcmp("dp1", name) == 0) {
         na = 1;
         inc_e = true;
-    } else if (strcmp("f", name) == 0)
+    } else if (strcmp("f-", name) == 0)
         na = 1;
-    else if (strcmp("cl", name) == 0)
+    else if (strcmp("cl-", name) == 0)
         na = 1;
-    else if (strcmp("br", name) == 0)
+    else if (strcmp("br-", name) == 0)
         na = 1;
-    else if (strcmp("i", name) == 0)
+    else if (strcmp("i-", name) == 0)
         na = 1;
     else if (strcmp("co2", name) == 0)
         na = 3;
@@ -961,7 +961,7 @@ int PairMBX::get_include_monomer(char *name, int anchor, bool &inc_m, bool &inc_
         if ((ii1 < 0) || (ii2 < 0)) inc_m = false;
     } else if (strcmp("li+", name) == 0)
         na = 1;
-    else if (strcmp("na", name) == 0)
+    else if (strcmp("na+", name) == 0)
         na = 1;
     else if (strcmp("k+", name) == 0)
         na = 1;
@@ -975,13 +975,13 @@ int PairMBX::get_include_monomer(char *name, int anchor, bool &inc_m, bool &inc_
         inc_m = false;
         inc_e = true;
 #endif
-    } else if (strcmp("f", name) == 0)
+    } else if (strcmp("f-", name) == 0)
         na = 1;
-    else if (strcmp("cl", name) == 0)
+    else if (strcmp("cl-", name) == 0)
         na = 1;
-    else if (strcmp("br", name) == 0)
+    else if (strcmp("br-", name) == 0)
         na = 1;
-    else if (strcmp("i", name) == 0)
+    else if (strcmp("i-", name) == 0)
         na = 1;
     else if (strcmp("he", name) == 0)
         na = 1;

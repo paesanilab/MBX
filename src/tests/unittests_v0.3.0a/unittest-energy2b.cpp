@@ -58,7 +58,7 @@ TEST_CASE("energy2b::get_2b_energy") {
                                     -1.3288712563e+00, 8.0703453000e-03,  -1.4412466488e+00};
 
         size_t nm = 3;
-        std::string mon1 = "cl";
+        std::string mon1 = "cl-";
         std::string mon2 = "h2o";
 
         std::vector<double> grad1(xyz1.size(), 0.0);
@@ -923,8 +923,8 @@ TEST_CASE("energy2b::get_2b_energy") {
         std::vector<double> xyz1 = {1.6216168900e+00, -1.0270244000e+00, 3.9469574100e+00};
         std::vector<double> xyz2 = {4.6216168900e+00, -2.0270244000e+00, 2.9469574100e+00};
         size_t nm = 1;
-        std::string mon1 = "cl";
-        std::string mon2 = "cl";
+        std::string mon1 = "cl-";
+        std::string mon2 = "cl-";
 
         std::vector<double> grad1(xyz1.size(), 0.0);
         std::vector<double> grad2(xyz2.size(), 0.0);
@@ -972,8 +972,8 @@ TEST_CASE("energy2b::get_2b_energy") {
         std::vector<double> xyz2 = {1.6216168900e+00, -3.0270244000e+00, 2.9469574100e+00,
                                     4.0831958000e+00, -1.4459911350e+00, 3.0238165600e+00};
         size_t nm = 2;
-        std::string mon1 = "na";
-        std::string mon2 = "na";
+        std::string mon1 = "na+";
+        std::string mon2 = "na+";
 
         std::vector<double> grad1(xyz1.size(), 0.0);
         std::vector<double> grad2(xyz2.size(), 0.0);
@@ -1074,8 +1074,8 @@ TEST_CASE("energy2b::get_2b_energy") {
         std::vector<double> xyz2 = {2.1000000000e+00, 3.2000000000e+00, 1.5000000000e+00,
                                     2.1500000000e+01, 3.1000000000e+00, 9.0000000000e-01};
         size_t nm = 2;
-        std::string mon1 = "na";
-        std::string mon2 = "cl";
+        std::string mon1 = "na+";
+        std::string mon2 = "cl-";
 
         std::vector<double> grad1(xyz1.size(), 0.0);
         std::vector<double> grad2(xyz2.size(), 0.0);

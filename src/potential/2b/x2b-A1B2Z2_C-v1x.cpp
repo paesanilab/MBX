@@ -625,7 +625,7 @@ x2b_h2o_ion_v2x::x2b_h2o_ion_v2x(std::string mon1, std::string mon2) {
     }
 
     // Sodium
-    if (mon1 == "h2o" && mon2 == "na") {
+    if (mon1 == "h2o" && mon2 == "na+") {
         twobodyfit = std::vector<double>{7.062376199607463e+00,   // 0
                                          7.876779442419362e+00,   // 1
                                          -2.540666047566872e+01,  // 2

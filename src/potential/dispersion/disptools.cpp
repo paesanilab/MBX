@@ -428,7 +428,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(9.775202425217957e+00);  // A^(-1)
         d6.push_back(9.406475169954112e+00);  // A^(-1)
 
-    } else if (mon_id1 == "f" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "f-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -445,7 +445,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.586190000000000e+00);  // A^(-1)
         d6.push_back(2.697680000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "cl" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "cl-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -462,7 +462,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.275420000000000e+00);  // A^(-1)
         d6.push_back(2.782260000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "br" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "br-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -479,7 +479,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.058250000000000e+00);  // A^(-1)
         d6.push_back(2.798040000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "i-") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -513,7 +513,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(4.023330000000000e+00);  // A^(-1)
         d6.push_back(4.006630000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "na") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "na+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -847,7 +847,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(372.8086);  // kcal/mol * A^(-6)  A--B
         d6.push_back(3.24781);   // A^(-1) A--B
-    } else if (mon_id1 == "na" and mon_id2 == "na") {
+    } else if (mon_id1 == "na+" and mon_id2 == "na+") {
         types1.push_back(0);
 
         types2.push_back(0);
@@ -857,7 +857,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(251.48);   // kcal/mol * A^(-6)  A--A
         d6.push_back(4.42822);  // A^(-1) A--A
-    } else if (mon_id1 == "cl" and mon_id2 == "cl") {
+    } else if (mon_id1 == "cl-" and mon_id2 == "cl-") {
         types1.push_back(0);
 
         types2.push_back(0);
@@ -867,7 +867,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(3066.2919);  // kcal/mol * A^(-6)  A--A
         d6.push_back(1.82786);    // A^(-1) A--A
-    } else if (mon_id1 == "cl" and mon_id2 == "na") {
+    } else if (mon_id1 == "cl-" and mon_id2 == "na+") {
         types1.push_back(0);
 
         types2.push_back(0);

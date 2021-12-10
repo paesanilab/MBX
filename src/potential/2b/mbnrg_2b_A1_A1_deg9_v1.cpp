@@ -8,7 +8,7 @@ mbnrg_A1_A1_deg9_v1::mbnrg_A1_A1_deg9_v1(const std::string mon1, const std::stri
     // =====>> BEGIN SECTION CONSTRUCTOR <<=====
     // =>> PASTE RIGHT BELOW THIS LINE <==
 
-    if (mon1 == "na" and mon2 == "na") {
+    if (mon1 == "na+" and mon2 == "na+") {
         coefficients = std::vector<double>{5.168979440098036e-03,   // 0
                                            -1.057172129456625e-02,  // 1
                                            9.840375789382686e-03,   // 2
@@ -23,8 +23,8 @@ mbnrg_A1_A1_deg9_v1::mbnrg_A1_A1_deg9_v1(const std::string mon1, const std::stri
         m_ri = 7.000000000000000e+00;                               // A
         m_ro = 9.000000000000000e+00;                               // A
 
-    }  // end if mon1 == "na" and mon2 == "na"
-    if (mon1 == "cl" and mon2 == "cl") {
+    }  // end if mon1 == "na+" and mon2 == "na+"
+    if (mon1 == "cl-" and mon2 == "cl-") {
         coefficients = std::vector<double>{9.425632806990795e-01,   // 0
                                            -1.210233366348845e+00,  // 1
                                            6.587041999446325e-01,   // 2
@@ -39,7 +39,7 @@ mbnrg_A1_A1_deg9_v1::mbnrg_A1_A1_deg9_v1(const std::string mon1, const std::stri
         m_ri = 7.000000000000000e+00;                               // A
         m_ro = 9.000000000000000e+00;                               // A
 
-    }  // end if mon1 == "cl" and mon2 == "cl"
+    }  // end if mon1 == "cl-" and mon2 == "cl-"
     if (mon1 == "ar" and mon2 == "ar") {
         coefficients = std::vector<double>{-8.527086309441063e-03,   // 0
                                            5.323541412508981e-03,    // 1

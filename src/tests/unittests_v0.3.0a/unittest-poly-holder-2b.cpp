@@ -89,7 +89,7 @@ TEST_CASE("mbnrg_A1_B1C2X2_deg5_v1::struct") {
                                                2.6778589990e-06,  6.8519561292e+00, 1.1337668899e-03,
                                                -8.8122004439e-05, 1.1337668899e-03, 4.8825412595e+00};
 
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 ph("cl", "h2o");
+        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 ph("cl-", "h2o");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
         double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 
@@ -382,7 +382,7 @@ TEST_CASE("x2b_h2o_ion_v2x::struct") {
                                                2.0508966300e+01, 4.0304984914e+01, 7.3118984343e+00,
                                                7.5854568492e+00, 7.3118984343e+00, 7.0543914173e+00};
 
-        h2o_ion::x2b_h2o_ion_v2x ph("h2o", "na");
+        h2o_ion::x2b_h2o_ion_v2x ph("h2o", "na+");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
         double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 
@@ -887,7 +887,7 @@ TEST_CASE("mbnrg_A1_A1_deg9_v1::struct") {
                                                -1.4373762604e+00, 4.7912542013e-01,  4.7912542013e-01,
                                                -1.4373762604e+00, 4.7912542013e-01,  4.7912542013e-01};
 
-        mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 ph("cl", "cl");
+        mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 ph("cl-", "cl-");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
         double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 
@@ -917,7 +917,7 @@ TEST_CASE("mbnrg_A1_A1_deg9_v1::struct") {
                                                -6.1265512068e-02, -1.7964015576e+00, 8.7661291855e-01,
                                                1.5746912998e-01,  8.7661291855e-01,  -3.8281975143e-01};
 
-        mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 ph("na", "na");
+        mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 ph("na+", "na+");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
         double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 
@@ -949,7 +949,7 @@ TEST_CASE("mbnrg_A1_B1_deg9_v1::struct") {
                                                -8.8227721991e-01, -1.3444224303e+00, -6.3019801422e-01,
                                                -4.1356744683e-01, -6.3019801422e-01, -2.9540531917e-01};
 
-        mbnrg_A1_B1_deg9::mbnrg_A1_B1_deg9_v1 ph("na", "cl");
+        mbnrg_A1_B1_deg9::mbnrg_A1_B1_deg9_v1 ph("na+", "cl-");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
         double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 

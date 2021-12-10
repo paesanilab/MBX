@@ -13,7 +13,7 @@ xyz = [-1.58972425,    1.04337922,   -0.08780840,
 
 number_of_atoms_per_monomer = [3,3,3,1]
 atom_names = ["O","H","H","O","H","H","O","H","H","F"]
-monomer_names = ["h2o","h2o","h2o","f"]
+monomer_names = ["h2o","h2o","h2o","f-"]
 json_file = "mbx.json"
 
 mbx.initialize_system(xyz,number_of_atoms_per_monomer,atom_names,monomer_names,json_file)

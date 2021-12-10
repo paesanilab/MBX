@@ -58,8 +58,8 @@ std::vector<double> box = {2.1000000000e+01, 0.0000000000e+00, 0.0000000000e+00,
                            0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 2.0000000000e+01};
 std::vector<size_t> num_atoms = {1, 3, 3, 3};
 std::vector<size_t> islocal = {1, 1, 1, 1};
-std::vector<std::pair<std::string, size_t> > mon_type_count = {{"f", 1}, {"h2o", 3}};
-std::vector<std::string> mon_id = {"f", "h2o", "h2o", "h2o"};
+std::vector<std::pair<std::string, size_t> > mon_type_count = {{"f-", 1}, {"h2o", 3}};
+std::vector<std::string> mon_id = {"f-", "h2o", "h2o", "h2o"};
 std::vector<size_t> force_ttm_for_idx = {};
 bool do_grads = true;
 
@@ -121,7 +121,7 @@ TEST_CASE("buckingham::SetNewParameters") {
         -6.4854990000e-01, 6.1074150000e-01, 2.1220508600e+00,  1.6672450700e+00,  -5.7715209000e-01, -1.2708347200e+00,
         1.1059465600e+00,  2.5077633600e+00, 5.4092195400e+00,  2.2000000000e-02,  2.1100508600e+00,  2.1374472700e+00};
 
-    std::vector<std::pair<std::string, std::string> > buck_pairs = {{"f", "h2o"}};
+    std::vector<std::pair<std::string, std::string> > buck_pairs = {{"f-", "h2o"}};
 
     d.SetNewParameters(sys_xyz, buck_pairs, force_ttm_for_idx, do_grads, cutoff, box);
 
@@ -235,7 +235,7 @@ TEST_CASE("buckingham::GetRepulsion") {
 
     double energy_expected = 4.4300261242e+00;
 
-    std::vector<std::pair<std::string, std::string> > buck_pairs = {{"f", "h2o"}};
+    std::vector<std::pair<std::string, std::string> > buck_pairs = {{"f-", "h2o"}};
 
     d.SetNewParameters(sys_xyz, buck_pairs, force_ttm_for_idx, true, cutoff, box);
     double energy = d.GetRepulsion(grad, &virial, use_ghost);
