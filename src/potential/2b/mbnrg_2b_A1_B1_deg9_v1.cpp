@@ -24,7 +24,7 @@ mbnrg_A1_B1_deg9_v1::mbnrg_A1_B1_deg9_v1(const std::string mon1, const std::stri
         m_ro = 9.000000000000000e+00;                               // A
 
     }  // end if mon1 == "na" and mon2 == "cl"
-    if (mon1 == "cs" and mon2 == "ar") {
+    if (mon1 == "cs+" and mon2 == "ar") {
         coefficients = std::vector<double>{-1.914465572254712e-02,  // 0
                                            -2.617449458559692e-02,  // 1
                                            -1.521325763974827e-03,  // 2
@@ -39,7 +39,7 @@ mbnrg_A1_B1_deg9_v1::mbnrg_A1_B1_deg9_v1(const std::string mon1, const std::stri
         m_ri = 7.000000000000000e+00;                               // A
         m_ro = 9.000000000000000e+00;                               // A
 
-    }  // end if mon1 == "cs" and mon2 == "ar"
+    }  // end if mon1 == "cs+" and mon2 == "ar"
     // =====>> END SECTION CONSTRUCTOR <<=====
 }
 

@@ -482,7 +482,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
 //----------------------------------------------------------------------------//
 
 x3b_h2o_ion_v1x_deg4_filtered::x3b_h2o_ion_v1x_deg4_filtered(std::string m3) {
-    if (m3 == "li") {
+    if (m3 == "li+") {
         const double the_poly[] = {-1.160089594691294e+03,   // 0
                                    -7.282152306292261e+02,   // 1
                                    -1.398348953811319e+02,   // 2
@@ -2558,7 +2558,7 @@ x3b_h2o_ion_v1x_deg4_filtered::x3b_h2o_ion_v1x_deg4_filtered(std::string m3) {
 
         std::copy(the_poly, the_poly + ncoeffs, m_coeffs);
 
-    } else if (m3 == "k") {
+    } else if (m3 == "k+") {
         const double the_poly[] = {
             -1.183549680608313e+01,  // 0
             2.785191087592593e+02,   // 1
@@ -3599,7 +3599,7 @@ x3b_h2o_ion_v1x_deg4_filtered::x3b_h2o_ion_v1x_deg4_filtered(std::string m3) {
 
         std::copy(the_poly, the_poly + ncoeffs, m_coeffs);
 
-    } else if (m3 == "rb") {
+    } else if (m3 == "rb+") {
         const double the_poly[] = {-6.714728321324774e+02,  // 0
                                    -4.363140175199011e+01,  // 1
                                    -1.386914275178937e+02,  // 2
@@ -4636,7 +4636,7 @@ x3b_h2o_ion_v1x_deg4_filtered::x3b_h2o_ion_v1x_deg4_filtered(std::string m3) {
 
         std::copy(the_poly, the_poly + ncoeffs, m_coeffs);
 
-    } else if (m3 == "cs") {
+    } else if (m3 == "cs+") {
         const double the_poly[] = {-1.907671721947504e+01,   // 0
                                    -6.148224358427421e+00,   // 1
                                    3.537515593740038e+00,    // 2

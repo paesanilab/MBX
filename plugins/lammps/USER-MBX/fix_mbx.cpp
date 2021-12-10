@@ -121,15 +121,15 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     for (int i = 0; i < num_mol_types; ++i) {
         if (strcmp("h2o", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 3;
-        else if (strcmp("li", mol_names[i]) == 0)
+        else if (strcmp("li+", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 1;
         else if (strcmp("na", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 1;
-        else if (strcmp("k", mol_names[i]) == 0)
+        else if (strcmp("k+", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 1;
-        else if (strcmp("rb", mol_names[i]) == 0)
+        else if (strcmp("rb+", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 1;
-        else if (strcmp("cs", mol_names[i]) == 0)
+        else if (strcmp("cs+", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 1;
         else if (strcmp("dp1", mol_names[i]) == 0)
             num_atoms_per_mol[i] = 1;
@@ -664,15 +664,15 @@ void FixMBX::pre_exchange() {
                     const int ii1 = atom->map(anchor + 1);
                     const int ii2 = atom->map(anchor + 2);
                     if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
-                } else if (strcmp("li", mol_names[mtype]) == 0)
+                } else if (strcmp("li+", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("na", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("k", mol_names[mtype]) == 0)
+                else if (strcmp("k+", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("rb", mol_names[mtype]) == 0)
+                else if (strcmp("rb+", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("cs", mol_names[mtype]) == 0)
+                else if (strcmp("cs+", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("f", mol_names[mtype]) == 0)
                     na = 1;
@@ -803,15 +803,15 @@ void FixMBX::mbx_get_dipoles_local() {
                     const int ii1 = atom->map(anchor + 1);
                     const int ii2 = atom->map(anchor + 2);
                     if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
-                } else if (strcmp("li", mol_names[mtype]) == 0)
+                } else if (strcmp("li+", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("na", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("k", mol_names[mtype]) == 0)
+                else if (strcmp("k+", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("rb", mol_names[mtype]) == 0)
+                else if (strcmp("rb+", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("cs", mol_names[mtype]) == 0)
+                else if (strcmp("cs+", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("f", mol_names[mtype]) == 0)
                     na = 1;
@@ -1177,15 +1177,15 @@ void FixMBX::mbx_init() {
             int na;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
-            else if (strcmp("li", mol_names[mtype]) == 0)
+            else if (strcmp("li+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("na", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("k", mol_names[mtype]) == 0)
+            else if (strcmp("k+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("rb", mol_names[mtype]) == 0)
+            else if (strcmp("rb+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("cs", mol_names[mtype]) == 0)
+            else if (strcmp("cs+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("dp1", mol_names[mtype]) == 0)
                 na = 1;
@@ -1259,15 +1259,15 @@ void FixMBX::mbx_init() {
                     names.push_back("O");
                     names.push_back("H");
                     names.push_back("H");
-                } else if (strcmp("li", mol_names[mtype]) == 0) {
+                } else if (strcmp("li+", mol_names[mtype]) == 0) {
                     names.push_back("Li");
                 } else if (strcmp("na", mol_names[mtype]) == 0) {
                     names.push_back("Na");
-                } else if (strcmp("k", mol_names[mtype]) == 0) {
+                } else if (strcmp("k+", mol_names[mtype]) == 0) {
                     names.push_back("K");
-                } else if (strcmp("rb", mol_names[mtype]) == 0) {
+                } else if (strcmp("rb+", mol_names[mtype]) == 0) {
                     names.push_back("Rb");
-                } else if (strcmp("cs", mol_names[mtype]) == 0) {
+                } else if (strcmp("cs+", mol_names[mtype]) == 0) {
                     names.push_back("Cs");
 #ifdef _DEBUG_EFIELD
                 } else if (strcmp("dp1", mol_names[mtype]) == 0) {
@@ -1469,15 +1469,15 @@ void FixMBX::mbx_init_local() {
             int na;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
-            else if (strcmp("li", mol_names[mtype]) == 0)
+            else if (strcmp("li+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("na", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("k", mol_names[mtype]) == 0)
+            else if (strcmp("k+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("rb", mol_names[mtype]) == 0)
+            else if (strcmp("rb+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("cs", mol_names[mtype]) == 0)
+            else if (strcmp("cs+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("dp1", mol_names[mtype]) == 0)
                 na = 1;
@@ -1550,15 +1550,15 @@ void FixMBX::mbx_init_local() {
                     names.push_back("O");
                     names.push_back("H");
                     names.push_back("H");
-                } else if (strcmp("li", mol_names[mtype]) == 0) {
+                } else if (strcmp("li+", mol_names[mtype]) == 0) {
                     names.push_back("Li");
                 } else if (strcmp("na", mol_names[mtype]) == 0) {
                     names.push_back("Na");
-                } else if (strcmp("k", mol_names[mtype]) == 0) {
+                } else if (strcmp("k+", mol_names[mtype]) == 0) {
                     names.push_back("K");
-                } else if (strcmp("rb", mol_names[mtype]) == 0) {
+                } else if (strcmp("rb+", mol_names[mtype]) == 0) {
                     names.push_back("Rb");
-                } else if (strcmp("cs", mol_names[mtype]) == 0) {
+                } else if (strcmp("cs+", mol_names[mtype]) == 0) {
                     names.push_back("Cs");
 #ifdef _DEBUG_EFIELD
                 } else if (strcmp("dp1", mol_names[mtype]) == 0) {
@@ -1804,15 +1804,15 @@ void FixMBX::mbx_init_full() {
             int na;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
-            else if (strcmp("li", mol_names[mtype]) == 0)
+            else if (strcmp("li+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("na", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("k", mol_names[mtype]) == 0)
+            else if (strcmp("k+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("rb", mol_names[mtype]) == 0)
+            else if (strcmp("rb+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("cs", mol_names[mtype]) == 0)
+            else if (strcmp("cs+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("dp1", mol_names[mtype]) == 0)
                 na = 1;
@@ -1894,15 +1894,15 @@ void FixMBX::mbx_init_full() {
                 } else if (strcmp("dp1", mol_names[mtype]) == 0) {
                     names.push_back("H");
 #endif
-                } else if (strcmp("li", mol_names[mtype]) == 0) {
+                } else if (strcmp("li+", mol_names[mtype]) == 0) {
                     names.push_back("Li");
                 } else if (strcmp("na", mol_names[mtype]) == 0) {
                     names.push_back("Na");
-                } else if (strcmp("k", mol_names[mtype]) == 0) {
+                } else if (strcmp("k+", mol_names[mtype]) == 0) {
                     names.push_back("K");
-                } else if (strcmp("rb", mol_names[mtype]) == 0) {
+                } else if (strcmp("rb+", mol_names[mtype]) == 0) {
                     names.push_back("Rb");
-                } else if (strcmp("cs", mol_names[mtype]) == 0) {
+                } else if (strcmp("cs+", mol_names[mtype]) == 0) {
                     names.push_back("Cs");
                 } else if (strcmp("f", mol_names[mtype]) == 0) {
                     names.push_back("F");
@@ -2073,15 +2073,15 @@ void FixMBX::mbx_update_xyz() {
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
-            else if (strcmp("li", mol_names[mtype]) == 0)
+            else if (strcmp("li+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("na", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("k", mol_names[mtype]) == 0)
+            else if (strcmp("k+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("rb", mol_names[mtype]) == 0)
+            else if (strcmp("rb+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("cs", mol_names[mtype]) == 0)
+            else if (strcmp("cs+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("dp1", mol_names[mtype]) == 0)
                 na = 1;
@@ -2238,15 +2238,15 @@ void FixMBX::mbx_update_xyz_local() {
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
-            else if (strcmp("li", mol_names[mtype]) == 0)
+            else if (strcmp("li+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("na", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("k", mol_names[mtype]) == 0)
+            else if (strcmp("k+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("rb", mol_names[mtype]) == 0)
+            else if (strcmp("rb+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("cs", mol_names[mtype]) == 0)
+            else if (strcmp("cs+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("dp1", mol_names[mtype]) == 0)
                 na = 1;
@@ -2408,15 +2408,15 @@ void FixMBX::mbx_update_xyz_full() {
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0)
                 na = 3;
-            else if (strcmp("li", mol_names[mtype]) == 0)
+            else if (strcmp("li+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("na", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("k", mol_names[mtype]) == 0)
+            else if (strcmp("k+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("rb", mol_names[mtype]) == 0)
+            else if (strcmp("rb+", mol_names[mtype]) == 0)
                 na = 1;
-            else if (strcmp("cs", mol_names[mtype]) == 0)
+            else if (strcmp("cs+", mol_names[mtype]) == 0)
                 na = 1;
             else if (strcmp("dp1", mol_names[mtype]) == 0)
                 na = 1;
@@ -2555,15 +2555,15 @@ void FixMBX::mbx_init_dipole_history_local() {
                 int na = 0;
                 if (strcmp("h2o", mol_names[mtype]) == 0)
                     na = 3;
-                else if (strcmp("li", mol_names[mtype]) == 0)
+                else if (strcmp("li+", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("na", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("k", mol_names[mtype]) == 0)
+                else if (strcmp("k+", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("rb", mol_names[mtype]) == 0)
+                else if (strcmp("rb+", mol_names[mtype]) == 0)
                     na = 1;
-                else if (strcmp("cs", mol_names[mtype]) == 0)
+                else if (strcmp("cs+", mol_names[mtype]) == 0)
                     na = 1;
                 else if (strcmp("f", mol_names[mtype]) == 0)
                     na = 1;
@@ -2765,15 +2765,15 @@ int FixMBX::get_num_atoms_per_monomer(char *name) {
 
     if (strcmp("h2o", name) == 0)
         na = 3;
-    else if (strcmp("li", name) == 0)
+    else if (strcmp("li+", name) == 0)
         na = 1;
     else if (strcmp("na", name) == 0)
         na = 1;
-    else if (strcmp("k", name) == 0)
+    else if (strcmp("k+", name) == 0)
         na = 1;
-    else if (strcmp("rb", name) == 0)
+    else if (strcmp("rb+", name) == 0)
         na = 1;
-    else if (strcmp("cs", name) == 0)
+    else if (strcmp("cs+", name) == 0)
         na = 1;
     else if (strcmp("dp1", name) == 0)
         na = 1;
@@ -2809,15 +2809,15 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc) {
         const int ii1 = atom->map(anchor + 1);
         const int ii2 = atom->map(anchor + 2);
         if ((ii1 < 0) || (ii2 < 0)) inc = false;
-    } else if (strcmp("li", name) == 0)
+    } else if (strcmp("li+", name) == 0)
         na = 1;
     else if (strcmp("na", name) == 0)
         na = 1;
-    else if (strcmp("k", name) == 0)
+    else if (strcmp("k+", name) == 0)
         na = 1;
-    else if (strcmp("rb", name) == 0)
+    else if (strcmp("rb+", name) == 0)
         na = 1;
-    else if (strcmp("cs", name) == 0)
+    else if (strcmp("cs+", name) == 0)
         na = 1;
     else if (strcmp("f", name) == 0)
         na = 1;
@@ -2864,15 +2864,15 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
         n.push_back("O");
         n.push_back("H");
         n.push_back("H");
-    } else if (strcmp("li", name) == 0) {
+    } else if (strcmp("li+", name) == 0) {
         n.push_back("Li");
     } else if (strcmp("na", name) == 0) {
         n.push_back("Na");
-    } else if (strcmp("k", name) == 0) {
+    } else if (strcmp("k+", name) == 0) {
         n.push_back("K");
-    } else if (strcmp("rb", name) == 0) {
+    } else if (strcmp("rb+", name) == 0) {
         n.push_back("Rb");
-    } else if (strcmp("cs", name) == 0) {
+    } else if (strcmp("cs+", name) == 0) {
         n.push_back("Cs");
 #ifdef _DEBUG_EFIELD
     } else if (strcmp("dp1", name) == 0) {

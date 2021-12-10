@@ -325,7 +325,7 @@ TEST_CASE("energy3b::get_3b_energy") {
             1.6302588920e+00,  -1.4297465600e+00, -2.3744893640e-01, 1.1236431040e+00,  -7.5808708930e-01,
             3.9350777550e-01,  1.4232346440e+00,  -2.2258007790e+00, -6.7917366630e-02, 1.6302588920e+00};
         size_t nm = 15;
-        std::string mon1 = "li";
+        std::string mon1 = "li+";
         std::string mon2 = "h2o";
         std::string mon3 = "h2o";
 
@@ -488,7 +488,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                                     4.9496556790e+00,  2.9546761940e+00,  2.0407189980e+00,  5.6082326770e+00,
                                     1.7445021530e+00,  2.9323398370e+00,  5.4575274610e+00};
         size_t nm = 3;
-        std::string mon1 = "cs";
+        std::string mon1 = "cs+";
         std::string mon2 = "h2o";
         std::string mon3 = "h2o";
 

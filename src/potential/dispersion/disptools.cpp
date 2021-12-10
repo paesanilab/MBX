@@ -496,7 +496,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(2.723140000000000e+00);  // A^(-1)
         d6.push_back(2.799110000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "li") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "li+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -530,7 +530,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.769530000000000e+00);  // A^(-1)
         d6.push_back(3.822550000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "k") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "k+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -547,7 +547,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.401250000000000e+00);  // A^(-1)
         d6.push_back(3.321390000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "rb") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "rb+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -564,7 +564,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.236530000000000e+00);  // A^(-1)
         d6.push_back(3.313640000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "cs" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "cs+" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -775,7 +775,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.53045);  // A^(-1)
         d6.push_back(3.89503);  // A^(-1)
 
-    } else if (mon_id1 == "ar" and mon_id2 == "cs") {
+    } else if (mon_id1 == "ar" and mon_id2 == "cs+") {
         types1.push_back(0);
 
         types2.push_back(0);
@@ -836,7 +836,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(170.8082);  // kcal/mol * A^(-6)  A--C
         d6.push_back(3.48054);   // A^(-1) A--B
         d6.push_back(3.46238);   // A^(-1) A--C
-    } else if (mon_id1 == "cs" and mon_id2 == "h2") {
+    } else if (mon_id1 == "cs+" and mon_id2 == "h2") {
         types1.push_back(0);
 
         types2.push_back(0);

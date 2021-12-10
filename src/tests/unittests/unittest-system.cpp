@@ -287,11 +287,11 @@ TEST_CASE("Test the system class.") {
         j["MBX"]["alpha_ewald_disp"] = 0.01;
         j["MBX"]["grid_density_disp"] = 2.7;
         j["MBX"]["spline_order_disp"] = 4;
-        j["MBX"]["ttm_pairs"] = nlohmann::json::array({{"h2o", "i"}, {"cs", "h2o"}});
+        j["MBX"]["ttm_pairs"] = nlohmann::json::array({{"h2o", "i"}, {"cs+", "h2o"}});
         j["MBX"]["ff_mons"] = nlohmann::json::array({"co2"});
         j["MBX"]["ignore_1b_poly"] = nlohmann::json::array({"co2"});
-        j["MBX"]["ignore_2b_poly"] = nlohmann::json::array({{"h2o", "i"}, {"cs", "h2o"}});
-        j["MBX"]["ignore_3b_poly"] = nlohmann::json::array({{"h2o", "i"}, {"cs", "h2o"}});
+        j["MBX"]["ignore_2b_poly"] = nlohmann::json::array({{"h2o", "i"}, {"cs+", "h2o"}});
+        j["MBX"]["ignore_3b_poly"] = nlohmann::json::array({{"h2o", "i"}, {"cs+", "h2o"}});
 
         // Write the new json file
         std::ofstream off("mbx_mod.json");
