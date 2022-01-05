@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/chemphys/MBX.svg?branch=master)](https://travis-ci.org/chemphys/MBX)
+[![MBX testing suite](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml/badge.svg)](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml)
 [![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
 
 # MBX
