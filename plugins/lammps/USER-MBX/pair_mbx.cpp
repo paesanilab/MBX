@@ -135,11 +135,11 @@ void PairMBX::compute(int eflag, int vflag) {
         printf("[MBX] (%i) -- Computing E2B\n", me);
 #endif
 
-        fix_mbx->mbxt_start(MBXT_E2B_LOCAL);
-        mbx_e2b_local = ptr_mbx->TwoBodyEnergy(true);
-        fix_mbx->mbxt_stop(MBXT_E2B_LOCAL);
-        accumulate_f(false);
-        // mbx_e2b_local = 0.0;
+        // fix_mbx->mbxt_start(MBXT_E2B_LOCAL);
+        // mbx_e2b_local = ptr_mbx->TwoBodyEnergy(true);
+        // fix_mbx->mbxt_stop(MBXT_E2B_LOCAL);
+        // accumulate_f(false);
+        mbx_e2b_local = 0.0;
 
         fix_mbx->mbxt_start(MBXT_E2B_GHOST);
         mbx_e2b_ghost = ptr_mbx->TwoBodyEnergy(true, true);
@@ -152,11 +152,11 @@ void PairMBX::compute(int eflag, int vflag) {
         printf("[MBX] (%i) -- Computing E3B\n", me);
 #endif
 
-        fix_mbx->mbxt_start(MBXT_E3B_LOCAL);
-        mbx_e3b_local = ptr_mbx->ThreeBodyEnergy(true);
-        fix_mbx->mbxt_stop(MBXT_E3B_LOCAL);
-        accumulate_f(false);
-        // mbx_e3b_local = 0.0;
+        // fix_mbx->mbxt_start(MBXT_E3B_LOCAL);
+        // mbx_e3b_local = ptr_mbx->ThreeBodyEnergy(true);
+        // fix_mbx->mbxt_stop(MBXT_E3B_LOCAL);
+        // accumulate_f(false);
+        mbx_e3b_local = 0.0;
 
         fix_mbx->mbxt_start(MBXT_E3B_GHOST);
         mbx_e3b_ghost = ptr_mbx->ThreeBodyEnergy(true, true);

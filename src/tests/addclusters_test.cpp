@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
     double e2b_1 = s1.TwoBodyEnergy(true, true);
     double e2b_1l = s1.TwoBodyEnergy(true);
     double e2b_2 = s2.TwoBodyEnergy(true, true);
-    double e2b_2l = s1.TwoBodyEnergy(true);
+    double e2b_2l = s2.TwoBodyEnergy(true);
 
     double e2b = systems[0].TwoBodyEnergy(true, false);
 
