@@ -1606,7 +1606,7 @@ class System {
 
     /**
      * Input order of monomers <monomer, site first index>. The position i of this
-     * vector contains a pair with the position of monomer "i" in the internal
+     * vector contains a pair with the position of monomer "i-" in the internal
      * order when it was inputed in the system. The second index of the pair
      * is the first index of that monomer in the input order.
      */
@@ -1614,7 +1614,7 @@ class System {
 
     /**
      * Input order of monomers <monomer, site first index>. The position i of this
-     * vector contains a pair with the position of monomer "i" in the internal
+     * vector contains a pair with the position of monomer "i-" in the internal
      * order when it was inputed in the system. The second index of the pair
      * is the first index of that monomer in the input order, but taking
      * into account only real sites.

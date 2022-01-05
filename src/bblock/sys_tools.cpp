@@ -208,9 +208,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 nat.push_back(1);
 
                 // Halides and alkali metal ions
-            } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
-                       mon[i] == "br" || mon[i] == "i" || mon[i] == "li" || mon[i] == "na" ||  // Alkali metal ions
-                       mon[i] == "k" || mon[i] == "rb" || mon[i] == "cs") {
+            } else if (mon[i] == "f-" || mon[i] == "cl-" ||                                      // Halides
+                       mon[i] == "br-" || mon[i] == "i-" || mon[i] == "li+" || mon[i] == "na+" ||  // Alkali metal ions
+                       mon[i] == "k+" || mon[i] == "rb+" || mon[i] == "cs+") {
                 sites.push_back(1);
                 nat.push_back(1);
             } else if (mon[i] == "h2") {
@@ -1170,14 +1170,14 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
     if (is_in_json) return;
     // Halide charges
-    if (mon_id == "f" || mon_id == "cl" || mon_id == "br" || mon_id == "i") {
+    if (mon_id == "f-" || mon_id == "cl-" || mon_id == "br-" || mon_id == "i-") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = -1.0 * CHARGECON;
         }
     }
 
     // Alkali metal ions
-    else if (mon_id == "li" || mon_id == "na" || mon_id == "k" || mon_id == "rb" || mon_id == "cs") {
+    else if (mon_id == "li+" || mon_id == "na+" || mon_id == "k+" || mon_id == "rb+" || mon_id == "cs+") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = 1.0 * CHARGECON;
         }
@@ -1334,26 +1334,26 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     if (is_in_json) return;
 
     // Halides
-    if (mon_id == "f") {  // Fluoride
+    if (mon_id == "f-") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.4669;
-    } else if (mon_id == "cl") {  // Chloride
+    } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3602;
-    } else if (mon_id == "br") {  // Bromide
+    } else if (mon_id == "br-") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 7.1668;
-    } else if (mon_id == "i") {  // Iodide
+    } else if (mon_id == "i-") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 10.1184;
     }
 
     // Alkali metal ions
-    if (mon_id == "li") {  // Lithium
+    if (mon_id == "li+") {  // Lithium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0285;
-    } else if (mon_id == "na") {  // Sodium
+    } else if (mon_id == "na+") {  // Sodium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.1476;
-    } else if (mon_id == "k") {  // Potassium
+    } else if (mon_id == "k+") {  // Potassium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.8184;
-    } else if (mon_id == "rb") {  // Rubidium
+    } else if (mon_id == "rb+") {  // Rubidium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 1.3614;
-    } else if (mon_id == "cs") {  // Cesium
+    } else if (mon_id == "cs+") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.3660;
 
         // =====>> BEGIN SECTION POLFACS <<=====
@@ -1467,26 +1467,26 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     if (is_in_json) return;
 
     // Halides
-    if (mon_id == "f") {  // Fluoride
+    if (mon_id == "f-") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.4669;
-    } else if (mon_id == "cl") {  // Chloride
+    } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3602;
-    } else if (mon_id == "br") {  // Bromide
+    } else if (mon_id == "br-") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 7.1668;
-    } else if (mon_id == "i") {  // Iodide
+    } else if (mon_id == "i-") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 10.1184;
     }
 
     // Alkali metal ions
-    if (mon_id == "li") {  // Lithium
+    if (mon_id == "li+") {  // Lithium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0285;
-    } else if (mon_id == "na") {  // Sodium
+    } else if (mon_id == "na+") {  // Sodium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.1476;
-    } else if (mon_id == "k") {  // Potassium
+    } else if (mon_id == "k+") {  // Potassium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8184;
-    } else if (mon_id == "rb") {  // Rubidium
+    } else if (mon_id == "rb+") {  // Rubidium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.3614;
-    } else if (mon_id == "cs") {  // Cesium
+    } else if (mon_id == "cs+") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
 
         // =====>> BEGIN SECTION POLS <<=====
@@ -1614,39 +1614,39 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     if (is_in_json) return;
 
     // All these C6 come from Qchem/avtz. We put two molecules at 50 A and get the c6 of the atoms.
-    if (mon_id == "f") {  // Fluoride
+    if (mon_id == "f-") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 25.56412750183350184739;
-    } else if (mon_id == "cl") {
+    } else if (mon_id == "cl-") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 57.88297168036554772821;
-    } else if (mon_id == "br") {
+    } else if (mon_id == "br-") {
         // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 74.56169774397084024344;
-    } else if (mon_id == "i") {
+    } else if (mon_id == "i-") {
         // FIXME This value will be set from C6 I-O and I-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(I--O)/C6_lr(O) + C6(I--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 105.39445721563933883337;
-    } else if (mon_id == "li") {
+    } else if (mon_id == "li+") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 3.24887148714749872914;
-    } else if (mon_id == "na") {
+    } else if (mon_id == "na+") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 16.02787872333703428437;
-    } else if (mon_id == "k") {
+    } else if (mon_id == "k+") {
         // FIXME This value will be set from C6 K-O and K-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(K--O)/C6_lr(O) + C6(K--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 37.63136349992751547203;
-    } else if (mon_id == "rb") {
+    } else if (mon_id == "rb+") {
         // FIXME This value will be set from C6 Rb-O and Rb-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(Rb--O)/C6_lr(O) + C6(Rb--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 49.17633137941422098718;
-    } else if (mon_id == "cs") {
+    } else if (mon_id == "cs+") {
         // FIXME This value will be set from C6 Cs-O and Cs-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:

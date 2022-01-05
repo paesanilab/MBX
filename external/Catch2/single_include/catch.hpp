@@ -15122,7 +15122,7 @@ std::string StringMaker<double>::convert(double value) {
 }
 
 std::string ratio_string<std::atto>::symbol() { return "a"; }
-std::string ratio_string<std::femto>::symbol() { return "f"; }
+std::string ratio_string<std::femto>::symbol() { return "f-"; }
 std::string ratio_string<std::pico>::symbol() { return "p"; }
 std::string ratio_string<std::nano>::symbol() { return "n"; }
 std::string ratio_string<std::micro>::symbol() { return "u"; }

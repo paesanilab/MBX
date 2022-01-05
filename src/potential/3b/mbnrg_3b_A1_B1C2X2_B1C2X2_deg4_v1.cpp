@@ -9,7 +9,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
     // =====>> BEGIN SECTION CONSTRUCTOR <<=====
     // =>> PASTE RIGHT BELOW THIS LINE <==
 
-    if (mon1 == "f" and mon2 == "h2o" and mon3 == "h2o") {
+    if (mon1 == "f-" and mon2 == "h2o" and mon3 == "h2o") {
         coefficients = std::vector<double>{-6.879099659808378e+01,   // 0
                                            -7.945968675962175e+01,   // 1
                                            -1.059814537770711e+02,   // 2
@@ -1599,9 +1599,9 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         m_ri = 2.000000000000000e+00;                                // A
         m_ro = 3.500000000000000e+00;                                // A
 
-    }  // end if mon1 == "f" and mon2 == "h2o" and mon3 == "h2o"
+    }  // end if mon1 == "f-" and mon2 == "h2o" and mon3 == "h2o"
 
-    if (mon1 == "cl" and mon2 == "h2o" and mon3 == "h2o") {
+    if (mon1 == "cl-" and mon2 == "h2o" and mon3 == "h2o") {
         coefficients = std::vector<double>{-1.623093888965971e-02,  // 0
                                            -3.731075082725800e+02,  // 1
                                            5.239838148602414e+01,   // 2
@@ -3191,9 +3191,9 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         m_ri = 2.500000000000000e+00;                               // A
         m_ro = 4.500000000000000e+00;                               // A
 
-    }  // end if mon1 == "cl" and mon2 == "h2o" and mon3 == "h2o"
+    }  // end if mon1 == "cl-" and mon2 == "h2o" and mon3 == "h2o"
 
-    if (mon1 == "br" and mon2 == "h2o" and mon3 == "h2o") {
+    if (mon1 == "br-" and mon2 == "h2o" and mon3 == "h2o") {
         coefficients = std::vector<double>{-1.474565459358993e+01,  // 0
                                            -6.366327325411402e+01,  // 1
                                            8.300203291026025e+01,   // 2
@@ -4783,9 +4783,9 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         m_ri = 2.500000000000000e+00;                               // A
         m_ro = 4.500000000000000e+00;                               // A
 
-    }  // end if mon1 == "br" and mon2 == "h2o" and mon3 == "h2o"
+    }  // end if mon1 == "br-" and mon2 == "h2o" and mon3 == "h2o"
 
-    if (mon1 == "i" and mon2 == "h2o" and mon3 == "h2o") {
+    if (mon1 == "i-" and mon2 == "h2o" and mon3 == "h2o") {
         coefficients = std::vector<double>{-1.020910484989265e-04,  // 0
                                            -3.295540921462281e+02,  // 1
                                            4.921944210222374e+01,   // 2
@@ -6375,7 +6375,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         m_ri = 2.700000000000000e+00;                               // A
         m_ro = 4.700000000000000e+00;                               // A
 
-    }  // end if mon1 == "i" and mon2 == "h2o" and mon3 == "h2o"
+    }  // end if mon1 == "i-" and mon2 == "h2o" and mon3 == "h2o"
 
     // =====>> END SECTION CONSTRUCTOR <<=====
 }
