@@ -146,8 +146,6 @@ class System {
      */
     std::vector<size_t> GetMonNumAt();
 
-    // FIXME As for today, these functions are not used. // MRR 20191022
-    // Will need to activate them and use them whenever we need them for MB-Spec
     /**
      * Gets the molecular dipoles for the system.
      * @param[out] mu_perm Permanent dipole moments
@@ -1074,7 +1072,8 @@ class System {
      * @param[in] istart Minimum index of i
      * @param[in] iend Maximum index (iend not included) of index i
      */
-    void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
+    // void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
+    void AddClusters(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost = false);
 
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -1087,7 +1086,9 @@ class System {
      * @param[in] iend Maximum index (iend not included) of index i
      * @return Vector of size_t with dimention nclusters * nmax
      */
-    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+    // std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+    //                                        bool use_ghost = false);
+    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, std::vector<size_t> idxs,
                                             bool use_ghost = false);
 
     /**
@@ -1681,6 +1682,11 @@ class System {
     std::vector<int> grid_fftdim_elec_;
     std::vector<int> grid_fftdim_disp_;
     std::vector<int> grid_fftdim_lj_;
+
+    /**
+     * Auxiliary tag counter
+     */
+    int tag_counter_;
 
     /**
      * States if the initialization is PME only or not"
