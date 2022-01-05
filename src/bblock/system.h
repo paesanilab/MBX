@@ -1072,7 +1072,7 @@ class System {
      * @param[in] istart Minimum index of i
      * @param[in] iend Maximum index (iend not included) of index i
      */
-    void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
+    // void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
     void AddClusters(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost = false);
 
     /**
@@ -1086,8 +1086,8 @@ class System {
      * @param[in] iend Maximum index (iend not included) of index i
      * @return Vector of size_t with dimention nclusters * nmax
      */
-    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
-                                            bool use_ghost = false);
+    // std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+    //                                        bool use_ghost = false);
     std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, std::vector<size_t> idxs,
                                             bool use_ghost = false);
 

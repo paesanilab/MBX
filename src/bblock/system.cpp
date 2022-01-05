@@ -1748,47 +1748,49 @@ void System::AddMonomerInfo() {
 #endif
 }
 
-void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost_) {
-    // istart is the monomer position for which we will look all dimers and
-    // trimers that contain it. iend is the last monomer position.
-    // This means, if istart is 0 and iend is 2, we will look for all dimers
-    // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
+// void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost_) {
+//    // istart is the monomer position for which we will look all dimers and
+//    // trimers that contain it. iend is the last monomer position.
+//    // This means, if istart is 0 and iend is 2, we will look for all dimers
+//    // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
+//
+//    // Make sure that nmax is 2 or 3
+//    // Throw exception otherwise
+//    // Commented for now since this functiuon is private and unlikely to
+//    // be called from the outside
+//    // if (nmax != 2 and nmax != 3) {
+//    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
+//    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
+//    //}
+//
+//    size_t nmon = monomers_.size();
+//    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_,
+//    islocal_,
+//                          atom_tag_, dimers_, trimers_, use_ghost_);
+//}
 
-    // Make sure that nmax is 2 or 3
-    // Throw exception otherwise
-    // Commented for now since this functiuon is private and unlikely to
-    // be called from the outside
-    // if (nmax != 2 and nmax != 3) {
-    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
-    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
-    //}
-
-    size_t nmon = monomers_.size();
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_,
-                          atom_tag_, dimers_, trimers_, use_ghost_);
-}
-
-std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
-                                                bool use_ghost_) {
-    // Overloaded function to be compatible with omp
-    // Returns dimers if nmax == 2, or trimers if nmax == 3
-
-    // Make sure that nmax is 2 or 3
-    // Throw exception otherwise
-    // Commented for now since this functiuon is private and unlikely to
-    // be called from the outside
-    // if (nmax != 2 and nmax != 3) {
-    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
-    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
-    //}
-
-    size_t nmon = monomers_.size();
-    std::vector<size_t> dimers, trimers;
-    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_,
-                          atom_tag_, dimers, trimers, use_ghost_);
-    if (nmax == 2) return dimers;
-    return trimers;
-}
+// std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+//                                                bool use_ghost_) {
+//    // Overloaded function to be compatible with omp
+//    // Returns dimers if nmax == 2, or trimers if nmax == 3
+//
+//    // Make sure that nmax is 2 or 3
+//    // Throw exception otherwise
+//    // Commented for now since this functiuon is private and unlikely to
+//    // be called from the outside
+//    // if (nmax != 2 and nmax != 3) {
+//    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
+//    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
+//    //}
+//
+//    size_t nmon = monomers_.size();
+//    std::vector<size_t> dimers, trimers;
+//    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_,
+//    islocal_,
+//                          atom_tag_, dimers, trimers, use_ghost_);
+//    if (nmax == 2) return dimers;
+//    return trimers;
+//}
 
 void System::AddClusters(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost_) {
     // istart is the monomer position for which we will look all dimers and

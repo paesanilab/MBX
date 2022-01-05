@@ -892,9 +892,11 @@ TEST_CASE("systools::AddClusters") {
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
                     bool use_ghost = false;
+                    std::vector<size_t> idxs;
+                    for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
-                    systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          atom_tag, dimers, trimers, use_ghost);
+                    systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          dimers, trimers, use_ghost);
                     REQUIRE(dimers.size() == 0);
                     REQUIRE(trimers.size() == 0);
                 }
@@ -908,9 +910,11 @@ TEST_CASE("systools::AddClusters") {
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
                     bool use_ghost = false;
+                    std::vector<size_t> idxs;
+                    for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
-                    systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          atom_tag, dimers, trimers, use_ghost);
+                    systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          dimers, trimers, use_ghost);
                     REQUIRE(dimers.size() ==
                             nmon * (nmon - 1));  // Combinations of nmon elements in groups of 2 n!/(n-2)!/2! * 2
                     REQUIRE(trimers.size() == 0);
@@ -925,6 +929,8 @@ TEST_CASE("systools::AddClusters") {
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
                     bool use_ghost = false;
+                    std::vector<size_t> idxs;
+                    for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
                     size_t expected_number_of_dimers = 0;
                     for (size_t i = 0; i < nmon - 1; i++) {
@@ -937,8 +943,8 @@ TEST_CASE("systools::AddClusters") {
                         }
                     }
 
-                    systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          atom_tag, dimers, trimers, use_ghost);
+                    systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          dimers, trimers, use_ghost);
                     REQUIRE(dimers.size() == expected_number_of_dimers * 2);
                     REQUIRE(trimers.size() == 0);
                 }
@@ -954,9 +960,11 @@ TEST_CASE("systools::AddClusters") {
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
                     bool use_ghost = false;
+                    std::vector<size_t> idxs;
+                    for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
-                    systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          atom_tag, dimers, trimers, use_ghost);
+                    systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          dimers, trimers, use_ghost);
                     REQUIRE(dimers.size() == 0);
                     REQUIRE(trimers.size() == 0);
                 }
@@ -970,9 +978,11 @@ TEST_CASE("systools::AddClusters") {
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
                     bool use_ghost = false;
+                    std::vector<size_t> idxs;
+                    for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
-                    systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          atom_tag, dimers, trimers, use_ghost);
+                    systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          dimers, trimers, use_ghost);
                     REQUIRE(dimers.size() ==
                             nmon * (nmon - 1));  // Combinations of nmon elements in groups of 2 n!/(n-2)!/2! * 2
                     REQUIRE(trimers.size() == nmon * (nmon - 1) * (nmon - 2) /
@@ -988,6 +998,8 @@ TEST_CASE("systools::AddClusters") {
                     std::vector<size_t> dimers;
                     std::vector<size_t> trimers;
                     bool use_ghost = false;
+                    std::vector<size_t> idxs;
+                    for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
                     size_t expected_number_of_dimers = 0;
                     for (size_t i = 0; i < nmon - 1; i++) {
@@ -1019,8 +1031,8 @@ TEST_CASE("systools::AddClusters") {
                         }
                     }
 
-                    systools::AddClusters(n_max, cutoff, istart, iend, nmon, use_pbc, box, box_inv, xyz, fi, islocal,
-                                          atom_tag, dimers, trimers, use_ghost);
+                    systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          dimers, trimers, use_ghost);
                     REQUIRE(dimers.size() == expected_number_of_dimers * 2);
                     REQUIRE(trimers.size() == expected_number_of_trimers * 3);
                 }
