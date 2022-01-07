@@ -149,7 +149,7 @@ double Repulsion(const double a, const double b, const double* p1, const double*
 
 bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2,
                    std::vector<std::pair<std::string, std::string> > buck_pairs, double& out_a, double& out_b,
-                   nlohmann::json repdisp_j) {
+                   const nlohmann::json& repdisp_j) {
     // Order the two monomer names and corresponding xyz
     if (mon_id2 < mon_id1) {
         std::string tmp = mon_id1;
@@ -174,37 +174,42 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
     bool done_with_it = false;
 
     // Check if pair is in json object
-    try {
-        std::vector<std::vector<std::string> > pairs = repdisp_j["pairs"];
-        for (size_t k = 0; k < pairs.size(); k++) {
-            if (mon_id1 == pairs[k][0] && mon_id2 == pairs[k][1]) {
-                std::vector<std::vector<std::string> > types1 = repdisp_j["types1"];
-                std::vector<std::vector<std::string> > types2 = repdisp_j["types2"];
-                std::vector<std::vector<std::pair<std::vector<std::string>, double> > > a_v = repdisp_j["a"];
-                std::vector<std::vector<std::pair<std::vector<std::string>, double> > > d6_v = repdisp_j["d6"];
-                std::string si = types1[k][index1];
-                std::string sj = types2[k][index2];
+    if (repdisp_j.size() > 0) {
+        try {
+            std::vector<std::vector<std::string> > pairs = repdisp_j["pairs"];
+            for (size_t k = 0; k < pairs.size(); k++) {
+                if (mon_id1 == pairs[k][0] && mon_id2 == pairs[k][1]) {
+                    std::vector<std::vector<std::string> > types1 = repdisp_j["types1"];
+                    std::vector<std::vector<std::string> > types2 = repdisp_j["types2"];
+                    std::vector<std::vector<std::pair<std::vector<std::string>, double> > > a_v = repdisp_j["a"];
+                    std::vector<std::vector<std::pair<std::vector<std::string>, double> > > d6_v = repdisp_j["d6"];
+                    std::string si = types1[k][index1];
+                    std::string sj = types2[k][index2];
 
-                for (size_t k2 = 0; k2 < a_v[k].size(); k2++) {
-                    if ((si == a_v[k][k2].first[0] && sj == a_v[k][k2].first[1]) ||
-                        (si == a_v[k][k2].first[1] && sj == a_v[k][k2].first[0])) {
-                        out_a = a_v[k][k2].second;
-                        done_with_it = true;
-                        break;
+                    for (size_t k2 = 0; k2 < a_v[k].size(); k2++) {
+                        if ((si == a_v[k][k2].first[0] && sj == a_v[k][k2].first[1]) ||
+                            (si == a_v[k][k2].first[1] && sj == a_v[k][k2].first[0])) {
+                            out_a = a_v[k][k2].second;
+                            done_with_it = true;
+                            break;
+                        }
                     }
-                }
 
-                for (size_t k2 = 0; k2 < d6_v[k].size(); k2++) {
-                    if ((si == d6_v[k][k2].first[0] && sj == d6_v[k][k2].first[1]) ||
-                        (si == d6_v[k][k2].first[1] && sj == d6_v[k][k2].first[0])) {
-                        out_b = d6_v[k][k2].second;
-                        done_with_it = true;
-                        break;
+                    for (size_t k2 = 0; k2 < d6_v[k].size(); k2++) {
+                        if ((si == d6_v[k][k2].first[0] && sj == d6_v[k][k2].first[1]) ||
+                            (si == d6_v[k][k2].first[1] && sj == d6_v[k][k2].first[0])) {
+                            out_b = d6_v[k][k2].second;
+                            done_with_it = true;
+                            break;
+                        }
                     }
                 }
             }
+        } catch (...) {
+            out_a = 0.0;
+            out_b = 0.0;
         }
-    } catch (...) {
+    } else {
         out_a = 0.0;
         out_b = 0.0;
     }

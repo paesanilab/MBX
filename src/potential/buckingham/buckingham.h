@@ -284,6 +284,15 @@ class Buckingham {
 
     // Json object with extra monomer properties
     nlohmann::json mon_j_;
+
+    // Vector with c6 coefficients
+    std::vector<std::vector<double> > a_all_;
+
+    // Vector with d6 coefficients
+    std::vector<std::vector<double> > b_all_;
+
+    // Vector with the bool use ttm
+    std::vector<bool> use_buck_all_;
 };
 
 }  // namespace buck
