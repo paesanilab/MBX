@@ -38,7 +38,7 @@ elif [ "$1" == "mpi" ]; then
   module unload mpi
   module load intel/mpi
   rm -rf build install
-  cmake -DUSE_OPENMP=TRUE -DCMAKE_CXX_FLAGS=" -DHAVE_MPI=1 -Wall -qopt-report -fPIC " -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=mpiicpc -DCMAKE_C_COMPILER=mpiicc -H. -Bbuild
+  cmake -DUSE_OPENMP=TRUE -DCMAKE_COMPILE_TESTS=FALSE -DCMAKE_CXX_FLAGS=" -DHAVE_MPI=1 -Wall -qopt-report -fPIC " -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=mpiicpc -DCMAKE_C_COMPILER=mpiicc -H. -Bbuild
   cd build
   make -j 8 CXX=mpiicpc CC=mpiicc
   make install

@@ -216,7 +216,7 @@ class Dispersion {
      * @return Array of call times for timing statistics
      */
     std::vector<double> GetInfoTimings();
-  
+
     /**
      * @brief Returns FFT grid used by PME solver
      *
@@ -399,7 +399,7 @@ class Dispersion {
 
     std::vector<size_t> mbxt_disp_count_;
     std::vector<double> mbxt_disp_time_;
-  
+
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
 
@@ -411,6 +411,15 @@ class Dispersion {
 
     // Pairs for which dispersion will be ignored
     std::vector<std::pair<std::string, std::string> > ignore_disp_;
+
+    // Vector with c6 coefficients
+    std::vector<std::vector<double> > c6_all_;
+
+    // Vector with d6 coefficients
+    std::vector<std::vector<double> > d6_all_;
+
+    // Vector with the bool use ttm
+    std::vector<bool> use_disp_all_;
 };
 
 }  // namespace disp
