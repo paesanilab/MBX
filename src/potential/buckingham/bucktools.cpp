@@ -228,7 +228,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(35920.3);  // kcal/mol F -- O
         a.push_back(800.553);  // kcal/mol F -- H
 
@@ -245,7 +245,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(50180.4);  // kcal/mol * A^(-6) Cl -- O
         a.push_back(2594.28);  // kcal/mol * A^(-6) Cl -- H
 
@@ -262,7 +262,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(37682.2);  // kcal/mol * A^(-6) Br -- O
         a.push_back(3804.53);  // kcal/mol * A^(-6) Br -- H
 
@@ -279,7 +279,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(22210.0);  // kcal/mol * A^(-6) I -- O
         a.push_back(6215.10);  // kcal/mol * A^(-6) I -- H
 
@@ -296,7 +296,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(32318.0);  // kcal/mol * A^(-6) Li -- O
         a.push_back(3245.78);  // kcal/mol * A^(-6) Li -- H
 
@@ -313,7 +313,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(47827.7);  // kcal/mol * A^(-6) Na -- O
         a.push_back(4992.61);  // kcal/mol * A^(-6) Na -- H
 
@@ -330,7 +330,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(49986.5);  // kcal/mol * A^(-6) K -- O
         a.push_back(4951.5);   // kcal/mol * A^(-6) K -- H
 
@@ -347,7 +347,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(48456.3);  // kcal/mol * A^(-6) Rb -- O
         a.push_back(6794.51);  // kcal/mol * A^(-6) Rb -- H
 
@@ -363,7 +363,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(42431.0);  // kcal/mol * A^(-6) Cs -- O
         a.push_back(9403.73);  // kcal/mol * A^(-6) Cs -- H
 
@@ -382,7 +382,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(9038.48);  // kcal/mol * A^(-6) C -- C
         a.push_back(12608.9);  // kcal/mol * A^(-6) C -- O
         a.push_back(12608.9);  // kcal/mol * A^(-6) O -- C
@@ -406,7 +406,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(19267.3);  // kcal/mol A--A
         a.push_back(3232.98);  // kcal/mol A--B
         a.push_back(3232.98);  // kcal/mol A--B
@@ -429,7 +429,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(20413.5);  // kcal/mol A--A
         a.push_back(3259.49);  // kcal/mol A--B
         a.push_back(3259.49);  // kcal/mol A--B
@@ -456,7 +456,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(42713.9);  // kcal/mol * A^(-6) C -- C
         a.push_back(3258.86);  // kcal/mol * A^(-6) C -- O
         a.push_back(3258.86);  // kcal/mol * A^(-6) O -- C
@@ -481,7 +481,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(11447.5);  // kcal/mol * A^(-6) C -- O
         a.push_back(4887.62);  // kcal/mol * A^(-6) C -- H
         a.push_back(6182.32);  // kcal/mol * A^(-6) O -- O
@@ -504,7 +504,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         // Set the number of different types
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(4735.44);  // kcal/mol * A^(-6) C -- O
         a.push_back(4956.27);  // kcal/mol * A^(-6) C -- H
         a.push_back(30678.4);  // kcal/mol * A^(-6) O -- O
@@ -599,7 +599,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(822.645);  // kcal/mol A--A
         b.push_back(3.11276);  // A^(-1) A--A
     } else if (mon_id1 == "h2" and mon_id2 == "h2o") {
@@ -612,7 +612,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(2651.63);  // kcal/mol A--C
         a.push_back(839.321);  // kcal/mol B--C
         b.push_back(3.05339);  // A^(-1) A--C
@@ -626,7 +626,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 2;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(55341.7);  // kcal/mol A--B
         a.push_back(5733.11);  // kcal/mol A--C
         b.push_back(3.48054);  // A^(-1) A--B
@@ -638,7 +638,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(102057.0);  // kcal/mol * A^(-6)  A--B
         b.push_back(3.41808);   // A^(-1) A--B
     } else if (mon_id1 == "cs+" and mon_id2 == "h2") {
@@ -649,7 +649,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(18116.1);  // kcal/mol A--B
         b.push_back(3.24781);  // A^(-1) A--B
     } else if (mon_id1 == "na+" and mon_id2 == "na+") {
@@ -659,7 +659,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(33569.6);  // kcal/mol A--A
         b.push_back(4.42822);  // A^(-1) A--A
     } else if (mon_id1 == "cl-" and mon_id2 == "cl-") {
@@ -669,7 +669,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(2943.76);  // kcal/mol A--A
         b.push_back(1.82786);  // A^(-1) A--A
     } else if (mon_id1 == "cl-" and mon_id2 == "na+") {
@@ -679,7 +679,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(33676.8);  // kcal/mol A--B
         b.push_back(2.85113);  // A^(-1) A--B
     } else if (mon_id1 == "ar" and mon_id2 == "cs+") {
@@ -689,7 +689,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
+        // Fill in (in order) the a and d6 coefficients
         a.push_back(157654.0);  // kcal/mol A--B
         b.push_back(3.28039);   // A^(-1) A--B
         // =====>> END SECTION BUCKINGHAM <<=====
