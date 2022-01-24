@@ -373,15 +373,15 @@ for i in range(len(sysmon)):
         atcount += 1
 
     for j in range(len(bntp)):
-        bnd_txt += "{} {} {} {}\n".format(bndcount + 1,1+bntp[j] + fi[m]['bntp'],fi_at_m+mbnd[j][0],fi_at_m+mbnd[j][1])
+        bnd_txt += "{} {} {} {}\n".format(bndcount + 1,1+bntp[j] + fi[m]['bntp'],fi_at_m+1+mbnd[j][0],fi_at_m+1+mbnd[j][1])
         bndcount += 1
 
     for j in range(len(agtp)):
-        ang_txt += "{} {} {} {} {}\n".format(angcount + 1,1+agtp[j] + fi[m]['agtp'],fi_at_m+mang[j][0],fi_at_m+mang[j][1],fi_at_m+mang[j][2])
+        ang_txt += "{} {} {} {} {}\n".format(angcount + 1,1+agtp[j] + fi[m]['agtp'],fi_at_m+1+mang[j][0],fi_at_m+1+mang[j][1],fi_at_m+1+mang[j][2])
         angcount += 1
 
     for j in range(len(dhtp)):
-        dih_txt += "{} {} {} {} {}\n".format(dihcount + 1,1+dhtp[j] + fi[m]['dhtp'],fi_at_m+mdih[j][0],fi_at_m+mdih[j][2],fi_at_m+mdih[j][3],fi_at_m+mdih[j][4])
+        dih_txt += "{} {} {} {} {}\n".format(dihcount + 1,1+dhtp[j] + fi[m]['dhtp'],fi_at_m+1+mdih[j][0],fi_at_m+1+mdih[j][2],fi_at_m+1+mdih[j][3],fi_at_m+1+mdih[j][4])
         dihcount += 1
 
 # Write atoms
