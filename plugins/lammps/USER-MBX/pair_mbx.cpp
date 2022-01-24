@@ -144,7 +144,7 @@ void PairMBX::compute(int eflag, int vflag) {
         fix_mbx->mbxt_start(MBXT_E2B_GHOST);
         mbx_e2b_ghost = ptr_mbx->TwoBodyEnergy(true, true);
         fix_mbx->mbxt_stop(MBXT_E2B_GHOST);
-        accumulate_f(false);
+        accumulate_f_all(false);
 
         mbx_e2b = mbx_e2b_local + mbx_e2b_ghost;
 
@@ -161,7 +161,7 @@ void PairMBX::compute(int eflag, int vflag) {
         fix_mbx->mbxt_start(MBXT_E3B_GHOST);
         mbx_e3b_ghost = ptr_mbx->ThreeBodyEnergy(true, true);
         fix_mbx->mbxt_stop(MBXT_E3B_GHOST);
-        accumulate_f(false);
+        accumulate_f_all(false);
 
         mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
 
@@ -593,6 +593,147 @@ void PairMBX::accumulate_f(bool include_ext) {
 
 #ifdef _DEBUG
     printf("[MBX] (%i) Leaving pair accumulate_f()\n", me);
+#endif
+}
+
+/* ----------------------------------------------------------------------
+   update forces with MBX contribution
+------------------------------------------------------------------------- */
+
+void PairMBX::accumulate_f_all(bool include_ext) {
+#ifdef _DEBUG
+    printf("[MBX] (%i) Inside pair accumulate_f_all()\n", me);
+#endif
+
+    fix_mbx->mbxt_start(MBXT_ACCUMULATE_F);
+
+    bblock::System *ptr_mbx = fix_mbx->ptr_mbx;
+
+    const int nlocal = atom->nlocal;
+    const int nall = nlocal + atom->nghost;
+    double **f = atom->f;
+
+    const int *const mol_anchor = fix_mbx->mol_anchor;
+    const int *const mol_type = fix_mbx->mol_type;
+    char **mol_names = fix_mbx->mol_names;
+
+    std::vector<double> grads = ptr_mbx->GetRealGrads();
+
+    std::vector<double> grads_ext;
+    if (include_ext)
+        grads_ext = ptr_mbx->GetExternalChargesGradients();
+    else
+        grads_ext = std::vector<double>(fix_mbx->mbx_num_ext * 3, 0.0);
+
+    // accumulate forces on local + ghost particles
+    // -- should use a map created from earlier loop loading particles into mbx
+
+    int indx = 0;
+    int indx_ext = 0;
+
+    for (int i = 0; i < nall; ++i) {
+        if (mol_anchor[i]) {
+            const int mtype = mol_type[i];
+
+            // to be replaced with integer comparison
+
+            bool include_monomer = true;
+            bool is_ext = false;
+            tagint anchor = atom->tag[i];
+
+#ifdef _NEW_MONOMER_OPS
+            int na = get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
+#else
+            int na = 0;
+            if (strcmp("h2o", mol_names[mtype]) == 0) {
+                na = 3;
+                const int ii1 = atom->map(anchor + 1);
+                const int ii2 = atom->map(anchor + 2);
+                if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
+            } else if (strcmp("li+", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("na+", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("k+", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("rb+", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("cs+", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("dp1", mol_names[mtype]) == 0) {
+                na = 1;
+#ifndef _DEBUG_EFIELD
+                include_monomer = false;
+                is_ext = true;
+#endif
+            } else if (strcmp("he", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("f-", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("cl-", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("br-", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("i-", mol_names[mtype]) == 0)
+                na = 1;
+            else if (strcmp("co2", mol_names[mtype]) == 0) {
+                na = 3;
+                const int ii1 = atom->map(anchor + 1);
+                const int ii2 = atom->map(anchor + 2);
+                if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
+            } else if (strcmp("ch4", mol_names[mtype]) == 0) {
+                na = 5;
+                const int ii1 = atom->map(anchor + 1);
+                const int ii2 = atom->map(anchor + 2);
+                const int ii3 = atom->map(anchor + 3);
+                const int ii4 = atom->map(anchor + 4);
+                if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
+            }
+#endif
+
+            if (include_monomer) {
+                for (int j = 0; j < na; ++j) {
+                    const int ii = atom->map(anchor + j);
+                    f[ii][0] -= grads[indx++];
+                    f[ii][1] -= grads[indx++];
+                    f[ii][2] -= grads[indx++];
+                }
+#ifndef _DEBUG_EFIELD
+            } else if (is_ext) {
+                f[i][0] -= grads_ext[indx_ext++];
+                f[i][1] -= grads_ext[indx_ext++];
+                f[i][2] -= grads_ext[indx_ext++];
+#endif
+            }
+
+        }  // if(anchor)
+    }
+
+    // accumulate virial: only global is supported
+    // MBX: xx, xy, xz, yx, yy, yz, zx, zy, zz
+    // LAMMPS: xx, yy, zz, xy, xz, yz
+
+    if (vflag_either) {
+        std::vector<double> mbx_vir = ptr_mbx->GetVirial();
+
+        mbx_virial[0] += mbx_vir[0];
+        mbx_virial[1] += mbx_vir[4];
+        mbx_virial[2] += mbx_vir[8];
+        mbx_virial[3] += mbx_vir[1];
+        mbx_virial[4] += mbx_vir[2];
+        mbx_virial[5] += mbx_vir[5];
+
+#ifdef _DEBUG_VIRIAL
+        printf("virial(MBX)= %f %f %f  %f %f %f  %f %f %f\n", mbx_vir[0], mbx_vir[1], mbx_vir[2], mbx_vir[3],
+               mbx_vir[4], mbx_vir[5], mbx_vir[6], mbx_vir[7], mbx_vir[8]);
+        printf("virial(LMP)= %f %f %f  %f %f %f\n", virial[0], virial[1], virial[2], virial[3], virial[4], virial[5]);
+#endif
+    }
+
+    fix_mbx->mbxt_stop(MBXT_ACCUMULATE_F);
+
+#ifdef _DEBUG
+    printf("[MBX] (%i) Leaving pair accumulate_f_all()\n", me);
 #endif
 }
 
