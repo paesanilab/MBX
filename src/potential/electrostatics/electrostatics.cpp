@@ -2172,8 +2172,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
 #endif
         if (iter > maxit_) {
             // Exit with error
-            std::cerr << "Max number of iterations reached" << std::endl;
-            std::exit(EXIT_FAILURE);
+            throw(CUException(__func__, __FILE__, __LINE__, "Max number of iterations reached"));
         }
 
         // Prepare next iteration
@@ -2408,7 +2407,7 @@ void Electrostatics::CalculateDipolesCG() {
         if (iter > maxit_) {
             // Exit with error
             std::cerr << "Max number of iterations reached" << std::endl;
-            //            std::exit(EXIT_FAILURE);
+            std::exit(EXIT_FAILURE);
             break;
         }
 
