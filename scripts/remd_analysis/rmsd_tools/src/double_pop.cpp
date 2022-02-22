@@ -267,7 +267,7 @@ int main(int argc, char** argv) {
     // Write xyz files with the isomer equivalences
     for (size_t i = 0; i < ref2unique.size(); i++) {
         std::stringstream ss;
-        ss << out_pref << "_isomers_equal_to_ref_isomer_" << i << +".dat";
+        ss << out_pref << "_isomers_equal_to_ref_isomer_" << i << +".xyz";
         fname = ss.str();
         off.open(fname);
         for (size_t jj = 0; jj < ref2unique[i].size(); jj++) {
