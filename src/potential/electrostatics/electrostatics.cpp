@@ -2901,8 +2901,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
 #endif
         if (iter > maxit_) {
             // Exit with error
-            std::cerr << "Max number of iterations reached" << std::endl;
-            std::exit(EXIT_FAILURE);
+            throw(CUException(__func__, __FILE__, __LINE__, "Max number of iterations reached"));
         }
 
         // Prepare next iteration
@@ -3137,7 +3136,8 @@ void Electrostatics::CalculateDipolesCG() {
         if (iter > maxit_) {
             // Exit with error
             std::cerr << "Max number of iterations reached" << std::endl;
-            //            std::exit(EXIT_FAILURE);
+            std::exit(EXIT_FAILURE);
+            break;
         }
 
         // Prepare next iteration
@@ -7364,7 +7364,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                             chg_all_.data() + fi_sites2, mu_all_.data() + fi_crd1, mu_all_.data() + fi_crd2, m1, m2init,
                             nmon2, nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
                             &phi1_thread, phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_,
-                            box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon + m1, fi_mon2,
+                            box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2,
                             &virial_pool[rank]);
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;

@@ -23,7 +23,7 @@ number_of_sites_per_monomer = [4,4,4,1]
 atom_names = ["O","H","H","O","H","H","O","H","H","F"]
 
 # Monomer id
-monomer_names = ["h2o","h2o","h2o","f"]
+monomer_names = ["h2o","h2o","h2o","f-"]
 
 # json file (see readme for info)
 json_file = "mbx.json"

@@ -67,6 +67,7 @@ class PairMBX : public Pair {
     virtual void allocate();
 
     void accumulate_f(bool);
+    void accumulate_f_all(bool); // local + ghost
     void accumulate_f_full(bool);
     void accumulate_f_local(bool);
 

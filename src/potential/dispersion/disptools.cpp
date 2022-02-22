@@ -336,7 +336,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 }
 
 bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6,
-           std::vector<std::pair<std::string, std::string> > ignore_disp, nlohmann::json repdisp_j) {
+           std::vector<std::pair<std::string, std::string> > ignore_disp, const nlohmann::json& repdisp_j) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon_id2 < mon_id1) {
@@ -365,37 +365,42 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     bool done_with_it = false;
 
     // Check if pair is in json object
-    try {
-        std::vector<std::vector<std::string> > pairs = repdisp_j["pairs"];
-        for (size_t k = 0; k < pairs.size(); k++) {
-            if (mon_id1 == pairs[k][0] && mon_id2 == pairs[k][1]) {
-                std::vector<std::vector<std::string> > types1 = repdisp_j["types1"];
-                std::vector<std::vector<std::string> > types2 = repdisp_j["types2"];
-                std::vector<std::vector<std::pair<std::vector<std::string>, double> > > c6_v = repdisp_j["c6"];
-                std::vector<std::vector<std::pair<std::vector<std::string>, double> > > d6_v = repdisp_j["d6"];
-                std::string si = types1[k][index1];
-                std::string sj = types2[k][index2];
+    if (repdisp_j.size() > 0) {
+        try {
+            std::vector<std::vector<std::string> > pairs = repdisp_j["pairs"];
+            for (size_t k = 0; k < pairs.size(); k++) {
+                if (mon_id1 == pairs[k][0] && mon_id2 == pairs[k][1]) {
+                    std::vector<std::vector<std::string> > types1 = repdisp_j["types1"];
+                    std::vector<std::vector<std::string> > types2 = repdisp_j["types2"];
+                    std::vector<std::vector<std::pair<std::vector<std::string>, double> > > c6_v = repdisp_j["c6"];
+                    std::vector<std::vector<std::pair<std::vector<std::string>, double> > > d6_v = repdisp_j["d6"];
+                    std::string si = types1[k][index1];
+                    std::string sj = types2[k][index2];
 
-                for (size_t k2 = 0; k2 < c6_v[k].size(); k2++) {
-                    if ((si == c6_v[k][k2].first[0] && sj == c6_v[k][k2].first[1]) ||
-                        (si == c6_v[k][k2].first[1] && sj == c6_v[k][k2].first[0])) {
-                        out_C6 = c6_v[k][k2].second;
-                        done_with_it = true;
-                        break;
+                    for (size_t k2 = 0; k2 < c6_v[k].size(); k2++) {
+                        if ((si == c6_v[k][k2].first[0] && sj == c6_v[k][k2].first[1]) ||
+                            (si == c6_v[k][k2].first[1] && sj == c6_v[k][k2].first[0])) {
+                            out_C6 = c6_v[k][k2].second;
+                            done_with_it = true;
+                            break;
+                        }
                     }
-                }
 
-                for (size_t k2 = 0; k2 < d6_v[k].size(); k2++) {
-                    if ((si == d6_v[k][k2].first[0] && sj == d6_v[k][k2].first[1]) ||
-                        (si == d6_v[k][k2].first[1] && sj == d6_v[k][k2].first[0])) {
-                        out_d6 = d6_v[k][k2].second;
-                        done_with_it = true;
-                        break;
+                    for (size_t k2 = 0; k2 < d6_v[k].size(); k2++) {
+                        if ((si == d6_v[k][k2].first[0] && sj == d6_v[k][k2].first[1]) ||
+                            (si == d6_v[k][k2].first[1] && sj == d6_v[k][k2].first[0])) {
+                            out_d6 = d6_v[k][k2].second;
+                            done_with_it = true;
+                            break;
+                        }
                     }
                 }
             }
+        } catch (...) {
+            out_C6 = 0.0;
+            out_d6 = 0.0;
         }
-    } catch (...) {
+    } else {
         out_C6 = 0.0;
         out_d6 = 0.0;
     }
@@ -428,7 +433,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(9.775202425217957e+00);  // A^(-1)
         d6.push_back(9.406475169954112e+00);  // A^(-1)
 
-    } else if (mon_id1 == "f" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "f-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -445,7 +450,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.586190000000000e+00);  // A^(-1)
         d6.push_back(2.697680000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "cl" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "cl-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -462,7 +467,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.275420000000000e+00);  // A^(-1)
         d6.push_back(2.782260000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "br" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "br-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -479,7 +484,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.058250000000000e+00);  // A^(-1)
         d6.push_back(2.798040000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "i-") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -496,7 +501,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(2.723140000000000e+00);  // A^(-1)
         d6.push_back(2.799110000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "li") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "li+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -513,7 +518,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(4.023330000000000e+00);  // A^(-1)
         d6.push_back(4.006630000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "na") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "na+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -530,7 +535,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.769530000000000e+00);  // A^(-1)
         d6.push_back(3.822550000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "k") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "k+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -547,7 +552,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.401250000000000e+00);  // A^(-1)
         d6.push_back(3.321390000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "rb") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "rb+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -564,7 +569,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.236530000000000e+00);  // A^(-1)
         d6.push_back(3.313640000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "cs" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "cs+" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -775,7 +780,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.53045);  // A^(-1)
         d6.push_back(3.89503);  // A^(-1)
 
-    } else if (mon_id1 == "ar" and mon_id2 == "cs") {
+    } else if (mon_id1 == "ar" and mon_id2 == "cs+") {
         types1.push_back(0);
 
         types2.push_back(0);
@@ -836,7 +841,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(170.8082);  // kcal/mol * A^(-6)  A--C
         d6.push_back(3.48054);   // A^(-1) A--B
         d6.push_back(3.46238);   // A^(-1) A--C
-    } else if (mon_id1 == "cs" and mon_id2 == "h2") {
+    } else if (mon_id1 == "cs+" and mon_id2 == "h2") {
         types1.push_back(0);
 
         types2.push_back(0);
@@ -847,7 +852,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(372.8086);  // kcal/mol * A^(-6)  A--B
         d6.push_back(3.24781);   // A^(-1) A--B
-    } else if (mon_id1 == "na" and mon_id2 == "na") {
+    } else if (mon_id1 == "na+" and mon_id2 == "na+") {
         types1.push_back(0);
 
         types2.push_back(0);
@@ -857,7 +862,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(251.48);   // kcal/mol * A^(-6)  A--A
         d6.push_back(4.42822);  // A^(-1) A--A
-    } else if (mon_id1 == "cl" and mon_id2 == "cl") {
+    } else if (mon_id1 == "cl-" and mon_id2 == "cl-") {
         types1.push_back(0);
 
         types2.push_back(0);
@@ -867,7 +872,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(3066.2919);  // kcal/mol * A^(-6)  A--A
         d6.push_back(1.82786);    // A^(-1) A--A
-    } else if (mon_id1 == "cl" and mon_id2 == "na") {
+    } else if (mon_id1 == "cl-" and mon_id2 == "na+") {
         types1.push_back(0);
 
         types2.push_back(0);

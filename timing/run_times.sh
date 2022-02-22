@@ -14,4 +14,4 @@ for i in $folders; do
 done 
 
 cd scripts
-python3 plot.py
+python3 plot.py $ncpulist
