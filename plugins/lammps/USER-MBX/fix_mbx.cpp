@@ -2241,7 +2241,7 @@ void FixMBX::mbx_update_xyz_local() {
 
 #ifdef _NEW_MONOMER_OPS
             bool is_ext = false;
-            int na = get_num_atoms_per_monomer(mol_names[mtype],is_ext);
+            int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
 #else
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0)
@@ -2560,7 +2560,7 @@ void FixMBX::mbx_init_dipole_history_local() {
 
 #ifdef _NEW_MONOMER_OPS
                         bool is_ext = false;
-                        int na = get_num_atoms_per_monomer(mol_names[mtype],is_ext);
+                        int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
 #else
                 int na = 0;
                 if (strcmp("h2o", mol_names[mtype]) == 0)
@@ -2827,7 +2827,7 @@ int FixMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
 int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e) {
     inc = true;
     inc_e = false;
-    int na = get_num_atoms_per_monomer(name,inc_e);
+    int na = get_num_atoms_per_monomer(name, inc_e);
 
     for (int ii = 1; ii < na; ii++) {
         if (atom->map(anchor + ii) < 0) {
@@ -2846,7 +2846,7 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e) 
     // check if na matches output from get_num_atoms_per_monomer()
 #ifdef _DEBUG
     bool _dummy = false;
-    int _na = get_num_atoms_per_monomer(name,dummy);
+    int _na = get_num_atoms_per_monomer(name, dummy);
     if (na != _na) error->one(FLERR, "Atom count mismatch in get_include_monomer()");
 #endif
 
