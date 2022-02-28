@@ -2791,6 +2791,18 @@ int FixMBX::get_num_atoms_per_monomer(char *name) {
         na = 5;
     else if (strcmp("he", name) == 0)
         na = 1;
+    else if (strcmp("ar", name) == 0)
+        na = 1;
+    else if (strcmp("h2", name) == 0)
+        na = 2;
+    else if (strcmp("so4a", name) == 0)
+        na = 5;
+    else if (strcmp("co3a", name) == 0)
+        na = 4;
+    else if (strcmp("no3a", name) == 0)
+        na = 4;
+    else if (strcmp("n2o5", name) == 0)
+        na = 7;
     else
         error->one(FLERR, "Unsupported molecule type in MBX");
 
@@ -2801,46 +2813,14 @@ int FixMBX::get_num_atoms_per_monomer(char *name) {
 ------------------------------------------------------------------------- */
 
 int FixMBX::get_include_monomer(char *name, int anchor, bool &inc) {
-    int na;
     inc = true;
+    int na = get_num_atoms_per_monomer(name);
 
-    if (strcmp("h2o", name) == 0) {
-        na = 3;
-        const int ii1 = atom->map(anchor + 1);
-        const int ii2 = atom->map(anchor + 2);
-        if ((ii1 < 0) || (ii2 < 0)) inc = false;
-    } else if (strcmp("li+", name) == 0)
-        na = 1;
-    else if (strcmp("na+", name) == 0)
-        na = 1;
-    else if (strcmp("k+", name) == 0)
-        na = 1;
-    else if (strcmp("rb+", name) == 0)
-        na = 1;
-    else if (strcmp("cs+", name) == 0)
-        na = 1;
-    else if (strcmp("f-", name) == 0)
-        na = 1;
-    else if (strcmp("cl-", name) == 0)
-        na = 1;
-    else if (strcmp("br-", name) == 0)
-        na = 1;
-    else if (strcmp("i-", name) == 0)
-        na = 1;
-    else if (strcmp("he", name) == 0)
-        na = 1;
-    else if (strcmp("co2", name) == 0) {
-        na = 3;
-        const int ii1 = atom->map(anchor + 1);
-        const int ii2 = atom->map(anchor + 2);
-        if ((ii1 < 0) || (ii2 < 0)) inc = false;
-    } else if (strcmp("ch4", name) == 0) {
-        na = 5;
-        const int ii1 = atom->map(anchor + 1);
-        const int ii2 = atom->map(anchor + 2);
-        const int ii3 = atom->map(anchor + 3);
-        const int ii4 = atom->map(anchor + 4);
-        if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) inc = false;
+    for (int ii = 1; ii < na; ii++) {
+        if (atom->map(anchor + ii) < 0) {
+            inc = false;
+            break;
+        }
     }
 
     // check if na matches output from get_num_atoms_per_monomer()
@@ -2898,8 +2878,36 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
         n.push_back("H");
         n.push_back("H");
         n.push_back("H");
+    } else if (strcmp("h2", name) == 0) {
+        n.push_back("H");
+        n.push_back("H");
+    } else if (strcmp("ar", name) == 0) {
+        n.push_back("Ar");
+    } else if (strcmp("n2o5", name) == 0) {
+        n.push_back("O");
+        n.push_back("N");
+        n.push_back("N");
+        n.push_back("O");
+        n.push_back("O");
+        n.push_back("O");
+        n.push_back("O");
+    } else if (strcmp("so4a", name) == 0) {
+        n.push_back("S");
+        n.push_back("O");
+        n.push_back("O");
+        n.push_back("O");
+        n.push_back("O");
+    } else if (strcmp("co3a", name) == 0) {
+        n.push_back("C");
+        n.push_back("O");
+        n.push_back("O");
+        n.push_back("O");
+    } else if (strcmp("no3a", name) == 0) {
+        n.push_back("N");
+        n.push_back("O");
+        n.push_back("O");
+        n.push_back("O");
     }
-
     // check if na matches output from get_num_atoms_per_monomer()
 #ifdef _DEBUG
     na = n.size() - na;  // # of elements added
