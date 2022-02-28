@@ -501,7 +501,7 @@ void PairMBX::accumulate_f(bool include_ext) {
             tagint anchor = atom->tag[i];
 
 #ifdef _NEW_MONOMER_OPS
-            int na = get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
+            int na = fix_mbx->get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
 #else
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0) {
@@ -642,7 +642,7 @@ void PairMBX::accumulate_f_all(bool include_ext) {
             tagint anchor = atom->tag[i];
 
 #ifdef _NEW_MONOMER_OPS
-            int na = get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
+            int na = fix_mbx->get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
 #else
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0) {
@@ -785,7 +785,7 @@ void PairMBX::accumulate_f_local(bool include_ext) {
             tagint anchor = atom->tag[i];
 
 #ifdef _NEW_MONOMER_OPS
-            int na = get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
+            int na = fix_mbx->get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
 #else
             int na = 0;
             if (strcmp("h2o", mol_names[mtype]) == 0) {
@@ -930,7 +930,7 @@ void PairMBX::accumulate_f_full(bool include_ext) {
                 // to be replaced with integer comparison
 
 #ifdef _NEW_MONOMER_OPS
-                int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
+                int na = fix_mbx->get_num_atoms_per_monomer(mol_names[mtype], is_ext);
 #else
                 int na = 0;
                 if (strcmp("h2o", mol_names[mtype]) == 0)
@@ -1042,7 +1042,7 @@ void PairMBX::accumulate_f_full(bool include_ext) {
    This helper function could be merged with FixMBX::get_num_atoms_per_monomer()
    -- argument inc_e is only needed by PairMBX instance
 ------------------------------------------------------------------------- */
-
+/*
 int PairMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
     int na;
     inc_e = false;
@@ -1086,12 +1086,12 @@ int PairMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
 
     return na;
 }
-
+*/
 /* ----------------------------------------------------------------------
  This helper function could be merged with FixMBX::get_include_monomer()
    -- arguments inc_m and inc_e are only needed by PairMBX instance
 ------------------------------------------------------------------------- */
-
+/*
 int PairMBX::get_include_monomer(char *name, int anchor, bool &inc_m, bool &inc_e) {
     int na;
     inc_m = true;
@@ -1151,3 +1151,4 @@ int PairMBX::get_include_monomer(char *name, int anchor, bool &inc_m, bool &inc_
 
     return na;
 }
+*/
