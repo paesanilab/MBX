@@ -36,8 +36,6 @@
 #define _MAX_ATOMS_PER_MONOMER 5
 #define SMALL 1.0e-4
 
-#define _NEW_MONOMER_OPS
-
 //#define _DEBUG
 
 //#define _DEBUG_EFIELD
@@ -115,43 +113,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     // assign # of atoms per molecule based on molecule name
     // -- use this as first pass whether molecule supported by MBX
 
-#ifdef _NEW_MONOMER_OPS
     bool is_ext = false;
     for (int i = 0; i < num_mol_types; ++i) num_atoms_per_mol[i] = get_num_atoms_per_monomer(mol_names[i], is_ext);
-#else
-    for (int i = 0; i < num_mol_types; ++i) {
-        if (strcmp("h2o", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 3;
-        else if (strcmp("li+", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("na+", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("k+", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("rb+", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("cs+", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("dp1", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("f-", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("cl-", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("br-", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("i-", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else if (strcmp("co2", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 3;
-        else if (strcmp("ch4", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 5;
-        else if (strcmp("he", mol_names[i]) == 0)
-            num_atoms_per_mol[i] = 1;
-        else
-            error->all(FLERR, "Unsupported molecule type in MBX");
-    }
-#endif
 
     int err = 0;
     for (int i = 0; i < num_mol_types; ++i)
@@ -656,50 +619,8 @@ void FixMBX::pre_exchange() {
                         // this will save history for both local and ghost particles
                         // comm->exchange() will sync ghost histories w/ local particles in new decomposition
 
-#ifdef _NEW_MONOMER_OPS
                         bool is_ext = false;
                         int na = get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
-#else
-                int na = 0;
-                if (strcmp("h2o", mol_names[mtype]) == 0) {
-                    na = 3;
-                    const int ii1 = atom->map(anchor + 1);
-                    const int ii2 = atom->map(anchor + 2);
-                    if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
-                } else if (strcmp("li+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("na+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("k+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("rb+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("cs+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("f-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("cl-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("br-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("i-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("he", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("co2", mol_names[mtype]) == 0) {
-                    na = 3;
-                    const int ii1 = atom->map(anchor + 1);
-                    const int ii2 = atom->map(anchor + 2);
-                    if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
-                } else if (strcmp("ch4", mol_names[mtype]) == 0) {
-                    na = 5;
-                    const int ii1 = atom->map(anchor + 1);
-                    const int ii2 = atom->map(anchor + 2);
-                    const int ii3 = atom->map(anchor + 3);
-                    const int ii4 = atom->map(anchor + 4);
-                    if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
-                }
-#endif
 
                         // add info
 
@@ -796,50 +717,8 @@ void FixMBX::mbx_get_dipoles_local() {
                 // this will save history for both local and ghost particles
                 // comm->exchange() will sync ghost histories w/ local particles in new decomposition
 
-#ifdef _NEW_MONOMER_OPS
                 bool is_ext = false;
                 int na = get_include_monomer(mol_names[mtype], anchor, include_monomer, is_ext);
-#else
-                int na = 0;
-                if (strcmp("h2o", mol_names[mtype]) == 0) {
-                    na = 3;
-                    const int ii1 = atom->map(anchor + 1);
-                    const int ii2 = atom->map(anchor + 2);
-                    if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
-                } else if (strcmp("li+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("na+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("k+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("rb+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("cs+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("f-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("cl-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("br-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("i-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("he", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("co2", mol_names[mtype]) == 0) {
-                    na = 3;
-                    const int ii1 = atom->map(anchor + 1);
-                    const int ii2 = atom->map(anchor + 2);
-                    if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
-                } else if (strcmp("ch4", mol_names[mtype]) == 0) {
-                    na = 5;
-                    const int ii1 = atom->map(anchor + 1);
-                    const int ii2 = atom->map(anchor + 2);
-                    const int ii3 = atom->map(anchor + 3);
-                    const int ii4 = atom->map(anchor + 4);
-                    if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
-                }
-#endif
 
                 // add info
 
@@ -896,35 +775,7 @@ void FixMBX::mbx_get_dipoles_local() {
 	// this will save history for both local and ghost particles
 	// comm->exchange() will sync ghost histories w/ local particles in new decomposition
 
-#ifdef _NEW_MONOMER_OPS
 	int na = get_include_monomer(mol_names[mtype], anchor, include_monomer);
-#else
-	int na = 0;
-	if (strcmp("h2o", mol_names[mtype]) == 0) {
-	  na = 3;
-	  const int ii1 = atom->map(anchor + 1);
-	  const int ii2 = atom->map(anchor + 2);
-	  if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
-	} else if (strcmp("na+", mol_names[mtype]) == 0)
-	  na = 1;
-	else if (strcmp("cl-", mol_names[mtype]) == 0)
-	  na = 1;
-	else if (strcmp("he", mol_names[mtype]) == 0)
-	  na = 1;
-	else if (strcmp("co2", mol_names[mtype]) == 0) {
-	  na = 3;
-	  const int ii1 = atom->map(anchor + 1);
-	  const int ii2 = atom->map(anchor + 2);
-	  if ((ii1 < 0) || (ii2 < 0)) include_monomer = false;
-	} else if (strcmp("ch4", mol_names[mtype]) == 0) {
-	  na = 5;
-	  const int ii1 = atom->map(anchor + 1);
-	  const int ii2 = atom->map(anchor + 2);
-	  const int ii3 = atom->map(anchor + 3);
-	  const int ii4 = atom->map(anchor + 4);
-	  if ((ii1 < 0) || (ii2 < 0) || (ii3 < 0) || (ii4 < 0)) include_monomer = false;
-	}
-#endif
 	
 	// add info
 	
@@ -1174,42 +1025,8 @@ void FixMBX::mbx_init() {
 
             int is_local = (i < nlocal);
 
-#ifdef _NEW_MONOMER_OPS
             bool is_ext = false;
             int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-#else
-            int na;
-            if (strcmp("h2o", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("li+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("na+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("k+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("rb+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cs+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("dp1", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("f-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cl-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("br-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("i-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("he", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("ch4", mol_names[mtype]) == 0)
-                na = 5;
-            else
-                error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
-#endif
 
             // ids of particles in molecule on proc
 
@@ -1256,49 +1073,7 @@ void FixMBX::mbx_init() {
                 }
 
                 // add types
-#ifdef _NEW_MONOMER_OPS
                 add_monomer_atom_types(mol_names[mtype], names);
-#else
-                if (strcmp("h2o", mol_names[mtype]) == 0) {
-                    names.push_back("O");
-                    names.push_back("H");
-                    names.push_back("H");
-                } else if (strcmp("li+", mol_names[mtype]) == 0) {
-                    names.push_back("Li");
-                } else if (strcmp("na+", mol_names[mtype]) == 0) {
-                    names.push_back("Na");
-                } else if (strcmp("k+", mol_names[mtype]) == 0) {
-                    names.push_back("K");
-                } else if (strcmp("rb+", mol_names[mtype]) == 0) {
-                    names.push_back("Rb");
-                } else if (strcmp("cs+", mol_names[mtype]) == 0) {
-                    names.push_back("Cs");
-#ifdef _DEBUG_EFIELD
-                } else if (strcmp("dp1", mol_names[mtype]) == 0) {
-                    names.push_back("X");
-#endif
-                } else if (strcmp("f-", mol_names[mtype]) == 0) {
-                    names.push_back("F");
-                } else if (strcmp("cl-", mol_names[mtype]) == 0) {
-                    names.push_back("Cl");
-                } else if (strcmp("br-", mol_names[mtype]) == 0) {
-                    names.push_back("Br");
-                } else if (strcmp("i-", mol_names[mtype]) == 0) {
-                    names.push_back("I");
-                } else if (strcmp("he", mol_names[mtype]) == 0) {
-                    names.push_back("He");
-                } else if (strcmp("co2", mol_names[mtype]) == 0) {
-                    names.push_back("C");
-                    names.push_back("O");
-                    names.push_back("O");
-                } else if (strcmp("ch4", mol_names[mtype]) == 0) {
-                    names.push_back("C");
-                    names.push_back("H");
-                    names.push_back("H");
-                    names.push_back("H");
-                    names.push_back("H");
-                }
-#endif
 
                 // add monomer
 
@@ -1467,42 +1242,8 @@ void FixMBX::mbx_init_local() {
 
             int is_local = (i < nlocal);
 
-#ifdef _NEW_MONOMER_OPS
             bool is_ext = false;
             int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-#else
-            int na;
-            if (strcmp("h2o", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("li+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("na+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("k+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("rb+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cs+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("dp1", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("f-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cl-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("br-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("i-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("he", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("ch4", mol_names[mtype]) == 0)
-                na = 5;
-            else
-                error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
-#endif
 
             // ids of particles in molecule on proc
 
@@ -1548,49 +1289,7 @@ void FixMBX::mbx_init_local() {
                     xyz.push_back(ximage[2] - zlo);
                 }
 
-#ifdef _NEW_MONOMER_OPS
                 add_monomer_atom_types(mol_names[mtype], names);
-#else
-                if (strcmp("h2o", mol_names[mtype]) == 0) {
-                    names.push_back("O");
-                    names.push_back("H");
-                    names.push_back("H");
-                } else if (strcmp("li+", mol_names[mtype]) == 0) {
-                    names.push_back("Li");
-                } else if (strcmp("na+", mol_names[mtype]) == 0) {
-                    names.push_back("Na");
-                } else if (strcmp("k+", mol_names[mtype]) == 0) {
-                    names.push_back("K");
-                } else if (strcmp("rb+", mol_names[mtype]) == 0) {
-                    names.push_back("Rb");
-                } else if (strcmp("cs+", mol_names[mtype]) == 0) {
-                    names.push_back("Cs");
-#ifdef _DEBUG_EFIELD
-                } else if (strcmp("dp1", mol_names[mtype]) == 0) {
-                    names.push_back("H");
-#endif
-                } else if (strcmp("f-", mol_names[mtype]) == 0) {
-                    names.push_back("F");
-                } else if (strcmp("cl-", mol_names[mtype]) == 0) {
-                    names.push_back("Cl");
-                } else if (strcmp("br-", mol_names[mtype]) == 0) {
-                    names.push_back("Br");
-                } else if (strcmp("i-", mol_names[mtype]) == 0) {
-                    names.push_back("I");
-                } else if (strcmp("he", mol_names[mtype]) == 0) {
-                    names.push_back("He");
-                } else if (strcmp("co2", mol_names[mtype]) == 0) {
-                    names.push_back("C");
-                    names.push_back("O");
-                    names.push_back("O");
-                } else if (strcmp("ch4", mol_names[mtype]) == 0) {
-                    names.push_back("C");
-                    names.push_back("H");
-                    names.push_back("H");
-                    names.push_back("H");
-                    names.push_back("H");
-                }
-#endif
 
                 molec.push_back(nm++);
 
@@ -1803,42 +1502,8 @@ void FixMBX::mbx_init_full() {
 
             int is_local = 1;
 
-#ifdef _NEW_MONOMER_OPS
             bool is_ext = false;
             int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-#else
-            int na;
-            if (strcmp("h2o", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("li+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("na+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("k+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("rb+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cs+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("dp1", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("f-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cl-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("br-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("i-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("he", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("ch4", mol_names[mtype]) == 0)
-                na = 5;
-            else
-                error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
-#endif
 
             // ids of particles in molecule on proc
 
@@ -1889,49 +1554,7 @@ void FixMBX::mbx_init_full() {
 
                 // add types
 
-#ifdef _NEW_MONOMER_OPS
                 add_monomer_atom_types(mol_names[mtype], names);
-#else
-                if (strcmp("h2o", mol_names[mtype]) == 0) {
-                    names.push_back("O");
-                    names.push_back("H");
-                    names.push_back("H");
-#ifdef _DEBUG_EFIELD
-                } else if (strcmp("dp1", mol_names[mtype]) == 0) {
-                    names.push_back("H");
-#endif
-                } else if (strcmp("li+", mol_names[mtype]) == 0) {
-                    names.push_back("Li");
-                } else if (strcmp("na+", mol_names[mtype]) == 0) {
-                    names.push_back("Na");
-                } else if (strcmp("k+", mol_names[mtype]) == 0) {
-                    names.push_back("K");
-                } else if (strcmp("rb+", mol_names[mtype]) == 0) {
-                    names.push_back("Rb");
-                } else if (strcmp("cs+", mol_names[mtype]) == 0) {
-                    names.push_back("Cs");
-                } else if (strcmp("f-", mol_names[mtype]) == 0) {
-                    names.push_back("F");
-                } else if (strcmp("cl-", mol_names[mtype]) == 0) {
-                    names.push_back("Cl");
-                } else if (strcmp("br-", mol_names[mtype]) == 0) {
-                    names.push_back("Br");
-                } else if (strcmp("i-", mol_names[mtype]) == 0) {
-                    names.push_back("I");
-                } else if (strcmp("he", mol_names[mtype]) == 0) {
-                    names.push_back("He");
-                } else if (strcmp("co2", mol_names[mtype]) == 0) {
-                    names.push_back("C");
-                    names.push_back("O");
-                    names.push_back("O");
-                } else if (strcmp("ch4", mol_names[mtype]) == 0) {
-                    names.push_back("C");
-                    names.push_back("H");
-                    names.push_back("H");
-                    names.push_back("H");
-                    names.push_back("H");
-                }
-#endif
 
                 // add monomer
 
@@ -2073,42 +1696,8 @@ void FixMBX::mbx_update_xyz() {
         if (mol_anchor[i]) {
             const int mtype = mol_type[i];
 
-#ifdef _NEW_MONOMER_OPS
             bool is_ext = false;
             int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-#else
-            int na = 0;
-            if (strcmp("h2o", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("li+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("na+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("k+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("rb+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cs+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("dp1", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("f-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cl-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("br-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("i-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("he", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("ch4", mol_names[mtype]) == 0)
-                na = 5;
-            else
-                error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
-#endif
 
             // ids of particles in molecule on proc
 
@@ -2239,42 +1828,8 @@ void FixMBX::mbx_update_xyz_local() {
         if (mol_anchor[i] && mol_local[i]) {
             const int mtype = mol_type[i];
 
-#ifdef _NEW_MONOMER_OPS
             bool is_ext = false;
             int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-#else
-            int na = 0;
-            if (strcmp("h2o", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("li+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("na+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("k+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("rb+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cs+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("dp1", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("f-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cl-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("br-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("i-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("he", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("ch4", mol_names[mtype]) == 0)
-                na = 5;
-            else
-                error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
-#endif
 
             // ids of particles in molecule on proc
 
@@ -2410,40 +1965,8 @@ void FixMBX::mbx_update_xyz_full() {
         if (mol_anchor_full[i]) {
             const int mtype = mol_type_full[i];
 
-#ifdef _NEW_MONOMER_OPS
             bool is_ext = false;
             int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-#else
-            int na = 0;
-            if (strcmp("h2o", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("li+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("na+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("k+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("rb+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cs+", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("dp1", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("f-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("cl-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("br-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("i-", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("he", mol_names[mtype]) == 0)
-                na = 1;
-            else if (strcmp("co2", mol_names[mtype]) == 0)
-                na = 3;
-            else if (strcmp("ch4", mol_names[mtype]) == 0)
-                na = 5;
-#endif
 
             // test if external charged particle
 #ifndef _DEBUG_EFIELD
@@ -2558,40 +2081,8 @@ void FixMBX::mbx_init_dipole_history_local() {
                     if (mol_anchor[i] && mol_local[i]) {
                         const int mtype = mol_type[i];
 
-#ifdef _NEW_MONOMER_OPS
                         bool is_ext = false;
                         int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-#else
-                int na = 0;
-                if (strcmp("h2o", mol_names[mtype]) == 0)
-                    na = 3;
-                else if (strcmp("li+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("na+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("k+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("rb+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("cs+", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("f-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("cl-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("br-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("i-", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("he", mol_names[mtype]) == 0)
-                    na = 1;
-                else if (strcmp("co2", mol_names[mtype]) == 0)
-                    na = 3;
-                else if (strcmp("ch4", mol_names[mtype]) == 0)
-                    na = 5;
-                else
-                    error->one(FLERR, "Unsupported molecule type in MBX");  // should never get this far...
-#endif
 
                         // ids of particles in molecule on proc
 
@@ -2843,13 +2334,6 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e) 
     }
 #endif
 
-    // check if na matches output from get_num_atoms_per_monomer()
-#ifdef _DEBUG
-    bool _dummy = false;
-    int _na = get_num_atoms_per_monomer(name, dummy);
-    if (na != _na) error->one(FLERR, "Atom count mismatch in get_include_monomer()");
-#endif
-
     return na;
 }
 
@@ -2857,10 +2341,6 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e) 
 ------------------------------------------------------------------------- */
 
 void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
-#ifdef _DEBUG
-    int na = n.size();
-#endif
-
     if (strcmp("h2o", name) == 0) {
         n.push_back("O");
         n.push_back("H");
@@ -2929,12 +2409,4 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
         n.push_back("O");
         n.push_back("O");
     }
-
-    // check if na matches output from get_num_atoms_per_monomer()
-#ifdef _DEBUG
-    na = n.size() - na;  // # of elements added
-    bool dummy = false;
-    int _na = get_num_atoms_per_monomer(name, dummy);
-    if (na != _na) error->one(FLERR, "Atom count mismatch in add_monomer_atom_types()");
-#endif
 }

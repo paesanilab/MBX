@@ -70,9 +70,6 @@ class PairMBX : public Pair {
     void accumulate_f_all(bool);  // local + ghost
     void accumulate_f_full(bool);
     void accumulate_f_local(bool);
-
-    // int get_num_atoms_per_monomer(char *, bool &);
-    // int get_include_monomer(char *, int, bool &, bool &);
 };
 
 }  // namespace LAMMPS_NS
