@@ -2306,6 +2306,8 @@ int FixMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
         na = 4;
     else if (strcmp("no3a", name) == 0)
         na = 4;
+    else if (strcmp("dp2", name) == 0)
+        na = 2;
     else
         error->one(FLERR, "Unsupported molecule type in MBX");
 
@@ -2408,5 +2410,8 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
         n.push_back("O");
         n.push_back("O");
         n.push_back("O");
+    } else if (strcmp("dp2", name) == 0) {
+        n.push_back("X");
+        n.push_back("X");
     }
 }

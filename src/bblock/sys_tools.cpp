@@ -171,8 +171,10 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 sites.push_back(4);
                 nat.push_back(3);
 
-                // =====>> BEGIN SECTION SITES <<=====
-                // ==> PASTE YOUR CODE BELOW <==
+            } else if (mon[i] == "dp2") {
+                sites.push_back(2);
+                nat.push_back(2);
+
             } else if (mon[i] == "dp1") {
                 sites.push_back(1);
                 nat.push_back(1);
@@ -216,6 +218,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             } else if (mon[i] == "h2") {
                 sites.push_back(2);
                 nat.push_back(2);
+                // =====>> BEGIN SECTION SITES <<=====
+                // ==> PASTE YOUR CODE BELOW <==
                 // END SECTION SITES
             } else {
                 // If monomer not found, throw exception
@@ -1015,8 +1019,12 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         // 14 distances
     }
 
-    // =====>> BEGIN SECTION EXCLUDED <<=====
-    // =====>> PASTE CODE BELOW <<=====
+    if (mon == "dp2") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        // 13 distances
+        // 14 distances
+    }
 
     if (mon == "h4_dummy") {
         // 12 distances
@@ -1036,6 +1044,9 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         // 13 distances
         // 14 distances
     }
+
+    // =====>> BEGIN SECTION EXCLUDED <<=====
+    // =====>> PASTE CODE BELOW <<=====
     // =====>> END SECTION EXCLUDED <<=====
 }
 
@@ -1056,6 +1067,8 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
         // Any other molecule (as for 01/10/2018)
     } else if (mon == "dp1") {
         aDD = 1.0E24;
+    } else if (mon == "dp2") {
+        aDD = 1.0E24;
     } else {
         if (is12 || is13) {
             aDD = 0.3;
@@ -1071,6 +1084,10 @@ double GetAcc(std::string mon) {
     double aCC = 0.4;
     // For water
     if (mon == "dp1") {
+        aCC = 1.0E24;
+    }
+
+    if (mon == "dp2") {
         aCC = 1.0E24;
     }
 
@@ -1204,6 +1221,11 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
     } else if (mon_id == "dp1p") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv * nsites] = 1.0 * CHARGECON;
+        }
+    } else if (mon_id == "dp2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites + 0] = 1.0 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = 1.0 * CHARGECON;
         }
     } else if (mon_id == "dp1") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1371,6 +1393,11 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites] = 0.0;
         }
+    } else if (mon_id == "dp2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites + 0] = 0.0;
+            polfac[fst_ind + nv * nsites + 1] = 0.0;
+        }
     } else if (mon_id == "dp1") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites] = 0.0;
@@ -1504,6 +1531,11 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     } else if (mon_id == "dp1p") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             pol[fst_ind + nv * nsites] = 0.0;
+        }
+    } else if (mon_id == "dp2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites + 0] = 0.0;
+            pol[fst_ind + nv * nsites + 1] = 0.0;
         }
     } else if (mon_id == "dp1") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1674,6 +1706,11 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     } else if (mon_id == "dp1p") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 0.0;
+        }
+    } else if (mon_id == "dp2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind + 0] = 0.0;
+            c6_lr[nv * natoms + fst_ind + 1] = 0.0;
         }
     } else if (mon_id == "dp1") {
         for (size_t nv = 0; nv < n_mon; nv++) {
