@@ -289,6 +289,12 @@ class System {
     std::vector<double> GetRealCharges();
 
     /**
+     * Gets the C6 long range params
+     * @return Gets the C6 long range params
+     */
+    std::vector<double> GetRealC6lr();
+
+    /**
      * Gets the polarizabilities of the system.
      * It includes the charges of ALL sites,
      * including the virtual sites such as the M-sites
@@ -420,6 +426,12 @@ class System {
      * @return Box in system
      */
     std::vector<double> GetBox();
+
+    /**
+     * Gets the box in ABCabc format
+     * @return Box in ABCabc format
+     */
+    std::vector<double> GetBoxABCabc();
 
     /**
      * Gets the maximum number of monomers per chunk in polynomial evaluation

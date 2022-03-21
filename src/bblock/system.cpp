@@ -310,6 +310,10 @@ std::vector<double> System::GetRealGrads() {
 
 std::vector<double> System::GetCharges() { return systools::ResetOrderN(chg_, initial_order_, first_index_, sites_); }
 
+std::vector<double> System::GetRealC6lr() {
+    return systools::ResetOrderRealN(c6_lr_, initial_order_realSites_, numat_, first_index_, nat_);
+}
+
 std::vector<double> System::GetRealCharges() {
     return systools::ResetOrderRealN(chg_, initial_order_realSites_, numat_, first_index_, nat_);
 }
@@ -346,6 +350,8 @@ std::vector<std::string> System::GetMonId() {
 std::vector<double> System::GetVirial() { return virial_; }
 
 std::vector<double> System::GetBox() { return box_; }
+
+std::vector<double> System::GetBoxABCabc() { return box_ABCabc_; }
 
 size_t System::GetMaxEval1b() { return maxNMonEval_; }
 
