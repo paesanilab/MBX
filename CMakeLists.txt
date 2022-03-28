@@ -19,6 +19,8 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 ############################  Options: Build How?  #############################
 #MRR
+set(CMAKE_CXX_FLAGS_RELEASE "")
+
 #SET(USE_OPENMP TRUE CACHE BOOL "Use OpenMP")
 OPTION(USE_OPENMP "Use OpenMP" TRUE)
 if (USE_OPENMP)
@@ -87,6 +89,7 @@ ExternalProject_Add(MBX-core
               -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
               -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
               -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
+	      -DCMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}
               -DCMAKE_CXX_STANDARD=${MBX_CXX_STANDARD}
               -DCMAKE_CXX_STANDARD_REQUIRED=ON
               -DCMAKE_CXX_EXTENSIONS=OFF

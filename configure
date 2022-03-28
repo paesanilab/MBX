@@ -1,0 +1,61 @@
+#!/bin/bash
+
+rm -f include.sh
+
+if [ -z "$FFTW_HOME" ]; then
+  echo "Where are the include and lib folders for FFTW?"
+  read FFTW_HOME
+fi
+
+if [ -z "$GSL_ROOT_DIR" ]; then
+  echo "Where are the include and lib folders for GLS?"
+  read GSL_ROOT_DIR
+fi
+
+if [ -z "$CMAKE_HOME" ]; then
+  echo "Where is the bin folder for CMake?"
+  read CMAKE_HOME
+fi
+
+if [ -z "$CXX" ]; then
+  echo "Which C++ compiler do you want to use?"
+  read CXX
+fi 
+
+if [ -z "$CC" ]; then
+  echo "Which C compiler do you want to use?"
+  read CC
+fi 
+
+if [ -z "$USE_MPI" ]; then
+  echo "USE_MPI is not set. Defaulted to 1. If you are not going to use MBX+LAMMPS, please set it to 0 in the include.sh file"
+  USE_MPI=1
+fi
+
+if [ -z "$USE_OPENMP" ]; then
+  echo "USE_OPENMP is not set. Defaulted to 1. If you are not going to use MBX+LAMMPS, please set it to 0 in the include.sh file"
+  USE_OPENMP=1
+fi
+
+if [ -z "$OPT_LEVEL" ]; then
+  echo "Which optimization level do you want to use? [0/1/2/3]"
+  read n
+  OPT_LEVEL="-O$n"
+fi
+
+
+# Generate the include.sh file
+cat << EOF > include.sh
+#!/bin/bash
+
+export FFTW_HOME=$FFTW_HOME
+export GSL_ROOT_DIR=$GSL_ROOT_DIR
+export CMAKE_HOME=$CMAKE_HOME
+export CXX=$CXX
+export CC=$CC
+export USE_MPI=$USE_MPI
+export USE_OPENMP=$USE_OPENMP
+export OPT_LEVEL=$OPT_LEVEL
+
+EOF
+

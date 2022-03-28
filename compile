@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ ! -f "include.sh" ]; then
+  echo "Please run first ./configure"
+  exit
+fi
+
+source include.sh
+
+$CMAKE_HOME/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DUSE_OPENMP=$USE_OPENMP -DCMAKE_COMPILE_TESTS=0 -DCMAKE_CXX_FLAGS=" -DHAVE_MPI=$USE_MPI -fPIC $OPT_LEVEL " -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_C_COMPILER=$CC -H. -Bbuild 
+
+cd build
+make VERBOSE=1 -j 2 CXX=$CXX CC=$CC
+
