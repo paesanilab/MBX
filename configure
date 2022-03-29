@@ -33,7 +33,6 @@ fi
 if [ -z "$USE_MPI" ]; then
   USE_MPI=0
   if echo $MBX_CXX | grep -q "mpi" ; then
-    echo "IS MPI"
     USE_MPI=1
   fi
 fi
@@ -49,6 +48,16 @@ if [ -z "$OPT_LEVEL" ]; then
   OPT_LEVEL="-O$n"
 fi
 
+if [[ -z "$LAMMPS_HOME" && $USE_MPI -eq 1 ]]; then
+  echo "Which is the home folder for LAMMPS?"
+  read LAMMPS_HOME
+  if [ -z "$LAMMPS_HOME" ]; then 
+    echo "Sorry, compilation with MPI without LAMMPS is not supported"
+    exit
+  fi
+fi
+
+MBX_HOME=$PWD
 
 # Generate the include.sh file
 cat << EOF > include.sh
@@ -62,6 +71,7 @@ export MBX_CC=$MBX_CC
 export USE_MPI=$USE_MPI
 export USE_OPENMP=$USE_OPENMP
 export OPT_LEVEL=$OPT_LEVEL
-
+export MBX_HOME=$MBX_HOME
+export LAMMPS_HOME=$LAMMPS_HOME
 EOF
 
