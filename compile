@@ -5,10 +5,14 @@ if [ ! -f "include.sh" ]; then
   exit
 fi
 
+# Load variables defined in configure
 source include.sh
 
+# Run CMake to generate the build tree
 $CMAKE_EXE -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DUSE_OPENMP=$USE_OPENMP -DCMAKE_COMPILE_TESTS=0 -DCMAKE_CXX_FLAGS=" -DHAVE_MPI=$USE_MPI -fPIC $OPT_LEVEL " -DCMAKE_CXX_COMPILER=$MBX_CXX -DCMAKE_C_COMPILER=$MBX_CC -H. -Bbuild 
 
+# Compile and install
 cd build
 make VERBOSE=1 -j 2 CXX=$MBX_CXX CC=$MBX_CC
+make install
 

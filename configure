@@ -31,8 +31,11 @@ if [ -z "$MBX_CC" ]; then
 fi 
 
 if [ -z "$USE_MPI" ]; then
-  echo "Do you want to compile with MPI? If you are not going to use MBX+LAMMPS, please set it to 0. Otherwise, set it to 1"
-  read USE_MPI
+  USE_MPI=0
+  if echo $MBX_CXX | grep -q "mpi" ; then
+    echo "IS MPI"
+    USE_MPI=1
+  fi
 fi
 
 if [ -z "$USE_OPENMP" ]; then
