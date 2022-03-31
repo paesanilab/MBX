@@ -51,3 +51,13 @@ If left blank it is assumed that is already in the path
 With this information, run the `configure` script, that will ask for 
 all of it, and then run the compile script, which should compile and 
 install MBX.
+
+## FAQs
+Q. I have FFTW installed, but there is an error saying that it cannot be found.
+A. Most likely you did not put the right path or the installation of FFTW is not complete. MBX needs both fftw3.a and fftw3.so to compile. 
+   If you are having troubles with this, the best option is to download and install FFTW3 yourself. It is pretty simple. You can download it from https://www.fftw.org/ . Compile enabling MPI if you are planning to use MPI. As an example, serial fftw can be obtained with:
+./configure --prefix=$PWD --enable-shared=yes
+
+Q. I have GSL in my computer but I get compilation errors.
+A. See answer for FFTW, but look at https://www.gnu.org/software/gsl/ to get the software.
+

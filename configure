@@ -30,6 +30,11 @@ if [ -z "$MBX_CC" ]; then
   read MBX_CC
 fi 
 
+if [ -z "$MBX_FC" ]; then
+  echo "Which Fortran compiler do you want to use?"
+  read MBX_FC
+fi 
+
 if [ -z "$USE_MPI" ]; then
   USE_MPI=0
   if echo $MBX_CXX | grep -q "mpi" ; then
@@ -48,6 +53,11 @@ if [ -z "$OPT_LEVEL" ]; then
   OPT_LEVEL="-O$n"
 fi
 
+if [ -z "$PLUMED_HOME" ]; then
+  echo "Where is the home folder for PLUMED?"
+  read PLUMED_HOME
+fi
+
 if [[ -z "$LAMMPS_HOME" && $USE_MPI -eq 1 ]]; then
   echo "Which is the home folder for LAMMPS?"
   read LAMMPS_HOME
@@ -55,6 +65,11 @@ if [[ -z "$LAMMPS_HOME" && $USE_MPI -eq 1 ]]; then
     echo "Sorry, compilation with MPI without LAMMPS is not supported"
     exit
   fi
+fi
+
+if [ -z $MBX_BINDIR ]; then
+  echo "Where do you want the main executables?"
+  read MBX_BINDIR
 fi
 
 MBX_HOME=$PWD
@@ -68,10 +83,13 @@ export GSL_ROOT_DIR=$GSL_ROOT_DIR
 export CMAKE_EXE=$CMAKE_EXE
 export MBX_CXX=$MBX_CXX
 export MBX_CC=$MBX_CC
+export MBX_FC=$MBX_FC
 export USE_MPI=$USE_MPI
 export USE_OPENMP=$USE_OPENMP
 export OPT_LEVEL=$OPT_LEVEL
 export MBX_HOME=$MBX_HOME
 export LAMMPS_HOME=$LAMMPS_HOME
+export PLUMED_HOME=$PLUMED_HOME
+export MBX_BINDIR=$MBX_BINDIR
 EOF
 
