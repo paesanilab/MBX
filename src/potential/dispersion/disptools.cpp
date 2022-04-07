@@ -174,25 +174,41 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
     double dispersion_energy = 0;
+
+    std::vector<double> x1 = p1;
+
+    double x1_r, y1_r, z1_r;
+
+    if (use_pbc) {
+        x1_r = boxinv[0] * p1[0] + boxinv[3] * p1[1] + boxinv[6] * p1[2];
+        y1_r = boxinv[1] * p1[0] + boxinv[4] * p1[1] + boxinv[7] * p1[2];
+        z1_r = boxinv[2] * p1[0] + boxinv[5] * p1[1] + boxinv[8] * p1[2];
+    }
+    
     for (size_t nv = start2; nv < end2; nv++) {
-        double dx = p1[0] - xyz2[shift2 + nv];
-        double dy = p1[1] - xyz2[nmon2 + shift2 + nv];
-        double dz = p1[2] - xyz2[nmon22 + shift2 + nv];
+        double x2[3];
+        x2[0] = xyz2[shift2 + nv];        
+        x2[1] = xyz2[nmon2 + shift2 + nv];        
+        x2[2] = xyz2[nmon22 + shift2 + nv];        
 
         // Apply minimum image convetion
         if (use_pbc) {
-            double tmp1 = boxinv[0] * dx + boxinv[3] * dy + boxinv[6] * dz;
-            double tmp2 = boxinv[1] * dx + boxinv[4] * dy + boxinv[7] * dz;
-            double tmp3 = boxinv[2] * dx + boxinv[5] * dy + boxinv[8] * dz;
+            double tmp1 = boxinv[0] * x2[0] + boxinv[3] * x2[1] + boxinv[6] * x2[2];
+            double tmp2 = boxinv[1] * x2[0] + boxinv[4] * x2[1] + boxinv[7] * x2[2];
+            double tmp3 = boxinv[2] * x2[0] + boxinv[5] * x2[1] + boxinv[8] * x2[2];
 
-            tmp1 -= std::floor(tmp1 + 0.5);
-            tmp2 -= std::floor(tmp2 + 0.5);
-            tmp3 -= std::floor(tmp3 + 0.5);
+            tmp1 -= std::round(tmp1 - x1_r);
+            tmp2 -= std::round(tmp2 - y1_r);
+            tmp3 -= std::round(tmp3 - z1_r);
 
-            dx = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
-            dy = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
-            dz = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
+            x2[0] = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
+            x2[1] = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
+            x2[2] = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
+
+        double dx = x1[0] - x2[0];
+        double dy = x1[1] - x2[1];
+        double dz = x1[2] - x2[2];
 
         const double rsq = dx * dx + dy * dy + dz * dz;
         const double r = std::sqrt(rsq);

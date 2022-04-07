@@ -734,7 +734,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
     }
 
     // Max number of monomers
-    size_t maxnmon = (mon_type_count_.size() > 0) ? mon_type_count_.back().second : 1;
+    size_t maxnmon = (mon_type_count_cp.size() > 0) ? mon_type_count_cp.back().second : 1;
     if (nExtChg > maxnmon) maxnmon = nExtChg;
     //    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
 
@@ -1279,7 +1279,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
     }
 
     // Max number of monomers
-    size_t maxnmon = (mon_type_count_.size() > 0) ? mon_type_count_.back().second : 1;
+    size_t maxnmon = (mon_type_count_cp.size() > 0) ? mon_type_count_cp.back().second : 1;
     if (nExtChg > maxnmon) maxnmon = nExtChg;
     //    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
     //    if (maxnmon == 0) maxnmon = 1;
@@ -2504,39 +2504,6 @@ void Electrostatics::SetAspcParameters(size_t k) {
 
     omega_aspc_ = (double(k) + 2.0) / (2.0 * double(k) + 3.0);
 
-    //    if (k == 0) {
-    //        b_consts_aspc_[0] = 2.0;
-    //        b_consts_aspc_[1] = -1.0;
-    //        omega_aspc_ = 2.0 / 3.0;
-    //    } else if (k == 1) {
-    //        b_consts_aspc_[0] = 2.5;
-    //        b_consts_aspc_[1] = -2.0;
-    //        b_consts_aspc_[2] = 0.5;
-    //        omega_aspc_ = 0.6;
-    //    } else if (k == 2) {
-    //        b_consts_aspc_[0] = 2.8;
-    //        b_consts_aspc_[1] = -2.8;
-    //        b_consts_aspc_[2] = 1.2;
-    //        b_consts_aspc_[3] = -0.2;
-    //        omega_aspc_ = 4.0 / 7.0;
-    //    } else if (k == 3) {
-    //        b_consts_aspc_[0] = 3.0;
-    //        b_consts_aspc_[1] = -24.0 / 7.0;
-    //        b_consts_aspc_[2] = 27.0 / 14.0;
-    //        b_consts_aspc_[3] = -4.0 / 7.0;
-    //        b_consts_aspc_[4] = 1.0 / 14.0;
-    //        omega_aspc_ = 5.0 / 9.0;
-    //    } else if (k == 4) {
-    //        b_consts_aspc_[0] = 22.0 / 7.0;
-    //        b_consts_aspc_[1] = -55.0 / 14.0;
-    //        b_consts_aspc_[2] = 55.0 / 21.0;
-    //        b_consts_aspc_[3] = -22.0 / 21.0;
-    //        b_consts_aspc_[4] = 5.0 / 21.0;
-    //        b_consts_aspc_[5] = -1.0 / 42.0;
-    //        omega_aspc_ = 6.0 / 11.0;
-    //    }
-
-    // TODO add exception if k < 0 or k > 4
 }
 
 void Electrostatics::ResetAspcHistory() { hist_num_aspc_ = 0; }
@@ -5491,7 +5458,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
     std::vector<double> grad_cp = grad;
 
-    size_t maxnmon = (mon_type_count_.size() > 0) ? mon_type_count_.back().second : 1;
+    size_t maxnmon = (mon_type_count_cp.size() > 0) ? mon_type_count_cp.back().second : 1;
     if (nExtChg > maxnmon) maxnmon = nExtChg;
     //    size_t maxnmon = mon_type_count_.back().second > nExtChg ? mon_type_count_.back().second : nExtChg;
 
