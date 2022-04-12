@@ -57,17 +57,71 @@ AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
           [AC_MSG_RESULT([no])]
     )
 
-    if test $linkinggood == no; then
+    if test $linkinggood == no;then
         AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable FFTW_HOME and rerun ./configure])
     fi
 ])
-    
+
+# Helper function to see if compiler accepts a flag
+# MBX_CHECK_CXXFLAG(flag)
+# use it to check if a flag is available on this compiler
+AC_DEFUN([MBX_CHECK_CXXFLAG], [
+  save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $1"
+  AC_MSG_CHECKING([whether $CXX accepts $1])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+    [
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
+        [AC_MSG_RESULT([yes])],
+        [AC_MSG_RESULT([not linking]); CXXFLAGS="$save_CXXFLAGS"])
+    ],
+    [AC_MSG_RESULT([no]); CXXFLAGS="$save_CXXFLAGS"]
+  )
+])
+
+# MBX_CHECK_REQ_CXXFLAG(flag)
+# use it to check if a flag is available on this compiler
+AC_DEFUN([MBX_CHECK_REQ_CXXFLAG], [
+  save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $1"
+  AC_MSG_CHECKING([whether $CXX accepts $1])
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+    [
+      AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
+        [AC_MSG_RESULT([yes])],
+        [AC_MSG_RESULT([not linking]); AC_MSG_ERROR([please ensure that your $CXX compiler is able to accept $1])])
+    ],
+    [AC_MSG_RESULT([no]); AC_MSG_ERROR([please ensure that your $CXX compiler is able to accept $1])]
+  )
+])
+
+# Helper function to set the enables
+# MBX_CONFIG_ENABLE(variablename,optionname,doc,default)
+# notice that variablename and optionname are likely identical,
+# they just need to be different with optionname contains a "-"
+# (not allowed in shell variable names)
+AC_DEFUN([MBX_CONFIG_ENABLE], [
+m4_bpatsubst([$1],-,_)=
+AC_ARG_ENABLE([$1],
+  AS_HELP_STRING([--enable-$1], [enable $2, default: $3]),
+  [case "${enableval}" in
+             (yes) m4_bpatsubst([$1],-,_)=true ;;
+             (no)  m4_bpatsubst([$1],-,_)=false ;;
+             (*)   AC_MSG_ERROR([wrong argument to --enable-$1]) ;;
+  esac],
+  [case "$3" in
+             (yes) m4_bpatsubst([$1],-,_)=true ;;
+             (no)  m4_bpatsubst([$1],-,_)=false ;;
+  esac]
+)
+])
+
 # Everything is in C++, so are the tests
 AC_LANG(C++)
 
 # Checks for programs.
 AC_PROG_CXX
-AC_PROG_CC
+CXXFLAGS=''
 
 # Checks for libraries.
 
@@ -101,6 +155,25 @@ fi
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
+# Check for C++11
+MBX_CHECK_REQ_CXXFLAG([-std=c++11])
+
+# Check for enable flags
+MBX_CONFIG_ENABLE([debug],[debugging],[no])
+MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
+
+
+# Act on enable flags
+
+if test $debug == true; then
+    MBX_CHECK_CXXFLAG([-g])
+fi
+
+if test $optimization == true; then
+    MBX_CHECK_CXXFLAG([-O2])
+else
+    MBX_CHECK_CXXFLAG([-O0])
+fi
 
 # Checks for library functions.
 
