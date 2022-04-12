@@ -149,7 +149,9 @@ int main() {
 
 # Add the corresponding flags to the variable FFTWFLAGS
 if test $fftw_dir != none; then
-    AC_SUBST(FFTWFLAGS,["-L$fftw_dir/lib -I$fftw_dir/include"])
+    AC_SUBST(FFTWFLAGS,["-L$fftw_dir/lib -I$fftw_dir/include -DHAVE_FFTWD=1"])
+else
+    AC_SUBST(FFTWFLAGS,["-DHAVE_FFTWD=1"])
 fi
 
 # Checks for header files.

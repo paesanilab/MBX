@@ -46,7 +46,6 @@ libmbx_la_CPPFLAGS = $(FFTWFLAGS)
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
 nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 
 
-include_HEADERS = $(top_buildidr)/external/json/json.h $(top_buildidr)/external/kdtree/*.h* $(top_buildidr)/external/Catch2/single_include/catch.hpp
 
 ## Binaries
 #bin_PROGRAMS = main_exe
