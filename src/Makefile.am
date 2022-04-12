@@ -41,7 +41,7 @@ potential_src = $(oneb_sources) $(twob_sources) $(threeb_sources) $(elec_sources
 libmbx_la_SOURCES = $(tools_src) $(iotools_src) $(bblock_src) $(potential_src)
 
 # Library extra flags
-libmbx_la_CPPFLAGS = $(FFTWFLAGS) 
+libmbx_la_CPPFLAGS = $(FFTWFLAGS) $(MPIFLAGS)
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
 nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 

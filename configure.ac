@@ -43,7 +43,10 @@ AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
     AC_CHECK_HEADERS($header_file,[headersgood=yes])
     
     if test $headersgood == no; then
-        AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable FFTW_HOME and rerun ./configure])
+        AC_CHECK_HEADERS($1,[headersgood=yes])
+        if test $headersgood == no; then
+            AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable MPI_HOME and rerun ./configure])
+        fi
     fi
 
     bk_LIBS="$LIBS"
@@ -58,7 +61,7 @@ AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
     )
 
     if test $linkinggood == no;then
-        AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable FFTW_HOME and rerun ./configure])
+        AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable MPI_HOME and rerun ./configure])
     fi
 ])
 
@@ -163,6 +166,7 @@ MBX_CHECK_REQ_CXXFLAG([-std=c++11])
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
 MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
+MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 
 
 # Act on enable flags
@@ -175,6 +179,36 @@ if test $optimization == true; then
     MBX_CHECK_CXXFLAG([-O2])
 else
     MBX_CHECK_CXXFLAG([-O0])
+fi
+
+# MPI
+if test $mpi == true; then
+    # Look for possible environment variables known to have FFTW home
+    mpi_dir=none
+    if test "$MPI_HOME" != ""; then
+        mpi_dir="$MPI_HOME"
+    elif test "$MPIHOME" != ""; then
+        mpi_dir="$MPIHOME"
+    elif test "$MPI_ROOT" != "" ; then
+        mpi_dir="$MPI_ROOT"
+    elif test "$MPIROOT" != "" ; then
+        mpi_dir="$MPIROOT"
+    fi
+    MBX_CHECK_REQ_PACKAGE([mpi.h],[
+#include <mpi.h>
+
+int main(int argc, char **argv){
+  MPI_Init(&argc,&argv);
+  return MPI_Finalize();
+}
+    ],[mpi],[$mpi_dir])
+    
+    # Add the corresponding flags to the variable FFTWFLAGS
+    if test $mpi_dir != none; then
+        AC_SUBST(MPIFLAGS,["-L$mpi_dir/lib -I$mpi_dir/include -DHAVE_MPI=1"])
+    else
+        AC_SUBST(MPIFLAGS,["-DHAVE_MPI=1"])
+    fi
 fi
 
 # Checks for library functions.
