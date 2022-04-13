@@ -21,7 +21,7 @@ DEPFLAGS =	-M
 LINK = $(MBX_CXX)
 LINKFLAGS =	-g -O3 -fopenmp
 LIB = 
-LIB +=          $(MBX_LIB)/libmbxlib.a
+LIB +=          $(MBX_LIB)/libmbx.a
 SIZE =		size
 
 ARCHIVE =	ar
