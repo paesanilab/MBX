@@ -58,7 +58,9 @@ optimize_SOURCES = main/optimize.cpp
 order_frames_SOURCES = main/order_frames.cpp
 
 # Binary Include path
-#main_exe_CPPFLAGS = $(FFTWFLAGS)
+single_point_CPPFLAGS = $(FFTWFLAGS)
+optimize_CPPFLAGS = $(FFTWFLAGS)
+order_frames_CPPFLAGS = $(FFTWFLAGS)
 
 # Binary dependencies
 single_point_DEPENDENCIES = libmbx.la
