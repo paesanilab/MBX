@@ -182,6 +182,9 @@ else
 fi
 
 # MPI
+
+# Set AutoMake flag to true
+AM_CONDITIONAL([ISMPI], [test x$mpi = xtrue])
 if test $mpi == true; then
     # Look for possible environment variables known to have FFTW home
     mpi_dir=none

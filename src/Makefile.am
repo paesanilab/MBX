@@ -47,19 +47,29 @@ libmbx_la_CPPFLAGS = $(FFTWFLAGS) $(MPIFLAGS)
 nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 
 
 
-## Binaries
-#bin_PROGRAMS = main_exe
-#
-## Binary sources
-#main_exe_SOURCES = main/main.cpp
-#
-## Binary Include path
-#main_exe_CPPFLAGS = $(FFTWFLAGS)
-#
-## Binary dependencies
-#main_exe_DEPENDENCIES = libmym.la
-##main_exe_DEPENDENCIES = $(top_builddir)/.lib/libmym.a
-#main_exe_LDADD = libmym.la
+# Only compile these binaries if is not MPI
+if !ISMPI
+# Main Binaries
+bin_PROGRAMS = single_point optimize order_frames
 
+# binary sources
+single_point_SOURCES = main/single_point.cpp
+optimize_SOURCES = main/optimize.cpp
+order_frames_SOURCES = main/order_frames.cpp
+
+# Binary Include path
+#main_exe_CPPFLAGS = $(FFTWFLAGS)
+
+# Binary dependencies
+single_point_DEPENDENCIES = libmbx.la
+single_point_LDADD = libmbx.la
+
+optimize_DEPENDENCIES = libmbx.la
+optimize_LDADD = libmbx.la
+
+order_frames_DEPENDENCIES = libmbx.la
+order_frames_LDADD = libmbx.la
+
+endif
 
 
