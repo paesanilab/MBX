@@ -29,7 +29,7 @@ AC_CONFIG_FILES([
 ])
 
 # Helper function to check if a required library can be linked
-# MBX_CHECK_REQ_LIB(header,program,lib,path_to_home)
+# MBX_CHECK_REQ_LIB(header,program,lib,path_to_home,environmentVar)
 AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
     # Check if a path to the home dir of lib has been given
     if ! test $4 == none; then
@@ -45,7 +45,7 @@ AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
     if test $headersgood == no; then
         AC_CHECK_HEADERS($1,[headersgood=yes])
         if test $headersgood == no; then
-            AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable MPI_HOME and rerun ./configure])
+            AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable $5 and rerun ./configure])
         fi
     fi
 
@@ -61,7 +61,7 @@ AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
     )
 
     if test $linkinggood == no;then
-        AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable MPI_HOME and rerun ./configure])
+        AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable $5 and rerun ./configure])
     fi
 ])
 
@@ -148,7 +148,7 @@ int main() {
     return 0;
 }
 
-],[fftw3],[$fftw_dir])
+],[fftw3],[$fftw_dir],["FFTW_HOME"])
 
 # Add the corresponding flags to the variable FFTWFLAGS
 if test $fftw_dir != none; then
@@ -204,7 +204,7 @@ int main(int argc, char **argv){
   MPI_Init(&argc,&argv);
   return MPI_Finalize();
 }
-    ],[mpi],[$mpi_dir])
+    ],[mpi],[$mpi_dir],["MPI_HOME"])
     
     # Add the corresponding flags to the variable FFTWFLAGS
     if test $mpi_dir != none; then
