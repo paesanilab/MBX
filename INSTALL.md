@@ -33,31 +33,32 @@ EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
+# Requirements
+- GNU C++ compiler 4.9 or higher OR Intel Compilers 2018 or higher
+- FFTW libraries (for dynamic library build, the fftw3.so lib is needed)
+- GSL libraries
 
-## Basic Installation
-Installation of MBX can be performed by using the shell scripts `configure` 
-and `compile`. Please have the following information beforehand:
-- Path to the home folder of FFTW3 (if left blank, it is assumed 
-it is already in the PATH and LD_LIBRARY_PATH variables, with the 
-include files in a common place)
-- Path to the GSL home folder (if left blank, it is assumed 
-it is already in the PATH and LD_LIBRARY_PATH variables, with the 
-include files in a common place)
-- Full path to the CMake executable (version higher than 3.12.4). 
-If left blank it is assumed that is already in the path 
-(i.e. the command `cmake` works).
-- CXX and CC compilers loaded
+# Optional requirements
+- MPI compilers
 
-With this information, run the `configure` script, that will ask for 
-all of it, and then run the compile script, which should compile and 
-install MBX.
+If not in the path, the variable FFTW_HOME and GSL_HOME must be defined.
 
-## FAQs
-Q. I have FFTW installed, but there is an error saying that it cannot be found.
-A. Most likely you did not put the right path or the installation of FFTW is not complete. MBX needs both fftw3.a and fftw3.so to compile. 
-   If you are having troubles with this, the best option is to download and install FFTW3 yourself. It is pretty simple. You can download it from https://www.fftw.org/ . Compile enabling MPI if you are planning to use MPI. As an example, serial fftw can be obtained with:
-./configure --prefix=$PWD --enable-shared=yes
+# Basic installation of MBX
+Installation is as simple as running
 
-Q. I have GSL in my computer but I get compilation errors.
-A. See answer for FFTW, but look at https://www.gnu.org/software/gsl/ to get the software.
+```
+autoreconf -fi
+./configure
+make && make install
+```
 
+# MPI compilation (For LAMMPS use only)
+MPI compilation is needed when using MBX with LAMMPS
+If the MPI compilers and libraries are not in the default location,
+a variable MPI_HOME needs to be defined.
+
+```
+autoreconf -fi
+./configure --enable-mpi CXX=mpiicpc
+make && make install
+```
