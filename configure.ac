@@ -210,6 +210,7 @@ MBX_CHECK_REQ_CXXFLAG([-std=c++11])
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
 MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
+MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 
 # Act on enable flags
 
@@ -223,7 +224,9 @@ else
     MBX_CHECK_CXXFLAG([-O0])
 fi
 
-AM_CONDITIONAL([UNITTESTS], [test x$unittests = xtrue])
+if test $coverage == true; then
+    MBX_CHECK_CXXFLAG([--coverage])
+fi
 
 # MPI
 # Set AutoMake flag to true

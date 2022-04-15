@@ -41,7 +41,7 @@ jobs:
           ls ${{ github.workspace }}
           rm -rf install
           autoreconf -fi
-          ./configure --disable-optimization
+          ./configure --disable-optimization --enable-coverage
           make install
 
       - run: echo "This job's status is ${{ job.status }}."
