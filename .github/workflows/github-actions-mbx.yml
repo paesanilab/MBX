@@ -40,7 +40,7 @@ jobs:
         run: |
           ls ${{ github.workspace }}
           rm -rf install
-          autoconf -fi
+          autoreconf -fi
           ./configure --disable-optimization
           make install
 
