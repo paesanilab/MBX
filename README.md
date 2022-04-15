@@ -7,6 +7,8 @@ has given explicit permission and specified which parts can be used. This softwa
 is still under development, and might not work as expected for situations that 
 have not been tested.
 
+PLEASE REPORT ANY ISSUES IN OUR [GOOGLE GROUPS PAGE](https://groups.google.com/g/mbx-users)
+
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
 - g++/gcc v4.9 or higher [and icpc/icc v2017 or higher - optional]
@@ -23,8 +25,7 @@ called `install` should have been created if no prefix has been given to `config
 ## Testing
 After installation, running the unittests is highly recomended. Run the following commands to run the tests.
 ```
-cd ${MBX_HOME}/install/unittests
-ctest
+make check
 ```
 All tests must pass. Please contact the code owners if there is any issue.
 
