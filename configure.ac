@@ -26,6 +26,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
  Makefile
  src/Makefile
+ src/unittests/Makefile
 ])
 
 # Helper function to check if a required library can be linked
@@ -157,6 +158,48 @@ else
     AC_SUBST(FFTWFLAGS,["-DHAVE_FFTWD=1"])
 fi
 
+# GSL
+# Look for possible environment variables known to have GSL home
+gsl_dir=none
+if test "$GSL_HOME" != ""; then
+    gsl_dir="$GSL_HOME"
+elif test "$GSLHOME" != ""; then
+    gsl_dir="$GSLHOME"
+elif test "$GSL_ROOT" != "" ; then
+    gsl_dir="$GSL_ROOT"
+elif test "$GSLROOT" != "" ; then
+    gsl_dir="$GSLROOT"
+elif test "$GSL_ROOT_DIR" != "" ; then
+    gsl_dir="$GSL_ROOT_DIR"
+fi
+MBX_CHECK_REQ_PACKAGE([gsl/gsl_math.h],[
+#include <gsl/gsl_math.h>
+
+int main() {
+    double a = M_SQRT3;
+    return 0;
+}
+
+],[gsl],[$gsl_dir],["GSL_HOME"])
+
+# GSLCBLAS
+MBX_CHECK_REQ_PACKAGE([gsl/gsl_eigen.h],[
+#include <gsl/gsl_eigen.h>
+
+int main() {
+    gsl_vector a;
+    return 0;
+}
+
+],[gslcblas],[$gsl_dir],["GSL_HOME"]) 
+
+# Add the corresponding flags to the variable FFTWFLAGS
+if test $gsl_dir != none; then
+    AC_SUBST(GSLFLAGS,["-L$gsl_dir/lib -I$gsl_dir/include"])
+else
+    AC_SUBST(GSLFLAGS,[""])
+fi
+
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -167,6 +210,7 @@ MBX_CHECK_REQ_CXXFLAG([-std=c++11])
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
 MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
+MBX_CONFIG_ENABLE([unittests],[compile the unittests],[no])
 
 
 # Act on enable flags
@@ -181,8 +225,9 @@ else
     MBX_CHECK_CXXFLAG([-O0])
 fi
 
-# MPI
+AM_CONDITIONAL([UNITTESTS], [test x$unittests = xtrue])
 
+# MPI
 # Set AutoMake flag to true
 AM_CONDITIONAL([ISMPI], [test x$mpi = xtrue])
 if test $mpi == true; then

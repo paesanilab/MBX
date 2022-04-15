@@ -1,3 +1,5 @@
+SUBDIRS = . unittests
+
 # Libraries
 lib_LTLIBRARIES = libmbx.la
 
@@ -50,17 +52,19 @@ nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h pote
 # Only compile these binaries if is not MPI
 if !ISMPI
 # Main Binaries
-bin_PROGRAMS = single_point optimize order_frames
+bin_PROGRAMS = single_point optimize order_frames normal_modes
 
 # binary sources
 single_point_SOURCES = main/single_point.cpp
 optimize_SOURCES = main/optimize.cpp
 order_frames_SOURCES = main/order_frames.cpp
+normal_modes_SOURCES = main/normal-modes.cpp
 
 # Binary Include path
 single_point_CPPFLAGS = $(FFTWFLAGS)
 optimize_CPPFLAGS = $(FFTWFLAGS)
 order_frames_CPPFLAGS = $(FFTWFLAGS)
+normal_modes_CPPFLAGS = $(FFTWFLAGS) $(GSLFLAGS)
 
 # Binary dependencies
 single_point_DEPENDENCIES = libmbx.la
@@ -72,6 +76,9 @@ optimize_LDADD = libmbx.la
 order_frames_DEPENDENCIES = libmbx.la
 order_frames_LDADD = libmbx.la
 
+normal_modes_DEPENDENCIES = libmbx.la
+normal_modes_LDADD = libmbx.la
 endif
+
 
 

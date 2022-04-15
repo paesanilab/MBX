@@ -2,44 +2,37 @@
 [![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
 
 # MBX
-This is the version 0.5a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
+This is the version 0.5a. This software should not be used unless the Paesani Lab 
+has given explicit permission and specified which parts can be used. This software 
+is still under development, and might not work as expected for situations that 
+have not been tested.
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
-- CMake v3.12.4 or higher
 - g++/gcc v4.9 or higher [and icpc/icc v2017 or higher - optional]
 - Read the entire README before doing anything
 
 ### Setup
 The home directory of MBX will be referred as `MBX_HOME`. You must set this environment variable, and can be done with the following command if the home directory of MBX is the current directory.
 `export MBX_HOME=$PWD`
-Then set up the compiler to use. To keep it general, we will use `g++` and `gcc`, but intel compilers are recommended.
-`export MBX_CXX=g++`
-`export MBX_CC=gcc`
-If the user wants to activate OpenMP parallelization, it needs to be activated. Otherwise set the following variable to `False`.
-`export MBX_USEOPENMP=True`
 
 ### Compilation
-Run the following commands, and MBX should compile. When using optimizations, compilation may be memory consuming and it may take 5-10 minutes.
-```
-cd ${MBX_HOME}
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_COMPILE_TESTS=True -DCMAKE_CXX_FLAGS="-fPIC -Wall" -DCMAKE_CXX_COMPILER=${MBX_CXX} -DCMAKE_C_COMPILER=${MBX_CC} -DUSE_OPENMP=${MBX_USEOPENMP} -H. -Bbuild
-cd build
-make
-make install
-```
-At this point, a folder called `install` should have been created.
+Please read the INSTALL.md instructions. After installation, a folder 
+called `install` should have been created if no prefix has been given to `configure`.
 
 ## Testing
 After installation, running the unittests is highly recomended. Run the following commands to run the tests.
 ```
-cd ${MBX_HOME}/install/bin/unittests
+cd ${MBX_HOME}/install/unittests
 ctest
 ```
 All tests must pass. Please contact the code owners if there is any issue.
 
 ## Json File
-To make life easier for you, a json configuration file can be used to pass all the information that MBX needs. Usually, one does not need to change anything except a couple of options. In any case, all the options of the json file are explained below.
+To make life easier for you, a json configuration file must be used to pass 
+all the information that MBX needs. Usually, one does not need to change 
+anything except a couple of options. In any case, all the options of the 
+json file are explained below.
 
 The json file template is the following:
 ```
@@ -85,7 +78,7 @@ In this file:
 - `localhost` is the name of the socket. It MUST match the name in the xml file, otherwise it will send an error saying that the socket was not found.
 
 ## Main executables
-After installation, there will be the main executables in `$MBX_HOME/install/bin/main`.
+After installation, there will be the main executables in `$MBX_HOME/install/bin`.
 - `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If the flag to print gradients is activated (`PRINT_GRADS`; see source code in `$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
 
@@ -116,6 +109,9 @@ In `${MBX_HOME}/examples/PEFs` there are sample scripts on how to use MBX called
 export LD_LIBRARY_PATH=MBX_HOME/install/lib/:$LD_LIBRARY_PATH
 export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 ```
+
+Note that for these interfaces to work, they need the dynamic library of MBX.
+You may need to rerun the `configure` script with the --enable-shared option.
 
 ### i-pi
 This software is already interfaced with i-pi. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-pi first. Please go to [the i-pi github page](https://github.com/i-pi/i-pi) and clone and follow the instructions to install i-pi. Before continuing with this, make sure i-pi is working. If you have any problems with the i-pi installation, you can ask a question in [the i-pi-user forum](https://groups.google.com/forum/#!forum/ipi-users). However, there is no need to install anything in i-pi. Just have it on your computer, so if you want skip the testing (PROCEED AT YOUR OWN RISK), you can skip testing i-pi and assume it works.
@@ -153,14 +149,14 @@ First of all you will need to download LAMMPS from their webpage (https://lammps
 MBX needs to be normally installed following the instructions provided in the previous sections. After installation:
 ```
 cd MBX_HOME/plugins/lammps
-vi Makefile.mpi_mbx.lab
+vi Makefile.mpi_mbx
 ```
 Make sure that the `MBX` variable is pointing to the right place. If you have your `MBX_HOME` environment varible you should be fine.
 
 Let's call the directory where LAMMPS has been put/unpacked `LAMMPS_HOME`. 
 Do the following:
 ```
-cp Makefile.mpi_mbx.lab LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
+cp Makefile.mpi_mbx LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
 cd LAMMPS_HOME/src/
 make yes-USER-MBX yes-MOLECULE
 make mpi_mbx -j 4
