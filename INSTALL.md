@@ -1,5 +1,5 @@
 # Installation Instructions
-
+```
 /******************************************************************************
 Copyright 2022 The Regents of the University of California.
 All Rights Reserved.
@@ -33,6 +33,7 @@ EXPRESS, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
+```
 # Requirements
 - GNU C++ compiler 4.9 or higher OR Intel Compilers 2018 or higher
 - FFTW libraries (for dynamic library build, the fftw3.so lib is needed)
@@ -62,3 +63,12 @@ autoreconf -fi
 ./configure --enable-mpi CXX=mpiicpc
 make && make install
 ```
+
+# Unittesting
+It is recommended to first install the code without MPI and optimizations and run 
+the unittests. To do so:
+```
+./configure --disable-optimization 
+make check
+```
+All tests should pass.

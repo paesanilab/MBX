@@ -210,8 +210,6 @@ MBX_CHECK_REQ_CXXFLAG([-std=c++11])
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
 MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
-MBX_CONFIG_ENABLE([unittests],[compile the unittests],[no])
-
 
 # Act on enable flags
 
