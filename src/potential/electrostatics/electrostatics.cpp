@@ -482,6 +482,732 @@ void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid
     num_mpi_ranks_ = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
 }
 
+void Electrostatics::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef) {
+    external_phi_ = phi;
+    external_ef_ = ef;
+}
+
+void Electrostatics::CalculateOneCgDipoleIter() {
+    size_t nsites3 = nsites_ * 3;
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    // Permanent electric field is computed
+    // Now start computation of dipole through conjugate gradient
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            // TODO assuming pol not site dependant
+            double p = pol_[fi_sites + i];
+            size_t inmon3 = 3 * i * nmon;
+#ifdef _OPENMP
+#pragma omp simd
+#endif
+            for (size_t m = 0; m < nmon; m++) {
+                mu_[fi_crd + inmon3 + m] = p * Efq_[fi_crd + inmon3 + m];
+                mu_[fi_crd + inmon3 + nmon + m] = p * Efq_[fi_crd + inmon3 + nmon + m];
+                mu_[fi_crd + inmon3 + nmon2 + m] = p * Efq_[fi_crd + inmon3 + nmon2 + m];
+            }
+        }
+
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+    std::vector<double> ts2v(nsites3);
+
+    DipolesCGIteration(mu_, ts2v);
+
+    std::vector<double> rv(nsites3);
+    std::vector<double> pv(nsites3);
+    std::vector<double> r_new(nsites3);
+
+    for (size_t i = 0; i < nsites3; i++) {
+        pv[i] = Efq_[i] * pol_sqrt_[i] - ts2v[i];
+    }
+    for (size_t i = 0; i < nsites3; i++) {
+        rv[i] = pv[i];
+    }
+
+    // Start iterations
+    size_t iter = 1;
+    double rvrv = DotProduct(rv, rv);
+    double residual = 0.0;
+    while (true) {
+        DipolesCGIteration(pv, ts2v);
+        double pvts2pv = DotProduct(pv, ts2v);
+
+        if (rvrv < tolerance_) break;
+        double alphak = rvrv / pvts2pv;
+        residual = 0.0;
+        for (size_t i = 0; i < nsites3; i++) {
+            mu_[i] = mu_[i] + alphak * pv[i];
+        }
+        for (size_t i = 0; i < nsites3; i++) {
+            r_new[i] = rv[i] - alphak * ts2v[i];
+        }
+        for (size_t i = 0; i < nsites3; i++) {
+            residual += r_new[i] * r_new[i];
+        }
+
+        double rvrv_new = residual;
+
+        break;
+    }
+
+    // Dipoles are computed
+    // Need to recalculate dipole and Efd due to the multiplication of polsqrt
+    for (size_t i = 0; i < nsites3; i++) {
+        mu_[i] *= pol_sqrt_[i];
+    }
+}
+
+void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef) {
+    phi = phi_x_;
+    ef = ef_x_;
+
+    // size_t nmon = phi_x_.size();
+    // size_t ns = 1;
+    // size_t nmon2 = nmon * 2;
+    // for (size_t m = 0; m < nmon; m++) {
+    //    size_t mns = m * ns;
+    //    size_t mns3 = mns * 3;
+    //    for (size_t i = 0; i < ns; i++) {
+    //        size_t inmon = i * nmon;
+    //        size_t inmon3 = 3 * inmon;
+    //        ef[mns3 + 3 * i] = ef_x_[inmon3 + m];
+    //        ef[mns3 + 3 * i + 1] = ef_x_[inmon3 + m + nmon];
+    //        ef[mns3 + 3 * i + 2] = ef_x_[inmon3 + m + nmon2];
+    //        phi[mns + i] = phi_x_[m + inmon];
+    //    }
+    //}
+}
+
+void Electrostatics::UpdatePhiAndEf() {
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                Efq_all_[inmon3 + m + fi_crd] += external_ef_[fi_crd + mns3 + 3 * i];
+                Efq_all_[inmon3 + m + fi_crd + nmon] += external_ef_[fi_crd + mns3 + 3 * i + 1];
+                Efq_all_[inmon3 + m + fi_crd + nmon2] += external_ef_[fi_crd + mns3 + 3 * i + 2];
+                phi_all_[fi_sites + m + inmon] += external_phi_[fi_sites + mns + i];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+}
+
+std::vector<double> Electrostatics::GetSysPhi() { return sys_phi_all_; }
+
+std::vector<double> Electrostatics::GetSysEfq() { return sys_Efq_all_; }
+
+std::vector<double> Electrostatics::GetSysEfd() { return sys_Efd_all_; }
+
+void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
+    size_t np3 = coordinates.size();
+    size_t np = np3 / 3;
+
+    bool use_ghost = false;
+
+    std::vector<double> coordinates_vectorized(np3, 0.0);
+    for (size_t i = 0; i < np; i++) {
+        coordinates_vectorized[i] = coordinates[3 * i];
+        coordinates_vectorized[i + np] = coordinates[3 * i + 1];
+        coordinates_vectorized[i + 2 * np] = coordinates[3 * i + 2];
+    }
+
+    size_t maxnmon = mon_type_count_.back().second > np ? mon_type_count_.back().second : np;
+    ElectricFieldHolder elec_field(maxnmon);
+
+    // Parallelization
+    size_t nthreads = 1;
+#ifdef _OPENMP
+#pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+    {
+        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+    }
+#endif
+
+    phi_x_ = std::vector<double>(np, 0.0);
+    ef_x_ = std::vector<double>(np3, 0.0);
+
+    // Auxiliary variables
+    double ex = 0.0;
+    double ey = 0.0;
+    double ez = 0.0;
+    double phi1 = 0.0;
+
+    // Sites corresponding to different monomers
+    // Declaring first indexes
+    size_t fi_mon1 = 0;
+    size_t fi_sites1 = 0;
+    size_t fi_mon2 = 0;
+    size_t fi_sites2 = 0;
+    size_t fi_crd1 = 0;
+    size_t fi_crd2 = 0;
+
+    // Permanent part
+
+    // Loop over all monomer types
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        size_t ns1 = sites_all_[fi_mon1];
+        size_t nmon1 = mon_type_count_[mt1].second;
+        size_t nmon12 = nmon1 * 2;
+
+        // For each monomer type mt1, loop over all the other monomer types
+        // mt2 >= mt1 to avoid double counting
+        size_t ns2 = 1;
+        size_t nmon2 = np;
+
+        // TODO add neighbour list here
+        // Loop over all pair of sites
+
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+        std::vector<std::vector<double>> Efq_1_pool;
+        std::vector<std::vector<double>> Efq_2_pool;
+        std::vector<std::vector<double>> phi_1_pool;
+        std::vector<std::vector<double>> phi_2_pool;
+        std::vector<std::vector<double>> virial_pool;
+        for (size_t i = 0; i < nthreads; i++) {
+            field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
+            Efq_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+            Efq_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+            phi_1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
+            phi_2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
+            virial_pool.push_back(std::vector<double>(9, 0.0));
+        }
+
+        size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+        for (size_t m1 = m1start; m1 < nmon1; m1 += num_mpi_ranks_) {
+            //	    for (size_t m1 = 0; m1 < nmon1; m1++) {
+            int rank = 0;
+#ifdef _OPENMP
+            rank = omp_get_thread_num();
+#endif
+            std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
+            size_t m2init = 0;
+            double ex_thread = 0.0;
+            double ey_thread = 0.0;
+            double ez_thread = 0.0;
+            double phi1_thread = 0.0;
+            for (size_t i = 0; i < ns1; i++) {
+                size_t inmon1 = i * nmon1;
+                size_t inmon13 = inmon1 * 3;
+
+                // If PBC is activated, get the xyz in vectorized form for
+                // all the monomer2 sites j
+                // What we are going to do here is to get all sites j of all m2
+                // that are close to site i of the monomer m1 we are looking at
+                size_t start_j = 0;
+                size_t size_j = np;
+                std::vector<double> xyz_sitej = coordinates_vectorized;
+
+                // Vector that will tell the original position of the new sites
+                std::vector<double> chg_sitej(size_j, 0.0);
+                std::vector<double> phi_sitej(size_j, 0.0);
+                std::vector<double> Efq_sitej(3 * size_j, 0.0);
+                // declare temporary virial for each pair
+                std::vector<double> virial_thread(9, 0.0);
+
+                // Check if A = 0 and call the proper field calculation
+                double A = 0.0;
+                double Ai = 0.0;
+                double Asqsqi = 0.0;
+                if (A > constants::EPS) {
+                    A = std::pow(A, 1.0 / 6.0);
+                    Ai = 1 / A;
+                    Asqsqi = Ai * Ai * Ai * Ai;
+                } else {
+                    Ai = BIGNUM;
+                    Asqsqi = Ai;
+                }
+                double elec_scale_factor = 1;
+                local_field->CalcPermanentElecField(
+                    xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(), m1, 0,
+                    size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread, &ez_thread,
+                    &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor, ewald_alpha_, use_pbc_, box_,
+                    box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
+
+                // Put proper data in field and electric field of j
+                for (size_t ind = 0; ind < size_j; ind++) {
+                    phi_2_pool[rank][m2init + ind] += phi_sitej[ind];
+                    for (size_t dim = 0; dim < 3; dim++) {
+                        Efq_2_pool[rank][nmon2 * dim + m2init + ind] += Efq_sitej[dim * size_j + ind];
+                    }
+                }
+
+                phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+                Efq_1_pool[rank][inmon13 + m1] += ex_thread;
+                Efq_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                Efq_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+
+                // update virial_pool from virial_threads
+                for (size_t k = 0; k < 9; k++) {
+                    virial_pool[rank][k] += virial_thread[k];
+                }
+            }
+        }
+        // Compress data in Efq and phi
+        for (size_t rank = 0; rank < nthreads; rank++) {
+            size_t kend1 = Efq_1_pool[rank].size();
+            size_t kend2 = Efq_2_pool[rank].size();
+            for (size_t k = 0; k < kend2 / 3; k++) {
+                ef_x_[3 * k] += Efq_2_pool[rank][k];
+                ef_x_[3 * k + 1] += Efq_2_pool[rank][k + np];
+                ef_x_[3 * k + 2] += Efq_2_pool[rank][k + np * 2];
+            }
+            kend1 = phi_1_pool[rank].size();
+            kend2 = phi_2_pool[rank].size();
+            for (size_t k = 0; k < kend2; k++) {
+                phi_x_[k] += phi_2_pool[rank][k];
+            }
+            for (size_t k = 0; k < 9; k++) {
+                virial_[k] += virial_pool[rank][k];
+            }
+        }
+        // Update first indexes
+        fi_mon1 += nmon1;
+        fi_sites1 += nmon1 * ns1;
+        fi_crd1 += nmon1 * ns1 * 3;
+    }
+
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        // Compute the reciprocal space terms, using PME
+        double A, B, C, alpha, beta, gamma;
+        A = box_ABCabc_[0];
+        B = box_ABCabc_[1];
+        C = box_ABCabc_[2];
+        alpha = box_ABCabc_[3];
+        beta = box_ABCabc_[4];
+        gamma = box_ABCabc_[5];
+
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
+        auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
+        auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
+        auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), nsites_all_, 4);
+        std::fill(rec_phi_and_field_all_.begin(), rec_phi_and_field_all_.end(), 0);
+        pme_solver_.computePRec(0, charges, coords, points, 1, result);
+
+#if HAVE_MPI == 1
+        MPI_Allreduce(MPI_IN_PLACE, rec_phi_and_field_.data(), rec_phi_and_field_.size(), MPI_DOUBLE, MPI_SUM, world_);
+#endif
+
+        // Resort phi from system order
+        for (size_t i = 0; i < np; i++) {
+            const double *result_ptr = result[i];
+            phi_x_[i] += result_ptr[0];
+            ef_x_[i] -= result_ptr[1];
+            ef_x_[np + i] -= result_ptr[2];
+            ef_x_[2 * np + i] -= result_ptr[3];
+        }
+    }
+
+    // Induced Electric field
+    fi_mon1 = 0;
+    fi_mon2 = 0;
+    fi_sites1 = 0;
+    fi_sites2 = 0;
+    fi_crd1 = 0;
+    fi_crd2 = 0;
+    // aDD intermolecular is always 0.055
+    double aDD = 1E-50;
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        size_t ns1 = sites_[fi_mon1];
+        size_t nmon1 = mon_type_count_[mt1].second;
+        size_t nmon12 = 2 * nmon1;
+        size_t ns2 = 1;
+        size_t nmon2 = np;
+        // Prepare for parallelization
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+        std::vector<std::vector<double>> Efd_1_pool;
+        std::vector<std::vector<double>> Efd_2_pool;
+        for (size_t i = 0; i < nthreads; i++) {
+            field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
+            Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+            Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+        }
+
+        // Parallel loop
+        size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+        for (size_t m1 = m1start; m1 < nmon1; m1 += num_mpi_ranks_) {
+            //            for (size_t m1 = 0; m1 < nmon1; m1++) {
+            int rank = 0;
+#ifdef _OPENMP
+            rank = omp_get_thread_num();
+#endif
+            std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
+            size_t m2init = 0;
+            double ex_thread = 0.0;
+            double ey_thread = 0.0;
+            double ez_thread = 0.0;
+
+            std::vector<double> mu_j(np3, 0.0);
+            for (size_t i = 0; i < ns1; i++) {
+                size_t inmon13 = 3 * nmon1 * i;
+                for (size_t j = 0; j < ns2; j++) {
+                    double A = 0.0;
+                    double Ai = 0.0;
+                    double Asqsqi = 0.0;
+                    Ai = BIGNUM;
+                    Asqsqi = Ai;
+                    local_field->CalcDipoleElecField(xyz_.data() + fi_crd1, coordinates_vectorized.data(),
+                                                     mu_.data() + fi_crd1, mu_j.data(), m1, m2init, nmon2, nmon1, nmon2,
+                                                     i, j, Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread, &ey_thread,
+                                                     &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_,
+                                                     use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+                    Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                    Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                    Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                }
+            }
+        }
+
+        // Compress data in Efd
+        for (size_t rank = 0; rank < nthreads; rank++) {
+            size_t kend1 = Efd_1_pool[rank].size();
+            size_t kend2 = Efd_2_pool[rank].size();
+            for (size_t k = 0; k < kend2 / 3; k++) {
+                ef_x_[3 * k] += Efd_2_pool[rank][k];
+                ef_x_[3 * k + 1] += Efd_2_pool[rank][k + np];
+                ef_x_[3 * k + 2] += Efd_2_pool[rank][k + np * 2];
+            }
+        }
+        // Update first indexes
+        fi_mon1 += nmon1;
+        fi_sites1 += nmon1 * ns1;
+        fi_crd1 += nmon1 * ns1 * 3;
+    }
+
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        // Sort the dipoles to the order helPME expects (for now)
+        // int fi_mon = 0;
+        // int fi_crd = 0;
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
+                }
+            }
+            fi_mon += nmon;
+            fi_crd += nmon * ns * 3;
+        }
+
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        double A, B, C, alpha, beta, gamma;
+        A = box_ABCabc_[0];
+        B = box_ABCabc_[1];
+        C = box_ABCabc_[2];
+        alpha = box_ABCabc_[3];
+        beta = box_ABCabc_[4];
+        gamma = box_ABCabc_[5];
+
+        // Compute the reciprocal space terms, using PME
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
+        auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
+        auto result = helpme::Matrix<double>(sys_Efd_.data(), nsites_, 3);
+        std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
+
+        pme_solver_.computePRec(-1, dipoles, coords, points, -1, result);
+
+        // Resort field from system order
+        fi_mon = 0;
+        size_t fi_sites = 0;
+        for (size_t i = 0; i < np; i++) {
+            double *result_ptr = result[i];
+            ef_x_[3 * i] -= result_ptr[0];
+            ef_x_[3 * i + 1] -= result_ptr[1];
+            ef_x_[3 * i + 2] -= result_ptr[2];
+        }
+        // The Ewald self field due to induced dipoles
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double *e_ptr = ef_x_.data();
+        for (const auto &mu : mu_) {
+            *e_ptr += slf_prefactor * mu;
+            ++e_ptr;
+        }
+    }
+
+    // Induced part of phi & grads
+    grad_x_ = std::vector<double>(np3, 0.0);
+    sys_grad_all_ = std::vector<double>((nsites_)*3, 0.0);
+
+    // FIx the mu vectors
+    mu_all_ = std::vector<double>(3 * (nsites_), 0.0);
+    sys_mu_all_ = std::vector<double>(3 * (nsites_), 0.0);
+    sys_Efq_all_ = std::vector<double>(3 * (nsites_), 0.0);
+    sys_Efd_all_ = std::vector<double>(3 * (nsites_), 0.0);
+    Efd_all_ = std::vector<double>(3 * (nsites_), 0.0);
+    sys_phi_all_ = std::vector<double>(nsites_, 0.0);
+
+    for (size_t i = 0; i < 3 * nsites_; i++) {
+        mu_all_[i] = mu_[i];
+        sys_mu_all_[i] = sys_mu_[i];
+        Efd_all_[i] = Efd_[i];
+    }
+
+    // Reset grad
+    grad_ = std::vector<double>(3 * (nsites_), 0.0);
+
+#ifdef _OPENMP
+#pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+    {
+        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+    }
+#endif
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+    fi_mon1 = 0;
+    fi_sites1 = 0;
+    fi_mon2 = 0;
+    fi_sites2 = 0;
+    fi_crd1 = 0;
+    fi_crd2 = 0;
+    // aDD intermolecular is always 0.055
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        size_t ns1 = sites_all_[fi_mon1];
+        size_t nmon1 = mon_type_count_[mt1].second;
+        size_t nmon12 = nmon1 * 2;
+        size_t ns2 = 1;
+        size_t nmon2 = np;
+        // TODO add neighbour list here
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+        std::vector<std::vector<double>> grad_1_pool;
+        std::vector<std::vector<double>> grad_2_pool;
+        std::vector<std::vector<double>> phi_1_pool;
+        std::vector<std::vector<double>> phi_2_pool;
+        std::vector<std::vector<double>> virial_pool;
+        for (size_t i = 0; i < nthreads; i++) {
+            field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
+            grad_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+            grad_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+            phi_1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
+            phi_2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
+            virial_pool.push_back(std::vector<double>(9, 0.0));
+        }
+#pragma omp parallel for schedule(dynamic)
+        for (size_t m1 = 0; m1 < nmon1; m1++) {
+            int rank = 0;
+#ifdef _OPENMP
+            rank = omp_get_thread_num();
+#endif
+            std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
+            size_t m2init = 0;
+            double ex_thread = 0.0;
+            double ey_thread = 0.0;
+            double ez_thread = 0.0;
+            double phi1_thread = 0.0;
+            std::vector<double> chg_j(np, 0.0);
+            std::vector<double> mu_j(np3, 0.0);
+            for (size_t i = 0; i < ns1; i++) {
+                size_t inmon1 = i * nmon1;
+                size_t inmon13 = 3 * inmon1;
+                for (size_t j = 0; j < ns2; j++) {
+                    double A = 0.0;
+                    double Ai = 0.0;
+                    double Asqsqi = 0.0;
+                    Ai = BIGNUM;
+                    Asqsqi = Ai;
+                    local_field->CalcElecFieldGrads(
+                        xyz_all_.data() + fi_crd1, coordinates_vectorized.data(), chg_all_.data() + fi_sites1,
+                        chg_j.data(), mu_all_.data() + fi_crd1, mu_j.data(), m1, m2init, nmon2, nmon1, nmon2, i, j, aDD,
+                        0.0, Asqsqi, &ex_thread, &ey_thread, &ez_thread, &phi1_thread, phi_2_pool[rank].data(),
+                        grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost,
+                        islocal_all_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                    grad_1_pool[rank][inmon13 + m1] += ex_thread;
+                    grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                    grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                    phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+                }
+            }
+            // Compress data in grad and phi
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                size_t kend1 = grad_1_pool[rank].size();
+                size_t kend2 = grad_2_pool[rank].size();
+                for (size_t k = 0; k < kend1; k++) {
+                    grad_[fi_crd1 + k] += grad_1_pool[rank][k];
+                }
+                for (size_t k = 0; k < kend2; k++) {
+                    grad_x_[k] += grad_2_pool[rank][k];
+                }
+                kend1 = phi_1_pool[rank].size();
+                kend2 = phi_2_pool[rank].size();
+                for (size_t k = 0; k < kend1; k++) {
+                    phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
+                }
+                for (size_t k = 0; k < kend2; k++) {
+                    phi_x_[fi_sites2 + k] += phi_2_pool[rank][k];
+                }
+                for (size_t k = 0; k < 9; k++) {
+                    virial_[k] += virial_pool[rank][k];
+                }
+            }
+        }
+        // Update first indexes
+        fi_mon1 += nmon1;
+        fi_sites1 += nmon1 * ns1;
+        fi_crd1 += nmon1 * ns1 * 3;
+    }
+
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        // Sort the dipoles to the order helPME expects (for now)
+        // int fi_mon = 0;
+        // int fi_sites = 0;
+        // int fi_crd = 0;
+        size_t fi_mon = 0;
+        size_t fi_sites = 0;
+        size_t fi_crd = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_all_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    sys_chg_all_[fi_sites + mns + i] = chg_all_[fi_sites + m + inmon];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i] = mu_all_[inmon3 + m + fi_crd];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i + 1] = mu_all_[inmon3 + m + fi_crd + nmon];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i + 2] = mu_all_[inmon3 + m + fi_crd + nmon2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
+
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        // Compute the reciprocal space terms, using PME
+        double A = box_ABCabc_[0];
+        double B = box_ABCabc_[1];
+        double C = box_ABCabc_[2];
+        double alpha = box_ABCabc_[3];
+        double beta = box_ABCabc_[4];
+        double gamma = box_ABCabc_[5];
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
+        auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_all_.data(), nsites_all_, 3);
+        auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
+        auto result = helpme::Matrix<double>(nsites_all_, 10);
+
+        pme_solver_.computePRec(-1, dipoles, coords, points, 2, result);
+
+        double *ptr = result[0];
+
+        // Resort field from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        fi_crd = 0;
+        double fac = constants::COULOMB;
+        size_t ns = 1;
+        size_t nmon = np;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            for (size_t i = 0; i < ns; i++) {
+                const double *result_ptr = result[fi_sites + mns + i];
+                const double chg = sys_chg_all_[fi_sites + mns + i];
+                const double *mu = &sys_mu_all_[fi_crd + 3 * mns + 3 * i];
+                double Phi = result_ptr[0];
+                // double Erec_x = result_ptr[1];
+                // double Erec_y = result_ptr[2];
+                // double Erec_z = result_ptr[3];
+                // double Erec_xx = result_ptr[4];
+                // double Erec_xy = result_ptr[5];
+                // double Erec_yy = result_ptr[6];
+                // double Erec_xz = result_ptr[7];
+                // double Erec_yz = result_ptr[8];
+                // double Erec_zz = result_ptr[9];
+                // double Grad_x = chg * Erec_x;
+                // double Grad_y = chg * Erec_y;
+                // double Grad_z = chg * Erec_z;
+                phi_x_[fi_sites + i * nmon + m] += Phi;
+                // grad[fi_crd + 3 * mns + 3 * i] += fac * Grad_x;
+                // grad[fi_crd + 3 * mns + 3 * i + 1] += fac * Grad_y;
+                // grad[fi_crd + 3 * mns + 3 * i + 2] += fac * Grad_z;
+            }
+        }
+    }
+}
+
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
@@ -1780,6 +2506,9 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 #endif
 
     // Copy back improtant imformation
+    if (external_phi_.size() and external_ef_.size()) {
+        UpdatePhiAndEf();
+    }
     mon_type_count_ = mon_type_count_cp;
     for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
     for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
@@ -2429,6 +3158,8 @@ void Electrostatics::CalculateDipolesCG() {
         std::cerr << "mu_final[" << i << "] = " << mu_[i] << std::endl;
 #endif
     }
+
+    DipolesCGIteration(mu_, Efd_);
 
 #ifdef _DEBUG_DIPOLE
     {  // debug print
