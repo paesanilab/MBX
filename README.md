@@ -1,5 +1,6 @@
 [![MBX testing suite](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml/badge.svg)](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml)
 [![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
+[![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
 # MBX
 This is the version 0.5a. This software should not be used unless the Paesani Lab 
