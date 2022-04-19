@@ -126,6 +126,7 @@ AC_LANG(C++)
 # Checks for programs.
 AC_PROG_CXX
 CXXFLAGS=''
+AC_OPENMP
 
 # Checks for libraries.
 

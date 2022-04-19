@@ -43,7 +43,7 @@ potential_src = $(oneb_sources) $(twob_sources) $(threeb_sources) $(elec_sources
 libmbx_la_SOURCES = $(tools_src) $(iotools_src) $(bblock_src) $(potential_src)
 
 # Library extra flags
-libmbx_la_CPPFLAGS = $(FFTWFLAGS) $(MPIFLAGS) 
+libmbx_la_CPPFLAGS = $(FFTWFLAGS) $(MPIFLAGS) $(OPENMP_CXXFLAGS)
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
 nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 
@@ -61,10 +61,10 @@ order_frames_SOURCES = main/order_frames.cpp
 normal_modes_SOURCES = main/normal-modes.cpp
 
 # Binary Include path
-single_point_CPPFLAGS = $(FFTWFLAGS)
-optimize_CPPFLAGS = $(FFTWFLAGS)
-order_frames_CPPFLAGS = $(FFTWFLAGS)
-normal_modes_CPPFLAGS = $(FFTWFLAGS) $(GSLFLAGS)
+single_point_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) 
+optimize_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS)
+order_frames_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS)
+normal_modes_CXXFLAGS = $(FFTWFLAGS) $(GSLFLAGS) $(OPENMP_CXXFLAGS)
 
 # Binary dependencies
 single_point_DEPENDENCIES = libmbx.la
