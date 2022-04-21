@@ -76,11 +76,12 @@ AC_DEFUN([MBX_CHECK_CXXFLAG], [
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
     [
       AC_LINK_IFELSE([AC_LANG_PROGRAM([])],
-        [AC_MSG_RESULT([yes])],
+        [AC_MSG_RESULT([yes]); EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS $1"],
         [AC_MSG_RESULT([not linking]); CXXFLAGS="$save_CXXFLAGS"])
     ],
     [AC_MSG_RESULT([no]); CXXFLAGS="$save_CXXFLAGS"]
   )
+  CXXFLAGS="$save_CXXFLAGS"
 ])
 
 # MBX_CHECK_REQ_CXXFLAG(flag)
@@ -97,6 +98,8 @@ AC_DEFUN([MBX_CHECK_REQ_CXXFLAG], [
     ],
     [AC_MSG_RESULT([no]); AC_MSG_ERROR([please ensure that your $CXX compiler is able to accept $1])]
   )
+  CXXFLAGS="$save_CXXFLAGS"
+  EXTRA_CXXFLAGS="$EXTRA_CXXFLAGS $1"
 ])
 
 # Helper function to set the enables
@@ -126,6 +129,7 @@ AC_LANG(C++)
 # Checks for programs.
 AC_PROG_CXX
 CXXFLAGS=''
+EXTRA_CXXFLAGS=''
 AC_OPENMP
 
 # Checks for libraries.
@@ -228,6 +232,9 @@ fi
 if test $coverage == true; then
     MBX_CHECK_CXXFLAG([--coverage])
 fi
+
+# Add flags to variable
+AC_SUBST(EXTRA_CXXFLAGS_AM,["$EXTRA_CXXFLAGS "])
 
 # MPI
 # Set AutoMake flag to true
