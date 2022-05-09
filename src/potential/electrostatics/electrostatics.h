@@ -308,9 +308,14 @@ class Electrostatics {
     void Hack1EfqPhi();
     void Hack2CgIter();
     void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+    void CalculateInducedGradientsExternal(std::vector<double> &grad);
+
+    // Grad is the grad_ variable (MBX system) and gradx will be the gradients in the external
+    void GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx);
     void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef);
     void UpdatePhiAndEf();
-    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef);
+    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
+                                                          std::vector<double> def, std::vector<double> dmui);
 
     std::vector<double> GetSysPhi();
     std::vector<double> GetSysEfq();
@@ -767,10 +772,15 @@ class Electrostatics {
 
     std::vector<double> external_phi_;
     std::vector<double> external_ef_;
+    std::vector<double> external_def_;
+    std::vector<double> external_dmui_;
 
     std::vector<double> phi_x_;
     std::vector<double> ef_x_;
     std::vector<double> grad_x_;
+    std::vector<double> phi_x_ind_;
+    std::vector<double> ef_x_ind_;
+    std::vector<double> grad_x_ind_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

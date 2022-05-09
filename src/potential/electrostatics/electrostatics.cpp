@@ -482,9 +482,13 @@ void Electrostatics::SetMPI(MPI_Comm world, size_t proc_grid_x, size_t proc_grid
     num_mpi_ranks_ = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
 }
 
-void Electrostatics::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef) {
+void Electrostatics::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
+                                                                      std::vector<double> def,
+                                                                      std::vector<double> dmui) {
     external_phi_ = phi;
     external_ef_ = ef;
+    external_def_ = def;
+    external_dmui_ = dmui;
 }
 
 void Electrostatics::CalculateOneCgDipoleIter() {
@@ -563,6 +567,11 @@ void Electrostatics::CalculateOneCgDipoleIter() {
     for (size_t i = 0; i < nsites3; i++) {
         mu_[i] *= pol_sqrt_[i];
     }
+}
+
+void Electrostatics::GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx) {
+    grad = grad_;
+    gradx = grad_x_;
 }
 
 void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef) {
@@ -646,12 +655,18 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
 
     phi_x_ = std::vector<double>(np, 0.0);
     ef_x_ = std::vector<double>(np3, 0.0);
+    phi_x_ind_ = std::vector<double>(np, 0.0);
+    ef_x_ind_ = std::vector<double>(np3, 0.0);
 
     // Auxiliary variables
     double ex = 0.0;
     double ey = 0.0;
     double ez = 0.0;
     double phi1 = 0.0;
+
+    // Acc and ACD will be 0 for this case
+    double aCC_local = 1E-50;
+    double aCD_local = 1E-50;
 
     // Sites corresponding to different monomers
     // Declaring first indexes
@@ -743,9 +758,10 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                 double elec_scale_factor = 1;
                 local_field->CalcPermanentElecField(
                     xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(), m1, 0,
-                    size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread, &ez_thread,
-                    &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor, ewald_alpha_, use_pbc_, box_,
-                    box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
+                    size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_local, aCC_local,  // This second is the aCC_1_4_
+                    g34_, &ex_thread, &ey_thread, &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(),
+                    elec_scale_factor, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_all_,
+                    fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
 
                 // Put proper data in field and electric field of j
                 for (size_t ind = 0; ind < size_j; ind++) {
@@ -903,9 +919,9 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
             size_t kend1 = Efd_1_pool[rank].size();
             size_t kend2 = Efd_2_pool[rank].size();
             for (size_t k = 0; k < kend2 / 3; k++) {
-                ef_x_[3 * k] += Efd_2_pool[rank][k];
-                ef_x_[3 * k + 1] += Efd_2_pool[rank][k + np];
-                ef_x_[3 * k + 2] += Efd_2_pool[rank][k + np * 2];
+                ef_x_ind_[3 * k] += Efd_2_pool[rank][k];
+                ef_x_ind_[3 * k + 1] += Efd_2_pool[rank][k + np];
+                ef_x_ind_[3 * k + 2] += Efd_2_pool[rank][k + np * 2];
             }
         }
         // Update first indexes
@@ -975,13 +991,13 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         size_t fi_sites = 0;
         for (size_t i = 0; i < np; i++) {
             double *result_ptr = result[i];
-            ef_x_[3 * i] -= result_ptr[0];
-            ef_x_[3 * i + 1] -= result_ptr[1];
-            ef_x_[3 * i + 2] -= result_ptr[2];
+            ef_x_ind_[3 * i] -= result_ptr[0];
+            ef_x_ind_[3 * i + 1] -= result_ptr[1];
+            ef_x_ind_[3 * i + 2] -= result_ptr[2];
         }
         // The Ewald self field due to induced dipoles
         double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
-        double *e_ptr = ef_x_.data();
+        double *e_ptr = ef_x_ind_.data();
         for (const auto &mu : mu_) {
             *e_ptr += slf_prefactor * mu;
             ++e_ptr;
@@ -1100,7 +1116,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 for (size_t k = 0; k < kend2; k++) {
-                    phi_x_[fi_sites2 + k] += phi_2_pool[rank][k];
+                    phi_x_ind_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
@@ -1199,13 +1215,84 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                 // double Grad_x = chg * Erec_x;
                 // double Grad_y = chg * Erec_y;
                 // double Grad_z = chg * Erec_z;
-                phi_x_[fi_sites + i * nmon + m] += Phi;
+                phi_x_ind_[fi_sites + i * nmon + m] += Phi;
                 // grad[fi_crd + 3 * mns + 3 * i] += fac * Grad_x;
                 // grad[fi_crd + 3 * mns + 3 * i + 1] += fac * Grad_y;
                 // grad[fi_crd + 3 * mns + 3 * i + 2] += fac * Grad_z;
             }
         }
     }
+}
+
+void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad) {
+    size_t nsites3 = nsites_ * 3;
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+
+    std::cout << "\n *****\n Before modifying\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cout << grad[i] << " ";
+    }
+    std::cout << std::endl;
+
+    for (size_t i = 0; i < sys_mu_all_.size(); i++) {
+        std::cout << sys_mu_all_[i] << " ";
+    }
+    std::cout << std::endl;
+
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            for (size_t j = 0; j < 3; j++) {
+                //// Contribution from dE*mu
+                // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5* constants::COULOMB * (
+                //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i]
+                //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 1]
+                //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 2]);
+
+                //// Contribution from dmu*E
+                // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5*constants::COULOMB * (
+                //    external_dmui_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i] *
+                //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j]
+                //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 1] *
+                //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j]
+                //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 2] *
+                //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j]) ;
+
+                // L[mu,E] ; dL/dR = dL/dmu dmu/dr + dl/dmu dmu/dE dE/dr
+                // dL/dmu dmu/dr
+                grad[fi_crd + mt * ns * 3 + 3 * i + j] -=
+                    constants::COULOMB *
+                    (external_dmui_[3 * fi_crd + 9 * ns * mt + 9 * i + j] * sys_Efq_all_[fi_crd + mt * ns * 3 + 3 * i] +
+                     external_dmui_[3 * fi_crd + 9 * ns * mt + 9 * i + 3 + j] *
+                         sys_Efq_all_[fi_crd + mt * ns * 3 + 3 * i + 1] +
+                     external_dmui_[3 * fi_crd + 9 * ns * mt + 9 * i + 6 + j] *
+                         sys_Efq_all_[fi_crd + mt * ns * 3 + 3 * i + 2]);
+
+                // dL/dmu dmu/dE dE/dr , where dmu/dE = alpha (pol)
+                grad[fi_crd + mt * ns * 3 + 3 * i + j] -=
+                    constants::COULOMB *
+                    (external_def_[3 * fi_crd + 9 * ns * mt + 9 * i + j] * sys_Efq_all_[fi_crd + mt * ns * 3 + 3 * i] +
+                     external_def_[3 * fi_crd + 9 * ns * mt + 9 * i + 3 + j] *
+                         sys_Efq_all_[fi_crd + mt * ns * 3 + 3 * i + 1] +
+                     external_def_[3 * fi_crd + 9 * ns * mt + 9 * i + 6 + j] *
+                         sys_Efq_all_[fi_crd + mt * ns * 3 + 3 * i + 2]);
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+    std::cout << "After modifying\n";
+    for (size_t i = 0; i < grad.size(); i++) {
+        std::cout << grad[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "*****" << std::endl;
 }
 
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
@@ -3234,7 +3321,6 @@ void Electrostatics::SetAspcParameters(size_t k) {
     }
 
     omega_aspc_ = (double(k) + 2.0) / (2.0 * double(k) + 3.0);
-
 }
 
 void Electrostatics::ResetAspcHistory() { hist_num_aspc_ = 0; }
@@ -7979,6 +8065,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     CalculateDipoles();
     CalculateElecEnergy();
     if (do_grads_) CalculateGradients(grad);
+    if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad);
     // update viral
     if (virial != 0) {
         for (size_t k = 0; k < 9; k++) {

@@ -582,12 +582,17 @@ class System {
                                         std::vector<int> tag);
 
     void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef);
+    void GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx);
     void SetNewParamsElec(bool do_grads);
     void Hack1EfqPhi();
     void Hack2CgIter();
     void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
-    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef);
+    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
+                                                          std::vector<double> def = {}, std::vector<double> dmui = {});
     void GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd);
+
+    double GetPermanentElectrostaticEnergy();
+    double GetInducedElectrostaticEnergy();
 
     /**
      * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
