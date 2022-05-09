@@ -1274,7 +1274,7 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
 
                 // dL/dmu dmu/dE dE/dr , where dmu/dE = alpha (pol)
                 grad[fi_crd + mt * ns * 3 + 3 * i + j] -=
-                    constants::COULOMB *
+                    constants::COULOMB * pol_[fi_crd / 3 + ns * mt + i] *
                     (external_def_[3 * fi_crd + 9 * ns * mt + 9 * i + j] * sys_Efq_all_[fi_crd + mt * ns * 3 + 3 * i] +
                      external_def_[3 * fi_crd + 9 * ns * mt + 9 * i + 3 + j] *
                          sys_Efq_all_[fi_crd + mt * ns * 3 + 3 * i + 1] +
