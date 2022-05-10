@@ -100,9 +100,12 @@ def set_coordinates(coordinates,number_of_atoms):
   mbxlib.set_real_xyz_(crd,ctypes.byref(nat))
 
 def get_induced_dipoles(number_of_atoms):
-  mu = np.zeros(3*number_of_atoms,dtype=np.float64)
+  mux = [0.0]*(3*number_of_atoms)
+  mu =  (ctypes.c_double * len(mux)) (*mux)
+  #mu = np.zeros(3*number_of_atoms,dtype=np.float64)
   mbxlib.get_induced_dipoles_(mu)
-  return mu
+  mu_out = [mu[i] for i in range(len(mu))]
+  return mu_out
 
 def redistribute_gradients(grads_in, number_of_atoms):
   grads_out = np.array(grads_in,dtype=np.float64)
