@@ -99,6 +99,19 @@ def set_coordinates(coordinates,number_of_atoms):
 
   mbxlib.set_real_xyz_(crd,ctypes.byref(nat))
 
+def get_induced_dipoles(number_of_atoms):
+  mu = np.zeros(3*number_of_atoms,dtype=np.float64)
+  mbxlib.get_induced_dipoles_(mu)
+  return mu
+
+def redistribute_gradients(grads_in, number_of_atoms):
+  grads_out = np.array(grads_in,dtype=np.float64)
+  nat = ctypes.c_int(number_of_atoms)
+
+  mbxlib.redistribute_gradients_(grads_out,ctypes.byref(nat))
+
+  return grads_out
+
 def get_potential_and_electric_field_on_points(coordinates, number_of_atoms):
   crd = np.array(coordinates,dtype=np.float64)
   nat = ctypes.c_int(number_of_atoms)

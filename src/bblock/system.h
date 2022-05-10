@@ -591,6 +591,8 @@ class System {
                                                           std::vector<double> def = {}, std::vector<double> dmui = {});
     void GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd);
 
+    void RedistributeGradients(std::vector<double> &grad);
+
     double GetPermanentElectrostaticEnergy();
     double GetInducedElectrostaticEnergy();
 

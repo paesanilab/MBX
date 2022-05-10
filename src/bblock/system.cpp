@@ -155,6 +155,17 @@ void System::GetElectrostaticFields(std::vector<double> &phi, std::vector<double
 //
 // void System::Hack2CgIter() { electrostaticE_.Hack2CgIter(); }
 
+void System::RedistributeGradients(std::vector<double> &grad) {
+    // TODO FOr now, assuming that grad is for all sites.
+    size_t nmon = 1;
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        size_t sys2inp_order = initial_order_[i].second;
+        size_t fi_crd = first_index_[sys2inp_order] * 3;
+        std::string mon = monomers_[sys2inp_order];
+        systools::RedistributeVirtGrads2Real(mon, nmon, fi_crd, grad);
+    }
+}
+
 void System::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
     electrostaticE_.Hack3GetPotentialAtPoints(coordinates);
 }
