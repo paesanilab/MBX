@@ -66,9 +66,19 @@ coordinates = mbx.get_xyz(nsites)
 # Get polarizabilities
 pols = mbx.get_polarizabilities(nsites)
 
+xp = [0.0,0.0,0.0]
+npp = 1
+phi,ef = mbx.get_potential_and_electric_field_on_points(xp,npp)
+print("POT:",phi,"EFQ",ef)
+
+# Get dipoles
+mu = mbx.get_induced_dipoles(nsites)
+
+
 print("Charges:",charges)
 print("Coordinates of charges:",coordinates)
 print("Polarizabilities:",pols)
+print("Dipoles:",mu)
 
 
 
