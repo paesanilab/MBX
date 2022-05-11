@@ -75,7 +75,7 @@ def get_energy_nograd(coordinates,number_of_atoms,units="mbx"):
 
   return energy.value * e_mbx2inp
 
-def get_energy_grad(coordinates,number_of_atoms):
+def get_energy_grad(coordinates,number_of_atoms,units="mbx"):
    # Define conversion factors
   l_mbx2inp = 1.0
   l_inp2mbx = 1.0
