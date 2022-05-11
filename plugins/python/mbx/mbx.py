@@ -306,7 +306,6 @@ def set_potential_and_electric_field_on_sites(phi,ef,units="mbx"):
     ef_inp2mbx = AUELECFIELD2MBX
 
   # Convert inputs to units
-  coordinates = [coordinates[i] * l_inp2mbx for i in range(len(coordinates))]
   phi = [phi[i] * phi_inp2mbx for i in range(len(phi))]
   ef = [ef[i] * ef_inp2mbx for i in range(len(ef))]
 

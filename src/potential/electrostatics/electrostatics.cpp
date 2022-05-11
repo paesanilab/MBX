@@ -1236,11 +1236,6 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
     }
     std::cout << std::endl;
 
-    for (size_t i = 0; i < sys_mu_all_.size(); i++) {
-        std::cout << sys_mu_all_[i] << " ";
-    }
-    std::cout << std::endl;
-
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
@@ -1265,22 +1260,34 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
 
                 // L[mu,E] ; dL/dR = dL/dmu dmu/dr + dl/dmu dmu/dE dE/dr
                 // dL/dmu dmu/dr
-                grad[fi_crd + mt * ns * 3 + 3 * i + j] -=
-                    constants::COULOMB *
-                    (external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i] +
-                     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
-                         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
-                     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
-                         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
+                //grad[fi_crd + m * ns * 3 + 3 * i + j] -=
+                //    constants::COULOMB *
+                //    (external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i] +
+                //     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
+                //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
+                //     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
+                //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
 
                 // dL/dmu dmu/dE dE/dr , where dmu/dE = alpha (pol)
-                grad[fi_crd + mt * ns * 3 + 3 * i + j] -=
+                grad[fi_crd + m * ns * 3 + 3 * i + j] -=
                     constants::COULOMB * pol_[fi_crd / 3 + ns * m + i] *
                     (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i] +
                      external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
                          sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
                      external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
                          sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
+
+                //grad[fi_crd + m * ns * 3 + 3 * i + j] += constants::COULOMB * 
+                //    (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j]* sys_mu_all_[fi_crd + m * ns * 3 + 3 * i] +
+                //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
+                //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
+
+                //grad[fi_crd + m * ns * 3 + 3 * i + j] -=  constants::COULOMB * (
+                //    external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i] +
+                //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
+                //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
+                //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
+                //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
             }
             }
         }
