@@ -184,12 +184,12 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         y1_r = boxinv[1] * p1[0] + boxinv[4] * p1[1] + boxinv[7] * p1[2];
         z1_r = boxinv[2] * p1[0] + boxinv[5] * p1[1] + boxinv[8] * p1[2];
     }
-    
+
     for (size_t nv = start2; nv < end2; nv++) {
         double x2[3];
-        x2[0] = xyz2[shift2 + nv];        
-        x2[1] = xyz2[nmon2 + shift2 + nv];        
-        x2[2] = xyz2[nmon22 + shift2 + nv];        
+        x2[0] = xyz2[shift2 + nv];
+        x2[1] = xyz2[nmon2 + shift2 + nv];
+        x2[2] = xyz2[nmon22 + shift2 + nv];
 
         // Apply minimum image convetion
         if (use_pbc) {
@@ -971,6 +971,26 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.24055);  // A^(-1) E--A
         d6.push_back(6.4749);   // A^(-1) E--B
         d6.push_back(3.03227);  // A^(-1) E--C
+    } else if (mon_id1 == "mbpbe" and mon_id2 == "mbpbe") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(185.9792);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(84.0262);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(84.0262);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(39.5741);   // kcal/mol * A^(-6)  B--B
+        d6.push_back(4.21118);   // A^(-1) A--A
+        d6.push_back(3.44966);   // A^(-1) A--B
+        d6.push_back(3.44966);   // A^(-1) A--B
+        d6.push_back(3.56401);   // A^(-1) B--B
         // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;
