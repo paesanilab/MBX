@@ -252,10 +252,7 @@ def get_potential_and_electric_field_on_points(coordinates, number_of_atoms, uni
     ef_mbx2inp = MBXELECFIELD2AU
     ef_inp2mbx = AUELECFIELD2MBX
 
-  # Convert inputs to units
-  coordinates = [coordinates[i] * l_inp2mbx for i in range(len(coordinates))]
-
-  crd = np.array(coordinates,dtype=np.float64)
+  crd = np.array(coordinates,dtype=np.float64) * l_inp2mbx
   nat = ctypes.c_int(number_of_atoms)
   
   phi = np.zeros(number_of_atoms,dtype=np.float64)

@@ -832,7 +832,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
         auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
         auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
-        auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), nsites_all_, 4);
+        auto result = helpme::Matrix<double>(rec_phi_and_field_all_.data(), np, 4);
         std::fill(rec_phi_and_field_all_.begin(), rec_phi_and_field_all_.end(), 0);
         pme_solver_.computePRec(0, charges, coords, points, 1, result);
 
@@ -978,11 +978,12 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
         // N.B. these do not make copies; they just wrap the memory with some metadata
+        std::vector<double> efdd(np * 3);
         auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
         auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
-        auto result = helpme::Matrix<double>(sys_Efd_.data(), nsites_, 3);
-        std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
+        auto result = helpme::Matrix<double>(efdd.data(), np, 3);
+        std::fill(efdd.begin(), efdd.end(), 0.0);
 
         pme_solver_.computePRec(-1, dipoles, coords, points, -1, result);
 
@@ -1183,7 +1184,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
         auto dipoles = helpme::Matrix<double>(sys_mu_all_.data(), nsites_all_, 3);
         auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
-        auto result = helpme::Matrix<double>(nsites_all_, 10);
+        auto result = helpme::Matrix<double>(np, 10);
 
         pme_solver_.computePRec(-1, dipoles, coords, points, 2, result);
 
@@ -1241,58 +1242,62 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
-        for (size_t i = 0; i < ns; i++) {
-            for (size_t j = 0; j < 3; j++) {
-                //// Contribution from dE*mu
-                // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5* constants::COULOMB * (
-                //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i]
-                //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 1]
-                //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 2]);
+            for (size_t i = 0; i < ns; i++) {
+                for (size_t j = 0; j < 3; j++) {
+                    //// Contribution from dE*mu
+                    // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5* constants::COULOMB * (
+                    //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i]
+                    //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 1]
+                    //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 2]);
 
-                //// Contribution from dmu*E
-                // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5*constants::COULOMB * (
-                //    external_dmui_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i] *
-                //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j]
-                //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 1] *
-                //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j]
-                //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 2] *
-                //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j]) ;
+                    //// Contribution from dmu*E
+                    // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5*constants::COULOMB * (
+                    //    external_dmui_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i] *
+                    //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j]
+                    //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 1] *
+                    //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j]
+                    //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 2] *
+                    //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j]) ;
 
-                // L[mu,E] ; dL/dR = dL/dmu dmu/dr + dl/dmu dmu/dE dE/dr
-                // dL/dmu dmu/dr
-                //grad[fi_crd + m * ns * 3 + 3 * i + j] -=
-                //    constants::COULOMB *
-                //    (external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i] +
-                //     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
-                //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
-                //     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
-                //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
+                    // L[mu,E] ; dL/dR = dL/dmu dmu/dr + dl/dmu dmu/dE dE/dr
+                    // dL/dmu dmu/dr
+                    // grad[fi_crd + m * ns * 3 + 3 * i + j] -=
+                    //    constants::COULOMB *
+                    //    (external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_Efq_all_[fi_crd + m * ns * 3 + 3 *
+                    //    i] +
+                    //     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
+                    //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
+                    //     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
+                    //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
 
-                // dL/dmu dmu/dE dE/dr , where dmu/dE = alpha (pol)
-                grad[fi_crd + m * ns * 3 + 3 * i + j] -=
-                    constants::COULOMB * pol_[fi_crd / 3 + ns * m + i] *
-                    (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i] +
-                     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
-                         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
-                     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
-                         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
+                    // dL/dmu dmu/dE dE/dr , where dmu/dE = alpha (pol)
+                    grad[fi_crd + m * ns * 3 + 3 * i + j] -= constants::COULOMB * pol_[fi_crd / 3 + ns * m + i] *
+                                                             (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] *
+                                                                  sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i] +
+                                                              external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
+                                                                  sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
+                                                              external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
+                                                                  sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
 
-                //grad[fi_crd + m * ns * 3 + 3 * i + j] += constants::COULOMB * 
-                //    (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j]* sys_mu_all_[fi_crd + m * ns * 3 + 3 * i] +
-                //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
-                //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
+                    // grad[fi_crd + m * ns * 3 + 3 * i + j] += constants::COULOMB *
+                    //    (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j]* sys_mu_all_[fi_crd + m * ns * 3 + 3 * i]
+                    //    +
+                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3
+                    //     * i + 1] + external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] * sys_mu_all_[fi_crd + m *
+                    //     ns * 3 + 3 * i + 2]);
 
-                //grad[fi_crd + m * ns * 3 + 3 * i + j] -=  constants::COULOMB * (
-                //    external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i] +
-                //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
-                //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
-                //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
-                //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
-            }
+                    // grad[fi_crd + m * ns * 3 + 3 * i + j] -=  constants::COULOMB * (
+                    //    external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i]
+                    //    +
+                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
+                    //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
+                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
+                    //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
+                }
             }
         }
 
-        systools::RedistributeVirtGrads2Real(mon_type_count_[mt].first, nmon, fi_crd,grad);
+        systools::RedistributeVirtGrads2Real(mon_type_count_[mt].first, nmon, fi_crd, grad);
 
         fi_mon += nmon;
         fi_sites += nmon * ns;
