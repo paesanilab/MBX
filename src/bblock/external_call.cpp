@@ -208,10 +208,12 @@ void get_xyz_(double* coords) {
 void get_potential_and_electric_field_on_points_(double* coords, double* phi, double* ef, int* nat) {
     std::vector<double> xyz(coords, coords + 3 * (*nat));
     my_s->Hack3GetPotentialAtPoints(xyz);
-    std::vector<double> p, e;
-    my_s->GetPhiXAndEfX(p, e);
+    std::vector<double> p, e, pd, ed;
+    my_s->GetPhiXAndEfX(p, e, pd, ed);
     std::copy(p.begin(), p.end(), phi);
     std::copy(e.begin(), e.end(), ef);
+    for (size_t i = 0; i < p.size(); i++) phi[i] += pd[i];
+    for (size_t i = 0; i < e.size(); i++) ef[i] += ed[i];
 }
 
 void set_box_(int* length, double* box) {

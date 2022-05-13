@@ -137,8 +137,9 @@ std::vector<double> System::GetExternalChargesPositions() { return electrostatic
 
 std::vector<double> System::GetExternalChargesGradients() { return electrostaticE_.GetExternalChargesGradients(); }
 
-void System::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef) {
-    electrostaticE_.GetPhiXAndEfX(phi, ef);
+void System::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
+                           std::vector<double> &efd) {
+    electrostaticE_.GetPhiXAndEfX(phi, ef, phid, efd);
 }
 
 void System::GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx) {

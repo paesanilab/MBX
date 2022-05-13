@@ -574,25 +574,12 @@ void Electrostatics::GetGradAndGradX(std::vector<double> &grad, std::vector<doub
     gradx = grad_x_;
 }
 
-void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef) {
+void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
+                                   std::vector<double> &efd) {
     phi = phi_x_;
     ef = ef_x_;
-
-    // size_t nmon = phi_x_.size();
-    // size_t ns = 1;
-    // size_t nmon2 = nmon * 2;
-    // for (size_t m = 0; m < nmon; m++) {
-    //    size_t mns = m * ns;
-    //    size_t mns3 = mns * 3;
-    //    for (size_t i = 0; i < ns; i++) {
-    //        size_t inmon = i * nmon;
-    //        size_t inmon3 = 3 * inmon;
-    //        ef[mns3 + 3 * i] = ef_x_[inmon3 + m];
-    //        ef[mns3 + 3 * i + 1] = ef_x_[inmon3 + m + nmon];
-    //        ef[mns3 + 3 * i + 2] = ef_x_[inmon3 + m + nmon2];
-    //        phi[mns + i] = phi_x_[m + inmon];
-    //    }
-    //}
+    phid = phi_x_ind_;
+    efd = ef_x_ind_;
 }
 
 void Electrostatics::UpdatePhiAndEf() {
@@ -845,9 +832,9 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         for (size_t i = 0; i < np; i++) {
             const double *result_ptr = result[i];
             phi_x_[i] += result_ptr[0];
-            ef_x_[i] -= result_ptr[1];
-            ef_x_[np + i] -= result_ptr[2];
-            ef_x_[2 * np + i] -= result_ptr[3];
+            ef_x_[3 * i] -= result_ptr[1];
+            ef_x_[3 * i + 1] -= result_ptr[2];
+            ef_x_[3 * i + 2] -= result_ptr[3];
         }
     }
 
@@ -931,80 +918,80 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
-    // if (ewald_alpha_ > 0 && use_pbc_) {
-    //    // Sort the dipoles to the order helPME expects (for now)
-    //    // int fi_mon = 0;
-    //    // int fi_crd = 0;
-    //    size_t fi_mon = 0;
-    //    size_t fi_crd = 0;
-    //    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-    //        size_t ns = sites_[fi_mon];
-    //        size_t nmon = mon_type_count_[mt].second;
-    //        size_t nmon2 = nmon * 2;
-    //        for (size_t m = 0; m < nmon; m++) {
-    //            size_t mns = m * ns;
-    //            size_t mns3 = mns * 3;
-    //            for (size_t i = 0; i < ns; i++) {
-    //                size_t inmon = i * nmon;
-    //                size_t inmon3 = 3 * inmon;
-    //                sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
-    //                sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
-    //                sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
-    //            }
-    //        }
-    //        fi_mon += nmon;
-    //        fi_crd += nmon * ns * 3;
-    //    }
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        // Sort the dipoles to the order helPME expects (for now)
+        // int fi_mon = 0;
+        // int fi_crd = 0;
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    sys_mu_[fi_crd + mns3 + 3 * i] = mu_[inmon3 + m + fi_crd];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = mu_[inmon3 + m + fi_crd + nmon];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = mu_[inmon3 + m + fi_crd + nmon2];
+                }
+            }
+            fi_mon += nmon;
+            fi_crd += nmon * ns * 3;
+        }
 
-    //    helpme::PMEInstance<double> pme_solver_;
-    //    if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
-    //    double A, B, C, alpha, beta, gamma;
-    //    A = box_ABCabc_[0];
-    //    B = box_ABCabc_[1];
-    //    C = box_ABCabc_[2];
-    //    alpha = box_ABCabc_[3];
-    //    beta = box_ABCabc_[4];
-    //    gamma = box_ABCabc_[5];
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        double A, B, C, alpha, beta, gamma;
+        A = box_ABCabc_[0];
+        B = box_ABCabc_[1];
+        C = box_ABCabc_[2];
+        alpha = box_ABCabc_[3];
+        beta = box_ABCabc_[4];
+        gamma = box_ABCabc_[5];
 
-    //    // Compute the reciprocal space terms, using PME
-    //    int grid_A = pme_grid_density_ * A;
-    //    int grid_B = pme_grid_density_ * B;
-    //    int grid_C = pme_grid_density_ * C;
-    //    if (mpi_initialized_) {
-    //        pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
-    //                                  PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    //    } else {
-    //        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
-    //    }
-    //    pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        // Compute the reciprocal space terms, using PME
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
-    //    // N.B. these do not make copies; they just wrap the memory with some metadata
-    //    std::vector<double> efdd(np * 3);
-    //    auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
-    //    auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
-    //    auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
-    //    auto result = helpme::Matrix<double>(efdd.data(), np, 3);
-    //    std::fill(efdd.begin(), efdd.end(), 0.0);
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        std::vector<double> efdd(np * 3);
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
+        auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
+        auto result = helpme::Matrix<double>(efdd.data(), np, 3);
+        std::fill(efdd.begin(), efdd.end(), 0.0);
 
-    //    pme_solver_.computePRec(-1, dipoles, coords, points, -1, result);
+        pme_solver_.computePRec(-1, dipoles, coords, points, -1, result);
 
-    //    // Resort field from system order
-    //    fi_mon = 0;
-    //    size_t fi_sites = 0;
-    //    for (size_t i = 0; i < np; i++) {
-    //        double *result_ptr = result[i];
-    //        ef_x_ind_[3 * i] -= result_ptr[0];
-    //        ef_x_ind_[3 * i + 1] -= result_ptr[1];
-    //        ef_x_ind_[3 * i + 2] -= result_ptr[2];
-    //    }
-    //    // The Ewald self field due to induced dipoles
-    //    double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
-    //    double *e_ptr = ef_x_ind_.data();
-    //    for (const auto &mu : mu_) {
-    //        *e_ptr += slf_prefactor * mu;
-    //        ++e_ptr;
-    //    }
-    //}
+        // Resort field from system order
+        fi_mon = 0;
+        size_t fi_sites = 0;
+        for (size_t i = 0; i < np; i++) {
+            double *result_ptr = result[i];
+            ef_x_ind_[3 * i] -= result_ptr[0];
+            ef_x_ind_[3 * i + 1] -= result_ptr[1];
+            ef_x_ind_[3 * i + 2] -= result_ptr[2];
+        }
+        // The Ewald self field due to induced dipoles
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double *e_ptr = ef_x_ind_.data();
+        for (const auto &mu : mu_) {
+            *e_ptr += slf_prefactor * mu;
+            ++e_ptr;
+        }
+    }
 
     // Induced part of phi & grads
     grad_x_ = std::vector<double>(np3, 0.0);
@@ -1131,99 +1118,99 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
-    // if (ewald_alpha_ > 0 && use_pbc_) {
-    //    // Sort the dipoles to the order helPME expects (for now)
-    //    // int fi_mon = 0;
-    //    // int fi_sites = 0;
-    //    // int fi_crd = 0;
-    //    size_t fi_mon = 0;
-    //    size_t fi_sites = 0;
-    //    size_t fi_crd = 0;
-    //    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-    //        size_t ns = sites_all_[fi_mon];
-    //        size_t nmon = mon_type_count_[mt].second;
-    //        size_t nmon2 = nmon * 2;
-    //        for (size_t m = 0; m < nmon; m++) {
-    //            size_t mns = m * ns;
-    //            size_t mns3 = mns * 3;
-    //            for (size_t i = 0; i < ns; i++) {
-    //                size_t inmon = i * nmon;
-    //                size_t inmon3 = 3 * inmon;
-    //                sys_chg_all_[fi_sites + mns + i] = chg_all_[fi_sites + m + inmon];
-    //                sys_mu_all_[fi_crd + mns3 + 3 * i] = mu_all_[inmon3 + m + fi_crd];
-    //                sys_mu_all_[fi_crd + mns3 + 3 * i + 1] = mu_all_[inmon3 + m + fi_crd + nmon];
-    //                sys_mu_all_[fi_crd + mns3 + 3 * i + 2] = mu_all_[inmon3 + m + fi_crd + nmon2];
-    //            }
-    //        }
-    //        fi_mon += nmon;
-    //        fi_sites += nmon * ns;
-    //        fi_crd += nmon * ns * 3;
-    //    }
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        // Sort the dipoles to the order helPME expects (for now)
+        // int fi_mon = 0;
+        // int fi_sites = 0;
+        // int fi_crd = 0;
+        size_t fi_mon = 0;
+        size_t fi_sites = 0;
+        size_t fi_crd = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_all_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    sys_chg_all_[fi_sites + mns + i] = chg_all_[fi_sites + m + inmon];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i] = mu_all_[inmon3 + m + fi_crd];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i + 1] = mu_all_[inmon3 + m + fi_crd + nmon];
+                    sys_mu_all_[fi_crd + mns3 + 3 * i + 2] = mu_all_[inmon3 + m + fi_crd + nmon2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
 
-    //    helpme::PMEInstance<double> pme_solver_;
-    //    if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
-    //    // Compute the reciprocal space terms, using PME
-    //    double A = box_ABCabc_[0];
-    //    double B = box_ABCabc_[1];
-    //    double C = box_ABCabc_[2];
-    //    double alpha = box_ABCabc_[3];
-    //    double beta = box_ABCabc_[4];
-    //    double gamma = box_ABCabc_[5];
-    //    int grid_A = pme_grid_density_ * A;
-    //    int grid_B = pme_grid_density_ * B;
-    //    int grid_C = pme_grid_density_ * C;
-    //    if (mpi_initialized_) {
-    //        pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
-    //                                  PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    //    } else {
-    //        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
-    //    }
-    //    pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        // Compute the reciprocal space terms, using PME
+        double A = box_ABCabc_[0];
+        double B = box_ABCabc_[1];
+        double C = box_ABCabc_[2];
+        double alpha = box_ABCabc_[3];
+        double beta = box_ABCabc_[4];
+        double gamma = box_ABCabc_[5];
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
-    //    // N.B. these do not make copies; they just wrap the memory with some metadata
-    //    auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
-    //    auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
-    //    auto dipoles = helpme::Matrix<double>(sys_mu_all_.data(), nsites_all_, 3);
-    //    auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
-    //    auto result = helpme::Matrix<double>(np, 10);
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_all_.data(), nsites_all_, 3);
+        auto points = helpme::Matrix<double>(coordinates.data(), np, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_all_.data(), nsites_all_, 3);
+        auto charges = helpme::Matrix<double>(sys_chg_all_.data(), nsites_all_, 1);
+        auto result = helpme::Matrix<double>(np, 10);
 
-    //    pme_solver_.computePRec(-1, dipoles, coords, points, 2, result);
+        pme_solver_.computePRec(-1, dipoles, coords, points, 2, result);
 
-    //    double *ptr = result[0];
+        double *ptr = result[0];
 
-    //    // Resort field from system order
-    //    fi_mon = 0;
-    //    fi_sites = 0;
-    //    fi_crd = 0;
-    //    double fac = constants::COULOMB;
-    //    size_t ns = 1;
-    //    size_t nmon = np;
-    //    for (size_t m = 0; m < nmon; m++) {
-    //        size_t mns = m * ns;
-    //        for (size_t i = 0; i < ns; i++) {
-    //            const double *result_ptr = result[fi_sites + mns + i];
-    //            const double chg = sys_chg_all_[fi_sites + mns + i];
-    //            const double *mu = &sys_mu_all_[fi_crd + 3 * mns + 3 * i];
-    //            double Phi = result_ptr[0];
-    //            // double Erec_x = result_ptr[1];
-    //            // double Erec_y = result_ptr[2];
-    //            // double Erec_z = result_ptr[3];
-    //            // double Erec_xx = result_ptr[4];
-    //            // double Erec_xy = result_ptr[5];
-    //            // double Erec_yy = result_ptr[6];
-    //            // double Erec_xz = result_ptr[7];
-    //            // double Erec_yz = result_ptr[8];
-    //            // double Erec_zz = result_ptr[9];
-    //            // double Grad_x = chg * Erec_x;
-    //            // double Grad_y = chg * Erec_y;
-    //            // double Grad_z = chg * Erec_z;
-    //            phi_x_ind_[fi_sites + i * nmon + m] += Phi;
-    //            // grad[fi_crd + 3 * mns + 3 * i] += fac * Grad_x;
-    //            // grad[fi_crd + 3 * mns + 3 * i + 1] += fac * Grad_y;
-    //            // grad[fi_crd + 3 * mns + 3 * i + 2] += fac * Grad_z;
-    //        }
-    //    }
-    //}
+        // Resort field from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        fi_crd = 0;
+        double fac = constants::COULOMB;
+        size_t ns = 1;
+        size_t nmon = np;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t mns = m * ns;
+            for (size_t i = 0; i < ns; i++) {
+                const double *result_ptr = result[fi_sites + mns + i];
+                const double chg = sys_chg_all_[fi_sites + mns + i];
+                const double *mu = &sys_mu_all_[fi_crd + 3 * mns + 3 * i];
+                double Phi = result_ptr[0];
+                // double Erec_x = result_ptr[1];
+                // double Erec_y = result_ptr[2];
+                // double Erec_z = result_ptr[3];
+                // double Erec_xx = result_ptr[4];
+                // double Erec_xy = result_ptr[5];
+                // double Erec_yy = result_ptr[6];
+                // double Erec_xz = result_ptr[7];
+                // double Erec_yz = result_ptr[8];
+                // double Erec_zz = result_ptr[9];
+                // double Grad_x = chg * Erec_x;
+                // double Grad_y = chg * Erec_y;
+                // double Grad_z = chg * Erec_z;
+                phi_x_ind_[fi_sites + i * nmon + m] += Phi;
+                // grad[fi_crd + 3 * mns + 3 * i] += fac * Grad_x;
+                // grad[fi_crd + 3 * mns + 3 * i + 1] += fac * Grad_y;
+                // grad[fi_crd + 3 * mns + 3 * i + 2] += fac * Grad_z;
+            }
+        }
+    }
 }
 
 void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad) {
