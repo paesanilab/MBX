@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
 
 # MBX
-This is the version 0.5a. This software should not be used unless the Paesani Lab has given explicit permission and specified which parts can be used. this software is still under development, and might not work as expected for situations that have not been tested.
+MBX is a C++ software that provides an interface for MD drivers, such as LAMMPS and i-PI, to perform classical and path-integral molecular dynamics simulations using our many-body potential energy functions. The current version of MBX includes the MB-pol many-body water potential, and the MB-nrg many-body potentials for neat CO2 and mixed CO2/H2O mixtures, neat CH4 and mixed CH4/H2O mixtures, and alkali-metal ions. It also includes the TTM-nrg potential for halide and alkali-metal ions in watter. MBX is periodically updated with performance improvements and the addition of other many-body potentials.
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to succesfully install the software
