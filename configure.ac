@@ -177,15 +177,15 @@ elif test "$GSLROOT" != "" ; then
 elif test "$GSL_ROOT_DIR" != "" ; then
     gsl_dir="$GSL_ROOT_DIR"
 fi
-MBX_CHECK_REQ_PACKAGE([gsl/gsl_math.h],[
-#include <gsl/gsl_math.h>
-
-int main() {
-    double a = M_SQRT3;
-    return 0;
-}
-
-],[gsl],[$gsl_dir],["GSL_HOME"])
+#MBX_CHECK_REQ_PACKAGE([gsl/gsl_math.h],[
+##include <gsl/gsl_math.h>
+#
+#int main() {
+#    double a = M_SQRT3;
+#    return 0;
+#}
+#
+#],[gsl],[$gsl_dir],["GSL_HOME"])
 
 # GSLCBLAS
 MBX_CHECK_REQ_PACKAGE([gsl/gsl_eigen.h],[
