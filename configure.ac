@@ -66,6 +66,42 @@ AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
     fi
 ])
 
+# Helper function to check if gsl library can be linked
+# MBX_CHECK_GSL_LIB(program,path_to_home,environmentVar)
+AC_DEFUN([MBX_CHECK_GSL_PACKAGE], [
+    # Check if a path to the home dir of lib has been given
+    header_file=gsl/gsl_math.h
+    if ! test $2 == none; then
+	header_file=$2/include/gsl/gsl_math.h
+        LDFLAGS="-I$2/include -L$2/lib $LDFLAGS"
+    fi
+    AC_MSG_CHECKING([whether the header gsl/gsl_math.h can be found])
+    headersgood=no
+    AC_CHECK_HEADERS($header_file,[headersgood=yes])
+
+    if test $headersgood == no; then
+        AC_CHECK_HEADERS([$header_file],[headersgood=yes])
+        if test $headersgood == no; then
+            AC_MSG_ERROR([please make sure that the library gsl is properly installed. Please define the environment variable $3 and rerun ./configure])
+        fi
+    fi
+
+    bk_LIBS="$LIBS"
+    LIBS="-lgslcblas -lgsl $LIBS"
+
+    linkinggood=no
+    AC_MSG_CHECKING([whether MBX can be linked to gsl and gslcblas])
+    AC_LINK_IFELSE([AC_LANG_SOURCE([$1])],
+          [linkinggood=yes]
+          [AC_MSG_RESULT([yes])],
+          [AC_MSG_RESULT([no])]
+    )
+
+    if test $linkinggood == no;then
+        AC_MSG_ERROR([please make sure that the library gsl is properly installed. Please define the environment variable $3 and rerun ./configure])
+    fi
+])
+
 # Helper function to see if compiler accepts a flag
 # MBX_CHECK_CXXFLAG(flag)
 # use it to check if a flag is available on this compiler
@@ -177,26 +213,17 @@ elif test "$GSLROOT" != "" ; then
 elif test "$GSL_ROOT_DIR" != "" ; then
     gsl_dir="$GSL_ROOT_DIR"
 fi
-#MBX_CHECK_REQ_PACKAGE([gsl/gsl_math.h],[
-##include <gsl/gsl_math.h>
-#
-#int main() {
-#    double a = M_SQRT3;
-#    return 0;
-#}
-#
-#],[gsl],[$gsl_dir],["GSL_HOME"])
-
-# GSLCBLAS
-MBX_CHECK_REQ_PACKAGE([gsl/gsl_eigen.h],[
+MBX_CHECK_GSL_PACKAGE([
+#include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
 
 int main() {
-    gsl_vector a;
+    double a = M_SQRT3;
+    gsl_vector av;
     return 0;
 }
 
-],[gslcblas],[$gsl_dir],["GSL_HOME"]) 
+],[$gsl_dir],["GSL_HOME"])
 
 # Add the corresponding flags to the variable FFTWFLAGS
 if test $gsl_dir != none; then
