@@ -44,7 +44,7 @@ AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
     AC_CHECK_HEADERS($header_file,[headersgood=yes])
     
     if test $headersgood == no; then
-        AC_CHECK_HEADERS($1,[headersgood=yes])
+        AC_CHECK_FILE($1,[headersgood=yes])
         if test $headersgood == no; then
             AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable $5 and rerun ./configure])
         fi
@@ -80,7 +80,7 @@ AC_DEFUN([MBX_CHECK_GSL_PACKAGE], [
     AC_CHECK_HEADERS($header_file,[headersgood=yes])
 
     if test $headersgood == no; then
-        AC_CHECK_HEADERS([$header_file],[headersgood=yes])
+        AC_CHECK_FILE([$header_file],[headersgood=yes])
         if test $headersgood == no; then
             AC_MSG_ERROR([please make sure that the library gsl is properly installed. Please define the environment variable $3 and rerun ./configure])
         fi
