@@ -46,12 +46,12 @@ To make life easier for you, a json configuration file can be used to pass all t
 The json file template is the following:
 ```
 {
-   "Note" : "This is a cofiguration file",
+   "Note" : "This is a configuration file",
    "MBX" : {
        "box" : [21.0,0.0,0.0,0.0,21.0,0.0,0.0,0.0,21.0],
        "twobody_cutoff"   : 9.0,
        "threebody_cutoff" : 7.0,
-       "dipole_tolerance" : 1E-12,
+       "dipole_tolerance" : 1E-8,
        "dipole_max_it"    : 100,
        "dipole_method"     : "cg",
        "alpha_ewald_elec" : 0.6,
