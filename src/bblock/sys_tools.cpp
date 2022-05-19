@@ -218,6 +218,9 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             } else if (mon[i] == "h2") {
                 sites.push_back(2);
                 nat.push_back(2);
+            } else if (mon[i] == "mbpbe") {
+                sites.push_back(4);
+                nat.push_back(3);
                 // =====>> BEGIN SECTION SITES <<=====
                 // ==> PASTE YOUR CODE BELOW <==
                 // END SECTION SITES
@@ -1045,6 +1048,15 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         // 14 distances
     }
 
+    if (mon == "mbpbe") {
+        exc13.insert(std::make_pair(2, 3));
+        exc13.insert(std::make_pair(1, 3));
+        exc13.insert(std::make_pair(1, 2));
+        exc12.insert(std::make_pair(0, 3));
+        exc12.insert(std::make_pair(0, 2));
+        exc12.insert(std::make_pair(0, 1));
+    }
+
     // =====>> BEGIN SECTION EXCLUDED <<=====
     // =====>> PASTE CODE BELOW <<=====
     // =====>> END SECTION EXCLUDED <<=====
@@ -1058,7 +1070,7 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
     // Intermolecular aDD is always 0.055
     double aDD = 0.055;
     // For water
-    if (mon == "h2o") {
+    if (mon == "h2o" || mon == "mbpbe") {
         if (is12) {
             aDD = 0.626;
         } else {
@@ -1127,7 +1139,7 @@ std::vector<double> ResetOrderReal3N(std::vector<double> coords, std::vector<std
 void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind) {
     size_t fstind_3 = 3 * fst_ind;
 
-    if (mon_id == "h2o") {
+    if (mon_id == "h2o" || mon_id == "mbpbe") {
         // Some useful constants
         size_t nmns = n_mon * 3;
         size_t nmns2 = nmns * 2;
@@ -1274,6 +1286,68 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
         }
         // END SECTION CHARGES
 
+    } else if (mon_id == "mbpbe") {
+        // chgtmp = M, H1, H2 according to ttm4.cpp
+        std::vector<double> chgtmp;
+        size_t fstind_3 = 3 * fst_ind;
+
+        chg_der = std::vector<double>(27 * n_mon, 0.0);
+
+        // Calculate individual monomer's charges
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            size_t ns3 = nsites * 3;
+            size_t shift = 27 * nv;
+
+            // Getting front and end of xyz vector of 1 monomer in system
+            std::vector<double> atomcoords(xyz);
+            std::vector<double> chgtmpnv((nsites - 1));
+
+            // Calculating charge
+            ps::dms_nasa(0.0, 0.0, 0.0, atomcoords.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
+                         chg_der.data() + shift);
+            // Inserting the found charges into chgtmp vector before calculating
+            // new charge values
+            chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
+        }
+
+        // Creating vector with contiguous data
+        std::vector<double> chg2(n_mon * nsites, 0.0);
+
+        // TODO Multiversioning
+        // Reorganizing sites
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                chg2[nv + i * n_mon] = chgtmp[i + nv * (nsites - 1)];
+            }
+
+            // looping over M
+            chg2[nv + 3 * n_mon] = chgtmp[nv * 3];
+        }
+
+        std::vector<double> chg2temp = chg2;
+
+        // calculating charge
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            size_t hy1 = n_mon + nv;
+            size_t hy2 = 2 * n_mon + nv;
+            size_t msite = 3 * n_mon + nv;
+
+            // Hydrogen1
+            chg2[hy1] = CHARGECON * (0.306258 + gamma21 * (0.306258 + 0.306258));
+            // Hydrogen2
+            chg2[hy2] = CHARGECON * (0.306258 + gamma21 * (0.306258 + 0.306258));
+            // M
+            chg2[msite] = CHARGECON * (-0.612537 / (1.0 - gammaM));
+        }
+
+        // TODO multiversioning
+        // Return all coordinates to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                charges[nv * nsites + j + fst_ind] = chg2[nv + n_mon * j];
+            }
+        }
         // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
         // chgtmp = M, H1, H2 according to ttm4.cpp
@@ -1452,6 +1526,28 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 1] = 0.3198;
         }
         // =====>> END SECTION POLFACS <<=====
+    } else if (mon_id == "mbpbe") {
+        // Creating vector with contiguous data
+        std::vector<double> polfac2(n_mon * nsites, 0.0);
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // Oxygen
+            polfac2[nv] = 0.7705056046539932;
+
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                polfac2[nv + i * n_mon] = 0.4364107405988837;
+            }
+            // M site
+            polfac2[nv + n_mon * 3] = 0.7705056046539932;
+        }
+
+        // TODO Multiversioning
+        // Return all polfacs to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                polfac[nv * nsites + j + fst_ind] = polfac2[nv + n_mon * j];
+            }
+        }
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
@@ -1591,6 +1687,26 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
         }
         // =====>> END SECTION POLS <<=====
 
+    } else if (mon_id == "mbpbe") {
+        // Creating vector with contiguous data
+        std::vector<double> pol2(n_mon * nsites, 0.0);
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // Oxygen
+            pol2[nv] = 0.7705056046539932;
+
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                pol2[nv + i * n_mon] = 0.4364107405988837;
+            }
+        }
+
+        // TODO Multiversioning
+        // Return all pols to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                pol[nv * nsites + j + fst_ind] = pol2[nv + n_mon * j];
+            }
+        }
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
         std::vector<double> pol2(n_mon * nsites, 0.0);
@@ -1757,6 +1873,12 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 6] = 13.402239942963767;  // O
         }
         // END SECTION C6_LONG_RANGE
+    } else if (mon_id == "mbpbe") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 13.637419110667532;  // A
+            c6_lr[nv * natoms + fst_ind] = 6.290794862336555;   // B
+            c6_lr[nv * natoms + fst_ind] = 6.290794862336555;   // B
+        }
         // Water is the only monomer which C6 does not come from qchem.
         // It comes from MB-pol (C6O = sqrt(C6OO))
     } else if (mon_id == "h2o") {
@@ -1771,7 +1893,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
 // Assuming for now xyzxyzxyz...
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const size_t fi_crd,
                                 std::vector<double> &grad) {
-    if (mon == "h2o") {
+    if (mon == "h2o" || mon == "mbpbe") {
         for (size_t i = 0; i < nmon; i++) {
             const size_t shift = fi_crd + i * 4 * 3;
             for (size_t k = 0; k < 3; ++k) {

@@ -137,6 +137,100 @@ std::vector<double> System::GetExternalChargesPositions() { return electrostatic
 
 std::vector<double> System::GetExternalChargesGradients() { return electrostaticE_.GetExternalChargesGradients(); }
 
+void System::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
+                           std::vector<double> &efd) {
+    electrostaticE_.GetPhiXAndEfX(phi, ef, phid, efd);
+}
+
+void System::GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx) {
+    electrostaticE_.GetGradAndGradX(grad, gradx);
+}
+
+void System::GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd) {
+    phi = systools::ResetOrderN(electrostaticE_.GetSysPhi(), initial_order_, first_index_, sites_);
+    efq = systools::ResetOrder3N(electrostaticE_.GetSysEfq(), initial_order_, first_index_, sites_);
+    efd = systools::ResetOrder3N(electrostaticE_.GetSysEfd(), initial_order_, first_index_, sites_);
+}
+
+// void System::Hack1EfqPhi() { electrostaticE_.Hack1EfqPhi(); }
+//
+// void System::Hack2CgIter() { electrostaticE_.Hack2CgIter(); }
+
+void System::RedistributeGradients(std::vector<double> &grad) {
+    // TODO FOr now, assuming that grad is for all sites.
+    size_t nmon = 1;
+    for (size_t i = 0; i < monomers_.size(); i++) {
+        size_t sys2inp_order = initial_order_[i].second;
+        size_t fi_crd = first_index_[sys2inp_order] * 3;
+        std::string mon = monomers_[sys2inp_order];
+        systools::RedistributeVirtGrads2Real(mon, nmon, fi_crd, grad);
+    }
+}
+
+void System::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
+    electrostaticE_.Hack3GetPotentialAtPoints(coordinates);
+}
+
+void System::SetNewParamsElec(bool do_grads) {
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+    electrostaticE_.SetDipoleTolerance(diptol_);
+    electrostaticE_.SetDipoleMaxIt(maxItDip_);
+    electrostaticE_.SetEwaldAlpha(elec_alpha_);
+    electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
+    electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
+    electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
+}
+
+double System::GetPermanentElectrostaticEnergy() { return electrostaticE_.GetPermanentElectrostaticEnergy(); }
+
+double System::GetInducedElectrostaticEnergy() { return electrostaticE_.GetInducedElectrostaticEnergy(); }
+
+void System::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
+                                                              std::vector<double> def, std::vector<double> dmui) {
+    // Make sure that the xyz of input has the right size
+    if (ef.size() != 3 * numsites_ or phi.size() != numsites_ or (def.size() != 9 * numsites_ and def.size() != 0) or
+        (dmui.size() != 9 * numsites_ and dmui.size() != 0)) {
+        std::string text =
+            "Sizes " + std::to_string(ef.size()) + " and " + std::to_string(3 * numsites_) + " don't match.";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    // Copy each coordinate in the apropriate place in the internal
+    std::vector<double> phi_ord(numsites_, 0.0), ef_ord(3 * numsites_, 0.0), def_ord(def.size(), 0.0),
+        dmui_ord(def.size(), 0.0);
+    for (size_t i = 0; i < sites_.size(); i++) {
+        size_t ini = 3 * initial_order_[i].second;
+        size_t fin = ini + 3 * sites_[i];
+        size_t ini_new = 3 * first_index_[i];
+        std::copy(ef.begin() + ini, ef.begin() + fin, ef_ord.begin() + ini_new);
+    }
+    for (size_t i = 0; i < sites_.size(); i++) {
+        size_t ini = initial_order_[i].second;
+        size_t fin = ini + sites_[i];
+        size_t ini_new = first_index_[i];
+        std::copy(phi.begin() + ini, phi.begin() + fin, phi_ord.begin() + ini_new);
+    }
+    if (def.size() != 0) {
+        for (size_t i = 0; i < sites_.size(); i++) {
+            size_t ini = 9 * initial_order_[i].second;
+            size_t fin = ini + 9 * sites_[i];
+            size_t ini_new = 9 * first_index_[i];
+            std::copy(def.begin() + ini, def.begin() + fin, def_ord.begin() + ini_new);
+        }
+    }
+
+    if (dmui.size() != 0) {
+        for (size_t i = 0; i < sites_.size(); i++) {
+            size_t ini = 9 * initial_order_[i].second;
+            size_t fin = ini + 9 * sites_[i];
+            size_t ini_new = 9 * first_index_[i];
+            std::copy(dmui.begin() + ini, dmui.begin() + fin, dmui_ord.begin() + ini_new);
+        }
+    }
+
+    electrostaticE_.SetExternalElectrostaticPotentialAndFieldInSites(phi_ord, ef_ord, def_ord, dmui_ord);
+}
+
 void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
     electrostaticE_.SetExternalChargesAndPositions(chg, xyz);
 }

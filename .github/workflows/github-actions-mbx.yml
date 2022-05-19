@@ -27,33 +27,29 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y fftw3-dev
+          sudo apt-get install libgsl-dev
           sudo apt-get install lcov -y
+          sudo apt-get install autoconf -y
 
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
 
-      - name: run-cmake
+      - name: run-install
         run: |
           ls ${{ github.workspace }}
-          rm -rf build install
-          cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_OPENMP=False -DCMAKE_COMPILE_TESTS=TRUE -DCMAKE_CXX_FLAGS=" -fPIC --coverage -O0 -Wall -ftree-vectorize -ftree-vectorizer-verbose=2" -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -H. -Bbuild
-
-      - name: run-make
-        run: |
-          cd build
-          make -j 2 CXX=g++ CC=gcc
+          rm -rf install
+          autoreconf -fi
+          ./configure --disable-optimization --enable-coverage
           make install
-          cd ../
+
       - run: echo "This job's status is ${{ job.status }}."
 
       - run: echo "Running unittests"
       - run: ls ${{ github.workspace }}
-      - name: ctest
-        run: |
-          cd ${{ github.workspace }}/install/bin/unittests
-          ctest --output-on-failure
+      - name: unittests
+        run: make check
 
       - name: Submit to codecov.io
         run: |

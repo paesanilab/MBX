@@ -1,3 +1,4 @@
+#if defined HAVE_MPI && HAVE_MPI > 0
 #include <mpi.h>
 #include <vector>
 #include <iostream>
@@ -89,3 +90,4 @@ int main(){
 
     return 0;
 }
+#endif // HAVE_MPI==1
