@@ -5,9 +5,9 @@ OBJ_INSTALL = ../obj
 LIB_INSTALL = ../lib
 BIN_INSTALL = ../bin
 
-LIBS_LIB = -lmbxlib -fopenmp -lfftw3
-LIBS = -lmbxlib -fopenmp -lfftw3 -lrsc
-LIBDIR = -L$(MBX_HOME)/install/lib/static -L$(LIB_INSTALL) -L$(FFTWHOME)/lib
+LIBS_LIB = -lmbx -fopenmp -lfftw3
+LIBS = -lmbx -fopenmp -lfftw3 -lrsc
+LIBDIR = -L$(MBX_HOME)/install/lib -L$(LIB_INSTALL) -L$(FFTWHOME)/lib
 
 INCLUDEDIR = -I$(MBX_HOME)/install/include -I$(FFTWHOME)/include
 
