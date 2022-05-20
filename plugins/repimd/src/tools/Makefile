@@ -1,7 +1,7 @@
 MPICXX=mpiicpc
 CXXFLAGS= -Wall -std=c++11  -O2
 
-LIBS = -lmbx -fopenmp -lfftw3
+LIBS = $(MBX_HOME)/install/lib/libmbx.a -fopenmp -lfftw3
 LIBDIR = -L$(MBX_HOME)/install/lib
 
 INCLUDEDIR = -I$(MBX_HOME)/install/include 
