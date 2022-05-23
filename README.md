@@ -3,7 +3,7 @@
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
 # MBX v0.7
-MBX is a C++ software that provides an interface for MD drivers, such as LAMMPS and i-PI, to perform classical and path-integral molecular dynamics simulations using our many-body potential energy functions. The current version of MBX includes the MB-pol many-body water potential (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg many-body potentials for neat CO2 and mixed CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and mixed CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). MBX also includes the TTM-nrg potentials for the halide (https://doi.org/10.1021/acs.jpcb.5b09562) and alkali-metal (https://doi.org/10.1039/C6CP02553F) ions in water. The MB-nrg many-body potentials for the halide (https://doi.org/10.1021/acs.jctc.6b00302) and alkali-metal (https://doi.org/10.1063/1.4993213) ions in water will become available in the next release of MBX. For more details about the MB-pol, MB-nrg, and TTM-nrg potentials in MBX please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
+MBX is a C++ software that provides an interface for MD drivers, such as LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org), to perform classical and path-integral molecular dynamics simulations using our many-body potential energy functions. The current version of MBX includes the MB-pol many-body water potential (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg many-body potentials for neat CO2 and mixed CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and mixed CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). MBX also includes the TTM-nrg potentials for the halide (https://doi.org/10.1021/acs.jpcb.5b09562) and alkali-metal (https://doi.org/10.1039/C6CP02553F) ions in water. The MB-nrg many-body potentials for the halide (https://doi.org/10.1021/acs.jctc.6b00302) and alkali-metal (https://doi.org/10.1063/1.4993213) ions in water will become available in the next release of MBX. For more details about the MB-pol, MB-nrg, and TTM-nrg potentials in MBX please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
 MBX is periodically updated with performance improvements and the addition of other many-body potentials. For any questions about MBX, installation issues, or general usage inquiries please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
@@ -112,35 +112,6 @@ export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 Note that for these interfaces to work, they need the dynamic library of MBX.
 You may need to rerun the `configure` script with the --enable-shared option.
 
-### i-pi
-This software is already interfaced with i-pi. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-pi first. Please go to [the i-pi github page](https://github.com/i-pi/i-pi) and clone and follow the instructions to install i-pi. Before continuing with this, make sure i-pi is working. If you have any problems with the i-pi installation, you can ask a question in [the i-pi-user forum](https://groups.google.com/forum/#!forum/ipi-users). However, there is no need to install anything in i-pi. Just have it on your computer, so if you want skip the testing (PROCEED AT YOUR OWN RISK), you can skip testing i-pi and assume it works.
-
-After making sure that i-pi is working on yor machine:
-```
-cd plugins/i-pi/src/main/
-make
-```
-
-A new file will be generated in `../../bin/`, called `driver`. Now we can run MD using i-pi. Go to the i-pi test folder in MBX:
-```
-cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/1-nvt
-```
-
-This folder contains 5 files:
-- `config.nrg` is the energy software input. It needs to be in this same format. If you have more water molecules, just add the `MOLECULE` and `MONOMER` sections, add the OHH coordinates, and end the sections with ENDMON and ENDMOL.
-- `config.xyz` is the input for the coordinates for i-pi. The two files, `nrg` and `xyz`, should have exactly the same order, but the coordinates in the nrg file are not required to be the same as the ones in the XYZ file. XYZ will overwrite NRG.
-- `config.xml` is the i-pi input file. This simulation will run an NVT MD at 100K. Refer to the i-pi user manual for more information.
-- `mbx.json` is the MBX configuration file
-- `run_i-pi.sh` will run the test. Make sure you sourced the env.sh in the i-pi folder before running the test, or most likely it will fail.
-
-These should initialize i-pi and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve`.
-```
-cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve
-cp ../1-nvt/RESTART ./config.xml
-./run_i-pi.sh
-```
-
-There are other tests for other type of simulations, including condensed phase simulations and replica-exchange simulations. For more information about whatk kind of simulations can i-pi run, please refer to the i-pi user manual.
 
 ### LAMMPS
 First of all you will need to download LAMMPS from their webpage (https://lammps.sandia.gov/download.html). It is recommended to just clone the repo from github (see the webpage).
@@ -174,15 +145,33 @@ After this, a new executable `lmp_mpi_mbx` in `src` should apear, and that is th
 Further doucmentation will follow up. For now, look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. 
 
 
+### i-pi
+This software is already interfaced with i-pi. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-pi first. Please go to [the i-pi github page](https://github.com/i-pi/i-pi) and clone and follow the instructions to install i-pi. Before continuing with this, make sure i-pi is working. If you have any problems with the i-pi installation, you can ask a question in [the i-pi-user forum](https://groups.google.com/forum/#!forum/ipi-users). However, there is no need to install anything in i-pi. Just have it on your computer, so if you want skip the testing (PROCEED AT YOUR OWN RISK), you can skip testing i-pi and assume it works.
 
+After making sure that i-pi is working on yor machine:
+```
+cd plugins/i-pi/src/main/
+make
+```
 
+A new file will be generated in `../../bin/`, called `driver`. Now we can run MD using i-pi. Go to the i-pi test folder in MBX:
+```
+cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/1-nvt
+```
 
+This folder contains 5 files:
+- `config.nrg` is the energy software input. It needs to be in this same format. If you have more water molecules, just add the `MOLECULE` and `MONOMER` sections, add the OHH coordinates, and end the sections with ENDMON and ENDMOL.
+- `config.xyz` is the input for the coordinates for i-pi. The two files, `nrg` and `xyz`, should have exactly the same order, but the coordinates in the nrg file are not required to be the same as the ones in the XYZ file. XYZ will overwrite NRG.
+- `config.xml` is the i-pi input file. This simulation will run an NVT MD at 100K. Refer to the i-pi user manual for more information.
+- `mbx.json` is the MBX configuration file
+- `run_i-pi.sh` will run the test. Make sure you sourced the env.sh in the i-pi folder before running the test, or most likely it will fail.
 
+These should initialize i-pi and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve`.
+```
+cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve
+cp ../1-nvt/RESTART ./config.xml
+./run_i-pi.sh
+```
 
-
-
-
-
-
-
+There are other tests for other type of simulations, including condensed phase simulations and replica-exchange simulations. For more information about what kind of simulations can i-pi run, please refer to the i-pi user manual.
 
