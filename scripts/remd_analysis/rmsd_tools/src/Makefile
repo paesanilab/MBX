@@ -1,13 +1,14 @@
 CXX=icpc
-CXXFLAGS= -Wall -std=c++11  -g
+CXXFLAGS= -Wall -std=c++11  -g 
 
 OBJ_INSTALL = ../obj
 LIB_INSTALL = ../lib
 BIN_INSTALL = ../bin
 
-LIBS_LIB = -lmbxlib -fopenmp -lfftw3
-LIBS = -lmbxlib -fopenmp -lfftw3 -lrsc
-LIBDIR = -L$(MBX_HOME)/install/lib/static -L$(LIB_INSTALL) -L$(FFTWHOME)/lib
+LIBS_LIB = -fopenmp -lfftw3
+LIBS = -fopenmp -lfftw3 -lrsc
+MBXLIB = $(MBX_HOME)/install/lib/libmbx.a
+LIBDIR = -L$(MBX_HOME)/install/lib/ -L$(LIB_INSTALL) -L$(FFTWHOME)/lib
 
 INCLUDEDIR = -I$(MBX_HOME)/install/include -I$(FFTWHOME)/include
 
@@ -15,7 +16,7 @@ AR = /usr/bin/ar
 
 RSC_OBJ = json_tools.o rmsd_tools.o rmsd.o
 
-all: librsc.a rsc pops
+all: librsc.a rsc pops double_pops
 
 librsc.a: $(addprefix $(OBJ_INSTALL)/, $(RSC_OBJ))
 	echo $(INCLUDEDIR)
@@ -24,12 +25,16 @@ librsc.a: $(addprefix $(OBJ_INSTALL)/, $(RSC_OBJ))
 	mv librsc.a $(LIB_INSTALL)
 
 rsc: rsc.cpp $(BIN_INSTALL)/.sentinel
-	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) rsc.cpp $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) rsc.cpp $(MBXLIB) $(LIBS) -o $@
 	mv rsc $(BIN_INSTALL)/rsc
 
 pops: pops.cpp $(BIN_INSTALL)/.sentinel
-	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) pops.cpp $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) pops.cpp $(MBXLIB) $(LIBS) -o $@
 	mv pops $(BIN_INSTALL)/pops
+
+double_pops: double_pop.cpp $(BIN_INSTALL)/.sentinel
+	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) double_pop.cpp $(MBXLIB) $(LIBS) -o $@
+	mv double_pops $(BIN_INSTALL)/double_pops
 
 $(OBJ_INSTALL)/%.o: %.cpp $(OBJ_INSTALL)/.sentinel
 	$(CXX) $(CXXFLAGS) $(INCLUDEDIR) $(LIBDIR) -c $< $(LIBS) -o $@

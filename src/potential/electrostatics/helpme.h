@@ -3823,9 +3823,15 @@ class PMEInstance {
                 auto fullSplineModC = spline.invSplineModuli(gridDimensionC_);
 
                 scaledRecVecs_ = recVecs_.clone();
-                scaledRecVecs_.row(0) *= gridDimensionA_;
-                scaledRecVecs_.row(1) *= gridDimensionB_;
-                scaledRecVecs_.row(2) *= gridDimensionC_;
+                scaledRecVecs_[0][0] *= gridDimensionA_;
+                scaledRecVecs_[0][1] *= gridDimensionB_;
+                scaledRecVecs_[0][2] *= gridDimensionC_;
+                scaledRecVecs_[1][0] *= gridDimensionA_;
+                scaledRecVecs_[1][1] *= gridDimensionB_;
+                scaledRecVecs_[1][2] *= gridDimensionC_;
+                scaledRecVecs_[2][0] *= gridDimensionA_;
+                scaledRecVecs_[2][1] *= gridDimensionB_;
+                scaledRecVecs_[2][2] *= gridDimensionC_;
 
                 splineModA_.resize(myNumKSumTermsA_);
                 splineModB_.resize(myNumKSumTermsB_);
@@ -4128,9 +4134,15 @@ class PMEInstance {
             }
             recVecs_ = boxVecs_.inverse();
             scaledRecVecs_ = recVecs_.clone();
-            scaledRecVecs_.row(0) *= gridDimensionA_;
-            scaledRecVecs_.row(1) *= gridDimensionB_;
-            scaledRecVecs_.row(2) *= gridDimensionC_;
+            scaledRecVecs_[0][0] *= gridDimensionA_;
+            scaledRecVecs_[0][1] *= gridDimensionB_;
+            scaledRecVecs_[0][2] *= gridDimensionC_;
+            scaledRecVecs_[1][0] *= gridDimensionA_;
+            scaledRecVecs_[1][1] *= gridDimensionB_;
+            scaledRecVecs_[1][2] *= gridDimensionC_;
+            scaledRecVecs_[2][0] *= gridDimensionA_;
+            scaledRecVecs_[2][1] *= gridDimensionB_;
+            scaledRecVecs_[2][2] *= gridDimensionC_;
             cellA_ = A;
             cellB_ = B;
             cellC_ = C;

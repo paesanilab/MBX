@@ -183,8 +183,8 @@ class FixMBX : public Fix {
 
     void mbx_get_dipoles_local();
 
-    int get_num_atoms_per_monomer(char *);
-    int get_include_monomer(char *, int, bool &);
+    int get_num_atoms_per_monomer(char *, bool &);
+    int get_include_monomer(char *, int, bool &, bool &);
     void add_monomer_atom_types(char *, std::vector<std::string> &);
 
     virtual int pack_forward_comm(int, int *, double *, int, int *);

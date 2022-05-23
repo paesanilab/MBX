@@ -110,7 +110,7 @@ double Repulsion(const double a, const double b, const double* p1, const double*
  */
 bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2,
                    std::vector<std::pair<std::string, std::string> > buck_pairs, double& out_a, double& out_b,
-                   nlohmann::json repdisp_j = {});
+                   const nlohmann::json& repdisp_j = {});
 
 }  // namespace buck
 

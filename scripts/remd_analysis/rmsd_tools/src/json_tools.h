@@ -7,6 +7,7 @@
 namespace rmsd_tools {
 nlohmann::json SetUpRscFromJson(char *json_file = 0);
 nlohmann::json SetUpPopsFromJson(char *json_file = 0);
+nlohmann::json SetUpFromJson(char *json_file = 0);
 
 }  // namespace rmsd_tools
 

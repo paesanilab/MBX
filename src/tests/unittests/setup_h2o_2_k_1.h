@@ -45,9 +45,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     double total_energy = -2.7692427010e+01;                                                                          \
     double total_energy_ttm = -2.7490168845e+01;                                                                      \
     const int n_monomers = 3;                                                                                         \
-    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"k", "h2o"}};                                      \
-    std::vector<std::vector<std::string>> ignore_2b = {{"k", "h2o"}};                                                 \
-    std::vector<std::vector<std::string>> ignore_3b = {{"k", "h2o", "h2o"}};                                          \
+    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"k+", "h2o"}};                                      \
+    std::vector<std::vector<std::string>> ignore_2b = {{"k+", "h2o"}};                                                 \
+    std::vector<std::vector<std::string>> ignore_3b = {{"k+", "h2o", "h2o"}};                                          \
     std::vector<double> coords{1.5980544090e-08,  5.3083405620e-08,  -4.0769717940e-08, 8.7887527370e-02,             \
                                -2.0220321020e+00, -2.0329422940e+00, 2.6040558380e-01,  -2.3586724350e+00,            \
                                -2.9133890250e+00, -2.4761302750e-01, -2.7638337240e+00, -1.5163609540e+00,            \
@@ -62,7 +62,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                     -3.8966250020e+00, 4.8017063390e-01,  -3.8249819440e-01, -4.2501894050e+00,       \
                                     8.9312177110e-01};                                                                \
     std::vector<std::string> atom_names{"K", "O", "H", "H", "O", "H", "H"};                                           \
-    std::vector<std::string> monomer_names = {"k", "h2o", "h2o"};                                                     \
+    std::vector<std::string> monomer_names = {"k+", "h2o", "h2o"};                                                     \
     std::vector<size_t> n_atoms_vector = {1, 3, 3};                                                                   \
     std::vector<size_t> n_sites_vector = {1, 4, 4};                                                                   \
     std::vector<size_t> first_index = {0, 1, 5};                                                                      \
@@ -85,9 +85,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                      0.0000000000e+00, 5.7555409696e-01, 5.7555409698e-01};                           \
     std::vector<double> C6_long_range{3.7631363500e+01, 1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00,         \
                                       1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00};                          \
-    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"k", 1}, {"h2o", 2}};                        \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"k+", 1}, {"h2o", 2}};                        \
     std::vector<size_t> internal_original_to_current_order{0, 1, 2};                                                  \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}, {1, 1}, {2, 5}};                            \
     std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}, {1, 1}, {2, 4}};                 \
-    std::vector<std::string> internal_monomer_names{"k", "h2o", "h2o"};
+    std::vector<std::string> internal_monomer_names{"k+", "h2o", "h2o"};
 #endif

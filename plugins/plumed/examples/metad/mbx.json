@@ -18,7 +18,7 @@
        "spline_order_disp" : 6,
        "ttm_pairs" : [],
        "ignore_2b_poly" : [],
-       "ignore_3b_poly" : [["cl","h2o","h2o"]]
+       "ignore_3b_poly" : [["cl-","h2o","h2o"]]
    } ,  
    "i-pi" : {
        "port" : 34567,

@@ -80,7 +80,7 @@ enum {
     ELE_COMM_REV,
     ELE_COMM_FORSET,
     ELE_COMM_FOR,
-    
+
     ELE_PME_SETUP,
     ELE_PME_PRC,
     ELE_PME_PRD,
@@ -303,6 +303,24 @@ class Electrostatics {
     std::vector<double> GetPermanentDipoles();
     std::vector<double> GetMolecularInducedDipoles();
     std::vector<double> GetMolecularPermanentDipoles();
+
+    void CalculateOneCgDipoleIter();
+    void Hack1EfqPhi();
+    void Hack2CgIter();
+    void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+    void CalculateInducedGradientsExternal(std::vector<double> &grad);
+
+    // Grad is the grad_ variable (MBX system) and gradx will be the gradients in the external
+    void GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx);
+    void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
+                       std::vector<double> &efd);
+    void UpdatePhiAndEf();
+    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
+                                                          std::vector<double> def, std::vector<double> dmui);
+
+    std::vector<double> GetSysPhi();
+    std::vector<double> GetSysEfq();
+    std::vector<double> GetSysEfd();
 
     /**
      * @brief Returns induced electrostatic energy.
@@ -752,6 +770,18 @@ class Electrostatics {
     std::vector<double> sys_grad_all_;
 
     std::vector<std::pair<std::string, size_t>> mon_type_count_all_;
+
+    std::vector<double> external_phi_;
+    std::vector<double> external_ef_;
+    std::vector<double> external_def_;
+    std::vector<double> external_dmui_;
+
+    std::vector<double> phi_x_;
+    std::vector<double> ef_x_;
+    std::vector<double> grad_x_;
+    std::vector<double> phi_x_ind_;
+    std::vector<double> ef_x_ind_;
+    std::vector<double> grad_x_ind_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

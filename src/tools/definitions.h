@@ -42,7 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
-static const double EMAX1B = 60.0;
+static const double EMAX1B = 100000.0;
 static const double EPSILON = 1E-50;
 static const double pi = M_PI;
 

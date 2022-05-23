@@ -50,6 +50,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_v1.h"
 #include "potential/3b/mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.h"
 #include "potential/3b/mbnrg_3b_A1B2C4_D1E2_D1E2_deg3_v1.h"
+#include "potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_vmbpbe.h"
 // =====>> END SECTION INCLUDE3B <<=====
 /**
  * @file energy3b.h

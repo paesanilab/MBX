@@ -192,6 +192,39 @@ void Buckingham::SetNewParameters(const std::vector<double> &xyz,
 
     ReorderData();
 
+    // Put C6 and D6 in a vector
+    size_t fi1 = 0;
+    size_t fi2 = 0;
+    size_t nmt = mon_type_count_.size();
+    use_buck_all_ = std::vector<bool>(nmt * nmt);
+    a_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    b_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    for (size_t mt1 = 0; mt1 < nmt; mt1++) {
+        size_t ns1 = num_atoms_[fi1];
+        fi2 = 0;
+        for (size_t mt2 = 0; mt2 < nmt; mt2++) {
+            size_t ns2 = num_atoms_[fi2];
+            std::vector<double> av(ns1 * ns2), bv(ns1 * ns2);
+
+            for (size_t i = 0; i < ns1; i++) {
+                for (size_t j = 0; j < ns2; j++) {
+                    double a = 0.0;
+                    double b = 0.0;
+                    bool do_buck = GetBuckParams(mon_id_[fi1], mon_id_[fi2], i, j, buck_pairs_, a, b, repdisp_j_);
+                    if (i == 0 && j == 0) {
+                        use_buck_all_[nmt * mt1 + mt2] = do_buck;
+                    }
+                    av[ns2 * i + j] = a;
+                    bv[ns2 * i + j] = b;
+                }
+            }
+            a_all_[nmt * mt1 + mt2] = av;
+            b_all_[nmt * mt1 + mt2] = bv;
+            fi2 += mon_type_count_[mt2].second;
+        }
+        fi1 += mon_type_count_[mt1].second;
+    }
+
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
@@ -260,7 +293,7 @@ double Buckingham::GetRepulsion(std::vector<double> &grad, std::vector<double> *
     std::fill(virial_.begin(), virial_.end(), 0.0);
 
     CalculateRepulsion(use_ghost);
-    CalculateEnforcedRepulsion(use_ghost);
+    if (force_ttm_for_idx_.size() > 0) CalculateEnforcedRepulsion(use_ghost);
 
     if (calc_virial_) {
         (*virial)[0] += virial_[0];
@@ -354,7 +387,7 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
         // Check if buckingham needs to be done. Otherwise, skip.
         double dummy_a;
         double dummy_b;
-        bool do_buck = GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, buck_pairs_, dummy_a, dummy_b, repdisp_j_);
+        bool do_buck = use_buck_all_[mt * mon_type_count_.size() + mt];
         if (do_buck) {
             // Obtain excluded pairs for monomer type mt
             systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
@@ -377,7 +410,8 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
                     if (is_excluded) continue;
 
                     double a, b;
-                    GetBuckParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, buck_pairs_, a, b, repdisp_j_);
+                    a = a_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                    b = b_all_[mt * mon_type_count_.size() + mt][i * ns + j];
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -452,10 +486,7 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
 
-            double dummy_a;
-            double dummy_b;
-            bool do_buck =
-                GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, buck_pairs_, dummy_a, dummy_b, repdisp_j_);
+            bool do_buck = use_buck_all_[mt1 * mon_type_count_.size() + mt2];
             if (do_buck) {
                 // Check if monomer types 1 and 2 are the same
                 // If so, same monomer won't be done, since it has been done in
@@ -486,7 +517,8 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
 
                         for (size_t j = 0; j < ns2; j++) {
                             double a, b;
-                            GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs_, a, b, repdisp_j_);
+                            a = a_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                            b = b_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                             energy_pool[rank] += Repulsion(a, b, xyz_sitei.data(), xyz_.data() + fi_crd2, g1.data(),
                                                            grad2_pool[rank].data(), nmon1, nmon2, m2init, nmon2, i, j,
                                                            do_grads_, cutoff_, box_, box_inverse_, use_ghost, islocal_,
@@ -564,8 +596,7 @@ void Buckingham::CalculateEnforcedRepulsion(bool use_ghost) {
 
             double dummy_a;
             double dummy_b;
-            bool do_buck =
-                GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, buck_pairs_, dummy_a, dummy_b, repdisp_j_);
+            bool do_buck = use_buck_all_[mt1 * mon_type_count_.size() + mt2];
             if (!do_buck) {
                 // Check if monomer types 1 and 2 are the same
                 // If so, same monomer won't be done, since it has been done in
@@ -602,7 +633,8 @@ void Buckingham::CalculateEnforcedRepulsion(bool use_ghost) {
                             std::make_pair(mon_id_[fi_mon2], mon_id_[fi_mon1])};
                         for (size_t j = 0; j < ns2; j++) {
                             double a, b;
-                            GetBuckParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, buck_pairs, a, b, repdisp_j_);
+                            a = a_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                            b = b_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                             for (size_t m2 = m2init; m2 < nmon2; m2++) {
                                 size_t mon2_idx = fi_mon2 + m2;
                                 bool do_mon2 = (std::find(force_ttm_for_idx_.begin(), force_ttm_for_idx_.end(),
