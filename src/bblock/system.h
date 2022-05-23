@@ -146,8 +146,6 @@ class System {
      */
     std::vector<size_t> GetMonNumAt();
 
-    // FIXME As for today, these functions are not used. // MRR 20191022
-    // Will need to activate them and use them whenever we need them for MB-Spec
     /**
      * Gets the molecular dipoles for the system.
      * @param[out] mu_perm Permanent dipole moments
@@ -291,6 +289,12 @@ class System {
     std::vector<double> GetRealCharges();
 
     /**
+     * Gets the C6 long range params
+     * @return Gets the C6 long range params
+     */
+    std::vector<double> GetRealC6lr();
+
+    /**
      * Gets the polarizabilities of the system.
      * It includes the charges of ALL sites,
      * including the virtual sites such as the M-sites
@@ -422,6 +426,12 @@ class System {
      * @return Box in system
      */
     std::vector<double> GetBox();
+
+    /**
+     * Gets the box in ABCabc format
+     * @return Box in ABCabc format
+     */
+    std::vector<double> GetBoxABCabc();
 
     /**
      * Gets the maximum number of monomers per chunk in polynomial evaluation
@@ -570,6 +580,22 @@ class System {
      */
     void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
                                         std::vector<int> tag);
+
+    void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
+                       std::vector<double> &efd);
+    void GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx);
+    void SetNewParamsElec(bool do_grads);
+    void Hack1EfqPhi();
+    void Hack2CgIter();
+    void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
+                                                          std::vector<double> def = {}, std::vector<double> dmui = {});
+    void GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd);
+
+    void RedistributeGradients(std::vector<double> &grad);
+
+    double GetPermanentElectrostaticEnergy();
+    double GetInducedElectrostaticEnergy();
 
     /**
      * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
@@ -1074,7 +1100,8 @@ class System {
      * @param[in] istart Minimum index of i
      * @param[in] iend Maximum index (iend not included) of index i
      */
-    void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
+    // void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
+    void AddClusters(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost = false);
 
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -1087,7 +1114,9 @@ class System {
      * @param[in] iend Maximum index (iend not included) of index i
      * @return Vector of size_t with dimention nclusters * nmax
      */
-    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+    // std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+    //                                        bool use_ghost = false);
+    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, std::vector<size_t> idxs,
                                             bool use_ghost = false);
 
     /**
@@ -1605,7 +1634,7 @@ class System {
 
     /**
      * Input order of monomers <monomer, site first index>. The position i of this
-     * vector contains a pair with the position of monomer "i" in the internal
+     * vector contains a pair with the position of monomer "i-" in the internal
      * order when it was inputed in the system. The second index of the pair
      * is the first index of that monomer in the input order.
      */
@@ -1613,7 +1642,7 @@ class System {
 
     /**
      * Input order of monomers <monomer, site first index>. The position i of this
-     * vector contains a pair with the position of monomer "i" in the internal
+     * vector contains a pair with the position of monomer "i-" in the internal
      * order when it was inputed in the system. The second index of the pair
      * is the first index of that monomer in the input order, but taking
      * into account only real sites.
@@ -1681,6 +1710,11 @@ class System {
     std::vector<int> grid_fftdim_elec_;
     std::vector<int> grid_fftdim_disp_;
     std::vector<int> grid_fftdim_lj_;
+
+    /**
+     * Auxiliary tag counter
+     */
+    int tag_counter_;
 
     /**
      * States if the initialization is PME only or not"

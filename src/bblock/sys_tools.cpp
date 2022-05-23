@@ -171,8 +171,10 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 sites.push_back(4);
                 nat.push_back(3);
 
-                // =====>> BEGIN SECTION SITES <<=====
-                // ==> PASTE YOUR CODE BELOW <==
+            } else if (mon[i] == "dp2") {
+                sites.push_back(2);
+                nat.push_back(2);
+
             } else if (mon[i] == "dp1") {
                 sites.push_back(1);
                 nat.push_back(1);
@@ -208,14 +210,19 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 nat.push_back(1);
 
                 // Halides and alkali metal ions
-            } else if (mon[i] == "f" || mon[i] == "cl" ||                                      // Halides
-                       mon[i] == "br" || mon[i] == "i" || mon[i] == "li" || mon[i] == "na" ||  // Alkali metal ions
-                       mon[i] == "k" || mon[i] == "rb" || mon[i] == "cs") {
+            } else if (mon[i] == "f-" || mon[i] == "cl-" ||                                        // Halides
+                       mon[i] == "br-" || mon[i] == "i-" || mon[i] == "li+" || mon[i] == "na+" ||  // Alkali metal ions
+                       mon[i] == "k+" || mon[i] == "rb+" || mon[i] == "cs+") {
                 sites.push_back(1);
                 nat.push_back(1);
             } else if (mon[i] == "h2") {
                 sites.push_back(2);
                 nat.push_back(2);
+            } else if (mon[i] == "mbpbe") {
+                sites.push_back(4);
+                nat.push_back(3);
+                // =====>> BEGIN SECTION SITES <<=====
+                // ==> PASTE YOUR CODE BELOW <==
                 // END SECTION SITES
             } else {
                 // If monomer not found, throw exception
@@ -422,10 +429,10 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
 
 bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { return a.first < b.first; }
 
-void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
+void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
-                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
-                 std::vector<size_t> &trimers, bool use_ghost) {
+                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
+                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost) {
     // istart is the monomer position for which we will look all dimers and
     // trimers that contain it. iend is the last monomer position.
     // This means, if istart is 0 and iend is 2, we will look for all dimers
@@ -451,48 +458,22 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
 
     // if first monomer is ghost and we're not computing local-ghost interactions, then skip
 
-    if (!use_ghost && !is_local[istart]) return;
+    // if (!use_ghost && !is_local[istart]) return;
 
     // Obtain xyz vector with the positions of first atom of each monomer
     std::vector<double> xyz;
+    // std::vector<double> xyz;
     size_t nmon2 = 0;
 
     std::vector<size_t> mon_index;
-    for (size_t i = istart; i < nmon; i++) {
-        size_t islsum = is_local[istart] + is_local[i];
-
-        bool include_monomer = false;
-        if (n_max == 2) {
-            if (i == istart) {
-                if (use_ghost)
-                    include_monomer = true;
-                else if (!use_ghost && islsum == 2)
-                    include_monomer = true;
-            } else {
-                if (use_ghost && islsum == 1)
-                    include_monomer = true;
-                else if (!use_ghost && islsum == 2)
-                    include_monomer = true;
-            }
-        } else {  // trimer
-            if (i == istart) {
-                if (use_ghost)
-                    include_monomer = true;
-                else if (!use_ghost && islsum == 2)
-                    include_monomer = true;
-            } else {
-                if (use_ghost)
-                    include_monomer = true;
-                else if (!use_ghost && islsum == 2)
-                    include_monomer = true;
-            }
-        }
-
-        if (include_monomer) {
+    std::vector<size_t> tag_index;
+    for (size_t i = 0; i < nmon; i++) {
+        if (use_ghost || (!use_ghost && is_local[i])) {
             xyz.push_back(xyz_orig[3 * first_index[i]]);
             xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
             xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
             mon_index.push_back(i);
+            tag_index.push_back(tag[first_index[i]]);
             nmon2++;
         }
     }
@@ -512,7 +493,9 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
 
     std::vector<size_t> idone;
     std::set<std::pair<size_t, size_t>> donej;
-    for (size_t i = 0; i < iend - istart; i++) {
+    for (size_t ii = 0; ii < idxs.size(); ii++) {
+        size_t i = idxs[ii];
+        if (!use_ghost && !is_local[i]) continue;
         // Define the query point
         double point[3];
         point[0] = ptc.pts[i].x;
@@ -543,11 +526,22 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                     // ghost-local == 1 for all permutations
                     // local-local == 2
 
-                    size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
+                    // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
 
                     bool include_dimer = false;
-                    if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
-                    if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
+                    // if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
+                    // if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
+                    size_t tag1 = tag_index[i];
+                    size_t tag2 = tag_index[ret_matches[j].first];
+                    size_t tagmin = tag1;
+                    size_t idxmin = mon_index[i];
+
+                    if (tagmin > tag2) {
+                        tagmin = tag2;
+                        idxmin = mon_index[ret_matches[j].first];
+                    }
+
+                    if (is_local[idxmin] == 1) include_dimer = true;
 
                     if (include_dimer) {
                         dimers.push_back(mon_index[i]);
@@ -567,12 +561,29 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                                 // ghost-ghost-local == 1 for all permutations
                                 // ghost-local-local == 2 for all permutations
                                 // local-local-local == 3
-                                size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
-                                                is_local[mon_index[ret_matches[k].first]];
+                                // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
+                                //                is_local[mon_index[ret_matches[k].first]];
 
                                 bool include_trimer = false;
-                                if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-                                if (!use_ghost && islsum == 3) include_trimer = true;
+                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+                                // if (!use_ghost && islsum == 3) include_trimer = true;
+                                size_t tag1 = tag_index[i];
+                                size_t tag2 = tag_index[ret_matches[j].first];
+                                size_t tag3 = tag_index[ret_matches[k].first];
+                                size_t tagmin = tag1;
+                                size_t idxmin = mon_index[i];
+
+                                if (tagmin > tag2) {
+                                    tagmin = tag2;
+                                    idxmin = mon_index[ret_matches[j].first];
+                                }
+
+                                if (tagmin > tag3) {
+                                    tagmin = tag3;
+                                    idxmin = mon_index[ret_matches[k].first];
+                                }
+
+                                if (is_local[idxmin] == 1) include_trimer = true;
 
                                 if (include_trimer) {
                                     trimers.push_back(mon_index[i]);
@@ -617,12 +628,30 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
                                 // ghost-ghost-local == 1 for all permutations
                                 // ghost-local-local == 2 for all permutations
                                 // local-local-local == 3
-                                size_t islsum =
-                                    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
+                                // size_t islsum =
+                                //    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
 
                                 bool include_trimer = false;
-                                if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-                                if (!use_ghost && islsum == 3) include_trimer = true;
+                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+                                // if (!use_ghost && islsum == 3) include_trimer = true;
+
+                                size_t tag1 = tag_index[i];
+                                size_t tag2 = tag_index[ret_matches[j].first];
+                                size_t tag3 = tag_index[ret_matches2[k].first];
+                                size_t tagmin = tag1;
+                                size_t idxmin = mon_index[i];
+
+                                if (tagmin > tag2) {
+                                    tagmin = tag2;
+                                    idxmin = mon_index[ret_matches[j].first];
+                                }
+
+                                if (tagmin > tag3) {
+                                    tagmin = tag3;
+                                    idxmin = mon_index[ret_matches2[k].first];
+                                }
+
+                                if (is_local[idxmin] == 1) include_trimer = true;
 
                                 if (include_trimer) {
                                     trimers.push_back(mon_index[i]);
@@ -637,6 +666,259 @@ void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t
         }
     }
 }
+
+// void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
+//                 std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
+//                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
+//                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost) {
+//    // istart is the monomer position for which we will look all dimers and
+//    // trimers that contain it. iend is the last monomer position.
+//    // This means, if istart is 0 and iend is 2, we will look for all dimers
+//    // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
+//
+//    // nmon is the number of monomers in xyz
+//    // xyz_orig is a double vector with positions of all atoms
+//    // first_index is a size_t vector with the first index of the site 'i'
+//    // in in the monomer vector
+//    // is_local is local/ghost descriptor for monomers; interactions involving
+//    //  all ghost monomers are ignored
+//    // use_ghost controls whether or not to include ghost monomers in clusters; default is no.
+//    // dimers and trimers will be filled with the dimers and trimers found
+//
+//    // if use_ghost == true,
+//    //       include local+ghost monomers in xyz, but only include local-ghost interactions
+//    // if use_ghost == false,
+//    //       include only local monomers in xyz and do nothing special
+//
+//    // Perform a radial search within the cutoff
+//    dimers.clear();
+//    if (n_max > 2) trimers.clear();
+//
+//    // if first monomer is ghost and we're not computing local-ghost interactions, then skip
+//
+//    // if (!use_ghost && !is_local[istart]) return;
+//
+//    // Obtain xyz vector with the positions of first atom of each monomer
+//    std::vector<double> xyz;
+//    // std::vector<double> xyz;
+//    size_t nmon2 = 0;
+//
+//    std::vector<size_t> mon_index;
+//    std::vector<size_t> tag_index;
+//    for (size_t i = istart; i < nmon; i++) {
+//        size_t islsum = is_local[istart] + is_local[i];
+//
+//        bool include_monomer = false;
+//        if (!use_ghost) {
+//            if (is_local[istart] == 0) {
+//                istart++;
+//                if (istart >= iend) return;
+//                continue;
+//            }
+//            if (is_local[i]) include_monomer = true;
+//        } else {
+//            if (n_max == 2 && islsum < 2) include_monomer = true;
+//        }
+//
+//        if (istart == i && is_local[i] == 1 && n_max == 2) include_monomer = true;
+//
+//        if (include_monomer) {
+//            xyz.push_back(xyz_orig[3 * first_index[i]]);
+//            xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
+//            xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
+//            mon_index.push_back(i);
+//            tag_index.push_back(tag[first_index[i]]);
+//            nmon2++;
+//        }
+//    }
+//
+//    if (nmon2 < 2) return;
+//    if (n_max > 2 && nmon2 < 3) return;
+//
+//    // Obtain the data in the structure needed by the kd-tree
+//    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
+//
+//    // Build the tree
+//    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+//                                                kdtutils::PointCloud<double>, 3 /* dim */>
+//        my_kd_tree_t;
+//    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+//    index.buildIndex();
+//
+//    std::vector<size_t> idone;
+//    std::set<std::pair<size_t, size_t>> donej;
+//    for (size_t i = 0; i < iend - istart; i++) {
+//        // Define the query point
+//        double point[3];
+//        point[0] = ptc.pts[i].x;
+//        point[1] = ptc.pts[i].y;
+//        point[2] = ptc.pts[i].z;
+//
+//        // Perform the search
+//        std::vector<std::pair<size_t, double>> ret_matches;
+//        nanoflann::SearchParams params;
+//        const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
+//
+//        for (size_t j = 0; j < nMatches; j++) {
+//            size_t pos = ret_matches[j].first / nmon2;
+//            ret_matches[j].first -= nmon2 * pos;
+//        }
+//
+//        std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
+//        std::set<std::pair<size_t, size_t>> donek;
+//
+//        // Add the pairs that are not in the dimer vector
+//        for (size_t j = 0; j < nMatches; j++) {
+//            std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> retdim;
+//            if (ret_matches[j].first > i) {
+//                retdim = donej.insert(std::make_pair(i, ret_matches[j].first));
+//                if (retdim.second) {
+//                    // ghost == 0, local == 1
+//                    // ghost-ghost == 0
+//                    // ghost-local == 1 for all permutations
+//                    // local-local == 2
+//
+//                    // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
+//
+//                    bool include_dimer = false;
+//                    // if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
+//                    // if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
+//                    size_t tag1 = tag_index[i];
+//                    size_t tag2 = tag_index[ret_matches[j].first];
+//                    size_t tagmin = tag1;
+//                    size_t idxmin = mon_index[i];
+//
+//                    if (tagmin > tag2) {
+//                        tagmin = tag2;
+//                        idxmin = mon_index[ret_matches[j].first];
+//                    }
+//
+//                    if (is_local[idxmin] == 1) include_dimer = true;
+//
+//                    if (include_dimer) {
+//                        dimers.push_back(mon_index[i]);
+//                        dimers.push_back(mon_index[ret_matches[j].first]);
+//                    }
+//                }
+//
+//                // Add trimers if requested
+//                if (n_max > 2) {
+//                    std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> ret;
+//                    for (size_t k = 0; k < nMatches; k++) {
+//                        if (ret_matches[k].first > ret_matches[j].first) {
+//                            ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
+//                            if (ret.second) {
+//                                // ghost == 0, local == 1
+//                                // ghost-ghost-ghost == 0
+//                                // ghost-ghost-local == 1 for all permutations
+//                                // ghost-local-local == 2 for all permutations
+//                                // local-local-local == 3
+//                                // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]]
+//                                +
+//                                //                is_local[mon_index[ret_matches[k].first]];
+//
+//                                bool include_trimer = false;
+//                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+//                                // if (!use_ghost && islsum == 3) include_trimer = true;
+//                                size_t tag1 = tag_index[i];
+//                                size_t tag2 = tag_index[ret_matches[j].first];
+//                                size_t tag3 = tag_index[ret_matches[k].first];
+//                                size_t tagmin = tag1;
+//                                size_t idxmin = mon_index[i];
+//
+//                                if (tagmin > tag2) {
+//                                    tagmin = tag2;
+//                                    idxmin = mon_index[ret_matches[j].first];
+//                                }
+//
+//                                if (tagmin > tag3) {
+//                                    tagmin = tag3;
+//                                    idxmin = mon_index[ret_matches[k].first];
+//                                }
+//
+//                                if (is_local[idxmin] == 1) include_trimer = true;
+//
+//                                if (include_trimer) {
+//                                    trimers.push_back(mon_index[i]);
+//                                    trimers.push_back(mon_index[ret_matches[j].first]);
+//                                    trimers.push_back(mon_index[ret_matches[k].first]);
+//                                }
+//                            }
+//                        }
+//                    }
+//                    // Define query point, which is each of the points 'j' inside the
+//                    // radius of 'i'
+//                    double point2[3];
+//                    point2[0] = ptc.pts[ret_matches[j].first].x;
+//                    point2[1] = ptc.pts[ret_matches[j].first].y;
+//                    point2[2] = ptc.pts[ret_matches[j].first].z;
+//                    std::vector<std::pair<size_t, double>> ret_matches2;
+//                    nanoflann::SearchParams params2;
+//                    const size_t nMatches2 = index.radiusSearch(point2, cutoff * cutoff, ret_matches2, params2);
+//
+//                    for (size_t k = 0; k < nMatches2; k++) {
+//                        size_t pos2 = ret_matches2[k].first / nmon2;
+//                        ret_matches2[k].first -= nmon2 * pos2;
+//                    }
+//
+//                    std::sort(ret_matches2.begin(), ret_matches2.end(), ComparePair);
+//
+//                    // Add the trimers that fulfil i > j > k, to avoid double counting
+//                    // We will add all trimers that fulfill the condition:
+//                    // At least 2 of the three distances must be smaller than the cutoff
+//                    for (size_t k = 0; k < nMatches2; k++) {
+//                        if (ret_matches2[k].first > i) {
+//                            size_t jel = ret_matches[j].first;
+//                            size_t kel = ret_matches2[k].first;
+//                            if (ret_matches[j].first > ret_matches2[k].first) {
+//                                jel = ret_matches2[k].first;
+//                                kel = ret_matches[j].first;
+//                            }
+//                            ret = donek.insert(std::make_pair(jel, kel));
+//                            if (ret.second && kel > jel) {
+//                                // ghost == 0, local == 1
+//                                // ghost-ghost-ghost == 0
+//                                // ghost-ghost-local == 1 for all permutations
+//                                // ghost-local-local == 2 for all permutations
+//                                // local-local-local == 3
+//                                // size_t islsum =
+//                                //    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
+//
+//                                bool include_trimer = false;
+//                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
+//                                // if (!use_ghost && islsum == 3) include_trimer = true;
+//
+//                                size_t tag1 = tag_index[i];
+//                                size_t tag2 = tag_index[ret_matches[j].first];
+//                                size_t tag3 = tag_index[ret_matches2[k].first];
+//                                size_t tagmin = tag1;
+//                                size_t idxmin = mon_index[i];
+//
+//                                if (tagmin > tag2) {
+//                                    tagmin = tag2;
+//                                    idxmin = mon_index[ret_matches[j].first];
+//                                }
+//
+//                                if (tagmin > tag3) {
+//                                    tagmin = tag3;
+//                                    idxmin = mon_index[ret_matches2[k].first];
+//                                }
+//
+//                                if (is_local[idxmin] == 1) include_trimer = true;
+//
+//                                if (include_trimer) {
+//                                    trimers.push_back(mon_index[i]);
+//                                    trimers.push_back(mon_index[jel]);
+//                                    trimers.push_back(mon_index[kel]);
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+//}
 
 void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,
                  excluded_set_type &exc14) {
@@ -740,8 +1022,12 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         // 14 distances
     }
 
-    // =====>> BEGIN SECTION EXCLUDED <<=====
-    // =====>> PASTE CODE BELOW <<=====
+    if (mon == "dp2") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        // 13 distances
+        // 14 distances
+    }
 
     if (mon == "h4_dummy") {
         // 12 distances
@@ -761,6 +1047,18 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         // 13 distances
         // 14 distances
     }
+
+    if (mon == "mbpbe") {
+        exc13.insert(std::make_pair(2, 3));
+        exc13.insert(std::make_pair(1, 3));
+        exc13.insert(std::make_pair(1, 2));
+        exc12.insert(std::make_pair(0, 3));
+        exc12.insert(std::make_pair(0, 2));
+        exc12.insert(std::make_pair(0, 1));
+    }
+
+    // =====>> BEGIN SECTION EXCLUDED <<=====
+    // =====>> PASTE CODE BELOW <<=====
     // =====>> END SECTION EXCLUDED <<=====
 }
 
@@ -772,7 +1070,7 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
     // Intermolecular aDD is always 0.055
     double aDD = 0.055;
     // For water
-    if (mon == "h2o") {
+    if (mon == "h2o" || mon == "mbpbe") {
         if (is12) {
             aDD = 0.626;
         } else {
@@ -780,6 +1078,8 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
         }
         // Any other molecule (as for 01/10/2018)
     } else if (mon == "dp1") {
+        aDD = 1.0E24;
+    } else if (mon == "dp2") {
         aDD = 1.0E24;
     } else {
         if (is12 || is13) {
@@ -796,6 +1096,10 @@ double GetAcc(std::string mon) {
     double aCC = 0.4;
     // For water
     if (mon == "dp1") {
+        aCC = 1.0E24;
+    }
+
+    if (mon == "dp2") {
         aCC = 1.0E24;
     }
 
@@ -835,7 +1139,7 @@ std::vector<double> ResetOrderReal3N(std::vector<double> coords, std::vector<std
 void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind) {
     size_t fstind_3 = 3 * fst_ind;
 
-    if (mon_id == "h2o") {
+    if (mon_id == "h2o" || mon_id == "mbpbe") {
         // Some useful constants
         size_t nmns = n_mon * 3;
         size_t nmns2 = nmns * 2;
@@ -896,14 +1200,14 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
     if (is_in_json) return;
     // Halide charges
-    if (mon_id == "f" || mon_id == "cl" || mon_id == "br" || mon_id == "i") {
+    if (mon_id == "f-" || mon_id == "cl-" || mon_id == "br-" || mon_id == "i-") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = -1.0 * CHARGECON;
         }
     }
 
     // Alkali metal ions
-    else if (mon_id == "li" || mon_id == "na" || mon_id == "k" || mon_id == "rb" || mon_id == "cs") {
+    else if (mon_id == "li+" || mon_id == "na+" || mon_id == "k+" || mon_id == "rb+" || mon_id == "cs+") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = 1.0 * CHARGECON;
         }
@@ -929,6 +1233,11 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
     } else if (mon_id == "dp1p") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv * nsites] = 1.0 * CHARGECON;
+        }
+    } else if (mon_id == "dp2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv * nsites + 0] = 1.0 * CHARGECON;
+            charges[fst_ind + nv * nsites + 1] = 1.0 * CHARGECON;
         }
     } else if (mon_id == "dp1") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -977,6 +1286,68 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
         }
         // END SECTION CHARGES
 
+    } else if (mon_id == "mbpbe") {
+        // chgtmp = M, H1, H2 according to ttm4.cpp
+        std::vector<double> chgtmp;
+        size_t fstind_3 = 3 * fst_ind;
+
+        chg_der = std::vector<double>(27 * n_mon, 0.0);
+
+        // Calculate individual monomer's charges
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            size_t ns3 = nsites * 3;
+            size_t shift = 27 * nv;
+
+            // Getting front and end of xyz vector of 1 monomer in system
+            std::vector<double> atomcoords(xyz);
+            std::vector<double> chgtmpnv((nsites - 1));
+
+            // Calculating charge
+            ps::dms_nasa(0.0, 0.0, 0.0, atomcoords.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
+                         chg_der.data() + shift);
+            // Inserting the found charges into chgtmp vector before calculating
+            // new charge values
+            chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
+        }
+
+        // Creating vector with contiguous data
+        std::vector<double> chg2(n_mon * nsites, 0.0);
+
+        // TODO Multiversioning
+        // Reorganizing sites
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                chg2[nv + i * n_mon] = chgtmp[i + nv * (nsites - 1)];
+            }
+
+            // looping over M
+            chg2[nv + 3 * n_mon] = chgtmp[nv * 3];
+        }
+
+        std::vector<double> chg2temp = chg2;
+
+        // calculating charge
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            size_t hy1 = n_mon + nv;
+            size_t hy2 = 2 * n_mon + nv;
+            size_t msite = 3 * n_mon + nv;
+
+            // Hydrogen1
+            chg2[hy1] = CHARGECON * (0.306258 + gamma21 * (0.306258 + 0.306258));
+            // Hydrogen2
+            chg2[hy2] = CHARGECON * (0.306258 + gamma21 * (0.306258 + 0.306258));
+            // M
+            chg2[msite] = CHARGECON * (-0.612537 / (1.0 - gammaM));
+        }
+
+        // TODO multiversioning
+        // Return all coordinates to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                charges[nv * nsites + j + fst_ind] = chg2[nv + n_mon * j];
+            }
+        }
         // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
         // chgtmp = M, H1, H2 according to ttm4.cpp
@@ -1060,26 +1431,26 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     if (is_in_json) return;
 
     // Halides
-    if (mon_id == "f") {  // Fluoride
+    if (mon_id == "f-") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.4669;
-    } else if (mon_id == "cl") {  // Chloride
+    } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3602;
-    } else if (mon_id == "br") {  // Bromide
+    } else if (mon_id == "br-") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 7.1668;
-    } else if (mon_id == "i") {  // Iodide
+    } else if (mon_id == "i-") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 10.1184;
     }
 
     // Alkali metal ions
-    if (mon_id == "li") {  // Lithium
+    if (mon_id == "li+") {  // Lithium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0285;
-    } else if (mon_id == "na") {  // Sodium
+    } else if (mon_id == "na+") {  // Sodium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.1476;
-    } else if (mon_id == "k") {  // Potassium
+    } else if (mon_id == "k+") {  // Potassium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.8184;
-    } else if (mon_id == "rb") {  // Rubidium
+    } else if (mon_id == "rb+") {  // Rubidium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 1.3614;
-    } else if (mon_id == "cs") {  // Cesium
+    } else if (mon_id == "cs+") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.3660;
 
         // =====>> BEGIN SECTION POLFACS <<=====
@@ -1095,6 +1466,11 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     } else if (mon_id == "dp1p") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites] = 0.0;
+        }
+    } else if (mon_id == "dp2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv * nsites + 0] = 0.0;
+            polfac[fst_ind + nv * nsites + 1] = 0.0;
         }
     } else if (mon_id == "dp1") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1150,6 +1526,28 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 1] = 0.3198;
         }
         // =====>> END SECTION POLFACS <<=====
+    } else if (mon_id == "mbpbe") {
+        // Creating vector with contiguous data
+        std::vector<double> polfac2(n_mon * nsites, 0.0);
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // Oxygen
+            polfac2[nv] = 0.7705056046539932;
+
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                polfac2[nv + i * n_mon] = 0.4364107405988837;
+            }
+            // M site
+            polfac2[nv + n_mon * 3] = 0.7705056046539932;
+        }
+
+        // TODO Multiversioning
+        // Return all polfacs to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                polfac[nv * nsites + j + fst_ind] = polfac2[nv + n_mon * j];
+            }
+        }
 
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
@@ -1193,26 +1591,26 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     if (is_in_json) return;
 
     // Halides
-    if (mon_id == "f") {  // Fluoride
+    if (mon_id == "f-") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.4669;
-    } else if (mon_id == "cl") {  // Chloride
+    } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3602;
-    } else if (mon_id == "br") {  // Bromide
+    } else if (mon_id == "br-") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 7.1668;
-    } else if (mon_id == "i") {  // Iodide
+    } else if (mon_id == "i-") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 10.1184;
     }
 
     // Alkali metal ions
-    if (mon_id == "li") {  // Lithium
+    if (mon_id == "li+") {  // Lithium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0285;
-    } else if (mon_id == "na") {  // Sodium
+    } else if (mon_id == "na+") {  // Sodium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.1476;
-    } else if (mon_id == "k") {  // Potassium
+    } else if (mon_id == "k+") {  // Potassium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8184;
-    } else if (mon_id == "rb") {  // Rubidium
+    } else if (mon_id == "rb+") {  // Rubidium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.3614;
-    } else if (mon_id == "cs") {  // Cesium
+    } else if (mon_id == "cs+") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
 
         // =====>> BEGIN SECTION POLS <<=====
@@ -1229,6 +1627,11 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     } else if (mon_id == "dp1p") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             pol[fst_ind + nv * nsites] = 0.0;
+        }
+    } else if (mon_id == "dp2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv * nsites + 0] = 0.0;
+            pol[fst_ind + nv * nsites + 1] = 0.0;
         }
     } else if (mon_id == "dp1") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1284,6 +1687,26 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
         }
         // =====>> END SECTION POLS <<=====
 
+    } else if (mon_id == "mbpbe") {
+        // Creating vector with contiguous data
+        std::vector<double> pol2(n_mon * nsites, 0.0);
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // Oxygen
+            pol2[nv] = 0.7705056046539932;
+
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                pol2[nv + i * n_mon] = 0.4364107405988837;
+            }
+        }
+
+        // TODO Multiversioning
+        // Return all pols to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                pol[nv * nsites + j + fst_ind] = pol2[nv + n_mon * j];
+            }
+        }
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
         std::vector<double> pol2(n_mon * nsites, 0.0);
@@ -1340,39 +1763,39 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     if (is_in_json) return;
 
     // All these C6 come from Qchem/avtz. We put two molecules at 50 A and get the c6 of the atoms.
-    if (mon_id == "f") {  // Fluoride
+    if (mon_id == "f-") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 25.56412750183350184739;
-    } else if (mon_id == "cl") {
+    } else if (mon_id == "cl-") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 57.88297168036554772821;
-    } else if (mon_id == "br") {
+    } else if (mon_id == "br-") {
         // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 74.56169774397084024344;
-    } else if (mon_id == "i") {
+    } else if (mon_id == "i-") {
         // FIXME This value will be set from C6 I-O and I-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(I--O)/C6_lr(O) + C6(I--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 105.39445721563933883337;
-    } else if (mon_id == "li") {
+    } else if (mon_id == "li+") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 3.24887148714749872914;
-    } else if (mon_id == "na") {
+    } else if (mon_id == "na+") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 16.02787872333703428437;
-    } else if (mon_id == "k") {
+    } else if (mon_id == "k+") {
         // FIXME This value will be set from C6 K-O and K-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(K--O)/C6_lr(O) + C6(K--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 37.63136349992751547203;
-    } else if (mon_id == "rb") {
+    } else if (mon_id == "rb+") {
         // FIXME This value will be set from C6 Rb-O and Rb-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(Rb--O)/C6_lr(O) + C6(Rb--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 49.17633137941422098718;
-    } else if (mon_id == "cs") {
+    } else if (mon_id == "cs+") {
         // FIXME This value will be set from C6 Cs-O and Cs-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
@@ -1399,6 +1822,11 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     } else if (mon_id == "dp1p") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 0.0;
+        }
+    } else if (mon_id == "dp2") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind + 0] = 0.0;
+            c6_lr[nv * natoms + fst_ind + 1] = 0.0;
         }
     } else if (mon_id == "dp1") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1445,6 +1873,12 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 6] = 13.402239942963767;  // O
         }
         // END SECTION C6_LONG_RANGE
+    } else if (mon_id == "mbpbe") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind] = 13.637419110667532;  // A
+            c6_lr[nv * natoms + fst_ind] = 6.290794862336555;   // B
+            c6_lr[nv * natoms + fst_ind] = 6.290794862336555;   // B
+        }
         // Water is the only monomer which C6 does not come from qchem.
         // It comes from MB-pol (C6O = sqrt(C6OO))
     } else if (mon_id == "h2o") {
@@ -1459,7 +1893,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
 // Assuming for now xyzxyzxyz...
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const size_t fi_crd,
                                 std::vector<double> &grad) {
-    if (mon == "h2o") {
+    if (mon == "h2o" || mon == "mbpbe") {
         for (size_t i = 0; i < nmon; i++) {
             const size_t shift = fi_crd + i * 4 * 3;
             for (size_t k = 0; k < 3; ++k) {
@@ -1490,7 +1924,7 @@ void ChargeDerivativeForce(const std::string mon, const size_t nmon, const size_
             double chgdev[27];
             std::copy(chg_grad.begin() + 27 * mm, chg_grad.begin() + 27 * (mm + 1), chgdev);
 
-            // Fast way to access the derivatives
+// Fast way to access the derivatives
 #define DQ3(l, m, k) chgdev[k + 3 * (m + 3 * l)]
 #define GRADQ(l, m, k) gradq[k + 3 * (m + 3 * l)]
 

@@ -14,14 +14,14 @@
        "spline_order_disp" : 6,
        "ff_mons"   : [],
        "connectivity_file" : "", 
-       "ttm_pairs" : [["f","h2o"]],
+       "ttm_pairs" : [["f-","h2o"]],
        "ignore_dispersion" : [],
        "use_lennard_jones" : [],
        "nonbonded_file" : "",
        "monomers_file" : "",
        "ignore_1b_poly" : [],
        "ignore_2b_poly" : [],
-       "ignore_3b_poly" : [["f","h2o","h2o"]]
+       "ignore_3b_poly" : [["f-","h2o","h2o"]]
    } ,  
    "i-pi" : {
        "port" : 34543,

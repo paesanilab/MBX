@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
     std::vector<std::string> atom_names_ref = {"O", "H", "H", "Br", "O", "H", "H", "O",
                                                "H", "H", "O", "H",  "H", "O", "H", "H"};
 
-    std::vector<std::string> monomers_ref = {"h2o", "br", "h2o", "h2o", "h2o", "h2o"};
+    std::vector<std::string> monomers_ref = {"h2o", "br-", "h2o", "h2o", "h2o", "h2o"};
 
     // Number of sites and number of atoms
     size_t nat_ref = 16;     // 1 + 5*3
@@ -564,7 +564,7 @@ int main(int argc, char **argv) {
     try {
         exitcode = 1;
         v = std::vector<double>(3, 0.0);
-        std::string id_v = "cl";
+        std::string id_v = "cl-";
         std::vector<std::string> at_v = {"Cl"};
         system_ref.AddMonomer(v, at_v, id_v);
     } catch (CUException &e) {
@@ -581,7 +581,7 @@ int main(int argc, char **argv) {
 
     // Creating a fake system
     v = std::vector<double>(2, 1.0);
-    std::string id_v = "cl";
+    std::string id_v = "cl-";
     std::vector<std::string> at_v = {"Cl"};
 
     bblock::System s_wrong;

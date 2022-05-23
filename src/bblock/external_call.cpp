@@ -195,6 +195,66 @@ void get_virial_(double* virial) {
     }
 }
 
+void set_real_xyz_(double* coords, int* nat) {
+    std::vector<double> xyz(coords, coords + 3 * (*nat));
+    my_s->SetRealXyz(xyz);
+}
+
+void get_xyz_(double* coords) {
+    std::vector<double> xyz = my_s->GetXyz();
+    std::copy(xyz.begin(), xyz.end(), coords);
+}
+
+void get_potential_and_electric_field_on_points_(double* coords, double* phi, double* ef, int* nat) {
+    std::vector<double> xyz(coords, coords + 3 * (*nat));
+    my_s->Hack3GetPotentialAtPoints(xyz);
+    std::vector<double> p, e, pd, ed;
+    my_s->GetPhiXAndEfX(p, e, pd, ed);
+    std::copy(p.begin(), p.end(), phi);
+    std::copy(e.begin(), e.end(), ef);
+    for (size_t i = 0; i < p.size(); i++) phi[i] += pd[i];
+    for (size_t i = 0; i < e.size(); i++) ef[i] += ed[i];
+}
+
+void set_box_(int* length, double* box) {
+    if (*length > 0) {
+        std::vector<double> boxv(box, box + (*length));
+        my_s->SetPBC(boxv);
+    } else {
+        std::vector<double> boxv;
+        my_s->SetPBC(boxv);
+    }
+    my_s->SetNewParamsElec(false);
+}
+
+void set_potential_and_electric_field_on_sites_(double* phi, double* ef, int* nsites) {
+    std::vector<double> phiv(phi, phi + (*nsites));
+    std::vector<double> efv(ef, ef + 3 * (*nsites));
+    my_s->SetExternalElectrostaticPotentialAndFieldInSites(phiv, efv);
+}
+
+void get_charges_(double* charges) {
+    std::vector<double> chg = my_s->GetCharges();
+    std::copy(chg.begin(), chg.end(), charges);
+}
+
+void get_induced_dipoles_(double* mu_i_out) {
+    std::vector<double> mu_p, mu_i;
+    my_s->GetDipoles(mu_p, mu_i);
+    std::copy(mu_i.begin(), mu_i.end(), mu_i_out);
+}
+
+void redistribute_gradients_(double* grd, int* nsites) {
+    std::vector<double> grad(grd, grd + 3 * (*nsites));
+    my_s->RedistributeGradients(grad);
+    std::copy(grad.begin(), grad.end(), grd);
+}
+
+void get_polarizabilities_(double* polarizability) {
+    std::vector<double> pol = my_s->GetPolarizabilities();
+    std::copy(pol.begin(), pol.end(), polarizability);
+}
+
 /**
  * Deletes the pointer to the system
  */

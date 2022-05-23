@@ -2,36 +2,26 @@
 
 SHELL = /bin/sh
 
-ifndef MBX_HOME
-$(info "MBX_HOME is not set. Please set it or ignore if the default HOME/codes/MBX is OK")
-MBX_HOME=$(HOME)/codes/MBX
-endif
-
-ifndef FFTWHOME
-$(info "FFTWHOME is not set. Please set it or ignore if FFTW is already in the path")
-FFTWHOME=
-endif
-
 MBX=$(MBX_HOME)/install
 MBX_INC=$(MBX)/include
-MBX_LIB=$(MBX)/lib/static
-FFTW=$(FFTWHOME)
+MBX_LIB=$(MBX)/lib
+FFTW=$(FFTW_HOME)
 
 # ---------------------------------------------------------------------
 # compiler/linker settings
 # specify flags and libraries needed for your compiler
 
-CC =		mpicxx
+CC = $(MBX_CXX)
 CCFLAGS =	-g -O3 -fopenmp -std=c++11
 CCFLAGS +=      -I$(MBX_INC)
 CCFLAGS +=      -I$(FFTW)/include
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
 
-LINK =		mpicxx
+LINK = $(MBX_CXX)
 LINKFLAGS =	-g -O3 -fopenmp
 LIB = 
-LIB +=          $(MBX_LIB)/libmbxlib.a
+LIB +=          $(MBX_LIB)/libmbx.a
 SIZE =		size
 
 ARCHIVE =	ar

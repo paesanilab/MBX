@@ -64,6 +64,7 @@ int main(int argc, char** argv) {
     std::vector<double> xyz = systems[0].GetRealXyz();
 
     size_t half = monid.size() / 2;
+    std::cout << "splitting at " << half << std::endl;
 
     bblock::System s1, s2;
 
@@ -92,21 +93,32 @@ int main(int argc, char** argv) {
     s2.SetUpFromJson(argv[2]);
 
     dimers = s1.GetPairList(2, 9.0, 0, 1000, true);
+    std::vector<size_t> dimers_local = s1.GetPairList(2, 9.0, 0, 1000, false);
     trimers = s1.GetPairList(3, 4.5, 0, 1000, true);
+    std::vector<size_t> trimers_local = s1.GetPairList(3, 4.5, 0, 1000, false);
 
     std::cout << "s1: " << dimers.size() / 2 << " dimers and " << trimers.size() / 3 << " trimers." << std::endl;
+    std::cout << "s1: " << dimers_local.size() / 2 << " local dimers and " << trimers_local.size() / 3
+              << " local trimers." << std::endl;
 
     dimers = s2.GetPairList(2, 9.0, 0, 1000, true);
+    dimers_local = s2.GetPairList(2, 9.0, 0, 1000, false);
     trimers = s2.GetPairList(3, 4.5, 0, 1000, true);
+    trimers_local = s2.GetPairList(3, 4.5, 0, 1000, false);
 
     std::cout << "s2: " << dimers.size() / 2 << " dimers and " << trimers.size() / 3 << " trimers." << std::endl;
+    std::cout << "s2: " << dimers_local.size() / 2 << " local dimers and " << trimers_local.size() / 3
+              << " local trimers." << std::endl;
 
     double e2b_1 = s1.TwoBodyEnergy(true, true);
+    double e2b_1l = s1.TwoBodyEnergy(true);
     double e2b_2 = s2.TwoBodyEnergy(true, true);
+    double e2b_2l = s2.TwoBodyEnergy(true);
 
     double e2b = systems[0].TwoBodyEnergy(true, false);
 
     std::cout << "2B: full " << e2b << " , s1 " << e2b_1 << " , s2 " << e2b_2 << std::endl;
+    std::cout << "2B: s1l " << e2b_1l << " , s2l " << e2b_2l << std::endl;
 
     return 0;
 }
