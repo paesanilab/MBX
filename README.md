@@ -90,16 +90,21 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * J. Chem. Theory Comput. 2014, 10, 4, 1599–1607
   * J. Chem. Theory Comput. 2014, 10, 8, 2906–2910
   * J. Chem. Phys. 145, 194504 (2016)
-- Alkali Metal Ions and water
+- MB-nrg PEFs for alkali-metal ions in water
   * Phys. Chem. Chem. Phys., 2016,18, 30334-30343 (TTM-nrg)
   * J. Chem. Phys. 147, 161715 (2017) (MB-nrg)
   * J. Phys. Chem. A 2018, 122, 27, 5811–5821 (MB-nrg)
-- CO2
+- MB-nrg PEFs for CO2 and CO2/H2O mixtures
   * J. Chem. Theory Comput. 2020, 16, 4, 2246–2257
-- CH4
+  * J. Chem. Phys. 2022, 156, 104503
+- MB-nrg PEFs for CH4 and CH4/H2O mixtures
   * J. Phys. Chem. B 2020, 124, 49, 11207–11221
-- N2O5
+  * J. Chem. Phys. 2022, 156, 194504
+- MB-nrg PEF for N2O5 in water
   * J. Chem. Theory Comput. 2021, 17, 7, 3931–3945
+- TTM-nrg PEFs for halide and alkali-metal ions in water
+  * J. Phys. Chem. B 2016, 120, 1822–1832
+  * Phys. Chem. Chem. Phys. 2016,18, 30334-30343
 
 ## Interfaces
 ### Fortran90 and Python
