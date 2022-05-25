@@ -388,7 +388,7 @@ def get_polarizabilities(number_of_electrostatic_sites):
   pol_out = [pol[i] for i in range(len(pol))]
   return pol_out
 
-def get_external_field_contribution_to_energy_(units="mbx"):
+def get_external_field_contribution_to_energy(units="mbx"):
    # Define conversion factors
   l_mbx2inp = 1.0
   l_inp2mbx = 1.0
