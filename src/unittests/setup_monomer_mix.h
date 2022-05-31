@@ -47,9 +47,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
         84.9114977282, 132.905429,   1.007825032,    1.007825032,    1.007825032,  1.007825032,   0.0,               \
         0.0,           15.994914619, 14.00307400443, 14.00307400443, 15.994914619, 15.994914619,  15.994914619,      \
         15.994914619,  1.007825032,  1.007825032,    14.00307400443, 1.007825032,  1.007825032,   1.007825032};      \
-    std::vector<std::string> monomer_names = {"ch4", "h2o",      "co2", "dummy", "he",   "ar", "f-",                  \
-                                              "cl-",  "br-",       "i-",   "li+",    "na+",   "k+",  "rb+",                 \
-                                              "cs+",  "h4_dummy", "dp1", "dp1p",  "n2o5", "h2", "nh3"};               \
+    std::vector<std::string> monomer_names = {"ch4", "h2o",      "co2_archive", "dummy", "he",   "ar", "f-",         \
+                                              "cl-", "br-",      "i-",          "li+",   "na+",  "k+", "rb+",        \
+                                              "cs+", "h4_dummy", "dp1",         "dp1p",  "n2o5", "h2", "nh3"};       \
     const int n_monomers = monomer_names.size();                                                                     \
     std::vector<size_t> islocal(n_monomers, 1);                                                                      \
     std::vector<size_t> n_atoms_vector = {5, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 7, 2, 4};            \
@@ -364,9 +364,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                      2.7350000000e-01,                                                               \
                                      2.7350000000e-01};                                                              \
     std::vector<std::pair<std::string, size_t>> internal_mon_type_count{                                             \
-        {"ch4", 1}, {"h2o", 1},      {"co2", 1}, {"dummy", 1}, {"he", 1},   {"ar", 1}, {"f-", 1},                     \
-        {"cl-", 1},  {"br-", 1},       {"i-", 1},   {"li+", 1},    {"na+", 1},   {"k+", 1},  {"rb+", 1},                    \
-        {"cs+", 1},  {"h4_dummy", 1}, {"dp1", 1}, {"dp1p", 1},  {"n2o5", 1}, {"h2", 1}, {"nh3", 1}};                  \
+        {"ch4", 1}, {"h2o", 1},      {"co2_archive", 1}, {"dummy", 1}, {"he", 1},   {"ar", 1}, {"f-", 1},            \
+        {"cl-", 1}, {"br-", 1},      {"i-", 1},          {"li+", 1},   {"na+", 1},  {"k+", 1}, {"rb+", 1},           \
+        {"cs+", 1}, {"h4_dummy", 1}, {"dp1", 1},         {"dp1p", 1},  {"n2o5", 1}, {"h2", 1}, {"nh3", 1}};          \
     std::vector<size_t> internal_original_to_current_order{0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10,                \
                                                            11, 12, 13, 14, 15, 16, 17, 18, 19, 20};                  \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{                                                   \
@@ -417,7 +417,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                       6.3285306351e+00,                                                              \
                                       6.3285306351e+00,                                                              \
                                       6.3285306351e+00};                                                             \
-    std::vector<std::string> internal_monomer_names{"ch4", "h2o",      "co2", "dummy", "he",   "ar", "f-",            \
-                                                    "cl-",  "br-",       "i-",   "li+",    "na+",   "k+",  "rb+",           \
-                                                    "cs+",  "h4_dummy", "dp1", "dp1p",  "n2o5", "h2", "nh3"};
+    std::vector<std::string> internal_monomer_names{"ch4", "h2o",      "co2_archive", "dummy", "he",   "ar", "f-",   \
+                                                    "cl-", "br-",      "i-",          "li+",   "na+",  "k+", "rb+",  \
+                                                    "cs+", "h4_dummy", "dp1",         "dp1p",  "n2o5", "h2", "nh3"};
 #endif
