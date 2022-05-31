@@ -255,6 +255,10 @@ void get_polarizabilities_(double* polarizability) {
     std::copy(pol.begin(), pol.end(), polarizability);
 }
 
+void get_external_field_contribution_to_energy_(double* e) {
+    *e = my_s->GetPermanentElectrostaticEnergyExternalFieldContribution();
+}
+
 /**
  * Deletes the pointer to the system
  */
