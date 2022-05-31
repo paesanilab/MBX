@@ -155,11 +155,13 @@ std::vector<std::pair<std::string, size_t>> OrderMonomers(
  * of atoms of the monomers in the same order as the mon vector
  * @param[out] fi_at Vector with same length as mon than contains the first
  * index of the monomers in the same order as the mon vector
+ * @param[out] fi_sites Vector with same length as mon than contains the first
+ * index of the monomers in the same order as the mon vector, but also accounting for virtual sites
  * @param[in] mon_j Json object with extra monomer info
  * @return Total number of sites
  */
 size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, std::vector<size_t> &nat,
-                     std::vector<size_t> &fi_at, nlohmann::json mon_j);
+                     std::vector<size_t> &fi_at, std::vector<size_t> &fi_sites, nlohmann::json mon_j);
 
 /**
  * @brief Makes sure that the coordinates of all atoms of the same monomer
@@ -262,10 +264,15 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
  * @warning The distance between monomers is computed as the distance
  * between the first atom of both monomers
  */
-void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
+// void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
+//                 std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
+//                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
+//                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost = false);
+
+void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
-                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<size_t> &dimers,
-                 std::vector<size_t> &trimers, bool use_ghost = false);
+                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
+                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost = false);
 
 /**
  * @brief Sets the excluded pairs for a given monomer
@@ -318,6 +325,7 @@ bool IsExcluded(excluded_set_type exc, size_t a, size_t b);
  * intermolecular damping (non-bonded damping).
  */
 double GetAdd(bool is12, bool is13, bool is14, std::string mon);
+double GetAcc(std::string mon);
 
 /**
  * @brief Reorders a vector of 3N coordinates, where N is the number

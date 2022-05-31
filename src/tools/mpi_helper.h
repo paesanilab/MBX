@@ -1,3 +1,4 @@
+#if defined HAVE_MPI && HAVE_MPI > 0
 #include <mpi.h>
 #include <vector>
 #include <iostream>
@@ -176,4 +177,4 @@ public:
 
 
 };  // end of namespace MPIUtility
-
+#endif //HAVE_MPI==1

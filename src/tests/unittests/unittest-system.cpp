@@ -159,8 +159,8 @@ TEST_CASE("Test the system class.") {
 
     SECTION("TTM pairs") {
         std::vector<std::pair<std::string, std::string> > empty_vec;
-        std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"h2o", "cl"}, {"h2o", "i"}};
-        std::vector<std::pair<std::string, std::string> > ttm_pairs_expected = {{"cl", "h2o"}, {"h2o", "i"}};
+        std::vector<std::pair<std::string, std::string> > ttm_pairs = {{"h2o", "cl-"}, {"h2o", "i-"}};
+        std::vector<std::pair<std::string, std::string> > ttm_pairs_expected = {{"cl-", "h2o"}, {"h2o", "i-"}};
 
         for (size_t i = 0; i < ttm_pairs.size(); i++) {
             my_system.AddTTMnrgPair(ttm_pairs[i].first, ttm_pairs[i].second);
@@ -184,8 +184,8 @@ TEST_CASE("Test the system class.") {
 
     SECTION("Ignore 2b poly") {
         std::vector<std::vector<std::string> > empty_vec;
-        std::vector<std::vector<std::string> > ignore2b = {{"h2o", "cl"}, {"h2o", "i"}};
-        std::vector<std::vector<std::string> > ignore2b_expected = {{"cl", "h2o"}, {"h2o", "i"}};
+        std::vector<std::vector<std::string> > ignore2b = {{"h2o", "cl-"}, {"h2o", "i-"}};
+        std::vector<std::vector<std::string> > ignore2b_expected = {{"cl-", "h2o"}, {"h2o", "i-"}};
 
         for (size_t i = 0; i < ignore2b.size(); i++) {
             my_system.Add2bIgnorePoly(ignore2b[i][0], ignore2b[i][1]);
@@ -209,8 +209,8 @@ TEST_CASE("Test the system class.") {
 
     SECTION("Ignore 3b poly") {
         std::vector<std::vector<std::string> > empty_vec;
-        std::vector<std::vector<std::string> > ignore3b = {{"h2o", "cl", "h2o"}, {"h2o", "i", "h2o"}};
-        std::vector<std::vector<std::string> > ignore3b_expected = {{"cl", "h2o", "h2o"}, {"h2o", "h2o", "i"}};
+        std::vector<std::vector<std::string> > ignore3b = {{"h2o", "cl-", "h2o"}, {"h2o", "i-", "h2o"}};
+        std::vector<std::vector<std::string> > ignore3b_expected = {{"cl-", "h2o", "h2o"}, {"h2o", "h2o", "i-"}};
 
         for (size_t i = 0; i < ignore3b.size(); i++) {
             my_system.Add3bIgnorePoly(ignore3b[i][0], ignore3b[i][1], ignore3b[i][2]);
@@ -287,11 +287,11 @@ TEST_CASE("Test the system class.") {
         j["MBX"]["alpha_ewald_disp"] = 0.01;
         j["MBX"]["grid_density_disp"] = 2.7;
         j["MBX"]["spline_order_disp"] = 4;
-        j["MBX"]["ttm_pairs"] = nlohmann::json::array({{"h2o", "i"}, {"cs", "h2o"}});
-        j["MBX"]["ff_mons"] = nlohmann::json::array({"co2_archive"});
-        j["MBX"]["ignore_1b_poly"] = nlohmann::json::array({"co2_archive"});
-        j["MBX"]["ignore_2b_poly"] = nlohmann::json::array({{"h2o", "i"}, {"cs", "h2o"}});
-        j["MBX"]["ignore_3b_poly"] = nlohmann::json::array({{"h2o", "i"}, {"cs", "h2o"}});
+        j["MBX"]["ttm_pairs"] = nlohmann::json::array({{"h2o", "i-"}, {"cs+", "h2o"}});
+        j["MBX"]["ff_mons"] = nlohmann::json::array({"co2"});
+        j["MBX"]["ignore_1b_poly"] = nlohmann::json::array({"co2"});
+        j["MBX"]["ignore_2b_poly"] = nlohmann::json::array({{"h2o", "i-"}, {"cs+", "h2o"}});
+        j["MBX"]["ignore_3b_poly"] = nlohmann::json::array({{"h2o", "i-"}, {"cs+", "h2o"}});
 
         // Write the new json file
         std::ofstream off("mbx_mod.json");
@@ -440,7 +440,7 @@ TEST_CASE("Test the system class.") {
             bool monomer_not_added_to_initialized_system = false;
             try {
                 std::vector<double> v(3, 0.0);
-                std::string id_v = "cl";
+                std::string id_v = "cl-";
                 std::vector<std::string> at_v = {"Cl"};
                 my_system.AddMonomer(v, at_v, id_v);
             } catch (CUException &e) {
@@ -454,7 +454,7 @@ TEST_CASE("Test the system class.") {
         SECTION("Initialize system with less than 3 coordinates") {
             // Creating a fake system
             std::vector<double> v(2, 1.0);
-            std::string id_v = "cl";
+            std::string id_v = "cl-";
             std::vector<std::string> at_v = {"Cl"};
 
             bblock::System s_wrong;
@@ -475,7 +475,7 @@ TEST_CASE("Test the system class.") {
         SECTION("Initialize system with more coordinates than expected") {
             // Creating a fake system
             std::vector<double> v(4, 1.0);
-            std::string id_v = "cl";
+            std::string id_v = "cl-";
             std::vector<std::string> at_v = {"Cl"};
 
             bblock::System s_wrong;

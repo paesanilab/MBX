@@ -141,6 +141,9 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
 
     user_fft_grid_ = std::vector<int>{};
 
+    mbxt_disp_count_ = std::vector<size_t>(DISP_NUM_TIMERS, 0);
+    mbxt_disp_time_ = std::vector<double>(DISP_NUM_TIMERS, 0.0);
+
     ReorderData();
 
 #ifdef DEBUG
@@ -219,6 +222,39 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz,
     box_PMElocal_ = {};
 
     ReorderData();
+
+    // Put C6 and D6 in a vector
+    size_t fi1 = 0;
+    size_t fi2 = 0;
+    size_t nmt = mon_type_count_.size();
+    use_disp_all_ = std::vector<bool>(nmt * nmt);
+    c6_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    d6_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    for (size_t mt1 = 0; mt1 < nmt; mt1++) {
+        size_t ns1 = num_atoms_[fi1];
+        fi2 = 0;
+        for (size_t mt2 = 0; mt2 < nmt; mt2++) {
+            size_t ns2 = num_atoms_[fi2];
+            std::vector<double> c6v(ns1 * ns2), d6v(ns1 * ns2);
+
+            for (size_t i = 0; i < ns1; i++) {
+                for (size_t j = 0; j < ns2; j++) {
+                    double c6 = 0.0;
+                    double d6 = 0.0;
+                    bool do_disp = GetC6(mon_id_[fi1], mon_id_[fi2], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                    if (i == 0 && j == 0) {
+                        use_disp_all_[nmt * mt1 + mt2] = do_disp;
+                    }
+                    c6v[ns2 * i + j] = c6;
+                    d6v[ns2 * i + j] = d6;
+                }
+            }
+            c6_all_[nmt * mt1 + mt2] = c6v;
+            d6_all_[nmt * mt1 + mt2] = d6v;
+            fi2 += mon_type_count_[mt2].second;
+        }
+        fi1 += mon_type_count_[mt1].second;
+    }
 
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
@@ -506,7 +542,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         size_t nmon2 = 2 * nmon;
 
         double dummy_c6, dummy_d6;
-        bool do_disp = GetC6(mon_id_[fi_mon], mon_id_[fi_mon], 0, 0, dummy_c6, dummy_d6, ignore_disp_, repdisp_j_);
+        bool do_disp = use_disp_all_[mt * mon_type_count_.size() + mt];
         std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
 
         // Obtain excluded pairs for monomer type mt
@@ -536,7 +572,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 double c6, d6;
                 double c6i = c6_long_range_[fi_sites + i * nmon];
                 double c6j = c6_long_range_[fi_sites + j * nmon];
-                GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                // GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                c6 = c6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                d6 = d6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -615,8 +653,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             size_t nmon2 = mon_type_count_[mt2].second;
 
             double dummy_c6, dummy_d6;
-            bool do_disp =
-                GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, dummy_c6, dummy_d6, ignore_disp_, repdisp_j_);
+            bool do_disp = use_disp_all_[mt1 * mon_type_count_.size() + mt2];
+
             double disp_scale_factor = do_disp ? 1.0 : 0.0;
             std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
 
@@ -665,7 +703,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         size_t jnmon23 = jnmon2 * 3;
                         double c6j = c6_long_range_[fi_sites2 + j * nmon2];
                         double c6, d6;
-                        GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                        // GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                        c6 = c6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                        d6 = d6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                         energy_pool[rank] += disp6(
                             c6, d6, c6i, c6j, xyz_sitei, xyz_mt2, g1, grad2_pool[rank], phi_i, phi2_pool[rank], nmon1,
                             nmon2, m2init, nmon2, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
@@ -918,6 +958,9 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     size_t fi_crd = 0;
     size_t fi_sites = 0;
 
+#if HAVE_MPI == 1
+    double _time0 = MPI_Wtime();
+#endif
     bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
 
     // override settings if ghost particles (big assumption?)
@@ -948,64 +991,27 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
     pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
-    // N.B. these do not make copies; they just wrap the memory with some metadata
-    auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-
-#if 0
-	// Zero property of particles outside local region
-
-	// proc grid order hard-coded (as above) for ZYX NodeOrder
-	
-	int proc_x = me % proc_grid_x_;
-	int proc_y = (me % (proc_grid_x_ * proc_grid_y_)) / proc_grid_x_;
-	int proc_z = me / (proc_grid_x_ * proc_grid_y_);
-
-	// include particles within local sub-domain and small halo region
-	// this allows the full ghost region to be included for pairwise calculations,
-	// but should exclude ghost monomers that are periodic images of local monomer
-
-	double padding = cutoff_ * 0.5;
-	double dx = A / (double) proc_grid_x_;
-	double dy = B / (double) proc_grid_y_;
-	double dz = C / (double) proc_grid_z_;
-
-	double xlo =  proc_x    * dx - padding;
-	double xhi = (proc_x+1) * dx + padding;
-	
-	double ylo =  proc_y    * dy - padding;
-	double yhi = (proc_y+1) * dy + padding;
-	
-	double zlo =  proc_z    * dz - padding;
-	double zhi = (proc_z+1) * dz + padding;
-
-        std::vector<double> sys_c6_long_range_local_(sys_c6_long_range_.size(),0.0);
-	for(int i=0; i<natoms_; ++i) sys_c6_long_range_local_[i] = sys_c6_long_range_[i];
-
-	const int num_procs = proc_grid_x_ * proc_grid_y_ * proc_grid_z_;
-
-	for(int i=0; i<natoms_; ++i) {
-	  double x = coords(i,0);
-	  double y = coords(i,1);
-	  double z = coords(i,2);
-	  
-	  bool local = true;
-	  if(x <= xlo || x > xhi) local = false;
-	  if(y <= ylo || y > yhi) local = false;
-	  if(z <= zlo || z > zhi) local = false;
-	  
-	  if(!local) sys_c6_long_range_local_[i] = 0.0;
-	}
-	
-        auto params = helpme::Matrix<double>(sys_c6_long_range_local_.data(), natoms_, 1);
-#else
-    auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+    mbxt_disp_count_[DISP_PME_SETUP]++;
+#if HAVE_MPI == 1
+    mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
 #endif
 
+    // N.B. these do not make copies; they just wrap the memory with some metadata
+    auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
+    auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
     auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
     std::vector<double> dummy_6vec(6, 0.0);
     auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
     std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
+
+#if HAVE_MPI == 1
+    _time0 = MPI_Wtime();
+#endif
     double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
+    mbxt_disp_count_[DISP_PME_PRE]++;
+#if HAVE_MPI == 1
+    mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
+#endif
 
     // get virial
     if (calc_virial_) {
@@ -1053,6 +1059,9 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
     //} // if(compute_pme)
 }
+
+std::vector<size_t> Dispersion::GetInfoCounts() { return mbxt_disp_count_; }
+std::vector<double> Dispersion::GetInfoTimings() { return mbxt_disp_time_; }
 
 std::vector<int> Dispersion::GetFFTDimension(int box_id) {
     double A, B, C, alpha, beta, gamma;

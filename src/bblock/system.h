@@ -146,29 +146,27 @@ class System {
      */
     std::vector<size_t> GetMonNumAt();
 
-    // FIXME As for today, these functions are not used. // MRR 20191022
-    // Will need to activate them and use them whenever we need them for MB-Spec
-    //    /**
-    //     * Gets the molecular dipoles for the system.
-    //     * @param[out] mu_perm Permanent dipole moments
-    //     * @param[out] mu_ind Induced dipole moments
-    //     */
-    //    void GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
-    //
-    //    /**
-    //     * Gets the point dipole moments in each atom.
-    //     * @param[out] mu_perm Permanent dipole moments
-    //     * @param[out] mu_ind Induced dipole moments
-    //     */
-    //    void GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
-    //
-    //    /**
-    //     * Gets the total dipole moment for the system.
-    //     * @param[out] mu_perm Permanent dipole moments
-    //     * @param[out] mu_ind Induced dipole moments
-    //     * @param[out] mu_tot Total dipole moment
-    //     */
-    //    void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
+    /**
+     * Gets the molecular dipoles for the system.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     */
+    void GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+
+    /**
+     * Gets the point dipole moments in each atom.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     */
+    void GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind);
+
+    /**
+     * Gets the total dipole moment for the system.
+     * @param[out] mu_perm Permanent dipole moments
+     * @param[out] mu_ind Induced dipole moments
+     * @param[out] mu_tot Total dipole moment
+     */
+    void GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot);
     //
     //    /**
     //     * Returns the charge derivatives for the whole system
@@ -235,7 +233,7 @@ class System {
      * @warning Order is not guaranteed. This means that the n-mers
      * can come in any order
      */
-    std::vector<size_t> GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend);
+    std::vector<size_t> GetPairList(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
 
     /**
      * Gets a vector with the indexes that form a molecule.
@@ -291,6 +289,12 @@ class System {
     std::vector<double> GetRealCharges();
 
     /**
+     * Gets the C6 long range params
+     * @return Gets the C6 long range params
+     */
+    std::vector<double> GetRealC6lr();
+
+    /**
      * Gets the polarizabilities of the system.
      * It includes the charges of ALL sites,
      * including the virtual sites such as the M-sites
@@ -337,6 +341,24 @@ class System {
      * @return A vector of strings with the names of all atoms
      */
     std::vector<std::string> GetRealAtomNames();
+
+    /**
+     * @brief Gets the external charges that are currently in the class
+     * @return External charges in the class
+     */
+    std::vector<double> GetExternalCharges();
+
+    /**
+     * @brief Gets the external charges XYZ that are currently in the class
+     * @return External charges XYZ in the class
+     */
+    std::vector<double> GetExternalChargesPositions();
+
+    /**
+     * @brief Gets the external charges gradients that are currently in the class
+     * @return External charges gradients in the class
+     */
+    std::vector<double> GetExternalChargesGradients();
 
     /**
      * Gets the id string of the n-th monomer
@@ -404,6 +426,12 @@ class System {
      * @return Box in system
      */
     std::vector<double> GetBox();
+
+    /**
+     * Gets the box in ABCabc format
+     * @return Box in ABCabc format
+     */
+    std::vector<double> GetBoxABCabc();
 
     /**
      * Gets the maximum number of monomers per chunk in polynomial evaluation
@@ -533,6 +561,42 @@ class System {
      * @param[in] mon2 Is the id of the second monomer
      **/
     void AddTTMnrgPair(std::string mon1, std::string mon2);
+
+    /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
+
+    /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     * @param[in] local/ghost of each one the the charges in chg
+     * @param[in] unique tag of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
+                                        std::vector<int> tag);
+
+    void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
+                       std::vector<double> &efd);
+    void GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx);
+    void SetNewParamsElec(bool do_grads);
+    void Hack1EfqPhi();
+    void Hack2CgIter();
+    void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
+                                                          std::vector<double> def = {}, std::vector<double> dmui = {});
+    void GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd);
+
+    void RedistributeGradients(std::vector<double> &grad);
+
+    double GetPermanentElectrostaticEnergy();
+    double GetPermanentElectrostaticEnergyExternalFieldContribution();
+    double GetInducedElectrostaticEnergy();
 
     /**
      * Sets the monomer vector that will use classical ff as a whole. Will overwrite the previous one.
@@ -771,6 +835,30 @@ class System {
     void ResetDipoleHistory();
 
     /**
+     * Return number of dipole histories
+     */
+    double GetNumDipoleHistory();
+
+    /**
+     * Return history of dipols
+     * @param[in] indx of history to retrieve
+     */
+    std::vector<double> GetDipoleHistory(size_t indx);
+
+    /**
+     * Set current number of dipole histories
+     * @param[in] num_hist number of histories to use initially
+     */
+    void SetNumDipoleHistory(size_t num_hist);
+
+    /**
+     * Set history of dipoles
+     * @param[in] indx of history to initialize
+     * @param[in] mu_hist dipoles to initialize history
+     */
+    void SetDipoleHistory(size_t indx, std::vector<double> mu_hist);
+
+    /**
      * Tells the system if we are in Periodic Boundary Conditions (PBC)
      * or not. If the box is not passed as argument, it is set to
      * a cubic box of 1000 Angstrom of side length
@@ -857,6 +945,11 @@ class System {
      * @param[in] 0 for default box / 1 for PMElocal box
      */
     std::vector<int> GetFFTDimensionLennardJones(int box_id = 0);
+
+    /**
+     * Check FFT grid for MPI proc grid
+     */
+    void CheckFFTDimension(std::vector<int> grid);
 
     /**
      * Set FFT grid for electrostatic pme solver
@@ -947,6 +1040,7 @@ class System {
      * @return Electrostatic energy of the system
      */
     double Electrostatics(bool do_grads, bool use_ghost = 0);
+    double ElectrostaticsTest(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPI(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
@@ -993,6 +1087,9 @@ class System {
     std::vector<size_t> GetInfoElectrostaticsCounts();
     std::vector<double> GetInfoElectrostaticsTimings();
 
+    std::vector<size_t> GetInfoDispersionCounts();
+    std::vector<double> GetInfoDispersionTimings();
+
    private:
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -1004,7 +1101,8 @@ class System {
      * @param[in] istart Minimum index of i
      * @param[in] iend Maximum index (iend not included) of index i
      */
-    void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
+    // void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
+    void AddClusters(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost = false);
 
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -1017,7 +1115,9 @@ class System {
      * @param[in] iend Maximum index (iend not included) of index i
      * @return Vector of size_t with dimention nclusters * nmax
      */
-    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+    // std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
+    //                                        bool use_ghost = false);
+    std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, std::vector<size_t> idxs,
                                             bool use_ghost = false);
 
     /**
@@ -1108,6 +1208,7 @@ class System {
      * @return  Electrostatic energy of the system
      */
     double GetElectrostatics(bool do_grads, bool use_ghost = 0);
+    double GetElectrostaticsTest(bool do_grads, bool use_ghost = 0);
     double GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
 
     /**
@@ -1352,6 +1453,15 @@ class System {
     std::vector<size_t> first_index_;
 
     /**
+     * Vector that contains the first index of the first atom of the
+     * monomers in the atom list. As an example, first_index_[4]
+     * will be the position of the first atom of the 5th monomer
+     * in the atom list. This first index only accounts for
+     * real sites
+     */
+    std::vector<size_t> first_index_real_sites_;
+
+    /**
      * Vector that stores the dimers computed by the AddClusters functions.
      * The vector stores the two indeces of a dimer, one after the other one,
      * in the internal order of the system.
@@ -1525,7 +1635,7 @@ class System {
 
     /**
      * Input order of monomers <monomer, site first index>. The position i of this
-     * vector contains a pair with the position of monomer "i" in the internal
+     * vector contains a pair with the position of monomer "i-" in the internal
      * order when it was inputed in the system. The second index of the pair
      * is the first index of that monomer in the input order.
      */
@@ -1533,7 +1643,7 @@ class System {
 
     /**
      * Input order of monomers <monomer, site first index>. The position i of this
-     * vector contains a pair with the position of monomer "i" in the internal
+     * vector contains a pair with the position of monomer "i-" in the internal
      * order when it was inputed in the system. The second index of the pair
      * is the first index of that monomer in the input order, but taking
      * into account only real sites.
@@ -1601,6 +1711,11 @@ class System {
     std::vector<int> grid_fftdim_elec_;
     std::vector<int> grid_fftdim_disp_;
     std::vector<int> grid_fftdim_lj_;
+
+    /**
+     * Auxiliary tag counter
+     */
+    int tag_counter_;
 
     /**
      * States if the initialization is PME only or not"

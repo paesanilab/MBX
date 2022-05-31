@@ -73,6 +73,34 @@ void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], c
 }
 
 /**
+ * Initializes the system in the heap.
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat_monomers Pointer to an array of the number of atoms in each monomer
+ * @param[in] at_names Pointer to an array with the atom names of all the whole system
+ * @param[in] monomers Pointer to the list of monomer ids in your system
+ * @param[in] nmon Number of monomers
+ * @param[in] json_file Name of the json configuration file
+ */
+void initialize_system_py_(double* coords, int* nat_monomers, char** at_names, char** monomers, int* nmon,
+                           char* json_file) {
+    my_s = new bblock::System();
+    int count = 0;
+    for (int i = 0; i < *nmon; i++) {
+        std::vector<double> xyz(3 * nat_monomers[i]);
+        std::vector<std::string> vAtNames(nat_monomers[i]);
+
+        std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
+        std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
+        std::string id = monomers[i];
+        my_s->AddMonomer(xyz, vAtNames, id);
+        count += nat_monomers[i];
+    }
+
+    my_s->Initialize();
+    my_s->SetUpFromJson(json_file);
+}
+
+/**
  * Given the coordinates, calculates the energy for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
  * @param[in] nat Number of atoms in he system
@@ -144,6 +172,12 @@ void get_energy_pbc_g_(double* coords, int* nat, double* box, double* energy, do
     std::copy(gradv.begin(), gradv.end(), grads);
 }
 
+void get_total_dipole_(double* dip) {
+    std::vector<double> dtot(3, 0.0), dperm(3, 0.0), dind(3, 0.0);
+    my_s->GetTotalDipole(dperm, dind, dtot);
+    std::copy(dtot.begin(), dtot.end(), dip);
+}
+
 /**
  * Retrieves the virial from the system class
  * @param[out] virial Pointer to the virial. Must be a 9 element vector.
@@ -159,6 +193,70 @@ void get_virial_(double* virial) {
         std::cerr << "Cannot retrieve the virial. Size should be 9, and instead is " << v.size() << std::endl;
         std::exit(EXIT_FAILURE);
     }
+}
+
+void set_real_xyz_(double* coords, int* nat) {
+    std::vector<double> xyz(coords, coords + 3 * (*nat));
+    my_s->SetRealXyz(xyz);
+}
+
+void get_xyz_(double* coords) {
+    std::vector<double> xyz = my_s->GetXyz();
+    std::copy(xyz.begin(), xyz.end(), coords);
+}
+
+void get_potential_and_electric_field_on_points_(double* coords, double* phi, double* ef, int* nat) {
+    std::vector<double> xyz(coords, coords + 3 * (*nat));
+    my_s->Hack3GetPotentialAtPoints(xyz);
+    std::vector<double> p, e, pd, ed;
+    my_s->GetPhiXAndEfX(p, e, pd, ed);
+    std::copy(p.begin(), p.end(), phi);
+    std::copy(e.begin(), e.end(), ef);
+    for (size_t i = 0; i < p.size(); i++) phi[i] += pd[i];
+    for (size_t i = 0; i < e.size(); i++) ef[i] += ed[i];
+}
+
+void set_box_(int* length, double* box) {
+    if (*length > 0) {
+        std::vector<double> boxv(box, box + (*length));
+        my_s->SetPBC(boxv);
+    } else {
+        std::vector<double> boxv;
+        my_s->SetPBC(boxv);
+    }
+    my_s->SetNewParamsElec(false);
+}
+
+void set_potential_and_electric_field_on_sites_(double* phi, double* ef, int* nsites) {
+    std::vector<double> phiv(phi, phi + (*nsites));
+    std::vector<double> efv(ef, ef + 3 * (*nsites));
+    my_s->SetExternalElectrostaticPotentialAndFieldInSites(phiv, efv);
+}
+
+void get_charges_(double* charges) {
+    std::vector<double> chg = my_s->GetCharges();
+    std::copy(chg.begin(), chg.end(), charges);
+}
+
+void get_induced_dipoles_(double* mu_i_out) {
+    std::vector<double> mu_p, mu_i;
+    my_s->GetDipoles(mu_p, mu_i);
+    std::copy(mu_i.begin(), mu_i.end(), mu_i_out);
+}
+
+void redistribute_gradients_(double* grd, int* nsites) {
+    std::vector<double> grad(grd, grd + 3 * (*nsites));
+    my_s->RedistributeGradients(grad);
+    std::copy(grad.begin(), grad.end(), grd);
+}
+
+void get_polarizabilities_(double* polarizability) {
+    std::vector<double> pol = my_s->GetPolarizabilities();
+    std::copy(pol.begin(), pol.end(), polarizability);
+}
+
+void get_external_field_contribution_to_energy_(double* e) {
+    *e = my_s->GetPermanentElectrostaticEnergyExternalFieldContribution();
 }
 
 /**

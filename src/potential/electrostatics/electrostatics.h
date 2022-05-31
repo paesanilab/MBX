@@ -81,6 +81,11 @@ enum {
     ELE_COMM_FORSET,
     ELE_COMM_FOR,
 
+    ELE_PME_SETUP,
+    ELE_PME_PRC,
+    ELE_PME_PRD,
+    ELE_PME_PRE,
+
     ELE_NUM_TIMERS
 };
 
@@ -154,6 +159,37 @@ class Electrostatics {
     void ResetAspcHistory();
 
     /**
+     * @brief Get the number of ASPC dipole histories
+     *
+     * Return number of dipoles histories saved
+     */
+    double GetNumDipoleHistory() { return hist_num_aspc_; };
+
+    /**
+     * @brief Get the number of ASPC dipole histories
+     *
+     * Set number of dipoles histories to initially use
+     */
+    void SetNumDipoleHistory(size_t num_hist) { hist_num_aspc_ = num_hist; };
+
+    /**
+     * @brief Get the ASPC dipole history
+     *
+     * Return history of dipoles
+     * @param[in] indx of selected history to retrieve
+     */
+    std::vector<double> GetDipoleHistory(size_t indx);
+
+    /**
+     * @brief Set the ASPC dipole history
+     *
+     * Return history of dipoles
+     * @param[in] indx of selected history to set
+     * @param[in] mu_hist dipoles to initialize history
+     */
+    void SetDipoleHistory(size_t indx, std::vector<double> mu_hist);
+
+    /**
      * @brief "Reinitializes" the electrostatics class.
      *
      * If the system changes (coordinates, charges, and so on) it is
@@ -220,16 +256,72 @@ class Electrostatics {
     void SetEwaldSplineOrder(int order);
 
     /**
+     * @brief Sets the external charges and positions.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz);
+
+    /**
+     * @brief Sets the external charges, positions, and local/ghost.
+     * The charges are treated as pure point charges
+     * @param[in] chg Vector of doubles with the charges
+     * @param[in] xyz Coordinates of each one the the charges in chg
+     * @param[in] local/ghost of each one the the charges in chg
+     * @param[in] unique tag of each one the the charges in chg
+     */
+    void SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz, std::vector<size_t> islocal,
+                                        std::vector<int> tag);
+
+    /**
+     * @brief Gets the external charges that are currently in the class
+     * @return External charges in the class
+     */
+    std::vector<double> GetExternalCharges();
+
+    /**
+     * @brief Gets the external charges XYZ that are currently in the class
+     * @return External charges XYZ in the class
+     */
+    std::vector<double> GetExternalChargesPositions();
+
+    /**
+     * @brief Gets the gradients on the external charge sites
+     * @return Vector of doubles with the external charge gradients
+     */
+    std::vector<double> GetExternalChargesGradients();
+
+    /**
      * @brief Returns permanent electrostatic energy.
      *
      * @return Permanent electrostatic energy. Undefined if energy has not yet been calculated
      */
     double GetPermanentElectrostaticEnergy();
 
+    double GetPermanentElectrostaticEnergyExternalFieldContribution();
     std::vector<double> GetInducedDipoles();
     std::vector<double> GetPermanentDipoles();
     std::vector<double> GetMolecularInducedDipoles();
     std::vector<double> GetMolecularPermanentDipoles();
+
+    void CalculateOneCgDipoleIter();
+    void Hack1EfqPhi();
+    void Hack2CgIter();
+    void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+    void CalculateInducedGradientsExternal(std::vector<double> &grad);
+
+    // Grad is the grad_ variable (MBX system) and gradx will be the gradients in the external
+    void GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx);
+    void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
+                       std::vector<double> &efd);
+    void UpdatePhiAndEf();
+    void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
+                                                          std::vector<double> def, std::vector<double> dmui);
+
+    std::vector<double> GetSysPhi();
+    std::vector<double> GetSysEfq();
+    std::vector<double> GetSysEfd();
 
     /**
      * @brief Returns induced electrostatic energy.
@@ -417,6 +509,7 @@ class Electrostatics {
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
     void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesAspc();
+    void CalculateDipolesAspcMPIlocal(bool use_ghost = 0);
     void SetAspcParameters(size_t k);
     void CalculateDipoles();
     void CalculateDipolesMPIlocal(bool use_ghost = 0);
@@ -428,6 +521,7 @@ class Electrostatics {
     void ReorderData();
 
     void reverse_forward_comm(std::vector<double> &in_v);
+    void reverse_forward_comm_ext(std::vector<double> &in_v);
     void reverse_comm_setup(std::vector<double> &in_v);
     void reverse_comm(std::vector<double> &in_v);
     void forward_comm_setup(std::vector<double> &in_v);
@@ -468,6 +562,10 @@ class Electrostatics {
     std::vector<size_t> nn_num_neighs;
     std::vector<size_t> nn_neighs;
     bool nn_first;
+    std::vector<size_t> nn_first_neigh_ext;
+    std::vector<size_t> nn_num_neighs_ext;
+    std::vector<size_t> nn_neighs_ext;
+    bool nn_first_ext;
     // Name of the monomers (h2o, f...)
     std::vector<std::string> mon_id_;
     // Number of sites of each mon
@@ -540,6 +638,8 @@ class Electrostatics {
     size_t maxnmon_;
     // Permanent electrostatics
     double Eperm_;
+    // Permanent electrostatics contribution due to external field
+    double Eperm_ext_;
     // Induced electrostatics
     double Eind_;
     // Method for dipoles (ITERative, Conjugate Gradient, ASPC, INVersion)
@@ -623,6 +723,68 @@ class Electrostatics {
     std::vector<std::vector<int>> nncomm_for_recvlist;
 
     nlohmann::json mon_j_;
+
+    /*
+     * External charges treated as point charges without smearing
+     */
+    std::vector<double> external_charge_;
+
+    /*
+     * External charge positions
+     */
+    std::vector<double> external_charge_xyz_;
+
+    /*
+     * External charge electrostatic gradients
+     */
+    std::vector<double> external_charge_grads_;
+
+    /*
+     * External charges local/ghost
+     */
+    std::vector<size_t> external_islocal_;
+
+    /*
+     * External charges tags
+     */
+    std::vector<int> external_tag_;
+
+    std::vector<double> Efq_all_;
+    std::vector<double> xyz_all_;
+    std::vector<double> phi_all_;
+    std::vector<double> chg_all_;
+    std::vector<double> polfac_all_;
+    std::vector<size_t> sites_all_;
+    std::vector<std::string> mon_id_all_;
+    std::vector<size_t> islocal_all_;
+    std::vector<size_t> islocal_atom_all_;  // why need this? because of reordering?
+    std::vector<int> atom_tag_all_;
+    std::vector<double> sys_xyz_all_;
+    std::vector<double> sys_chg_all_;
+    size_t nsites_all_;
+    std::vector<double> rec_phi_and_field_all_;
+
+    std::vector<double> mu_all_;
+    std::vector<double> sys_mu_all_;
+    std::vector<double> sys_Efq_all_;
+    std::vector<double> sys_Efd_all_;
+    std::vector<double> sys_phi_all_;
+    std::vector<double> Efd_all_;
+    std::vector<double> sys_grad_all_;
+
+    std::vector<std::pair<std::string, size_t>> mon_type_count_all_;
+
+    std::vector<double> external_phi_;
+    std::vector<double> external_ef_;
+    std::vector<double> external_def_;
+    std::vector<double> external_dmui_;
+
+    std::vector<double> phi_x_;
+    std::vector<double> ef_x_;
+    std::vector<double> grad_x_;
+    std::vector<double> phi_x_ind_;
+    std::vector<double> ef_x_ind_;
+    std::vector<double> grad_x_ind_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

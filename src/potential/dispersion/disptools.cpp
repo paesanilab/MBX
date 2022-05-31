@@ -174,25 +174,41 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
     double dispersion_energy = 0;
+
+    std::vector<double> x1 = p1;
+
+    double x1_r, y1_r, z1_r;
+
+    if (use_pbc) {
+        x1_r = boxinv[0] * p1[0] + boxinv[3] * p1[1] + boxinv[6] * p1[2];
+        y1_r = boxinv[1] * p1[0] + boxinv[4] * p1[1] + boxinv[7] * p1[2];
+        z1_r = boxinv[2] * p1[0] + boxinv[5] * p1[1] + boxinv[8] * p1[2];
+    }
+
     for (size_t nv = start2; nv < end2; nv++) {
-        double dx = p1[0] - xyz2[shift2 + nv];
-        double dy = p1[1] - xyz2[nmon2 + shift2 + nv];
-        double dz = p1[2] - xyz2[nmon22 + shift2 + nv];
+        double x2[3];
+        x2[0] = xyz2[shift2 + nv];
+        x2[1] = xyz2[nmon2 + shift2 + nv];
+        x2[2] = xyz2[nmon22 + shift2 + nv];
 
         // Apply minimum image convetion
         if (use_pbc) {
-            double tmp1 = boxinv[0] * dx + boxinv[3] * dy + boxinv[6] * dz;
-            double tmp2 = boxinv[1] * dx + boxinv[4] * dy + boxinv[7] * dz;
-            double tmp3 = boxinv[2] * dx + boxinv[5] * dy + boxinv[8] * dz;
+            double tmp1 = boxinv[0] * x2[0] + boxinv[3] * x2[1] + boxinv[6] * x2[2];
+            double tmp2 = boxinv[1] * x2[0] + boxinv[4] * x2[1] + boxinv[7] * x2[2];
+            double tmp3 = boxinv[2] * x2[0] + boxinv[5] * x2[1] + boxinv[8] * x2[2];
 
-            tmp1 -= std::floor(tmp1 + 0.5);
-            tmp2 -= std::floor(tmp2 + 0.5);
-            tmp3 -= std::floor(tmp3 + 0.5);
+            tmp1 -= std::round(tmp1 - x1_r);
+            tmp2 -= std::round(tmp2 - y1_r);
+            tmp3 -= std::round(tmp3 - z1_r);
 
-            dx = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
-            dy = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
-            dz = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
+            x2[0] = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
+            x2[1] = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
+            x2[2] = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
+
+        double dx = x1[0] - x2[0];
+        double dy = x1[1] - x2[1];
+        double dz = x1[2] - x2[2];
 
         const double rsq = dx * dx + dy * dy + dz * dz;
         const double r = std::sqrt(rsq);
@@ -336,7 +352,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 }
 
 bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6,
-           std::vector<std::pair<std::string, std::string> > ignore_disp, nlohmann::json repdisp_j) {
+           std::vector<std::pair<std::string, std::string> > ignore_disp, const nlohmann::json& repdisp_j) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon_id2 < mon_id1) {
@@ -365,37 +381,42 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     bool done_with_it = false;
 
     // Check if pair is in json object
-    try {
-        std::vector<std::vector<std::string> > pairs = repdisp_j["pairs"];
-        for (size_t k = 0; k < pairs.size(); k++) {
-            if (mon_id1 == pairs[k][0] && mon_id2 == pairs[k][1]) {
-                std::vector<std::vector<std::string> > types1 = repdisp_j["types1"];
-                std::vector<std::vector<std::string> > types2 = repdisp_j["types2"];
-                std::vector<std::vector<std::pair<std::vector<std::string>, double> > > c6_v = repdisp_j["c6"];
-                std::vector<std::vector<std::pair<std::vector<std::string>, double> > > d6_v = repdisp_j["d6"];
-                std::string si = types1[k][index1];
-                std::string sj = types2[k][index2];
+    if (repdisp_j.size() > 0) {
+        try {
+            std::vector<std::vector<std::string> > pairs = repdisp_j["pairs"];
+            for (size_t k = 0; k < pairs.size(); k++) {
+                if (mon_id1 == pairs[k][0] && mon_id2 == pairs[k][1]) {
+                    std::vector<std::vector<std::string> > types1 = repdisp_j["types1"];
+                    std::vector<std::vector<std::string> > types2 = repdisp_j["types2"];
+                    std::vector<std::vector<std::pair<std::vector<std::string>, double> > > c6_v = repdisp_j["c6"];
+                    std::vector<std::vector<std::pair<std::vector<std::string>, double> > > d6_v = repdisp_j["d6"];
+                    std::string si = types1[k][index1];
+                    std::string sj = types2[k][index2];
 
-                for (size_t k2 = 0; k2 < c6_v[k].size(); k2++) {
-                    if ((si == c6_v[k][k2].first[0] && sj == c6_v[k][k2].first[1]) ||
-                        (si == c6_v[k][k2].first[1] && sj == c6_v[k][k2].first[0])) {
-                        out_C6 = c6_v[k][k2].second;
-                        done_with_it = true;
-                        break;
+                    for (size_t k2 = 0; k2 < c6_v[k].size(); k2++) {
+                        if ((si == c6_v[k][k2].first[0] && sj == c6_v[k][k2].first[1]) ||
+                            (si == c6_v[k][k2].first[1] && sj == c6_v[k][k2].first[0])) {
+                            out_C6 = c6_v[k][k2].second;
+                            done_with_it = true;
+                            break;
+                        }
                     }
-                }
 
-                for (size_t k2 = 0; k2 < d6_v[k].size(); k2++) {
-                    if ((si == d6_v[k][k2].first[0] && sj == d6_v[k][k2].first[1]) ||
-                        (si == d6_v[k][k2].first[1] && sj == d6_v[k][k2].first[0])) {
-                        out_d6 = d6_v[k][k2].second;
-                        done_with_it = true;
-                        break;
+                    for (size_t k2 = 0; k2 < d6_v[k].size(); k2++) {
+                        if ((si == d6_v[k][k2].first[0] && sj == d6_v[k][k2].first[1]) ||
+                            (si == d6_v[k][k2].first[1] && sj == d6_v[k][k2].first[0])) {
+                            out_d6 = d6_v[k][k2].second;
+                            done_with_it = true;
+                            break;
+                        }
                     }
                 }
             }
+        } catch (...) {
+            out_C6 = 0.0;
+            out_d6 = 0.0;
         }
-    } catch (...) {
+    } else {
         out_C6 = 0.0;
         out_d6 = 0.0;
     }
@@ -436,7 +457,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(9.775202425217957e+00);  // A^(-1)
         d6.push_back(9.406475169954112e+00);  // A^(-1)
 
-    } else if (mon_id1 == "f" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "f-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -453,7 +474,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.586190000000000e+00);  // A^(-1)
         d6.push_back(2.697680000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "cl" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "cl-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -470,7 +491,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.275420000000000e+00);  // A^(-1)
         d6.push_back(2.782260000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "br" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "br-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -487,7 +508,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.058250000000000e+00);  // A^(-1)
         d6.push_back(2.798040000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "i-") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -504,7 +525,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(2.723140000000000e+00);  // A^(-1)
         d6.push_back(2.799110000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "li") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "li+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -521,7 +542,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(4.023330000000000e+00);  // A^(-1)
         d6.push_back(4.006630000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "na") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "na+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -538,7 +559,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.769530000000000e+00);  // A^(-1)
         d6.push_back(3.822550000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "k") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "k+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -555,7 +576,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.401250000000000e+00);  // A^(-1)
         d6.push_back(3.321390000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "rb") {
+    } else if (mon_id1 == "h2o" and mon_id2 == "rb+") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -572,7 +593,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.236530000000000e+00);  // A^(-1)
         d6.push_back(3.313640000000000e+00);  // A^(-1)
-    } else if (mon_id1 == "cs" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "cs+" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -635,8 +656,6 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.43864);  // A^(-1)
         d6.push_back(3.45707);  // A^(-1)
-                                // =====>> BEGIN SECTION DISPERSION <<=====
-                                // ======>> PASTE CODE BELOW <<======
     } else if (mon_id1 == "co2_archive" && mon_id2 == "co2_archive") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -706,6 +725,52 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.82894);  // A^(-1)
         d6.push_back(3.82894);  // A^(-1)
         d6.push_back(3.92759);  // A^(-1)
+
+    } else if (mon_id1 == "nh3pbe0d3bj" and mon_id2 == "nh3pbe0d3bj") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(243.7007);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(39.9906);   // kcal/mol * A^(-6)  B--B
+        d6.push_back(3.09382);   // A^(-1) A--A
+        d6.push_back(3.44698);   // A^(-1) A--B
+        d6.push_back(3.44698);   // A^(-1) A--B
+        d6.push_back(3.83901);   // A^(-1) B--B
+
+    } else if (mon_id1 == "nh3" and mon_id2 == "nh3") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(243.7007);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(98.6092);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(39.9906);   // kcal/mol * A^(-6)  B--B
+        d6.push_back(3.11493);   // A^(-1) A--A
+        d6.push_back(3.4174);    // A^(-1) A--B
+        d6.push_back(3.4174);    // A^(-1) A--B
+        d6.push_back(3.78007);   // A^(-1) B--B
 
     } else if (mon_id1 == "ch4" && mon_id2 == "ch4") {
         // Define the type of atom in each mon
@@ -829,7 +894,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.87591);  // A^(-1)
         d6.push_back(3.71826);  // A^(-1)
 
-    } else if (mon_id1 == "ar" and mon_id2 == "cs") {
+    } else if (mon_id1 == "ar" and mon_id2 == "cs+") {
         types1.push_back(0);
 
         types2.push_back(0);
@@ -837,8 +902,80 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         nt2 = 1;
 
         // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(1857.467);  // kcal/mol * A^(-6)  A--B
-        d6.push_back(3.19908);   // A^(-1) A--B
+        C6.push_back(1500.0914);  // kcal/mol * A^(-6)  A--B
+        d6.push_back(3.28039);    // A^(-1) A--B
+    } else if (mon_id1 == "ar" and mon_id2 == "ar") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(774.5257);  // kcal/mol * A^(-6)  A--B
+        d6.push_back(3.41808);   // A^(-1) A--B
+    } else if (mon_id1 == "h2" and mon_id2 == "h2") {
+        types1.push_back(0);
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(45.4166);  // kcal/mol * A^(-6)  A--A
+        d6.push_back(3.11276);  // A^(-1) A--A
+    } else if (mon_id1 == "h2" and mon_id2 == "h2o") {
+        types1.push_back(0);
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(91.2878);  // kcal/mol * A^(-6)  A--C
+        C6.push_back(40.6489);  // kcal/mol * A^(-6)  B--C
+        d6.push_back(3.05339);  // A^(-1) A--C
+        d6.push_back(3.62823);  // A^(-1) B--C
+    } else if (mon_id1 == "ar" and mon_id2 == "h2o") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(382.031);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(170.8082);  // kcal/mol * A^(-6)  A--C
+        d6.push_back(3.48054);   // A^(-1) A--B
+        d6.push_back(3.46238);   // A^(-1) A--C
+    } else if (mon_id1 == "cs+" and mon_id2 == "h2") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(372.8086);  // kcal/mol * A^(-6)  A--B
+        d6.push_back(3.24781);   // A^(-1) A--B
+    } else if (mon_id1 == "na+" and mon_id2 == "na+") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(251.48);   // kcal/mol * A^(-6)  A--A
+        d6.push_back(4.42822);  // A^(-1) A--A
     } else if (mon_id1 == "ch4" and mon_id2 == "co2") {
         types1.push_back(0);
         types1.push_back(1);
@@ -850,9 +987,8 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         types2.push_back(1);
         types2.push_back(1);
 
-        nt2 = 2;
+        nt2 = 1;
 
-        // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(306.4929);  // kcal/mol * A^(-6)  A--C
         C6.push_back(215.0259);  // kcal/mol * A^(-6)  A--D
         C6.push_back(104.5401);  // kcal/mol * A^(-6)  B--C
@@ -861,7 +997,125 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.55762);   // A^(-1) A--D
         d6.push_back(3.37636);   // A^(-1) B--C
         d6.push_back(3.5529);    // A^(-1) B--D
-                                 // =====>> END SECTION DISPERSION <<=====
+
+    } else if (mon_id1 == "cl-" and mon_id2 == "cl-") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(3066.2919);  // kcal/mol * A^(-6)  A--A
+        d6.push_back(1.82786);    // A^(-1) A--A
+    } else if (mon_id1 == "cl-" and mon_id2 == "na+") {
+        types1.push_back(0);
+
+        types2.push_back(0);
+
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(784.5853);  // kcal/mol * A^(-6)  A--B
+        d6.push_back(2.85113);   // A^(-1) A--B
+
+    } else if (mon_id1 == "n2o5" and mon_id2 == "n2o5") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(2);
+        types1.push_back(2);
+        types1.push_back(2);
+        types1.push_back(2);
+
+        // Set the number of different types
+        nt2 = 3;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(169.526699905518);    // kcal/mol * A^(-6)  A--A
+        C6.push_back(165.351572694970);    // kcal/mol * A^(-6)  A--B
+        C6.push_back(174.39423682672617);  // kcal/mol * A^(-6)  A--C
+        C6.push_back(165.351572694970);    // kcal/mol * A^(-6)  B--A
+        C6.push_back(171.35934650288723);  // kcal/mol * A^(-6)  B--B
+        C6.push_back(165.351572694970);    // kcal/mol * A^(-6)  B--C
+        C6.push_back(174.39423682672617);  // kcal/mol * A^(-6)  C--A
+        C6.push_back(165.351572694970);    // kcal/mol * A^(-6)  C--B
+        C6.push_back(179.62003548877342);  // kcal/mol * A^(-6)  C--C
+
+        d6.push_back(3.86891);  // A^(-1) A--A
+        d6.push_back(3.19945);  // A^(-1) A--B
+        d6.push_back(3.60907);  // A^(-1) A--C
+        d6.push_back(3.19945);  // A^(-1) B--A
+        d6.push_back(2.33813);  // A^(-1) B--B
+        d6.push_back(4.19428);  // A^(-1) B--C
+        d6.push_back(3.60907);  // A^(-1) C--A
+        d6.push_back(4.19428);  // A^(-1) C--B
+        d6.push_back(3.56601);  // A^(-1) C--C
+    } else if (mon_id1 == "h2o" and mon_id2 == "n2o5") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+        types2.push_back(2);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        // Set the number of different types
+        nt2 = 3;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(176.36123157691006);  // kcal/mol * A^(-6)  D--A
+        C6.push_back(170.03653392132748);  // kcal/mol * A^(-6)  D--B
+        C6.push_back(181.7351576894966);   // kcal/mol * A^(-6)  D--C
+        C6.push_back(78.55577632783532);   // kcal/mol * A^(-6)  E--A
+        C6.push_back(79.65812014580179);   // kcal/mol * A^(-6)  E--B
+        C6.push_back(80.37292121526443);   // kcal/mol * A^(-6)  E--C
+
+        d6.push_back(4.1869);   // A^(-1) D--A
+        d6.push_back(3.22662);  // A^(-1) D--B
+        d6.push_back(4.455);    // A^(-1) D--C
+        d6.push_back(3.24055);  // A^(-1) E--A
+        d6.push_back(6.4749);   // A^(-1) E--B
+        d6.push_back(3.03227);  // A^(-1) E--C
+    } else if (mon_id1 == "mbpbe" and mon_id2 == "mbpbe") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(185.9792);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(84.0262);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(84.0262);   // kcal/mol * A^(-6)  A--B
+        C6.push_back(39.5741);   // kcal/mol * A^(-6)  B--B
+        d6.push_back(4.21118);   // A^(-1) A--A
+        d6.push_back(3.44966);   // A^(-1) A--B
+        d6.push_back(3.44966);   // A^(-1) A--B
+        d6.push_back(3.56401);   // A^(-1) B--B
+
+        // =====>> BEGIN SECTION DISPERSION <<=====
+        // ======>> PASTE CODE BELOW <<======
+
+        // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;
         out_d6 = 0.0;
