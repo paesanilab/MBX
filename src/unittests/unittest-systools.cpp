@@ -1150,12 +1150,12 @@ TEST_CASE("systools::GetExcluded") {
         REQUIRE(exc14 == exc14_expected);
     }
 
-    SECTION("co2") {
+    SECTION("co2_archive") {
         excluded_set_type exc12, exc12_expected;
         excluded_set_type exc13, exc13_expected;
         excluded_set_type exc14, exc14_expected;
 
-        std::string mon = "co2";
+        std::string mon = "co2_archive";
 
         // 12 distances
         exc12_expected.insert(std::make_pair(0, 1));
@@ -1362,13 +1362,13 @@ TEST_CASE("systools::GetAdd") {
         REQUIRE(systools::GetAdd(f, f, t, mon) == Approx(aDD_14).margin(TOL));
     }
 
-    SECTION("co2") {
+    SECTION("co2_archive") {
         double aDD_12 = 0.3;
         double aDD_13 = 0.3;
         double aDD_14 = 0.055;
         double aDD_inter = 0.055;
 
-        std::string mon = "co2";
+        std::string mon = "co2_archive";
 
         REQUIRE(systools::GetAdd(f, f, f, mon) == Approx(aDD_inter).margin(TOL));
         REQUIRE(systools::GetAdd(t, f, f, mon) == Approx(aDD_12).margin(TOL));

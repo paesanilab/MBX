@@ -595,6 +595,7 @@ class System {
     void RedistributeGradients(std::vector<double> &grad);
 
     double GetPermanentElectrostaticEnergy();
+    double GetPermanentElectrostaticEnergyExternalFieldContribution();
     double GetInducedElectrostaticEnergy();
 
     /**

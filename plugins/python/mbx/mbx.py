@@ -388,6 +388,25 @@ def get_polarizabilities(number_of_electrostatic_sites):
   pol_out = [pol[i] for i in range(len(pol))]
   return pol_out
 
+def get_external_field_contribution_to_energy(units="mbx"):
+   # Define conversion factors
+  l_mbx2inp = 1.0
+  l_inp2mbx = 1.0
+  e_mbx2inp = 1.0
+  e_inp2mbx = 1.0
+  if units == "au":
+    l_mbx2inp = MBXLENGTH2AU
+    l_inp2mbx = AULENGTH2MBX
+    e_mbx2inp = MBXENERGY2AU
+    e_inp2mbx = AUENERGY2MBX
+
+  # Convert inputs to units
+  energy = ctypes.c_double(0.0)
+
+  mbxlib.get_external_field_contribution_to_energy_(ctypes.byref(energy))
+
+  return energy.value * e_mbx2inp
+
 def finalize_system():
   mbxlib.finalize_system_()
 

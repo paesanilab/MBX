@@ -196,7 +196,7 @@ TEST_CASE("mbnrg_3b_A1B2_A1B2_A1B2_deg4_v1::class") {
                                                6.1254058810e-02,  -2.2767072231e-01, -5.6217795636e-02,
                                                7.8075547317e-02,  -5.6217795636e-02, -4.2417660822e-01};
 
-        mbnrg_A1B2_A1B2_A1B2_deg4::mbnrg_A1B2_A1B2_A1B2_deg4_v1 ph("co2", "co2", "co2");
+        mbnrg_A1B2_A1B2_A1B2_deg4::mbnrg_A1B2_A1B2_A1B2_deg4_v1 ph("co2_archive", "co2_archive", "co2_archive");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), ntrim);
         double e =
             ph.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), ntrim, &virial);

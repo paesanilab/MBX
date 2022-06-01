@@ -299,6 +299,7 @@ class Electrostatics {
      */
     double GetPermanentElectrostaticEnergy();
 
+    double GetPermanentElectrostaticEnergyExternalFieldContribution();
     std::vector<double> GetInducedDipoles();
     std::vector<double> GetPermanentDipoles();
     std::vector<double> GetMolecularInducedDipoles();
@@ -637,6 +638,8 @@ class Electrostatics {
     size_t maxnmon_;
     // Permanent electrostatics
     double Eperm_;
+    // Permanent electrostatics contribution due to external field
+    double Eperm_ext_;
     // Induced electrostatics
     double Eind_;
     // Method for dipoles (ITERative, Conjugate Gradient, ASPC, INVersion)

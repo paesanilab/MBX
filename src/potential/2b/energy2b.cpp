@@ -95,10 +95,11 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         mbnrg_A1B2Z2_A1B2Z2_deg4::mbnrg_A1B2Z2_A1B2Z2_deg4_vmbpbe pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
 
-        // =====>> BEGIN SECTION 2B_NO_GRADIENT <<=====
-        // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon1 == "ch4" && mon2 == "ch4") {
         x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "co2_archive" and mon2 == "co2_archive") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "nh3" and mon2 == "nh3") {
         mbnrg_A1B3_A1B3_deg4::mbnrg_A1B3_A1B3_deg4_v1 pot(mon1, mon2);
@@ -109,12 +110,41 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "co2cm5100" and mon2 == "co2cm5100") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "co2cm595" and mon2 == "co2cm595") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "co2cm5875" and mon2 == "co2cm5875") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "co2cm590" and mon2 == "co2cm590") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "co2cm595" and mon2 == "co2cm595") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "co2cm5100" and mon2 == "co2cm5100") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if (mon1 == "co2_archive" and mon2 == "h2o") {
+        x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x pot(mon2, mon1);
+        energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "co2" and mon2 == "h2o") {
         x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x pot(mon2, mon1);
+        energy = pot.eval(xyz2.data(), xyz1.data(), nm);
+    } else if ((mon1 == "co2cm5100" || mon1 == "co2cm595" || mon1 == "co2cm590" || mon1 == "co2cm5875" ||
+                mon1 == "co2cm585" || mon1 == "co2cm580") and
+               mon2 == "h2o") {
+        x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x pot(mon2, "co2");
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "ch4" and mon2 == "h2o") {
         x2b_A1B2Z2_C1D4_deg3_exp0::x2b_A1B2Z2_C1D4_v1x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
+    } else if (mon1 == "ch4" and mon2 == "co2") {
+        mbnrg_A1B4_C1D2_deg4::mbnrg_A1B4_C1D2_deg4_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "h2" and mon2 == "h2") {
         mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -145,6 +175,9 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "h2o" && mon2 == "n2o5") {
         x2b_A1B2C4_D1E2_deg3::x2b_A1B2C4_D1E2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
+        // =====>> BEGIN SECTION 2B_NO_GRADIENT <<=====
+        // =====>> PASTE YOUR CODE BELOW <<=====
+
         // =====>> END SECTION 2B_NO_GRADIENT <<=====
 
     } else {
@@ -231,10 +264,11 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
 
-        // =====>> BEGIN SECTION 2B_GRADIENT <<=====
-        // ====>> PASTE YOUR CODE BELOW <<====
     } else if (mon1 == "ch4" && mon2 == "ch4") {
         x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "co2_archive" and mon2 == "co2_archive") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "nh3" and mon2 == "nh3") {
         mbnrg_A1B3_A1B3_deg4::mbnrg_A1B3_A1B3_deg4_v1 pot(mon1, mon2);
@@ -245,12 +279,41 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "co2" and mon2 == "co2") {
         x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "co2cm5100" and mon2 == "co2cm5100") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "co2cm595" and mon2 == "co2cm595") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "co2cm590" and mon2 == "co2cm590") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "co2cm5875" and mon2 == "co2cm5875") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "co2cm585" and mon2 == "co2cm585") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "co2cm580" and mon2 == "co2cm580") {
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "co2_archive" and mon2 == "h2o") {
+        x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x pot(mon2, mon1);
+        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
     } else if (mon1 == "co2" and mon2 == "h2o") {
         x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x pot(mon2, mon1);
+        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
+    } else if ((mon1 == "co2cm5100" || mon1 == "co2cm595" || mon1 == "co2cm590" || mon1 == "co2cm5875" ||
+                mon1 == "co2cm585" || mon1 == "co2cm580") and
+               mon2 == "h2o") {
+        x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x pot(mon2, "co2");
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
     } else if (mon1 == "ch4" and mon2 == "h2o") {
         x2b_A1B2Z2_C1D4_deg3_exp0::x2b_A1B2Z2_C1D4_v1x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
+    } else if (mon1 == "ch4" and mon2 == "co2") {
+        mbnrg_A1B4_C1D2_deg4::mbnrg_A1B4_C1D2_deg4_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "h2" and mon2 == "h2") {
         mbnrg_A2_A2_deg6::mbnrg_A2_A2_deg6_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
@@ -284,6 +347,9 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "mbpbe" and mon2 == "mbpbe") {
         mbnrg_A1B2Z2_A1B2Z2_deg4::mbnrg_A1B2Z2_A1B2Z2_deg4_vmbpbe pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+        // =====>> BEGIN SECTION 2B_GRADIENT <<=====
+        // ====>> PASTE YOUR CODE BELOW <<====
+
         // =====>> END SECTION 2B_GRADIENT <<=====
     } else {
         energy = 0.0;

@@ -182,6 +182,9 @@ void System::SetNewParamsElec(bool do_grads) {
 }
 
 double System::GetPermanentElectrostaticEnergy() { return electrostaticE_.GetPermanentElectrostaticEnergy(); }
+double System::GetPermanentElectrostaticEnergyExternalFieldContribution() {
+    return electrostaticE_.GetPermanentElectrostaticEnergyExternalFieldContribution();
+}
 
 double System::GetInducedElectrostaticEnergy() { return electrostaticE_.GetInducedElectrostaticEnergy(); }
 

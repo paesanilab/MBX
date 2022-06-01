@@ -192,7 +192,7 @@ TEST_CASE("x2b_A1B2_A1B2_v1x::struct") {
                                                -2.9887779240e+00, 7.4309743102e+00,  -5.0183109093e+00,
                                                1.1505203548e+00,  -5.0183109093e+00, 1.3835171657e+01};
 
-        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x ph("co2", "co2");
+        x2b_A1B2_A1B2_deg5::x2b_A1B2_A1B2_v1x ph("co2_archive", "co2_archive");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
         double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 
@@ -256,7 +256,7 @@ TEST_CASE("x2b_A1B2Z2_C1D2_v1x::struct") {
                                                5.1320557907e+02,  1.8897800093e+03,  -1.2748725485e+03,
                                                -3.3395885269e+02, -1.2748725485e+03, 1.0536993559e+03};
 
-        x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x ph("h2o", "co2");
+        x2b_A1B2Z2_C1D2_deg4::x2b_A1B2Z2_C1D2_v1x ph("h2o", "co2_archive");
         double e_nograd = ph.eval(xyz1.data(), xyz2.data(), ndim);
         double e = ph.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), ndim, &virial);
 

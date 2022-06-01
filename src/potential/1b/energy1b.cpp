@@ -52,10 +52,11 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
     if (mon1 == "h2o") {
         energies = ps::pot_nasa(xyz1.data(), 0, nm);
 
-        // =====>> BEGIN SECTION 1B_NO_GRADIENT <<=====
-        // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon1 == "ch4") {
         x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), nm);
+    } else if (mon1 == "co2_archive") {
+        x1b_A1B2_deg4::x1b_A1B2_v1x pot("co2");
         energies = pot.eval(xyz1.data(), nm);
     } else if (mon1 == "nh3") {
         mbnrg_A1B3_deg5::mbnrg_A1B3_deg5_v1 pot(mon1);
@@ -66,6 +67,10 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
     } else if (mon1 == "co2") {
         x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon1);
         energies = pot.eval(xyz1.data(), nm);
+    } else if (mon1 == "co2cm5100" || mon1 == "co2cm595" || mon1 == "co2cm590" || mon1 == "co2cm5875" ||
+               mon1 == "co2cm585" || mon1 == "co2cm580") {
+        x1b_A1B2_deg4::x1b_A1B2_v1x pot("co2");
+        energies = pot.eval(xyz1.data(), nm);
     } else if (mon1 == "h2") {
         mbnrg_A2_deg8::mbnrg_A2_deg8_v1 pot(mon1);
         energies = pot.eval(xyz1.data(), nm);
@@ -75,6 +80,9 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
     } else if (mon1 == "mbpbe") {
         mbnrg_A1B2_deg6::mbnrg_A1B2_deg6_vmbpbe pot(mon1);
         energies = pot.eval(xyz1.data(), nm);
+        // =====>> BEGIN SECTION 1B_NO_GRADIENT <<=====
+        // =====>> PASTE YOUR CODE BELOW <<=====
+
         // =====>> END SECTION 1B_NO_GRADIENT <<=====
     } else {
         return 0.0;
@@ -139,6 +147,9 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
     } else if (mon1 == "ch4") {
         x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon1);
         energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
+    } else if (mon1 == "co2_archive") {
+        x1b_A1B2_deg4::x1b_A1B2_v1x pot("co2");
+        energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
     } else if (mon1 == "nh3") {
         mbnrg_A1B3_deg5::mbnrg_A1B3_deg5_v1 pot(mon1);
         energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
@@ -147,6 +158,10 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
     } else if (mon1 == "co2") {
         x1b_A1B2_deg4::x1b_A1B2_v1x pot(mon1);
+        energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
+    } else if (mon1 == "co2cm5100" || mon1 == "co2cm595" || mon1 == "co2cm590" || mon1 == "co2cm5875" ||
+               mon1 == "co2cm585" || mon1 == "co2cm580") {
+        x1b_A1B2_deg4::x1b_A1B2_v1x pot("co2");
         energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
     } else if (mon1 == "h2") {
         mbnrg_A2_deg8::mbnrg_A2_deg8_v1 pot(mon1);

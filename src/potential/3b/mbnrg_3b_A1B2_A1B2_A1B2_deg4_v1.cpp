@@ -43,7 +43,7 @@ mbnrg_A1B2_A1B2_A1B2_deg4_v1::mbnrg_A1B2_A1B2_A1B2_deg4_v1(const std::string mon
     // =====>> BEGIN SECTION CONSTRUCTOR <<=====
     // =>> PASTE RIGHT BELOW THIS LINE <==
 
-    if (mon1 == "co2" and mon2 == "co2" and mon3 == "co2") {
+    if (mon1 == "co2_archive" and mon2 == "co2_archive" and mon3 == "co2_archive") {
         coefficients = std::vector<double>{1.092334532224068e+01,    // 0
                                            8.807163197065165e+00,    // 1
                                            -1.902782569763853e+01,   // 2
@@ -2383,7 +2383,7 @@ mbnrg_A1B2_A1B2_A1B2_deg4_v1::mbnrg_A1B2_A1B2_A1B2_deg4_v1(const std::string mon
         m_ri = 3.500000000000000e+00;                                // A
         m_ro = 4.500000000000000e+00;                                // A
 
-    }  // end if mon1 == "co2" and mon2 == "co2" and mon3 == "co2"
+    }  // end if mon1 == "co2_archive" and mon2 == "co2_archive" and mon3 == "co2_archive"
     // =====>> END SECTION CONSTRUCTOR <<=====
 }
 

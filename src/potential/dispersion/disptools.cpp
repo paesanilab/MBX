@@ -422,6 +422,14 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
     }
 
     if (done_with_it) return true;
+
+    if (mon_id1 == "co2cm5100" || mon_id1 == "co2cm595" || mon_id1 == "co2cm590" || mon_id1 == "co2cm585" ||
+        mon_id1 == "co2cm580" || mon_id1 == "co2cm5875")
+        mon_id1 = "co2cm5";
+    if (mon_id2 == "co2cm5100" || mon_id2 == "co2cm595" || mon_id2 == "co2cm590" || mon_id2 == "co2cm585" ||
+        mon_id2 == "co2cm580" || mon_id2 == "co2cm5875")
+        mon_id2 = "co2cm5";
+
     std::vector<size_t> types1, types2;
 
     // Monomers here have to be in alphabetical order: mon1 < mon2 ALWAYS
@@ -648,9 +656,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.43864);  // A^(-1)
         d6.push_back(3.45707);  // A^(-1)
-        // =====>> BEGIN SECTION DISPERSION <<=====
-        // ======>> PASTE CODE BELOW <<======
-    } else if (mon_id1 == "co2" && mon_id2 == "co2") {
+    } else if (mon_id1 == "co2_archive" && mon_id2 == "co2_archive") {
         // Define the type of atom in each mon
         types1.push_back(0);
         types1.push_back(1);
@@ -673,6 +679,52 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.64236);  // A^(-1)
         d6.push_back(3.64236);  // A^(-1)
         d6.push_back(3.52744);  // A^(-1)
+    } else if (mon_id1 == "co2cm5" && mon_id2 == "co2cm5") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(321.00932864);  // kcal/mol * A^(-6) C -- C
+        C6.push_back(219.55020747);  // kcal/mol * A^(-6) C -- O
+        C6.push_back(219.55020747);  // kcal/mol * A^(-6) O -- C
+        C6.push_back(170.09525896);  // kcal/mol * A^(-6) O -- O
+
+        d6.push_back(3.43054);  // A^(-1)
+        d6.push_back(3.82894);  // A^(-1)
+        d6.push_back(3.82894);  // A^(-1)
+        d6.push_back(3.92759);  // A^(-1)
+    } else if (mon_id1 == "co2" && mon_id2 == "co2") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(321.00932864);  // kcal/mol * A^(-6) C -- C
+        C6.push_back(219.55020747);  // kcal/mol * A^(-6) C -- O
+        C6.push_back(219.55020747);  // kcal/mol * A^(-6) O -- C
+        C6.push_back(170.09525896);  // kcal/mol * A^(-6) O -- O
+
+        d6.push_back(3.43054);  // A^(-1)
+        d6.push_back(3.82894);  // A^(-1)
+        d6.push_back(3.82894);  // A^(-1)
+        d6.push_back(3.92759);  // A^(-1)
 
     } else if (mon_id1 == "nh3pbe0d3bj" and mon_id2 == "nh3pbe0d3bj") {
         types1.push_back(0);
@@ -772,7 +824,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.68542);  // A^(-1)
         d6.push_back(3.79757);  // A^(-1)
         d6.push_back(4.01558);  // A^(-1)
-    } else if (mon_id1 == "co2" && mon_id2 == "h2o") {
+    } else if (mon_id1 == "co2_archive" && mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
         types1.push_back(1);
@@ -795,6 +847,52 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.7359);   // A^(-1)
         d6.push_back(3.53045);  // A^(-1)
         d6.push_back(3.89503);  // A^(-1)
+    } else if (mon_id1 == "co2" && mon_id2 == "h2o") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(223.8723);  // kcal/mol * A^(-6) C -- O
+        C6.push_back(106.2522);  // kcal/mol * A^(-6) C -- H
+        C6.push_back(176.5128);  // kcal/mol * A^(-6) O -- O
+        C6.push_back(77.9633);   // kcal/mol * A^(-6) O -- H
+
+        d6.push_back(3.54868);  // A^(-1)
+        d6.push_back(3.1436);   // A^(-1)
+        d6.push_back(3.87591);  // A^(-1)
+        d6.push_back(3.71826);  // A^(-1)
+    } else if (mon_id1 == "co2cm5" && mon_id2 == "h2o") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(223.8723);  // kcal/mol * A^(-6) C -- O
+        C6.push_back(106.2522);  // kcal/mol * A^(-6) C -- H
+        C6.push_back(176.5128);  // kcal/mol * A^(-6) O -- O
+        C6.push_back(77.9633);   // kcal/mol * A^(-6) O -- H
+
+        d6.push_back(3.54868);  // A^(-1)
+        d6.push_back(3.1436);   // A^(-1)
+        d6.push_back(3.87591);  // A^(-1)
+        d6.push_back(3.71826);  // A^(-1)
 
     } else if (mon_id1 == "ar" and mon_id2 == "cs+") {
         types1.push_back(0);
@@ -878,6 +976,28 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         // Fill in (in order) the C6 and d6 coefficients
         C6.push_back(251.48);   // kcal/mol * A^(-6)  A--A
         d6.push_back(4.42822);  // A^(-1) A--A
+    } else if (mon_id1 == "ch4" and mon_id2 == "co2") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 1;
+
+        C6.push_back(306.4929);  // kcal/mol * A^(-6)  A--C
+        C6.push_back(215.0259);  // kcal/mol * A^(-6)  A--D
+        C6.push_back(104.5401);  // kcal/mol * A^(-6)  B--C
+        C6.push_back(77.8082);   // kcal/mol * A^(-6)  B--D
+        d6.push_back(3.2644);    // A^(-1) A--C
+        d6.push_back(3.55762);   // A^(-1) A--D
+        d6.push_back(3.37636);   // A^(-1) B--C
+        d6.push_back(3.5529);    // A^(-1) B--D
+
     } else if (mon_id1 == "cl-" and mon_id2 == "cl-") {
         types1.push_back(0);
 
@@ -991,6 +1111,10 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.44966);   // A^(-1) A--B
         d6.push_back(3.44966);   // A^(-1) A--B
         d6.push_back(3.56401);   // A^(-1) B--B
+
+        // =====>> BEGIN SECTION DISPERSION <<=====
+        // ======>> PASTE CODE BELOW <<======
+
         // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;

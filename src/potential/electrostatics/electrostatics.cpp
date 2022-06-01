@@ -6257,6 +6257,10 @@ void Electrostatics::CalculateElecEnergy() {
     for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
     Eperm_ *= 0.5 * constants::COULOMB;
 
+    Eperm_ext_ = 0.0;
+    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ext_ += external_phi_[i] * sys_chg_all_[i];
+    Eperm_ext_ *= 0.5 * constants::COULOMB;
+
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;
     for (size_t i = 0; i < 3 * nsites_; i++) Eind_ -= mu_[i] * Efq_[i];
@@ -8040,6 +8044,7 @@ std::vector<double> Electrostatics::GetMolecularPermanentDipoles() {
 }
 
 double Electrostatics::GetPermanentElectrostaticEnergy() { return Eperm_; }
+double Electrostatics::GetPermanentElectrostaticEnergyExternalFieldContribution() { return Eperm_ext_; }
 
 double Electrostatics::GetInducedElectrostaticEnergy() { return Eind_; }
 
