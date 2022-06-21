@@ -646,6 +646,116 @@ void ElectricFieldHolder::CalcElecFieldGrads(
     }
 }
 
+// TODO MRR Finish this function
+// void ElectricFieldHolder::CalcElecFieldsAtPoints(double &phi, double &phid,
+//                                                 double *efq, double *efd,
+//                                                 double *point, double *xyz, double *chg,
+//                                                 double *mu, size_t npoints, size_t nmon,
+//                                                 size_t mon_index_start, size_t mon_index_end,
+//                                                 size_t site, bool use_pbc,
+//                                                 const std::vector<double> &box,
+//                                                 const std::vector<double> &box_inverse,
+//                                                 double cutoff, double ewald_alpha,
+//                                                 double Ai, double Asqsq, double g34,
+//                                                 double aCC1_4) {
+//
+//    // Shifts that will be useful in the loops
+//    const size_t nmon2 = nmon * 2;
+//    const size_t site3 = site * 3;
+//    const size_t sitenmon = site * nmon;
+//    const size_t site3nmon = site3 * nmon;
+//
+//    const double elec_scale_factor = 1.0;
+//
+//    const double x = point[0];
+//    const double y = point[1];
+//    const double z = point[2];
+//
+//    // Fill vectors with zeros in the desired range
+//    std::fill(v0_.begin(), v0_.begin() + mon_index_end - mon_index_start, 0.0);
+//    std::fill(v1_.begin(), v1_.begin() + mon_index_end - mon_index_start, 0.0);
+//    std::fill(v2_.begin(), v2_.begin() + mon_index_end - mon_index_start, 0.0);
+//    std::fill(v3_.begin(), v3_.begin() + mon_index_end - mon_index_start, 0.0);
+//
+//    for (size_t m = 0; m < mon_index_end - mon_index_start; m++) {
+//        // Distances between sites i and j from mon1 and mon2
+//        const double rawrijx = x - xyz[site3nmon + m];
+//        const double rawrijy = y - xyz[site3nmon + nmon + m];
+//        const double rawrijz = z - xyz[site3nmon + nmon2 + m];
+//
+//        // Apply the minimum image convention via fractional coordinates
+//        double minrijx, minrijy, minrijz;
+//        if (use_pbc) {
+//            // Convert to fractional coordinates
+//            const double fracrijx = box_inverse[0] * rawrijx + box_inverse[3] * rawrijy + box_inverse[6] * rawrijz;
+//            const double fracrijy = box_inverse[1] * rawrijx + box_inverse[4] * rawrijy + box_inverse[7] * rawrijz;
+//            const double fracrijz = box_inverse[2] * rawrijx + box_inverse[5] * rawrijy + box_inverse[8] * rawrijz;
+//            // Put in the range 0 to 1
+//            const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
+//            const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
+//            const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
+//            // Convert back to Cartesian coordinates
+//            minrijx = box[0] * minfracrijx + box[3] * minfracrijy + box[6] * minfracrijz;
+//            minrijy = box[1] * minfracrijx + box[4] * minfracrijy + box[7] * minfracrijz;
+//            minrijz = box[2] * minfracrijx + box[5] * minfracrijy + box[8] * minfracrijz;
+//        }
+//        const double rijx = use_pbc ? minrijx : rawrijx;
+//        const double rijy = use_pbc ? minrijy : rawrijy;
+//        const double rijz = use_pbc ? minrijz : rawrijz;
+//
+//        const double rijx2 = rijx * rijx;
+//        const double rijy2 = rijy * rijy;
+//        const double rijz2 = rijz * rijz;
+//        const double rsq = rijx2 + rijy2 + rijz2;
+//        const double r = std::sqrt(rsq);
+//        const double ri = r < cutoff ? 1 / r : 0;
+//        const double risq = ri * ri;
+//        const double rsqsq = rsq * rsq;
+//
+//        // Some values that will be used in the screening functions
+//        const double rA4 = rsqsq * Asqsqi;
+//
+//        // Store exponentials
+//        const double addrA4 = aDD * rA4;
+//        const double acdrA4 = aCD * rA4;
+//        const double accrA4 = aCC * rA4;
+//        const double exp1dd = std::exp(-addrA4);
+//        const double exp1cd = std::exp(-acdrA4);
+//        const double exp1cc = std::exp(-accrA4);
+//
+//        //////////////////////////////
+//        // Permanent electric field //
+//        //////////////////////////////
+//
+//        const double gq = gammq(0.75, accrA4);
+//        // Store the attenuated coulomb operator in vector
+//        double ri_at = (elec_scale_factor - erf(ewald_alpha / (ri + 1e-30))) * ri; //(1-erf(alpha r))/r
+//
+//        // Terms needed for the Ewald direct space field, see equation 2.8 of
+//        // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
+//        const double exp_alpha2r2 = std::exp(-ewald_alpha * ewald_alpha / risq );
+//        const bool use_ewald = use_pbc;
+//        const double ewaldterm = use_ewald ? 2 * exp_alpha2r2 * ewald_alpha / PIQSRT : 0;
+//
+//        // Screening functions
+//        // (1 - exp(-a(r/A)^4)) / r = s1(r)/r
+//        const double s1r = ri_at - exp1cc * ri;
+//        // (s1(r) + a^(1/4)r/A GAMMA(3/4,a(r/A)^4) ) / r = s0(r) / r
+//        const double s0r = (s1r + aCC1_4 * Ai * g34 * gq);
+//        // (s1(r) / r + ewald term ) / r^2 = s1(r)/r^3
+//        const double s1r3 = (s1r + ewaldterm) * risq;
+//
+//        // Update fields
+//        // Electorstatic potential due to permanent charges
+//        phi += s0r * chg[sitenmon + m];
+//
+//        // Electric field
+//        const double s1r3c = s1r3 * chg[sitenmon + m];
+//        efq[0] =- s1r3c * rijx;
+//				efq[1] =- s1r3c * rijy;
+//        efq[2] =- s1r3c * rijz;
+//
+
 ////////////////////////////////////////////////////////////////////////////////
 
 }  // namespace elec

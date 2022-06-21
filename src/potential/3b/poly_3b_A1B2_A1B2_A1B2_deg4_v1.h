@@ -1,3 +1,4 @@
+
 /******************************************************************************
 Copyright 2019 The Regents of the University of California.
 All Rights Reserved.
@@ -35,56 +36,75 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef POLY_3B_MBNRG_A1B2_A1B2_A1B2_DEG4_H
 #define POLY_3B_MBNRG_A1B2_A1B2_A1B2_DEG4_H
 
-#ifdef DEBUG
-#include <iostream>
-#include <iomanip>
-#endif
-
 /**
  * @file poly_3b_A1B2_A1B2_A1B2_deg4_v1.h
- * @brief Contains the structure that allows the evaluation of the polynomial for A1B2_A1B2_A1B2 symmetry.
+ * @brief Contains the structure of the polynomial for symmetry A1B2_A1B2_A1B2
  */
 
 /**
  * @namespace mbnrg_A1B2_A1B2_A1B2_deg4
- * @brief Namespace that encloses the A1B2_A1B2_A1B2 polynomial structure
+ * @brief Encloses the structure of the polynomial for symmetry A1B2_A1B2_A1B2
  */
 
 namespace mbnrg_A1B2_A1B2_A1B2_deg4 {
 
-class poly_A1B2_A1B2_A1B2_deg4_v1 {
-   public:
+struct poly_A1B2_A1B2_A1B2_deg4_v1 {
     // Degree of the polynomial
     static const unsigned degree = 4;
 
     // Number of variables
-    static const unsigned n_vars = 36;
+    static const unsigned n_vars = 27;
 
     // Number of terms
-    static const unsigned size = 2331;
+    static const unsigned size = 1067;
 
     /**
      * @brief Evaluates the polynomial of degree 4 for A1B2_A1B2_A1B2 symmetry.
      *
-     * Given the linear parameters and the value of the polynomial variables, evaluates the polynomial for the
-     * A1B2_A1B2_A1B2 symmetry
-     * @param[in] a Double array of 2331 elements with the linear parameters of the polynomial
-     * @param[in] x Double array of length 36 with the variable values
+     * Given the linear parameters and the value of the polynomial variables,
+     * evaluates the polynomial for the A1B2_A1B2_A1B2 symmetry.
+     * @param[in] x Double array of length 27 with the variable values
+     * @param[in] a Double array of 1067 elements with the linear parameters of the polynomial
      * @return Value of the polynomial
      */
-    double eval(const double x[36], const double a[2331]);
+    double eval(const double x[27], const double a[1067]);
 
     /**
      * @brief Evaluates the polynomial of degree 4 for A1B2_A1B2_A1B2 symmetry.
      *
-     * Given the linear parameters and the value of the polynomial variables, evaluates the polynomial for the
-     * A1B2_A1B2_A1B2 symmetry, and calculates the gradients.
-     * @param[in] a Double array of 2331 elements with the linear parameters of the polynomial
-     * @param[in] x Double array of length 36 with the variable values
-     * @param[out] g Double array of length 36 that will store the gradients dP/dxi
+     * Given the linear parameters and the value of the polynomial variables,
+     * evaluates the polynomial for the A1B2_A1B2_A1B2 symmetry.
+     * It uses the direct, non optimized polynomial
+     * @param[in] x Double array of length 27 with the variable values
+     * @param[in] a Double array of 1067 elements with the linear parameters of the polynomial
      * @return Value of the polynomial
      */
-    double eval(const double x[36], const double a[2331], double g[36]);
+    double eval_direct(const double x[27], const double a[1067]);
+
+    /**
+     * @brief Evaluates the polynomial of degree 4 for A1B2_A1B2_A1B2 symmetry.
+     *
+     * Given the linear parameters and the value of the polynomial variables,
+     * evaluates the polynomial for the A1B2_A1B2_A1B2 symmetry.
+     * @param[in] x Double array of length 27 with the variable values
+     * @param[in] a Double array of 1067 elements with the linear parameters of the polynomial
+     * @param[out] g Double array of length 27 that will store the gradients dP/dxi
+     * @return Value of the polynomial
+     */
+    double eval(const double x[27], const double a[1067], double g[27]);
+
+    /**
+     * @brief Evaluates the polynomial of degree 4 for A1B2_A1B2_A1B2 symmetry.
+     *
+     * Given the linear parameters and the value of the polynomial variables,
+     * evaluates the polynomial for the A1B2_A1B2_A1B2 symmetry.
+     * It uses the direct, non optimized polynomial
+     * @param[in] x Double array of length 27 with the variable values
+     * @param[in] a Double array of 1067 elements with the linear parameters of the polynomial
+     * @param[out] g Double array of length 27 that will store the gradients dP/dxi
+     * @return Value of the polynomial
+     */
+    double eval_direct(const double x[27], const double a[1067], double g[27]);
 };
 
 }  // namespace mbnrg_A1B2_A1B2_A1B2_deg4
@@ -99,8 +119,6 @@ class poly_A1B2_A1B2_A1B2_deg4_v1 {
 //
 //  add_variable['A', '1', 'a', 'A', '2', 'b', 'x-inter-A+A-0']
 //  add_variable['A', '1', 'a', 'A', '3', 'c', 'x-inter-A+A-0']
-//  add_variable['A', '1', 'a', 'B', '1', 'a', 'x-intra-A+B-1']
-//  add_variable['A', '1', 'a', 'B', '2', 'a', 'x-intra-A+B-1']
 //  add_variable['A', '1', 'a', 'B', '3', 'b', 'x-inter-A+B-0']
 //  add_variable['A', '1', 'a', 'B', '4', 'b', 'x-inter-A+B-0']
 //  add_variable['A', '1', 'a', 'B', '5', 'c', 'x-inter-A+B-0']
@@ -108,17 +126,12 @@ class poly_A1B2_A1B2_A1B2_deg4_v1 {
 //  add_variable['A', '2', 'b', 'A', '3', 'c', 'x-inter-A+A-0']
 //  add_variable['A', '2', 'b', 'B', '1', 'a', 'x-inter-A+B-0']
 //  add_variable['A', '2', 'b', 'B', '2', 'a', 'x-inter-A+B-0']
-//  add_variable['A', '2', 'b', 'B', '3', 'b', 'x-intra-A+B-1']
-//  add_variable['A', '2', 'b', 'B', '4', 'b', 'x-intra-A+B-1']
 //  add_variable['A', '2', 'b', 'B', '5', 'c', 'x-inter-A+B-0']
 //  add_variable['A', '2', 'b', 'B', '6', 'c', 'x-inter-A+B-0']
 //  add_variable['A', '3', 'c', 'B', '1', 'a', 'x-inter-A+B-0']
 //  add_variable['A', '3', 'c', 'B', '2', 'a', 'x-inter-A+B-0']
 //  add_variable['A', '3', 'c', 'B', '3', 'b', 'x-inter-A+B-0']
 //  add_variable['A', '3', 'c', 'B', '4', 'b', 'x-inter-A+B-0']
-//  add_variable['A', '3', 'c', 'B', '5', 'c', 'x-intra-A+B-1']
-//  add_variable['A', '3', 'c', 'B', '6', 'c', 'x-intra-A+B-1']
-//  add_variable['B', '1', 'a', 'B', '2', 'a', 'x-intra-B+B-1']
 //  add_variable['B', '1', 'a', 'B', '3', 'b', 'x-inter-B+B-0']
 //  add_variable['B', '1', 'a', 'B', '4', 'b', 'x-inter-B+B-0']
 //  add_variable['B', '1', 'a', 'B', '5', 'c', 'x-inter-B+B-0']
@@ -127,12 +140,9 @@ class poly_A1B2_A1B2_A1B2_deg4_v1 {
 //  add_variable['B', '2', 'a', 'B', '4', 'b', 'x-inter-B+B-0']
 //  add_variable['B', '2', 'a', 'B', '5', 'c', 'x-inter-B+B-0']
 //  add_variable['B', '2', 'a', 'B', '6', 'c', 'x-inter-B+B-0']
-//  add_variable['B', '3', 'b', 'B', '4', 'b', 'x-intra-B+B-1']
 //  add_variable['B', '3', 'b', 'B', '5', 'c', 'x-inter-B+B-0']
 //  add_variable['B', '3', 'b', 'B', '6', 'c', 'x-inter-B+B-0']
 //  add_variable['B', '4', 'b', 'B', '5', 'c', 'x-inter-B+B-0']
 //  add_variable['B', '4', 'b', 'B', '6', 'c', 'x-inter-B+B-0']
-//  add_variable['B', '5', 'c', 'B', '6', 'c', 'x-intra-B+B-1']
 //
 //  add_filter['sum-degree', 'x-inter-*+*-*', '0']
-//  add_filter['sum-degree', 'x-intra-*+*-*', '2+']
