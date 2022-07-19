@@ -630,8 +630,8 @@ TEST_CASE("systools::GetCloseTrimerImage") {
             std::vector<double> m1_coordinates = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0};
             std::vector<double> m2_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
             std::vector<double> m2_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0};
-            std::vector<double> m3_coordinates = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
-            std::vector<double> m3_coordinates_close = {2.0, 2.0, 2.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+            std::vector<double> m3_coordinates = {1.0, 1.0, 1.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
+            std::vector<double> m3_coordinates_close = {1.0, 1.0, 1.0, 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0, 2.0, 2.0};
 
             size_t nat1 = 3;
             size_t nat2 = 2;
@@ -657,10 +657,13 @@ TEST_CASE("systools::GetCloseTrimerImage") {
 
             systools::GetCloseTrimerImage(box, box_inv, nat1, nat2, nat3, 1, m1_coordinates, m2_coordinates,
                                           m3_coordinates);
+
             for (size_t i = 0; i < m2_coordinates.size(); i++) {
+                std::cout << i << std::endl;
                 REQUIRE(m2_coordinates[i] == Approx(m2_coordinates_close[i]).margin(TOL));
             }
             for (size_t i = 0; i < m3_coordinates.size(); i++) {
+                std::cout << i << std::endl;
                 REQUIRE(m3_coordinates[i] == Approx(m3_coordinates_close[i]).margin(TOL));
             }
         }
