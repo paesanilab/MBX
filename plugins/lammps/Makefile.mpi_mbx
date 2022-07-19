@@ -11,14 +11,14 @@ FFTW=$(FFTW_HOME)
 # compiler/linker settings
 # specify flags and libraries needed for your compiler
 
-CC = $(MBX_CXX)
+CC = mpiicpc
 CCFLAGS =	-g -O3 -fopenmp -std=c++11
 CCFLAGS +=      -I$(MBX_INC)
 CCFLAGS +=      -I$(FFTW)/include
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
 
-LINK = $(MBX_CXX)
+LINK = mpiicpc
 LINKFLAGS =	-g -O3 -fopenmp
 LIB = 
 LIB +=          $(MBX_LIB)/libmbx.a
