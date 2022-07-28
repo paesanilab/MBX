@@ -2031,7 +2031,7 @@ void FixMBX::mbx_init_dipole_history_local() {
 
     // sync dipole histories of ghost particles
 
-    comm->forward_comm_fix(this);
+    comm->forward_comm(this);
 
     // update coordinates
 
