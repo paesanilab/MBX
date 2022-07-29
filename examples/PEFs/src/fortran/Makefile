@@ -1,4 +1,4 @@
-F90=ifort
+F90=gfortran
 F90FLAGS= -lstdc++ -g -O2
 
 ifndef MBX_HOME
@@ -6,8 +6,8 @@ $(info "MBX_HOME is not set. Please set it or ignore if the default $(HOME)/code
 MBX_HOME = $(HOME)/codes/MBX
 endif
 
-LIBS = -lmbxlib -fopenmp -lfftw3
-LIBDIR = -L$(MBX_HOME)/install/lib/static
+LIBS = -lmbx -fopenmp -lfftw3
+LIBDIR = -L$(MBX_HOME)/install/lib
 
 INCLUDEDIR = -I$(MBX_HOME)/install/include
 
