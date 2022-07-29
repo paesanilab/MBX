@@ -6,7 +6,7 @@ program test
   double precision, allocatable :: box(:)
   double precision, allocatable :: virial(:)
 
-  character(len=5), allocatable :: at_name(:)
+  character(len=5), allocatable :: at_name(:),at_name_cp(:)
   character(len=5), allocatable :: monomers(:)
   character(len=20) :: xyz, json_file, inp
   
@@ -50,7 +50,7 @@ program test
 
   ! Allocation of the coord vector and the atom name vector,
   ! as so as the vector that will store the gradients
-  allocate(coord(n_at*3),at_name(n_at),grads(3*n_at))
+  allocate(coord(n_at*3),at_name_cp(n_at),at_name(n_at),grads(3*n_at))
 
   ! Reading comment file from XYZ. Not saving it
   read(55,*)
@@ -64,8 +64,10 @@ program test
   ! Done reading. Closing file.
   close(55)
 
-  ! MAKE SURE YOU HAVE LEN=5 IN THE CHAR ARRAY!!!!!!
+  ! Copy at_name array
+  at_name_cp(:) = at_name
 
+  ! MAKE SURE YOU HAVE LEN=5 IN THE CHAR ARRAY!!!!!!
   do i =1,n_at
     at_name(i)=trim(at_name(i))//CHAR(0)
   enddo
@@ -120,7 +122,7 @@ program test
   write(*,*)
   write(*,*) "Writting gradients below..."
   do i=1,n_at
-    write(*,*) at_name(i),(grads(3*(i-1)+j),j=1,3)
+    write(*,*) at_name_cp(i),(grads(3*(i-1)+j),j=1,3)
   enddo
   write(*,*)
 

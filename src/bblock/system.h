@@ -55,6 +55,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/force_field/connectivity.h"
 #include "io_tools/read_connectivity.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 // Potential
 // Force Field
 #include "potential/force_field/energyff.h"
