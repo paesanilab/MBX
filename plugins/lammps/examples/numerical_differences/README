@@ -1,0 +1,7 @@
+For the python script to work, the LAMMPS python plugin must be installed
+To do so, long story short:
+1. Compile the shared libraries of MBX (--enable-shared)
+2. Compile the shared libraries of LAMMPS (mode=shared when "making")
+3. If there are complaints about not finding some libraries, make sure they are in LD_LIBRARY_PATH
+
+After that, it should work.
