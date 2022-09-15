@@ -42,3 +42,16 @@ ClustersUltimate.includes
 ClustersUltimate.config
 
 install/
+
+# Autoconf generated files
+**/.deps
+.dirstamp
+Makefile
+Makefile.in
+configure
+autom4te.cache
+m4/
+aclocal.m4
+config.*
+libtool
+stamp-h1
