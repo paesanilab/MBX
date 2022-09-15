@@ -1388,8 +1388,10 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
         rec_phi_and_field_all_ = std::vector<double>((nExtChg + nsites_) * 4, 0.0);
         external_charge_grads_ = std::vector<double>(3 * nExtChg, 0.0);
 
-        nn_first_neigh_ext = std::vector<size_t>(nExtChg, -1);
-        nn_num_neighs_ext = std::vector<size_t>(nExtChg, 0);
+        if(nn_first_ext) {
+          nn_first_neigh_ext = std::vector<size_t>(nExtChg, -1);
+          nn_num_neighs_ext = std::vector<size_t>(nExtChg, 0);
+        }
 
         nsites_all_ = nsites_ + nExtChg;
 
