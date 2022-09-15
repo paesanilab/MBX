@@ -1,4 +1,5 @@
 import sys
+import copy
 
 # parse command line
 
@@ -27,7 +28,12 @@ xc = lmp.gather_atoms("x",1,3)
 lmp.command('run 0')
 
 # Analytical forces ([N],[3])
-frc = lmp.extract_atom('f')
+frc2 = lmp.gather_atoms('f',1,3)
+frc = []
+for i in range(natoms):
+  frc.append([])
+  for j in range(3):
+    frc[-1].append(frc2[3*i+j])
 
 energy = lmp.get_thermo('pe')
 
@@ -35,6 +41,7 @@ energy = lmp.get_thermo('pe')
 step = 1E-05
 
 with open("num_diff.dat",'w') as ff:
+  ff.write("Reference potential energy: {} kcal/mol\n".format(energy))
   ff.write("NUMERICAL DIFFERENCES: INDEX ANALYTICAL NUMERICAL DIFFERENCE\n")
   
   for i in range(natoms):
