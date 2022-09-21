@@ -243,7 +243,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     std::vector<size_t> indexes_to_include, iisls;
     for (size_t i = 0; i < N; i++) {
         bool include_pair = false;
-        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
+        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + i + start2];
         if (!use_ghost) include_pair = true;
         if (use_ghost && isls) include_pair = true;
 
@@ -303,7 +303,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         c6term[i] = c6i * c6j * iinv_r6[i];
         pmeterm[i] = (1 - (1 + ar2 + ar4 / 2) * expterm[i]) * c6term[i];
         ipair_energy[i] =
-            ttsw * (disp_scale_factor * e6[i]) + (1 - ttsw[i]) * disp_scale_factor * c6term[i] - pmeterm[i];
+            ttsw[i] * (disp_scale_factor * e6[i]) + (1 - ttsw[i]) * disp_scale_factor * c6term[i] - pmeterm[i];
     }
 
     for (size_t i = 0; i < n_idxs; i++) {
@@ -336,7 +336,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             g2[nmon22 + index] -= idz[i] * grad[i];
 
             if (virial != 0) {
-                const double vscale = (isls == 1) ? 0.5 : 1.0;
+                const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
 
                 (*virial)[0] -= idx[i] * idx[i] * grad[i] * vscale;  //  update the virial for the atom pair
                 (*virial)[1] -= idx[i] * idy[i] * grad[i] * vscale;
