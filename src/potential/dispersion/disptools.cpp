@@ -319,8 +319,8 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             const double e6term_grad = 6 * e6[i] * iinv_rsq[i] - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r[i]) / ir[i];
             const double c6term_grad = 6 * c6term[i] * iinv_rsq[i];
             const double pmeterm_grad = 6 * pmeterm[i] * iinv_rsq[i];
-            const double ttgrad = ttsw[i] * e6term_grad - ttsw_grad[i] * e6[i] / r[i];
-            const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[i] / r[i];
+            const double ttgrad = ttsw[i] * e6term_grad - ttsw_grad[i] * e6[i] / ir[i];
+            const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[i] / ir[i];
             grad[i] = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
         }
 
