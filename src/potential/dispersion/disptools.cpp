@@ -159,7 +159,6 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 #endif
 
     double disp = 0.0;
-    double disp_lr_below_cutoff = 0.0;
 
     size_t nmon22 = nmon2 * 2;
 
@@ -282,7 +281,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         ttsw[i] = switch_function(ir[i], cutoff - 1.0, cutoff, ttsw_grad[i]);
     }
 
-    double pmeterm[n_idxs], e6[n_idxs], expterm[n_idxs], c6term[n_idxs];
+    double pmeterm[n_idxs], pmeterm2[n_idxs], e6[n_idxs], expterm[n_idxs], c6term[n_idxs];
     for (size_t i = 0; i < n_idxs; i++) {
         // Intermediates used in the dispersion PME terms
         double ar2 = ewald_alpha * ewald_alpha * irsq[i];
@@ -302,6 +301,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
         c6term[i] = c6i * c6j * iinv_r6[i];
         pmeterm[i] = (1 - (1 + ar2 + ar4 / 2) * expterm[i]) * c6term[i];
+        pmeterm2[i] = (1 - (1 + ar2 + ar4 / 2 + ar6 / 6) * expterm[i]) * c6term[i];
         ipair_energy[i] =
             ttsw[i] * (disp_scale_factor * e6[i]) + (1 - ttsw[i]) * disp_scale_factor * c6term[i] - pmeterm[i];
     }
@@ -318,7 +318,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             const double c6sw_grad = -ttsw_grad[i];
             const double e6term_grad = 6 * e6[i] * iinv_rsq[i] - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r[i]) / ir[i];
             const double c6term_grad = 6 * c6term[i] * iinv_rsq[i];
-            const double pmeterm_grad = 6 * pmeterm[i] * iinv_rsq[i];
+            const double pmeterm_grad = 6 * pmeterm2[i] * iinv_rsq[i];
             const double ttgrad = ttsw[i] * e6term_grad - ttsw_grad[i] * e6[i] / ir[i];
             const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[i] / ir[i];
             grad[i] = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
