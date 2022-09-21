@@ -219,11 +219,11 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
     double rsq[N], r[N], inv_rsq[N], inv_r6[N];
     for (size_t i = 0; i < N; i++) {
-        const double rsq[i] = dx[i] * dx[i] + dy[i] * dy[i] + dz[i] * dz[i];
-        const double r[i] = std::sqrt(rsq[i]);
+        rsq[i] = dx[i] * dx[i] + dy[i] * dy[i] + dz[i] * dz[i];
+        r[i] = std::sqrt(rsq[i]);
 
-        const double inv_rsq[i] = 1.0 / rsq[i];
-        const double inv_r6[i] = inv_rsq[i] * inv_rsq[i] * inv_rsq[i];
+        inv_rsq[i] = 1.0 / rsq[i];
+        inv_r6[i] = inv_rsq[i] * inv_rsq[i] * inv_rsq[i];
 
         // Update phi for long range interactions
         // phi2 is a double array
@@ -248,9 +248,9 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         if (use_ghost && isls) include_pair = true;
 
         // If using cutoff, check for distances and get proper dispersion
-        if (r <= cutoff && include_pair) {
+        if (r[i] <= cutoff && include_pair) {
             indexes_to_include.push_back(i);
-            iisls.push_nack(isls);
+            iisls.push_back(isls);
         }
     }
 
@@ -301,13 +301,14 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
         // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
         c6term[i] = c6i * c6j * iinv_r6[i];
-        pmetermi[i] = (1 - (1 + ar2 + ar4 / 2) * expterm) * c6term[i];
-        ipair_energy[i] = ttsw * (disp_scale_factor * e6) + c6sw * disp_scale_factor * c6term - pmeterm;
+        pmeterm[i] = (1 - (1 + ar2 + ar4 / 2) * expterm[i]) * c6term[i];
+        ipair_energy[i] =
+            ttsw * (disp_scale_factor * e6[i]) + (1 - ttsw[i]) * disp_scale_factor * c6term[i] - pmeterm[i];
     }
 
     for (size_t i = 0; i < n_idxs; i++) {
-        if (iisls[i] == 1) pair_energy *= 0.5;
-        dispersion_energy -= pair_energy;
+        if (iisls[i] == 1) ipair_energy[i] *= 0.5;
+        dispersion_energy -= ipair_energy[i];
     }
 
     if (do_grads) {
@@ -317,7 +318,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             const double c6sw_grad = -ttsw_grad[i];
             const double e6term_grad = 6 * e6[i] * iinv_rsq[i] - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r[i]) / ir[i];
             const double c6term_grad = 6 * c6term[i] * iinv_rsq[i];
-            const double pmeterm_grad = 6 * pmetermi[i] * iinv_rsq[i];
+            const double pmeterm_grad = 6 * pmeterm[i] * iinv_rsq[i];
             const double ttgrad = ttsw[i] * e6term_grad - ttsw_grad[i] * e6[i] / r[i];
             const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[i] / r[i];
             grad[i] = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
@@ -326,13 +327,13 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         for (size_t i = 0; i < n_idxs; i++) {
             size_t index = indexes_to_include[i] + start2;
             g1[0] += idx[i] * grad[i];
-            g2[index] -= idx[i] * grad;
+            g2[index] -= idx[i] * grad[i];
 
-            g1[1] += idy[i] * grad;
-            g2[nmon2 + index] -= idy[i] * grad;
+            g1[1] += idy[i] * grad[i];
+            g2[nmon2 + index] -= idy[i] * grad[i];
 
-            g1[2] += idz[i] * grad;
-            g2[nmon22 + index] -= idz[i] * grad;
+            g1[2] += idz[i] * grad[i];
+            g2[nmon22 + index] -= idz[i] * grad[i];
 
             if (virial != 0) {
                 const double vscale = (isls == 1) ? 0.5 : 1.0;
