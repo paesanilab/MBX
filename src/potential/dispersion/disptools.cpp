@@ -166,9 +166,10 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
-    double g1[3], g2[3 * nmon2];
+    size_t g2_size = 3 * nmon2;
+    double g1[3], g2[g2_size];
     std::fill(g1, g1 + 3, 0.0);
-    std::fill(g2, g2 + 3 * nmon2, 0.0);
+    std::fill(g2, g2 + g2_size, 0.0);
     //    #pragma simd
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
@@ -226,13 +227,8 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
         // Update phi for long range interactions
         // phi2 is a double array
-        // Due to vectorization, phi2 is updated here, while phi1 is updated later
+        // phi1 is a double value passed by reference
         phi2[shift_phi + start2 + i] -= c6i * inv_r6[i];
-    }
-
-    // Update phi for long range interactions
-    // phi1 is a double value passed by reference
-    for (size_t i = 0; i < N; i++) {
         phi1 -= c6j * inv_r6[i];
     }
 
