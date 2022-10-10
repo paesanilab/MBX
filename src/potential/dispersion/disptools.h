@@ -98,6 +98,7 @@ const double if8 = 1.0 / disp::factorial<8>();
  * @return The value of the damping function
  */
 double tang_toennies(int n, const double& x);
+double tang_toennies(const double& x);
 
 /**
  * @brief Calculates the dispersion contribution for a given pair of atoms for all apirs in the system.

@@ -75,6 +75,34 @@ double tang_toennies(int n, const double& x) {
     return tt;
 }
 
+double tang_toennies(const double& x) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "x = " << x << std::endl;
+#endif
+
+    int n = 6;
+    double n_inv = 1.0 / n;
+    double xn_inv = n_inv * x;
+    double sum6 = 1.0 + xn_inv;
+    double sum5 = 1.0 + sum6 * xn_inv;
+    double sum4 = 1.0 + sum5 * xn_inv;
+    double sum3 = 1.0 + sum4 * xn_inv;
+    double sum2 = 1.0 + sum3 * xn_inv;
+    double sum = 1.0 + sum2 * xn_inv;
+
+    double tt = 1.0 - sum * std::exp(-x);
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "tt = " << tt << std::endl;
+#endif
+
+    return tt;
+}
+
 //----------------------------------------------------------------------------//
 
 double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,
@@ -273,7 +301,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     double d6r[n_idxs];
     for (size_t i = 0; i < n_idxs; i++) {
         d6r[i] = d6 * ir[i];
-        tt6[i] = disp::tang_toennies(6, d6r[i]);
+        tt6[i] = disp::tang_toennies(d6r[i]);
         ttsw[i] = switch_function(ir[i], cutoff - 1.0, cutoff, ttsw_grad[i]);
     }
 
