@@ -75,6 +75,38 @@ double tang_toennies(int n, const double& x) {
     return tt;
 }
 
+double tang_toennies(const double& x) {
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "x = " << x << std::endl;
+#endif
+
+    int n = 6;
+    double one_over_6 = 1.0 / 6.0;
+    double one_over_5 = 0.2;
+    double one_over_4 = 0.25;
+    double one_over_3 = one_over_6 * 2.0;
+    double one_over_2 = 0.5;
+
+    double sum6 = 1.0 + x * one_over_6;
+    double sum5 = 1.0 + sum6 * x * one_over_5;
+    double sum4 = 1.0 + sum5 * x * one_over_4;
+    double sum3 = 1.0 + sum4 * x * one_over_3;
+    double sum2 = 1.0 + sum3 * x * one_over_2;
+    double sum = 1.0 + sum2 * x;
+
+    double tt = 1.0 - sum * std::exp(-x);
+
+#ifdef DEBUG
+    std::cerr << std::scientific << std::setprecision(10);
+    std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "tt = " << tt << std::endl;
+#endif
+
+    return tt;
+}
+
 //----------------------------------------------------------------------------//
 
 double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,
@@ -159,7 +191,6 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 #endif
 
     double disp = 0.0;
-    double disp_lr_below_cutoff = 0.0;
 
     size_t nmon22 = nmon2 * 2;
 
@@ -167,9 +198,10 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
-    double g1[3], g2[3 * nmon2];
+    size_t g2_size = 3 * nmon2;
+    double g1[3], g2[g2_size];
     std::fill(g1, g1 + 3, 0.0);
-    std::fill(g2, g2 + 3 * nmon2, 0.0);
+    std::fill(g2, g2 + g2_size, 0.0);
     //    #pragma simd
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
@@ -185,7 +217,13 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         z1_r = boxinv[2] * p1[0] + boxinv[5] * p1[1] + boxinv[8] * p1[2];
     }
 
+    const size_t N = end2 - start2;
+    double dx[N];
+    double dy[N];
+    double dz[N];
+
     for (size_t nv = start2; nv < end2; nv++) {
+        size_t i = nv - start2;
         double x2[3];
         x2[0] = xyz2[shift2 + nv];
         x2[1] = xyz2[nmon2 + shift2 + nv];
@@ -206,98 +244,140 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             x2[2] = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
 
-        double dx = x1[0] - x2[0];
-        double dy = x1[1] - x2[1];
-        double dz = x1[2] - x2[2];
+        dx[i] = x1[0] - x2[0];
+        dy[i] = x1[1] - x2[1];
+        dz[i] = x1[2] - x2[2];
+    }
 
-        const double rsq = dx * dx + dy * dy + dz * dz;
-        const double r = std::sqrt(rsq);
+    double rsq[N], r[N], inv_rsq[N], inv_r6[N];
+    for (size_t i = 0; i < N; i++) {
+        rsq[i] = dx[i] * dx[i] + dy[i] * dy[i] + dz[i] * dz[i];
+        r[i] = std::sqrt(rsq[i]);
 
-        const double inv_rsq = 1.0 / rsq;
-        const double inv_r6 = inv_rsq * inv_rsq * inv_rsq;
+        inv_rsq[i] = 1.0 / rsq[i];
+        inv_r6[i] = inv_rsq[i] * inv_rsq[i] * inv_rsq[i];
 
         // Update phi for long range interactions
-        // phi1 is a double value passed by reference
         // phi2 is a double array
+        // phi1 is a double value passed by reference
+        phi2[shift_phi + start2 + i] -= c6i * inv_r6[i];
+        phi1 -= c6j * inv_r6[i];
+    }
 
-        phi1 -= c6j * inv_r6;
-        phi2[shift_phi + nv] -= c6i * inv_r6;
+    // Figure out which are the pairs to be included
+    // Kinda buzzed right now, so hopefully nothing breaks...
 
+    std::vector<size_t> indexes_to_include, iisls;
+    for (size_t i = 0; i < N; i++) {
         bool include_pair = false;
-        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
+        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + i + start2];
         if (!use_ghost) include_pair = true;
         if (use_ghost && isls) include_pair = true;
 
         // If using cutoff, check for distances and get proper dispersion
-        if (r <= cutoff && include_pair) {
-            const double d6r = d6 * r;
-            const double tt6 = disp::tang_toennies(6, d6r);
+        if (r[i] <= cutoff && include_pair) {
+            indexes_to_include.push_back(i);
+            iisls.push_back(isls);
+        }
+    }
 
-            const double inv_rsq = 1.0 / rsq;
-            const double inv_r6 = inv_rsq * inv_rsq * inv_rsq;
+    size_t n_idxs = indexes_to_include.size();
 
-            // Intermediates used in the dispersion PME terms
-            double ar2 = ewald_alpha * ewald_alpha * rsq;
-            double ar4 = ar2 * ar2;
-            double ar6 = ar4 * ar2;
-            double expterm = ewald_alpha ? std::exp(-ar2) : 1;
+    double idx[n_idxs];
+    double idy[n_idxs];
+    double idz[n_idxs];
 
-            const double e6 = C6 * tt6 * inv_r6;
+    double irsq[n_idxs], ir[n_idxs], iinv_rsq[n_idxs], iinv_r6[n_idxs];
 
-            double ttsw_grad = 0;
-            const double ttsw = switch_function(r, cutoff - 1.0, cutoff, ttsw_grad);
-            const double c6sw = 1 - ttsw;
-            const double c6sw_grad = -ttsw_grad;
+    for (size_t i = 0; i < n_idxs; i++) {
+        idx[i] = dx[indexes_to_include[i]];
+        idy[i] = dy[indexes_to_include[i]];
+        idz[i] = dz[indexes_to_include[i]];
 
-            // The idea here is quite simple.  At short range we want the TT term (e6) to model dispersion.  At long
-            // range this becomes C6i C6j / Rij^6, which is handled by PME.  The reciprocal space part of PME always
-            // includes extra terms that contribute below the cutoff, even if that pair shouldn't contribute.  For
-            // intermonomer pairs, this means there is the TT contribution that we want, but we have to remove the
-            // part of the reciprocal space from C6i C6j / Rij^6 that was added in the reciprocal space term.  Similarly
-            // for intramonomer terms, there should be no TT contribution or C6i C6j / Rij^6 term, so we use the scale
-            // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
-            // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
-            double c6term = c6i * c6j * inv_r6;
-            double pmeterm = c6i * c6j * (1 - (1 + ar2 + ar4 / 2) * expterm) * inv_r6;
-            double pair_energy = ttsw * (disp_scale_factor * e6) + c6sw * disp_scale_factor * c6term - pmeterm;
+        irsq[i] = rsq[indexes_to_include[i]];
+        ir[i] = r[indexes_to_include[i]];
+        iinv_rsq[i] = inv_rsq[indexes_to_include[i]];
+        iinv_r6[i] = inv_r6[indexes_to_include[i]];
+    }
 
-            if (isls == 1) pair_energy *= 0.5;
-            dispersion_energy -= pair_energy;
+    double tt6[n_idxs], ttsw_grad[n_idxs], ttsw[n_idxs];
+    double ipair_energy[n_idxs];
+    double d6r[n_idxs];
+    for (size_t i = 0; i < n_idxs; i++) {
+        d6r[i] = d6 * ir[i];
+        tt6[i] = disp::tang_toennies(d6r[i]);
+        ttsw[i] = switch_function(ir[i], cutoff - 1.0, cutoff, ttsw_grad[i]);
+    }
 
-            if (do_grads) {
-                const double e6term_grad = 6 * e6 * inv_rsq - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r) / r;
-                const double c6term_grad = 6 * c6term * inv_rsq;
-                const double pmeterm_grad =
-                    6 * c6i * c6j * (1 - (1 + ar2 + ar4 / 2 + ar6 / 6) * expterm) * inv_r6 * inv_rsq;
-                const double ttgrad = ttsw * e6term_grad - ttsw_grad * e6 / r;
-                const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term / r;
-                const double grad = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
+    double pmeterm[n_idxs], pmeterm2[n_idxs], e6[n_idxs], expterm[n_idxs], c6term[n_idxs];
+    for (size_t i = 0; i < n_idxs; i++) {
+        // Intermediates used in the dispersion PME terms
+        double ar2 = ewald_alpha * ewald_alpha * irsq[i];
+        double ar4 = ar2 * ar2;
+        double ar6 = ar4 * ar2;
+        expterm[i] = ewald_alpha ? std::exp(-ar2) : 1;
 
-                g1[0] += dx * grad;
-                g2[nv] -= dx * grad;
+        e6[i] = C6 * tt6[i] * iinv_r6[i];
 
-                g1[1] += dy * grad;
-                g2[nmon2 + nv] -= dy * grad;
+        // The idea here is quite simple.  At short range we want the TT term (e6) to model dispersion.  At long
+        // range this becomes C6i C6j / Rij^6, which is handled by PME.  The reciprocal space part of PME always
+        // includes extra terms that contribute below the cutoff, even if that pair shouldn't contribute.  For
+        // intermonomer pairs, this means there is the TT contribution that we want, but we have to remove the
+        // part of the reciprocal space from C6i C6j / Rij^6 that was added in the reciprocal space term.  Similarly
+        // for intramonomer terms, there should be no TT contribution or C6i C6j / Rij^6 term, so we use the scale
+        // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
+        // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
+        c6term[i] = c6i * c6j * iinv_r6[i];
+        pmeterm[i] = (1 - (1 + ar2 + ar4 / 2) * expterm[i]) * c6term[i];
+        pmeterm2[i] = (1 - (1 + ar2 + ar4 / 2 + ar6 / 6) * expterm[i]) * c6term[i];
+        ipair_energy[i] =
+            ttsw[i] * (disp_scale_factor * e6[i]) + (1 - ttsw[i]) * disp_scale_factor * c6term[i] - pmeterm[i];
+    }
 
-                g1[2] += dz * grad;
-                g2[nmon22 + nv] -= dz * grad;
+    for (size_t i = 0; i < n_idxs; i++) {
+        if (iisls[i] == 1) ipair_energy[i] *= 0.5;
+        dispersion_energy -= ipair_energy[i];
+    }
 
-                if (virial != 0) {
-                    const double vscale = (isls == 1) ? 0.5 : 1.0;
+    if (do_grads) {
+        double grad[n_idxs];
+        for (size_t i = 0; i < n_idxs; i++) {
+            const double c6sw = 1 - ttsw[i];
+            const double c6sw_grad = -ttsw_grad[i];
+            const double e6term_grad = 6 * e6[i] * iinv_rsq[i] - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r[i]) / ir[i];
+            const double c6term_grad = 6 * c6term[i] * iinv_rsq[i];
+            const double pmeterm_grad = 6 * pmeterm2[i] * iinv_rsq[i];
+            const double ttgrad = ttsw[i] * e6term_grad - ttsw_grad[i] * e6[i] / ir[i];
+            const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[i] / ir[i];
+            grad[i] = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
+        }
 
-                    (*virial)[0] -= dx * dx * grad * vscale;  //  update the virial for the atom pair
-                    (*virial)[1] -= dx * dy * grad * vscale;
-                    (*virial)[2] -= dx * dz * grad * vscale;
+        for (size_t i = 0; i < n_idxs; i++) {
+            size_t index = indexes_to_include[i] + start2;
+            g1[0] += idx[i] * grad[i];
+            g2[index] -= idx[i] * grad[i];
 
-                    (*virial)[4] -= dy * dy * grad * vscale;
-                    (*virial)[5] -= dy * dz * grad * vscale;
+            g1[1] += idy[i] * grad[i];
+            g2[nmon2 + index] -= idy[i] * grad[i];
 
-                    (*virial)[8] -= dz * dz * grad * vscale;
+            g1[2] += idz[i] * grad[i];
+            g2[nmon22 + index] -= idz[i] * grad[i];
 
-                    (*virial)[3] = (*virial)[1];
-                    (*virial)[6] = (*virial)[2];
-                    (*virial)[7] = (*virial)[5];
-                }
+            if (virial != 0) {
+                const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
+
+                (*virial)[0] -= idx[i] * idx[i] * grad[i] * vscale;  //  update the virial for the atom pair
+                (*virial)[1] -= idx[i] * idy[i] * grad[i] * vscale;
+                (*virial)[2] -= idx[i] * idz[i] * grad[i] * vscale;
+
+                (*virial)[4] -= idy[i] * idy[i] * grad[i] * vscale;
+                (*virial)[5] -= idy[i] * idz[i] * grad[i] * vscale;
+
+                (*virial)[8] -= idz[i] * idz[i] * grad[i] * vscale;
+
+                (*virial)[3] = (*virial)[1];
+                (*virial)[6] = (*virial)[2];
+                (*virial)[7] = (*virial)[5];
             }
         }
     }
