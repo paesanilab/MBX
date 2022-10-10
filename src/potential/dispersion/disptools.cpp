@@ -83,14 +83,18 @@ double tang_toennies(const double& x) {
 #endif
 
     int n = 6;
-    double n_inv = 1.0 / n;
-    double xn_inv = n_inv * x;
-    double sum6 = 1.0 + xn_inv;
-    double sum5 = 1.0 + sum6 * xn_inv;
-    double sum4 = 1.0 + sum5 * xn_inv;
-    double sum3 = 1.0 + sum4 * xn_inv;
-    double sum2 = 1.0 + sum3 * xn_inv;
-    double sum = 1.0 + sum2 * xn_inv;
+    double one_over_6 = 1.0 / 6.0;
+    double one_over_5 = 0.2;
+    double one_over_4 = 0.25;
+    double one_over_3 = one_over_6 * 2.0;
+    double one_over_2 = 0.5;
+
+    double sum6 = 1.0 + x * one_over_6;
+    double sum5 = 1.0 + sum6 * x * one_over_5;
+    double sum4 = 1.0 + sum5 * x * one_over_4;
+    double sum3 = 1.0 + sum4 * x * one_over_3;
+    double sum2 = 1.0 + sum3 * x * one_over_2;
+    double sum = 1.0 + sum2 * x;
 
     double tt = 1.0 - sum * std::exp(-x);
 
