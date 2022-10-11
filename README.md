@@ -94,6 +94,8 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * Phys. Chem. Chem. Phys., 2016,18, 30334-30343 (TTM-nrg)
   * J. Chem. Phys. 147, 161715 (2017) (MB-nrg)
   * J. Phys. Chem. A 2018, 122, 27, 5811–5821 (MB-nrg)
+- Halide Ions and water
+  * Alessandro will add papers here
 - CO2
   * J. Chem. Theory Comput. 2020, 16, 4, 2246–2257
 - CH4
