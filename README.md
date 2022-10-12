@@ -177,7 +177,10 @@ Further doucmentation will follow up. For now, look at the examples in `MBX_HOME
 
 ## Coverage
 The unit tests implemented should cover a big part of the code, and their coverage can be checked here:
-![plot](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR)
+<p align="center">
+  <img src="https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
+</p>
+
 
 
 
