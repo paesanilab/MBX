@@ -159,14 +159,16 @@ Do the following:
 ```
 cp Makefile.mpi_mbx LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
 cd LAMMPS_HOME/src/
-make yes-USER-MBX yes-MOLECULE
+make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+make yes-USER-MBX
 make mpi_mbx -j 4
 ```
 It is possible that there is a compilation error at this point regarding an undefined reference to `FIX_MBX`.
 If so, while being in the src folder in LAMMPS, do the following:
 ```
 rm style_fix.h style_pair.h 
-make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID
+make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+make yes-USER-MBX
 touch fix_mbx.* pair_mbx.*
 make mpi_mbx -j 8
 ```
@@ -176,7 +178,7 @@ After this, a new executable `lmp_mpi_mbx` in `src` should apear, and that is th
 Further doucmentation will follow up. For now, look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. 
 
 ## Coverage
-The unit tests implemented should cover a big part of the code, and their coverage can be checked here:
+The unit tests implemented should cover a big part of the code. This sunburst graph gives an idea of the coverage from top (center) to bottom (periphery). Our goal is to keep it as green as possible, being green good coverage, and red bad covergae.
 <p align="center">
   <img src="https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>
