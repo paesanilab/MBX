@@ -176,7 +176,8 @@ After this, a new executable `lmp_mpi_mbx` in `src` should apear, and that is th
 Further doucmentation will follow up. For now, look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. 
 
 ## Coverage
-The unit tests implemented should cover a big part of the code, and their coverage can be checked [here](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR)
+The unit tests implemented should cover a big part of the code, and their coverage can be checked here:
+![plot](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR)
 
 
 
