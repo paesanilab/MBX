@@ -1,5 +1,5 @@
 [![MBX testing suite](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml/badge.svg)](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml)
-[![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
+[![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
 # MBX v0.7
@@ -94,6 +94,8 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * Phys. Chem. Chem. Phys., 2016,18, 30334-30343 (TTM-nrg)
   * J. Chem. Phys. 147, 161715 (2017) (MB-nrg)
   * J. Phys. Chem. A 2018, 122, 27, 5811–5821 (MB-nrg)
+- Halide Ions and water
+  * Alessandro will add papers here
 - CO2
   * J. Chem. Theory Comput. 2020, 16, 4, 2246–2257
 - CH4
@@ -157,14 +159,16 @@ Do the following:
 ```
 cp Makefile.mpi_mbx LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
 cd LAMMPS_HOME/src/
-make yes-USER-MBX yes-MOLECULE
+make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+make yes-USER-MBX
 make mpi_mbx -j 4
 ```
 It is possible that there is a compilation error at this point regarding an undefined reference to `FIX_MBX`.
 If so, while being in the src folder in LAMMPS, do the following:
 ```
 rm style_fix.h style_pair.h 
-make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID
+make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+make yes-USER-MBX
 touch fix_mbx.* pair_mbx.*
 make mpi_mbx -j 8
 ```
@@ -173,6 +177,11 @@ After this, a new executable `lmp_mpi_mbx` in `src` should apear, and that is th
 
 Further doucmentation will follow up. For now, look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. 
 
+## Coverage
+The unit tests implemented should cover a big part of the code. This sunburst graph gives an idea of the coverage from top (center) to bottom (periphery). Our goal is to keep it as green as possible, being green good coverage, and red bad covergae.
+<p align="center">
+  <img src="https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
+</p>
 
 
 

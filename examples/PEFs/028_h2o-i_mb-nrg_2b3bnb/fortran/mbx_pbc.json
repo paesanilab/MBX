@@ -14,7 +14,7 @@
        "spline_order_disp" : 6,
        "ff_mons"   : [],
        "connectivity_file" : "", 
-       "ttm_pairs" : [["i-","h2o"]],
+       "ttm_pairs" : [],
        "ignore_dispersion" : [],
        "use_lennard_jones" : [],
        "nonbonded_file" : "",

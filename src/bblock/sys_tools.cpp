@@ -1619,13 +1619,13 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
 
     // Halides
     if (mon_id == "f-") {  // Fluoride
-        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.4669;
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.8079;
     } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3602;
     } else if (mon_id == "br-") {  // Bromide
-        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 7.1668;
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 3.7819;
     } else if (mon_id == "i-") {  // Iodide
-        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 10.1184;
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.9563;
     }
 
     // Alkali metal ions
@@ -1792,13 +1792,13 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
 
     // Halides
     if (mon_id == "f-") {  // Fluoride
-        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.4669;
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8079;
     } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3602;
     } else if (mon_id == "br-") {  // Bromide
-        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 7.1668;
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 3.7819;
     } else if (mon_id == "i-") {  // Iodide
-        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 10.1184;
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.9563;
     }
 
     // Alkali metal ions

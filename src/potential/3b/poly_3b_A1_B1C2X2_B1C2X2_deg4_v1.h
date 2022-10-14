@@ -20,6 +20,24 @@ struct poly_A1_B1C2X2_B1C2X2_deg4_v1 {
 
 }  // namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
 
+namespace mbnrg_A1_B1C2X2_B1C2X2_deg4_oldswitch {
+
+struct poly_A1_B1C2X2_B1C2X2_deg4_v1 {
+    static const unsigned degree = 4;
+    static const unsigned n_vars = 41;
+
+    static const unsigned size = 1575;
+
+    double eval(const double x[41], const double a[1575]);
+    double eval_direct(const double x[41], const double a[1575]);
+    double eval(const double x[41], const double a[1575], double g[41]);
+    double eval_direct(const double x[41], const double a[1575], double g[41]);
+    unsigned report_nvars() { return n_vars; };
+    unsigned report_size() { return size; };
+};
+
+}  // namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
+
 #endif  // POLY_3B_MBNRG_A1_B1C2X2_B1C2X2_DEG4_H
 
 // Polynomial input used to generate these files:

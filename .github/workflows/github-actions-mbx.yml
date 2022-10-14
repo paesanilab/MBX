@@ -53,9 +53,12 @@ jobs:
 
       - name: Submit to codecov.io
         run: |
+          export CODECOV_TOKEN=c788f6e4-7b04-4a7a-a8dc-41c0a45811d2
           cd ${{ github.workspace }}
           lcov --directory . --capture --output-file coverage.info # capture coverage info
           lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
           lcov --list coverage.info #debug info
-          bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports"
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov -t ${CODECOV_TOKEN}
           
