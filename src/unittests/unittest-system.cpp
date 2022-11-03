@@ -494,3 +494,59 @@ TEST_CASE("External fields") {
         REQUIRE(ei + ei2 == Approx(eind[0]).margin(TOL));
     }
 }
+
+TEST_CASE("External charges") {
+    // Read systems from input
+    // 3 systems read: complete, without point charges, and only point charges
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    // Set up json defaults
+    for (size_t i = 0; i < systems.size(); i++) {
+        systems[i].SetUpFromJson();
+    }
+
+    // Calculate reference energy and gradients
+    double expected_energy = systems[0].Energy(true);
+    std::vector<double> expected_grads = systems[0].GetRealGrads();
+
+    // Calculate the energy contribution and the gradients from the 2 point charges
+    double energy_point_charges = systems[2].Energy(true);
+    std::vector<double> gradients_point_charges = systems[2].GetRealGrads();
+
+    // Get Charge information from system[2] (the point charges)
+    std::vector<double> external_chg_xyz = systems[2].GetXyz();
+    std::vector<double> external_chg_charge = systems[2].GetCharges();
+
+    // Set external charges in system 1 (the real atoms)
+    systems[1].SetExternalChargesAndPositions(external_chg_charge, external_chg_xyz);
+
+    // Calculate energy and gradients of system 1 and the external charges
+    double en1 = systems[1].Energy(true);
+    std::vector<double> grads = systems[1].GetRealGrads();
+    std::vector<double> grads_external_charges = systems[1].GetExternalChargesGradients();
+
+    // Check that it adds up together
+    SECTION("Energy") { REQUIRE(en1 == Approx(expected_energy).margin(TOL)); }
+
+    SECTION("Gradients") {
+        size_t n1 = systems[1].GetNumRealSites();
+        size_t n2 = systems[2].GetNumRealSites();
+
+        for (size_t i = 0; i < 3 * n1; i++) {
+            REQUIRE(grads[i] == Approx(expected_grads[i]).margin(TOL));
+        }
+
+        for (size_t i = 0; i < 3 * n2; i++) {
+            REQUIRE(grads_external_charges[i] == Approx(expected_grads[3 * n1 + i]).margin(TOL));
+        }
+    }
+}
