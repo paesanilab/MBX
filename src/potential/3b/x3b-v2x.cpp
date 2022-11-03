@@ -33,7 +33,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "potential/3b/x3b-v2x.h"
+//#define PRINT_GPU_DATA
 
+#ifdef PRINT_GPU_DATA
+#include <iostream>
+#include <iomanip>
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace {
@@ -1440,6 +1445,12 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
     }
     std::cerr << std::endl;
 #endif
+
+#ifdef PRINT_GPU_DATA
+        if (virial != 0) 
+            for (size_t kk = 0; kk < 9; kk++) (*virial)[kk] = 0.0;
+#endif
+
     std::vector<double> energy(nt, 0.0);
     double rabsq[nt], racsq[nt], rbcsq[nt];
     double rab[nt], rac[nt], rbc[nt];
@@ -1646,6 +1657,46 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
             (*virial)[7] = (*virial)[5];
         }
     }
+
+#ifdef PRINT_GPU_DATA
+    std::cerr << std::scientific << std::setprecision(10);
+
+    // Ref energy
+    std::cerr << e << std::endl;
+
+    // Number of trimers
+    std::cerr << nt << std::endl;
+  
+    size_t ndata = 9*nt;
+    // Print size of xyz1 and the coordinates
+    std::cerr << ndata << std::endl;
+    for (size_t kk = 0; kk < ndata; kk++) std::cerr << w1[kk] << std::endl;
+  
+    // Print size of xyz2 and the coordinates
+    std::cerr << ndata << std::endl;
+    for (size_t kk = 0; kk < ndata; kk++) std::cerr << w2[kk] << std::endl;
+
+    // Print size of xyz3 and the coordinates
+    std::cerr << ndata << std::endl;
+    for (size_t kk = 0; kk < ndata; kk++) std::cerr << w3[kk] << std::endl;
+    
+    // Print size of grad1 and the coordinates
+    std::cerr << ndata << std::endl;
+    for (size_t kk = 0; kk < ndata; kk++) std::cerr << g1[kk] << std::endl;
+  
+    // Print size of grad2 and the coordinates
+    std::cerr << ndata << std::endl;
+    for (size_t kk = 0; kk < ndata; kk++) std::cerr << g2[kk] << std::endl;
+
+    // Print size of grad3 and the coordinates
+    std::cerr << ndata << std::endl;
+    for (size_t kk = 0; kk < ndata; kk++) std::cerr << g3[kk] << std::endl;
+    
+    // Virial
+    std::cerr << 9 << std::endl;
+    for (size_t kk = 0; kk < 9; kk++) std::cerr << (*virial)[kk] << std::endl;
+
+#endif
 
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);

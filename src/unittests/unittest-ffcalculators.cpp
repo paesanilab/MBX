@@ -475,8 +475,8 @@ TEST_CASE("calculators::CalculateInversionGrad") {
 
             // Shift the phis vector because the inversion angles are assigned
             // in the incorrect order from dlpoly
-            for (int i = 0; i < 3; i++) {
-                phi[i] = temp_shift_vector[(i + 1) % 3];
+            for (int ii = 0; ii < 3; ii++) {
+                phi[ii] = temp_shift_vector[(ii + 1) % 3];
             }
             ////////////////////////////////////
 

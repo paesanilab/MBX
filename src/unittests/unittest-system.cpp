@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/math_tools.h"
 #include "json/json.h"
 #include "setup_h2o_2_ch4_1.h"
+#include "setup_co2_2_h2o_2.h"
 
 #include <vector>
 #include <iostream>
@@ -47,6 +48,21 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <utility>
 
 constexpr double TOL = 1E-6;
+
+void CreateSystem(bblock::System &s, std::vector<std::string> mon_ids, std::vector<size_t> nats,
+                  std::vector<size_t> first_index, std::vector<double> coords, std::vector<std::string> atom_names,
+                  nlohmann::json j) {
+    for (size_t i = 0; i < mon_ids.size(); i++) {
+        size_t numat = nats[i];
+        size_t fi = first_index[i];
+        std::vector<double> xyz(coords.begin() + 3 * fi, coords.begin() + 3 * (fi + numat));
+        std::vector<std::string> atoms(atom_names.begin() + fi, atom_names.begin() + fi + numat);
+        s.AddMonomer(xyz, atoms, mon_ids[i]);
+    }
+
+    s.Initialize();
+    s.SetUpFromJson(j);
+}
 
 void TestEnergy(bblock::System &s, TestEnergyData &testData) {
     SECTION("Total Energy") {
@@ -213,4 +229,96 @@ TEST_CASE("system::energy") {
     s.SetUpFromJson(j);
 
     TestEnergy(s, testData);
+
+    // Quick test to check one of the getters
+    size_t nats_ch4 = s.GetMonNumAt(2);
+    REQUIRE(nats_ch4 == 5);
+}
+
+TEST_CASE("system::getters") {
+    SECTION("System Information") {
+        // Set up system
+        SETUP_CO2_2_H2O_2
+
+        // Create system object
+        bblock::System s;
+        nlohmann::json j;
+        CreateSystem(s, monomer_names, n_atoms_vector, first_index_realSites, real_coords, atom_names, j);
+
+        // Start "getting"
+
+        // Number of molecules
+        size_t s_nummol = s.GetNumMol();
+        size_t nummol = 0;
+        REQUIRE(s_nummol == nummol);  // For now, no molecules
+
+        // Number of Monomers
+        size_t s_nummon = s.GetNumMon();
+        REQUIRE(s_nummon == n_monomers);
+
+        // Number of Sites
+        size_t s_numsites = s.GetNumSites();
+        REQUIRE(s_numsites == n_sites);
+
+        // Number of atoms
+        size_t s_numats = s.GetNumRealSites();
+        REQUIRE(s_numats == n_atoms);
+
+        // Vector of number of atoms
+        std::vector<size_t> s_nats = s.GetMonNumAt();
+        REQUIRE(VectorsAreEqual(s_nats, n_atoms_vector));
+
+        // First index vector
+        std::vector<size_t> s_fi_sites = s.GetFirstInd();
+        REQUIRE(VectorsAreEqual(s_fi_sites, first_index));
+
+        // First index of a given monomer
+        for (size_t i = 0; i < s_fi_sites.size(); i++) {
+            size_t s_fi_ind = s.GetFirstInd(i);
+            REQUIRE(s_fi_ind == s_fi_sites[i]);
+        }
+
+        // First index real sites
+        std::vector<size_t> s_fi_realsites = s.GetFirstIndRealSites();
+        REQUIRE(VectorsAreEqual(s_fi_realsites, first_index_realSites));
+
+        // Sites vector
+        std::vector<size_t> s_sites = s.GetSitesVector();
+        REQUIRE(VectorsAreEqual(s_sites, n_sites_vector));
+
+        // Atoms vector
+        std::vector<size_t> s_atoms = s.GetAtomsVector();
+        REQUIRE(VectorsAreEqual(s_atoms, n_atoms_vector));
+
+        // Charges
+        std::vector<double> s_charges = s.GetCharges();
+        REQUIRE(VectorsAreEqual(s_charges, charges, TOL));
+
+        std::vector<double> s_realcharges = s.GetRealCharges();
+        REQUIRE(VectorsAreEqual(s_realcharges, real_charges, TOL));
+
+        // Polarizability
+        std::vector<double> s_pols = s.GetPolarizabilities();
+        REQUIRE(VectorsAreEqual(s_pols, pol, TOL));
+
+        std::vector<double> s_realpols = s.GetRealPolarizabilities();
+        REQUIRE(VectorsAreEqual(s_realpols, real_pol, TOL));
+
+        // Polarizability Factor
+        std::vector<double> s_polfac = s.GetPolarizabilityFactors();
+        REQUIRE(VectorsAreEqual(s_polfac, polfac, TOL));
+
+        std::vector<double> s_realpolfac = s.GetRealPolarizabilityFactors();
+        REQUIRE(VectorsAreEqual(s_realpolfac, real_polfac, TOL));
+
+        // C6 for long range
+        std::vector<double> s_c6lr = s.GetRealC6lr();
+        REQUIRE(VectorsAreEqual(s_c6lr, C6_long_range, TOL));
+
+        // Get mon id of index
+        for (size_t i = 0; i < monomer_names.size(); i++) {
+            std::string s_id = s.GetMonId(i);
+            REQUIRE(s_id == monomer_names[i]);
+        }
+    }
 }
