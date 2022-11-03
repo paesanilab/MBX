@@ -369,18 +369,18 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
     return pair_list;
 }
 
-void System::GetAtomMonIndex(std::vector<size_t> &original_atom_index_to_original_mon_index,
-                             std::vector<std::string> &original_atom_index_to_original_mon_id) {
-    original_atom_index_to_original_mon_index = std::vector<size_t>(numat_, 0);
-    original_atom_index_to_original_mon_id = std::vector<std::string>(numat_, 0);
-    for (size_t i = 0; i < nat_.size(); i++) {
-        size_t original_index = initial_order_realSites_[i].first;
-        for (size_t j = 0; j < nat_[i]; j++) {
-            original_atom_index_to_original_mon_index[original_index + j] = i;
-            original_atom_index_to_original_mon_id[original_index + j] = monomers_[i];
-        }
-    }
-}
+// void System::GetAtomMonIndex(std::vector<size_t> &original_atom_index_to_original_mon_index,
+//                             std::vector<std::string> &original_atom_index_to_original_mon_id) {
+//    original_atom_index_to_original_mon_index = std::vector<size_t>(numat_);
+//    original_atom_index_to_original_mon_id = std::vector<std::string>(numat_);
+//    for (size_t i = 0; i < nat_.size(); i++) {
+//        size_t original_index = initial_order_realSites_[i].first;
+//        for (size_t j = 0; j < nat_[i]; j++) {
+//            original_atom_index_to_original_mon_index[original_index + j] = i;
+//            original_atom_index_to_original_mon_id[original_index + j] = monomers_[i];
+//        }
+//    }
+//}
 
 std::vector<size_t> System::GetMolecule(size_t n) { return molecules_[n]; }
 
@@ -408,7 +408,7 @@ std::vector<double> System::GetRealGrads() {
 std::vector<double> System::GetCharges() { return systools::ResetOrderN(chg_, initial_order_, first_index_, sites_); }
 
 std::vector<double> System::GetRealC6lr() {
-    return systools::ResetOrderRealN(c6_lr_, initial_order_realSites_, numat_, first_index_, nat_);
+    return systools::ResetOrderN(c6_lr_, initial_order_realSites_, first_index_real_sites_, nat_);
 }
 
 std::vector<double> System::GetRealCharges() {
@@ -1823,7 +1823,7 @@ void System::AddMonomerInfo() {
         // Adding the first index of sites
         first_index_.push_back(count);
         // Adding the first index of real sites
-        first_index_real_sites_.push_back(count);
+        first_index_real_sites_.push_back(count_real);
         // Update count
         count += sites_[k];
         count_real += nat_[k];
