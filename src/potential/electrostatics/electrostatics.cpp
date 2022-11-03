@@ -1388,9 +1388,9 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
         rec_phi_and_field_all_ = std::vector<double>((nExtChg + nsites_) * 4, 0.0);
         external_charge_grads_ = std::vector<double>(3 * nExtChg, 0.0);
 
-        if(nn_first_ext) {
-          nn_first_neigh_ext = std::vector<size_t>(nExtChg, -1);
-          nn_num_neighs_ext = std::vector<size_t>(nExtChg, 0);
+        if (nn_first_ext) {
+            nn_first_neigh_ext = std::vector<size_t>(nExtChg, -1);
+            nn_num_neighs_ext = std::vector<size_t>(nExtChg, 0);
         }
 
         nsites_all_ = nsites_ + nExtChg;
@@ -2907,15 +2907,6 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
         rv[i] = pv[i];
     }
 
-#ifdef DEBUG
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cout << "ts2v[" << i << "] = " << ts2v[i] << std::endl;
-    }
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cout << "rv[" << i << "] = " << rv[i] << std::endl;
-    }
-#endif
-
     // Start iterations
     size_t iter = 1;
     double rvrv = DotProduct(rv, rv);
@@ -2928,10 +2919,6 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
     double residual = 0.0;
     double residual_global = 0.0;
     while (true) {
-#ifdef DEBUG
-        std::cout << "Iteration: " << iter << std::endl;
-#endif
-
         DipolesCGIterationMPIlocal(pv, ts2v, use_ghost);
         double pvts2pv = DotProduct(pv, ts2v);
 
@@ -3169,23 +3156,11 @@ void Electrostatics::CalculateDipolesCG() {
         rv[i] = pv[i];
     }
 
-#ifdef DEBUG
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cout << "ts2v[" << i << "] = " << ts2v[i] << std::endl;
-    }
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cout << "rv[" << i << "] = " << rv[i] << std::endl;
-    }
-#endif
-
     // Start iterations
     size_t iter = 1;
     double rvrv = DotProduct(rv, rv);
     double residual = 0.0;
     while (true) {
-#ifdef DEBUG
-        std::cout << "Iteration: " << iter << std::endl;
-#endif
         DipolesCGIteration(pv, ts2v);
         double pvts2pv = DotProduct(pv, ts2v);
 

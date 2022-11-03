@@ -8,5 +8,6 @@ ignore:
   - "src/json"
   - "src/Catch2"
   - "src/main"
+  - "src/io_tools"
   - "src/potential/electrostatics/files_not_used"
   - "src/potential/electrostatics/helpme.h"
