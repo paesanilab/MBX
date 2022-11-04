@@ -171,15 +171,16 @@ void System::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
     electrostaticE_.Hack3GetPotentialAtPoints(coordinates);
 }
 
-void System::SetNewParamsElec(bool do_grads) {
-    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
-    electrostaticE_.SetDipoleTolerance(diptol_);
-    electrostaticE_.SetDipoleMaxIt(maxItDip_);
-    electrostaticE_.SetEwaldAlpha(elec_alpha_);
-    electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
-    electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
-    electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
-}
+// MRR Remove from header if no other issues
+// void System::SetNewParamsElec(bool do_grads) {
+//    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+//    electrostaticE_.SetDipoleTolerance(diptol_);
+//    electrostaticE_.SetDipoleMaxIt(maxItDip_);
+//    electrostaticE_.SetEwaldAlpha(elec_alpha_);
+//    electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
+//    electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
+//    electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
+//}
 
 double System::GetPermanentElectrostaticEnergy() { return electrostaticE_.GetPermanentElectrostaticEnergy(); }
 double System::GetPermanentElectrostaticEnergyExternalFieldContribution() {
@@ -549,11 +550,11 @@ void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<doubl
 }
 
 void System::GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
-    mu_perm = electrostaticE_.GetPermanentDipoles();
-    mu_ind = electrostaticE_.GetInducedDipoles();
+    std::vector<double> mu_perm2 = electrostaticE_.GetPermanentDipoles();
+    std::vector<double> mu_ind2 = electrostaticE_.GetInducedDipoles();
 
-    systools::ResetOrderReal3N(mu_perm, initial_order_realSites_, numat_, first_index_, nat_);
-    systools::ResetOrderReal3N(mu_ind, initial_order_realSites_, numat_, first_index_, nat_);
+    mu_perm = systools::ResetOrder3N(mu_perm2, initial_order_, first_index_, sites_);
+    mu_ind = systools::ResetOrder3N(mu_ind2, initial_order_, first_index_, sites_);
 }
 
 void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot) {
