@@ -1,0 +1,38 @@
+{
+   "Note" : "This is a cofiguration file",
+   "MBX" : {
+       "box" : [20.0,33.912,25.213,90.0,120.0,92.5],
+       "twobody_cutoff"   : 13.0,
+       "threebody_cutoff" : 7.2,
+       "max_n_eval_1b"    : 600,
+       "max_n_eval_2b"    : 700,
+       "max_n_eval_3b"    : 800,
+       "dipole_tolerance" : 10.0,
+       "dipole_max_it"    : 102,
+       "dipole_method"     : "iter",
+       "alpha_ewald_elec" : 0.61,
+       "grid_density_elec" : 2.6,
+       "grid_fftdim_elec" : [300,500,700],
+       "spline_order_elec" : 5,
+       "alpha_ewald_disp" : 0.59,
+       "grid_density_disp" : 2.4,
+       "grid_fftdim_disp" : [304,504,704],
+       "spline_order_disp" : 7,
+       "alpha_ewald_lj" : 0.56,
+       "grid_density_lj" : 2.9,
+       "grid_fftdim_lj" : [302,502,702],
+       "spline_order_lj" : 8,
+       "ttm_pairs" : [["h2o","f-"]],
+       "ff_mons" : ["co2"],
+       "ignore_dispersion" : [],
+       "use_lennard_jones" : [],
+       "ignore_1b_poly" : ["ch4"],
+       "ignore_2b_poly" : [["h2o","na+"]],
+       "ignore_3b_poly" : [["co2","h2o","ch4"]],
+       "connectivity_file" : ""
+   } ,
+   "i-pi" : {
+       "port" : 34543,
+       "localhost" : "localhost"
+   }
+}

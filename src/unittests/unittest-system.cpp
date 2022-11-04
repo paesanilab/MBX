@@ -493,6 +493,17 @@ TEST_CASE("External fields") {
         REQUIRE(ep + ep2 == Approx(eperm[0]).margin(TOL));
         REQUIRE(ei + ei2 == Approx(eind[0]).margin(TOL));
     }
+
+    SECTION("Assertions") {
+        bool failed = false;
+        try {
+            std::vector<double> phi_bad;
+            systems[1].SetExternalElectrostaticPotentialAndFieldInSites(phi_bad, efx2, defx2);
+        } catch (...) {
+            failed = true;
+        }
+        REQUIRE(failed);
+    }
 }
 
 TEST_CASE("External charges") {
@@ -548,5 +559,185 @@ TEST_CASE("External charges") {
         for (size_t i = 0; i < 3 * n2; i++) {
             REQUIRE(grads_external_charges[i] == Approx(expected_grads[3 * n1 + i]).margin(TOL));
         }
+    }
+
+    // Check the getters
+    SECTION("Getters") {
+        std::vector<double> chg_get = systems[1].GetExternalCharges();
+        std::vector<double> xyz_get = systems[1].GetExternalChargesPositions();
+
+        REQUIRE(VectorsAreEqual(chg_get, external_chg_charge, TOL));
+        REQUIRE(VectorsAreEqual(xyz_get, external_chg_xyz, TOL));
+    }
+}
+
+TEST_CASE("Pair List") {
+    // Read systems from input
+    // 3 systems read: complete, without point charges, and only point charges
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    // Set up json defaults
+    for (size_t i = 0; i < systems.size(); i++) {
+        systems[i].SetUpFromJson();
+    }
+
+    std::vector<size_t> dimers = systems[0].GetPairList(2, 10.0, 0, systems[0].GetNumMon());
+    std::vector<size_t> trimers = systems[0].GetPairList(3, 10.0, 0, systems[0].GetNumMon());
+
+    std::vector<size_t> expected_d = {6, 7, 6, 8, 6, 0, 6, 1, 6, 2, 6, 3, 6, 4, 7, 9, 7, 0, 7, 1, 7,
+                                      2, 7, 3, 7, 5, 8, 3, 8, 4, 9, 1, 9, 2, 9, 3, 9, 5, 0, 1, 0, 2,
+                                      0, 3, 0, 4, 0, 5, 1, 2, 1, 5, 2, 3, 2, 5, 3, 4, 3, 5, 4, 5};
+    std::vector<size_t> expected_t = {
+        6, 7, 8, 6, 7, 0, 6, 7, 1, 6, 7, 2, 6, 7, 3, 6, 7, 4, 6, 7, 9, 6, 7, 5, 6, 8, 0, 6, 8, 1, 6, 8, 2,
+        6, 8, 3, 6, 8, 4, 6, 0, 1, 6, 0, 2, 6, 0, 3, 6, 0, 4, 6, 0, 5, 6, 1, 2, 6, 1, 3, 6, 1, 4, 6, 9, 1,
+        6, 1, 5, 6, 2, 3, 6, 2, 4, 6, 9, 2, 6, 2, 5, 6, 3, 4, 6, 9, 3, 6, 3, 5, 6, 4, 5, 7, 9, 0, 7, 9, 1,
+        7, 9, 2, 7, 9, 3, 7, 9, 5, 7, 0, 1, 7, 0, 2, 7, 0, 3, 7, 0, 5, 7, 0, 4, 7, 1, 2, 7, 1, 3, 7, 1, 5,
+        7, 2, 3, 7, 2, 5, 7, 3, 5, 7, 8, 3, 7, 3, 4, 7, 4, 5, 8, 3, 4, 8, 9, 3, 8, 0, 3, 8, 2, 3, 8, 3, 5,
+        8, 0, 4, 8, 4, 5, 9, 1, 2, 9, 1, 3, 9, 1, 5, 9, 0, 1, 9, 2, 3, 9, 2, 5, 9, 0, 2, 9, 3, 5, 9, 0, 3,
+        9, 3, 4, 9, 0, 5, 9, 4, 5, 0, 1, 2, 0, 1, 3, 0, 1, 4, 0, 1, 5, 0, 2, 3, 0, 2, 4, 0, 2, 5, 0, 3, 4,
+        0, 3, 5, 0, 4, 5, 1, 2, 5, 1, 2, 3, 1, 3, 5, 1, 4, 5, 2, 3, 5, 2, 3, 4, 2, 4, 5, 3, 4, 5};
+
+    std::vector<size_t> dimers2 = systems[0].GetPairList(2, 5.0, 0, systems[0].GetNumMon());
+    std::vector<size_t> trimers2 = systems[0].GetPairList(3, 5.0, 0, systems[0].GetNumMon());
+
+    std::vector<size_t> expected_d2 = {7, 9, 8, 4, 1, 2, 2, 5};
+    std::vector<size_t> expected_t2 = {1, 2, 5};
+
+    SECTION("Expected behavior") {
+        REQUIRE(VectorsAreEqual(dimers, expected_d));
+        REQUIRE(VectorsAreEqual(trimers, expected_t));
+        REQUIRE(VectorsAreEqual(dimers2, expected_d2));
+        REQUIRE(VectorsAreEqual(trimers2, expected_t2));
+    }
+
+    SECTION("Assertions") {
+        bool failed = false;
+        try {
+            std::vector<size_t> x = systems[0].GetPairList(4, 10.0, 0, systems[0].GetNumMon());
+        } catch (...) {
+            failed = true;
+        }
+        REQUIRE(failed);
+    }
+}
+
+TEST_CASE("JSON: mbx.json") {
+    // Read systems from input
+    // 3 systems read: complete, without point charges, and only point charges
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    // Set up json defaults
+    systems[0].SetUpFromJson("unittests_inputs/crazy.json");
+    systems[1].SetUpFromJson("unittests_inputs/mbx.json");
+    systems[2].SetUpFromJson("unittests_inputs/mbx_pbc.json");
+
+    std::vector<double> boxAbc = systems[0].GetBoxABCabc();
+    std::vector<double> box = systems[0].GetBox();
+    std::vector<double> box_reconverted = BoxVecToBoxABCabc(box);
+
+    std::vector<double> expected_boxAbc = {20.0, 33.912, 25.213, 90.0, 120.0, 92.5};
+
+    REQUIRE(VectorsAreEqual(boxAbc, expected_boxAbc, TOL));
+    REQUIRE(VectorsAreEqual(box_reconverted, expected_boxAbc, TOL));
+
+    size_t maxeval1b = systems[0].GetMaxEval1b();
+    size_t maxeval2b = systems[0].GetMaxEval2b();
+    size_t maxeval3b = systems[0].GetMaxEval3b();
+
+    size_t expected_maxeval1b = 600;
+    size_t expected_maxeval2b = 700;
+    size_t expected_maxeval3b = 800;
+
+    REQUIRE(maxeval1b == expected_maxeval1b);
+    REQUIRE(maxeval2b == expected_maxeval2b);
+    REQUIRE(maxeval3b == expected_maxeval3b);
+
+    double diptol = systems[0].GetDipoleTolerance();
+    std::string dipmethod = systems[0].GetDipoleMethod();
+    size_t maxiter = systems[0].GetMaxIterationsDipoles();
+
+    double expected_diptol = 10.0;
+    std::string expected_dipmethod = "iter";
+    size_t expected_maxiter = 102;
+
+    REQUIRE(diptol == Approx(expected_diptol).margin(TOL));
+    REQUIRE(dipmethod == expected_dipmethod);
+    REQUIRE(maxiter == expected_maxiter);
+
+    double alpha_e, grid_dens_e;
+    size_t spline_e;
+    systems[0].GetEwaldParamsElectrostatics(alpha_e, grid_dens_e, spline_e);
+
+    double expected_alpha_e = 0.61;
+    double expected_grid_dens_e = 2.6;
+    size_t expected_spline_e = 5;
+
+    REQUIRE(alpha_e == Approx(expected_alpha_e).margin(TOL));
+    REQUIRE(grid_dens_e == Approx(expected_grid_dens_e).margin(TOL));
+    REQUIRE(spline_e == expected_spline_e);
+
+    double alpha_d, grid_dens_d;
+    size_t spline_d;
+    systems[0].GetEwaldParamsDispersion(alpha_d, grid_dens_d, spline_d);
+
+    double expected_alpha_d = 0.59;
+    double expected_grid_dens_d = 2.4;
+    size_t expected_spline_d = 7;
+
+    REQUIRE(alpha_d == Approx(expected_alpha_d).margin(TOL));
+    REQUIRE(grid_dens_d == Approx(expected_grid_dens_d).margin(TOL));
+    REQUIRE(spline_d == expected_spline_d);
+
+    double alpha_lj, grid_dens_lj;
+    size_t spline_lj;
+    systems[0].GetEwaldParamsLennardJones(alpha_lj, grid_dens_lj, spline_lj);
+
+    double expected_alpha_lj = 0.56;
+    double expected_grid_dens_lj = 2.9;
+    size_t expected_spline_lj = 8;
+
+    REQUIRE(alpha_lj == Approx(expected_alpha_lj).margin(TOL));
+    REQUIRE(grid_dens_lj == Approx(expected_grid_dens_lj).margin(TOL));
+    REQUIRE(spline_lj == expected_spline_lj);
+
+    std::vector<int> grid_e = systems[0].GetFFTDimensionElectrostatics(0);
+    std::vector<int> grid_d = systems[0].GetFFTDimensionDispersion(0);
+    std::vector<int> grid_lj = systems[0].GetFFTDimensionLennardJones(0);
+
+    // std::vector<int> expected_grid_e = {300,500,700};
+    // std::vector<int> expected_grid_d = {304,504,704};
+    // std::vector<int> expected_grid_lj = {302,502,702};
+
+    // REQUIRE(VectorsAreEqual(grid_e,expected_grid_e));
+    // REQUIRE(VectorsAreEqual(grid_d,expected_grid_d));
+    // REQUIRE(VectorsAreEqual(grid_lj,expected_grid_lj));
+
+    SECTION("Assertions") {
+        std::vector<int> grid_bad = {101, 101, 101};
+        bool failed = false;
+        try {
+            systems[0].SetFFTDimensionElectrostatics(grid_bad);
+        } catch (...) {
+            failed = true;
+        }
+        REQUIRE(failed);
     }
 }
