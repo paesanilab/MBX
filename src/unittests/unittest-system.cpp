@@ -569,6 +569,16 @@ TEST_CASE("External charges") {
         REQUIRE(VectorsAreEqual(chg_get, external_chg_charge, TOL));
         REQUIRE(VectorsAreEqual(xyz_get, external_chg_xyz, TOL));
     }
+
+    // Make sure setter works for the local+tag version
+    std::vector<size_t> islocal(systems[1].GetNumMon(), 1);
+    std::vector<int> tag(systems[1].GetNumRealSites());
+
+    for (size_t i = 0; i < tag.size(); i++) tag[i] = i;
+
+    systems[1].SetExternalChargesAndPositions(external_chg_charge, external_chg_xyz, islocal, tag);
+    double en1b = systems[1].Energy(true);
+    REQUIRE(en1b == Approx(expected_energy).margin(TOL));
 }
 
 TEST_CASE("Pair List") {
@@ -739,5 +749,125 @@ TEST_CASE("JSON: mbx.json") {
             failed = true;
         }
         REQUIRE(failed);
+    }
+}
+
+TEST_CASE("Setters") {
+    // Read systems from input
+    // 3 systems read: complete, without point charges, and only point charges
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    // Set up json defaults
+    systems[2].SetUpFromJson("unittests_inputs/mbx.json");
+}
+
+TEST_CASE("Dipoles") {
+    // Read systems from input
+    // 3 systems read: complete, without point charges, and only point charges
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    // Set up json defaults
+    systems[1].SetUpFromJson("unittests_inputs/mbx.json");
+
+    // Calculate energy to fill dipole vectors
+    systems[1].Energy(true);
+
+    std::vector<double> mu_p, mu_i;
+    systems[1].GetDipoles(mu_p, mu_i);
+
+    std::vector<double> expected_mu_p = {
+        -1.3036793844e+00, 1.6686615298e+00,  8.0603217182e-01,  9.4390313242e-01,  -8.3815537466e-01,
+        -4.7834317663e-01, 3.5977625198e-01,  -8.3050615513e-01, -3.2768874383e-01, -2.3501780822e+00,
+        -1.5768899996e+00, 1.5449115865e+00,  1.2350483144e+00,  5.3511028956e-01,  -9.2482482763e-01,
+        1.1151295165e+00,  1.0417794587e+00,  -6.2008675885e-01, -2.4771154098e+00, -6.7818588671e-01,
+        -4.7127336725e-01, 1.2349414817e+00,  5.9952888436e-01,  3.8778702525e-01,  1.2421741795e+00,
+        7.8656750981e-02,  8.3486090633e-02,  0.0000000000e+00,  -0.0000000000e+00, -0.0000000000e+00,
+        1.5992322072e+00,  3.3125342511e-01,  -2.8882750544e+00, 1.2333688886e+00,  -1.4384872657e-02,
+        -2.1730874255e+00, -2.6084619498e+00, -9.2041297924e-02, 5.2846796239e+00,  0.0000000000e+00,
+        0.0000000000e+00,  -0.0000000000e+00, 2.3637103997e+00,  2.8925566082e+00,  -2.4565071588e+00,
+        2.8798575174e+00,  2.1896743834e+00,  -2.5225570485e+00, -5.1790574682e+00, -5.0708091961e+00,
+        5.3616398085e+00,  -0.0000000000e+00, 0.0000000000e+00,  -0.0000000000e+00, -2.9293657824e+00,
+        7.2366467693e-01,  -2.4275496091e+00, -2.4286938594e+00, 8.9750797306e-02,  -2.7626534026e+00,
+        5.4581795141e+00,  -9.2379680449e-01, 5.5485994973e+00,  -1.3248120255e+00, -2.3929660107e-01,
+        -2.0458395550e+00, 4.1021853228e-01,  -2.4845718923e-03, 6.1727682678e-01,  2.2968872803e-01,
+        1.4627211822e-01,  5.7099671032e-01,  4.1870550025e-01,  1.3936168805e-01,  4.2578517698e-01,
+        2.6619953421e-01,  -4.3852633309e-02, 4.3178111019e-01,  4.3370368116e-01,  2.4582512912e+00,
+        2.2071577871e+00,  -2.3422391662e-01, -6.7391383668e-01, -5.9623424110e-01, -2.7298918938e-03,
+        -6.4754153259e-01, -6.4699366920e-01, -1.2319318802e-01, -4.6950855277e-01, -5.4377386482e-01,
+        -7.3556415334e-02, -6.6728696520e-01, -4.2015614663e-01};
+    std::vector<double> expected_mu_i = {
+        -1.9469476438e-03, -2.8719499685e-05, 8.0366588203e-04,  -1.0251549859e-03, -7.5537023792e-04,
+        2.3925223867e-04,  -1.1008860460e-03, 4.2764106243e-04,  6.7291407511e-04,  -4.8560114268e-04,
+        -1.4090334552e-03, 3.3817961177e-03,  -5.6027388312e-04, 5.4442966426e-04,  8.8756074396e-04,
+        -7.6996026387e-05, -1.7221369922e-03, 5.9307778158e-04,  -2.1104103430e-03, -3.8441286674e-03,
+        2.7826438637e-04,  -7.4691364088e-04, -3.2369327533e-03, -2.5522094983e-04, -1.7174901995e-03,
+        -3.8509444461e-04, 1.8695459575e-03,  2.0116406138e-03,  3.3448091425e-03,  -3.9143346972e-03,
+        -8.3045048905e-05, 1.4041291151e-03,  -8.4197434799e-04, -2.3366898358e-04, -3.0518208655e-04,
+        -6.9735663071e-04, 0.0000000000e+00,  0.0000000000e+00,  -0.0000000000e+00, 1.3828617183e-03,
+        7.5500790767e-03,  -1.6143602243e-03, -5.2056764218e-04, -2.0272846892e-05, 5.9691949625e-04,
+        3.4662014960e-04,  7.2748564482e-04,  1.1099312304e-05,  0.0000000000e+00,  0.0000000000e+00,
+        -0.0000000000e+00, 1.9420655047e-03,  -1.9407514381e-04, -3.0910616730e-03, -6.3902036538e-05,
+        3.5453931337e-04,  -7.1828851507e-04, 4.1304276296e-04,  -1.6922997550e-04, -6.7781404708e-04,
+        0.0000000000e+00,  0.0000000000e+00,  -0.0000000000e+00, 3.2358416768e-05,  2.5715947089e-04,
+        9.8805479063e-04,  1.4223996397e-04,  -1.2699392794e-04, 3.6744212326e-04,  1.2813755500e-05,
+        1.9444003551e-04,  1.5593804173e-04,  -1.6833538389e-04, 3.5301018812e-05,  5.0040930312e-04,
+        1.6087088715e-04,  5.0357451340e-05,  4.3831206102e-04,  1.4990466267e-03,  4.9041156273e-04,
+        -2.6700837485e-03, 9.7360735844e-05,  -1.3090661884e-04, -2.0164785053e-04, 6.7498950243e-04,
+        8.1182359087e-04,  -8.2435626499e-04, 1.5506822124e-03,  -1.0111158980e-04, -1.5760343965e-03,
+        -1.4849640320e-04, -2.0797837283e-04, -8.5475489360e-04};
+
+    SECTION("Atomic Dipoles") {
+        REQUIRE(VectorsAreEqual(mu_p, expected_mu_p, TOL));
+        REQUIRE(VectorsAreEqual(mu_i, expected_mu_i, TOL));
+    }
+
+    std::vector<double> m_mu_p, m_mu_i;
+    systems[1].GetMolecularDipoles(m_mu_p, m_mu_i);
+
+    std::vector<double> expected_m_mu_p = {
+        -1.11022302e-16, 0.00000000e+00,  2.51371000e-07,  -2.51371000e-07, -2.51371000e-07, -1.11022302e-16,
+        2.51371000e-07,  -2.51371000e-07, -2.51371000e-07, 2.24139146e-01,  2.24827255e-01,  2.23317144e-01,
+        6.45104489e-02,  1.14217955e-02,  3.82575601e-01,  1.00119872e-01,  -1.10381330e-01, 3.58396486e-01,
+        2.69286500e-07,  2.77555756e-17,  2.69286500e-07,  2.69286500e-07,  4.03929750e-07,  -1.34643250e-07};
+    std::vector<double> expected_m_mu_i = {
+        -4.07298868e-03, -3.56448675e-04, 1.71583220e-03,  -1.12287105e-03, -2.58674078e-03, 4.86243464e-03,
+        -4.57481418e-03, -7.46615587e-03, 1.89258939e-03,  1.69492658e-03,  4.44375617e-03,  -5.45366568e-03,
+        1.20891423e-03,  8.25729187e-03,  -1.00634142e-03, 2.29120623e-03,  -8.76580595e-06, -4.48716424e-03,
+        1.79947640e-04,  4.10264049e-04,  2.45015632e-03,  3.67358267e-03,  8.62238572e-04,  -6.12687715e-03};
+
+    SECTION("Molecular Dipoles") {
+        REQUIRE(VectorsAreEqual(m_mu_p, expected_m_mu_p, TOL));
+        REQUIRE(VectorsAreEqual(m_mu_i, expected_m_mu_i, TOL));
+    }
+
+    std::vector<double> t_mu_p, t_mu_i, t_mu;
+    systems[1].GetTotalDipole(t_mu_p, t_mu_i, t_mu);
+
+    std::vector<double> expected_t_mu_p = {3.88770006e-01, 1.25867621e-01, 9.64289365e-01};
+    std::vector<double> expected_t_mu_i = {-7.22096559e-04, 3.55543954e-03, -6.15303593e-03};
+    std::vector<double> expected_t_mu = {3.88047909e-01, 1.29423061e-01, 9.58136330e-01};
+
+    SECTION("Molecular Dipoles") {
+        REQUIRE(VectorsAreEqual(t_mu_p, expected_t_mu_p, TOL));
+        REQUIRE(VectorsAreEqual(t_mu_i, expected_t_mu_i, TOL));
+        REQUIRE(VectorsAreEqual(t_mu, expected_t_mu, TOL));
     }
 }
