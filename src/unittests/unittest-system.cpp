@@ -980,6 +980,85 @@ TEST_CASE("Setters") {
         REQUIRE(VectorsAreEqual(real_xyz, expected_real_xyz, TOL));
         REQUIRE(VectorsAreEqual(xyz, expected_xyz, TOL));
     }
+
+    SECTION("Pairs to use/ignore") {
+        SECTION("TTM-nrg pairs") {
+            std::vector<std::pair<std::string, std::string> > ttm_pairs = systems[1].GetTTMnrgPairs();
+
+            REQUIRE(ttm_pairs.size() == 0);
+
+            std::vector<std::pair<std::string, std::string> > expected_ttm_pairs = {{"ch4", "h2o"}, {"co2", "h2o"}};
+            for (size_t i = 0; i < expected_ttm_pairs.size(); i++) {
+                systems[1].AddTTMnrgPair(expected_ttm_pairs[i].second, expected_ttm_pairs[i].first);
+            }
+
+            ttm_pairs = systems[1].GetTTMnrgPairs();
+
+            REQUIRE(VectorsAreEqual(ttm_pairs, expected_ttm_pairs));
+        }
+
+        SECTION("FF monomers") {
+            std::vector<std::string> ffmons = systems[1].GetFFMons();
+            REQUIRE(ffmons.size() == 0);
+
+            std::vector<std::string> expected_ffmons = {"ch4", "co2"};
+
+            for (size_t i = 0; i < expected_ffmons.size(); i++) {
+                systems[1].AddFFMon(expected_ffmons[i]);
+            }
+
+            ffmons = systems[1].GetFFMons();
+
+            REQUIRE(VectorsAreEqual(ffmons, expected_ffmons));
+        }
+
+        SECTION("Polynomial pairs") {
+            SECTION("One-body") {
+                std::vector<std::string> ignore1b = systems[1].Get1bIgnorePoly();
+                REQUIRE(ignore1b.size() == 0);
+
+                std::vector<std::string> expected_ignore1b = {"co2", "h2o"};
+
+                for (size_t i = 0; i < expected_ignore1b.size(); i++) {
+                    systems[1].Add1bIgnorePoly(expected_ignore1b[i]);
+                }
+
+                ignore1b = systems[1].Get1bIgnorePoly();
+
+                REQUIRE(VectorsAreEqual(ignore1b, expected_ignore1b));
+            }
+
+            SECTION("Two-body") {
+                std::vector<std::vector<std::string> > ignore2b = systems[1].Get2bIgnorePoly();
+                REQUIRE(ignore2b.size() == 0);
+
+                std::vector<std::vector<std::string> > expected_ignore2b = {{"ch4", "co2"}, {"dp1", "h2o"}};
+                for (size_t i = 0; i < expected_ignore2b.size(); i++) {
+                    systems[1].Add2bIgnorePoly(expected_ignore2b[i][1], expected_ignore2b[i][0]);
+                }
+
+                ignore2b = systems[1].Get2bIgnorePoly();
+
+                REQUIRE(ignore2b == expected_ignore2b);
+            }
+
+            SECTION("Three-body") {
+                std::vector<std::vector<std::string> > ignore3b = systems[1].Get3bIgnorePoly();
+                REQUIRE(ignore3b.size() == 0);
+
+                std::vector<std::vector<std::string> > expected_ignore3b = {
+                    {"h2o", "h2o", "h2o"}, {"ch4", "h2o", "h2o"}, {"ch4", "co2", "h2o"}};
+                for (size_t i = 0; i < expected_ignore3b.size(); i++) {
+                    systems[1].Add3bIgnorePoly(expected_ignore3b[i][2], expected_ignore3b[i][1],
+                                               expected_ignore3b[i][0]);
+                }
+
+                ignore3b = systems[1].Get3bIgnorePoly();
+
+                REQUIRE(ignore3b == expected_ignore3b);
+            }
+        }
+    }
 }
 
 TEST_CASE("Add Monomer") {
