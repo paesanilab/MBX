@@ -752,24 +752,6 @@ TEST_CASE("JSON: mbx.json") {
     }
 }
 
-TEST_CASE("Setters") {
-    // Read systems from input
-    // 3 systems read: complete, without point charges, and only point charges
-    std::vector<bblock::System> systems;
-    try {
-        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
-        if (!ifs) throw std::runtime_error("could not open the NRG file");
-        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
-        ifs.close();
-    } catch (const std::exception &e) {
-        std::cerr << " ** Error ** : " << e.what() << std::endl;
-        REQUIRE(1 == 2);
-    }
-
-    // Set up json defaults
-    systems[2].SetUpFromJson("unittests_inputs/mbx.json");
-}
-
 TEST_CASE("Dipoles") {
     // Read systems from input
     // 3 systems read: complete, without point charges, and only point charges
@@ -869,5 +851,246 @@ TEST_CASE("Dipoles") {
         REQUIRE(VectorsAreEqual(t_mu_p, expected_t_mu_p, TOL));
         REQUIRE(VectorsAreEqual(t_mu_i, expected_t_mu_i, TOL));
         REQUIRE(VectorsAreEqual(t_mu, expected_t_mu, TOL));
+    }
+}
+
+TEST_CASE("Setters") {
+    // Read systems from input
+    // 3 systems read: complete, without point charges, and only point charges
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    // Set up json defaults
+    systems[1].SetUpFromJson("unittests_inputs/mbx.json");
+    systems[2].SetUpFromJson("unittests_inputs/mbx.json");
+
+    SECTION("Cutoffs") {
+        double expected_twobcutoff = 12.0;
+        double expected_threebcutoff = 7.2;
+
+        systems[2].Set2bCutoff(expected_twobcutoff);
+        systems[2].Set3bCutoff(expected_threebcutoff);
+
+        double twobcutoff = systems[2].Get2bCutoff();
+        double threebcutoff = systems[2].Get3bCutoff();
+
+        REQUIRE(twobcutoff == Approx(expected_twobcutoff).margin(TOL));
+        REQUIRE(threebcutoff == Approx(expected_threebcutoff).margin(TOL));
+    }
+
+    SECTION("Max Batch of poly evaluation") {
+        size_t expected_nmax1b = 200;
+        size_t expected_nmax2b = 300;
+        size_t expected_nmax3b = 250;
+
+        systems[2].SetNMaxEval1b(expected_nmax1b);
+        systems[2].SetNMaxEval2b(expected_nmax2b);
+        systems[2].SetNMaxEval3b(expected_nmax3b);
+
+        size_t nmax1b = systems[2].GetMaxEval1b();
+        size_t nmax2b = systems[2].GetMaxEval2b();
+        size_t nmax3b = systems[2].GetMaxEval3b();
+
+        REQUIRE(expected_nmax1b == nmax1b);
+        REQUIRE(expected_nmax2b == nmax2b);
+        REQUIRE(expected_nmax3b == nmax3b);
+    }
+
+    SECTION("Electrostatics Solver") {
+        double expected_diptol = 1E-24;
+        size_t expected_maxiter = 133;
+        std::string expected_dipmethod = "iter";
+
+        systems[2].SetDipoleTol(expected_diptol);
+        systems[2].SetDipoleMaxIt(expected_maxiter);
+        systems[2].SetDipoleMethod(expected_dipmethod);
+
+        double diptol = systems[2].GetDipoleTolerance();
+        size_t maxiter = systems[2].GetMaxIterationsDipoles();
+        std::string dipmethod = systems[2].GetDipoleMethod();
+
+        REQUIRE(diptol == Approx(expected_diptol).margin(TOL));
+        REQUIRE(maxiter == expected_maxiter);
+        REQUIRE(dipmethod == expected_dipmethod);
+    }
+
+    SECTION("Box") {
+        std::vector<double> expected_box = {22.0, 0.0, 0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 23.0};
+        std::vector<double> expected_box_abc = {22.0, 20.0, 23.0, 90.0, 90.0, 90.0};
+
+        systems[2].SetPBC(expected_box);
+
+        std::vector<double> box = systems[2].GetBox();
+        std::vector<double> box_abc = systems[2].GetBoxABCabc();
+
+        REQUIRE(VectorsAreEqual(box, expected_box, TOL));
+        REQUIRE(VectorsAreEqual(box_abc, expected_box_abc, TOL));
+
+        systems[2].SetPBC(expected_box_abc);
+
+        box = systems[2].GetBox();
+        box_abc = systems[2].GetBoxABCabc();
+
+        REQUIRE(VectorsAreEqual(box, expected_box, TOL));
+        REQUIRE(VectorsAreEqual(box_abc, expected_box_abc, TOL));
+
+        SECTION("Assertions") {
+            std::vector<double> bad_box = {10.0, 2.0};
+            bool failed = false;
+            try {
+                systems[2].SetPBC(bad_box);
+            } catch (...) {
+                failed = true;
+            }
+            REQUIRE(failed);
+        }
+    }
+
+    SECTION("Xyz") {
+        std::vector<double> original_xyz = systems[1].GetXyz();
+        std::vector<double> original_real_xyz = systems[1].GetRealXyz();
+
+        std::vector<double> expected_real_xyz;
+        for (size_t i = 0; i < original_real_xyz.size(); i++) expected_real_xyz.push_back(original_real_xyz[i] + 0.1);
+
+        std::vector<double> expected_xyz;
+        for (size_t i = 0; i < original_xyz.size(); i++) expected_xyz.push_back(original_xyz[i] + 0.1);
+
+        systems[1].SetRealXyz(expected_real_xyz);
+
+        std::vector<double> real_xyz = systems[1].GetRealXyz();
+        std::vector<double> xyz = systems[1].GetXyz();
+
+        REQUIRE(VectorsAreEqual(real_xyz, expected_real_xyz, TOL));
+        REQUIRE(VectorsAreEqual(xyz, expected_xyz, TOL));
+
+        systems[1].SetXyz(expected_xyz);
+
+        real_xyz = systems[1].GetRealXyz();
+        xyz = systems[1].GetXyz();
+
+        REQUIRE(VectorsAreEqual(real_xyz, expected_real_xyz, TOL));
+        REQUIRE(VectorsAreEqual(xyz, expected_xyz, TOL));
+    }
+
+    SECTION("Pairs to use/ignore") {
+        SECTION("TTM-nrg pairs") {
+            std::vector<std::pair<std::string, std::string> > ttm_pairs = systems[1].GetTTMnrgPairs();
+
+            REQUIRE(ttm_pairs.size() == 0);
+
+            std::vector<std::pair<std::string, std::string> > expected_ttm_pairs = {{"ch4", "h2o"}, {"co2", "h2o"}};
+            for (size_t i = 0; i < expected_ttm_pairs.size(); i++) {
+                systems[1].AddTTMnrgPair(expected_ttm_pairs[i].second, expected_ttm_pairs[i].first);
+            }
+
+            ttm_pairs = systems[1].GetTTMnrgPairs();
+
+            REQUIRE(VectorsAreEqual(ttm_pairs, expected_ttm_pairs));
+        }
+
+        SECTION("FF monomers") {
+            std::vector<std::string> ffmons = systems[1].GetFFMons();
+            REQUIRE(ffmons.size() == 0);
+
+            std::vector<std::string> expected_ffmons = {"ch4", "co2"};
+
+            for (size_t i = 0; i < expected_ffmons.size(); i++) {
+                systems[1].AddFFMon(expected_ffmons[i]);
+            }
+
+            ffmons = systems[1].GetFFMons();
+
+            REQUIRE(VectorsAreEqual(ffmons, expected_ffmons));
+        }
+
+        SECTION("Polynomial pairs") {
+            SECTION("One-body") {
+                std::vector<std::string> ignore1b = systems[1].Get1bIgnorePoly();
+                REQUIRE(ignore1b.size() == 0);
+
+                std::vector<std::string> expected_ignore1b = {"co2", "h2o"};
+
+                for (size_t i = 0; i < expected_ignore1b.size(); i++) {
+                    systems[1].Add1bIgnorePoly(expected_ignore1b[i]);
+                }
+
+                ignore1b = systems[1].Get1bIgnorePoly();
+
+                REQUIRE(VectorsAreEqual(ignore1b, expected_ignore1b));
+            }
+
+            SECTION("Two-body") {
+                std::vector<std::vector<std::string> > ignore2b = systems[1].Get2bIgnorePoly();
+                REQUIRE(ignore2b.size() == 0);
+
+                std::vector<std::vector<std::string> > expected_ignore2b = {{"ch4", "co2"}, {"dp1", "h2o"}};
+                for (size_t i = 0; i < expected_ignore2b.size(); i++) {
+                    systems[1].Add2bIgnorePoly(expected_ignore2b[i][1], expected_ignore2b[i][0]);
+                }
+
+                ignore2b = systems[1].Get2bIgnorePoly();
+
+                REQUIRE(ignore2b == expected_ignore2b);
+            }
+
+            SECTION("Three-body") {
+                std::vector<std::vector<std::string> > ignore3b = systems[1].Get3bIgnorePoly();
+                REQUIRE(ignore3b.size() == 0);
+
+                std::vector<std::vector<std::string> > expected_ignore3b = {
+                    {"h2o", "h2o", "h2o"}, {"ch4", "h2o", "h2o"}, {"ch4", "co2", "h2o"}};
+                for (size_t i = 0; i < expected_ignore3b.size(); i++) {
+                    systems[1].Add3bIgnorePoly(expected_ignore3b[i][2], expected_ignore3b[i][1],
+                                               expected_ignore3b[i][0]);
+                }
+
+                ignore3b = systems[1].Get3bIgnorePoly();
+
+                REQUIRE(ignore3b == expected_ignore3b);
+            }
+        }
+    }
+}
+
+TEST_CASE("Add Monomer") {
+    // Read systems from input
+    // 3 systems read: complete, without point charges, and only point charges
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    // Set up json defaults
+    systems[2].SetUpFromJson("unittests_inputs/mbx.json");
+
+    SECTION("Assertions") {
+        bool failed = false;
+        try {
+            std::vector<double> xyz = {1.0, 0.0, 0.0};
+            std::vector<std::string> ats = {"X"};
+            std::string id = "dp1";
+            size_t islocal = 1;
+            int tag = 0;
+            systems[2].AddMonomer(xyz, ats, id, islocal, tag);
+        } catch (...) {
+            failed = true;
+        }
+
+        REQUIRE(failed);
     }
 }

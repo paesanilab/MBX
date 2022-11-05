@@ -706,7 +706,7 @@ void System::SetDipoleMethod(std::string method) { dipole_method_ = method; }
 
 void System::SetPBC(std::vector<double> box) {
     // Check that the box has 0 or 9 components
-    if (box.size() != 9 && box.size() != 0) {
+    if (box.size() != 9 && box.size() != 6 && box.size() != 0) {
         std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
