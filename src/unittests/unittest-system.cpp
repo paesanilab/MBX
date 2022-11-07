@@ -234,6 +234,19 @@ TEST_CASE("system::energy") {
     // Quick test to check one of the getters
     size_t nats_ch4 = s.GetMonNumAt(2);
     REQUIRE(nats_ch4 == 5);
+
+    // TODO giving segfault for unknown reasons
+    //    SECTION("Energy without initialization") {
+    //        bool failed = false;
+    //        bblock::System s2;
+    //        try {
+    //            s2.Energy(true);
+    //        } catch (...) {
+    //            failed = true;
+    //        }
+    //
+    //        REQUIRE(failed);
+    //    }
 }
 
 TEST_CASE("system::getters") {
@@ -979,15 +992,35 @@ TEST_CASE("Setters") {
 
         REQUIRE(VectorsAreEqual(real_xyz, expected_real_xyz, TOL));
         REQUIRE(VectorsAreEqual(xyz, expected_xyz, TOL));
+
+        SECTION("Assertions") {
+            bool setxyz_failed = false;
+            try {
+                std::vector<double> xyz_bad = {0.0, 1.0};
+                systems[1].SetXyz(xyz_bad);
+            } catch (...) {
+                setxyz_failed = true;
+            }
+            REQUIRE(setxyz_failed);
+
+            bool setrealxyz_failed = false;
+            try {
+                std::vector<double> xyz_bad = {0.0, 1.0};
+                systems[1].SetRealXyz(xyz_bad);
+            } catch (...) {
+                setrealxyz_failed = true;
+            }
+            REQUIRE(setrealxyz_failed);
+        }
     }
 
     SECTION("Pairs to use/ignore") {
         SECTION("TTM-nrg pairs") {
-            std::vector<std::pair<std::string, std::string> > ttm_pairs = systems[1].GetTTMnrgPairs();
+            std::vector<std::pair<std::string, std::string>> ttm_pairs = systems[1].GetTTMnrgPairs();
 
             REQUIRE(ttm_pairs.size() == 0);
 
-            std::vector<std::pair<std::string, std::string> > expected_ttm_pairs = {{"ch4", "h2o"}, {"co2", "h2o"}};
+            std::vector<std::pair<std::string, std::string>> expected_ttm_pairs = {{"ch4", "h2o"}, {"co2", "h2o"}};
             for (size_t i = 0; i < expected_ttm_pairs.size(); i++) {
                 systems[1].AddTTMnrgPair(expected_ttm_pairs[i].second, expected_ttm_pairs[i].first);
             }
@@ -995,6 +1028,20 @@ TEST_CASE("Setters") {
             ttm_pairs = systems[1].GetTTMnrgPairs();
 
             REQUIRE(VectorsAreEqual(ttm_pairs, expected_ttm_pairs));
+        }
+
+        SECTION("Lennard Jones") {
+            std::vector<std::pair<std::string, std::string>> expected_use_lennard_jones = {{"co2", "h2o"},
+                                                                                           {"ch4", "co2"}};
+            systems[1].SetLennardJonesPairs(expected_use_lennard_jones);
+            // TODO There is no getter in System, so far.
+        }
+
+        SECTION("Ignore dispersion") {
+            std::vector<std::pair<std::string, std::string>> expected_ignore_dispersion = {{"ch4", "h2o"},
+                                                                                           {"h2o", "co2"}};
+            systems[1].SetIgnoreDispersionPairs(expected_ignore_dispersion);
+            // TODO There is no getter in System, so far.
         }
 
         SECTION("FF monomers") {
@@ -1029,10 +1076,10 @@ TEST_CASE("Setters") {
             }
 
             SECTION("Two-body") {
-                std::vector<std::vector<std::string> > ignore2b = systems[1].Get2bIgnorePoly();
+                std::vector<std::vector<std::string>> ignore2b = systems[1].Get2bIgnorePoly();
                 REQUIRE(ignore2b.size() == 0);
 
-                std::vector<std::vector<std::string> > expected_ignore2b = {{"ch4", "co2"}, {"dp1", "h2o"}};
+                std::vector<std::vector<std::string>> expected_ignore2b = {{"ch4", "co2"}, {"dp1", "h2o"}};
                 for (size_t i = 0; i < expected_ignore2b.size(); i++) {
                     systems[1].Add2bIgnorePoly(expected_ignore2b[i][1], expected_ignore2b[i][0]);
                 }
@@ -1043,10 +1090,10 @@ TEST_CASE("Setters") {
             }
 
             SECTION("Three-body") {
-                std::vector<std::vector<std::string> > ignore3b = systems[1].Get3bIgnorePoly();
+                std::vector<std::vector<std::string>> ignore3b = systems[1].Get3bIgnorePoly();
                 REQUIRE(ignore3b.size() == 0);
 
-                std::vector<std::vector<std::string> > expected_ignore3b = {
+                std::vector<std::vector<std::string>> expected_ignore3b = {
                     {"h2o", "h2o", "h2o"}, {"ch4", "h2o", "h2o"}, {"ch4", "co2", "h2o"}};
                 for (size_t i = 0; i < expected_ignore3b.size(); i++) {
                     systems[1].Add3bIgnorePoly(expected_ignore3b[i][2], expected_ignore3b[i][1],
@@ -1094,3 +1141,76 @@ TEST_CASE("Add Monomer") {
         REQUIRE(failed);
     }
 }
+
+TEST_CASE("JSON files") {
+    // Read systems from input
+    // 3 systems read: complete, without point charges, and only point charges
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/input_h2o_co2_ch4_dp1_unittest_system.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    SECTION("Set up") {
+        // Set up json defaults (json does not exist)
+        systems[2].SetUpFromJson("unittests_inputs/i_should_not_be_here.json");
+
+        // Json does exist
+        systems[0].SetUpFromJson("unittests_inputs/mbx_wextrajson.json");
+        systems[1].SetUpFromJson("unittests_inputs/mbx_wextrajson_rightpaths.json");
+
+        // TODO add getters to ensure that results are as expected
+    }
+
+    SECTION("Retrieve and use json in string format") {
+        std::string json_full = systems[1].GetJsonText();
+        std::string json_disprep = systems[1].GetJsonDispersionRepulsionText();
+        std::string json_mons = systems[1].GetJsonMonomersText();
+
+        systems[1].SetUpFromJson(json_full);
+    }
+
+    SECTION("Human readable json config") { std::string json_human = systems[1].GetCurrentSystemConfig(); }
+}
+
+// TODO Something is worng with this test
+// TEST_CASE("Initialize") {
+//    SECTION("Empty system") {
+//        bblock::System s;
+//
+//        bool first_initialization_passed = false;
+//        try {
+//            s.Initialize();
+//            first_initialization_passed = true;
+//        } catch (...) {
+//            first_initialization_passed = false;
+//        }
+//
+//        REQUIRE(first_initialization_passed);
+//
+//        bool is_setup_with_json = false;
+//        try {
+//            s.SetUpFromJson("unittests_inputs/mbx.json");
+//            is_setup_with_json = true;
+//        } catch (...) {
+//            is_setup_with_json = false;
+//        }
+//
+//        REQUIRE(is_setup_with_json);
+//
+//        bool second_initialization_failed = false;
+//        try {
+//            s.Initialize();
+//            second_initialization_failed = true;
+//        } catch (...) {
+//            second_initialization_failed = false;
+//        }
+//
+//        REQUIRE(second_initialization_failed);
+//    }
+//}
