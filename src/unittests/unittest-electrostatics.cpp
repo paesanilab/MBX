@@ -670,3 +670,20 @@ TEST_CASE("ExternalCharges") {
     REQUIRE(VectorsAreEqual(grad_external, grad_external_expected, TOL));
     REQUIRE(VectorsAreEqual(virial_system, virial_all_expected, TOL));
 }
+
+TEST_CASE("Setters") {
+    // Declare and initialize electrostatics
+    elec::Electrostatics d;
+
+    // Set some external charges
+    std::vector<double> ext_chg = {1.0};
+    std::vector<double> ext_xyz = {8.0, 0.0, 0.0};
+
+    d.SetExternalChargesAndPositions(ext_chg, ext_xyz);
+
+    // Initialize should now also go through the external charge modification
+    d.Initialize(chg, chg_grad, polfac, pol, sys_xyz, mon_id, sites, first_ind, mon_type_count, islocal, sys_atom_tag,
+                 do_grads, tol, maxit, dip_method, box);
+
+    SECTION("Set Periodicity") { d.SetPeriodicity(false); }
+}
