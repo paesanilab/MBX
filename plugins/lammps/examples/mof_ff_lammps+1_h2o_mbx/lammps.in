@@ -260,9 +260,9 @@ velocity        all create 298.15 428879 rot yes dist gaussian
 dump            1 all custom 10 traj.lammpstrj id type x y z fx fy fz vx vy vz
 dump_modify     1 sort id
 
-restart         5000 restart.inter.1 restart.inter.2
+restart         5 restart.inter.1 restart.inter.2
 
-run             100000
+run             100 upto
 
 write_data      final.data nocoeff
 write_restart   restart.inter
