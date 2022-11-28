@@ -30,6 +30,7 @@ jobs:
           sudo apt-get install libgsl-dev
           sudo apt-get install lcov -y
           sudo apt-get install autoconf -y
+          sudo apt-get install g++-9 gcc-9 -y
 
       - name: Check out repository code
         uses: actions/checkout@v2
