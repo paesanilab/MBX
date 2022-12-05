@@ -216,8 +216,14 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 nat.push_back(1);
 
                 // Halides and alkali metal ions
-            } else if (mon[i] == "f-" || mon[i] == "cl-" ||                                        // Halides
-                       mon[i] == "br-" || mon[i] == "i-" || mon[i] == "li+" || mon[i] == "na+" ||  // Alkali metal ions
+            } else if (mon[i] == "f-"        || mon[i] == "cl-"        || mon[i] == "br-"        || mon[i] == "i-"        || // Halides
+                       mon[i] == "f-poleff" || mon[i] == "cl-poleff" || mon[i] == "br-poleff" || mon[i] == "i-poleff" ||
+                       mon[i] == "f-pol100" || mon[i] == "cl-pol100" || mon[i] == "br-pol100" || mon[i] == "i-pol100" ||
+                       mon[i] == "f-pol75"  || mon[i] == "cl-pol75"  || mon[i] == "br-pol75"  || mon[i] == "i-pol75"  ||
+                       mon[i] == "f-pol50"  || mon[i] == "cl-pol50"  || mon[i] == "br-pol50"  || mon[i] == "i-pol50"  ||
+                       mon[i] == "f-pol25"  || mon[i] == "cl-pol25"  || mon[i] == "br-pol25"  || mon[i] == "i-pol25"  ||
+                       mon[i] == "f-pol0"   || mon[i] == "cl-pol0"   || mon[i] == "br-pol0"   || mon[i] == "i-pol0"   ||
+                       mon[i] == "li+" || mon[i] == "na+" ||  // Alkali metal ions
                        mon[i] == "k+" || mon[i] == "rb+" || mon[i] == "cs+") {
                 sites.push_back(1);
                 nat.push_back(1);
@@ -1373,7 +1379,13 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
     if (is_in_json) return;
     // Halide charges
-    if (mon_id == "f-" || mon_id == "cl-" || mon_id == "br-" || mon_id == "i-") {
+    if (mon_id == "f-"        || mon_id == "cl-"        || mon_id == "br-"        || mon_id == "i-"        ||
+        mon_id == "f-poleff" || mon_id == "cl-poleff" || mon_id == "br-poleff" || mon_id == "i-poleff" ||
+        mon_id == "f-pol100" || mon_id == "cl-pol100" || mon_id == "br-pol100" || mon_id == "i-pol100" ||
+        mon_id == "f-pol75"  || mon_id == "cl-pol75"  || mon_id == "br-pol75"  || mon_id == "i-pol75"  ||
+        mon_id == "f-pol50"  || mon_id == "cl-pol50"  || mon_id == "br-pol50"  || mon_id == "i-pol50"  ||
+        mon_id == "f-pol25"  || mon_id == "cl-pol25"  || mon_id == "br-pol25"  || mon_id == "i-pol25"  ||
+        mon_id == "f-pol0"   || mon_id == "cl-pol0"   || mon_id == "br-pol0"   || mon_id == "i-pol0") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = -1.0 * CHARGECON;
         }
@@ -1618,14 +1630,64 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     if (is_in_json) return;
 
     // Halides
-    if (mon_id == "f-") {  // Fluoride
+    if (mon_id == "f-" || mon_id == "f-poleff") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.8079;
-    } else if (mon_id == "cl-") {  // Chloride
-        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3602;
-    } else if (mon_id == "br-") {  // Bromide
+    } else if (mon_id == "cl-" || mon_id == "cl-poleff") {  // Chloride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.6569;
+    } else if (mon_id == "br-" || mon_id == "br-poleff") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 3.7819;
-    } else if (mon_id == "i-") {  // Iodide
+    } else if (mon_id == "i-" || mon_id == "i-poleff") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.9563;
+    }
+
+    if (mon_id == "f-pol100") {  // Fluoride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.4669;
+    } else if (mon_id == "cl-pol100") {  // Chloride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3602;
+    } else if (mon_id == "br-pol100") {  // Bromide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 7.1668;
+    } else if (mon_id == "i-pol100") {  // Iodide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 10.1184;
+    }
+
+    if (mon_id == "f-pol75") {  // Fluoride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 1.8502;
+    } else if (mon_id == "cl-pol75") {  // Chloride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 4.0202;
+    } else if (mon_id == "br-pol75") {  // Bromide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3751;
+    } else if (mon_id == "i-pol75") {  // Iodide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 7.5888;
+    }
+
+    if (mon_id == "f-pol50") {  // Fluoride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 1.2335;
+    } else if (mon_id == "cl-pol50") {  // Chloride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.6801;
+    } else if (mon_id == "br-pol50") {  // Bromide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 3.5834;
+    } else if (mon_id == "i-pol50") {  // Iodide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.0592;
+    }
+
+    if (mon_id == "f-pol25") {  // Fluoride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.6167;
+    } else if (mon_id == "cl-pol25") {  // Chloride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 1.3401;
+    } else if (mon_id == "br-pol25") {  // Bromide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 1.7917;
+    } else if (mon_id == "i-pol25") {  // Iodide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.5296;
+    }
+
+    if (mon_id == "f-pol0") {  // Fluoride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0000;
+    } else if (mon_id == "cl-pol0") {  // Chloride
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0000;
+    } else if (mon_id == "br-pol0") {  // Bromide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0000;
+    } else if (mon_id == "i-pol0") {  // Iodide
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0000;
     }
 
     // Alkali metal ions
@@ -1791,26 +1853,76 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     if (is_in_json) return;
 
     // Halides
-    if (mon_id == "f-") {  // Fluoride
+    if (mon_id == "f-" || mon_id == "f-poleff") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8079;
-    } else if (mon_id == "cl-") {  // Chloride
-        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3602;
-    } else if (mon_id == "br-") {  // Bromide
+    } else if (mon_id == "cl-" || mon_id == "cl-poleff") {  // Chloride
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.6569;
+    } else if (mon_id == "br-" || mon_id == "br-poleff") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 3.7819;
-    } else if (mon_id == "i-") {  // Iodide
+    } else if (mon_id == "i-" || mon_id == "i-poleff") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.9563;
     }
 
-    // Alkali metal ions
-    if (mon_id == "li+") {  // Lithium
+    if (mon_id == "f-pol100") {  // Fluoride
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.4669;
+    } else if (mon_id == "cl-pol100") {  // Chloride                      
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3602;
+    } else if (mon_id == "br-pol100") {  // Bromide                       
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 7.1668;
+    } else if (mon_id == "i-pol100") {  // Iodide                         
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 10.118;
+    }                                                                   
+                                                                        
+    if (mon_id == "f-pol75") {  // Fluoride                              
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.8502;
+    } else if (mon_id == "cl-pol75") {  // Chloride                      
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 4.0202;
+    } else if (mon_id == "br-pol75") {  // Bromide                       
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3751;
+    } else if (mon_id == "i-pol75") {  // Iodide                         
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 7.5888;
+    }                                                                   
+                                                                        
+    if (mon_id == "f-pol50") {  // Fluoride                              
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.2335;
+    } else if (mon_id == "cl-pol50") {  // Chloride                      
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.6801;
+    } else if (mon_id == "br-pol50") {  // Bromide                       
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 3.5834;
+    } else if (mon_id == "i-pol50") {  // Iodide                         
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.0592;
+    }                                                                   
+                                                                        
+    if (mon_id == "f-pol25") {  // Fluoride                              
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.6167;
+    } else if (mon_id == "cl-pol25") {  // Chloride                      
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.3401;
+    } else if (mon_id == "br-pol25") {  // Bromide                       
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.7917;
+    } else if (mon_id == "i-pol25") {  // Iodide                         
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.5296;
+    }                                                                   
+                                                                        
+    if (mon_id == "f-pol0") {  // Fluoride                              
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0000;
+    } else if (mon_id == "cl-pol0") {  // Chloride                      
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0000;
+    } else if (mon_id == "br-pol0") {  // Bromide                       
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0000;
+    } else if (mon_id == "i-pol0") {  // Iodide
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0000;
+    }                                                                   
+                                                                        
+    // Alkali metal ions                                                
+    if (mon_id == "li+") {  // Lithium                                  
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0285;
-    } else if (mon_id == "na+") {  // Sodium
+    } else if (mon_id == "na+") {  // Sodium                            
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.1476;
-    } else if (mon_id == "k+") {  // Potassium
+    } else if (mon_id == "k+") {  // Potassium                          
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8184;
-    } else if (mon_id == "rb+") {  // Rubidium
+    } else if (mon_id == "rb+") {  // Rubidium                          
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.3614;
-    } else if (mon_id == "cs+") {  // Cesium
+    } else if (mon_id == "cs+") {  // Cesium                            
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1976,17 +2088,17 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     if (is_in_json) return;
 
     // All these C6 come from Qchem/avtz. We put two molecules at 50 A and get the c6 of the atoms.
-    if (mon_id == "f-") {  // Fluoride
+    if (mon_id == "f-" || mon_id == "f-poleff" || mon_id == "f-pol100" || mon_id == "f-pol75" || mon_id == "f-pol50" || mon_id == "f-pol25" || mon_id == "f-pol0") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 25.56412750183350184739;
-    } else if (mon_id == "cl-") {
+    } else if (mon_id == "cl-" || mon_id == "cl-poleff" || mon_id == "cl-pol100" || mon_id == "cl-pol75" || mon_id == "cl-pol50" || mon_id == "cl-pol25" || mon_id == "cl-pol0") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 57.88297168036554772821;
-    } else if (mon_id == "br-") {
+    } else if (mon_id == "br-" || mon_id == "br-poleff" || mon_id == "br-pol100" || mon_id == "br-pol75" || mon_id == "br-pol50" || mon_id == "br-pol25" || mon_id == "br-pol0") {
         // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:
         // (C6(Br--O)/C6_lr(O) + C6(Br--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 74.56169774397084024344;
-    } else if (mon_id == "i-") {
+    } else if (mon_id == "i-" || mon_id == "i-poleff" || mon_id == "i-pol100" || mon_id == "i-pol75" || mon_id == "i-pol50" || mon_id == "i-pol25" || mon_id == "i-pol0") {
         // FIXME This value will be set from C6 I-O and I-H. Qchem does not allow
         // C6 calculations for only pseudopotential atoms, i.e. 2 bromide, iodide...)
         // It will be calculated as:

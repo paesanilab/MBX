@@ -81,12 +81,43 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
-    } else if ((mon1 == "f-" or mon1 == "cl-" or mon1 == "br-") and mon2 == "h2o") {
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
+    } else if ((mon1 == "f-" or
+                mon1 == "f-poleff" or
+                mon1 == "f-pol100" or
+                mon1 == "f-pol75" or
+                mon1 == "f-pol50" or
+                mon1 == "f-pol25" or
+                mon1 == "f-pol0") and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if ((mon1 == "cl-" or
+                mon1 == "cl-poleff" or
+                mon1 == "cl-pol100" or
+                mon1 == "cl-pol75" or
+                mon1 == "cl-pol50" or
+                mon1 == "cl-pol25" or
+                mon1 == "cl-pol0") and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+    } else if ((mon1 == "br-" or
+                mon1 == "br-poleff" or
+                mon1 == "br-pol100" or
+                mon1 == "br-pol75" or
+                mon1 == "br-pol50" or
+                mon1 == "br-pol25" or
+                mon1 == "br-pol0") and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
         // More ion water
-    } else if (mon1 == "h2o" and mon2 == "i-") {
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon2, mon1);
+    } else if (mon1 == "h2o" and
+              (mon2 == "i-" or
+               mon2 == "i-poleff" or
+               mon2 == "i-pol100" or
+               mon2 == "i-pol75" or
+               mon2 == "i-pol50" or
+               mon2 == "i-pol25" or
+               mon2 == "i-pol0")) {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "h2o" and (mon2 == "li+" or mon2 == "na+" or mon2 == "k+" or mon2 == "rb+")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
@@ -254,11 +285,42 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
-    } else if ((mon1 == "f-" or mon1 == "cl-" or mon1 == "br-") and mon2 == "h2o") {
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
+    } else if ((mon1 == "f-" or
+                mon1 == "f-poleff" or
+                mon1 == "f-pol100" or
+                mon1 == "f-pol75" or
+                mon1 == "f-pol50" or
+                mon1 == "f-pol25" or
+                mon1 == "f-pol0") and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
-    } else if (mon1 == "h2o" and mon2 == "i-") {
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon2, mon1);
+    } else if ((mon1 == "cl-" or
+                mon1 == "cl-poleff" or
+                mon1 == "cl-pol100" or
+                mon1 == "cl-pol75" or
+                mon1 == "cl-pol50" or
+                mon1 == "cl-pol25" or
+                mon1 == "cl-pol0") and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if ((mon1 == "br-" or
+                mon1 == "br-poleff" or
+                mon1 == "br-pol100" or
+                mon1 == "br-pol75" or
+                mon1 == "br-pol50" or
+                mon1 == "br-pol25" or
+                mon1 == "br-pol0") and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if (mon1 == "h2o" and
+              (mon2 == "i-" or
+               mon2 == "i-poleff" or
+               mon2 == "i-pol100" or
+               mon2 == "i-pol75" or
+               mon2 == "i-pol50" or
+               mon2 == "i-pol25" or
+               mon2 == "i-pol0")) {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
     } else if (mon1 == "h2o" and (mon2 == "li+" or mon2 == "na+" or mon2 == "k+" or mon2 == "rb+")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
