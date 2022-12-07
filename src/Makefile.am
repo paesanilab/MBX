@@ -27,6 +27,9 @@ twob_sources = potential/2b/energy2b.cpp potential/2b/mbnrg_2b_A1_A1_deg9_v1.cpp
 # 3B poly sources
 threeb_sources = potential/3b/energy3b.cpp potential/3b/mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_v1.cpp potential/3b/mbnrg_3b_A1B2C4_D1E2_D1E2_deg3_v1.cpp potential/3b/mbnrg_3b_A1B4_C1D2_C1D2_deg3_v1.cpp potential/3b/poly_3b_A1_B1C2X2_B1C2X2_deg4_grad_v1.cpp potential/3b/poly_3b_A1_B1C2X2_B1C2X2_deg4_nograd_v1.cpp potential/3b/poly_3b_A1B2_A1B2_A1B2_deg4_grad_v1.cpp potential/3b/poly_3b_A1B2_A1B2_A1B2_deg4_nograd_v1.cpp potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_grad_v1.cpp potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_nograd_v1.cpp potential/3b/poly_3b_A1B4_C1D2_C1D2_deg3_grad_v1.cpp potential/3b/poly_3b_A1B4_C1D2_C1D2_deg3_nograd_v1.cpp potential/3b/poly-3b-h2o-ion-v1x_deg4_filtered.cpp potential/3b/poly-3b-v2x.cpp potential/3b/poly-3b-v2x-nogrd.cpp potential/3b/x3b-h2o-ion-v2x-deg4-filtered.cpp potential/3b/x3b-v2x.cpp potential/3b/poly_3b_A1B2_A1B2_A1B2_deg4_grad_vmbpbe.cpp potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_vmbpbe.cpp potential/3b/poly_3b_A1B2_A1B2_A1B2_deg4_nograd_vmbpbe.cpp potential/3b/mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1_oldswitch.cpp potential/3b/poly_3b_A1_B1C2X2_B1C2X2_deg4_grad_v1_oldswitch.cpp potential/3b/poly_3b_A1_B1C2X2_B1C2X2_deg4_nograd_v1_oldswitch.cpp
 
+# 4B poly sources
+fourb_sources = potential/4b/energy4b.cpp  potential/4b/mbnrg_4b_A1B2_A1B2_A1B2_A1B2_deg4_v1.cpp  potential/4b/poly_4b_A1B2_A1B2_A1B2_A1B2_deg4_grad_v1.cpp  potential/4b/poly_4b_A1B2_A1B2_A1B2_A1B2_deg4_nograd_v1.cpp
+
 # Electrostatics sources
 elec_sources = potential/electrostatics/electrostatics.cpp potential/electrostatics/fields.cpp potential/electrostatics/gammq.cpp
 
@@ -43,7 +46,7 @@ ff_sources = potential/force_field/angles.cpp potential/force_field/bond.cpp pot
 lj_sources = potential/lj/lj.cpp potential/lj/ljtools.cpp
 
 # Potential sources
-potential_src = $(oneb_sources) $(twob_sources) $(threeb_sources) $(elec_sources) $(disp_sources) $(buck_sources) $(ff_sources) $(lj_sources)
+potential_src = $(oneb_sources) $(twob_sources) $(threeb_sources) $(fourb_sources) $(elec_sources) $(disp_sources) $(buck_sources) $(ff_sources) $(lj_sources)
 
 libmbx_la_SOURCES = $(tools_src) $(iotools_src) $(bblock_src) $(potential_src)
 libmbx_la_LIBADD = liba1b2c4.la
@@ -52,7 +55,7 @@ libmbx_la_LIBADD = liba1b2c4.la
 libmbx_la_CPPFLAGS = $(FFTWFLAGS) $(MPIFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
-nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 
+nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/4b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 
 
 
 # Only compile these binaries if is not MPI

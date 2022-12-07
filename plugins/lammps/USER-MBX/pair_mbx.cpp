@@ -60,7 +60,7 @@ PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp) {
 
     // energy terms available to pair compute
 
-    nextra = 19;
+    nextra = 22;
     pvector = new double[nextra];
 }
 
@@ -97,6 +97,7 @@ void PairMBX::compute(int eflag, int vflag) {
 
     double mbx_e2b_local, mbx_e2b_ghost;
     double mbx_e3b_local, mbx_e3b_ghost;
+    double mbx_e4b_local, mbx_e4b_ghost;
     double mbx_disp_real, mbx_disp_pme;
 
     // compute energy
@@ -104,11 +105,14 @@ void PairMBX::compute(int eflag, int vflag) {
     mbx_e1b = 0.0;
     mbx_e2b = 0.0;
     mbx_e3b = 0.0;
+    mbx_e4b = 0.0;
 
     mbx_e2b_local = 0.0;
     mbx_e2b_ghost = 0.0;
     mbx_e3b_local = 0.0;
     mbx_e3b_ghost = 0.0;
+    mbx_e4b_local = 0.0;
+    mbx_e4b_ghost = 0.0;
 
     mbx_disp_real = 0.0;
     mbx_disp_pme = 0.0;
@@ -162,6 +166,23 @@ void PairMBX::compute(int eflag, int vflag) {
         accumulate_f_all(false);
 
         mbx_e3b = mbx_e3b_local + mbx_e3b_ghost;
+
+#ifdef _DEBUG
+        printf("[MBX] (%i) -- Computing E4B\n", me);
+#endif
+
+        // fix_mbx->mbxt_start(MBXT_E4B_LOCAL);
+        // mbx_e4b_local = ptr_mbx->FourBodyEnergy(true);
+        // fix_mbx->mbxt_stop(MBXT_E4B_LOCAL);
+        // accumulate_f(false);
+        mbx_e4b_local = 0.0;
+
+        fix_mbx->mbxt_start(MBXT_E4B_GHOST);
+        mbx_e4b_ghost = ptr_mbx->FourBodyEnergy(true, true);
+        fix_mbx->mbxt_stop(MBXT_E4B_GHOST);
+        accumulate_f_all(false);
+
+        mbx_e4b = mbx_e4b_local + mbx_e4b_ghost;
 
         if (mbx_parallel) {
 #ifdef _DEBUG
@@ -234,7 +255,7 @@ void PairMBX::compute(int eflag, int vflag) {
         accumulate_f_full(true);
     }
 
-    mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_ele;
+    mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_e4b + mbx_ele;
 
     for (int i = 0; i < 6; ++i) virial[i] += mbx_virial[i];
 
@@ -248,28 +269,31 @@ void PairMBX::compute(int eflag, int vflag) {
         pvector[0] = mbx_e1b;
         pvector[1] = mbx_e2b;
         pvector[2] = mbx_e3b;
-        pvector[3] = mbx_disp;
-        pvector[4] = mbx_buck;
-        pvector[5] = mbx_ele;
-        pvector[6] = mbx_total_energy;
+        pvector[3] = mbx_e4b;
+        pvector[4] = mbx_disp;
+        pvector[5] = mbx_buck;
+        pvector[6] = mbx_ele;
+        pvector[7] = mbx_total_energy;
 
         // for debugging
 
-        pvector[7] = mbx_e2b_local;
-        pvector[8] = mbx_e2b_ghost;
-        pvector[9] = mbx_e3b_local;
-        pvector[10] = mbx_e3b_ghost;
-        pvector[11] = mbx_disp_real;
-        pvector[12] = mbx_disp_pme;
+        pvector[8] = mbx_e2b_local;
+        pvector[9] = mbx_e2b_ghost;
+        pvector[10] = mbx_e3b_local;
+        pvector[11] = mbx_e3b_ghost;
+        pvector[12] = mbx_e4b_local;
+        pvector[13] = mbx_e4b_ghost;
+        pvector[14] = mbx_disp_real;
+        pvector[15] = mbx_disp_pme;
 
         // for comparison with MBX
 
-        pvector[13] = mbx_virial[0];
-        pvector[14] = mbx_virial[1];
-        pvector[15] = mbx_virial[2];
-        pvector[16] = mbx_virial[3];
-        pvector[17] = mbx_virial[4];
-        pvector[18] = mbx_virial[5];
+        pvector[16] = mbx_virial[0];
+        pvector[17] = mbx_virial[1];
+        pvector[18] = mbx_virial[2];
+        pvector[19] = mbx_virial[3];
+        pvector[20] = mbx_virial[4];
+        pvector[21] = mbx_virial[5];
     }
 
 #ifdef _DEBUG_VIRIAL
@@ -280,6 +304,8 @@ void PairMBX::compute(int eflag, int vflag) {
     double e2g = 0.0;
     double e3l = 0.0;
     double e3g = 0.0;
+    double e4l = 0.0;
+    double e4g = 0.0;
     double edr = 0.0;
     double edp = 0.0;
     double eb = 0.0;
@@ -292,6 +318,8 @@ void PairMBX::compute(int eflag, int vflag) {
     MPI_Reduce(&mbx_e2b_ghost, &e2g, 1, MPI_DOUBLE, MPI_SUM, 0, world);
     MPI_Reduce(&mbx_e3b_local, &e3l, 1, MPI_DOUBLE, MPI_SUM, 0, world);
     MPI_Reduce(&mbx_e3b_ghost, &e3g, 1, MPI_DOUBLE, MPI_SUM, 0, world);
+    MPI_Reduce(&mbx_e4b_local, &e4l, 1, MPI_DOUBLE, MPI_SUM, 0, world);
+    MPI_Reduce(&mbx_e4b_ghost, &e4g, 1, MPI_DOUBLE, MPI_SUM, 0, world);
     MPI_Reduce(&mbx_disp_real, &edr, 1, MPI_DOUBLE, MPI_SUM, 0, world);
     MPI_Reduce(&mbx_disp_pme, &edp, 1, MPI_DOUBLE, MPI_SUM, 0, world);
     MPI_Reduce(&mbx_buck, &eb, 1, MPI_DOUBLE, MPI_SUM, 0, world);
@@ -299,7 +327,7 @@ void PairMBX::compute(int eflag, int vflag) {
 
     MPI_Reduce(&virial[0], &v[0], 6, MPI_DOUBLE, MPI_SUM, 0, world);
 
-    double etot = e1 + e2l + e2g + e3l + e3g + edr + edp + eb + ee;
+    double etot = e1 + e2l + e2g + e3l + e3g + e4l + e4g + edr + edp + eb + ee;
 
     printf("(%i)  virial= %f %f %f  %f %f %f\n", me, virial[0], virial[1], virial[2], virial[3], virial[4], virial[5]);
 
@@ -307,6 +335,7 @@ void PairMBX::compute(int eflag, int vflag) {
         printf("mbx_e1b=   %f  Parallel\n", e1);
         printf("mbx_e2b=   %f (%f, %f)  Parallel\n", e2l + e2g, e2l, e2g);
         printf("mbx_e3b=   %f (%f, %f)  Parallel\n", e3l + e3g, e3l, e3g);
+        printf("mbx_e4b=   %f (%f, %f)  Parallel\n", e4l + e4g, e4l, e4g);
         printf("mbx_disp=  %f (%f, %f)  Parallel\n", edr + edp, edr, edp);
         printf("mbx_buck=  %f  Parallel\n", mbx_buck);
         printf("mbx_ele=   %f  Parallel\n", mbx_ele);

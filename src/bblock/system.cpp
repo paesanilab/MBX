@@ -79,6 +79,10 @@ System::System() {
     // Affects the 3B polynomials
     cutoff3b_ = 5.0;
 
+    // Setting 4B cutoff
+    // Affects the 4B polynomials
+    cutoff4b_ = 0.0;
+
     ////////////////////////
     // Evaluation batches //
     ////////////////////////
@@ -326,7 +330,10 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
     for (size_t i = 0; i < monomers_.size(); i++) {
         idxs.push_back(i);
     }
-    AddClusters(nmax, cutoff, idxs, use_ghost);
+
+    if (nmax == 2) dimers_ = AddClustersParallel(2, cutoff, idxs, use_ghost);
+    if (nmax == 3) trimers_ = AddClustersParallel(3, cutoff, idxs, use_ghost);
+
     for (size_t j = 0; j < dimers_.size(); j++) d.push_back(dimers_[j]);
     for (size_t j = 0; j < trimers_.size(); j++) t.push_back(trimers_[j]);
 
@@ -694,8 +701,10 @@ void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &m
 
 void System::Set2bCutoff(double cutoff2b) { cutoff2b_ = cutoff2b; }
 void System::Set3bCutoff(double cutoff3b) { cutoff3b_ = cutoff3b; }
+void System::Set4bCutoff(double cutoff4b) { cutoff4b_ = cutoff4b; }
 double System::Get2bCutoff() { return cutoff2b_; }
 double System::Get3bCutoff() { return cutoff3b_; }
+double System::Get4bCutoff() { return cutoff4b_; }
 void System::SetNMaxEval1b(size_t nmax) { maxNMonEval_ = nmax; }
 void System::SetNMaxEval2b(size_t nmax) { maxNDimEval_ = nmax; }
 void System::SetNMaxEval3b(size_t nmax) { maxNTriEval_ = nmax; }
@@ -829,6 +838,8 @@ std::vector<std::vector<std::string>> System::Get2bIgnorePoly() { return ignore_
 
 std::vector<std::vector<std::string>> System::Get3bIgnorePoly() { return ignore_3b_poly_; }
 
+std::vector<std::vector<std::string>> System::Get4bIgnorePoly() { return ignore_4b_poly_; }
+
 void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
     std::pair<std::string, std::string> p = mon2 < mon1 ? std::make_pair(mon2, mon1) : std::make_pair(mon1, mon2);
 
@@ -921,6 +932,25 @@ void System::Set3bIgnorePoly(std::vector<std::vector<std::string>> ignore_3b) {
         std::vector<std::string> p = ignore_3b[i];
         std::sort(p.begin(), p.end());
         ignore_3b_poly_.push_back(p);
+    }
+}
+
+void System::Add4bIgnorePoly(std::string mon1, std::string mon2, std::string mon3, std::string mon4) {
+    std::vector<std::string> p = {mon1, mon2, mon3, mon4};
+    std::sort(p.begin(), p.end());
+
+    if (std::find(ignore_4b_poly_.begin(), ignore_4b_poly_.end(), p) == ignore_4b_poly_.end()) {
+        ignore_4b_poly_.push_back(p);
+    }
+}
+
+void System::Set4bIgnorePoly(std::vector<std::vector<std::string>> ignore_4b) {
+    ignore_4b_poly_.clear();
+
+    for (size_t i = 0; i < ignore_4b.size(); i++) {
+        std::vector<std::string> p = ignore_4b[i];
+        std::sort(p.begin(), p.end());
+        ignore_4b_poly_.push_back(p);
     }
 }
 
@@ -1200,6 +1230,16 @@ void System::SetUpFromJson(nlohmann::json j) {
     }
     mbx_j_["MBX"]["threebody_cutoff"] = cutoff3b_;
 
+    // Try to get 4b cutoff
+    // Default: 0.0 Angstrom
+    try {
+        cutoff4b_ = j["MBX"]["fourbody_cutoff"];
+    } catch (...) {
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"fourbody_cutoff\" is not defined in json file. Using " << cutoff4b_ << "\n";
+    }
+    mbx_j_["MBX"]["fourbody_cutoff"] = cutoff4b_;
+
     // Try to get maximum number of evaluations for 1b
     // Default: 1024
     try {
@@ -1439,6 +1479,16 @@ void System::SetUpFromJson(nlohmann::json j) {
     Set3bIgnorePoly(ignore_3b_poly_);
     mbx_j_["MBX"]["ignore_3b_poly"] = ignore_3b_poly_;
 
+    try {
+        std::vector<std::vector<std::string>> ignore_4b_poly = j["MBX"]["ignore_4b_poly"];
+        ignore_4b_poly_ = ignore_4b_poly;
+    } catch (...) {
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"ignore_4b_poly\" is not defined in json file. Using empty list.\n";
+    }
+    Set4bIgnorePoly(ignore_4b_poly_);
+    mbx_j_["MBX"]["ignore_4b_poly"] = ignore_4b_poly_;
+
     std::string connectivity_file = "";
     try {
         connectivity_file = j["MBX"]["connectivity_file"];
@@ -1606,6 +1656,7 @@ std::string System::GetCurrentSystemConfig() {
 
     ss << std::left << std::setw(25) << "2B cutoff:" << cutoff2b_ << std::endl;
     ss << std::left << std::setw(25) << "3B cutoff:" << cutoff3b_ << std::endl;
+    ss << std::left << std::setw(25) << "4B cutoff:" << cutoff4b_ << std::endl;
     ss << std::left << std::setw(25) << "Max Eval Mon:" << maxNMonEval_ << std::endl;
     ss << std::left << std::setw(25) << "Max Eval Dim:" << maxNDimEval_ << std::endl;
     ss << std::left << std::setw(25) << "Max Eval Trim:" << maxNTriEval_ << std::endl;
@@ -1655,6 +1706,16 @@ std::string System::GetCurrentSystemConfig() {
         ss << "{";
         for (size_t j = 0; j < ignore_3b_poly_[i].size(); j++) {
             ss << ignore_3b_poly_[i][j] << " ";
+        }
+        ss << "} ";
+    }
+    ss << std::endl;
+
+    ss << std::left << std::setw(25) << "Ignore 4B poly:";
+    for (size_t i = 0; i < ignore_4b_poly_.size(); i++) {
+        ss << "{";
+        for (size_t j = 0; j < ignore_4b_poly_[i].size(); j++) {
+            ss << ignore_4b_poly_[i][j] << " ";
         }
         ss << "} ";
     }
@@ -1852,70 +1913,6 @@ void System::AddMonomerInfo() {
 #endif
 }
 
-// void System::AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost_) {
-//    // istart is the monomer position for which we will look all dimers and
-//    // trimers that contain it. iend is the last monomer position.
-//    // This means, if istart is 0 and iend is 2, we will look for all dimers
-//    // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
-//
-//    // Make sure that nmax is 2 or 3
-//    // Throw exception otherwise
-//    // Commented for now since this functiuon is private and unlikely to
-//    // be called from the outside
-//    // if (nmax != 2 and nmax != 3) {
-//    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
-//    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
-//    //}
-//
-//    size_t nmon = monomers_.size();
-//    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_,
-//    islocal_,
-//                          atom_tag_, dimers_, trimers_, use_ghost_);
-//}
-
-// std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
-//                                                bool use_ghost_) {
-//    // Overloaded function to be compatible with omp
-//    // Returns dimers if nmax == 2, or trimers if nmax == 3
-//
-//    // Make sure that nmax is 2 or 3
-//    // Throw exception otherwise
-//    // Commented for now since this functiuon is private and unlikely to
-//    // be called from the outside
-//    // if (nmax != 2 and nmax != 3) {
-//    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
-//    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
-//    //}
-//
-//    size_t nmon = monomers_.size();
-//    std::vector<size_t> dimers, trimers;
-//    systools::AddClusters(nmax, cutoff, istart, iend, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_,
-//    islocal_,
-//                          atom_tag_, dimers, trimers, use_ghost_);
-//    if (nmax == 2) return dimers;
-//    return trimers;
-//}
-
-void System::AddClusters(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost_) {
-    // istart is the monomer position for which we will look all dimers and
-    // trimers that contain it. iend is the last monomer position.
-    // This means, if istart is 0 and iend is 2, we will look for all dimers
-    // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
-
-    // Make sure that nmax is 2 or 3
-    // Throw exception otherwise
-    // Commented for now since this functiuon is private and unlikely to
-    // be called from the outside
-    // if (nmax != 2 and nmax != 3) {
-    //    std::string text = "nmax value of " + std::to_string(nmax) + " is not acceptable. Possible values are 2
-    //    or 3."; throw CUException(__func__, __FILE__, __LINE__, text);
-    //}
-
-    size_t nmon = monomers_.size();
-    systools::AddClusters(nmax, cutoff, idxs, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_,
-                          atom_tag_, dimers_, trimers_, use_ghost_);
-}
-
 std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost_) {
     // Overloaded function to be compatible with omp
     // Returns dimers if nmax == 2, or trimers if nmax == 3
@@ -1930,11 +1927,10 @@ std::vector<size_t> System::AddClustersParallel(size_t nmax, double cutoff, std:
     //}
 
     size_t nmon = monomers_.size();
-    std::vector<size_t> dimers, trimers;
+    std::vector<size_t> nmers;
     systools::AddClusters(nmax, cutoff, idxs, nmon, use_pbc_, box_, box_inverse_, xyz_, first_index_, islocal_,
-                          atom_tag_, dimers, trimers, use_ghost_);
-    if (nmax == 2) return dimers;
-    return trimers;
+                          atom_tag_, nmers, use_ghost_);
+    return nmers;
 }
 
 void System::SetConnectivity(std::unordered_map<std::string, eff::Conn> connectivity_map) {
@@ -2016,6 +2012,15 @@ double System::Energy(bool do_grads) {
     double e3b = Get3B(do_grads);
 
 #ifdef TIMING
+    auto t32 = std::chrono::high_resolution_clock::now();
+#endif
+
+    double e4b = 0.0;
+    if (cutoff4b_ > std::numeric_limits<double>::epsilon()) {
+        e4b = Get4B(do_grads);
+    }
+
+#ifdef TIMING
     auto t4 = std::chrono::high_resolution_clock::now();
 #endif
 
@@ -2028,7 +2033,7 @@ double System::Energy(bool do_grads) {
 #endif
 
     // Set up energy with the new value
-    energy_ = eff + e1b + e2b + e3b + edisp + ebuck + elj + Eelec;
+    energy_ = eff + e1b + e2b + e3b + e4b + edisp + ebuck + elj + Eelec;
 
 #ifdef PRINT_INDIVIDUAL_TERMS
     std::cerr << std::setprecision(20) << std::scientific;
@@ -2036,6 +2041,7 @@ double System::Energy(bool do_grads) {
               << "FF = " << eff << std::endl
               << "2B = " << e2b << std::endl
               << "3B = " << e3b << std::endl
+              << "4B = " << e4b << std::endl
               << "Disp = " << edisp << std::endl
               << "Buck = " << ebuck << std::endl
               << "LJ = " << elj << std::endl
@@ -2053,8 +2059,10 @@ double System::Energy(bool do_grads) {
               << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2b).count() << " milliseconds\n";
     std::cerr << "System::LJ(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t31 - t3).count() << " milliseconds\n";
+    std::cerr << "System::4b(grad=" << do_grads << ") "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t32 - t31).count() << " milliseconds\n";
     std::cerr << "System::3b(grad=" << do_grads << ") "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t31).count() << " milliseconds\n";
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t32).count() << " milliseconds\n";
     std::cerr << "System::electrostatics(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() << " milliseconds\n";
     std::cerr << "TotalEnergy(grad=" << do_grads << ") "
@@ -2343,17 +2351,13 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         for (size_t i = rank; i < nummon_; i += step) {
             idxs.push_back(i);
         }
-// Adding corresponding clusters depending on if we are within
-// OPENMP or not
+        // Adding corresponding clusters depending on if we are within
+        // OPENMP or not
 
-// This call will get the dimers that have as first index a monomer
-// with index between istart and iend (iend not included)
-#ifdef _OPENMP
+        // This call will get the dimers that have as first index a monomer
+        // with index between istart and iend (iend not included)
+
         std::vector<size_t> dimers = AddClustersParallel(2, cutoff2b_, idxs, use_ghost);
-#else
-    AddClusters(2, cutoff2b_, idxs, use_ghost);
-    std::vector<size_t> dimers = dimers_;
-#endif
 
         // In order to continue, we need at least one dimer
         // If the size of the dimer vector is not at least 2, means
@@ -2567,11 +2571,31 @@ double System::ThreeBodyEnergy(bool do_grads, bool use_ghost) {
     return energy_;
 }
 
+double System::FourBodyEnergy(bool do_grads, bool use_ghost) {
+    // Check if system has been initialized
+    // If not, throw exception
+    if (!initialized_) {
+        std::string text =
+            std::string("System has not been initialized. ") + std::string("4B Energy calculation not possible.");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+    energy_ = 0.0;
+    std::fill(grad_.begin(), grad_.end(), 0.0);
+    std::fill(virial_.begin(), virial_.end(), 0.0);
+
+    SetPBC(box_);
+
+    if (cutoff4b_ > std::numeric_limits<double>::epsilon()) {
+        energy_ = Get4B(do_grads, use_ghost);
+    }
+
+    return energy_;
+}
+
 double System::Get3B(bool do_grads, bool use_ghost) {
     // 3B ENERGY
     double e3b_t = 0.0;
-
-    const double one_third = 1.0 / 3.0;
 
     // Variables needed for OMP
     size_t step = 1;
@@ -2609,12 +2633,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
             idxs.push_back(i);
         }
 
-#ifdef _OPENMP
         std::vector<size_t> trimers = AddClustersParallel(3, cutoff3b_, idxs, use_ghost);
-#else
-    AddClusters(3, cutoff3b_, idxs, use_ghost);
-    std::vector<size_t> trimers = trimers_;
-#endif
 
         // In order to continue, we need at least one dimer
         // If the size of the dimer vector is not at least 2, means
@@ -2814,6 +2833,164 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     }
 
     return e3b_t;
+}
+
+double System::Get4B(bool do_grads, bool use_ghost) {
+    // 4B ENERGY
+    double e4b_t = 0.0;
+
+    // Variables needed for OMP
+    size_t step = 1;
+    int num_threads = 1;
+
+#ifdef _OPENMP
+#pragma omp parallel
+    {
+        // Get the number of threads
+        if (omp_get_thread_num() == 0) num_threads = omp_get_num_threads();
+    }
+    // Define variables to be used later in the condensation of data
+    int grad_step = 3 * numsites_ / num_threads;
+    step = num_threads;
+#endif  // _OPENMP
+
+    // Variables to be used for both serial and parallel implementation
+    size_t first_grad = 0;
+    size_t last_grad = 3 * numsites_;
+    int rank = 0;
+    std::vector<size_t> idxs;
+
+    // Vector pools that allow compatibility between
+    // serial and parallel implementation
+    std::vector<double> e4b_pool(num_threads, 0.0);
+    std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
+    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0));  // declare virial pool
+
+#ifdef _OPENMP
+#pragma omp parallel private(rank, idxs)
+    {
+        rank = omp_get_thread_num();
+#endif
+        for (size_t i = rank; i < nummon_; i += step) {
+            idxs.push_back(i);
+        }
+
+        std::vector<size_t> tetramers = AddClustersParallel(4, cutoff4b_, idxs, use_ghost);
+
+        // Loop over all the tetramers
+        for (size_t i = 0; i < tetramers.size(); i += 4) {
+            // The way the XYZ are set, they include the virtual site,
+            // but we don't need the electrostatic virtual site for the 4B
+            // polynomials. Thus, we need to create a pair of vectors with the right
+            // coordinates to pass to polynomials and dispersion
+            std::vector<std::vector<double>> coords(4);
+            std::vector<std::string> ms(4);
+            std::vector<size_t> nats(4);
+
+            // Set monomer names and push the coordinates
+            for (size_t n = 0; n < 4; n++) {
+                coords[n].clear();
+                ms[n] = monomers_[tetramers[i + n]];
+                nats[n] = nat_[tetramers[i + n]];
+
+                for (size_t j = 0; j < 3 * nat_[tetramers[i + n]]; j++) {
+                    coords[n].push_back(xyz_[3 * first_index_[tetramers[i + n]] + j]);
+                }
+            }
+
+            // Fix tetramer positions if pbc
+            if (use_pbc_) {
+                systools::GetCloseNmerImage(box_, box_inverse_, 4, nats, 1, coords);
+            }
+
+            // Check if this pair needs to use MB-nrg
+            bool use_poly = true;
+            for (size_t i4b = 0; i4b < ignore_4b_poly_.size(); i4b++) {
+                std::vector<std::string> v1 = ignore_4b_poly_[i4b];
+                std::vector<std::string> v2 = ms;
+                std::sort(v1.begin(), v1.end());
+                std::sort(v2.begin(), v2.end());
+
+                if (v1 == v2) {
+                    use_poly = false;
+                    break;
+                }
+            }
+
+            if (use_poly) {
+                if (do_grads) {
+                    // POLYNOMIALS
+                    std::vector<std::vector<double>> grad(4);
+                    for (size_t n = 0; n < 4; n++) {
+                        grad[n].resize(coords[n].size(), 0.0);
+                    }
+                    std::vector<double> virial(9, 0.0);  // declare virial tensor
+
+                    // POLYNOMIALS
+                    double e = e4b::get_4b_energy(ms[0], ms[1], ms[2], ms[3], 1, coords[0], coords[1], coords[2],
+                                                  coords[3], grad[0], grad[1], grad[2], grad[3], &virial);
+
+                    e4b_pool[rank] += e;
+
+                    // Update gradients
+                    for (size_t n = 0; n < 4; n++) {
+                        for (size_t j = 0; j < 3 * nat_[tetramers[i + n]]; j++) {
+                            grad_pool[rank][3 * first_index_[tetramers[i + n]] + j] += grad[n][j];
+                        }
+                    }
+                    // Virial Tensor
+                    for (size_t j = 0; j < 9; j++) {
+                        virial_pool[rank][j] += virial[j];
+                    }
+
+                } else {
+                    // POLYNOMIALS
+                    double e =
+                        e4b::get_4b_energy(ms[0], ms[1], ms[2], ms[3], 1, coords[0], coords[1], coords[2], coords[3]);
+                    e4b_pool[rank] += e;
+                }
+            }
+        }
+
+#ifdef _OPENMP
+    }  // parallel
+
+#pragma omp parallel private(first_grad, last_grad, rank)
+    {
+        rank = omp_get_thread_num();
+
+        first_grad = 0 + rank * grad_step;
+
+        last_grad = (rank + 1) * grad_step;
+        if (rank == num_threads - 1) {
+            last_grad = 3 * numsites_;
+        }
+#pragma omp barrier
+#endif
+
+        // Condensate gradients
+        for (int i = 0; i < num_threads; i++) {
+            for (size_t j = first_grad; j < last_grad; j++) {
+                grad_[j] += grad_pool[i][j];
+            }
+        }
+
+#ifdef _OPENMP
+    }  // parallel
+#endif
+
+    // Condensate energy
+    for (int i = 0; i < num_threads; i++) {
+        e4b_t += e4b_pool[i];
+    }
+    // Condensate virial
+    for (int i = 0; i < num_threads; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            virial_[j] += virial_pool[i][j];
+        }
+    }
+
+    return e4b_t;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
