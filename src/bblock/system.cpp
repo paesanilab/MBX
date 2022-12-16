@@ -2059,9 +2059,9 @@ double System::Energy(bool do_grads) {
               << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2b).count() << " milliseconds\n";
     std::cerr << "System::LJ(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t31 - t3).count() << " milliseconds\n";
-    std::cerr << "System::4b(grad=" << do_grads << ") "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t32 - t31).count() << " milliseconds\n";
     std::cerr << "System::3b(grad=" << do_grads << ") "
+              << std::chrono::duration_cast<std::chrono::milliseconds>(t32 - t31).count() << " milliseconds\n";
+    std::cerr << "System::4b(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t32).count() << " milliseconds\n";
     std::cerr << "System::electrostatics(grad=" << do_grads << ") "
               << std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4).count() << " milliseconds\n";
