@@ -2207,6 +2207,8 @@ void FixMBX::mbxt_write_summary() {
     mbxt_print_time("E2B_GHOST", MBXT_E2B_GHOST, t);
     mbxt_print_time("E3B_LOCAL", MBXT_E3B_LOCAL, t);
     mbxt_print_time("E3B_GHOST", MBXT_E3B_GHOST, t);
+    mbxt_print_time("E4B_LOCAL", MBXT_E4B_LOCAL, t);
+    mbxt_print_time("E4B_GHOST", MBXT_E4B_GHOST, t);
     mbxt_print_time("DISP", MBXT_DISP, t);
     mbxt_print_time("DISP_PME", MBXT_DISP_PME, t);
     mbxt_print_time("BUCK", MBXT_BUCK, t);

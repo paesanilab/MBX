@@ -435,155 +435,33 @@ void GetCloseDimerImage(std::vector<double> box, std::vector<double> box_inv, si
 
 void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, size_t nat1, size_t nat2, size_t nat3,
                          size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3) {
-    size_t shift1 = 0;
-    size_t shift2 = 0;
-    size_t shift3 = 0;
-    size_t coords1 = 3 * nat1;
-    size_t coords2 = 3 * nat2;
-    size_t coords3 = 3 * nat3;
+    GetCloseDimerImage(box, box_inv, nat1, nat2, nt, xyz1.data(), xyz2.data());
+    GetCloseDimerImage(box, box_inv, nat1, nat3, nt, xyz1.data(), xyz3.data());
+}
 
-    for (size_t i = 0; i < nt; i++) {
-        // Reciprocal coordinates of mon 1
-        double xr1 = box_inv[0] * xyz1[shift1] + box_inv[3] * xyz1[shift1 + 1] + box_inv[6] * xyz1[shift1 + 2];
-        double yr1 = box_inv[1] * xyz1[shift1] + box_inv[4] * xyz1[shift1 + 1] + box_inv[7] * xyz1[shift1 + 2];
-        double zr1 = box_inv[2] * xyz1[shift1] + box_inv[5] * xyz1[shift1 + 1] + box_inv[8] * xyz1[shift1 + 2];
+// void GetCloseTetramerImage(std::vector<double> box, std::vector<double> box_inv,
+//                            size_t nat1, size_t nat2, size_t nat3, size_t nat4, size_t nt,
+//                            std::vector<double> &xyz1, std::vector<double> &xyz2,
+//                            std::vector<double> &xyz3, std::vector<double> &xyz4) {
+//    GetCloseDimerImage(box, box_inv, nat1, nat2, nt, xyz1.data(), xyz2.data());
+//    GetCloseDimerImage(box, box_inv, nat1, nat3, nt, xyz1.data(), xyz3.data());
+//    GetCloseDimerImage(box, box_inv, nat1, nat4, nt, xyz1.data(), xyz4.data());
+//}
 
-        // Reciprocal coordinates of mon 2
-        double xr2 = box_inv[0] * xyz2[shift2] + box_inv[3] * xyz2[shift2 + 1] + box_inv[6] * xyz2[shift2 + 2];
-        double yr2 = box_inv[1] * xyz2[shift2] + box_inv[4] * xyz2[shift2 + 1] + box_inv[7] * xyz2[shift2 + 2];
-        double zr2 = box_inv[2] * xyz2[shift2] + box_inv[5] * xyz2[shift2 + 1] + box_inv[8] * xyz2[shift2 + 2];
-
-        // Reciprocal coordinates of mon 3
-        double xr3 = box_inv[0] * xyz3[shift3] + box_inv[3] * xyz3[shift3 + 1] + box_inv[6] * xyz3[shift3 + 2];
-        double yr3 = box_inv[1] * xyz3[shift3] + box_inv[4] * xyz3[shift3 + 1] + box_inv[7] * xyz3[shift3 + 2];
-        double zr3 = box_inv[2] * xyz3[shift3] + box_inv[5] * xyz3[shift3 + 1] + box_inv[8] * xyz3[shift3 + 2];
-
-        // Check distance (reciprocal) between mon 1 and mon 2
-        double dx = (xr2 - xr1) - std::floor(xr2 - xr1 + 0.5);
-        double dy = (yr2 - yr1) - std::floor(yr2 - yr1 + 0.5);
-        double dz = (zr2 - zr1) - std::floor(zr2 - zr1 + 0.5);
-
-        double d12 = dx * dx + dy * dy + dz * dz;
-
-        // Check distance (reciprocal) between mon 1 and mon 3
-        dx = (xr3 - xr1) - std::floor(xr3 - xr1 + 0.5);
-        dy = (yr3 - yr1) - std::floor(yr3 - yr1 + 0.5);
-        dz = (zr3 - zr1) - std::floor(zr3 - zr1 + 0.5);
-
-        double d13 = dx * dx + dy * dy + dz * dz;
-
-        // Check distance (reciprocal) between mon 2 and mon 3
-        dx = (xr3 - xr2) - std::floor(xr3 - xr2 + 0.5);
-        dy = (yr3 - yr2) - std::floor(yr3 - yr2 + 0.5);
-        dz = (zr3 - zr2) - std::floor(zr3 - zr2 + 0.5);
-
-        double d23 = dx * dx + dy * dy + dz * dz;
-
-        // The one with the lowest distance is put next to mon 1
-
-        double *xyzcp;
-        double xrcp;
-        double yrcp;
-        double zrcp;
-        size_t natcp;
-        size_t targetmon;
-        double d;
-        if (d12 < d13) {
-            // Will move monomer 2 close to mon 1
-            xyzcp = xyz2.data() + shift2;
-            xrcp = xr2;
-            yrcp = yr2;
-            zrcp = zr2;
-            natcp = nat2;
-            targetmon = 3;
-            d = d13;
-        } else {
-            // Will move monomer 3 close to mon 1
-            xyzcp = xyz3.data() + shift3;
-            xrcp = xr3;
-            yrcp = yr3;
-            zrcp = zr3;
-            natcp = nat3;
-            targetmon = 2;
-            d = d12;
-        }
-
-        double dx0 = std::floor(xrcp - xr1 + 0.5);
-        double dy0 = std::floor(yrcp - yr1 + 0.5);
-        double dz0 = std::floor(zrcp - zr1 + 0.5);
-
-        // Move monomer 2 to be the closest image to mon1 if needed
-        for (size_t j = 0; j < natcp; j++) {
-            double xr = box_inv[0] * xyzcp[3 * j] + box_inv[3] * xyzcp[3 * j + 1] + box_inv[6] * xyzcp[3 * j + 2];
-            double yr = box_inv[1] * xyzcp[3 * j] + box_inv[4] * xyzcp[3 * j + 1] + box_inv[7] * xyzcp[3 * j + 2];
-            double zr = box_inv[2] * xyzcp[3 * j] + box_inv[5] * xyzcp[3 * j + 1] + box_inv[8] * xyzcp[3 * j + 2];
-
-            xr -= dx0;
-            yr -= dy0;
-            zr -= dz0;
-
-            xyzcp[3 * j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;
-            xyzcp[3 * j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;
-            xyzcp[3 * j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;
-        }
-
-        // Update reciprocal positions of the updated monomer
-        if (d12 < d13) {
-            xr2 -= dx0;
-            yr2 -= dy0;
-            zr2 -= dz0;
-        } else {
-            xr3 -= dx0;
-            yr3 -= dy0;
-            zr3 -= dz0;
-        }
-
-        // Now need to figure out if the last monomer (target mon) is closer to 1 or second mon
-        double *xyztarget = targetmon == 2 ? xyz2.data() + shift2 : xyz3.data() + shift3;
-        size_t nat_target = targetmon == 2 ? nat2 : nat3;
-        double xrtg = targetmon == 2 ? xr2 : xr3;
-        double yrtg = targetmon == 2 ? yr2 : yr3;
-        double zrtg = targetmon == 2 ? zr2 : zr3;
-
-        double xrc, yrc, zrc;
-
-        if (d < d23) {
-            // Monomer 1 is the closets to target
-            xrc = xr1;
-            yrc = yr1;
-            zrc = zr1;
-        } else {
-            // Second monomer is the closest to target
-            xrc = targetmon == 2 ? xr3 : xr2;
-            yrc = targetmon == 2 ? yr3 : yr2;
-            zrc = targetmon == 2 ? zr3 : zr2;
-        }
-
-        dx0 = std::floor(xrtg - xrc + 0.5);
-        dy0 = std::floor(yrtg - yrc + 0.5);
-        dz0 = std::floor(zrtg - zrc + 0.5);
-
-        // Move monomer 2 to be the closest image to mon1 if needed
-        for (size_t j = 0; j < nat_target; j++) {
-            double xr =
-                box_inv[0] * xyztarget[3 * j] + box_inv[3] * xyztarget[3 * j + 1] + box_inv[6] * xyztarget[3 * j + 2];
-            double yr =
-                box_inv[1] * xyztarget[3 * j] + box_inv[4] * xyztarget[3 * j + 1] + box_inv[7] * xyztarget[3 * j + 2];
-            double zr =
-                box_inv[2] * xyztarget[3 * j] + box_inv[5] * xyztarget[3 * j + 1] + box_inv[8] * xyztarget[3 * j + 2];
-
-            xr -= dx0;
-            yr -= dy0;
-            zr -= dz0;
-
-            xyztarget[3 * j + 0] = box[0] * xr + box[3] * yr + box[6] * zr;
-            xyztarget[3 * j + 1] = box[1] * xr + box[4] * yr + box[7] * zr;
-            xyztarget[3 * j + 2] = box[2] * xr + box[5] * yr + box[8] * zr;
-        }
-
-        shift1 += coords1;
-        shift2 += coords2;
-        shift3 += coords3;
+void GetCloseNmerImage(std::vector<double> box, std::vector<double> box_inv, size_t oc, std::vector<size_t> nat,
+                       size_t nc, std::vector<std::vector<double>> &xyz) {
+    if (oc == 2) {
+        GetCloseDimerImage(box, box_inv, nat[0], nat[1], nc, xyz[0].data(), xyz[1].data());
+    } else if (oc == 3) {
+        GetCloseDimerImage(box, box_inv, nat[0], nat[1], nc, xyz[0].data(), xyz[1].data());
+        GetCloseDimerImage(box, box_inv, nat[0], nat[2], nc, xyz[0].data(), xyz[2].data());
+    } else if (oc == 4) {
+        GetCloseDimerImage(box, box_inv, nat[0], nat[1], nc, xyz[0].data(), xyz[1].data());
+        GetCloseDimerImage(box, box_inv, nat[0], nat[2], nc, xyz[0].data(), xyz[2].data());
+        GetCloseDimerImage(box, box_inv, nat[0], nat[3], nc, xyz[0].data(), xyz[3].data());
+    } else {
+        for (size_t i = 1; i < oc; i++)
+            GetCloseDimerImage(box, box_inv, nat[0], nat[i], nc, xyz[0].data(), xyz[i].data());
     }
 }
 
@@ -592,7 +470,7 @@ bool ComparePair(std::pair<size_t, double> a, std::pair<size_t, double> b) { ret
 void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
                  std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost) {
+                 std::vector<size_t> &nmers, bool use_ghost) {
     // istart is the monomer position for which we will look all dimers and
     // trimers that contain it. iend is the last monomer position.
     // This means, if istart is 0 and iend is 2, we will look for all dimers
@@ -605,7 +483,7 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
     // is_local is local/ghost descriptor for monomers; interactions involving
     //  all ghost monomers are ignored
     // use_ghost controls whether or not to include ghost monomers in clusters; default is no.
-    // dimers and trimers will be filled with the dimers and trimers found
+    // nmers will be filled with the dimers or trimers found
 
     // if use_ghost == true,
     //       include local+ghost monomers in xyz, but only include local-ghost interactions
@@ -613,11 +491,9 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
     //       include only local monomers in xyz and do nothing special
 
     // Perform a radial search within the cutoff
-    dimers.clear();
-    if (n_max > 2) trimers.clear();
+    nmers.clear();
 
     // if first monomer is ghost and we're not computing local-ghost interactions, then skip
-
     // if (!use_ghost && !is_local[istart]) return;
 
     // Obtain xyz vector with the positions of first atom of each monomer
@@ -640,6 +516,7 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
 
     if (nmon2 < 2) return;
     if (n_max > 2 && nmon2 < 3) return;
+    if (n_max > 3 && nmon2 < 4) return;
 
     // Obtain the data in the structure needed by the kd-tree
     kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
@@ -651,11 +528,12 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
     my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
     index.buildIndex();
 
-    std::vector<size_t> idone;
-    std::set<std::pair<size_t, size_t>> donej;
     for (size_t ii = 0; ii < idxs.size(); ii++) {
         size_t i = idxs[ii];
-        if (!use_ghost && !is_local[i]) continue;
+
+        // if idx only contains local atom, then this line has no effect
+        if (!is_local[i]) continue;
+
         // Define the query point
         double point[3];
         point[0] = ptc.pts[i].x;
@@ -667,158 +545,91 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
         nanoflann::SearchParams params;
         const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
 
-        for (size_t j = 0; j < nMatches; j++) {
-            size_t pos = ret_matches[j].first / nmon2;
-            ret_matches[j].first -= nmon2 * pos;
-        }
+        // can sort but is uneccessary
+        // std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
 
-        std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
-        std::set<std::pair<size_t, size_t>> donek;
+        //  follwing code assumes cutoff*2 < box size, so for an atom,
+        //  at most one pbc replica exists within cutoff around a point,
+        //  to ensure no trimer contains monomer interacting with its image
 
         // Add the pairs that are not in the dimer vector
-        for (size_t j = 0; j < nMatches; j++) {
-            std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> retdim;
-            if (ret_matches[j].first > i) {
-                retdim = donej.insert(std::make_pair(i, ret_matches[j].first));
-                if (retdim.second) {
-                    // ghost == 0, local == 1
-                    // ghost-ghost == 0
-                    // ghost-local == 1 for all permutations
-                    // local-local == 2
+        if (n_max == 2) {
+            for (size_t j = 0; j < nMatches; j++) {
+                size_t id_j = ret_matches[j].first % nmon2;
+                // add dimer (i, id_j) if i has the lower label
+                if (tag_index[i] < tag_index[id_j]) {
+                    nmers.push_back(mon_index[i]);
+                    nmers.push_back(mon_index[id_j]);
+                }
+            }
+        }
 
-                    // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
+        // Add trimers if requested
+        if (n_max == 3) {
+            for (size_t j = 0; j < nMatches; j++) {
+                for (size_t k = j + 1; k < nMatches; k++) {
+                    double djk[3];
+                    djk[0] = ptc.pts[ret_matches[j].first].x - ptc.pts[ret_matches[k].first].x;
+                    djk[1] = ptc.pts[ret_matches[j].first].y - ptc.pts[ret_matches[k].first].y;
+                    djk[2] = ptc.pts[ret_matches[j].first].z - ptc.pts[ret_matches[k].first].z;
+                    size_t id_j = ret_matches[j].first % nmon2;
+                    size_t id_k = ret_matches[k].first % nmon2;
 
-                    bool include_dimer = false;
-                    // if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
-                    // if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
-                    size_t tag1 = tag_index[i];
-                    size_t tag2 = tag_index[ret_matches[j].first];
-                    size_t tagmin = tag1;
-                    size_t idxmin = mon_index[i];
+                    // sanity check: no self-image interaction. shouldn't happen if box > 2*cutoff
+                    if (id_j == i || id_k == i || id_j == id_k) continue;
 
-                    if (tagmin > tag2) {
-                        tagmin = tag2;
-                        idxmin = mon_index[ret_matches[j].first];
-                    }
-
-                    if (is_local[idxmin] == 1) include_dimer = true;
-
-                    if (include_dimer) {
-                        dimers.push_back(mon_index[i]);
-                        dimers.push_back(mon_index[ret_matches[j].first]);
+                    // add trimer (i, id_j, id_k) if trimer is not a triangle or if i has the lowest label
+                    if (djk[0] * djk[0] + djk[1] * djk[1] + djk[2] * djk[2] > cutoff * cutoff ||
+                        (tag_index[i] < tag_index[id_j] && tag_index[i] < tag_index[id_k])) {
+                        nmers.push_back(mon_index[i]);
+                        nmers.push_back(mon_index[id_j]);
+                        nmers.push_back(mon_index[id_k]);
                     }
                 }
+            }
+        }
 
-                // Add trimers if requested
-                if (n_max > 2) {
-                    std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> ret;
-                    for (size_t k = 0; k < nMatches; k++) {
-                        if (ret_matches[k].first > ret_matches[j].first) {
-                            ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
-                            if (ret.second) {
-                                // ghost == 0, local == 1
-                                // ghost-ghost-ghost == 0
-                                // ghost-ghost-local == 1 for all permutations
-                                // ghost-local-local == 2 for all permutations
-                                // local-local-local == 3
-                                // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]] +
-                                //                is_local[mon_index[ret_matches[k].first]];
+        // Add tetramers if requested
+        if (n_max == 4) {
+            for (size_t j = 0; j < nMatches; j++) {
+                for (size_t k = j + 1; k < nMatches; k++) {
+                    for (size_t l = k + 1; l < nMatches; l++) {
+                        double djk[3];
+                        djk[0] = ptc.pts[ret_matches[j].first].x - ptc.pts[ret_matches[k].first].x;
+                        djk[1] = ptc.pts[ret_matches[j].first].y - ptc.pts[ret_matches[k].first].y;
+                        djk[2] = ptc.pts[ret_matches[j].first].z - ptc.pts[ret_matches[k].first].z;
+                        double d2jk = djk[0] * djk[0] + djk[1] * djk[1] + djk[2] * djk[2];
 
-                                bool include_trimer = false;
-                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-                                // if (!use_ghost && islsum == 3) include_trimer = true;
-                                size_t tag1 = tag_index[i];
-                                size_t tag2 = tag_index[ret_matches[j].first];
-                                size_t tag3 = tag_index[ret_matches[k].first];
-                                size_t tagmin = tag1;
-                                size_t idxmin = mon_index[i];
+                        double djl[3];
+                        djl[0] = ptc.pts[ret_matches[j].first].x - ptc.pts[ret_matches[l].first].x;
+                        djl[1] = ptc.pts[ret_matches[j].first].y - ptc.pts[ret_matches[l].first].y;
+                        djl[2] = ptc.pts[ret_matches[j].first].z - ptc.pts[ret_matches[l].first].z;
+                        double d2jl = djl[0] * djl[0] + djl[1] * djl[1] + djl[2] * djl[2];
 
-                                if (tagmin > tag2) {
-                                    tagmin = tag2;
-                                    idxmin = mon_index[ret_matches[j].first];
-                                }
+                        double dkl[3];
+                        dkl[0] = ptc.pts[ret_matches[k].first].x - ptc.pts[ret_matches[l].first].x;
+                        dkl[1] = ptc.pts[ret_matches[k].first].y - ptc.pts[ret_matches[l].first].y;
+                        dkl[2] = ptc.pts[ret_matches[k].first].z - ptc.pts[ret_matches[l].first].z;
+                        double d2kl = dkl[0] * dkl[0] + dkl[1] * dkl[1] + dkl[2] * dkl[2];
 
-                                if (tagmin > tag3) {
-                                    tagmin = tag3;
-                                    idxmin = mon_index[ret_matches[k].first];
-                                }
+                        size_t id_j = ret_matches[j].first % nmon2;
+                        size_t id_k = ret_matches[k].first % nmon2;
+                        size_t id_l = ret_matches[l].first % nmon2;
 
-                                if (is_local[idxmin] == 1) include_trimer = true;
+                        //  Use this condition for cutoff-by-largest-distance scheme
+                        //  if (tag_index[i] < tag_index[id_j] && tag_index[i] < tag_index[id_k] && tag_index[i] <
+                        //  tag_index[id_l] && d2jk < cutoff * cutoff && d2jl < cutoff * cutoff && d2kl < cutoff *
+                        //  cutoff) {
 
-                                if (include_trimer) {
-                                    trimers.push_back(mon_index[i]);
-                                    trimers.push_back(mon_index[ret_matches[j].first]);
-                                    trimers.push_back(mon_index[ret_matches[k].first]);
-                                }
-                            }
-                        }
-                    }
-                    // Define query point, which is each of the points 'j' inside the
-                    // radius of 'i'
-                    double point2[3];
-                    point2[0] = ptc.pts[ret_matches[j].first].x;
-                    point2[1] = ptc.pts[ret_matches[j].first].y;
-                    point2[2] = ptc.pts[ret_matches[j].first].z;
-                    std::vector<std::pair<size_t, double>> ret_matches2;
-                    nanoflann::SearchParams params2;
-                    const size_t nMatches2 = index.radiusSearch(point2, cutoff * cutoff, ret_matches2, params2);
-
-                    for (size_t k = 0; k < nMatches2; k++) {
-                        size_t pos2 = ret_matches2[k].first / nmon2;
-                        ret_matches2[k].first -= nmon2 * pos2;
-                    }
-
-                    std::sort(ret_matches2.begin(), ret_matches2.end(), ComparePair);
-
-                    // Add the trimers that fulfil i > j > k, to avoid double counting
-                    // We will add all trimers that fulfill the condition:
-                    // At least 2 of the three distances must be smaller than the cutoff
-                    for (size_t k = 0; k < nMatches2; k++) {
-                        if (ret_matches2[k].first > i) {
-                            size_t jel = ret_matches[j].first;
-                            size_t kel = ret_matches2[k].first;
-                            if (ret_matches[j].first > ret_matches2[k].first) {
-                                jel = ret_matches2[k].first;
-                                kel = ret_matches[j].first;
-                            }
-                            ret = donek.insert(std::make_pair(jel, kel));
-                            if (ret.second && kel > jel) {
-                                // ghost == 0, local == 1
-                                // ghost-ghost-ghost == 0
-                                // ghost-ghost-local == 1 for all permutations
-                                // ghost-local-local == 2 for all permutations
-                                // local-local-local == 3
-                                // size_t islsum =
-                                //    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
-
-                                bool include_trimer = false;
-                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-                                // if (!use_ghost && islsum == 3) include_trimer = true;
-
-                                size_t tag1 = tag_index[i];
-                                size_t tag2 = tag_index[ret_matches[j].first];
-                                size_t tag3 = tag_index[ret_matches2[k].first];
-                                size_t tagmin = tag1;
-                                size_t idxmin = mon_index[i];
-
-                                if (tagmin > tag2) {
-                                    tagmin = tag2;
-                                    idxmin = mon_index[ret_matches[j].first];
-                                }
-
-                                if (tagmin > tag3) {
-                                    tagmin = tag3;
-                                    idxmin = mon_index[ret_matches2[k].first];
-                                }
-
-                                if (is_local[idxmin] == 1) include_trimer = true;
-
-                                if (include_trimer) {
-                                    trimers.push_back(mon_index[i]);
-                                    trimers.push_back(mon_index[jel]);
-                                    trimers.push_back(mon_index[kel]);
-                                }
-                            }
+                        //  Use this condition for center-3-neighbor scheme
+                        if (!((tag_index[i] >= tag_index[id_j] && d2jk < cutoff * cutoff && d2jl < cutoff * cutoff) ||
+                              (tag_index[i] >= tag_index[id_k] && d2jk < cutoff * cutoff && d2kl < cutoff * cutoff) ||
+                              (tag_index[i] >= tag_index[id_l] && d2kl < cutoff * cutoff && d2jl < cutoff * cutoff))) {
+                            // add tetramers here
+                            nmers.push_back(mon_index[i]);
+                            nmers.push_back(mon_index[id_j]);
+                            nmers.push_back(mon_index[id_k]);
+                            nmers.push_back(mon_index[id_l]);
                         }
                     }
                 }
@@ -826,259 +637,6 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
         }
     }
 }
-
-// void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
-//                 std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
-//                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
-//                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost) {
-//    // istart is the monomer position for which we will look all dimers and
-//    // trimers that contain it. iend is the last monomer position.
-//    // This means, if istart is 0 and iend is 2, we will look for all dimers
-//    // and trimers that contain monomers 0 and/or 1. !!! 2 IS NOT INCLUDED. !!!
-//
-//    // nmon is the number of monomers in xyz
-//    // xyz_orig is a double vector with positions of all atoms
-//    // first_index is a size_t vector with the first index of the site 'i'
-//    // in in the monomer vector
-//    // is_local is local/ghost descriptor for monomers; interactions involving
-//    //  all ghost monomers are ignored
-//    // use_ghost controls whether or not to include ghost monomers in clusters; default is no.
-//    // dimers and trimers will be filled with the dimers and trimers found
-//
-//    // if use_ghost == true,
-//    //       include local+ghost monomers in xyz, but only include local-ghost interactions
-//    // if use_ghost == false,
-//    //       include only local monomers in xyz and do nothing special
-//
-//    // Perform a radial search within the cutoff
-//    dimers.clear();
-//    if (n_max > 2) trimers.clear();
-//
-//    // if first monomer is ghost and we're not computing local-ghost interactions, then skip
-//
-//    // if (!use_ghost && !is_local[istart]) return;
-//
-//    // Obtain xyz vector with the positions of first atom of each monomer
-//    std::vector<double> xyz;
-//    // std::vector<double> xyz;
-//    size_t nmon2 = 0;
-//
-//    std::vector<size_t> mon_index;
-//    std::vector<size_t> tag_index;
-//    for (size_t i = istart; i < nmon; i++) {
-//        size_t islsum = is_local[istart] + is_local[i];
-//
-//        bool include_monomer = false;
-//        if (!use_ghost) {
-//            if (is_local[istart] == 0) {
-//                istart++;
-//                if (istart >= iend) return;
-//                continue;
-//            }
-//            if (is_local[i]) include_monomer = true;
-//        } else {
-//            if (n_max == 2 && islsum < 2) include_monomer = true;
-//        }
-//
-//        if (istart == i && is_local[i] == 1 && n_max == 2) include_monomer = true;
-//
-//        if (include_monomer) {
-//            xyz.push_back(xyz_orig[3 * first_index[i]]);
-//            xyz.push_back(xyz_orig[3 * first_index[i] + 1]);
-//            xyz.push_back(xyz_orig[3 * first_index[i] + 2]);
-//            mon_index.push_back(i);
-//            tag_index.push_back(tag[first_index[i]]);
-//            nmon2++;
-//        }
-//    }
-//
-//    if (nmon2 < 2) return;
-//    if (n_max > 2 && nmon2 < 3) return;
-//
-//    // Obtain the data in the structure needed by the kd-tree
-//    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz, use_pbc, box, box_inverse);
-//
-//    // Build the tree
-//    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-//                                                kdtutils::PointCloud<double>, 3 /* dim */>
-//        my_kd_tree_t;
-//    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-//    index.buildIndex();
-//
-//    std::vector<size_t> idone;
-//    std::set<std::pair<size_t, size_t>> donej;
-//    for (size_t i = 0; i < iend - istart; i++) {
-//        // Define the query point
-//        double point[3];
-//        point[0] = ptc.pts[i].x;
-//        point[1] = ptc.pts[i].y;
-//        point[2] = ptc.pts[i].z;
-//
-//        // Perform the search
-//        std::vector<std::pair<size_t, double>> ret_matches;
-//        nanoflann::SearchParams params;
-//        const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
-//
-//        for (size_t j = 0; j < nMatches; j++) {
-//            size_t pos = ret_matches[j].first / nmon2;
-//            ret_matches[j].first -= nmon2 * pos;
-//        }
-//
-//        std::sort(ret_matches.begin(), ret_matches.end(), ComparePair);
-//        std::set<std::pair<size_t, size_t>> donek;
-//
-//        // Add the pairs that are not in the dimer vector
-//        for (size_t j = 0; j < nMatches; j++) {
-//            std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> retdim;
-//            if (ret_matches[j].first > i) {
-//                retdim = donej.insert(std::make_pair(i, ret_matches[j].first));
-//                if (retdim.second) {
-//                    // ghost == 0, local == 1
-//                    // ghost-ghost == 0
-//                    // ghost-local == 1 for all permutations
-//                    // local-local == 2
-//
-//                    // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]];
-//
-//                    bool include_dimer = false;
-//                    // if (use_ghost && islsum == 1) include_dimer = true;   // local-ghost
-//                    // if (!use_ghost && islsum == 2) include_dimer = true;  // local-local
-//                    size_t tag1 = tag_index[i];
-//                    size_t tag2 = tag_index[ret_matches[j].first];
-//                    size_t tagmin = tag1;
-//                    size_t idxmin = mon_index[i];
-//
-//                    if (tagmin > tag2) {
-//                        tagmin = tag2;
-//                        idxmin = mon_index[ret_matches[j].first];
-//                    }
-//
-//                    if (is_local[idxmin] == 1) include_dimer = true;
-//
-//                    if (include_dimer) {
-//                        dimers.push_back(mon_index[i]);
-//                        dimers.push_back(mon_index[ret_matches[j].first]);
-//                    }
-//                }
-//
-//                // Add trimers if requested
-//                if (n_max > 2) {
-//                    std::pair<std::set<std::pair<size_t, size_t>>::iterator, bool> ret;
-//                    for (size_t k = 0; k < nMatches; k++) {
-//                        if (ret_matches[k].first > ret_matches[j].first) {
-//                            ret = donek.insert(std::make_pair(ret_matches[j].first, ret_matches[k].first));
-//                            if (ret.second) {
-//                                // ghost == 0, local == 1
-//                                // ghost-ghost-ghost == 0
-//                                // ghost-ghost-local == 1 for all permutations
-//                                // ghost-local-local == 2 for all permutations
-//                                // local-local-local == 3
-//                                // size_t islsum = is_local[mon_index[i]] + is_local[mon_index[ret_matches[j].first]]
-//                                +
-//                                //                is_local[mon_index[ret_matches[k].first]];
-//
-//                                bool include_trimer = false;
-//                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-//                                // if (!use_ghost && islsum == 3) include_trimer = true;
-//                                size_t tag1 = tag_index[i];
-//                                size_t tag2 = tag_index[ret_matches[j].first];
-//                                size_t tag3 = tag_index[ret_matches[k].first];
-//                                size_t tagmin = tag1;
-//                                size_t idxmin = mon_index[i];
-//
-//                                if (tagmin > tag2) {
-//                                    tagmin = tag2;
-//                                    idxmin = mon_index[ret_matches[j].first];
-//                                }
-//
-//                                if (tagmin > tag3) {
-//                                    tagmin = tag3;
-//                                    idxmin = mon_index[ret_matches[k].first];
-//                                }
-//
-//                                if (is_local[idxmin] == 1) include_trimer = true;
-//
-//                                if (include_trimer) {
-//                                    trimers.push_back(mon_index[i]);
-//                                    trimers.push_back(mon_index[ret_matches[j].first]);
-//                                    trimers.push_back(mon_index[ret_matches[k].first]);
-//                                }
-//                            }
-//                        }
-//                    }
-//                    // Define query point, which is each of the points 'j' inside the
-//                    // radius of 'i'
-//                    double point2[3];
-//                    point2[0] = ptc.pts[ret_matches[j].first].x;
-//                    point2[1] = ptc.pts[ret_matches[j].first].y;
-//                    point2[2] = ptc.pts[ret_matches[j].first].z;
-//                    std::vector<std::pair<size_t, double>> ret_matches2;
-//                    nanoflann::SearchParams params2;
-//                    const size_t nMatches2 = index.radiusSearch(point2, cutoff * cutoff, ret_matches2, params2);
-//
-//                    for (size_t k = 0; k < nMatches2; k++) {
-//                        size_t pos2 = ret_matches2[k].first / nmon2;
-//                        ret_matches2[k].first -= nmon2 * pos2;
-//                    }
-//
-//                    std::sort(ret_matches2.begin(), ret_matches2.end(), ComparePair);
-//
-//                    // Add the trimers that fulfil i > j > k, to avoid double counting
-//                    // We will add all trimers that fulfill the condition:
-//                    // At least 2 of the three distances must be smaller than the cutoff
-//                    for (size_t k = 0; k < nMatches2; k++) {
-//                        if (ret_matches2[k].first > i) {
-//                            size_t jel = ret_matches[j].first;
-//                            size_t kel = ret_matches2[k].first;
-//                            if (ret_matches[j].first > ret_matches2[k].first) {
-//                                jel = ret_matches2[k].first;
-//                                kel = ret_matches[j].first;
-//                            }
-//                            ret = donek.insert(std::make_pair(jel, kel));
-//                            if (ret.second && kel > jel) {
-//                                // ghost == 0, local == 1
-//                                // ghost-ghost-ghost == 0
-//                                // ghost-ghost-local == 1 for all permutations
-//                                // ghost-local-local == 2 for all permutations
-//                                // local-local-local == 3
-//                                // size_t islsum =
-//                                //    is_local[mon_index[i]] + is_local[mon_index[jel]] + is_local[mon_index[kel]];
-//
-//                                bool include_trimer = false;
-//                                // if (use_ghost && (islsum == 1 || islsum == 2)) include_trimer = true;
-//                                // if (!use_ghost && islsum == 3) include_trimer = true;
-//
-//                                size_t tag1 = tag_index[i];
-//                                size_t tag2 = tag_index[ret_matches[j].first];
-//                                size_t tag3 = tag_index[ret_matches2[k].first];
-//                                size_t tagmin = tag1;
-//                                size_t idxmin = mon_index[i];
-//
-//                                if (tagmin > tag2) {
-//                                    tagmin = tag2;
-//                                    idxmin = mon_index[ret_matches[j].first];
-//                                }
-//
-//                                if (tagmin > tag3) {
-//                                    tagmin = tag3;
-//                                    idxmin = mon_index[ret_matches2[k].first];
-//                                }
-//
-//                                if (is_local[idxmin] == 1) include_trimer = true;
-//
-//                                if (include_trimer) {
-//                                    trimers.push_back(mon_index[i]);
-//                                    trimers.push_back(mon_index[jel]);
-//                                    trimers.push_back(mon_index[kel]);
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
 
 void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,
                  excluded_set_type &exc14) {
