@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
-# MBX v0.7
+# MBX v0.8
 MBX is a C++ software that provides an interface for MD drivers, such as LAMMPS and i-PI, to perform classical and path-integral molecular dynamics simulations using our many-body potential energy functions. The current version of MBX includes the MB-pol many-body water potential (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg many-body potentials for neat CO2 and mixed CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and mixed CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). MBX also includes the TTM-nrg potentials for the halide (https://doi.org/10.1021/acs.jpcb.5b09562) and alkali-metal (https://doi.org/10.1039/C6CP02553F) ions in water. The MB-nrg many-body potentials for the halide (https://doi.org/10.1021/acs.jctc.6b00302) and alkali-metal (https://doi.org/10.1063/1.4993213) ions in water will become available in the next release of MBX. For more details about the MB-pol, MB-nrg, and TTM-nrg potentials in MBX please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
 MBX is periodically updated with performance improvements and the addition of other many-body potentials. For any questions about MBX, installation issues, or general usage inquiries please use the MBX Google Group: https://groups.google.com/g/mbx-users.
@@ -26,6 +26,8 @@ After installation, running the unittests is highly recomended. Run the followin
 make check
 ```
 All tests must pass. Please contact the code owners if there is any issue.
+Tests won't pass if the compiler is an MPI compiler. Please compile first with g++
+and check the tests.
 
 ## Json File
 To make life easier for you, a json configuration file must be used to pass 
