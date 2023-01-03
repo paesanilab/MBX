@@ -97,7 +97,8 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * J. Chem. Phys. 147, 161715 (2017) (MB-nrg)
   * J. Phys. Chem. A 2018, 122, 27, 5811–5821 (MB-nrg)
 - Halide Ions and water
-  * Alessandro will add papers here
+  * J. Chem. Phys. 155, 064502 (2021) (Chloride MB-nrg)
+  * J. Phys. Chem. B 2022, 126, 41, 8266–8278 (Bromide & Iodide MB-nrg)
 - MB-nrg PEFs for CO2 and CO2/H2O mixtures
   * J. Chem. Theory Comput. 2020, 16, 4, 2246–2257
   * J. Chem. Phys. 2022, 156, 104503
