@@ -69,8 +69,9 @@ std::vector<double> box = {2.0000000000e+01, 0.0000000000e+00, 0.0000000000e+00,
                            0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 2.0000000000e+01};
 std::vector<size_t> num_atoms = {3, 3, 3, 3, 3, 3, 3};
 std::vector<size_t> islocal = {1, 1, 1, 1, 1, 1, 1};
-std::vector<std::pair<std::string, size_t> > mon_type_count = {{"h2o", 2}, {"co2", 5}};
-std::vector<std::string> mon_id = {"h2o", "h2o", "co2", "co2", "co2", "co2", "co2"};
+std::vector<std::pair<std::string, size_t> > mon_type_count = {{"h2o", 2}, {"co2_archive", 5}};
+std::vector<std::string> mon_id = {"h2o",         "h2o",         "co2_archive", "co2_archive",
+                                   "co2_archive", "co2_archive", "co2_archive"};
 bool do_grads = true;
 
 TEST_CASE("dispersion::Initialize") {
@@ -215,7 +216,7 @@ TEST_CASE("dispersion::SetJsonMonomers") {
     d.Initialize(c6lr, sys_xyz, mon_id, num_atoms, mon_type_count, islocal, do_grads, box);
 
     nlohmann::json jsonMon = {
-        {"co2",
+        {"co2_archive",
          {{"sites", 3},
           {"nat", 3},
           {"exc12", nlohmann::json::array({nlohmann::json::array({0, 1}), nlohmann::json::array({0, 2})})},

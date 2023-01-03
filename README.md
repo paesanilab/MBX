@@ -1,8 +1,8 @@
 [![MBX testing suite](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml/badge.svg)](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml)
-[![codecov](https://codecov.io/gh/chemphys/MBX/branch/master/graph/badge.svg)](https://codecov.io/gh/chemphys/MBX)
+[![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
-# MBX v0.7
+# MBX v0.8
 MBX is a C++ software that provides an interface for MD drivers, such as LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org), to perform classical and path-integral molecular dynamics simulations using our many-body potential energy functions. The current version of MBX includes the MB-pol many-body water potential (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg many-body potentials for neat CO2 and CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). MBX also includes the TTM-nrg potentials for the halide (https://doi.org/10.1021/acs.jpcb.5b09562) and alkali-metal (https://doi.org/10.1039/C6CP02553F) ions in water. The MB-nrg many-body potentials for the halide (https://doi.org/10.1021/acs.jctc.6b00302) and alkali-metal (https://doi.org/10.1063/1.4993213) ions in water will become available in the next release of MBX. For more details about the MB-pol, MB-nrg, and TTM-nrg potentials in MBX, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
 MBX is periodically updated with performance improvements and the addition of other many-body potentials. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
@@ -26,6 +26,8 @@ After installation, running the unit tests is highly recommended. Run the follow
 make check
 ```
 All tests must pass. Please contact the code owners if there is any issue.
+Tests won't pass if the compiler is an MPI compiler. Please compile first with g++
+and check the tests.
 
 ## JSON File
 To make life easier for you, a JSON configuration file must be used to pass 
@@ -94,6 +96,9 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * Phys. Chem. Chem. Phys., 2016,18, 30334-30343 (TTM-nrg)
   * J. Chem. Phys. 147, 161715 (2017) (MB-nrg)
   * J. Phys. Chem. A 2018, 122, 27, 5811–5821 (MB-nrg)
+- Halide Ions and water
+  * J. Chem. Phys. 155, 064502 (2021) (Chloride MB-nrg)
+  * J. Phys. Chem. B 2022, 126, 41, 8266–8278 (Bromide & Iodide MB-nrg)
 - MB-nrg PEFs for CO2 and CO2/H2O mixtures
   * J. Chem. Theory Comput. 2020, 16, 4, 2246–2257
   * J. Chem. Phys. 2022, 156, 104503
@@ -134,19 +139,23 @@ Do the following:
 ```
 cp Makefile.mpi_mbx LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
 cd LAMMPS_HOME/src/
-make yes-USER-MBX yes-MOLECULE
+make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+make yes-USER-MBX
 make mpi_mbx -j 4
 ```
 It is possible that there is a compilation error at this point regarding an undefined reference to `FIX_MBX`.
 If so, while being in the src folder in LAMMPS, do the following:
 ```
 rm style_fix.h style_pair.h 
-make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID
+make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+make yes-USER-MBX
 touch fix_mbx.* pair_mbx.*
 make mpi_mbx -j 8
 ```
 
 After this, a new executable `lmp_mpi_mbx` in `src` should appear, and that is the executable you have to use for LAMMPS.
+
+Further doucmentation will follow up. For now, look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. 
 
 Additional documentation will follow up. For now, please look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. For any questions, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
@@ -180,4 +189,12 @@ cp ../1-nvt/RESTART ./config.xml
 ```
 
 There are more tests for other types of simulations, including condensed phase simulations and replica-exchange simulations. For more information about what kind of simulations can i-PI run, please refer to the i-PI user manual.
+
+
+## Coverage
+The unit tests implemented should cover a big part of the code. This sunburst graph gives an idea of the coverage from top (center) to bottom (periphery). Our goal is to keep it as green as possible, being green good coverage, and red bad covergae.
+<p align="center">
+  <img src="https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
+</p>
+
 

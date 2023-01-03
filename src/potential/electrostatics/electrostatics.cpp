@@ -651,9 +651,10 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     double ez = 0.0;
     double phi1 = 0.0;
 
-    // Acc and ACD will be 0 for this case
-    double aCC_local = 1E-50;
-    double aCD_local = 1E-50;
+    double aCC_local = 0.4;
+    double aCD_local = 0.4;
+    double aCC_1_4_local = std::pow(aCC_local, 0.25);
+    double aDD_local = 0.055;
 
     // Sites corresponding to different monomers
     // Declaring first indexes
@@ -745,7 +746,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                 double elec_scale_factor = 1;
                 local_field->CalcPermanentElecField(
                     xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(), m1, 0,
-                    size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_local, aCC_local,  // This second is the aCC_1_4_
+                    size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_local, aCC_1_4_local,  // This second is the aCC_1_4_
                     g34_, &ex_thread, &ey_thread, &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(),
                     elec_scale_factor, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_all_,
                     fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
@@ -846,7 +847,6 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     fi_crd1 = 0;
     fi_crd2 = 0;
     // aDD intermolecular is always 0.055
-    double aDD = 1E-50;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
@@ -892,9 +892,9 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                     Asqsqi = Ai;
                     local_field->CalcDipoleElecField(xyz_.data() + fi_crd1, coordinates_vectorized.data(),
                                                      mu_.data() + fi_crd1, mu_j.data(), m1, m2init, nmon2, nmon1, nmon2,
-                                                     i, j, Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread, &ey_thread,
-                                                     &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_,
-                                                     use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+                                                     i, j, Asqsqi, aDD_local, Efd_2_pool[rank].data(), &ex_thread,
+                                                     &ey_thread, &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_,
+                                                     cutoff_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
                     Efd_1_pool[rank][inmon13 + m1] += ex_thread;
                     Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                     Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -1079,10 +1079,10 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                     Asqsqi = Ai;
                     local_field->CalcElecFieldGrads(
                         xyz_all_.data() + fi_crd1, coordinates_vectorized.data(), chg_all_.data() + fi_sites1,
-                        chg_j.data(), mu_all_.data() + fi_crd1, mu_j.data(), m1, m2init, nmon2, nmon1, nmon2, i, j, aDD,
-                        0.0, Asqsqi, &ex_thread, &ey_thread, &ez_thread, &phi1_thread, phi_2_pool[rank].data(),
-                        grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost,
-                        islocal_all_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                        chg_j.data(), mu_all_.data() + fi_crd1, mu_j.data(), m1, m2init, nmon2, nmon1, nmon2, i, j,
+                        aDD_local, aCD_local, Asqsqi, &ex_thread, &ey_thread, &ez_thread, &phi1_thread,
+                        phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_, box_,
+                        box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
                     grad_1_pool[rank][inmon13 + m1] += ex_thread;
                     grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                     grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -1219,12 +1219,6 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
     size_t fi_crd = 0;
     size_t fi_sites = 0;
 
-    std::cout << "\n *****\n Before modifying\n";
-    for (size_t i = 0; i < grad.size(); i++) {
-        std::cout << grad[i] << " ";
-    }
-    std::cout << std::endl;
-
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
         size_t nmon = mon_type_count_[mt].second;
@@ -1291,13 +1285,6 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
-
-    std::cout << "After modifying\n";
-    for (size_t i = 0; i < grad.size(); i++) {
-        std::cout << grad[i] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "*****" << std::endl;
 }
 
 void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
@@ -1401,8 +1388,10 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
         rec_phi_and_field_all_ = std::vector<double>((nExtChg + nsites_) * 4, 0.0);
         external_charge_grads_ = std::vector<double>(3 * nExtChg, 0.0);
 
-        nn_first_neigh_ext = std::vector<size_t>(nExtChg, -1);
-        nn_num_neighs_ext = std::vector<size_t>(nExtChg, 0);
+        if (nn_first_ext) {
+            nn_first_neigh_ext = std::vector<size_t>(nExtChg, -1);
+            nn_num_neighs_ext = std::vector<size_t>(nExtChg, 0);
+        }
 
         nsites_all_ = nsites_ + nExtChg;
 
@@ -2918,15 +2907,6 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
         rv[i] = pv[i];
     }
 
-#ifdef DEBUG
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cout << "ts2v[" << i << "] = " << ts2v[i] << std::endl;
-    }
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cout << "rv[" << i << "] = " << rv[i] << std::endl;
-    }
-#endif
-
     // Start iterations
     size_t iter = 1;
     double rvrv = DotProduct(rv, rv);
@@ -2939,10 +2919,6 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
     double residual = 0.0;
     double residual_global = 0.0;
     while (true) {
-#ifdef DEBUG
-        std::cout << "Iteration: " << iter << std::endl;
-#endif
-
         DipolesCGIterationMPIlocal(pv, ts2v, use_ghost);
         double pvts2pv = DotProduct(pv, ts2v);
 
@@ -3180,23 +3156,11 @@ void Electrostatics::CalculateDipolesCG() {
         rv[i] = pv[i];
     }
 
-#ifdef DEBUG
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cout << "ts2v[" << i << "] = " << ts2v[i] << std::endl;
-    }
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cout << "rv[" << i << "] = " << rv[i] << std::endl;
-    }
-#endif
-
     // Start iterations
     size_t iter = 1;
     double rvrv = DotProduct(rv, rv);
     double residual = 0.0;
     while (true) {
-#ifdef DEBUG
-        std::cout << "Iteration: " << iter << std::endl;
-#endif
         DipolesCGIteration(pv, ts2v);
         double pvts2pv = DotProduct(pv, ts2v);
 

@@ -46,11 +46,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     double total_energy = 9.9150780942e+00;                                                                   \
     double total_energy_ttm = 10.28986;                                                                       \
     const int n_monomers = 1;                                                                                 \
-    std::vector<std::string> ff_mon = {"co2"};                                                                \
-    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"co2", "h2o"}};                            \
-    std::vector<std::string> ignore_1b = {"co2"};                                                             \
-    std::vector<std::vector<std::string>> ignore_2b = {{"co2", "h2o"}};                                       \
-    std::vector<std::vector<std::string>> ignore_3b = {{"co2", "h2o", "h2o"}};                                \
+    std::vector<std::string> ff_mon = {"co2_archive"};                                                        \
+    std::vector<std::pair<std::string, std::string>> ttm_pairs = {{"co2_archive", "h2o"}};                    \
+    std::vector<std::string> ignore_1b = {"co2_archive"};                                                     \
+    std::vector<std::vector<std::string>> ignore_2b = {{"co2_archive", "h2o"}};                               \
+    std::vector<std::vector<std::string>> ignore_3b = {{"co2_archive", "h2o", "h2o"}};                        \
     std::vector<double> coords{-3.7350600000e-03, 2.1493800000e-02,  -2.0987560000e-02,                       \
                                1.1921700000e-03,  -7.0306800000e-03, 1.2319206500e+00,                        \
                                1.1921700000e-03,  -7.0306800000e-03, -1.2182866600e+00};                      \
@@ -58,7 +58,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                     1.1921700000e-03,  -7.0306800000e-03, 1.2319206500e+00,                   \
                                     1.1921700000e-03,  -7.0306800000e-03, -1.2182866600e+00};                 \
     std::vector<std::string> atom_names{"C", "O", "O"};                                                       \
-    std::vector<std::string> monomer_names = {"co2"};                                                         \
+    std::vector<std::string> monomer_names = {"co2_archive"};                                                 \
     std::vector<size_t> n_atoms_vector = {3};                                                                 \
     std::vector<size_t> n_sites_vector = {3};                                                                 \
     std::vector<size_t> first_index = {0};                                                                    \
@@ -72,11 +72,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<double> real_polfac{1.4716770000e+00, 7.6979000000e-01, 7.6979000000e-01};                    \
     std::vector<double> real_pol{1.4716770000e+00, 7.6979000000e-01, 7.6979000000e-01};                       \
     std::vector<double> C6_long_range{1.7916733202e+01, 1.3042057313e+01, 1.3042057313e+01};                  \
-    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"co2", 1}};                          \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"co2_archive", 1}};                  \
     std::vector<size_t> internal_original_to_current_order{0};                                                \
     std::vector<std::pair<size_t, size_t>> internal_orginal_order{{0, 0}};                                    \
     std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}};                         \
-    std::vector<std::string> internal_monomer_names{"co2"};                                                   \
+    std::vector<std::string> internal_monomer_names{"co2_archive"};                                           \
     eff::Bond co2_bond1("bond", std::vector<size_t>{1, 2}, "morse");                                          \
     eff::Bond co2_bond2("bond", std::vector<size_t>{1, 3}, "morse");                                          \
     eff::Angles co2_angle1("angle", std::vector<size_t>{2, 1, 3}, "harm");                                    \

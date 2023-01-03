@@ -240,14 +240,20 @@ MBX_CHECK_REQ_CXXFLAG([-std=c++11])
 
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
+MBX_CONFIG_ENABLE([verbose],[verbose debug output],[no])
 MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
+MBX_CONFIG_ENABLE([optreport],[write optimization reports].[no])
 
 # Act on enable flags
 
 if test $debug == true; then
     MBX_CHECK_CXXFLAG([-g])
+fi
+
+if test $verbose == true; then
+    MBX_CHECK_CXXFLAG([-DDEBUG])
 fi
 
 if test $optimization == true; then
@@ -258,6 +264,11 @@ fi
 
 if test $coverage == true; then
     MBX_CHECK_CXXFLAG([--coverage])
+fi
+
+if test $optreport == true; then
+    MBX_CHECK_CXXFLAG([-qopt-report=1])
+    MBX_CHECK_CXXFLAG([-qopt-report-phase=vec])
 fi
 
 # Add flags to variable

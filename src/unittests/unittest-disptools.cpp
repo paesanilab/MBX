@@ -61,6 +61,12 @@ TEST_CASE("disptools::tang_toennies") {
     REQUIRE(disp::tang_toennies(6, 2.0237085301e+01) == Approx(9.9978489638e-01).margin(TOL));
     REQUIRE(disp::tang_toennies(6, 2.4523130297e+01) == Approx(9.9999118823e-01).margin(TOL));
     REQUIRE(disp::tang_toennies(6, 1.0) == Approx(8.3241149288e-05).margin(TOL));
+
+    REQUIRE(disp::tang_toennies(1.5739453024e+01) == Approx(9.9525216483e-01).margin(TOL));
+    REQUIRE(disp::tang_toennies(7.7861960823e+00) == Approx(6.5982125868e-01).margin(TOL));
+    REQUIRE(disp::tang_toennies(2.0237085301e+01) == Approx(9.9978489638e-01).margin(TOL));
+    REQUIRE(disp::tang_toennies(2.4523130297e+01) == Approx(9.9999118823e-01).margin(TOL));
+    REQUIRE(disp::tang_toennies(1.0) == Approx(8.3241149288e-05).margin(TOL));
 }
 
 TEST_CASE("disptools::disp6") {
@@ -387,14 +393,14 @@ TEST_CASE("disptools::GetC6") {
                   {nlohmann::json::array({{{"a", "c"}, 100.0}, {{"b", "c"}, 200.0}}),
                    nlohmann::json::array({{{"a", "a"}, 150.0}, {{"a", "b"}, 250.0}, {{"b", "b"}, 500.0}})})}};
 
-    std::vector<std::string> mon1 = {"mon_t", "mon_t", "h2o", "f-",  "cl-",          "br-",  "i-",    "li+",
-                                     "na+",    "k+",     "rb+",  "cs+", "he",          "he",  "ar",   "co2",
-                                     "ch4",   "co2",   "ch4", "ar", "nh3pbe0d3bj", "nh3", "ar",   "h2",
-                                     "h2",    "ar",    "cs+",  "na+", "cl-",          "cl-",  "n2o5", "h2o"};
+    std::vector<std::string> mon1 = {"mon_t", "mon_t",       "h2o", "f-",  "cl-",         "br-", "i-",   "li+",
+                                     "na+",   "k+",          "rb+", "cs+", "he",          "he",  "ar",   "co2_archive",
+                                     "ch4",   "co2_archive", "ch4", "ar",  "nh3pbe0d3bj", "nh3", "ar",   "h2",
+                                     "h2",    "ar",          "cs+", "na+", "cl-",         "cl-", "n2o5", "h2o"};
     std::vector<std::string> mon2 = {"test_mon", "mon_t", "h2o", "h2o", "h2o",         "h2o", "h2o",  "h2o",
-                                     "h2o",      "h2o",   "h2o", "h2o", "he",          "h2o", "h2o",  "co2",
-                                     "ch4",      "h2o",   "h2o", "cs+",  "nh3pbe0d3bj", "nh3", "ar",   "h2",
-                                     "h2o",      "h2o",   "h2",  "na+",  "cl-",          "na+",  "n2o5", "n2o5"};
+                                     "h2o",      "h2o",   "h2o", "h2o", "he",          "h2o", "h2o",  "co2_archive",
+                                     "ch4",      "h2o",   "h2o", "cs+", "nh3pbe0d3bj", "nh3", "ar",   "h2",
+                                     "h2o",      "h2o",   "h2",  "na+", "cl-",         "na+", "n2o5", "n2o5"};
     std::vector<size_t> index1 = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
                                   4, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1};
     std::vector<size_t> index2 = {0, 0, 1, 0, 1, 0, 1, 2, 1, 2, 1, 0, 0, 2, 1, 1,

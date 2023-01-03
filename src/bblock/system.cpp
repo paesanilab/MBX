@@ -171,15 +171,16 @@ void System::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
     electrostaticE_.Hack3GetPotentialAtPoints(coordinates);
 }
 
-void System::SetNewParamsElec(bool do_grads) {
-    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
-    electrostaticE_.SetDipoleTolerance(diptol_);
-    electrostaticE_.SetDipoleMaxIt(maxItDip_);
-    electrostaticE_.SetEwaldAlpha(elec_alpha_);
-    electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
-    electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
-    electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
-}
+// MRR Remove from header if no other issues
+// void System::SetNewParamsElec(bool do_grads) {
+//    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+//    electrostaticE_.SetDipoleTolerance(diptol_);
+//    electrostaticE_.SetDipoleMaxIt(maxItDip_);
+//    electrostaticE_.SetEwaldAlpha(elec_alpha_);
+//    electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
+//    electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
+//    electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
+//}
 
 double System::GetPermanentElectrostaticEnergy() { return electrostaticE_.GetPermanentElectrostaticEnergy(); }
 double System::GetPermanentElectrostaticEnergyExternalFieldContribution() {
@@ -369,18 +370,18 @@ std::vector<size_t> System::GetPairList(size_t nmax, double cutoff, size_t istar
     return pair_list;
 }
 
-void System::GetAtomMonIndex(std::vector<size_t> &original_atom_index_to_original_mon_index,
-                             std::vector<std::string> &original_atom_index_to_original_mon_id) {
-    original_atom_index_to_original_mon_index = std::vector<size_t>(numat_, 0);
-    original_atom_index_to_original_mon_id = std::vector<std::string>(numat_, 0);
-    for (size_t i = 0; i < nat_.size(); i++) {
-        size_t original_index = initial_order_realSites_[i].first;
-        for (size_t j = 0; j < nat_[i]; j++) {
-            original_atom_index_to_original_mon_index[original_index + j] = i;
-            original_atom_index_to_original_mon_id[original_index + j] = monomers_[i];
-        }
-    }
-}
+// void System::GetAtomMonIndex(std::vector<size_t> &original_atom_index_to_original_mon_index,
+//                             std::vector<std::string> &original_atom_index_to_original_mon_id) {
+//    original_atom_index_to_original_mon_index = std::vector<size_t>(numat_);
+//    original_atom_index_to_original_mon_id = std::vector<std::string>(numat_);
+//    for (size_t i = 0; i < nat_.size(); i++) {
+//        size_t original_index = initial_order_realSites_[i].first;
+//        for (size_t j = 0; j < nat_[i]; j++) {
+//            original_atom_index_to_original_mon_index[original_index + j] = i;
+//            original_atom_index_to_original_mon_id[original_index + j] = monomers_[i];
+//        }
+//    }
+//}
 
 std::vector<size_t> System::GetMolecule(size_t n) { return molecules_[n]; }
 
@@ -408,7 +409,7 @@ std::vector<double> System::GetRealGrads() {
 std::vector<double> System::GetCharges() { return systools::ResetOrderN(chg_, initial_order_, first_index_, sites_); }
 
 std::vector<double> System::GetRealC6lr() {
-    return systools::ResetOrderRealN(c6_lr_, initial_order_realSites_, numat_, first_index_, nat_);
+    return systools::ResetOrderN(c6_lr_, initial_order_realSites_, first_index_real_sites_, nat_);
 }
 
 std::vector<double> System::GetRealCharges() {
@@ -549,11 +550,11 @@ void System::GetMolecularDipoles(std::vector<double> &mu_perm, std::vector<doubl
 }
 
 void System::GetDipoles(std::vector<double> &mu_perm, std::vector<double> &mu_ind) {
-    mu_perm = electrostaticE_.GetPermanentDipoles();
-    mu_ind = electrostaticE_.GetInducedDipoles();
+    std::vector<double> mu_perm2 = electrostaticE_.GetPermanentDipoles();
+    std::vector<double> mu_ind2 = electrostaticE_.GetInducedDipoles();
 
-    systools::ResetOrderReal3N(mu_perm, initial_order_realSites_, numat_, first_index_, nat_);
-    systools::ResetOrderReal3N(mu_ind, initial_order_realSites_, numat_, first_index_, nat_);
+    mu_perm = systools::ResetOrder3N(mu_perm2, initial_order_, first_index_, sites_);
+    mu_ind = systools::ResetOrder3N(mu_ind2, initial_order_, first_index_, sites_);
 }
 
 void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &mu_ind, std::vector<double> &mu_tot) {
@@ -705,7 +706,7 @@ void System::SetDipoleMethod(std::string method) { dipole_method_ = method; }
 
 void System::SetPBC(std::vector<double> box) {
     // Check that the box has 0 or 9 components
-    if (box.size() != 9 && box.size() != 0) {
+    if (box.size() != 9 && box.size() != 6 && box.size() != 0) {
         std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
         throw CUException(__func__, __FILE__, __LINE__, text);
     }
@@ -1823,7 +1824,7 @@ void System::AddMonomerInfo() {
         // Adding the first index of sites
         first_index_.push_back(count);
         // Adding the first index of real sites
-        first_index_real_sites_.push_back(count);
+        first_index_real_sites_.push_back(count_real);
         // Update count
         count += sites_[k];
         count_real += nat_[k];

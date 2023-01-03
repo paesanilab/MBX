@@ -64,7 +64,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                     2.1439525102e+00,  1.6639051316e+00,  8.0501784870e-01,  2.7574021582e+00,        \
                                     2.3791378598e+00,  1.6203025410e+00,  1.4960194683e+00,  2.0291893372e+00};       \
     std::vector<std::string> atom_names{"C", "O", "O", "C", "O", "O", "O", "H", "H", "O", "H", "H"};                  \
-    std::vector<std::string> monomer_names = {"co2", "co2", "h2o", "h2o"};                                            \
+    std::vector<std::string> monomer_names = {"co2_archive", "co2_archive", "h2o", "h2o"};                            \
     std::vector<size_t> islocal = {1, 1, 1, 1};                                                                       \
     std::vector<size_t> n_atoms_vector = {3, 3, 3, 3};                                                                \
     std::vector<size_t> n_sites_vector = {3, 3, 4, 4};                                                                \
@@ -92,12 +92,47 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
     std::vector<double> real_charges{7.0602700000e-01,  -3.5301350000e-01, -3.5301350000e-01, 7.0602700000e-01,       \
                                      -3.5301350000e-01, -3.5301350000e-01, 0.0000000000e+00,  5.7199974482e-01,       \
                                      5.7203329069e-01,  0.0000000000e+00,  5.7636979828e-01,  5.7479892955e-01};      \
-    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"co2", 2}, {"h2o", 2}};                      \
+    std::vector<std::pair<std::string, size_t>> internal_mon_type_count{{"co2_archive", 2}, {"h2o", 2}};              \
     std::vector<size_t> internal_original_to_current_order{0, 1, 2, 3};                                               \
     std::vector<std::pair<size_t, size_t>> internal_original_order{{0, 0}, {1, 3}, {2, 6}, {3, 10}};                  \
     std::vector<std::pair<size_t, size_t>> internal_original_order_realSites{{0, 0}, {1, 3}, {2, 6}, {3, 9}};         \
     std::vector<double> C6_long_range{1.7916733202e+01, 1.3042057313e+01, 1.3042057313e+01, 1.7916733202e+01,         \
                                       1.3042057313e+01, 1.3042057313e+01, 1.5405233572e+01, 4.4825869765e+00,         \
                                       4.4825869765e+00, 1.5405233572e+01, 4.4825869765e+00, 4.4825869765e+00};        \
-    std::vector<std::string> internal_monomer_names{"co2", "co2", "h2o", "h2o"};
+    std::vector<std::string> internal_monomer_names{"co2_archive", "co2_archive", "h2o", "h2o"};                      \
+    std::vector<size_t> mon_idxs_at;                                                                                  \
+    std::vector<std::string> mon_id_at;
 #endif
+
+/* NRG file
+SYSTEM NRG
+MOLECULE
+MONOMER co2
+C -0.3476178881 0.2237313366 -0.0099154063
+O 0.070932878 -0.6519721642 0.6471764108
+O -0.778614474 1.0711451166 -0.6879403924
+ENDMON
+ENDMOL
+MOLECULE
+MONOMER co2
+C 2.0135383728 2.45638142 -0.9084926918
+O 2.4173378894 1.3610844076 -0.7839983735
+O 1.631013652 3.5458287814 -1.0710246849
+ENDMON
+ENDMOL
+MOLECULE
+MONOMER h2o
+O 2.7444571499 -0.0288953975 2.0146795423
+H 2.0559286005 -0.6690597132 1.7989680726
+H 3.160706331 0.144974533 1.1623613238
+ENDMON
+ENDMOL
+MOLECULE
+MONOMER h2o
+O 0.9925968546 2.1439525102 1.6639051316
+H 0.8050178487 2.7574021582 2.3791378598
+H 1.620302541 1.4960194683 2.0291893372
+ENDMON
+ENDMOL
+ENDSYS
+*/
