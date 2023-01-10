@@ -235,18 +235,80 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
                          size_t nt, std::vector<double> &xyz1, std::vector<double> &xyz2, std::vector<double> &xyz3);
 
 /**
- * @brief Gets the dimers and/or trimers of a system in which the first
+ * @brief This function finds the monomers that is closer to the
+ * monomer 1 image.
+ *
+ * In periodic boundary conditions, it will look for the image of the
+ * monomers in xyz[i] that is closer to the monomer in xyz[0].
+ * This function assumes that
+ * For each i, all monomers in xyz[i] are of the same type.
+ * Monomers in xyz[i], xyz[j] can be of a different type.
+ * The monomers in xyz have to be paired, meaning that monomer
+ * xyz[0][n], monomer xyz[1][n], and monomer xyz[2][n] etc are in the
+ * same cluster
+ * @param[in] box Vector of 9 component with the 3 vectors of the box
+ * @param[in] oc Order of cluster. oc = 2 for dimer, 3 for trimer
+ * @param[in] nat Number of atoms.
+ * nat[i] is number of atoms for monomers in xyz[i]
+ * @param[in] nc Number of clusters
+ * @param[in,out] xyz Coordinates.
+ * xyz[0] is coordinates of all the monomers 1, one after the other
+ * one. At output, it will be untouched.
+ * xyz[i-1] is coordinates of all the monomers i, one after the other
+ * one. At output, it will be modified so the coordinates of
+ * monomer i are the closer image to monomer 1.
+ */
+void GetCloseNmerImage(std::vector<double> box, std::vector<double> box_inv, size_t oc, std::vector<size_t> nat,
+                       size_t nc, std::vector<std::vector<double>> &xyz);
+
+/**
+ * @brief Gets the N-mers (dimers/trimers/etc.) of a system in which the first
  * monomer index is between istart and iend (iend not included)
  *
- * Given a vector of doubles with the coordinates of all monomers,
- * this function calculates, using a kd-tree, the monomers that are
- * closer to the first one, always inside the cutoff range. This
- * function can also work in PBC, but won't be very efficient for
- * extremely large systems (>8000 monomers)
- * The dimers and trimers will be returned in order, <i,j> and
- * <i,j,k> with k > j > i
+ * Given a vector of doubles with the coordinates of all monomers, this function
+ * uses the first atom in each monomer as reference to search for valid N-mers
+ * following criteria described below:
+ *
+ * Center-Neighbor Criterion:
+ * - For a collection of N monomers, a monomer is a 'center' iff all other N-1
+ *   monomers are inside the cutoff range with respect to that monomer. A
+ *   collection of N monomers has at least 0, at most N centers.
+ * - A center monomer is a 'min-tag center' iff it has the smallest
+ *   tag among all valid centers. A collection of N monomers has at least 0, at
+ *   most 1 min-tag center.
+ * - The proposed N monomers form a valid N-mer iff the first monomer is a
+ *   min-tag center.
+ *
+ * This function finds all N-mers in which the first monomer index is between
+ * istart and iend, and is a valid min-tag center. This function uses a kd-tree
+ * implementation that can also work in PBC, but won't be very efficient for
+ * extremely large systems (>8000 monomers) under PBC. This function returns
+ * indices of atoms. Without PBC, the indices uniquely specify the coordinates.
+ * With PBC, coordinates are expected to be recovered by GetClose*Image().
+ *
+ * Special attention is needed if PBC is used:
+ * - To ensure indices-to-coordinates conversion has unique solutions, user must
+ *   make sure that cutoff must never exceed 1/2 the shortest side of the box.
+ * - To ensure a group of monomers and/or their images do not participate N-mer
+ *   interaction in multiple different ways, for Center-Neighbor Criterion,
+ *   2-body cutoff should not exceed 1/2 the shortest side of the box. All other
+ *   N-body cutoff should not exceed 1/3 the shortest side of the box.
+ * - If the second restriction is relieved while still under the first
+ *   restriction, then given a group of monomer by indices, it is possible to
+ *   exist multiple ways to form valid N-mers from its differnt images. Each
+ *   valid N-mer will have a different center, which can be used to recover the
+ *   correct image coordinates. All valid ways will be returned.
+ *
+ * Criteria for the followings depends on each other, so under any changes these
+ * need to remain consistent:
+ * - switching function for many-body energy
+ * - clustering criterion - search must covers the entire geometry where
+ *   switching function is non-zero
+ * - GetClose*Image() - must be able to recover the correct image found by
+ *   AddClusters()
+ *
  * @param[in] n_max Maximum order of the cluster. Implemented for
- * n_max = 2,3. Otherwise will give an error.
+ * n_max = 2,3,4. Otherwise will give an error.
  * @param[in] cutoff Maximum distance between monomers accepted. Larger
  * distances will not be considered a cluster
  * @param[in] istart Minimum value of index i
@@ -258,21 +320,15 @@ void GetCloseTrimerImage(std::vector<double> box, std::vector<double> box_inv, s
  * @param[in] xyz_orig Coordinates of the system
  * @param[in] first_index First index of the monomers in the system
  * @param[in] is_local is local/ghost descriptor for monomers in system
- * @param[out] dimers Vector of unsigned integers with the dimers
- * @param[out] trimers Vector of unsigned integers with the trimers
+ * @param[out] nmers Vector of unsigned integers with the dimers, trimers, etc.
  * @param[in] use_ghost whether or not to include ghost monomers in clusters; this is optional
  * @warning The distance between monomers is computed as the distance
  * between the first atom of both monomers
  */
-// void AddClusters(size_t n_max, double cutoff, size_t istart, size_t iend, size_t nmon, bool use_pbc,
-//                 std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
-//                 std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
-//                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost = false);
-
 void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t nmon, bool use_pbc,
                  std::vector<double> box, std::vector<double> box_inverse, std::vector<double> xyz_orig,
                  std::vector<size_t> first_index, std::vector<size_t> is_local, std::vector<int> tag,
-                 std::vector<size_t> &dimers, std::vector<size_t> &trimers, bool use_ghost = false);
+                 std::vector<size_t> &nmers, bool use_ghost = false);
 
 /**
  * @brief Sets the excluded pairs for a given monomer

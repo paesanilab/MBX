@@ -88,28 +88,28 @@ All the PEFs implemented, along with examples of input files and scripts to run 
 
 Please cite the following manuscripts if any of the following PEFs is used:
 - MB-pol
-  * J. Chem. Theory Comput. 2013, 9, 12, 5395–5403
-  * J. Chem. Theory Comput. 2014, 10, 4, 1599–1607
-  * J. Chem. Theory Comput. 2014, 10, 8, 2906–2910
-  * J. Chem. Phys. 145, 194504 (2016)
+  * [J. Chem. Theory Comput. 2013, 9, 12, 5395–5403](https://doi.org/10.1021/ct400863t)
+  * [J. Chem. Theory Comput. 2014, 10, 4, 1599–1607](https://doi.org/10.1021/ct500079y)
+  * [J. Chem. Theory Comput. 2014, 10, 8, 2906–2910](https://doi.org/10.1021/ct5004115)
+  * [J. Chem. Phys. 145, 194504 (2016)](https://doi.org/10.1063/1.4967719)
 - MB-nrg PEFs for alkali-metal ions in water
-  * Phys. Chem. Chem. Phys., 2016,18, 30334-30343 (TTM-nrg)
-  * J. Chem. Phys. 147, 161715 (2017) (MB-nrg)
-  * J. Phys. Chem. A 2018, 122, 27, 5811–5821 (MB-nrg)
+  * [Phys. Chem. Chem. Phys., 2016,18, 30334-30343](https://doi.org/10.1039/C6CP02553F) (TTM-nrg)
+  * [J. Chem. Phys. 147, 161715 (2017)](https://doi.org/10.1063/1.4993213) (MB-nrg)
+  * [J. Phys. Chem. A 2018, 122, 27, 5811–5821](https://doi.org/10.1021/acs.jpca.8b04106) (MB-nrg)
 - Halide Ions and water
-  * J. Chem. Phys. 155, 064502 (2021) (Chloride MB-nrg)
-  * J. Phys. Chem. B 2022, 126, 41, 8266–8278 (Bromide & Iodide MB-nrg)
+  * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445) (Chloride MB-nrg)
+  * [J. Phys. Chem. B 2022, 126, 41, 8266–8278](https://doi.org/10.1021/acs.jpcb.2c04698) (Bromide & Iodide MB-nrg)
 - MB-nrg PEFs for CO2 and CO2/H2O mixtures
-  * J. Chem. Theory Comput. 2020, 16, 4, 2246–2257
-  * J. Chem. Phys. 2022, 156, 104503
+  * [J. Chem. Theory Comput. 2020, 16, 4, 2246–2257](https://doi.org/10.1021/acs.jctc.9b01175)
+  * [J. Chem. Phys. 2022, 156, 104503](https://doi.org/10.1063/5.0080061)
 - MB-nrg PEFs for CH4 and CH4/H2O mixtures
-  * J. Phys. Chem. B 2020, 124, 49, 11207–11221
-  * J. Chem. Phys. 2022, 156, 194504
+  * [J. Phys. Chem. B 2020, 124, 49, 11207–11221](https://doi.org/10.1021/acs.jpcb.0c08728)
+  * [J. Chem. Phys. 2022, 156, 194504](https://doi.org/10.1063/5.0089773)
 - MB-nrg PEF for N2O5 in water
-  * J. Chem. Theory Comput. 2021, 17, 7, 3931–3945
+  * [J. Chem. Theory Comput. 2021, 17, 7, 3931–3945](https://doi.org/10.1021/acs.jctc.1c00069)
 - TTM-nrg PEFs for halide and alkali-metal ions in water
-  * J. Phys. Chem. B 2016, 120, 1822–1832
-  * Phys. Chem. Chem. Phys. 2016,18, 30334-30343
+  * [J. Phys. Chem. B 2016, 120, 1822–1832](https://doi.org/10.1021/acs.jpcb.5b09562)
+  * [Phys. Chem. Chem. Phys. 2016,18, 30334-30343](https://doi.org/10.1039/C6CP02553F)
 
 ## Interfaces
 ### Fortran90 and Python

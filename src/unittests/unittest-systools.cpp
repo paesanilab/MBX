@@ -899,9 +899,8 @@ TEST_CASE("systools::AddClusters") {
                     for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
                     systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
-                                          dimers, trimers, use_ghost);
+                                          dimers, use_ghost);
                     REQUIRE(dimers.size() == 0);
-                    REQUIRE(trimers.size() == 0);
                 }
 
                 SECTION("Cutoff long, all possible dimers") {
@@ -917,10 +916,9 @@ TEST_CASE("systools::AddClusters") {
                     for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
                     systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
-                                          dimers, trimers, use_ghost);
+                                          dimers, use_ghost);
                     REQUIRE(dimers.size() ==
                             nmon * (nmon - 1));  // Combinations of nmon elements in groups of 2 n!/(n-2)!/2! * 2
-                    REQUIRE(trimers.size() == 0);
                 }
 
                 SECTION("Cutoff to get all the dimers below 1.1") {
@@ -947,9 +945,8 @@ TEST_CASE("systools::AddClusters") {
                     }
 
                     systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
-                                          dimers, trimers, use_ghost);
+                                          dimers, use_ghost);
                     REQUIRE(dimers.size() == expected_number_of_dimers * 2);
-                    REQUIRE(trimers.size() == 0);
                 }
             }
 
@@ -967,8 +964,7 @@ TEST_CASE("systools::AddClusters") {
                     for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
                     systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
-                                          dimers, trimers, use_ghost);
-                    REQUIRE(dimers.size() == 0);
+                                          trimers, use_ghost);
                     REQUIRE(trimers.size() == 0);
                 }
 
@@ -984,8 +980,10 @@ TEST_CASE("systools::AddClusters") {
                     std::vector<size_t> idxs;
                     for (size_t i = 0; i < nmon; i++) idxs.push_back(i);
 
-                    systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
-                                          dimers, trimers, use_ghost);
+                    systools::AddClusters(2, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          dimers, use_ghost);
+                    systools::AddClusters(3, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          trimers, use_ghost);
                     REQUIRE(dimers.size() ==
                             nmon * (nmon - 1));  // Combinations of nmon elements in groups of 2 n!/(n-2)!/2! * 2
                     REQUIRE(trimers.size() == nmon * (nmon - 1) * (nmon - 2) /
@@ -1034,8 +1032,10 @@ TEST_CASE("systools::AddClusters") {
                         }
                     }
 
-                    systools::AddClusters(n_max, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
-                                          dimers, trimers, use_ghost);
+                    systools::AddClusters(2, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          dimers, use_ghost);
+                    systools::AddClusters(3, cutoff, idxs, nmon, use_pbc, box, box_inv, xyz, fi, islocal, atom_tag,
+                                          trimers, use_ghost);
                     REQUIRE(dimers.size() == expected_number_of_dimers * 2);
                     REQUIRE(trimers.size() == expected_number_of_trimers * 3);
                 }

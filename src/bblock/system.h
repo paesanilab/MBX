@@ -68,6 +68,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/energy2b.h"
 // 3B
 #include "potential/3b/energy3b.h"
+// 4B
+#include "potential/4b/energy4b.h"
 // DISPERSION
 #include "potential/dispersion/dispersion.h"
 // LENNARD-JONES
@@ -390,6 +392,12 @@ class System {
     double Get3bCutoff();
 
     /**
+     * Gets the four-body cutoff for polynomials.
+     * @return Four-body cutoff
+     */
+    double Get4bCutoff();
+
+    /**
      * Gets the TTM pairs vector.
      * @return Vector of pairs of the monomer pairs for which buckingham will be calculated
      */
@@ -418,6 +426,12 @@ class System {
      * @return Vector of string vectors with the trimers to be ignored
      */
     std::vector<std::vector<std::string> > Get3bIgnorePoly();
+
+    /**
+     * Gets the whole vector for which the 4b polynomials won't be calculated
+     * @return Vector of string vectors with the tetramers to be ignored
+     */
+    std::vector<std::vector<std::string> > Get4bIgnorePoly();
 
     /**
      * Gets the virial tensor
@@ -667,6 +681,21 @@ class System {
     void Set3bIgnorePoly(std::vector<std::vector<std::string> > ignore_3b);
 
     /**
+     * Adds a pair that will be ignored in the 4b polynomials
+     * @param[in] mon1 Is the id of the first monomer
+     * @param[in] mon2 Is the id of the second monomer
+     * @param[in] mon3 Is the id of the third monomer
+     * @param[in] mon4 Is the id of the fourth monomer
+     */
+    void Add4bIgnorePoly(std::string mon1, std::string mon2, std::string mon3, std::string mon4);
+
+    /**
+     * Sets the whole vector for which the 4b polynomials won't be calculated
+     * @param[in] ignore_4b Vector of string vectors with the tetramers to be ignored
+     */
+    void Set4bIgnorePoly(std::vector<std::vector<std::string> > ignore_4b);
+
+    /**
      * Initializes the system once the monomer information is inputed. The
      * system, once created, cannot be modified in terms of monomer composition.
      * To see the default values of the initialization,
@@ -788,6 +817,14 @@ class System {
      * @param[in] cutoff3b Is the distance, in angstrom, of the cutoff
      */
     void Set3bCutoff(double cutoff3b);
+
+    /**
+     * Sets the four-body cutoff for polynomials.
+     * Molecules that are at a larger distance than the cutoff will not
+     * be evaluated
+     * @param[in] cutoff4b Is the distance, in angstrom, of the cutoff
+     */
+    void Set4bCutoff(double cutoff4b);
 
     /**
      * Sets the maximum number of monomers in the batch of the 1B evaluation
@@ -1035,6 +1072,18 @@ class System {
     double ThreeBodyEnergy(bool do_grads, bool use_ghost = 0);
 
     /**
+     * Obtains the four-body energy. This is the sum of all the 4B
+     * polynomials.
+     * Gradients will be ONLY for the four-body part.
+     * @param[in] do_grads If true, the gradients will be computed. Otherwise,
+     * the gradient calculation will not be performed
+     * @param[in] use_ghost If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return Four-body energy of the system
+     */
+    double FourBodyEnergy(bool do_grads, bool use_ghost = 0);
+
+    /**
      * Obtains the electrostatic energy. This is the sum of the permanent
      * and induced electrostatics
      * Gradients will be ONLY for the electrostatics part.
@@ -1105,8 +1154,7 @@ class System {
      * @param[in] istart Minimum index of i
      * @param[in] iend Maximum index (iend not included) of index i
      */
-    // void AddClusters(size_t nmax, double cutoff, size_t istart, size_t iend, bool use_ghost = false);
-    void AddClusters(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost = false);
+    // void AddClusters(size_t nmax, double cutoff, std::vector<size_t> idxs, bool use_ghost = false);
 
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
@@ -1119,8 +1167,6 @@ class System {
      * @param[in] iend Maximum index (iend not included) of index i
      * @return Vector of size_t with dimention nclusters * nmax
      */
-    // std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, size_t istart, size_t iend,
-    //                                        bool use_ghost = false);
     std::vector<size_t> AddClustersParallel(size_t nmax, double cutoff, std::vector<size_t> idxs,
                                             bool use_ghost = false);
 
@@ -1201,6 +1247,17 @@ class System {
      * @return  Three-body energy of the system
      */
     double Get3B(bool do_grads, bool use_ghost = 0);
+
+    /**
+     * Private function to internally get the 4b energy.
+     * Gradients of the system will be updated.
+     * @param[in] do_grads Boolean. If true, gradients will be computed.
+     * If false, gradients won't be computed.
+     * @param[in] use_ghost Boolean. If true, include ghost monomers in calculation. Otherwise,
+     * only local monomers included (default)
+     * @return  Four-body energy of the system
+     */
+    double Get4B(bool do_grads, bool use_ghost = 0);
 
     /**
      * Private function to internally get the electrostatic energy.
@@ -1378,6 +1435,13 @@ class System {
      * will not be considered a 3b cluster
      */
     double cutoff3b_;
+
+    /**
+     * Cutoff in the search for clusters for the tetramers.
+     * Molecules which first atoms are at a larger distance than this cutoff
+     * will not be considered a 4b cluster
+     */
+    double cutoff4b_;
 
     /**
      * Stores the energy of the system
@@ -1628,6 +1692,12 @@ class System {
      * when calculating the 3b polynomials.
      */
     std::vector<std::vector<std::string> > ignore_3b_poly_;
+
+    /**
+     * This vector of vectors contains the tetramers of monomer types that will be ignored when
+     * when calculating the 4b polynomials.
+     */
+    std::vector<std::vector<std::string> > ignore_4b_poly_;
 
     /**
      * Vector that contains the relation between the input monomer
