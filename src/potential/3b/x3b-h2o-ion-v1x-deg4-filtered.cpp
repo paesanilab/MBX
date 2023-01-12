@@ -32,7 +32,7 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#include "x3b-h2o-ion-v2x-deg4-filtered.h"
+#include "x3b-h2o-ion-v1x-deg4-filtered.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
