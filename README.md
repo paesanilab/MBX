@@ -138,6 +138,8 @@ Let's call the directory where LAMMPS has been put/unpacked `LAMMPS_HOME`.
 Do the following:
 ```
 cp Makefile.mpi_mbx LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
+cp -rf USER-MBX LAMMPS_HOME/src
+cp USER-MBX/*.cpp LAMMPS_HOME/src
 cd LAMMPS_HOME/src/
 make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
 make yes-USER-MBX
