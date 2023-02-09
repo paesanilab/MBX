@@ -124,7 +124,7 @@ You may need to rerun the `configure` script with the --enable-shared option.
 
 
 ### LAMMPS
-You need to download LAMMPS from https://lammps.sandia.gov/download.html. The current version of MBX supports the LAMMPS version from September 29, 2021 that can be downloaded from GitHub: ```git clone -b stable_29Sep2021_update3 git@github.com:lammps/lammps.git```
+You need to download LAMMPS from https://lammps.sandia.gov/download.html. The current version of MBX supports the LAMMPS version from September 29, 2021 that can be downloaded from GitHub: ```git clone -b stable_23Jun2022_update1 git@github.com:lammps/lammps.git```
 
 
 MBX needs to be installed following the instructions provided in the previous sections. After installation:
