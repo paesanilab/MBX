@@ -41,7 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "poly-3b-h2o-ion-v1x_deg4_filtered.h"
 
 /**
- * @file x3b-h2o-ion-v2x-deg4-filtered.h
+ * @file x3b-h2o-ion-v1x-deg4-filtered.h
  * @brief Contains the structure of the polynomial holder for ion-water-water
  */
 
