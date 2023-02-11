@@ -1,4 +1,7 @@
-if !ISMPI
+if ISMPI
+TESTS = 
+check_PROGRAMS = 
+else
 TESTS = unittest-angle unittest-bond unittest-buckingham unittest-bucktools unittest-connectivity unittest-dihedral unittest-dispersion unittest-disptools unittest-electrostatics unittest-energy1b unittest-energy2b unittest-energy3b unittest-energy4b unittest-energyff unittest-ffcalculators unittest-gamma unittest-inversion unittest-lj unittest-ljtools unittest-pme-nopolarization unittest-pme-nopolarization-findif unittest-pme-withpolarization unittest-pme-withpolarization-findif unittest-poly-1b unittest-poly-2b unittest-poly-3b unittest-poly-holder-1b unittest-poly-holder-2b unittest-poly-holder-3b unittest-ps unittest-system unittest-systools unittest-tools unittest-topology
 
 check_PROGRAMS = unittest-angle unittest-bond unittest-buckingham unittest-bucktools unittest-connectivity unittest-dihedral unittest-dispersion unittest-disptools unittest-electrostatics unittest-energy1b unittest-energy2b unittest-energy3b unittest-energy4b unittest-energyff unittest-ffcalculators unittest-gamma unittest-inversion unittest-lj unittest-ljtools unittest-pme-nopolarization unittest-pme-nopolarization-findif unittest-pme-withpolarization unittest-pme-withpolarization-findif unittest-poly-1b unittest-poly-2b unittest-poly-3b unittest-poly-holder-1b unittest-poly-holder-2b unittest-poly-holder-3b unittest-ps unittest-system unittest-systools unittest-tools unittest-topology
@@ -42,6 +45,3 @@ unittest_tools_SOURCES = unittest-main.cpp unittest-tools.cpp
 unittest_topology_SOURCES = unittest-main.cpp unittest-topology.cpp
 endif
 
-if ISMPI
-$(error "make check is not available when compiling with mpi. Please compile without the --enable-mpi flag, and run make check again")
-endif
