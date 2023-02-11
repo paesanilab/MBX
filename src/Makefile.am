@@ -1,4 +1,7 @@
-SUBDIRS = . unittests
+SUBDIRS = . 
+if !ISMPI
+SUBDIRS +=  unittests
+endif
 
 # Libraries
 lib_LTLIBRARIES = libmbx.la
