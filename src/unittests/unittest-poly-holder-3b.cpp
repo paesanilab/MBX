@@ -35,7 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/testutils.h"
 #include "potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_v1.h"
 #include "potential/3b/mbnrg_3b_A1B4_C1D2_C1D2_deg3_v1.h"
-#include "potential/3b/x3b-h2o-ion-v2x-deg4-filtered.h"
+#include "potential/3b/x3b-h2o-ion-v1x-deg4-filtered.h"
 #include "potential/3b/x3b-v2x.h"
 #include "potential/3b/mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.h"
 #include "potential/3b/mbnrg_3b_A1B2C4_D1E2_D1E2_deg3_v1.h"
