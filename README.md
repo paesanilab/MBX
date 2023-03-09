@@ -124,7 +124,7 @@ You may need to rerun the `configure` script with the --enable-shared option.
 
 
 ### LAMMPS
-You need to download LAMMPS from https://lammps.sandia.gov/download.html. The current version of MBX supports the LAMMPS version from September 29, 2021 that can be downloaded from GitHub: ```git clone -b stable_23Jun2022_update1 git@github.com:lammps/lammps.git```
+You need to download LAMMPS from https://lammps.sandia.gov/download.html. The current version of MBX supports the LAMMPS version from June 23, 2022 that can be downloaded from GitHub: ```git clone -b stable_23Jun2022_update1 git@github.com:lammps/lammps.git```
 
 
 MBX needs to be installed following the instructions provided in the previous sections. After installation:
@@ -138,6 +138,8 @@ Let's call the directory where LAMMPS has been put/unpacked `LAMMPS_HOME`.
 Do the following:
 ```
 cp Makefile.mpi_mbx LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
+cp -rf USER-MBX LAMMPS_HOME/src
+cp USER-MBX/*.cpp LAMMPS_HOME/src
 cd LAMMPS_HOME/src/
 make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
 make yes-USER-MBX
