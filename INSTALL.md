@@ -68,7 +68,7 @@ make && make install
 It is recommended to first install the code without MPI and optimizations and run 
 the unittests. To do so:
 ```
-./configure --disable-optimization 
+./configure --disable-optimization CXX=icpc
 make check
 ```
 All tests should pass.

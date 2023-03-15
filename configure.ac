@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [0.7], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.0], [mbx-users@googlegroups.com])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -20,7 +20,7 @@ AM_PROG_AR
 LT_INIT([disable-shared])
 
 # Initialize Automake. Warnings will be treated as errors.
-AM_INIT_AUTOMAKE([subdir-objects -Wall -Werror foreign])
+AM_INIT_AUTOMAKE([subdir-objects -Wall foreign])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
@@ -276,7 +276,7 @@ AC_SUBST(EXTRA_CXXFLAGS_AM,["$EXTRA_CXXFLAGS "])
 
 # MPI
 # Set AutoMake flag to true
-AM_CONDITIONAL([ISMPI], [test x$mpi = xtrue])
+AM_CONDITIONAL([ISMPI], [test $mpi == true])
 if test $mpi == true; then
     # Look for possible environment variables known to have FFTW home
     mpi_dir=none
