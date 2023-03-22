@@ -73,10 +73,10 @@ order_frames_SOURCES = main/order_frames.cpp
 normal_modes_SOURCES = main/normal-modes.cpp
 
 # Binary Include path
-single_point_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
-optimize_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
-order_frames_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
-normal_modes_CXXFLAGS = $(FFTWFLAGS) $(GSLFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
+single_point_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
+optimize_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
+order_frames_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
+normal_modes_CXXFLAGS = $(FFTWFLAGS) $(GSLFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
 
 # Binary dependencies
 single_point_DEPENDENCIES = libmbx.la
