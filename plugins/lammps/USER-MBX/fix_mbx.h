@@ -126,9 +126,11 @@ class FixMBX : public Fix {
 
     int num_mol_types;       // # of unique molecule types
     int num_molecules;       // total # of molecules
-    int *num_mols;           // array of # of molecules of each type
+    //int *num_mols;           // array of # of molecules of each type
     int *num_atoms_per_mol;  // array of # of atoms per molecule for each type
-    tagint *mol_offset;      // array of atom count per molecule prefix sum
+    int *lower_atom_type_index_in_mol; // array with the lowest atom type index in the monomer
+    int *higher_atom_type_index_in_mol; // array with the highest atom type index in the monomer
+    //tagint *mol_offset;      // array of atom count per molecule prefix sum
     char **mol_names;        // array of molecule names
 
     int *mol_type;    // per-atom array of molecule type
@@ -180,6 +182,8 @@ class FixMBX : public Fix {
     void mbx_update_xyz();
     void mbx_update_xyz_full();
     void mbx_update_xyz_local();
+
+    void mbx_fill_system_information_from_atom();
 
     void mbx_init_dipole_history_local();
 

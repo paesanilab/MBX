@@ -433,7 +433,8 @@ void FixMBX::mbx_fill_system_information_from_atom() {
             } else if (j == num_mol_types - 1) {
                 error->all(FLERR, "The atom types in fix mbx do not match the atom types in the data file");
             }
-        // Assign anchor
+        // Assign anchor TODO careful, not necessarily true
+        // Create another peratom property -> index within molecules
         bool is_ext = strcmp("dp1", mol_names[mtype]) == 0;
         if (atom->type[i] == lower_atom_type_index_in_mol[mtype] or is_ext) {
             mol_anchor[i] = 1;
@@ -1259,6 +1260,9 @@ void FixMBX::mbx_init_local() {
     // -- just an artifact for small systems and PBC
     // -- should be able to remove this
 
+    // Look for atoms that are local (0<i<nlocal)
+    // Then update tag+j to make local if atom is local and anchor
+
     for (int i = nlocal; i < nall; ++i) {
         if (mol_anchor[i]) {
             const int indx = atom->map(atom->tag[i]);
@@ -1319,6 +1323,7 @@ void FixMBX::mbx_init_local() {
 
             tagint anchor = tag[i];
 
+            // TODO fix this if monomer becomes too lurge
             int amap[_MAX_ATOMS_PER_MONOMER];
             bool add_monomer = true;
             for (int j = 1; j < na; ++j) {
