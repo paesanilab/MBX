@@ -180,6 +180,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     mol_type = NULL;
     mol_anchor = NULL;
     mol_local = NULL;
+    mol_order = NULL;
 
     grow_arrays(atom->nmax);
 
@@ -417,6 +418,10 @@ void FixMBX::mbx_fill_system_information_from_atom() {
     const int nghost = atom->nghost;
     const int nall = nlocal + nghost;
 
+    //printf("\n[MBX] (%i,%i) Inside mbx_fill_system_information_from_atom() natoms = %i \n", universe->iworld, me, atom->natoms);   
+
+    bigint natoms = atom->natoms;
+
     tagint *tag = atom->tag;
     int *molecule = atom->molecule;
     double **x = atom->x;
@@ -432,11 +437,33 @@ void FixMBX::mbx_fill_system_information_from_atom() {
             // If j is max and no type has been found, types in mbx fix do not match types in data file
             } else if (j == num_mol_types - 1) {
                 error->all(FLERR, "The atom types in fix mbx do not match the atom types in the data file");
-            }
+        }
+    }    
+
+    // Idea of this loop: fill an array that will say the position
+    // of each atom in the monomer
+    // PROBLEM CHRIS: no idea how to get when mroe than 1 rank is involved
+    bigint itag = 1;
+    while( itag < natoms+1) {
+        int indx = atom->map(itag);
+        //if (indx < 0) continue; 
+        mol_order[indx] = 1;
+        int mtype = mol_type[indx];
+        bool is_ext = strcmp("dp1", mol_names[mtype]) == 0;
+        int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
+        for (int j = 1; j < na; j++) {
+            mol_order[atom->map(itag+j)] = j+1;
+        }
+        itag += na;   
+    }
+
+    // Tag must be na at this point:
+    if (itag != natoms+1) error->all(FLERR, "Inconsisten number of atoms in mbx_fill_system_information_from_atom()"); 
+        
+    for (int i = 0; i < nall; ++i) {
         // Assign anchor TODO careful, not necessarily true
         // Create another peratom property -> index within molecules
-        bool is_ext = strcmp("dp1", mol_names[mtype]) == 0;
-        if (atom->type[i] == lower_atom_type_index_in_mol[mtype] or is_ext) {
+        if (mol_order[atom->map(tag[i])] == 1) {
             mol_anchor[i] = 1;
         } else {
             mol_anchor[i] = 0;
@@ -483,6 +510,8 @@ void FixMBX::post_neighbor() {
     tagint *tag = atom->tag;
     int *molecule = atom->molecule;
     double **x = atom->x;
+
+    mbx_fill_system_information_from_atom();
 
     // do we need to pre-compute and track molecule types?
 
@@ -962,6 +991,7 @@ void FixMBX::grow_arrays(int nmax) {
     memory->grow(mol_type, nmax, "fixmbx:mol_type");
     memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
     memory->grow(mol_local, nmax, "fixmbx:mol_local");
+    memory->grow(mol_order, nmax, "fixmbx:mol_order");
     std::fill(mol_anchor,mol_anchor+nmax,0);
 
     if (!mbx_mpi_enabled) {
@@ -1250,10 +1280,12 @@ void FixMBX::mbx_init_local() {
     mbx_num_atoms_local = 0;
     mbx_num_ext_local = 0;
 
+    for (int i = 0; i < nall; ++i) mol_local[i] = 0;
+
+    // add all local+ghost monomers
+
     for (int i = 0; i < nall; ++i) {
-        mol_local[i] = 0;
-        const int indx = atom->map(atom->tag[i]);
-        if (indx < nlocal) mol_local[i] = 1;
+        if (mol_anchor[i]) mol_local[i] = 1;
     }
 
     // remove ghost monomers that are periodic images of local monomer
