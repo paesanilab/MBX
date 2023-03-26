@@ -540,7 +540,9 @@ void FixMBX::post_neighbor() {
     const int nghost = atom->nghost;
     const int nall = nlocal + nghost;
 
+#ifdef _DEBUG
     printf("\n[MBX] (%i,%i) (post neighbor) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me,atom->nlocal ,atom->nghost,atom->nmax);
+#endif
 
     tagint *tag = atom->tag;
     int *molecule = atom->molecule;
@@ -1114,7 +1116,9 @@ void FixMBX::mbx_init() {
     double **x = atom->x;
     double *q = atom->q;
 
+#ifdef _DEBUG
     printf("\n[MBX] (%i,%i) (mbx_init) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me,atom->nlocal ,atom->nghost,atom->nmax);
+#endif
 
     // #ifdef _DEBUG
     //     MPI_Barrier(universe->uworld);
@@ -1310,7 +1314,9 @@ void FixMBX::mbx_init_local() {
     double **x = atom->x;
     double *q = atom->q;
 
+#ifdef _DEBUG
     printf("\n[MBX] (%i,%i) (mbx_init) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me,atom->nlocal ,atom->nghost,atom->nmax);
+#endif
 
     mbx_num_atoms_local = 0;
     mbx_num_ext_local = 0;
