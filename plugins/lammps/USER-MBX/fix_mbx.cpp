@@ -33,7 +33,7 @@
 #include "universe.h"
 
 #define _MAX_SIZE_MOL_NAME 10
-#define _MAX_ATOMS_PER_MONOMER 5
+#define _MAX_ATOMS_PER_MONOMER 8
 #define SMALL 1.0e-4
 
 //#define _DEBUG
@@ -85,6 +85,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     memory->create(mol_names, num_mol_types, _MAX_SIZE_MOL_NAME, "fixmbx:mol_names");
     memory->create(lower_atom_type_index_in_mol, num_mol_types, "fixmbx:lower_atom_type_index_in_mol");
     memory->create(higher_atom_type_index_in_mol, num_mol_types, "fixmbx:higher_atom_type_index_in_mol");
+    // TODO this instruction limits the number of atoms in a konomer to _MAX_ATOMS_PER_MONOMER
+    memory->create(order_in_mol,num_mol_types,_MAX_ATOMS_PER_MONOMER, "fixmbx:order_in_mol");
 
     //int iarg = 4;
     //for (int i = 0; i < num_mol_types; ++i) {
@@ -95,9 +97,16 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     // Extract information about min and max indexes
     int iarg = 4;
     for (int i = 0; i < num_mol_types; ++i) {
+        strcpy(mol_names[i], arg[iarg++]);
         lower_atom_type_index_in_mol[i] = utils::inumeric(FLERR, arg[iarg++], false, lmp);
         higher_atom_type_index_in_mol[i] = utils::inumeric(FLERR, arg[iarg++], false, lmp);
-        strcpy(mol_names[i], arg[iarg++]);
+        int nat = utils::inumeric(FLERR, arg[iarg++], false, lmp);
+        if (nat > _MAX_ATOMS_PER_MONOMER) 
+            error->all(FLERR,"num_atoms_per_mol > _MAX_ATOMS_PER_MONOMER : did developer correctly add support for monomer?");
+        // TDOD add flag to check consistency
+        for (int j = 0; j < nat ; j++) {
+            order_in_mol[i][j] = utils::inumeric(FLERR, arg[iarg++], false, lmp);
+        }
     }
 
     // process remaining optional keywords
@@ -318,6 +327,9 @@ FixMBX::~FixMBX() {
     memory->destroy(mol_local);
     memory->destroy(mol_type);
     memory->destroy(mol_anchor);
+    memory->destroy(lower_atom_type_index_in_mol);
+    memory->destroy(higher_atom_type_index_in_mol);
+    memory->destroy(order_in_mol);
 
     if (ptr_mbx) delete ptr_mbx;
 
@@ -443,31 +455,54 @@ void FixMBX::mbx_fill_system_information_from_atom() {
     // Idea of this loop: fill an array that will say the position
     // of each atom in the monomer
     // PROBLEM CHRIS: no idea how to get when mroe than 1 rank is involved
-    bigint itag = 1;
-    while( itag < natoms+1) {
-        int indx = atom->map(itag);
-        //if (indx < 0) continue; 
-        mol_order[indx] = 1;
-        int mtype = mol_type[indx];
-        bool is_ext = strcmp("dp1", mol_names[mtype]) == 0;
-        int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-        for (int j = 1; j < na; j++) {
-            mol_order[atom->map(itag+j)] = j+1;
-        }
-        itag += na;   
-    }
 
-    // Tag must be na at this point:
-    if (itag != natoms+1) error->all(FLERR, "Inconsisten number of atoms in mbx_fill_system_information_from_atom()"); 
+
+
+//    bigint itag = 1;
+//    while( itag < natoms+1) {
+//        int indx = atom->map(itag);
+//        //if (indx < 0) continue; 
+//        mol_order[indx] = 1;
+//        int mtype = mol_type[indx];
+//        bool is_ext = strcmp("dp1", mol_names[mtype]) == 0;
+//        int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
+//        for (int j = 1; j < na; j++) {
+//            mol_order[atom->map(itag+j)] = j+1;
+//        }
+//        itag += na;   
+//    }
+//
+//    // Tag must be na at this point:
+//    if (itag != natoms+1) error->all(FLERR, "Inconsisten number of atoms in mbx_fill_system_information_from_atom()"); 
         
+    // Reset anchors
+    std::fill(mol_anchor,mol_anchor+nall,0);
+
     for (int i = 0; i < nall; ++i) {
         // Assign anchor TODO careful, not necessarily true
         // Create another peratom property -> index within molecules
-        if (mol_order[atom->map(tag[i])] == 1) {
+        tagint itag = tag[i];
+        int mtype = mol_type[i];
+        bool is_ext = false;
+        int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
+        if (is_ext) {
             mol_anchor[i] = 1;
-        } else {
-            mol_anchor[i] = 0;
+            continue;
         }
+
+        bool isanchor = true;
+        for (int j = 0; j < na; j++) {
+            int idx = atom->map(tag[i] + j);
+            if (idx < 0) {
+                isanchor = false;
+                break;
+            }
+
+            isanchor = isanchor and atom->type[idx] == order_in_mol[mtype][j];
+            if (!isanchor) break;
+        }
+
+        if (isanchor) mol_anchor[i] = 1;
     }
 }
 
@@ -633,6 +668,7 @@ void FixMBX::pre_force(int /*vflag*/) {
 #ifdef _DEBUG
     printf("\n[MBX] (%i,%i) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me,atom->nlocal ,atom->nghost,atom->nmax);
 #endif
+    post_neighbor();
     mbx_update_xyz();
     if (mbx_mpi_enabled)
         mbx_update_xyz_local();
@@ -992,7 +1028,6 @@ void FixMBX::grow_arrays(int nmax) {
     memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
     memory->grow(mol_local, nmax, "fixmbx:mol_local");
     memory->grow(mol_order, nmax, "fixmbx:mol_order");
-    std::fill(mol_anchor,mol_anchor+nmax,0);
 
     if (!mbx_mpi_enabled) {
         memory->grow(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
