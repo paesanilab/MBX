@@ -130,11 +130,13 @@ class FixMBX : public Fix {
     int *num_atoms_per_mol;  // array of # of atoms per molecule for each type
     int *lower_atom_type_index_in_mol; // array with the lowest atom type index in the monomer
     int *higher_atom_type_index_in_mol; // array with the highest atom type index in the monomer
+    int **order_in_mol;      // array wuith the atom order for each monomer
     //tagint *mol_offset;      // array of atom count per molecule prefix sum
     char **mol_names;        // array of molecule names
 
     int *mol_type;    // per-atom array of molecule type
     int *mol_anchor;  // per-atom array 1/0 if anchor atom of a molecule
+    int *mol_order;   // per-atom array 1/2/3/4... with position of atom in molecule
     int *mol_local;   // per-molecule array 1/0 if molecule has at least one local particle
 
     int mbx_num_atoms, mbx_num_ext;
