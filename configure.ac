@@ -244,7 +244,7 @@ MBX_CONFIG_ENABLE([verbose],[verbose debug output],[no])
 MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
-MBX_CONFIG_ENABLE([optreport],[write optimization reports].[no])
+MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 
 # Act on enable flags
 
