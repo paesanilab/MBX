@@ -52,10 +52,10 @@ lj_sources = potential/lj/lj.cpp potential/lj/ljtools.cpp
 potential_src = $(oneb_sources) $(twob_sources) $(threeb_sources) $(fourb_sources) $(elec_sources) $(disp_sources) $(buck_sources) $(ff_sources) $(lj_sources)
 
 libmbx_la_SOURCES = $(tools_src) $(iotools_src) $(bblock_src) $(potential_src)
-libmbx_la_LIBADD = liba1b2c4.la
+libmbx_la_LIBADD = liba1b2c4.la 
 
 # Library extra flags
-libmbx_la_CPPFLAGS = $(FFTWFLAGS) $(MPIFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
+libmbx_la_CPPFLAGS = $(CPPFLAGS) $(LDFLAGS) $(LIBS) $(MPIFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
 nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/4b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 
@@ -70,13 +70,11 @@ bin_PROGRAMS = single_point optimize order_frames normal_modes
 single_point_SOURCES = main/single_point.cpp
 optimize_SOURCES = main/optimize.cpp
 order_frames_SOURCES = main/order_frames.cpp
-normal_modes_SOURCES = main/normal-modes.cpp
 
 # Binary Include path
-single_point_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
-optimize_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
-order_frames_CXXFLAGS = $(FFTWFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
-normal_modes_CXXFLAGS = $(FFTWFLAGS) $(GSLFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
+single_point_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
+optimize_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
+order_frames_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
 
 # Binary dependencies
 single_point_DEPENDENCIES = libmbx.la
@@ -88,6 +86,8 @@ optimize_LDADD = libmbx.la
 order_frames_DEPENDENCIES = libmbx.la
 order_frames_LDADD = libmbx.la
 
+normal_modes_SOURCES = main/normal-modes.cpp
+normal_modes_CXXFLAGS = $(CPPFLAGS) $(EXTRA_CXXFLAGS_AM) $(OPENMP_CXXFLAGS) -I$(top_srcdir)/src -static
 normal_modes_DEPENDENCIES = libmbx.la
 normal_modes_LDADD = libmbx.la
 endif
