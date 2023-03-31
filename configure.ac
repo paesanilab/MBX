@@ -204,21 +204,11 @@ if test $mpi == true; then
     elif test "$MPIROOT" != "" ; then
         mpi_dir="$MPIROOT"
     fi
-    MBX_CHECK_REQ_PACKAGE([mpi.h],[
-#include <mpi.h>
-
-int main(int argc, char **argv){
-  MPI_Init(&argc,&argv);
-  return MPI_Finalize();
-}
-    ],[mpi],[$mpi_dir],["MPI_HOME"])
-    
-    # Add the corresponding flags to the variable FFTWFLAGS
-    if test $mpi_dir != none; then
-        AC_SUBST(MPIFLAGS,["-L$mpi_dir/lib -I$mpi_dir/include -DHAVE_MPI=1"])
-    else
-        AC_SUBST(MPIFLAGS,["-DHAVE_MPI=1"])
-    fi
+    MBX_CHECK_PACKAGE([mpi_dir])
+    AC_CHECK_LIB([mpi],[MPI_COMM_SIZE],[
+        CPPFLAGS="$CPPFLAGS -DHAVE_MPI=1"
+        LIBS="-lmpi $LIBS"
+    ])
 fi
 
 # Checks for library functions.
