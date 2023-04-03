@@ -8,7 +8,7 @@ for i in $folders; do
   cd $i
   for j in $ncpulist; do 
     export OMP_NUM_THREADS=$j 
-    $MBX_HOME/install/bin/tests/get_timings input.nrg mbx.json > ${j}np_times.dat
+    $MBX_HOME/bin/tests/get_timings input.nrg mbx.json > ${j}np_times.dat
   done 
   cd ../ 
 done 

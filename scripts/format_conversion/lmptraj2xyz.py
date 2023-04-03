@@ -1,30 +1,5 @@
 import sys
 
-# Create monomer dictionary
-monomers = {}
-#NH4+
-monomers['nh4+'] = ['N','H','H','H','H']
-monomers['nh3'] = ['N','H','H','H']
-monomers['ch4'] = ['C','H','H','H','H']
-monomers['pf6-'] = ['P','F','F','F','F','F','F']
-monomers['co2'] = ['C','O','O']
-monomers['li+'] = ['Li']
-monomers['na+'] = ['Na']
-monomers['k+'] = ['K']
-monomers['rb+'] = ['Rb']
-monomers['cs+'] = ['Cs']
-monomers['f-'] = ['F']
-monomers['cl-'] = ['Cl']
-monomers['br-'] = ['Br']
-monomers['i-'] = ['I']
-monomers['ar'] = ['Ar']
-monomers['he'] = ['He']
-monomers['h2'] = ['H','H']
-monomers['n2o5'] = ['O','N','N','O','O','O','O']
-
-#H2O
-monomers['h2o'] = ['O','H','H']
-
 if len(sys.argv) < 4:
     print("Usage: " + sys.argv[0] + "<lmptraj> <id1> <at1> <id2> <at2> ...")
     sys.exit()
@@ -35,7 +10,7 @@ xyz_col = 4
 
 id_eq = {}
 for i in range(2,len(sys.argv),2):
-    id_eq[sys.argv[i]] = sys.argv[i+1]
+    id_eq[int(sys.argv[i])] = sys.argv[i+1]
 
 fin = open(sys.argv[1],'r')
 fou = open("traj.xyz",'w')

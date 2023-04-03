@@ -1,5 +1,5 @@
 # Install/unInstall package files in LAMMPS
-# mode = 0/1/2 for uninstall/install/update
+# mode = 0/1/2 for uninstall/update
 
 mode=$1
 

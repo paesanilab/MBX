@@ -2,7 +2,7 @@
 
 SHELL = /bin/sh
 
-MBX=$(MBX_HOME)/install
+MBX=$(MBX_HOME)
 MBX_INC=$(MBX)/include
 MBX_LIB=$(MBX)/lib
 FFTW=$(FFTW_HOME)
