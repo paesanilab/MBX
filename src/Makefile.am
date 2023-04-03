@@ -64,7 +64,11 @@ nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h pote
 # Only compile these binaries if is not MPI
 if !ISMPI
 # Main Binaries
-bin_PROGRAMS = single_point optimize order_frames normal_modes
+bin_PROGRAMS = single_point optimize order_frames
+
+if HASGSL
+bin_PROGRAMS += normal_modes
+endif
 
 # binary sources
 single_point_SOURCES = main/single_point.cpp
@@ -86,10 +90,12 @@ optimize_LDADD = libmbx.la
 order_frames_DEPENDENCIES = libmbx.la
 order_frames_LDADD = libmbx.la
 
+if HASGSL
 normal_modes_SOURCES = main/normal-modes.cpp
 normal_modes_CXXFLAGS = $(CPPFLAGS) $(EXTRA_CXXFLAGS_AM) $(OPENMP_CXXFLAGS) -I$(top_srcdir)/src -static
 normal_modes_DEPENDENCIES = libmbx.la
 normal_modes_LDADD = libmbx.la
+endif
 endif
 
 

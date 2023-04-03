@@ -126,6 +126,8 @@ MBX_CHECK_PACKAGE([$fftw_dir])
 AC_CHECK_LIB([fftw3],[fftw_plan_dft],[
     CPPFLAGS="$CPPFLAGS -DHAVE_FFTWD=1"
     LIBS="-lfftw3 $LIBS"
+],[
+    AC_MSG_ERROR([fftw3 cannot be linked. Please define FFTW_HOME.])
 ])
 
 # GSL
@@ -145,7 +147,13 @@ fi
 
 MBX_CHECK_PACKAGE([$gsl_dir])
 AC_CHECK_LIB([gslcblas],[cblas_dgemm])
-AC_CHECK_LIB([gsl],[gsl_blas_dgemm])
+AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
+    LIBS="-lgsl $LIBS"
+    AM_CONDITIONAL([HASGSL], [test x == x])
+],[
+    AM_CONDITIONAL([HASGSL], [test x == y])
+    AC_MSG_WARN([gsl cannot be found. Will not install the normal modes executable.])
+])
 
 # Checks for header files.
 
