@@ -595,25 +595,24 @@ TEST_CASE("External charges") {
 }
 
 // Helper function for TEST_CASE("Pair List"), sorts dimers, trimers
-void sortEdge(std::vector<size_t>& nmers, size_t n) {
-
-    //convert iterators to pointers
-    size_t* begin = &(*(nmers.begin()));
-    size_t* end = &(*(nmers.end()));
+void sortEdge(std::vector<size_t> &nmers, size_t n) {
+    // convert iterators to pointers
+    size_t *begin = &(*(nmers.begin()));
+    size_t *end = &(*(nmers.end()));
 
     // Sort within nmers
-    for(size_t* i=begin;i<end;i+=n) std::sort(i, i+n);
+    for (size_t *i = begin; i < end; i += n) std::sort(i, i + n);
 
     // Sort across nmers
-    if(n==2) {
+    if (n == 2) {
         typedef std::array<size_t, 2> Edge;
-        Edge* edge_begin = reinterpret_cast<Edge*>(begin);
-        Edge* edge_end = reinterpret_cast<Edge*>(end);
+        Edge *edge_begin = reinterpret_cast<Edge *>(begin);
+        Edge *edge_end = reinterpret_cast<Edge *>(end);
         std::sort(edge_begin, edge_end);
-    } else if(n==3) {
+    } else if (n == 3) {
         typedef std::array<size_t, 3> Edge;
-        Edge* edge_begin = reinterpret_cast<Edge*>(begin);
-        Edge* edge_end = reinterpret_cast<Edge*>(end);
+        Edge *edge_begin = reinterpret_cast<Edge *>(begin);
+        Edge *edge_end = reinterpret_cast<Edge *>(end);
         std::sort(edge_begin, edge_end);
     }
 }
@@ -660,21 +659,21 @@ TEST_CASE("Pair List") {
     std::vector<size_t> expected_t2 = {1, 2, 5};
 
     // sort dimers and trimers before comparing
-    REQUIRE( dimers.size() == expected_d.size() );
-    sortEdge(dimers,2);
-    sortEdge(expected_d,2);
+    REQUIRE(dimers.size() == expected_d.size());
+    sortEdge(dimers, 2);
+    sortEdge(expected_d, 2);
 
-    REQUIRE( trimers.size() == expected_t.size() );
-    sortEdge(trimers,3);
-    sortEdge(expected_t,3);
+    REQUIRE(trimers.size() == expected_t.size());
+    sortEdge(trimers, 3);
+    sortEdge(expected_t, 3);
 
-    REQUIRE( dimers2.size() == expected_d2.size() );
-    sortEdge(dimers2,2);
-    sortEdge(expected_d2,2);
+    REQUIRE(dimers2.size() == expected_d2.size());
+    sortEdge(dimers2, 2);
+    sortEdge(expected_d2, 2);
 
-    REQUIRE( trimers2.size() == expected_t2.size() );
-    sortEdge(trimers2,3);
-    sortEdge(expected_t2,3);
+    REQUIRE(trimers2.size() == expected_t2.size());
+    sortEdge(trimers2, 3);
+    sortEdge(expected_t2, 3);
 
     SECTION("Expected behavior") {
         REQUIRE(VectorsAreEqual(dimers, expected_d));
@@ -709,9 +708,12 @@ TEST_CASE("JSON: mbx.json") {
     }
 
     // Set up json defaults
-    systems[0].SetUpFromJson("unittests_inputs/crazy.json");
-    systems[1].SetUpFromJson("unittests_inputs/mbx.json");
-    systems[2].SetUpFromJson("unittests_inputs/mbx_pbc.json");
+    char jj1[] = "unittests_inputs/crazy.json";
+    systems[0].SetUpFromJson(jj1);
+    char jj2[] = "unittests_inputs/mbx.json";
+    systems[1].SetUpFromJson(jj2);
+    char jj3[] = "unittests_inputs/mbx_pbc.json";
+    systems[2].SetUpFromJson(jj3);
 
     std::vector<double> boxAbc = systems[0].GetBoxABCabc();
     std::vector<double> box = systems[0].GetBox();
@@ -821,7 +823,8 @@ TEST_CASE("Dipoles") {
     }
 
     // Set up json defaults
-    systems[1].SetUpFromJson("unittests_inputs/mbx.json");
+    char jj4[] = "unittests_inputs/mbx.json";
+    systems[1].SetUpFromJson(jj4);
 
     // Calculate energy to fill dipole vectors
     systems[1].Energy(true);
@@ -923,8 +926,9 @@ TEST_CASE("Setters") {
     }
 
     // Set up json defaults
-    systems[1].SetUpFromJson("unittests_inputs/mbx.json");
-    systems[2].SetUpFromJson("unittests_inputs/mbx.json");
+    char jj5[] = "unittests_inputs/mbx.json";
+    systems[1].SetUpFromJson(jj5);
+    systems[2].SetUpFromJson(jj5);
 
     SECTION("Cutoffs") {
         double expected_twobcutoff = 12.0;
@@ -1164,7 +1168,8 @@ TEST_CASE("Add Monomer") {
     }
 
     // Set up json defaults
-    systems[2].SetUpFromJson("unittests_inputs/mbx.json");
+    char jj5[] = "unittests_inputs/mbx.json";
+    systems[2].SetUpFromJson(jj5);
 
     SECTION("Assertions") {
         bool failed = false;
@@ -1199,11 +1204,14 @@ TEST_CASE("JSON files") {
 
     SECTION("Set up") {
         // Set up json defaults (json does not exist)
-        systems[2].SetUpFromJson("unittests_inputs/i_should_not_be_here.json");
+        char jj6[] = "unittests_inputs/i_should_not_be_here.json";
+        systems[2].SetUpFromJson(jj6);
 
         // Json does exist
-        systems[0].SetUpFromJson("unittests_inputs/mbx_wextrajson.json");
-        systems[1].SetUpFromJson("unittests_inputs/mbx_wextrajson_rightpaths.json");
+        char jj7[] = "unittests_inputs/mbx_wextrajson.json";
+        systems[0].SetUpFromJson(jj7);
+        char jj8[] = "unittests_inputs/mbx_wextrajson_rightpaths.json";
+        systems[1].SetUpFromJson(jj8);
 
         // TODO add getters to ensure that results are as expected
     }

@@ -5,12 +5,12 @@ endif
 
 F90 = ifort 
 F90FLAGS = -O3 -lstdc++
-F90LFLAGS = -L/usr/lib64 -L$(MBX_HOME)/install/lib/static/
+F90LFLAGS = -L/usr/lib64 -L$(MBX_HOME)/lib/static/
 F90OBJDIR = ../obj_f90/
 
 CXX = icpc
 CXXFLAGS = -std=c++11  -O0 -g
-CXXLFLAGS = -L$(MBX_HOME)/install/lib/static  -I$(MBX_HOME)/install/include 
+CXXLFLAGS = -L$(MBX_HOME)/lib/static  -I$(MBX_HOME)/include 
 CXXOBJDIR = ../obj_cxx/
 
 CXXLIBS = -lmbxlib -fopenmp -lfftw3 

@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
-# MBX v0.8
+# MBX v1.0
 MBX is a C++ software that provides an interface for MD drivers, such as LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org), to perform classical and path-integral molecular dynamics simulations using our many-body potential energy functions. The current version of MBX includes the MB-pol many-body water potential (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg many-body potentials for neat CO2 and CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). MBX also includes the TTM-nrg potentials for the halide (https://doi.org/10.1021/acs.jpcb.5b09562) and alkali-metal (https://doi.org/10.1039/C6CP02553F) ions in water. The MB-nrg many-body potentials for the halide (https://doi.org/10.1021/acs.jctc.6b00302) and alkali-metal (https://doi.org/10.1063/1.4993213) ions in water will become available in the next release of MBX. For more details about the MB-pol, MB-nrg, and TTM-nrg potentials in MBX, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
 MBX is periodically updated with performance improvements and the addition of other many-body potentials. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
@@ -17,8 +17,7 @@ The home directory of MBX will be referred to as `MBX_HOME`. You must set this e
 `export MBX_HOME=$PWD`
 
 ### Compilation
-Please read the INSTALL.md instructions. After installation, a folder 
-called `install` should have been created if no prefix has been given to `configure`.
+Please read the INSTALL.md instructions. After installation, a bin, a lib, and an include folder should have been created if no prefix has been given to `configure`.
 
 ## Testing
 After installation, running the unit tests is highly recommended. Run the following commands to run the tests:
@@ -79,7 +78,7 @@ In this file:
 - `localhost` is the name of the socket. It MUST match the name in the XML file, otherwise it will send an error saying that the socket was not found.
 
 ## Main executables
-After installation, there will be the main executables in `$MBX_HOME/install/bin`.
+After installation, there will be the main executables in `$MBX_HOME/bin`.
 - `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If the flag to print gradients is activated (`PRINT_GRADS`; see source code in `$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
 
@@ -115,7 +114,7 @@ Please cite the following manuscripts if any of the following PEFs is used:
 ### Fortran90 and Python
 In `${MBX_HOME}/examples/PEFs` there are sample scripts on how to use MBX called from Fortran90 and Python. Please remember to update the `LD_LIBRARY_PATH` variable and, if using python, the `PYTHONPATH` variable.
 ```
-export LD_LIBRARY_PATH=MBX_HOME/install/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=MBX_HOME/lib/:$LD_LIBRARY_PATH
 export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 ```
 
@@ -124,7 +123,7 @@ You may need to rerun the `configure` script with the --enable-shared option.
 
 
 ### LAMMPS
-You need to download LAMMPS from https://lammps.sandia.gov/download.html. The current version of MBX supports the LAMMPS version from September 29, 2021 that can be downloaded from GitHub: ```git clone -b stable_23Jun2022_update1 git@github.com:lammps/lammps.git```
+You need to download LAMMPS from https://lammps.sandia.gov/download.html. The current version of MBX supports the LAMMPS version from June 23, 2022 that can be downloaded from GitHub: ```git clone -b stable_23Jun2022_update1 git@github.com:lammps/lammps.git```
 
 
 MBX needs to be installed following the instructions provided in the previous sections. After installation:
@@ -138,6 +137,8 @@ Let's call the directory where LAMMPS has been put/unpacked `LAMMPS_HOME`.
 Do the following:
 ```
 cp Makefile.mpi_mbx LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
+cp -rf USER-MBX LAMMPS_HOME/src
+cp USER-MBX/*.cpp LAMMPS_HOME/src
 cd LAMMPS_HOME/src/
 make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
 make yes-USER-MBX
