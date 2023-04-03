@@ -29,76 +29,13 @@ AC_CONFIG_FILES([
  src/unittests/Makefile
 ])
 
-# Helper function to check if a required library can be linked
-# MBX_CHECK_REQ_LIB(header,program,lib,path_to_home,environmentVar)
-AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
+# Helper function to add the proper flags to CPPFLAGS and LDFLAGS
+# MBX_CHECK_PACKAGE(path_to_home)
+AC_DEFUN([MBX_CHECK_PACKAGE], [
     # Check if a path to the home dir of lib has been given
-    if ! test $4 == none; then
-        header_file=$4/include/$1
-        LDFLAGS="-I$4/include -L$4/lib $LDFLAGS"
-    else
-        header_file=$1
-    fi
-    AC_MSG_CHECKING([whether the header $1 can be found])
-    headersgood=no
-    AC_CHECK_HEADERS($header_file,[headersgood=yes])
-    
-    if test $headersgood == no; then
-        AC_CHECK_FILE($1,[headersgood=yes])
-        if test $headersgood == no; then
-            AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable $5 and rerun ./configure])
-        fi
-    fi
-
-    bk_LIBS="$LIBS"
-    LIBS="-l$3 $LIBS"
-    
-    linkinggood=no
-    AC_MSG_CHECKING([whether MBX can be linked to $3])
-    AC_LINK_IFELSE([AC_LANG_SOURCE([$2])],
-          [linkinggood=yes]
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])]
-    )
-
-    if test $linkinggood == no;then
-        AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable $5 and rerun ./configure])
-    fi
-])
-
-# Helper function to check if gsl library can be linked
-# MBX_CHECK_GSL_LIB(program,path_to_home,environmentVar)
-AC_DEFUN([MBX_CHECK_GSL_PACKAGE], [
-    # Check if a path to the home dir of lib has been given
-    header_file=gsl/gsl_math.h
-    if ! test $2 == none; then
-	header_file=$2/include/gsl/gsl_math.h
-        LDFLAGS="-I$2/include -L$2/lib $LDFLAGS"
-    fi
-    AC_MSG_CHECKING([whether the header gsl/gsl_math.h can be found])
-    headersgood=no
-    AC_CHECK_HEADERS($header_file,[headersgood=yes])
-
-    if test $headersgood == no; then
-        AC_CHECK_FILE([$header_file],[headersgood=yes])
-        if test $headersgood == no; then
-            AC_MSG_ERROR([please make sure that the library gsl is properly installed. Please define the environment variable $3 and rerun ./configure])
-        fi
-    fi
-
-    bk_LIBS="$LIBS"
-    LIBS="-lgslcblas -lgsl $LIBS"
-
-    linkinggood=no
-    AC_MSG_CHECKING([whether MBX can be linked to gsl and gslcblas])
-    AC_LINK_IFELSE([AC_LANG_SOURCE([$1])],
-          [linkinggood=yes]
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])]
-    )
-
-    if test $linkinggood == no;then
-        AC_MSG_ERROR([please make sure that the library gsl is properly installed. Please define the environment variable $3 and rerun ./configure])
+    if ! test $1 == none; then
+        LDFLAGS="$LDFLAGS -L$1/lib"
+        CPPFLAGS="$CPPFLAGS -I$1/include"
     fi
 ])
 
@@ -170,6 +107,8 @@ AC_OPENMP
 
 # Checks for libraries.
 
+AC_CHECK_LIB([m],[cos])
+
 # FFTW
 # Look for possible environment variables known to have FFTW home
 fftw_dir=none
@@ -182,22 +121,14 @@ elif test "$FFTW_ROOT" != "" ; then
 elif test "$FFTWROOT" != "" ; then
     fftw_dir="$FFTWROOT"
 fi
-MBX_CHECK_REQ_PACKAGE([fftw3.h],[
-#include <fftw3.h>
+MBX_CHECK_PACKAGE([$fftw_dir])
 
-int main() {
-    fftw_complex nc;
-    return 0;
-}
-
-],[fftw3],[$fftw_dir],["FFTW_HOME"])
-
-# Add the corresponding flags to the variable FFTWFLAGS
-if test $fftw_dir != none; then
-    AC_SUBST(FFTWFLAGS,["-L$fftw_dir/lib -I$fftw_dir/include -DHAVE_FFTWD=1"])
-else
-    AC_SUBST(FFTWFLAGS,["-DHAVE_FFTWD=1"])
-fi
+AC_CHECK_LIB([fftw3],[fftw_plan_dft],[
+    CPPFLAGS="$CPPFLAGS -DHAVE_FFTWD=1"
+    LIBS="-lfftw3 $LIBS"
+],[
+    AC_MSG_ERROR([fftw3 cannot be linked. Please define FFTW_HOME.])
+])
 
 # GSL
 # Look for possible environment variables known to have GSL home
@@ -213,24 +144,16 @@ elif test "$GSLROOT" != "" ; then
 elif test "$GSL_ROOT_DIR" != "" ; then
     gsl_dir="$GSL_ROOT_DIR"
 fi
-MBX_CHECK_GSL_PACKAGE([
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
 
-int main() {
-    double a = M_SQRT3;
-    gsl_vector av;
-    return 0;
-}
-
-],[$gsl_dir],["GSL_HOME"])
-
-# Add the corresponding flags to the variable FFTWFLAGS
-if test $gsl_dir != none; then
-    AC_SUBST(GSLFLAGS,["-L$gsl_dir/lib -I$gsl_dir/include"])
-else
-    AC_SUBST(GSLFLAGS,[""])
-fi
+MBX_CHECK_PACKAGE([$gsl_dir])
+AC_CHECK_LIB([gslcblas],[cblas_dgemm])
+AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
+    LIBS="-lgsl $LIBS"
+    AM_CONDITIONAL([HASGSL], [test x == x])
+],[
+    AM_CONDITIONAL([HASGSL], [test x == y])
+    AC_MSG_WARN([gsl cannot be found. Will not install the normal modes executable.])
+])
 
 # Checks for header files.
 
@@ -244,7 +167,7 @@ MBX_CONFIG_ENABLE([verbose],[verbose debug output],[no])
 MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
-MBX_CONFIG_ENABLE([optreport],[write optimization reports].[no])
+MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 
 # Act on enable flags
 
@@ -289,25 +212,15 @@ if test $mpi == true; then
     elif test "$MPIROOT" != "" ; then
         mpi_dir="$MPIROOT"
     fi
-    MBX_CHECK_REQ_PACKAGE([mpi.h],[
-#include <mpi.h>
-
-int main(int argc, char **argv){
-  MPI_Init(&argc,&argv);
-  return MPI_Finalize();
-}
-    ],[mpi],[$mpi_dir],["MPI_HOME"])
-    
-    # Add the corresponding flags to the variable FFTWFLAGS
-    if test $mpi_dir != none; then
-        AC_SUBST(MPIFLAGS,["-L$mpi_dir/lib -I$mpi_dir/include -DHAVE_MPI=1"])
-    else
-        AC_SUBST(MPIFLAGS,["-DHAVE_MPI=1"])
-    fi
+    MBX_CHECK_PACKAGE([mpi_dir])
+    AC_CHECK_LIB([mpi],[MPI_COMM_SIZE],[
+        CPPFLAGS="$CPPFLAGS -DHAVE_MPI=1"
+        LIBS="-lmpi $LIBS"
+    ])
 fi
 
 # Checks for library functions.
 
-AC_PREFIX_DEFAULT([`pwd`/install])
+AC_PREFIX_DEFAULT([`pwd`])
 
 AC_OUTPUT

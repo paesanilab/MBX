@@ -17,8 +17,7 @@ The home directory of MBX will be referred to as `MBX_HOME`. You must set this e
 `export MBX_HOME=$PWD`
 
 ### Compilation
-Please read the INSTALL.md instructions. After installation, a folder 
-called `install` should have been created if no prefix has been given to `configure`.
+Please read the INSTALL.md instructions. After installation, a bin, a lib, and an include folder should have been created if no prefix has been given to `configure`.
 
 ## Testing
 After installation, running the unit tests is highly recommended. Run the following commands to run the tests:
@@ -79,7 +78,7 @@ In this file:
 - `localhost` is the name of the socket. It MUST match the name in the XML file, otherwise it will send an error saying that the socket was not found.
 
 ## Main executables
-After installation, there will be the main executables in `$MBX_HOME/install/bin`.
+After installation, there will be the main executables in `$MBX_HOME/bin`.
 - `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If the flag to print gradients is activated (`PRINT_GRADS`; see source code in `$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
 
@@ -115,7 +114,7 @@ Please cite the following manuscripts if any of the following PEFs is used:
 ### Fortran90 and Python
 In `${MBX_HOME}/examples/PEFs` there are sample scripts on how to use MBX called from Fortran90 and Python. Please remember to update the `LD_LIBRARY_PATH` variable and, if using python, the `PYTHONPATH` variable.
 ```
-export LD_LIBRARY_PATH=MBX_HOME/install/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=MBX_HOME/lib/:$LD_LIBRARY_PATH
 export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 ```
 

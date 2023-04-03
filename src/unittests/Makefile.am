@@ -6,8 +6,8 @@ TESTS = unittest-angle unittest-bond unittest-buckingham unittest-bucktools unit
 
 check_PROGRAMS = unittest-angle unittest-bond unittest-buckingham unittest-bucktools unittest-connectivity unittest-dihedral unittest-dispersion unittest-disptools unittest-electrostatics unittest-energy1b unittest-energy2b unittest-energy3b unittest-energy4b unittest-energyff unittest-ffcalculators unittest-gamma unittest-inversion unittest-lj unittest-ljtools unittest-pme-nopolarization unittest-pme-nopolarization-findif unittest-pme-withpolarization unittest-pme-withpolarization-findif unittest-poly-1b unittest-poly-2b unittest-poly-3b unittest-poly-holder-1b unittest-poly-holder-2b unittest-poly-holder-3b unittest-ps unittest-system unittest-systools unittest-tools unittest-topology
 
-LDADD = ${top_builddir}/src/libmbx.la
-AM_CXXFLAGS = $(FFTWFLAGS) $(MPIFLAGS) $(OPENMP_CXXFLAGS) -I${top_builddir}/src/ $(EXTRA_CXXFLAGS_AM)
+LDADD = ${top_builddir}/src/libmbx.la 
+AM_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) -I${top_builddir}/src/ $(EXTRA_CXXFLAGS_AM) -static
 
 unittest_angle_SOURCES = unittest-main.cpp unittest-angle.cpp
 unittest_bond_SOURCES = unittest-main.cpp unittest-bond.cpp

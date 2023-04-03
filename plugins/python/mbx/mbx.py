@@ -19,7 +19,7 @@ if MBX_HOME == "":
   print("MBX_HOME is not set.")
   sys.exit()
 
-mbxlib = cdll.LoadLibrary(MBX_HOME + '/install/lib/libmbx.so')
+mbxlib = ctypes.CDLL(MBX_HOME + '/lib/libmbx.so',mode=os.RTLD_LAZY)
 
 c_double_array = np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
 int_pointer = ctypes.POINTER(ctypes.c_int)
