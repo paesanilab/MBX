@@ -213,6 +213,6 @@ fi
 
 # Checks for library functions.
 
-AC_PREFIX_DEFAULT([`pwd`/install])
+AC_PREFIX_DEFAULT([`pwd`])
 
 AC_OUTPUT

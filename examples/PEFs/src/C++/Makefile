@@ -7,9 +7,9 @@ MBX_HOME = $(HOME)/codes/MBX
 endif
 
 LIBS = -l:libmbx.a -fopenmp -lfftw3
-LIBDIR = -L$(MBX_HOME)/install/lib
+LIBDIR = -L$(MBX_HOME)/lib
 
-INCLUDEDIR = -I$(MBX_HOME)/install/include
+INCLUDEDIR = -I$(MBX_HOME)/include
 
 BINDIR = ./
 
