@@ -1999,21 +1999,19 @@ double System::Energy(bool do_grads) {
     auto t2b = std::chrono::high_resolution_clock::now();
 #endif
 
-// Only calculate buck if compiled with the option
-#ifdef TTMNRG
-    double ebuck = GetBuckingham(do_grads);
-#else
+    // Only calculate buck if compiled with the option
     double ebuck = 0.0;
+#ifdef TTMNRG
+    ebuck = GetBuckingham(do_grads);
 #endif
 
 #ifdef TIMING
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
 
+    double elj = 0.0;
 #ifdef TTMNRG
     if (lj_pairs_.size() > 0) elj = GetLennardJones(do_grads);
-#else
-    double elj = 0.0;
 #endif
 
 #ifdef TIMING
