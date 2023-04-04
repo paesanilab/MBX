@@ -168,6 +168,7 @@ MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
+MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
 
 # Act on enable flags
 
@@ -187,6 +188,10 @@ fi
 
 if test $coverage == true; then
     MBX_CHECK_CXXFLAG([--coverage])
+fi
+
+if test $ttmnrg == true; then
+    MBX_CHECK_CXXFLAG([-DTTMNRG])
 fi
 
 if test $optreport == true; then
