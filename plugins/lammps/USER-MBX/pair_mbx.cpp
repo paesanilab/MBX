@@ -200,10 +200,16 @@ void PairMBX::compute(int eflag, int vflag) {
         printf("[MBX] (%i) -- Computing buck\n", me);
 #endif
 
+#ifdef TTMNRG
         fix_mbx->mbxt_start(MBXT_BUCK);
         mbx_buck = ptr_mbx->Buckingham(true, true);
         fix_mbx->mbxt_stop(MBXT_BUCK);
         accumulate_f(false);
+#else
+        fix_mbx->mbxt_start(MBXT_BUCK);
+        mbx_buck = 0.0;
+        fix_mbx->mbxt_stop(MBXT_BUCK);
+#endif
     }
 
     if (mbx_parallel) {

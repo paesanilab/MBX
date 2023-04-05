@@ -1968,7 +1968,11 @@ double System::Energy(bool do_grads) {
     auto t1 = std::chrono::high_resolution_clock::now();
 #endif
 
+#ifdef TTMNRG
     double eff = GetFF(do_grads);
+#else
+    double eff = 0.0;
+#endif
     double e1b = Get1B(do_grads);
 
     // If monomers are too distorted, skip 2b and 3b calculation
@@ -1995,14 +1999,20 @@ double System::Energy(bool do_grads) {
     auto t2b = std::chrono::high_resolution_clock::now();
 #endif
 
-    // double ebuck = 0.0;
-    double ebuck = GetBuckingham(do_grads);
+    // Only calculate buck if compiled with the option
+    double ebuck = 0.0;
+#ifdef TTMNRG
+    ebuck = GetBuckingham(do_grads);
+#endif
+
 #ifdef TIMING
     auto t3 = std::chrono::high_resolution_clock::now();
 #endif
 
     double elj = 0.0;
+#ifdef TTMNRG
     if (lj_pairs_.size() > 0) elj = GetLennardJones(do_grads);
+#endif
 
 #ifdef TIMING
     auto t31 = std::chrono::high_resolution_clock::now();
