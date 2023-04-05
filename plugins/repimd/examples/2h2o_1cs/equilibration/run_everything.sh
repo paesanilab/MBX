@@ -41,12 +41,12 @@ for i in `seq 1 1 $NREPLICAS`; do
   # Optimize trajectory every 20 frames
   rm optimized.xyz unconverged.xyz
   printf -v j "%02d" $i
-  ${MBX_HOME}/install/bin/optimize  input.nrg mbx.json 500 0.000001 unmixed_trajectory.${j}.xyz 20
+  ${MBX_HOME}/bin/optimize  input.nrg mbx.json 500 0.000001 unmixed_trajectory.${j}.xyz 20
   mv optimized.xyz optimized_unmixed_trajectory.${j}.xyz
 
   # Try converging the ones that did not
   if [ -s "unconverged.xyz" ]; then
-    ${MBX_HOME}/install/bin/optimize  input.nrg mbx.json 500 0.000001 unconverged.xyz 1
+    ${MBX_HOME}/bin/optimize  input.nrg mbx.json 500 0.000001 unconverged.xyz 1
     cat optimized.xyz >> optimized_unmixed_trajectory.${j}.xyz
   fi
   
@@ -69,7 +69,7 @@ ${MBX_HOME}/scripts/remd_analysis/rmsd_tools/bin/rsc input.nrg unique_isomers.xy
 mv configs_rsc.xyz unique_isomers.xyz
 
 # Order the isomers
-${MBX_HOME}/install/bin/order_frames input.nrg unique_isomers.xyz mbx.json
+${MBX_HOME}/bin/order_frames input.nrg unique_isomers.xyz mbx.json
 mv ordered.xyz unique_isomers_ordered.xyz
 
 # Get populations

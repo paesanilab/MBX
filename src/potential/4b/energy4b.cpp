@@ -33,7 +33,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "energy4b.h"
-#include <iostream>
 
 namespace e4b {
 

@@ -17,8 +17,7 @@ The home directory of MBX will be referred to as `MBX_HOME`. You must set this e
 `export MBX_HOME=$PWD`
 
 ### Compilation
-Please read the INSTALL.md instructions. After installation, a folder 
-called `install` should have been created if no prefix has been given to `configure`.
+Please read the INSTALL.md instructions. After installation, a bin, a lib, and an include folder should have been created if no prefix has been given to `configure`.
 
 ## Testing
 After installation, running the unit tests is highly recommended. Run the following commands to run the tests:
@@ -72,14 +71,14 @@ In this file:
 - `alpha_ewald_XX` is the alpha used in the reciprocal space. It should be set to 0 when running gas-phase calculations/simulations.
 - `grid_density_XX` is the number of grid points density.
 - `spline_order_XX` is the order of the splines used for interpolation.
-- `ttm_pairs` a list of 2 element lists with the monomer pairs for which the repulsion will be calculated using a Buckingham potential. If a pure TTM-nrg calculation is being performed, `ignore_2b_poly` should contain the same pairs as `ttm_pairs`. Example: `"ttm_pairs" : [["f","h2o"],["na","h2o"]]`
+- `ttm_pairs` a list of 2 element lists with the monomer pairs for which the repulsion will be calculated using a Buckingham potential. If a pure TTM-nrg calculation is being performed, `ignore_2b_poly` should contain the same pairs as `ttm_pairs`. Example: `"ttm_pairs" : [["f","h2o"],["na","h2o"]]` If this option will be used, the software should be configured with the option `--enable-ttmnrg`. 
 - `ignore_2b_poly` has the same format as `ttm_pairs`, but this will make MBX not to calculate the polynomials for the pairs specified.
 - `ignore_3b_poly` has a similar format as 2b, but with the difference that the list is a list of 3-element list. If a set of three monomer types is specified in this list, MBX won't add the polynomial correction of that given trimer. Example: `"ignore_3b_poly" : [["na","h2o","h2o"]]`
 - `port` is used when interfacing with i-pi. It is the port that will hold the socket. Should be greater than 34500.
 - `localhost` is the name of the socket. It MUST match the name in the XML file, otherwise it will send an error saying that the socket was not found.
 
 ## Main executables
-After installation, there will be the main executables in `$MBX_HOME/install/bin`.
+After installation, there will be the main executables in `$MBX_HOME/bin`.
 - `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If the flag to print gradients is activated (`PRINT_GRADS`; see source code in `$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
 
@@ -115,7 +114,7 @@ Please cite the following manuscripts if any of the following PEFs is used:
 ### Fortran90 and Python
 In `${MBX_HOME}/examples/PEFs` there are sample scripts on how to use MBX called from Fortran90 and Python. Please remember to update the `LD_LIBRARY_PATH` variable and, if using python, the `PYTHONPATH` variable.
 ```
-export LD_LIBRARY_PATH=MBX_HOME/install/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=MBX_HOME/lib/:$LD_LIBRARY_PATH
 export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 ```
 
