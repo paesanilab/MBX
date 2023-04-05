@@ -818,10 +818,8 @@ TEST_CASE("energy2b::get_2b_energy") {
     }
 
     SECTION("ar-ar") {
-        std::vector<double> xyz1 = {1.6216168900e+00, -1.0270244000e+00, 2.9469574100e+00,
-                                    1.6216168900e+00, -1.0270244000e+00, 2.9469574100e+00};
-        std::vector<double> xyz2 = {2.0831958000e+00, -1.4459911350e+00, 3.0238165600e+00,
-                                    3.6216168900e+00, -1.0270244000e+00, 2.9469574100e+00};
+        std::vector<double> xyz1 = {2.1000000000e+00, 3.2000000000e+00, 1.5000000000e+00};
+        std::vector<double> xyz2 = {-1.0000000000e+00, -2.0000000000e+00, -3.0000000000e+00};
         size_t nm = 2;
         std::string mon1 = "ar";
         std::string mon2 = "ar";
@@ -830,15 +828,13 @@ TEST_CASE("energy2b::get_2b_energy") {
         std::vector<double> grad2(xyz2.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = -2.6455183439e+04;
+        double expected_energy = -2.0181038622e-03;
 
-        std::vector<double> grad1_expected = {-1.2179058127e+05, 1.1054708325e+05, -2.0279783915e+04,
-                                              -1.1681346080e+01, 0.0000000000e+00, 0.0000000000e+00};
-        std::vector<double> grad2_expected = {1.2179058127e+05, -1.1054708325e+05, 2.0279783915e+04,
-                                              1.1681346080e+01, 0.0000000000e+00,  0.0000000000e+00};
-        std::vector<double> virial_expected = {-5.6239326443e+04, 5.1026202189e+04,  -9.3607205545e+03,
-                                               5.1026202189e+04,  -4.6315550532e+04, 8.4965548533e+03,
-                                               -9.3607205545e+03, 8.4965548533e+03,  -1.5586869539e+03};
+        std::vector<double> grad1_expected = {1.1398195075e-03, 1.9119553028e-03, 1.6545767044e-03};
+        std::vector<double> grad2_expected = {-1.1398195075e-03, -1.9119553028e-03, -1.6545767044e-03};
+        std::vector<double> virial_expected = {-3.5334404731e-03, -5.9270614388e-03, -5.1291877835e-03,
+                                               -5.9270614388e-03, -9.9421675747e-03, -8.6037988627e-03,
+                                               -5.1291877835e-03, -8.6037988627e-03, -7.4455951697e-03};
 
         SECTION("No gradients") {
             double e = e2b::get_2b_energy(mon1, mon2, nm, xyz1, xyz2);
@@ -967,11 +963,9 @@ TEST_CASE("energy2b::get_2b_energy") {
     }
 
     SECTION("ar-cs") {
-        std::vector<double> xyz1 = {0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00,
-                                    0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
-        std::vector<double> xyz2 = {2.1000000000e+00, 3.2000000000e+00, 1.5000000000e+00,
-                                    2.1500000000e+01, 3.1000000000e+00, 9.0000000000e-01};
-        size_t nm = 2;
+        std::vector<double> xyz1 = {2.1000000000e+00, 3.2000000000e+00, 1.5000000000e+00};
+        std::vector<double> xyz2 = {0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
+        size_t nm = 1;
         std::string mon1 = "ar";
         std::string mon2 = "cs+";
 
@@ -979,15 +973,13 @@ TEST_CASE("energy2b::get_2b_energy") {
         std::vector<double> grad2(xyz2.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = -3.9545704132e-01;
+        double expected_energy = -1.7617588048e-01;
 
-        std::vector<double> grad1_expected = {-3.1162849344e-01, -4.7486246619e-01, -2.2259178103e-01,
-                                              0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00};
-        std::vector<double> grad2_expected = {3.1162849344e-01, 4.7486246619e-01, 2.2259178103e-01,
-                                              0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
-        std::vector<double> virial_expected = {-6.5441983622e-01, -9.9721117901e-01, -4.6744274016e-01,
-                                               -9.9721117901e-01, -1.5195598918e+00, -7.1229369929e-01,
-                                               -4.6744274016e-01, -7.1229369929e-01, -3.3388767154e-01};
+        std::vector<double> grad1_expected = {-5.5837108499e-02, -8.5085117712e-02, -3.9883648928e-02};
+        std::vector<double> grad2_expected = {5.5837108499e-02, 8.5085117712e-02, 3.9883648928e-02};
+        std::vector<double> virial_expected = {1.1725792785e-01, 1.7867874720e-01, 8.3755662748e-02,
+                                               1.7867874720e-01, 2.7227237668e-01, 1.2762767657e-01,
+                                               8.3755662748e-02, 1.2762767657e-01, 5.9825473392e-02};
 
         SECTION("No gradients") {
             double e = e2b::get_2b_energy(mon1, mon2, nm, xyz1, xyz2);
