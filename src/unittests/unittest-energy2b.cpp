@@ -820,7 +820,7 @@ TEST_CASE("energy2b::get_2b_energy") {
     SECTION("ar-ar") {
         std::vector<double> xyz1 = {2.1000000000e+00, 3.2000000000e+00, 1.5000000000e+00};
         std::vector<double> xyz2 = {-1.0000000000e+00, -2.0000000000e+00, -3.0000000000e+00};
-        size_t nm = 2;
+        size_t nm = 1;
         std::string mon1 = "ar";
         std::string mon2 = "ar";
 
