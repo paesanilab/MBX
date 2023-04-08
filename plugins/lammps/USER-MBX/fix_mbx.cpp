@@ -31,9 +31,10 @@
 #include "citeme.h"
 #include "error.h"
 #include "universe.h"
+#include "modify.h"
 
 #define _MAX_SIZE_MOL_NAME 10
-#define _MAX_ATOMS_PER_MONOMER 5
+#define _MAX_ATOMS_PER_MONOMER 8
 #define SMALL 1.0e-4
 
 //#define _DEBUG
@@ -57,29 +58,57 @@ static const char cite_fix_mbx[] =
 /* ---------------------------------------------------------------------- */
 
 FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
+    // Expected arguments:
+    // all mbx n imin1 imax1 mon1_label imin2 imax2 mon2_label ... json mbx.json
+    // n -> number of monomer types
+    // iminX -> initial atom type for mon type monX_label
+    // imaxX -> final atom type for mon type monX_label
+
     if (lmp->citeme) lmp->citeme->add(cite_fix_mbx);
 
     me = comm->me;
     nprocs = comm->nprocs;
 
-    if (narg < 5) error->all(FLERR, "Illegal fix mbx command");
+    if (narg < 6) error->all(FLERR, "Illegal fix mbx command");
 
     num_mol_types = utils::inumeric(FLERR, arg[3], false, lmp);
 
     if (num_mol_types < 1) error->all(FLERR, "Illegal fix mbx command");
 
-    num_mols = NULL;
+    // num_mols = NULL;
     num_atoms_per_mol = NULL;
     mol_names = NULL;
+    lower_atom_type_index_in_mol = NULL;
+    higher_atom_type_index_in_mol = NULL;
 
-    memory->create(num_mols, num_mol_types, "fixmbx:num_mols");
+    // memory->create(num_mols, num_mol_types, "fixmbx:num_mols");
     memory->create(num_atoms_per_mol, num_mol_types, "fixmbx:num_atoms_per_mol");
     memory->create(mol_names, num_mol_types, _MAX_SIZE_MOL_NAME, "fixmbx:mol_names");
+    memory->create(lower_atom_type_index_in_mol, num_mol_types, "fixmbx:lower_atom_type_index_in_mol");
+    memory->create(higher_atom_type_index_in_mol, num_mol_types, "fixmbx:higher_atom_type_index_in_mol");
+    // TODO this instruction limits the number of atoms in a konomer to _MAX_ATOMS_PER_MONOMER
+    memory->create(order_in_mol, num_mol_types, _MAX_ATOMS_PER_MONOMER, "fixmbx:order_in_mol");
 
+    // int iarg = 4;
+    // for (int i = 0; i < num_mol_types; ++i) {
+    //     num_mols[i] = utils::inumeric(FLERR, arg[iarg++], false, lmp);
+    //     strcpy(mol_names[i], arg[iarg++]);
+    // }
+
+    // Extract information about min and max indexes
     int iarg = 4;
     for (int i = 0; i < num_mol_types; ++i) {
-        num_mols[i] = utils::inumeric(FLERR, arg[iarg++], false, lmp);
         strcpy(mol_names[i], arg[iarg++]);
+        lower_atom_type_index_in_mol[i] = utils::inumeric(FLERR, arg[iarg++], false, lmp);
+        higher_atom_type_index_in_mol[i] = utils::inumeric(FLERR, arg[iarg++], false, lmp);
+        int nat = utils::inumeric(FLERR, arg[iarg++], false, lmp);
+        if (nat > _MAX_ATOMS_PER_MONOMER)
+            error->all(FLERR,
+                       "num_atoms_per_mol > _MAX_ATOMS_PER_MONOMER : did developer correctly add support for monomer?");
+        // TDOD add flag to check consistency
+        for (int j = 0; j < nat; j++) {
+            order_in_mol[i][j] = utils::inumeric(FLERR, arg[iarg++], false, lmp);
+        }
     }
 
     // process remaining optional keywords
@@ -107,8 +136,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
         iarg++;
     }
 
-    mol_offset = NULL;
-    memory->create(mol_offset, num_mol_types + 1, "fixmbx:mol_offset");
+    // mol_offset = NULL;
+    // memory->create(mol_offset, num_mol_types + 1, "fixmbx:mol_offset");
 
     // assign # of atoms per molecule based on molecule name
     // -- use this as first pass whether molecule supported by MBX
@@ -126,27 +155,27 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
 
     // check that total number of atoms matches what is expected
 
-    int na = 0;
-    for (int i = 0; i < num_mol_types; ++i) na += num_mols[i] * num_atoms_per_mol[i];
+    // int na = 0;
+    // for (int i = 0; i < num_mol_types; ++i) na += num_mols[i] * num_atoms_per_mol[i];
 
-    mol_offset[0] = 0;
-    mol_offset[1] = num_mols[0] * num_atoms_per_mol[0];
-    for (int i = 1; i < num_mol_types; ++i) mol_offset[i + 1] = mol_offset[i] + num_mols[i] * num_atoms_per_mol[i];
+    // mol_offset[0] = 0;
+    // mol_offset[1] = num_mols[0] * num_atoms_per_mol[0];
+    // for (int i = 1; i < num_mol_types; ++i) mol_offset[i + 1] = mol_offset[i] + num_mols[i] * num_atoms_per_mol[i];
 
-    num_molecules = 0;
-    for (int i = 0; i < num_mol_types; ++i) num_molecules += num_mols[i];
+    // num_molecules = 0;
+    // for (int i = 0; i < num_mol_types; ++i) num_molecules += num_mols[i];
 
-    if (screen && comm->me == 0) {
-        if (use_json) fprintf(screen, "\n[MBX] Using json_file= %s\n", json_file);
-        fprintf(screen, "[MBX] # molecule types= %i\n", num_mol_types);
-        fprintf(screen, "[MBX] # molecules=      %i\n", num_molecules);
-        for (int i = 0; i < num_mol_types; ++i)
-            fprintf(screen, "[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n", i, num_mols[i],
-                    mol_names[i], mol_offset[i]);
-        fprintf(screen, "\n");
-    }
+    // if (screen && comm->me == 0) {
+    //     if (use_json) fprintf(screen, "\n[MBX] Using json_file= %s\n", json_file);
+    //     fprintf(screen, "[MBX] # molecule types= %i\n", num_mol_types);
+    //     fprintf(screen, "[MBX] # molecules=      %i\n", num_molecules);
+    //     for (int i = 0; i < num_mol_types; ++i)
+    //         fprintf(screen, "[MBX]   i= %i  # of molecules= %i  name= '%4s'  offset= %i\n", i, num_mols[i],
+    //                 mol_names[i], mol_offset[i]);
+    //     fprintf(screen, "\n");
+    // }
 
-    if (na != atom->natoms) error->all(FLERR, "Inconsistent # of atoms");
+    // if (na != atom->natoms) error->all(FLERR, "Inconsistent # of atoms");
 
     mbx_mpi_enabled = true;
     mbx_aspc_enabled = false;
@@ -161,8 +190,12 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     mol_type = NULL;
     mol_anchor = NULL;
     mol_local = NULL;
+    mol_order = NULL;
 
     grow_arrays(atom->nmax);
+
+    // MRR Call function to fill up arrays
+    mbx_fill_system_information_from_atom();
 
     atom->add_callback(0);
     atom->add_callback(1);
@@ -283,9 +316,9 @@ FixMBX::~FixMBX() {
 
     if (print_dipoles) memory->destroy(mbx_dip);
 
-    memory->destroy(mol_offset);
+    // memory->destroy(mol_offset);
     memory->destroy(mol_names);
-    memory->destroy(num_mols);
+    // memory->destroy(num_mols);
 
     // unregister callbacks to this fix from Atom class
 
@@ -295,6 +328,9 @@ FixMBX::~FixMBX() {
     memory->destroy(mol_local);
     memory->destroy(mol_type);
     memory->destroy(mol_anchor);
+    memory->destroy(lower_atom_type_index_in_mol);
+    memory->destroy(higher_atom_type_index_in_mol);
+    memory->destroy(order_in_mol);
 
     if (ptr_mbx) delete ptr_mbx;
 
@@ -389,11 +425,114 @@ void FixMBX::init() {
 
 /* ---------------------------------------------------------------------- */
 
+void FixMBX::mbx_fill_system_information_from_atom() {
+    // mol_type, mol_anchor
+    const int nlocal = atom->nlocal;
+    const int nghost = atom->nghost;
+    const int nall = nlocal + nghost;
+
+    // printf("\n[MBX] (%i,%i) Inside mbx_fill_system_information_from_atom() natoms = %i \n", universe->iworld, me,
+    // atom->natoms);
+
+    bigint natoms = atom->natoms;
+
+    tagint *tag = atom->tag;
+    int *molecule = atom->molecule;
+    double **x = atom->x;
+
+    int mtype = -1;
+    for (int i = 0; i < nall; ++i) {
+        // Assign mol_type
+        for (int j = 0; j < num_mol_types; ++j)
+            if (atom->type[i] >= lower_atom_type_index_in_mol[j] and
+                atom->type[i] <= higher_atom_type_index_in_mol[j]) {
+                mol_type[i] = j;
+                mtype = j;
+                break;
+                // If j is max and no type has been found, types in mbx fix do not match types in data file
+            } else if (j == num_mol_types - 1) {
+                error->all(FLERR, "The atom types in fix mbx do not match the atom types in the data file");
+            }
+    }
+
+    // Idea of this loop: fill an array that will say the position
+    // of each atom in the monomer
+    // PROBLEM CHRIS: no idea how to get when mroe than 1 rank is involved
+
+    //    bigint itag = 1;
+    //    while( itag < natoms+1) {
+    //        int indx = atom->map(itag);
+    //        //if (indx < 0) continue;
+    //        mol_order[indx] = 1;
+    //        int mtype = mol_type[indx];
+    //        bool is_ext = strcmp("dp1", mol_names[mtype]) == 0;
+    //        int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
+    //        for (int j = 1; j < na; j++) {
+    //            mol_order[atom->map(itag+j)] = j+1;
+    //        }
+    //        itag += na;
+    //    }
+    //
+    //    // Tag must be na at this point:
+    //    if (itag != natoms+1) error->all(FLERR, "Inconsisten number of atoms in
+    //    mbx_fill_system_information_from_atom()");
+
+    // Reset anchors
+    std::fill(mol_anchor, mol_anchor + nall, 0);
+
+    for (int i = 0; i < nall; ++i) {
+        // Assign anchor TODO careful, not necessarily true
+        // Create another peratom property -> index within molecules
+        tagint itag = tag[i];
+        int mtype = mol_type[i];
+        bool is_ext = false;
+        int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
+        if (is_ext) {
+            mol_anchor[i] = 1;
+            continue;
+        }
+
+        bool isanchor = true;
+        for (int j = 0; j < na; j++) {
+            int idx = atom->map(tag[i] + j);
+            if (idx < 0) {
+                isanchor = false;
+                break;
+            }
+
+            isanchor = isanchor and atom->type[idx] == order_in_mol[mtype][j];
+            if (!isanchor) break;
+        }
+
+        if (isanchor) mol_anchor[i] = 1;
+    }
+}
+
+/* ---------------------------------------------------------------------- */
+
 void FixMBX::setup_post_neighbor() {
 #ifdef _DEBUG
     printf("\n[MBX] (%i,%i) Inside setup_post_neighbor()\n", universe->iworld, me);
+    printf("\n[MBX] (%i,%i) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me, atom->nlocal,
+           atom->nghost, atom->nmax);
 #endif
 
+    // Figure out if there is a gcmc fix somewhere
+    has_gcmc = false;
+    int ifix = -1;
+    for (int i = 0; i < modify->nfix; ++i)
+        if (strcmp(modify->fix[i]->style, "gcmc") == 0) {
+            if (ifix == -1)
+                ifix = i;
+            else
+                error->all(FLERR, "Only one GCMC fix instance allowed to be active");
+        }
+    if (ifix != -1) has_gcmc = true;
+
+    grow_arrays(atom->nmax);
+
+    // MRR Call function to fill up arrays
+    mbx_fill_system_information_from_atom();
     post_neighbor();
 
     first_step = false;
@@ -416,33 +555,42 @@ void FixMBX::post_neighbor() {
     const int nghost = atom->nghost;
     const int nall = nlocal + nghost;
 
+#ifdef _DEBUG
+    printf("\n[MBX] (%i,%i) (post neighbor) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me,
+           atom->nlocal, atom->nghost, atom->nmax);
+#endif
+
     tagint *tag = atom->tag;
     int *molecule = atom->molecule;
     double **x = atom->x;
 
+    mbx_fill_system_information_from_atom();
+
     // do we need to pre-compute and track molecule types?
 
-    for (int i = 0; i < nall; ++i) {
-        const int id = tag[i];
+    // MRR not needed anymore
+    // for (int i = 0; i < nall; ++i) {
+    //    const int id = tag[i];
 
-        for (int j = 0; j < num_mol_types; ++j)
-            if (id <= mol_offset[j + 1]) {
-                mol_type[i] = j;
-                break;
-            }
-    }
+    //    for (int j = 0; j < num_mol_types; ++j)
+    //        if (id <= mol_offset[j + 1]) {
+    //            mol_type[i] = j;
+    //            break;
+    //        }
+    //}
 
     // do we need to pre-compute and track anchor-atoms?
 
-    for (int i = 0; i < nall; ++i) {
-        const int mol_id = molecule[i];
-        const int mtype = mol_type[i];
+    // MRR not needed anymore
+    // for (int i = 0; i < nall; ++i) {
+    //    const int mol_id = molecule[i];
+    //    const int mtype = mol_type[i];
 
-        if ((tag[i] - 1 - mol_offset[mtype]) % num_atoms_per_mol[mtype] == 0)
-            mol_anchor[i] = 1;
-        else
-            mol_anchor[i] = 0;
-    }
+    //    if ((tag[i] - 1 - mol_offset[mtype]) % num_atoms_per_mol[mtype] == 0)
+    //        mol_anchor[i] = 1;
+    //    else
+    //        mol_anchor[i] = 0;
+    //}
 
     //    printf("\n[MBX] Deleting and Recreating MBX objects\n\n");
 
@@ -535,7 +683,13 @@ void FixMBX::init_storage() {}
 
 void FixMBX::pre_force(int /*vflag*/) {
     // update coordinates in MBX objects
-
+#ifdef _DEBUG
+    printf("\n[MBX] (%i,%i) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me, atom->nlocal,
+           atom->nghost, atom->nmax);
+#endif
+    if (has_gcmc) {
+        post_neighbor();
+    }
     mbx_update_xyz();
     if (mbx_mpi_enabled)
         mbx_update_xyz_local();
@@ -894,6 +1048,7 @@ void FixMBX::grow_arrays(int nmax) {
     memory->grow(mol_type, nmax, "fixmbx:mol_type");
     memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
     memory->grow(mol_local, nmax, "fixmbx:mol_local");
+    memory->grow(mol_order, nmax, "fixmbx:mol_order");
 
     if (!mbx_mpi_enabled) {
         memory->grow(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
@@ -979,6 +1134,11 @@ void FixMBX::mbx_init() {
     tagint *tag = atom->tag;
     double **x = atom->x;
     double *q = atom->q;
+
+#ifdef _DEBUG
+    printf("\n[MBX] (%i,%i) (mbx_init) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me,
+           atom->nlocal, atom->nghost, atom->nmax);
+#endif
 
     // #ifdef _DEBUG
     //     MPI_Barrier(universe->uworld);
@@ -1174,6 +1334,11 @@ void FixMBX::mbx_init_local() {
     double **x = atom->x;
     double *q = atom->q;
 
+#ifdef _DEBUG
+    printf("\n[MBX] (%i,%i) (mbx_init) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me,
+           atom->nlocal, atom->nghost, atom->nmax);
+#endif
+
     mbx_num_atoms_local = 0;
     mbx_num_ext_local = 0;
 
@@ -1188,6 +1353,9 @@ void FixMBX::mbx_init_local() {
     // remove ghost monomers that are periodic images of local monomer
     // -- just an artifact for small systems and PBC
     // -- should be able to remove this
+
+    // Look for atoms that are local (0<i<nlocal)
+    // Then update tag+j to make local if atom is local and anchor
 
     for (int i = nlocal; i < nall; ++i) {
         if (mol_anchor[i]) {
@@ -1249,6 +1417,7 @@ void FixMBX::mbx_init_local() {
 
             tagint anchor = tag[i];
 
+            // TODO fix this if monomer becomes too lurge
             int amap[_MAX_ATOMS_PER_MONOMER];
             bool add_monomer = true;
             for (int j = 1; j < na; ++j) {

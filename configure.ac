@@ -217,8 +217,8 @@ if test $mpi == true; then
     elif test "$MPIROOT" != "" ; then
         mpi_dir="$MPIROOT"
     fi
-    MBX_CHECK_PACKAGE([mpi_dir])
-    AC_CHECK_LIB([mpi],[MPI_COMM_SIZE],[
+    MBX_CHECK_PACKAGE([$mpi_dir])
+    AC_CHECK_LIB([mpi],[MPI_Init],[
         CPPFLAGS="$CPPFLAGS -DHAVE_MPI=1"
         LIBS="-lmpi $LIBS"
     ])

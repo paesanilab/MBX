@@ -43,7 +43,7 @@ variable        etot  equal c_mbx[8]
 #velocity        all zero linear
 #velocity        all zero angular
 
-fix             1 all mbx 2 285 ch4 285 h2o json mbx.json
+fix             1 all mbx 2 ch4 1 2 5 1 2 2 2 2 h2o 3 4 3 3 4 4 json mbx.json
 fix             2 all rigid/npt/small molecule temp ${T} ${T} $(50.0*dt) iso ${P} ${P} $(500.0*dt)
 
 thermo_style	custom step time temp etotal ke pe enthalpy density lx ly lz vol pxx pyy pzz press
