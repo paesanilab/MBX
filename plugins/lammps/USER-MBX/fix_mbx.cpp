@@ -117,7 +117,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     json_file = NULL;
     print_settings = 0;
     print_dipoles = false;
-    aspc_step_reset = 5000;
+    aspc_step_reset = 1000;
 
     while (iarg < narg) {
         if (strcmp(arg[iarg], "json") == 0) {
