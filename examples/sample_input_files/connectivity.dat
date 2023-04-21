@@ -1,5 +1,0 @@
-co2
-bond 1 2 morse 189.05 2.57 1.16
-bond 1 3 morse 189.05 2.57 1.16
-angle 2 1 3 harm 87.87 3.141592
-ENDMON
