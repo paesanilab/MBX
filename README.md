@@ -91,11 +91,22 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * [J. Chem. Theory Comput. 10, 1599 (2014)](https://doi.org/10.1021/ct500079y)
   * [J. Chem. Theory Comput. 10, 2906 (2014)](https://doi.org/10.1021/ct5004115)
   * [J. Chem. Phys. 145, 194504 (2016)](https://doi.org/10.1063/1.4967719)
+  * [Acc. Chem. Res. 49, 1844 (2016)](https://doi.org/10.1021/acs.accounts.6b00285)
 - MB-nrg PEFs for alkali-metal ions in water
   * [J. Chem. Phys. 147, 161715 (2017)](https://doi.org/10.1063/1.4993213)
   * [J. Phys. Chem. A 122, 5811 (2018)](https://doi.org/10.1021/acs.jpca.8b04106)
+  * [J. Phys. Chem. Lett. 10, 406 (2019)](https://doi.org/10.1021/acs.jpclett.8b03829)
+  * [J. Chem. Phys. 153, 044306 (2020)](https://doi.org/10.1063/5.0013101)
+  * [J. Chem. Theory Comput. 16, 3055 (2020)](https://doi.org/10.1021/acs.jctc.0c00082)
+  * [J. Phys. Chem. B. 126, 9349 (2022)](https://doi.org/10.1021/acs.jpcb.2c05674)
 - MB-nrg PEFs for halide ions in water
   * [J. Chem. Theory Comput. 12, 2698 (2016)](https://doi.org/10.1063/5.0059445)
+  * [J. Chem. Phys. 148, 102321 (2018)](https://doi.org/10.1063/1.5005540)
+  * [J. Comp. Theory. Comput. 15, 2983 (2019)](https://doi.org/10.1021/acs.jctc.9b00064)
+  * [Nat. Chem. 11, 367 (2019)](https://www.nature.com/articles/s41557-019-0220-2)
+  * [J. Phys. Chem. Lett. 10, 2823 (2019)](https://doi.org/10.1021/acs.jpclett.9b00899)
+  * [J. Phys. Chem. A 123, 2843 (2019)](https://doi.org/10.1021/acs.jpca.9b00816)
+  * [Adv. Phys. X 4, 1631212 (2019)](https://doi.org/10.1080/23746149.2019.1631212)
   * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445)
   * [J. Phys. Chem. B 126, 8266 (2022)](https://doi.org/10.1021/acs.jpcb.2c04698)
 - MB-nrg PEFs for CO2 and CO2/H2O mixtures
