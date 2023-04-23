@@ -39,6 +39,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include <iostream>
 #include <utility>
+#include <iomanip>
 
 // 4B
 // =====>> BEGIN SECTION INCLUDE4B <<=====

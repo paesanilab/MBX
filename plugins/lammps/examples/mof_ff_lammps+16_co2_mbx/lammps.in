@@ -166,7 +166,7 @@ thermo_modify   flush yes
 #fix             wshake water shake 1e-5 50 0 b 14 a 24 mol h2o
 #fix		mynvt all nvt temp ${temp} ${temp} 100.0
 fix             mynpt all npt temp ${temp} ${temp} $(100.0*dt) iso ${pressure} ${pressure} $(1000.0*dt) tchain 4
-fix             1 all mbx 2 176 dp1 16 co2 json mbx.json
+fix             1 all mbx 2 dp1 1 6 1 1 co2 7 8 3 7 8 8 json mbx.json
 #fix             3 all npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
 #fix            4 mof npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
 #fix             5 water gcmc 100 100 0 0 54341 ${temp} ${mu} ${disp} mol h2o tfac_insert ${tfac} group water shake wshake

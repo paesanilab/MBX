@@ -40,7 +40,7 @@ variable        etot  equal c_mbx[8]
 
 
 fix             1 all npt temp ${T} ${T} $(1000.0*dt) iso ${P} ${P} $(4000.0*dt)
-fix             2 all mbx 2 1 na+ 277 h2o json mbx.json
+fix             2 all mbx 2 na+ 1 1 1 1 h2o 2 3 3 2 3 3 json mbx.json
 
 velocity        all create ${T} 428459 rot yes dist gaussian
 velocity        all zero linear
