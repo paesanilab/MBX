@@ -3,8 +3,9 @@
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
 # MBX v1.0
-MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFS) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
-The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. The current version of MBX includes the MB-pol PEF for water (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg PEFs for neat CO2 and CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). For more details about the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
+MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
+The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. 
+For details on the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
 MBX is periodically updated with performance improvements and the addition of other MB-nrg PEFs. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
@@ -52,7 +53,6 @@ The JSON file template is the following:
        "alpha_ewald_disp" : 0.6,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
-       "ttm_pairs" : [],
        "ignore_2b_poly" : [],
        "ignore_3b_poly" : []
    } ,
@@ -66,15 +66,14 @@ In this file:
 - `box` is either a 9 element list, comma-separated and limited by brackets with the 3 vectors of the box: ax, ay, az, bx, by, bz, cx, cy, cz, or an empty list if one wants to run gas-phase calculations.
 - `twobody_cutoff` is the distance at which the 2-body interactions will be cut in the real space. If you are using polynomials, that should be the largest polynomial cutoff that you are using (usually 9.0 Angstrom) in periodic boundary conditions. In gas phase calculations, that should be set to a large number so the real space electrostatics and dispersion are properly calculated and fully accounted for.
 - `threebody_cutoff` is the cutoff for the 3-body polynomials. If only water is used, one can set that to 4.5, but if alkali metal ions or halides are used, it should be set to the maximum cutoff in any of the trimers used (7.0).
-- `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. 
+- `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. A value of 1E-08 is usually small enough (1E-06 may also be sufficient in some cases but, if it is used, it is recommended to verity the convergence of both structural and thermodynamic properties relative to simulations carried out with 1E-08). However, if the dipole solver used is aspc, the magnitude of the tolerance may have to be decreased up to 1E-10 or 1E-12. It is recommended to run a few thousand steps using aspc and cg for the dipole solver, and decide which is the dipole tolerance needed.
 - `dipole_max_it` is the maximum number of iterations allowed in the dipole iterative method calculation. If the number of iterations exceeds this value, MBX will throw an error message saying that the dipoles have diverged.
-- `dipole_method` is the method adopted to calculate the induced dipoles. Current options are `iter` (iterative), `cg` (conjugate gradient, faster than iter), and `aspc` (always stable predictor-corrector), which should only be used in simulations. Since `aspc` is currently not interfaced with LAMMPS, the best option to run simulations with LAMMPS is to use `cg` with `dipole_tolerance` = 1E-08 (1E-06 may also be sufficient in some cases but, if it is used, it is recommended to verity the convergence of both structural and thermodynamic properties relative to simulations carried out with 1E-08).
+- `dipole_method` is the method adopted to calculate the induced dipoles. Current options are `iter` (iterative), `cg` (conjugate gradient, faster than iter), and `aspc` (always stable predictor-corrector), which should only be used in simulations. All three solvers are implemented and available through i-PI or LAMMPS. 
 - `alpha_ewald_XX` is the alpha used in the reciprocal space. It should be set to 0 when running gas-phase calculations/simulations.
 - `grid_density_XX` is the number of grid points density.
 - `spline_order_XX` is the order of the splines used for interpolation.
-- `ttm_pairs` a list of 2 element lists with the monomer pairs for which the repulsion will be calculated using a Buckingham potential. If a pure TTM-nrg calculation is being performed, `ignore_2b_poly` should contain the same pairs as `ttm_pairs`. Example: `"ttm_pairs" : [["f","h2o"],["na","h2o"]]`
-- `ignore_2b_poly` has the same format as `ttm_pairs`, but this will make MBX not to calculate the polynomials for the pairs specified.
-- `ignore_3b_poly` has a similar format as 2b, but with the difference that the list is a list of 3-element list. If a set of three monomer types is specified in this list, MBX won't add the polynomial correction of that given trimer. Example: `"ignore_3b_poly" : [["na","h2o","h2o"]]`
+- `ignore_2b_poly` a list of 2 element lists with the monomer pairs for which the 2-body polynomials will not be calculated. Example: `"ignore_2b_poly" : [["na","h2o"]]`
+- `ignore_3b_poly` has a similar format as ignore_2b_poly, but with the difference that the list is a list of 3-element list. If a set of three monomer types is specified in this list, MBX won't calculate the 3-body polynomials for that given trimer. Example: `"ignore_3b_poly" : [["na","h2o","h2o"]]`
 - `port` is used when interfacing with i-pi. It is the port that will hold the socket. Should be greater than 34500.
 - `localhost` is the name of the socket. It MUST match the name in the XML file, otherwise it will send an error saying that the socket was not found.
 
@@ -88,25 +87,36 @@ All the PEFs implemented, along with examples of input files and scripts to run 
 
 Please cite the following manuscripts if any of the following PEFs is used:
 - MB-pol
-  * [J. Chem. Theory Comput. 2013, 9, 12, 5395–5403](https://doi.org/10.1021/ct400863t)
-  * [J. Chem. Theory Comput. 2014, 10, 4, 1599–1607](https://doi.org/10.1021/ct500079y)
-  * [J. Chem. Theory Comput. 2014, 10, 8, 2906–2910](https://doi.org/10.1021/ct5004115)
+  * [J. Chem. Theory Comput. 9, 5395 (2013)](https://doi.org/10.1021/ct400863t)
+  * [J. Chem. Theory Comput. 10, 1599 (2014)](https://doi.org/10.1021/ct500079y)
+  * [J. Chem. Theory Comput. 10, 2906 (2014)](https://doi.org/10.1021/ct5004115)
   * [J. Chem. Phys. 145, 194504 (2016)](https://doi.org/10.1063/1.4967719)
+  * [Acc. Chem. Res. 49, 1844 (2016)](https://doi.org/10.1021/acs.accounts.6b00285)
 - MB-nrg PEFs for alkali-metal ions in water
-  * [Phys. Chem. Chem. Phys., 2016,18, 30334-30343](https://doi.org/10.1039/C6CP02553F) (TTM-nrg)
-  * [J. Chem. Phys. 147, 161715 (2017)](https://doi.org/10.1063/1.4993213) (MB-nrg)
-  * [J. Phys. Chem. A 2018, 122, 27, 5811–5821](https://doi.org/10.1021/acs.jpca.8b04106) (MB-nrg)
+  * [J. Chem. Phys. 147, 161715 (2017)](https://doi.org/10.1063/1.4993213)
+  * [J. Phys. Chem. A 122, 5811 (2018)](https://doi.org/10.1021/acs.jpca.8b04106)
+  * [J. Phys. Chem. Lett. 10, 406 (2019)](https://doi.org/10.1021/acs.jpclett.8b03829)
+  * [J. Chem. Phys. 153, 044306 (2020)](https://doi.org/10.1063/5.0013101)
+  * [J. Chem. Theory Comput. 16, 3055 (2020)](https://doi.org/10.1021/acs.jctc.0c00082)
+  * [J. Phys. Chem. B. 126, 9349 (2022)](https://doi.org/10.1021/acs.jpcb.2c05674)
 - MB-nrg PEFs for halide ions in water
-  * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445) (Chloride MB-nrg)
-  * [J. Phys. Chem. B 2022, 126, 41, 8266–8278](https://doi.org/10.1021/acs.jpcb.2c04698) (Bromide & Iodide MB-nrg)
+  * [J. Chem. Theory Comput. 12, 2698 (2016)](https://doi.org/10.1063/5.0059445)
+  * [J. Chem. Phys. 148, 102321 (2018)](https://doi.org/10.1063/1.5005540)
+  * [J. Comp. Theory. Comput. 15, 2983 (2019)](https://doi.org/10.1021/acs.jctc.9b00064)
+  * [Nat. Chem. 11, 367 (2019)](https://www.nature.com/articles/s41557-019-0220-2)
+  * [J. Phys. Chem. Lett. 10, 2823 (2019)](https://doi.org/10.1021/acs.jpclett.9b00899)
+  * [J. Phys. Chem. A 123, 2843 (2019)](https://doi.org/10.1021/acs.jpca.9b00816)
+  * [Adv. Phys. X 4, 1631212 (2019)](https://doi.org/10.1080/23746149.2019.1631212)
+  * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445)
+  * [J. Phys. Chem. B 126, 8266 (2022)](https://doi.org/10.1021/acs.jpcb.2c04698)
 - MB-nrg PEFs for CO2 and CO2/H2O mixtures
-  * [J. Chem. Theory Comput. 2020, 16, 4, 2246–2257](https://doi.org/10.1021/acs.jctc.9b01175)
-  * [J. Chem. Phys. 2022, 156, 104503](https://doi.org/10.1063/5.0080061)
+  * [J. Chem. Theory Comput. 16, 2246 (2020)](https://doi.org/10.1021/acs.jctc.9b01175)
+  * [J. Chem. Phys. 156, 104503 (2022)](https://doi.org/10.1063/5.0080061)
 - MB-nrg PEFs for CH4 and CH4/H2O mixtures
-  * [J. Phys. Chem. B 2020, 124, 49, 11207–11221](https://doi.org/10.1021/acs.jpcb.0c08728)
-  * [J. Chem. Phys. 2022, 156, 194504](https://doi.org/10.1063/5.0089773)
+  * [J. Phys. Chem. B 124, 11207 (2020)](https://doi.org/10.1021/acs.jpcb.0c08728)
+  * [J. Chem. Phys. 156, 194504 (2022)](https://doi.org/10.1063/5.0089773)
 - MB-nrg PEF for N2O5 in water
-  * [J. Chem. Theory Comput. 2021, 17, 7, 3931–3945](https://doi.org/10.1021/acs.jctc.1c00069)
+  * [J. Chem. Theory Comput. 17, 3931 (2021)](https://doi.org/10.1021/acs.jctc.1c00069)
 
 ## Interfaces
 ### Fortran90 and Python
