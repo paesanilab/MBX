@@ -72,7 +72,6 @@ In this file:
 - `alpha_ewald_XX` is the alpha used in the reciprocal space. It should be set to 0 when running gas-phase calculations/simulations.
 - `grid_density_XX` is the number of grid points density.
 - `spline_order_XX` is the order of the splines used for interpolation.
-- `ttm_pairs` a list of 2 element lists with the monomer pairs for which the repulsion will be calculated using a Buckingham potential. If a pure TTM-nrg calculation is being performed, `ignore_2b_poly` should contain the same pairs as `ttm_pairs`. Example: `"ttm_pairs" : [["f","h2o"],["na","h2o"]]` If this option will be used, the software should be configured with the option `--enable-ttmnrg`. 
 - `ignore_2b_poly` a list of 2 element lists with the monomer pairs for which the 2-body polynomials will not be calculated. Example: ``"ignore_2b_poly" : [["na","h2o"]]`
 - `ignore_3b_poly` has a similar format as ignore_2b_poly, but with the difference that the list is a list of 3-element list. If a set of three monomer types is specified in this list, MBX won't calculate the 3-body polynomials for that given trimer. Example: `"ignore_3b_poly" : [["na","h2o","h2o"]]`
 - `port` is used when interfacing with i-pi. It is the port that will hold the socket. Should be greater than 34500.
