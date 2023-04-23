@@ -3,9 +3,10 @@
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
 # MBX v1.0
-MBX is a C++ software that provides an interface for MD drivers, such as LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org), to perform classical and path-integral molecular dynamics simulations using our many-body potential energy functions. The current version of MBX includes the MB-pol many-body water potential (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg many-body potentials for neat CO2 and CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). MBX also includes the TTM-nrg potentials for the halide (https://doi.org/10.1021/acs.jpcb.5b09562) and alkali-metal (https://doi.org/10.1039/C6CP02553F) ions in water. The MB-nrg many-body potentials for the halide (https://doi.org/10.1021/acs.jctc.6b00302) and alkali-metal (https://doi.org/10.1063/1.4993213) ions in water will become available in the next release of MBX. For more details about the MB-pol, MB-nrg, and TTM-nrg potentials in MBX, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
+MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFS) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
+The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. The current version of MBX includes the MB-pol PEF for water (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg PEFs for neat CO2 and CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). For more details about the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
-MBX is periodically updated with performance improvements and the addition of other many-body potentials. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
+MBX is periodically updated with performance improvements and the addition of other MB-nrg PEFs. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to successfully install the software
@@ -63,8 +64,8 @@ The JSON file template is the following:
 ```
 In this file:
 - `box` is either a 9 element list, comma-separated and limited by brackets with the 3 vectors of the box: ax, ay, az, bx, by, bz, cx, cy, cz, or an empty list if one wants to run gas-phase calculations.
-- `twobody_cutoff` is the distance at which the 2b interactions will be cut in the real space. If you are using polynomials, that should be the largest polynomial cutoff that you are using (usually 9.0 Angstrom) in periodic boundary conditions. In gas phase calculations, that should be set to a large number so the real space electrostatics and dispersion are properly calculated and fully accounted for.
-- `threebody_cutoff` is the cutoff for the 3b polynomials. If only water is used, one can set that to 4.5, but if alkali metal ions or halides are used, it should be set to the maximum cutoff in any of the trimers used (7.0).
+- `twobody_cutoff` is the distance at which the 2-body interactions will be cut in the real space. If you are using polynomials, that should be the largest polynomial cutoff that you are using (usually 9.0 Angstrom) in periodic boundary conditions. In gas phase calculations, that should be set to a large number so the real space electrostatics and dispersion are properly calculated and fully accounted for.
+- `threebody_cutoff` is the cutoff for the 3-body polynomials. If only water is used, one can set that to 4.5, but if alkali metal ions or halides are used, it should be set to the maximum cutoff in any of the trimers used (7.0).
 - `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. 
 - `dipole_max_it` is the maximum number of iterations allowed in the dipole iterative method calculation. If the number of iterations exceeds this value, MBX will throw an error message saying that the dipoles have diverged.
 - `dipole_method` is the method adopted to calculate the induced dipoles. Current options are `iter` (iterative), `cg` (conjugate gradient, faster than iter), and `aspc` (always stable predictor-corrector), which should only be used in simulations. Since `aspc` is currently not interfaced with LAMMPS, the best option to run simulations with LAMMPS is to use `cg` with `dipole_tolerance` = 1E-08 (1E-06 may also be sufficient in some cases but, if it is used, it is recommended to verity the convergence of both structural and thermodynamic properties relative to simulations carried out with 1E-08).
@@ -95,7 +96,7 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * [Phys. Chem. Chem. Phys., 2016,18, 30334-30343](https://doi.org/10.1039/C6CP02553F) (TTM-nrg)
   * [J. Chem. Phys. 147, 161715 (2017)](https://doi.org/10.1063/1.4993213) (MB-nrg)
   * [J. Phys. Chem. A 2018, 122, 27, 5811–5821](https://doi.org/10.1021/acs.jpca.8b04106) (MB-nrg)
-- Halide Ions and water
+- MB-nrg PEFs for halide ions in water
   * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445) (Chloride MB-nrg)
   * [J. Phys. Chem. B 2022, 126, 41, 8266–8278](https://doi.org/10.1021/acs.jpcb.2c04698) (Bromide & Iodide MB-nrg)
 - MB-nrg PEFs for CO2 and CO2/H2O mixtures
@@ -106,9 +107,6 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * [J. Chem. Phys. 2022, 156, 194504](https://doi.org/10.1063/5.0089773)
 - MB-nrg PEF for N2O5 in water
   * [J. Chem. Theory Comput. 2021, 17, 7, 3931–3945](https://doi.org/10.1021/acs.jctc.1c00069)
-- TTM-nrg PEFs for halide and alkali-metal ions in water
-  * [J. Phys. Chem. B 2016, 120, 1822–1832](https://doi.org/10.1021/acs.jpcb.5b09562)
-  * [Phys. Chem. Chem. Phys. 2016,18, 30334-30343](https://doi.org/10.1039/C6CP02553F)
 
 ## Interfaces
 ### Fortran90 and Python
