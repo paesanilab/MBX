@@ -3,9 +3,10 @@
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
 # MBX v1.0
-MBX is a C++ software that provides an interface for MD drivers, such as LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org), to perform classical and path-integral molecular dynamics simulations using our many-body potential energy functions. The current version of MBX includes the MB-pol many-body water potential (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg many-body potentials for neat CO2 and CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). MBX also includes the TTM-nrg potentials for the halide (https://doi.org/10.1021/acs.jpcb.5b09562) and alkali-metal (https://doi.org/10.1039/C6CP02553F) ions in water. The MB-nrg many-body potentials for the halide (https://doi.org/10.1021/acs.jctc.6b00302) and alkali-metal (https://doi.org/10.1063/1.4993213) ions in water will become available in the next release of MBX. For more details about the MB-pol, MB-nrg, and TTM-nrg potentials in MBX, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
+MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFS) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
+The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. The current version of MBX includes the MB-pol PEF for water (https://doi.org/10.1021/ct400863t, https://doi.org/10.1021/ct500079y, https://pubs.acs.org/doi/abs/10.1021/ct5004115) and the MB-nrg PEFs for neat CO2 and CO2/H2O mixtures (https://doi.org/10.1021/acs.jctc.9b01175, https://doi.org/10.1063/5.0080061), and neat CH4 and CH4/H2O mixtures (https://doi.org/10.1021/acs.jpcb.0c08728). For more details about the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
-MBX is periodically updated with performance improvements and the addition of other many-body potentials. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
+MBX is periodically updated with performance improvements and the addition of other MB-nrg PEFs. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to successfully install the software
@@ -87,28 +88,25 @@ All the PEFs implemented, along with examples of input files and scripts to run 
 
 Please cite the following manuscripts if any of the following PEFs is used:
 - MB-pol
-  * [J. Chem. Theory Comput. 2013, 9, 12, 5395–5403](https://doi.org/10.1021/ct400863t)
-  * [J. Chem. Theory Comput. 2014, 10, 4, 1599–1607](https://doi.org/10.1021/ct500079y)
-  * [J. Chem. Theory Comput. 2014, 10, 8, 2906–2910](https://doi.org/10.1021/ct5004115)
+  * [J. Chem. Theory Comput. 9, 5395 (2013)](https://doi.org/10.1021/ct400863t)
+  * [J. Chem. Theory Comput. 10, 1599 (2014)](https://doi.org/10.1021/ct500079y)
+  * [J. Chem. Theory Comput. 10, 2906 (2014)](https://doi.org/10.1021/ct5004115)
   * [J. Chem. Phys. 145, 194504 (2016)](https://doi.org/10.1063/1.4967719)
 - MB-nrg PEFs for alkali-metal ions in water
-  * [Phys. Chem. Chem. Phys., 2016,18, 30334-30343](https://doi.org/10.1039/C6CP02553F) (TTM-nrg)
-  * [J. Chem. Phys. 147, 161715 (2017)](https://doi.org/10.1063/1.4993213) (MB-nrg)
-  * [J. Phys. Chem. A 2018, 122, 27, 5811–5821](https://doi.org/10.1021/acs.jpca.8b04106) (MB-nrg)
-- Halide Ions and water
-  * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445) (Chloride MB-nrg)
-  * [J. Phys. Chem. B 2022, 126, 41, 8266–8278](https://doi.org/10.1021/acs.jpcb.2c04698) (Bromide & Iodide MB-nrg)
+  * [J. Chem. Phys. 147, 161715 (2017)](https://doi.org/10.1063/1.4993213)
+  * [J. Phys. Chem. A 122, 5811 (2018)](https://doi.org/10.1021/acs.jpca.8b04106)
+- MB-nrg PEFs for halide ions in water
+  * [J. Chem. Theory Comput. 12, 2698 (2016)](https://doi.org/10.1063/5.0059445)
+  * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445)
+  * [J. Phys. Chem. B 126, 8266 (2022)](https://doi.org/10.1021/acs.jpcb.2c04698)
 - MB-nrg PEFs for CO2 and CO2/H2O mixtures
-  * [J. Chem. Theory Comput. 2020, 16, 4, 2246–2257](https://doi.org/10.1021/acs.jctc.9b01175)
-  * [J. Chem. Phys. 2022, 156, 104503](https://doi.org/10.1063/5.0080061)
+  * [J. Chem. Theory Comput. 16, 2246 (2020)](https://doi.org/10.1021/acs.jctc.9b01175)
+  * [J. Chem. Phys. 156, 104503 (2022)](https://doi.org/10.1063/5.0080061)
 - MB-nrg PEFs for CH4 and CH4/H2O mixtures
-  * [J. Phys. Chem. B 2020, 124, 49, 11207–11221](https://doi.org/10.1021/acs.jpcb.0c08728)
-  * [J. Chem. Phys. 2022, 156, 194504](https://doi.org/10.1063/5.0089773)
+  * [J. Phys. Chem. B 124, 11207 (2020)](https://doi.org/10.1021/acs.jpcb.0c08728)
+  * [J. Chem. Phys. 156, 194504 (2022)](https://doi.org/10.1063/5.0089773)
 - MB-nrg PEF for N2O5 in water
-  * [J. Chem. Theory Comput. 2021, 17, 7, 3931–3945](https://doi.org/10.1021/acs.jctc.1c00069)
-- TTM-nrg PEFs for halide and alkali-metal ions in water
-  * [J. Phys. Chem. B 2016, 120, 1822–1832](https://doi.org/10.1021/acs.jpcb.5b09562)
-  * [Phys. Chem. Chem. Phys. 2016,18, 30334-30343](https://doi.org/10.1039/C6CP02553F)
+  * [J. Chem. Theory Comput. 17, 3931 (2021)](https://doi.org/10.1021/acs.jctc.1c00069)
 
 ## Interfaces
 ### Fortran90 and Python
