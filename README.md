@@ -180,7 +180,7 @@ make
 
 A new file will be generated in `../../bin/`, called `driver`. Now we can run MD using i-PI. Go to the i-PI test folder in MBX:
 ```
-cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/1-nvt
+cd $MBX_HOME/plugins/i-pi/examples/molecular_dynamics/gas_phase/3h2o/100K/1-nvt
 ```
 
 This folder contains five files:
