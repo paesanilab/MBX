@@ -188,7 +188,7 @@ This folder contains five files:
 - `config.xyz` is the input for the coordinates for i-PI. The two files, `nrg` and `xyz`, should have exactly the same order, but the coordinates in the nrg file are not required to be the same as the ones in the XYZ file. XYZ will overwrite NRG.
 - `config.xml` is the i-PI input file. This simulation will run an NVT MD at 100K. Refer to the i-pi user manual for more information.
 - `mbx.json` is the MBX configuration file
-- `run_i-pi.sh` will run the test. Make sure you sourced the env.sh in the i-PI folder before running the test, or most likely it will fail.
+- `run_i-pi.sh` will run the test. Make sure to define $IPI_HOME as a global variable (pointing to the main folder of i-PI).
 
 These should initialize i-PI and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve`.
 ```
