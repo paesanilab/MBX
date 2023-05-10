@@ -1660,8 +1660,8 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     } else if (mon_id == "mbpbe") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 13.637419110667532;  // A
-            c6_lr[nv * natoms + fst_ind] = 6.290794862336555;   // B
-            c6_lr[nv * natoms + fst_ind] = 6.290794862336555;   // B
+            c6_lr[nv * natoms + fst_ind + 1] = 6.290794862336555;   // B
+            c6_lr[nv * natoms + fst_ind + 2] = 6.290794862336555;   // B
         }
         // Water is the only monomer which C6 does not come from qchem.
         // It comes from MB-pol (C6O = sqrt(C6OO))
