@@ -1561,7 +1561,7 @@ void FixMBX::mbx_init_local() {
             mbx_aspc_enabled = true;
 
             memory->create(aspc_dip_hist, atom->nmax, aspc_per_atom_size, "fixmbx::aspc_dip_hist");
-        } else if (!(dip_method == "cg")) {
+        } else if (!(dip_method == "cg") and !(dip_method == "iter")) {
             error->one(FLERR, "[MBX] requested dip_method not supported with LAMMPS");
         }
     }
@@ -1807,7 +1807,7 @@ void FixMBX::mbx_init_full() {
             mbx_aspc_enabled = true;
 
             memory->create(aspc_dip_hist, atom->nmax, aspc_per_atom_size, "fixmbx::aspc_dip_hist");
-        } else if (!(dip_method == "cg")) {
+        } else if (!(dip_method == "cg") and !(dip_method == "iter")) {
             error->one(FLERR, "[MBX] requested dip_method not supported with LAMMPS");
         }
     }
