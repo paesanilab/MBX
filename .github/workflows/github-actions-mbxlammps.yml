@@ -50,6 +50,7 @@ jobs:
       - name: LAMMPS-Install
         run: |
           cd $HOME
+          export MBX_HOME=${{ env.MBX_HOME }}
           git clone https://github.com/lammps/lammps.git -b stable LAMMPS
           export LAMMPS_HOME=$PWD/LAMMPS
           export GITHUB_ACTIONS_MBX_LAMMPS_FLAGS="-O0"
