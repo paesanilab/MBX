@@ -28,7 +28,7 @@ jobs:
           sudo apt-get install libgsl-dev
           sudo apt-get install autoconf -y
           sudo apt-get install g++-9 gcc-9 -y
-          sudo apt install openmpi-bin openmpi-dev openmpi-common openmpi-doc libopenmpi-dev -y
+          sudo apt install openmpi-bin libopenmpi-dev -y
 
       - name: Check out repository code
         uses: actions/checkout@v2
