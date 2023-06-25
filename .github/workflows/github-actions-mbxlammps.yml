@@ -1,0 +1,65 @@
+name: MBX testing suite
+
+on:
+  push:
+    branches:
+      - "master"
+  pull_request:
+    branches:
+      - "master"
+  schedule:
+    # Nightly tests run on master by default:
+    #   Scheduled workflows run on the latest commit on the default or base branch.
+    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
+    - cron: "0 0 * * *"
+
+jobs:
+  compile-and-test-mbx:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: install-dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y fftw3-dev
+          sudo apt-get install libgsl-dev
+          sudo apt-get install autoconf -y
+          sudo apt-get install g++-9 gcc-9 -y
+          sudo apt install openmpi-bin openmpi-dev openmpi-common openmpi-doc libopenmpi-dev -y
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
+
+      - name: run-install
+        run: |
+          ls ${{ github.workspace }}
+          rm -rf install
+          autoreconf -fi
+          ./configure --disable-optimization --enable-mpi CXX=mpicxx
+          make install
+          export MBX_HOME=$PWD
+
+      - run: echo "This job's status is ${{ job.status }}."
+
+      - name: LAMMPS-Install
+        - run: |
+          cd $HOME
+          git clone https://github.com/lammps/lammps.git -b stable LAMMPS
+          export LAMMPS_HOME=$PWD/LAMMPS
+          export GITHUB_ACTIONS_MBX_LAMMPS_FLAGS="-O0"
+          cp -r $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
+          cp $MBX_HOME/plugins/lammps/Makefile.mpi_mbx $LAMMPS_HOME/src/MAKE
+          cd $LAMMPS_HOME/src
+          cp USER-MBX/fix_mbx.cpp .
+          cp USER-MBX/pair_mbx.cpp .
+          make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+          make yes-USER-MBX
+          make mpi_mbx
+
+
+          
