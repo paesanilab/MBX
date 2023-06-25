@@ -47,7 +47,7 @@ jobs:
       - run: echo "This job's status is ${{ job.status }}."
 
       - name: LAMMPS-Install
-        - run: |
+        run: |
           cd $HOME
           git clone https://github.com/lammps/lammps.git -b stable LAMMPS
           export LAMMPS_HOME=$PWD/LAMMPS
