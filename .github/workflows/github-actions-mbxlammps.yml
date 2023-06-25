@@ -42,7 +42,8 @@ jobs:
           autoreconf -fi
           ./configure --disable-optimization --enable-mpi CXX=mpicxx
           make install
-          export MBX_HOME=$PWD
+          echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
+          
 
       - run: echo "This job's status is ${{ job.status }}."
 
