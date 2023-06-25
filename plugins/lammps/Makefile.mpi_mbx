@@ -11,15 +11,15 @@ FFTW=$(FFTW_HOME)
 # compiler/linker settings
 # specify flags and libraries needed for your compiler
 
-CC = mpiicpc
-CCFLAGS =	-g -O3 -fopenmp -std=c++11
+CC = mpicxx
+CCFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 CCFLAGS +=      -I$(MBX_INC)
 CCFLAGS +=      -I$(FFTW)/include
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
 
-LINK = mpiicpc
-LINKFLAGS =	-g -O3 -fopenmp
+LINK = mpicxx
+LINKFLAGS =	-g -O3 -fopenmp $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 LIB = 
 LIB +=          $(MBX_LIB)/libmbx.a
 SIZE =		size
