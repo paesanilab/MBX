@@ -1,4 +1,4 @@
-name: MBX testing suite
+name: MBX+LAMMPS integration test
 
 on:
   push:
