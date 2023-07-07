@@ -69,7 +69,7 @@ namespace tools {
  * @param[out] systems Vector of systems that will be filled with
  * the information in the file
  */
-void ReadNrg(char* filename, std::vector<bblock::System>& systems);
+void ReadNrg(const char* filename, std::vector<bblock::System>& systems);
 
 /**
  * @brief Reads a system inside the NRG file
