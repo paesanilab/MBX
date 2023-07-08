@@ -19,7 +19,7 @@ The home directory of MBX will be referred to as `MBX_HOME`. You must set this e
 `export MBX_HOME=$PWD`
 
 ### Compilation
-Please read the INSTALL.md instructions. After installation, a bin, a lib, and an include folder should have been created if no prefix has been given to `configure`.
+Please read the [INSTALL.md](INSTALL.md) instructions. After installation, a bin, a lib, and an include folder should have been created if no prefix has been given to `configure`.
 
 ## Testing
 After installation, running the unit tests is highly recommended. Run the following commands to run the tests:
