@@ -40,7 +40,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace tools {
 
-void ReadNrg(char* filename, std::vector<bblock::System>& systems) {
+void ReadNrg(const char* filename, std::vector<bblock::System>& systems) {
     // Check that filename is not empty
     assert(filename);
     std::ifstream ifs(filename);
