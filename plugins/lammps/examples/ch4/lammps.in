@@ -1,7 +1,7 @@
 variable        T   equal  125
 variable        dt  equal  0.2
 variable        P   equal  20.0
-variable        nsteps  equal 100000
+variable        nsteps  equal 1000
 variable        thermo_freq equal 1
 variable        dump_freq equal 1
 
