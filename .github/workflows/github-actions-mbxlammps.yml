@@ -14,7 +14,7 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-  compile-and-test-mbx:
+  test_mbx-lammps:
     runs-on: ubuntu-latest
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
@@ -31,7 +31,7 @@ jobs:
           sudo apt install openmpi-bin libopenmpi-dev -y
 
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
 
