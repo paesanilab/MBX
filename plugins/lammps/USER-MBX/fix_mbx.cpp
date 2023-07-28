@@ -33,7 +33,8 @@
 #include "universe.h"
 #include "modify.h"
 
-#define _MAX_SIZE_MOL_NAME 10
+#define _MAX_SIZE_MOL_NAME 16
+// Subject to further increase _MAX_SIZE_MOL_NAME
 #define _MAX_ATOMS_PER_MONOMER 8
 #define SMALL 1.0e-4
 
