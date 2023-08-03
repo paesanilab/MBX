@@ -151,6 +151,23 @@ class ElectricFieldHolder {
                              bool use_ghost,                          // use ghost monomers
                              const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset);
 
+    bool withinCutoff(double *xyz1, 
+                    double *xyz2, 
+                    size_t m, 
+                    size_t nmon1, 
+                    size_t nmon2, 
+                    bool use_pbc, 
+                    std::vector<double> &box, 
+                    std::vector<double> &box_inverse, 
+                    double cutoff,
+                    size_t site_i,
+                    size_t site_j, 
+                    size_t mon1_index, 
+                    bool use_ghost,
+                    const std::vector<size_t> &islocal, 
+                    const size_t isl1_offset,
+                    const size_t isl2_offset);
+    
     ////////////////////////////////////////////////////////////////////////////////
     // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////
     ////////////////////////////////////////////////////////////////////////////////

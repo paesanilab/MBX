@@ -5816,11 +5816,65 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                             Ai = BIGNUM;
                             Asqsqi = Ai;
                         }
-                        local_field->CalcDipoleElecField(xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, in_ptr + fi_crd1,
-                                                         in_ptr + fi_crd2, m1, m2init, nmon2, nmon1, nmon2, i, j,
-                                                         Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread, &ey_thread,
+
+                        std::vector<int> good_mon2_indices;
+                        for (size_t m = m2init; m < nmon2; m++) {
+                            
+                            bool check = local_field->withinCutoff(xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m, 
+                                                                    nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
+                                                                    m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+                            
+                            if (check == true){
+                                good_mon2_indices.push_back(m);
+                                std::cout << m << " ";
+                            } 
+                        }
+                        // std::cout << 1 << std::endl;
+                        int reordered_mon2_size = good_mon2_indices.size();
+                        const size_t site_j3 = j * 3;
+                        const size_t site_jnmon23 = nmon2 * site_j3;
+                        std::vector<double> reordered_xyz2(3*reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
+                        std::vector<size_t> reordered_islocal(reordered_mon2_size + 1, 0.0);
+                        std::vector<double> reordered_Efd2(3*reordered_mon2_size, 0.0);
+
+                        reordered_islocal[0] = islocal_[fi_mon1 + m1];
+                        double *xyz2 = xyz_.data() + fi_crd2;
+                        double *mu2 = in_ptr + fi_crd2;
+         
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            reordered_xyz2[new_mon2_index] = xyz2[old_mon2_index];
+                            reordered_xyz2[new_mon2_index + reordered_mon2_size] = xyz2[old_mon2_index + nmon2];
+                            reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz2[old_mon2_index + 2*nmon2];
+
+                            reordered_mu2[new_mon2_index] = mu2[old_mon2_index];
+                            reordered_mu2[new_mon2_index + reordered_mon2_size] = mu2[old_mon2_index + nmon2];
+                            reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2];
+
+                            reordered_islocal[new_mon2_index + 1] = islocal_[old_mon2_index];
+                        }
+
+                        local_field->CalcDipoleElecField(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
+                                                         reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
+                                                         Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
                                                          &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_,
-                                                         cutoff_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+                                                         cutoff_, use_ghost, reordered_islocal, 0, 1);
+
+                        double *Efd2 = Efd_2_pool[rank].data();
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            
+                            Efd2[site_jnmon23 + old_mon2_index] += reordered_Efd2[new_mon2_index];
+                            Efd2[site_jnmon23 + nmon2 + old_mon2_index] += reordered_Efd2[reordered_mon2_size + new_mon2_index];
+                            Efd2[site_jnmon23 + 2*nmon2 + old_mon2_index] += reordered_Efd2[2*reordered_mon2_size + new_mon2_index];
+                            /*
+                            Efd_2_pool[rank][old_mon2_index] += reordered_Efd2[new_mon2_index];
+                            Efd_2_pool[rank + nmon2 ][old_mon2_index] += reordered_Efd2[reordered_mon2_size + new_mon2_index];
+                            Efd_2_pool[rank + 2*nmon2][old_mon2_index] += reordered_Efd2[2*reordered_mon2_size + new_mon2_index];
+                            */
+                        }
+
                         Efd_1_pool[rank][inmon13 + m1] += ex_thread;
                         Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
