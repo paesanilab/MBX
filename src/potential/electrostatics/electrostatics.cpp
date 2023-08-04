@@ -5844,15 +5844,15 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
          
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
-                            reordered_xyz2[new_mon2_index] = xyz2[old_mon2_index];
-                            reordered_xyz2[new_mon2_index + reordered_mon2_size] = xyz2[old_mon2_index + nmon2];
-                            reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz2[old_mon2_index + 2*nmon2];
+                            reordered_xyz2[new_mon2_index] = xyz2[old_mon2_index + site_jnmon23];
+                            reordered_xyz2[new_mon2_index + reordered_mon2_size] = xyz2[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz2[old_mon2_index + 2*nmon2 + site_jnmon23];
 
-                            reordered_mu2[new_mon2_index] = mu2[old_mon2_index];
-                            reordered_mu2[new_mon2_index + reordered_mon2_size] = mu2[old_mon2_index + nmon2];
-                            reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2];
+                            reordered_mu2[new_mon2_index] = mu2[old_mon2_index + site_jnmon23];
+                            reordered_mu2[new_mon2_index + reordered_mon2_size] = mu2[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2 + site_jnmon23];
 
-                            reordered_islocal[new_mon2_index + 1] = islocal_[old_mon2_index];
+                            reordered_islocal[new_mon2_index + 1] = islocal_[fi_crd2 + old_mon2_index];
                         }
 
                         local_field->CalcDipoleElecField(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
