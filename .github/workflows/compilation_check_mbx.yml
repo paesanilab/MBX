@@ -1,6 +1,7 @@
 name: MBX testing suite
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "master"
@@ -23,12 +24,12 @@ jobs:
 
       - name: install-dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install -y fftw3-dev
-          sudo apt-get install libgsl-dev
-          sudo apt-get install lcov -y
-          sudo apt-get install autoconf -y
-          sudo apt-get install g++-9 gcc-9 -y
+          sudo apt update -y
+          sudo apt install -y fftw3-dev
+          sudo apt install libgsl-dev
+          sudo apt install lcov -y
+          sudo apt install autoconf -y
+          sudo apt install g++-9 gcc-9 -y
 
       - name: Check out repository code
         uses: actions/checkout@v3
