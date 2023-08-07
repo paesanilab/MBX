@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - "master"
+      - "master-dev"
   pull_request:
     branches:
       - "master"
+      - "master-dev"
   schedule:
     # Nightly tests run on master by default:
     #   Scheduled workflows run on the latest commit on the default or base branch.
@@ -17,6 +19,9 @@ on:
 jobs:
   test_mbx-lammps:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
