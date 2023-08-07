@@ -1,6 +1,7 @@
 name: MBX+LAMMPS integration test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "master"
