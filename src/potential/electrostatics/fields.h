@@ -151,6 +151,27 @@ class ElectricFieldHolder {
                              bool use_ghost,                          // use ghost monomers
                              const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset);
 
+    void CalcDipoleElecField2(double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
+                             double *mu1, double *mu2,                // Dipoles of mon type 1 and 2
+                             size_t mon1_index,                       // Mon 1 index
+                             size_t mon2_index_start,                 // Mon 2 initial index
+                             size_t mon2_index_end,                   // Mon 2 final index
+                             size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
+                             size_t site_i, size_t site_j,            // Site # i of mon1 and # j of mon 2
+                             double Asqsqi,                           // (polfac[i] * polfac[j])^4 inverted
+                             double aDD,                              // Thole damping aDD (dipole - dipole)
+                             double *Efd2,                            // Electric field on Mon 2
+                             double *Efdx_mon1,                       // Output electric field on X for Mon 1
+                             double *Efdy_mon1,                       // Output electric field on Y for Mon 1
+                             double *Efdz_mon1,                       // Output electric field on Z for Mon 1
+                             double ewald_alpha,                      // Ewald attenuation paramter
+                             bool use_pbc,                            // Whether to enforce periodic boundary conditions
+                             const std::vector<double> &box,          // The lattice vectors
+                             const std::vector<double> &box_inverse,  // The inverse lattice vectors
+                             double cutoff,                           // The real space cutoff for pairs
+                             bool use_ghost,                          // use ghost monomers
+                             const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset);
+
     bool withinCutoff(double *xyz1, 
                     double *xyz2, 
                     size_t m, 

@@ -5855,7 +5855,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                             reordered_islocal[new_mon2_index + 1] = islocal_[fi_crd2 + old_mon2_index];
                         }
 
-                        local_field->CalcDipoleElecField(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
+                        local_field->CalcDipoleElecField2(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
                                                          reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
                                                          Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
                                                          &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_,
