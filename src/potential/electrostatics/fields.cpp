@@ -438,7 +438,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
+void ElectricFieldHolder::CalcDipoleElecField2(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
