@@ -5823,11 +5823,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                             bool check = local_field->withinCutoff(xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m, 
                                                                     nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
                                                                     m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
-                            
-                            if (check == true){
-                                good_mon2_indices.push_back(m);
-                                std::cout << m << " ";
-                            } 
                         }
                         // std::cout << 1 << std::endl;
                         int reordered_mon2_size = good_mon2_indices.size();
