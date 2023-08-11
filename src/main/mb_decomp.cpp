@@ -18,7 +18,7 @@ namespace {
 static std::vector<bblock::System> systems;
 static int max_order = -1; // maximum subset order
 static bool verbose = false;
-static bool do_decomp = false;
+static bool do_decomp = true;
 
 void show_usage();
 void parse_command_line(int, char**);
@@ -209,14 +209,18 @@ void show_usage()
     "Options:\n"
     "    -h --help\n"
     "    -v --verbose\n"
-    "    -d --do_decomp\n"
-    "    -o --max_order <int> (default : -1)\n"
+    "    -e --do_decomp=false (no many-body decomposition)\n"
+    "    -o --max_order <int> (default : -1, do full many-body decomposition)\n"
     "\nIf -v is set, program prints monomer indices of each subsystem, followed"
     "\nby the energy value. Every subsystem uses one line. Otherwise, energies"
-    "\nof subsystems are printed without line-breaks. Each frame uses one line.\n"
-    "\nIf -d is set, program prints many-body energies of subsystems. Otherwise,"
-    "\nprogram prints total energy of subsystems.\n"
-    "\n-o -1 unsets max_order, program performs full many-body decomposition."
+    "\nof subsystems are printed without line-breaks. Each frame uses one line."
+    "\nNote that all additional outputs due to -v flag are directed to stderr.\n"
+    "\nIf -e is set, program prints singlepoint total energies of subsystems."
+    "\nOtherwise, program prints many-body energies of subsystems.\n"
+    "\n-o <int> if set, perform many-body decomposition upto this order."
+    "\n"
+    "\nExample:"
+    "\n$ ./mb_decomp -v -o 2 -e input.nrg"
     "\n\n";
 }
 
@@ -226,7 +230,7 @@ void parse_command_line(int argc, char** argv)
 {
     int c;
 
-    static const char short_options[] = "hvdo:";
+    static const char short_options[] = "hveo:";
 
     while (true) {
 
@@ -242,8 +246,8 @@ void parse_command_line(int argc, char** argv)
             case 'v':
                 verbose = true;
                 break;
-            case 'd':
-                do_decomp = true;
+            case 'e':
+                do_decomp = false;
                 break;
             case 'o':
                 max_order = atoi(optarg);
