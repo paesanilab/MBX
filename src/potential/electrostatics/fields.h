@@ -172,9 +172,11 @@ class ElectricFieldHolder {
                              bool use_ghost,                          // use ghost monomers
                              const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset);
 
-    bool withinCutoff(double *xyz1, 
+    bool withinCutoff(
+                    int* bool_indices,
+                    double *xyz1, 
                     double *xyz2, 
-                    size_t m, 
+                    size_t m2init,
                     size_t nmon1, 
                     size_t nmon2, 
                     bool use_pbc, 

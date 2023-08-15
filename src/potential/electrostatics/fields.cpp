@@ -233,7 +233,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool ElectricFieldHolder::withinCutoff(double *xyz1, double *xyz2, size_t m, size_t nmon1, 
+bool ElectricFieldHolder::withinCutoff(int* bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
                                         size_t nmon2, bool use_pbc, std::vector<double> &box, 
                                         std::vector<double> &box_inverse, double cutoff, size_t site_i,
                                         size_t site_j, size_t mon1_index, bool use_ghost,
@@ -252,53 +252,52 @@ bool ElectricFieldHolder::withinCutoff(double *xyz1, double *xyz2, size_t m, siz
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
     bool accum2 = !use_ghost;
-    size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
-    const double cutoffsq = cutoff * cutoff;
-    if (use_ghost && isls) accum2 = true;
 
-    if (accum2) {
-        const size_t nmon12 = nmon1 * 2;
-        const size_t nmon22 = nmon2 * 2;
-        const size_t site_i3 = site_i * 3;
-        const size_t site_j3 = site_j * 3;
-        const size_t site_inmon13 = nmon1 * site_i3;
-        const size_t site_jnmon23 = nmon2 * site_j3; 
-        const double xyzmon1_x = xyz1[site_inmon13 + mon1_index];
-        const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
-        const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index]; 
-        double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
-    
-        // Distances between sites i and j from mon1 and mon2
-        double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];  // m is left or right
-        double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-        double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+#pragma omp simd 
+    for (size_t m = m2init; m < nmon2; m++) {
+        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        const double cutoffsq = cutoff * cutoff;
+        if (use_ghost && isls) accum2 = true;
 
-        // Apply the minimum image convention via fractional coordinates
-        // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-        if (use_pbc) {
-            // Convert to fractional coordinates
-            double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
-            double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
-            double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
-            // Put in the range 0 to 1
-            fracrijx -= std::floor(fracrijx + 0.5);
-            fracrijy -= std::floor(fracrijy + 0.5);
-            fracrijz -= std::floor(fracrijz + 0.5);
-            // Convert back to Cartesian coordinates
-            rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
-            rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
-            rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
+        if (accum2) {
+            const size_t nmon12 = nmon1 * 2;
+            const size_t nmon22 = nmon2 * 2;
+            const size_t site_i3 = site_i * 3;
+            const size_t site_j3 = site_j * 3;
+            const size_t site_inmon13 = nmon1 * site_i3;
+            const size_t site_jnmon23 = nmon2 * site_j3; 
+            const double xyzmon1_x = xyz1[site_inmon13 + mon1_index];
+            const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
+            const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index]; 
+            double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
+        
+            // Distances between sites i and j from mon1 and mon2
+            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];  // m is left or right
+            double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+            double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+
+            // Apply the minimum image convention via fractional coordinates
+            // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+            if (use_pbc) {
+                // Convert to fractional coordinates
+                double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
+                double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
+                double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
+                // Put in the range 0 to 1
+                fracrijx -= std::floor(fracrijx + 0.5);
+                fracrijy -= std::floor(fracrijy + 0.5);
+                fracrijz -= std::floor(fracrijz + 0.5);
+                // Convert back to Cartesian coordinates
+                rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
+                rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
+                rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
+            }
+
+            const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
+            if (rsq < cutoffsq){
+                bool_indices[m - m2init] = true;
+            }
         }
-
-        const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
-        if (rsq < cutoffsq){
-            return true;
-        } else {
-            return false;
-        }
-
-    } else {
-        return false;
     }
         
 }
