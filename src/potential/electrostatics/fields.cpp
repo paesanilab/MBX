@@ -295,7 +295,7 @@ bool ElectricFieldHolder::withinCutoff(int *bool_indices, double *xyz1, double *
 
             const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
             if (rsq < cutoffsq){
-                bool_indices[m - m2init] = true;
+                bool_indices[m] = true;
             }
         }
     }
