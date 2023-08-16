@@ -251,24 +251,16 @@ bool ElectricFieldHolder::withinCutoff(int *bool_indices, double *xyz1, double *
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
-    bool accum2 = !use_ghost;
-
 #pragma omp simd 
     for (size_t m = m2init; m < nmon2; m++) {
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         const double cutoffsq = cutoff * cutoff;
+        bool accum2 = !use_ghost;
+        
         if (use_ghost && isls) accum2 = true;
 
         if (accum2) {
-            const size_t nmon12 = nmon1 * 2;
-            const size_t nmon22 = nmon2 * 2;
-            const size_t site_i3 = site_i * 3;
-            const size_t site_j3 = site_j * 3;
-            const size_t site_inmon13 = nmon1 * site_i3;
-            const size_t site_jnmon23 = nmon2 * site_j3; 
-            const double xyzmon1_x = xyz1[site_inmon13 + mon1_index];
-            const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
-            const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index]; 
+            
             double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
         
             // Distances between sites i and j from mon1 and mon2
