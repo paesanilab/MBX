@@ -233,7 +233,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool ElectricFieldHolder::withinCutoff(int* bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
+bool ElectricFieldHolder::withinCutoff(int *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
                                         size_t nmon2, bool use_pbc, std::vector<double> &box, 
                                         std::vector<double> &box_inverse, double cutoff, size_t site_i,
                                         size_t site_j, size_t mon1_index, bool use_ghost,

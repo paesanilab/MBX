@@ -173,7 +173,7 @@ class ElectricFieldHolder {
                              const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset);
 
     bool withinCutoff(
-                    int* bool_indices,
+                    int *bool_indices,
                     double *xyz1, 
                     double *xyz2, 
                     size_t m2init,

@@ -5818,19 +5818,19 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                         }
 
                         std::vector<int> good_mon2_indices;
-                        int mon_size = nmon2 - m2init
-                        std::vector<int> bool_mon2_indices(mon_size, false);
-                        local_field->withinCutoff(&bool_mon2_indices, xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, m, 
+                        std::vector<int> bool_mon2_indices(nmon2, false);
+                        local_field->withinCutoff(bool_mon2_indices.data(), xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
                                                                     nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
                                                                     m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
 
-                        for (int i = 0; i < mon_size; i++) {
-                            if (bool_mon2_indices[i] == true) {
-                                good_mon2_indices.push_back(i)
+                       
+                        for (int ind = 0; ind < nmon2; ind++) {
+                            if (bool_mon2_indices[ind] == true) {
+                                good_mon2_indices.push_back(ind);
                             }
                         }
-
-                        int reordered_mon2_size = bool_mon2_indices.size();
+                    
+                        int reordered_mon2_size = good_mon2_indices.size();
                         const size_t site_j3 = j * 3;
                         const size_t site_jnmon23 = nmon2 * site_j3;
                         std::vector<double> reordered_xyz2(3*reordered_mon2_size, 0.0);
@@ -5841,6 +5841,8 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                         reordered_islocal[0] = islocal_[fi_mon1 + m1];
                         double *xyz2 = xyz_.data() + fi_crd2;
                         double *mu2 = in_ptr + fi_crd2;
+                    
+
                     #pragma omp simd 
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
@@ -5854,7 +5856,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 
                             reordered_islocal[new_mon2_index + 1] = islocal_[fi_crd2 + old_mon2_index];
                         }
-
                         local_field->CalcDipoleElecField2(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
                                                          reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
                                                          Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
