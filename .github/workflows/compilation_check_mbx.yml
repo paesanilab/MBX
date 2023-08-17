@@ -53,8 +53,12 @@ jobs:
           rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update
-          sudo apt-get install -y intel-hpckit
-          sudo apt-get install -y intel-mkl
+          sudo apt-get install -y intel-oneapi-common-vars
+          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+          sudo apt-get install -y intel-oneapi-mkl
+          sudo apt-get install -y intel-oneapi-mpi
+          sudo apt-get install -y intel-oneapi-mpi-devel
+          source /opt/intel/oneapi/setvars.sh
           ${{matrix.compiler}} -v
 
       - name: Check out repository code
