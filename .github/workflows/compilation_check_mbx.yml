@@ -71,7 +71,7 @@ jobs:
           ls ${{ github.workspace }}
           rm -rf install
           autoreconf -fi
-          ./configure --disable-optimization --enable-coverage -CXX=${{matrix.compiler}}
+          ./configure --disable-optimization --enable-coverage CXX=${{matrix.compiler}}
           make install
 
       - run: echo "This job's status is ${{ job.status }}."
