@@ -30,7 +30,7 @@ jobs:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-
+      - run: echo "Using compiler ${{matrix.compiler}}"
       - name: install-dependencies
         run: |
           sudo apt-get update -y
@@ -39,13 +39,13 @@ jobs:
           sudo apt-get install autoconf -y
           
       - name: install-compiler g++
-        if: ${{matrix.compiler}} == "g++"
+        if: matrix.compiler == "g++"
         run: |
           sudo apt-get install g++-9 gcc-9 -y
           sudo apt-get install openmpi-bin libopenmpi-dev -y
           
       - name: apt-compiler icpc
-        if: ${{matrix.compiler}} == "icpc"
+        if: matrix.compiler == "icpc"
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -53,7 +53,7 @@ jobs:
           sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update
       - name: install-compiler icpc
-        if: ${{matrix.compiler}} == "icpc"
+        if: matrix.compiler == "icpc"
         run: |
           sudo apt-get install -y intel-oneapi-common-vars
           sudo apt-get install -y intel-oneapi-compiler-fortran
@@ -71,7 +71,7 @@ jobs:
           ls ${{ github.workspace }}
           rm -rf install
           autoreconf -fi
-          ./configure --disable-optimization --enable-coverage -cxx=${{matrix.compiler}}
+          ./configure --disable-optimization --enable-coverage -CXX=${{matrix.compiler}}
           make install
 
       - run: echo "This job's status is ${{ job.status }}."
