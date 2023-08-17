@@ -44,7 +44,7 @@ jobs:
           sudo apt-get install g++-9 gcc-9 -y
           sudo apt-get install openmpi-bin libopenmpi-dev -y
           
-      - name: apt-compiler icpc
+      - name: install-compiler icpc
         if: matrix.compiler == 'icpc'
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -52,14 +52,9 @@ jobs:
           rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update
-      - name: install-compiler icpc
-        if: matrix.compiler == 'icpc'
-        run: |
-          sudo apt-get install -y intel-oneapi-common-vars
-          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+          sudo apt-get install -y intel-oneapi-hpckit
           sudo apt-get install -y intel-oneapi-mkl
-          sudo apt-get install -y intel-oneapi-mpi
-          sudo apt-get install -y intel-oneapi-mpi-devel
+          icpc -v
 
       - name: Check out repository code
         uses: actions/checkout@v3
