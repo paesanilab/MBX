@@ -19,6 +19,9 @@ on:
 jobs:
   compile-and-test-mbx:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++, icpc]
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
@@ -33,7 +36,28 @@ jobs:
           sudo apt-get install -y fftw3-dev
           sudo apt-get install libgsl-dev
           sudo apt-get install autoconf -y
+          
+      - name: install-compiler g++
+        if: ${{matrix.compiler}} == "g++"
           sudo apt-get install g++-9 gcc-9 -y
+          sudo apt-get install openmpi-bin libopenmpi-dev -y
+          
+      - name: apt-compiler icpc
+        if: ${{matrix.compiler}} == "icpc"
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update
+      - name: install-compiler icpc
+        if: ${{matrix.compiler}} == "icpc"
+        run: |
+          sudo apt-get install -y intel-oneapi-common-vars
+          sudo apt-get install -y intel-oneapi-compiler-fortran
+          sudo apt-get install -y intel-oneapi-mkl
+          sudo apt-get install -y intel-oneapi-mpi
+          sudo apt-get install -y intel-oneapi-mpi-devel
 
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -45,7 +69,7 @@ jobs:
           ls ${{ github.workspace }}
           rm -rf install
           autoreconf -fi
-          ./configure --disable-optimization --enable-coverage
+          ./configure --disable-optimization --enable-coverage -cxx=${{matrix.compiler}}
           make install
 
       - run: echo "This job's status is ${{ job.status }}."
