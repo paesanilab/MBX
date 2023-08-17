@@ -40,6 +40,7 @@ jobs:
           
       - name: install-compiler g++
         if: ${{matrix.compiler}} == "g++"
+        run: |
           sudo apt-get install g++-9 gcc-9 -y
           sudo apt-get install openmpi-bin libopenmpi-dev -y
           
