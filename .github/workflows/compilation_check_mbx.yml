@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [g++, icpc]
+        compiler: [g++, icpc, icpx]
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -45,8 +45,8 @@ jobs:
           sudo apt-get install openmpi-bin libopenmpi-dev -y
           ${{matrix.compiler}} -v
           
-      - name: install-compiler icpc
-        if: matrix.compiler == 'icpc'
+      - name: install-compiler intel
+        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -54,7 +54,8 @@ jobs:
           sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update
           sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel intel-oneapi-mkl
-      - if: matrix.compiler == 'icpc'
+      - name: activate intel oneAPI
+        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
@@ -64,7 +65,7 @@ jobs:
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
 
-      - name: run-install
+      - name: Installing MBX
         run: |
           ls ${{ github.workspace }}
           ${{matrix.compiler}} -v
@@ -76,10 +77,11 @@ jobs:
 
       - run: echo "Running unittests"
       - run: ls ${{ github.workspace }}
-      - name: unittests
+      - name: Unittests
         run: make check
 
       - name: Submit to codecov.io
+        if: matrix.compiler == 'g++'
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
