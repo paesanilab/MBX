@@ -84,5 +84,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           gcov: true
-          directory: src
+          gcov_exclude: /usr/include
           
