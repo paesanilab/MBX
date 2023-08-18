@@ -60,7 +60,6 @@ jobs:
           sudo apt-get install -y intel-oneapi-mpi-devel
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-          ${{matrix.compiler}} -v
 
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -70,7 +69,7 @@ jobs:
       - name: run-install
         run: |
           ls ${{ github.workspace }}
-          rm -rf install
+          ${{matrix.compiler}} -v
           autoreconf -fi
           ./configure --disable-optimization --enable-coverage CXX=${{matrix.compiler}}
           make install
