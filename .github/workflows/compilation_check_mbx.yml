@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [g++, icpc, icpx]
+        compiler: [g++, icpc] # eventually need to swap deprecated icpc for icpx
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -34,7 +34,7 @@ jobs:
       - name: install-dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y fftw3-dev libgsl-dev lcov autoconf
+          sudo apt-get install -y fftw3-dev libgsl-dev autoconf
           
       - name: install-compiler g++
         if: matrix.compiler == 'g++'
@@ -78,16 +78,10 @@ jobs:
       - name: Unittests
         run: make check
 
-      - name: Collect coverage
-        run: |
-          cd ${{ github.workspace }}
-          lcov --directory . --capture --output-file coverage.info # capture coverage info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-          lcov --list coverage.info #debug info
-
       - name: Submit to codecov.io
         if: matrix.compiler == 'g++'
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          gcov: true
           
