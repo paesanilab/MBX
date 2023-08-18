@@ -84,4 +84,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           gcov: true
+          directory: src
           
