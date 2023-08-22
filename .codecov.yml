@@ -1,4 +1,8 @@
 ignore:
+  - "/usr/include"
+  - "examples"
+  - "plugins"
+  - "scripts"
   - "src/potential/1b/poly*"
   - "src/potential/2b/poly*"
   - "src/potential/3b/poly*"
