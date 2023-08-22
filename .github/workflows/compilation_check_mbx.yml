@@ -78,6 +78,7 @@ jobs:
       - name: Unittests
         run: make check
 
+      - run: ls ${{ github.workspace }}
       - name: Submit to codecov.io
         if: matrix.compiler == 'g++'
         uses: codecov/codecov-action@v3
@@ -85,4 +86,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           gcov: true
           gcov_ignore: /usr/include
+          verbose: true
+      - run: ls ${{ github.workspace }}
           
