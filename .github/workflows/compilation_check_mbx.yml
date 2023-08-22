@@ -40,7 +40,7 @@ jobs:
         if: matrix.compiler == 'g++'
         run: |
           sudo apt-get install g++-9 gcc-9 -y
-          sudo apt-get install openmpi-bin libopenmpi-dev -y
+          sudo apt-get install openmpi-bin libopenmpi-dev lcov -y
           ${{matrix.compiler}} -v
           
       - name: install-compiler intel
@@ -78,14 +78,20 @@ jobs:
       - name: Unittests
         run: make check
 
-      - run: ls ${{ github.workspace }}
+      - name: Collect coverage
+        if: matrix.compiler == 'g++'
+        run: |
+          cd ${{ github.workspace }}
+          lcov --directory . --capture --output-file coverage.info # capture coverage info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+          lcov --list coverage.info #debug info
+        
       - name: Submit to codecov.io
         if: matrix.compiler == 'g++'
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          gcov: true
-          gcov_ignore: /usr/include
+          # gcov: true
+          # gcov_ignore: /usr/include
           verbose: true
-      - run: ls ${{ github.workspace }}
           
