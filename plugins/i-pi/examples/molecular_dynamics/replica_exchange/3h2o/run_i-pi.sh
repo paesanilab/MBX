@@ -11,7 +11,7 @@ sleep 10
 
 export OMP_NUM_THREADS=4
 
-$MBX_HOME/plugins/i-pi/bin/driver config.nrg mbx.json
+$MBX_HOME/bin/ipi_driver config.nrg mbx.json
 
 id=`cat ipi.id`
 kill $id
