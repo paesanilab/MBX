@@ -34,12 +34,12 @@ jobs:
       - name: install-dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y fftw3-dev libgsl-dev autoconf
+          sudo apt-get install -y libfftw3-dev libgsl-dev autoconf
           
       - name: install-compiler g++
         if: matrix.compiler == 'g++'
         run: |
-          sudo apt-get install g++-9 gcc-9 -y
+          sudo apt-get install g++ gcc -y
           sudo apt-get install openmpi-bin libopenmpi-dev lcov -y
           ${{matrix.compiler}} -v
           
@@ -75,6 +75,7 @@ jobs:
 
       - run: echo "Running unittests"
       - run: ls ${{ github.workspace }}
+      - run: ls ${{ github.workspace }}/bin
       - name: Unittests
         run: make check
 

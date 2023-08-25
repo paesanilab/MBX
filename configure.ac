@@ -27,6 +27,8 @@ AC_CONFIG_FILES([
  Makefile
  src/Makefile
  src/unittests/Makefile
+ plugins/Makefile
+ plugins/i-pi/Makefile
 ])
 
 # Helper function to add the proper flags to CPPFLAGS and LDFLAGS
@@ -104,6 +106,12 @@ AC_PROG_CXX
 CXXFLAGS=''
 EXTRA_CXXFLAGS=''
 AC_OPENMP
+
+# Check compiler is working
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+    [],
+    [AC_MSG_ERROR([C++ compiler ${CXX} is not working])]
+)
 
 # Checks for libraries.
 

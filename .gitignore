@@ -42,6 +42,15 @@ ClustersUltimate.includes
 ClustersUltimate.config
 
 install/
+include/
+bin/
+share/
+src/normal_modes
+src/optimize
+src/order_frames
+src/single_point
+plugins/i-pi/ipi_driver
+plugins/i-pi/bin/driver
 
 # Autoconf generated files
 **/.deps
@@ -49,6 +58,7 @@ install/
 Makefile
 Makefile.in
 configure
+configure~
 autom4te.cache
 m4/
 aclocal.m4
