@@ -11,9 +11,17 @@ FFTW=$(FFTW_HOME)
 # compiler/linker settings
 # specify flags and libraries needed for your compiler
 
-CCFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
-CCFLAGS +=      -I$(MBX_INC)
-CCFLAGS +=      -I$(FFTW)/include
+# if CXX is undefined, will default to mpicxx
+ifeq ($(CXX),)
+CXX = mpicxx
+endif
+ifeq ($(CXX),g++)
+CXX = mpicxx
+endif
+
+CXXFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
+CXXFLAGS +=      -I$(MBX_INC)
+CXXFLAGS +=      -I$(FFTW)/include
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
 
@@ -104,7 +112,7 @@ $(ARLIB): $(OBJ) $(EXTRA_LINK_DEPENDS)
 	@ln -s ../$(ARLIB) $(ARLIB)
 
 $(SHLIB): $(OBJ) $(EXTRA_LINK_DEPENDS)
-	$(CXX) $(CCFLAGS) $(SHFLAGS) $(SHLIBFLAGS) $(EXTRA_PATH) -o ../$(SHLIB) \
+	$(CXX) $(CXXFLAGS) $(SHFLAGS) $(SHLIBFLAGS) $(EXTRA_PATH) -o ../$(SHLIB) \
 		$(OBJ) $(EXTRA_LIB) $(LIB)
 	@rm -f $(SHLIB)
 	@ln -s ../$(SHLIB) $(SHLIB)
@@ -112,7 +120,7 @@ $(SHLIB): $(OBJ) $(EXTRA_LINK_DEPENDS)
 # Compilation rules
 
 %.o:%.cpp
-	$(CXX) $(CCFLAGS) $(SHFLAGS) $(EXTRA_INC) -c $<
+	$(CXX) $(CXXFLAGS) $(SHFLAGS) $(EXTRA_INC) -c $<
 
 # Individual dependencies
 
