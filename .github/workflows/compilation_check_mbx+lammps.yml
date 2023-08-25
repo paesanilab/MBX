@@ -44,7 +44,7 @@ jobs:
         run: |
           sudo apt-get install g++ gcc -y
           sudo apt-get install openmpi-bin libopenmpi-dev lcov -y
-          echo "MPI_COMPILER=mpicxx" >> "$GITHUB_ENV
+          echo "MPI_COMPILER=mpicxx" >> "$GITHUB_ENV"
 
       - name: install-compiler intel
         if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
@@ -60,7 +60,7 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-          echo "MPI_COMPILER=mpiicpc" >> "$GITHUB_ENV
+          echo "MPI_COMPILER=mpiicpc" >> "$GITHUB_ENV"
         
       - run: echo "Using compiler ${{matrix.compiler}} with ${{env.MPI_COMPILER}}"
 
