@@ -11,14 +11,12 @@ FFTW=$(FFTW_HOME)
 # compiler/linker settings
 # specify flags and libraries needed for your compiler
 
-CC = mpicxx
 CCFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 CCFLAGS +=      -I$(MBX_INC)
 CCFLAGS +=      -I$(FFTW)/include
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
 
-LINK = mpicxx
 LINKFLAGS =	-g -O3 -fopenmp $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 LIB = 
 LIB +=          $(MBX_LIB)/libmbx.a
@@ -94,7 +92,7 @@ vpath %.h ..
 # Link target
 
 $(EXE): main.o $(LMPLIB) $(EXTRA_LINK_DEPENDS)
-	$(LINK) $(LINKFLAGS) main.o $(EXTRA_PATH) $(LMPLINK) $(EXTRA_LIB) $(LIB) -o $@
+	$(CXX) $(LINKFLAGS) main.o $(EXTRA_PATH) $(LMPLINK) $(EXTRA_LIB) $(LIB) -o $@
 	$(SIZE) $@
 
 # Library targets
@@ -106,7 +104,7 @@ $(ARLIB): $(OBJ) $(EXTRA_LINK_DEPENDS)
 	@ln -s ../$(ARLIB) $(ARLIB)
 
 $(SHLIB): $(OBJ) $(EXTRA_LINK_DEPENDS)
-	$(CC) $(CCFLAGS) $(SHFLAGS) $(SHLIBFLAGS) $(EXTRA_PATH) -o ../$(SHLIB) \
+	$(CXX) $(CCFLAGS) $(SHFLAGS) $(SHLIBFLAGS) $(EXTRA_PATH) -o ../$(SHLIB) \
 		$(OBJ) $(EXTRA_LIB) $(LIB)
 	@rm -f $(SHLIB)
 	@ln -s ../$(SHLIB) $(SHLIB)
@@ -114,7 +112,7 @@ $(SHLIB): $(OBJ) $(EXTRA_LINK_DEPENDS)
 # Compilation rules
 
 %.o:%.cpp
-	$(CC) $(CCFLAGS) $(SHFLAGS) $(EXTRA_INC) -c $<
+	$(CXX) $(CCFLAGS) $(SHFLAGS) $(EXTRA_INC) -c $<
 
 # Individual dependencies
 
