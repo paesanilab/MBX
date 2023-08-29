@@ -93,7 +93,7 @@ jobs:
           cd $LAMMPS_HOME/src
           cp USER-MBX/fix_mbx.cpp .
           cp USER-MBX/pair_mbx.cpp .
-          make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR yes-MISC
+          make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
           make yes-USER-MBX
           make mpi_mbx CXX=${{env.MPI_COMPILER}}
 
