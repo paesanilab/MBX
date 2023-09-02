@@ -20,10 +20,12 @@ action () {
       else 
         echo "  updating src/$1"
       fi
+    else
+      echo "ERROR:  skipping src/$1 due to missing dependency src/$2"
     fi
   elif (test -n "$2") then # remove if missing dependency
     if (test ! -e ../$2) then
-      echo "  removing src/$1 due to missing dependency src/$2"
+      echo "WARNING:  removing src/$1 due to missing dependency src/$2"
       rm -f ../$1
     fi
   fi
