@@ -76,7 +76,7 @@ jobs:
       - run: echo "Running unittests"
       - run: ls ${{ github.workspace }}
       - run: ls ${{ github.workspace }}/bin
-      - run: ls ${{ github.workspace }}/libs
+      - run: ls ${{ github.workspace }}/lib
       - name: Unittests
         run: make check
 
