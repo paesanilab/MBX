@@ -112,11 +112,12 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
     [],
     [AC_MSG_ERROR([C++ compiler ${CXX} is not working])]
 )
-AM_CONDITIONAL([INTELCOMPILER], [test ${CXX} --version | grep -q Intel])
 
 # Checks for libraries.
 
 AC_CHECK_LIB([m],[cos])
+AC_SEARCH_LIBS([omp_get_thread_num],[iomp5, gomp])
+
 
 # FFTW
 # Look for possible environment variables known to have FFTW home

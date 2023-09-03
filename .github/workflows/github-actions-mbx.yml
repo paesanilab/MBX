@@ -73,10 +73,10 @@ jobs:
           echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
           
 
-      - run: echo "Running unittests"
-      - run: ls ${{ github.workspace }}
-      - run: ls ${{ github.workspace }}/bin
-      - run: ls ${{ github.workspace }}/lib
+      - run: |
+          ls ${{ github.workspace }}
+          ls ${{ github.workspace }}/bin
+          ls ${{ github.workspace }}/lib
       - name: Unittests
         run: make check
 
