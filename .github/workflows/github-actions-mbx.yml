@@ -64,19 +64,19 @@ jobs:
 
       - name: Installing MBX
         run: |
-          ${{matrix.compiler}} -v
+          ${{matrix.compiler}} -v | tee compiler_version.txt
           ls ${{ github.workspace }}
           autoreconf -fi
           ./configure --disable-optimization --enable-coverage CXX=${{matrix.compiler}}
           make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
           
-
-      - run: echo "This job's status is ${{ job.status }}."
 
       - run: echo "Running unittests"
       - run: ls ${{ github.workspace }}
       - run: ls ${{ github.workspace }}/bin
+      - run: ls ${{ github.workspace }}/libs
       - name: Unittests
         run: make check
 
@@ -93,4 +93,21 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          
+      
+      - name: Archive production artifacts
+        if: matrix.compiler == 'g++'
+        uses: actions/upload-artifact@v3
+  
+  test-python-plugin:
+    runs-on: ubuntu-latest
+    needs: compile-and-test-mbx
+    steps:
+      - run: cat compiler_version.txt
+      - run: ls ${{ github.workspace }}/lib
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v3
+      
+      - name: Testing python
+        run: |
+          cd ${{ github.workspace }}/plugins/python/example
+          python3 mbx_test.py

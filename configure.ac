@@ -17,7 +17,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_PROG_AR
 
 # Initialize the LIBTOOLS lib to make the .la libraries, from where the .so and .a will be created
-LT_INIT([disable-shared])
+LT_INIT
 
 # Initialize Automake. Warnings will be treated as errors.
 AM_INIT_AUTOMAKE([subdir-objects -Wall foreign])
@@ -112,6 +112,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
     [],
     [AC_MSG_ERROR([C++ compiler ${CXX} is not working])]
 )
+AM_CONDITIONAL([INTELCOMPILER], [test ${CXX} --version | grep -q Intel])
 
 # Checks for libraries.
 

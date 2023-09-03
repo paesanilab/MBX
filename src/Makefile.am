@@ -58,6 +58,12 @@ libmbx_la_LIBADD = liba1b2c4.la
 libmbx_la_CPPFLAGS = $(CPPFLAGS) $(MPIFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
 libmbx_la_LDFLAGS = $(LDFLAGS) $(LIBS) $(EXTRA_LDFLAGS_AM)
 
+if INTELCOMPILER
+libmbx_la_LDFLAGS += -liomp5
+else
+libmbx_la_LDFLAGS += -lgomp
+endif
+
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
 nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/4b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 
 
