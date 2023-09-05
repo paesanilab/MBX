@@ -68,7 +68,6 @@ jobs:
           ls ${{ github.workspace }}
           autoreconf -fi
           ./configure --disable-optimization --enable-coverage CXX=${{matrix.compiler}}
-          make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
           echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
           
@@ -118,7 +117,9 @@ jobs:
       - run: ls -lth
       - run: cat compiler_version.txt
       - run: ls ${{ github.workspace }}/lib -lth
-      - run: echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
+      - run: |
+          echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
 
       - name: Testing python
         run: |
