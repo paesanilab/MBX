@@ -115,10 +115,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: mbx-artifacts
-      - run: ls
+      - run: ls -lth
       - run: cat compiler_version.txt
-      - run: ls ${{ github.workspace }}/lib
-      
+      - run: ls ${{ github.workspace }}/lib -lth
+      - run: echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
+
       - name: Testing python
         run: |
           cd ${{ github.workspace }}/plugins/python/example

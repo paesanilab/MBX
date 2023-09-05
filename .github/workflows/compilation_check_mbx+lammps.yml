@@ -82,14 +82,14 @@ jobs:
         run: |
           cd $HOME
           export MBX_HOME=${{ env.MBX_HOME }}
-          git clone https://github.com/lammps/lammps.git -b stable LAMMPS
-          export LAMMPS_HOME=$PWD/LAMMPS
+          git clone https://github.com/lammps/lammps.git -b stable
+          export LAMMPS_HOME=$PWD/lammps
           export GITHUB_ACTIONS_MBX_LAMMPS_FLAGS="-O0"
-          cp $MBX_HOME/plugins/lammps/Makefile.mpi_mbx $LAMMPS_HOME/src/MAKE
           cp -r $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
           cd $LAMMPS_HOME/src
           make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
           make mpi_mbx CXX=${{env.MPI_COMPILER}}
 
+      - run: ls ${{ github.workspace }}/lib -lth
 
           

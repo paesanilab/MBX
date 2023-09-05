@@ -41,3 +41,7 @@ action pair_mbx.cpp pair_mbx.h
 
 action fix_mbx.h
 action fix_mbx.cpp fix_mbx.h
+
+if (test mode != 0) then
+  cp Makefile.mpi_mbx ../MAKE/
+fi

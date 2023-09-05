@@ -2,7 +2,7 @@
 [![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
-# MBX v1.0
+# MBX v1.0.1
 MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
 The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. 
 For details on the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
@@ -121,78 +121,50 @@ Please cite the following manuscripts if any of the following PEFs is used:
 ## Interfaces
 ### Fortran90 and Python
 In `${MBX_HOME}/examples/PEFs` there are sample scripts on how to use MBX called from Fortran90 and Python. Please remember to update the `LD_LIBRARY_PATH` variable and, if using python, the `PYTHONPATH` variable.
-```
+```console
 export LD_LIBRARY_PATH=MBX_HOME/lib/:$LD_LIBRARY_PATH
 export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 ```
 
-Note that for these interfaces to work, they need the dynamic library of MBX.
-You may need to rerun the `configure` script with the --enable-shared option.
-
 
 ### LAMMPS
-You need to download LAMMPS from https://lammps.sandia.gov/download.html. The current version of MBX supports the LAMMPS version from June 23, 2022 that can be downloaded from GitHub: ```git clone -b stable_23Jun2022_update1 git@github.com:lammps/lammps.git```
+MBX can interface with [LAMMPS](https://lammps.sandia.gov/) using a plugin for LAMMPS. After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
+```console
+git clone -b stable git@github.com:lammps/lammps.git
+export $LAMMPS_HOME=$PWD/lammps
 
-
-MBX needs to be installed following the instructions provided in the previous sections. After installation:
-```
-cd MBX_HOME/plugins/lammps
-vi Makefile.mpi_mbx
-```
-Make sure that the `MBX` variable is pointing to the right place. If you have your `MBX_HOME` environment variable set, you should be fine.
-
-Let's call the directory where LAMMPS has been put/unpacked `LAMMPS_HOME`. 
-Do the following:
-```
-cp Makefile.mpi_mbx LAMMPS_HOME/src/MAKE/Makefile.mpi_mbx
-cp -rf USER-MBX LAMMPS_HOME/src
-cp USER-MBX/*.cpp LAMMPS_HOME/src
-cd LAMMPS_HOME/src/
+# The below steps assume that you have already installed MBX
+cp -rf $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
+cd $LAMMPS_HOME/src/
 make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
-make yes-USER-MBX
 make mpi_mbx -j 4
-```
-It is possible that there is a compilation error at this point regarding an undefined reference to `FIX_MBX`.
-If so, while being in the src folder in LAMMPS, do the following:
-```
-rm style_fix.h style_pair.h 
-make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
-make yes-USER-MBX
-touch fix_mbx.* pair_mbx.*
-make mpi_mbx -j 8
-```
-
-After this, a new executable `lmp_mpi_mbx` in `src` should appear, and that is the executable you have to use for LAMMPS.
-
-Further doucmentation will follow up. For now, look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. 
+``````
+After this, a new executable `lmp_mpi_mbx` in `$LAMMPS_HOME/src` should appear, and that is the executable you have to use for LAMMPS.
 
 Additional documentation will follow up. For now, please look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. For any questions, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
 
 ### i-PI
-This software is already interfaced with i-PI. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-PI first. Please go to the [i-PI GitHub page] (https://github.com/i-pi/i-pi) and clone and follow the instructions to install i-PI. Before continuing with this, make sure i-PI is working. If you have any problems with the i-PI installation, you can ask a question in [the i-pi-user forum](https://groups.google.com/forum/#!forum/ipi-users). However, there is no need to install anything in i-PI. If you want to skip the testing (PROCEED AT YOUR OWN RISK), you can skip testing i-PI and assume it works.
+This software is already interfaced with i-PI. In order to run molecular dynamics using the MB-nrg PEFs, you will need to install i-PI first.
+```console
+git clone https://github.com/i-pi/i-pi.git
+```
+ Before continuing with this, make sure i-PI is working. If you have any problems with the i-PI installation, you can ask a question in [the i-pi-user forum](https://groups.google.com/forum/#!forum/ipi-users). If you want to skip the testing (PROCEED AT YOUR OWN RISK), you can skip testing i-PI and assume it works.
 
-After making sure that i-PI is working on your machine:
-```
-cd plugins/i-pi/src/main/
-make
-```
-
-A new file will be generated in `../../bin/`, called `driver`. Now we can run MD using i-PI. Go to the i-PI test folder in MBX:
-```
+After making sure that i-PI is working on your machine and having compiled MBX, you can use the i-PI driver located in `$MBX_HOME/bin/ipi_driver` to run MD using i-PI. To confirm that the driver is working go to the i-PI examples folder in MBX:
+```console
 cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/1-nvt
 ```
 
 This folder contains five files:
-- `config.nrg` is the energy software input. It needs to be in this same format. If you have more water molecules, just add the `MOLECULE` and `MONOMER` sections, add the OHH coordinates, and end the sections with ENDMON and ENDMOL.
-- `config.xyz` is the input for the coordinates for i-PI. The two files, `nrg` and `xyz`, should have exactly the same order, but the coordinates in the nrg file are not required to be the same as the ones in the XYZ file. XYZ will overwrite NRG.
+- `config.xyz` is the input for the coordinates for i-PI, while `config.nrg` is the input format for MBX. These two files `xyz` and `nrg` are related, so if you make any changes to the xyz file you must correspondingly update the nrg file using `$MBX_HOME/scripts/format_conversion config.xyz`
 - `config.xml` is the i-PI input file. This simulation will run an NVT MD at 100K. Refer to the i-pi user manual for more information.
 - `mbx.json` is the MBX configuration file
-- `run_i-pi.sh` will run the test. Make sure you sourced the env.sh in the i-PI folder before running the test, or most likely it will fail.
+- `run_i-pi.sh` will run the test. Make sure you `source  env.sh` in the i-PI folder before running the test, or most likely it will fail.
 
 These should initialize i-PI and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve`.
 ```
-cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve
+cd $MBX_HOME/plugins/i-pi/examples/molecular_dynamics/gas_phase/3h2o/100K/2-nve
 cp ../1-nvt/RESTART ./config.xml
 ./run_i-pi.sh
 ```
