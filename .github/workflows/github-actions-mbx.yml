@@ -98,6 +98,7 @@ jobs:
         if: matrix.compiler == 'g++'
         uses: actions/upload-artifact@v3
         with:
+          retention-days: 1
           path: |
             bin/
             examples/
@@ -111,8 +112,9 @@ jobs:
     steps:
       - name: Download previous job artifacts
         uses: actions/download-artifact@v3
-      - run: cat compiler_version.txt
+      - run: ls
       - run: ls ${{ github.workspace }}/lib
+      - run: cat compiler_version.txt
       
       - name: Testing python
         run: |
