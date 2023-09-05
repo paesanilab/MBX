@@ -98,16 +98,21 @@ jobs:
         if: matrix.compiler == 'g++'
         uses: actions/upload-artifact@v3
         with:
-          path: ${{ github.workspace }}
+          path: |
+            bin/
+            examples/
+            lib/
+            plugins/
+            compiler_version.txt
   
   test-python-plugin:
     runs-on: ubuntu-latest
     needs: compile-and-test-mbx
     steps:
+      - name: Download previous job artifacts
+        uses: actions/download-artifact@v3
       - run: cat compiler_version.txt
       - run: ls ${{ github.workspace }}/lib
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v3
       
       - name: Testing python
         run: |
