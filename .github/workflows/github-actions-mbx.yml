@@ -123,4 +123,5 @@ jobs:
       - name: Testing python
         run: |
           cd ${{ github.workspace }}/plugins/python/example
+          pip install numpy
           python3 mbx_test.py
