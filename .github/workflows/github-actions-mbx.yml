@@ -99,6 +99,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           retention-days: 1
+          name: mbx-artifacts
           path: |
             bin/
             examples/
@@ -112,9 +113,11 @@ jobs:
     steps:
       - name: Download previous job artifacts
         uses: actions/download-artifact@v3
+        with:
+          name: mbx-artifacts
       - run: ls
-      - run: ls ${{ github.workspace }}/lib
       - run: cat compiler_version.txt
+      - run: ls ${{ github.workspace }}/lib
       
       - name: Testing python
         run: |
