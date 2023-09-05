@@ -116,7 +116,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
 # Checks for libraries.
 
 AC_CHECK_LIB([m],[cos])
-AC_SEARCH_LIBS([omp_get_thread_num],[iomp5, gomp])
+AC_SEARCH_LIBS([omp_get_thread_num],[iomp5 gomp])
 
 
 # FFTW
@@ -216,7 +216,7 @@ AC_SUBST(EXTRA_CXXFLAGS_AM,["$EXTRA_CXXFLAGS "])
 # Set AutoMake flag to true
 AM_CONDITIONAL([ISMPI], [test $mpi == true])
 if test $mpi == true; then
-    # Look for possible environment variables known to have FFTW home
+    # Look for possible environment variables known to have MPI home
     mpi_dir=none
     if test "$MPI_HOME" != ""; then
         mpi_dir="$MPI_HOME"
@@ -231,7 +231,16 @@ if test $mpi == true; then
     AC_CHECK_LIB([mpi],[MPI_Init],[
         CPPFLAGS="$CPPFLAGS -DHAVE_MPI=1"
         LIBS="-lmpi $LIBS"
+    ],
+    [
+        AC_MSG_ERROR([mpi lib is missing])
     ])
+    AC_MSG_CHECKING([if compiler ${CXX} is able to find mpi.h])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <mpi.h>]])],[AC_MSG_RESULT(yes)], [
+        AC_MSG_RESULT(no)
+        AC_MSG_ERROR([compiler ${CXX} is not able to find mpi.h])
+        ])
+    AC_DISABLE_SHARED
 fi
 
 # Checks for library functions.
