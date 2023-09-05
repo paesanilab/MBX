@@ -11,30 +11,45 @@ MBX is periodically updated with performance improvements and the addition of ot
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to successfully install the software
-- g++/gcc v4.9 or higher [and icpc/icc v2017 or higher - optional]
+- g++/gcc v4.9 or higher [and icpc/icc v2018 or higher - optional]
+- FFTW libraries
+- GSL libraries [optional, needed only for normal_modes executable]
+- MPI compilers [optional, needed only for LAMMPS]
 - Read the entire README before doing anything
 
 ### Setup
-The home directory of MBX will be referred to as `MBX_HOME`. You must set this environment variable, which can be done with the following command if the home directory of MBX is the current directory:
-`export MBX_HOME=$PWD`
+The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be done with the following command if the home directory of MBX is the current directory:
+```console
+git clone https://github.com/paesanilab/MBX.git
+cd MBX/
+export MBX_HOME=$PWD
+```
 
 ### Compilation
-Please read the [INSTALL.md](INSTALL.md) instructions. After installation, a bin, a lib, and an include folder should have been created if no prefix has been given to `configure`.
+
+
+#### Basic installation of MBX (for use with i-PI, Python, Fortran, or standalone. **NOT LAMMPS**)
+```console
+autoreconf -fi
+./configure
+make && make install
+```
+After performing basic installation, you can [run the unit tests](#testing) to make sure everything is working properly.
+
+#### [Alternative installation of MBX_MPI (**LAMMPS only**)](#lammps)
+If you want to use MBX with LAMMPS, instead skip to the section about the [LAMMPS plugin](#lammps). This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps) in a different directory.
 
 ## Testing
-After installation, running the unit tests is highly recommended. Run the following commands to run the tests:
+After [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps), running the unit tests is highly recommended. Run the following commands to run the tests:
 ```
 make check
 ```
-All tests must pass. Please contact the code owners if there is any issue.
-Tests won't pass if the compiler is an MPI compiler. Please compile first with g++
-and check the tests.
+All tests must pass. If you encounter any errors, please report them in the [MBX Google Group](https://groups.google.com/g/mbx-users).
+
+Tests will fail if using an MPI compiler instead of `g++`/`icpc`, such as if you performed alternative installation with MBX_MPI with LAMMPS. Please instead perform [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps) first with g++ and check the tests.
 
 ## JSON File
-To make life easier for you, a JSON configuration file must be used to pass 
-all the information that MBX needs. Usually, one does not need to change 
-anything except a couple of options. In any case, all the options of the 
-json file are explained below.
+To make life easier for you, a JSON configuration file must be used to pass all the information that MBX needs. Usually, one does not need to change anything except a couple of options. In any case, all the options of the json file are explained below.
 
 The JSON file template is the following:
 ```
@@ -57,8 +72,8 @@ The JSON file template is the following:
        "ignore_3b_poly" : []
    } ,
    "i-pi" : {
-       "port" : 34567,
-       "localhost" : "localhost3"
+       "localhost" : "localhost3",
+       "port" : 34567
    }
 }
 ```
@@ -74,8 +89,8 @@ In this file:
 - `spline_order_XX` is the order of the splines used for interpolation.
 - `ignore_2b_poly` a list of 2 element lists with the monomer pairs for which the 2-body polynomials will not be calculated. Example: `"ignore_2b_poly" : [["na+","h2o"]]`
 - `ignore_3b_poly` has a similar format as ignore_2b_poly, but with the difference that the list is a list of 3-element list. If a set of three monomer types is specified in this list, MBX won't calculate the 3-body polynomials for that given trimer. Example: `"ignore_3b_poly" : [["na+","h2o","h2o"]]`
-- `port` is used when interfacing with i-pi. It is the port that will hold the socket. Should be greater than 34500.
 - `localhost` is the name of the socket. It MUST match the name in the XML file, otherwise it will send an error saying that the socket was not found.
+- `port` is used when interfacing with i-pi. It is the port that will hold the socket. Should be greater than 34500.
 
 ## Main executables
 After installation, there will be the main executables in `$MBX_HOME/bin`.
@@ -85,8 +100,11 @@ After installation, there will be the main executables in `$MBX_HOME/bin`.
 ## PEFs implemented
 All the PEFs implemented, along with examples of input files and scripts to run various types of simulations, are provided in `$MBX_HOME/examples/PEFs`. If a surface is not there, its usage is not recommended because it is either not tested or not finalized. Example calls with C++, Fortran and Python are located inside each of the corresponding folders.
 
+Please cite the corresponding manuscript whenever using MBX:
+- [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
+
 Please cite the following manuscripts if any of the following PEFs is used:
-- MB-pol
+- MB-pol for water
   * [J. Chem. Theory Comput. 9, 5395 (2013)](https://doi.org/10.1021/ct400863t)
   * [J. Chem. Theory Comput. 10, 1599 (2014)](https://doi.org/10.1021/ct500079y)
   * [J. Chem. Theory Comput. 10, 2906 (2014)](https://doi.org/10.1021/ct5004115)
@@ -128,17 +146,24 @@ export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 
 
 ### LAMMPS
-MBX can interface with [LAMMPS](https://lammps.sandia.gov/) using a plugin for LAMMPS. After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
+MBX can interface with [LAMMPS](https://lammps.sandia.gov/) using a plugin for LAMMPS. In order to use MBX with LAMMPS, you must first install MBX with MPI compilers. You must use `mpicxx` or `mpiicpc` instead of `g++` or `icpc`. This can be done by running the following commands:
+```console
+# install MBX with MPI
+autoreconf -fi
+./configure --enable-mpi CXX=mpiicpc
+make && make install
+```
+
+ After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
 ```console
 git clone -b stable git@github.com:lammps/lammps.git
 export $LAMMPS_HOME=$PWD/lammps
 
-# The below steps assume that you have already installed MBX
 cp -rf $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
 cd $LAMMPS_HOME/src/
 make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
-make mpi_mbx -j 4
-``````
+make mpi_mbx -j 4 CXX=mpiicpc
+```
 After this, a new executable `lmp_mpi_mbx` in `$LAMMPS_HOME/src` should appear, and that is the executable you have to use for LAMMPS.
 
 Additional documentation will follow up. For now, please look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. For any questions, please use the MBX Google Group: https://groups.google.com/g/mbx-users.

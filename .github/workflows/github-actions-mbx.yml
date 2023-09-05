@@ -79,6 +79,13 @@ jobs:
           ls ${{ github.workspace }}/lib
       - name: Unittests
         run: make check
+  
+      - name: Testing python
+        if: matrix.compiler == 'intel'
+        run: |
+          cd ${{ github.workspace }}/plugins/python/example
+          pip install numpy
+          python3 mbx_test.py
 
       - name: Collect coverage
         if: matrix.compiler == 'g++'
@@ -94,36 +101,15 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       
-      - name: Archive production artifacts
-        if: matrix.compiler == 'g++'
-        uses: actions/upload-artifact@v3
-        with:
-          retention-days: 1
-          name: mbx-artifacts
-          path: |
-            bin/
-            examples/
-            lib/
-            plugins/
-            compiler_version.txt
-  
-  test-python-plugin:
-    runs-on: ubuntu-latest
-    needs: compile-and-test-mbx
-    steps:
-      - name: Download previous job artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: mbx-artifacts
-      - run: ls -lth
-      - run: cat compiler_version.txt
-      - run: ls ${{ github.workspace }}/lib -lth
-      - run: |
-          echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
-          echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
-
-      - name: Testing python
-        run: |
-          cd ${{ github.workspace }}/plugins/python/example
-          pip install numpy
-          python3 mbx_test.py
+      # - name: Archive production artifacts
+      #   if: matrix.compiler == 'g++'
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     retention-days: 1
+      #     name: mbx-artifacts
+      #     path: |
+      #       bin/
+      #       examples/
+      #       lib/
+      #       plugins/
+      #       compiler_version.txt
