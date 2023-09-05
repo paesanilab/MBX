@@ -48,6 +48,8 @@ int main(int argc, char** argv) {
 
     for (size_t ii = 0; ii < systems.size(); ii++) {
 
+        if(verbose) std::cout << "--- frame " << ii << " ---" << std::endl;
+
         // Load JSON file
         if (argc - optind > 1) {
             systems[ii].SetUpFromJson(argv[optind+1]);
@@ -98,7 +100,7 @@ int main(int argc, char** argv) {
                     std::string id = monomer_ids[mm];
                     subsystem.AddMonomer(xyz, vAtNames, id);
 
-                    if(verbose) std::cerr << mm << ",";
+                    if(verbose) std::cout << mm << ",";
                 }
 
 //                subsystem.Initialize(); // in system.cpp, it seems this line does not have any effect before json is read.
@@ -131,15 +133,12 @@ int main(int argc, char** argv) {
 
                 }
 
-                if(verbose) std::cerr.flush();
                 std::cout << " " << std::setprecision(10) << energies[subset[nn][jj]];
                 std::cout.flush();
-                if(verbose && ii < systems.size() - 1) std::cerr << std::endl;
+                if(verbose) std::cout << std::endl;
             }
         }
-        if(verbose) std::cerr.flush();
-        std::cout << std::endl;
-        if(verbose) std::cout.flush();
+        if(!verbose) std::cout << std::endl;
     }
 
     return 0;
@@ -216,7 +215,6 @@ void show_usage()
     "\nIf -v is set, program prints monomer indices of each subsystem, followed"
     "\nby the energy value. Every subsystem uses one line. Otherwise, energies"
     "\nof subsystems are printed without line-breaks. Each frame uses one line."
-    "\nNote that all additional outputs due to -v flag are directed to stderr.\n"
     "\nIf -e is set, program prints singlepoint total energies of subsystems."
     "\nOtherwise, program prints many-body energies of subsystems.\n"
     "\n-o <int> if set, perform many-body decomposition upto this order."
