@@ -5,11 +5,9 @@ on:
   push:
     branches:
       - "master"
-      - "master-dev"
   pull_request:
     branches:
       - "master"
-      - "master-dev"
   schedule:
     # Nightly tests run on master by default:
     #   Scheduled workflows run on the latest commit on the default or base branch.
@@ -74,14 +72,15 @@ jobs:
           
 
       - run: |
-          ls ${{ github.workspace }}
-          ls ${{ github.workspace }}/bin
-          ls ${{ github.workspace }}/lib
+          echo "\n  BIN/  "
+          ls ${{ github.workspace }}/bin -lth
+          echo "\n  LIB/  "
+          ls ${{ github.workspace }}/lib -lth
       - name: Unittests
         run: make check
   
       - name: Testing python
-        if: matrix.compiler == 'intel'
+        if: matrix.compiler == 'icpc'
         run: |
           cd ${{ github.workspace }}/plugins/python/example
           pip install numpy

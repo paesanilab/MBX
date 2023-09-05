@@ -1,5 +1,4 @@
 ignore:
-  - "/usr/include"
   - "examples"
   - "plugins"
   - "scripts"
