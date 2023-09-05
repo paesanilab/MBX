@@ -134,10 +134,12 @@ int main(int argc, char** argv) {
                 if(verbose) std::cerr.flush();
                 std::cout << " " << std::setprecision(10) << energies[subset[nn][jj]];
                 std::cout.flush();
-                if(verbose) std::cerr << std::endl;
+                if(verbose && ii < systems.size() - 1) std::cerr << std::endl;
             }
         }
+        if(verbose) std::cerr.flush();
         std::cout << std::endl;
+        if(verbose) std::cout.flush();
     }
 
     return 0;
