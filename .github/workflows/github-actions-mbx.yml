@@ -68,6 +68,7 @@ jobs:
           ls ${{ github.workspace }}
           autoreconf -fi
           ./configure --disable-optimization --enable-coverage CXX=${{matrix.compiler}}
+          make && make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
           echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
           
