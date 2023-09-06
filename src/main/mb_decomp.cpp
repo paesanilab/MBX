@@ -205,7 +205,8 @@ void show_usage()
 {
     std::cerr <<
     "\n"
-    "Usage: [options]  <input.nrg> [mbx.json]\n"
+    "Usage: ./mb_decomp [options]  <input.nrg> [mbx.json]\n"
+    "Computes energies for subsystems for the given system(s).\n"
     "\n"
     "Options:\n"
     "    -h      , help\n"
