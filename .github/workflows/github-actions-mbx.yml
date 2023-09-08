@@ -82,7 +82,7 @@ jobs:
       - run: cat src/unittests/test-suite.log
         if: ${{ !cancelled() }}
       
-        - name: Testing python plugin
+      - name: Testing python plugin
         if: matrix.compiler == 'icpc'
         run: |
           cd ${{ github.workspace }}/plugins/python/example
