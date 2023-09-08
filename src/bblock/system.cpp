@@ -849,15 +849,6 @@ void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
 }
 
 void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string>> ttm_pairs) {
-    
-    // ttm-nrg pairs is deprecated. If required, please recompile with: ./configure --enable-ttmnrg
-    # ifndef TTMNRG
-    if (ttm_pairs.size() > 0) {
-        std::string text = std::string("TTM-nrg pairs is deprecated. If required, please recompile with ./configure --enable-ttmnrg");
-        throw CUException(__func__, __FILE__, __LINE__, text);
-    }
-    # endif
-
     buck_pairs_.clear();
 
     for (auto it = ttm_pairs.begin(); it != ttm_pairs.end(); it++) {
@@ -1428,6 +1419,17 @@ void System::SetUpFromJson(nlohmann::json j) {
         // if (mpi_rank_ == 0) std::cerr << "**WARNING** \"ttm_pairs\" is not defined in json file. Using empty
         // list.\n";
     }
+
+
+    // TODO: enable this code block once TTM tests are modified
+    // // ttm-nrg pairs is deprecated. If required, please recompile with: ./configure --enable-ttmnrg
+    // # ifndef TTMNRG
+    // if (buck_pairs_.size() > 0) {
+    //     std::string text = std::string("TTM-nrg pairs is deprecated. If required, please recompile with ./configure --enable-ttmnrg");
+    //     throw CUException(__func__, __FILE__, __LINE__, text);
+    // }
+    // # endif
+
     SetTTMnrgPairs(buck_pairs_);
     mbx_j_["MBX"]["ttm_pairs"] = buck_pairs_;
 
