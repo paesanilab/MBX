@@ -849,6 +849,15 @@ void System::AddTTMnrgPair(std::string mon1, std::string mon2) {
 }
 
 void System::SetTTMnrgPairs(std::vector<std::pair<std::string, std::string>> ttm_pairs) {
+    
+    // ttm-nrg pairs is deprecated. If required, please recompile with: ./configure --enable-ttmnrg
+    # ifndef TTMNRG
+    if (ttm_pairs.size() > 0) {
+        std::string text = std::string("TTM-nrg pairs is deprecated. If required, please recompile with ./configure --enable-ttmnrg");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+    # endif
+
     buck_pairs_.clear();
 
     for (auto it = ttm_pairs.begin(); it != ttm_pairs.end(); it++) {
@@ -1153,6 +1162,8 @@ void System::SetUpFromJsonMonomers(nlohmann::json j) {
 }
 
 void System::SetUpFromJson(nlohmann::json j) {
+    //TODO: Re-enable errors for better JSON validation: https://github.com/paesanilab/MBX-dev/issues/107
+    
     // Try to get box
     // Default at initialization: no box (empty vector)
     try {

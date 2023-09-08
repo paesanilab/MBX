@@ -2,7 +2,9 @@
 [![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
-# MBX v1.0.1
+# MBX v1.0.2
+MBX: A many-body energy and force calculator for data-driven many-body simulations. [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
+
 MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
 The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. 
 For details on the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
@@ -15,7 +17,7 @@ The following requirements need to be fulfilled in order to successfully install
 - FFTW libraries
 - GSL libraries [optional, needed only for normal_modes executable]
 - MPI compilers [optional, needed only for LAMMPS]
-- Read the entire README before doing anything
+- Read the entire README before doing anything!
 
 ### Setup
 The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be done with the following command if the home directory of MBX is the current directory:
@@ -36,7 +38,7 @@ make && make install
 ```
 After performing basic installation, you can [run the unit tests](#testing) to make sure everything is working properly.
 
-#### [Alternative installation of MBX_MPI (**LAMMPS only**)](#lammps)
+#### [Alternative installation of MBX_MPI](#lammps) (**LAMMPS only**)
 If you want to use MBX with LAMMPS, instead skip to the section about the [LAMMPS plugin](#lammps). This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps) in a different directory.
 
 ## Testing
@@ -46,7 +48,7 @@ make check
 ```
 All tests must pass. If you encounter any errors, please report them in the [MBX Google Group](https://groups.google.com/g/mbx-users).
 
-Tests will fail if using an MPI compiler instead of `g++`/`icpc`, such as if you performed alternative installation with MBX_MPI with LAMMPS. Please instead perform [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps) first with g++ and check the tests.
+Tests will fail if using an MPI compiler instead of `g++`/`icpc`, such as if you performed alternative installation with MBX_MPI with LAMMPS. Please instead perform [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps) first with g++ and then run the tests.
 
 ## JSON File
 To make life easier for you, a JSON configuration file must be used to pass all the information that MBX needs. Usually, one does not need to change anything except a couple of options. In any case, all the options of the json file are explained below.
@@ -54,12 +56,12 @@ To make life easier for you, a JSON configuration file must be used to pass all 
 The JSON file template is the following:
 ```
 {
-   "Note" : "This is a configuration file",
+   "Note" : "This is a  MBX v1.0.2 configuration file",
    "MBX" : {
        "box" : [21.0,0.0,0.0,0.0,21.0,0.0,0.0,0.0,21.0],
        "twobody_cutoff"   : 9.0,
        "threebody_cutoff" : 7.0,
-       "dipole_tolerance" : 1E-8,
+       "dipole_tolerance" : 1E-08,
        "dipole_max_it"    : 100,
        "dipole_method"     : "cg",
        "alpha_ewald_elec" : 0.6,
@@ -81,20 +83,20 @@ In this file:
 - `box` is either a 9 element list, comma-separated and limited by brackets with the 3 vectors of the box: ax, ay, az, bx, by, bz, cx, cy, cz, or an empty list if one wants to run gas-phase calculations.
 - `twobody_cutoff` is the distance at which the 2-body interactions will be cut in the real space. If you are using polynomials, that should be the largest polynomial cutoff that you are using (usually 9.0 Angstrom) in periodic boundary conditions. In gas phase calculations, that should be set to a large number so the real space electrostatics and dispersion are properly calculated and fully accounted for.
 - `threebody_cutoff` is the cutoff for the 3-body polynomials. If only water is used, one can set that to 4.5, but if alkali metal ions or halides are used, it should be set to the maximum cutoff in any of the trimers used (7.0).
-- `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. A value of 1E-08 is usually small enough (1E-06 may also be sufficient in some cases but, if it is used, it is recommended to verity the convergence of both structural and thermodynamic properties relative to simulations carried out with 1E-08). However, if the dipole solver used is aspc, the magnitude of the tolerance may have to be decreased up to 1E-10 or 1E-12. It is recommended to run a few thousand steps using aspc and cg for the dipole solver, and decide which is the dipole tolerance needed.
+- `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. A value of 1E-08 is usually small enough. However, if the dipole solver used is aspc, the magnitude of the tolerance may have to be decreased up to 1E-10 or 1E-12. It is recommended to run a few thousand steps using aspc and cg for the dipole solver, and decide which is the dipole tolerance needed.
 - `dipole_max_it` is the maximum number of iterations allowed in the dipole iterative method calculation. If the number of iterations exceeds this value, MBX will throw an error message saying that the dipoles have diverged.
 - `dipole_method` is the method adopted to calculate the induced dipoles. Current options are `iter` (iterative), `cg` (conjugate gradient, faster than iter), and `aspc` (always stable predictor-corrector), which should only be used in simulations. All three solvers are implemented and available through i-PI or LAMMPS. 
-- `alpha_ewald_XX` is the alpha used in the reciprocal space. It should be set to 0 when running gas-phase calculations/simulations.
-- `grid_density_XX` is the number of grid points density.
-- `spline_order_XX` is the order of the splines used for interpolation.
+- `alpha_ewald_{elec/disp}` is the alpha used in the reciprocal space. It should be set to 0 when running gas-phase calculations/simulations.
+- `grid_density_{elec/disp}` is the Ewald grid points density.
+- `spline_order_{elec/disp}` is the order of the splines used for interpolation.
 - `ignore_2b_poly` a list of 2 element lists with the monomer pairs for which the 2-body polynomials will not be calculated. Example: `"ignore_2b_poly" : [["na+","h2o"]]`
 - `ignore_3b_poly` has a similar format as ignore_2b_poly, but with the difference that the list is a list of 3-element list. If a set of three monomer types is specified in this list, MBX won't calculate the 3-body polynomials for that given trimer. Example: `"ignore_3b_poly" : [["na+","h2o","h2o"]]`
 - `localhost` is the name of the socket. It MUST match the name in the XML file, otherwise it will send an error saying that the socket was not found.
-- `port` is used when interfacing with i-pi. It is the port that will hold the socket. Should be greater than 34500.
+- `port` is used when interfacing with i-pi. It is the port that will hold the socket. Should be greater than `34500`.
 
 ## Main executables
-After installation, there will be the main executables in `$MBX_HOME/bin`.
-- `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If the flag to print gradients is activated (`PRINT_GRADS`; see source code in `$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
+After installation, there will be the main executables in `$MBX_HOME/bin/`.
+- `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If `PRINT_GRADS` is manually enabled in the source code in (`$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
 
 ## PEFs implemented
@@ -127,13 +129,13 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * [Adv. Phys. X 4, 1631212 (2019)](https://doi.org/10.1080/23746149.2019.1631212)
   * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445)
   * [J. Phys. Chem. B 126, 8266 (2022)](https://doi.org/10.1021/acs.jpcb.2c04698)
-- MB-nrg PEFs for CO2 and CO2/H2O mixtures
+- MB-nrg PEFs for CO<sub>2</sub> and CO<sub>2</sub>/H<sub>2</sub>O mixtures
   * [J. Chem. Theory Comput. 16, 2246 (2020)](https://doi.org/10.1021/acs.jctc.9b01175)
   * [J. Chem. Phys. 156, 104503 (2022)](https://doi.org/10.1063/5.0080061)
-- MB-nrg PEFs for CH4 and CH4/H2O mixtures
+- MB-nrg PEFs for CH<sub>4</sub> and CH<sub>4</sub>/H<sub>2</sub>O mixtures
   * [J. Phys. Chem. B 124, 11207 (2020)](https://doi.org/10.1021/acs.jpcb.0c08728)
   * [J. Chem. Phys. 156, 194504 (2022)](https://doi.org/10.1063/5.0089773)
-- MB-nrg PEF for N2O5 in water
+- MB-nrg PEF for N<sub>2</sub>O<sub>5</sub> in water
   * [J. Chem. Theory Comput. 17, 3931 (2021)](https://doi.org/10.1021/acs.jctc.1c00069)
 
 ## Interfaces
@@ -156,8 +158,8 @@ make && make install
 
  After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
 ```console
-git clone -b stable git@github.com:lammps/lammps.git
-export $LAMMPS_HOME=$PWD/lammps
+git clone -b stable git@github.com:lammps/lammps.git LAMMPS-stable
+export $LAMMPS_HOME=$PWD/LAMMPS-stable
 
 cp -rf $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
 cd $LAMMPS_HOME/src/
@@ -198,7 +200,7 @@ There are more tests for other types of simulations, including condensed phase s
 
 
 ## Coverage
-The unit tests implemented should cover a big part of the code. This sunburst graph gives an idea of the coverage from top (center) to bottom (periphery). Our goal is to keep it as green as possible, being green good coverage, and red bad covergae.
+The unit tests implemented should cover a big part of the code. This sunburst graph gives an idea of the coverage from top (center) to bottom (periphery). Our goal is to keep it as green as possible, being green good coverage, and red bad coverage.
 <p align="center">
   <img src="https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>

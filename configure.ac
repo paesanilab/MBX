@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.0.1], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.0.2], [mbx-users@googlegroups.com])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -60,7 +60,7 @@ AC_DEFUN([MBX_CHECK_CXXFLAG], [
 ])
 
 # MBX_CHECK_REQ_CXXFLAG(flag)
-# use it to check if a flag is available on this compiler
+# use it to check if a required flag is available on this compiler
 AC_DEFUN([MBX_CHECK_REQ_CXXFLAG], [
   save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
@@ -122,15 +122,21 @@ AC_SEARCH_LIBS([omp_get_thread_num],[iomp5 gomp])
 # FFTW
 # Look for possible environment variables known to have FFTW home
 fftw_dir=none
+fftw_dir_name=none
 if test "$FFTW_HOME" != ""; then
     fftw_dir="$FFTW_HOME"
+    fftw_dir_name="FFTW_HOME"
 elif test "$FFTWHOME" != ""; then 
     fftw_dir="$FFTWHOME"
+    fftw_dir_name="FFTWHOME"
 elif test "$FFTW_ROOT" != "" ; then
     fftw_dir="$FFTW_ROOT"
+    fftw_dir_name="FFTW_ROOT"
 elif test "$FFTWROOT" != "" ; then
     fftw_dir="$FFTWROOT"
+    fftw_dir_name="FFTWROOT"
 fi
+AC_MSG_NOTICE([fftw_dir: ${fftw_dir_name}=${fftw_dir}])
 MBX_CHECK_PACKAGE([$fftw_dir])
 
 AC_CHECK_LIB([fftw3],[fftw_plan_dft],[
@@ -183,7 +189,7 @@ MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
 # Act on enable flags
 
 if test $debug == true; then
-    MBX_CHECK_CXXFLAG([-g])
+    MBX_CHECK_REQ_CXXFLAG([-g])
 fi
 
 if test $verbose == true; then
@@ -191,16 +197,18 @@ if test $verbose == true; then
 fi
 
 if test $optimization == true; then
-    MBX_CHECK_CXXFLAG([-O2])
+    MBX_CHECK_REQ_CXXFLAG([-O2])
 else
-    MBX_CHECK_CXXFLAG([-O0])
+    MBX_CHECK_REQ_CXXFLAG([-O0])
 fi
 
 if test $coverage == true; then
     MBX_CHECK_CXXFLAG([--coverage])
 fi
 
+# deprecated ttm-nrg mode
 if test $ttmnrg == true; then
+    AC_MSG_WARN([ttm-nrg is deprecated.])
     MBX_CHECK_CXXFLAG([-DTTMNRG])
 fi
 
@@ -218,15 +226,21 @@ AM_CONDITIONAL([ISMPI], [test $mpi == true])
 if test $mpi == true; then
     # Look for possible environment variables known to have MPI home
     mpi_dir=none
+    mpi_dir_name=none
     if test "$MPI_HOME" != ""; then
         mpi_dir="$MPI_HOME"
+        mpi_dir_name="MPI_HOME"
     elif test "$MPIHOME" != ""; then
         mpi_dir="$MPIHOME"
+        mpi_dir_name="MPIHOME"
     elif test "$MPI_ROOT" != "" ; then
         mpi_dir="$MPI_ROOT"
+        mpi_dir_name="MPI_ROOT"
     elif test "$MPIROOT" != "" ; then
         mpi_dir="$MPIROOT"
+        mpi_dir_name="MPIROOT"
     fi
+    AC_MSG_NOTICE([mpi_dir: ${mpi_dir_name}=${mpi_dir}])
     MBX_CHECK_PACKAGE([$mpi_dir])
     AC_CHECK_LIB([mpi],[MPI_Init],[
         CPPFLAGS="$CPPFLAGS -DHAVE_MPI=1"
@@ -240,7 +254,6 @@ if test $mpi == true; then
         AC_MSG_RESULT(no)
         AC_MSG_ERROR([compiler ${CXX} is not able to find mpi.h])
         ])
-    AC_DISABLE_SHARED
 fi
 
 # Checks for library functions.
