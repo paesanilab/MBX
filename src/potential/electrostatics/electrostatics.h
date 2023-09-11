@@ -38,8 +38,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include <cstdlib>
 #include <string>
-#include <cmath>
 #include <memory>
+#include <mathimf.h>
+#include <unordered_map>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -502,11 +503,18 @@ class Electrostatics {
     void CalculatePermanentElecField(bool use_ghost = 0);
     void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
     void CalculateDipolesIterative();
+    void PrecomputeDipoleIterationsInformation(std::vector<double> &in_v, std::vector<double> &out_v, 
+                                                           std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                                                           bool use_ghost = 0);
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
+    void ComputeDipoleField2(std::vector<double> &in_v, std::vector<double> &out_v,
+                            std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                            bool use_ghost = 0);
     void ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesCG();
     void CalculateDipolesCGMPIlocal(bool use_ghost = 0);
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
+    void DipolesCGIteration2(std::vector<double> &in_v, std::vector<double> &out_v,std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation);
     void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesAspc();
     void CalculateDipolesAspcMPIlocal(bool use_ghost = 0);
@@ -784,7 +792,9 @@ class Electrostatics {
     std::vector<double> grad_x_;
     std::vector<double> phi_x_ind_;
     std::vector<double> ef_x_ind_;
-    std::vector<double> grad_x_ind_;
+    std::vector<double> grad_x_ind_; 
+
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////

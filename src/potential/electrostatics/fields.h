@@ -71,15 +71,24 @@ derived.
 #define FIELDS_H
 
 #include <vector>
-#include <cmath>
 #include <cstddef>
+#include <mathimf.h>
+#include <functional>
+#include <unordered_map>
 
 #include "potential/electrostatics/gammq.h"
 #include "tools/constants.h"
 #include "tools/definitions.h"
 
+
 namespace elec {
 
+    typedef std::tuple<size_t, size_t, size_t, size_t, size_t, std::string> key_precomputed_info;
+    struct key_hash : public std::unary_function<key_precomputed_info, std::size_t> {
+        std::size_t operator()(const key_precomputed_info& k) const {
+            return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k) ^ std::get<3>(k) ^ std::get<4>(k) ^ std::hash<std::string>{}(std::get<5>(k));
+        }
+    };
 ////////////////////////////////////////////////////////////////////////////////
 
 class ElectricFieldHolder {
@@ -149,48 +158,45 @@ class ElectricFieldHolder {
                              const std::vector<double> &box_inverse,  // The inverse lattice vectors
                              double cutoff,                           // The real space cutoff for pairs
                              bool use_ghost,                          // use ghost monomers
-                             const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset);
-
-    void CalcDipoleElecField2(double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
-                             double *mu1, double *mu2,                // Dipoles of mon type 1 and 2
-                             size_t mon1_index,                       // Mon 1 index
-                             size_t mon2_index_start,                 // Mon 2 initial index
-                             size_t mon2_index_end,                   // Mon 2 final index
-                             size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
-                             size_t site_i, size_t site_j,            // Site # i of mon1 and # j of mon 2
-                             double Asqsqi,                           // (polfac[i] * polfac[j])^4 inverted
-                             double aDD,                              // Thole damping aDD (dipole - dipole)
-                             double *Efd2,                            // Electric field on Mon 2
-                             double *Efdx_mon1,                       // Output electric field on X for Mon 1
-                             double *Efdy_mon1,                       // Output electric field on Y for Mon 1
-                             double *Efdz_mon1,                       // Output electric field on Z for Mon 1
-                             double ewald_alpha,                      // Ewald attenuation paramter
-                             bool use_pbc,                            // Whether to enforce periodic boundary conditions
-                             const std::vector<double> &box,          // The lattice vectors
-                             const std::vector<double> &box_inverse,  // The inverse lattice vectors
-                             double cutoff,                           // The real space cutoff for pairs
-                             bool use_ghost,                          // use ghost monomers
-                             const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset);
-
-    bool withinCutoff(
-                    int *bool_indices,
-                    double *xyz1, 
-                    double *xyz2, 
-                    size_t m2init,
-                    size_t nmon1, 
-                    size_t nmon2, 
-                    bool use_pbc, 
-                    std::vector<double> &box, 
-                    std::vector<double> &box_inverse, 
-                    double cutoff,
-                    size_t site_i,
-                    size_t site_j, 
-                    size_t mon1_index, 
-                    bool use_ghost,
-                    const std::vector<size_t> &islocal, 
-                    const size_t isl1_offset,
-                    const size_t isl2_offset);
-    
+                             const std::vector<size_t> &islocal, 
+                             const size_t isl1_offset, 
+                             const size_t isl2_offset);
+    void CalcDipoleElecField2(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
+                                              size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
+                                              size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
+                                              double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
+                                              double ewald_alpha, bool use_pbc, const std::vector<double> &box,
+                                              const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
+                                              const std::vector<size_t> &islocal, const size_t isl1_offset,
+                                              const size_t isl2_offset);
+    void CalcDipoleElecField22(double *xyz1, 
+                            double *xyz2, 
+                            double *mu1, 
+                            double *mu2, 
+                            size_t mon1_index,     
+                            size_t mon2_index_start, 
+                            size_t mon2_index_end, 
+                            size_t nmon1,
+                            size_t nmon2,
+                            size_t site_i, 
+                            size_t site_j, 
+                            double aDD,
+                            double *Efd2, 
+                            double *Efdx_mon1, 
+                            double *Efdy_mon1, 
+                            double *Efdz_mon1,
+                            std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                            int mt1, 
+                            int mt2, 
+                            int m1, 
+                            int i, 
+                            int j);
+    bool withinCutoff(std::vector<bool> &bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
+                                        size_t nmon2, bool use_pbc, std::vector<double> &box, 
+                                        std::vector<double> &box_inverse, double cutoff, size_t site_i,
+                                        size_t site_j, size_t mon1_index, bool use_ghost,
+                                        const std::vector<size_t> &islocal, const size_t isl1_offset,
+                                        const size_t isl2_offset);
     ////////////////////////////////////////////////////////////////////////////////
     // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////
     ////////////////////////////////////////////////////////////////////////////////
