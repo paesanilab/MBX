@@ -2,6 +2,12 @@
 
 SHELL = /bin/sh
 
+ifndef MBX_HOME
+$(error "MBX_HOME is not set. Please set it.")
+else
+$(info "MBX_HOME=$(MBX_HOME)")
+endif
+
 MBX=$(MBX_HOME)
 MBX_INC=$(MBX)/include
 MBX_LIB=$(MBX)/lib
@@ -25,7 +31,7 @@ CXXFLAGS +=      -I$(FFTW)/include
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
 
-LINKFLAGS =	-g -O3 -fopenmp $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
+LINKFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 LIB = 
 LIB +=          $(MBX_LIB)/libmbx.a
 SIZE =		size
