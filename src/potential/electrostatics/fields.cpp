@@ -251,7 +251,7 @@ bool ElectricFieldHolder::withinCutoff(std::vector<bool> &bool_indices, double *
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
-#pragma omp simd
+    #pragma omp simd
     for (size_t m = m2init; m < nmon2; m++) {
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         const double cutoffsq = cutoff * cutoff;
@@ -604,7 +604,7 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
 
 
    //std::cout << rijx_vec.size() << " " << mon2_index_end << std::endl << std::flush;
-// #pragma omp simd reduction(+ : v0, v1, v2)
+    #pragma omp simd reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         double rijx = rijx_vec[m - mon2_index_start];
         double rijy = rijy_vec[m - mon2_index_start];
@@ -744,14 +744,14 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 
     const double cutoffsq = cutoff * cutoff;
 
-    std::vector<double> rijx_vec;
-    std::vector<double> rijy_vec;
-    std::vector<double> rijz_vec;
-    std::vector<double> ts2x_vec;
-    std::vector<double> ts2y_vec;
-    std::vector<double> ts2z_vec;
-    std::vector<double> s1r3_vec;
-// #pragma omp simd reduction(+ : v0, v1, v2)
+    std::vector<double> rijx_vec(mon2_index_end - mon2_index_start, 0.0);
+    std::vector<double> rijy_vec(mon2_index_end - mon2_index_start, 0.0);
+    std::vector<double> rijz_vec(mon2_index_end - mon2_index_start, 0.0);
+    std::vector<double> ts2x_vec(mon2_index_end - mon2_index_start, 0.0);
+    std::vector<double> ts2y_vec(mon2_index_end - mon2_index_start, 0.0);
+    std::vector<double> ts2z_vec(mon2_index_end - mon2_index_start, 0.0);
+    std::vector<double> s1r3_vec(mon2_index_end - mon2_index_start, 0.0);
+    #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
@@ -814,14 +814,13 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
         // Stored in vectors to make the loop vectorizable
 
         // Component x
-        rijx_vec.push_back(rijx);
-        rijy_vec.push_back(rijy);
-        rijz_vec.push_back(rijz);
-        // ts2x_vec.push_back(ts2x);
-        ts2x_vec.push_back(ts2x);
-        ts2y_vec.push_back(ts2y);
-        ts2z_vec.push_back(ts2z);
-        s1r3_vec.push_back(s1r3);
+        rijx_vec[m - mon2_index_start] = rijx;
+        rijy_vec[m - mon2_index_start] = rijy;
+        rijz_vec[m - mon2_index_start] = rijz;
+        ts2x_vec[m - mon2_index_start] = ts2x;
+        ts2y_vec[m - mon2_index_start] = ts2y;
+        ts2z_vec[m - mon2_index_start] = ts2z;
+        s1r3_vec[m - mon2_index_start] = s1r3;
     
     }
     // Setting the values to the output

@@ -5752,7 +5752,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         double *xyz2 = xyz_.data() + fi_crd2;
                         
                     // reorder the vector of monomers
-                    // #pragma omp simd 
+                        // #pragma omp simd 
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
                             reordered_xyz2[new_mon2_index] = xyz2[old_mon2_index + site_jnmon23];
