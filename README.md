@@ -2,9 +2,11 @@
 [![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
-# MBX v1.0.2
+
+# MBX v1.0.3
 MBX: A many-body energy and force calculator for data-driven many-body simulations.
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
+
 
 MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
 The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. 
@@ -99,6 +101,9 @@ In this file:
 After installation, there will be the main executables in `$MBX_HOME/bin/`.
 - `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If `PRINT_GRADS` is manually enabled in the source code in (`$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
+- `mb_decomp` will compute energies for subsystems for the given system(s), then performs many-body decomposition and prints the n-body contribution for all subsystems. If the flag to skip many-body decomposition ("-e") is activated, it prints the binding energy for all subsystems.
+- `order_frames` will compute the energies for a given list of configurations from the XYZ file, and rearranges the configuration frames in the order of increasing energy.
+- `normal_modes` will compute the normal modes for an optimized nrg file.
 
 ## PEFs implemented
 All the PEFs implemented, along with examples of input files and scripts to run various types of simulations, are provided in `$MBX_HOME/examples/PEFs`. If a surface is not there, its usage is not recommended because it is either not tested or not finalized. Example calls with C++, Fortran and Python are located inside each of the corresponding folders.
