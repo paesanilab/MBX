@@ -82,11 +82,23 @@ derived.
 
 
 namespace elec {
+    struct PrecomputedInfo {
+        std::vector<size_t> good_mon2;
+        std::vector<double> reordered_xyz2;
+        std::vector<size_t> reordered_islocal;
+        std::vector<double> rijx;
+        std::vector<double> rijy;
+        std::vector<double> rijz;
+        std::vector<double> ts2x;
+        std::vector<double> ts2y;
+        std::vector<double> ts2z;
+        std::vector<double> s1r3;
+    };
 
-    typedef std::tuple<size_t, size_t, size_t, size_t, size_t, std::string> key_precomputed_info;
+    typedef std::tuple<size_t, size_t, size_t, size_t, size_t> key_precomputed_info;
     struct key_hash : public std::unary_function<key_precomputed_info, std::size_t> {
         std::size_t operator()(const key_precomputed_info& k) const {
-            return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k) ^ std::get<3>(k) ^ std::get<4>(k) ^ std::hash<std::string>{}(std::get<5>(k));
+            return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k) ^ std::get<3>(k) ^ std::get<4>(k);
         }
     };
 ////////////////////////////////////////////////////////////////////////////////
@@ -197,6 +209,15 @@ class ElectricFieldHolder {
                                         size_t site_j, size_t mon1_index, bool use_ghost,
                                         const std::vector<size_t> &islocal, const size_t isl1_offset,
                                         const size_t isl2_offset);
+    void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, size_t mon1_index,
+                                              size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
+                                              size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
+                                              double ewald_alpha, bool use_pbc, const std::vector<double> &box,
+                                              const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
+                                              const std::vector<size_t> &islocal, const size_t isl1_offset,
+                                              const size_t isl2_offset,
+                                              std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                                              int mt1, int mt2, int m1, int i, int j);
     ////////////////////////////////////////////////////////////////////////////////
     // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////
     ////////////////////////////////////////////////////////////////////////////////

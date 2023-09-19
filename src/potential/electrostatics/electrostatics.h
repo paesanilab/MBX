@@ -503,7 +503,7 @@ class Electrostatics {
     void CalculatePermanentElecField(bool use_ghost = 0);
     void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
     void CalculateDipolesIterative();
-    void PrecomputeDipoleIterationsInformation(std::vector<double> &in_v, std::vector<double> &out_v, 
+    void PrecomputeDipoleIterationsInformation(std::vector<double> &out_v, 
                                                            std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
                                                            bool use_ghost = 0);
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);

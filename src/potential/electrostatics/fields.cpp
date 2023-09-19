@@ -564,13 +564,14 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
                                               std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
-    std::vector<double>  rijx_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j, "rijx")]; 
-    std::vector<double>  rijy_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j, "rijy")]; 
-    std::vector<double>  rijz_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j, "rijz")];
-    std::vector<double>  ts2x_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j, "ts2x")];
-    std::vector<double>  ts2y_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j, "ts2x")];
-    std::vector<double>  ts2z_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j, "ts2x")];
-    std::vector<double>  s1r3_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j, "s1r3")];
+    PrecomputedInfo precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+    std::vector<double>  rijx_vec = precomp_info.rijx;
+    std::vector<double>  rijy_vec = precomp_info.rijy; 
+    std::vector<double>  rijz_vec = precomp_info.rijz;
+    std::vector<double>  ts2x_vec = precomp_info.ts2x;
+    std::vector<double>  ts2y_vec = precomp_info.ts2y;
+    std::vector<double>  ts2z_vec = precomp_info.ts2z;
+    std::vector<double>  s1r3_vec = precomp_info.s1r3;
     
     
     // Shifts that will be useful in the loops
@@ -600,6 +601,10 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
 
     const double cutoffsq = cutoff * cutoff;
     */
+
+
+   std::cout << rijx_vec.size() << " " << mon2_index_end << std::endl;
+    std::flush();
 #pragma omp simd reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         double rijx = rijx_vec[m - mon2_index_start];
@@ -609,7 +614,7 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
         double ts2y = ts2y_vec[m - mon2_index_start];
         double ts2z = ts2z_vec[m - mon2_index_start];
         double s1r3 = s1r3_vec[m - mon2_index_start];
-
+       
         /*
         bool accum2 = !use_ghost;
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
@@ -711,7 +716,131 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
 
 ////////////////////////////////////////////////////////////////////////////////
 
+void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, size_t mon1_index,
+                                              size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
+                                              size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
+                                              double ewald_alpha, bool use_pbc, const std::vector<double> &box,
+                                              const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
+                                              const std::vector<size_t> &islocal, const size_t isl1_offset,
+                                              const size_t isl2_offset,
+                                              std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                                              int mt1, int mt2, int m1, int i, int j) {
+    // PrecomputedInfo precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+    PrecomputedInfo dipole_info;
+    const size_t nmon12 = nmon1 * 2;
+    const size_t nmon22 = nmon2 * 2;
+    const size_t site_i3 = site_i * 3;
+    const size_t site_j3 = site_j * 3;
+    const size_t site_inmon13 = nmon1 * site_i3;
+    const size_t site_jnmon23 = nmon2 * site_j3;
 
+    // Coordinates x, y and z of site i of monomer 1
+    const double xyzmon1_x = xyz1[site_inmon13 + mon1_index];
+    const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
+    const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
+
+    double v0 = 0.0;
+    double v1 = 0.0;
+    double v2 = 0.0;
+
+    double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+    double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
+    alpha_pi_term *= two_alpha_squared;
+
+    const double cutoffsq = cutoff * cutoff;
+
+    std::vector<double> rijx_vec;
+    std::vector<double> rijy_vec;
+    std::vector<double> rijz_vec;
+    std::vector<double> ts2x_vec;
+    std::vector<double> ts2y_vec;
+    std::vector<double> ts2z_vec;
+    std::vector<double> s1r3_vec;
+// #pragma omp simd reduction(+ : v0, v1, v2)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        bool accum2 = !use_ghost;
+        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        
+        double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
+
+        // Distances between sites i and j from mon1 and mon2
+        double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
+        double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+        double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+
+        // Apply the minimum image convention via fractional coordinates
+        // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+        if (use_pbc) {
+            // Convert to fractional coordinates
+            double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
+            double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
+            double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
+            // Put in the range 0 to 1
+            fracrijx -= std::floor(fracrijx + 0.5);
+            fracrijy -= std::floor(fracrijy + 0.5);
+            fracrijz -= std::floor(fracrijz + 0.5);
+            // Convert back to Cartesian coordinates
+            rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
+            rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
+            rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
+        }
+
+        const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
+        
+        const double ri = 1 / sqrt(rsq);
+        const double risq = ri * ri;
+
+        // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
+        // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
+        // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
+        // r^-1, r^-3, r^-5
+        double r_alpha = ewald_alpha * sqrt(rsq);
+        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
+        double bn1 = (erfc(r_alpha) * ri + alpha_pi_term * exp_alpha2_r2) * risq;
+        double bn2 = (3 * bn1 + alpha_pi_term * two_alpha_squared * exp_alpha2_r2) * risq;
+
+        // Some values that will be used in the screening functions
+        const double rA4 = rsq * rsq * Asqsqi;
+// TODO look at the exponential function intel vec
+#if NO_THOLE
+        const double exp1 = 0;
+#else
+        const double exp1 = std::exp(-aDD * rA4);
+#endif
+
+        // Get screening functions
+        const double s1r3 = scale * (bn1 - exp1 * ri * risq);
+        const double s2r5_3 = scale * (bn2 - (3 + 4 * aDD * rA4) * exp1 * ri * risq * risq);
+        const double ts2x = s2r5_3 * rijx;
+        const double ts2y = s2r5_3 * rijy;
+        const double ts2z = s2r5_3 * rijz;
+
+        // Contributions to the dipole electric field to site i of mon1
+        // Stored in vectors to make the loop vectorizable
+
+        // Component x
+        rijx_vec.push_back(rijx);
+        rijy_vec.push_back(rijy);
+        rijz_vec.push_back(rijz);
+        ts2x_vec.push_back(ts2x);
+        ts2x_vec.push_back(ts2x);
+        ts2y_vec.push_back(ts2y);
+        ts2z_vec.push_back(ts2z);
+        s1r3_vec.push_back(s1r3);
+    
+    }
+    // Setting the values to the output
+    dipole_info.rijx = rijx_vec;
+    dipole_info.rijy = rijy_vec;
+    dipole_info.rijz = rijz_vec;
+    dipole_info.ts2x = ts2x_vec;
+    dipole_info.ts2y = ts2y_vec;
+    dipole_info.ts2z = ts2z_vec;
+    dipole_info.s1r3 = s1r3_vec;
+    dipole_info.reordered_xyz2 = xyz2;
+    dipole_info.reordered_islocal = islocal;
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)] = dipole_info
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
