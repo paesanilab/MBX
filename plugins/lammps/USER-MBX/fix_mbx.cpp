@@ -47,13 +47,15 @@ using namespace FixConst;
 
 static const char cite_fix_mbx[] =
     "fix mbx command:\n\n"
-    "@Article{,\n"
-    " author = {},\n"
-    " title = {},\n"
-    " journal = {},\n"
-    " year =    ,\n"
-    " volume =  ,\n"
-    " pages =   {}\n"
+    "@article{10.1063/5.0156036,\n"
+    " author = {Riera, Marc and Knight, Christopher and Bull-Vulpe, Ethan F. and Zhu, Xuanyu and Agnew, Henry and Smith, Daniel G. A. and Simmonett, Andrew C. and Paesani, Francesco},\n"
+    " title = \"{MBX: A many-body energy and force calculator for data-driven many-body simulations}\",\n"
+    " journal = {The Journal of Chemical Physics},\n"
+    " volume = {159},\n"
+    " number = {5},\n"
+    " pages = {054802},\n"
+    " year = {2023},\n"
+    " doi = {10.1063/5.0156036},\n"
     "}\n\n";
 
 /* ---------------------------------------------------------------------- */
