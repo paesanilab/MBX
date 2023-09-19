@@ -197,7 +197,7 @@ class ElectricFieldHolder {
                             double *Efdx_mon1, 
                             double *Efdy_mon1, 
                             double *Efdz_mon1,
-                            std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                            std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                             int mt1, 
                             int mt2, 
                             int m1, 
@@ -209,14 +209,14 @@ class ElectricFieldHolder {
                                         size_t site_j, size_t mon1_index, bool use_ghost,
                                         const std::vector<size_t> &islocal, const size_t isl1_offset,
                                         const size_t isl2_offset);
-    void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, size_t mon1_index,
+    void CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, size_t mon1_index,
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double ewald_alpha, bool use_pbc, const std::vector<double> &box,
                                               const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
                                               const std::vector<size_t> &islocal, const size_t isl1_offset,
                                               const size_t isl2_offset,
-                                              std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                                              std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j);
     ////////////////////////////////////////////////////////////////////////////////
     // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////

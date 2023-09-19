@@ -562,7 +562,7 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
-                                              std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                                              std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
     PrecomputedInfo precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
     std::vector<double>  rijx_vec = precomp_info.rijx;
@@ -603,9 +603,8 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
     */
 
 
-   std::cout << rijx_vec.size() << " " << mon2_index_end << std::endl;
-    std::flush();
-#pragma omp simd reduction(+ : v0, v1, v2)
+   //std::cout << rijx_vec.size() << " " << mon2_index_end << std::endl << std::flush;
+// #pragma omp simd reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         double rijx = rijx_vec[m - mon2_index_start];
         double rijy = rijy_vec[m - mon2_index_start];
@@ -723,7 +722,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
                                               const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
                                               const std::vector<size_t> &islocal, const size_t isl1_offset,
                                               const size_t isl2_offset,
-                                              std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                                              std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
     // PrecomputedInfo precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
     PrecomputedInfo dipole_info;
@@ -738,10 +737,6 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
     const double xyzmon1_x = xyz1[site_inmon13 + mon1_index];
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
-
-    double v0 = 0.0;
-    double v1 = 0.0;
-    double v2 = 0.0;
 
     double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
     double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
@@ -822,7 +817,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
         rijx_vec.push_back(rijx);
         rijy_vec.push_back(rijy);
         rijz_vec.push_back(rijz);
-        ts2x_vec.push_back(ts2x);
+        // ts2x_vec.push_back(ts2x);
         ts2x_vec.push_back(ts2x);
         ts2y_vec.push_back(ts2y);
         ts2z_vec.push_back(ts2z);
@@ -837,9 +832,9 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
     dipole_info.ts2y = ts2y_vec;
     dipole_info.ts2z = ts2z_vec;
     dipole_info.s1r3 = s1r3_vec;
-    dipole_info.reordered_xyz2 = xyz2;
-    dipole_info.reordered_islocal = islocal;
-    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)] = dipole_info
+    //dipole_info.reordered_xyz2 = xyz2;
+    //dipole_info.reordered_islocal = islocal;
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)] = dipole_info;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

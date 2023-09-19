@@ -504,17 +504,17 @@ class Electrostatics {
     void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
     void CalculateDipolesIterative();
     void PrecomputeDipoleIterationsInformation(std::vector<double> &out_v, 
-                                                           std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                                                           std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                                                            bool use_ghost = 0);
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void ComputeDipoleField2(std::vector<double> &in_v, std::vector<double> &out_v,
-                            std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation,
+                            std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                             bool use_ghost = 0);
     void ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesCG();
     void CalculateDipolesCGMPIlocal(bool use_ghost = 0);
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
-    void DipolesCGIteration2(std::vector<double> &in_v, std::vector<double> &out_v,std::unordered_map<key_precomputed_info, std::vector<double>, key_hash>& precomputedInformation);
+    void DipolesCGIteration2(std::vector<double> &in_v, std::vector<double> &out_v,std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
     void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void CalculateDipolesAspc();
     void CalculateDipolesAspcMPIlocal(bool use_ghost = 0);
