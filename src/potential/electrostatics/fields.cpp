@@ -233,7 +233,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool ElectricFieldHolder::withinCutoff(std::vector<bool> &bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
+bool ElectricFieldHolder::withinCutoff(size_t *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
                                         size_t nmon2, bool use_pbc, std::vector<double> &box, 
                                         std::vector<double> &box_inverse, double cutoff, size_t site_i,
                                         size_t site_j, size_t mon1_index, bool use_ghost,
@@ -251,45 +251,44 @@ bool ElectricFieldHolder::withinCutoff(std::vector<bool> &bool_indices, double *
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
+    const double cutoffsq = cutoff * cutoff;
+
     #pragma omp simd
     for (size_t m = m2init; m < nmon2; m++) {
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
-        const double cutoffsq = cutoff * cutoff;
         bool accum2 = !use_ghost;
 
         if (use_ghost && isls) accum2 = true;
 
-        if (accum2) {
+        // if (accum2) {
             
-            double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
-        
-            // Distances between sites i and j from mon1 and mon2
-            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];  // m is left or right
-            double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-            double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+        double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
+    
+        // Distances between sites i and j from mon1 and mon2
+        double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];  // m is left or right
+        double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+        double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
 
-            // Apply the minimum image convention via fractional coordinates
-            // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-            if (use_pbc) {
-                // Convert to fractional coordinates
-                double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
-                double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
-                double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
-                // Put in the range 0 to 1
-                fracrijx -= std::floor(fracrijx + 0.5);
-                fracrijy -= std::floor(fracrijy + 0.5);
-                fracrijz -= std::floor(fracrijz + 0.5);
-                // Convert back to Cartesian coordinates
-                rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
-                rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
-                rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
-            }
-
-            const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
-            if (rsq < cutoffsq){
-                bool_indices[m] = true;
-            }
+        // Apply the minimum image convention via fractional coordinates
+        // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+        if (use_pbc) {
+            // Convert to fractional coordinates
+            double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
+            double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
+            double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
+            // Put in the range 0 to 1
+            fracrijx -= std::floor(fracrijx + 0.5);
+            fracrijy -= std::floor(fracrijy + 0.5);
+            fracrijz -= std::floor(fracrijz + 0.5);
+            // Convert back to Cartesian coordinates
+            rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
+            rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
+            rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
         }
+
+        const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
+        bool_indices[m] = accum2 && rsq < cutoffsq;
+        // }
     }
         
 }
@@ -564,14 +563,14 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
                                               std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
-    PrecomputedInfo precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
-    std::vector<double>  rijx_vec = precomp_info.rijx;
-    std::vector<double>  rijy_vec = precomp_info.rijy; 
-    std::vector<double>  rijz_vec = precomp_info.rijz;
-    std::vector<double>  ts2x_vec = precomp_info.ts2x;
-    std::vector<double>  ts2y_vec = precomp_info.ts2y;
-    std::vector<double>  ts2z_vec = precomp_info.ts2z;
-    std::vector<double>  s1r3_vec = precomp_info.s1r3;
+    PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+    double *rijx_vec = precomp_info.rijx.data();
+    double *rijy_vec = precomp_info.rijy.data(); 
+    double *rijz_vec = precomp_info.rijz.data();
+    double *ts2x_vec = precomp_info.ts2x.data();
+    double *ts2y_vec = precomp_info.ts2y.data();
+    double *ts2z_vec = precomp_info.ts2z.data();
+    double *s1r3_vec = precomp_info.s1r3.data();
     
     
     // Shifts that will be useful in the loops
@@ -725,7 +724,6 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
                                               std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
     // PrecomputedInfo precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
-    PrecomputedInfo dipole_info;
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
     const size_t site_i3 = site_i * 3;
@@ -744,13 +742,21 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 
     const double cutoffsq = cutoff * cutoff;
 
-    std::vector<double> rijx_vec(mon2_index_end - mon2_index_start, 0.0);
-    std::vector<double> rijy_vec(mon2_index_end - mon2_index_start, 0.0);
-    std::vector<double> rijz_vec(mon2_index_end - mon2_index_start, 0.0);
-    std::vector<double> ts2x_vec(mon2_index_end - mon2_index_start, 0.0);
-    std::vector<double> ts2y_vec(mon2_index_end - mon2_index_start, 0.0);
-    std::vector<double> ts2z_vec(mon2_index_end - mon2_index_start, 0.0);
-    std::vector<double> s1r3_vec(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].rijx = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].rijy = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].rijz = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].ts2x = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].ts2y = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].ts2z = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].s1r3 = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+
+    double *rijx_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].rijx.data();
+    double *rijy_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].rijy.data();
+    double *rijz_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].rijz.data();
+    double *ts2x_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].ts2x.data();
+    double *ts2y_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].ts2y.data();
+    double *ts2z_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].ts2z.data();
+    double *s1r3_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].s1r3.data();
     #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
@@ -823,17 +829,6 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
         s1r3_vec[m - mon2_index_start] = s1r3;
     
     }
-    // Setting the values to the output
-    dipole_info.rijx = rijx_vec;
-    dipole_info.rijy = rijy_vec;
-    dipole_info.rijz = rijz_vec;
-    dipole_info.ts2x = ts2x_vec;
-    dipole_info.ts2y = ts2y_vec;
-    dipole_info.ts2z = ts2z_vec;
-    dipole_info.s1r3 = s1r3_vec;
-    //dipole_info.reordered_xyz2 = xyz2;
-    //dipole_info.reordered_islocal = islocal;
-    precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)] = dipole_info;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

@@ -98,7 +98,8 @@ namespace elec {
     typedef std::tuple<size_t, size_t, size_t, size_t, size_t> key_precomputed_info;
     struct key_hash : public std::unary_function<key_precomputed_info, std::size_t> {
         std::size_t operator()(const key_precomputed_info& k) const {
-            return std::get<0>(k) ^ std::get<1>(k) ^ std::get<2>(k) ^ std::get<3>(k) ^ std::get<4>(k);
+            return std::get<0>(k) << 8 ^ std::get<1>(k) << 6 ^ std::get<2>(k) ^ std::get<3>(k) << 4 ^ std::get<4>(k) << 2;
+            // return std::hash<key_precomputed_info>{}(k);
         }
     };
 ////////////////////////////////////////////////////////////////////////////////
@@ -203,7 +204,7 @@ class ElectricFieldHolder {
                             int m1, 
                             int i, 
                             int j);
-    bool withinCutoff(std::vector<bool> &bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
+    bool withinCutoff(size_t *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
                                         size_t nmon2, bool use_pbc, std::vector<double> &box, 
                                         std::vector<double> &box_inverse, double cutoff, size_t site_i,
                                         size_t site_j, size_t mon1_index, bool use_ghost,

@@ -5650,7 +5650,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
 
     // Following is the Compute Dipole Field code 
-    // size_t nthreads = 1;
+    size_t nthreads = 1;
     size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
     // std::fill(out_v.begin(), out_v.end(), 0);
     double ewald_alpha = ewald_alpha_;
@@ -5681,21 +5681,21 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             bool same = (mt1 == mt2);
             // TODO add neighbour list here
             // Prepare for parallelization
-            /*
+            // /*
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-            std::vector<std::vector<double>> Efd_1_pool;
-            std::vector<std::vector<double>> Efd_2_pool;
+            // std::vector<std::vector<double>> Efd_1_pool;
+            // std::vector<std::vector<double>> Efd_2_pool;
             for (size_t i = 0; i < nthreads; i++) {
                 field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
-                Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-                Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+                // Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+                // Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
             }
-            */
+            // */
 
             // Parallel loop
             size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
 #ifdef _OPENMP
-// #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
 #endif
             for (size_t m1 = m1start; m1 < nmon1; m1 += num_mpi_ranks_) {
                 //            for (size_t m1 = 0; m1 < nmon1; m1++) {
@@ -5705,8 +5705,8 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 #ifdef _OPENMP
                 rank = omp_get_thread_num();
 #endif
-                //std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
-                ElectricFieldHolder local_field = ElectricFieldHolder(maxnmon);
+                std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
+                // ElectricFieldHolder local_field = ElectricFieldHolder(maxnmon);
                 size_t m2init = same ? m1 + 1 : 0;
                 // double ex_thread = 0.0;
                 // double ey_thread = 0.0;
@@ -5728,14 +5728,14 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
                         // determine which monomers are within the Cutoff
                         std::vector<size_t> good_mon2_indices;
-                        std::vector<bool> bool_mon2_indices(nmon2, false);
-                        local_field.withinCutoff(bool_mon2_indices, xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
+                        std::vector<size_t> bool_mon2_indices(nmon2, 0);
+                        local_field->withinCutoff(bool_mon2_indices.data(), xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
                                                                     nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
                                                                     m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
 
                        
                         for (int ind = 0; ind < nmon2; ind++) {
-                            if (bool_mon2_indices[ind] == true) {
+                            if (bool_mon2_indices[ind] == 1) {
                                 good_mon2_indices.push_back(ind);
                             }
                         }
@@ -5763,15 +5763,17 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             reordered_islocal[new_mon2_index + 1] = islocal_[fi_crd2 + old_mon2_index];
                         }
 
+                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
+                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].reordered_xyz2 = reordered_xyz2;
+                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].reordered_islocal = reordered_islocal;
+                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
+
                         // Calculate constants -- ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3
-                        local_field.CalcPrecomputedDipoleElec(xyz_.data() + fi_crd1, reordered_xyz2.data(),
+                        local_field->CalcPrecomputedDipoleElec(xyz_.data() + fi_crd1, reordered_xyz2.data(),
                                                          m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
                                                          Asqsqi, aDD, ewald_alpha_, use_pbc_, box_, box_inverse_,
                                                          cutoff_, use_ghost, reordered_islocal, 0, 1, precomputedInformation,
                                                          mt1, mt2, m1, i, j); 
-                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].reordered_xyz2 = reordered_xyz2;
-                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].reordered_islocal = reordered_islocal;
-                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
                         
                     }
                 }
@@ -6018,14 +6020,14 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                         }
 
                         std::vector<int> good_mon2_indices;
-                        std::vector<bool> bool_mon2_indices(nmon2, false);
-                        local_field->withinCutoff(bool_mon2_indices, xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
+                        std::vector<size_t> bool_mon2_indices(nmon2, 0);
+                        local_field->withinCutoff(bool_mon2_indices.data(), xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
                                                                     nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
                                                                     m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
 
                        
                         for (int ind = 0; ind < nmon2; ind++) {
-                            if (bool_mon2_indices[ind] == true) {
+                            if (bool_mon2_indices[ind] == 1) {
                                 good_mon2_indices.push_back(ind);
                             }
                         }
@@ -6641,14 +6643,14 @@ void Electrostatics::ComputeDipoleField2(std::vector<double> &in_v, std::vector<
                             reordered_islocal[new_mon2_index + 1] = islocal_[fi_crd2 + old_mon2_index];
                         }
                         */
-                        PrecomputedInfo precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
-                        std::vector<double>  reordered_xyz2 = precomp_info.reordered_xyz2;
-                        std::vector<size_t>  reordered_islocal = precomp_info.reordered_islocal;
-                        std::vector<size_t>  good_mon2_indices = precomp_info.good_mon2;
+                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
 
-                        std::vector<double>  reordered_Efd2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_Efd2(reordered_xyz2.size(), 0.0);
                         int reordered_mon2_size = good_mon2_indices.size();
-                        std::vector<double>  reordered_mu2(3*reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
 
