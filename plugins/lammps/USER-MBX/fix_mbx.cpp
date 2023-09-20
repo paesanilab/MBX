@@ -181,8 +181,9 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     mbx_mpi_enabled = true;
     mbx_aspc_enabled = false;
 
-    pair_mbx = NULL;
+    pair_mbx = nullptr;
     pair_mbx = (PairMBX *)force->pair_match("^mbx", 0);
+    if(!pair_mbx) error->all(FLERR,"Pair mbx is missing");
 
     ptr_mbx = NULL;
 
