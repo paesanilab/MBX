@@ -16,7 +16,7 @@ For details on the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.uc
 MBX is periodically updated with performance improvements and the addition of other MB-nrg PEFs. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
 ## Compilation and Installation
-The following requirements need to be fulfilled in order to successfully install the software
+The following requirements need to be fulfilled in order to successfully install the software:
 - g++/gcc v4.9 or higher [and icpc/icc v2018 or higher - optional]
 - FFTW libraries
 - GSL libraries [optional, needed only for normal_modes executable]
@@ -43,16 +43,16 @@ make && make install
 After performing basic installation, you can [run the unit tests](#testing) to make sure everything is working properly.
 
 #### [Alternative installation of MBX_MPI](#lammps) (**LAMMPS only**)
-If you want to use MBX with LAMMPS, instead skip to the section about the [LAMMPS plugin](#lammps). This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps) in a different directory.
+If you want to use MBX with LAMMPS, instead skip to the section about the [LAMMPS plugin](#lammps). This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
 
 ## Testing
-After [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps), running the unit tests is highly recommended. Run the following commands to run the tests:
+After [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps), running the unit tests is highly recommended. Run the following commands to run the tests:
 ```
 make check
 ```
 All tests must pass. If you encounter any errors, please report them in the [MBX Google Group](https://groups.google.com/g/mbx-users).
 
-Tests will fail if using an MPI compiler instead of `g++`/`icpc`, such as if you performed alternative installation with MBX_MPI with LAMMPS. Please instead perform [basic installation](#basic-installation-of-mbx-standalone-i-pi-python-or-fortran-not-lammps) first with g++ and then run the tests.
+Tests will fail if using an MPI compiler instead of `g++`/`icpc`, such as if you performed alternative installation with MBX_MPI with LAMMPS. Please instead perform [basic installation](##basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) first with g++ and then run the tests.
 
 ## JSON File
 To make life easier for you, a JSON configuration file must be used to pass all the information that MBX needs. Usually, one does not need to change anything except a couple of options. In any case, all the options of the json file are explained below.
@@ -60,7 +60,7 @@ To make life easier for you, a JSON configuration file must be used to pass all 
 The JSON file template is the following:
 ```
 {
-   "Note" : "This is a  MBX v1.0.2 configuration file",
+   "Note" : "This is a  MBX v1.0.0 configuration file",
    "MBX" : {
        "box" : [21.0,0.0,0.0,0.0,21.0,0.0,0.0,0.0,21.0],
        "twobody_cutoff"   : 9.0,
