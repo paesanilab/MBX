@@ -2867,26 +2867,25 @@ void Electrostatics::CalculatePermanentElecField3(std::unordered_map<key_precomp
                         double elec_scale_factor = 1;
                         
                         PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
-                        std::vector<double>  reordered_xyz2 = precomp_info.reordered_xyz2;
-                        std::vector<size_t>  reordered_islocal = precomp_info.reordered_islocal; // should this be used or just the original?
-                        std::vector<size_t>  good_mon2_indices = precomp_info.good_mon2;
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal; // should this be used or just the original?
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
 
-                        std::vector<double>  reordered_Efq2(reordered_xyz2.size(), 0.0);
-                        std::vector<double>  reordered_phi2(reordered_mon2_size, 0.0);
-                        std::vector<double>  reordered_chg(reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_Efq2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
 
                         const size_t site_jnmon23 = nmon2 * j;
                         double *chg = chg_sitej.data();
 
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
+
                             reordered_chg[new_mon2_index] = chg[old_mon2_index - m2init];
                             // reordered_chg[new_mon2_index + reordered_mon2_size] = chg[old_mon2_index + nmon2 + site_jnmon23];
                             // reordered_chg[new_mon2_index + 2*reordered_mon2_size] = chg[old_mon2_index + 2*nmon2 + site_jnmon23];
                         }
-
-                        std::cout << "hi";
                         /* 
                         local_field->CalcPermanentElecField3(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
@@ -2898,13 +2897,14 @@ void Electrostatics::CalculatePermanentElecField3(std::unordered_map<key_precomp
 
                        local_field->CalcPermanentElecField(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
-                            m1, 0, reordered_mon2_size, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
+                            m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
                             ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0,
                             1, 0, &virial_thread);
                         
                         double *Efq2 = Efq_2_pool[rank].data();
                         double *phi2 = phi_2_pool[rank].data();
+
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
                             
@@ -2912,6 +2912,7 @@ void Electrostatics::CalculatePermanentElecField3(std::unordered_map<key_precomp
                             Efq2[old_mon2_index - m2init] += reordered_Efq2[new_mon2_index];
                             Efq2[nmon2 + old_mon2_index - m2init] += reordered_Efq2[reordered_mon2_size + new_mon2_index];
                             Efq2[2*nmon2 + old_mon2_index - m2init] += reordered_Efq2[2*reordered_mon2_size + new_mon2_index];
+
                         }
 
                         // Put proper data in field and electric field of j
@@ -6829,7 +6830,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 
                        
                         for (int ind = 0; ind < nmon2; ind++) {
-                            if (bool_mon2_indices[ind] == true) {
+                            if (bool_mon2_indices[ind] == 1) {
                                 good_mon2_indices.push_back(ind);
                             }
                         }
@@ -7446,13 +7447,13 @@ void Electrostatics::ComputeDipoleField2(std::vector<double> &in_v, std::vector<
                         }
                         */
                         PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
-                        std::vector<double>  reordered_xyz2 = precomp_info.reordered_xyz2;
-                        std::vector<size_t>  reordered_islocal = precomp_info.reordered_islocal;
-                        std::vector<size_t>  good_mon2_indices = precomp_info.good_mon2;
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
 
-                        std::vector<double>  reordered_Efd2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_Efd2(reordered_xyz2.size(), 0.0);
                         int reordered_mon2_size = good_mon2_indices.size();
-                        std::vector<double>  reordered_mu2(3*reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
 
