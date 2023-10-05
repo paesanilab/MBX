@@ -2902,16 +2902,16 @@ void Electrostatics::CalculatePermanentElecField3(std::unordered_map<key_precomp
                             ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0,
                             1, 0, &virial_thread);
                         
-                        double *Efq2 = Efq_2_pool[rank].data();
-                        double *phi2 = phi_2_pool[rank].data();
+                        double *Efq2 = Efq_sitej.data();
+                        double *phi2 = phi_sitej.data();
 
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
                             
                             phi2[old_mon2_index - m2init] += reordered_phi2[new_mon2_index];
                             Efq2[old_mon2_index - m2init] += reordered_Efq2[new_mon2_index];
-                            Efq2[nmon2 + old_mon2_index - m2init] += reordered_Efq2[reordered_mon2_size + new_mon2_index];
-                            Efq2[2*nmon2 + old_mon2_index - m2init] += reordered_Efq2[2*reordered_mon2_size + new_mon2_index];
+                            Efq2[nmon2 + old_mon2_index - m2init*2] += reordered_Efq2[reordered_mon2_size + new_mon2_index];
+                            Efq2[2*nmon2 + old_mon2_index - m2init*3] += reordered_Efq2[2*reordered_mon2_size + new_mon2_index];
 
                         }
 
