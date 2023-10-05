@@ -189,11 +189,11 @@ MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
 # Act on enable flags
 
 if test $debug == true; then
-    MBX_CHECK_REQ_CXXFLAG([-g])
+    MBX_CHECK_REQ_CXXFLAG([-g]) # allow debugging using gdb
 fi
 
 if test $verbose == true; then
-    MBX_CHECK_CXXFLAG([-DDEBUG])
+    MBX_CHECK_CXXFLAG([-DDEBUG]) # verbose debug output
 fi
 
 if test $optimization == true; then
@@ -203,7 +203,7 @@ else
 fi
 
 if test $coverage == true; then
-    MBX_CHECK_CXXFLAG([--coverage])
+    MBX_CHECK_CXXFLAG([--coverage]) # allow coverage analysis using codecov
 fi
 
 # deprecated ttm-nrg mode
