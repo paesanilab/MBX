@@ -571,6 +571,40 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.275420000000000e+00);  // A^(-1)
         d6.push_back(2.782260000000000e+00);  // A^(-1)
+    } else if (mon_id1 == "cl-scan" and mon_id2 == "h2o-scan") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(729.00752542);  // kcal/mol * A^(-6) Cl -- O
+        C6.push_back(327.83705146);  // kcal/mol * A^(-6) Cl -- H
+
+        d6.push_back(2.6752471923828125);  // A^(-1)
+        d6.push_back(3.0864715576171875);  // A^(-1)
+    } else if (mon_id1 == "cl-dcscan" and mon_id2 == "h2o-dcscan") {
+        // Define the type of atom in each mon
+        types1.push_back(0);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        // Set the number of different types
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(704.57683055);  // kcal/mol * A^(-6) Cl -- O
+        C6.push_back(310.42001914);  // kcal/mol * A^(-6) Cl -- H
+
+        d6.push_back(2.690887451171875);  // A^(-1)
+        d6.push_back(3.11279296875);  // A^(-1)
     } else if (mon_id1 == "br-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -639,6 +673,40 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.769530000000000e+00);  // A^(-1)
         d6.push_back(3.822550000000000e+00);  // A^(-1)
+    } else if (mon_id1 == "h2o-scan" and mon_id2 == "na+scan") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        // Set the number of different types
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(164.78662149);  // kcal/mol * A^(-6) Na -- O
+        C6.push_back(81.44942885);  // kcal/mol * A^(-6) Na -- H
+
+        d6.push_back(4.257965087890625);  // A^(-1)
+        d6.push_back(5.40313720703125);  // A^(-1)
+    } else if (mon_id1 == "h2o-dcscan" and mon_id2 == "na+dcscan") {
+        // Define the type of atom in each mon
+        types2.push_back(0);
+
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        // Set the number of different types
+        nt2 = 1;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(162.09965843);  // kcal/mol * A^(-6) Na -- O
+        C6.push_back(78.41798335);  // kcal/mol * A^(-6) Na -- H
+
+        d6.push_back(4.2694091796875);  // A^(-1)
+        d6.push_back(5.438232421875);  // A^(-1)
     } else if (mon_id1 == "h2o" and mon_id2 == "k+") {
         // Define the type of atom in each mon
         types2.push_back(0);
@@ -1191,6 +1259,46 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(3.44966);   // A^(-1) A--B
         d6.push_back(3.44966);   // A^(-1) A--B
         d6.push_back(3.56401);   // A^(-1) B--B
+    } else if (mon_id1 == "h2o-scan" and mon_id2 == "h2o-scan") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(176.6506);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(76.6267);  // kcal/mol * A^(-6)  A--B
+        C6.push_back(76.6267);  // kcal/mol * A^(-6)  A--B
+        C6.push_back(34.6274);  // kcal/mol * A^(-6)  B--B
+        d6.push_back(4.36728);  // A^(-1) A--A
+        d6.push_back(3.46324);  // A^(-1) A--B
+        d6.push_back(3.46324);  // A^(-1) A--B
+        d6.push_back(3.6762);  // A^(-1) B--B
+    } else if (mon_id1 == "h2o-dcscan" and mon_id2 == "h2o-dcscan") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(1);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(1);
+
+        nt2 = 2;
+
+        // Fill in (in order) the C6 and d6 coefficients
+        C6.push_back(172.7648);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(73.2645);  // kcal/mol * A^(-6)  A--B
+        C6.push_back(73.2645);  // kcal/mol * A^(-6)  A--B
+        C6.push_back(32.3813);  // kcal/mol * A^(-6)  B--B
+        d6.push_back(4.29027);  // A^(-1) A--A
+        d6.push_back(3.31367);  // A^(-1) A--B
+        d6.push_back(3.31367);  // A^(-1) A--B
+        d6.push_back(3.64568);  // A^(-1) B--B
 
         // =====>> BEGIN SECTION DISPERSION <<=====
         // ======>> PASTE CODE BELOW <<======

@@ -216,15 +216,15 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 nat.push_back(1);
 
                 // Halides and alkali metal ions
-            } else if (mon[i] == "f-" || mon[i] == "cl-" ||                                        // Halides
-                       mon[i] == "br-" || mon[i] == "i-" || mon[i] == "li+" || mon[i] == "na+" ||  // Alkali metal ions
+            } else if (mon[i] == "f-" || mon[i] == "cl-" || mon[i] == "cl-scan" || mon[i] == "cl-dcscan" ||                                        // Halides
+                       mon[i] == "br-" || mon[i] == "i-" || mon[i] == "li+" || mon[i] == "na+" ||  mon[i] == "na+scan" || mon[i] == "na+dcscan" ||  // Alkali metal ions
                        mon[i] == "k+" || mon[i] == "rb+" || mon[i] == "cs+") {
                 sites.push_back(1);
                 nat.push_back(1);
             } else if (mon[i] == "h2") {
                 sites.push_back(2);
                 nat.push_back(2);
-            } else if (mon[i] == "mbpbe") {
+            } else if (mon[i] == "mbpbe" || mon[i] == "h2o-scan" || mon[i] == "h2o-dcscan") {
                 sites.push_back(4);
                 nat.push_back(3);
                 // =====>> BEGIN SECTION SITES <<=====
@@ -779,7 +779,7 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
         // 14 distances
     }
 
-    if (mon == "mbpbe") {
+    if (mon == "mbpbe" || mon == "h2o-scan" || mon == "h2o-dcscan") {
         exc13.insert(std::make_pair(2, 3));
         exc13.insert(std::make_pair(1, 3));
         exc13.insert(std::make_pair(1, 2));
@@ -801,7 +801,7 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
     // Intermolecular aDD is always 0.055
     double aDD = 0.055;
     // For water
-    if (mon == "h2o" || mon == "mbpbe") {
+    if (mon == "h2o" || mon == "mbpbe" || mon == "h2o-scan" || mon == "h2o-dcscan") {
         if (is12) {
             aDD = 0.626;
         } else {
@@ -870,7 +870,7 @@ std::vector<double> ResetOrderReal3N(std::vector<double> coords, std::vector<std
 void SetVSites(std::vector<double> &xyz, std::string mon_id, size_t n_mon, size_t nsites, size_t fst_ind) {
     size_t fstind_3 = 3 * fst_ind;
 
-    if (mon_id == "h2o" || mon_id == "mbpbe") {
+    if (mon_id == "h2o" || mon_id == "mbpbe" || mon_id == "h2o-scan" || mon_id == "h2o-dcscan") {
         // Some useful constants
         size_t nmns = n_mon * 3;
         size_t nmns2 = nmns * 2;
@@ -931,14 +931,14 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
     if (is_in_json) return;
     // Halide charges
-    if (mon_id == "f-" || mon_id == "cl-" || mon_id == "br-" || mon_id == "i-") {
+    if (mon_id == "f-" || mon_id == "cl-" || mon_id == "br-" || mon_id == "i-" || mon_id == "cl-scan" || mon_id == "cl-dcscan") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = -1.0 * CHARGECON;
         }
     }
 
     // Alkali metal ions
-    else if (mon_id == "li+" || mon_id == "na+" || mon_id == "k+" || mon_id == "rb+" || mon_id == "cs+") {
+    else if (mon_id == "li+" || mon_id == "na+" || mon_id == "k+" || mon_id == "rb+" || mon_id == "cs+" || mon_id == "na+scan" || mon_id == "na+dcscan") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = 1.0 * CHARGECON;
         }
@@ -1094,6 +1094,132 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             }
         }
         // Note, for now, assuming only water has site dependant charges
+    } else if (mon_id == "h2o-scan") {
+
+        // chgtmp = M, H1, H2 according to ttm4.cpp
+        std::vector<double> chgtmp;
+        size_t fstind_3 = 3 * fst_ind;
+
+        chg_der = std::vector<double>(27 * n_mon, 0.0);
+
+        // Calculate individual monomer's charges
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            size_t ns3 = nsites * 3;
+            size_t shift = 27 * nv;
+
+            // Getting front and end of xyz vector of 1 monomer in system
+            std::vector<double> atomcoords(xyz);
+            std::vector<double> chgtmpnv((nsites - 1));
+
+            // Calculating charge
+            ps::dms_nasa(0.0, 0.0, 0.0, atomcoords.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
+                         chg_der.data() + shift);
+            // Inserting the found charges into chgtmp vector before calculating
+            // new charge values
+            chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
+        }
+
+        // Creating vector with contiguous data
+        std::vector<double> chg2(n_mon * nsites, 0.0);
+
+        // TODO Multiversioning
+        // Reorganizing sites
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                chg2[nv + i * n_mon] = chgtmp[i + nv * (nsites - 1)];
+            }
+
+            // looping over M
+            chg2[nv + 3 * n_mon] = chgtmp[nv * 3];
+        }
+
+        std::vector<double> chg2temp = chg2;
+
+        // calculating charge
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            size_t hy1 = n_mon + nv;
+            size_t hy2 = 2 * n_mon + nv;
+            size_t msite = 3 * n_mon + nv;
+
+            // Hydrogen1
+            chg2[hy1] = CHARGECON * (0.31368 + gamma21 * (0.31368 + 0.31368));
+            // Hydrogen2
+            chg2[hy2] = CHARGECON * (0.31368 + gamma21 * (0.31368 + 0.31368));
+            // M
+            chg2[msite] = CHARGECON * (-0.626771 / (1.0 - gammaM));
+        }
+
+        // TODO multiversioning
+        // Return all coordinates to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                charges[nv * nsites + j + fst_ind] = chg2[nv + n_mon * j];
+            }
+        }
+    } else if (mon_id == "h2o-dcscan") {
+
+        // chgtmp = M, H1, H2 according to ttm4.cpp
+        std::vector<double> chgtmp;
+        size_t fstind_3 = 3 * fst_ind;
+
+        chg_der = std::vector<double>(27 * n_mon, 0.0);
+
+        // Calculate individual monomer's charges
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            size_t ns3 = nsites * 3;
+            size_t shift = 27 * nv;
+
+            // Getting front and end of xyz vector of 1 monomer in system
+            std::vector<double> atomcoords(xyz);
+            std::vector<double> chgtmpnv((nsites - 1));
+
+            // Calculating charge
+            ps::dms_nasa(0.0, 0.0, 0.0, atomcoords.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
+                         chg_der.data() + shift);
+            // Inserting the found charges into chgtmp vector before calculating
+            // new charge values
+            chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
+        }
+
+        // Creating vector with contiguous data
+        std::vector<double> chg2(n_mon * nsites, 0.0);
+
+        // TODO Multiversioning
+        // Reorganizing sites
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                chg2[nv + i * n_mon] = chgtmp[i + nv * (nsites - 1)];
+            }
+
+            // looping over M
+            chg2[nv + 3 * n_mon] = chgtmp[nv * 3];
+        }
+
+        std::vector<double> chg2temp = chg2;
+
+        // calculating charge
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            size_t hy1 = n_mon + nv;
+            size_t hy2 = 2 * n_mon + nv;
+            size_t msite = 3 * n_mon + nv;
+
+            // Hydrogen1
+            chg2[hy1] = CHARGECON * (0.319747 + gamma21 * (0.319747 + 0.319747));
+            // Hydrogen2
+            chg2[hy2] = CHARGECON * (0.319747 + gamma21 * (0.319747 + 0.319747));
+            // M
+            chg2[msite] = CHARGECON * (-0.638945 / (1.0 - gammaM));
+        }
+
+        // TODO multiversioning
+        // Return all coordinates to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                charges[nv * nsites + j + fst_ind] = chg2[nv + n_mon * j];
+            }
+        }
     } else if (mon_id == "h2o") {
         // chgtmp = M, H1, H2 according to ttm4.cpp
         std::vector<double> chgtmp;
@@ -1180,6 +1306,10 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.8079;
     } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3602;
+    } else if (mon_id == "cl-scan" ) {  // Chloride MB-SCAN pol SCAN
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.0077208;
+    } else if (mon_id == "cl-dcscan" ) {  // Chloride MB-SCAN(DC) pol SCAN0
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 4.7381683;
     } else if (mon_id == "br-") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 3.7819;
     } else if (mon_id == "i-") {  // Iodide
@@ -1191,6 +1321,10 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0285;
     } else if (mon_id == "na+") {  // Sodium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.1476;
+    } else if (mon_id == "na+scan") {  // Sodium MB-SCAN pol SCAN
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0839172;
+    } else if (mon_id == "na+dcscan") {  // Sodium MB-SCAN(DC) pol SCAN0
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.0813511;
     } else if (mon_id == "k+") {  // Potassium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.8184;
     } else if (mon_id == "rb+") {  // Rubidium
@@ -1306,7 +1440,54 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
                 polfac[nv * nsites + j + fst_ind] = polfac2[nv + n_mon * j];
             }
         }
+    } else if (mon_id == "h2o-scan") {
 
+        // Creating vector with contiguous data
+        std::vector<double> polfac2(n_mon * nsites, 0.0);
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // Oxygen
+            polfac2[nv] = 0.7061627122275473;
+
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                polfac2[nv + i * n_mon] = 0.37573976545639015;
+            }
+            // M site
+            polfac2[nv + n_mon * 3] = 0.7061627122275473;
+        }
+
+        // TODO Multiversioning
+        // Return all polfacs to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                polfac[nv * nsites + j + fst_ind] = polfac2[nv + n_mon * j];
+            }
+        }
+    } else if (mon_id == "h2o-dcscan") {
+
+        // Creating vector with contiguous data
+        std::vector<double> polfac2(n_mon * nsites, 0.0);
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // Oxygen
+            polfac2[nv] = 0.6646527806556349;
+
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                polfac2[nv + i * n_mon] = 0.3472630993359442;
+            }
+            // M site
+            polfac2[nv + n_mon * 3] = 0.6646527806556349;
+        }
+
+        // TODO Multiversioning
+        // Return all polfacs to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                polfac[nv * nsites + j + fst_ind] = polfac2[nv + n_mon * j];
+            }
+        }
+
+    
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
         std::vector<double> polfac2(n_mon * nsites, 0.0);
@@ -1353,6 +1534,11 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8079;
     } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3602;
+    } else if (mon_id == "cl-scan") {  // Chloride MB-SCAN pol SCAN 
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.007208;
+    } else if (mon_id == "cl-dcscan") {  // Chloride MB-SCAN(DC) pol SCAN0
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 4.7381683;
+
     } else if (mon_id == "br-") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 3.7819;
     } else if (mon_id == "i-") {  // Iodide
@@ -1364,6 +1550,10 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0285;
     } else if (mon_id == "na+") {  // Sodium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.1476;
+    } else if (mon_id == "na+scan") {  // Sodium MB-SCAN pol SCAN                        
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0839172;
+    } else if (mon_id == "na+dcscan" ) {  // Sodium MB-SCAN(DC) pol SCAN0                         
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0813511;
     } else if (mon_id == "k+") {  // Potassium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8184;
     } else if (mon_id == "rb+") {  // Rubidium
@@ -1478,6 +1668,48 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
                 pol[nv * nsites + j + fst_ind] = pol2[nv + n_mon * j];
             }
         }
+    } else if (mon_id == "h2o-scan") {
+
+        // Creating vector with contiguous data
+        std::vector<double> pol2(n_mon * nsites, 0.0);
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // Oxygen
+            pol2[nv] = 0.7061627122275473;
+
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                pol2[nv + i * n_mon] = 0.37573976545639015;
+            }
+        }
+
+        // TODO Multiversioning
+        // Return all pols to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                pol[nv * nsites + j + fst_ind] = pol2[nv + n_mon * j];
+            }
+        }
+    } else if (mon_id == "h2o-dcscan") {
+
+        // Creating vector with contiguous data
+        std::vector<double> pol2(n_mon * nsites, 0.0);
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            // Oxygen
+            pol2[nv] = 0.6646527806556349;
+
+            // looping over sites -- H1 and H2
+            for (size_t i = 1; i < nsites - 1; i++) {
+                pol2[nv + i * n_mon] = 0.3472630993359442;
+            }
+        }
+
+        // TODO Multiversioning
+        // Return all pols to the original vector
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            for (size_t j = 0; j < nsites; j++) {
+                pol[nv * nsites + j + fst_ind] = pol2[nv + n_mon * j];
+            }
+        }
     } else if (mon_id == "h2o") {
         // Creating vector with contiguous data
         std::vector<double> pol2(n_mon * nsites, 0.0);
@@ -1536,7 +1768,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
     // All these C6 come from Qchem/avtz. We put two molecules at 50 A and get the c6 of the atoms.
     if (mon_id == "f-") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 25.56412750183350184739;
-    } else if (mon_id == "cl-") {
+    } else if (mon_id == "cl-" || mon_id == "cl-scan" || mon_id == "cl-dcscan") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 57.88297168036554772821;
     } else if (mon_id == "br-") {
         // FIXME This value will be set from C6 Br-O and Br-H. Qchem does not allow
@@ -1552,7 +1784,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 105.39445721563933883337;
     } else if (mon_id == "li+") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 3.24887148714749872914;
-    } else if (mon_id == "na+") {
+    } else if (mon_id == "na+" || mon_id == "na+scan" || mon_id == "na+dcscan") {
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 16.02787872333703428437;
     } else if (mon_id == "k+") {
         // FIXME This value will be set from C6 K-O and K-H. Qchem does not allow
@@ -1665,6 +1897,12 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         }
         // Water is the only monomer which C6 does not come from qchem.
         // It comes from MB-pol (C6O = sqrt(C6OO))
+    } else if (mon_id == "h2o-scan") {
+        for (size_t nv = 0; nv < n_mon; nv++) { 
+            c6_lr[nv * natoms + fst_ind] = 13.290996952824871; // A
+            c6_lr[nv * natoms + fst_ind + 1] = 5.884505076894743; // B
+            c6_lr[nv * natoms + fst_ind + 2] = 5.884505076894743; // B
+        }
     } else if (mon_id == "h2o") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 15.40523357222455098728;     // O
@@ -1677,7 +1915,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
 // Assuming for now xyzxyzxyz...
 void RedistributeVirtGrads2Real(const std::string mon, const size_t nmon, const size_t fi_crd,
                                 std::vector<double> &grad) {
-    if (mon == "h2o" || mon == "mbpbe") {
+    if (mon == "h2o" || mon == "mbpbe" || mon == "h2o-scan" || mon == "h2o-dcscan") {
         for (size_t i = 0; i < nmon; i++) {
             const size_t shift = fi_crd + i * 4 * 3;
             for (size_t k = 0; k < 3; ++k) {
