@@ -102,7 +102,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
                 mon2 == "h2o-dcscan") and
                (mon3 == "h2o-scan" or
                 mon3 == "h2o-dcscan")) {
-        mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
+        mbnrg_A1_B1C2X2_B1C2X2_deg4_v2::mbnrg_A1_B1C2X2_B1C2X2_deg4_v2 pot(mon1, mon2, mon3);
         return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
     } else if ((mon1 == "f-" or mon1 == "br-") and mon2 == "h2o" and mon3 == "h2o") {
         mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
@@ -135,7 +135,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
                  mon2 == "h2o-dcscan") and
                 (mon3 == "na+scan" or
                  mon3 == "na+dcscan")) {
-         mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon3, mon1, mon2);
+         mbnrg_A1_B1C2X2_B1C2X2_deg4_v2::mbnrg_A1_B1C2X2_B1C2X2_deg4_v2 pot(mon3, mon1, mon2);
          return pot.eval(xyz3.data(), xyz1.data(), xyz2.data(), nm);
     } else {
         energy = 0.0;
@@ -250,7 +250,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
                 mon2 == "h2o-dcscan") and
                (mon3 == "h2o-scan" or
                 mon3 == "h2o-dcscan")) {
-        mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
+        mbnrg_A1_B1C2X2_B1C2X2_deg4_v2::mbnrg_A1_B1C2X2_B1C2X2_deg4_v2 pot(mon1, mon2, mon3);
         energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
     } else if ((mon1 == "f-" or mon1 == "br-") and mon2 == "h2o" and mon3 == "h2o") {
         mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
@@ -283,7 +283,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
                  mon2 == "h2o-dcscan") and
                 (mon3 == "na+scan" or
                  mon3 == "na+dcscan")) {
-         mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon3, mon1, mon2);
+         mbnrg_A1_B1C2X2_B1C2X2_deg4_v2::mbnrg_A1_B1C2X2_B1C2X2_deg4_v2 pot(mon3, mon1, mon2);
          energy = pot.eval(xyz3.data(), xyz1.data(), xyz2.data(), grad3.data(), grad1.data(), grad2.data(), nm, virial);
     } else {
         energy = 0.0;
