@@ -33,7 +33,7 @@
 #include "universe.h"
 #include "modify.h"
 
-#define _MAX_SIZE_MOL_NAME 10
+#define _MAX_SIZE_MOL_NAME 16
 #define _MAX_ATOMS_PER_MONOMER 8
 #define SMALL 1.0e-4
 
@@ -2436,11 +2436,15 @@ int FixMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
     int na;
     inc_e = false;
 
-    if (strcmp("h2o", name) == 0)
+    if (strcmp("h2o", name) == 0 ||
+        strcmp("h2o-scan", name) == 0 ||
+        strcmp("h2o-dcscan", name) == 0)
         na = 3;
     else if (strcmp("li+", name) == 0)
         na = 1;
-    else if (strcmp("na+", name) == 0)
+    else if (strcmp("na+", name) == 0 ||
+             strcmp("na+scan", name) == 0 ||
+             strcmp("na+dcscan", name) == 0)
         na = 1;
     else if (strcmp("k+", name) == 0)
         na = 1;
@@ -2453,7 +2457,9 @@ int FixMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
         inc_e = true;
     } else if (strcmp("f-", name) == 0)
         na = 1;
-    else if (strcmp("cl-", name) == 0)
+    else if (strcmp("cl-", name) == 0 ||
+             strcmp("cl-scan", name) == 0 ||
+             strcmp("cl-dcscan", name) == 0)
         na = 1;
     else if (strcmp("br-", name) == 0)
         na = 1;
@@ -2514,13 +2520,17 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e) 
 ------------------------------------------------------------------------- */
 
 void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
-    if (strcmp("h2o", name) == 0) {
+    if (strcmp("h2o", name) == 0 ||
+        strcmp("h2o-scan", name) == 0 ||
+        strcmp("h2o-dcscan", name) == 0) {
         n.push_back("O");
         n.push_back("H");
         n.push_back("H");
     } else if (strcmp("li+", name) == 0) {
         n.push_back("Li");
-    } else if (strcmp("na+", name) == 0) {
+    } else if (strcmp("na+", name) == 0 ||
+               strcmp("na+scan", name) == 0 ||
+               strcmp("na+dcscan", name) == 0) {
         n.push_back("Na");
     } else if (strcmp("k+", name) == 0) {
         n.push_back("K");
@@ -2534,7 +2544,9 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
 #endif
     } else if (strcmp("f-", name) == 0) {
         n.push_back("F");
-    } else if (strcmp("cl-", name) == 0) {
+    } else if (strcmp("cl-", name) == 0 ||
+               strcmp("cl-scan", name) == 0 ||
+               strcmp("cl-dcscan", name) == 0) {
         n.push_back("Cl");
     } else if (strcmp("br-", name) == 0) {
         n.push_back("Br");
