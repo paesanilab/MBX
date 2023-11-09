@@ -6497,7 +6497,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             // Parallel loop
             size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) shared(precomputedInformation) 
 #endif
             for (size_t m1 = m1start; m1 < nmon1; m1 += num_mpi_ranks_) {
                 //            for (size_t m1 = 0; m1 < nmon1; m1++) {
