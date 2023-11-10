@@ -9,11 +9,7 @@ For details on the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.uc
 
 MBX is periodically updated with performance improvements and the addition of other MB-nrg PEFs. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
-NOTE: This is a modified version of MBX v1.0 that includes our flagship MB-DFT and MB-DFT(DC) potentials, based on Kohn-Sham density functional theory and density-corrected density functional theory, respectively. 
-Briefly, this version includes the following potentials: 
-- MB-SCAN and MB-SCAN(DC) potentials for water (usage: h2o-scan , h2o-dcscan)
-- MB-SCAN and MB-SCAN(DC) potentails for chloride--water (cl-scan, cl-dcscan)
-- MB-SCAN and MB-SCAN(DC) potentails for sodium--water (na+scan, na+dcscan)
+NOTE: This is a modified version of MBX v1.0 that includes our flagship MB-DFT and MB-DFT(DC) potentials, based on Kohn-Sham density functional theory and density-corrected density functional theory, respectively. See section "MB PEFs Implemented"
 
 
 ## Compilation and Installation
@@ -124,6 +120,16 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * [J. Chem. Phys. 156, 194504 (2022)](https://doi.org/10.1063/5.0089773)
 - MB-nrg PEF for N2O5 in water
   * [J. Chem. Theory Comput. 17, 3931 (2021)](https://doi.org/10.1021/acs.jctc.1c00069)
+    
+- MB-SCAN and MB-SCAN(DC) PEFs for water and ions in water (Na+, Cl-)
+  * [Nature Communications, 12, : 6359 (2021)](https://doi.org/10.1038/s41467-021-26618-9 )
+  * [J. Chem. Theory Comput. 18, 6, 3410 (2022)](https://doi.org/10.1021/acs.jctc.2c00050)
+  * [J. Chem. Phys. 156, 161103 (2022)](https://doi.org/10.1063/5.0090862)
+  * [J. Chem. Theory Comput. 18, 8, 4745 (2022)](https://doi.org/10.1021/acs.jctc.2c00313)
+  * [Chem. Phys. Rev. 4, 011301 (2023)](https://doi.org/10.1063/5.0129613)
+  * [J. Chem. Phys. 159, 181101 (2023)](https://doi.org/10.1063/5.0174577)
+
+
 
 ## Interfaces
 ### Fortran90 and Python
