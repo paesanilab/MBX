@@ -2,12 +2,19 @@
 [![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
-# MBX v1.0
+# MBX v1.0 (+ MB-DFT)
 MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
 The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. 
 For details on the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
 MBX is periodically updated with performance improvements and the addition of other MB-nrg PEFs. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
+
+NOTE: This is a modified version of MBX v1.0 that includes our flagship MB-DFT and MB-DFT(DC) potentials, based on Kohn-Sham density functional theory and density-corrected density functional theory, respectively. 
+Briefly, this version includes the following potentials: 
+- MB-SCAN and MB-SCAN(DC) potentials for water (usage: h2o-scan , h2o-dcscan)
+- MB-SCAN and MB-SCAN(DC) potentails for chloride--water (cl-scan, cl-dcscan)
+- MB-SCAN and MB-SCAN(DC) potentails for sodium--water (na+scan, na+dcscan)
+
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to successfully install the software
