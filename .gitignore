@@ -50,6 +50,7 @@ src/normal_modes
 src/optimize
 src/order_frames
 src/single_point
+src/mb_decomp
 src/.libs
 plugins/i-pi/ipi_driver
 plugins/i-pi/bin/driver
