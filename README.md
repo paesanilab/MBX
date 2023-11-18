@@ -17,18 +17,18 @@ MBX is periodically updated with performance improvements and the addition of ot
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to successfully install the software:
-- g++/gcc v4.9 or higher [and icpc/icc v2018 or higher - optional]
+- g++/gcc v4.9 or higher
+- icpc/icc v2018 or higher [optional but recommended]
+- MPI compilers [optional, needed only for LAMMPS]
 - FFTW libraries
 - GSL libraries [optional, needed only for normal_modes executable]
-- MPI compilers [optional, needed only for LAMMPS]
 - Read the entire README before doing anything!
 
 ### Setup
-The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be done with the following command if the home directory of MBX is the current directory:
+The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be done automatically by sourcing `sourceme.sh`:
 ```console
 git clone https://github.com/paesanilab/MBX.git
-cd MBX/
-export MBX_HOME=$PWD
+source ./MBX/sourceme.sh
 ```
 
 ### Compilation
@@ -40,6 +40,15 @@ autoreconf -fi
 ./configure
 make && make install
 ```
+
+`./configure` has additional flags and options if you want to customize your installation:
+- `CXX=` if you want to use a different compiler than the system default. Popular options include `CXX=icpc` or `CXX=g++`
+- `--enable-shared` and `--disable-shared` if you want to enable/disable the shared library (default: **disabled**). `--enable-shared` is **required for Python+MBX**.
+- `--enable-debug` for debugging using GDB
+- `--enable-verbose` will turn on additional logging
+- `--disable-optimization` will disable compliler 
+- `--help` to see additional configuration options
+
 After performing basic installation, you can [run the unit tests](#testing) to make sure everything is working properly.
 
 #### [Alternative installation of MBX_MPI](#lammps) (**LAMMPS only**)
@@ -52,7 +61,7 @@ make check
 ```
 All tests must pass. If you encounter any errors, please report them in the [MBX Google Group](https://groups.google.com/g/mbx-users).
 
-Tests will fail if using an MPI compiler instead of `g++`/`icpc`, such as if you performed alternative installation with MBX_MPI with LAMMPS. Please instead perform [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) first with g++ and then run the tests.
+Tests will fail if using an MPI compiler instead of `g++`/`icpc`, such as if you performed alternative installation with MBX_MPI with LAMMPS. Please instead perform [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) first with `g++`/`icpc` and then run the tests.
 
 ## JSON File
 To make life easier for you, a JSON configuration file must be used to pass all the information that MBX needs. Usually, one does not need to change anything except a couple of options. In any case, all the options of the json file are explained below.
@@ -84,13 +93,13 @@ The JSON file template is the following:
 }
 ```
 In this file:
-- `box` is either a 9 element list, comma-separated and limited by brackets with the 3 vectors of the box: ax, ay, az, bx, by, bz, cx, cy, cz, or an empty list if one wants to run gas-phase calculations.
-- `twobody_cutoff` is the distance at which the 2-body interactions will be cut in the real space. If you are using polynomials, that should be the largest polynomial cutoff that you are using (usually 9.0 Angstrom) in periodic boundary conditions. In gas phase calculations, that should be set to a large number so the real space electrostatics and dispersion are properly calculated and fully accounted for.
-- `threebody_cutoff` is the cutoff for the 3-body polynomials. If only water is used, one can set that to 4.5, but if alkali metal ions or halides are used, it should be set to the maximum cutoff in any of the trimers used (7.0).
-- `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. A value of 1E-08 is usually small enough. However, if the dipole solver used is aspc, the magnitude of the tolerance may have to be decreased up to 1E-10 or 1E-12. It is recommended to run a few thousand steps using aspc and cg for the dipole solver, and decide which is the dipole tolerance needed.
+- `box` is either a 9 element list, with the 3 vectors of the box: `[ax, ay, az, bx, by, bz, cx, cy, cz]` or an empty list `[]` if one wants to run gas-phase calculations.
+- `twobody_cutoff` is the distance at which the 2-body interactions will be cut in the real space. If you are using polynomials, that should be the largest polynomial cutoff that you are using (usually `9.0` Angstrom) in periodic boundary conditions. In gas phase calculations, that should be set to a large number so the real space electrostatics and dispersion are properly calculated and fully accounted for.
+- `threebody_cutoff` is the cutoff for the 3-body polynomials. If only water is used, one can set that to `4.5`, but if alkali metal ions or halides are used, it should be set to the maximum cutoff in any of the trimers used (`7.0`).
+- `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. A value of `1E-08` is usually small enough. However, if the dipole solver used is aspc, the magnitude of the tolerance may have to be decreased up to `1E-10` or `1E-12`. It is recommended to run a few thousand steps using aspc and cg for the dipole solver, and decide which is the dipole tolerance needed.
 - `dipole_max_it` is the maximum number of iterations allowed in the dipole iterative method calculation. If the number of iterations exceeds this value, MBX will throw an error message saying that the dipoles have diverged.
-- `dipole_method` is the method adopted to calculate the induced dipoles. Current options are `iter` (iterative), `cg` (conjugate gradient, faster than iter), and `aspc` (always stable predictor-corrector). `aspc` is only suitable for simulations. All three solvers are implemented and available through i-PI or LAMMPS. 
-- `alpha_ewald_{elec/disp}` is the alpha used in the reciprocal space. It should be set to 0 when running gas-phase calculations/simulations.
+- `dipole_method` is the method adopted to calculate the induced dipoles. Current options are `iter` (iterative), `cg` (conjugate gradient, faster than iter), and `aspc` (always stable predictor-corrector). `aspc` is only suitable for simulations. Only `cg` and `aspc` are currently available in LAMMPS.
+- `alpha_ewald_{elec/disp}` is the alpha used in the reciprocal space. It should be set to `0.0` when running gas-phase calculations/simulations.
 - `grid_density_{elec/disp}` is the Ewald grid points density.
 - `spline_order_{elec/disp}` is the order of the splines used for interpolation.
 - `ignore_2b_poly` a list of 2 element lists with the monomer pairs for which the 2-body polynomials will not be calculated. Example: `"ignore_2b_poly" : [["na+","h2o"]]`
@@ -102,7 +111,7 @@ In this file:
 After installation, there will be the main executables in `$MBX_HOME/bin/`.
 - `single_point` will return the energy (Binding Energy) in kcal/mol for a given configuration. One can have multiple systems in the nrg file, and single point will return the energies of each one of them. If `PRINT_GRADS` is manually enabled in the source code in (`$MBX_HOME/src/main/single_point.cpp`) it will also print the gradients.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
-- `mb_decomp` will compute energies for subsystems for the given system(s), then performs many-body decomposition and prints the n-body contribution for all subsystems. If the flag to skip many-body decomposition ("-e") is activated, it prints the binding energy for all subsystems.
+- `mb_decomp` will compute energies for subsystems for the given system(s), then performs many-body decomposition and prints the n-body contribution for all subsystems. If the flag to skip many-body decomposition ("`-e`") is activated, it instead prints the binding energy for all subsystems.
 - `order_frames` will compute the energies for a given list of configurations from the XYZ file, and rearranges the configuration frames in the order of increasing energy.
 - `normal_modes` will compute the normal modes for an optimized nrg file.
 

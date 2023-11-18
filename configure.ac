@@ -17,7 +17,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AM_PROG_AR
 
 # Initialize the LIBTOOLS lib to make the .la libraries, from where the .so and .a will be created
-LT_INIT
+LT_INIT([disable-shared])
 
 # Initialize Automake. Warnings will be treated as errors.
 AM_INIT_AUTOMAKE([subdir-objects -Wall foreign])
