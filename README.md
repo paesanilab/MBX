@@ -25,10 +25,11 @@ The following requirements need to be fulfilled in order to successfully install
 - Read the entire README before doing anything!
 
 ### Setup
-The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be done automatically by sourcing `sourceme.sh`:
+The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be exported manually or by sourcing `sourceme.sh`:
 ```console
 git clone https://github.com/paesanilab/MBX.git
-source ./MBX/sourceme.sh
+cd MBX/
+export MBX_HOME=$PWD
 ```
 
 ### Compilation
@@ -43,13 +44,13 @@ make && make install
 
 `./configure` has additional flags and options if you want to customize your installation:
 - `CXX=` if you want to use a different compiler than the system default. Popular options include `CXX=icpc` or `CXX=g++`
-- `--enable-shared` and `--disable-shared` if you want to enable/disable the shared library (default: **disabled**). `--enable-shared` is **required for Python+MBX**.
+- `--enable-shared` if you want to also compile MBX as a shared library. This is **required for Python+MBX**.
 - `--enable-debug` for debugging using GDB
 - `--enable-verbose` will turn on additional logging
-- `--disable-optimization` will disable compliler 
+- `--disable-optimization` will disable compliation optimization. This is **not recommended** unless you are debugging.
 - `--help` to see additional configuration options
 
-After performing basic installation, you can [run the unit tests](#testing) to make sure everything is working properly.
+After performing basic installation, you should [run the unit tests](#testing) to make sure everything is working properly.
 
 #### [Alternative installation of MBX_MPI](#lammps) (**LAMMPS only**)
 If you want to use MBX with LAMMPS, instead skip to the section about the [LAMMPS plugin](#lammps). This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
