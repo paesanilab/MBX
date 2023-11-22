@@ -45,9 +45,9 @@ make && make install
 `./configure` has additional flags and options if you want to customize your installation:
 - `CXX=` if you want to use a different compiler than the system default. Popular options include `CXX=icpc` or `CXX=g++`
 - `--enable-shared` if you want to also compile MBX as a shared library. This is **required for Python+MBX**.
-- `--enable-debug` for debugging using GDB
-- `--enable-verbose` will turn on additional logging
-- `--disable-optimization` will disable compliation optimization. This is **not recommended** unless you are debugging.
+- `--enable-debug` for debugging using GDB.
+- `--enable-verbose` will turn on additional logging to the console.
+- `--disable-optimization` will disable compiler optimizations. This is **not recommended** unless you are debugging.
 - `--help` to see additional configuration options
 
 After performing basic installation, you should [run the unit tests](#testing) to make sure everything is working properly.
@@ -114,7 +114,7 @@ After installation, there will be the main executables in `$MBX_HOME/bin/`.
 - `optimize` will optimize a given configuration. You can optimize a single nrg system, or pass an XYZ file with a set of configurations, in which all of them will be optimized.
 - `mb_decomp` will compute energies for subsystems for the given system(s), then performs many-body decomposition and prints the n-body contribution for all subsystems. If the flag to skip many-body decomposition ("`-e`") is activated, it instead prints the binding energy for all subsystems.
 - `order_frames` will compute the energies for a given list of configurations from the XYZ file, and rearranges the configuration frames in the order of increasing energy.
-- `normal_modes` will compute the normal modes for an optimized nrg file.
+- `normal_modes` will compute the normal modes for an optimized nrg file. Requires the GSL library.
 
 ## PEFs implemented
 All the PEFs implemented, along with examples of input files and scripts to run various types of simulations, are provided in `$MBX_HOME/examples/PEFs`. If a surface is not there, its usage is not recommended because it is either not tested or not finalized. Example calls with C++, Fortran and Python are located inside each of the corresponding folders.
@@ -195,18 +195,18 @@ git clone https://github.com/i-pi/i-pi.git
 ```
  Before continuing with this, make sure i-PI is working. If you have any problems with the i-PI installation, you can ask a question in [the i-pi-user forum](https://groups.google.com/forum/#!forum/ipi-users). If you want to skip the testing (PROCEED AT YOUR OWN RISK), you can skip testing i-PI and assume it works.
 
-After making sure that i-PI is working on your machine and having compiled MBX, you can use the i-PI driver located in `$MBX_HOME/bin/ipi_driver` to run MD using i-PI. To confirm that the driver is working go to the i-PI examples folder in MBX:
+After making sure that i-PI is working on your machine and having [compiled MBX](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps), you can use the i-PI driver located in `$MBX_HOME/bin/ipi_driver` to run MD using i-PI. To confirm that the driver is working, go to the i-PI examples folder in MBX:
 ```console
-cd $MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/1-nvt
+cd $MBX_HOME/plugins/i-pi/examples/molecular_dynamics/gas_phase/3h2o/100K/1-nvt
 ```
 
 This folder contains five files:
 - `config.xyz` is the input for the coordinates for i-PI, while `config.nrg` is the input format for MBX. These two files `xyz` and `nrg` are related, so if you make any changes to the xyz file you must correspondingly update the nrg file using `$MBX_HOME/scripts/format_conversion config.xyz`
 - `config.xml` is the i-PI input file. This simulation will run an NVT MD at 100K. Refer to the i-pi user manual for more information.
 - `mbx.json` is the MBX configuration file
-- `run_i-pi.sh` will run the test. Make sure you `source  env.sh` in the i-PI folder before running the test, or most likely it will fail.
+- `run_i-pi.sh` will run the test. Make sure you `source env.sh` in the i-PI folder before running the test, or most likely it will fail.
 
-These should initialize i-PI and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$MBX_HOME/plugins/i-pi/test/molecular_dynamics/gas_phase/3h2o/100K/2-nve`.
+These should initialize i-PI and start the simulation. Once the simulation is completed, terminate the i-pi instance and then run the NVE simulation in `$MBX_HOME/plugins/i-pi/examples/molecular_dynamics/gas_phase/3h2o/100K/2-nve`.
 ```
 cd $MBX_HOME/plugins/i-pi/examples/molecular_dynamics/gas_phase/3h2o/100K/2-nve
 cp ../1-nvt/RESTART ./config.xml
