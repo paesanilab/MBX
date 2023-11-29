@@ -33,7 +33,9 @@ export MBX_HOME=$PWD
 ```
 
 ### Compilation
-
+MBX has different compilation instructions depending on how you plan to use it:
+- For use with **i-PI**, **Python**, **Fortran**, or **standalone**, perform a [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps)
+- For use with **LAMMPS**, perform an [alternative MBX_MPI installation](#alternative-installation-of-mbx_mpi-lammps-only)
 
 #### Basic installation of MBX (for use with i-PI, Python, Fortran, or standalone. **NOT LAMMPS**)
 ```console
@@ -53,7 +55,7 @@ make && make install
 After performing basic installation, you should [run the unit tests](#testing) to make sure everything is working properly.
 
 #### [Alternative installation of MBX_MPI](#lammps) (**LAMMPS only**)
-If you want to use MBX with LAMMPS, instead skip to the section about the [LAMMPS plugin](#lammps). This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
+If you want to use MBX with LAMMPS, instead [skip to this section about the LAMMPS plugin](#lammps). This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
 
 ## Testing
 After [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps), running the unit tests is highly recommended. Run the following commands to run the tests:
