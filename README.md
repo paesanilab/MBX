@@ -25,7 +25,7 @@ The following requirements need to be fulfilled in order to successfully install
 - Read the entire README before doing anything!
 
 ### Setup
-The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be exported manually or by sourcing `sourceme.sh`:
+The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be exported either manually or by sourcing `sourceme.sh`:
 ```console
 git clone https://github.com/paesanilab/MBX.git
 cd MBX/
@@ -44,7 +44,7 @@ make && make install
 
 `./configure` has additional flags and options if you want to customize your installation:
 - `CXX=` if you want to use a different compiler than the system default. Popular options include `CXX=icpc` or `CXX=g++`
-- `--enable-shared` if you want to also compile MBX as a shared library. This is **required for Python+MBX**.
+- `--enable-shared` if you want to also compile MBX as a shared library. This is **required for using MBX with Python**.
 - `--enable-debug` for debugging using GDB.
 - `--enable-verbose` will turn on additional logging to the console.
 - `--disable-optimization` will disable compiler optimizations. This is **not recommended** unless you are debugging.
