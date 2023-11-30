@@ -1,0 +1,2 @@
+SUBDIRS = i-pi
+ACLOCAL_AMFLAGS = -I m4
