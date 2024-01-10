@@ -524,6 +524,7 @@ class Electrostatics {
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
     void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
+    void CalculateGradients3(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost = 0);
     void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
 
     void ReorderData();
