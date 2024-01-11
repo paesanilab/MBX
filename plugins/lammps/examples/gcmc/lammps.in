@@ -246,7 +246,7 @@ variable        nO equal count(oxygen)
 variable        nH equal count(hydrogen)
 
 #thermo_style    custom step time temp cella cellb cellc vol pe ke etotal
-thermo_style    custom step time temp evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1bpip v_e2bpip v_e3bpip v_e4bpip v_ebuck v_edisp v_eele v_etot pe etotal v_nO v_nH
+thermo_style    custom step time temp evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1bpip v_e2bpip v_e3bpip v_e4bpip v_edisp v_ebuck v_eele v_etot pe etotal v_nO v_nH
 thermo          1
 thermo_modify   flush yes
 
