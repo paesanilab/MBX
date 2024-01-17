@@ -9053,7 +9053,7 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                         std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
                         std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
                         std::vector<double> reordered_mu(reordered_mon2_size, 0.0);
-                        std::vector<double> reordered_virial(reordered_mon2_size, 0.0); // is this necessary??
+                        
     
 
                         const size_t site_jnmon23 = nmon2 * j;
@@ -9073,7 +9073,7 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                             reordered_mon2_size, nmon1, reordered_mon2_size, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
                             &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, use_pbc_,
                             box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2,
-                            &reordered_virial);
+                            &virial_pool[rank]);
 
                         /*
                         local_field->CalcElecFieldGrads(
@@ -9082,13 +9082,13 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                             nmon2, nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
                             &phi1_thread, phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_,
                             box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2,
-                            &virial_pool[rank]);s
+                            &virial_pool[rank]);
                         */
 
                        // Revert the reordering of input vectors 
                         double *grad2 = phi_2_pool[rank].data();
                         double *phi2 = grad_2_pool[rank].data();
-                        double *virial = virial_pool[rank].data();
+ 
 
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
@@ -9097,7 +9097,7 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                             grad2[old_mon2_index - m2init] += reordered_grad2[new_mon2_index];
                             grad2[nmon2 + old_mon2_index - m2init*2] += reordered_grad2[reordered_mon2_size + new_mon2_index];
                             grad2[2*nmon2 + old_mon2_index - m2init*3] += reordered_grad2[2*reordered_mon2_size + new_mon2_index];
-                            virial[old_mon2_index - m2init] += reordered_virial[new_mon2_index]; // is this correct??
+                            
                         }
 
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
