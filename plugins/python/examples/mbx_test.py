@@ -1,4 +1,5 @@
 import mbx
+import ctypes
 
 # Define input parametrs
 # Coordinates
@@ -80,6 +81,10 @@ print("Coordinates of charges:",coordinates)
 print("Polarizabilities:",pols)
 print("Dipoles:",mu)
 
+virial = (ctypes.c_double * 9)()
 
+mbx.mbxlib.get_virial_(virial)
+
+print(f"Virial: {[item for item in virial]}")
 
 mbx.finalize_system()
