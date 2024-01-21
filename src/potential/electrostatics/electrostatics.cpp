@@ -9050,29 +9050,36 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                         int reordered_mon2_size = good_mon2_indices.size();
 
                         std::vector<double> reordered_grad2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_mu(reordered_xyz2.size(), 0.0);
                         std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
                         std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
-                        std::vector<double> reordered_mu(reordered_mon2_size, 0.0);
                         
-    
-
-                        const size_t site_jnmon23 = nmon2 * j;
-                        double *chg = chg_all_.data();
-                        double *mu = mu_all_.data();
+                
+                        double *chg = chg_all_.data() + fi_sites2;
+                        const size_t site_j3 = j * 3;
+                        const size_t site_jnmon23 = nmon2 * site_j3;
+                        const size_t site_jnmon2 = nmon2 * j;
+                
+                        
+                        double *mu = mu_all_.data() + fi_crd2;
 
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
 
-                            reordered_chg[new_mon2_index] = chg[old_mon2_index - m2init];
-                            reordered_mu[new_mon2_index] = mu[old_mon2_index - m2init];
+                            reordered_chg[new_mon2_index] = chg[old_mon2_index + site_jnmon23];
+                           
+
+                            reordered_mu[new_mon2_index] = mu[old_mon2_index + site_jnmon23 ];
+                            reordered_mu[new_mon2_index + reordered_mon2_size] = mu[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_mu[new_mon2_index + 2*reordered_mon2_size] = mu[old_mon2_index + 2*nmon2 + site_jnmon23];
                         }
 
                         local_field->CalcElecFieldGrads(
-                            xyz_all_.data() + fi_crd1, reordered_xyz2.data() + fi_crd2, chg_all_.data() + fi_sites1,
-                            reordered_chg.data() + fi_sites2, mu_all_.data() + fi_crd1, reordered_mu.data() + fi_crd2, m1, m2init,
-                            reordered_mon2_size, nmon1, reordered_mon2_size, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
+                            xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1,
+                            reordered_chg.data(), mu_all_.data() + fi_crd1, reordered_mu.data(), m1, 0,
+                            reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
                             &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, use_pbc_,
-                            box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2,
+                            box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0, 1,
                             &virial_pool[rank]);
 
                         /*
@@ -9086,18 +9093,17 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                         */
 
                        // Revert the reordering of input vectors 
-                        double *grad2 = phi_2_pool[rank].data();
-                        double *phi2 = grad_2_pool[rank].data();
- 
+                        double *phi2 = phi_2_pool[rank].data();
+                        double *grad2 = grad_2_pool[rank].data();
 
+ 
+                        
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
-                            
-                            phi2[old_mon2_index - m2init] += reordered_phi2[new_mon2_index];
-                            grad2[old_mon2_index - m2init] += reordered_grad2[new_mon2_index];
-                            grad2[nmon2 + old_mon2_index - m2init*2] += reordered_grad2[reordered_mon2_size + new_mon2_index];
-                            grad2[2*nmon2 + old_mon2_index - m2init*3] += reordered_grad2[2*reordered_mon2_size + new_mon2_index];
-                            
+                            phi_2_pool[rank][site_jnmon2 + old_mon2_index] += reordered_phi2[new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + old_mon2_index] += reordered_grad2[new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + nmon2 + old_mon2_index] += reordered_grad2[reordered_mon2_size + new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + 2*nmon2 + old_mon2_index] += reordered_grad2[2*reordered_mon2_size + new_mon2_index];
                         }
 
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
