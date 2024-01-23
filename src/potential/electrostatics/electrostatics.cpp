@@ -8988,6 +8988,7 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
     // aDD intermolecular is always 0.055
+
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
@@ -9066,7 +9067,7 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
 
-                            reordered_chg[new_mon2_index] = chg[old_mon2_index + site_jnmon23];
+                            reordered_chg[new_mon2_index] = chg[old_mon2_index + site_jnmon2];
                            
 
                             reordered_mu[new_mon2_index] = mu[old_mon2_index + site_jnmon23 ];
@@ -9081,7 +9082,7 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                             &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, use_pbc_,
                             box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0, 1,
                             &virial_pool[rank]);
-
+                        
                         /*
                         local_field->CalcElecFieldGrads(
                             xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, chg_all_.data() + fi_sites1,
@@ -9092,6 +9093,7 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                             &virial_pool[rank]);
                         */
 
+                        
                        // Revert the reordering of input vectors 
                         double *phi2 = phi_2_pool[rank].data();
                         double *grad2 = grad_2_pool[rank].data();
@@ -9105,6 +9107,7 @@ void Electrostatics::CalculateGradients3(std::unordered_map<key_precomputed_info
                             grad_2_pool[rank][site_jnmon23 + nmon2 + old_mon2_index] += reordered_grad2[reordered_mon2_size + new_mon2_index];
                             grad_2_pool[rank][site_jnmon23 + 2*nmon2 + old_mon2_index] += reordered_grad2[2*reordered_mon2_size + new_mon2_index];
                         }
+                        
 
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
