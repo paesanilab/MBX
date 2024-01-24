@@ -6453,6 +6453,13 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
     // Following is the Compute Dipole Field code 
     size_t nthreads = 1;
+#ifdef _OPENMP
+#pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+    {
+        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+    }
+#endif
     size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
     // std::fill(out_v.begin(), out_v.end(), 0);
     double ewald_alpha = ewald_alpha_;
@@ -6485,19 +6492,18 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             // Prepare for parallelization
             // /*
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-            // std::vector<std::vector<double>> Efd_1_pool;
-            // std::vector<std::vector<double>> Efd_2_pool;
+            std::vector<std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>> precomputedInformation_pool;
+
             for (size_t i = 0; i < nthreads; i++) {
                 field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
-                // Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-                // Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+                precomputedInformation_pool.push_back(std::make_shared<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>());
             }
             // */
 
             // Parallel loop
             size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
 #ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic) shared(precomputedInformation) 
+#pragma omp parallel for schedule(dynamic)
 #endif
             for (size_t m1 = m1start; m1 < nmon1; m1 += num_mpi_ranks_) {
                 //            for (size_t m1 = 0; m1 < nmon1; m1++) {
@@ -6508,11 +6514,9 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 rank = omp_get_thread_num();
 #endif
                 std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
-                // ElectricFieldHolder local_field = ElectricFieldHolder(maxnmon);
+                std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>> rank_precomputedInformation = precomputedInformation_pool[rank];
                 size_t m2init = same ? m1 + 1 : 0;
-                // double ex_thread = 0.0;
-                // double ey_thread = 0.0;
-                // double ez_thread = 0.0;
+
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon13 = 3 * nmon1 * i;
                     for (size_t j = 0; j < ns2; j++) {
@@ -6565,22 +6569,35 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             reordered_islocal[new_mon2_index + 1] = islocal_[fi_crd2 + old_mon2_index];
                         }
 
-                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
-                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].reordered_xyz2 = reordered_xyz2;
-                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].reordered_islocal = reordered_islocal;
-                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].reordered_xyz2 = reordered_xyz2;
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].reordered_islocal = reordered_islocal;
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
 
                         // Calculate constants -- ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3
                         local_field->CalcPrecomputedDipoleElec(xyz_.data() + fi_crd1, reordered_xyz2.data(),
                                                          m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
                                                          Asqsqi, aDD, ewald_alpha_, use_pbc_, box_, box_inverse_,
-                                                         cutoff_, use_ghost, reordered_islocal, 0, 1, precomputedInformation,
+                                                         cutoff_, use_ghost, reordered_islocal, 0, 1, *rank_precomputedInformation,
                                                          mt1, mt2, m1, i, j); 
                         
                     }
                 }
             }
+
+            // Compress data in precomputedInformation
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                precomputedInformation.insert(precomputedInformation_pool[rank]->begin(), precomputedInformation_pool[rank]->end());
+            }
+            // Update first indexes
+            fi_mon2 += nmon2;
+            fi_sites2 += nmon2 * ns2;
+            fi_crd2 += nmon2 * ns2 * 3;
         }
+        // Update first indexes
+        fi_mon1 += nmon1;
+        fi_sites1 += nmon1 * ns1;
+        fi_crd1 += nmon1 * ns1 * 3;
     }
 }
 
