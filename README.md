@@ -4,7 +4,7 @@
 
 
 
-# MBX v1.0.5
+# MBX v1.0.6
 MBX: A many-body energy and force calculator for data-driven many-body simulations.
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
@@ -161,7 +161,7 @@ Please cite the following manuscripts if any of the following PEFs is used:
 ### Fortran90 and Python
 In `${MBX_HOME}/examples/PEFs` there are sample scripts on how to use MBX called from Fortran90 and Python. Please remember to update the `LD_LIBRARY_PATH` variable and, if using python, the `PYTHONPATH` variable.
 ```console
-export LD_LIBRARY_PATH=MBX_HOME/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$MBX_HOME/lib/:$LD_LIBRARY_PATH
 export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 ```
 

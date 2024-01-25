@@ -15,7 +15,7 @@ AUELECFIELD2MBX = MBXLENGTH2AU * MBXLENGTH2AU
 AUELECPOT2MBX = MBXLENGTH2AU
 
 MBX_HOME = os.getenv('MBX_HOME')
-if MBX_HOME == "":
+if MBX_HOME == "" or MBX_HOME == None:
   print("MBX_HOME is not set.")
   sys.exit()
 
