@@ -178,7 +178,7 @@ make && make install
  After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
 ```console
 git clone -b stable git@github.com:lammps/lammps.git LAMMPS-stable
-export $LAMMPS_HOME=$PWD/LAMMPS-stable
+export LAMMPS_HOME=$PWD/LAMMPS-stable
 
 cp -rf $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
 cd $LAMMPS_HOME/src/
