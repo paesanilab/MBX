@@ -4,7 +4,7 @@
 
 
 
-# MBX v1.0.6
+# MBX v1.0.7
 MBX: A many-body energy and force calculator for data-driven many-body simulations.
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
@@ -178,7 +178,7 @@ make && make install
  After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
 ```console
 git clone -b stable git@github.com:lammps/lammps.git LAMMPS-stable
-export $LAMMPS_HOME=$PWD/LAMMPS-stable
+export LAMMPS_HOME=$PWD/LAMMPS-stable
 
 cp -rf $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
 cd $LAMMPS_HOME/src/
