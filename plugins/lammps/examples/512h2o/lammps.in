@@ -2,8 +2,8 @@ variable        T   equal  298
 variable        dt  equal  0.5
 variable        P   equal  1.0
 variable        nsteps  equal 100
-variable        thermo_freq equal 10
-variable        dump_freq equal 10
+variable        thermo_freq equal 1
+variable        dump_freq equal 1
 
 processors      * * * map xyz
 
