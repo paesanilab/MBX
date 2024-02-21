@@ -7914,6 +7914,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal2(std::vector<double> &in_v, std:
     reverse_forward_comm(out_v);
 }
 
+//key--pre
 void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &out_v,
                                                            std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                                                            bool use_ghost) { // change parameters
@@ -7946,14 +7947,14 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     // std::unordered_map<std::tuple<size_t, size_t, size_t, size_t, std::vector<double>>, size_t> precomputedInformation;
     double aDD = 0.055; // aDD intermolecular is always 0.055
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        size_t ns1 = sites_[fi_mon1];
+        size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = 2 * nmon1;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-            size_t ns2 = sites_[fi_mon2];
+            size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
             // TODO add neighbour list here
@@ -8003,7 +8004,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         // determine which monomers are within the Cutoff
                         std::vector<size_t> good_mon2_indices;
                         std::vector<size_t> bool_mon2_indices(nmon2, 0);
-                        local_field->withinCutoff(bool_mon2_indices.data(), xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
+                        local_field->withinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
                                                                     nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
                                                                     m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
 
@@ -8023,7 +8024,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         std::vector<size_t> reordered_islocal(reordered_mon2_size + 1, 0.0);
 
                         reordered_islocal[0] = islocal_[fi_mon1 + m1];
-                        double *xyz2 = xyz_.data() + fi_crd2;
+                        double *xyz2 = xyz_all_.data() + fi_crd2;
                         
                     // reorder the vector of monomers
                         // #pragma omp simd 
@@ -8043,7 +8044,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
 
                         // Calculate constants -- ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3
-                        local_field->CalcPrecomputedDipoleElec(xyz_.data() + fi_crd1, reordered_xyz2.data(),
+                        local_field->CalcPrecomputedDipoleElec(xyz_all_.data() + fi_crd1, reordered_xyz2.data(),
                                                          m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
                                                          Asqsqi, aDD, ewald_alpha_, use_pbc_, box_, box_inverse_,
                                                          cutoff_, use_ghost, reordered_islocal, 0, 1, *rank_precomputedInformation,
