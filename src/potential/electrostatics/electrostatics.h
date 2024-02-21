@@ -39,7 +39,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <cstdlib>
 #include <string>
 #include <memory>
+
+#ifdef __INTEL_COMPILER
 #include <mathimf.h>
+#endif
+
 #include <unordered_map>
 
 #ifdef _OPENMP
