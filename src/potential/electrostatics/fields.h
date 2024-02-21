@@ -72,7 +72,12 @@ derived.
 
 #include <vector>
 #include <cstddef>
+
+
+#ifdef __INTEL_COMPILER
 #include <mathimf.h>
+#endif
+
 #include <functional>
 #include <unordered_map>
 
