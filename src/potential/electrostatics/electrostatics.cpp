@@ -7933,7 +7933,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     // std::fill(out_v.begin(), out_v.end(), 0);
     double ewald_alpha = ewald_alpha_;
     double cutoff = cutoff_;
-    std::vector<size_t> &islocal = islocal_;
+    std::vector<size_t> &islocal = islocal_all_;
     bool use_pbc = use_pbc_;
     std::vector<double> &box_inverse = box_inverse_;
     const std::vector<double> &box = box_;
@@ -8006,7 +8006,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         std::vector<size_t> bool_mon2_indices(nmon2, 0);
                         local_field->withinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
                                                                     nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
-                                                                    m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+                                                                    m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
 
                        
                         for (int ind = 0; ind < nmon2; ind++) {
@@ -8023,7 +8023,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         std::vector<double> reordered_xyz2(3*reordered_mon2_size, 0.0);
                         std::vector<size_t> reordered_islocal(reordered_mon2_size + 1, 0.0);
 
-                        reordered_islocal[0] = islocal_[fi_mon1 + m1];
+                        reordered_islocal[0] = islocal_all_[fi_mon1 + m1];
                         double *xyz2 = xyz_all_.data() + fi_crd2;
                         
                     // reorder the vector of monomers
@@ -8035,7 +8035,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz2[old_mon2_index + 2*nmon2 + site_jnmon23];
 
 
-                            reordered_islocal[new_mon2_index + 1] = islocal_[fi_crd2 + old_mon2_index];
+                            reordered_islocal[new_mon2_index + 1] = islocal_all_[fi_crd2 + old_mon2_index];
                         }
 
                         (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
