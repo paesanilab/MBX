@@ -3483,7 +3483,7 @@ void Electrostatics::CalculatePermanentElecField3(std::unordered_map<key_precomp
                             reordered_islocal, fi_mon1 + m1, fi_mon2, m2init, &virial_thread, mt1, mt2, m1, i, j);
                         */
 
-                       local_field->CalcPermanentElecField(
+                        local_field->CalcPermanentElecField(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
                             m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
@@ -7929,7 +7929,17 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
     }
 #endif
-    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
+    size_t nExtChg = external_charge_.size();
+    std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
+    if (nExtChg > 0) {
+        mon_type_count_.push_back(std::make_pair("ext", nExtChg));
+    }
+
+    // Max number of monomers
+    size_t maxnmon = (mon_type_count_cp.size() > 0) ? mon_type_count_cp.back().second : 1;
+    if (nExtChg > maxnmon) maxnmon = nExtChg;
+
+    //size_t maxnmon = (nsites_all_ == 0) ? 1 : mon_type_count_.back().second;
     // std::fill(out_v.begin(), out_v.end(), 0);
     double ewald_alpha = ewald_alpha_;
     double cutoff = cutoff_;
@@ -7989,7 +7999,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon13 = 3 * nmon1 * i;
                     for (size_t j = 0; j < ns2; j++) {
-                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+                        double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
                         double Asqsqi = 0.0;
                         if (A > constants::EPS) {
@@ -8068,6 +8078,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
     }
+    mon_type_count_ = mon_type_count_cp;
 }
 
 void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
@@ -8827,8 +8838,6 @@ void Electrostatics::ComputeDipoleField2(std::vector<double> &in_v, std::vector<
         }
     }  // debug print
 #endif
-
-    
 
     size_t fi_mon1 = 0;
     size_t fi_mon2 = 0;
@@ -12957,7 +12966,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     std::vector<double> ts2v(nsites3);
 
     std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
-    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, true);
+    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost);
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField3(precomputedInformation, use_ghost);
