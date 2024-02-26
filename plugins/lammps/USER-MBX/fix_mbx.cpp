@@ -33,7 +33,8 @@
 #include "universe.h"
 #include "modify.h"
 
-#define _MAX_SIZE_MOL_NAME 10
+#define _MAX_SIZE_MOL_NAME 16
+// Subject to further increase _MAX_SIZE_MOL_NAME
 #define _MAX_ATOMS_PER_MONOMER 8
 #define SMALL 1.0e-4
 
@@ -46,13 +47,15 @@ using namespace FixConst;
 
 static const char cite_fix_mbx[] =
     "fix mbx command:\n\n"
-    "@Article{,\n"
-    " author = {},\n"
-    " title = {},\n"
-    " journal = {},\n"
-    " year =    ,\n"
-    " volume =  ,\n"
-    " pages =   {}\n"
+    "@article{10.1063/5.0156036,\n"
+    " author = {Riera, Marc and Knight, Christopher and Bull-Vulpe, Ethan F. and Zhu, Xuanyu and Agnew, Henry and Smith, Daniel G. A. and Simmonett, Andrew C. and Paesani, Francesco},\n"
+    " title = \"{MBX: A many-body energy and force calculator for data-driven many-body simulations}\",\n"
+    " journal = {The Journal of Chemical Physics},\n"
+    " volume = {159},\n"
+    " number = {5},\n"
+    " pages = {054802},\n"
+    " year = {2023},\n"
+    " doi = {10.1063/5.0156036},\n"
     "}\n\n";
 
 /* ---------------------------------------------------------------------- */
@@ -180,8 +183,9 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     mbx_mpi_enabled = true;
     mbx_aspc_enabled = false;
 
-    pair_mbx = NULL;
+    pair_mbx = nullptr;
     pair_mbx = (PairMBX *)force->pair_match("^mbx", 0);
+    if(!pair_mbx) error->all(FLERR,"Pair mbx is missing");
 
     ptr_mbx = NULL;
 
