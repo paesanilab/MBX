@@ -3791,6 +3791,42 @@ void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
     }
 }
 
+void Electrostatics::CalculateDipolesMPIlocal3(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
+#if DIRECT_ONLY
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            double p = pol_[fi_sites + i];
+            size_t inmon3 = 3 * i * nmon;
+            for (size_t m = 0; m < nmon; m++) {
+                mu_[fi_crd + inmon3 + m] = p * Efq_[fi_crd + inmon3 + m];
+                mu_[fi_crd + inmon3 + nmon + m] = p * Efq_[fi_crd + inmon3 + nmon + m];
+                mu_[fi_crd + inmon3 + nmon2 + m] = p * Efq_[fi_crd + inmon3 + nmon2 + m];
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+    return;
+#endif
+    if (dip_method_ == "iter") {
+        // CalculateDipolesIterative();
+
+        std::string text = std::string("CalculateDipolesIterativeMPIlocal missing. ");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+
+    } else if (dip_method_ == "cg") {
+        CalculateDipolesCGMPIlocal3(precomputedInformation);
+    } else if (dip_method_ == "aspc") {
+        CalculateDipolesAspcMPIlocal(use_ghost);
+    }
+}
 
 
 void Electrostatics::CalculateDipoles(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
@@ -7915,6 +7951,8 @@ void Electrostatics::ComputeDipoleFieldMPIlocal2(std::vector<double> &in_v, std:
 }
 
 //key--pre
+// xyz_all, polfac_all_, islocal_all_, nsites_all_, sites_all_
+
 void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &out_v,
                                                            std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                                                            bool use_ghost) { // change parameters
@@ -7929,7 +7967,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
     }
 #endif
-    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
+    size_t maxnmon = (nsites_all_ == 0) ? 1 : mon_type_count_.back().second;
     // std::fill(out_v.begin(), out_v.end(), 0);
     double ewald_alpha = ewald_alpha_;
     double cutoff = cutoff_;
@@ -7989,7 +8027,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon13 = 3 * nmon1 * i;
                     for (size_t j = 0; j < ns2; j++) {
-                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+                        double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
                         double Asqsqi = 0.0;
                         if (A > constants::EPS) {
@@ -13009,10 +13047,16 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
 double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std::vector<double> *virial,
                                                  bool use_ghost) {
     std::fill(virial_.begin(), virial_.end(), 0.0);
-    CalculatePermanentElecFieldMPIlocal(use_ghost);
-    CalculateDipolesMPIlocal(use_ghost);
+    size_t nsites3 = nsites_ * 3;
+    std::vector<double> ts2v(nsites3);
+
+    std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
+    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, true);
+
+    CalculatePermanentElecFieldMPIlocal3(precomputedInformation);
+    CalculateDipolesMPIlocal3(precomputedInformation, use_ghost);
     CalculateElecEnergyMPIlocal();
-    if (do_grads_) CalculateGradientsMPIlocal(grad, use_ghost);
+    if (do_grads_) CalculateGradientsMPIlocal3(precomputedInformation, grad, use_ghost);
     // update viral
     if (virial != 0) {
         for (size_t k = 0; k < 9; k++) {
