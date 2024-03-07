@@ -42,17 +42,18 @@ neigh_modify	every 1 delay 1 check yes
 
 timestep        ${dt}
 compute         mbx all pair mbx
-variable        e1    equal c_mbx[1]
-variable        e2    equal c_mbx[2]
-variable        e3    equal c_mbx[3]
-variable        e4    equal c_mbx[4]
-variable        ebuck equal c_mbx[5]
-variable        edisp equal c_mbx[6]
-variable        eele  equal c_mbx[7]
-variable        etot  equal c_mbx[8]
+variable        e1bpip    equal c_mbx[1]
+variable        e2bpip    equal c_mbx[2]
+variable        e3bpip    equal c_mbx[3]
+variable        e4bpip    equal c_mbx[4]
+variable        edisp     equal c_mbx[5]
+variable        ebuck     equal c_mbx[6]
+variable        eele      equal c_mbx[7]
+variable        etot      equal c_mbx[8]
+
 
 #thermo_style    custom step time temp cella cellb cellc vol pe ke etotal
-thermo_style    custom step time temp evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1 v_e2 v_e3 v_ebuck v_edisp v_eele v_etot pe etotal
+thermo_style    custom step time temp evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1bpip v_e2bpip v_e3bpip v_e4bpip v_edisp v_ebuck v_eele v_etot pe etotal
 thermo          1
 thermo_modify   flush yes
 

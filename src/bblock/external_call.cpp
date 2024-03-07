@@ -265,7 +265,7 @@ void set_box_(int* length, double* box) {
         std::vector<double> boxv;
         my_s->SetPBC(boxv);
     }
-    my_s->SetNewParamsElec(false);
+    //my_s->SetNewParamsElec(false);
 }
 
 void set_potential_and_electric_field_on_sites_(double* phi, double* ef, int* nsites) {

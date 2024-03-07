@@ -104,6 +104,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
             double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];           // rijx
             double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];   // rijy
             double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];  // rijz
+            
 
             // Apply the minimum image convention via fractional coordinates
             // It is probably a good idea to identify orthorhombic cases and write a faster version for them
@@ -402,6 +403,7 @@ bool ElectricFieldHolder::withinCutoff(size_t *bool_indices, double *xyz1, doubl
         bool accum2 = !use_ghost;
 
         if (use_ghost && isls) accum2 = true;
+
 
         if (accum2) {
             
@@ -820,7 +822,7 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
 
         // Contributions to the dipole electric field to site i of mon1
         // Stored in vectors to make the loop vectorizable
-
+        
         // Component x
         v0 += (ts2x * rijx - s1r3) * mu2[site_jnmon23 + m] + ts2x * rijy * mu2[site_jnmon23 + nmon2 + m] +
                 ts2x * rijz * mu2[site_jnmon23 + nmon22 + m];
@@ -913,7 +915,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
         double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
         double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
         double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
-
+        
         // Apply the minimum image convention via fractional coordinates
         // It is probably a good idea to identify orthorhombic cases and write a faster version for them
         if (use_pbc) {

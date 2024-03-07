@@ -602,7 +602,6 @@ class System {
     void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
                        std::vector<double> &efd);
     void GetGradAndGradX(std::vector<double> &grad, std::vector<double> &gradx);
-    void SetNewParamsElec(bool do_grads);
     void Hack1EfqPhi();
     void Hack2CgIter();
     void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
