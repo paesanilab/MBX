@@ -531,7 +531,6 @@ class Electrostatics {
     void SetAspcParameters(size_t k);
     void CalculateDipoles(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
     void CalculateDipolesMPIlocal(bool use_ghost = 0);
-    void CalculateDipolesMPIlocal3(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0); // do this
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
     void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
