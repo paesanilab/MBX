@@ -7967,9 +7967,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
     }
 #endif
-<<<<<<< HEAD
-    size_t maxnmon = (nsites_all_ == 0) ? 1 : mon_type_count_.back().second;
-=======
     size_t nExtChg = external_charge_.size();
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
     if (nExtChg > 0) {
@@ -7981,7 +7978,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     if (nExtChg > maxnmon) maxnmon = nExtChg;
 
     //size_t maxnmon = (nsites_all_ == 0) ? 1 : mon_type_count_.back().second;
->>>>>>> b10bd77a61678993827565e47705cd8c396bf5e4
     // std::fill(out_v.begin(), out_v.end(), 0);
     double ewald_alpha = ewald_alpha_;
     double cutoff = cutoff_;
