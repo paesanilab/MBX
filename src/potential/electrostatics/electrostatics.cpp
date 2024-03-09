@@ -2375,20 +2375,39 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal3(std::unordered_map<key
                             // reordered_chg[new_mon2_index + reordered_mon2_size] = chg[old_mon2_index + nmon2 + site_jnmon23];
                             // reordered_chg[new_mon2_index + 2*reordered_mon2_size] = chg[old_mon2_index + 2*nmon2 + site_jnmon23];
                         }
-                        /* 
-                        local_field->CalcPermanentElecField3(
-                            xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
-                            m1, 0, reordered_mon2_size, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
-                            &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
-                            ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost,
-                            reordered_islocal, fi_mon1 + m1, fi_mon2, m2init, &virial_thread, mt1, mt2, m1, i, j);
-                        */
 
-                       local_field->CalcPermanentElecField(
+
+                        /* 
+                        // this is the function cal from the non-optimized, mpi verison
+                        local_field->CalcPermanentElecField(
+                            xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(),
+                            m1, 0, size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
+                            &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
+                            ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost,
+                            islocal_all_, fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
+                        
+                        // this is from non-optimized, non-mpi version
+                        local_field->CalcPermanentElecField(
+                            xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(),
+                            m1, 0, size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
+                            &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
+                            ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1,
+                            fi_mon2, m2init, &virial_thread);
+                        
+                        // this is the function cal from the optimized, non-mpi verison
+                        local_field->CalcPermanentElecField(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
                             m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
                             ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0,
+                            1, 0, &virial_thread);
+                        */
+                       //key-- change
+                       local_field->CalcPermanentElecField(
+                            xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
+                            m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
+                            &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
+                            ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, reordered_islocal, 0,
                             1, 0, &virial_thread);
                         
                         double *Efq2 = Efq_sitej.data();
@@ -2930,9 +2949,6 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                             Asqsqi = Ai;
                         }
                         double elec_scale_factor = 1;
-
-
-                        
                         local_field->CalcPermanentElecField(
                             xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(),
                             m1, 0, size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
@@ -3753,7 +3769,8 @@ void Electrostatics::CalculatePermanentElecField3(std::unordered_map<key_precomp
 ////////////////////////////////////////////////////////////////////////////////
 // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
+//key--change
+/*
 void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
 #if DIRECT_ONLY
     size_t fi_mon = 0;
@@ -3790,6 +3807,7 @@ void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
         CalculateDipolesAspcMPIlocal(use_ghost);
     }
 }
+*/
 
 void Electrostatics::CalculateDipolesMPIlocal3(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
 #if DIRECT_ONLY
@@ -7643,10 +7661,58 @@ void Electrostatics::ComputeDipoleFieldMPIlocal2(std::vector<double> &in_v, std:
                             reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2 + site_jnmon23];
                         }
 
+                        
+                        /*
+
+                        // non-optimized, mpi verison
+                        local_field->CalcDipoleElecField(
+                            xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, in_ptr + fi_crd1, in_ptr + fi_crd2, m1,
+                            m2init, nmon2, nmon1, nmon2, i, j, Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread,
+                            &ey_thread, &ez_thread, ewald_alpha_, simcell_periodic_, box_PMElocal_,
+                            box_inverse_PMElocal_, cutoff_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+                        
+                        non-optimied, non-mpi version
+                        local_field->CalcDipoleElecField2(
+                            xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1, reordered_mu2.data(), m1, 
+                            0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, 
+                            &ey_thread, &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0, 1);
+
+                        
+                        optimized non-mpi verison
+                        local_field->CalcDipoleElecField22(
+                            xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1, reordered_mu2.data(), m1, 
+                            0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, aDD, reordered_Efd2.data(), &ex_thread, 
+                            &ey_thread, &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
+                        */
+
+                        /*
+
+                        correct function call--must modify function though:
+                        // note must use box_PMElocal_ and box_inverse_PMElocal_ instead of box_, box_inverse_
+                        local_field->CalcDipoleElecField22(
+                            xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,reordered_mu2.data(), m1, 
+                            0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, aDD, reordered_Efd2.data(), &ex_thread, 
+                            &ey_thread, &ez_thread, simcell_periodic_, precomputedInformation, mt1, mt2, m1, i, j);
+
+                        current version (CalcDipoleElecField22)-- potentially incorrect:
                         local_field->CalcDipoleElecField22(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
                                                          reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, 
                                                          aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
                                                          &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
+                        possible option...
+                        local_field->CalcDipoleElecField2(
+                            xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,reordered_mu2.data(), m1, 
+                            0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, 
+                            &ey_thread, &ez_thread, ewald_alpha_, simcell_periodic_, box_PMElocal_,
+                            box_inverse_PMElocal_, cutoff_, use_ghost, 0, 1);
+
+                        
+                        */
+                        local_field->CalcDipoleElecField2(
+                            xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,reordered_mu2.data(), m1, 
+                            0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, 
+                            &ey_thread, &ez_thread, ewald_alpha_, simcell_periodic_, box_PMElocal_,
+                            box_inverse_PMElocal_, cutoff_, use_ghost, 0, 1);
 
                         double *Efd2 = Efd_2_pool[rank].data();
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
@@ -10627,13 +10693,34 @@ void Electrostatics::CalculateGradientsMPIlocal3(std::unordered_map<key_precompu
                             reordered_mu[new_mon2_index + 2*reordered_mon2_size] = mu[old_mon2_index + 2*nmon2 + site_jnmon23];
                         }
 
+                        /*
+
+                        Non-optimized MPI version
+                        local_field->CalcElecFieldGrads(
+                            xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, chg_all_.data() + fi_sites1,
+                            chg_all_.data() + fi_sites2, mu_all_.data() + fi_crd1, mu_all_.data() + fi_crd2, m1, m2init,
+                            nmon2, nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
+                            &phi1_thread, phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_,
+                            simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, 
+                            islocal_all_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                        Optimized, non-mpi version
+
                         local_field->CalcElecFieldGrads(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1,
                             reordered_chg.data(), mu_all_.data() + fi_crd1, reordered_mu.data(), m1, 0,
                             reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
-                            &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, use_pbc_,
-                            box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0, 1,
-                            &virial_pool[rank]);
+                            &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, 
+                            use_pbc_, box_, box_inverse_, cutoff_, use_ghost, 
+                            reordered_islocal, 0, 1, &virial_pool[rank]);
+                        */
+
+                        local_field->CalcElecFieldGrads(
+                            xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1,
+                            reordered_chg.data(), mu_all_.data() + fi_crd1, reordered_mu.data(), m1, 0,
+                            reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
+                            &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, 
+                            simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, 
+                            reordered_islocal, 0, 1, &virial_pool[rank]);
 
                         // Revert the reordering of input vectors 
                         double *phi2 = phi_2_pool[rank].data();
