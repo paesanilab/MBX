@@ -7699,12 +7699,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal2(std::vector<double> &in_v, std:
                                                          reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, 
                                                          aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
                                                          &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
-                        possible option...
-                        local_field->CalcDipoleElecField2(
-                            xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,reordered_mu2.data(), m1, 
-                            0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, 
-                            &ey_thread, &ez_thread, ewald_alpha_, simcell_periodic_, box_PMElocal_,
-                            box_inverse_PMElocal_, cutoff_, use_ghost, 0, 1);
 
                         
                         */
@@ -7712,7 +7706,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal2(std::vector<double> &in_v, std:
                             xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,reordered_mu2.data(), m1, 
                             0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, 
                             &ey_thread, &ez_thread, ewald_alpha_, simcell_periodic_, box_PMElocal_,
-                            box_inverse_PMElocal_, cutoff_, use_ghost, 0, 1);
+                            box_inverse_PMElocal_, cutoff_, use_ghost, reordered_islocal, 0, 1);
 
                         double *Efd2 = Efd_2_pool[rank].data();
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
