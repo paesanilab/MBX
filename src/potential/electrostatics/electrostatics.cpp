@@ -7702,11 +7702,10 @@ void Electrostatics::ComputeDipoleFieldMPIlocal2(std::vector<double> &in_v, std:
 
                         
                         */
-                        local_field->CalcDipoleElecField2(
-                            xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,reordered_mu2.data(), m1, 
-                            0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, 
-                            &ey_thread, &ez_thread, ewald_alpha_, simcell_periodic_, box_PMElocal_,
-                            box_inverse_PMElocal_, cutoff_, use_ghost, reordered_islocal, 0, 1);
+                        local_field->CalcDipoleElecField22(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
+                                                         reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, 
+                                                         aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
+                                                         &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
 
                         double *Efd2 = Efd_2_pool[rank].data();
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
@@ -8013,9 +8012,10 @@ void Electrostatics::ComputeDipoleFieldMPIlocal2(std::vector<double> &in_v, std:
 //key--pre
 // xyz_all, polfac_all_, islocal_all_, nsites_all_, sites_all_
 
+
 void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &out_v,
                                                            std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
-                                                           bool use_ghost) { // change parameters
+                                                           bool use_ghost, bool MPI) { // change parameters
 
 
     // Following is the Compute Dipole Field code 
@@ -8042,9 +8042,15 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     double ewald_alpha = ewald_alpha_;
     double cutoff = cutoff_;
     std::vector<size_t> &islocal = islocal_all_;
-    bool use_pbc = use_pbc_;
-    std::vector<double> &box_inverse = box_inverse_;
-    const std::vector<double> &box = box_;
+    if (MPI == 1) {
+        const std::vector<double> &box = box_PMElocal_;
+        std::vector<double> &box_inverse = box_inverse_PMElocal_;
+        bool use_pbc = simcell_periodic_;
+    } else {
+        const std::vector<double> &box = box_;
+        std::vector<double> &box_inverse = box_inverse_;
+         bool use_pbc = use_pbc_;
+    }
 
     size_t fi_mon1 = 0;
     size_t fi_mon2 = 0;
@@ -13141,7 +13147,7 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
     std::vector<double> ts2v(nsites3);
 
     std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
-    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, true);
+    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, true, 1);
 
     CalculatePermanentElecFieldMPIlocal3(precomputedInformation);
     CalculateDipolesMPIlocal3(precomputedInformation, use_ghost);
