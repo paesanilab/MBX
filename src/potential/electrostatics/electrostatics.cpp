@@ -8088,6 +8088,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             size_t m1_step_size;
             if (MPI == 1) {
                 m1_step_size = num_mpi_ranks_;
+                m1start = 0;
             } else {
                 m1_step_size = 1;
             }
