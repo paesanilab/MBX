@@ -1824,6 +1824,32 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                             }
                         }
 
+                        //key- debug
+                        std::cout << "CALCULATE_PERMANTENT_ELEC_FIELD" << std::endl;
+                        std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
+                        
+                        std::cout << "phi_sitej: ";
+                        for (int z = 0; z < size_j; z++) {
+                            std::cout << phi_sitej[z];
+                        }
+                        std::cout << " " << std::endl;
+
+                        std::cout << "Efq_sitej: ";
+                        for (int z = 0; z < size_j; z++) {
+                            for (size_t dim = 0; dim < 3; dim++) {
+                                std::cout << Efq_sitej[dim * size_j + z];
+                            }
+                        }
+                        std::cout << " " << std::endl;
+
+                        std::cout << "chg_all_: ";
+                        for (int z = 0; z < chg_all_.size(); z++) {
+                            std::cout << chg_all_[z];
+                        }
+                        std::cout << " " << std::endl;
+
+                        
+
                         phi_1_pool[rank][inmon1 + m1] += phi1_thread;
                         Efq_1_pool[rank][inmon13 + m1] += ex_thread;
                         Efq_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
@@ -2422,6 +2448,28 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal3(std::unordered_map<key
                             Efq2[2*nmon2 + old_mon2_index - m2init*3] += reordered_Efq2[2*reordered_mon2_size + new_mon2_index];
 
                         }
+
+                        //key- debug
+                        std::cout << "CALCULATE_PERMANTENT_ELEC_FIELD" << std::endl;
+                        std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
+                        
+                        std::cout << "reordered_phi2: ";
+                        for (int z = 0; z < reordered_phi2.size(); z++) {
+                            std::cout << reordered_phi2[z];
+                        }
+                        std::cout << " " << std::endl;
+
+                        std::cout << "reordered_Efq2: ";
+                        for (int z = 0; z < reordered_Efq2.size(); z++) {
+                            std::cout << reordered_Efq2[z];
+                        }
+                        std::cout << " " << std::endl;
+
+                        std::cout << "reordered_chg: ";
+                        for (int z = 0; z < reordered_chg.size(); z++) {
+                            std::cout << reordered_chg[z];
+                        }
+                        std::cout << " " << std::endl;
 
                         // Put proper data in field and electric field of j
                         for (size_t ind = 0; ind < size_j; ind++) {
@@ -8166,22 +8214,23 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
 
                         //key- debug
+                        std::cout << "PRECOMPUTED INFO FUNTION" << std::endl;
                         std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
                         
                         std::cout << "reordered_xyz2: ";
-                        for (int z; z < reordered_xyz2.size(); z++) {
+                        for (int z = 0; z < reordered_xyz2.size(); z++) {
                             std::cout << reordered_xyz2[z];
                         }
                         std::cout << " " << std::endl;
 
                         std::cout << "reordered_islocal: ";
-                        for (int z; z < reordered_islocal.size(); z++) {
+                        for (int z = 0; z < reordered_islocal.size(); z++) {
                             std::cout << reordered_islocal[z];
                         }
                         std::cout << " " << std::endl;
 
                         std::cout << "good_mon2_indices: ";
-                        for (int z; z < good_mon2_indices.size(); z++) {
+                        for (int z = 0; z < good_mon2_indices.size(); z++) {
                             std::cout << good_mon2_indices[z];
                         }
                         std::cout << " " << std::endl;
