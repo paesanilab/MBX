@@ -8166,25 +8166,25 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
 
                         //key- debug
-                        std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << endl;
+                        std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
                         
                         std::cout << "reordered_xyz2: ";
                         for (int z; z < reordered_xyz2.size(); z++) {
                             std::cout << reordered_xyz2[z];
                         }
-                        std::cout << " " << endl;
+                        std::cout << " " << std::endl;
 
                         std::cout << "reordered_islocal: ";
                         for (int z; z < reordered_islocal.size(); z++) {
                             std::cout << reordered_islocal[z];
                         }
-                        std::cout << " " << endl;
+                        std::cout << " " << std::endl;
 
                         std::cout << "good_mon2_indices: ";
                         for (int z; z < good_mon2_indices.size(); z++) {
                             std::cout << good_mon2_indices[z];
                         }
-                        std::cout << " " << endl;
+                        std::cout << " " << std::endl;
 
                         // Calculate constants -- ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3
                         local_field->CalcPrecomputedDipoleElec(xyz_all_.data() + fi_crd1, reordered_xyz2.data(),
