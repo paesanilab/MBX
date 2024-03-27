@@ -1831,6 +1831,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         std::cout << "phi_sitej: ";
                         for (int z = 0; z < size_j; z++) {
                             std::cout << phi_sitej[z];
+                            std::cout << " ";
                         }
                         std::cout << " " << std::endl;
 
@@ -1838,6 +1839,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         for (int z = 0; z < size_j; z++) {
                             for (size_t dim = 0; dim < 3; dim++) {
                                 std::cout << Efq_sitej[dim * size_j + z];
+                                 std::cout << " ";
                             }
                         }
                         std::cout << " " << std::endl;
@@ -1845,6 +1847,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                         std::cout << "chg_all_: ";
                         for (int z = 0; z < chg_all_.size(); z++) {
                             std::cout << chg_all_[z];
+                             std::cout << " ";
                         }
                         std::cout << " " << std::endl;
 
@@ -8220,18 +8223,21 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         std::cout << "reordered_xyz2: ";
                         for (int z = 0; z < reordered_xyz2.size(); z++) {
                             std::cout << reordered_xyz2[z];
+                            std::cout << " ";
                         }
                         std::cout << " " << std::endl;
 
                         std::cout << "reordered_islocal: ";
                         for (int z = 0; z < reordered_islocal.size(); z++) {
                             std::cout << reordered_islocal[z];
+                            std::cout << " ";
                         }
                         std::cout << " " << std::endl;
 
                         std::cout << "good_mon2_indices: ";
                         for (int z = 0; z < good_mon2_indices.size(); z++) {
                             std::cout << good_mon2_indices[z];
+                            std::cout << " ";
                         }
                         std::cout << " " << std::endl;
 
