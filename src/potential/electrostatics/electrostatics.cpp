@@ -1824,32 +1824,34 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                             }
                         }
 
+                        /*
                         //key- debug
-                        std::cout << "CALCULATE_PERMANTENT_ELEC_FIELD" << std::endl;
-                        std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
+                        std::cerr << "CALCULATE_PERMANTENT_ELEC_FIELD" << std::endl;
+                        std::cerr << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
                         
-                        std::cout << "phi_sitej: ";
+                        std::cerr << "phi_sitej: ";
                         for (int z = 0; z < size_j; z++) {
-                            std::cout << phi_sitej[z];
-                            std::cout << " ";
+                            std::cerr << phi_sitej[z];
+                            std::cerr << " ";
                         }
-                        std::cout << " " << std::endl;
+                        std::cerr << " " << std::endl;
 
-                        std::cout << "Efq_sitej: ";
+                        std::cerr << "Efq_sitej: ";
                         for (int z = 0; z < size_j; z++) {
                             for (size_t dim = 0; dim < 3; dim++) {
-                                std::cout << Efq_sitej[dim * size_j + z];
-                                 std::cout << " ";
+                                std::cerr << Efq_sitej[dim * size_j + z];
+                                 std::cerr << " ";
                             }
                         }
-                        std::cout << " " << std::endl;
+                        std::cerr << " " << std::endl;
 
-                        std::cout << "chg_all_: ";
+                        std::cerr << "chg_all_: ";
                         for (int z = 0; z < chg_all_.size(); z++) {
-                            std::cout << chg_all_[z];
-                             std::cout << " ";
+                            std::cerr << chg_all_[z];
+                            std::cerr << " ";
                         }
                         std::cout << " " << std::endl;
+                        */
 
                         
 
@@ -8217,29 +8219,29 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
 
                         //key- debug
-                        std::cout << "PRECOMPUTED INFO FUNTION" << std::endl;
-                        std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
+                        std::cerr << "PRECOMPUTED INFO FUNTION" << std::endl;
+                        std::cerr << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
                         
-                        std::cout << "reordered_xyz2: ";
+                        std::cerr << "reordered_xyz2: ";
                         for (int z = 0; z < reordered_xyz2.size(); z++) {
-                            std::cout << reordered_xyz2[z];
-                            std::cout << " ";
+                            std::cerr << reordered_xyz2[z];
+                            std::cerr << " ";
                         }
-                        std::cout << " " << std::endl;
+                        std::cerr << " " << std::endl;
 
-                        std::cout << "reordered_islocal: ";
+                        std::cerr << "reordered_islocal: ";
                         for (int z = 0; z < reordered_islocal.size(); z++) {
-                            std::cout << reordered_islocal[z];
-                            std::cout << " ";
+                            std::cerr << reordered_islocal[z];
+                            std::cerr << " ";
                         }
-                        std::cout << " " << std::endl;
+                        std::cerr << " " << std::endl;
 
-                        std::cout << "good_mon2_indices: ";
+                        std::cerr << "good_mon2_indices: ";
                         for (int z = 0; z < good_mon2_indices.size(); z++) {
-                            std::cout << good_mon2_indices[z];
-                            std::cout << " ";
+                            std::cerr << good_mon2_indices[z];
+                            std::cerr << " ";
                         }
-                        std::cout << " " << std::endl;
+                        std::cerr << " " << std::endl;
 
                         // Calculate constants -- ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3
                         local_field->CalcPrecomputedDipoleElec(xyz_all_.data() + fi_crd1, reordered_xyz2.data(),
