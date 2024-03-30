@@ -8119,7 +8119,8 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
-        size_t nmon12 = 2 * nmon1;
+
+        size_t nmon12 = nmon1 * 2;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
@@ -8154,8 +8155,8 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
             for (size_t m1 = m1start; m1 < nmon1; m1 += m1_step_size) {
                 //            for (size_t m1 = 0; m1 < nmon1; m1++) {
-                size_t isl1_offset = fi_mon1 + m1;
-                size_t isl2_offset = fi_mon2;
+                // size_t isl1_offset = fi_mon1 + m1;
+                // size_t isl2_offset = fi_mon2;
                 int rank = 0;
 #ifdef _OPENMP
                 rank = omp_get_thread_num();
@@ -8213,7 +8214,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz2[old_mon2_index + 2*nmon2 + site_jnmon23];
 
 
-                            reordered_islocal[new_mon2_index + 1] = islocal_all_[fi_crd2 + old_mon2_index];
+                            reordered_islocal[new_mon2_index + 1] = islocal_all_[fi_mon2 + old_mon2_index];
                         }
 
                         (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
@@ -13183,7 +13184,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     std::vector<double> ts2v(nsites3);
 
     std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
-    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost);
+    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 0);
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField3(precomputedInformation, use_ghost);
