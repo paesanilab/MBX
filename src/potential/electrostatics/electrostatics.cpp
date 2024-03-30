@@ -8095,14 +8095,17 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     double ewald_alpha = ewald_alpha_;
     double cutoff = cutoff_;
     std::vector<size_t> &islocal = islocal_all_;
+    std::vector<double> box;
+    std::vector<double> box_inverse;
+    bool use_pbc;
     if (MPI == 1) {
-        const std::vector<double> &box = box_PMElocal_;
-        std::vector<double> &box_inverse = box_inverse_PMElocal_;
-        bool use_pbc = simcell_periodic_;
+        box = box_PMElocal_;
+        box_inverse = box_inverse_PMElocal_;
+        use_pbc = simcell_periodic_;
     } else {
-        const std::vector<double> &box = box_;
-        std::vector<double> &box_inverse = box_inverse_;
-         bool use_pbc = use_pbc_;
+        box = box_;
+        box_inverse = box_inverse_;
+        use_pbc = use_pbc_;
     }
 
     size_t fi_mon1 = 0;
@@ -8139,11 +8142,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             // Parallel loop
             size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
             size_t m1_step_size;
-            if (MPI == 1) {
+            if (MPI == 0) {
                 m1_step_size = num_mpi_ranks_;
-                m1start = 0;
             } else {
                 m1_step_size = 1;
+                m1start = 0;
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -8180,7 +8183,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         std::vector<size_t> good_mon2_indices;
                         std::vector<size_t> bool_mon2_indices(nmon2, 0);
                         local_field->withinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
-                                                                    nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
+                                                                    nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
                                                                     m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
 
                        
@@ -8246,7 +8249,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         // Calculate constants -- ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3
                         local_field->CalcPrecomputedDipoleElec(xyz_all_.data() + fi_crd1, reordered_xyz2.data(),
                                                          m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
-                                                         Asqsqi, aDD, ewald_alpha_, use_pbc_, box_, box_inverse_,
+                                                         Asqsqi, aDD, ewald_alpha_, use_pbc, box, box_inverse,
                                                          cutoff_, use_ghost, reordered_islocal, 0, 1, *rank_precomputedInformation,
                                                          mt1, mt2, m1, i, j); 
                         
@@ -10771,7 +10774,7 @@ void Electrostatics::CalculateGradientsMPIlocal3(std::unordered_map<key_precompu
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
 
-                            reordered_chg[new_mon2_index] = chg[old_mon2_index + site_jnmon23];
+                            reordered_chg[new_mon2_index] = chg[old_mon2_index + site_jnmon2];
                            
 
                             reordered_mu[new_mon2_index] = mu[old_mon2_index + site_jnmon23 ];
