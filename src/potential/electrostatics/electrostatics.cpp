@@ -2455,26 +2455,26 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal3(std::unordered_map<key
                         }
 
                         //key- debug
-                        std::cout << "CALCULATE_PERMANTENT_ELEC_FIELD" << std::endl;
-                        std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
+                        // std::cout << "CALCULATE_PERMANTENT_ELEC_FIELD" << std::endl;
+                        // std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
                         
-                        std::cout << "reordered_phi2: ";
-                        for (int z = 0; z < reordered_phi2.size(); z++) {
-                            std::cout << reordered_phi2[z];
-                        }
-                        std::cout << " " << std::endl;
+                        // std::cout << "reordered_phi2: ";
+                        // for (int z = 0; z < reordered_phi2.size(); z++) {
+                        //     std::cout << reordered_phi2[z];
+                        // }
+                        // std::cout << " " << std::endl;
 
-                        std::cout << "reordered_Efq2: ";
-                        for (int z = 0; z < reordered_Efq2.size(); z++) {
-                            std::cout << reordered_Efq2[z];
-                        }
-                        std::cout << " " << std::endl;
+                        // std::cout << "reordered_Efq2: ";
+                        // for (int z = 0; z < reordered_Efq2.size(); z++) {
+                        //     std::cout << reordered_Efq2[z];
+                        // }
+                        // std::cout << " " << std::endl;
 
-                        std::cout << "reordered_chg: ";
-                        for (int z = 0; z < reordered_chg.size(); z++) {
-                            std::cout << reordered_chg[z];
-                        }
-                        std::cout << " " << std::endl;
+                        // std::cout << "reordered_chg: ";
+                        // for (int z = 0; z < reordered_chg.size(); z++) {
+                        //     std::cout << reordered_chg[z];
+                        // }
+                        // std::cout << " " << std::endl;
 
                         // Put proper data in field and electric field of j
                         for (size_t ind = 0; ind < size_j; ind++) {
@@ -3823,7 +3823,7 @@ void Electrostatics::CalculatePermanentElecField3(std::unordered_map<key_precomp
 // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //key--change
-/*
+
 void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
 #if DIRECT_ONLY
     size_t fi_mon = 0;
@@ -3860,7 +3860,7 @@ void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
         CalculateDipolesAspcMPIlocal(use_ghost);
     }
 }
-*/
+
 
 void Electrostatics::CalculateDipolesMPIlocal3(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
 #if DIRECT_ONLY
@@ -3893,7 +3893,7 @@ void Electrostatics::CalculateDipolesMPIlocal3(std::unordered_map<key_precompute
         throw CUException(__func__, __FILE__, __LINE__, text);
 
     } else if (dip_method_ == "cg") {
-        CalculateDipolesCGMPIlocal3(precomputedInformation);
+        CalculateDipolesCGMPIlocal3(precomputedInformation, use_ghost);
     } else if (dip_method_ == "aspc") {
         CalculateDipolesAspcMPIlocal(use_ghost);
     }
@@ -3992,7 +3992,7 @@ void Electrostatics::DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::
 }
 
 void Electrostatics::DipolesCGIterationMPIlocal2(std::vector<double> &in_v, std::vector<double> &out_v, 
-                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation){
+                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost){
     // Apply sqrt(pol) to the dipoles
     int fi_sites = 0;
     int fi_crd = 0;
@@ -4017,7 +4017,7 @@ void Electrostatics::DipolesCGIterationMPIlocal2(std::vector<double> &in_v, std:
     }
 
     // Compute the field from the modified dipoles
-    ComputeDipoleFieldMPIlocal2(in_v, out_v, precomputedInformation);
+    ComputeDipoleFieldMPIlocal2(in_v, out_v, precomputedInformation, use_ghost);
 
     // Apply sqrt(pol) to the field product, and revert the changes to mu
     fi_sites = 0;
@@ -4426,7 +4426,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
 }
 
 
-void Electrostatics::CalculateDipolesCGMPIlocal3(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
+void Electrostatics::CalculateDipolesCGMPIlocal3(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -4481,7 +4481,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal3(std::unordered_map<key_precompu
 
     std::vector<double> ts2v(nsites3);
 
-    DipolesCGIterationMPIlocal2(mu_, ts2v, precomputedInformation);
+    DipolesCGIterationMPIlocal2(mu_, ts2v, precomputedInformation, use_ghost);
 
     std::vector<double> rv(nsites3);
     std::vector<double> pv(nsites3);
@@ -4559,7 +4559,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal3(std::unordered_map<key_precompu
     double residual = 0.0;
     double residual_global = 0.0;
     while (true) {
-        DipolesCGIterationMPIlocal2(pv, ts2v, precomputedInformation);
+        DipolesCGIterationMPIlocal2(pv, ts2v, precomputedInformation, use_ghost);
         double pvts2pv = DotProduct(pv, ts2v);
 
         double pvts2pv_global = 0.0;
@@ -8222,29 +8222,29 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
 
                         //key- debug
-                        std::cerr << "PRECOMPUTED INFO FUNTION" << std::endl;
-                        std::cerr << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
+                        // std::cerr << "PRECOMPUTED INFO FUNTION" << std::endl;
+                        // std::cerr << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
                         
-                        std::cerr << "reordered_xyz2: ";
-                        for (int z = 0; z < reordered_xyz2.size(); z++) {
-                            std::cerr << reordered_xyz2[z];
-                            std::cerr << " ";
-                        }
-                        std::cerr << " " << std::endl;
+                        // std::cerr << "reordered_xyz2: ";
+                        // for (int z = 0; z < reordered_xyz2.size(); z++) {
+                        //     std::cerr << reordered_xyz2[z];
+                        //     std::cerr << " ";
+                        // }
+                        // std::cerr << " " << std::endl;
 
-                        std::cerr << "reordered_islocal: ";
-                        for (int z = 0; z < reordered_islocal.size(); z++) {
-                            std::cerr << reordered_islocal[z];
-                            std::cerr << " ";
-                        }
-                        std::cerr << " " << std::endl;
+                        // std::cerr << "reordered_islocal: ";
+                        // for (int z = 0; z < reordered_islocal.size(); z++) {
+                        //     std::cerr << reordered_islocal[z];
+                        //     std::cerr << " ";
+                        // }
+                        // std::cerr << " " << std::endl;
 
-                        std::cerr << "good_mon2_indices: ";
-                        for (int z = 0; z < good_mon2_indices.size(); z++) {
-                            std::cerr << good_mon2_indices[z];
-                            std::cerr << " ";
-                        }
-                        std::cerr << " " << std::endl;
+                        // std::cerr << "good_mon2_indices: ";
+                        // for (int z = 0; z < good_mon2_indices.size(); z++) {
+                        //     std::cerr << good_mon2_indices[z];
+                        //     std::cerr << " ";
+                        // }
+                        // std::cerr << " " << std::endl;
 
                         // Calculate constants -- ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3
                         local_field->CalcPrecomputedDipoleElec(xyz_all_.data() + fi_crd1, reordered_xyz2.data(),
@@ -13176,6 +13176,9 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
 
     std::cerr << "Use ghost: " << use_ghost << std::endl;
 #endif
+
+    std::cerr << "CALLING GetElectrostatics() (not MPILocal)" << std::endl;
+
     size_t nsites3 = nsites_ * 3;
     std::vector<double> ts2v(nsites3);
 
@@ -13232,13 +13235,14 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
 double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std::vector<double> *virial,
                                                  bool use_ghost) {
     std::fill(virial_.begin(), virial_.end(), 0.0);
+    // key- check : remove as argument.
     size_t nsites3 = nsites_ * 3;
     std::vector<double> ts2v(nsites3);
 
     std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
-    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, true, 1);
+    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 1);
 
-    CalculatePermanentElecFieldMPIlocal3(precomputedInformation);
+    CalculatePermanentElecFieldMPIlocal3(precomputedInformation, use_ghost);
     CalculateDipolesMPIlocal3(precomputedInformation, use_ghost);
     CalculateElecEnergyMPIlocal();
     if (do_grads_) CalculateGradientsMPIlocal3(precomputedInformation, grad, use_ghost);

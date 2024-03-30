@@ -978,9 +978,9 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 
 
         //key- debug
-        std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
-        std::cout << " rijx: " << rijx << " rijy: " << rijy << " rijz: " << rijz;
-        std::cout << " ts2x: " << ts2x << " ts2y: " << ts2y << " ts2z: " << ts2z << " s1r3: " << s1r3 << std::endl;
+        // std::cout << " mt1: " << mt1 << " mt2: " << mt2 << " m1: " << m1 << " i: " << i << " j " << j << std::endl;
+        // std::cout << " rijx: " << rijx << " rijy: " << rijy << " rijz: " << rijz;
+        // std::cout << " ts2x: " << ts2x << " ts2y: " << ts2y << " ts2z: " << ts2z << " s1r3: " << s1r3 << std::endl;
 
     
     }
