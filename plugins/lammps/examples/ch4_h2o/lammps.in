@@ -50,11 +50,11 @@ thermo_style	custom step time temp etotal ke pe enthalpy density lx ly lz vol px
 thermo          ${thermo_freq}
 thermo_modify   flush yes
 
-fix             thermo_print all print ${thermo_freq} "$(step) $(0.001*time) $(temp) $(etotal) $(ke) $(pe) $(enthalpy) $(density) $(lx) $(ly) $(lz) $(vol) $(pxx) $(pyy) $(pzz) $(press)" append thermo.out screen no title "# step time temp etotal ke pe enthalpy density lx ly lz vol pxx pyy pzz press"
+fix             thermo_print all print ${thermo_freq} "$(step) $(0.001*time) $(temp) $(etotal) $(ke) $(pe) $(enthalpy) $(density) $(lx) $(ly) $(lz) $(vol) $(pxx) $(pyy) $(pzz) $(press)" file thermo.out screen no title "# step time temp etotal ke pe enthalpy density lx ly lz vol pxx pyy pzz press"
 # fix             verbose_mbx_thermo_print all print ${thermo_freq} "$(step) $(0.001*time) $(temp) $(etotal) $(ke) $(pe) $(enthalpy) $(density) $(lx) $(ly) $(lz) $(vol) $(pxx) $(pyy) $(pzz) $(press) $(e1bpip) $(e2bpip) $(e3bpip) $(e4bpip) $(edisp) $(ebuck) $(eele) $(etot)" file mbx_thermo.out screen no title "# step time temp etotal ke pe enthalpy density lx ly lz vol pxx pyy pzz press e1bpip e2bpip e3bpip e4bpip edisp ebuck eele etot"
 
 dump            1 all custom ${dump_freq} dump.lammpstrj id mol type q x y z
-dump_modify     1 append yes sort id format line "%d %d %d %8.4f %15.8f %15.8f %15.8f"
+dump_modify     1 append no sort id format line "%d %d %d %8.4f %15.8f %15.8f %15.8f"
 
 restart         10 restart.1 restart.2
 
