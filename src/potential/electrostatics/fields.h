@@ -139,9 +139,9 @@ class ElectricFieldHolder {
                                 double *phi1,                  // Output potential for mon 1
                                 double *phi2,                  // Potential on Mon 2
                                 double *Efq2,                  // Electric field on Mon 2
-                                double elec_scale_factor,  // Scale factor for electrostatic (1=included, 0=excluded)
-                                double ewald_alpha,        // Ewald attenuation paramter
-                                bool use_pbc,              // Whether to enforce periodic boundary conditions
+                                double elec_scale_factor,      // Scale factor for electrostatic (1=included, 0=excluded)
+                                double ewald_alpha,            // Ewald attenuation paramter
+                                bool use_pbc,                  // Whether to enforce periodic boundary conditions
                                 const std::vector<double> &box,          // The lattice vectors
                                 const std::vector<double> &box_inverse,  // The inverse lattice vectors
                                 double cutoff,                           // The real space cutoff for pairs
@@ -180,100 +180,89 @@ class ElectricFieldHolder {
                              const size_t isl1_offset, 
                              const size_t isl2_offset);
     
-    void CalcDipoleElecField2(double *xyz1, 
-                              double *xyz2, 
-                              double *mu1, 
-                              double *mu2, 
-                              size_t mon1_index,
-                              size_t mon2_index_start, 
-                              size_t mon2_index_end, 
-                              size_t nmon1,
-                              size_t nmon2, 
-                              size_t site_i, 
-                              size_t site_j, 
-                              double Asqsqi, 
-                              double aDD,
-                              double *Efd2, 
-                              double *Efdx_mon1, 
-                              double *Efdy_mon1, 
-                              double *Efdz_mon1,
-                              double ewald_alpha, 
-                              bool use_pbc, 
-                              const std::vector<double> &box,
-                              const std::vector<double> &box_inverse, 
-                              double cutoff, 
-                              bool use_ghost,
-                              const std::vector<size_t> &islocal, 
-                              const size_t isl1_offset,
-                              const size_t isl2_offset);
+    // Optimized version of CalcDipoleElecField
+    void CalcDipoleElecField_WithinCutoff(double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
+                                          double *mu1, double *mu2,                // Dipoles of mon type 1 and 2
+                                          size_t mon1_index,                       // Mon 1 index
+                                          size_t mon2_index_start,                 // Mon 2 initial index
+                                          size_t mon2_index_end,                   // Mon 2 final index
+                                          size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
+                                          size_t site_i, size_t site_j,            // Site # i of mon1 and # j of mon 2
+                                          double Asqsqi,                           // (polfac[i] * polfac[j])^4 inverted
+                                          double aDD,                              // Thole damping aDD (dipole - dipole)
+                                          double *Efd2,                            // Electric field on Mon 2
+                                          double *Efdx_mon1,                       // Output electric field on X for Mon 1
+                                          double *Efdy_mon1,                       // Output electric field on Y for Mon 1
+                                          double *Efdz_mon1,                       // Output electric field on Z for Mon 1
+                                          double ewald_alpha,                      // Ewald attenuation paramter
+                                          bool use_pbc,                            // Whether to enforce periodic boundary conditions
+                                          const std::vector<double> &box,          // The lattice vectors
+                                          const std::vector<double> &box_inverse,  // The inverse lattice vectors
+                                          double cutoff,                           // The real space cutoff for pairs
+                                          bool use_ghost,                          // use ghost monomers
+                                          const std::vector<size_t> &islocal, 
+                                          const size_t isl1_offset,
+                                          const size_t isl2_offset);
     
-    void CalcDipoleElecField22(double *xyz1, 
-                              double *xyz2, 
-                              double *mu1, 
-                              double *mu2, 
-                              size_t mon1_index,     
-                              size_t mon2_index_start, 
-                              size_t mon2_index_end, 
-                              size_t nmon1,
-                              size_t nmon2,
-                              size_t site_i, 
-                              size_t site_j, 
-                              double aDD,
-                              double *Efd2, 
-                              double *Efdx_mon1, 
-                              double *Efdy_mon1, 
-                              double *Efdz_mon1,
-                              std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
-                              int mt1, 
-                              int mt2, 
-                              int m1, 
-                              int i, 
-                              int j);
+    // Optimized version of CalcDipoleElecField that builds off of CalcDipoleElecField_WithinCutoff
+    void CalcDipoleElecField_Optimized(double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
+                                        double *mu1, double *mu2,                // Dipoles of mon type 1 and 2
+                                        size_t mon1_index,                       // Mon 1 index
+                                        size_t mon2_index_start,                 // Mon 2 initial index
+                                        size_t mon2_index_end,                   // Mon 2 final index
+                                        size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
+                                        size_t site_i, size_t site_j,            // Site # i of mon1 and # j of mon 2
+                                        double aDD,                              // Thole damping aDD (dipole - dipole)
+                                        double *Efd2,                            // Electric field on Mon 2
+                                        double *Efdx_mon1,                       // Output electric field on X for Mon 1
+                                        double *Efdy_mon1,                       // Output electric field on Y for Mon 1
+                                        double *Efdz_mon1,                       // Output electric field on Z for Mon 1
+                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, // Contains precomputed coordinate-dependant calculations
+                                        int mt1, int mt2, int m1, int i, int j); //
+    /*
+    *  This function finds the all monomers of type 2 which are within a 9 angstrom distance from monomer 1.
+    *  It saves the indices of these monomers to bool_indices, which other electrostatics functions will use
+    *  to ensure calculations are only done on monomers are which are within the cutoff.
+    */
+    bool FindMonomersWithinCutoff(size_t *bool_indices, 
+                                double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
+                                size_t m2init, 
+                                size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
+                                bool use_pbc,                            // Whether to enforce periodic boundary conditions
+                                std::vector<double> &box,                // The lattice vectors
+                                std::vector<double> &box_inverse,        // The inverse lattice vectors
+                                double cutoff,                           // The real space cutoff for pairs
+                                size_t site_i, 
+                                size_t site_j, 
+                                size_t mon1_index,                       // Monomer 1 index
+                                bool use_ghost,                          // should we use ghost monomers
+                                const std::vector<size_t> &islocal, 
+                                const size_t isl1_offset,
+                                const size_t isl2_offset);
     
-    bool withinCutoff(size_t *bool_indices, 
-                      double *xyz1, 
-                      double *xyz2, 
-                      size_t m2init, 
-                      size_t nmon1, 
-                      size_t nmon2,
-                      bool use_pbc, 
-                      std::vector<double> &box, 
-                      std::vector<double> &box_inverse, 
-                      double cutoff, 
-                      size_t site_i,
-                      size_t site_j, 
-                      size_t mon1_index, 
-                      bool use_ghost,
-                      const std::vector<size_t> &islocal, 
-                      const size_t isl1_offset,
-                      const size_t isl2_offset);
-    
-    void CalcPrecomputedDipoleElec(double *xyz1, 
-                                  double *xyz2, 
-                                  size_t mon1_index,
-                                  size_t mon2_index_start, 
-                                  size_t mon2_index_end, 
-                                  size_t nmon1,
-                                  size_t nmon2, 
-                                  size_t site_i, 
-                                  size_t site_j, 
-                                  double Asqsqi, 
-                                  double aDD,
-                                  double ewald_alpha, 
-                                  bool use_pbc, 
-                                  const std::vector<double> &box,
-                                  const std::vector<double> &box_inverse, 
-                                  double cutoff, 
-                                  bool use_ghost,
-                                  const std::vector<size_t> &islocal, 
-                                  const size_t isl1_offset,
-                                  const size_t isl2_offset,
-                                  std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
-                                  int mt1,
-                                  int mt2, 
-                                  int m1, 
-                                  int i, 
-                                  int j);
+    /*
+    * This function is a subroutine of PrecomputeDipoleIterationsInformation (in electrostatics.cpp).
+    * It calculates ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3 and stores them in precomputedInformation.
+    */
+    void CalcPrecomputedDipoleElec(double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
+                                    size_t mon1_index,                       // Mon 1 index
+                                    size_t mon2_index_start,                 // Mon 2 initial index
+                                    size_t mon2_index_end,                   // Mon 2 final index
+                                    size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
+                                    size_t site_i, size_t site_j,            // Site # i of mon1 and # j of mon 2
+                                    double Asqsqi,                           // (polfac[i] * polfac[j])^4 inverted
+                                    double aDD,                              // Thole damping aDD (dipole - dipole)
+                                    double ewald_alpha,                      // Ewald attenuation paramter
+                                    bool use_pbc,                            // Whether to enforce periodic boundary conditions
+                                    const std::vector<double> &box,          // The lattice vectors
+                                    const std::vector<double> &box_inverse,  // The inverse lattice vectors
+                                    double cutoff,                           // The real space cutoff for pairs
+                                    bool use_ghost,                          // use ghost monomers
+                                    const std::vector<size_t> &islocal, 
+                                    const size_t isl1_offset,
+                                    const size_t isl2_offset,
+                                    std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, // Contains precomputed coordinate-dependant calculations
+                                    int mt1, int mt2, int m1, int i, int j);
     ////////////////////////////////////////////////////////////////////////////////
     // GRADIENTS AND ADD DIPOLE CONTRIBUTIONS TO POTENTIAL /////////////////////////
     ////////////////////////////////////////////////////////////////////////////////

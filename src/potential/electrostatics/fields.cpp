@@ -235,69 +235,9 @@ void ElectricFieldHolder::CalcPermanentElecField(
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool ElectricFieldHolder::withinCutoff(size_t *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
-                                        size_t nmon2, bool use_pbc, std::vector<double> &box, 
-                                        std::vector<double> &box_inverse, double cutoff, size_t site_i,
-                                        size_t site_j, size_t mon1_index, bool use_ghost,
-                                        const std::vector<size_t> &islocal, const size_t isl1_offset,
-                                        const size_t isl2_offset){
-
-
-    const size_t nmon12 = nmon1 * 2;
-    const size_t nmon22 = nmon2 * 2;
-    const size_t site_i3 = site_i * 3;
-    const size_t site_j3 = site_j * 3;
-    const size_t site_inmon13 = nmon1 * site_i3;
-    const size_t site_jnmon23 = nmon2 * site_j3; 
-    const double xyzmon1_x = xyz1[site_inmon13 + mon1_index];
-    const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
-    const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
-
-#pragma omp simd
-    for (size_t m = m2init; m < nmon2; m++) {
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
-        const double cutoffsq = cutoff * cutoff;
-        bool accum2 = !use_ghost;
-
-        if (use_ghost && isls) accum2 = true;
-
-
-        if (accum2) {
-            
-            double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
-        
-            // Distances between sites i and j from mon1 and mon2
-            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];  // m is left or right
-            double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-            double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
-
-            // Apply the minimum image convention via fractional coordinates
-            // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-            if (use_pbc) {
-                // Convert to fractional coordinates
-                double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
-                double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
-                double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
-                // Put in the range 0 to 1
-                fracrijx -= std::floor(fracrijx + 0.5);
-                fracrijy -= std::floor(fracrijy + 0.5);
-                fracrijz -= std::floor(fracrijz + 0.5);
-                // Convert back to Cartesian coordinates
-                rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
-                rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
-                rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
-            }
-
-            const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
-            if (rsq < cutoffsq){
-                bool_indices[m] = true;
-            }
-        }
-    }
-        
-}
-
-/////////////////////////////////////////////////////////////
+/*
+ *  Computes the dipole field for a pair of sites for a number of monomers
+ */
 
 void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
@@ -430,7 +370,14 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
     *Efdz_mon1 = v2;
 }
 
-void ElectricFieldHolder::CalcDipoleElecField2(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
+/*
+ * A version of CalcDipoleElecField which only performs calculations on monomers of type 2 which are 
+ * within a 9 angstrom distance from monomer 1. This returns the exact same values of CalcDipoleElecField
+ * (as calculations involving monomers not within the 9 angstrom cutoff are discared by CalcDipoleElecField), but
+ * has a faster runtime as time isn't wasted doing calculations which will eventually be discarded.
+ */
+
+void ElectricFieldHolder::CalcDipoleElecField_WithinCutoff(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
@@ -561,7 +508,14 @@ void ElectricFieldHolder::CalcDipoleElecField2(double *xyz1, double *xyz2, doubl
 ////////////////////////////////////////////////////////////////////////////////
 // site i and site j are the same as i and j... m1 is the same as mon1_index
 
-void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
+/*
+ * This is an optimized version of CalcDipoleElecField which should return the same values as CalcDipoleElecField.
+ * This is a further optimization on CalcDipoleElecField_WithinCutoff. It retrieves previously computed atom coordinate-dependant
+ * calculations from memory, instead of re-calculating them. These calculations are stored in precomputedInformation and retrieving
+ * them from memory instead of recomputing them saves CPU time.
+ */
+
+void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xyz2, double *mu1, double *mu2, size_t mon1_index,
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
@@ -646,6 +600,80 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/*
+ *  This function finds the all monomers of type 2 which are within a 9 angstrom distance from monomer 1.
+ *  It saves the indices of these monomers to bool_indices, which other electrostatics functions will use
+ *  to ensure calculations are only done on monomers are which are within the cutoff.
+ */
+bool ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
+                                        size_t nmon2, bool use_pbc, std::vector<double> &box, 
+                                        std::vector<double> &box_inverse, double cutoff, size_t site_i,
+                                        size_t site_j, size_t mon1_index, bool use_ghost,
+                                        const std::vector<size_t> &islocal, const size_t isl1_offset,
+                                        const size_t isl2_offset){
+
+
+    const size_t nmon12 = nmon1 * 2;
+    const size_t nmon22 = nmon2 * 2;
+    const size_t site_i3 = site_i * 3;
+    const size_t site_j3 = site_j * 3;
+    const size_t site_inmon13 = nmon1 * site_i3;
+    const size_t site_jnmon23 = nmon2 * site_j3; 
+    const double xyzmon1_x = xyz1[site_inmon13 + mon1_index];
+    const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
+    const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
+
+#pragma omp simd
+    for (size_t m = m2init; m < nmon2; m++) {
+        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        const double cutoffsq = cutoff * cutoff;
+        bool accum2 = !use_ghost;
+
+        if (use_ghost && isls) accum2 = true;
+
+
+        if (accum2) {
+            
+            double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
+        
+            // Distances between sites i and j from mon1 and mon2
+            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];  // m is left or right
+            double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+            double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+
+            // Apply the minimum image convention via fractional coordinates
+            // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+            if (use_pbc) {
+                // Convert to fractional coordinates
+                double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
+                double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
+                double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
+                // Put in the range 0 to 1
+                fracrijx -= std::floor(fracrijx + 0.5);
+                fracrijy -= std::floor(fracrijy + 0.5);
+                fracrijz -= std::floor(fracrijz + 0.5);
+                // Convert back to Cartesian coordinates
+                rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
+                rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
+                rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
+            }
+
+            const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
+            if (rsq < cutoffsq){
+                bool_indices[m] = true;
+            }
+        }
+    }
+        
+}
+
+/////////////////////////////////////////////////////////////
+
+/*
+ * This function is a subroutine of PrecomputeDipoleIterationsInformation (in electrostatics.cpp).
+ * It calculates ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3 and stores them in precomputedInformation.
+ */
+
 void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, size_t mon1_index,
                                               size_t mon2_index_start, size_t mon2_index_end, size_t nmon1,
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
@@ -689,6 +717,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
     double *ts2y_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].ts2y.data();
     double *ts2z_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].ts2z.data();
     double *s1r3_vec = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)].s1r3.data();
+
     #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
@@ -750,8 +779,6 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 
         // Contributions to the dipole electric field to site i of mon1
         // Stored in vectors to make the loop vectorizable
-
-        // Component x
         rijx_vec[m - mon2_index_start] = rijx;
         rijy_vec[m - mon2_index_start] = rijy;
         rijz_vec[m - mon2_index_start] = rijz;
