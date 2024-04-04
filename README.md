@@ -4,7 +4,7 @@
 
 
 
-# MBX v1.0.8
+# MBX v1.0.9
 MBX: A many-body energy and force calculator for data-driven many-body simulations.
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
@@ -35,7 +35,7 @@ export MBX_HOME=$PWD
 ### Compilation
 MBX has different compilation instructions depending on how you plan to use it:
 - For use with **i-PI**, **Python**, **Fortran**, or **standalone**, perform a [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps)
-- For use with **LAMMPS**, perform an [alternative MBX_MPI installation](#alternative-installation-of-mbx_mpi-lammps-only)
+- For use with **LAMMPS**, perform an [alternative MBX_MPI installation](#lammps)
 
 #### Basic installation of MBX (for use with i-PI, Python, Fortran, or standalone. **NOT LAMMPS**)
 ```console
@@ -174,10 +174,12 @@ autoreconf -fi
 ./configure --enable-mpi CXX=mpiicpc
 make && make install
 ```
+This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
+
 
  After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
 ```console
-git clone -b stable git@github.com:lammps/lammps.git LAMMPS-stable
+git clone -b stable https://github.com/lammps/lammps.git LAMMPS-stable
 export LAMMPS_HOME=$PWD/LAMMPS-stable
 
 cp -rf $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src

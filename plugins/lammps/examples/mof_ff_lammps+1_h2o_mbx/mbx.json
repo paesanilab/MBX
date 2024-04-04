@@ -1,13 +1,10 @@
 {
-   "Note" : "This is a cofiguration file",
+   "Note" : "This is an MBX v1.0 configuration file",
    "MBX" : { 
-       "box" : [39.0060005,0.0,0.0,-19.503000,33.7801873,0.0,0.0,0.0,22.2450008],
+       "box" : [],
        "twobody_cutoff"   : 9.0,
-       "threebody_cutoff" : 4.5, 
-       "max_n_eval_1b"    : 500,
-       "max_n_eval_2b"    : 500,
-       "max_n_eval_3b"    : 500,
-       "dipole_tolerance" : 1E-16,
+       "threebody_cutoff" : 4.5,
+       "dipole_tolerance" : 1E-8,
        "dipole_max_it"    : 100,
        "dipole_method"     : "cg",
        "alpha_ewald_elec" : 0.60,
@@ -16,7 +13,6 @@
        "alpha_ewald_disp" : 0.60,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
-       "ttm_pairs" : [],
        "ignore_2b_poly" : [],
        "ignore_3b_poly" : []
    }   

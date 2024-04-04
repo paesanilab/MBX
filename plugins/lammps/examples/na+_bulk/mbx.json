@@ -3,10 +3,7 @@
    "MBX" : { 
        "box" : [],
        "twobody_cutoff"   : 9.0,
-       "threebody_cutoff" : 4.5, 
-       "max_n_eval_1b"    : 500,
-       "max_n_eval_2b"    : 500,
-       "max_n_eval_3b"    : 500,
+       "threebody_cutoff" : 4.5,
        "dipole_tolerance" : 1E-8,
        "dipole_max_it"    : 100,
        "dipole_method"     : "cg",
@@ -16,7 +13,6 @@
        "alpha_ewald_disp" : 0.60,
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
-       "ttm_pairs" : [],
        "ignore_2b_poly" : [],
        "ignore_3b_poly" : []
    }   
