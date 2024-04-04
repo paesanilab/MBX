@@ -566,7 +566,7 @@ void ElectricFieldHolder::CalcDipoleElecField22(double *xyz1, double *xyz2, doub
                                               size_t nmon2, size_t site_i, size_t site_j, double aDD,
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
                                               std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
-                                              int mt1, int mts2, int m1, int i, int j) {
+                                              int mt1, int mt2, int m1, int i, int j) {
     PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
     double *rijx_vec = precomp_info.rijx.data();
     double *rijy_vec = precomp_info.rijy.data(); 
