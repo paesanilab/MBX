@@ -372,8 +372,8 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 
 /*
  * A version of CalcDipoleElecField which only performs calculations on monomers of type 2 which are 
- * within a 9 angstrom distance from monomer 1. This returns the exact same values of CalcDipoleElecField
- * (as calculations involving monomers not within the 9 angstrom cutoff are discared by CalcDipoleElecField), but
+ * within a a twobody_cutoffngstrom distance from monomer 1. This returns the exact same values of CalcDipoleElecField
+ * (as calculations involving monomers not within the a twobody_cutoffngstrom cutoff are discared by CalcDipoleElecField), but
  * has a faster runtime as time isn't wasted doing calculations which will eventually be discarded.
  */
 
@@ -601,7 +601,7 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
- *  This function finds the all monomers of type 2 which are within a 9 angstrom distance from monomer 1.
+ *  This function finds the all monomers of type 2 which are within a a twobody_cutoffngstrom distance from monomer 1.
  *  It saves the indices of these monomers to bool_indices, which other electrostatics functions will use
  *  to ensure calculations are only done on monomers are which are within the cutoff.
  */

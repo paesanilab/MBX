@@ -1818,7 +1818,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
                         int reordered_mon2_size = good_mon2_indices.size();
 
 
-                        // Reordered versions of xyz2, islocal,...  which only contain monomers of type 2 which are within 9 A from monomer 1
+                        // Reordered versions of xyz2, islocal,...  which only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2; 
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
@@ -2391,7 +2391,7 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
                         int reordered_mon2_size = good_mon2_indices.size();
 
 
-                        // Reordered versions of xyz2, islocal,...  which only contain monomers of type 2 which are within 9 A from monomer 1
+                        // Reordered versions of xyz2, islocal,...  which only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2; 
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
@@ -6038,7 +6038,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
                         
-                        // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within 9 A from mon 1
+                        // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within a twobody_cutoff from mon 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
@@ -6482,7 +6482,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             Asqsqi = Ai;
                         }
 
-                        // Determine which monomers are within a 9 angstrom cutoff of monomer 1
+                        // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
                         std::vector<size_t> good_mon2_indices;
                         std::vector<size_t> bool_mon2_indices(nmon2, 0);
                         local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
@@ -7371,7 +7371,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
                         
-                        // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within 9 A from mon 1
+                        // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within a twobody_cutoff from mon 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
@@ -8148,7 +8148,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
 
-                        // Reordered versions of xyz2, islocal ,..., chg  so they only contain monomers of type 2 which are within 9 A from monomer 1
+                        // Reordered versions of xyz2, islocal ,..., chg  so they only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal; 
@@ -9026,7 +9026,7 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
 
-                        // Reordered versions of xyz2, islocal ,..., chg  so they only contain monomers of type 2 which are within 9 A from monomer 1
+                        // Reordered versions of xyz2, islocal ,..., chg  so they only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal; 

@@ -505,7 +505,7 @@ class Electrostatics {
 
    private:
     /*
-     * TODO
+     * Calculates the permanent electric field of the system.
      */
     void CalculatePermanentElecField(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
     void CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
@@ -518,16 +518,21 @@ class Electrostatics {
     
     /*
      * This function fills precomputedInformation with atom-coordinate dependant calculations, a list of 
-     * indicies of monomer 2s which are within a 9A cutoff from monomer 1, and xyz2 (an array of coordinates of mon type 2)
+     * indicies of monomer 2's which are within a 9A cutoff from monomer 1, and xyz2 (an array of coordinates of mon type 2)
      * and mu2 (an array of dipoles of mon type 2) such that they only contain information from monomer 2s within the cutoff.
      * 
-     * The purpose of this function is to calculate and store these values so they can be reused each dipole iteration
-     * without having to be recalculated, saving CPU time.
+     * Any calculation are between monomers that are more than a twobody_cutoff apart is insignificant, so our code ignores these pairs. It does this
+     * by labeling each monomer as monomer 1. For the rest of the monomers (which are labled monomer 2), it only saves the indices of the monomer 2's
+     * which are within a 9A cutoff.
+     * 
+     * The purpose of this function is to calculate and store these values so they can be reused for all dipole iteration
+     * without having to be recalculated, saving CPU time. Since the calculations are only are dependant on atom coordinates, they do not change
+     * between dipole iterations.
      */
     void PrecomputeDipoleIterationsInformation(std::vector<double> &out_v, std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0, bool MPI = 0);
     
     /*
-     * Computes the electric field from the modified dipoles. 
+     * Computes the electric field from the modified dipoles. The optimized versions of these functions uses 
      */
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void ComputeDipoleFieldOptimized(std::vector<double> &in_v, std::vector<double> &out_v,
