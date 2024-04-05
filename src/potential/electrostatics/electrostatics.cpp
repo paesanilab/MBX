@@ -2712,9 +2712,9 @@ void Electrostatics::CalculateDipolesMPIlocal(std::unordered_map<key_precomputed
         throw CUException(__func__, __FILE__, __LINE__, text);
 
     } else if (dip_method_ == "cg") {
-        CalculateDipolesCGMPIlocal_Optimized(precomputedInformation, use_ghost);
+        CalculateDipolesCGMPIlocal(precomputedInformation, use_ghost);
     } else if (dip_method_ == "aspc") {
-        CalculateDipolesAspcMPIlocal(use_ghost);
+        CalculateDipolesAspcMPIlocal(precomputedInformation, use_ghost);
     }
 }
 
@@ -2744,11 +2744,11 @@ void Electrostatics::CalculateDipoles(std::unordered_map<key_precomputed_info, P
     return;
 #endif
     if (dip_method_ == "iter")
-        CalculateDipolesIterative();
+        CalculateDipolesIterative(precomputedInformation);
     else if (dip_method_ == "cg")
-        CalculateDipolesCG_Optimized(precomputedInformation);
+        CalculateDipolesCG(precomputedInformation);
     else if (dip_method_ == "aspc")
-        CalculateDipolesAspc();
+        CalculateDipolesAspc(precomputedInformation);
 }
 
 void Electrostatics::DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
@@ -2992,260 +2992,9 @@ void Electrostatics::DipolesCGIterationOptimized(std::vector<double> &in_v, std:
     }
 }
 
-void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
-    // Parallelization
-    //    size_t nthreads = 1;
-    //#   ifdef _OPENMP
-    //#     pragma omp parallel // omp_get_num_threads() needs to be inside
-    //                          // parallel region to get number of threads
-    //      {
-    //        if (omp_get_thread_num() == 0)
-    //          nthreads = omp_get_num_threads();
-    //      }
-    //#   endif
-
-    // proxy for sequence of reverse_comm(in_v) to accumulate and forward_comm(in_v) to update
-    reverse_forward_comm(Efq_);
-
-    size_t nsites3 = nsites_ * 3;
-    size_t fi_mon = 0;
-    size_t fi_crd = 0;
-    size_t fi_sites = 0;
-    // Permanent electric field is computed
-    // Now start computation of dipole through conjugate gradient
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = nmon * 2;
-        for (size_t i = 0; i < ns; i++) {
-            // TODO assuming pol not site dependant
-            double p = pol_[fi_sites + i];
-            size_t inmon3 = 3 * i * nmon;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
-            for (size_t m = 0; m < nmon; m++) {
-                mu_[fi_crd + inmon3 + m] = p * Efq_[fi_crd + inmon3 + m];
-                mu_[fi_crd + inmon3 + nmon + m] = p * Efq_[fi_crd + inmon3 + nmon + m];
-                mu_[fi_crd + inmon3 + nmon2 + m] = p * Efq_[fi_crd + inmon3 + nmon2 + m];
-            }
-        }
-
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-    // The Matrix is completed. Now proceed to CG algorithm
-    // Following algorithm from:
-    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
-
-#ifdef DEBUG
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cerr << "mu[" << i << "] = " << mu_[i] << std::endl;
-    }
-#endif
-
-    std::vector<double> ts2v(nsites3);
-
-    DipolesCGIterationMPIlocal(mu_, ts2v, use_ghost);
-
-    std::vector<double> rv(nsites3);
-    std::vector<double> pv(nsites3);
-    std::vector<double> r_new(nsites3);
-
-#ifdef _DEBUG_DIPOLE
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") CALCDIP LOCAL: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " Efq_= " << Efq_[fi_crd + inmon3 + m]
-                                      << " " << Efq_[fi_crd + inmon3 + nmon + m] << " "
-                                      << Efq_[fi_crd + inmon3 + nmon2 + m]
-                                      << " pol_sqrt_= " << pol_sqrt_[fi_crd + inmon3 + m] << " "
-                                      << pol_sqrt_[fi_crd + inmon3 + nmon + m] << " "
-                                      << pol_sqrt_[fi_crd + inmon3 + nmon2 + m]
-                                      << " t2sv= " << ts2v[fi_crd + inmon3 + m] << " "
-                                      << ts2v[fi_crd + inmon3 + nmon + m] << " " << ts2v[fi_crd + inmon3 + nmon2 + m]
-                                      << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-
-    //#   ifdef _OPENMP
-    //#     pragma omp parallel for schedule(static)
-    //#   endif
-    for (size_t i = 0; i < nsites3; i++) {
-        pv[i] = Efq_[i] * pol_sqrt_[i] - ts2v[i];
-    }
-    for (size_t i = 0; i < nsites3; i++) {
-        rv[i] = pv[i];
-    }
-
-    // Start iterations
-    size_t iter = 1;
-    double rvrv = DotProduct(rv, rv);
-    double rvrv_global = 0.0;
-#if HAVE_MPI == 1
-    MPI_Allreduce(&rvrv, &rvrv_global, 1, MPI_DOUBLE, MPI_SUM, world_);
-#else
-    rvrv_global = rvrv;
-#endif
-    double residual = 0.0;
-    double residual_global = 0.0;
-    while (true) {
-        DipolesCGIterationMPIlocal(pv, ts2v, use_ghost);
-        double pvts2pv = DotProduct(pv, ts2v);
-
-        double pvts2pv_global = 0.0;
-#if HAVE_MPI == 1
-        MPI_Allreduce(&pvts2pv, &pvts2pv_global, 1, MPI_DOUBLE, MPI_SUM, world_);
-#else
-        pvts2pv_global = pvts2pv;
-#endif
-
-        if (rvrv_global < tolerance_) break;
-        double alphak = rvrv_global / pvts2pv_global;
-        residual = 0.0;
-        for (size_t i = 0; i < nsites3; i++) {
-            mu_[i] = mu_[i] + alphak * pv[i];
-        }
-        for (size_t i = 0; i < nsites3; i++) {
-            r_new[i] = rv[i] - alphak * ts2v[i];
-        }
-        for (size_t i = 0; i < nsites3; i++) {
-            residual += r_new[i] * r_new[i];
-        }
-
-        residual_global = 0.0;
-#if HAVE_MPI == 1
-        MPI_Allreduce(&residual, &residual_global, 1, MPI_DOUBLE, MPI_SUM, world_);
-#else
-        residual_global = residual;
-#endif
-        // Check if converged
-        int break_local = 0;
-        if (residual_global < tolerance_) break_local = 1;
-
-#if HAVE_MPI == 1
-        MPI_Bcast(&break_local, 1, MPI_INT, 0, world_);
-#endif
-        // std::cout << "residual= " << residual << "  residual_global= " << residual_global << "  break_local= " <<
-        // break_local << std::endl;
-        if (break_local) break;
-
-        double rvrv_new = residual_global;
-
-#ifdef _DEBUG_ITERATION
-        if (iter > _DEBUG_ITERATION) {
-            std::cout << "Not converged" << std::endl;
-            break;
-        }
-#endif
-        if (iter > maxit_) {
-            // Exit with error
-            throw(CUException(__func__, __FILE__, __LINE__, "Max number of iterations reached"));
-        }
-
-        // Prepare next iteration
-        double betak = rvrv_new / rvrv_global;
-        for (size_t i = 0; i < nsites3; i++) {
-            pv[i] = r_new[i] + betak * pv[i];
-        }
-        rvrv_global = rvrv_new;
-        rv = r_new;
-        iter++;
-    }
-
-    // Dipoles are computed
-    // Need to recalculate dipole and Efd due to the multiplication of polsqrt
-    for (size_t i = 0; i < nsites3; i++) {
-        mu_[i] *= pol_sqrt_[i];
-#ifdef DEBUG
-        std::cerr << "mu_final[" << i << "] = " << mu_[i] << std::endl;
-#endif
-    }
-
-#ifdef _DEBUG_DIPOLE
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") DIPOLES LOCAL mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " mu_= " << mu_[fi_crd + inmon3 + m]
-                                      << " " << mu_[fi_crd + inmon3 + nmon + m] << " "
-                                      << mu_[fi_crd + inmon3 + nmon2 + m] << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-
-    //    Efd = Efq - 1/pol
-}
 
 
-void Electrostatics::CalculateDipolesCGMPIlocal_Optimized(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
+void Electrostatics::CalculateDipolesCGMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -3498,239 +3247,8 @@ void Electrostatics::CalculateDipolesCGMPIlocal_Optimized(std::unordered_map<key
 }
 
 
-void Electrostatics::CalculateDipolesCG() {
-    // Parallelization
-    //    size_t nthreads = 1;
-    //#   ifdef _OPENMP
-    //#     pragma omp parallel // omp_get_num_threads() needs to be inside
-    //                          // parallel region to get number of threads
-    //      {
-    //        if (omp_get_thread_num() == 0)
-    //          nthreads = omp_get_num_threads();
-    //      }
-    //#   endif
 
-    size_t nsites3 = nsites_ * 3;
-    size_t fi_mon = 0;
-    size_t fi_crd = 0;
-    size_t fi_sites = 0;
-    // Permanent electric field is computed
-    // Now start computation of dipole through conjugate gradient
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = nmon * 2;
-        for (size_t i = 0; i < ns; i++) {
-            // TODO assuming pol not site dependant
-            double p = pol_[fi_sites + i];
-            size_t inmon3 = 3 * i * nmon;
-#ifdef _OPENMP
-#pragma omp simd
-#endif
-            for (size_t m = 0; m < nmon; m++) {
-                mu_[fi_crd + inmon3 + m] = p * Efq_[fi_crd + inmon3 + m];
-                mu_[fi_crd + inmon3 + nmon + m] = p * Efq_[fi_crd + inmon3 + nmon + m];
-                mu_[fi_crd + inmon3 + nmon2 + m] = p * Efq_[fi_crd + inmon3 + nmon2 + m];
-            }
-        }
-
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
-    }
-    // The Matrix is completed. Now proceed to CG algorithm
-    // Following algorithm from:
-    // https://en.wikipedia.org/wiki/Conjugate_gradient_method
-
-#ifdef DEBUG
-    for (size_t i = 0; i < nsites3; i++) {
-        std::cerr << "mu[" << i << "] = " << mu_[i] << std::endl;
-    }
-#endif
-
-    std::vector<double> ts2v(nsites3);
-    std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
-
-    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, true);
-
-    DipolesCGIterationOptimized(mu_, ts2v, precomputedInformation);
-
-    std::vector<double> rv(nsites3);
-    std::vector<double> pv(nsites3);
-    std::vector<double> r_new(nsites3);
-
-#ifdef _DEBUG_DIPOLE
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") CALCDIP ORIG: mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " Efq_= " << Efq_[fi_crd + inmon3 + m]
-                                      << " " << Efq_[fi_crd + inmon3 + nmon + m] << " "
-                                      << Efq_[fi_crd + inmon3 + nmon2 + m]
-                                      << " pol_sqrt_= " << pol_sqrt_[fi_crd + inmon3 + m] << " "
-                                      << pol_sqrt_[fi_crd + inmon3 + nmon + m] << " "
-                                      << pol_sqrt_[fi_crd + inmon3 + nmon2 + m]
-                                      << " t2sv= " << ts2v[fi_crd + inmon3 + m] << " "
-                                      << ts2v[fi_crd + inmon3 + nmon + m] << " " << ts2v[fi_crd + inmon3 + nmon2 + m]
-                                      << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-
-    //#   ifdef _OPENMP
-    //#     pragma omp parallel for schedule(static)
-    //#   endif
-    for (size_t i = 0; i < nsites3; i++) {
-        pv[i] = Efq_[i] * pol_sqrt_[i] - ts2v[i];
-    }
-    for (size_t i = 0; i < nsites3; i++) {
-        rv[i] = pv[i];
-    }
-
-    // Start iterations
-    size_t iter = 1;
-    double rvrv = DotProduct(rv, rv);
-    double residual = 0.0;
-    while (true) {
-        DipolesCGIterationOptimized(pv, ts2v, precomputedInformation);
-        double pvts2pv = DotProduct(pv, ts2v);
-
-        if (rvrv < tolerance_) break;
-        double alphak = rvrv / pvts2pv;
-        residual = 0.0;
-        for (size_t i = 0; i < nsites3; i++) {
-            mu_[i] = mu_[i] + alphak * pv[i];
-        }
-        for (size_t i = 0; i < nsites3; i++) {
-            r_new[i] = rv[i] - alphak * ts2v[i];
-        }
-        for (size_t i = 0; i < nsites3; i++) {
-            residual += r_new[i] * r_new[i];
-        }
-
-        double rvrv_new = residual;
-
-        // Check if converged
-        if (residual < tolerance_) break;
-
-#ifdef _DEBUG_ITERATION
-        if (iter > _DEBUG_ITERATION) {
-            std::cout << "Not converged" << std::endl;
-            break;
-        }
-#endif
-
-        if (iter > maxit_) {
-            // Exit with error
-            std::cerr << "Max number of iterations reached" << std::endl;
-            std::exit(EXIT_FAILURE);
-            break;
-        }
-
-        // Prepare next iteration
-        double betak = rvrv_new / rvrv;
-        for (size_t i = 0; i < nsites3; i++) {
-            pv[i] = r_new[i] + betak * pv[i];
-        }
-        rvrv = rvrv_new;
-        rv = r_new;
-        iter++;
-    }
-
-    // Dipoles are computed
-    // Need to recalculate dipole and Efd due to the multiplication of polsqrt
-    for (size_t i = 0; i < nsites3; i++) {
-        mu_[i] *= pol_sqrt_[i];
-#ifdef DEBUG
-        std::cerr << "mu_final[" << i << "] = " << mu_[i] << std::endl;
-#endif
-    }
-
-    DipolesCGIterationOptimized(mu_, Efd_, precomputedInformation);
-
-#ifdef _DEBUG_DIPOLE
-    {  // debug print
-        int me, nprocs;
-        MPI_Comm_size(world_, &nprocs);
-        MPI_Comm_rank(world_, &me);
-        size_t fi_mon = 0;
-        size_t fi_crd = 0;
-        size_t fi_sites = 0;
-
-        MPI_Barrier(world_);
-        for (int ip = 0; ip < nprocs; ++ip) {
-            if (ip == me) {
-                std::cout << "\n" << std::endl;
-                // Loop over each monomer type
-                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-                    size_t ns = sites_[fi_mon];
-                    size_t nmon = mon_type_count_[mt].second;
-                    size_t nmon2 = 2 * nmon;
-
-                    // Loop over each pair of sites
-                    for (size_t i = 0; i < ns; i++) {
-                        size_t inmon = i * nmon;
-                        size_t inmon3 = inmon * 3;
-                        for (size_t m = 0; m < nmon; m++) {
-                            std::cout << "(" << me << ") DIPOLES ORIG mt= " << mt << " i= " << i << " m= " << m
-                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
-                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
-                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " mu_= " << mu_[fi_crd + inmon3 + m]
-                                      << " " << mu_[fi_crd + inmon3 + nmon + m] << " "
-                                      << mu_[fi_crd + inmon3 + nmon2 + m] << std::endl;
-                        }
-                    }
-
-                    // Update first indexes
-                    fi_mon += nmon;
-                    fi_sites += nmon * ns;
-                    fi_crd += nmon * ns * 3;
-                }
-            }
-            MPI_Barrier(world_);
-        }
-    }  // debug print
-#endif
-
-    //    Efd = Efq - 1/pol
-}
-
-
-
-
-void Electrostatics::CalculateDipolesCG_Optimized(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
+void Electrostatics::CalculateDipolesCG(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -4064,10 +3582,10 @@ void Electrostatics::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) 
     }
 }
 
-void Electrostatics::CalculateDipolesAspc() {
+void Electrostatics::CalculateDipolesAspc(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
-        CalculateDipolesCG();
+        CalculateDipolesCG(precomputedInformation);
         std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
         hist_num_aspc_++;
     } else {
@@ -4088,7 +3606,7 @@ void Electrostatics::CalculateDipolesAspc() {
         std::copy(mu_pred_.begin(), mu_pred_.end(), mu_.begin());
 
         // Now we run a single iteration to get the new Efd
-        ComputeDipoleField(mu_, Efd_);
+        ComputeDipoleFieldOptimized(mu_, Efd_, precomputedInformation);
 
         // Now the Electric dipole field is computed, and we update
         // the dipoles to get the corrector
@@ -4141,10 +3659,10 @@ void Electrostatics::CalculateDipolesAspc() {
     }  // end if (hist_num_aspc_ < k_aspc_ + 2)
 }
 
-void Electrostatics::CalculateDipolesAspcMPIlocal(bool use_ghost) {
+void Electrostatics::CalculateDipolesAspcMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
-        CalculateDipolesCGMPIlocal(use_ghost);
+        CalculateDipolesCGMPIlocal(precomputedInformation, use_ghost);
         std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
         hist_num_aspc_++;
     } else {
@@ -4212,7 +3730,7 @@ void Electrostatics::CalculateDipolesAspcMPIlocal(bool use_ghost) {
 
         // Now we run a single iteration to get the new Efd
         reverse_forward_comm(Efq_);
-        ComputeDipoleFieldMPIlocal(mu_, Efd_, use_ghost);
+        ComputeDipoleFieldMPIlocalOptimized(mu_, Efd_, precomputedInformation, use_ghost);
 
         // Now the Electric dipole field is computed, and we update
         // the dipoles to get the corrector
@@ -8165,7 +7683,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
 #endif
 }
 
-void Electrostatics::CalculateDipolesIterative() {
+void Electrostatics::CalculateDipolesIterative(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
     // Permanent electric field is computed
     // Now start computation of dipole through iteration
     double eps = 1.0E+50;
@@ -8235,7 +7753,7 @@ void Electrostatics::CalculateDipolesIterative() {
         }
         iter++;
         // Perform next iteration
-        ComputeDipoleField(mu_, Efd_);
+        ComputeDipoleFieldOptimized(mu_, Efd_, precomputedInformation);
     }
 }
 
