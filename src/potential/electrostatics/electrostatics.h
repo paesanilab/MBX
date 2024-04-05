@@ -504,14 +504,31 @@ class Electrostatics {
     void SetPeriodicity(bool periodic);
 
    private:
+    /*
+     * TODO
+     */
     void CalculatePermanentElecField(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
     void CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
     
+
+    /*
+     * Oversees each dipole iteration using the normal iterative method.
+     */
     void CalculateDipolesIterative(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
     
+    /*
+     * This function fills precomputedInformation with atom-coordinate dependant calculations, a list of 
+     * indicies of monomer 2s which are within a 9A cutoff from monomer 1, and xyz2 (an array of coordinates of mon type 2)
+     * and mu2 (an array of dipoles of mon type 2) such that they only contain information from monomer 2s within the cutoff.
+     * 
+     * The purpose of this function is to calculate and store these values so they can be reused each dipole iteration
+     * without having to be recalculated, saving CPU time.
+     */
     void PrecomputeDipoleIterationsInformation(std::vector<double> &out_v, std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0, bool MPI = 0);
     
-
+    /*
+     * Computes the electric field from the modified dipoles. 
+     */
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void ComputeDipoleFieldOptimized(std::vector<double> &in_v, std::vector<double> &out_v,
                             std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
@@ -521,25 +538,41 @@ class Electrostatics {
                             std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
                             bool use_ghost = 0);
     
-    void CalculateDipolesCG(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
-    void CalculateDipolesCGMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost);
+    /*
+     * Oversees each dipole iteration using the conjugate gradient method.
+     */
+    void CalculateDipolesConjugateGradient(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
+    void CalculateDipolesConjugateGradientMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost);
     
+    /*
+     * These are a single dipole iteration for conjugate gradient method (called by CalculateDipolesConjugateGradient).
+     */
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
     void DipolesCGIterationOptimized(std::vector<double> &in_v, std::vector<double> &out_v, std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
     void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void DipolesCGIterationMPIlocalOptimized(std::vector<double> &in_v, std::vector<double> &out_v, std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
     
+    /*
+     * Oversees each dipole iteration using the always stable predictor-corrector method.
+     */
     void CalculateDipolesAspc(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
     void CalculateDipolesAspcMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
     
     void SetAspcParameters(size_t k);
     
+    /*
+     * Calculates the real-space electric field for every pair of atoms within a 9A (2-body) cutoff. 
+     */
     void CalculateDipoles(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
     void CalculateDipolesMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0); // do this
     
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
-    
+
+
+    /*
+     * Calculates the gradients of the potential energy surface
+     */
     void CalculateGradients(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost = 0);
     void CalculateGradientsMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost = 0);
 

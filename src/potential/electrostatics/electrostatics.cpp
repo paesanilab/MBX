@@ -2712,7 +2712,7 @@ void Electrostatics::CalculateDipolesMPIlocal(std::unordered_map<key_precomputed
         throw CUException(__func__, __FILE__, __LINE__, text);
 
     } else if (dip_method_ == "cg") {
-        CalculateDipolesCGMPIlocal(precomputedInformation, use_ghost);
+        CalculateDipolesConjugateGradientMPIlocal(precomputedInformation, use_ghost);
     } else if (dip_method_ == "aspc") {
         CalculateDipolesAspcMPIlocal(precomputedInformation, use_ghost);
     }
@@ -2746,9 +2746,11 @@ void Electrostatics::CalculateDipoles(std::unordered_map<key_precomputed_info, P
     if (dip_method_ == "iter")
         CalculateDipolesIterative(precomputedInformation);
     else if (dip_method_ == "cg")
-        CalculateDipolesCG(precomputedInformation);
+        CalculateDipolesConjugateGradient(precomputedInformation);
     else if (dip_method_ == "aspc")
         CalculateDipolesAspc(precomputedInformation);
+
+    // TODO Should we add an else (error catching)
 }
 
 void Electrostatics::DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
@@ -2994,7 +2996,7 @@ void Electrostatics::DipolesCGIterationOptimized(std::vector<double> &in_v, std:
 
 
 
-void Electrostatics::CalculateDipolesCGMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
+void Electrostatics::CalculateDipolesConjugateGradientMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -3248,7 +3250,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal(std::unordered_map<key_precomput
 
 
 
-void Electrostatics::CalculateDipolesCG(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
+void Electrostatics::CalculateDipolesConjugateGradient(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -3585,7 +3587,7 @@ void Electrostatics::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) 
 void Electrostatics::CalculateDipolesAspc(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
-        CalculateDipolesCG(precomputedInformation);
+        CalculateDipolesConjugateGradient(precomputedInformation);
         std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
         hist_num_aspc_++;
     } else {
@@ -3662,7 +3664,7 @@ void Electrostatics::CalculateDipolesAspc(std::unordered_map<key_precomputed_inf
 void Electrostatics::CalculateDipolesAspcMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
-        CalculateDipolesCGMPIlocal(precomputedInformation, use_ghost);
+        CalculateDipolesConjugateGradientMPIlocal(precomputedInformation, use_ghost);
         std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
         hist_num_aspc_++;
     } else {
@@ -6487,7 +6489,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                                                                     nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
                                                                     m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
 
-                        // monomers within the cuttoff are stored in good_mon2_indices
+                        // monomer 2s within the cutoff are stored in good_mon2_indices
                         for (int ind = 0; ind < nmon2; ind++) {
                             if (bool_mon2_indices[ind] == 1) {
                                 good_mon2_indices.push_back(ind);
@@ -6504,7 +6506,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         reordered_islocal[0] = islocal_all_[fi_mon1 + m1];
                         double *xyz2 = xyz_all_.data() + fi_crd2;
                         
-                        // reorder the vector of monomers and islocal to only include monomers within the cuttoff
+                        // reorder the vector of monomers and islocal to only include monomer 2s within the cutoff
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
                             reordered_xyz2[new_mon2_index] = xyz2[old_mon2_index + site_jnmon23];
