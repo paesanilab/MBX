@@ -6512,17 +6512,22 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                             Ai = BIGNUM;
                             Asqsqi = Ai;
                         }
+                        // contains precomputed atom coordinate-dependant calculations
                         PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+                        // contains indices of all mon 2s which are within a 9A cutoff from mon1
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
+                        int reordered_mon2_size = good_mon2_indices.size();
+                        
+                        // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within 9 A from mon 1
+                        // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
-                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
-
                         std::vector<double> reordered_Efd2(reordered_xyz2.size(), 0.0);
-                        int reordered_mon2_size = good_mon2_indices.size();
                         std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
 
+                        // populates reordered_mu2
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
                             reordered_mu2[new_mon2_index] = mu2[old_mon2_index + site_jnmon23];
@@ -6530,11 +6535,13 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                             reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2 + site_jnmon23];
                         }
 
+                        // populates reordered_Efd2 (electric field on mon 2)
                         local_field->CalcDipoleElecField_Optimized(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
                                                          reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, 
                                                          aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
                                                          &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
 
+                        // reverts reordering of Efd2
                         double *Efd2 = Efd_2_pool[rank].data();
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
