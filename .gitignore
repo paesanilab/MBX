@@ -52,6 +52,8 @@ src/order_frames
 src/single_point
 src/mb_decomp
 src/.libs
+src/unittests
+.vscode
 plugins/i-pi/ipi_driver
 plugins/i-pi/bin/driver
 
