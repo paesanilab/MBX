@@ -504,10 +504,8 @@ class Electrostatics {
     void SetPeriodicity(bool periodic);
 
    private:
-    void CalculatePermanentElecField(bool use_ghost = 0);
-    void CalculatePermanentElecFieldOptimized(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
-    void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
-    void CalculatePermanentElecFieldMPIlocalOptimized(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
+    void CalculatePermanentElecField(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
+    void CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
     void CalculateDipolesIterative();
     void PrecomputeDipoleIterationsInformation(std::vector<double> &out_v, std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0, bool MPI = 0);
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
@@ -533,10 +531,8 @@ class Electrostatics {
     void CalculateDipolesMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0); // do this
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
-    void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
-    void CalculateGradientsOptimized(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost = 0);
-    void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
-    void CalculateGradientsMPIlocalOptimized(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost = 0);
+    void CalculateGradients(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost = 0);
+    void CalculateGradientsMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost = 0);
 
     void ReorderData();
 
