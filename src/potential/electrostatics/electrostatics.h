@@ -532,7 +532,9 @@ class Electrostatics {
     void PrecomputeDipoleIterationsInformation(std::vector<double> &out_v, std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0, bool MPI = 0);
     
     /*
-     * Computes the electric field from the modified dipoles. The optimized versions of these functions uses 
+     * Computes the electric field from the modified dipoles. Instead of re-computing coordinate-dependant calculations,
+     * the optimized versions of this function retrieves them from the precomputedInformation hashmap generated in the function
+     * PrecomputeDipoleIterationsInformation
      */
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void ComputeDipoleFieldOptimized(std::vector<double> &in_v, std::vector<double> &out_v,

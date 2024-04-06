@@ -373,7 +373,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 /*
  * A version of CalcDipoleElecField which only performs calculations on monomers of type 2 which are 
  * within a a twobody_cutoffngstrom distance from monomer 1. This returns the exact same values of CalcDipoleElecField
- * (as calculations involving monomers not within the a twobody_cutoffngstrom cutoff are discared by CalcDipoleElecField), but
+ * (as calculations involving monomers not within the twobody_cutoff are discared by CalcDipoleElecField), but
  * has a faster runtime as time isn't wasted doing calculations which will eventually be discarded.
  */
 
