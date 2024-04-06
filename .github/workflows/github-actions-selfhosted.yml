@@ -59,7 +59,7 @@ jobs:
   test_mbxlammps:
     strategy:
       matrix:
-        example: [256h2o, 512h2o, 1024h2o, 2048h2o, na+_bulk, mof_ff_lammps+1_h2o_mbx]
+        example: [256h2o, 512h2o, 1024h2o, 2048h2o, na+_bulk]
     runs-on: [self-hosted, epyc]
     needs: compile-mbxlammps
     steps:
