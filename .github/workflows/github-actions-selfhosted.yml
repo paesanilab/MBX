@@ -33,7 +33,7 @@ jobs:
         run: |
           ls ${{ github.workspace }}
           autoreconf -fi
-          ./configure --enable-mpi CXX=${{env.MPI_COMPILER}}
+          ./configure --enable-mpi CXX=${{ env.MPI_COMPILER }}
           make -j 8
           make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
@@ -47,7 +47,7 @@ jobs:
           cp -r $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
           cd $LAMMPS_HOME/src
           make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
-          make mpi_mbx CXX=${{env.MPI_COMPILER}} -j 8
+          make mpi_mbx CXX=${{ env.MPI_COMPILER }} -j 8
 
       - name: Upload MBX+LAMMPS executable
         uses: actions/upload-artifact@v4
@@ -73,15 +73,15 @@ jobs:
           name: executable
       - run: ls ${{ github.workspace }} -lth
       
-      - name: testing example ${{matrix.example}}
+      - name: testing example ${{ matrix.example }}
         run: |
           chmod u+x lmp_mpi_mbx
           ls ${{ github.workspace }}/lmp_mpi_mbx
-          cd ${{ github.workspace }}/plugins/lammps/examples/${{matrix.example}}/
+          cd ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/
           export OMP_NUM_THREADS=2
           mpirun -np 8 ${{ github.workspace }}/lmp_mpi_mbx -in lammps.in
-      - run: ls ${{ github.workspace }}/plugins/lammps/examples/${{matrix.example}}/ -lth
+      - run: ls ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/ -lth
       - name: log output
-        run: cat lammps.log
+        run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/log.lammps
       - name: thermo output
-        run: cat thermo.out
+        run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/thermo.out
