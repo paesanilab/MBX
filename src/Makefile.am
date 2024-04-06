@@ -92,6 +92,7 @@ optimize_LDADD = libmbx.la
 
 order_frames_DEPENDENCIES = libmbx.la
 order_frames_LDADD = libmbx.la
+
 mb_decomp_DEPENDENCIES = libmbx.la
 mb_decomp_LDADD = libmbx.la
 
