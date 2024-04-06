@@ -82,6 +82,6 @@ jobs:
           mpirun -np 8 ${{ github.workspace }}/lmp_mpi_mbx -in lammps.in
       - run: ls ${{ github.workspace }}/plugins/lammps/examples/${{matrix.example}}/ -lth
       - name: log output
-        run: cat log.lammps
+        run: cat lammps.log
       - name: thermo output
         run: cat thermo.out
