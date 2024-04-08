@@ -605,7 +605,7 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
  *  It saves the indices of these monomers to bool_indices, which other electrostatics functions will use
  *  to ensure calculations are only done on monomers are which are within the cutoff.
  */
-bool ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
+void ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
                                         size_t nmon2, bool use_pbc, std::vector<double> &box, 
                                         std::vector<double> &box_inverse, double cutoff, size_t site_i,
                                         size_t site_j, size_t mon1_index, bool use_ghost,
