@@ -101,7 +101,7 @@ namespace elec {
     };
 
     typedef std::tuple<size_t, size_t, size_t, size_t, size_t> key_precomputed_info;
-    struct key_hash : public std::unary_function<key_precomputed_info, std::size_t> {
+    struct key_hash {
         std::size_t operator()(const key_precomputed_info& k) const {
             return std::get<0>(k) << 8 ^ std::get<1>(k) << 6 ^ std::get<2>(k) ^ std::get<3>(k) << 4 ^ std::get<4>(k) << 2;
             // return std::hash<key_precomputed_info>{}(k);
@@ -224,7 +224,7 @@ class ElectricFieldHolder {
     *  It saves the indices of these monomers to bool_indices, which other electrostatics functions will use
     *  to ensure calculations are only done on monomers are which are within the cutoff.
     */
-    bool FindMonomersWithinCutoff(size_t *bool_indices, 
+    void FindMonomersWithinCutoff(size_t *bool_indices, 
                                 double *xyz1, double *xyz2,              // Coordinates of mon type 1 and 2
                                 size_t m2init, 
                                 size_t nmon1, size_t nmon2,              // # monomers of types 1 and 2
