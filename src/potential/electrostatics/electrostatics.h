@@ -42,7 +42,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #ifdef __INTEL_COMPILER
 #include <mathimf.h>
-#endif
+#else
+#include <cmath>
+#endif 
 
 #include <unordered_map>
 
@@ -568,8 +570,7 @@ class Electrostatics {
     void SetAspcParameters(size_t k);
     
     /*
-     * TODO:fix 
-     * Calculates the real-space electric field for every pair of atoms within a 9A (2-body) cutoff. 
+     * Oversees all of the dipole iterations. 
      */
     void CalculateDipoles(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
     void CalculateDipolesMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);

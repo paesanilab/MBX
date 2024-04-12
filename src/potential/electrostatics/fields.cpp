@@ -638,7 +638,7 @@ void ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double 
             double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
         
             // Distances between sites i and j from mon1 and mon2
-            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];  // m is left or right
+            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m]; 
             double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
             double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
 
