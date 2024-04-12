@@ -63,7 +63,8 @@ void ElectricFieldHolder::CalcPermanentElecField(
     const std::vector<double> &box, const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
     const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
     std::vector<double> *virial) {
-    // Shifts that will be useful in the loops
+
+    // These shifts are for vector indexing and will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
     const size_t site_i3 = site_i * 3;
@@ -372,7 +373,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 
 /*
  * A version of CalcDipoleElecField which only performs calculations on monomers of type 2 which are 
- * within a a twobody_cutoffngstrom distance from monomer 1. This returns the exact same values of CalcDipoleElecField
+ * within a a twobody_cutoff distance from monomer 1. This returns the exact same values of CalcDipoleElecField
  * (as calculations involving monomers not within the twobody_cutoff are discared by CalcDipoleElecField), but
  * has a faster runtime as time isn't wasted doing calculations which will eventually be discarded.
  */

@@ -218,9 +218,9 @@ class ElectricFieldHolder {
                                         double *Efdy_mon1,                       // Output electric field on Y for Mon 1
                                         double *Efdz_mon1,                       // Output electric field on Z for Mon 1
                                         std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, // Contains precomputed coordinate-dependant calculations
-                                        int mt1, int mt2, int m1, int i, int j); //
+                                        int mt1, int mt2, int m1, int i, int j); 
     /*
-    *  This function finds the all monomers of type 2 which are within a a twobody_cutoffngstrom distance from monomer 1.
+    *  This function finds the all monomers of type 2 which are within a a twobody_cutoff distance from monomer 1.
     *  It saves the indices of these monomers to bool_indices, which other electrostatics functions will use
     *  to ensure calculations are only done on monomers are which are within the cutoff.
     */
