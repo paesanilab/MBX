@@ -19,3 +19,11 @@ echo "Running MBX+LAMMPS using MPI=$MPI_PROC and OMP=$OMP_NUM_THREADS"
 
 export OMP_NUM_THREADS
 mpirun -np ${MPI_PROC} $LAMMPS_HOME/src/lmp_mpi_mbx -in lammps.in
+
+if [ -s log.lammps ]; then
+    date | tee performance.txt
+    echo -e "$HOSTNAME\n-----------------------------" | tee -a performance.txt
+    grep 'ns/day' log.lammps | tee -a performance.txt
+    grep '% CPU use' log.lammps | tee -a performance.txt
+    grep 'Total wall time' log.lammps | tee -a performance.txt
+fi
