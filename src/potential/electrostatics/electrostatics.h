@@ -42,7 +42,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #ifdef __INTEL_COMPILER
 #include <mathimf.h>
-#endif
+#else
+#include <cmath>
+#endif 
 
 #include <unordered_map>
 
@@ -534,7 +536,7 @@ class Electrostatics {
     /*
      * Computes the electric field from the modified dipoles. Instead of re-computing coordinate-dependant calculations,
      * the optimized versions of this function retrieves them from the precomputedInformation hashmap generated in the function
-     * PrecomputeDipoleIterationsInformation
+     * PrecomputeDipoleIterationsInformation.
      */
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
     void ComputeDipoleFieldOptimized(std::vector<double> &in_v, std::vector<double> &out_v,
@@ -568,10 +570,10 @@ class Electrostatics {
     void SetAspcParameters(size_t k);
     
     /*
-     * Calculates the real-space electric field for every pair of atoms within a 9A (2-body) cutoff. 
+     * Oversees all of the dipole iterations. 
      */
     void CalculateDipoles(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation);
-    void CalculateDipolesMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0); // do this
+    void CalculateDipolesMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost = 0);
     
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();

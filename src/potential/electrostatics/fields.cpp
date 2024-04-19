@@ -63,7 +63,8 @@ void ElectricFieldHolder::CalcPermanentElecField(
     const std::vector<double> &box, const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
     const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
     std::vector<double> *virial) {
-    // Shifts that will be useful in the loops
+
+    // These shifts are for vector indexing and will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
     const size_t site_i3 = site_i * 3;
@@ -94,6 +95,8 @@ void ElectricFieldHolder::CalcPermanentElecField(
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = false;
         if (!use_ghost) accum2 = true;
+        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
+        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset + m2_offset];
         if (use_ghost && isls) accum2 = true;
 
@@ -272,6 +275,8 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 #pragma omp simd reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
+        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
+        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         if (use_ghost && isls) accum2 = true;
 
@@ -372,7 +377,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
 
 /*
  * A version of CalcDipoleElecField which only performs calculations on monomers of type 2 which are 
- * within a a twobody_cutoffngstrom distance from monomer 1. This returns the exact same values of CalcDipoleElecField
+ * within a a twobody_cutoff distance from monomer 1. This returns the exact same values of CalcDipoleElecField
  * (as calculations involving monomers not within the twobody_cutoff are discared by CalcDipoleElecField), but
  * has a faster runtime as time isn't wasted doing calculations which will eventually be discarded.
  */
@@ -410,6 +415,8 @@ void ElectricFieldHolder::CalcDipoleElecField_WithinCutoff(double *xyz1, double 
 #pragma omp simd reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
+        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
+        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         
         double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
@@ -605,7 +612,7 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
  *  It saves the indices of these monomers to bool_indices, which other electrostatics functions will use
  *  to ensure calculations are only done on monomers are which are within the cutoff.
  */
-bool ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
+void ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double *xyz1, double *xyz2, size_t m2init, size_t nmon1, 
                                         size_t nmon2, bool use_pbc, std::vector<double> &box, 
                                         std::vector<double> &box_inverse, double cutoff, size_t site_i,
                                         size_t site_j, size_t mon1_index, bool use_ghost,
@@ -625,6 +632,8 @@ bool ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double 
 
 #pragma omp simd
     for (size_t m = m2init; m < nmon2; m++) {
+        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
+        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         const double cutoffsq = cutoff * cutoff;
         bool accum2 = !use_ghost;
@@ -637,7 +646,7 @@ bool ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double 
             double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
         
             // Distances between sites i and j from mon1 and mon2
-            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];  // m is left or right
+            double rijx = xyzmon1_x - xyz2[site_jnmon23 + m]; 
             double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
             double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
 
@@ -721,6 +730,9 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
     #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
+        
+        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
+        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         
         double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
@@ -825,6 +837,8 @@ void ElectricFieldHolder::CalcElecFieldGrads(
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = false;
         if (!use_ghost) accum2 = true;
+        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
+        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         if (use_ghost && isls) accum2 = true;
 

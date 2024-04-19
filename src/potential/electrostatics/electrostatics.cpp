@@ -846,7 +846,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     fi_sites2 = 0;
     fi_crd1 = 0;
     fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
@@ -1032,7 +1032,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     fi_sites2 = 0;
     fi_crd1 = 0;
     fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
@@ -2386,7 +2386,7 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
 
                         // contains precomputed atom coordinate-dependant calculations
                         PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
-                        // contians all indices of monomer type 2s which are withing a 9A cutoff
+                        //contains all indices of monomer type 2s which are withing a 9A cutoff
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
 
@@ -5339,8 +5339,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
-        //      TODO: Check why this makes shit fail
-        //      if (ns == 1) continue;
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
@@ -5370,7 +5368,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
 
-                    // TODO. Slowest function
+                    // TODO Can we use faster function here 
                     if (include_monomer) {
                         elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                        in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
@@ -5440,7 +5438,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
@@ -5879,8 +5877,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
-        //      TODO: Check why this makes shit fail
-        //      if (ns == 1) continue;
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
@@ -5910,7 +5906,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
 
-                    // TODO. Slowest function
+                    // TODO Can faster function be used? 
                     if (include_monomer) {
                         elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                        in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
@@ -5980,7 +5976,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
@@ -6421,7 +6417,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    double aDD = 0.055; // aDD intermolecular is always 0.055
+    double aDD = 0.055; // Thole damping aDD intermolecular is always 0.055
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
@@ -6647,8 +6643,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
-        //      TODO: Check why this makes shit fail
-        //      if (ns == 1) continue;
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
@@ -6676,7 +6670,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                 //                for (size_t m = 0; m < nmon; m++) {
                 size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
                 for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
-                    // TODO. Slowest function
+                    // TODO: Can faster function be used
                     elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                    in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
                                                    out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
@@ -6743,7 +6737,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
@@ -7223,8 +7217,6 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
-        //      TODO: Check why this makes shit fail
-        //      if (ns == 1) continue;
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
@@ -7252,7 +7244,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                 //                for (size_t m = 0; m < nmon; m++) {
                 size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
                 for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
-                    // TODO. Slowest function
+                    // TODO: Can we use faster function here?
                     elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                    in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
                                                    out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
@@ -7319,7 +7311,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
@@ -8095,7 +8087,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
@@ -8973,8 +8965,8 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
 
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
@@ -9738,7 +9730,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     CalculatePermanentElecField(precomputedInformation, use_ghost);
     CalculateDipoles(precomputedInformation);
     CalculateElecEnergy();
-    if (do_grads_) CalculateGradients(precomputedInformation, grad); // change
+    if (do_grads_) CalculateGradients(precomputedInformation, grad);
     if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad);
     // update viral
     if (virial != 0) {
