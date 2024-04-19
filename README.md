@@ -4,7 +4,7 @@
 
 
 
-# MBX v1.0.10
+# MBX v1.1.0
 MBX: A many-body energy and force calculator for data-driven many-body simulations.
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
