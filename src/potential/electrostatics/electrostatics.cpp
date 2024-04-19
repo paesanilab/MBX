@@ -678,9 +678,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         size_t ns2 = 1;
         size_t nmon2 = np;
 
-        // TODO add neighbour list here
         // Loop over all pair of sites
-
         std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
         std::vector<std::vector<double>> Efq_1_pool;
         std::vector<std::vector<double>> Efq_2_pool;
@@ -1039,7 +1037,6 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         size_t nmon12 = nmon1 * 2;
         size_t ns2 = 1;
         size_t nmon2 = np;
-        // TODO add neighbour list here
         std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
         std::vector<std::vector<double>> grad_1_pool;
         std::vector<std::vector<double>> grad_2_pool;
@@ -1725,9 +1722,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
             // previous loop.
             bool same = (mt1 == mt2);
 
-            // TODO add neighbour list here
             // Loop over all pair of sites
-
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efq_1_pool;
             std::vector<std::vector<double>> Efq_2_pool;
@@ -2297,9 +2292,7 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
             // previous loop.
             bool same = (mt1 == mt2);
 
-            // TODO add neighbour list here
             // Loop over all pair of sites
-
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efq_1_pool;
             std::vector<std::vector<double>> Efq_2_pool;
@@ -5367,8 +5360,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
-
-                    // TODO Can we use faster function here 
                     if (include_monomer) {
                         elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                        in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
@@ -5451,7 +5442,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             size_t ns2 = sites_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             // Prepare for parallelization
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efd_1_pool;
@@ -5904,9 +5894,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                 for (size_t m = 0; m < nmon; m++) {
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
-                    if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
-
-                    // TODO Can faster function be used? 
+                    if (use_ghost && islocal_[fi_mon + m]) include_monomer = true; 
                     if (include_monomer) {
                         elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                        in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
@@ -5989,7 +5977,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
             size_t ns2 = sites_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             // Prepare for parallelization
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efd_1_pool;
@@ -6430,7 +6417,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             // Prepare for parallelization
             // /*
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
@@ -6670,7 +6656,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                 //                for (size_t m = 0; m < nmon; m++) {
                 size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
                 for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
-                    // TODO: Can faster function be used
                     elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                    in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
                                                    out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
@@ -6750,7 +6735,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             size_t ns2 = sites_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             // Prepare for parallelization
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efd_1_pool;
@@ -7244,7 +7228,6 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                 //                for (size_t m = 0; m < nmon; m++) {
                 size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
                 for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
-                    // TODO: Can we use faster function here?
                     elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                    in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
                                                    out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
@@ -7324,7 +7307,6 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
             size_t ns2 = sites_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             // Prepare for parallelization
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efd_1_pool;
@@ -8100,7 +8082,6 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> grad_1_pool;
             std::vector<std::vector<double>> grad_2_pool;
@@ -8979,7 +8960,6 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> grad_1_pool;
             std::vector<std::vector<double>> grad_2_pool;
