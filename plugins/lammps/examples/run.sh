@@ -21,10 +21,10 @@ export OMP_NUM_THREADS
 mpirun -np ${MPI_PROC} $LAMMPS_HOME/src/lmp_mpi_mbx -in lammps.in
 
 if [ -s log.lammps ]; then
-    date | tee performance.txt
-    hostname -s | tee -a performance.txt
-    echo "-----------------------------" | tee -a performance.txt
+    date | tee -a performance.txt
+    echo "<$(hostname -s)>" | tee -a performance.txt
     grep 'ns/day' log.lammps | tee -a performance.txt
     grep '% CPU use' log.lammps | tee -a performance.txt
     grep 'Total wall time' log.lammps | tee -a performance.txt
+    echo "-----------------------------" | tee -a performance.txt
 fi
