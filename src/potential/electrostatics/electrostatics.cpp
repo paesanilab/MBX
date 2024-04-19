@@ -6384,6 +6384,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
     }
 #endif
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
     size_t nExtChg = external_charge_.size();
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
     if (nExtChg > 0) {
@@ -6548,6 +6553,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         fi_crd1 += nmon1 * ns1 * 3;
     }
     mon_type_count_ = mon_type_count_cp;
+
+    #if HAVE_MPI == 1
+        double time2 = MPI_Wtime();
+        mbxt_ele_time_[ELE_DIPFIELD_REAL] += time2 - time1;
+    #endif
 }
 
 void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
