@@ -35,7 +35,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef CU_INCLUDE_POTENTIAL_ELECTROSTATICS_GAMMQ_H
 #define CU_INCLUDE_POTENTIAL_ELECTROSTATICS_GAMMQ_H
 
+#ifdef __INTEL_COMPILER
+#include <mathimf.h>
+#else
 #include <cmath>
+#endif 
+
 #include <cassert>
 
 #include <iostream>
