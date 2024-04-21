@@ -211,7 +211,7 @@ void show_usage()
     "Options:\n"
     "    -h      , help\n"
     "    -v      , verbose\n"
-    "    -e      , do_decomp=false (default: true, do many-body decomposition)\n"
+    "    -e      , skip_decomp (won't perform many-body decomposition)\n"
     "    -o <int>, max_order (default: -1, calculate for all subsystems)\n"
     "\nIf -v is set, program prints monomer indices of each subsystem, followed"
     "\nby the energy value. Every subsystem uses one line. Otherwise, energies"
