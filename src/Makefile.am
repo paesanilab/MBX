@@ -55,7 +55,8 @@ libmbx_la_SOURCES = $(tools_src) $(iotools_src) $(bblock_src) $(potential_src)
 libmbx_la_LIBADD = liba1b2c4.la 
 
 # Library extra flags
-libmbx_la_CPPFLAGS = $(CPPFLAGS) $(LDFLAGS) $(LIBS) $(MPIFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
+libmbx_la_CPPFLAGS = $(CPPFLAGS) $(MPIFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM)
+libmbx_la_LDFLAGS = $(LDFLAGS) $(LIBS) $(EXTRA_LDFLAGS_AM)
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
 nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/4b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h* 
@@ -64,7 +65,7 @@ nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h pote
 # Only compile these binaries if is not MPI
 if !ISMPI
 # Main Binaries
-bin_PROGRAMS = single_point optimize order_frames
+bin_PROGRAMS = single_point optimize order_frames mb_decomp
 
 if HASGSL
 bin_PROGRAMS += normal_modes
@@ -74,11 +75,13 @@ endif
 single_point_SOURCES = main/single_point.cpp
 optimize_SOURCES = main/optimize.cpp
 order_frames_SOURCES = main/order_frames.cpp
+mb_decomp_SOURCES = main/mb_decomp.cpp
 
 # Binary Include path
 single_point_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
 optimize_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
 order_frames_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
+mb_decomp_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
 
 # Binary dependencies
 single_point_DEPENDENCIES = libmbx.la
@@ -89,6 +92,9 @@ optimize_LDADD = libmbx.la
 
 order_frames_DEPENDENCIES = libmbx.la
 order_frames_LDADD = libmbx.la
+
+mb_decomp_DEPENDENCIES = libmbx.la
+mb_decomp_LDADD = libmbx.la
 
 if HASGSL
 normal_modes_SOURCES = main/normal-modes.cpp

@@ -1,5 +1,6 @@
 variable        T   equal  298
-variable        dt  equal  0.50
+variable        dt  equal  0.5 
+# variable        P   equal  1.0
 variable        nsteps  equal 100
 variable        thermo_freq equal 1
 variable        dump_freq equal 1
@@ -28,14 +29,14 @@ neigh_modify	every 1 delay 10
 timestep	${dt}
 
 compute         mbx all pair mbx
-variable        e1    equal c_mbx[1]
-variable        e2    equal c_mbx[2]
-variable        e3    equal c_mbx[3]
-variable        e4    equal c_mbx[4]
-variable        ebuck equal c_mbx[5]
-variable        edisp equal c_mbx[6]
-variable        eele  equal c_mbx[7]
-variable        etot  equal c_mbx[8]
+variable        e1bpip    equal c_mbx[1]
+variable        e2bpip    equal c_mbx[2]
+variable        e3bpip    equal c_mbx[3]
+variable        e4bpip    equal c_mbx[4]
+variable        edisp     equal c_mbx[5]
+variable        ebuck     equal c_mbx[6]
+variable        eele      equal c_mbx[7]
+variable        etot      equal c_mbx[8]
 
 fix             1 all nvt temp ${T} ${T} $(1000.0*dt)
 fix             2 all mbx 2 na+ 1 1 1 1 h2o 2 3 3 2 3 3 json mbx.json
@@ -48,10 +49,11 @@ thermo_style	custom step time temp etotal pe ke density lx ly lz vol pxx pyy pzz
 thermo          ${thermo_freq}
 thermo_modify   flush yes
 
-fix             thermo_print all print 100 "$(step) $(0.001*time) $(temp) $(etotal) $(pe) $(ke) $(density) $(lx) $(ly) $(lz) $(vol) $(pxx) $(pyy) $(pzz) $(press)" append thermo.out screen no title "# step time temp etotal pe ke density lx ly lz vol pxx pyy pzz press"
+fix             thermo_print all print 100 "$(step) $(0.001*time) $(temp) $(etotal) $(pe) $(ke) $(density) $(lx) $(ly) $(lz) $(vol) $(pxx) $(pyy) $(pzz) $(press)" file thermo.out screen no title "# step time temp etotal pe ke density lx ly lz vol pxx pyy pzz press"
+# fix             verbose_mbx_thermo_print all print ${thermo_freq} "$(step) $(0.001*time) $(temp) $(etotal) $(ke) $(pe) $(enthalpy) $(density) $(lx) $(ly) $(lz) $(vol) $(pxx) $(pyy) $(pzz) $(press) $(v_e1bpip) $(v_e2bpip) $(v_e3bpip) $(v_e4bpip) $(v_edisp) $(v_ebuck) $(v_eele) $(v_etot)" file mbx_thermo.out screen no title "# step time temp etotal ke pe enthalpy density lx ly lz vol pxx pyy pzz press e1bpip e2bpip e3bpip e4bpip edisp ebuck eele etot"
 
 dump            1 all custom ${dump_freq} dump.lammpstrj id mol type q x y z
-dump_modify     1 append yes sort id format line "%d %d %d %8.4f %15.8f %15.8f %15.8f"
+dump_modify     1 append no sort id format line "%d %d %d %8.4f %15.8f %15.8f %15.8f"
 
 restart         5 restart.1 restart.2
 

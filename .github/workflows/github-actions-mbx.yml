@@ -1,65 +1,117 @@
 name: MBX testing suite
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "master"
-      - "master-dev"
   pull_request:
     branches:
       - "master"
-      - "master-dev"
   schedule:
     # Nightly tests run on master by default:
     #   Scheduled workflows run on the latest commit on the default or base branch.
     #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * MON"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   compile-and-test-mbx:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++, icpc] # eventually need to swap deprecated icpc for icpx
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-
+      - run: echo "Using compiler ${{matrix.compiler}}"
       - name: install-dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y fftw3-dev
-          sudo apt-get install libgsl-dev
-          sudo apt-get install lcov -y
-          sudo apt-get install autoconf -y
-          sudo apt-get install g++-9 gcc-9 -y
+          sudo apt-get install -y libfftw3-dev libgsl-dev autoconf
+          
+      - name: install-compiler g++
+        if: matrix.compiler == 'g++'
+        run: |
+          sudo apt-get install g++ gcc -y
+          sudo apt-get install openmpi-bin libopenmpi-dev lcov -y
+          
+      - name: install-compiler intel
+        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update
+          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel intel-oneapi-mkl
+      - name: activate intel oneAPI
+        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
+        run: |
+          source /opt/intel/oneapi/setvars.sh
+          printenv >> $GITHUB_ENV
 
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
 
-      - name: run-install
+      - name: Installing MBX
         run: |
+          ${{matrix.compiler}} -v | tee compiler_version.txt
           ls ${{ github.workspace }}
-          rm -rf install
           autoreconf -fi
-          ./configure --disable-optimization --enable-coverage
-          make install
+          ./configure --disable-optimization --enable-coverage --enable-shared CXX=${{matrix.compiler}}
+          make && make install
+          echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
+          
 
-      - run: echo "This job's status is ${{ job.status }}."
-
-      - run: echo "Running unittests"
-      - run: ls ${{ github.workspace }}
-      - name: unittests
+      - run: |
+          echo "\n  BIN/  "
+          ls ${{ github.workspace }}/bin -lth
+          echo "\n\n  LIB/  "
+          ls ${{ github.workspace }}/lib -lth
+      - name: Unittests
         run: make check
-
-      - name: Submit to codecov.io
+  
+      - run: cat src/unittests/test-suite.log
+        if: ${{ !cancelled() }}
+      
+      - name: Testing python plugin
+        if: matrix.compiler == 'icpc'
         run: |
-          export CODECOV_TOKEN=c788f6e4-7b04-4a7a-a8dc-41c0a45811d2
+          cd ${{ github.workspace }}/plugins/python/examples
+          pip install numpy
+          python3 mbx_test.py
+
+      - name: Collect coverage
+        if: matrix.compiler == 'g++'
+        run: |
           cd ${{ github.workspace }}
           lcov --directory . --capture --output-file coverage.info # capture coverage info
           lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
           lcov --list coverage.info #debug info
-          curl -Os https://uploader.codecov.io/latest/linux/codecov
-          chmod +x codecov
-          ./codecov -t ${CODECOV_TOKEN}
-          
+        
+      - name: Submit to codecov.io
+        if: matrix.compiler == 'g++'
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      
+      # - name: Archive production artifacts
+      #   if: matrix.compiler == 'g++'
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     retention-days: 1
+      #     name: mbx-artifacts
+      #     path: |
+      #       bin/
+      #       examples/
+      #       lib/
+      #       plugins/
+      #       compiler_version.txt

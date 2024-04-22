@@ -1,0 +1,91 @@
+name: MBX+LAMMPS integration test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "master"
+  pull_request:
+    branches:
+      - "master"
+  schedule:
+    # Nightly tests run on master by default:
+    #   Scheduled workflows run on the latest commit on the default or base branch.
+    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
+    - cron: "0 0 * * MON"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test_mbx-lammps:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [g++, icpc] # eventually need to swap deprecated icpc for icpx
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - run: echo "Using compiler ${{matrix.compiler}}"
+      - name: install-dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y libfftw3-dev libgsl-dev autoconf
+
+      - name: install-compiler g++
+        if: matrix.compiler == 'g++'
+        run: |
+          sudo apt-get install g++ gcc -y
+          sudo apt-get install openmpi-bin libopenmpi-dev lcov -y
+          echo "MPI_COMPILER=mpicxx" >> "$GITHUB_ENV"
+
+      - name: install-compiler intel
+        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update
+          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel intel-oneapi-mkl
+      - name: activate intel oneAPI
+        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
+        run: |
+          source /opt/intel/oneapi/setvars.sh
+          printenv >> $GITHUB_ENV
+          echo "MPI_COMPILER=mpiicpc" >> "$GITHUB_ENV"
+        
+      - run: echo "Using compiler ${{matrix.compiler}} with ${{env.MPI_COMPILER}}"
+
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
+
+      - name: Installing MBX
+        run: |
+          ${{matrix.compiler}} -v
+          ls ${{ github.workspace }}
+          autoreconf -fi
+          ./configure --disable-optimization --enable-mpi CXX=${{env.MPI_COMPILER}}
+          make install
+          echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
+          
+
+      - name: LAMMPS-Install
+        run: |
+          cd $HOME
+          export MBX_HOME=${{ env.MBX_HOME }}
+          git clone https://github.com/lammps/lammps.git -b stable
+          export LAMMPS_HOME=$PWD/lammps
+          export GITHUB_ACTIONS_MBX_LAMMPS_FLAGS="-O0"
+          cp -r $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
+          cd $LAMMPS_HOME/src
+          make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+          make mpi_mbx CXX=${{env.MPI_COMPILER}}
+
+      - run: ls ${{ github.workspace }}/lib -lth
+
+          

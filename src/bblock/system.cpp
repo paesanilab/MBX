@@ -175,17 +175,6 @@ void System::Hack3GetPotentialAtPoints(std::vector<double> coordinates) {
     electrostaticE_.Hack3GetPotentialAtPoints(coordinates);
 }
 
-// MRR Remove from header if no other issues
-// void System::SetNewParamsElec(bool do_grads) {
-//    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
-//    electrostaticE_.SetDipoleTolerance(diptol_);
-//    electrostaticE_.SetDipoleMaxIt(maxItDip_);
-//    electrostaticE_.SetEwaldAlpha(elec_alpha_);
-//    electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
-//    electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
-//    electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
-//}
-
 double System::GetPermanentElectrostaticEnergy() { return electrostaticE_.GetPermanentElectrostaticEnergy(); }
 double System::GetPermanentElectrostaticEnergyExternalFieldContribution() {
     return electrostaticE_.GetPermanentElectrostaticEnergyExternalFieldContribution();

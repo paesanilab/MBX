@@ -4,6 +4,8 @@
 *.o
 *.obj
 
+LAMMPS-stable/
+
 # Precompiled Headers
 *.gch
 *.pch
@@ -42,6 +44,18 @@ ClustersUltimate.includes
 ClustersUltimate.config
 
 install/
+include/
+bin/
+lib/
+share/
+src/normal_modes
+src/optimize
+src/order_frames
+src/single_point
+src/mb_decomp
+src/.libs
+plugins/i-pi/ipi_driver
+plugins/i-pi/bin/driver
 
 # Autoconf generated files
 **/.deps
@@ -49,6 +63,7 @@ install/
 Makefile
 Makefile.in
 configure
+configure~
 autom4te.cache
 m4/
 aclocal.m4
