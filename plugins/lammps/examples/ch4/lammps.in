@@ -1,7 +1,7 @@
 variable        T   equal  125
 variable        dt  equal  0.2
 variable        P   equal  20.0
-variable        nsteps  equal 100000
+variable        nsteps  equal 100
 variable        thermo_freq equal 1
 variable        dump_freq equal 1
 
@@ -51,14 +51,15 @@ thermo_style    custom step time temp cella cellb cellc evdwl ecoul epair ebond 
 thermo          ${thermo_freq}
 thermo_modify   flush yes
 
+fix             thermo_print all print ${thermo_freq} "$(step) $(0.001*time) $(temp) $(etotal) $(ke) $(pe) $(enthalpy) $(density) $(lx) $(ly) $(lz) $(vol) $(pxx) $(pyy) $(pzz) $(press)" file thermo.out screen no title "# step time temp etotal ke pe enthalpy density lx ly lz vol pxx pyy pzz press"
+# fix             verbose_mbx_thermo_print all print ${thermo_freq} "$(step) $(0.001*time) $(temp) $(etotal) $(ke) $(pe) $(enthalpy) $(density) $(lx) $(ly) $(lz) $(vol) $(pxx) $(pyy) $(pzz) $(press) $(v_e1bpip) $(v_e2bpip) $(v_e3bpip) $(v_e4bpip) $(v_edisp) $(v_ebuck) $(v_eele) $(v_etot)" file mbx_thermo.out screen no title "# step time temp etotal ke pe enthalpy density lx ly lz vol pxx pyy pzz press e1bpip e2bpip e3bpip e4bpip edisp ebuck eele etot"
 
 dump            1 all custom ${dump_freq} dump.lammpstrj id mol type q x y z
-dump_modify     1 append yes sort id format line "%d %d %d %8.4f %15.8f %15.8f %15.8f"
+dump_modify     1 append no sort id format line "%d %d %d %8.4f %15.8f %15.8f %15.8f"
 
-restart         5 restart.1 restart.2
+restart         10 restart.1 restart.2
 
 run             ${nsteps}  upto
 
 write_data      final.data nocoeff
-
 write_restart   restart.new

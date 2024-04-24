@@ -678,9 +678,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         size_t ns2 = 1;
         size_t nmon2 = np;
 
-        // TODO add neighbour list here
         // Loop over all pair of sites
-
         std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
         std::vector<std::vector<double>> Efq_1_pool;
         std::vector<std::vector<double>> Efq_2_pool;
@@ -846,7 +844,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     fi_sites2 = 0;
     fi_crd1 = 0;
     fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
@@ -1032,14 +1030,13 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     fi_sites2 = 0;
     fi_crd1 = 0;
     fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
         size_t ns2 = 1;
         size_t nmon2 = np;
-        // TODO add neighbour list here
         std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
         std::vector<std::vector<double>> grad_1_pool;
         std::vector<std::vector<double>> grad_2_pool;
@@ -1531,7 +1528,7 @@ void Electrostatics::ReorderData() {
 // PERMANENT ELECTRIC FIELD ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
+void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     // MRR modification for external charges
     // MRR EXT
     size_t nExtChg = external_charge_.size();
@@ -1725,9 +1722,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
             // previous loop.
             bool same = (mt1 == mt2);
 
-            // TODO add neighbour list here
             // Loop over all pair of sites
-
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efq_1_pool;
             std::vector<std::vector<double>> Efq_2_pool;
@@ -1809,12 +1804,53 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
                             Asqsqi = Ai;
                         }
                         double elec_scale_factor = 1;
-                        local_field->CalcPermanentElecField(
-                            xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(),
-                            m1, 0, size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
-                            &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
-                            ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost,
-                            islocal_all_, fi_mon1 + m1, fi_mon2, m2init, &virial_thread);
+
+
+                        // contains precomputed atom coordinate-dependant calculations
+                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
+                        // contains indices of all mon 2s which are within a 9A cutoff from mon1
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
+                        int reordered_mon2_size = good_mon2_indices.size();
+
+
+                        // Reordered versions of xyz2, islocal,...  which only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
+                        // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless- eliminating them saves CPU time
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2; 
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double> reordered_Efq2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
+
+                        // populates reordered_chg
+                        const size_t site_jnmon23 = nmon2 * j;
+                        double *chg = chg_sitej.data();
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+
+                            reordered_chg[new_mon2_index] = chg[old_mon2_index - m2init];
+                        }
+
+                       // populates reordered_phi2 (potential on Mon 2) and reordered_Efq2 (electric field on Mon 2)
+                       local_field->CalcPermanentElecField(
+                            xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
+                            m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
+                            &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
+                            ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, reordered_islocal, 0,
+                            1, 0, &virial_thread);
+                        
+                        double *Efq2 = Efq_sitej.data();
+                        double *phi2 = phi_sitej.data();
+
+                        // Update the original phi2 and Efq2 (unreorder reordered_phi2 and reordered_Efq2 and add their values)
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            
+                            phi2[old_mon2_index - m2init] += reordered_phi2[new_mon2_index];
+                            Efq2[old_mon2_index - m2init] += reordered_Efq2[new_mon2_index];
+                            Efq2[nmon2 + old_mon2_index - m2init*2] += reordered_Efq2[reordered_mon2_size + new_mon2_index];
+                            Efq2[2*nmon2 + old_mon2_index - m2init*3] += reordered_Efq2[2*reordered_mon2_size + new_mon2_index];
+
+                        }
 
                         // Put proper data in field and electric field of j
                         for (size_t ind = 0; ind < size_j; ind++) {
@@ -2076,7 +2112,8 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(bool use_ghost) {
 #endif
 }
 
-void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
+
+void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     // MRR modification for external charges
     // MRR EXT
     size_t nExtChg = external_charge_.size();
@@ -2255,9 +2292,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
             // previous loop.
             bool same = (mt1 == mt2);
 
-            // TODO add neighbour list here
             // Loop over all pair of sites
-
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efq_1_pool;
             std::vector<std::vector<double>> Efq_2_pool;
@@ -2341,12 +2376,52 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
                             Asqsqi = Ai;
                         }
                         double elec_scale_factor = 1;
+
+                        // contains precomputed atom coordinate-dependant calculations
+                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
+                        //contains all indices of monomer type 2s which are withing a 9A cutoff
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
+                        int reordered_mon2_size = good_mon2_indices.size();
+
+
+                        // Reordered versions of xyz2, islocal,...  which only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
+                        // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2; 
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double> reordered_Efq2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
+
+                        // populates reordered_chg
+                        const size_t site_jnmon23 = nmon2 * j;
+                        double *chg = chg_sitej.data();
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+
+                            reordered_chg[new_mon2_index] = chg[old_mon2_index - m2init];
+                        }
+                        
+                        // populates reordered_phi2 (potential on monomer 2) and reordered_Efq2 (electric field on monomer 2)
                         local_field->CalcPermanentElecField(
-                            xyz_all_.data() + fi_crd1, xyz_sitej.data(), chg_all_.data() + fi_sites1, chg_sitej.data(),
-                            m1, 0, size_j, nmon1, size_j, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
-                            &ez_thread, &phi1_thread, phi_sitej.data(), Efq_sitej.data(), elec_scale_factor,
-                            ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1,
-                            fi_mon2, m2init, &virial_thread);
+                            xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
+                            m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
+                            &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
+                            ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0,
+                            1, 0, &virial_thread);
+                        
+                        double *Efq2 = Efq_sitej.data();
+                        double *phi2 = phi_sitej.data();
+
+                        // Update the original phi2 and Efq2 (unreorder reordered_phi2 and reordered_Efq2 and add their values)
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            
+                            phi2[old_mon2_index - m2init] += reordered_phi2[new_mon2_index];
+                            Efq2[old_mon2_index - m2init] += reordered_Efq2[new_mon2_index];
+                            Efq2[nmon2 + old_mon2_index - m2init*2] += reordered_Efq2[reordered_mon2_size + new_mon2_index];
+                            Efq2[2*nmon2 + old_mon2_index - m2init*3] += reordered_Efq2[2*reordered_mon2_size + new_mon2_index];
+
+                        }
 
                         // Put proper data in field and electric field of j
                         for (size_t ind = 0; ind < size_j; ind++) {
@@ -2599,7 +2674,7 @@ void Electrostatics::CalculatePermanentElecField(bool use_ghost) {
 // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
+void Electrostatics::CalculateDipolesMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
 #if DIRECT_ONLY
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -2630,13 +2705,14 @@ void Electrostatics::CalculateDipolesMPIlocal(bool use_ghost) {
         throw CUException(__func__, __FILE__, __LINE__, text);
 
     } else if (dip_method_ == "cg") {
-        CalculateDipolesCGMPIlocal(use_ghost);
+        CalculateDipolesConjugateGradientMPIlocal(precomputedInformation, use_ghost);
     } else if (dip_method_ == "aspc") {
-        CalculateDipolesAspcMPIlocal(use_ghost);
+        CalculateDipolesAspcMPIlocal(precomputedInformation, use_ghost);
     }
 }
 
-void Electrostatics::CalculateDipoles() {
+
+void Electrostatics::CalculateDipoles(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
 #if DIRECT_ONLY
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -2661,11 +2737,13 @@ void Electrostatics::CalculateDipoles() {
     return;
 #endif
     if (dip_method_ == "iter")
-        CalculateDipolesIterative();
+        CalculateDipolesIterative(precomputedInformation);
     else if (dip_method_ == "cg")
-        CalculateDipolesCG();
+        CalculateDipolesConjugateGradient(precomputedInformation);
     else if (dip_method_ == "aspc")
-        CalculateDipolesAspc();
+        CalculateDipolesAspc(precomputedInformation);
+
+    // TODO Should we add an else (error catching)
 }
 
 void Electrostatics::DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
@@ -2727,7 +2805,8 @@ void Electrostatics::DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::
     }
 }
 
-void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v) {
+void Electrostatics::DipolesCGIterationMPIlocalOptimized(std::vector<double> &in_v, std::vector<double> &out_v, 
+                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost){
     // Apply sqrt(pol) to the dipoles
     int fi_sites = 0;
     int fi_crd = 0;
@@ -2752,7 +2831,7 @@ void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, std::vector<d
     }
 
     // Compute the field from the modified dipoles
-    ComputeDipoleField(in_v, out_v);
+    ComputeDipoleFieldMPIlocalOptimized(in_v, out_v, precomputedInformation, use_ghost);
 
     // Apply sqrt(pol) to the field product, and revert the changes to mu
     fi_sites = 0;
@@ -2786,7 +2865,131 @@ void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, std::vector<d
     }
 }
 
-void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
+void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v){
+    // Apply sqrt(pol) to the dipoles
+    int fi_sites = 0;
+    int fi_crd = 0;
+    int fi_mon = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            size_t inmon3 = 3 * i * nmon;
+            double A = -std::sqrt(pol_[fi_sites + i]);
+            for (size_t m = 0; m < nmon; m++) {
+                in_v[fi_crd + inmon3 + m] *= A;
+                in_v[fi_crd + inmon3 + nmon + m] *= A;
+                in_v[fi_crd + inmon3 + nmon2 + m] *= A;
+            }
+        }
+        // Update first indexes
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+
+    // Compute the field from the modified dipoles
+    ComputeDipoleField(in_v, out_v);
+    
+
+    // Apply sqrt(pol) to the field product, and revert the changes to mu
+    fi_sites = 0;
+    fi_crd = 0;
+    fi_mon = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            size_t inmon3 = 3 * i * nmon;
+            double A = std::sqrt(pol_[fi_sites + i]);
+            double Ai = A == 0 ? 1 : -1 / A;
+            for (size_t m = 0; m < nmon; m++) {
+                out_v[fi_crd + inmon3 + m] *= A;
+                out_v[fi_crd + inmon3 + nmon + m] *= A;
+                out_v[fi_crd + inmon3 + nmon2 + m] *= A;
+                // Revert scaling of mu
+                in_v[fi_crd + inmon3 + m] *= Ai;
+                in_v[fi_crd + inmon3 + nmon + m] *= Ai;
+                in_v[fi_crd + inmon3 + nmon2 + m] *= Ai;
+            }
+        }
+        // Update first indexes
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+    for (size_t i = 0; i < in_v.size(); i++) {
+        out_v[i] += in_v[i];
+    }
+}
+void Electrostatics::DipolesCGIterationOptimized(std::vector<double> &in_v, std::vector<double> &out_v, 
+                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation){
+    // Apply sqrt(pol) to the dipoles
+    int fi_sites = 0;
+    int fi_crd = 0;
+    int fi_mon = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            size_t inmon3 = 3 * i * nmon;
+            double A = -std::sqrt(pol_[fi_sites + i]);
+            for (size_t m = 0; m < nmon; m++) {
+                in_v[fi_crd + inmon3 + m] *= A;
+                in_v[fi_crd + inmon3 + nmon + m] *= A;
+                in_v[fi_crd + inmon3 + nmon2 + m] *= A;
+            }
+        }
+        // Update first indexes
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+
+    // Compute the field from the modified dipoles
+    ComputeDipoleFieldOptimized(in_v, out_v, precomputedInformation);
+
+
+    // Apply sqrt(pol) to the field product, and revert the changes to mu
+    fi_sites = 0;
+    fi_crd = 0;
+    fi_mon = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t i = 0; i < ns; i++) {
+            size_t inmon3 = 3 * i * nmon;
+            double A = std::sqrt(pol_[fi_sites + i]);
+            double Ai = A == 0 ? 1 : -1 / A;
+            for (size_t m = 0; m < nmon; m++) {
+                out_v[fi_crd + inmon3 + m] *= A;
+                out_v[fi_crd + inmon3 + nmon + m] *= A;
+                out_v[fi_crd + inmon3 + nmon2 + m] *= A;
+                // Revert scaling of mu
+                in_v[fi_crd + inmon3 + m] *= Ai;
+                in_v[fi_crd + inmon3 + nmon + m] *= Ai;
+                in_v[fi_crd + inmon3 + nmon2 + m] *= Ai;
+            }
+        }
+        // Update first indexes
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+    for (size_t i = 0; i < in_v.size(); i++) {
+        out_v[i] += in_v[i];
+    }
+}
+
+
+
+void Electrostatics::CalculateDipolesConjugateGradientMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -2841,7 +3044,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
 
     std::vector<double> ts2v(nsites3);
 
-    DipolesCGIterationMPIlocal(mu_, ts2v, use_ghost);
+    DipolesCGIterationMPIlocalOptimized(mu_, ts2v, precomputedInformation, use_ghost);
 
     std::vector<double> rv(nsites3);
     std::vector<double> pv(nsites3);
@@ -2919,7 +3122,7 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
     double residual = 0.0;
     double residual_global = 0.0;
     while (true) {
-        DipolesCGIterationMPIlocal(pv, ts2v, use_ghost);
+        DipolesCGIterationMPIlocalOptimized(pv, ts2v, precomputedInformation, use_ghost);
         double pvts2pv = DotProduct(pv, ts2v);
 
         double pvts2pv_global = 0.0;
@@ -3038,7 +3241,9 @@ void Electrostatics::CalculateDipolesCGMPIlocal(bool use_ghost) {
     //    Efd = Efq - 1/pol
 }
 
-void Electrostatics::CalculateDipolesCG() {
+
+
+void Electrostatics::CalculateDipolesConjugateGradient(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -3090,7 +3295,7 @@ void Electrostatics::CalculateDipolesCG() {
 
     std::vector<double> ts2v(nsites3);
 
-    DipolesCGIteration(mu_, ts2v);
+    DipolesCGIterationOptimized(mu_, ts2v, precomputedInformation);
 
     std::vector<double> rv(nsites3);
     std::vector<double> pv(nsites3);
@@ -3161,7 +3366,7 @@ void Electrostatics::CalculateDipolesCG() {
     double rvrv = DotProduct(rv, rv);
     double residual = 0.0;
     while (true) {
-        DipolesCGIteration(pv, ts2v);
+        DipolesCGIterationOptimized(pv, ts2v, precomputedInformation);
         double pvts2pv = DotProduct(pv, ts2v);
 
         if (rvrv < tolerance_) break;
@@ -3215,7 +3420,7 @@ void Electrostatics::CalculateDipolesCG() {
 #endif
     }
 
-    DipolesCGIteration(mu_, Efd_);
+    DipolesCGIterationOptimized(mu_, Efd_, precomputedInformation);
 
 #ifdef _DEBUG_DIPOLE
     {  // debug print
@@ -3372,10 +3577,10 @@ void Electrostatics::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) 
     }
 }
 
-void Electrostatics::CalculateDipolesAspc() {
+void Electrostatics::CalculateDipolesAspc(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
-        CalculateDipolesCG();
+        CalculateDipolesConjugateGradient(precomputedInformation);
         std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
         hist_num_aspc_++;
     } else {
@@ -3396,7 +3601,7 @@ void Electrostatics::CalculateDipolesAspc() {
         std::copy(mu_pred_.begin(), mu_pred_.end(), mu_.begin());
 
         // Now we run a single iteration to get the new Efd
-        ComputeDipoleField(mu_, Efd_);
+        ComputeDipoleFieldOptimized(mu_, Efd_, precomputedInformation);
 
         // Now the Electric dipole field is computed, and we update
         // the dipoles to get the corrector
@@ -3449,10 +3654,10 @@ void Electrostatics::CalculateDipolesAspc() {
     }  // end if (hist_num_aspc_ < k_aspc_ + 2)
 }
 
-void Electrostatics::CalculateDipolesAspcMPIlocal(bool use_ghost) {
+void Electrostatics::CalculateDipolesAspcMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, bool use_ghost) {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
-        CalculateDipolesCGMPIlocal(use_ghost);
+        CalculateDipolesConjugateGradientMPIlocal(precomputedInformation, use_ghost);
         std::copy(mu_.begin(), mu_.end(), mu_hist_.begin() + hist_num_aspc_ * nsites_ * 3);
         hist_num_aspc_++;
     } else {
@@ -3520,7 +3725,7 @@ void Electrostatics::CalculateDipolesAspcMPIlocal(bool use_ghost) {
 
         // Now we run a single iteration to get the new Efd
         reverse_forward_comm(Efq_);
-        ComputeDipoleFieldMPIlocal(mu_, Efd_, use_ghost);
+        ComputeDipoleFieldMPIlocalOptimized(mu_, Efd_, precomputedInformation, use_ghost);
 
         // Now the Electric dipole field is computed, and we update
         // the dipoles to get the corrector
@@ -5127,8 +5332,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
-        //      TODO: Check why this makes shit fail
-        //      if (ns == 1) continue;
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
@@ -5157,8 +5360,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
-
-                    // TODO. Slowest function
                     if (include_monomer) {
                         elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                        in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
@@ -5228,7 +5429,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
@@ -5241,7 +5442,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
             size_t ns2 = sites_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             // Prepare for parallelization
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efd_1_pool;
@@ -5579,6 +5779,769 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
     reverse_forward_comm(out_v);
 }
 
+void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in_v, std::vector<double> &out_v, 
+                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
+                                        bool use_ghost) {
+    // Parallelization
+    size_t nthreads = 1;
+#ifdef _OPENMP
+#pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+    {
+        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+    }
+#endif
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+#ifdef _DEBUG_DIPFIELD
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") DIPFIELD IN LOCAL: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
+                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
+                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
+                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
+                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
+                                      << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+    // Max number of monomers
+    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
+    ElectricFieldHolder elec_field(maxnmon);
+
+    std::fill(out_v.begin(), out_v.end(), 0);
+    double *in_ptr = in_v.data();
+    double aDD = 0.0;
+
+    // Excluded sets
+    excluded_set_type exc12;
+    excluded_set_type exc13;
+    excluded_set_type exc14;
+
+    // Auxiliary variables
+    double ex = 0.0;
+    double ey = 0.0;
+    double ez = 0.0;
+    // Recalculate Electric field due to dipoles
+    // Sites on the same monomer
+    size_t fi_mon = 0;
+    size_t fi_sites = 0;
+    size_t fi_crd = 0;
+
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = 2 * nmon;
+        // Get excluded pairs for this monomer
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+        for (size_t i = 0; i < ns - 1; i++) {
+            size_t inmon3 = 3 * i * nmon;
+            for (size_t j = i + 1; j < ns; j++) {
+                // Set the proper aDD
+                bool is12 = systools::IsExcluded(exc12, i, j);
+                bool is13 = systools::IsExcluded(exc13, i, j);
+                bool is14 = systools::IsExcluded(exc14, i, j);
+                aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
+                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+                double Ai = 0.0;
+                double Asqsqi = 0.0;
+                if (A > constants::EPS) {
+                    A = std::pow(A, 1.0 / 6.0);
+                    Ai = 1 / A;
+                    Asqsqi = Ai * Ai * Ai * Ai;
+                } else {
+                    Ai = BIGNUM;
+                    Asqsqi = Ai;
+                }
+
+                for (size_t m = 0; m < nmon; m++) {
+                    bool include_monomer = false;
+                    if (!use_ghost) include_monomer = true;
+                    if (use_ghost && islocal_[fi_mon + m]) include_monomer = true; 
+                    if (include_monomer) {
+                        elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
+                                                       in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
+                                                       out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_,
+                                                       simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_,
+                                                       use_ghost, islocal_, fi_mon + m, fi_mon);
+                        out_v[fi_crd + inmon3 + m] += ex;
+                        out_v[fi_crd + inmon3 + nmon + m] += ey;
+                        out_v[fi_crd + inmon3 + nmon2 + m] += ez;
+                    }  // if(include_monomer)
+                }      // for(m)
+            }
+        }
+        // Update first indexes
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+#ifdef _DEBUG_DIPFIELD
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") DIPFIELD 1B LOCAL: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
+                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " out_v= " << out_v[fi_crd + inmon3 + m]
+                                      << " " << out_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << out_v[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+    size_t fi_mon1 = 0;
+    size_t fi_mon2 = 0;
+    size_t fi_sites1 = 0;
+    size_t fi_sites2 = 0;
+    size_t fi_crd1 = 0;
+    size_t fi_crd2 = 0;
+    // Thole damping aDD intermolecular is always 0.055
+    aDD = 0.055;
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        size_t ns1 = sites_[fi_mon1];
+        size_t nmon1 = mon_type_count_[mt1].second;
+        size_t nmon12 = 2 * nmon1;
+        fi_mon2 = fi_mon1;
+        fi_sites2 = fi_sites1;
+        fi_crd2 = fi_crd1;
+        for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+            size_t ns2 = sites_[fi_mon2];
+            size_t nmon2 = mon_type_count_[mt2].second;
+            bool same = (mt1 == mt2);
+            // Prepare for parallelization
+            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+            std::vector<std::vector<double>> Efd_1_pool;
+            std::vector<std::vector<double>> Efd_2_pool;
+            for (size_t i = 0; i < nthreads; i++) {
+                field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
+                Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+                Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+            }
+
+// Parallel loop
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+            for (size_t m1 = 0; m1 < nmon1; m1++) {
+                int rank = 0;
+#ifdef _OPENMP
+                rank = omp_get_thread_num();
+#endif
+                std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
+                size_t m2init = same ? m1 + 1 : 0;
+                double ex_thread = 0.0;
+                double ey_thread = 0.0;
+                double ez_thread = 0.0;
+                for (size_t i = 0; i < ns1; i++) {
+                    size_t inmon13 = 3 * nmon1 * i;
+                    for (size_t j = 0; j < ns2; j++) {
+                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+                        double Ai = 0.0;
+                        double Asqsqi = 0.0;
+                        if (A > constants::EPS) {
+                            A = std::pow(A, 1.0 / 6.0);
+                            Ai = 1 / A;
+                            Asqsqi = Ai * Ai * Ai * Ai;
+                        } else {
+                            Ai = BIGNUM;
+                            Asqsqi = Ai;
+                        }
+                        // contains precomputed atom coordinate-dependant calculations
+                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+                        // contains indices of all mon 2s which are within a 9A cutoff from mon1
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
+                        int reordered_mon2_size = good_mon2_indices.size();
+                        
+                        // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within a twobody_cutoff from mon 1
+                        // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double> reordered_Efd2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
+                        const size_t site_jnmon23 = nmon2 * j * 3;
+                        double *mu2 = in_ptr + fi_crd2;
+
+                        // populates reordered_mu2
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            reordered_mu2[new_mon2_index] = mu2[old_mon2_index + site_jnmon23];
+                            reordered_mu2[new_mon2_index + reordered_mon2_size] = mu2[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2 + site_jnmon23];
+                        }
+
+                        // populates reordered_Efd2 (electric field on mon 2)
+                        local_field->CalcDipoleElecField_Optimized(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
+                                                         reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, 
+                                                         aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
+                                                         &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
+
+                        // reverts reordering of Efd2
+                        double *Efd2 = Efd_2_pool[rank].data();
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            
+                            Efd2[site_jnmon23 + old_mon2_index] += reordered_Efd2[new_mon2_index];
+                            Efd2[site_jnmon23 + nmon2 + old_mon2_index] += reordered_Efd2[reordered_mon2_size + new_mon2_index];
+                            Efd2[site_jnmon23 + 2*nmon2 + old_mon2_index] += reordered_Efd2[2*reordered_mon2_size + new_mon2_index];
+                        }
+
+                        Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                        Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                        Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                    }
+                }
+            }
+
+            // Compress data in Efd
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                size_t kend1 = Efd_1_pool[rank].size();
+                size_t kend2 = Efd_2_pool[rank].size();
+                for (size_t k = 0; k < kend1; k++) {
+                    out_v[fi_crd1 + k] += Efd_1_pool[rank][k];
+                }
+                for (size_t k = 0; k < kend2; k++) {
+                    out_v[fi_crd2 + k] += Efd_2_pool[rank][k];
+                }
+            }
+            // Update first indexes
+            fi_mon2 += nmon2;
+            fi_sites2 += nmon2 * ns2;
+            fi_crd2 += nmon2 * ns2 * 3;
+        }
+        // Update first indexes
+        fi_mon1 += nmon1;
+        fi_sites1 += nmon1 * ns1;
+        fi_crd1 += nmon1 * ns1 * 3;
+    }
+
+    //   }
+    // } // for(ip)
+
+#ifdef _DEBUG_DIPFIELD
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") DIPFIELD 2B LOCAL: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
+                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " out_v= " << out_v[fi_crd + inmon3 + m]
+                                      << " " << out_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << out_v[fi_crd + inmon3 + nmon2 + m] << " in_v= " << in_v[fi_crd + inmon3 + m]
+                                      << " " << in_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << in_v[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+#if HAVE_MPI == 1
+    double time2 = MPI_Wtime();
+#endif
+
+    bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
+
+    if (!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
+
+    if (!simcell_periodic_) compute_pme = false;
+
+    if (compute_pme) {
+        // Sort the dipoles to the order helPME expects (for now)
+        // int fi_mon = 0;
+        // int fi_crd = 0;
+        fi_mon = 0;
+        fi_crd = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    sys_mu_[fi_crd + mns3 + 3 * i] = in_ptr[inmon3 + m + fi_crd];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = in_ptr[inmon3 + m + fi_crd + nmon];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = in_ptr[inmon3 + m + fi_crd + nmon2];
+                }
+            }
+            fi_mon += nmon;
+            fi_crd += nmon * ns * 3;
+        }
+
+#if HAVE_MPI == 1
+        double _time0 = MPI_Wtime();
+#endif
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        // Compute the reciprocal space terms, using PME
+        double A, B, C, alpha, beta, gamma;
+        if (use_ghost) {
+            A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
+        } else {
+            A = box_ABCabc_[0];
+            B = box_ABCabc_[1];
+            C = box_ABCabc_[2];
+            alpha = box_ABCabc_[3];
+            beta = box_ABCabc_[4];
+            gamma = box_ABCabc_[5];
+        }
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
+
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
+        auto result = helpme::Matrix<double>(sys_Efd_.data(), nsites_, 3);
+        std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
+
+#ifdef _DEBUG_DIPFIELD
+        {  // debug print
+            int me, nprocs;
+            MPI_Comm_size(world_, &nprocs);
+            MPI_Comm_rank(world_, &me);
+
+            MPI_Barrier(world_);
+            for (int ip = 0; ip < nprocs; ++ip) {
+                if (ip == me) {
+                    std::cout << "\n" << std::endl;
+                    for (size_t i = 0; i < nsites_; i++) {
+                        std::cout << "(" << me << ") DIPFIELD PRec LOCAL: i= " << i << " xyz= " << coords(i, 0) << " "
+                                  << coords(i, 1) << " " << coords(i, 2) << " dipoles= " << dipoles(i, 0) << " "
+                                  << dipoles(i, 1) << " " << dipoles(i, 2) << std::endl;
+                    }
+                }
+                MPI_Barrier(world_);
+            }
+        }  // debug print
+#endif
+#if HAVE_MPI == 1
+        double _time1 = MPI_Wtime();
+#endif
+        pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
+        mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
+
+#ifdef _DEBUG_DIPFIELD
+        {  // debug print
+            int me, nprocs;
+            MPI_Comm_size(world_, &nprocs);
+            MPI_Comm_rank(world_, &me);
+
+            MPI_Barrier(world_);
+            for (int ip = 0; ip < nprocs; ++ip) {
+                if (ip == me) {
+                    std::cout << "\n" << std::endl;
+                    for (size_t i = 0; i < nsites_; i++) {
+                        std::cout << "(" << me << ") DIPFIELD PRec LOCAL (before Allreduce): i= " << i
+                                  << " xyz= " << coords(i, 0) << " " << coords(i, 1) << " " << coords(i, 2)
+                                  << " result= " << result(i, 0) << " " << result(i, 1) << " " << result(i, 2)
+                                  << std::endl;
+                    }
+                }
+                MPI_Barrier(world_);
+            }
+        }  // debug print
+#endif
+
+        // The Ewald self field due to induced dipoles
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+
+        // Resort field from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    const double *result_ptr = result[fi_sites + mns + i];
+                    out_v[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                    out_v[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                    out_v[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
+
+        for (int i = 0; i < nsites_ * 3; ++i) out_v[i] += slf_prefactor * in_v[i] * islocal_atom_xyz_[i];
+    }
+
+#ifdef _DEBUG_DIPFIELD
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") DIPFIELD PME LOCAL: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
+                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " out_v= " << out_v[fi_crd + inmon3 + m]
+                                      << " " << out_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << out_v[fi_crd + inmon3 + nmon2 + m] << " in_v= " << in_v[fi_crd + inmon3 + m]
+                                      << " " << in_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << in_v[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+#if HAVE_MPI == 1
+    double time3 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_DIPFIELD_REAL]++;
+    mbxt_ele_time_[ELE_DIPFIELD_REAL] += time2 - time1;
+
+    mbxt_ele_count_[ELE_DIPFIELD_PME]++;
+    mbxt_ele_time_[ELE_DIPFIELD_PME] += time3 - time2;
+#endif
+
+    // proxy for reverse_forward_comm(out_v) to accumulate
+    reverse_forward_comm(out_v);
+}
+
+/*
+ * This function computes all necessary electrostatic calculations which are based on atom positions.
+ * These calculations are then stored in the precomputedInformation hashmap, to be accessed in 
+ * the optimized versions of the Electrostatics functions. The purpose of this function is to
+ * improve runtime of the optimized functions by ensuring expensive coordinate-depedant work is only 
+ * done once.
+ */
+void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &out_v,
+                                                           std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
+                                                           bool use_ghost, bool MPI) { // change parameters
+
+
+    size_t nthreads = 1;
+#ifdef _OPENMP
+#pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+    {
+        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+    }
+#endif
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+    size_t nExtChg = external_charge_.size();
+    std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
+    if (nExtChg > 0) {
+        mon_type_count_.push_back(std::make_pair("ext", nExtChg));
+    }
+
+    size_t maxnmon = (mon_type_count_cp.size() > 0) ? mon_type_count_cp.back().second : 1;
+    if (nExtChg > maxnmon) maxnmon = nExtChg; // maxnmon is the maximum number of monomers
+    double ewald_alpha = ewald_alpha_;
+    double cutoff = cutoff_;
+    std::vector<size_t> &islocal = islocal_all_;
+    std::vector<double> box;
+    std::vector<double> box_inverse;
+    bool use_pbc;
+    // Checks whether MPI is being used and sets variables accordingly
+    if (MPI == 1) {
+        box = box_PMElocal_;
+        box_inverse = box_inverse_PMElocal_;
+        use_pbc = simcell_periodic_;
+    } else {
+        box = box_;
+        box_inverse = box_inverse_;
+        use_pbc = use_pbc_;
+    }
+
+    // All atom coordinate-dependant calculations are done below and stored in precomputedInformation
+    size_t fi_mon1 = 0;
+    size_t fi_mon2 = 0;
+    size_t fi_sites1 = 0;
+    size_t fi_sites2 = 0;
+    size_t fi_crd1 = 0;
+    size_t fi_crd2 = 0;
+    double aDD = 0.055; // Thole damping aDD intermolecular is always 0.055
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        size_t ns1 = sites_all_[fi_mon1];
+        size_t nmon1 = mon_type_count_[mt1].second;
+        size_t nmon12 = nmon1 * 2;
+        fi_mon2 = fi_mon1;
+        fi_sites2 = fi_sites1;
+        fi_crd2 = fi_crd1;
+
+        for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+            size_t ns2 = sites_all_[fi_mon2];
+            size_t nmon2 = mon_type_count_[mt2].second;
+            bool same = (mt1 == mt2);
+            // Prepare for parallelization
+            // /*
+            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+            std::vector<std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>> precomputedInformation_pool;
+            for (size_t i = 0; i < nthreads; i++) {
+                field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
+                precomputedInformation_pool.push_back(std::make_shared<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>());
+            }
+            // */
+            // Parallel loop
+            size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
+            size_t m1_step_size;
+
+            if (MPI == 1) {
+                m1_step_size = 1;
+                m1start = 0;
+            } else {
+                m1_step_size = num_mpi_ranks_;
+            }
+
+            #ifdef _OPENMP
+            #pragma omp parallel for schedule(dynamic)
+            #endif
+
+            for (size_t m1 = m1start; m1 < nmon1; m1 += m1_step_size) {
+                //            for (size_t m1 = 0; m1 < nmon1; m1++) {
+                // size_t isl1_offset = fi_mon1 + m1;
+                // size_t isl2_offset = fi_mon2;
+                int rank = 0;
+            #ifdef _OPENMP
+                            rank = omp_get_thread_num();
+            #endif
+
+                std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
+                std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>> rank_precomputedInformation = precomputedInformation_pool[rank];
+                size_t m2init = same ? m1 + 1 : 0;
+
+                for (size_t i = 0; i < ns1; i++) {
+                    size_t inmon13 = 3 * nmon1 * i;
+                    for (size_t j = 0; j < ns2; j++) {
+                        double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
+                        double Ai = 0.0;
+                        double Asqsqi = 0.0;
+                        if (A > constants::EPS) {
+                            A = std::pow(A, 1.0 / 6.0);
+                            Ai = 1 / A;
+                            Asqsqi = Ai * Ai * Ai * Ai;
+                        } else {
+                            Ai = BIGNUM;
+                            Asqsqi = Ai;
+                        }
+
+                        // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
+                        std::vector<size_t> good_mon2_indices;
+                        std::vector<size_t> bool_mon2_indices(nmon2, 0);
+                        local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
+                                                                    nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
+                                                                    m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
+
+                        // monomer 2s within the cutoff are stored in good_mon2_indices
+                        for (int ind = 0; ind < nmon2; ind++) {
+                            if (bool_mon2_indices[ind] == 1) {
+                                good_mon2_indices.push_back(ind);
+                            }
+                        }
+
+                    
+
+                        int reordered_mon2_size = good_mon2_indices.size();
+                        std::vector<double> reordered_xyz2(3*reordered_mon2_size, 0.0);
+                        std::vector<size_t> reordered_islocal(reordered_mon2_size + 1, 0.0);
+                        size_t site_j3 = j * 3;
+                        size_t site_jnmon23 = nmon2 * site_j3;
+                        reordered_islocal[0] = islocal_all_[fi_mon1 + m1];
+                        double *xyz2 = xyz_all_.data() + fi_crd2;
+                        
+                        // reorder the vector of monomers and islocal to only include monomer 2s within the cutoff
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            reordered_xyz2[new_mon2_index] = xyz2[old_mon2_index + site_jnmon23];
+                            reordered_xyz2[new_mon2_index + reordered_mon2_size] = xyz2[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz2[old_mon2_index + 2*nmon2 + site_jnmon23];
+                            reordered_islocal[new_mon2_index + 1] = islocal_all_[fi_mon2 + old_mon2_index];
+                        }
+
+                        // Store versions of xyz2 and islocal which only include monomers within the cutoff
+                        // and a list of monomers within the cutoff in precomputedInformation
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].reordered_xyz2 = reordered_xyz2;
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].reordered_islocal = reordered_islocal;
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
+
+                        // Calculate ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3 values and store them in precomputedInformation
+                        local_field->CalcPrecomputedDipoleElec(xyz_all_.data() + fi_crd1, reordered_xyz2.data(),
+                                                         m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
+                                                         Asqsqi, aDD, ewald_alpha_, use_pbc, box, box_inverse,
+                                                         cutoff_, use_ghost, reordered_islocal, 0, 1, *rank_precomputedInformation,
+                                                         mt1, mt2, m1, i, j); 
+                        
+                    }
+                }
+            }
+
+            // Compress data in precomputedInformation
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                precomputedInformation.insert(precomputedInformation_pool[rank]->begin(), precomputedInformation_pool[rank]->end());
+            }
+            // Update first indexes
+            fi_mon2 += nmon2;
+            fi_sites2 += nmon2 * ns2;
+            fi_crd2 += nmon2 * ns2 * 3;
+        }
+        // Update first indexes
+        fi_mon1 += nmon1;
+        fi_sites1 += nmon1 * ns1;
+        fi_crd1 += nmon1 * ns1 * 3;
+    }
+    mon_type_count_ = mon_type_count_cp;
+
+    #if HAVE_MPI == 1
+        double time2 = MPI_Wtime();
+        mbxt_ele_time_[ELE_DIPFIELD_REAL] += time2 - time1;
+    #endif
+}
+
 void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost) {
     // Parallelization
     size_t nthreads = 1;
@@ -5666,8 +6629,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = sites_[fi_mon];
-        //      TODO: Check why this makes shit fail
-        //      if (ns == 1) continue;
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
@@ -5695,7 +6656,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                 //                for (size_t m = 0; m < nmon; m++) {
                 size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
                 for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
-                    // TODO. Slowest function
                     elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                    in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
                                                    out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
@@ -5762,7 +6722,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_[fi_mon1];
@@ -5775,7 +6735,6 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             size_t ns2 = sites_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             // Prepare for parallelization
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> Efd_1_pool;
@@ -5816,11 +6775,61 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                             Ai = BIGNUM;
                             Asqsqi = Ai;
                         }
-                        local_field->CalcDipoleElecField(xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, in_ptr + fi_crd1,
-                                                         in_ptr + fi_crd2, m1, m2init, nmon2, nmon1, nmon2, i, j,
-                                                         Asqsqi, aDD, Efd_2_pool[rank].data(), &ex_thread, &ey_thread,
+
+                        std::vector<int> good_mon2_indices;
+                        std::vector<size_t> bool_mon2_indices(nmon2, 0);
+                        local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
+                                                                    nmon1, nmon2, use_pbc_, box_, box_inverse_, cutoff_, i, j,
+                                                                    m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+
+                       
+                        for (int ind = 0; ind < nmon2; ind++) {
+                            if (bool_mon2_indices[ind] == 1) {
+                                good_mon2_indices.push_back(ind);
+                            }
+                        }
+                    
+                        int reordered_mon2_size = good_mon2_indices.size();
+                        const size_t site_j3 = j * 3;
+                        const size_t site_jnmon23 = nmon2 * site_j3;
+                        std::vector<double> reordered_xyz2(3*reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
+                        std::vector<size_t> reordered_islocal(reordered_mon2_size + 1, 0.0);
+                        std::vector<double> reordered_Efd2(3*reordered_mon2_size, 0.0);
+
+                        reordered_islocal[0] = islocal_[fi_mon1 + m1];
+                        double *xyz2 = xyz_.data() + fi_crd2;
+                        double *mu2 = in_ptr + fi_crd2;
+                    
+
+                    #pragma omp simd 
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            reordered_xyz2[new_mon2_index] = xyz2[old_mon2_index + site_jnmon23];
+                            reordered_xyz2[new_mon2_index + reordered_mon2_size] = xyz2[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz2[old_mon2_index + 2*nmon2 + site_jnmon23];
+
+                            reordered_mu2[new_mon2_index] = mu2[old_mon2_index + site_jnmon23];
+                            reordered_mu2[new_mon2_index + reordered_mon2_size] = mu2[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2 + site_jnmon23];
+
+                            reordered_islocal[new_mon2_index + 1] = islocal_[fi_crd2 + old_mon2_index];
+                        }
+                        local_field->CalcDipoleElecField_WithinCutoff(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
+                                                         reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
+                                                         Asqsqi, aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
                                                          &ez_thread, ewald_alpha_, use_pbc_, box_, box_inverse_,
-                                                         cutoff_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+                                                         cutoff_, use_ghost, reordered_islocal, 0, 1);
+
+                        double *Efd2 = Efd_2_pool[rank].data();
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            
+                            Efd2[site_jnmon23 + old_mon2_index] += reordered_Efd2[new_mon2_index];
+                            Efd2[site_jnmon23 + nmon2 + old_mon2_index] += reordered_Efd2[reordered_mon2_size + new_mon2_index];
+                            Efd2[site_jnmon23 + 2*nmon2 + old_mon2_index] += reordered_Efd2[2*reordered_mon2_size + new_mon2_index];
+                        }
+
                         Efd_1_pool[rank][inmon13 + m1] += ex_thread;
                         Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -6102,7 +7111,565 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 #endif
 }
 
-void Electrostatics::CalculateDipolesIterative() {
+
+void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std::vector<double> &out_v, 
+                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
+                                        bool use_ghost) {
+    // Parallelization
+    size_t nthreads = 1;
+#ifdef _OPENMP
+#pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+    {
+        if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+    }
+#endif
+
+#if HAVE_MPI == 1
+    double time1 = MPI_Wtime();
+#endif
+
+#ifdef _DEBUG_DIPFIELD
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            //		std::cout << std::setprecision(15) <<
+                            std::cout << "(" << me << ") DIPFIELD IN ORIG: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " indx= " << fi_crd + inmon3 + m
+                                      << " " << fi_crd + inmon3 + nmon + m << " " << fi_crd + inmon3 + nmon2 + m
+                                      << " xyz= " << xyz_[fi_crd + inmon3 + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon + m] << " " << xyz_[fi_crd + inmon3 + nmon2 + m]
+                                      << " in_v= " << in_v[fi_crd + inmon3 + m] << " "
+                                      << in_v[fi_crd + inmon3 + nmon + m] << " " << in_v[fi_crd + inmon3 + nmon2 + m]
+                                      << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+    // Max number of monomers
+    size_t maxnmon = (nsites_ == 0) ? 1 : mon_type_count_.back().second;
+    ElectricFieldHolder elec_field(maxnmon);
+
+    std::fill(out_v.begin(), out_v.end(), 0);
+    double *in_ptr = in_v.data();
+    double aDD = 0.0;
+
+    // Excluded sets
+    excluded_set_type exc12;
+    excluded_set_type exc13;
+    excluded_set_type exc14;
+
+    // Auxiliary variables
+    double ex = 0.0;
+    double ey = 0.0;
+    double ez = 0.0;
+    // Recalculate Electric field due to dipoles
+    // Sites on the same monomer
+    size_t fi_mon = 0;
+    size_t fi_sites = 0;
+    size_t fi_crd = 0;
+
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = 2 * nmon;
+        // Get excluded pairs for this monomer
+        systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+        for (size_t i = 0; i < ns - 1; i++) {
+            size_t inmon3 = 3 * i * nmon;
+            for (size_t j = i + 1; j < ns; j++) {
+                // Set the proper aDD
+                bool is12 = systools::IsExcluded(exc12, i, j);
+                bool is13 = systools::IsExcluded(exc13, i, j);
+                bool is14 = systools::IsExcluded(exc14, i, j);
+                aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
+                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+                double Ai = 0.0;
+                double Asqsqi = 0.0;
+                if (A > constants::EPS) {
+                    A = std::pow(A, 1.0 / 6.0);
+                    Ai = 1 / A;
+                    Asqsqi = Ai * Ai * Ai * Ai;
+                } else {
+                    Ai = BIGNUM;
+                    Asqsqi = Ai;
+                }
+
+                //                for (size_t m = 0; m < nmon; m++) {
+                size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
+                for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
+                    elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
+                                                   in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
+                                                   out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
+                                                   box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon);
+                    out_v[fi_crd + inmon3 + m] += ex;
+                    out_v[fi_crd + inmon3 + nmon + m] += ey;
+                    out_v[fi_crd + inmon3 + nmon2 + m] += ez;
+                }  // for(m)
+            }
+        }
+        // Update first indexes
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+
+#ifdef _DEBUG_DIPFIELD
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") DIPFIELD 1B ORIG: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
+                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " out_v= " << out_v[fi_crd + inmon3 + m]
+                                      << " " << out_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << out_v[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+    size_t fi_mon1 = 0;
+    size_t fi_mon2 = 0;
+    size_t fi_sites1 = 0;
+    size_t fi_sites2 = 0;
+    size_t fi_crd1 = 0;
+    size_t fi_crd2 = 0;
+    // Thole damping aDD intermolecular is always 0.055
+    aDD = 0.055;
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        size_t ns1 = sites_[fi_mon1];
+        size_t nmon1 = mon_type_count_[mt1].second;
+        size_t nmon12 = 2 * nmon1;
+        fi_mon2 = fi_mon1;
+        fi_sites2 = fi_sites1;
+        fi_crd2 = fi_crd1;
+        for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+            size_t ns2 = sites_[fi_mon2];
+            size_t nmon2 = mon_type_count_[mt2].second;
+            bool same = (mt1 == mt2);
+            // Prepare for parallelization
+            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
+            std::vector<std::vector<double>> Efd_1_pool;
+            std::vector<std::vector<double>> Efd_2_pool;
+            for (size_t i = 0; i < nthreads; i++) {
+                field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
+                Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
+                Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+            }
+
+            // Parallel loop
+            size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+            for (size_t m1 = m1start; m1 < nmon1; m1 += num_mpi_ranks_) {
+                //            for (size_t m1 = 0; m1 < nmon1; m1++) {
+                int rank = 0;
+#ifdef _OPENMP
+                rank = omp_get_thread_num();
+#endif
+                std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
+                size_t m2init = same ? m1 + 1 : 0;
+                double ex_thread = 0.0;
+                double ey_thread = 0.0;
+                double ez_thread = 0.0;
+                for (size_t i = 0; i < ns1; i++) {
+                    size_t inmon13 = 3 * nmon1 * i;
+                    for (size_t j = 0; j < ns2; j++) {
+                        double A = polfac_[fi_sites1 + i] * polfac_[fi_sites2 + j];
+                        double Ai = 0.0;
+                        double Asqsqi = 0.0;
+                        if (A > constants::EPS) {
+                            A = std::pow(A, 1.0 / 6.0);
+                            Ai = 1 / A;
+                            Asqsqi = Ai * Ai * Ai * Ai;
+                        } else {
+                            Ai = BIGNUM;
+                            Asqsqi = Ai;
+                        }
+                        
+
+                        // contains precomputed atom coordinate-dependant calculations
+                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+                        // contains indices of all mon 2s which are within a 9A cutoff from mon1
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
+                        int reordered_mon2_size = good_mon2_indices.size();
+                        
+                        // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within a twobody_cutoff from mon 1
+                        // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double> reordered_Efd2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
+                        const size_t site_jnmon23 = nmon2 * j * 3;
+                        double *mu2 = in_ptr + fi_crd2;
+
+                        // populates reordered_mu2
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            reordered_mu2[new_mon2_index] = mu2[old_mon2_index + site_jnmon23];
+                            reordered_mu2[new_mon2_index + reordered_mon2_size] = mu2[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2 + site_jnmon23];
+                        }
+
+                        // populates reordered_Efd2 (electric field on mon 2)
+                        local_field->CalcDipoleElecField_Optimized(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
+                                                         reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, 
+                                                         aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
+                                                         &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
+
+                        
+                        // reverts reordering of Efd2
+                        double *Efd2 = Efd_2_pool[rank].data();
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            Efd2[site_jnmon23 + old_mon2_index] += reordered_Efd2[new_mon2_index];
+                            Efd2[site_jnmon23 + nmon2 + old_mon2_index] += reordered_Efd2[reordered_mon2_size + new_mon2_index];
+                            Efd2[site_jnmon23 + 2*nmon2 + old_mon2_index] += reordered_Efd2[2*reordered_mon2_size + new_mon2_index];
+                        }
+
+                        Efd_1_pool[rank][inmon13 + m1] += ex_thread;
+                        Efd_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
+                        Efd_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
+                    }
+                }
+            }
+
+            // Compress data in Efd
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                size_t kend1 = Efd_1_pool[rank].size();
+                size_t kend2 = Efd_2_pool[rank].size();
+                for (size_t k = 0; k < kend1; k++) {
+                    out_v[fi_crd1 + k] += Efd_1_pool[rank][k];
+                }
+                for (size_t k = 0; k < kend2; k++) {
+                    out_v[fi_crd2 + k] += Efd_2_pool[rank][k];
+                }
+            }
+            // Update first indexes
+            fi_mon2 += nmon2;
+            fi_sites2 += nmon2 * ns2;
+            fi_crd2 += nmon2 * ns2 * 3;
+        }
+        // Update first indexes
+        fi_mon1 += nmon1;
+        fi_sites1 += nmon1 * ns1;
+        fi_crd1 += nmon1 * ns1 * 3;
+    }
+
+#if HAVE_MPI == 1
+    MPI_Allreduce(MPI_IN_PLACE, out_v.data(), out_v.size(), MPI_DOUBLE, MPI_SUM, world_);
+    double time2 = MPI_Wtime();
+#endif
+
+#ifdef _DEBUG_DIPFIELD
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") DIPFIELD 2B ORIG: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
+                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " out_v= " << out_v[fi_crd + inmon3 + m]
+                                      << " " << out_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << out_v[fi_crd + inmon3 + nmon2 + m] << " in_v= " << in_v[fi_crd + inmon3 + m]
+                                      << " " << in_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << in_v[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        // Sort the dipoles to the order helPME expects (for now)
+        // int fi_mon = 0;
+        // int fi_crd = 0;
+        fi_mon = 0;
+        fi_crd = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    sys_mu_[fi_crd + mns3 + 3 * i] = in_ptr[inmon3 + m + fi_crd];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 1] = in_ptr[inmon3 + m + fi_crd + nmon];
+                    sys_mu_[fi_crd + mns3 + 3 * i + 2] = in_ptr[inmon3 + m + fi_crd + nmon2];
+                }
+            }
+            fi_mon += nmon;
+            fi_crd += nmon * ns * 3;
+        }
+
+#if HAVE_MPI == 1
+        double _time0 = MPI_Wtime();
+#endif
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        double A, B, C, alpha, beta, gamma;
+        A = box_ABCabc_[0];
+        B = box_ABCabc_[1];
+        C = box_ABCabc_[2];
+        alpha = box_ABCabc_[3];
+        beta = box_ABCabc_[4];
+        gamma = box_ABCabc_[5];
+
+        // Compute the reciprocal space terms, using PME
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                      PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
+        mbxt_ele_count_[ELE_PME_SETUP]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_SETUP] += MPI_Wtime() - _time0;
+#endif
+
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), nsites_, 3);
+        auto dipoles = helpme::Matrix<double>(sys_mu_.data(), nsites_, 3);
+        auto result = helpme::Matrix<double>(sys_Efd_.data(), nsites_, 3);
+        std::fill(sys_Efd_.begin(), sys_Efd_.end(), 0.0);
+
+#ifdef _DEBUG_DIPFIELD
+        {  // debug print
+            int me, nprocs;
+            MPI_Comm_size(world_, &nprocs);
+            MPI_Comm_rank(world_, &me);
+
+            MPI_Barrier(world_);
+            for (int ip = 0; ip < nprocs; ++ip) {
+                if (ip == me) {
+                    std::cout << "\n" << std::endl;
+                    for (size_t i = 0; i < nsites_; i++) {
+                        std::cout << "(" << me << ") DIPFIELD PRec ORIG: i= " << i << " xyz= " << coords(i, 0) << " "
+                                  << coords(i, 1) << " " << coords(i, 2) << " dipoles= " << dipoles(i, 0) << " "
+                                  << dipoles(i, 1) << " " << dipoles(i, 2) << std::endl;
+                    }
+                }
+                MPI_Barrier(world_);
+            }
+        }  // debug print
+#endif
+
+#if HAVE_MPI == 1
+        double _time1 = MPI_Wtime();
+#endif
+        pme_solver_.computePRec(-1, dipoles, coords, coords, -1, result);
+        mbxt_ele_count_[ELE_PME_PRD]++;
+#if HAVE_MPI == 1
+        mbxt_ele_time_[ELE_PME_PRD] += MPI_Wtime() - _time1;
+#endif
+
+#ifdef _DEBUG_DIPFIELD
+        {  // debug print
+            int me, nprocs;
+            MPI_Comm_size(world_, &nprocs);
+            MPI_Comm_rank(world_, &me);
+
+            MPI_Barrier(world_);
+            for (int ip = 0; ip < nprocs; ++ip) {
+                if (ip == me) {
+                    std::cout << "\n" << std::endl;
+                    for (size_t i = 0; i < nsites_; i++) {
+                        std::cout << "(" << me << ") DIPFIELD PRec ORIG (before Allreduce): i= " << i
+                                  << " xyz= " << coords(i, 0) << " " << coords(i, 1) << " " << coords(i, 2)
+                                  << " result= " << result(i, 0) << " " << result(i, 1) << " " << result(i, 2)
+                                  << std::endl;
+                    }
+                }
+                MPI_Barrier(world_);
+            }
+        }  // debug print
+#endif
+
+#if HAVE_MPI == 1
+        MPI_Allreduce(MPI_IN_PLACE, sys_Efd_.data(), sys_Efd_.size(), MPI_DOUBLE, MPI_SUM, world_);
+#endif
+
+        // Resort field from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    const double *result_ptr = result[fi_sites + mns + i];
+                    out_v[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                    out_v[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                    out_v[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
+        // The Ewald self field due to induced dipoles
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double *e_ptr = out_v.data();
+        for (const auto &mu : in_v) {
+            *e_ptr += slf_prefactor * mu;
+            ++e_ptr;
+        }
+    }
+
+#ifdef _DEBUG_DIPFIELD
+    {  // debug print
+        int me, nprocs;
+        MPI_Comm_size(world_, &nprocs);
+        MPI_Comm_rank(world_, &me);
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+
+        MPI_Barrier(world_);
+        for (int ip = 0; ip < nprocs; ++ip) {
+            if (ip == me) {
+                std::cout << "\n" << std::endl;
+                // Loop over each monomer type
+                for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+                    size_t ns = sites_[fi_mon];
+                    size_t nmon = mon_type_count_[mt].second;
+                    size_t nmon2 = 2 * nmon;
+
+                    // Loop over each pair of sites
+                    for (size_t i = 0; i < ns; i++) {
+                        size_t inmon = i * nmon;
+                        size_t inmon3 = inmon * 3;
+                        for (size_t m = 0; m < nmon; m++) {
+                            std::cout << "(" << me << ") DIPFIELD PME ORIG: mt= " << mt << " i= " << i << " m= " << m
+                                      << "  islocal= " << islocal_[fi_mon + m] << " xyz= " << xyz_[fi_crd + inmon3 + m]
+                                      << " " << xyz_[fi_crd + inmon3 + nmon + m] << " "
+                                      << xyz_[fi_crd + inmon3 + nmon2 + m] << " out_v= " << out_v[fi_crd + inmon3 + m]
+                                      << " " << out_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << out_v[fi_crd + inmon3 + nmon2 + m] << " in_v= " << in_v[fi_crd + inmon3 + m]
+                                      << " " << in_v[fi_crd + inmon3 + nmon + m] << " "
+                                      << in_v[fi_crd + inmon3 + nmon2 + m] << std::endl;
+                        }
+                    }
+
+                    // Update first indexes
+                    fi_mon += nmon;
+                    fi_sites += nmon * ns;
+                    fi_crd += nmon * ns * 3;
+                }
+            }
+            MPI_Barrier(world_);
+        }
+    }  // debug print
+#endif
+
+#if HAVE_MPI == 1
+    double time3 = MPI_Wtime();
+
+    mbxt_ele_count_[ELE_DIPFIELD_REAL]++;
+    mbxt_ele_time_[ELE_DIPFIELD_REAL] += time2 - time1;
+
+    mbxt_ele_count_[ELE_DIPFIELD_PME]++;
+    mbxt_ele_time_[ELE_DIPFIELD_PME] += time3 - time2;
+#endif
+}
+
+void Electrostatics::CalculateDipolesIterative(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation) {
     // Permanent electric field is computed
     // Now start computation of dipole through iteration
     double eps = 1.0E+50;
@@ -6172,7 +7739,7 @@ void Electrostatics::CalculateDipolesIterative() {
         }
         iter++;
         // Perform next iteration
-        ComputeDipoleField(mu_, Efd_);
+        ComputeDipoleFieldOptimized(mu_, Efd_, precomputedInformation);
     }
 }
 
@@ -6242,7 +7809,8 @@ void Electrostatics::CalculateElecEnergy() {
 #endif
 }
 
-void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost) {
+
+void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost) {
     // MRR EXT
     size_t nExtChg = external_charge_.size();
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
@@ -6501,7 +8069,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
@@ -6514,7 +8082,6 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> grad_1_pool;
             std::vector<std::vector<double>> grad_2_pool;
@@ -6556,13 +8123,62 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
                             Ai = BIGNUM;
                             Asqsqi = Ai;
                         }
+
+                        
+                        // contains precomputed atom coordinate-dependant calculations
+                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
+                        // contains indices of all mon 2s which are within a 9A cutoff from mon1
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
+                        int reordered_mon2_size = good_mon2_indices.size();
+
+                        // Reordered versions of xyz2, islocal ,..., chg  so they only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
+                        // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal; 
+                        std::vector<double> reordered_grad2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_mu(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
+                        
+                
+                        double *chg = chg_all_.data() + fi_sites2;
+                        double *mu = mu_all_.data() + fi_crd2;
+                        const size_t site_j3 = j * 3;
+                        const size_t site_jnmon23 = nmon2 * site_j3;
+                        const size_t site_jnmon2 = nmon2 * j;
+
+                        // Populates reordered_chg and reordered_mu
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            reordered_chg[new_mon2_index] = chg[old_mon2_index + site_jnmon2];
+                            reordered_mu[new_mon2_index] = mu[old_mon2_index + site_jnmon23 ];
+                            reordered_mu[new_mon2_index + reordered_mon2_size] = mu[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_mu[new_mon2_index + 2*reordered_mon2_size] = mu[old_mon2_index + 2*nmon2 + site_jnmon23];
+                        }
+
+                        // Populates reordered_grad2 (gradient on site j on monomer 2) and reordered_phi2 (field on site j of mon2)
                         local_field->CalcElecFieldGrads(
-                            xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, chg_all_.data() + fi_sites1,
-                            chg_all_.data() + fi_sites2, mu_all_.data() + fi_crd1, mu_all_.data() + fi_crd2, m1, m2init,
-                            nmon2, nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
-                            &phi1_thread, phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_,
-                            simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, islocal_all_,
-                            fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                            xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1,
+                            reordered_chg.data(), mu_all_.data() + fi_crd1, reordered_mu.data(), m1, 0,
+                            reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
+                            &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, 
+                            simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, 
+                            reordered_islocal, 0, 1, &virial_pool[rank]);
+
+                        // Revert the reordering of grad2 and phi2
+                        double *phi2 = phi_2_pool[rank].data();
+                        double *grad2 = grad_2_pool[rank].data();
+
+ 
+                        
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            phi_2_pool[rank][site_jnmon2 + old_mon2_index] += reordered_phi2[new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + old_mon2_index] += reordered_grad2[new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + nmon2 + old_mon2_index] += reordered_grad2[reordered_mon2_size + new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + 2*nmon2 + old_mon2_index] += reordered_grad2[2*reordered_mon2_size + new_mon2_index];
+                        }
+
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -7090,7 +8706,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<double> &grad, bool 
 #endif
 }
 
-void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghost) {
+void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, bool use_ghost) {
     // MRR EXT
     size_t nExtChg = external_charge_.size();
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
@@ -7330,7 +8946,8 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-    // aDD intermolecular is always 0.055
+
+    // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
@@ -7343,7 +8960,6 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            // TODO add neighbour list here
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::vector<double>> grad_1_pool;
             std::vector<std::vector<double>> grad_2_pool;
@@ -7385,13 +9001,61 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
                             Ai = BIGNUM;
                             Asqsqi = Ai;
                         }
+
+                        // contains precomputed atom coordinate-dependant calculations
+                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
+                        // contains indices of all mon 2s which are within a 9A cutoff from mon1
+                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
+                        int reordered_mon2_size = good_mon2_indices.size();
+
+                        // Reordered versions of xyz2, islocal ,..., chg  so they only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
+                        // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal; 
+                        std::vector<double> reordered_grad2(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_mu(reordered_xyz2.size(), 0.0);
+                        std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
+                        
+                
+                        double *chg = chg_all_.data() + fi_sites2;
+                        double *mu = mu_all_.data() + fi_crd2;
+                        const size_t site_j3 = j * 3;
+                        const size_t site_jnmon23 = nmon2 * site_j3;
+                        const size_t site_jnmon2 = nmon2 * j;
+            
+                        // Populates reordered_chg and reordered_mu
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            reordered_chg[new_mon2_index] = chg[old_mon2_index + site_jnmon2];
+                            reordered_mu[new_mon2_index] = mu[old_mon2_index + site_jnmon23 ];
+                            reordered_mu[new_mon2_index + reordered_mon2_size] = mu[old_mon2_index + nmon2 + site_jnmon23];
+                            reordered_mu[new_mon2_index + 2*reordered_mon2_size] = mu[old_mon2_index + 2*nmon2 + site_jnmon23];
+                        }
+                        
+                        // Populates reordered_grad2 (gradient on site j on monomer 2) and reordered_phi2 (field on site j of mon2)
                         local_field->CalcElecFieldGrads(
-                            xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, chg_all_.data() + fi_sites1,
-                            chg_all_.data() + fi_sites2, mu_all_.data() + fi_crd1, mu_all_.data() + fi_crd2, m1, m2init,
-                            nmon2, nmon1, nmon2, i, j, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
-                            &phi1_thread, phi_2_pool[rank].data(), grad_2_pool[rank].data(), 1, ewald_alpha_, use_pbc_,
-                            box_, box_inverse_, cutoff_, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2,
+                            xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1,
+                            reordered_chg.data(), mu_all_.data() + fi_crd1, reordered_mu.data(), m1, 0,
+                            reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
+                            &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, use_pbc_,
+                            box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0, 1,
                             &virial_pool[rank]);
+                        
+                        double *phi2 = phi_2_pool[rank].data();
+                        double *grad2 = grad_2_pool[rank].data();
+
+ 
+                        // Revert the reordering of grad2 and phi2
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            phi_2_pool[rank][site_jnmon2 + old_mon2_index] += reordered_phi2[new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + old_mon2_index] += reordered_grad2[new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + nmon2 + old_mon2_index] += reordered_grad2[reordered_mon2_size + new_mon2_index];
+                            grad_2_pool[rank][site_jnmon23 + 2*nmon2 + old_mon2_index] += reordered_grad2[2*reordered_mon2_size + new_mon2_index];
+                        }
+                        
+
                         grad_1_pool[rank][inmon13 + m1] += ex_thread;
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
@@ -7912,6 +9576,7 @@ void Electrostatics::CalculateGradients(std::vector<double> &grad, bool use_ghos
 #endif
 }
 
+
 std::vector<double> Electrostatics::GetInducedDipoles() {
     size_t fi_mon = 0;
     size_t fi_sites = 0;
@@ -8034,11 +9699,18 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     std::cerr << "Use ghost: " << use_ghost << std::endl;
 #endif
 
+
+    size_t nsites3 = nsites_ * 3;
+    std::vector<double> ts2v(nsites3);
+
+    std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
+    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 0);
+
     std::fill(virial_.begin(), virial_.end(), 0.0);
-    CalculatePermanentElecField(use_ghost);
-    CalculateDipoles();
+    CalculatePermanentElecField(precomputedInformation, use_ghost);
+    CalculateDipoles(precomputedInformation);
     CalculateElecEnergy();
-    if (do_grads_) CalculateGradients(grad);
+    if (do_grads_) CalculateGradients(precomputedInformation, grad);
     if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad);
     // update viral
     if (virial != 0) {
@@ -8084,10 +9756,17 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
 double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std::vector<double> *virial,
                                                  bool use_ghost) {
     std::fill(virial_.begin(), virial_.end(), 0.0);
-    CalculatePermanentElecFieldMPIlocal(use_ghost);
-    CalculateDipolesMPIlocal(use_ghost);
+    // key- check : remove as argument.
+    size_t nsites3 = nsites_ * 3;
+    std::vector<double> ts2v(nsites3);
+
+    std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
+    PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 1);
+
+    CalculatePermanentElecFieldMPIlocal(precomputedInformation, use_ghost);
+    CalculateDipolesMPIlocal(precomputedInformation, use_ghost);
     CalculateElecEnergyMPIlocal();
-    if (do_grads_) CalculateGradientsMPIlocal(grad, use_ghost);
+    if (do_grads_) CalculateGradientsMPIlocal(precomputedInformation, grad, use_ghost);
     // update viral
     if (virial != 0) {
         for (size_t k = 0; k < 9; k++) {

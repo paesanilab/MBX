@@ -4,6 +4,8 @@
 *.o
 *.obj
 
+LAMMPS-stable/
+
 # Precompiled Headers
 *.gch
 *.pch

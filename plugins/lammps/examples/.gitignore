@@ -1,0 +1,5 @@
+dump.lammpstrj
+final.data
+log.lammps
+restart.*
+thermo.out
