@@ -1968,6 +1968,7 @@ void FixMBX::mbx_update_xyz_local() {
         } else if (domain->xperiodic || domain->yperiodic || domain->zperiodic)
             error->all(FLERR, "System must be fully periodic or non-periodic with MBX");
 
+        ptr_mbx_local->SetPBC(box);
         ptr_mbx_local->SetBoxPMElocal(box);
     }
 

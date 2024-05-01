@@ -191,9 +191,9 @@ void PairMBX::compute(int eflag, int vflag) {
 
             fix_mbx->mbxt_start(MBXT_DISP);
             mbx_disp_real =
-                ptr_mbx->Dispersion(true, true);  // computes real-space with local-local & local-ghost pairs
+                ptr_mbx_local->Dispersion(true, true);  // computes real-space with local-local & local-ghost pairs
             fix_mbx->mbxt_stop(MBXT_DISP);
-            accumulate_f(false);
+            accumulate_f_local(false);
         }
 
 #ifdef _DEBUG
@@ -218,12 +218,12 @@ void PairMBX::compute(int eflag, int vflag) {
 #endif
         //  printf("(%i)  procgrid= %i %i %i\n",comm->me,comm->myloc[0],comm->myloc[1],comm->myloc[2]);
 
-        if (!domain->nonperiodic) {
-            fix_mbx->mbxt_start(MBXT_DISP_PME);
-            mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true);  // computes k-space using sub-domain
-            accumulate_f_local(false);
-            fix_mbx->mbxt_stop(MBXT_DISP_PME);
-        }
+//         // if (!domain->nonperiodic) {
+//         //     fix_mbx->mbxt_start(MBXT_DISP_PME);
+//         //     mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true);  // computes k-space using sub-domain
+//         //     accumulate_f_local(false);
+//         //     fix_mbx->mbxt_stop(MBXT_DISP_PME);
+//         // }
 
     } else {
 #ifdef _DEBUG
