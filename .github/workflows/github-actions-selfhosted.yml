@@ -85,3 +85,5 @@ jobs:
         run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/log.lammps
       - name: thermo output
         run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/thermo.out
+      - name: performance output
+        run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/performance.txt
