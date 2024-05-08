@@ -34,9 +34,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/3b/x3b-v2x.h"
 //#define PRINT_GPU_DATA
-#include <iostream>
 
 #ifdef PRINT_GPU_DATA
+#include <iostream>
 #include <iomanip>
 #endif
 ////////////////////////////////////////////////////////////////////////////////
@@ -1478,8 +1478,6 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
 
     int idx = 0;
     int copyIdx = 0;
-    
-    // std::cerr << nt << "\n";
 
     for (size_t i = 0; i < nt; i++) {
         for (size_t j = 0; j < 3; j++) {
@@ -1519,7 +1517,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
         const double* Hc2 = w3 + sh9 + 6;
 
         if (skip) {
-            if(i < nt - 1) continue;
+            if(i < nt - 1 || idx == 0) continue;
             if(idx > 0) goto eval_energy;
         }
 
@@ -1583,18 +1581,13 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
 eval_energy:
         int numEvals = (idx == 0) ? 8 : idx;
         double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
-        for(int j = 0; j < numEvals; j++) std::cout << e3b[j] << "\n";
         std::copy(e3b, e3b + numEvals, energy.begin() + copyIdx);
         delete[] e3b;
-
-        // for(int j = 0; j < 8; j++) std::cerr << eval_sh[j] << " ";
-        // std::cerr << "\n";
 
         for(size_t j = 0; j < numEvals; j++) {
             sh = eval_sh[j];
             sh9 = 9 * sh;
             int energyIdx = copyIdx + j;
-            // std::cerr << sh << " ";
 
             const double* Oa_new = eval_oa[j];
             const double* Ha1_new = eval_ha1[j];
@@ -1725,8 +1718,6 @@ eval_energy:
         }
 
         copyIdx += numEvals;
-
-        // std::cerr << "\n";
     }
 
 #ifdef PRINT_GPU_DATA
