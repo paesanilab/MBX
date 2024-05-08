@@ -31589,8 +31589,6 @@ double* poly_3b_v2x::eval(const double *a, const double *x, double *t, double *g
     std::cerr << "Output polynomial energy: " << e << std::endl;
 #endif
 
-    // for(int j = 0; j < 8; j++) std::cerr << e[j] << " ";
-    // std::cerr << "\n";
     return e;
 }
 
