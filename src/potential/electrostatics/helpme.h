@@ -2788,6 +2788,8 @@ class PMEInstance {
             cartesianTransform(parameterAngMom, onlyOneShellForInput, scaledRecVecs_.transpose(), parameters);
         int nComponents = nCartesian(parameterAngMom) - cartesianOffset;
         size_t nAtoms = coordinates.nRows();
+
+        #pragma omp parallel for
         for (size_t atom = 0; atom < nAtoms; ++atom) {
             // Blindly reconstruct splines for this atom, assuming nothing about the validity of the cache.
             // Note that this incurs a somewhat steep cost due to repeated memory allocations.
@@ -2804,6 +2806,7 @@ class PMEInstance {
             const auto *iteratorDataA = aGridIterator.data();
             const auto *iteratorDataB = bGridIterator.data();
             const auto *iteratorDataC = cGridIterator.data();
+ 
             for (int component = 0; component < nComponents; ++component) {
                 const auto &quanta = angMomIterator_[component + cartesianOffset];
                 Real param = fractionalParameters(atom, component);
@@ -2854,6 +2857,9 @@ class PMEInstance {
         cartesianOffset = onlyOneShellForOutput ? nCartesian(derivativeLevel - 1) : 0;
         int nPotentialComponents = nCartesian(derivativeLevel) - cartesianOffset;
         size_t nPoints = gridPoints.nRows();
+
+
+        #pragma omp parallel for
         for (size_t point = 0; point < nPoints; ++point) {
             Real *phiPtr = fracPotential[point];
             auto bSplines = makeBSplines(gridPoints[point], derivativeLevel);
