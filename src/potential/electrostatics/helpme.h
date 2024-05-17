@@ -2782,6 +2782,9 @@ class PMEInstance {
         // easy to write some logic to check whether gridPoints and coordinates are the same, and
         // handle that special case using spline cacheing machinery for efficiency.
         Real *realGrid = reinterpret_cast<Real *>(workSpace1_.data());
+        int realGrid_size = workSpace1_.size() * 2;
+       
+
         std::fill(workSpace1_.begin(), workSpace1_.end(), 0);
         updateAngMomIterator(parameterAngMom);
         auto fractionalParameters =
@@ -2789,7 +2792,7 @@ class PMEInstance {
         int nComponents = nCartesian(parameterAngMom) - cartesianOffset;
         size_t nAtoms = coordinates.nRows();
 
-        #pragma omp parallel for
+        #pragma omp parallel for reduction(+:realGrid[:realGrid_size])
         for (size_t atom = 0; atom < nAtoms; ++atom) {
             // Blindly reconstruct splines for this atom, assuming nothing about the validity of the cache.
             // Note that this incurs a somewhat steep cost due to repeated memory allocations.
@@ -2857,7 +2860,6 @@ class PMEInstance {
         cartesianOffset = onlyOneShellForOutput ? nCartesian(derivativeLevel - 1) : 0;
         int nPotentialComponents = nCartesian(derivativeLevel) - cartesianOffset;
         size_t nPoints = gridPoints.nRows();
-
 
         #pragma omp parallel for
         for (size_t point = 0; point < nPoints; ++point) {
