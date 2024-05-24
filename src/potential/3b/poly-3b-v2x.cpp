@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace x2o {
 
 void f1(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1*8 + i] = a[11];
         t[2*8 + i] = a[204];
@@ -143,6 +144,7 @@ void f1(const double *x, const double *a, double *t) {
 }
 
 void f2(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[101*8 + i] = t[94*8 + i] * t[90*8 + i];
         t[102*8 + i] = a[486];
@@ -248,6 +250,7 @@ void f2(const double *x, const double *a, double *t) {
 }
 
 void f3(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[199*8 + i] = a[667];
         t[393*8 + i] = x[22*8 + i];
@@ -356,6 +359,7 @@ void f3(const double *x, const double *a, double *t) {
 }
 
 void f4(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[295*8 + i] = t[294*8 + i] * t[4*8 + i];
         t[296*8 + i] = a[807];
@@ -461,6 +465,7 @@ void f4(const double *x, const double *a, double *t) {
 }
 
 void f5(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[403*8 + i] = t[402*8 + i] * t[90*8 + i];
         t[404*8 + i] = a[762];
@@ -568,6 +573,7 @@ void f5(const double *x, const double *a, double *t) {
 }
 
 void f6(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[505*8 + i] = t[503*8 + i] * t[374*8 + i];
         t[506*8 + i] = t[489*8 + i] + t[491*8 + i] + t[493*8 + i] + t[495*8 + i] + t[497*8 + i] + t[499*8 + i] + t[501*8 + i] + t[502*8 + i] + t[504*8 + i] + t[505*8 + i];
@@ -674,6 +680,7 @@ void f6(const double *x, const double *a, double *t) {
 }
 
 void f7(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[607*8 + i] = t[602*8 + i] * t[90*8 + i];
         t[608*8 + i] = a[787];
@@ -779,7 +786,8 @@ void f7(const double *x, const double *a, double *t) {
 }
 
 void f8(const double *x, const double *a, double *t) {
-    for(int i = 0; i < 8; i++) {
+    #pragma omp simd simdlen(8)
+	for(int i = 0; i < 8; i++) {
         t[710*8 + i] = t[709*8 + i] * t[4*8 + i];
         t[711*8 + i] = a[871];
         t[712*8 + i] = t[711*8 + i] * t[170*8 + i];
@@ -885,7 +893,8 @@ void f8(const double *x, const double *a, double *t) {
 }
 
 void f9(const double *x, const double *a, double *t) {
-    for(int i = 0; i < 8; i++) {
+    #pragma omp simd simdlen(8)
+	for(int i = 0; i < 8; i++) {
         t[811*8 + i] = a[459];
         t[812*8 + i] = t[811*8 + i] * t[342*8 + i];
         t[813*8 + i] = a[415];
@@ -998,8 +1007,9 @@ void f9(const double *x, const double *a, double *t) {
         }
     }
 
-    void f10(const double *x, const double *a, double *t) {
-        for(int i = 0; i < 8; i++) {
+void f10(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
+	for(int i = 0; i < 8; i++) {
         t[915*8 + i] = t[193*8 + i] * t[258*8 + i];
         t[916*8 + i] = t[178*8 + i] * t[342*8 + i];
         t[917*8 + i] = t[188*8 + i] + t[183*8 + i] + t[196*8 + i] + t[190*8 + i] + t[185*8 + i] + t[181*8 + i] + t[198*8 + i] + t[913*8 + i] + t[192*8 + i] + t[186*8 + i] + t[914*8 + i] + t[915*8 + i] +
@@ -1111,6 +1121,7 @@ void f9(const double *x, const double *a, double *t) {
 }
 
 void f11(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1024*8 + i] = t[574*8 + i] * t[285*8 + i];
         t[1026*8 + i] = (t[561*8 + i] + t[562*8 + i] + t[564*8 + i] + t[566*8 + i] + t[568*8 + i] + t[569*8 + i] + t[571*8 + i] + t[573*8 + i] + t[593*8 + i] + t[1024*8 + i]) * t[285*8 + i];
@@ -1227,6 +1238,7 @@ void f11(const double *x, const double *a, double *t) {
 }
 
 void f12(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1143*8 + i] = t[1142*8 + i] * t[29*8 + i];
         t[1144*8 + i] = a[139];
@@ -1333,6 +1345,7 @@ void f12(const double *x, const double *a, double *t) {
 }
 
 void f13(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1253*8 + i] = t[256*8 + i] * t[90*8 + i];
         t[1254*8 + i] = a[1055];
@@ -1448,6 +1461,7 @@ void f13(const double *x, const double *a, double *t) {
 }
 
 void f14(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1367*8 + i] = t[1366*8 + i] * t[242*8 + i];
         t[1368*8 + i] = t[338*8 + i] * t[12*8 + i];
@@ -1566,6 +1580,7 @@ void f14(const double *x, const double *a, double *t) {
 }
 
 void f15(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1488*8 + i] = t[236*8 + i] * t[29*8 + i];
         t[1489*8 + i] = t[232*8 + i] * t[12*8 + i];
@@ -1680,8 +1695,9 @@ void f15(const double *x, const double *a, double *t) {
         }
     }
 
-    void f16(const double *x, const double *a, double *t) {
-        for(int i = 0; i < 8; i++) {
+void f16(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
+	for(int i = 0; i < 8; i++) {
         t[1605*8 + i] = t[636*8 + i] * t[90*8 + i];
         t[1607*8 + i] = (t[950*8 + i] + t[1604*8 + i] + t[1605*8 + i] + t[622*8 + i] + t[949*8 + i] + t[624*8 + i] + t[948*8 + i] + t[951*8 + i]) * t[242*8 + i];
         t[1609*8 + i] = (t[957*8 + i] + t[955*8 + i] + t[956*8 + i] + t[526*8 + i] + t[587*8 + i] + t[530*8 + i] + t[568*8 + i] + t[954*8 + i] + t[958*8 + i]) * t[258*8 + i];
@@ -1803,6 +1819,7 @@ void f15(const double *x, const double *a, double *t) {
 }
 
 void f17(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1719*8 + i] = (t[55*8 + i] + t[57*8 + i] + t[59*8 + i] + t[60*8 + i] + t[62*8 + i] + t[63*8 + i] + t[1716*8 + i] + t[1717*8 + i] + t[69*8 + i]) * t[258*8 + i];
         t[1720*8 + i] = t[84*8 + i] * t[170*8 + i];
@@ -1921,6 +1938,7 @@ void f17(const double *x, const double *a, double *t) {
 }
 
 void f18(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1843*8 + i] = (t[579*8 + i] + t[580*8 + i] + t[582*8 + i] + t[584*8 + i] + t[586*8 + i] + t[587*8 + i] + t[1756*8 + i] + t[1757*8 + i] + t[1021*8 + i]) * t[258*8 + i];
         t[1845*8 + i] = (t[561*8 + i] + t[562*8 + i] + t[564*8 + i] + t[566*8 + i] + t[568*8 + i] + t[569*8 + i] + t[1752*8 + i] + t[1753*8 + i] + t[593*8 + i] + t[1024*8 + i]) * t[285*8 + i];
@@ -2046,6 +2064,7 @@ void f18(const double *x, const double *a, double *t) {
 }
 
 void f19(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[1978*8 + i] = t[514*8 + i] * t[1085*8 + i];
         t[1979*8 + i] = t[514*8 + i] * t[657*8 + i];
@@ -2179,6 +2198,7 @@ void f19(const double *x, const double *a, double *t) {
 }
 
 void f20(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2116*8 + i] = t[1572*8 + i] + t[2007*8 + i] + t[448*8 + i] + t[1422*8 + i] + t[2010*8 + i] + t[1423*8 + i] + t[1573*8 + i] + t[1425*8 + i] + t[484*8 + i] + t[505*8 + i] + t[2009*8 + i] +
                 t[441*8 + i] + t[2008*8 + i] + t[1429*8 + i] + t[1432*8 + i];
@@ -2288,6 +2308,7 @@ void f20(const double *x, const double *a, double *t) {
 }
 
 void f21(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2229*8 + i] = t[2228*8 + i] * t[12*8 + i];
         t[2230*8 + i] = a[590];
@@ -2393,6 +2414,7 @@ void f21(const double *x, const double *a, double *t) {
 }
 
 void f22(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2340*8 + i] = t[2339*8 + i] * t[285*8 + i];
         t[2342*8 + i] =
@@ -2504,6 +2526,7 @@ void f22(const double *x, const double *a, double *t) {
 }
 
 void f23(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2452*8 + i] = t[2451*8 + i] * t[301*8 + i];
         t[2453*8 + i] =
@@ -2617,6 +2640,7 @@ void f23(const double *x, const double *a, double *t) {
 }
 
 void f24(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2559*8 + i] = (t[2546*8 + i] + t[2548*8 + i] + t[2549*8 + i] + t[2551*8 + i] + t[2553*8 + i] + t[2555*8 + i] + t[2557*8 + i]) * t[170*8 + i];
         t[2560*8 + i] = a[436];
@@ -2726,6 +2750,7 @@ void f24(const double *x, const double *a, double *t) {
 }
 
 void f25(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2660*8 + i] = a[746];
         t[2661*8 + i] = t[2660*8 + i] * t[342*8 + i];
@@ -2834,6 +2859,7 @@ void f25(const double *x, const double *a, double *t) {
 }
 
 void f26(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2771*8 + i] = t[2770*8 + i] * t[90*8 + i];
         t[2772*8 + i] = t[2758*8 + i] * t[314*8 + i];
@@ -2946,6 +2972,7 @@ void f26(const double *x, const double *a, double *t) {
 }
 
 void f27(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2883*8 + i] = t[2882*8 + i] * t[90*8 + i];
         t[2884*8 + i] = a[584];
@@ -3053,6 +3080,7 @@ void f27(const double *x, const double *a, double *t) {
 }
 
 void f28(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[2996*8 + i] = a[359];
         t[2997*8 + i] = t[2996*8 + i] * t[29*8 + i];
@@ -3160,6 +3188,7 @@ void f28(const double *x, const double *a, double *t) {
 }
 
 void f29(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[3100*8 + i] = a[465];
         t[3101*8 + i] = t[3100*8 + i] * t[242*8 + i];
@@ -3269,6 +3298,7 @@ void f29(const double *x, const double *a, double *t) {
 }
 
 void f30(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[3205*8 + i] = t[3069*8 + i] * t[12*8 + i];
         t[3206*8 + i] = t[3080*8 + i] * t[34*8 + i];
@@ -3381,6 +3411,7 @@ void f30(const double *x, const double *a, double *t) {
 }
 
 void f31(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[3316*8 + i] = t[3152*8 + i] + t[3168*8 + i] + t[3172*8 + i] + t[3156*8 + i] + t[3147*8 + i] + t[3166*8 + i] + t[3314*8 + i] + t[3149*8 + i] + t[3151*8 + i] + t[3315*8 + i] +
                 t[3164*8 + i] + t[3272*8 + i] + t[3162*8 + i] + t[3282*8 + i] + t[3174*8 + i];
@@ -3495,6 +3526,7 @@ void f31(const double *x, const double *a, double *t) {
 }
 
 void f32(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[3428*8 + i] = t[3403*8 + i] * t[29*8 + i];
         t[3429*8 + i] = a[1082];
@@ -3607,6 +3639,7 @@ void f32(const double *x, const double *a, double *t) {
 }
 
 void f33(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[3548*8 + i] = t[3531*8 + i] * t[90*8 + i];
         t[3549*8 + i] = t[3526*8 + i] * t[258*8 + i];
@@ -3719,6 +3752,7 @@ void f33(const double *x, const double *a, double *t) {
 }
 
 void f34(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[3666*8 + i] = t[2706*8 + i] * t[29*8 + i];
         t[3667*8 + i] = t[2704*8 + i] * t[12*8 + i];
@@ -3831,6 +3865,7 @@ void f34(const double *x, const double *a, double *t) {
 }
 
 void f35(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[3788*8 + i] = t[3756*8 + i] + t[3757*8 + i] + t[2905*8 + i] + t[3758*8 + i] + t[3759*8 + i] + t[3760*8 + i] + t[3786*8 + i] + t[3787*8 + i] + t[3763*8 + i] + t[3764*8 + i];
         t[3790*8 + i] = t[2872*8 + i] * t[242*8 + i];
@@ -3939,6 +3974,7 @@ void f35(const double *x, const double *a, double *t) {
 }
 
 void f36(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[3903*8 + i] = a[107];
         t[3904*8 + i] = a[919];
@@ -4048,6 +4084,7 @@ void f36(const double *x, const double *a, double *t) {
 }
 
 void f37(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4010*8 + i] = t[4009*8 + i] * t[34*8 + i];
         t[4011*8 + i] = t[4001*8 + i] * t[242*8 + i];
@@ -4171,6 +4208,7 @@ void f37(const double *x, const double *a, double *t) {
 }
 
 void f38(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4120*8 + i] = t[4109*8 + i] + t[3903*8 + i] + t[4110*8 + i] + t[3902*8 + i] + t[4111*8 + i] + t[4112*8 + i] + t[3954*8 + i] + t[3953*8 + i] + t[4113*8 + i] + t[4114*8 + i] +
                 t[4118*8 + i] + t[4119*8 + i];
@@ -4299,6 +4337,7 @@ void f38(const double *x, const double *a, double *t) {
 }
 
 void f39(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4266*8 + i] = t[4265*8 + i] * t[342*8 + i];
         t[4267*8 + i] = t[4041*8 + i] + t[2625*8 + i] + t[2627*8 + i] + t[2631*8 + i] + t[2624*8 + i] + t[4042*8 + i] + t[2635*8 + i] + t[2636*8 + i] + t[2638*8 + i] + t[2640*8 + i] +
@@ -4438,6 +4477,7 @@ void f39(const double *x, const double *a, double *t) {
 }
 
 void f40(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4429*8 + i] = t[2819*8 + i] + t[2821*8 + i] + t[2823*8 + i] + t[2824*8 + i] + t[2826*8 + i] + t[2827*8 + i] + t[2829*8 + i] + t[2831*8 + i] + t[4427*8 + i] + t[4428*8 + i];
         t[4431*8 + i] = t[2819*8 + i] + t[2821*8 + i] + t[2823*8 + i] + t[2824*8 + i] + t[2826*8 + i] + t[2827*8 + i] + t[2838*8 + i] + t[2839*8 + i] + t[4427*8 + i] + t[4428*8 + i];
@@ -4559,6 +4599,7 @@ void f40(const double *x, const double *a, double *t) {
 }
 
 void f41(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4557*8 + i] = a[100];
         t[4558*8 + i] = t[4557*8 + i] * t[29*8 + i];
@@ -4664,6 +4705,7 @@ void f41(const double *x, const double *a, double *t) {
 }
 
 void f42(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4669*8 + i] = t[4668*8 + i] * t[12*8 + i];
         t[4670*8 + i] = a[733];
@@ -4771,6 +4813,7 @@ void f42(const double *x, const double *a, double *t) {
 }
 
 void f43(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4778*8 + i] = t[4777*8 + i] * t[34*8 + i];
         t[4780*8 + i] = (t[4771*8 + i] + t[4773*8 + i] + t[4774*8 + i] + t[4776*8 + i] + t[4778*8 + i]) * t[34*8 + i];
@@ -4877,6 +4920,7 @@ void f43(const double *x, const double *a, double *t) {
 }
 
 void f44(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4887*8 + i] = a[299];
         t[4888*8 + i] = t[4887*8 + i] * t[34*8 + i];
@@ -4985,6 +5029,7 @@ void f44(const double *x, const double *a, double *t) {
 }
 
 void f45(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[4994*8 + i] = t[4700*8 + i] * t[34*8 + i];
         t[4996*8 + i] = (t[4992*8 + i] + t[4993*8 + i] + t[4691*8 + i] + t[4697*8 + i] + t[4994*8 + i]) * t[34*8 + i];
@@ -5093,6 +5138,7 @@ void f45(const double *x, const double *a, double *t) {
 }
 
 void f46(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5100*8 + i] = t[4728*8 + i] * t[90*8 + i];
         t[5101*8 + i] = t[4725*8 + i] * t[12*8 + i];
@@ -5207,6 +5253,7 @@ void f46(const double *x, const double *a, double *t) {
 }
 
 void f47(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5209*8 + i] = t[5208*8 + i] * t[90*8 + i];
         t[5210*8 + i] = a[1007];
@@ -5318,6 +5365,7 @@ void f47(const double *x, const double *a, double *t) {
 }
 
 void f48(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5319*8 + i] = t[4944*8 + i] * t[374*8 + i];
         t[5320*8 + i] = t[5310*8 + i] + t[5124*8 + i] + t[5318*8 + i] + t[5311*8 + i] + t[4937*8 + i] + t[5313*8 + i] + t[5312*8 + i] + t[5314*8 + i] + t[5123*8 + i] + t[5309*8 + i] +
@@ -5429,6 +5477,7 @@ void f48(const double *x, const double *a, double *t) {
 }
 
 void f49(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5420*8 + i] = t[5395*8 + i] * t[374*8 + i];
         t[5421*8 + i] = t[5411*8 + i] * t[415*8 + i];
@@ -5541,6 +5590,7 @@ void f49(const double *x, const double *a, double *t) {
 }
 
 void f50(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5535*8 + i] = t[2208*8 + i] * t[12*8 + i];
         t[5536*8 + i] = t[5534*8 + i] + t[5535*8 + i];
@@ -5649,6 +5699,7 @@ void f50(const double *x, const double *a, double *t) {
 }
 
 void f51(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5648*8 + i] = t[3042*8 + i] * t[374*8 + i];
         t[5649*8 + i] = t[3028*8 + i] + t[4151*8 + i] + t[5641*8 + i] + t[5642*8 + i] + t[3232*8 + i] + t[5643*8 + i] + t[3030*8 + i] + t[5644*8 + i] + t[3137*8 + i] + t[3311*8 + i] +
@@ -5769,6 +5820,7 @@ void f51(const double *x, const double *a, double *t) {
 }
 
 void f52(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5761*8 + i] = t[3042*8 + i] * t[170*8 + i];
         t[5763*8 + i] = (t[3206*8 + i] + t[3028*8 + i] + t[5641*8 + i] + t[5760*8 + i] + t[3193*8 + i] + t[4139*8 + i] + t[5761*8 + i]) * t[170*8 + i];
@@ -5880,6 +5932,7 @@ void f52(const double *x, const double *a, double *t) {
 }
 
 void f53(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5878*8 + i] = t[5877*8 + i] * t[34*8 + i];
         t[5879*8 + i] = t[5877*8 + i] * t[90*8 + i];
@@ -5991,6 +6044,7 @@ void f53(const double *x, const double *a, double *t) {
 }
 
 void f54(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[5993*8 + i] = t[2696*8 + i] * t[4*8 + i];
         t[5994*8 + i] = t[5993*8 + i] + t[2699*8 + i] + t[3336*8 + i] + t[3341*8 + i];
@@ -6110,6 +6164,7 @@ void f54(const double *x, const double *a, double *t) {
 }
 
 void f55(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[6114*8 + i] = t[2858*8 + i] * t[258*8 + i];
         t[6115*8 + i] = t[2856*8 + i] * t[285*8 + i];
@@ -6224,6 +6279,7 @@ void f55(const double *x, const double *a, double *t) {
 }
 
 void f56(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[6244*8 + i] = t[2830*8 + i] * t[258*8 + i];
         t[6245*8 + i] = t[2828*8 + i] * t[285*8 + i];
@@ -6338,6 +6394,7 @@ void f56(const double *x, const double *a, double *t) {
 }
 
 void f57(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[6370*8 + i] = t[3576*8 + i] * t[314*8 + i];
         t[6371*8 + i] = t[3568*8 + i] * t[342*8 + i];
@@ -6448,6 +6505,7 @@ void f57(const double *x, const double *a, double *t) {
 }
 
 void f58(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[6490*8 + i] =
             t[6482*8 + i] + t[6483*8 + i] + t[6444*8 + i] + t[6484*8 + i] + t[2970*8 + i] + t[6485*8 + i] + t[6486*8 + i] + t[3908*8 + i] * t[285*8 + i] + t[6488*8 + i] + t[6489*8 + i];
@@ -6576,6 +6634,7 @@ void f58(const double *x, const double *a, double *t) {
 }
 
 void f59(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[6632*8 + i] = t[6631*8 + i] * t[301*8 + i];
         t[6633*8 + i] = t[2614*8 + i] * t[170*8 + i];
@@ -6709,6 +6768,7 @@ void f59(const double *x, const double *a, double *t) {
 }
 
 void f60(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[6786*8 + i] = (t[3213*8 + i] + t[4143*8 + i] + t[5641*8 + i] + t[5760*8 + i] + t[3193*8 + i] + t[3028*8 + i] + t[5761*8 + i]) * t[170*8 + i];
         t[6788*8 + i] = (t[5765*8 + i] + t[4140*8 + i] + t[3050*8 + i] + t[5764*8 + i] + t[3204*8 + i] + t[3199*8 + i] + t[5633*8 + i] + t[5766*8 + i]) * t[242*8 + i];
@@ -6842,6 +6902,7 @@ void f60(const double *x, const double *a, double *t) {
 }
 
 void f61(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[6937*8 + i] = (t[5866*8 + i] + t[5867*8 + i] + t[5868*8 + i] + t[5869*8 + i] + t[6934*8 + i] + t[6935*8 + i] + t[5859*8 + i] + t[5863*8 + i]) * t[314*8 + i];
         t[6941*8 + i] = (t[3050*8 + i] + t[4144*8 + i] + t[5633*8 + i] + t[3199*8 + i] + t[5765*8 + i] + t[3214*8 + i] + t[6573*8 + i]) * t[170*8 + i];
@@ -6963,6 +7024,7 @@ void f61(const double *x, const double *a, double *t) {
 }
 
 void f62(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7049*8 + i] = t[7048*8 + i] * t[398*8 + i];
         t[7050*8 + i] = t[1348*8 + i] + t[6965*8 + i] + t[6968*8 + i] + t[6971*8 + i] + t[6976*8 + i] + t[6980*8 + i] + t[6985*8 + i] + t[6990*8 + i] + t[7001*8 + i] + t[7007*8 + i] +
@@ -7072,6 +7134,7 @@ void f62(const double *x, const double *a, double *t) {
 }
 
 void f63(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7158*8 + i] = t[775*8 + i] * t[285*8 + i];
         t[7159*8 + i] = t[697*8 + i] * t[342*8 + i];
@@ -7182,6 +7245,7 @@ void f63(const double *x, const double *a, double *t) {
 }
 
 void f64(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7275*8 + i] = t[1202*8 + i] * t[12*8 + i];
         t[7276*8 + i] = t[1204*8 + i] * t[4*8 + i];
@@ -7292,6 +7356,7 @@ void f64(const double *x, const double *a, double *t) {
 }
 
 void f65(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7386*8 + i] = t[75*8 + i] * t[12*8 + i];
         t[7387*8 + i] = t[77*8 + i] * t[170*8 + i];
@@ -7407,6 +7472,7 @@ void f65(const double *x, const double *a, double *t) {
 }
 
 void f66(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7497*8 + i] = t[796*8 + i] + t[7129*8 + i] + t[7122*8 + i] + t[7126*8 + i] + t[7496*8 + i] + t[7117*8 + i] + t[7125*8 + i] + t[7128*8 + i] + t[835*8 + i] + t[7095*8 + i] +
                 t[7123*8 + i] + t[7130*8 + i];
@@ -7522,6 +7588,7 @@ void f66(const double *x, const double *a, double *t) {
 }
 
 void f67(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7611*8 + i] = t[36*8 + i] * t[4*8 + i];
         t[7612*8 + i] = t[182*8 + i] * t[285*8 + i];
@@ -7648,6 +7715,7 @@ void f67(const double *x, const double *a, double *t) {
 }
 
 void f68(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7734*8 + i] = t[7075*8 + i] + t[7080*8 + i] + t[7086*8 + i] + t[7702*8 + i] + t[7703*8 + i] + t[7707*8 + i] + t[7711*8 + i] + t[7716*8 + i] + t[7721*8 + i] + t[7725*8 + i] +
                 t[7729*8 + i] + t[7731*8 + i] + t[7733*8 + i] + t[921*8 + i] + t[922*8 + i] + t[512*8 + i] + t[1345*8 + i];
@@ -7773,6 +7841,7 @@ void f68(const double *x, const double *a, double *t) {
 }
 
 void f69(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7854*8 + i] = t[7853*8 + i] * t[314*8 + i];
         t[7856*8 + i] = (t[869*8 + i] + t[1276*8 + i] + t[728*8 + i] + t[7726*8 + i] + t[7727*8 + i] + t[7139*8 + i] + t[774*8 + i] + t[744*8 + i]) * t[342*8 + i];
@@ -7890,6 +7959,7 @@ void f69(const double *x, const double *a, double *t) {
 }
 
 void f70(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[7981*8 + i] = t[4976*8 + i] * t[34*8 + i];
         t[7982*8 + i] = t[4980*8 + i] * t[90*8 + i];
@@ -8001,6 +8071,7 @@ void f70(const double *x, const double *a, double *t) {
 }
 
 void f71(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[8090*8 + i] = (t[4771*8 + i] + t[5166*8 + i] + t[4774*8 + i] + t[5159*8 + i] + t[4816*8 + i] + t[8087*8 + i] + t[5160*8 + i] + t[8088*8 + i]) * t[242*8 + i];
         t[8091*8 + i] = t[5061*8 + i] * t[90*8 + i];
@@ -8119,6 +8190,7 @@ void f71(const double *x, const double *a, double *t) {
 }
 
 void f72(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[8208*8 + i] = t[5354*8 + i] * t[314*8 + i];
         t[8209*8 + i] = t[5380*8 + i] * t[1085*8 + i];
@@ -8235,6 +8307,7 @@ void f72(const double *x, const double *a, double *t) {
 }
 
 void f73(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[8340*8 + i] = t[4685*8 + i] * t[170*8 + i];
         t[8342*8 + i] = (t[8308*8 + i] + t[5012*8 + i] + t[4677*8 + i] + t[5009*8 + i] + t[4695*8 + i] + t[4680*8 + i] + t[8340*8 + i]) * t[170*8 + i];
@@ -8352,6 +8425,7 @@ void f73(const double *x, const double *a, double *t) {
 }
 
 void f74(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[8458*8 + i] = (t[8440*8 + i] + t[8443*8 + i] + t[4727*8 + i] + t[8453*8 + i] + t[5101*8 + i] + t[8442*8 + i] + t[8441*8 + i] + t[8456*8 + i]) * t[242*8 + i];
         t[8460*8 + i] = (t[4991*8 + i] + t[8427*8 + i] + t[8428*8 + i] + t[4658*8 + i] + t[8433*8 + i] + t[8439*8 + i] + t[8455*8 + i] + t[8458*8 + i]) * t[242*8 + i];
@@ -8461,6 +8535,7 @@ void f74(const double *x, const double *a, double *t) {
 }
 
 void f75(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[8575*8 + i] = t[5134*8 + i] * t[90*8 + i];
         t[8576*8 + i] = t[5044*8 + i] * t[242*8 + i];
@@ -8578,6 +8653,7 @@ void f75(const double *x, const double *a, double *t) {
 }
 
 void f76(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[8687*8 + i] = t[4805*8 + i] * t[285*8 + i];
         t[8688*8 + i] = t[4700*8 + i] * t[301*8 + i];
@@ -8695,6 +8771,7 @@ void f76(const double *x, const double *a, double *t) {
 }
 
 void f77(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[8799*8 + i] = t[4611*8 + i] * t[342*8 + i];
         t[8800*8 + i] = t[8792*8 + i] + t[8740*8 + i] + t[4610*8 + i] + t[4626*8 + i] + t[8793*8 + i] + t[4795*8 + i] + t[5267*8 + i] + t[8794*8 + i] + t[8795*8 + i] + t[8796*8 + i] +
@@ -8809,6 +8886,7 @@ void f77(const double *x, const double *a, double *t) {
 }
 
 void f78(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[8919*8 + i] = t[1743*8 + i] + t[8918*8 + i] + t[1091*8 + i] + t[196*8 + i];
         t[8920*8 + i] = t[8919*8 + i] * t[258*8 + i];
@@ -8922,6 +9000,7 @@ void f78(const double *x, const double *a, double *t) {
 }
 
 void f79(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[9025*8 + i] = t[389*8 + i] * t[285*8 + i];
         t[9026*8 + i] = t[376*8 + i] * t[258*8 + i];
@@ -9041,6 +9120,7 @@ void f79(const double *x, const double *a, double *t) {
 }
 
 void f80(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[9150*8 + i] = t[266*8 + i] * t[258*8 + i];
         t[9151*8 + i] = t[262*8 + i] * t[285*8 + i];
@@ -9156,6 +9236,7 @@ void f80(const double *x, const double *a, double *t) {
 }
 
 void f81(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[9259*8 + i] = t[323*8 + i] + t[1338*8 + i] + t[7787*8 + i] + t[7008*8 + i] + t[9004*8 + i] + t[499*8 + i] + t[326*8 + i] + t[7897*8 + i] + t[9254*8 + i] + t[9255*8 + i] + t[9256*8 + i] +
                 t[9029*8 + i] + t[7033*8 + i] + t[7759*8 + i] + t[9257*8 + i] + t[9258*8 + i];
@@ -9271,6 +9352,7 @@ void f81(const double *x, const double *a, double *t) {
 }
 
 void f82(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[9378*8 + i] = t[9213*8 + i] * t[34*8 + i];
         t[9379*8 + i] = t[9211*8 + i] * t[90*8 + i];
@@ -9401,6 +9483,7 @@ void f82(const double *x, const double *a, double *t) {
 }
 
 void f83(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[9518*8 + i] = (t[1517*8 + i] + t[280*8 + i] + t[7264*8 + i] + t[9142*8 + i] + t[545*8 + i] + t[548*8 + i] + t[9515*8 + i] + t[9516*8 + i] + t[1247*8 + i] + t[1533*8 + i]) * t[285*8 + i];
         t[9520*8 + i] = (t[7268*8 + i] + t[534*8 + i] + t[265*8 + i] + t[539*8 + i] + t[7182*8 + i] + t[7188*8 + i] + t[1234*8 + i] + t[1525*8 + i]) * t[301*8 + i];
@@ -9520,6 +9603,7 @@ void f83(const double *x, const double *a, double *t) {
 }
 
 void f84(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[9643*8 + i] = t[7564*8 + i] + t[8951*8 + i] + t[74*8 + i] + t[1481*8 + i] + t[7388*8 + i] + t[1125*8 + i] + t[1048*8 + i] + t[7660*8 + i] + t[8952*8 + i] + t[8953*8 + i] +
                 t[8954*8 + i] + t[8955*8 + i] + t[7411*8 + i] + t[7649*8 + i] + t[8964*8 + i] + t[9642*8 + i];
@@ -9646,6 +9730,7 @@ void f84(const double *x, const double *a, double *t) {
 }
 
 void f85(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[9764*8 + i] = (t[9757*8 + i] + t[9758*8 + i] + t[9762*8 + i]) * t[34*8 + i];
         t[9765*8 + i] = t[7938*8 + i] * t[90*8 + i];
@@ -9751,6 +9836,7 @@ void f85(const double *x, const double *a, double *t) {
 }
 
 void f86(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[9890*8 + i] = t[9889*8 + i] * t[12*8 + i];
         t[9891*8 + i] = a[136];
@@ -9868,6 +9954,7 @@ void f86(const double *x, const double *a, double *t) {
 }
 
 void f87(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[10018*8 + i] = t[4845*8 + i] * t[34*8 + i];
         t[10020*8 + i] = (t[8435*8 + i] + t[10014*8 + i] + t[10018*8 + i] + t[4828*8 + i] + t[4838*8 + i] + t[8440*8 + i]) * t[90*8 + i];
@@ -9985,6 +10072,7 @@ void f87(const double *x, const double *a, double *t) {
 }
 
 void f88(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[10147*8 + i] = t[5185*8 + i] * t[2179*8 + i];
         t[10148*8 + i] = t[5193*8 + i] * t[34*8 + i];
@@ -10104,6 +10192,7 @@ void f88(const double *x, const double *a, double *t) {
 }
 
 void f89(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[10261*8 + i] = t[4736*8 + i] * t[393*8 + i];
         t[10262*8 + i] = t[8551*8 + i] + t[10221*8 + i] + t[4727*8 + i] + t[8720*8 + i] + t[9988*8 + i] + t[5102*8 + i] + t[5319*8 + i] + t[5224*8 + i] + t[10259*8 + i] + t[8499*8 + i] +
@@ -10226,6 +10315,7 @@ void f89(const double *x, const double *a, double *t) {
 }
 
 void f90(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[10367*8 + i] = t[10366*8 + i] * t[1022*8 + i];
         t[10368*8 + i] = t[5395*8 + i] * t[34*8 + i];
@@ -10353,6 +10443,7 @@ void f90(const double *x, const double *a, double *t) {
 }
 
 void f91(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[10508*8 + i] = t[10507*8 + i] * t[342*8 + i];
         t[10509*8 + i] = t[4615*8 + i] + t[5006*8 + i] + t[4778*8 + i] + t[8685*8 + i] + t[4546*8 + i] + t[8684*8 + i] + t[7961*8 + i] + t[8343*8 + i] + t[8686*8 + i] + t[8687*8 + i] +
@@ -10478,6 +10569,7 @@ void f91(const double *x, const double *a, double *t) {
 }
 
 void f92(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[10644*8 + i] = t[2962*8 + i] * t[258*8 + i];
         t[10645*8 + i] = t[2962*8 + i] * t[285*8 + i];
@@ -10603,6 +10695,7 @@ void f92(const double *x, const double *a, double *t) {
 }
 
 void f93(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[10773*8 + i] = t[2896*8 + i] * t[393*8 + i];
         t[10774*8 + i] = t[2896*8 + i] * t[398*8 + i];
@@ -10721,6 +10814,7 @@ void f93(const double *x, const double *a, double *t) {
 }
 
 void f94(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[10887*8 + i] = t[10837*8 + i] * t[285*8 + i];
         t[10888*8 + i] =
@@ -10860,6 +10954,7 @@ void f94(const double *x, const double *a, double *t) {
 }
 
 void f95(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[11029*8 + i] = (t[3903*8 + i] + t[6454*8 + i] + t[3894*8 + i] + t[11027*8 + i] + t[5867*8 + i]) * t[34*8 + i];
         t[11031*8 + i] = (t[3894*8 + i] + t[3903*8 + i] + t[11027*8 + i] + t[6926*8 + i] + t[6454*8 + i] + t[5869*8 + i]) * t[90*8 + i];
@@ -10978,6 +11073,7 @@ void f95(const double *x, const double *a, double *t) {
 }
 
 void f96(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[11161*8 + i] = (t[2602*8 + i] + t[5917*8 + i] + t[11096*8 + i] + t[2650*8 + i] + t[11159*8 + i]) * t[34*8 + i];
         t[11162*8 + i] = t[2646*8 + i] * t[90*8 + i];
@@ -11110,6 +11206,7 @@ void f96(const double *x, const double *a, double *t) {
 }
 
 void f97(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[11294*8 + i] = t[3576*8 + i] * t[34*8 + i];
         t[11295*8 + i] = t[3576*8 + i] * t[90*8 + i];
@@ -11241,6 +11338,7 @@ void f97(const double *x, const double *a, double *t) {
 }
 
 void f98(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[11439*8 + i] = t[2916*8 + i] * t[374*8 + i];
         t[11440*8 + i] = t[2914*8 + i] * t[393*8 + i];
@@ -11377,6 +11475,7 @@ void f98(const double *x, const double *a, double *t) {
 }
 
 void f99(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[11562*8 + i] = t[11561*8 + i] * t[314*8 + i];
         t[11564*8 + i] = (t[6493*8 + i] + t[11059*8 + i] + t[5837*8 + i] + t[5841*8 + i] + t[11553*8 + i] + t[11556*8 + i] + t[11060*8 + i] + t[11061*8 + i]) * t[342*8 + i];
@@ -11529,6 +11628,7 @@ void f99(const double *x, const double *a, double *t) {
 }
 
 void f100(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[11734*8 + i] =
             t[11294*8 + i] + t[6408*8 + i] + t[11266*8 + i] + t[11295*8 + i] + t[11718*8 + i] + t[11719*8 + i] + t[11323*8 + i] + t[11324*8 + i] + t[11300*8 + i] + t[11301*8 + i];
@@ -11681,6 +11781,7 @@ void f100(const double *x, const double *a, double *t) {
 }
 
 void f101(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[11879*8 + i] = t[11878*8 + i] * t[535*8 + i];
         t[11881*8 + i] = (t[5018*8 + i] + t[5016*8 + i] + t[5019*8 + i] + t[5021*8 + i] + t[5023*8 + i] + t[5025*8 + i] + t[8354*8 + i] + t[8355*8 + i] + t[5029*8 + i]) * t[258*8 + i];
@@ -11803,6 +11904,7 @@ void f101(const double *x, const double *a, double *t) {
 }
 
 void f102(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[12026*8 + i] = t[9846*8 + i] * t[4*8 + i];
         t[12027*8 + i] = t[2399*8 + i] * t[4*8 + i];
@@ -11927,6 +12029,7 @@ void f102(const double *x, const double *a, double *t) {
 }
 
 void f103(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[12147*8 + i] = t[2467*8 + i] * t[258*8 + i];
         t[12149*8 + i] = (t[2466*8 + i] + t[9779*8 + i] + t[2411*8 + i] + t[2412*8 + i] + t[11955*8 + i] + t[2493*8 + i] + t[2487*8 + i] + t[11959*8 + i] + t[12147*8 + i]) * t[258*8 + i];
@@ -12050,6 +12153,7 @@ void f103(const double *x, const double *a, double *t) {
 }
 
 void f104(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[12277*8 + i] = t[7343*8 + i] + t[7544*8 + i] + t[12250*8 + i] + t[12253*8 + i] + t[12255*8 + i] + t[12257*8 + i] + t[12259*8 + i] + t[12261*8 + i] + t[12263*8 + i] +
                 t[12265*8 + i] + t[12267*8 + i] + t[12269*8 + i] + t[12272*8 + i] + t[12275*8 + i] + t[7836*8 + i] + t[7837*8 + i] + t[9206*8 + i] + t[12276*8 + i] + t[7621*8 + i] +
@@ -12196,6 +12300,7 @@ void f104(const double *x, const double *a, double *t) {
 }
 
 void f105(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[12425*8 + i] =
             t[185*8 + i] + t[9185*8 + i] + t[7369*8 + i] + t[186*8 + i] + t[7585*8 + i] + t[9191*8 + i] + t[7372*8 + i] + t[7374*8 + i] + t[7580*8 + i] + t[7376*8 + i] + t[7377*8 + i];
@@ -12339,6 +12444,7 @@ void f105(const double *x, const double *a, double *t) {
 }
 
 void f106(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[12571*8 + i] =
             (t[445*8 + i] + t[7783*8 + i] + t[8990*8 + i] + t[7791*8 + i] + t[7898*8 + i] + t[6994*8 + i] + t[7897*8 + i] + t[8994*8 + i] + t[448*8 + i] + t[7792*8 + i]) * t[285*8 + i];
@@ -12476,6 +12582,7 @@ void f106(const double *x, const double *a, double *t) {
 }
 
 void f107(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[12699*8 + i] = t[4980*8 + i] * t[301*8 + i];
         t[12700*8 + i] = t[4976*8 + i] * t[314*8 + i];
@@ -12615,6 +12722,7 @@ void f107(const double *x, const double *a, double *t) {
 }
 
 void f108(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[12820*8 + i] = t[4551*8 + i] * t[342*8 + i];
         t[12821*8 + i] = t[5006*8 + i] + t[4546*8 + i] + t[4615*8 + i] + t[8685*8 + i] + t[8684*8 + i] + t[8239*8 + i] + t[4881*8 + i] + t[8343*8 + i] + t[10151*8 + i] + t[12819*8 + i] +
@@ -12754,6 +12862,7 @@ void f108(const double *x, const double *a, double *t) {
 }
 
 void f109(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[12938*8 + i] = t[8663*8 + i] + t[4690*8 + i] + t[8669*8 + i] + t[8355*8 + i] + t[8361*8 + i] + t[5066*8 + i] + t[10249*8 + i] + t[5042*8 + i] + t[12814*8 + i] + t[8662*8 + i] +
                 t[4691*8 + i] + t[8670*8 + i];
@@ -12901,6 +13010,7 @@ void f109(const double *x, const double *a, double *t) {
 }
 
 void f110(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[13057*8 + i] = t[5356*8 + i] * t[258*8 + i];
         t[13058*8 + i] = t[5354*8 + i] * t[285*8 + i];
@@ -13038,6 +13148,7 @@ void f110(const double *x, const double *a, double *t) {
 }
 
 void f111(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[13190*8 + i] = (t[2164*8 + i] + t[9712*8 + i] + t[13188*8 + i] + t[2166*8 + i] + t[9905*8 + i] + t[11958*8 + i] + t[2238*8 + i] + t[11968*8 + i] + t[11969*8 + i]) * t[258*8 + i];
         t[13192*8 + i] = (t[2234*8 + i] + t[2502*8 + i] + t[9943*8 + i] + t[11955*8 + i] + t[2292*8 + i] + t[2155*8 + i] + t[2151*8 + i] + t[11959*8 + i] + t[11969*8 + i] + t[11972*8 + i]) *
@@ -13178,6 +13289,7 @@ void f111(const double *x, const double *a, double *t) {
 }
 
 void f112(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[13335*8 + i] = t[7465*8 + i] + t[9133*8 + i] + t[1146*8 + i] + t[946*8 + i] + t[9132*8 + i] + t[947*8 + i] + t[1152*8 + i] + t[9134*8 + i] + t[9312*8 + i] + t[13334*8 + i] +
                 t[9137*8 + i] + t[9138*8 + i] + t[7328*8 + i] + t[7482*8 + i];
@@ -13312,6 +13424,7 @@ void f112(const double *x, const double *a, double *t) {
 }
 
 void f113(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[13452*8 + i] = t[13451*8 + i] * t[393*8 + i];
         t[13453*8 + i] = t[402*8 + i] * t[258*8 + i];
@@ -13455,6 +13568,7 @@ void f113(const double *x, const double *a, double *t) {
 }
 
 void f114(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[13584*8 + i] = t[13583*8 + i] * t[342*8 + i];
         t[13585*8 + i] = t[7029*8 + i] + t[9233*8 + i] + t[371*8 + i] + t[1963*8 + i] + t[7805*8 + i] + t[8989*8 + i] + t[360*8 + i] + t[435*8 + i] + t[9019*8 + i] + t[13426*8 + i] +
@@ -13604,6 +13718,7 @@ void f114(const double *x, const double *a, double *t) {
 }
 
 void f115(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[13747*8 + i] = (t[8105*8 + i] + t[5186*8 + i] + t[8106*8 + i] + t[5191*8 + i] + t[5192*8 + i] + t[5194*8 + i] + t[5195*8 + i]) * t[301*8 + i];
         t[13749*8 + i] = (t[5207*8 + i] + t[8101*8 + i] + t[5199*8 + i] + t[5203*8 + i] + t[8100*8 + i] + t[5201*8 + i] + t[5205*8 + i] + t[5212*8 + i]) * t[314*8 + i];
@@ -13759,6 +13874,7 @@ void f115(const double *x, const double *a, double *t) {
 }
 
 void f116(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[13875*8 + i] = t[5385*8 + i] + t[5387*8 + i] + t[8042*8 + i] + t[10319*8 + i] + t[10320*8 + i] + t[10321*8 + i] + t[12763*8 + i] + t[12764*8 + i] + t[13000*8 + i] +
                 t[13001*8 + i] + t[12765*8 + i] + t[12766*8 + i] + t[13002*8 + i] + t[13003*8 + i] + t[10330*8 + i] + t[10331*8 + i] + t[7948*8 + i];
@@ -13926,6 +14042,7 @@ void f116(const double *x, const double *a, double *t) {
 }
 
 void f117(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[14118*8 + i] = t[14061*8 + i] + t[14062*8 + i] + t[7075*8 + i] + t[12183*8 + i] + t[12186*8 + i] + t[12188*8 + i] + t[12190*8 + i] + t[12467*8 + i] + t[12469*8 + i] +
                 t[12471*8 + i] + t[14064*8 + i];
@@ -14109,6 +14226,7 @@ void f117(const double *x, const double *a, double *t) {
 }
 
 void f118(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[14340*8 + i] = t[8141*8 + i] + t[5461*8 + i] + t[5385*8 + i] + t[5459*8 + i] + t[10370*8 + i] + t[10371*8 + i] + t[10375*8 + i] + t[10376*8 + i] + t[10372*8 + i] + t[10374*8 + i] +
                 t[14309*8 + i] + t[14265*8 + i] + t[13047*8 + i];
@@ -14290,6 +14408,7 @@ void f118(const double *x, const double *a, double *t) {
 }
 
 void f119(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[14559*8 + i] =
             t[1263*8 + i] + t[1267*8 + i] + t[1271*8 + i] + t[732*8 + i] + t[740*8 + i] + t[1275*8 + i] + t[1279*8 + i] + t[1283*8 + i] + t[1287*8 + i] + t[1292*8 + i] + t[1297*8 + i];
@@ -14479,6 +14598,7 @@ void f119(const double *x, const double *a, double *t) {
 }
 
 void f120(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[14775*8 + i] = t[6225*8 + i] * t[4719*8 + i] + t[14416*8 + i] + t[14221*8 + i] + t[5826*8 + i] + t[5829*8 + i] + t[6534*8 + i] * t[4132*8 + i] + t[14424*8 + i] + t[5998*8 + i] +
                 t[5999*8 + i] + t[6001*8 + i] + t[6015*8 + i] + t[6021*8 + i] + t[3400*8 + i] + t[6722*8 + i] * t[4027*8 + i];
@@ -14678,6 +14798,7 @@ void f120(const double *x, const double *a, double *t) {
 }
 
 void f121(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[15005*8 + i] = 2.0 * t[9642*8 + i];
         t[15006*8 + i] = t[15005*8 + i] + t[1048*8 + i] + t[1125*8 + i] + t[74*8 + i] + t[1481*8 + i] + t[7388*8 + i] + t[8951*8 + i] + t[7564*8 + i] + t[7660*8 + i] + t[13407*8 + i] +
@@ -14813,6 +14934,7 @@ void f121(const double *x, const double *a, double *t) {
 }
 
 void f122(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[15138*8 + i] = t[2884*8 + i] * t[1017*8 + i];
         t[15139*8 + i] = t[2884*8 + i] * t[1022*8 + i];
@@ -14959,6 +15081,7 @@ void f122(const double *x, const double *a, double *t) {
 }
 
 void f123(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[15284*8 + i] = t[15221*8 + i] + t[10875*8 + i] + t[3194*8 + i] + t[5642*8 + i] + t[3028*8 + i] + t[4170*8 + i] + t[3276*8 + i] + t[5769*8 + i] + t[6581*8 + i] + t[10906*8 + i] +
                 t[10907*8 + i] + t[10878*8 + i] + t[10879*8 + i] + t[6018*8 + i] + t[5658*8 + i] + t[10880*8 + i];
@@ -15112,6 +15235,7 @@ void f123(const double *x, const double *a, double *t) {
 }
 
 void f124(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[15444*8 + i] = t[11853*8 + i] + t[11855*8 + i] + t[11857*8 + i] + t[11859*8 + i] + t[11861*8 + i] + t[15202*8 + i] + t[15441*8 + i] + t[15442*8 + i] + t[15201*8 + i] +
                 t[15443*8 + i] + t[15200*8 + i];
@@ -15289,6 +15413,7 @@ void f124(const double *x, const double *a, double *t) {
 }
 
 void f125(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[15637*8 + i] = t[5360*8 + i] * t[535*8 + i];
         t[15638*8 + i] = t[5397*8 + i] * t[540*8 + i];
@@ -15454,6 +15579,7 @@ void f125(const double *x, const double *a, double *t) {
 }
 
 void f126(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[15819*8 + i] = t[3005*8 + i] * t[398*8 + i];
         t[15820*8 + i] = t[15818*8 + i] + t[3164*8 + i] + t[5819*8 + i] + t[2998*8 + i] + t[10947*8 + i] + t[5612*8 + i] + t[10948*8 + i] + t[10879*8 + i] + t[10870*8 + i] + t[5606*8 + i] +
@@ -15613,6 +15739,7 @@ void f126(const double *x, const double *a, double *t) {
 }
 
 void f127(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[15979*8 + i] = t[15721*8 + i] * t[576*8 + i] + (t[15765*8 + i] + t[15783*8 + i]) * t[10012*8 + i] + (t[15788*8 + i] + t[15789*8 + i]) * t[1644*8 + i] + t[13286*8 + i] +
                 t[13187*8 + i] + t[15797*8 + i] * t[415*8 + i] + t[15894*8 + i] * t[540*8 + i] + (t[15853*8 + i] + t[15872*8 + i]) * t[13943*8 + i] + t[15880*8 + i] * t[535*8 + i] +
@@ -15771,6 +15898,7 @@ void f127(const double *x, const double *a, double *t) {
 }
 
 void f128(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[16133*8 + i] = t[16131*8 + i] + t[5161*8 + i] + t[8738*8 + i] + t[4921*8 + i] + t[8739*8 + i] + t[4609*8 + i] + t[4610*8 + i] + t[8740*8 + i] + t[8741*8 + i] + t[8742*8 + i] +
                 t[8743*8 + i] + t[8744*8 + i] + t[8745*8 + i] + t[8746*8 + i] + t[16132*8 + i];
@@ -15952,6 +16080,7 @@ void f128(const double *x, const double *a, double *t) {
 }
 
 void f129(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[16310*8 + i] = t[2759*8 + i] + t[4407*8 + i] + t[2765*8 + i] + t[2767*8 + i] + t[4406*8 + i] + t[2776*8 + i] + t[2775*8 + i] + t[2772*8 + i] + t[16304*8 + i] + t[16305*8 + i] +
                 t[15090*8 + i] + t[15725*8 + i] + t[15726*8 + i] + t[15093*8 + i] + t[16306*8 + i] + t[16307*8 + i] + t[16308*8 + i] + t[16309*8 + i];
@@ -16095,6 +16224,7 @@ void f129(const double *x, const double *a, double *t) {
 }
 
 void f130(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[16449*8 + i] =
             (t[5683*8 + i] + t[10839*8 + i] + t[5815*8 + i] + t[5615*8 + i] + t[10897*8 + i] + t[10860*8 + i] + t[10943*8 + i] + t[10944*8 + i] + t[16392*8 + i] + t[16393*8 + i]) *
@@ -16278,6 +16408,7 @@ void f130(const double *x, const double *a, double *t) {
 }
 
 void f131(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[16617*8 + i] = t[3355*8 + i] * t[393*8 + i];
         t[16618*8 + i] = t[16588*8 + i] + t[3838*8 + i] + t[3817*8 + i] + t[6471*8 + i] + t[5987*8 + i] + t[6470*8 + i] + t[3332*8 + i] + t[3829*8 + i] + t[6472*8 + i] + t[4466*8 + i] +
@@ -16480,6 +16611,7 @@ void f131(const double *x, const double *a, double *t) {
 }
 
 void f132(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[16815*8 + i] = 2.0 * t[7812*8 + i];
         t[16816*8 + i] = t[395*8 + i] * t[374*8 + i];
@@ -16676,6 +16808,7 @@ void f132(const double *x, const double *a, double *t) {
 }
 
 void f133(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[17005*8 + i] = 2.0 * t[5800*8 + i];
         t[17006*8 + i] = t[3005*8 + i] * t[374*8 + i];
@@ -16899,6 +17032,7 @@ void f133(const double *x, const double *a, double *t) {
 }
 
 void f134(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[17226*8 + i] = t[17214*8 + i] + t[10272*8 + i] + t[12723*8 + i] + t[4937*8 + i] + t[10003*8 + i] + t[8533*8 + i] + t[12814*8 + i] + t[12726*8 + i] + t[5309*8 + i] +
                 t[12725*8 + i] + t[8542*8 + i] + t[8613*8 + i] + t[12724*8 + i] + t[5331*8 + i] + t[16150*8 + i] + t[16151*8 + i];
@@ -17048,6 +17182,7 @@ void f134(const double *x, const double *a, double *t) {
 }
 
 void f135(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[17368*8 + i] = t[2965*8 + i] * t[374*8 + i];
         t[17369*8 + i] = t[17366*8 + i] + t[2956*8 + i] + t[6448*8 + i] + t[4109*8 + i] + t[10635*8 + i] + t[2957*8 + i] + t[4112*8 + i] + t[4103*8 + i] + t[4096*8 + i] + t[10659*8 + i] +
@@ -17189,6 +17324,7 @@ void f135(const double *x, const double *a, double *t) {
 }
 
 void f136(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[17509*8 + i] = t[3131*8 + i] * t[342*8 + i];
         t[17510*8 + i] = t[3131*8 + i] * t[374*8 + i];
@@ -17326,6 +17462,7 @@ void f136(const double *x, const double *a, double *t) {
 }
 
 void f137(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[17648*8 + i] =
             (t[768*8 + i] + t[1284*8 + i] + t[7090*8 + i] + t[763*8 + i] + t[7128*8 + i] + t[733*8 + i] + t[7718*8 + i] + t[862*8 + i] + t[17609*8 + i] + t[17610*8 + i]) * t[1356*8 + i] +
@@ -17483,6 +17620,7 @@ void f137(const double *x, const double *a, double *t) {
 }
 
 void f138(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[17802*8 + i] = t[17642*8 + i] + t[387*8 + i] + t[420*8 + i] + t[6972*8 + i] + t[9027*8 + i] + t[1415*8 + i] + t[7004*8 + i] + t[7002*8 + i] + t[1404*8 + i] + t[388*8 + i] +
                 t[9229*8 + i] + t[414*8 + i] + t[17800*8 + i] + t[17801*8 + i] + t[17638*8 + i] + t[17630*8 + i];
@@ -17641,6 +17779,7 @@ void f138(const double *x, const double *a, double *t) {
 }
 
 void f139(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[17954*8 + i] = t[140*8 + i] * t[374*8 + i];
         t[17957*8 + i] = 2.0 * t[7130*8 + i];
@@ -17778,6 +17917,7 @@ void f139(const double *x, const double *a, double *t) {
 }
 
 void f140(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[18086*8 + i] = t[3500*8 + i] * t[540*8 + i];
         t[18087*8 + i] = t[3535*8 + i] * t[1017*8 + i];
@@ -17949,6 +18089,7 @@ void f140(const double *x, const double *a, double *t) {
 }
 
 void f141(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[18256*8 + i] = t[5362*8 + i] * t[432*8 + i];
         t[18257*8 + i] = t[5362*8 + i] * t[415*8 + i];
@@ -18128,6 +18269,7 @@ void f141(const double *x, const double *a, double *t) {
 }
 
 void f142(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[18431*8 + i] = 2.0 * t[8720*8 + i];
         t[18432*8 + i] = t[18431*8 + i] + t[12851*8 + i] + t[8596*8 + i] + t[8354*8 + i] + t[5043*8 + i] + t[12850*8 + i] + t[5275*8 + i] + t[8719*8 + i] + t[8092*8 + i] + t[4679*8 + i] +
@@ -18346,6 +18488,7 @@ void f142(const double *x, const double *a, double *t) {
 }
 
 void f143(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[18660*8 + i] = 2.0 * t[5070*8 + i];
         t[18661*8 + i] = t[18660*8 + i] + t[5060*8 + i] + t[5064*8 + i] + t[8366*8 + i] + t[5059*8 + i] + t[5068*8 + i] + t[5055*8 + i] + t[5062*8 + i] + t[5051*8 + i] + t[8365*8 + i] +
@@ -18574,6 +18717,7 @@ void f143(const double *x, const double *a, double *t) {
 }
 
 void f144(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[18891*8 + i] = t[18889*8 + i] * t[301*8 + i] + t[4539*8 + i] + t[4591*8 + i] + t[10029*8 + i] + t[8761*8 + i] + t[10104*8 + i] + t[10106*8 + i] + t[12629*8 + i] + t[12631*8 + i] +
                 t[12635*8 + i] + t[12639*8 + i];
@@ -18745,6 +18889,7 @@ void f144(const double *x, const double *a, double *t) {
 }
 
 void f145(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[19068*8 + i] = t[3672*8 + i] + t[3673*8 + i] + t[2717*8 + i] + t[3674*8 + i] + t[2748*8 + i] + t[2750*8 + i] + t[4179*8 + i] + t[4180*8 + i] + t[18054*8 + i] + t[18055*8 + i] +
                 t[18056*8 + i] + t[18057*8 + i] + t[18058*8 + i] + t[18059*8 + i] + t[19064*8 + i] + t[19065*8 + i] + t[19066*8 + i] + t[19067*8 + i];
@@ -18921,6 +19066,7 @@ void f145(const double *x, const double *a, double *t) {
 }
 
 void f146(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[19231*8 + i] = t[19227*8 + i] + t[12027*8 + i] + t[12012*8 + i] + t[11988*8 + i] + t[9796*8 + i] + t[11989*8 + i] + t[2396*8 + i] + t[2398*8 + i] + t[11993*8 + i] + t[9716*8 + i] +
                 t[19228*8 + i] + t[19229*8 + i] + t[19230*8 + i];
@@ -19051,6 +19197,7 @@ void f146(const double *x, const double *a, double *t) {
 }
 
 void f147(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[19358*8 + i] = t[492*8 + i] * t[398*8 + i];
         t[19359*8 + i] = t[19278*8 + i] + t[379*8 + i] + t[387*8 + i] + t[385*8 + i] + t[377*8 + i] + t[390*8 + i] + t[381*8 + i] + t[388*8 + i] + t[396*8 + i] + t[383*8 + i] + t[19279*8 + i] +
@@ -19184,6 +19331,7 @@ void f147(const double *x, const double *a, double *t) {
 }
 
 void f148(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[19485*8 + i] = t[3815*8 + i] * t[342*8 + i];
         t[19486*8 + i] = t[3828*8 + i] * t[374*8 + i];
@@ -19323,6 +19471,7 @@ void f148(const double *x, const double *a, double *t) {
 }
 
 void f149(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[19626*8 + i] = t[2616*8 + i] * t[393*8 + i];
         t[19627*8 + i] = t[2616*8 + i] * t[398*8 + i];
@@ -19468,6 +19617,7 @@ void f149(const double *x, const double *a, double *t) {
 }
 
 void f150(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[19757*8 + i] = t[592*8 + i] * t[342*8 + i];
         t[19758*8 + i] = t[594*8 + i] * t[374*8 + i];
@@ -19617,6 +19767,7 @@ void f150(const double *x, const double *a, double *t) {
 }
 
 void f151(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[19906*8 + i] = 2.0 * t[9122*8 + i];
         t[19907*8 + i] = t[1231*8 + i] * t[342*8 + i];
@@ -19762,6 +19913,7 @@ void f151(const double *x, const double *a, double *t) {
 }
 
 void f152(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[20046*8 + i] = t[2768*8 + i] * t[398*8 + i];
         t[20047*8 + i] = t[3666*8 + i] + t[3667*8 + i] + t[3668*8 + i] + t[3669*8 + i] + t[19585*8 + i] + t[19567*8 + i] + t[19653*8 + i] + t[19701*8 + i] + t[20045*8 + i] + t[20046*8 + i] +
@@ -19935,6 +20087,7 @@ void f152(const double *x, const double *a, double *t) {
 }
 
 void f153(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[20206*8 + i] = t[19984*8 + i] + t[4877*8 + i] + t[8101*8 + i] + t[8773*8 + i] + t[8638*8 + i] + t[5299*8 + i] + t[5271*8 + i] + t[4873*8 + i] + t[8159*8 + i] + t[8778*8 + i] +
                 t[12724*8 + i] + t[10252*8 + i] + t[19985*8 + i] + t[19986*8 + i] + t[19993*8 + i] + t[20205*8 + i];
@@ -20104,6 +20257,7 @@ void f153(const double *x, const double *a, double *t) {
 }
 
 void f154(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[20368*8 + i] =
             t[19419*8 + i] + t[8545*8 + i] + t[4828*8 + i] + t[8546*8 + i] + t[8434*8 + i] + t[4834*8 + i] + t[8547*8 + i] + t[8548*8 + i] + t[8492*8 + i] + t[4966*8 + i] + t[19420*8 + i];
@@ -20283,6 +20437,7 @@ void f154(const double *x, const double *a, double *t) {
 }
 
 void f155(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[20534*8 + i] = t[811*8 + i] * t[285*8 + i];
         t[20535*8 + i] = t[773*8 + i] * t[342*8 + i];
@@ -20441,6 +20596,7 @@ void f155(const double *x, const double *a, double *t) {
 }
 
 void f156(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[20687*8 + i] = 2.0 * t[11112*8 + i];
         t[20688*8 + i] = t[2560*8 + i] * t[285*8 + i];
@@ -20633,6 +20789,7 @@ void f156(const double *x, const double *a, double *t) {
 }
 
 void f157(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[20883*8 + i] = t[20662*8 + i] + t[5016*8 + i] + t[5018*8 + i] + t[5019*8 + i] + t[5021*8 + i] + t[8352*8 + i] + t[8353*8 + i] + t[8354*8 + i] + t[8355*8 + i] + t[5133*8 + i] +
                 t[20261*8 + i] + t[20262*8 + i] + t[20663*8 + i];
@@ -20847,6 +21004,7 @@ void f157(const double *x, const double *a, double *t) {
 }
 
 void f158(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[21099*8 + i] = t[20581*8 + i] + t[7191*8 + i] + t[7192*8 + i] + t[981*8 + i] + t[986*8 + i] + t[7193*8 + i] + t[7194*8 + i] + t[7871*8 + i] + t[7872*8 + i] + t[7882*8 + i] +
                 t[19776*8 + i] + t[19777*8 + i];
@@ -21042,6 +21200,7 @@ void f158(const double *x, const double *a, double *t) {
 }
 
 void f159(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[21300*8 + i] = t[21263*8 + i] * t[4149*8 + i] + t[21266*8 + i] * t[301*8 + i] + t[21268*8 + i] * t[4740*8 + i] + t[2949*8 + i] + t[21272*8 + i] * t[596*8 + i] + t[2973*8 + i] +
                 2.0 * t[4020*8 + i] + t[21279*8 + i] * t[398*8 + i] + t[21283*8 + i] * t[342*8 + i] + t[2979*8 + i] * t[285*8 + i] + t[21286*8 + i] * t[4719*8 + i] +
@@ -21240,6 +21399,7 @@ void f159(const double *x, const double *a, double *t) {
 }
 
 void f160(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[21491*8 + i] = t[5061*8 + i] * t[314*8 + i];
         t[21492*8 + i] = t[5104*8 + i] * t[393*8 + i];
@@ -21387,6 +21547,7 @@ void f160(const double *x, const double *a, double *t) {
 }
 
 void f161(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[21642*8 + i] = t[3138*8 + i] * t[314*8 + i];
         t[21647*8 + i] = t[3927*8 + i] * t[393*8 + i];
@@ -21552,6 +21713,7 @@ void f161(const double *x, const double *a, double *t) {
 }
 
 void f162(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[21816*8 + i] = 2.0 * t[4823*8 + i];
         t[21817*8 + i] = t[4852*8 + i] * t[301*8 + i];
@@ -21701,6 +21863,7 @@ void f162(const double *x, const double *a, double *t) {
 }
 
 void f163(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[21966*8 + i] = t[4850*8 + i] * t[398*8 + i];
         t[21967*8 + i] = t[21764*8 + i] + t[4771*8 + i] + t[5166*8 + i] + t[4774*8 + i] + t[5159*8 + i] + t[4816*8 + i] + t[8087*8 + i] + t[5160*8 + i] + t[21765*8 + i] + t[21489*8 + i] +
@@ -21874,6 +22037,7 @@ void f163(const double *x, const double *a, double *t) {
 }
 
 void f164(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[22144*8 + i] = t[5083*8 + i] * t[285*8 + i];
         t[22145*8 + i] = t[4672*8 + i] * t[342*8 + i];
@@ -22047,6 +22211,7 @@ void f164(const double *x, const double *a, double *t) {
 }
 
 void f165(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[22339*8 + i] = t[22336*8 + i] + t[1505*8 + i] + t[1510*8 + i] + t[306*8 + i] + t[7226*8 + i] + t[1488*8 + i] + t[238*8 + i] + t[7286*8 + i] + t[22257*8 + i] + t[21858*8 + i] +
                 t[21873*8 + i] + t[21874*8 + i] + t[17613*8 + i] + t[17797*8 + i] + t[22337*8 + i] + t[22338*8 + i];
@@ -22237,6 +22402,7 @@ void f165(const double *x, const double *a, double *t) {
 }
 
 void f166(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[22527*8 + i] = t[3992*8 + i] * t[393*8 + i];
         t[22528*8 + i] = t[4001*8 + i] * t[398*8 + i];
@@ -22411,6 +22577,7 @@ void f166(const double *x, const double *a, double *t) {
 }
 
 void f167(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[22721*8 + i] =
             t[22683*8 + i] * t[415*8 + i] + t[22685*8 + i] * t[535*8 + i] +
@@ -22593,6 +22760,7 @@ void f167(const double *x, const double *a, double *t) {
 }
 
 void f168(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[22888*8 + i] = t[5040*8 + i] * t[314*8 + i];
         t[22889*8 + i] = t[22886*8 + i] + t[5009*8 + i] + t[8596*8 + i] + t[4836*8 + i] + t[7972*8 + i] + t[4680*8 + i] + t[8597*8 + i] + t[5131*8 + i] + t[22105*8 + i] + t[22106*8 + i] +
@@ -22752,6 +22920,7 @@ void f168(const double *x, const double *a, double *t) {
 }
 
 void f169(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[23066*8 + i] = t[3944*8 + i] * t[314*8 + i];
         t[23067*8 + i] = t[23064*8 + i] + t[3816*8 + i] + t[3800*8 + i] + t[6448*8 + i] + t[3830*8 + i] + t[5705*8 + i] + t[2957*8 + i] + t[2978*8 + i] + t[21554*8 + i] + t[21555*8 + i] +
@@ -22940,6 +23109,7 @@ void f169(const double *x, const double *a, double *t) {
 }
 
 void f170(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[23264*8 + i] = 2.0 * t[7352*8 + i];
         t[23265*8 + i] = t[31*8 + i] * t[242*8 + i];
@@ -23155,6 +23325,7 @@ void f170(const double *x, const double *a, double *t) {
 }
 
 void f171(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[23489*8 + i] = 2.0 * t[2300*8 + i];
         t[23492*8 + i] = 2.0 * t[2247*8 + i];
@@ -23389,6 +23560,7 @@ void f171(const double *x, const double *a, double *t) {
 }
 
 void f172(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[23737*8 + i] = t[632*8 + i] * t[301*8 + i];
         t[23738*8 + i] = t[23736*8 + i] + t[624*8 + i] + t[946*8 + i] + t[947*8 + i] + t[948*8 + i] + t[622*8 + i] + t[949*8 + i] + t[9530*8 + i] + t[21857*8 + i] + t[22009*8 + i] +
@@ -23597,6 +23769,7 @@ void f172(const double *x, const double *a, double *t) {
 }
 
 void f173(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[23955*8 + i] = 2.0 * t[8440*8 + i];
         t[23956*8 + i] = t[4860*8 + i] * t[170*8 + i];
@@ -23728,6 +23901,7 @@ void f173(const double *x, const double *a, double *t) {
 }
 
 void f174(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[24085*8 + i] = t[24044*8 + i] + t[8909*8 + i] + t[7567*8 + i] + t[186*8 + i] + t[9159*8 + i] + t[181*8 + i] + t[24083*8 + i] + t[24084*8 + i] + t[24047*8 + i] + t[24048*8 + i] +
                 t[7390*8 + i] + t[7400*8 + i] + t[18136*8 + i] + t[18321*8 + i] + t[24049*8 + i] + t[24050*8 + i];
@@ -23886,6 +24060,7 @@ void f174(const double *x, const double *a, double *t) {
 }
 
 void f175(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[24246*8 + i] = t[24243*8 + i] + t[7226*8 + i] + t[7227*8 + i] + t[233*8 + i] + t[1241*8 + i] + t[238*8 + i] + t[7309*8 + i] + t[7311*8 + i] + t[22294*8 + i] + t[22295*8 + i] +
                 t[24017*8 + i] + t[24018*8 + i] + t[24244*8 + i] + t[24245*8 + i];
@@ -24043,6 +24218,7 @@ void f175(const double *x, const double *a, double *t) {
 }
 
 void f176(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[24430*8 + i] = t[24427*8 + i] + t[12027*8 + i] + t[2396*8 + i] + t[9857*8 + i] + t[11932*8 + i] + t[9911*8 + i] + t[23938*8 + i] + t[24363*8 + i] + t[22422*8 + i] +
                 t[22668*8 + i] + t[24428*8 + i] + t[24429*8 + i] + t[19247*8 + i];
@@ -24200,6 +24376,7 @@ void f176(const double *x, const double *a, double *t) {
 }
 
 void f177(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[24586*8 + i] = t[24538*8 + i] + t[3152*8 + i] + t[10915*8 + i] + t[3149*8 + i] + t[10827*8 + i] + t[5770*8 + i] + t[24478*8 + i] + t[24559*8 + i] + t[24540*8 + i] +
                 t[24541*8 + i] + t[5645*8 + i] + t[5637*8 + i] + t[18093*8 + i] + t[18001*8 + i] + t[24542*8 + i] + t[24543*8 + i];
@@ -24377,6 +24554,7 @@ void f177(const double *x, const double *a, double *t) {
 }
 
 void f178(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[24756*8 + i] = t[24693*8 + i] + t[4077*8 + i] + t[4082*8 + i] + t[4078*8 + i] + t[3921*8 + i] + t[3918*8 + i] + t[10650*8 + i] + t[10652*8 + i] + t[22689*8 + i] + t[22690*8 + i] +
                 t[24496*8 + i] + t[24497*8 + i] + t[24754*8 + i] + t[24755*8 + i];
@@ -24530,6 +24708,7 @@ void f178(const double *x, const double *a, double *t) {
 }
 
 void f179(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[24915*8 + i] = 2.0 * t[1303*8 + i];
         t[24916*8 + i] = t[369*8 + i] * t[170*8 + i];
@@ -24716,6 +24895,7 @@ void f179(const double *x, const double *a, double *t) {
 }
 
 void f180(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[25097*8 + i] = t[25082*8 + i] + t[7076*8 + i] + t[708*8 + i] + t[718*8 + i] + t[7082*8 + i] + t[7077*8 + i] + t[24904*8 + i] + t[25096*8 + i] + t[24056*8 + i] + t[24936*8 + i] +
                 t[1675*8 + i] + t[802*8 + i] + t[17829*8 + i] + t[17618*8 + i] + t[24183*8 + i] + t[25084*8 + i];
@@ -24912,6 +25092,7 @@ void f180(const double *x, const double *a, double *t) {
 }
 
 void f181(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[25292*8 + i] =
             t[25264*8 + i] * t[576*8 + i] + t[25266*8 + i] +
@@ -25088,6 +25269,7 @@ void f181(const double *x, const double *a, double *t) {
 }
 
 void f182(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[25475*8 + i] = t[2705*8 + i] + t[2707*8 + i] + t[24777*8 + i] + t[24778*8 + i] + t[10976*8 + i] + t[10702*8 + i] + t[17526*8 + i] + t[17569*8 + i] + t[25473*8 + i] +
                 t[25474*8 + i] + t[15230*8 + i] + t[15231*8 + i] + t[22984*8 + i] + t[22763*8 + i] + t[15232*8 + i] + t[15233*8 + i] + t[22764*8 + i] + t[22987*8 + i];
@@ -25278,6 +25460,7 @@ void f182(const double *x, const double *a, double *t) {
 }
 
 void f183(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[25702*8 + i] = t[25382*8 + i] + t[8971*8 + i] + t[448*8 + i] + t[7783*8 + i] + t[1429*8 + i] + t[25383*8 + i] + t[24023*8 + i] + t[24039*8 + i] + t[24190*8 + i] + t[24958*8 + i] +
                 t[7021*8 + i] + t[7013*8 + i] + t[18349*8 + i] + t[18174*8 + i] + t[25384*8 + i] + t[25385*8 + i];
@@ -25468,6 +25651,7 @@ void f183(const double *x, const double *a, double *t) {
 }
 
 void f184(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[25910*8 + i] =
             t[25909*8 + i] + t[252*8 + i] + t[1191*8 + i] + t[251*8 + i] + t[1192*8 + i] + t[12239*8 + i] + t[1798*8 + i] + t[1520*8 + i] + t[9126*8 + i] + t[13326*8 + i] + t[9368*8 + i];
@@ -25672,6 +25856,7 @@ void f184(const double *x, const double *a, double *t) {
 }
 
 void f185(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[26114*8 + i] = t[25871*8 + i] + t[8657*8 + i] + t[8765*8 + i] + t[5149*8 + i] + t[4796*8 + i] + t[8123*8 + i] + t[4830*8 + i] + t[8249*8 + i] + t[22177*8 + i] + t[21481*8 + i] +
                 t[22844*8 + i] + t[21491*8 + i] + t[21450*8 + i] + t[19442*8 + i] + t[25872*8 + i];
@@ -25911,6 +26096,7 @@ void f185(const double *x, const double *a, double *t) {
 }
 
 void f186(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[26360*8 + i] = (t[26358*8 + i] + t[2182*8 + i] + t[2183*8 + i] + t[2185*8 + i] + t[2187*8 + i] + t[5521*8 + i] + t[12058*8 + i]) * t[170*8 + i];
         t[26362*8 + i] = (t[26358*8 + i] + t[2182*8 + i] + t[2183*8 + i] + t[2185*8 + i] + t[2187*8 + i] + t[5521*8 + i] + t[12078*8 + i] + t[12060*8 + i]) * t[242*8 + i];
@@ -26051,6 +26237,7 @@ void f186(const double *x, const double *a, double *t) {
 }
 
 void f187(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[26503*8 + i] = t[2149*8 + i] * t[90*8 + i];
         t[26505*8 + i] = (t[2144*8 + i] + t[26502*8 + i] + t[26503*8 + i]) * t[90*8 + i];
@@ -26167,6 +26354,7 @@ void f187(const double *x, const double *a, double *t) {
 }
 
 void f188(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[26644*8 + i] = t[1204*8 + i] * t[242*8 + i];
         t[26645*8 + i] = t[1151*8 + i] * t[258*8 + i];
@@ -26296,6 +26484,7 @@ void f188(const double *x, const double *a, double *t) {
 }
 
 void f189(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[26787*8 + i] = t[5077*8 + i] * t[170*8 + i];
         t[26788*8 + i] = t[5067*8 + i] * t[242*8 + i];
@@ -26415,6 +26604,7 @@ void f189(const double *x, const double *a, double *t) {
 }
 
 void f190(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[26912*8 + i] = t[20*8 + i] * t[374*8 + i];
         t[26915*8 + i] = t[412*8 + i] * t[34*8 + i];
@@ -26545,6 +26735,7 @@ void f190(const double *x, const double *a, double *t) {
 }
 
 void f191(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[27058*8 + i] = t[2399*8 + i] * t[90*8 + i];
         t[27059*8 + i] = t[2309*8 + i] * t[170*8 + i];
@@ -26654,6 +26845,7 @@ void f191(const double *x, const double *a, double *t) {
 }
 
 void f192(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[27191*8 + i] = t[3095*8 + i] * t[170*8 + i];
         t[27192*8 + i] = t[3071*8 + i] * t[242*8 + i];
@@ -26794,6 +26986,7 @@ void f192(const double *x, const double *a, double *t) {
 }
 
 void f193(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[27362*8 + i] =
             t[26395*8 + i] + t[8408*8 + i] + t[8405*8 + i] + t[4524*8 + i] + t[27320*8 + i] + t[27323*8 + i] + t[27325*8 + i] + t[27327*8 + i] +
@@ -26912,6 +27105,7 @@ void f193(const double *x, const double *a, double *t) {
 }
 
 void f194(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[27507*8 + i] = t[9875*8 + i] * t[374*8 + i];
         t[27508*8 + i] = t[9843*8 + i] + t[27495*8 + i] + t[27496*8 + i] + t[27497*8 + i] + t[27498*8 + i] + t[27504*8 + i] + t[27505*8 + i] + t[27499*8 + i] + t[27500*8 + i] +
@@ -27072,6 +27266,7 @@ void f194(const double *x, const double *a, double *t) {
 }
 
 void f195(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[27702*8 + i] = t[679*8 + i] + t[27647*8 + i] + t[27648*8 + i] + t[26929*8 + i] + t[26930*8 + i] + t[26999*8 + i] + t[27000*8 + i] + t[26931*8 + i] + t[26932*8 + i] +
                 t[27001*8 + i] + t[27002*8 + i] + t[27649*8 + i] + t[27650*8 + i];
@@ -27262,6 +27457,7 @@ void f195(const double *x, const double *a, double *t) {
 }
 
 void f196(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[27885*8 + i] = t[2626*8 + i] * t[90*8 + i];
         t[27886*8 + i] = t[2607*8 + i] * t[170*8 + i];
@@ -27386,6 +27582,7 @@ void f196(const double *x, const double *a, double *t) {
 }
 
 void f197(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[28031*8 + i] = t[3883*8 + i] * t[170*8 + i];
         t[28032*8 + i] = t[3870*8 + i] * t[242*8 + i];
@@ -27527,6 +27724,7 @@ void f197(const double *x, const double *a, double *t) {
 }
 
 void f198(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[28224*8 + i] = t[3496*8 + i] * t[657*8 + i];
         t[28225*8 + i] = t[3412*8 + i] * t[34*8 + i] + t[3421*8 + i] * t[90*8 + i] + t[28211*8 + i] + t[28212*8 + i] + t[28213*8 + i] + t[28214*8 + i] + t[28215*8 + i] + t[28216*8 + i] +
@@ -27653,6 +27851,7 @@ void f198(const double *x, const double *a, double *t) {
 }
 
 void f199(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[28376*8 + i] = t[3942*8 + i] * t[90*8 + i];
         t[28377*8 + i] = t[3915*8 + i] * t[170*8 + i];
@@ -27780,6 +27979,7 @@ void f199(const double *x, const double *a, double *t) {
 }
 
 void f200(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[28518*8 + i] = t[1144*8 + i] + t[28508*8 + i] + t[28509*8 + i] + t[28510*8 + i] + t[28511*8 + i] + t[28512*8 + i] + t[1217*8 + i] * t[285*8 + i] + t[28514*8 + i] + t[28515*8 + i] +
                 t[28516*8 + i] + t[1171*8 + i] * t[374*8 + i];
@@ -27943,6 +28143,7 @@ void f200(const double *x, const double *a, double *t) {
 }
 
 void f201(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[28728*8 + i] = t[1204*8 + i] * t[170*8 + i];
         t[28729*8 + i] = t[1214*8 + i] * t[242*8 + i];
@@ -28102,6 +28303,7 @@ void f201(const double *x, const double *a, double *t) {
 }
 
 void f202(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[28884*8 + i] = t[3460*8 + i] * t[285*8 + i];
         t[28885*8 + i] = t[3460*8 + i] * t[301*8 + i];
@@ -28244,6 +28446,7 @@ void f202(const double *x, const double *a, double *t) {
 }
 
 void f203(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[29061*8 + i] = t[4665*8 + i] * t[170*8 + i];
         t[29062*8 + i] = t[4681*8 + i] * t[242*8 + i];
@@ -28365,6 +28568,7 @@ void f203(const double *x, const double *a, double *t) {
 }
 
 void f204(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[29214*8 + i] = t[2460*8 + i] + t[29152*8 + i] + t[29156*8 + i] + t[29207*8 + i] + t[29208*8 + i] + t[29209*8 + i] + t[29210*8 + i] + t[29211*8 + i] + t[29212*8 + i] +
                 t[27501*8 + i] + t[27507*8 + i] + t[29204*8 + i] + t[2517*8 + i] * t[398*8 + i];
@@ -28504,6 +28708,7 @@ void f204(const double *x, const double *a, double *t) {
 }
 
 void f205(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[29371*8 + i] = t[2688*8 + i] + t[29368*8 + i] + t[29369*8 + i] + t[29324*8 + i] + t[29325*8 + i] + t[29326*8 + i] + t[29327*8 + i] + t[29328*8 + i] + t[29329*8 + i] +
                 t[28233*8 + i] + t[28234*8 + i] + t[2696*8 + i] * t[393*8 + i];
@@ -28641,6 +28846,7 @@ void f205(const double *x, const double *a, double *t) {
 }
 
 void f206(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[29527*8 + i] = t[367*8 + i] * t[301*8 + i];
         t[29528*8 + i] = t[344*8 + i] * t[314*8 + i];
@@ -28761,6 +28967,7 @@ void f206(const double *x, const double *a, double *t) {
 }
 
 void f207(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[29659*8 + i] = t[679*8 + i] + t[29655*8 + i] + t[29656*8 + i] + t[29614*8 + i] + t[29615*8 + i] + t[29616*8 + i] + t[29617*8 + i] + t[29618*8 + i] + t[29619*8 + i] +
                 t[29620*8 + i] + t[29621*8 + i] + t[29657*8 + i] + t[29658*8 + i];
@@ -28900,6 +29107,7 @@ void f207(const double *x, const double *a, double *t) {
 }
 
 void f208(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[29849*8 + i] = t[5036*8 + i] * t[34*8 + i];
         t[29850*8 + i] = t[5020*8 + i] * t[90*8 + i];
@@ -29030,6 +29238,7 @@ void f208(const double *x, const double *a, double *t) {
 }
 
 void f209(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[29980*8 + i] = t[444*8 + i] * t[34*8 + i];
         t[29981*8 + i] = t[444*8 + i] * t[90*8 + i];
@@ -29168,6 +29377,7 @@ void f209(const double *x, const double *a, double *t) {
 }
 
 void f210(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[30138*8 + i] = t[49*8 + i] * t[90*8 + i];
         t[30139*8 + i] = t[25*8 + i] * t[170*8 + i];
@@ -29319,6 +29529,7 @@ void f210(const double *x, const double *a, double *t) {
 }
 
 void f211(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[30282*8 + i] = t[1204*8 + i] * t[258*8 + i];
         t[30283*8 + i] = t[1214*8 + i] * t[285*8 + i];
@@ -29507,6 +29718,7 @@ void f211(const double *x, const double *a, double *t) {
 }
 
 void f212(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[30517*8 + i] = t[99*8 + i] * t[301*8 + i];
         t[30518*8 + i] = t[114*8 + i] * t[314*8 + i];
@@ -29644,6 +29856,7 @@ void f212(const double *x, const double *a, double *t) {
 }
 
 void f213(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[30681*8 + i] = t[3148*8 + i] * t[393*8 + i];
         t[30682*8 + i] = t[3148*8 + i] * t[398*8 + i];
@@ -29836,6 +30049,7 @@ void f213(const double *x, const double *a, double *t) {
 }
 
 void f214(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[30937*8 + i] = t[600*8 + i] * t[258*8 + i];
         t[30938*8 + i] = t[600*8 + i] * t[285*8 + i];
@@ -29954,6 +30168,7 @@ void f214(const double *x, const double *a, double *t) {
 }
 
 void f215(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[31059*8 + i] = t[662*8 + i] * t[314*8 + i];
         t[31062*8 + i] = t[679*8 + i] + t[30992*8 + i] + t[30993*8 + i] + t[31020*8 + i] + t[31021*8 + i] + t[31014*8 + i] + t[31015*8 + i] + t[31022*8 + i] + t[31023*8 + i] +
@@ -30104,6 +30319,7 @@ void f215(const double *x, const double *a, double *t) {
 }
 
 void f216(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[31233*8 + i] = t[5073*8 + i] * t[314*8 + i];
         t[31236*8 + i] = t[4659*8 + i] + t[26804*8 + i] + t[26776*8 + i] + t[26455*8 + i] + t[26445*8 + i] + t[29070*8 + i] + t[29071*8 + i] + t[31232*8 + i] + t[31233*8 + i] +
@@ -30255,6 +30471,7 @@ void f216(const double *x, const double *a, double *t) {
 }
 
 void f217(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[31419*8 + i] = t[417*8 + i] * t[242*8 + i];
         t[31420*8 + i] = t[336*8 + i] * t[258*8 + i];
@@ -30387,6 +30604,7 @@ void f217(const double *x, const double *a, double *t) {
 }
 
 void f218(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[31567*8 + i] = t[3031*8 + i] * t[90*8 + i];
         t[31568*8 + i] = t[3067*8 + i] * t[170*8 + i];
@@ -30571,6 +30789,7 @@ void f218(const double *x, const double *a, double *t) {
 }
 
 void f219(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[31778*8 + i] = t[3403*8 + i] * t[242*8 + i];
         t[31779*8 + i] = t[3462*8 + i] * t[301*8 + i];
@@ -30709,6 +30928,7 @@ void f219(const double *x, const double *a, double *t) {
 }
 
 void f220(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[31934*8 + i] = t[4713*8 + i] * t[301*8 + i];
         t[31935*8 + i] = t[4713*8 + i] * t[314*8 + i];
@@ -30894,6 +31114,7 @@ void f220(const double *x, const double *a, double *t) {
 }
 
 void f221(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[32155*8 + i] = t[29556*8 + i] + t[30533*8 + i];
         t[32157*8 + i] = t[813*8 + i] * t[34*8 + i];
@@ -31046,6 +31267,7 @@ void f221(const double *x, const double *a, double *t) {
 }
 
 void f222(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[32317*8 + i] = (t[2178*8 + i] + t[27063*8 + i] + t[27064*8 + i] + t[26547*8 + i]) * t[170*8 + i];
         t[32319*8 + i] = (t[2178*8 + i] + t[27063*8 + i] + t[27064*8 + i] + t[27556*8 + i] + t[26548*8 + i]) * t[242*8 + i];
@@ -31183,6 +31405,7 @@ void f222(const double *x, const double *a, double *t) {
 }
 
 void f223(const double *x, const double *a, double *t) {
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         t[32503*8 + i] = t[2531*8 + i] + t[32379*8 + i] + t[32380*8 + i] + t[32488*8 + i] + t[32489*8 + i] + t[32383*8 + i] + t[32384*8 + i] + t[32490*8 + i] + t[32491*8 + i] +
                 t[32387*8 + i] + t[32388*8 + i] + t[32389*8 + i] + t[32390*8 + i];
@@ -31528,6 +31751,7 @@ double* poly_3b_v2x::eval(const double *a, const double *x, double *t, double *g
 
     double* e = new double[8];
 
+	#pragma omp simd simdlen(8)
     for(int i = 0; i < 8; i++) {
         g[0*8 + i] = t[4522*8 + i];
         g[1*8 + i] = t[6963*8 + i];
