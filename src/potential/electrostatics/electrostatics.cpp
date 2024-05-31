@@ -6405,10 +6405,40 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
     double aDD = 0.055; // Thole damping aDD intermolecular is always 0.055
+
+    //TODO: Need to rearrange the coordinates (presmably in xyz_all_)
+    vector<double> xyz_rearranged(xyz_all_.size());
+    int fi_mon = 0;
+    int fi_crd = 0;
+    //fi_mon has the index of the first monomer of this monomer type
+    //for each monomer type
+    for(int mt = 0; mt<mon_type_count_.size(); mt++){
+        //for each site of that monomer type
+        //nmon = number of monomers of that type
+        int nmon = mon_type_count_[mt].second;
+        for(int s = 0; s < sites_all_[fi_mon]; s++){
+            for(int i = 0; i<nmon; ++i){
+                xyz_rearranged[fi_crd+3*i] = xyz_all_[fi_crd+i];
+                xyz_rearranged[fi_crd+3*i+1] = xyz_all_[fi_crd+i+nmon];
+                xyz_rearranged[fi_crd+3*i+2] = xyz_all_[fi_crd+i+2*nmon];
+            }
+            fi_crd += nmon*3;
+        }
+        fi_mon += nmon;
+    }
+
+    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz_rearranged,use_pbc, box, box_inverse);
+    
+    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                kdtutils::PointCloud<double>, 3 /* dim */>
+        my_kd_tree_t;
+    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+    index.buildIndex();
+
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
-        size_t nmon12 = nmon1 * 2;
+        //size_t nmon12 = nmon1 * 2;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
@@ -6440,7 +6470,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             #ifdef _OPENMP
             #pragma omp parallel for schedule(dynamic)
             #endif
-
+            //for each monomer in mt1...
             for (size_t m1 = m1start; m1 < nmon1; m1 += m1_step_size) {
                 //            for (size_t m1 = 0; m1 < nmon1; m1++) {
                 // size_t isl1_offset = fi_mon1 + m1;
@@ -6454,8 +6484,15 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>> rank_precomputedInformation = precomputedInformation_pool[rank];
                 size_t m2init = same ? m1 + 1 : 0;
 
+                // indexing of xyz_all_ (?) : m1s1x m2s1x ... m1s1y ... m1s1z ... m1s2x ... m1s3x ... [next monomer type]
+                //for each site in the monomer m1...
                 for (size_t i = 0; i < ns1; i++) {
-                    size_t inmon13 = 3 * nmon1 * i;
+                    //size_t inmon13 = 3 * nmon1 * i; not used in this function
+                    //first getting the point:
+                        double[3] point;
+                        point[0] = fi_crd1+i*nmon1*3+m1;
+                        point[1] = fi_crd1+i*nmon1*3+nmon1+m1;
+                        point[2] = fi_crd1+i*nmon1*3+nmon1*2+m1;
                     for (size_t j = 0; j < ns2; j++) {
                         double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
@@ -6468,20 +6505,53 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             Ai = BIGNUM;
                             Asqsqi = Ai;
                         }
-
                         // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
-                        std::vector<size_t> good_mon2_indices;
-                        std::vector<size_t> bool_mon2_indices(nmon2, 0);
-                        local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
-                                                                    nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
-                                                                    m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
+                        // goes over all mt2 site j
 
-                        // monomer 2s within the cutoff are stored in good_mon2_indices
-                        for (int ind = 0; ind < nmon2; ind++) {
-                            if (bool_mon2_indices[ind] == 1) {
-                                good_mon2_indices.push_back(ind);
+                        // TODO: use the kdtree to find all sites within radius, then choose only sites of type
+                        /* Notes or something:
+                            1. from sys_tools addCluster: kdtree.radiusSearch(point = ptc(xyz to cloud).pts[i].x,y,z , cutoff^2, return vector of match indices (matches[i] = index of ), params)
+                                mon_index list of indices of first_index[i] corresponding to monomers used in xyz (xyz[ith monomer] --> mon_index[i] = index in first_index of the monomer)
+                                first_index: index of x for first site in xyz_orig (?)
+                            2. output format of .radiusSearch: return value is size_t, length of the return vector; return vector is xindex of match monomers, assuming xyz is x1 y1 z1 ... xi yi zi ... xn yn zn
+                            3. planning todo: draw out how things are indexed in sys_tools, then diagram out how i'll index things here...
+                                doneish ?
+                            4. pay attention to m2init
+                        */
+                        // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
+                        
+                        // replace with kdtree? start
+                        std::vector<size_t> good_mon2_indices;
+                        // old code
+                        // std::vector<size_t> bool_mon2_indices(nmon2, 0);
+                        
+                        // local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
+                        //                                             nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
+                        //                                             m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
+
+                        // // monomer 2s within the cutoff are stored in good_mon2_indices
+                        // for (int ind = 0; ind < nmon2; ind++) {
+                        //     if (bool_mon2_indices[ind] == 1) {
+                        //         good_mon2_indices.push_back(ind);
+                        //     }
+                        // }
+
+                        //finding the list of all indices:
+                        
+
+                        std::vector<std::pair<size_t, double>> site2_indices;
+                        nanoflann::SearchParams params;
+                        const size_t nMatches = index.radiusSearch(point, cutoff*cutoff, site2_indices, params);
+
+                        //site offset
+                        size_t offset = fi_sites2 + nmon2*j;
+                        for(size_t s = 0; s<nMatches; ++s){
+                            if(site2_indices[s] >= offset && site2_indices[s] < offset + nmon2){
+                                //add the monomer, indexed relative to mt2
+                                good_mon2_indices.push_back(site2_indices[s] - offset);
                             }
                         }
+                        //end: good_mon2_indices: contains indices of mon2s within threshold
 
                     
 
