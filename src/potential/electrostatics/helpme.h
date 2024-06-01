@@ -2792,6 +2792,13 @@ class PMEInstance {
         int nComponents = nCartesian(parameterAngMom) - cartesianOffset;
         size_t nAtoms = coordinates.nRows();
 
+        std::vector<std::tuple<Spline, Spline, Spline>> bSplines(nAtoms);
+
+        #pragma omp parallel for
+        for (size_t atom = 0; atom < nAtoms; ++atom) {
+            bSplines[atom] = makeBSplines(coordinates[atom], parameterAngMom);
+        }
+
 #pragma omp parallel num_threads(nThreads_)
         {
 #ifdef _OPENMP
@@ -2799,12 +2806,6 @@ class PMEInstance {
 #else
             int threadID = 0;
 #endif
-
-            std::vector<std::tuple<Spline, Spline, Spline>> bSplines(nAtoms);
-
-            for (size_t atom = 0; atom < nAtoms; ++atom) {
-                bSplines[atom] = makeBSplines(coordinates[atom], parameterAngMom);
-            }
 
             for (size_t atom = 0; atom < nAtoms; ++atom) {
                 // Blindly reconstruct splines for this atom, assuming nothing about the validity of the cache.
