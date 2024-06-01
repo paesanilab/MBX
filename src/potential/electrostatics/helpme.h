@@ -2803,13 +2803,19 @@ class PMEInstance {
             #endif
 
 
+            std::vector<std::tuple<Spline, Spline, Spline>> bSplines(nAtoms);
+
+            for (size_t atom = 0; atom < nAtoms; ++atom) {
+                bSplines[atom] = makeBSplines(coordinates[atom], parameterAngMom);
+            }
+
             for (size_t atom = 0; atom < nAtoms; ++atom) {
                 // Blindly reconstruct splines for this atom, assuming nothing about the validity of the cache.
                 // Note that this incurs a somewhat steep cost due to repeated memory allocations.
-                auto bSplines = makeBSplines(coordinates[atom], parameterAngMom);
-                const auto &splineA = std::get<0>(bSplines);
-                const auto &splineB = std::get<1>(bSplines);
-                const auto &splineC = std::get<2>(bSplines);
+                // auto bSplines = makeBSplines(coordinates[atom], parameterAngMom);
+                const auto &splineA = std::get<0>(bSplines[atom]);
+                const auto &splineB = std::get<1>(bSplines[atom]);
+                const auto &splineC = std::get<2>(bSplines[atom]);
                 const auto &aGridIterator = gridIteratorA_[splineA.startingGridPoint()];
                 const auto &bGridIterator = gridIteratorB_[splineB.startingGridPoint()];
                 const auto &cGridIterator = threadedGridIteratorC_[threadID][splineC.startingGridPoint()];
