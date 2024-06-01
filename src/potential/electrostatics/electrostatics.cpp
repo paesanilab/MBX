@@ -6522,10 +6522,13 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
             // Compress data in precomputedInformation
             for (size_t rank = 0; rank < nthreads; rank++) {
-                precomputedInformation.merge(*precomputedInformation_pool[rank]);
-                // For versions of C++ before 17
-                //precomputedInformation.insert(precomputedInformation_pool[rank]->begin(), precomputedInformation_pool[rank]->end());
+                #if __cplusplus >= 201703L  // C++17
+                    precomputedInformation.merge(*precomputedInformation_pool[rank]);
+                #else
+                    precomputedInformation.insert(precomputedInformation_pool[rank]->begin(), precomputedInformation_pool[rank]->end());
+                #endif
             }
+            
             // Update first indexes
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
