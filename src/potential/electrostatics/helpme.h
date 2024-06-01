@@ -2792,16 +2792,13 @@ class PMEInstance {
         int nComponents = nCartesian(parameterAngMom) - cartesianOffset;
         size_t nAtoms = coordinates.nRows();
 
-        // #pragma omp parallel for reduction(+:realGrid[:realGrid_size]) schedule(dynamic)
-        #pragma omp parallel num_threads(nThreads_)
-            {
-
-            #ifdef _OPENMP  
-                int threadID = omp_get_thread_num();
-            #else
-                int threadID =0;
-            #endif
-
+#pragma omp parallel num_threads(nThreads_)
+        {
+#ifdef _OPENMP
+            int threadID = omp_get_thread_num();
+#else
+            int threadID = 0;
+#endif
 
             std::vector<std::tuple<Spline, Spline, Spline>> bSplines(nAtoms);
 
@@ -2878,6 +2875,7 @@ class PMEInstance {
         int nPotentialComponents = nCartesian(derivativeLevel) - cartesianOffset;
         size_t nPoints = gridPoints.nRows();
 
+        #pragma omp parallel for
         for (size_t point = 0; point < nPoints; ++point) {
             Real *phiPtr = fracPotential[point];
             auto bSplines = makeBSplines(gridPoints[point], derivativeLevel);
