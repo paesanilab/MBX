@@ -185,7 +185,9 @@ MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
-MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
+MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[yes])
+MBX_CONFIG_ENABLE([avx2],[enable the avx-2 vector instruction set, improving vetorization],[no])
+MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
 
 # Act on enable flags
 
@@ -222,6 +224,14 @@ if test $cpp17 == true; then
     MBX_CHECK_REQ_CXXFLAG([-std=c++17])
 else
     MBX_CHECK_REQ_CXXFLAG([-std=c++11])
+fi
+
+if test $avx512 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
+fi
+
+if test $avx2 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX2])
 fi
 
 # Add flags to variable
