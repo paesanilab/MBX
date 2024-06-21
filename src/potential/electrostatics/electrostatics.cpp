@@ -1831,12 +1831,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
                         }
 
                        // populates reordered_phi2 (potential on Mon 2) and reordered_Efq2 (electric field on Mon 2)
-                       local_field->CalcPermanentElecField(
+                       local_field->CalcPermanentElecField_Optimized(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
                             m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
                             ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, reordered_islocal, 0,
-                            1, 0, &virial_thread);
+                            1, 0, precomp_info, &virial_thread);
                         
                         double *Efq2 = Efq_sitej.data();
                         double *phi2 = phi_sitej.data();
@@ -2402,12 +2402,12 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
                         }
                         
                         // populates reordered_phi2 (potential on monomer 2) and reordered_Efq2 (electric field on monomer 2)
-                        local_field->CalcPermanentElecField(
+                        local_field->CalcPermanentElecField_Optimized(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
                             m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
                             ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0,
-                            1, 0, &virial_thread);
+                            1, 0, precomp_info, &virial_thread);
                         
                         double *Efq2 = Efq_sitej.data();
                         double *phi2 = phi_sitej.data();
@@ -6042,7 +6042,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                         local_field->CalcDipoleElecField_Optimized(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
                                                          reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, 
                                                          aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
-                                                         &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
+                                                         &ez_thread, precomp_info, mt1, mt2, m1, i, j);
 
                         // reverts reordering of Efd2
                         double *Efd2 = Efd_2_pool[rank].data();
@@ -6502,18 +6502,20 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             reordered_islocal[new_mon2_index + 1] = islocal_all_[fi_mon2 + old_mon2_index];
                         }
 
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
+                        PrecomputedInfo& precomp_info = (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)];
+
                         // Store versions of xyz2 and islocal which only include monomers within the cutoff
                         // and a list of monomers within the cutoff in precomputedInformation
-                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
-                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].reordered_xyz2 = reordered_xyz2;
-                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].reordered_islocal = reordered_islocal;
-                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)].good_mon2 = good_mon2_indices;
+                        precomp_info.reordered_xyz2 = reordered_xyz2;
+                        precomp_info.reordered_islocal = reordered_islocal;
+                        precomp_info.good_mon2 = good_mon2_indices;
 
                         // Calculate ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3 values and store them in precomputedInformation
                         local_field->CalcPrecomputedDipoleElec(xyz_all_.data() + fi_crd1, reordered_xyz2.data(),
                                                          m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0,
                                                          Asqsqi, aDD, ewald_alpha_, use_pbc, box, box_inverse,
-                                                         cutoff_, use_ghost, reordered_islocal, 0, 1, *rank_precomputedInformation,
+                                                         cutoff_, use_ghost, reordered_islocal, 0, 1, precomp_info,
                                                          mt1, mt2, m1, i, j); 
                         
                     }
@@ -6807,7 +6809,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
                         double *mu2 = in_ptr + fi_crd2;
                     
 
-                    #pragma omp simd 
+                    // #pragma omp simd 
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
                             reordered_xyz2[new_mon2_index] = xyz2[old_mon2_index + site_jnmon23];
@@ -7381,7 +7383,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                         local_field->CalcDipoleElecField_Optimized(xyz_.data() + fi_crd1, reordered_xyz2.data(), in_ptr + fi_crd1,
                                                          reordered_mu2.data(), m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i,0, 
                                                          aDD, reordered_Efd2.data(), &ex_thread, &ey_thread,
-                                                         &ez_thread, precomputedInformation, mt1, mt2, m1, i, j);
+                                                         &ez_thread, precomp_info, mt1, mt2, m1, i, j);
 
                         
                         // reverts reordering of Efd2
@@ -8162,13 +8164,13 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
                         }
 
                         // Populates reordered_grad2 (gradient on site j on monomer 2) and reordered_phi2 (field on site j of mon2)
-                        local_field->CalcElecFieldGrads(
+                        local_field->CalcElecFieldGrads_Optimized(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1,
                             reordered_chg.data(), mu_all_.data() + fi_crd1, reordered_mu.data(), m1, 0,
                             reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
                             &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, 
                             simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, 
-                            reordered_islocal, 0, 1, &virial_pool[rank]);
+                            reordered_islocal, 0, 1, precomp_info, &virial_pool[rank]);
 
                         // Revert the reordering of grad2 and phi2
                         double *phi2 = phi_2_pool[rank].data();
@@ -9039,12 +9041,12 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
                         }
                         
                         // Populates reordered_grad2 (gradient on site j on monomer 2) and reordered_phi2 (field on site j of mon2)
-                        local_field->CalcElecFieldGrads(
+                        local_field->CalcElecFieldGrads_Optimized(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1,
                             reordered_chg.data(), mu_all_.data() + fi_crd1, reordered_mu.data(), m1, 0,
                             reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, aDD, aCD_, Asqsqi, &ex_thread, &ey_thread, &ez_thread,
                             &phi1_thread, reordered_phi2.data(), reordered_grad2.data(), 1, ewald_alpha_, use_pbc_,
-                            box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0, 1,
+                            box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0, 1, precomp_info,
                             &virial_pool[rank]);
                         
                         double *phi2 = phi_2_pool[rank].data();
