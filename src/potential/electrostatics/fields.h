@@ -91,6 +91,8 @@ namespace elec {
         std::vector<size_t> good_mon2;
         std::vector<double> reordered_xyz2;
         std::vector<size_t> reordered_islocal;
+        std::vector<double> reordered_mu2;
+        std::vector<double> reordered_Efd2;
         std::vector<double> rijx;
         std::vector<double> rijy;
         std::vector<double> rijz;

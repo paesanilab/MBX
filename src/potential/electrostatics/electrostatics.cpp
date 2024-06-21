@@ -1877,20 +1877,29 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
             for (size_t rank = 0; rank < nthreads; rank++) {
                 size_t kend1 = Efq_1_pool[rank].size();
                 size_t kend2 = Efq_2_pool[rank].size();
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     Efq_all_[fi_crd1 + k] += Efq_1_pool[rank][k];
                 }
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     Efq_all_[fi_crd2 + k] += Efq_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
+
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
                 }
@@ -2447,20 +2456,29 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
             for (size_t rank = 0; rank < nthreads; rank++) {
                 size_t kend1 = Efq_1_pool[rank].size();
                 size_t kend2 = Efq_2_pool[rank].size();
+
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     Efq_all_[fi_crd1 + k] += Efq_1_pool[rank][k];
                 }
+
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     Efq_all_[fi_crd2 + k] += Efq_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
+
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
+
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
                 }
@@ -6025,8 +6043,9 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
-                        std::vector<double> reordered_Efd2(reordered_xyz2.size(), 0.0);
-                        std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
+                        std::vector<double>& reordered_mu2 = precomp_info.reordered_mu2;
+                        std::vector<double>& reordered_Efd2 = precomp_info.reordered_Efd2;
+                        std::fill(reordered_Efd2.begin(), reordered_Efd2.end(), 0.0);
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
 
@@ -6065,9 +6084,13 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
             for (size_t rank = 0; rank < nthreads; rank++) {
                 size_t kend1 = Efd_1_pool[rank].size();
                 size_t kend2 = Efd_2_pool[rank].size();
+
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     out_v[fi_crd1 + k] += Efd_1_pool[rank][k];
                 }
+
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     out_v[fi_crd2 + k] += Efd_2_pool[rank][k];
                 }
@@ -6483,11 +6506,21 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             }
                         }
 
-                    
+                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
+                        PrecomputedInfo& precomp_info = (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)];
 
                         int reordered_mon2_size = good_mon2_indices.size();
-                        std::vector<double> reordered_xyz2(3*reordered_mon2_size, 0.0);
-                        std::vector<size_t> reordered_islocal(reordered_mon2_size + 1, 0.0);
+
+                        // Store versions of xyz2 and islocal which only include monomers within the cutoff
+                        // and a list of monomers within the cutoff in precomputedInformation
+                        precomp_info.reordered_xyz2 = std::vector<double>(3*reordered_mon2_size, 0.0);
+                        precomp_info.reordered_islocal = std::vector<size_t>(reordered_mon2_size + 1, 0.0);
+                        precomp_info.good_mon2 = good_mon2_indices;
+                        precomp_info.reordered_mu2 = std::vector(3*reordered_mon2_size, 0.0);
+                        precomp_info.reordered_Efd2 = std::vector(3*reordered_mon2_size, 0.0);
+
+                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
                         size_t site_j3 = j * 3;
                         size_t site_jnmon23 = nmon2 * site_j3;
                         reordered_islocal[0] = islocal_all_[fi_mon1 + m1];
@@ -6501,15 +6534,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz2[old_mon2_index + 2*nmon2 + site_jnmon23];
                             reordered_islocal[new_mon2_index + 1] = islocal_all_[fi_mon2 + old_mon2_index];
                         }
-
-                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
-                        PrecomputedInfo& precomp_info = (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)];
-
-                        // Store versions of xyz2 and islocal which only include monomers within the cutoff
-                        // and a list of monomers within the cutoff in precomputedInformation
-                        precomp_info.reordered_xyz2 = reordered_xyz2;
-                        precomp_info.reordered_islocal = reordered_islocal;
-                        precomp_info.good_mon2 = good_mon2_indices;
 
                         // Calculate ts2x, ts2y, ts2z, rijx, rijy, rijz, slr3 values and store them in precomputedInformation
                         local_field->CalcPrecomputedDipoleElec(xyz_all_.data() + fi_crd1, reordered_xyz2.data(),
@@ -7366,8 +7390,9 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
-                        std::vector<double> reordered_Efd2(reordered_xyz2.size(), 0.0);
-                        std::vector<double> reordered_mu2(3*reordered_mon2_size, 0.0);
+                        std::vector<double>& reordered_mu2 = precomp_info.reordered_mu2;
+                        std::vector<double>& reordered_Efd2 = precomp_info.reordered_Efd2;
+                        std::fill(reordered_Efd2.begin(), reordered_Efd2.end(), 0.0);
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
 
@@ -7406,9 +7431,11 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
             for (size_t rank = 0; rank < nthreads; rank++) {
                 size_t kend1 = Efd_1_pool[rank].size();
                 size_t kend2 = Efd_2_pool[rank].size();
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     out_v[fi_crd1 + k] += Efd_1_pool[rank][k];
                 }
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     out_v[fi_crd2 + k] += Efd_2_pool[rank][k];
                 }
@@ -8197,20 +8224,29 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
             for (size_t rank = 0; rank < nthreads; rank++) {
                 size_t kend1 = grad_1_pool[rank].size();
                 size_t kend2 = grad_2_pool[rank].size();
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     grad_[fi_crd1 + k] += grad_1_pool[rank][k];
                 }
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     grad_[fi_crd2 + k] += grad_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
+                
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
                 }
@@ -9074,17 +9110,25 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
             for (size_t rank = 0; rank < nthreads; rank++) {
                 size_t kend1 = grad_1_pool[rank].size();
                 size_t kend2 = grad_2_pool[rank].size();
+
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     grad_[fi_crd1 + k] += grad_1_pool[rank][k];
                 }
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     grad_[fi_crd2 + k] += grad_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
+                
+                #pragma omp simd simdlen(8)
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
