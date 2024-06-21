@@ -175,7 +175,7 @@ AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
 
 # Checks for typedefs, structures, and compiler characteristics.
 # Check for C++11
-MBX_CHECK_REQ_CXXFLAG([-std=c++17])
+#MBX_CHECK_REQ_CXXFLAG([-std=c++17])
 
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
@@ -185,6 +185,7 @@ MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
+MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
 
 # Act on enable flags
 
@@ -215,6 +216,12 @@ fi
 if test $optreport == true; then
     MBX_CHECK_CXXFLAG([-qopt-report=1])
     MBX_CHECK_CXXFLAG([-qopt-report-phase=vec])
+fi
+
+if test $cpp17 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-std=c++17])
+else
+    MBX_CHECK_REQ_CXXFLAG([-std=c++11])
 fi
 
 # Add flags to variable
