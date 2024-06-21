@@ -81,7 +81,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
 
     // Fill vectors with zeros in the desired range
     // temporary virial holder
-    std::fill(v11_.begin(), v11_.end(), 0.0);
+    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
 
     const double PIQSRT = std::sqrt(M_PI);
 
@@ -199,12 +199,12 @@ void ElectricFieldHolder::CalcPermanentElecField(
                 double dvy = dvr * rijy;
                 double dvz = dvr * rijz;
 
-                v11_[0 * maxnmon + m] = rijx * dvx;
-                v11_[1 * maxnmon + m] = rijx * dvy;
-                v11_[2 * maxnmon + m] = rijx * dvz;
-                v11_[3 * maxnmon + m] = rijy * dvy;
-                v11_[4 * maxnmon + m] = rijy * dvz;
-                v11_[5 * maxnmon + m] = rijz * dvz;
+                v11_[0 * mon2_index_end + m] = rijx * dvx;
+                v11_[1 * mon2_index_end + m] = rijx * dvy;
+                v11_[2 * mon2_index_end + m] = rijx * dvz;
+                v11_[3 * mon2_index_end + m] = rijy * dvy;
+                v11_[4 * mon2_index_end + m] = rijy * dvz;
+                v11_[5 * mon2_index_end + m] = rijz * dvz;
             }
 
         }  // if(accum2)
@@ -219,14 +219,14 @@ void ElectricFieldHolder::CalcPermanentElecField(
     if (virial != 0) {
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             // condensate virial
-            (*virial)[0] += v11_[0 * maxnmon + m];
-            (*virial)[1] += v11_[1 * maxnmon + m];
-            (*virial)[2] += v11_[2 * maxnmon + m];
+            (*virial)[0] += v11_[0 * mon2_index_end + m];
+            (*virial)[1] += v11_[1 * mon2_index_end + m];
+            (*virial)[2] += v11_[2 * mon2_index_end + m];
 
-            (*virial)[4] += v11_[3 * maxnmon + m];
-            (*virial)[5] += v11_[4 * maxnmon + m];
+            (*virial)[4] += v11_[3 * mon2_index_end + m];
+            (*virial)[5] += v11_[4 * mon2_index_end + m];
 
-            (*virial)[8] += v11_[5 * maxnmon + m];
+            (*virial)[8] += v11_[5 * mon2_index_end + m];
 
             (*virial)[3] = (*virial)[1];
             (*virial)[6] = (*virial)[2];
@@ -831,7 +831,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(
     std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
     std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
     std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-    std::fill(v11_.begin(), v11_.end(), 0.0);  // holders for the virial during vectorized loop
+    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
 
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -1046,14 +1046,14 @@ void ElectricFieldHolder::CalcElecFieldGrads(
 
             // update virial
             if (virial != 0) {
-                v11_[0 * maxnmon + m] = -rijx * v0_[m] * constants::COULOMB;
-                v11_[1 * maxnmon + m] = -rijx * v1_[m] * constants::COULOMB;
-                v11_[2 * maxnmon + m] = -rijx * v2_[m] * constants::COULOMB;
+                v11_[0 * mon2_index_end + m] = -rijx * v0_[m] * constants::COULOMB;
+                v11_[1 * mon2_index_end + m] = -rijx * v1_[m] * constants::COULOMB;
+                v11_[2 * mon2_index_end + m] = -rijx * v2_[m] * constants::COULOMB;
 
-                v11_[3 * maxnmon + m] = -rijy * v1_[m] * constants::COULOMB;
-                v11_[4 * maxnmon + m] = -rijy * v2_[m] * constants::COULOMB;
+                v11_[3 * mon2_index_end + m] = -rijy * v1_[m] * constants::COULOMB;
+                v11_[4 * mon2_index_end + m] = -rijy * v2_[m] * constants::COULOMB;
 
-                v11_[5 * maxnmon + m] = -rijz * v2_[m] * constants::COULOMB;
+                v11_[5 * mon2_index_end + m] = -rijz * v2_[m] * constants::COULOMB;
             }
         }  // if(accum2)
     }
@@ -1070,14 +1070,14 @@ void ElectricFieldHolder::CalcElecFieldGrads(
         *phi1 += v3_[m];
         // condensate virial
         if (virial != 0) {
-            (*virial)[0] += v11_[0 * maxnmon + m];
-            (*virial)[1] += v11_[1 * maxnmon + m];
-            (*virial)[2] += v11_[2 * maxnmon + m];
+            (*virial)[0] += v11_[0 * mon2_index_end + m];
+            (*virial)[1] += v11_[1 * mon2_index_end + m];
+            (*virial)[2] += v11_[2 * mon2_index_end + m];
 
-            (*virial)[4] += v11_[3 * maxnmon + m];
-            (*virial)[5] += v11_[4 * maxnmon + m];
+            (*virial)[4] += v11_[3 * mon2_index_end + m];
+            (*virial)[5] += v11_[4 * mon2_index_end + m];
 
-            (*virial)[8] += v11_[5 * maxnmon + m];
+            (*virial)[8] += v11_[5 * mon2_index_end + m];
 
             (*virial)[3] = (*virial)[1];
             (*virial)[6] = (*virial)[2];
