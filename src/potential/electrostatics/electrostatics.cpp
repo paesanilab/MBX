@@ -9758,26 +9758,30 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 0);
 
     helpme::PMEInstance<double> pme_solver_;
-    if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
-    double A, B, C, alpha, beta, gamma;
-    A = box_ABCabc_[0];
-    B = box_ABCabc_[1];
-    C = box_ABCabc_[2];
-    alpha = box_ABCabc_[3];
-    beta = box_ABCabc_[4];
-    gamma = box_ABCabc_[5];
+    if (ewald_alpha_ > 0 && use_pbc_) {
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        double A, B, C, alpha, beta, gamma;
+        A = box_ABCabc_[0];
+        B = box_ABCabc_[1];
+        C = box_ABCabc_[2];
+        alpha = box_ABCabc_[3];
+        beta = box_ABCabc_[4];
+        gamma = box_ABCabc_[5];
 
-    // Compute the reciprocal space terms, using PME
-    int grid_A = pme_grid_density_ * A;
-    int grid_B = pme_grid_density_ * B;
-    int grid_C = pme_grid_density_ * C;
-    if (mpi_initialized_) {
-        pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
-                                    PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        // Compute the reciprocal space terms, using PME
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                        PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
     } else {
-        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        pme_solver_.setup(1, 1, 2, 1, 1, 1, 1, 0);
     }
-    pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField(precomputedInformation, pme_solver_, use_ghost);
@@ -9837,34 +9841,45 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
     PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 1);
 
     helpme::PMEInstance<double> pme_solver_;
-    if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
-    // Compute the reciprocal space terms, using PME
-    double A, B, C, alpha, beta, gamma;
-    if (use_ghost) {
-        A = box_ABCabc_PMElocal_[0];
-        B = box_ABCabc_PMElocal_[1];
-        C = box_ABCabc_PMElocal_[2];
-        alpha = box_ABCabc_PMElocal_[3];
-        beta = box_ABCabc_PMElocal_[4];
-        gamma = box_ABCabc_PMElocal_[5];
+    
+    bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
+
+    if (!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
+
+    if (!simcell_periodic_) compute_pme = false;
+    
+    if(compute_pme) {
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        // Compute the reciprocal space terms, using PME
+        double A, B, C, alpha, beta, gamma;
+        if (use_ghost) {
+            A = box_ABCabc_PMElocal_[0];
+            B = box_ABCabc_PMElocal_[1];
+            C = box_ABCabc_PMElocal_[2];
+            alpha = box_ABCabc_PMElocal_[3];
+            beta = box_ABCabc_PMElocal_[4];
+            gamma = box_ABCabc_PMElocal_[5];
+        } else {
+            A = box_ABCabc_[0];
+            B = box_ABCabc_[1];
+            C = box_ABCabc_[2];
+            alpha = box_ABCabc_[3];
+            beta = box_ABCabc_[4];
+            gamma = box_ABCabc_[5];
+        }
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
+                                        PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
+        }
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
     } else {
-        A = box_ABCabc_[0];
-        B = box_ABCabc_[1];
-        C = box_ABCabc_[2];
-        alpha = box_ABCabc_[3];
-        beta = box_ABCabc_[4];
-        gamma = box_ABCabc_[5];
+        pme_solver_.setup(1, 1, 2, 1, 1, 1, 1, 0);
     }
-    int grid_A = pme_grid_density_ * A;
-    int grid_B = pme_grid_density_ * B;
-    int grid_C = pme_grid_density_ * C;
-    if (mpi_initialized_) {
-        pme_solver_.setupParallel(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0, world_,
-                                    PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    } else {
-        pme_solver_.setup(1, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, 1, 0);
-    }
-    pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
     CalculatePermanentElecFieldMPIlocal(precomputedInformation, pme_solver_, use_ghost);
     CalculateDipolesMPIlocal(precomputedInformation, pme_solver_, use_ghost);
