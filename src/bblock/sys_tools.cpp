@@ -1095,20 +1095,45 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
         }
         // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
+
+
+    size_t nthreads = 1;
+    #ifdef _OPENMP
+    #pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+        {
+            if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+        }
+    #endif
+
         // chgtmp = M, H1, H2 according to ttm4.cpp
         std::vector<double> chgtmp(n_mon * (nsites - 1), 0.0);
         size_t fstind_3 = 3 * fst_ind;
 
         chg_der = std::vector<double>(27 * n_mon, 0.0);
 
-        std::vector<double> chgtmpnv((nsites - 1));
+        std::vector<std::vector<double>> chgtmpnvpool;
+        for (size_t i = 0; i < nthreads; i++) {
+            chgtmpnvpool.push_back(std::vector<double>((nsites - 1)));
+        }
+
+        // std::vector<double> chgtmpnv((nsites - 1));
 
         // std::vector<double> chg2(n_mon * nsites, 0.0);
 
         // Calculate individual monomer's charges
+        #pragma omp parallel for
         for (size_t nv = 0; nv < n_mon; nv++) {
+
+                int rank = 0;
+                #ifdef _OPENMP
+                    rank = omp_get_thread_num();
+                #endif
+
             size_t ns3 = nsites * 3;
             size_t shift = 27 * nv;
+
+            std::vector<double>& chgtmpnv = chgtmpnvpool[rank];
 
             // Getting front and end of xyz vector of 1 monomer in system
             // std::vector<double> atomcoords(xyz);
