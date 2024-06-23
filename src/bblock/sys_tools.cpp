@@ -1096,10 +1096,12 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
         // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
         // chgtmp = M, H1, H2 according to ttm4.cpp
-        std::vector<double> chgtmp;
+        std::vector<double> chgtmp(n_mon * (nsites - 1), 0.0);
         size_t fstind_3 = 3 * fst_ind;
 
         chg_der = std::vector<double>(27 * n_mon, 0.0);
+
+        // std::vector<double> chgtmpnv((nsites - 1));
 
         // Calculate individual monomer's charges
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1107,15 +1109,14 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             size_t shift = 27 * nv;
 
             // Getting front and end of xyz vector of 1 monomer in system
-            std::vector<double> atomcoords(xyz);
-            std::vector<double> chgtmpnv((nsites - 1));
+            // std::vector<double> atomcoords(xyz);
 
             // Calculating charge
-            ps::dms_nasa(0.0, 0.0, 0.0, atomcoords.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
+            ps::dms_nasa(0.0, 0.0, 0.0, xyz.data() + (nv * ns3) + fstind_3, chgtmp.data() + (nsites - 1) * nv,
                          chg_der.data() + shift);
             // Inserting the found charges into chgtmp vector before calculating
             // new charge values
-            chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
+            // chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
         }
 
         // Creating vector with contiguous data
@@ -1131,23 +1132,38 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
             // looping over M
             chg2[nv + 3 * n_mon] = chgtmp[nv * 3];
-        }
 
-        std::vector<double> chg2temp = chg2;
-
-        // calculating charge
-        for (size_t nv = 0; nv < n_mon; nv++) {
             size_t hy1 = n_mon + nv;
             size_t hy2 = 2 * n_mon + nv;
             size_t msite = 3 * n_mon + nv;
 
+            double tmp1 = chg2[hy1];
+            double tmp2 = chg2[hy2];
+            double tmpmsite = chg2[msite];
+
             // Hydrogen1
-            chg2[hy1] = CHARGECON * (chg2temp[hy1] + gamma21 * (chg2temp[hy1] + chg2temp[hy2]));
+            chg2[hy1] = CHARGECON * (tmp1 + gamma21 * (tmp1 + tmp2));
             // Hydrogen2
-            chg2[hy2] = CHARGECON * (chg2temp[hy2] + gamma21 * (chg2temp[hy1] + chg2temp[hy2]));
+            chg2[hy2] = CHARGECON * (tmp2 + gamma21 * (tmp1 + tmp2));
             // M
-            chg2[msite] = CHARGECON * (chg2temp[msite] / (1.0 - gammaM));
+            chg2[msite] = CHARGECON * (tmpmsite / (1.0 - gammaM));
         }
+
+        // std::vector<double> chg2temp = chg2;
+
+        // // calculating charge
+        // for (size_t nv = 0; nv < n_mon; nv++) {
+        //     size_t hy1 = n_mon + nv;
+        //     size_t hy2 = 2 * n_mon + nv;
+        //     size_t msite = 3 * n_mon + nv;
+
+        //     // Hydrogen1
+        //     chg2[hy1] = CHARGECON * (chg2temp[hy1] + gamma21 * (chg2temp[hy1] + chg2temp[hy2]));
+        //     // Hydrogen2
+        //     chg2[hy2] = CHARGECON * (chg2temp[hy2] + gamma21 * (chg2temp[hy1] + chg2temp[hy2]));
+        //     // M
+        //     chg2[msite] = CHARGECON * (chg2temp[msite] / (1.0 - gammaM));
+        // }
 
         // TODO multiversioning
         // Return all coordinates to the original vector
