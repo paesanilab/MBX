@@ -1101,7 +1101,9 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
         chg_der = std::vector<double>(27 * n_mon, 0.0);
 
-        // std::vector<double> chgtmpnv((nsites - 1));
+        std::vector<double> chgtmpnv((nsites - 1));
+
+        // std::vector<double> chg2(n_mon * nsites, 0.0);
 
         // Calculate individual monomer's charges
         for (size_t nv = 0; nv < n_mon; nv++) {
@@ -1112,42 +1114,60 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             // std::vector<double> atomcoords(xyz);
 
             // Calculating charge
-            ps::dms_nasa(0.0, 0.0, 0.0, xyz.data() + (nv * ns3) + fstind_3, chgtmp.data() + (nsites - 1) * nv,
+            ps::dms_nasa(0.0, 0.0, 0.0, xyz.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
                          chg_der.data() + shift);
             // Inserting the found charges into chgtmp vector before calculating
             // new charge values
             // chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
+
+            double tmp1 = chgtmpnv[1];
+            double tmp2 = chgtmpnv[2];
+            double tmpmsite = chgtmpnv[0];
+
+            // size_t hy1 = n_mon + nv;
+            // size_t hy2 = 2 * n_mon + nv;
+            // size_t msite = 3 * n_mon + nv;
+
+            // Oxygen
+            charges[nv * nsites + 0 + fst_ind] = 0.0;
+
+            // Hydrogen1
+            charges[nv * nsites + 1 + fst_ind] = CHARGECON * (tmp1 + gamma21 * (tmp1 + tmp2));
+            // Hydrogen2
+            charges[nv * nsites + 2 + fst_ind] = CHARGECON * (tmp2 + gamma21 * (tmp1 + tmp2));
+            // M
+            charges[nv * nsites + 3 + fst_ind] = CHARGECON * (tmpmsite / (1.0 - gammaM));
         }
 
         // Creating vector with contiguous data
-        std::vector<double> chg2(n_mon * nsites, 0.0);
+        // std::vector<double> chg2(n_mon * nsites, 0.0);
 
         // TODO Multiversioning
         // Reorganizing sites
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            // looping over sites -- H1 and H2
-            for (size_t i = 1; i < nsites - 1; i++) {
-                chg2[nv + i * n_mon] = chgtmp[i + nv * (nsites - 1)];
-            }
+        // for (size_t nv = 0; nv < n_mon; nv++) {
+        //     // looping over sites -- H1 and H2
+        //     for (size_t i = 1; i < nsites - 1; i++) {
+        //         chg2[nv + i * n_mon] = chgtmp[i + nv * (nsites - 1)];
+        //     }
 
-            // looping over M
-            chg2[nv + 3 * n_mon] = chgtmp[nv * 3];
+        //     // looping over M
+        //     chg2[nv + 3 * n_mon] = chgtmp[nv * 3];
 
-            size_t hy1 = n_mon + nv;
-            size_t hy2 = 2 * n_mon + nv;
-            size_t msite = 3 * n_mon + nv;
+        //     size_t hy1 = n_mon + nv;
+        //     size_t hy2 = 2 * n_mon + nv;
+        //     size_t msite = 3 * n_mon + nv;
 
-            double tmp1 = chg2[hy1];
-            double tmp2 = chg2[hy2];
-            double tmpmsite = chg2[msite];
+        //     double tmp1 = chg2[hy1];
+        //     double tmp2 = chg2[hy2];
+        //     double tmpmsite = chg2[msite];
 
-            // Hydrogen1
-            chg2[hy1] = CHARGECON * (tmp1 + gamma21 * (tmp1 + tmp2));
-            // Hydrogen2
-            chg2[hy2] = CHARGECON * (tmp2 + gamma21 * (tmp1 + tmp2));
-            // M
-            chg2[msite] = CHARGECON * (tmpmsite / (1.0 - gammaM));
-        }
+        //     // Hydrogen1
+        //     chg2[hy1] = CHARGECON * (tmp1 + gamma21 * (tmp1 + tmp2));
+        //     // Hydrogen2
+        //     chg2[hy2] = CHARGECON * (tmp2 + gamma21 * (tmp1 + tmp2));
+        //     // M
+        //     chg2[msite] = CHARGECON * (tmpmsite / (1.0 - gammaM));
+        // }
 
         // std::vector<double> chg2temp = chg2;
 
@@ -1167,11 +1187,11 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
         // TODO multiversioning
         // Return all coordinates to the original vector
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            for (size_t j = 0; j < nsites; j++) {
-                charges[nv * nsites + j + fst_ind] = chg2[nv + n_mon * j];
-            }
-        }
+        // for (size_t nv = 0; nv < n_mon; nv++) {
+        //     for (size_t j = 0; j < nsites; j++) {
+        //         charges[nv * nsites + j + fst_ind] = chg2[nv + n_mon * j];
+        //     }
+        // }
     }
 }
 
