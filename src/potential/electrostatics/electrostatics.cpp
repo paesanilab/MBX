@@ -9883,7 +9883,15 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     size_t nsites3 = nsites_ * 3;
     std::vector<double> ts2v(nsites3);
 
-    std::vector<PrecomputedInfo*> precomputedInformation(nsites_);
+    int nsite_types = 0;
+
+    size_t fi_mon1 = 0;
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+
+    std::vector<PrecomputedInfo*> precomputedInformation(nsites_ * nsite_types);
     PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 0);
 
     helpme::PMEInstance<double> pme_solver_;

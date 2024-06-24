@@ -670,6 +670,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             std::vector<std::vector<double>> grad2_pool(nthreads);
             std::vector<double> energy_pool(nthreads, 0.0);
             std::vector<std::vector<double>> virial_pool(nthreads);
+            
+            #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
                 phi1_pool[i] = std::vector<double>(nmon1 * ns1, 0.0);
                 phi2_pool[i] = std::vector<double>(nmon2 * ns2, 0.0);
