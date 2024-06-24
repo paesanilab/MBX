@@ -115,7 +115,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
              const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
              const double cutoff, const double ewald_alpha, const std::vector<double>& box,
              const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
-             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial) {
+             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial, const size_t xyz2_offset) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -207,7 +207,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     const double* boxptr = box.data();
     double dispersion_energy = 0;
 
-    std::vector<double> x1 = p1;
+    const std::vector<double>& x1 = p1;
 
     double x1_r, y1_r, z1_r;
 
@@ -225,9 +225,9 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     for (size_t nv = start2; nv < end2; nv++) {
         size_t i = nv - start2;
         double x2[3];
-        x2[0] = xyz2[shift2 + nv];
-        x2[1] = xyz2[nmon2 + shift2 + nv];
-        x2[2] = xyz2[nmon22 + shift2 + nv];
+        x2[0] = xyz2[xyz2_offset + shift2 + nv];
+        x2[1] = xyz2[xyz2_offset + nmon2 + shift2 + nv];
+        x2[2] = xyz2[xyz2_offset + nmon22 + shift2 + nv];
 
         // Apply minimum image convetion
         if (use_pbc) {

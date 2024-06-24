@@ -6444,9 +6444,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             // /*
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
             std::vector<std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>> precomputedInformation_pool;
+            std::vector<std::shared_ptr<std::vector<size_t>>> bool_mon2_indices_pool;
             for (size_t i = 0; i < nthreads; i++) {
                 field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
                 precomputedInformation_pool.push_back(std::make_shared<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>());
+                bool_mon2_indices_pool.push_back(std::make_shared<std::vector<size_t>>(nmon2));
             }
             // */
             // Parallel loop
@@ -6493,16 +6495,26 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         }
 
                         // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
-                        std::vector<size_t> good_mon2_indices;
-                        std::vector<size_t> bool_mon2_indices(nmon2, 0);
+                        std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];
+                        std::fill(bool_mon2_indices.begin(), bool_mon2_indices.end(), 0.0);
                         local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
                                                                     nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
                                                                     m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
 
+                        int num_good_mon2 = 0;
+                        for (int ind = 0; ind < nmon2; ind++) {
+                            if (bool_mon2_indices[ind] == 1) {
+                                num_good_mon2++;
+                            }
+                        }
+
+                        std::vector<size_t> good_mon2_indices(num_good_mon2);
+                        int current_good_mon2_index = 0;
                         // monomer 2s within the cutoff are stored in good_mon2_indices
                         for (int ind = 0; ind < nmon2; ind++) {
                             if (bool_mon2_indices[ind] == 1) {
-                                good_mon2_indices.push_back(ind);
+                                good_mon2_indices[current_good_mon2_index] = ind;
+                                current_good_mon2_index++;
                             }
                         }
 
@@ -8217,6 +8229,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
                         phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+
+                        // Note: deallocate the PrecomputedInfo here, instead of all at once in GetElectrostaticsMPILocal.
+                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
+
                     }
                 }
             }

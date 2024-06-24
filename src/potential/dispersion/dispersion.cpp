@@ -543,7 +543,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
         double dummy_c6, dummy_d6;
         bool do_disp = use_disp_all_[mt * mon_type_count_.size() + mt];
-        std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
+        // std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
 
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
@@ -591,13 +591,13 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         std::vector<double> p1(3, 0.0);
                         std::vector<double> g1(3, 0.0);
                         double phi_i = 0.0;
-                        p1[0] = xyz_mt[inmon3 + m];
-                        p1[1] = xyz_mt[inmon3 + nmon + m];
-                        p1[2] = xyz_mt[inmon3 + nmon2 + m];
+                        p1[0] = xyz_[fi_crd + inmon3 + m];
+                        p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
+                        p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                         energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, p1, xyz_mt, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
+                            disp6(c6, d6, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
                                   m, m + 1, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
-                                  box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank]);
+                                  box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank], fi_crd);
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
                         grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
@@ -656,7 +656,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             bool do_disp = use_disp_all_[mt1 * mon_type_count_.size() + mt2];
 
             double disp_scale_factor = do_disp ? 1.0 : 0.0;
-            std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
+            // std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
 
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
@@ -664,18 +664,18 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             bool same = (mt1 == mt2);
 
             // For parallel region
-            std::vector<std::vector<double> > phi1_pool;
-            std::vector<std::vector<double> > phi2_pool;
-            std::vector<std::vector<double> > grad1_pool;
-            std::vector<std::vector<double> > grad2_pool;
+            std::vector<std::vector<double>> phi1_pool(nthreads);
+            std::vector<std::vector<double>> phi2_pool(nthreads);
+            std::vector<std::vector<double>> grad1_pool(nthreads);
+            std::vector<std::vector<double>> grad2_pool(nthreads);
             std::vector<double> energy_pool(nthreads, 0.0);
-            std::vector<std::vector<double> > virial_pool;
+            std::vector<std::vector<double>> virial_pool(nthreads);
             for (size_t i = 0; i < nthreads; i++) {
-                phi1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
-                phi2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
-                grad1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-                grad2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
-                virial_pool.push_back(std::vector<double>(9, 0.0));
+                phi1_pool[i] = std::vector<double>(nmon1 * ns1, 0.0);
+                phi2_pool[i] = std::vector<double>(nmon2 * ns2, 0.0);
+                grad1_pool[i] = std::vector<double>(nmon1 * ns1 * 3, 0.0);
+                grad2_pool[i] = std::vector<double>(nmon2 * ns2 * 3, 0.0);
+                virial_pool[i] = std::vector<double>(9, 0.0);
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -707,9 +707,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         c6 = c6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                         d6 = d6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                         energy_pool[rank] += disp6(
-                            c6, d6, c6i, c6j, xyz_sitei, xyz_mt2, g1, grad2_pool[rank], phi_i, phi2_pool[rank], nmon1,
+                            c6, d6, c6i, c6j, xyz_sitei, xyz_, g1, grad2_pool[rank], phi_i, phi2_pool[rank], nmon1,
                             nmon2, m2init, nmon2, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
-                            box_inverse_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                            box_inverse_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank], fi_crd2);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];

@@ -153,14 +153,16 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
     size_t ats = 0;
     for (size_t i = 0; i < mon.size(); i++) {
         bool is_in_json = false;
-        try {
-            size_t ns = mon_j[mon[i]]["sites"];
-            size_t na = mon_j[mon[i]]["nat"];
-            sites.push_back(ns);
-            nat.push_back(na);
-            is_in_json = true;
-        } catch (...) {
-            is_in_json = false;
+        if(mon_j.contains(mon[i])) {
+            try {
+                size_t ns = mon_j[mon[i]]["sites"];
+                size_t na = mon_j[mon[i]]["nat"];
+                sites.push_back(ns);
+                nat.push_back(na);
+                is_in_json = true;
+            } catch (...) {
+                is_in_json = false;
+            }
         }
 
         if (!is_in_json) {
