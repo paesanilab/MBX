@@ -1528,7 +1528,7 @@ void Electrostatics::ReorderData() {
 // PERMANENT ELECTRIC FIELD ////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
+void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
     // MRR modification for external charges
     // MRR EXT
     size_t nExtChg = external_charge_.size();
@@ -1702,6 +1702,17 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
 
+    size_t fi_sitetypes2 = 0;
+
+    int nsite_types = 0;
+
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+
+    fi_mon1 = 0;
+
     // Loop over all monomer types
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
@@ -1710,6 +1721,8 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
+
+        fi_sitetypes2 = 0;
 
         // For each monomer type mt1, loop over all the other monomer types
         // mt2 >= mt1 to avoid double counting
@@ -1807,7 +1820,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
 
 
                         // contains precomputed atom coordinate-dependant calculations
-                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
+                        PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
@@ -1908,6 +1921,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
@@ -2122,7 +2136,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::unordered_map<key_
 }
 
 
-void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
+void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
     // MRR modification for external charges
     // MRR EXT
     size_t nExtChg = external_charge_.size();
@@ -2281,6 +2295,17 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
 
+    size_t fi_sitetypes2 = 0;
+
+    int nsite_types = 0;
+
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+    
+    fi_mon1 = 0;
+
     // Loop over all monomer types
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
@@ -2289,6 +2314,8 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
+
+        fi_sitetypes2 = 0;
 
         // For each monomer type mt1, loop over all the other monomer types
         // mt2 >= mt1 to avoid double counting
@@ -2387,7 +2414,7 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
                         double elec_scale_factor = 1;
 
                         // contains precomputed atom coordinate-dependant calculations
-                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
+                        PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         //contains all indices of monomer type 2s which are withing a 9A cutoff
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
@@ -2487,6 +2514,7 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
@@ -2692,7 +2720,7 @@ void Electrostatics::CalculatePermanentElecField(std::unordered_map<key_precompu
 // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void Electrostatics::CalculateDipolesMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
+void Electrostatics::CalculateDipolesMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
 #if DIRECT_ONLY
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -2730,7 +2758,7 @@ void Electrostatics::CalculateDipolesMPIlocal(std::unordered_map<key_precomputed
 }
 
 
-void Electrostatics::CalculateDipoles(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_) {
+void Electrostatics::CalculateDipoles(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_) {
 #if DIRECT_ONLY
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -2824,7 +2852,7 @@ void Electrostatics::DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::
 }
 
 void Electrostatics::DipolesCGIterationMPIlocalOptimized(std::vector<double> &in_v, std::vector<double> &out_v, 
-                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost){
+                                        std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost){
     // Apply sqrt(pol) to the dipoles
     int fi_sites = 0;
     int fi_crd = 0;
@@ -2944,7 +2972,7 @@ void Electrostatics::DipolesCGIteration(std::vector<double> &in_v, std::vector<d
     }
 }
 void Electrostatics::DipolesCGIterationOptimized(std::vector<double> &in_v, std::vector<double> &out_v, 
-                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_){
+                                        std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_){
     // Apply sqrt(pol) to the dipoles
     int fi_sites = 0;
     int fi_crd = 0;
@@ -3007,7 +3035,7 @@ void Electrostatics::DipolesCGIterationOptimized(std::vector<double> &in_v, std:
 
 
 
-void Electrostatics::CalculateDipolesConjugateGradientMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
+void Electrostatics::CalculateDipolesConjugateGradientMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -3261,7 +3289,7 @@ void Electrostatics::CalculateDipolesConjugateGradientMPIlocal(std::unordered_ma
 
 
 
-void Electrostatics::CalculateDipolesConjugateGradient(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_) {
+void Electrostatics::CalculateDipolesConjugateGradient(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_) {
     // Parallelization
     //    size_t nthreads = 1;
     //#   ifdef _OPENMP
@@ -3595,7 +3623,7 @@ void Electrostatics::SetDipoleHistory(size_t indx, std::vector<double> mu_hist) 
     }
 }
 
-void Electrostatics::CalculateDipolesAspc(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_) {
+void Electrostatics::CalculateDipolesAspc(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_) {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
         CalculateDipolesConjugateGradient(precomputedInformation, pme_solver_);
@@ -3672,7 +3700,7 @@ void Electrostatics::CalculateDipolesAspc(std::unordered_map<key_precomputed_inf
     }  // end if (hist_num_aspc_ < k_aspc_ + 2)
 }
 
-void Electrostatics::CalculateDipolesAspcMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
+void Electrostatics::CalculateDipolesAspcMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
     if (hist_num_aspc_ < k_aspc_ + 2) {
         // TODO do we want to allow iteration?
         CalculateDipolesConjugateGradientMPIlocal(precomputedInformation, pme_solver_, use_ghost);
@@ -5798,7 +5826,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 }
 
 void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in_v, std::vector<double> &out_v, 
-                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_,
+                                        std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_,
                                         bool use_ghost) {
     // Parallelization
     size_t nthreads = 1;
@@ -5982,6 +6010,18 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
+
+    size_t fi_sitetypes2 = 0;
+
+    int nsite_types = 0;
+
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+    
+    fi_mon1 = 0;
+
     // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
@@ -5991,18 +6031,22 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
+
+        fi_sitetypes2 = 0;
+
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
             // Prepare for parallelization
-            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-            std::vector<std::vector<double>> Efd_1_pool;
-            std::vector<std::vector<double>> Efd_2_pool;
+            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+            std::vector<std::vector<double>> Efd_1_pool(nthreads);
+            std::vector<std::vector<double>> Efd_2_pool(nthreads);
+            #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
-                field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
-                Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-                Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+                field_pool[i] = std::make_shared<ElectricFieldHolder>(maxnmon);
+                Efd_1_pool[i] = std::vector<double>(nmon1 * ns1 * 3, 0.0);
+                Efd_2_pool[i] = std::vector<double>(nmon2 * ns2 * 3, 0.0);
             }
 
 // Parallel loop
@@ -6034,7 +6078,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                             Asqsqi = Ai;
                         }
                         // contains precomputed atom coordinate-dependant calculations
-                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+                        PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
@@ -6099,6 +6143,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
@@ -6378,7 +6423,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
  * done once.
  */
 void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &out_v,
-                                                           std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,
+                                                           std::vector<PrecomputedInfo*>& precomputedInformation,
                                                            bool use_ghost, bool MPI) { // change parameters
 
 
@@ -6427,6 +6472,18 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
+
+    size_t fi_sitetypes2 = 0;
+
+    int nsite_types = 0;
+
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+    
+    fi_mon1 = 0;
+
     double aDD = 0.055; // Thole damping aDD intermolecular is always 0.055
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
@@ -6436,6 +6493,8 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
 
+        fi_sitetypes2 = 0;
+
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
@@ -6443,11 +6502,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             // Prepare for parallelization
             // /*
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-            std::vector<std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>> precomputedInformation_pool;
+            // std::vector<std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>> precomputedInformation_pool;
             std::vector<std::shared_ptr<std::vector<size_t>>> bool_mon2_indices_pool;
             for (size_t i = 0; i < nthreads; i++) {
                 field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
-                precomputedInformation_pool.push_back(std::make_shared<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>());
+                // precomputedInformation_pool.push_back(std::make_shared<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>());
                 bool_mon2_indices_pool.push_back(std::make_shared<std::vector<size_t>>(nmon2));
             }
             // */
@@ -6476,7 +6535,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             #endif
 
                 std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
-                std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>> rank_precomputedInformation = precomputedInformation_pool[rank];
+                // std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>> rank_precomputedInformation = precomputedInformation_pool[rank];
                 size_t m2init = same ? m1 + 1 : 0;
 
                 for (size_t i = 0; i < ns1; i++) {
@@ -6518,8 +6577,9 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             }
                         }
 
-                        (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
-                        PrecomputedInfo& precomp_info = (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)];
+                        // (*rank_precomputedInformation)[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
+                        precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j] = new PrecomputedInfo();
+                        PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
 
                         int reordered_mon2_size = good_mon2_indices.size();
 
@@ -6559,18 +6619,19 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             }
 
             // Compress data in precomputedInformation
-            for (size_t rank = 0; rank < nthreads; rank++) {
-                #if __cplusplus >= 201703L  // C++17
-                    precomputedInformation.merge(*precomputedInformation_pool[rank]);
-                #else
-                    precomputedInformation.insert(precomputedInformation_pool[rank]->begin(), precomputedInformation_pool[rank]->end());
-                #endif
-            }
+            // for (size_t rank = 0; rank < nthreads; rank++) {
+            //     #if __cplusplus >= 201703L  // C++17
+            //         precomputedInformation.merge(*precomputedInformation_pool[rank]);
+            //     #else
+            //         precomputedInformation.insert(precomputedInformation_pool[rank]->begin(), precomputedInformation_pool[rank]->end());
+            //     #endif
+            // }
             
             // Update first indexes
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
@@ -7156,7 +7217,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
 
 
 void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std::vector<double> &out_v, 
-                                        std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation,helpme::PMEInstance<double>& pme_solver_,
+                                        std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_,
                                         bool use_ghost) {
     // Parallelization
     size_t nthreads = 1;
@@ -7337,6 +7398,18 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
+
+    size_t fi_sitetypes2 = 0;
+
+    int nsite_types = 0;
+
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+    
+    fi_mon1 = 0;
+
     // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
@@ -7346,6 +7419,9 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
+
+        fi_sitetypes2 = 0;
+
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
@@ -7393,7 +7469,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                         
 
                         // contains precomputed atom coordinate-dependant calculations
-                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)];
+                        PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
@@ -7456,6 +7532,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
@@ -7715,7 +7792,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
 #endif
 }
 
-void Electrostatics::CalculateDipolesIterative(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_) {
+void Electrostatics::CalculateDipolesIterative(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_) {
     // Permanent electric field is computed
     // Now start computation of dipole through iteration
     double eps = 1.0E+50;
@@ -7856,7 +7933,7 @@ void Electrostatics::CalculateElecEnergy() {
 }
 
 
-void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
+void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, std::vector<double> &grad, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
     // MRR EXT
     size_t nExtChg = external_charge_.size();
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
@@ -8115,6 +8192,18 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
+
+    size_t fi_sitetypes2 = 0;
+
+    int nsite_types = 0;
+
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+    
+    fi_mon1 = 0;
+
     // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
@@ -8124,6 +8213,9 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
+
+        fi_sitetypes2 = 0;
+
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
@@ -8172,7 +8264,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
 
                         
                         // contains precomputed atom coordinate-dependant calculations
-                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
+                        PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
@@ -8231,7 +8323,8 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
                         phi_1_pool[rank][inmon1 + m1] += phi1_thread;
 
                         // Note: deallocate the PrecomputedInfo here, instead of all at once in GetElectrostaticsMPILocal.
-                        precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)] = PrecomputedInfo();
+                        delete precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j];
+                        precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j] = nullptr;
 
                     }
                 }
@@ -8271,6 +8364,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
@@ -8765,7 +8859,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::unordered_map<key_precomput
 #endif
 }
 
-void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>& precomputedInformation, std::vector<double> &grad, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
+void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomputedInformation, std::vector<double> &grad, helpme::PMEInstance<double>& pme_solver_, bool use_ghost) {
     // MRR EXT
     size_t nExtChg = external_charge_.size();
     std::vector<std::pair<std::string, size_t>> mon_type_count_cp = mon_type_count_;
@@ -9006,6 +9100,17 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
 
+    size_t fi_sitetypes2 = 0;
+
+    int nsite_types = 0;
+
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+    
+    fi_mon1 = 0;
+
     // Thole damping aDD intermolecular is always 0.055
     aDD = 0.055;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
@@ -9015,6 +9120,9 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
+
+        fi_sitetypes2 = 0;
+
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
@@ -9062,7 +9170,7 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
                         }
 
                         // contains precomputed atom coordinate-dependant calculations
-                        PrecomputedInfo& precomp_info = precomputedInformation[std::make_tuple(mt1, mt2, m1, i, j)]; 
+                        PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
                         std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
@@ -9119,6 +9227,10 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
                         grad_1_pool[rank][inmon13 + nmon1 + m1] += ey_thread;
                         grad_1_pool[rank][inmon13 + nmon12 + m1] += ez_thread;
                         phi_1_pool[rank][inmon1 + m1] += phi1_thread;
+
+                        // Note: deallocate the PrecomputedInfo here, instead of all at once in GetElectrostaticsMPILocal.
+                        delete precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j];
+                        precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j] = nullptr;
                     }
                 }
             }
@@ -9156,6 +9268,7 @@ void Electrostatics::CalculateGradients(std::unordered_map<key_precomputed_info,
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
@@ -9770,7 +9883,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     size_t nsites3 = nsites_ * 3;
     std::vector<double> ts2v(nsites3);
 
-    std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
+    std::vector<PrecomputedInfo*> precomputedInformation(nsites_);
     PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 0);
 
     helpme::PMEInstance<double> pme_solver_;
@@ -9804,6 +9917,11 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     CalculateDipoles(precomputedInformation, pme_solver_);
     CalculateElecEnergy();
     if (do_grads_) CalculateGradients(precomputedInformation, grad, pme_solver_);
+
+    for(size_t i = 0; i < precomputedInformation.size(); i++) {
+        delete precomputedInformation[i];
+    }
+
     if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad);
     // update viral
     if (virial != 0) {
@@ -9853,7 +9971,15 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
     size_t nsites3 = nsites_ * 3;
     std::vector<double> ts2v(nsites3);
 
-    std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash> precomputedInformation;
+    int nsite_types = 0;
+
+    size_t fi_mon1 = 0;
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
+
+    std::vector<PrecomputedInfo*> precomputedInformation(nsites_ * nsite_types);
     PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 1);
 
     helpme::PMEInstance<double> pme_solver_;
@@ -9901,6 +10027,11 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
     CalculateDipolesMPIlocal(precomputedInformation, pme_solver_, use_ghost);
     CalculateElecEnergyMPIlocal();
     if (do_grads_) CalculateGradientsMPIlocal(precomputedInformation, grad, pme_solver_, use_ghost);
+
+    for(size_t i = 0; i < precomputedInformation.size(); i++) {
+        delete precomputedInformation[i];
+    }
+    
     // update viral
     if (virial != 0) {
         for (size_t k = 0; k < 9; k++) {
