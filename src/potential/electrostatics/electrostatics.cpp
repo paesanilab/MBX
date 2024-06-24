@@ -1707,7 +1707,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
     int nsite_types = 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
 
@@ -2300,7 +2300,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
     int nsite_types = 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
     
@@ -6017,7 +6017,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
     int nsite_types = nExtChg > 0 ? 1 : 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
     
@@ -6479,7 +6479,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     int nsite_types = 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
     
@@ -7406,7 +7406,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
     int nsite_types = nExtChg > 0 ? 1 : 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
     
@@ -8200,7 +8200,7 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& p
     int nsite_types = 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
     
@@ -9107,7 +9107,7 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
     int nsite_types = 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
     
@@ -9890,11 +9890,11 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
 
     size_t fi_mon1 = 0;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
 
-    std::vector<PrecomputedInfo*> precomputedInformation(nsites_ * nsite_types);
+    std::vector<PrecomputedInfo*> precomputedInformation((nsites_ + external_charge_.size()) * nsite_types);
     PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 0);
 
     helpme::PMEInstance<double> pme_solver_;
@@ -9987,11 +9987,11 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
 
     size_t fi_mon1 = 0;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
-        nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
+        nsite_types += sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
 
-    std::vector<PrecomputedInfo*> precomputedInformation(nsites_ * nsite_types);
+    std::vector<PrecomputedInfo*> precomputedInformation((nsites_ + external_charge_.size()) * nsite_types);
     PrecomputeDipoleIterationsInformation(ts2v, precomputedInformation, use_ghost, 1);
 
     helpme::PMEInstance<double> pme_solver_;
