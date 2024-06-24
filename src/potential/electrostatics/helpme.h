@@ -2785,7 +2785,13 @@ class PMEInstance {
         int realGrid_size = workSpace1_.size() * 2;
        
 
-        std::fill(workSpace1_.begin(), workSpace1_.end(), 0);
+        // std::fill(workSpace1_.begin(), workSpace1_.end(), 0);
+
+        #pragma omp parallel for
+        for (size_t i = 0; i < workSpace1_.size(); ++i) {
+            workSpace1_[i] = 0;
+        }
+
         updateAngMomIterator(parameterAngMom);
         auto fractionalParameters =
             cartesianTransform(parameterAngMom, onlyOneShellForInput, scaledRecVecs_.transpose(), parameters);
@@ -2846,6 +2852,12 @@ class PMEInstance {
                     }
                 }
             }
+        }
+
+        
+        #pragma omp parallel for
+        for (size_t atom = 0; atom < nAtoms; ++atom) {
+            bSplines[atom] = std::make_tuple<Spline, Spline, Spline>(Spline(), Spline(), Spline());
         }
 
         Real *potentialGrid;
