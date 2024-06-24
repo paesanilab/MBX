@@ -198,10 +198,11 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
-    size_t g2_size = 3 * nmon2;
-    double g1[3], g2[g2_size];
+    // size_t g2_size = 3 * nmon2;
+    double g1[3];
+    // double g1[3], g2[g2_size];
     std::fill(g1, g1 + 3, 0.0);
-    std::fill(g2, g2 + g2_size, 0.0);
+    // std::fill(g2, g2 + g2_size, 0.0);
     //    #pragma simd
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
@@ -222,8 +223,9 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     double dy[N];
     double dz[N];
 
+    #pragma omp simd
     for (size_t nv = start2; nv < end2; nv++) {
-        size_t i = nv - start2;
+        // size_t i = nv - start2;
         double x2[3];
         x2[0] = xyz2[xyz2_offset + shift2 + nv];
         x2[1] = xyz2[xyz2_offset + nmon2 + shift2 + nv];
@@ -244,12 +246,14 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             x2[2] = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
 
-        dx[i] = x1[0] - x2[0];
-        dy[i] = x1[1] - x2[1];
-        dz[i] = x1[2] - x2[2];
+        dx[nv - start2] = x1[0] - x2[0];
+        dy[nv - start2] = x1[1] - x2[1];
+        dz[nv - start2] = x1[2] - x2[2];
     }
 
     double rsq[N], r[N], inv_rsq[N], inv_r6[N];
+
+    #pragma omp simd reduction(+: phi1)
     for (size_t i = 0; i < N; i++) {
         rsq[i] = dx[i] * dx[i] + dy[i] * dy[i] + dz[i] * dz[i];
         r[i] = std::sqrt(rsq[i]);
@@ -268,6 +272,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     // Kinda buzzed right now, so hopefully nothing breaks...
 
     std::vector<size_t> indexes_to_include, iisls;
+    #pragma omp simd
     for (size_t i = 0; i < N; i++) {
         bool include_pair = false;
         size_t isls = islocal[isl1_offset] + islocal[isl2_offset + i + start2];
@@ -352,16 +357,21 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             grad[i] = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
         }
 
+        // #pragma omp simd
         for (size_t i = 0; i < n_idxs; i++) {
             size_t index = indexes_to_include[i] + start2;
             g1[0] += idx[i] * grad[i];
-            g2[index] -= idx[i] * grad[i];
+            // g2[index] -= idx[i] * grad[i];
 
             g1[1] += idy[i] * grad[i];
-            g2[nmon2 + index] -= idy[i] * grad[i];
+            // g2[nmon2 + index] -= idy[i] * grad[i];
 
             g1[2] += idz[i] * grad[i];
-            g2[nmon22 + index] -= idz[i] * grad[i];
+            // g2[nmon22 + index] -= idz[i] * grad[i];
+
+            grad2[shift2 + index] -= idx[i] * grad[i];
+            grad2[shift2 + nmon2 + index] -= idy[i] * grad[i];
+            grad2[shift2 + nmon22 + index] -= idz[i] * grad[i];
 
             if (virial != 0) {
                 const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
@@ -380,17 +390,10 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
                 (*virial)[7] = (*virial)[5];
             }
         }
-    }
 
-    if (do_grads) {
         grad1[0] += g1[0];
         grad1[1] += g1[1];
         grad1[2] += g1[2];
-        for (size_t i = start2; i < end2; i++) {
-            grad2[shift2 + i] += g2[i];
-            grad2[shift2 + nmon2 + i] += g2[nmon2 + i];
-            grad2[shift2 + nmon22 + i] += g2[nmon22 + i];
-        }
     }
 
 #ifdef DEBUG
