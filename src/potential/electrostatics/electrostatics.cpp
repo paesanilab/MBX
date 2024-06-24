@@ -6013,7 +6013,8 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
 
     size_t fi_sitetypes2 = 0;
 
-    int nsite_types = 0;
+    size_t nExtChg = external_charge_.size();
+    int nsite_types = nExtChg > 0 ? 1 : 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
@@ -7401,7 +7402,8 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
 
     size_t fi_sitetypes2 = 0;
 
-    int nsite_types = 0;
+    size_t nExtChg = external_charge_.size();
+    int nsite_types = nExtChg > 0 ? 1 : 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         nsite_types += mon_type_count_[mt1].second * sites_all_[fi_mon1];
@@ -9883,7 +9885,8 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     size_t nsites3 = nsites_ * 3;
     std::vector<double> ts2v(nsites3);
 
-    int nsite_types = 0;
+    size_t nExtChg = external_charge_.size();
+    int nsite_types = nExtChg > 0 ? 1 : 0;
 
     size_t fi_mon1 = 0;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
@@ -9979,7 +9982,8 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
     size_t nsites3 = nsites_ * 3;
     std::vector<double> ts2v(nsites3);
 
-    int nsite_types = 0;
+    size_t nExtChg = external_charge_.size();
+    int nsite_types = nExtChg > 0 ? 1 : 0;
 
     size_t fi_mon1 = 0;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
