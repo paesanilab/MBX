@@ -648,28 +648,30 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
     exc14.clear();
 
     bool is_in_json = false;
-    try {
-        excluded_set_type e12 = mon_j[mon]["exc12"];
-        exc12 = e12;
-        is_in_json = true;
-    } catch (...) {
-        exc12.clear();
-    }
+    if(mon_j.contains(mon)) {
+        try {
+            excluded_set_type e12 = mon_j[mon]["exc12"];
+            exc12 = e12;
+            is_in_json = true;
+        } catch (...) {
+            exc12.clear();
+        }
 
-    try {
-        excluded_set_type e13 = mon_j[mon]["exc13"];
-        exc13 = e13;
-        is_in_json = true;
-    } catch (...) {
-        exc13.clear();
-    }
+        try {
+            excluded_set_type e13 = mon_j[mon]["exc13"];
+            exc13 = e13;
+            is_in_json = true;
+        } catch (...) {
+            exc13.clear();
+        }
 
-    try {
-        excluded_set_type e14 = mon_j[mon]["exc14"];
-        exc14 = e14;
-        is_in_json = true;
-    } catch (...) {
-        exc14.clear();
+        try {
+            excluded_set_type e14 = mon_j[mon]["exc14"];
+            exc14 = e14;
+            is_in_json = true;
+        } catch (...) {
+            exc14.clear();
+        }
     }
 
     if (is_in_json) return;

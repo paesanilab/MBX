@@ -1133,6 +1133,7 @@ Matrix<Real> cartesianTransform(int maxAngularMomentum, bool transformOnlyThisSh
     int firstShell = transformOnlyThisShell ? maxAngularMomentum : 1;
     for (int angularMomentum = firstShell; angularMomentum <= maxAngularMomentum; ++angularMomentum) {
         auto rotationMatrix = makeCartesianRotationMatrix(angularMomentum, transformer);
+        #pragma omp parallel for
         for (int atom = 0; atom < nAtoms; ++atom) {
             const Real *inputData = transformee[atom];
             Real *outputData = transformed[atom];

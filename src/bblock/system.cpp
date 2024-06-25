@@ -2340,8 +2340,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     // Vector pools that allow compatibility between
     // serial and parallel implementation
     std::vector<double> e2b_pool(num_threads, 0.0);
-    std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
-    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0));  // declare virial pool
+    std::vector<std::vector<double>> grad_pool(num_threads);
+    std::vector<std::vector<double>> virial_pool(num_threads);  // declare virial pool
 #ifdef _OPENMP
 #pragma omp parallel private(rank, idxs)
     {
@@ -2357,6 +2357,9 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         // with index between istart and iend (iend not included)
 
         std::vector<size_t> dimers = AddClustersParallel(2, cutoff2b_, idxs, use_ghost);
+
+        grad_pool[rank] = std::vector<double>(3 * numsites_, 0.0);
+        virial_pool[rank] = std::vector<double>(9, 0.0);
 
         // In order to continue, we need at least one dimer
         // If the size of the dimer vector is not at least 2, means
@@ -2620,8 +2623,8 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     // Vector pools that allow compatibility between
     // serial and parallel implementation
     std::vector<double> e3b_pool(num_threads, 0.0);
-    std::vector<std::vector<double>> grad_pool(num_threads, std::vector<double>(3 * numsites_, 0.0));
-    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0));  // declare virial pool
+    std::vector<std::vector<double>> grad_pool(num_threads);
+    std::vector<std::vector<double>> virial_pool(num_threads);  // declare virial pool
 
     std::vector<std::vector<size_t>> all_trimers(num_threads);
 
@@ -2639,43 +2642,12 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
         all_trimers[rank] = AddClustersParallel(3, cutoff3b_, idxs, use_ghost);
 
+        grad_pool[rank] = std::vector<double>(3 * numsites_, 0.0);
+        virial_pool[rank] = std::vector<double>(9, 0.0);
+
 #ifdef _OPENMP  
     }
 #endif
-
-    // rebalance the load of trimers between threads.
-    // while (true) {
-    //     size_t max_trimers_len = all_trimers[0].size();
-    //     size_t min_trimers_len = all_trimers[0].size();
-
-    //     size_t max_trimers_index = 0;
-    //     size_t min_trimers_index = 0;
-
-    //     for (size_t i = 1; i < num_threads; i++) {
-    //         if (all_trimers[i].size() > max_trimers_len) {
-    //             max_trimers_len = all_trimers[i].size();
-    //             max_trimers_index = i;
-    //         }
-    //         if (all_trimers[i].size() < min_trimers_len) {
-    //             min_trimers_len = all_trimers[i].size();
-    //             min_trimers_index = i;
-    //         }
-    //     }
-
-    //     size_t difference_in_length = (max_trimers_len - min_trimers_len) / 3;
-
-    //     // std::cout << "DIFF: " << (difference_in_length) << std::endl;
-
-    //     if(difference_in_length <= 1) break;
-
-    //     all_trimers[min_trimers_index].insert(all_trimers[min_trimers_index].end(),
-    //                                           all_trimers[max_trimers_index].end() - (difference_in_length / 2) * 3,
-    //                                           all_trimers[max_trimers_index].end());
-
-    //     all_trimers[max_trimers_index].erase(all_trimers[max_trimers_index].end() - (difference_in_length / 2) * 3,
-    //                                             all_trimers[max_trimers_index].end());                        
-
-    // }
 
     std::vector<size_t> trimers_pool;
 
