@@ -1519,7 +1519,7 @@ void FixMBX::mbx_init_local() {
 #endif
 
     std::vector<double> box;
-    ptr_mbx_local->SetPBC(box);
+    // ptr_mbx_local->SetPBC(box);
 
     if (domain->nonperiodic && (domain->xperiodic || domain->yperiodic || domain->zperiodic))
         error->all(FLERR, "System must be fully periodic or non-periodic with MBX");
@@ -1535,6 +1535,7 @@ void FixMBX::mbx_init_local() {
     box[7] = domain->yz;
     box[8] = domain->zprd;
 
+    ptr_mbx_local->SetPBC(box);
     ptr_mbx_local->SetBoxPMElocal(box);
 
     ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);

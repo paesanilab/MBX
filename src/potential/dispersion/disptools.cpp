@@ -353,18 +353,19 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         }
 
         for (size_t i = 0; i < n_idxs; i++) {
+            const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
+
             size_t index = indexes_to_include[i] + start2;
-            g1[0] += idx[i] * grad[i];
-            g2[index] -= idx[i] * grad[i];
+            g1[0] += idx[i] * grad[i] * vscale;
+            g2[index] -= idx[i] * grad[i] * vscale;
 
-            g1[1] += idy[i] * grad[i];
-            g2[nmon2 + index] -= idy[i] * grad[i];
+            g1[1] += idy[i] * grad[i] * vscale;
+            g2[nmon2 + index] -= idy[i] * grad[i] * vscale;
 
-            g1[2] += idz[i] * grad[i];
-            g2[nmon22 + index] -= idz[i] * grad[i];
+            g1[2] += idz[i] * grad[i] * vscale;
+            g2[nmon22 + index] -= idz[i] * grad[i] * vscale;
 
             if (virial != 0) {
-                const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
 
                 (*virial)[0] -= idx[i] * idx[i] * grad[i] * vscale;  //  update the virial for the atom pair
                 (*virial)[1] -= idx[i] * idy[i] * grad[i] * vscale;
