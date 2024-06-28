@@ -2374,26 +2374,29 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         all_dimers[i].clear();
     }
 
+    size_t dimers_pool_index = 0;
+
     size_t batch_size = 16;
 
     // actually calculate the dimers
 #ifdef _OPENMP
-#pragma omp parallel private(rank, idxs) shared(dimers_pool)
+#pragma omp parallel private(rank, idxs) shared(dimers_pool_index)
     {
         rank = omp_get_thread_num();
 #endif
 
         std::vector<size_t>& dimers = all_dimers[rank];
 
-        #pragma omp critical(dimers_pool)
-        {
-            if(dimers_pool.size() > 0) {
+        size_t start_index;
+        size_t this_batch_size;
 
-                size_t this_batch_size = std::min(batch_size, dimers_pool.size() / 2);
-                dimers.insert(dimers.end(), dimers_pool.end() - this_batch_size*2, dimers_pool.end());
-                dimers_pool.erase(dimers_pool.end() - this_batch_size*2, dimers_pool.end());
-            }
+        #pragma omp critical(dimers_pool_index)
+        {
+            start_index = dimers_pool_index;
+            this_batch_size = std::min(batch_size, (dimers_pool.size() - start_index) / 2);
+            dimers_pool_index += this_batch_size * 2;
         }
+        dimers.insert(dimers.end(), dimers_pool.begin() + start_index, dimers_pool.begin() + start_index + this_batch_size*2);
 
         // In order to continue, we need at least one dimer
         // If the size of the dimer vector is not at least 2, means
@@ -2534,14 +2537,20 @@ double System::Get2B(bool do_grads, bool use_ghost) {
                 m1 = monomers_[dimers[i]];
                 m2 = monomers_[dimers[i + 1]];
             }
+            
+            if(dimers.size() - 2 * (nd_tot + nd_bad + nd) == 0) {
 
-            #pragma omp critical(dimers_pool)
-            {
-                if(dimers.size() - 2 * (nd_tot + nd_bad + nd) == 0 && dimers_pool.size() > 0) {
-                    size_t this_batch_size = std::min(batch_size, dimers_pool.size() / 2);
-                    dimers.insert(dimers.end(), dimers_pool.end() - this_batch_size*2, dimers_pool.end());
-                    dimers_pool.erase(dimers_pool.end() - this_batch_size*2, dimers_pool.end());
+                size_t start_index;
+                size_t this_batch_size;
+
+                #pragma omp critical(dimers_pool_index)
+                {
+                    start_index = dimers_pool_index;
+                    this_batch_size = std::min(batch_size, (dimers_pool.size() - start_index) / 2);
+                    dimers_pool_index += this_batch_size * 2;
+
                 }
+                dimers.insert(dimers.end(), dimers_pool.begin() + start_index, dimers_pool.begin() + start_index + this_batch_size*2);
             }
         }
 #ifdef _OPENMP
@@ -2695,6 +2704,8 @@ double System::Get3B(bool do_grads, bool use_ghost) {
         all_trimers[i].clear();
     }
 
+    size_t trimers_pool_index = 0;
+
     size_t batch_size = 16;
 
     // actually calculate the trimers
@@ -2706,15 +2717,18 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
         std::vector<size_t>& trimers = all_trimers[rank];
 
-        #pragma omp critical(trimers_pool)
-        {
-            if(trimers_pool.size() > 0) {
+        size_t start_index;
+        size_t this_batch_size;
 
-                size_t this_batch_size = std::min(batch_size, trimers_pool.size() / 3);
-                trimers.insert(trimers.end(), trimers_pool.end() - this_batch_size*3, trimers_pool.end());
-                trimers_pool.erase(trimers_pool.end() - this_batch_size*3, trimers_pool.end());
-            }
+        #pragma omp critical(trimers_pool_index)
+        {
+
+            start_index = trimers_pool_index;
+            size_t truncated_batch_size = ((trimers_pool.size() - start_index) / 3) / (num_threads) + 1;
+            this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (trimers_pool.size() - start_index) / 3));
+            trimers_pool_index += this_batch_size * 3;
         }
+        trimers.insert(trimers.end(), trimers_pool.begin() + start_index, trimers_pool.begin() + start_index + this_batch_size*3);
 
         // In order to continue, we need at least one dimer
         // If the size of the dimer vector is not at least 2, means
@@ -2875,13 +2889,21 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                 m3 = monomers_[trimers[i + 2]];
             }
 
-            #pragma omp critical(trimers_pool)
-            {
-                if(trimers.size() - 3 * nt_tot == 0 && trimers_pool.size() > 0) {
-                    size_t this_batch_size = std::min(batch_size, trimers_pool.size() / 3);
-                    trimers.insert(trimers.end(), trimers_pool.end() - this_batch_size*3, trimers_pool.end());
-                    trimers_pool.erase(trimers_pool.end() - this_batch_size*3, trimers_pool.end());
+            if(trimers.size() - 3 * nt_tot == 0) {
+
+                size_t start_index;
+                size_t this_batch_size;
+
+                #pragma omp critical(trimers_pool_index)
+                {
+
+                    start_index = trimers_pool_index;
+                    size_t truncated_batch_size = ((trimers_pool.size() - start_index) / 3) / (num_threads  * 4) + 1;
+                    this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (trimers_pool.size() - start_index) / 3));
+                    trimers_pool_index += this_batch_size * 3;
+
                 }
+                trimers.insert(trimers.end(), trimers_pool.begin() + start_index, trimers_pool.begin() + start_index + this_batch_size*3);
             }
         }
 #ifdef _OPENMP
