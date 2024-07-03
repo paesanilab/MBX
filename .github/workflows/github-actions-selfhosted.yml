@@ -2,6 +2,17 @@ name: Self-Hosted Integration test
 
 on:
   workflow_dispatch:
+    inputs:
+      mpi:
+        description: 'MPI ranks'
+        required: true
+        default: "8"
+        type: number
+      omp:
+        description: 'OpenMP threads'
+        required: true
+        default: "2"
+        type: number
   # workflow_run:
   #   workflows: [MBX+LAMMPS integration test]
   #   branches: [master]
@@ -59,7 +70,7 @@ jobs:
   test_mbxlammps:
     strategy:
       matrix:
-        example: [256h2o, 512h2o, 1024h2o, 2048h2o, na+_bulk]
+        example: [256h2o, 512h2o, 1024h2o, 2048h2o, na+_bulk, ch4, ch4_h2o]
     runs-on: [self-hosted, epyc]
     needs: compile-mbxlammps
     steps:
@@ -78,8 +89,8 @@ jobs:
           chmod u+x lmp_mpi_mbx
           ls ${{ github.workspace }}/lmp_mpi_mbx
           cd ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/
-          export OMP_NUM_THREADS=2
-          mpirun -np 8 ${{ github.workspace }}/lmp_mpi_mbx -in lammps.in
+          export OMP_NUM_THREADS=${{ github.event.inputs.omp }}
+          mpirun -np ${{ github.event.inputs.mpi }} ${{ github.workspace }}/lmp_mpi_mbx -in lammps.in
       - run: ls ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/ -lth
       - name: log output
         run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/log.lammps
