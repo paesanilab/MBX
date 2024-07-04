@@ -185,7 +185,7 @@ MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
-MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[yes])
+MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
 MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization],[no])
 MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
 
