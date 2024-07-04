@@ -184,18 +184,6 @@ void PairMBX::compute(int eflag, int vflag) {
 
         mbx_e4b = mbx_e4b_local + mbx_e4b_ghost;
 
-        if (mbx_parallel) {
-#ifdef _DEBUG
-            printf("[MBX] (%i) -- Computing disp real parallel\n", me);
-#endif
-
-            fix_mbx->mbxt_start(MBXT_DISP);
-            mbx_disp_real =
-                ptr_mbx->Dispersion(true, true);  // computes real-space with local-local & local-ghost pairs
-            fix_mbx->mbxt_stop(MBXT_DISP);
-            accumulate_f(false);
-        }
-
 #ifdef _DEBUG
         printf("[MBX] (%i) -- Computing buck\n", me);
 #endif
@@ -214,20 +202,23 @@ void PairMBX::compute(int eflag, int vflag) {
 
     if (mbx_parallel) {
 #ifdef _DEBUG
-        printf("[MBX] (%i) -- Computing disp pme parallel\n", me);
+            printf("[MBX] (%i) -- Computing disp parallel\n", me);
 #endif
-        //  printf("(%i)  procgrid= %i %i %i\n",comm->me,comm->myloc[0],comm->myloc[1],comm->myloc[2]);
 
-        if (!domain->nonperiodic) {
-            fix_mbx->mbxt_start(MBXT_DISP_PME);
-            mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true);  // computes k-space using sub-domain
+            fix_mbx->mbxt_start(MBXT_DISP);
+            mbx_disp_real =
+                ptr_mbx_local->Dispersion(true, true);  // computes real-space with local-local & local-ghost pairs
+            fix_mbx->mbxt_stop(MBXT_DISP);
             accumulate_f_local(false);
+
+            fix_mbx->mbxt_start(MBXT_DISP_PME);
+            mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true);  // computes PME-space with local-local & local-ghost pairs
             fix_mbx->mbxt_stop(MBXT_DISP_PME);
-        }
+            accumulate_f_local(false);
 
     } else {
 #ifdef _DEBUG
-        printf("[MBX] (%i) -- Computing disp pme serial\n", me);
+        printf("[MBX] (%i) -- Computing disp serial\n", me);
 #endif
 
         fix_mbx->mbxt_start(MBXT_DISP);

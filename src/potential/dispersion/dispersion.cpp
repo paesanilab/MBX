@@ -753,7 +753,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
-    if (ewald_alpha_ > 0 && use_pbc_) {
+    if (ewald_alpha_ > 0 && use_pbc_ && !use_ghost) {
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
