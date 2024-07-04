@@ -267,7 +267,6 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     // Kinda buzzed right now, so hopefully nothing breaks...
 
     std::vector<size_t> indexes_to_include, iisls;
-    #pragma omp simd
     for (size_t i = 0; i < N; i++) {
         bool include_pair = false;
         size_t isls = islocal[isl1_offset] + islocal[isl2_offset + i + start2];
