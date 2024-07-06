@@ -6094,19 +6094,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                 }
             }
 
-            // // Compress data in Efd
-            // for (size_t rank = 0; rank < nthreads; rank++) {
-
-            //     #pragma omp simd simdlen(8)
-            //     for (size_t k = 0; k < kend1; k++) {
-            //         out_v[fi_crd1 + k] += Efd_1_pool[rank][k];
-            //     }
-
-            //     #pragma omp simd simdlen(8)
-            //     for (size_t k = 0; k < kend2; k++) {
-            //         out_v[fi_crd2 + k] += Efd_2_pool[rank][k];
-            //     }
-            // }
             // Update first indexes
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
