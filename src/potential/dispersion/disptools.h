@@ -147,7 +147,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
              const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
              const double cutoff, const double ewald_alpha, const std::vector<double>& box,
              const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
-             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial = 0);
+             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial = 0, const size_t xyz2_offset = 0);
 
 /**
  * @brief Retrieves the parameters for dispersion energy

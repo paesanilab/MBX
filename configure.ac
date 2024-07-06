@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.1.1], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.1.2], [mbx-users@googlegroups.com])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -175,7 +175,7 @@ AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
 
 # Checks for typedefs, structures, and compiler characteristics.
 # Check for C++11
-MBX_CHECK_REQ_CXXFLAG([-std=c++11])
+#MBX_CHECK_REQ_CXXFLAG([-std=c++17])
 
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
@@ -185,6 +185,9 @@ MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
+MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
+MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization],[no])
+MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
 
 # Act on enable flags
 
@@ -215,6 +218,20 @@ fi
 if test $optreport == true; then
     MBX_CHECK_CXXFLAG([-qopt-report=1])
     MBX_CHECK_CXXFLAG([-qopt-report-phase=vec])
+fi
+
+if test $cpp17 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-std=c++17])
+else
+    MBX_CHECK_REQ_CXXFLAG([-std=c++11])
+fi
+
+if test $avx2 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX2])
+fi
+
+if test $avx512 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
 fi
 
 # Add flags to variable

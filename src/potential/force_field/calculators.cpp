@@ -396,9 +396,9 @@ std::vector<double> CalculateInversionAngle(std::vector<double> coor1, std::vect
 
         // use ukn, vkn, and one of the r_vectors to calculate phi.
         phi.push_back(acos(
-            sqrt(CalculateDotProduct(r_vector[(i + 2) % 3], ukn) * CalculateDotProduct(r_vector[(i + 2) % 3], ukn) +
+            std::min(1.0, sqrt(CalculateDotProduct(r_vector[(i + 2) % 3], ukn) * CalculateDotProduct(r_vector[(i + 2) % 3], ukn) +
                  CalculateDotProduct(r_vector[(i + 2) % 3], vkn) * CalculateDotProduct(r_vector[(i + 2) % 3], vkn)) /
-            CalculateDistance(r_vector[(i + 2) % 3], {0, 0, 0})));
+            CalculateDistance(r_vector[(i + 2) % 3], {0, 0, 0}))));
     }
 
     return phi;

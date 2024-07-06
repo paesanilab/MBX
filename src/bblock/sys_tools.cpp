@@ -153,14 +153,16 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
     size_t ats = 0;
     for (size_t i = 0; i < mon.size(); i++) {
         bool is_in_json = false;
-        try {
-            size_t ns = mon_j[mon[i]]["sites"];
-            size_t na = mon_j[mon[i]]["nat"];
-            sites.push_back(ns);
-            nat.push_back(na);
-            is_in_json = true;
-        } catch (...) {
-            is_in_json = false;
+        if(mon_j.contains(mon[i])) {
+            try {
+                size_t ns = mon_j[mon[i]]["sites"];
+                size_t na = mon_j[mon[i]]["nat"];
+                sites.push_back(ns);
+                nat.push_back(na);
+                is_in_json = true;
+            } catch (...) {
+                is_in_json = false;
+            }
         }
 
         if (!is_in_json) {
@@ -1095,66 +1097,61 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
         }
         // Note, for now, assuming only water has site dependant charges
     } else if (mon_id == "h2o") {
+
+
+    size_t nthreads = 1;
+    #ifdef _OPENMP
+    #pragma omp parallel  // omp_get_num_threads() needs to be inside
+                      // parallel region to get number of threads
+        {
+            if (omp_get_thread_num() == 0) nthreads = omp_get_num_threads();
+        }
+    #endif
+
         // chgtmp = M, H1, H2 according to ttm4.cpp
-        std::vector<double> chgtmp;
+        std::vector<double> chgtmp(n_mon * (nsites - 1), 0.0);
         size_t fstind_3 = 3 * fst_ind;
 
         chg_der = std::vector<double>(27 * n_mon, 0.0);
 
+        std::vector<std::vector<double>> chgtmpnvpool;
+        for (size_t i = 0; i < nthreads; i++) {
+            chgtmpnvpool.push_back(std::vector<double>((nsites - 1)));
+        }
+
         // Calculate individual monomer's charges
+        #pragma omp parallel for
         for (size_t nv = 0; nv < n_mon; nv++) {
+
+                int rank = 0;
+                #ifdef _OPENMP
+                    rank = omp_get_thread_num();
+                #endif
+
             size_t ns3 = nsites * 3;
             size_t shift = 27 * nv;
 
-            // Getting front and end of xyz vector of 1 monomer in system
-            std::vector<double> atomcoords(xyz);
-            std::vector<double> chgtmpnv((nsites - 1));
+            std::vector<double>& chgtmpnv = chgtmpnvpool[rank];
 
-            // Calculating charge
-            ps::dms_nasa(0.0, 0.0, 0.0, atomcoords.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
+            // Calculating the partridge schwenke geometry dependent charges
+            ps::dms_nasa(0.0, 0.0, 0.0, xyz.data() + (nv * ns3) + fstind_3, chgtmpnv.data(),
                          chg_der.data() + shift);
-            // Inserting the found charges into chgtmp vector before calculating
-            // new charge values
-            chgtmp.insert(chgtmp.end(), chgtmpnv.begin(), chgtmpnv.end());
-        }
 
-        // Creating vector with contiguous data
-        std::vector<double> chg2(n_mon * nsites, 0.0);
+            double h1_nasa_charge = chgtmpnv[1];
+            double h2_nasa_charge = chgtmpnv[2];
+            double o_nasa_charge = chgtmpnv[0];
 
-        // TODO Multiversioning
-        // Reorganizing sites
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            // looping over sites -- H1 and H2
-            for (size_t i = 1; i < nsites - 1; i++) {
-                chg2[nv + i * n_mon] = chgtmp[i + nv * (nsites - 1)];
-            }
+            // Redistribute Charges according over the hydrogens and M-site according to TTM4 model.
 
-            // looping over M
-            chg2[nv + 3 * n_mon] = chgtmp[nv * 3];
-        }
-
-        std::vector<double> chg2temp = chg2;
-
-        // calculating charge
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            size_t hy1 = n_mon + nv;
-            size_t hy2 = 2 * n_mon + nv;
-            size_t msite = 3 * n_mon + nv;
+            // Oxygen
+            charges[nv * nsites + 0 + fst_ind] = 0.0;
 
             // Hydrogen1
-            chg2[hy1] = CHARGECON * (chg2temp[hy1] + gamma21 * (chg2temp[hy1] + chg2temp[hy2]));
+            charges[nv * nsites + 1 + fst_ind] = CHARGECON * (h1_nasa_charge + gamma21 * (h1_nasa_charge + h2_nasa_charge));
             // Hydrogen2
-            chg2[hy2] = CHARGECON * (chg2temp[hy2] + gamma21 * (chg2temp[hy1] + chg2temp[hy2]));
+            charges[nv * nsites + 2 + fst_ind] = CHARGECON * (h2_nasa_charge + gamma21 * (h1_nasa_charge + h2_nasa_charge));
             // M
-            chg2[msite] = CHARGECON * (chg2temp[msite] / (1.0 - gammaM));
-        }
-
-        // TODO multiversioning
-        // Return all coordinates to the original vector
-        for (size_t nv = 0; nv < n_mon; nv++) {
-            for (size_t j = 0; j < nsites; j++) {
-                charges[nv * nsites + j + fst_ind] = chg2[nv + n_mon * j];
-            }
+            charges[nv * nsites + 3 + fst_ind] = CHARGECON * (o_nasa_charge / (1.0 - gammaM));
         }
     }
 }
