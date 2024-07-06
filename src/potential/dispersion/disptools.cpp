@@ -198,12 +198,8 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
-    // size_t g2_size = 3 * nmon2;
     double g1[3];
-    // double g1[3], g2[g2_size];
     std::fill(g1, g1 + 3, 0.0);
-    // std::fill(g2, g2 + g2_size, 0.0);
-    //    #pragma simd
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
     double dispersion_energy = 0;
@@ -225,7 +221,6 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
     #pragma omp simd
     for (size_t nv = start2; nv < end2; nv++) {
-        // size_t i = nv - start2;
         double x2[3];
         x2[0] = xyz2[xyz2_offset + shift2 + nv];
         x2[1] = xyz2[xyz2_offset + nmon2 + shift2 + nv];
@@ -272,7 +267,6 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     // Kinda buzzed right now, so hopefully nothing breaks...
 
     std::vector<size_t> indexes_to_include, iisls;
-    #pragma omp simd
     for (size_t i = 0; i < N; i++) {
         bool include_pair = false;
         size_t isls = islocal[isl1_offset] + islocal[isl2_offset + i + start2];
@@ -359,22 +353,20 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
         // #pragma omp simd
         for (size_t i = 0; i < n_idxs; i++) {
+            const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
+
             size_t index = indexes_to_include[i] + start2;
-            g1[0] += idx[i] * grad[i];
-            // g2[index] -= idx[i] * grad[i];
+            g1[0] += idx[i] * grad[i] * vscale;
 
-            g1[1] += idy[i] * grad[i];
-            // g2[nmon2 + index] -= idy[i] * grad[i];
+            g1[1] += idy[i] * grad[i] * vscale;
 
-            g1[2] += idz[i] * grad[i];
-            // g2[nmon22 + index] -= idz[i] * grad[i];
+            g1[2] += idz[i] * grad[i] * vscale;
 
-            grad2[shift2 + index] -= idx[i] * grad[i];
-            grad2[shift2 + nmon2 + index] -= idy[i] * grad[i];
-            grad2[shift2 + nmon22 + index] -= idz[i] * grad[i];
+            grad2[shift2 + index] -= idx[i] * grad[i] * vscale;
+            grad2[shift2 + nmon2 + index] -= idy[i] * grad[i] * vscale;
+            grad2[shift2 + nmon22 + index] -= idz[i] * grad[i] * vscale;
 
             if (virial != 0) {
-                const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
 
                 (*virial)[0] -= idx[i] * idx[i] * grad[i] * vscale;  //  update the virial for the atom pair
                 (*virial)[1] -= idx[i] * idy[i] * grad[i] * vscale;

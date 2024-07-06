@@ -543,7 +543,6 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
         double dummy_c6, dummy_d6;
         bool do_disp = use_disp_all_[mt * mon_type_count_.size() + mt];
-        // std::vector<double> xyz_mt(xyz_.begin() + fi_crd, xyz_.begin() + fi_crd + nmon * ns * 3);
 
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
@@ -665,7 +664,6 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             bool do_disp = use_disp_all_[mt1 * mon_type_count_.size() + mt2];
 
             double disp_scale_factor = do_disp ? 1.0 : 0.0;
-            // std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
 
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
@@ -781,7 +779,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
-    if (ewald_alpha_ > 0 && use_pbc_) {
+    if (ewald_alpha_ > 0 && use_pbc_ && !use_ghost) {
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
