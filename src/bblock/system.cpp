@@ -2379,7 +2379,7 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     // this variable is the maximum number of dimers that will be dispached to a thread at a time.
     // the number of trimers will be smaller near the end of the evaluaton when there are fewer dimers.
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
-    size_t batch_size = 16;
+    const size_t batch_size = 16;
 
     // actually calculate the dimers
 #ifdef _OPENMP
@@ -2712,7 +2712,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     // this variable is the maximum number of trimers that will be dispached to a thread at a time.
     // the number of trimers will be smaller near the end of the evaluaton when there are fewer trimers.
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
-    size_t batch_size = 16;
+    const size_t batch_size = 16;
 
     // actually calculate the trimers
 #ifdef _OPENMP
