@@ -46,6 +46,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <string>
 #include <vector>
 #include <math.h>
+#include <algorithm>
 #include "tools/custom_exceptions.h"
 #include "tools/definitions.h"
 
