@@ -6407,20 +6407,38 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     double aDD = 0.055; // Thole damping aDD intermolecular is always 0.055
 
     //TODO: Need to rearrange the coordinates (presmably in xyz_all_)
-    vector<double> xyz_rearranged(xyz_all_.size());
-    int fi_mon = 0;
-    int fi_crd = 0;
+    //move the points into the box also
+    std::vector<double> xyz_rearranged(xyz_all_.size());
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t site_count = xyz_rearranged.size()/3;
     //fi_mon has the index of the first monomer of this monomer type
     //for each monomer type
-    for(int mt = 0; mt<mon_type_count_.size(); mt++){
+    for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
         //for each site of that monomer type
         //nmon = number of monomers of that type
-        int nmon = mon_type_count_[mt].second;
-        for(int s = 0; s < sites_all_[fi_mon]; s++){
-            for(int i = 0; i<nmon; ++i){
-                xyz_rearranged[fi_crd+3*i] = xyz_all_[fi_crd+i];
-                xyz_rearranged[fi_crd+3*i+1] = xyz_all_[fi_crd+i+nmon];
-                xyz_rearranged[fi_crd+3*i+2] = xyz_all_[fi_crd+i+2*nmon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t ns = sites_all_[fi_mon];
+        for(size_t s = 0; s < ns; s++){
+            for(size_t i = 0; i<nmon; ++i){
+                if(use_pbc){
+                    double x = box_inverse[0]*xyz_all_[fi_crd+i] + box_inverse[3]*xyz_all_[fi_crd+i+nmon] + box_inverse[6]*xyz_all_[fi_crd+i+2*nmon],
+                        y = box_inverse[1]*xyz_all_[fi_crd+i] + box_inverse[4]*xyz_all_[fi_crd+i+nmon] + box_inverse[7]*xyz_all_[fi_crd+i+2*nmon],
+                        z = box_inverse[2]*xyz_all_[fi_crd+i] + box_inverse[5]*xyz_all_[fi_crd+i+nmon] + box_inverse[8]*xyz_all_[fi_crd+i+2*nmon];
+                    
+                    x -= std::floor(x + 0.5);
+                    y -= std::floor(y + 0.5);
+                    z -= std::floor(z + 0.5);
+
+                    xyz_rearranged[fi_crd+3*i] = box[0]*x + box[3]*y + box[6]*z;
+                    xyz_rearranged[fi_crd+3*i+1] = box[1]*x + box[4]*y + box[7]*z;
+                    xyz_rearranged[fi_crd+3*i+2] = box[2]*x + box[5]*y + box[8]*z;
+                }
+                else{
+                    xyz_rearranged[fi_crd+3*i] = xyz_all_[fi_crd+i];
+                    xyz_rearranged[fi_crd+3*i+1] = xyz_all_[fi_crd+i+nmon];
+                    xyz_rearranged[fi_crd+3*i+2] = xyz_all_[fi_crd+i+nmon*2];
+                }
             }
             fi_crd += nmon*3;
         }
@@ -6487,12 +6505,15 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 // indexing of xyz_all_ (?) : m1s1x m2s1x ... m1s1y ... m1s1z ... m1s2x ... m1s3x ... [next monomer type]
                 //for each site in the monomer m1...
                 for (size_t i = 0; i < ns1; i++) {
-                    //size_t inmon13 = 3 * nmon1 * i; not used in this function
+                    size_t inmon13 = 3 * nmon1 * i;
                     //first getting the point:
-                        double[3] point;
-                        point[0] = fi_crd1+i*nmon1*3+m1;
-                        point[1] = fi_crd1+i*nmon1*3+nmon1+m1;
-                        point[2] = fi_crd1+i*nmon1*3+nmon1*2+m1;
+                    //islocal_all_
+                        bool point1_local = islocal_all_[fi_mon1+m1]==1;
+                        double point[3];
+                        point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
+                        point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
+                        point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
+
                     for (size_t j = 0; j < ns2; j++) {
                         double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
@@ -6522,7 +6543,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         
                         // replace with kdtree? start
                         std::vector<size_t> good_mon2_indices;
-                        // old code
+                        //old code
                         // std::vector<size_t> bool_mon2_indices(nmon2, 0);
                         
                         // local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
@@ -6535,24 +6556,42 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         //         good_mon2_indices.push_back(ind);
                         //     }
                         // }
+                        // std::cout << "original good_mon2:\n";
+                        // for(auto i : good_mon2_indices)
+                        //     std::cout << i << " ";
+                        // std::cout << "\n";
 
                         //finding the list of all indices:
+                        //use_ghost + islocal_all_ ?
                         
-
+                        //std::vector<size_t> good_mon2_indices2;
                         std::vector<std::pair<size_t, double>> site2_indices;
                         nanoflann::SearchParams params;
-                        const size_t nMatches = index.radiusSearch(point, cutoff*cutoff, site2_indices, params);
+                        const size_t nMatches = index.radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
 
-                        //site offset
-                        size_t offset = fi_sites2 + nmon2*j;
                         for(size_t s = 0; s<nMatches; ++s){
-                            if(site2_indices[s] >= offset && site2_indices[s] < offset + nmon2){
+                            size_t idx = site2_indices[s].first % site_count;
+                            if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_mon2+idx-fi_sites2 - nmon2*j]))) && idx >= m2init+fi_sites2+nmon2*j && idx < fi_sites2+nmon2*j + nmon2){
                                 //add the monomer, indexed relative to mt2
-                                good_mon2_indices.push_back(site2_indices[s] - offset);
+                                if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx - fi_sites2 - nmon2*j) == good_mon2_indices.end())
+                                    good_mon2_indices.push_back(idx - fi_sites2 - nmon2*j);
                             }
                         }
+                        // sort(good_mon2_indices2.begin(), good_mon2_indices2.end());
+                        // std::cout << "new sites within distance:\n";
+                        // for(auto i : site2_indices)
+                        //     std::cout << i.first%site_count<< " ";
+                        // std::cout << "\n";
+                        // if(good_mon2_indices != good_mon2_indices2){
+                        // std::cout << "MISMATCH! new distance matches:\n";
+                        // for(auto i : site2_indices)
+                        //     std::cout << i.first % site_count << " ";
+                        // std::cout << "\ngood_mon2:\n";
+                        // for(auto i : good_mon2_indices2)
+                        //     std::cout << i<< " ";
+                        // std::cout << "\n";}
                         //end: good_mon2_indices: contains indices of mon2s within threshold
-
+                        //good_mon2_indices = good_mon2_indices2;
                     
 
                         int reordered_mon2_size = good_mon2_indices.size();
