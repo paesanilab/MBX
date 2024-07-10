@@ -1133,6 +1133,7 @@ Matrix<Real> cartesianTransform(int maxAngularMomentum, bool transformOnlyThisSh
     int firstShell = transformOnlyThisShell ? maxAngularMomentum : 1;
     for (int angularMomentum = firstShell; angularMomentum <= maxAngularMomentum; ++angularMomentum) {
         auto rotationMatrix = makeCartesianRotationMatrix(angularMomentum, transformer);
+        #pragma omp parallel for
         for (int atom = 0; atom < nAtoms; ++atom) {
             const Real *inputData = transformee[atom];
             Real *outputData = transformed[atom];
@@ -2783,9 +2784,12 @@ class PMEInstance {
         // handle that special case using spline cacheing machinery for efficiency.
         Real *realGrid = reinterpret_cast<Real *>(workSpace1_.data());
         int realGrid_size = workSpace1_.size() * 2;
-       
 
-        std::fill(workSpace1_.begin(), workSpace1_.end(), 0);
+        #pragma omp parallel for
+        for (size_t i = 0; i < workSpace1_.size(); ++i) {
+            workSpace1_[i] = 0;
+        }
+
         updateAngMomIterator(parameterAngMom);
         auto fractionalParameters =
             cartesianTransform(parameterAngMom, onlyOneShellForInput, scaledRecVecs_.transpose(), parameters);
@@ -2846,6 +2850,12 @@ class PMEInstance {
                     }
                 }
             }
+        }
+
+        
+        #pragma omp parallel for
+        for (size_t atom = 0; atom < nAtoms; ++atom) {
+            bSplines[atom] = std::make_tuple<Spline, Spline, Spline>(Spline(), Spline(), Spline());
         }
 
         Real *potentialGrid;

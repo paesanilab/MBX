@@ -548,15 +548,16 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
 
         // For parallel region
-        std::vector<std::vector<double> > phi_pool;
-        std::vector<std::vector<double> > grad_pool;
+        std::vector<std::vector<double> > phi_pool(nthreads);
+        std::vector<std::vector<double> > grad_pool(nthreads);
         std::vector<double> energy_pool(nthreads, 0.0);
-        std::vector<std::vector<double> > virial_pool;
+        std::vector<std::vector<double> > virial_pool(nthreads);
 
+        #pragma omp parallel for schedule(static, 1)
         for (size_t i = 0; i < nthreads; i++) {
-            phi_pool.push_back(std::vector<double>(nmon * ns, 0.0));
-            grad_pool.push_back(std::vector<double>(nmon * ns * 3, 0.0));
-            virial_pool.push_back(std::vector<double>(9, 0.0));
+            phi_pool[i] = std::vector<double>(nmon * ns, 0.0);
+            grad_pool[i] = std::vector<double>(nmon * ns * 3, 0.0);
+            virial_pool[i] = std::vector<double>(9, 0.0);
         }
         // Loop over each pair of sites
         for (size_t i = 0; i < ns - 1; i++) {
@@ -605,17 +606,25 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 }
             }
         }
+        size_t kend1 = phi_pool[0].size();
+        size_t kend2 = grad_pool[0].size();
+
+        #pragma omp parallel for
+        for (size_t k = 0; k < kend1; k++) {
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                phi_[fi_sites + k] += phi_pool[rank][k];
+            }
+        }
+
+        #pragma omp parallel for
+        for (size_t k = 0; k < kend2; k++) {
+            for (size_t rank = 0; rank < nthreads; rank++) {
+                grad_[fi_crd + k] += grad_pool[rank][k];
+            }
+        }
 
         // Compress data in phi and grad and virial
         for (size_t rank = 0; rank < nthreads; rank++) {
-            size_t kend = phi_pool[rank].size();
-            for (size_t k = 0; k < kend; k++) {
-                phi_[fi_sites + k] += phi_pool[rank][k];
-            }
-            kend = grad_pool[rank].size();
-            for (size_t k = 0; k < kend; k++) {
-                grad_[fi_crd + k] += grad_pool[rank][k];
-            }
             for (size_t k = 0; k < 9; k++) {
                 virial_[k] += virial_pool[rank][k];
             }
@@ -717,25 +726,42 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                     phi1_pool[rank][inmon1 + m1] += phi_i;
                 }
             }
+            
+            size_t kend1 = grad1_pool[0].size();
+            size_t kend2 = grad2_pool[0].size();
+            size_t kend3 = phi1_pool[0].size();
+            size_t kend4 = phi2_pool[0].size();
+
+            #pragma omp parallel for
+            for (size_t k = 0; k < kend1; k++) {
+                for (size_t rank = 0; rank < nthreads; rank++) {
+                    grad_[fi_crd1 + k] += grad1_pool[rank][k];
+                }
+            }
+            
+            #pragma omp parallel for
+            for (size_t k = 0; k < kend2; k++) {
+                for (size_t rank = 0; rank < nthreads; rank++) {
+                    grad_[fi_crd2 + k] += grad2_pool[rank][k];
+                }
+            }
+
+            #pragma omp parallel for
+            for (size_t k = 0; k < kend3; k++) {
+                for (size_t rank = 0; rank < nthreads; rank++) {
+                    phi_[fi_sites1 + k] += phi1_pool[rank][k];
+                }
+            }
+
+            #pragma omp parallel for
+            for (size_t k = 0; k < kend4; k++) {
+                for (size_t rank = 0; rank < nthreads; rank++) {
+                    phi_[fi_sites2 + k] += phi2_pool[rank][k];
+                }
+            }
 
             // Compress data in Efq and phi
             for (size_t rank = 0; rank < nthreads; rank++) {
-                size_t kend1 = grad1_pool[rank].size();
-                size_t kend2 = grad2_pool[rank].size();
-                for (size_t k = 0; k < kend1; k++) {
-                    grad_[fi_crd1 + k] += grad1_pool[rank][k];
-                }
-                for (size_t k = 0; k < kend2; k++) {
-                    grad_[fi_crd2 + k] += grad2_pool[rank][k];
-                }
-                kend1 = phi1_pool[rank].size();
-                kend2 = phi2_pool[rank].size();
-                for (size_t k = 0; k < kend1; k++) {
-                    phi_[fi_sites1 + k] += phi1_pool[rank][k];
-                }
-                for (size_t k = 0; k < kend2; k++) {
-                    phi_[fi_sites2 + k] += phi2_pool[rank][k];
-                }
                 for (size_t k = 0; k < 9; k++) {
                     virial_[k] += virial_pool[rank][k];
                 }

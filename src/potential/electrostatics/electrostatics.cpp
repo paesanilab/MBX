@@ -5848,11 +5848,6 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
     excluded_set_type exc12;
     excluded_set_type exc13;
     excluded_set_type exc14;
-
-    // Auxiliary variables
-    double ex = 0.0;
-    double ey = 0.0;
-    double ez = 0.0;
     // Recalculate Electric field due to dipoles
     // Sites on the same monomer
     size_t fi_mon = 0;
@@ -5885,11 +5880,20 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                     Asqsqi = Ai;
                 }
 
+                #pragma omp parallel for
                 for (size_t m = 0; m < nmon; m++) {
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true; 
                     if (include_monomer) {
+
+                        
+
+                        // Auxiliary variables
+                        double ex = 0.0;
+                        double ey = 0.0;
+                        double ez = 0.0;
+
                         elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                        in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
                                                        out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_,
@@ -6073,21 +6077,23 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                 }
             }
 
-            // Compress data in Efd
-            for (size_t rank = 0; rank < nthreads; rank++) {
-                size_t kend1 = Efd_1_pool[rank].size();
-                size_t kend2 = Efd_2_pool[rank].size();
+            size_t kend1 = Efd_1_pool[0].size();
+            size_t kend2 = Efd_2_pool[0].size();
 
-                #pragma omp simd simdlen(8)
-                for (size_t k = 0; k < kend1; k++) {
+            #pragma omp parallel for
+            for (size_t k = 0; k < kend1; k++) {
+                for (size_t rank = 0; rank < nthreads; rank++) {
                     out_v[fi_crd1 + k] += Efd_1_pool[rank][k];
                 }
+            }
 
-                #pragma omp simd simdlen(8)
-                for (size_t k = 0; k < kend2; k++) {
+            #pragma omp parallel for
+            for (size_t k = 0; k < kend2; k++) {
+                for (size_t rank = 0; rank < nthreads; rank++) {
                     out_v[fi_crd2 + k] += Efd_2_pool[rank][k];
                 }
             }
+
             // Update first indexes
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
@@ -7201,11 +7207,6 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
     excluded_set_type exc12;
     excluded_set_type exc13;
     excluded_set_type exc14;
-
-    // Auxiliary variables
-    double ex = 0.0;
-    double ey = 0.0;
-    double ez = 0.0;
     // Recalculate Electric field due to dipoles
     // Sites on the same monomer
     size_t fi_mon = 0;
@@ -7240,7 +7241,14 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
 
                 //                for (size_t m = 0; m < nmon; m++) {
                 size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
+                #pragma omp parallel for
                 for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
+
+                    // Auxiliary variables
+                    double ex = 0.0;
+                    double ey = 0.0;
+                    double ez = 0.0;
+                    
                     elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                    in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
                                                    out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
@@ -7425,19 +7433,23 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                 }
             }
 
-            // Compress data in Efd
-            for (size_t rank = 0; rank < nthreads; rank++) {
-                size_t kend1 = Efd_1_pool[rank].size();
-                size_t kend2 = Efd_2_pool[rank].size();
-                #pragma omp simd simdlen(8)
-                for (size_t k = 0; k < kend1; k++) {
+            size_t kend1 = Efd_1_pool[0].size();
+            size_t kend2 = Efd_2_pool[0].size();
+
+            #pragma omp parallel for
+            for (size_t k = 0; k < kend1; k++) {
+                for (size_t rank = 0; rank < nthreads; rank++) {
                     out_v[fi_crd1 + k] += Efd_1_pool[rank][k];
                 }
-                #pragma omp simd simdlen(8)
-                for (size_t k = 0; k < kend2; k++) {
+            }
+
+            #pragma omp parallel for
+            for (size_t k = 0; k < kend2; k++) {
+                for (size_t rank = 0; rank < nthreads; rank++) {
                     out_v[fi_crd2 + k] += Efd_2_pool[rank][k];
                 }
             }
+
             // Update first indexes
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
