@@ -6444,16 +6444,10 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         }
         fi_mon += nmon;
     }
-
-    kdtutils::PointCloud<double> ptc = kdtutils::XyzToCloud(xyz_rearranged,use_pbc, box, box_inverse);
-    
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                kdtutils::PointCloud<double>, 3 /* dim */>
-        my_kd_tree_t;
-    my_kd_tree_t index(3 /*dim*/, ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
-    index.buildIndex();
-
-    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                        kdtutils::PointCloud<double>, 3 /* dim */>
+            my_kd_tree_t;
+        for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         //size_t nmon12 = nmon1 * 2;
@@ -6462,8 +6456,19 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         fi_crd2 = fi_crd1;
 
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+            // mini trees for each site in mon2
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
+
+            std::vector<my_kd_tree_t*> trees(ns2);
+            std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
+            for(int i = 0; i<ns2; ++i){
+                std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
+                kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box, box_inverse));
+                my_kd_tree_t* index = new my_kd_tree_t(3 /*dim*/, *ptc, nanoflann::KDTreeSingleIndexAdaptorParams(10 /* max leaf */));
+                index->buildIndex();
+                trees[i] = index;
+            }
             bool same = (mt1 == mt2);
             // Prepare for parallelization
             // /*
@@ -6528,18 +6533,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         }
                         // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
                         // goes over all mt2 site j
-
-                        // TODO: use the kdtree to find all sites within radius, then choose only sites of type
-                        /* Notes or something:
-                            1. from sys_tools addCluster: kdtree.radiusSearch(point = ptc(xyz to cloud).pts[i].x,y,z , cutoff^2, return vector of match indices (matches[i] = index of ), params)
-                                mon_index list of indices of first_index[i] corresponding to monomers used in xyz (xyz[ith monomer] --> mon_index[i] = index in first_index of the monomer)
-                                first_index: index of x for first site in xyz_orig (?)
-                            2. output format of .radiusSearch: return value is size_t, length of the return vector; return vector is xindex of match monomers, assuming xyz is x1 y1 z1 ... xi yi zi ... xn yn zn
-                            3. planning todo: draw out how things are indexed in sys_tools, then diagram out how i'll index things here...
-                                doneish ?
-                            4. pay attention to m2init
-                        */
-                        // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
                         
                         // replace with kdtree? start
                         std::vector<size_t> good_mon2_indices;
@@ -6565,33 +6558,26 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         //use_ghost + islocal_all_ ?
                         
                         //std::vector<size_t> good_mon2_indices2;
+                        good_mon2_indices.clear();
                         std::vector<std::pair<size_t, double>> site2_indices;
                         nanoflann::SearchParams params;
-                        const size_t nMatches = index.radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
-
+                        const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
                         for(size_t s = 0; s<nMatches; ++s){
-                            size_t idx = site2_indices[s].first % site_count;
-                            if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_mon2+idx-fi_sites2 - nmon2*j]))) && idx >= m2init+fi_sites2+nmon2*j && idx < fi_sites2+nmon2*j + nmon2){
+                            size_t idx = site2_indices[s].first % nmon2;
+                            if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_mon2+idx]))) && idx >= m2init){
                                 //add the monomer, indexed relative to mt2
-                                if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx - fi_sites2 - nmon2*j) == good_mon2_indices.end())
-                                    good_mon2_indices.push_back(idx - fi_sites2 - nmon2*j);
+                                if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
+                                    good_mon2_indices.push_back(idx);
                             }
                         }
-                        // sort(good_mon2_indices2.begin(), good_mon2_indices2.end());
-                        // std::cout << "new sites within distance:\n";
+                        // std::cout << "kdtree matches:\n";
                         // for(auto i : site2_indices)
-                        //     std::cout << i.first%site_count<< " ";
+                        //     std::cout << i.first%nmon2 << " ";
                         // std::cout << "\n";
-                        // if(good_mon2_indices != good_mon2_indices2){
-                        // std::cout << "MISMATCH! new distance matches:\n";
-                        // for(auto i : site2_indices)
-                        //     std::cout << i.first % site_count << " ";
-                        // std::cout << "\ngood_mon2:\n";
-                        // for(auto i : good_mon2_indices2)
-                        //     std::cout << i<< " ";
-                        // std::cout << "\n";}
-                        //end: good_mon2_indices: contains indices of mon2s within threshold
-                        //good_mon2_indices = good_mon2_indices2;
+                        // std::cout << "new good_mon2:\n";
+                        // for(auto i : good_mon2_indices)
+                        //     std::cout << i << " ";
+                        // std::cout << "\n";
                     
 
                         int reordered_mon2_size = good_mon2_indices.size();
@@ -6637,6 +6623,12 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+
+            //freeing trees
+            for(int i = 0; i<ns2; ++i){
+                delete trees[i];
+                delete clouds[i];
+            }
         }
         // Update first indexes
         fi_mon1 += nmon1;
