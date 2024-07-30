@@ -2713,6 +2713,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     // the number of trimers will be smaller near the end of the evaluaton when there are fewer trimers.
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
     const size_t batch_size = 16;
+    const size_t batch_size_factor = 4;
 
     // actually calculate the trimers
 #ifdef _OPENMP
@@ -2730,7 +2731,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
         {
 
             start_index = trimers_pool_index;
-            size_t truncated_batch_size = ((trimers_pool.size() - start_index) / 3) / (num_threads) + 1;
+            size_t truncated_batch_size = batch_size_factor*std::ceil(((trimers_pool.size() - start_index) / 3) / (batch_size_factor*num_threads)) + batch_size_factor;
             this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (trimers_pool.size() - start_index) / 3));
             trimers_pool_index += this_batch_size * 3;
         }
@@ -2888,7 +2889,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                 {
 
                     start_index = trimers_pool_index;
-                    size_t truncated_batch_size = ((trimers_pool.size() - start_index) / 3) / (num_threads  * 4) + 1;
+                    size_t truncated_batch_size = batch_size_factor*std::ceil(((trimers_pool.size() - start_index) / 3) / (batch_size_factor*num_threads)) + batch_size_factor;
                     this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (trimers_pool.size() - start_index) / 3));
                     trimers_pool_index += this_batch_size * 3;
 
