@@ -6406,8 +6406,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     size_t fi_crd2 = 0;
     double aDD = 0.055; // Thole damping aDD intermolecular is always 0.055
 
-    //TODO: Need to rearrange the coordinates (presmably in xyz_all_)
-    //move the points into the box also
+    //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
     std::vector<double> xyz_rearranged(xyz_all_.size());
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -6456,10 +6455,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         fi_crd2 = fi_crd1;
 
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-            // mini trees for each site in mon2
+            // making mini trees for each site in mon2 (one tree per site)
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
 
+            //trees and associated point clouds need to be allocated on the heap
             std::vector<my_kd_tree_t*> trees(ns2);
             std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
             for(int i = 0; i<ns2; ++i){
@@ -6469,6 +6469,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 index->buildIndex();
                 trees[i] = index;
             }
+
             bool same = (mt1 == mt2);
             // Prepare for parallelization
             // /*
@@ -6507,7 +6508,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>> rank_precomputedInformation = precomputedInformation_pool[rank];
                 size_t m2init = same ? m1 + 1 : 0;
 
-                // indexing of xyz_all_ (?) : m1s1x m2s1x ... m1s1y ... m1s1z ... m1s2x ... m1s3x ... [next monomer type]
                 //for each site in the monomer m1...
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon13 = 3 * nmon1 * i;
@@ -6534,35 +6534,14 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
                         // goes over all mt2 site j
                         
-                        // replace with kdtree? start
                         std::vector<size_t> good_mon2_indices;
-                        //old code
-                        // std::vector<size_t> bool_mon2_indices(nmon2, 0);
-                        
-                        // local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
-                        //                                             nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
-                        //                                             m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
-
-                        // // monomer 2s within the cutoff are stored in good_mon2_indices
-                        // for (int ind = 0; ind < nmon2; ind++) {
-                        //     if (bool_mon2_indices[ind] == 1) {
-                        //         good_mon2_indices.push_back(ind);
-                        //     }
-                        // }
-                        // std::cout << "original good_mon2:\n";
-                        // for(auto i : good_mon2_indices)
-                        //     std::cout << i << " ";
-                        // std::cout << "\n";
-
-                        //finding the list of all indices:
-                        //use_ghost + islocal_all_ ?
-                        
-                        //std::vector<size_t> good_mon2_indices2;
-                        good_mon2_indices.clear();
                         std::vector<std::pair<size_t, double>> site2_indices;
                         nanoflann::SearchParams params;
+
                         const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                        
                         for(size_t s = 0; s<nMatches; ++s){
+                            //getting the actual index (not periodic index) of the monomer
                             size_t idx = site2_indices[s].first % nmon2;
                             if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_mon2+idx]))) && idx >= m2init){
                                 //add the monomer, indexed relative to mt2
@@ -6570,14 +6549,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                                     good_mon2_indices.push_back(idx);
                             }
                         }
-                        // std::cout << "kdtree matches:\n";
-                        // for(auto i : site2_indices)
-                        //     std::cout << i.first%nmon2 << " ";
-                        // std::cout << "\n";
-                        // std::cout << "new good_mon2:\n";
-                        // for(auto i : good_mon2_indices)
-                        //     std::cout << i << " ";
-                        // std::cout << "\n";
                     
 
                         int reordered_mon2_size = good_mon2_indices.size();
