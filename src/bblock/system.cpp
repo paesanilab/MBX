@@ -33,6 +33,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "system.h"
+#include "../potential/3b/x3b-v2x.h"
 
 //#define DEBUG
 //#define TIMING
@@ -2713,7 +2714,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     // the number of trimers will be smaller near the end of the evaluaton when there are fewer trimers.
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
     const size_t batch_size = 16;
-    const size_t batch_size_factor = 4;
+    const size_t batch_size_factor = 8;
+
+    std::vector<size_t> num_evals(num_threads, 0);
 
     // actually calculate the trimers
 #ifdef _OPENMP
@@ -2745,6 +2748,14 @@ double System::Get3B(bool do_grads, bool use_ghost) {
             skip = true;
             trimers.clear();
         }
+
+        double bigmem[8283*8];
+
+        void* pool = reinterpret_cast<void *>(bigmem);
+
+        size_t space = 8283*8*8;
+
+        double* t = reinterpret_cast<double *>(std::align(128, 8279*8*8, pool, space));
 
         // The way the XYZ are set, they include the virtual site,
         // but we don't need the electrostatic virtual site for teh 2B
@@ -2838,7 +2849,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                         std::vector<double> grad3(coord3.size(), 0.0);
                         std::vector<double> virial(9, 0.0);  // declare virial tensor
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, t, num_evals[rank], &virial);
                         // Update gradients
                         size_t i0 = nt_tot * 3;
                         for (size_t k = 0; k < nt; k++) {
@@ -2934,6 +2945,13 @@ double System::Get3B(bool do_grads, bool use_ghost) {
             virial_[j] += virial_pool[i][j];
         }
     }
+
+    size_t total_evals = 0;
+    for (size_t i: num_evals) {
+        total_evals += i;
+    }
+
+    std::cout << "Total number of 3B evaluations: " << total_evals << std::endl;
 
     return e3b_t;
 }

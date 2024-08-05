@@ -35,6 +35,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/3b/x3b-v2x.h"
 //#define PRINT_GPU_DATA
 #include <memory>
+#include <iostream>
 
 #ifdef PRINT_GPU_DATA
 #include <iostream>
@@ -1398,7 +1399,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, const
  * Do an evaluation once we fill up x (i.e. idx == 7)
 */
 double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, double* g1, double* g2, double* g3,
-                     size_t nt, std::vector<double>* virial) {
+                     size_t nt, double* t, size_t& num_evals, std::vector<double>* virial) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -1462,14 +1463,6 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
     double dab[3 * nt], dac[3 * nt], dbc[3 * nt];
     double e = 0.0;
 
-    double bigmem[8283*8];
-
-    void * pool = reinterpret_cast<void *>(bigmem);
-
-    size_t space = 8283*8*8;
-
-    double * t = reinterpret_cast<double *>(std::align(128, 8279*8*8, pool, space));
-
     double x[36*8];
     double gg[36*8];
 
@@ -1525,6 +1518,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
         const double* Hc2 = w3 + sh9 + 6;
 
         if (skip) {
+            std::cout << "SKIPPING A TRIMER" << std::endl;
             if(i < nt - 1 || idx == 0) continue;
             if(idx > 0) goto eval_energy;
         }
@@ -1591,6 +1585,8 @@ eval_energy:
         double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
         std::copy(e3b, e3b + numEvals, energy.begin() + copyIdx);
         delete[] e3b;
+
+        num_evals += 1;
 
         for(size_t j = 0; j < numEvals; j++) {
             sh = eval_sh[j];
