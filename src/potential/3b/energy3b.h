@@ -101,7 +101,7 @@ double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, 
  */
 double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grd1,
-                     std::vector<double> &grd2, std::vector<double> &grd3, double* t, size_t& num_evals, std::vector<double> *virial = 0);
+                     std::vector<double> &grd2, std::vector<double> &grd3, double* t, const double* a, size_t& num_evals, std::vector<double> *virial = 0);
 
 }  // namespace e3b
 #endif

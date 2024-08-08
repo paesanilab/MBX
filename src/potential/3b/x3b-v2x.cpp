@@ -1399,7 +1399,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, const
  * Do an evaluation once we fill up x (i.e. idx == 7)
 */
 double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, double* g1, double* g2, double* g3,
-                     size_t nt, double* t, size_t& num_evals, std::vector<double>* virial) {
+                     size_t nt, double* t, const double* a, size_t& num_evals, std::vector<double>* virial) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -1582,7 +1582,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
 
 eval_energy:
         int numEvals = (idx == 0) ? 8 : idx;
-        double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
+        double* e3b = poly_3b_v2x::eval(a, x, t, gg);  // Now returns size 8 array
         std::copy(e3b, e3b + numEvals, energy.begin() + copyIdx);
         delete[] e3b;
 
