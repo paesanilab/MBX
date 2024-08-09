@@ -82,7 +82,7 @@ class x3b_v2x {
      * @return Double with the sum of the energies of each trimer.
      */
     static double eval(const double* w1, const double* w2, const double* w3, double* g1, double* g2, double* g3,
-                       const size_t nt, double* t, const double* a, double& poly_time, size_t& num_evals, std::vector<double>* virial = 0);
+                       const size_t nt, double* t, double& poly_time, size_t& num_evals, std::vector<double>* virial = 0);
 
     // Inner cutoff
     static const double r3i;
