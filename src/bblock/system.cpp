@@ -3881,10 +3881,16 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     // this variable is the maximum number of trimers that will be dispached to a thread at a time.
     // the number of trimers will be smaller near the end of the evaluaton when there are fewer trimers.
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
-    const size_t batch_size = 16;
+    const size_t batch_size = 8;
     const size_t batch_size_factor = 8;
 
+    const size_t max_profile_index = 200;
+
     std::vector<size_t> num_evals(num_threads, 0);
+    std::vector<std::vector<size_t>> first_num_evals(max_profile_index, std::vector<size_t>(num_threads, 0));
+
+    std::vector<double> total_poly_time(num_threads, 0.0);
+    std::vector<std::vector<double>> first_poly_time(max_profile_index, std::vector<double>(num_threads, 0.0));
 
     // actually calculate the trimers
 #ifdef _OPENMP
@@ -3950,6 +3956,8 @@ double System::Get3B(bool do_grads, bool use_ghost) {
         size_t i = 0;
         size_t nt = 0;
         size_t nt_tot = 0;
+        
+        size_t cur_profile_index = 0;
 
         // Loop over all the trimers
         while (3 * nt_tot < trimers.size()) {
@@ -4021,7 +4029,23 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                         std::vector<double> grad3(coord3.size(), 0.0);
                         std::vector<double> virial(9, 0.0);  // declare virial tensor
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, t, a, num_evals[rank], &virial);
+
+                        double poly_time = 0.0;
+
+                        size_t this_num_evals = 0;
+
+                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, t, a, poly_time, this_num_evals, &virial);
+
+                        num_evals[rank] += this_num_evals;
+                        total_poly_time[rank] += poly_time;
+
+                        if (cur_profile_index < max_profile_index) {
+                            first_poly_time[cur_profile_index][rank] = poly_time;
+                            first_num_evals[cur_profile_index][rank] = this_num_evals;
+                        }
+
+                        cur_profile_index += 1;
+
                         // Update gradients
                         size_t i0 = nt_tot * 3;
                         for (size_t k = 0; k < nt; k++) {
@@ -4123,7 +4147,27 @@ double System::Get3B(bool do_grads, bool use_ghost) {
         total_evals += i;
     }
 
-    std::cout << "Total number of 3B evaluations: " << total_evals << std::endl;
+    double final_poly_time = 0.0;
+    for (double i: total_poly_time) {
+        final_poly_time += i;
+    }
+
+    std::vector<size_t> total_first_evals(max_profile_index, 0);
+    std::vector<double> final_first_poly_time(max_profile_index, 0.0);
+    for (size_t i = 0; i < max_profile_index; i++) {
+        for (size_t j: first_num_evals[i]) {
+            total_first_evals[i] += j;
+        }
+        for (double j: first_poly_time[i]) {
+            final_first_poly_time[i] += j;
+        }
+    }
+
+    std::cout << "Total number of 3B evaluations: " << total_evals << " in " << final_poly_time << " (average=" << final_poly_time/total_evals << ")" << std::endl;
+
+    for(size_t i = 0; i < max_profile_index; i++) {
+        std::cout << "Eval period " << i << " evaluated " << total_first_evals[i] << " polys in " << final_first_poly_time[i] << " (average=" << final_first_poly_time[i]/total_first_evals[i] << ")" << std::endl;
+    }
 
     return e3b_t;
 }
