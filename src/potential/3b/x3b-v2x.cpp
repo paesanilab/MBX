@@ -1401,7 +1401,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, const
  * Do an evaluation once we fill up x (i.e. idx == 7)
 */
 double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, double* g1, double* g2, double* g3,
-                     size_t nt, double* t, const double* a, double& poly_time, size_t& num_evals, std::vector<double>* virial) {
+                     size_t nt, double* t, double& poly_time, size_t& num_evals, std::vector<double>* virial) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -1587,7 +1587,7 @@ eval_energy:
 
         double time1 = MPI_Wtime();
 
-        double* e3b = poly_3b_v2x::eval(a, x, t, gg);  // Now returns size 8 array
+        double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
 
         double time2 = MPI_Wtime();
 
