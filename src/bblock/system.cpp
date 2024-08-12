@@ -2721,8 +2721,6 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
     const size_t batch_size = 8;
     const size_t batch_size_factor = 8;
-    
-    const size_t max_profile_index = 200;
 
     const size_t max_profile_index = 200;
 
