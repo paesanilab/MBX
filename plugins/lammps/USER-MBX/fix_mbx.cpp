@@ -1052,7 +1052,7 @@ void FixMBX::grow_arrays(int nmax) {
     memory->grow(mol_type, nmax, "fixmbx:mol_type");
     memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
     memory->grow(mol_local, nmax, "fixmbx:mol_local");
-    memory->grow(mol_order, nmax, "fixmbx:mol_order");
+    //memory->grow(mol_order, nmax, "fixmbx:mol_order");
 
     if (!mbx_mpi_enabled) {
         memory->grow(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
