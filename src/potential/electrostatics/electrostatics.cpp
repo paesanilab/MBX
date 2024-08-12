@@ -1891,24 +1891,24 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                 size_t kend1 = Efq_1_pool[rank].size();
                 size_t kend2 = Efq_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     Efq_all_[fi_crd1 + k] += Efq_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     Efq_all_[fi_crd2 + k] += Efq_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
@@ -2453,24 +2453,24 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                 size_t kend1 = Efq_1_pool[rank].size();
                 size_t kend2 = Efq_2_pool[rank].size();
 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     Efq_all_[fi_crd1 + k] += Efq_1_pool[rank][k];
                 }
 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     Efq_all_[fi_crd2 + k] += Efq_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
@@ -8235,24 +8235,24 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& p
                 size_t kend1 = grad_1_pool[rank].size();
                 size_t kend2 = grad_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     grad_[fi_crd1 + k] += grad_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     grad_[fi_crd2 + k] += grad_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
@@ -9110,24 +9110,24 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
                 size_t kend1 = grad_1_pool[rank].size();
                 size_t kend2 = grad_2_pool[rank].size();
 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     grad_[fi_crd1 + k] += grad_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     grad_[fi_crd2 + k] += grad_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
