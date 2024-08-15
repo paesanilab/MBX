@@ -3444,7 +3444,7 @@ double System::ElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     if (islocal_.size() > 0) std::fill(grad_.begin(), grad_.end(), 0.0);
     std::fill(virial_.begin(), virial_.end(), 0.0);
 
-    SetPBC(box_);
+    // SetPBC(box_);
 
     energy_ = GetElectrostaticsMPIlocal(do_grads, use_ghost);
 
