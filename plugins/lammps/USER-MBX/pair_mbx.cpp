@@ -184,18 +184,6 @@ void PairMBX::compute(int eflag, int vflag) {
 
         mbx_e4b = mbx_e4b_local + mbx_e4b_ghost;
 
-        if (mbx_parallel) {
-#ifdef _DEBUG
-            printf("[MBX] (%i) -- Computing disp real parallel\n", me);
-#endif
-
-            fix_mbx->mbxt_start(MBXT_DISP);
-            mbx_disp_real =
-                ptr_mbx->Dispersion(true, true);  // computes real-space with local-local & local-ghost pairs
-            fix_mbx->mbxt_stop(MBXT_DISP);
-            accumulate_f(false);
-        }
-
 #ifdef _DEBUG
         printf("[MBX] (%i) -- Computing buck\n", me);
 #endif
@@ -211,32 +199,6 @@ void PairMBX::compute(int eflag, int vflag) {
         fix_mbx->mbxt_stop(MBXT_BUCK);
 #endif
     }
-
-    if (mbx_parallel) {
-#ifdef _DEBUG
-        printf("[MBX] (%i) -- Computing disp pme parallel\n", me);
-#endif
-        //  printf("(%i)  procgrid= %i %i %i\n",comm->me,comm->myloc[0],comm->myloc[1],comm->myloc[2]);
-
-        if (!domain->nonperiodic) {
-            fix_mbx->mbxt_start(MBXT_DISP_PME);
-            mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true);  // computes k-space using sub-domain
-            accumulate_f_local(false);
-            fix_mbx->mbxt_stop(MBXT_DISP_PME);
-        }
-
-    } else {
-#ifdef _DEBUG
-        printf("[MBX] (%i) -- Computing disp pme serial\n", me);
-#endif
-
-        fix_mbx->mbxt_start(MBXT_DISP);
-        if (comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true);  // compute full dispersion on rank 0
-        fix_mbx->mbxt_stop(MBXT_DISP);
-        accumulate_f_full(false);
-    }
-
-    mbx_disp = mbx_disp_real + mbx_disp_pme;
 
     if (mbx_parallel) {
 #ifdef _DEBUG
@@ -260,6 +222,35 @@ void PairMBX::compute(int eflag, int vflag) {
         fix_mbx->mbxt_stop(MBXT_ELE);
         accumulate_f_full(true);
     }
+
+    if (mbx_parallel) {
+#ifdef _DEBUG
+            printf("[MBX] (%i) -- Computing disp parallel\n", me);
+#endif
+
+            fix_mbx->mbxt_start(MBXT_DISP);
+            mbx_disp_real =
+                ptr_mbx_local->Dispersion(true, true);  // computes real-space with local-local & local-ghost pairs
+            fix_mbx->mbxt_stop(MBXT_DISP);
+            accumulate_f_local(false);
+
+            fix_mbx->mbxt_start(MBXT_DISP_PME);
+            mbx_disp_pme = ptr_mbx_local->DispersionPMElocal(true, true);  // computes PME-space with local-local & local-ghost pairs
+            fix_mbx->mbxt_stop(MBXT_DISP_PME);
+            accumulate_f_local(false);
+
+    } else {
+#ifdef _DEBUG
+        printf("[MBX] (%i) -- Computing disp serial\n", me);
+#endif
+
+        fix_mbx->mbxt_start(MBXT_DISP);
+        if (comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true);  // compute full dispersion on rank 0
+        fix_mbx->mbxt_stop(MBXT_DISP);
+        accumulate_f_full(false);
+    }
+
+    mbx_disp = mbx_disp_real + mbx_disp_pme;
 
     mbx_total_energy = mbx_e1b + mbx_e2b + mbx_disp + mbx_buck + mbx_e3b + mbx_e4b + mbx_ele;
 

@@ -908,6 +908,19 @@ class System {
      */
     void SetPBC(std::vector<double> box = {});
 
+
+    /**
+     * Tells the system if we are in Periodic Boundary Conditions (PBC)
+     * or not. If the box is not passed as argument, it is set to
+     * a cubic box of 1000 Angstrom of side length
+     * @param[in] use_pbc Boolean setting if we use PBC (true) or not (false)
+     * @param[in] box Optional argument. Is a 9 component vector of double with
+     * the three main vectors of the cell: {v1x v1y v1z v2x v2y v2z v3x v3y v3z}
+     * 
+     * this function differs from SetPBC, because it does systools::FixMonomerCoordinates.
+     */
+    void SetPBCElectrostaticsMPIlocal(std::vector<double> box = {});
+
     /**
      * Sets the values for alpha, the grid density and the spline order when using PME to get the reciprocal space
      * contribution. Sets both the parameters for dispersion and electorstatics to be the same.
