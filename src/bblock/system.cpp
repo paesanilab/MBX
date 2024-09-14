@@ -755,6 +755,53 @@ void System::SetPBC(std::vector<double> box) {
     SetPolfacs();
 }
 
+
+void System::SetPBCElectrostaticsMPIlocal(std::vector<double> box) {
+    // Check that the box has 0 or 9 components
+    if (box.size() != 9 && box.size() != 6 && box.size() != 0) {
+        std::string text = "Box size of " + std::to_string(box.size()) + " is not acceptable.";
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+
+#ifdef DEBUG
+    std::cerr << "Entered SetPBC():\n";
+    std::cerr << "Coordinate before fixing monomers:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
+    // Set the box and the bool to use or not pbc
+    use_pbc_ = box.size();
+    if (use_pbc_) simcell_periodic_ = true;
+
+    box_ = box;
+    if (box.size() == 9) {
+        box_ = box;
+        box_ABCabc_ = BoxVecToBoxABCabc(box);
+    } else if (box.size() == 6) {
+        box_ABCabc_ = box;
+        box_ = BoxABCabcToBoxVec(box);
+    }
+
+    box_inverse_ = InvertUnitCell(box_);
+
+#ifdef DEBUG
+    std::cerr << "Coordinate after fixing monomers:\n";
+    for (size_t i = 0; i < xyz_.size(); i++) {
+        std::cerr << xyz_[i] << " , ";
+    }
+    std::cerr << std::endl;
+#endif
+
+    // Reset the virtual site positions, charges, pols and polfacs
+    SetVSites();
+    SetCharges();
+    SetPols();
+    SetPolfacs();
+}
+
 void System::SetXyz(std::vector<double> xyz) {
     // Make sure that the xyz of input has the right size
     if (xyz.size() != 3 * numsites_) {
@@ -3444,7 +3491,7 @@ double System::ElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     if (islocal_.size() > 0) std::fill(grad_.begin(), grad_.end(), 0.0);
     std::fill(virial_.begin(), virial_.end(), 0.0);
 
-    SetPBC(box_);
+    SetPBCElectrostaticsMPIlocal(box_);
 
     energy_ = GetElectrostaticsMPIlocal(do_grads, use_ghost);
 
