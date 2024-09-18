@@ -156,6 +156,14 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * [J. Chem. Phys. 156, 194504 (2022)](https://doi.org/10.1063/5.0089773)
 - MB-nrg PEF for N<sub>2</sub>O<sub>5</sub> in water
   * [J. Chem. Theory Comput. 17, 3931 (2021)](https://doi.org/10.1021/acs.jctc.1c00069)
+- MB-SCAN and MB-SCAN(DC) PEFs for water and ions in water (Na+, Cl-)
+  * [Nature Communications, 12, : 6359 (2021)](https://doi.org/10.1038/s41467-021-26618-9 )
+  * [J. Chem. Theory Comput. 18, 6, 3410 (2022)](https://doi.org/10.1021/acs.jctc.2c00050)
+  * [J. Chem. Phys. 156, 161103 (2022)](https://doi.org/10.1063/5.0090862)
+  * [J. Chem. Theory Comput. 18, 8, 4745 (2022)](https://doi.org/10.1021/acs.jctc.2c00313)
+  * [Chem. Phys. Rev. 4, 011301 (2023)](https://doi.org/10.1063/5.0129613)
+  * [J. Chem. Phys. 159, 181101 (2023)](https://doi.org/10.1063/5.0174577)
+
 
 ## Interfaces
 ### Fortran90 and Python
