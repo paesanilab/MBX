@@ -85,13 +85,21 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
         // More ion water
+    } else if ((mon1 == "cl-scan" or mon1 == "cl-dcscan") and
+               (mon2 == "h2o-scan" or mon2 == "h2o-dcscan")) {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "h2o" and mon2 == "i-") {
         mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon2, mon1);
+        energy = pot.eval(xyz2.data(), xyz1.data(), nm);
+    } else if ((mon1 == "h2o-scan" or mon1 == "h2o-dcscan") and
+                (mon2 == "na+scan" or mon2 == "na+dcscan")) {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "h2o" and (mon2 == "li+" or mon2 == "na+" or mon2 == "k+" or mon2 == "rb+")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
-    } else if (mon1 == "mbpbe" and mon2 == "mbpbe") {
+    } else if ((mon1 == "mbpbe" and mon2 == "mbpbe") or (mon1 == "h2o-scan" and mon2 == "h2o-scan") or (mon1 == "h2o-dcscan" and mon2 == "h2o-dcscan")) {
         mbnrg_A1B2Z2_A1B2Z2_deg4::mbnrg_A1B2Z2_A1B2Z2_deg4_vmbpbe pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
 
@@ -260,8 +268,16 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if ((mon1 == "f-" or mon1 == "cl-" or mon1 == "br-") and mon2 == "h2o") {
         mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+    } else if ((mon1 == "cl-scan" or mon1 == "cl-dcscan") and
+               (mon2 == "h2o-scan" or mon2 == "h2o-dcscan")) {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "h2o" and mon2 == "i-") {
         mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon2, mon1);
+        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
+    } else if ((mon1 == "h2o-scan" or mon1 == "h2o-dcscan") and
+                (mon2 == "na+scan" or mon2 == "na+dcscan")) {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
     } else if (mon1 == "h2o" and (mon2 == "li+" or mon2 == "na+" or mon2 == "k+" or mon2 == "rb+")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
@@ -344,7 +360,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
     } else if (mon1 == "h2o" && mon2 == "n2o5") {
         x2b_A1B2C4_D1E2_deg3::x2b_A1B2C4_D1E2_v1x pot(mon1, mon2);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
-    } else if (mon1 == "mbpbe" and mon2 == "mbpbe") {
+    } else if ((mon1 == "mbpbe" and mon2 == "mbpbe") or (mon1 == "h2o-scan" and mon2 == "h2o-scan") || (mon1 == "h2o-dcscan" and mon2 == "h2o-dcscan")) {
         mbnrg_A1B2Z2_A1B2Z2_deg4::mbnrg_A1B2Z2_A1B2Z2_deg4_vmbpbe pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "h2o" and mon2 == "he") {
