@@ -6470,7 +6470,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             //trees and associated point clouds need to be allocated on the heap
             std::vector<my_kd_tree_t*> trees(ns2);
             std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
-            if(nmon2 >= 2048) {
+            //if(nmon2 >= 2048) {
                 for(int i = 0; i<ns2; ++i){
                     std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
                     kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box, box_inverse));
@@ -6478,7 +6478,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                     index->buildIndex();
                     trees[i] = index;
                 }
-            }
+            //}
 
             bool same = (mt1 == mt2);
             // Prepare for parallelization
@@ -6547,9 +6547,9 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         
                         std::vector<size_t> good_mon2_indices;
 
-                        if(nmon2 >= 2048) {
+                        //if(nmon2 >= 2048) {
                             std::vector<std::pair<size_t, double>> site2_indices;
-                            nanoflann::SearchParams params;
+                            nanoflann::SearchParams params(32, 0, false);
 
                             const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
                             
@@ -6562,7 +6562,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                                         good_mon2_indices.push_back(idx);
                                 }
                             }
-                        } else {
+                        /*} else {
                             std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];
                             std::fill(bool_mon2_indices.begin(), bool_mon2_indices.end(), 0.0);
                             local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
@@ -6585,7 +6585,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                                     current_good_mon2_index++;
                                 }
                             }
-                        }
+                        }*/
                         
                         precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j] = new PrecomputedInfo();
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
