@@ -6633,9 +6633,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             fi_crd2 += nmon2 * ns2 * 3;
 
             //freeing trees
-            for(int i = 0; i<ns2; ++i){
-                delete trees[i];
-                delete clouds[i];
+            if(nmon2 >= 2048) {
+                for(int i = 0; i<ns2; ++i){
+                    delete trees[i];
+                    delete clouds[i];
+                }
             }
             fi_sitetypes2 += ns2;
         }
