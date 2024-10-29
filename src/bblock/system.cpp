@@ -573,6 +573,52 @@ void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &m
     }
 }
 
+/**
+ * Bonding code:
+ */
+
+void addBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2, int bo){
+    //ensures order
+    if(mon1 > mon2){
+        std::swap(mon1, mon2);
+        std::swap(idx1, idx2);
+    }
+    //do i need to check the validity of the indices/bond order too?
+    if(areSitesBonded(mon1, mon2, idx1, idx2))
+        throw std::runtime_error("addBond: bond already exists");
+    if(!areMonomersBonded(mon1, mon2))
+        bonds_[std::make_pair(mon1, mon2)] = std::unordered_map<std::pair<size_t, size_t>, BondOrder>{};
+    bonds_[std::make_pair(mon1, mon2)].push_back(std::make_tuple(idx1, idx2, bo));
+}
+
+BondOrder getBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2){
+    if(mon1 > mon2){
+        std::swap(mon1, mon2);
+        std::swap(idx1, idx2);
+    }
+    if(!areSitesBonded(mon1, mon2, idx1, idx2))
+        throw std::runtime_error("getBond: requested bond does not exist");
+    else
+        return bonds_[std::make_pair(mon1, mon2)][std::make_pair(idx1, idx2)];
+        // for coding convenience and time? we could make it a map of maps, not sure
+        // if that's space efficient or if map has overhead that outweighs benefits
+}
+
+bool areSitesBonded(size_t mon1, size_t mon2, size_t idx1, size_t idx2){
+    if(mon1 > mon2){
+        std::swap(mon1, mon2);
+        std::swap(idx1, idx2);
+    }
+    return (areMonomersBonded(mon1, mon2) && bonds_[std::make_pair(mon1, mon2)].find(std::make_pair(idx1, idx2)) != bonds_.end());
+}
+
+bool areMonomersBonded(size_t mon1, size_t mon2){
+    if(mon1 > mon2)
+        std::swap(mon1, mon2);
+    return bonds_.find(std::make_pair(mon1, mon2)) != bonds_.end();
+}
+
+
 // std::vector<double> System::GetChargeDerivativesOHH() {
 //    std::vector<double> chg_der(numat_ * numat_ * 3, 0.0);
 //
