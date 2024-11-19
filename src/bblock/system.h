@@ -535,20 +535,20 @@ class System {
     /**
      * Adds a bond to the system
      */
-    void addBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2, BondOrder bo);
+    void addBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2, int bo);
     /** 
      * Returns the bond order of the bond between sites i1 and i2 of monomers 
      * m1 and m2 respectively
     */
-    BondOrder getBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2) const;
+    int getBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2);
     /**
      * Checks whether a bond exists between the two specified sites
      */
-    bool areSitesBonded(size_t mon1, size_t mon2, size_t idx1, size_t idx2) const;
+    bool areSitesBonded(size_t mon1, size_t mon2, size_t idx1, size_t idx2);
     /**
      * Checks whether the two monomers have any bonds between them
      */
-    bool areMonomersBonded(size_t mon1, size_t mon2) const;
+    bool areMonomersBonded(size_t mon1, size_t mon2);
 
     // TODO Keep in mind that the order must be consistent with
     // the database!!
@@ -1663,7 +1663,7 @@ class System {
     /**
      * Unordered map that stores the bonds of system. 
      */
-    std::unordered_map<std::pair<size_t, size_t>, std::unordered_map<std::pair<size_t, size_t>, BondOrder, bond_hash>, bond_hash> bonds_;
+    std::unordered_map<std::pair<size_t, size_t>, std::unordered_map<std::pair<size_t, size_t>, BondOrder>> bonds_;
 
     /**
      * Important vector that stores a pair with the monomer id and the

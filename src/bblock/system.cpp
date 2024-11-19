@@ -577,28 +577,21 @@ void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &m
  * Bonding code:
  */
 
-void System::addBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2, BondOrder bo){
+void addBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2, int bo){
     //ensures order
     if(mon1 > mon2){
         std::swap(mon1, mon2);
         std::swap(idx1, idx2);
     }
-    if(mon1 >= monomers_.size() || mon2 >= monomers_.size())
-        throw std::runtime_error("addBond: monomers to be bonded do not exist");
-    if(idx1 > sites_[mon1] || idx2 > sites_[mon2])
-        throw std::runtime_error("addBond: sites to be bonded do not exist");
     //do i need to check the validity of the indices/bond order too?
     if(areSitesBonded(mon1, mon2, idx1, idx2))
         throw std::runtime_error("addBond: bond already exists");
-    //no bonds between the same site
-    if(mon1 == mon2 && idx1 == idx2)
-        throw std::runtime_error("addBond: no site self-bonding");
     if(!areMonomersBonded(mon1, mon2))
-        bonds_[std::make_pair(mon1, mon2)] = std::unordered_map<std::pair<size_t, size_t>, BondOrder, bond_hash>{};
-    bonds_[std::make_pair(mon1, mon2)][std::make_pair(idx1, idx2)] = bo; 
+        bonds_[std::make_pair(mon1, mon2)] = std::unordered_map<std::pair<size_t, size_t>, BondOrder>{};
+    bonds_[std::make_pair(mon1, mon2)].push_back(std::make_tuple(idx1, idx2, bo));
 }
 
-BondOrder System::getBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2) const{
+BondOrder getBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2){
     if(mon1 > mon2){
         std::swap(mon1, mon2);
         std::swap(idx1, idx2);
@@ -606,20 +599,20 @@ BondOrder System::getBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2) co
     if(!areSitesBonded(mon1, mon2, idx1, idx2))
         throw std::runtime_error("getBond: requested bond does not exist");
     else
-        return bonds_.at(std::make_pair(mon1, mon2)).at(std::make_pair(idx1, idx2));
+        return bonds_[std::make_pair(mon1, mon2)][std::make_pair(idx1, idx2)];
         // for coding convenience and time? we could make it a map of maps, not sure
         // if that's space efficient or if map has overhead that outweighs benefits
 }
 
-bool System::areSitesBonded(size_t mon1, size_t mon2, size_t idx1, size_t idx2) const{
+bool areSitesBonded(size_t mon1, size_t mon2, size_t idx1, size_t idx2){
     if(mon1 > mon2){
         std::swap(mon1, mon2);
         std::swap(idx1, idx2);
     }
-    return (areMonomersBonded(mon1, mon2) && bonds_.at(std::make_pair(mon1, mon2)).find(std::make_pair(idx1, idx2)) != bonds_.at(std::make_pair(mon1, mon2)).end());
+    return (areMonomersBonded(mon1, mon2) && bonds_[std::make_pair(mon1, mon2)].find(std::make_pair(idx1, idx2)) != bonds_.end());
 }
 
-bool System::areMonomersBonded(size_t mon1, size_t mon2) const{
+bool areMonomersBonded(size_t mon1, size_t mon2){
     if(mon1 > mon2)
         std::swap(mon1, mon2);
     return bonds_.find(std::make_pair(mon1, mon2)) != bonds_.end();
