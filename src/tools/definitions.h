@@ -39,6 +39,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <utility>
 #include <cstdlib>
 #include <cmath>
+#include <functional>
 
 typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
@@ -47,6 +48,12 @@ static const double EPSILON = 1E-50;
 static const double pi = M_PI;
 
 enum BondOrder {singleb, doubleb, tripleb, conjb};
+
+struct bond_hash {
+    std::size_t operator()(const std::pair<size_t, size_t>& k) const {
+            return std::hash<size_t>{}(k.first) ^ std::hash<size_t>{}(k.second);
+        }
+    };
 
 // Ignore mutual terms in the dipoles, for debugging
 #define DIRECT_ONLY 0
