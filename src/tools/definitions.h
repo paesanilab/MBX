@@ -46,8 +46,6 @@ static const double EMAX1B = 100000.0;
 static const double EPSILON = 1E-50;
 static const double pi = M_PI;
 
-enum BondOrder {singleb, doubleb, tripleb, conjb};
-
 // Ignore mutual terms in the dipoles, for debugging
 #define DIRECT_ONLY 0
 // A useful macro for debugging against other codes by removing Thole damping entirely

@@ -531,25 +531,6 @@ class System {
      */
     void SetRealXyz(std::vector<double> xyz);
 
-    //Bonding section
-    /**
-     * Adds a bond to the system
-     */
-    void addBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2, int bo);
-    /** 
-     * Returns the bond order of the bond between sites i1 and i2 of monomers 
-     * m1 and m2 respectively
-    */
-    int getBond(size_t mon1, size_t mon2, size_t idx1, size_t idx2);
-    /**
-     * Checks whether a bond exists between the two specified sites
-     */
-    bool areSitesBonded(size_t mon1, size_t mon2, size_t idx1, size_t idx2);
-    /**
-     * Checks whether the two monomers have any bonds between them
-     */
-    bool areMonomersBonded(size_t mon1, size_t mon2);
-
     // TODO Keep in mind that the order must be consistent with
     // the database!!
     /**
@@ -1659,11 +1640,6 @@ class System {
      * belong to the same molecule are in the same vector inside this vector.
      */
     std::vector<std::vector<size_t> > molecules_;
-
-    /**
-     * Unordered map that stores the bonds of system. 
-     */
-    std::unordered_map<std::pair<size_t, size_t>, std::unordered_map<std::pair<size_t, size_t>, BondOrder>> bonds_;
 
     /**
      * Important vector that stores a pair with the monomer id and the
