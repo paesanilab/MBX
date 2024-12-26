@@ -1,3 +1,4 @@
+
 /******************************************************************************
 Copyright 2019 The Regents of the University of California.
 All Rights Reserved.
@@ -1461,7 +1462,7 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
     double dab[3 * nt], dac[3 * nt], dbc[3 * nt];
     double e = 0.0;
 
-    double t[8279*8];
+    double t[7407*8];
     double x[36*8];
     double gg[36*8];
 
