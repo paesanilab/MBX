@@ -6470,7 +6470,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             //trees and associated point clouds need to be allocated on the heap
             std::vector<my_kd_tree_t*> trees(ns2);
             std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
-            if(nmon2 >= 2048) {
+            if(nmon2 >= 2048) {        //pt 1/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
                 for(int i = 0; i<ns2; ++i){
                     std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
                     kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box, box_inverse));
@@ -6547,7 +6547,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         
                         std::vector<size_t> good_mon2_indices;
 
-                        if(nmon2 >= 2048) {
+                        if(nmon2 >= 2048) {  //pt 2/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
                             std::vector<std::pair<size_t, double>> site2_indices;
                             nanoflann::SearchParams params(32, 0, false);
 
@@ -6633,7 +6633,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             fi_crd2 += nmon2 * ns2 * 3;
 
             //freeing trees
-            if(nmon2 >= 2048) {
+            if(nmon2 >= 2048) { //pt 3/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
                 for(int i = 0; i<ns2; ++i){
                     delete trees[i];
                     delete clouds[i];
