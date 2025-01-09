@@ -42,7 +42,7 @@ jobs:
           echo "coverageflag=--enable-coverage" >> $GITHUB_ENV
           
       - name: install-compiler intel
-        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
+        if: matrix.compiler == 'icpx' 
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
