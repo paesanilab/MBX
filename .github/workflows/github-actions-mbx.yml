@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [g++, icpc] # eventually need to swap deprecated icpc for icpx
+        compiler: [g++, icpx]
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -39,9 +39,10 @@ jobs:
         run: |
           sudo apt-get install g++ gcc -y
           sudo apt-get install openmpi-bin libopenmpi-dev lcov -y
+          echo "coverageflag=--enable-coverage" >> $GITHUB_ENV
           
       - name: install-compiler intel
-        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
+        if: matrix.compiler == 'icpx' 
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -65,7 +66,7 @@ jobs:
           ${{matrix.compiler}} -v | tee compiler_version.txt
           ls ${{ github.workspace }}
           autoreconf -fi
-          ./configure --disable-optimization --enable-coverage --enable-shared CXX=${{matrix.compiler}}
+          ./configure --disable-optimization $coverageflag --enable-shared CXX=${{matrix.compiler}}
           make && make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
           echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
@@ -79,11 +80,14 @@ jobs:
       - name: Unittests
         run: make check
   
-      - run: cat src/unittests/test-suite.log
+      - name: Unittest log
         if: ${{ !cancelled() }}
+        run: |
+          cat src/unittests/test-suite.log
+          cat src/unittests/test-suite.log >> $GITHUB_STEP_SUMMARY
       
       - name: Testing python plugin
-        if: matrix.compiler == 'icpc'
+        if: matrix.compiler == 'icpx'
         run: |
           cd ${{ github.workspace }}/plugins/python/examples
           pip install numpy
