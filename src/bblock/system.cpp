@@ -2781,13 +2781,13 @@ double System::Get3B(bool do_grads, bool use_ghost) {
             trimers.clear();
         }
 
-        double bigmem[8283*8];
+        double bigmem[7420*8];
 
         void* pool = reinterpret_cast<void *>(bigmem);
 
-        size_t space = 8283*8*8;
+        size_t space = 7420*8*8;
 
-        double* t = reinterpret_cast<double *>(std::align(128, 8279*8*8, pool, space));
+        double* t = reinterpret_cast<double *>(std::align(128, 7406*8*8, pool, space));
 
         // The way the XYZ are set, they include the virtual site,
         // but we don't need the electrostatic virtual site for teh 2B
