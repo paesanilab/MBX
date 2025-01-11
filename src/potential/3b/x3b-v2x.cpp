@@ -1585,13 +1585,13 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
 eval_energy:
         int numEvals = (idx == 0) ? 8 : idx;
 
-        double time1 = MPI_Wtime();
+        // double time1 = MPI_Wtime();
 
         double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
 
-        double time2 = MPI_Wtime();
+        // double time2 = MPI_Wtime();
 
-        poly_time += time2 - time1;
+        // poly_time += time2 - time1;
 
         std::copy(e3b, e3b + numEvals, energy.begin() + copyIdx);
         delete[] e3b;

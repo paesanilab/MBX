@@ -2659,7 +2659,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     size_t step = 1;
     int num_threads = 1;
 
-    double start_overhead = MPI_Wtime();
+    // double start_overhead = MPI_Wtime();
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -2746,9 +2746,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     //     space -= 8279*8*8;
     // }
 
-    double end_overhead = MPI_Wtime();
+    // double end_overhead = MPI_Wtime();
 
-    std::cout << "Overhead time: " << end_overhead - start_overhead << std::endl;
+    // std::cout << "Overhead time: " << end_overhead - start_overhead << std::endl;
 
     // actually calculate the trimers
 #ifdef _OPENMP
@@ -3017,14 +3017,14 @@ double System::Get3B(bool do_grads, bool use_ghost) {
         }
     }
 
-    std::cout << "Total number of 3B evaluations: " << total_evals << " in " << final_poly_time << " (average=" << final_poly_time/total_evals << ")" << std::endl;
+    // std::cout << "Total number of 3B evaluations: " << total_evals << " in " << final_poly_time << " (average=" << final_poly_time/total_evals << ")" << std::endl;
 
-    for(size_t i = 0; i < max_profile_index; i++) {
-        std::cout << "Eval period " << i << " evaluated " << total_first_evals[i] << " polys in " << final_first_poly_time[i] << " (average=" << final_first_poly_time[i]/total_first_evals[i] << ")" << std::endl;
-    }
+    // for(size_t i = 0; i < max_profile_index; i++) {
+    //     std::cout << "Eval period " << i << " evaluated " << total_first_evals[i] << " polys in " << final_first_poly_time[i] << " (average=" << final_first_poly_time[i]/total_first_evals[i] << ")" << std::endl;
+    // }
 
-    grand_total_poly_time += final_poly_time;
-    std::cout << "Cumulative total poly time: " << grand_total_poly_time << std::endl;
+    // grand_total_poly_time += final_poly_time;
+    // std::cout << "Cumulative total poly time: " << grand_total_poly_time << std::endl;
 
     return e3b_t;
 }
