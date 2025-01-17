@@ -70,6 +70,7 @@ jobs:
           ls ${{ github.workspace }}
           autoreconf -fi
           ./configure --disable-optimization --enable-mpi CXX=${{env.MPI_COMPILER}}
+          make -j2
           make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
           
