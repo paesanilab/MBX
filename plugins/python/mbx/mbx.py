@@ -15,11 +15,11 @@ AUELECFIELD2MBX = MBXLENGTH2AU * MBXLENGTH2AU
 AUELECPOT2MBX = MBXLENGTH2AU
 
 MBX_HOME = os.getenv('MBX_HOME')
-if MBX_HOME == "":
+if MBX_HOME == "" or MBX_HOME == None:
   print("MBX_HOME is not set.")
   sys.exit()
 
-mbxlib = cdll.LoadLibrary(MBX_HOME + '/install/lib/libmbx.so')
+mbxlib = ctypes.CDLL(MBX_HOME + '/lib/libmbx.so',mode=os.RTLD_LAZY)
 
 c_double_array = np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
 int_pointer = ctypes.POINTER(ctypes.c_int)

@@ -1,4 +1,7 @@
 ignore:
+  - "examples"
+  - "plugins"
+  - "scripts"
   - "src/potential/1b/poly*"
   - "src/potential/2b/poly*"
   - "src/potential/3b/poly*"
@@ -8,5 +11,6 @@ ignore:
   - "src/json"
   - "src/Catch2"
   - "src/main"
+  - "src/io_tools"
   - "src/potential/electrostatics/files_not_used"
   - "src/potential/electrostatics/helpme.h"

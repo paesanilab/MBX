@@ -1,0 +1,211 @@
+# Depositing TIP3P water into MOF with QeQ charges obtained with Ongari scheme
+# Variable defiition
+variable        mu index -5.0  #chemical potential of reservoir for gcmc (in kcal/mol for real units)
+variable        disp index 0.1  # max MC translation distance for random molecular move
+variable        temp index 1000.0  # simulation temperature
+variable        dt  equal  0.2
+variable        tfac equal 5.0/3.0 
+variable        pressure equal 1.0
+
+processors * * * map xyz
+
+units		real	
+atom_style	full
+boundary        p p p
+
+box tilt large
+read_data	initial.data
+
+group mof type 1 2 3 4 5 6 
+group h2o type 7 8
+group co2 type 9 10
+#molecule h2o H2Otip4p.txt
+## Bonded styles ##
+bond_style      harmonic
+angle_style     harmonic
+dihedral_style  harmonic
+improper_style  cvff
+
+## MOF ##
+bond_coeff      1     32.28973605      2.15620001 # Zn  o
+bond_coeff      2      36.9295234      2.05480166 # Zn  nc
+bond_coeff      3           510.5      1.36500000 # nc  nc
+bond_coeff      4           441.1      1.36900000 # cc  nc
+bond_coeff      5           349.1      1.08400000 # cc  ha
+bond_coeff      6           637.5      1.21800000 # c  o
+bond_coeff      7           291.7      1.54800000 # c  c
+angle_coeff    1    30.87978925     131.460673 # Zn-nc-cc
+angle_coeff    2      57.496879     120.196951 # Zn-nc-nc
+angle_coeff    3     48.4760699     109.336204 # Zn-o-c
+angle_coeff    4      11.987154     92.5855661 # nc-Zn-nc
+angle_coeff    5      18.429192     74.0971127 # o-Zn-o
+angle_coeff    6     20.2159165      86.183884 # o-Zn-nc
+angle_coeff    7     23.9870345     116.167131 # o-Zn-nc
+angle_coeff    8     74.3545905     169.105528 # o-Zn-nc
+angle_coeff    9           72.9     120.000000 # cc-nc-nc
+angle_coeff   10           69.9     129.000000 # nc-cc-nc
+angle_coeff   11           50.9     116.500000 # ha-cc-nc
+angle_coeff   12           71.0     117.200000 # cc-nc-cc
+angle_coeff   13           77.9     130.200000 # o-c-o
+angle_coeff   14           67.2     120.800000 # c-c-o
+dihedral_coeff    1       17.03190        -1         2 # Zn-nc-nc-cc
+dihedral_coeff    2       8.367632        -1         2 # Zn-nc-cc-nc
+dihedral_coeff    3       3.138488         1         2 # Zn-nc-cc-ha
+dihedral_coeff    4       0.864613        -1         2 # Zn-o-c-o
+dihedral_coeff    5       0.409487         1         2 # Zn-o-c-c
+dihedral_coeff    6       5.537521         1         2 # o-Zn-o-c
+dihedral_coeff    7            0.0         1         2 # nc-Zn-nc-cc
+dihedral_coeff    8            0.0         1         2 # nc-Zn-nc-nc
+dihedral_coeff    9            0.0         1         2 # nc-Zn-o-c
+dihedral_coeff   10            0.0         1         2 # o-Zn-nc-cc
+dihedral_coeff   11            0.0         1         2 # o-Zn-nc-nc
+dihedral_coeff   12         4.7500        -1         2 # nc-cc-nc-nc
+dihedral_coeff   13         4.7500        -1         2 # ha-cc-nc-nc
+dihedral_coeff   14         4.0000        -1         2 # cc-nc-nc-cc
+dihedral_coeff   15         4.7500        -1         2 # nc-cc-nc-cc
+dihedral_coeff   16         4.7500        -1         2 # ha-cc-nc-cc
+dihedral_coeff   17         0.3000        -1         2 # o-c-c-o
+improper_coeff    1    1.1000        -1         2 # ha-cc-nc-nc
+improper_coeff    2    1.1000        -1         2 # c-c-o-o
+
+
+## H2O ##
+#set             type 3 charge -1.1128
+#set             type 4 charge  0.5564
+bond_coeff       8 0.0 0.0
+angle_coeff      15 0.0 0.0
+
+## CO2 ##
+bond_coeff  9  0.0  0.0
+angle_coeff  16 0.0  0.0
+
+## LJ ##
+#pair_style      lj/cut/coul/long 20.0
+pair_style      hybrid/overlay mbx 9.0 lj/cut 9.0 coul/exclude 9.0 #
+pair_modify     tail yes
+
+
+## MOF pair coefficients ##
+pair_coeff      2      2         lj/cut      0.170000      3.249999
+pair_coeff      2      3         lj/cut      0.120913      3.324834
+pair_coeff      2      4         lj/cut      0.050498      2.924820
+pair_coeff      2      5         lj/cut      0.188944      3.104782
+pair_coeff      2      6         lj/cut      0.120913      3.324834
+pair_coeff      3      3         lj/cut      0.086000      3.399670
+pair_coeff      3      4         lj/cut      0.035917      2.999656
+pair_coeff      3      5         lj/cut      0.134387      3.179618
+pair_coeff      3      6         lj/cut      0.086000      3.399670
+pair_coeff      4      4         lj/cut      0.015000      2.599642
+pair_coeff      4      5         lj/cut      0.056125      2.779604
+pair_coeff      4      6         lj/cut      0.035917      2.999656
+pair_coeff      5      5         lj/cut      0.210000      2.959566
+pair_coeff      5      6         lj/cut      0.134387      3.179618
+pair_coeff      6      6         lj/cut      0.086000      3.399670
+pair_coeff      1      2         lj/cut      0.145190      2.855776
+pair_coeff      1      3         lj/cut      0.103267      2.930611
+pair_coeff      1      4         lj/cut      0.043128      2.530598
+pair_coeff      1      5         lj/cut      0.161369      2.710559
+pair_coeff      1      6         lj/cut      0.103267      2.930611
+pair_coeff      1      1         lj/cut      0.124000      2.461553
+
+# H2O MOF Mixed
+pair_coeff      2      7         lj/cut      0.177433      3.204449
+pair_coeff      2      8         lj/cut      0.000000      0.000000
+pair_coeff      3      7         lj/cut      0.126200      3.279285
+pair_coeff      3      8         lj/cut      0.000000      0.000000
+pair_coeff      4      7         lj/cut      0.052705      2.879271
+pair_coeff      4      8         lj/cut      0.000000      0.000000
+pair_coeff      5      7         lj/cut      0.197205      3.059233
+pair_coeff      5      8         lj/cut      0.000000      0.000000
+pair_coeff      6      7         lj/cut      0.126200      3.279285
+pair_coeff      6      8         lj/cut      0.000000      0.000000
+pair_coeff      1      7         lj/cut      0.151537      2.810227
+pair_coeff      1      8         lj/cut      0.000000      0.000000
+
+# CO2 MOF Mixed
+pair_coeff      2      9         lj/cut      0.095485      3.024999
+pair_coeff      2     10         lj/cut      0.163330      3.149999
+pair_coeff      3      9         lj/cut      0.067914      3.099835
+pair_coeff      3     10         lj/cut      0.116169      3.224835
+pair_coeff      4      9         lj/cut      0.028363      2.699821
+pair_coeff      4     10         lj/cut      0.048516      2.824821
+pair_coeff      5      9         lj/cut      0.106125      2.879783
+pair_coeff      5     10         lj/cut      0.181531      3.004783
+pair_coeff      6      9         lj/cut      0.067914      3.099835
+pair_coeff      6     10         lj/cut      0.116169      3.224835
+pair_coeff      1      9         lj/cut      0.081549      2.630777
+pair_coeff      1     10         lj/cut      0.139493      2.755777
+
+## TIP4P H2O ##
+#pair_coeff      12 12 lj/cut/tip4p/long 0.1852 3.1589
+#pair_coeff      12 13 lj/cut/tip4p/long 0.0 0.0
+#pair_coeff      13 13 lj/cut/tip4p/long 0.0 0.0
+
+#MBX-water
+pair_coeff      7      7 mbx  0.0 0.0 
+pair_coeff      7      8 mbx  0.0 0.0 
+pair_coeff      8      8 mbx  0.0 0.0 
+
+#MBX-CO2
+pair_coeff      9      9 mbx  0.0 0.0 
+pair_coeff      9     10 mbx  0.0 0.0 
+pair_coeff      10    10 mbx  0.0 0.0 
+
+#MBX-water-CO2
+pair_coeff      7      9 mbx  0.0 0.0
+pair_coeff      7      10 mbx  0.0 0.0
+pair_coeff      8      9 mbx  0.0 0.0
+pair_coeff      8      10 mbx  0.0 0.0
+#coul exclude
+pair_coeff      1*6 1*6 coul/exclude
+
+## Non-bonded k-space ##
+#kspace_style    ewald 0.000001
+#kspace_style    pppm/tip4p 1.0e-5
+special_bonds   amber
+
+
+neighbor        2.0 bin
+neigh_modify	every 1 delay 1 check yes
+
+timestep        ${dt}
+compute         mbx all pair mbx
+variable        e1bpip    equal c_mbx[1]
+variable        e2bpip    equal c_mbx[2]
+variable        e3bpip    equal c_mbx[3]
+variable        e4bpip    equal c_mbx[4]
+variable        edisp     equal c_mbx[5]
+variable        ebuck     equal c_mbx[6]
+variable        eele      equal c_mbx[7]
+variable        etot      equal c_mbx[8]
+
+#thermo_style    custom step time temp cella cellb cellc vol pe ke etotal
+thermo_style    custom step time temp cella cellb cellc evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1bpip v_e2bpip v_e3bpip v_e4bpip v_edisp v_ebuck v_eele v_etot pe etotal
+thermo          1
+thermo_modify   flush yes
+
+#fix             wshake water shake 1e-5 50 0 b 14 a 24 mol h2o
+#fix		mynvt all nvt temp ${temp} ${temp} 100.0
+fix             mynpt all npt temp ${temp} ${temp} $(100.0*dt) iso ${pressure} ${pressure} $(1000.0*dt) tchain 4
+fix             1 all mbx 3 dp1 1 6 1 1 h2o 7 8 3 7 8 8 co2 9 10 3 9 10 10 json mbx.json
+#fix             3 all npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
+#fix            4 mof npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
+#fix             5 water gcmc 100 100 0 0 54341 ${temp} ${mu} ${disp} mol h2o tfac_insert ${tfac} group water shake wshake
+
+#fix             nve all nve
+#fix             nvt all nvt temp 300.0 300.0 1.0
+#fix             3 all npt temp 298.15 298.15 $(10.0*dt) iso 1.0 1.0 $(100.0*dt)
+
+velocity        all create ${temp} 428879 rot yes dist gaussian
+#velocity        all zero linear
+#velocity        all zero angular
+
+dump            1 all custom 1 traj.lammpstrj id type x y z
+dump_modify     1 sort id
+
+restart         5 restart.inter.1 restart.inter.2
+
+run             100
+
+write_data      final.data nocoeff
+write_restart   restart.inter

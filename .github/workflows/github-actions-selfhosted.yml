@@ -1,0 +1,100 @@
+name: Self-Hosted Integration test
+
+on:
+  workflow_dispatch:
+    inputs:
+      mpi:
+        description: 'MPI ranks'
+        required: true
+        default: "8"
+        type: number
+      omp:
+        description: 'OpenMP threads'
+        required: true
+        default: "2"
+        type: number
+  # workflow_run:
+  #   workflows: [MBX+LAMMPS integration test]
+  #   branches: [master]
+  #   types:
+  #     - completed
+    
+  # push: 
+  #   branches: Actions-Test
+
+jobs:
+  compile-mbxlammps:
+    runs-on: [self-hosted, epyc]
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
+      - name: activate gnu compiler
+        run: |
+          module load gcc/12.2.0
+          echo "MPI_COMPILER=mpicxx" >> "$GITHUB_ENV"
+          
+      - name: MBX-install
+        run: |
+          ls ${{ github.workspace }}
+          autoreconf -fi
+          ./configure --enable-mpi CXX=${{ env.MPI_COMPILER }}
+          make -j 8
+          make install
+          echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
+          
+      - name: LAMMPS-Install
+        run: |
+          export MBX_HOME=${{ env.MBX_HOME }}
+          git clone https://github.com/lammps/lammps.git -b stable
+          export LAMMPS_HOME=$PWD/lammps
+          export GITHUB_ACTIONS_MBX_LAMMPS_FLAGS=""
+          cp -r $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
+          cd $LAMMPS_HOME/src
+          make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
+          make mpi_mbx CXX=${{ env.MPI_COMPILER }} -j 8
+
+      - name: Upload MBX+LAMMPS executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: executable
+          path: ${{ github.workspace }}/lammps/src/lmp_mpi_mbx
+          retention-days: 1
+          
+  test_mbxlammps:
+    strategy:
+      matrix:
+        example: [256h2o, 512h2o, 1024h2o, 2048h2o, na+_bulk, ch4, ch4_h2o]
+    runs-on: [self-hosted, epyc]
+    needs: compile-mbxlammps
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "The workflow is now ready to test your code on the runner."
+      - name: Download executable from compilation
+        uses: actions/download-artifact@v4
+        with:
+          name: executable
+      - run: ls ${{ github.workspace }} -lth
+      
+      - name: testing example ${{ matrix.example }}
+        run: |
+          chmod u+x lmp_mpi_mbx
+          ls ${{ github.workspace }}/lmp_mpi_mbx
+          cd ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/
+          export OMP_NUM_THREADS=${{ github.event.inputs.omp }}
+          mpirun -np ${{ github.event.inputs.mpi }} ${{ github.workspace }}/lmp_mpi_mbx -in lammps.in
+      - run: ls ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/ -lth
+      - name: log output
+        run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/log.lammps
+      - name: thermo output
+        run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/thermo.out
+      - name: performance output
+        run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/performance.txt

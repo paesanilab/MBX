@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [0.7], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.2.2], [mbx-users@googlegroups.com])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -20,85 +20,24 @@ AM_PROG_AR
 LT_INIT([disable-shared])
 
 # Initialize Automake. Warnings will be treated as errors.
-AM_INIT_AUTOMAKE([subdir-objects -Wall -Werror foreign])
+AM_INIT_AUTOMAKE([subdir-objects -Wall foreign])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
  Makefile
  src/Makefile
  src/unittests/Makefile
+ plugins/Makefile
+ plugins/i-pi/Makefile
 ])
 
-# Helper function to check if a required library can be linked
-# MBX_CHECK_REQ_LIB(header,program,lib,path_to_home,environmentVar)
-AC_DEFUN([MBX_CHECK_REQ_PACKAGE], [
+# Helper function to add the proper flags to CPPFLAGS and LDFLAGS
+# MBX_CHECK_PACKAGE(path_to_home)
+AC_DEFUN([MBX_CHECK_PACKAGE], [
     # Check if a path to the home dir of lib has been given
-    if ! test $4 == none; then
-        header_file=$4/include/$1
-        LDFLAGS="-I$4/include -L$4/lib $LDFLAGS"
-    else
-        header_file=$1
-    fi
-    AC_MSG_CHECKING([whether the header $1 can be found])
-    headersgood=no
-    AC_CHECK_HEADERS($header_file,[headersgood=yes])
-    
-    if test $headersgood == no; then
-        AC_CHECK_FILE($1,[headersgood=yes])
-        if test $headersgood == no; then
-            AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable $5 and rerun ./configure])
-        fi
-    fi
-
-    bk_LIBS="$LIBS"
-    LIBS="-l$3 $LIBS"
-    
-    linkinggood=no
-    AC_MSG_CHECKING([whether MBX can be linked to $3])
-    AC_LINK_IFELSE([AC_LANG_SOURCE([$2])],
-          [linkinggood=yes]
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])]
-    )
-
-    if test $linkinggood == no;then
-        AC_MSG_ERROR([please make sure that the library $3 is properly installed. Please define the environment variable $5 and rerun ./configure])
-    fi
-])
-
-# Helper function to check if gsl library can be linked
-# MBX_CHECK_GSL_LIB(program,path_to_home,environmentVar)
-AC_DEFUN([MBX_CHECK_GSL_PACKAGE], [
-    # Check if a path to the home dir of lib has been given
-    header_file=gsl/gsl_math.h
-    if ! test $2 == none; then
-	header_file=$2/include/gsl/gsl_math.h
-        LDFLAGS="-I$2/include -L$2/lib $LDFLAGS"
-    fi
-    AC_MSG_CHECKING([whether the header gsl/gsl_math.h can be found])
-    headersgood=no
-    AC_CHECK_HEADERS($header_file,[headersgood=yes])
-
-    if test $headersgood == no; then
-        AC_CHECK_FILE([$header_file],[headersgood=yes])
-        if test $headersgood == no; then
-            AC_MSG_ERROR([please make sure that the library gsl is properly installed. Please define the environment variable $3 and rerun ./configure])
-        fi
-    fi
-
-    bk_LIBS="$LIBS"
-    LIBS="-lgslcblas -lgsl $LIBS"
-
-    linkinggood=no
-    AC_MSG_CHECKING([whether MBX can be linked to gsl and gslcblas])
-    AC_LINK_IFELSE([AC_LANG_SOURCE([$1])],
-          [linkinggood=yes]
-          [AC_MSG_RESULT([yes])],
-          [AC_MSG_RESULT([no])]
-    )
-
-    if test $linkinggood == no;then
-        AC_MSG_ERROR([please make sure that the library gsl is properly installed. Please define the environment variable $3 and rerun ./configure])
+    if ! test $1 == none; then
+        LDFLAGS="$LDFLAGS -L$1/lib"
+        CPPFLAGS="$CPPFLAGS -I$1/include"
     fi
 ])
 
@@ -121,7 +60,7 @@ AC_DEFUN([MBX_CHECK_CXXFLAG], [
 ])
 
 # MBX_CHECK_REQ_CXXFLAG(flag)
-# use it to check if a flag is available on this compiler
+# use it to check if a required flag is available on this compiler
 AC_DEFUN([MBX_CHECK_REQ_CXXFLAG], [
   save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
@@ -168,36 +107,44 @@ CXXFLAGS=''
 EXTRA_CXXFLAGS=''
 AC_OPENMP
 
+# Check compiler is working
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
+    [],
+    [AC_MSG_ERROR([C++ compiler ${CXX} is not working])]
+)
+
 # Checks for libraries.
+
+AC_CHECK_LIB([m],[cos])
+AC_SEARCH_LIBS([omp_get_thread_num],[iomp5 gomp])
+
 
 # FFTW
 # Look for possible environment variables known to have FFTW home
 fftw_dir=none
+fftw_dir_name=none
 if test "$FFTW_HOME" != ""; then
     fftw_dir="$FFTW_HOME"
+    fftw_dir_name="FFTW_HOME"
 elif test "$FFTWHOME" != ""; then 
     fftw_dir="$FFTWHOME"
+    fftw_dir_name="FFTWHOME"
 elif test "$FFTW_ROOT" != "" ; then
     fftw_dir="$FFTW_ROOT"
+    fftw_dir_name="FFTW_ROOT"
 elif test "$FFTWROOT" != "" ; then
     fftw_dir="$FFTWROOT"
+    fftw_dir_name="FFTWROOT"
 fi
-MBX_CHECK_REQ_PACKAGE([fftw3.h],[
-#include <fftw3.h>
+AC_MSG_NOTICE([fftw_dir: ${fftw_dir_name}=${fftw_dir}])
+MBX_CHECK_PACKAGE([$fftw_dir])
 
-int main() {
-    fftw_complex nc;
-    return 0;
-}
-
-],[fftw3],[$fftw_dir],["FFTW_HOME"])
-
-# Add the corresponding flags to the variable FFTWFLAGS
-if test $fftw_dir != none; then
-    AC_SUBST(FFTWFLAGS,["-L$fftw_dir/lib -I$fftw_dir/include -DHAVE_FFTWD=1"])
-else
-    AC_SUBST(FFTWFLAGS,["-DHAVE_FFTWD=1"])
-fi
+AC_CHECK_LIB([fftw3],[fftw_plan_dft],[
+    CPPFLAGS="$CPPFLAGS -DHAVE_FFTWD=1"
+    LIBS="-lfftw3 $LIBS"
+],[
+    AC_MSG_ERROR([fftw3 cannot be linked. Please define FFTW_HOME.])
+])
 
 # GSL
 # Look for possible environment variables known to have GSL home
@@ -213,30 +160,22 @@ elif test "$GSLROOT" != "" ; then
 elif test "$GSL_ROOT_DIR" != "" ; then
     gsl_dir="$GSL_ROOT_DIR"
 fi
-MBX_CHECK_GSL_PACKAGE([
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
 
-int main() {
-    double a = M_SQRT3;
-    gsl_vector av;
-    return 0;
-}
-
-],[$gsl_dir],["GSL_HOME"])
-
-# Add the corresponding flags to the variable FFTWFLAGS
-if test $gsl_dir != none; then
-    AC_SUBST(GSLFLAGS,["-L$gsl_dir/lib -I$gsl_dir/include"])
-else
-    AC_SUBST(GSLFLAGS,[""])
-fi
+MBX_CHECK_PACKAGE([$gsl_dir])
+AC_CHECK_LIB([gslcblas],[cblas_dgemm])
+AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
+    LIBS="-lgsl $LIBS"
+    AM_CONDITIONAL([HASGSL], [test x == x])
+],[
+    AM_CONDITIONAL([HASGSL], [test x == y])
+    AC_MSG_WARN([gsl cannot be found. Will not install the normal modes executable.])
+])
 
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
 # Check for C++11
-MBX_CHECK_REQ_CXXFLAG([-std=c++11])
+#MBX_CHECK_REQ_CXXFLAG([-std=c++17])
 
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
@@ -244,26 +183,36 @@ MBX_CONFIG_ENABLE([verbose],[verbose debug output],[no])
 MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
-MBX_CONFIG_ENABLE([optreport],[write optimization reports].[no])
+MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
+MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
+MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
+MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization],[no])
+MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
 
 # Act on enable flags
 
 if test $debug == true; then
-    MBX_CHECK_CXXFLAG([-g])
+    MBX_CHECK_REQ_CXXFLAG([-g]) # allow debugging using gdb
 fi
 
 if test $verbose == true; then
-    MBX_CHECK_CXXFLAG([-DDEBUG])
+    MBX_CHECK_CXXFLAG([-DDEBUG]) # verbose debug output
 fi
 
 if test $optimization == true; then
-    MBX_CHECK_CXXFLAG([-O2])
+    MBX_CHECK_REQ_CXXFLAG([-O2])
 else
-    MBX_CHECK_CXXFLAG([-O0])
+    MBX_CHECK_REQ_CXXFLAG([-O0])
 fi
 
 if test $coverage == true; then
-    MBX_CHECK_CXXFLAG([--coverage])
+    MBX_CHECK_CXXFLAG([--coverage]) # allow coverage analysis using codecov
+fi
+
+# deprecated ttm-nrg mode
+if test $ttmnrg == true; then
+    AC_MSG_WARN([ttm-nrg is deprecated.])
+    MBX_CHECK_CXXFLAG([-DTTMNRG])
 fi
 
 if test $optreport == true; then
@@ -271,43 +220,61 @@ if test $optreport == true; then
     MBX_CHECK_CXXFLAG([-qopt-report-phase=vec])
 fi
 
+if test $cpp17 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-std=c++17])
+else
+    MBX_CHECK_REQ_CXXFLAG([-std=c++11])
+fi
+
+if test $avx2 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX2])
+fi
+
+if test $avx512 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
+fi
+
 # Add flags to variable
 AC_SUBST(EXTRA_CXXFLAGS_AM,["$EXTRA_CXXFLAGS "])
 
 # MPI
 # Set AutoMake flag to true
-AM_CONDITIONAL([ISMPI], [test x$mpi = xtrue])
+AM_CONDITIONAL([ISMPI], [test $mpi == true])
 if test $mpi == true; then
-    # Look for possible environment variables known to have FFTW home
+    # Look for possible environment variables known to have MPI home
     mpi_dir=none
+    mpi_dir_name=none
     if test "$MPI_HOME" != ""; then
         mpi_dir="$MPI_HOME"
+        mpi_dir_name="MPI_HOME"
     elif test "$MPIHOME" != ""; then
         mpi_dir="$MPIHOME"
+        mpi_dir_name="MPIHOME"
     elif test "$MPI_ROOT" != "" ; then
         mpi_dir="$MPI_ROOT"
+        mpi_dir_name="MPI_ROOT"
     elif test "$MPIROOT" != "" ; then
         mpi_dir="$MPIROOT"
+        mpi_dir_name="MPIROOT"
     fi
-    MBX_CHECK_REQ_PACKAGE([mpi.h],[
-#include <mpi.h>
-
-int main(int argc, char **argv){
-  MPI_Init(&argc,&argv);
-  return MPI_Finalize();
-}
-    ],[mpi],[$mpi_dir],["MPI_HOME"])
-    
-    # Add the corresponding flags to the variable FFTWFLAGS
-    if test $mpi_dir != none; then
-        AC_SUBST(MPIFLAGS,["-L$mpi_dir/lib -I$mpi_dir/include -DHAVE_MPI=1"])
-    else
-        AC_SUBST(MPIFLAGS,["-DHAVE_MPI=1"])
-    fi
+    AC_MSG_NOTICE([mpi_dir: ${mpi_dir_name}=${mpi_dir}])
+    MBX_CHECK_PACKAGE([$mpi_dir])
+    AC_CHECK_LIB([mpi],[MPI_Init],[
+        CPPFLAGS="$CPPFLAGS -DHAVE_MPI=1"
+        LIBS="-lmpi $LIBS"
+    ],
+    [
+        AC_MSG_ERROR([mpi lib is missing])
+    ])
+    AC_MSG_CHECKING([if compiler ${CXX} is able to find mpi.h])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <mpi.h>]])],[AC_MSG_RESULT(yes)], [
+        AC_MSG_RESULT(no)
+        AC_MSG_ERROR([compiler ${CXX} is not able to find mpi.h])
+        ])
 fi
 
 # Checks for library functions.
 
-AC_PREFIX_DEFAULT([`pwd`/install])
+AC_PREFIX_DEFAULT([`pwd`])
 
 AC_OUTPUT

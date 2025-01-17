@@ -115,7 +115,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
              const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
              const double cutoff, const double ewald_alpha, const std::vector<double>& box,
              const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
-             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial) {
+             const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial, const size_t xyz2_offset) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -198,16 +198,13 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
-    size_t g2_size = 3 * nmon2;
-    double g1[3], g2[g2_size];
+    double g1[3];
     std::fill(g1, g1 + 3, 0.0);
-    std::fill(g2, g2 + g2_size, 0.0);
-    //    #pragma simd
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
     double dispersion_energy = 0;
 
-    std::vector<double> x1 = p1;
+    const std::vector<double>& x1 = p1;
 
     double x1_r, y1_r, z1_r;
 
@@ -222,12 +219,12 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     double dy[N];
     double dz[N];
 
+    #pragma omp simd
     for (size_t nv = start2; nv < end2; nv++) {
-        size_t i = nv - start2;
         double x2[3];
-        x2[0] = xyz2[shift2 + nv];
-        x2[1] = xyz2[nmon2 + shift2 + nv];
-        x2[2] = xyz2[nmon22 + shift2 + nv];
+        x2[0] = xyz2[xyz2_offset + shift2 + nv];
+        x2[1] = xyz2[xyz2_offset + nmon2 + shift2 + nv];
+        x2[2] = xyz2[xyz2_offset + nmon22 + shift2 + nv];
 
         // Apply minimum image convetion
         if (use_pbc) {
@@ -244,12 +241,14 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             x2[2] = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
 
-        dx[i] = x1[0] - x2[0];
-        dy[i] = x1[1] - x2[1];
-        dz[i] = x1[2] - x2[2];
+        dx[nv - start2] = x1[0] - x2[0];
+        dy[nv - start2] = x1[1] - x2[1];
+        dz[nv - start2] = x1[2] - x2[2];
     }
 
     double rsq[N], r[N], inv_rsq[N], inv_r6[N];
+
+    #pragma omp simd reduction(+: phi1)
     for (size_t i = 0; i < N; i++) {
         rsq[i] = dx[i] * dx[i] + dy[i] * dy[i] + dz[i] * dz[i];
         r[i] = std::sqrt(rsq[i]);
@@ -352,19 +351,22 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
             grad[i] = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
         }
 
+        // #pragma omp simd
         for (size_t i = 0; i < n_idxs; i++) {
+            const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
+
             size_t index = indexes_to_include[i] + start2;
-            g1[0] += idx[i] * grad[i];
-            g2[index] -= idx[i] * grad[i];
+            g1[0] += idx[i] * grad[i] * vscale;
 
-            g1[1] += idy[i] * grad[i];
-            g2[nmon2 + index] -= idy[i] * grad[i];
+            g1[1] += idy[i] * grad[i] * vscale;
 
-            g1[2] += idz[i] * grad[i];
-            g2[nmon22 + index] -= idz[i] * grad[i];
+            g1[2] += idz[i] * grad[i] * vscale;
+
+            grad2[shift2 + index] -= idx[i] * grad[i] * vscale;
+            grad2[shift2 + nmon2 + index] -= idy[i] * grad[i] * vscale;
+            grad2[shift2 + nmon22 + index] -= idz[i] * grad[i] * vscale;
 
             if (virial != 0) {
-                const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
 
                 (*virial)[0] -= idx[i] * idx[i] * grad[i] * vscale;  //  update the virial for the atom pair
                 (*virial)[1] -= idx[i] * idy[i] * grad[i] * vscale;
@@ -380,17 +382,10 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
                 (*virial)[7] = (*virial)[5];
             }
         }
-    }
 
-    if (do_grads) {
         grad1[0] += g1[0];
         grad1[1] += g1[1];
         grad1[2] += g1[2];
-        for (size_t i = start2; i < end2; i++) {
-            grad2[shift2 + i] += g2[i];
-            grad2[shift2 + nmon2 + i] += g2[nmon2 + i];
-            grad2[shift2 + nmon22 + i] += g2[nmon22 + i];
-        }
     }
 
 #ifdef DEBUG

@@ -42,22 +42,24 @@ neigh_modify	every 1 delay 1 check yes
 
 timestep        ${dt}
 compute         mbx all pair mbx
-variable        e1    equal c_mbx[1]
-variable        e2    equal c_mbx[2]
-variable        e3    equal c_mbx[3]
-variable        ebuck equal c_mbx[4]
-variable        edisp equal c_mbx[5]
-variable        eele  equal c_mbx[6]
-variable        etot  equal c_mbx[7]
+variable        e1bpip    equal c_mbx[1]
+variable        e2bpip    equal c_mbx[2]
+variable        e3bpip    equal c_mbx[3]
+variable        e4bpip    equal c_mbx[4]
+variable        edisp     equal c_mbx[5]
+variable        ebuck     equal c_mbx[6]
+variable        eele      equal c_mbx[7]
+variable        etot      equal c_mbx[8]
+
 
 #thermo_style    custom step time temp cella cellb cellc vol pe ke etotal
-thermo_style    custom step time temp evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1 v_e2 v_e3 v_ebuck v_edisp v_eele v_etot pe etotal
+thermo_style    custom step time temp evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1bpip v_e2bpip v_e3bpip v_e4bpip v_edisp v_ebuck v_eele v_etot pe etotal
 thermo          1
 thermo_modify   flush yes
 
 #fix             wshake water shake 1e-5 50 0 b 14 a 24 mol h2o
 fix		mynvt all nvt temp ${temp} ${temp} $(100.0*dt)
-fix             1 all mbx 2 888 dp1 1 h2o json mbx.json
+fix             1 all mbx 2 dp1 1 11 1 1 h2o 12 13 3 12 13 13 json mbx.json
 #fix             3 all npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
 #fix            4 mof npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
 #fix             5 water gcmc 100 100 0 0 54341 ${temp} ${mu} ${disp} mol h2o tfac_insert ${tfac} group water shake wshake

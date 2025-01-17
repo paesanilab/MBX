@@ -41,6 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace {
 bblock::System* my_s;
+std::vector<bblock::System*> my_sf;
 }  // namespace
 
 extern "C" {
@@ -70,6 +71,27 @@ void initialize_system_(double* coords, int* nat_monomers, char at_names[][5], c
 
     my_s->Initialize();
     my_s->SetUpFromJson(json_file);
+}
+
+void initialize_system2_(double* coords, int* nat_monomers, char at_names[][5], char monomers[][5], int* nmon,
+                         char json_file[20], int* nranks) {
+    for (size_t k = 0; k < *nranks; k++) {
+        my_sf.push_back(new bblock::System());
+        int count = 0;
+        for (int i = 0; i < *nmon; i++) {
+            std::vector<double> xyz(3 * nat_monomers[i]);
+            std::vector<std::string> vAtNames(nat_monomers[i]);
+
+            std::copy(coords + 3 * count, coords + 3 * (count + nat_monomers[i]), xyz.begin());
+            std::copy(at_names + count, at_names + count + nat_monomers[i], vAtNames.begin());
+            std::string id = monomers[i];
+            my_sf[k]->AddMonomer(xyz, vAtNames, id);
+            count += nat_monomers[i];
+        }
+
+        my_sf[k]->Initialize();
+        my_sf[k]->SetUpFromJson(json_file);
+    }
 }
 
 /**
@@ -114,6 +136,14 @@ void get_energy_(double* coords, int* nat, double* energy) {
     *energy = my_s->Energy(false);
 }
 
+void get_energy2_(double* coords, int* nat, double* energy, int* rank) {
+    std::vector<double> xyz(3 * (*nat));
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+
+    my_sf[*rank]->SetRealXyz(xyz);
+    *energy = my_sf[*rank]->Energy(false);
+}
+
 /**
  * Given the coordinates, calculates the energy iand gradients for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
@@ -129,6 +159,17 @@ void get_energy_g_(double* coords, int* nat, double* energy, double* grads) {
     *energy = my_s->Energy(true);
 
     std::vector<double> gradv = my_s->GetRealGrads();
+    std::copy(gradv.begin(), gradv.end(), grads);
+}
+
+void get_energy_g2_(double* coords, int* nat, double* energy, double* grads, int* rank) {
+    std::vector<double> xyz(3 * (*nat));
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+
+    my_sf[*rank]->SetRealXyz(xyz);
+    *energy = my_sf[*rank]->Energy(true);
+
+    std::vector<double> gradv = my_sf[*rank]->GetRealGrads();
     std::copy(gradv.begin(), gradv.end(), grads);
 }
 
@@ -224,7 +265,7 @@ void set_box_(int* length, double* box) {
         std::vector<double> boxv;
         my_s->SetPBC(boxv);
     }
-    my_s->SetNewParamsElec(false);
+    //my_s->SetNewParamsElec(false);
 }
 
 void set_potential_and_electric_field_on_sites_(double* phi, double* ef, int* nsites) {
@@ -263,5 +304,8 @@ void get_external_field_contribution_to_energy_(double* e) {
  * Deletes the pointer to the system
  */
 void finalize_system_() { delete my_s; }
+void finalize_system2_() {
+    for (size_t k = 0; k < my_sf.size(); k++) delete my_sf[k];
+}
 
 }  // extern C

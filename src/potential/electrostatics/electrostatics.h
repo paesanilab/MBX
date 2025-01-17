@@ -38,8 +38,15 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <vector>
 #include <cstdlib>
 #include <string>
-#include <cmath>
 #include <memory>
+
+#ifdef __INTEL_COMPILER
+#include <mathimf.h>
+#else
+#include <cmath>
+#endif 
+
+#include <unordered_map>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -499,24 +506,84 @@ class Electrostatics {
     void SetPeriodicity(bool periodic);
 
    private:
-    void CalculatePermanentElecField(bool use_ghost = 0);
-    void CalculatePermanentElecFieldMPIlocal(bool use_ghost = 0);
-    void CalculateDipolesIterative();
+    /*
+     * Calculates the permanent electric field of the system.
+     */
+    void CalculatePermanentElecField(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost = 0);
+    void CalculatePermanentElecFieldMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost = 0);
+    
+
+    /*
+     * Oversees each dipole iteration using the normal iterative method.
+     */
+    void CalculateDipolesIterative(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_);
+    
+    /*
+     * This function fills precomputedInformation with atom-coordinate dependant calculations, a list of 
+     * indicies of monomer 2's which are within a 9A cutoff from monomer 1, and xyz2 (an array of coordinates of mon type 2)
+     * and mu2 (an array of dipoles of mon type 2) such that they only contain information from monomer 2s within the cutoff.
+     * 
+     * Any calculation are between monomers that are more than a twobody_cutoff apart is insignificant, so our code ignores these pairs. It does this
+     * by labeling each monomer as monomer 1. For the rest of the monomers (which are labled monomer 2), it only saves the indices of the monomer 2's
+     * which are within a 9A cutoff.
+     * 
+     * The purpose of this function is to calculate and store these values so they can be reused for all dipole iteration
+     * without having to be recalculated, saving CPU time. Since the calculations are only are dependant on atom coordinates, they do not change
+     * between dipole iterations.
+     */
+    void PrecomputeDipoleIterationsInformation(std::vector<double> &out_v, std::vector<PrecomputedInfo*>& precomputedInformation, bool use_ghost = 0, bool MPI = 0);
+    
+    /*
+     * Computes the electric field from the modified dipoles. Instead of re-computing coordinate-dependant calculations,
+     * the optimized versions of this function retrieves them from the precomputedInformation hashmap generated in the function
+     * PrecomputeDipoleIterationsInformation.
+     */
     void ComputeDipoleField(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
+    void ComputeDipoleFieldOptimized(std::vector<double> &in_v, std::vector<double> &out_v,
+                            std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_,
+                            bool use_ghost = 0);
     void ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
-    void CalculateDipolesCG();
-    void CalculateDipolesCGMPIlocal(bool use_ghost = 0);
+    void ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in_v, std::vector<double> &out_v,
+                            std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_,
+                            bool use_ghost = 0);
+    
+    /*
+     * Oversees each dipole iteration using the conjugate gradient method.
+     */
+    void CalculateDipolesConjugateGradient(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_);
+    void CalculateDipolesConjugateGradientMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost);
+    
+    /*
+     * These are a single dipole iteration for conjugate gradient method (called by CalculateDipolesConjugateGradient).
+     */
     void DipolesCGIteration(std::vector<double> &in_v, std::vector<double> &out_v);
+    void DipolesCGIterationOptimized(std::vector<double> &in_v, std::vector<double> &out_v, std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_);
     void DipolesCGIterationMPIlocal(std::vector<double> &in_v, std::vector<double> &out_v, bool use_ghost = 0);
-    void CalculateDipolesAspc();
-    void CalculateDipolesAspcMPIlocal(bool use_ghost = 0);
+    void DipolesCGIterationMPIlocalOptimized(std::vector<double> &in_v, std::vector<double> &out_v, std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost = 0);
+    
+    /*
+     * Oversees each dipole iteration using the always stable predictor-corrector method.
+     */
+    void CalculateDipolesAspc(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_);
+    void CalculateDipolesAspcMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost = 0);
+    
     void SetAspcParameters(size_t k);
-    void CalculateDipoles();
-    void CalculateDipolesMPIlocal(bool use_ghost = 0);
+    
+    /*
+     * Oversees all of the dipole iterations. 
+     */
+    void CalculateDipoles(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_);
+    void CalculateDipolesMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost = 0);
+    
     void CalculateElecEnergy();
     void CalculateElecEnergyMPIlocal();
-    void CalculateGradients(std::vector<double> &grad, bool use_ghost = 0);
-    void CalculateGradientsMPIlocal(std::vector<double> &grad, bool use_ghost = 0);
+
+
+    /*
+     * Calculates the gradients of the potential energy surface
+     */
+    void CalculateGradients(std::vector<PrecomputedInfo*>& precomputedInformation, std::vector<double> &grad, helpme::PMEInstance<double>& pme_solver_, bool use_ghost = 0);
+    void CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, std::vector<double> &grad, helpme::PMEInstance<double>& pme_solver_, bool use_ghost = 0);
 
     void ReorderData();
 
@@ -784,7 +851,9 @@ class Electrostatics {
     std::vector<double> grad_x_;
     std::vector<double> phi_x_ind_;
     std::vector<double> ef_x_ind_;
-    std::vector<double> grad_x_ind_;
+    std::vector<double> grad_x_ind_; 
+
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////

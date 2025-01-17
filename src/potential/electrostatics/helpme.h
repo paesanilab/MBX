@@ -1133,6 +1133,7 @@ Matrix<Real> cartesianTransform(int maxAngularMomentum, bool transformOnlyThisSh
     int firstShell = transformOnlyThisShell ? maxAngularMomentum : 1;
     for (int angularMomentum = firstShell; angularMomentum <= maxAngularMomentum; ++angularMomentum) {
         auto rotationMatrix = makeCartesianRotationMatrix(angularMomentum, transformer);
+        #pragma omp parallel for
         for (int atom = 0; atom < nAtoms; ++atom) {
             const Real *inputData = transformee[atom];
             Real *outputData = transformed[atom];
@@ -2782,49 +2783,79 @@ class PMEInstance {
         // easy to write some logic to check whether gridPoints and coordinates are the same, and
         // handle that special case using spline cacheing machinery for efficiency.
         Real *realGrid = reinterpret_cast<Real *>(workSpace1_.data());
-        std::fill(workSpace1_.begin(), workSpace1_.end(), 0);
+        int realGrid_size = workSpace1_.size() * 2;
+
+        #pragma omp parallel for
+        for (size_t i = 0; i < workSpace1_.size(); ++i) {
+            workSpace1_[i] = 0;
+        }
+
         updateAngMomIterator(parameterAngMom);
         auto fractionalParameters =
             cartesianTransform(parameterAngMom, onlyOneShellForInput, scaledRecVecs_.transpose(), parameters);
         int nComponents = nCartesian(parameterAngMom) - cartesianOffset;
         size_t nAtoms = coordinates.nRows();
+
+        std::vector<std::tuple<Spline, Spline, Spline>> bSplines(nAtoms);
+
+        #pragma omp parallel for
         for (size_t atom = 0; atom < nAtoms; ++atom) {
-            // Blindly reconstruct splines for this atom, assuming nothing about the validity of the cache.
-            // Note that this incurs a somewhat steep cost due to repeated memory allocations.
-            auto bSplines = makeBSplines(coordinates[atom], parameterAngMom);
-            const auto &splineA = std::get<0>(bSplines);
-            const auto &splineB = std::get<1>(bSplines);
-            const auto &splineC = std::get<2>(bSplines);
-            const auto &aGridIterator = gridIteratorA_[splineA.startingGridPoint()];
-            const auto &bGridIterator = gridIteratorB_[splineB.startingGridPoint()];
-            const auto &cGridIterator = gridIteratorC_[splineC.startingGridPoint()];
-            int numPointsA = static_cast<int>(aGridIterator.size());
-            int numPointsB = static_cast<int>(bGridIterator.size());
-            int numPointsC = static_cast<int>(cGridIterator.size());
-            const auto *iteratorDataA = aGridIterator.data();
-            const auto *iteratorDataB = bGridIterator.data();
-            const auto *iteratorDataC = cGridIterator.data();
-            for (int component = 0; component < nComponents; ++component) {
-                const auto &quanta = angMomIterator_[component + cartesianOffset];
-                Real param = fractionalParameters(atom, component);
-                const Real *splineValsA = splineA[quanta[0]];
-                const Real *splineValsB = splineB[quanta[1]];
-                const Real *splineValsC = splineC[quanta[2]];
-                for (int pointC = 0; pointC < numPointsC; ++pointC) {
-                    const auto &cPoint = iteratorDataC[pointC];
-                    Real cValP = param * splineValsC[cPoint.second];
-                    for (int pointB = 0; pointB < numPointsB; ++pointB) {
-                        const auto &bPoint = iteratorDataB[pointB];
-                        Real cbValP = cValP * splineValsB[bPoint.second];
-                        Real *cbRow = &realGrid[cPoint.first * myGridDimensionB_ * myGridDimensionA_ +
-                                                bPoint.first * myGridDimensionA_];
-                        for (int pointA = 0; pointA < numPointsA; ++pointA) {
-                            const auto &aPoint = iteratorDataA[pointA];
-                            cbRow[aPoint.first] += cbValP * splineValsA[aPoint.second];
+            bSplines[atom] = makeBSplines(coordinates[atom], parameterAngMom);
+        }
+
+#pragma omp parallel num_threads(nThreads_)
+        {
+#ifdef _OPENMP
+            int threadID = omp_get_thread_num();
+#else
+            int threadID = 0;
+#endif
+
+            for (size_t atom = 0; atom < nAtoms; ++atom) {
+                // Blindly reconstruct splines for this atom, assuming nothing about the validity of the cache.
+                // Note that this incurs a somewhat steep cost due to repeated memory allocations.
+                // auto bSplines = makeBSplines(coordinates[atom], parameterAngMom);
+                const auto &splineA = std::get<0>(bSplines[atom]);
+                const auto &splineB = std::get<1>(bSplines[atom]);
+                const auto &splineC = std::get<2>(bSplines[atom]);
+                const auto &aGridIterator = gridIteratorA_[splineA.startingGridPoint()];
+                const auto &bGridIterator = gridIteratorB_[splineB.startingGridPoint()];
+                const auto &cGridIterator = threadedGridIteratorC_[threadID][splineC.startingGridPoint()];
+                int numPointsA = static_cast<int>(aGridIterator.size());
+                int numPointsB = static_cast<int>(bGridIterator.size());
+                int numPointsC = static_cast<int>(cGridIterator.size());
+                const auto *iteratorDataA = aGridIterator.data();
+                const auto *iteratorDataB = bGridIterator.data();
+                const auto *iteratorDataC = cGridIterator.data();
+    
+                for (int component = 0; component < nComponents; ++component) {
+                    const auto &quanta = angMomIterator_[component + cartesianOffset];
+                    Real param = fractionalParameters(atom, component);
+                    const Real *splineValsA = splineA[quanta[0]];
+                    const Real *splineValsB = splineB[quanta[1]];
+                    const Real *splineValsC = splineC[quanta[2]];
+                    for (int pointC = 0; pointC < numPointsC; ++pointC) {
+                        const auto &cPoint = iteratorDataC[pointC];
+                        Real cValP = param * splineValsC[cPoint.second];
+                        for (int pointB = 0; pointB < numPointsB; ++pointB) {
+                            const auto &bPoint = iteratorDataB[pointB];
+                            Real cbValP = cValP * splineValsB[bPoint.second];
+                            Real *cbRow = &realGrid[cPoint.first * myGridDimensionB_ * myGridDimensionA_ +
+                                                    bPoint.first * myGridDimensionA_];
+                            for (int pointA = 0; pointA < numPointsA; ++pointA) {
+                                const auto &aPoint = iteratorDataA[pointA];
+                                cbRow[aPoint.first] += cbValP * splineValsA[aPoint.second];
+                            }
                         }
                     }
                 }
             }
+        }
+
+        
+        #pragma omp parallel for
+        for (size_t atom = 0; atom < nAtoms; ++atom) {
+            bSplines[atom] = std::make_tuple<Spline, Spline, Spline>(Spline(), Spline(), Spline());
         }
 
         Real *potentialGrid;
@@ -2854,6 +2885,8 @@ class PMEInstance {
         cartesianOffset = onlyOneShellForOutput ? nCartesian(derivativeLevel - 1) : 0;
         int nPotentialComponents = nCartesian(derivativeLevel) - cartesianOffset;
         size_t nPoints = gridPoints.nRows();
+
+        #pragma omp parallel for
         for (size_t point = 0; point < nPoints; ++point) {
             Real *phiPtr = fracPotential[point];
             auto bSplines = makeBSplines(gridPoints[point], derivativeLevel);

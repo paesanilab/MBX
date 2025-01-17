@@ -1,0 +1,52 @@
+# H2O molecule file. TIP3P model.
+
+3 atoms
+2 bonds
+1 angles
+
+Coords
+
+1    1.12456   0.09298   1.27452
+2    1.53683   0.75606   1.89928
+3    0.49482   0.56390   0.65678
+
+Types
+
+1        12  
+2        13   
+3        13  
+
+Charges 
+
+1       -1.1128
+2        0.5564
+3        0.5564
+
+Bonds
+
+1   14      1      2
+2   14      1      3
+
+Angles
+
+1   24      2      1      3
+
+Shake Flags
+
+1 1
+2 1
+3 1
+
+Shake Atoms
+
+1 1 2 3
+2 1 2 3
+3 1 2 3
+
+Shake Bond Types
+
+1 14 14 24
+2 14 14 24
+3 14 14 24
+
+
