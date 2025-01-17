@@ -224,7 +224,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
         mon_id2 = "co2cm5";
 
     // Monomers here have to be in alphabetical order: mon1 < mon2 ALWAYS
-    if ((mon_id1 == "f-" || mon_id1 == "f-poleff") and mon_id2 == "h2o") {
+    if (mon_id1 == "f-poleff" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -241,7 +241,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.65841);  // A^(-1)
         b.push_back(2.99892);  // A^(-1)
-    } else if (mon_id1 == "f-pol100" and mon_id2 == "h2o") {
+    } else if ((mon_id1 == "f-" || mon_id1 == "f-pol100") and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -326,7 +326,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.28017);  // A^(-1)
         b.push_back(4.19907);  // A^(-1)
-    } else if ((mon_id1 == "cl-" || mon_id1 == "cl-poleff") and mon_id2 == "h2o") {
+    } else if (mon_id1 == "cl-poleff" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -343,7 +343,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.27758);  // A^(-1)
         b.push_back(2.92664);  // A^(-1)
-    } else if (mon_id1 == "cl-pol100" and mon_id2 == "h2o") {
+    } else if ((mon_id1 == "cl-" || mon_id1 == "cl-pol100") and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -428,7 +428,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.2164);  // A^(-1)
         b.push_back(3.20482);  // A^(-1)
-    } else if ((mon_id1 == "br-" || mon_id1 == "br-poleff") and mon_id2 == "h2o") {
+    } else if (mon_id1 == "br-poleff" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -445,7 +445,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.06017);  // A^(-1)
         b.push_back(2.91132);  // A^(-1)
-    } else if (mon_id1 == "br-pol100" and mon_id2 == "h2o") {
+    } else if ((mon_id1 == "br-" || mon_id1 == "br-pol100") and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -530,7 +530,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(3.01321);  // A^(-1)
         b.push_back(3.14144);  // A^(-1)
-    } else if (mon_id1 == "h2o" and (mon_id2 == "i-" || mon_id2 == "i-poleff")) {
+    } else if (mon_id1 == "h2o" and mon_id2 == "i-poleff") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -547,7 +547,7 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         b.push_back(2.71045);  // A^(-1)
         b.push_back(2.87024);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i-pol100") {
+    } else if (mon_id1 == "h2o" and (mon_id2 == "i-" || mon_id2 == "i-pol100")) {
         // Define the type of atom in each mon
         types2.push_back(0);
 

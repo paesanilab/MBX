@@ -1187,23 +1187,23 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     if (is_in_json) return;
 
     // Halides
-    if (mon_id == "f-" || mon_id == "f-poleff") {  // Fluoride
+    if (mon_id == "f-poleff") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.8079;
-    } else if (mon_id == "cl-" || mon_id == "cl-poleff") {  // Chloride
+    } else if (mon_id == "cl-poleff") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.6569;
-    } else if (mon_id == "br-" || mon_id == "br-poleff") {  // Bromide
+    } else if (mon_id == "br-poleff") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 3.7819;
-    } else if (mon_id == "i-" || mon_id == "i-poleff") {  // Iodide
+    } else if (mon_id == "i-poleff") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.9563;
     }
 
-    if (mon_id == "f-pol100") {  // Fluoride
+    if (mon_id == "f-" || mon_id == "f-pol100") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.4669;
-    } else if (mon_id == "cl-pol100") {  // Chloride
+    } else if (mon_id == "cl-" || mon_id == "cl-pol100") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3602;
-    } else if (mon_id == "br-pol100") {  // Bromide
+    } else if (mon_id == "br-" || mon_id == "br-pol100") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 7.1668;
-    } else if (mon_id == "i-pol100") {  // Iodide
+    } else if (mon_id == "i-" || mon_id == "i-pol100") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 10.1184;
     }
 
