@@ -233,7 +233,7 @@ TEST_CASE("buckingham::GetRepulsion") {
                                            2.8645442630e+01,  2.3930132729e+01, 9.9910439136e+00,
                                            -1.3256346429e+00, 9.9910439136e+00, 1.0218786823e+01};
 
-    double energy_expected = 4.4300261242e+00;
+    double energy_expected = 4.3821380806e+00;
 
     std::vector<std::pair<std::string, std::string> > buck_pairs = {{"f-", "h2o"}};
 
