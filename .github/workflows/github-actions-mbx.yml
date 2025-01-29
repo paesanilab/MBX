@@ -79,7 +79,7 @@ jobs:
           echo "\n\n  LIB/  "
           ls ${{ github.workspace }}/lib -lth
       - name: Unittests
-        run: make check
+        run: make -j2 check
   
       - name: Unittest log
         if: ${{ !cancelled() }}
