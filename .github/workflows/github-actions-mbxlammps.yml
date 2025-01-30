@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        compiler: [g++, icpc] # eventually need to swap deprecated icpc for icpx
+        compiler: [g++, icpx]
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -51,11 +51,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel intel-oneapi-mkl
       - name: activate intel oneAPI
-        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
+        if: matrix.compiler == 'icpx' 
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-          echo "MPI_COMPILER=mpiicpc" >> "$GITHUB_ENV"
+          echo "MPI_COMPILER=mpiicpx" >> "$GITHUB_ENV"
         
       - run: echo "Using compiler ${{matrix.compiler}} with ${{env.MPI_COMPILER}}"
 

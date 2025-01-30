@@ -1891,24 +1891,24 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                 size_t kend1 = Efq_1_pool[rank].size();
                 size_t kend2 = Efq_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     Efq_all_[fi_crd1 + k] += Efq_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     Efq_all_[fi_crd2 + k] += Efq_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
@@ -2453,24 +2453,24 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                 size_t kend1 = Efq_1_pool[rank].size();
                 size_t kend2 = Efq_2_pool[rank].size();
 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     Efq_all_[fi_crd1 + k] += Efq_1_pool[rank][k];
                 }
 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     Efq_all_[fi_crd2 + k] += Efq_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
@@ -6411,10 +6411,51 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     fi_mon1 = 0;
 
     double aDD = 0.055; // Thole damping aDD intermolecular is always 0.055
-    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+
+    //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
+    std::vector<double> xyz_rearranged(xyz_all_.size());
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t site_count = xyz_rearranged.size()/3;
+    //fi_mon has the index of the first monomer of this monomer type
+    //for each monomer type
+    for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
+        //for each site of that monomer type
+        //nmon = number of monomers of that type
+        size_t nmon = mon_type_count_[mt].second;
+        size_t ns = sites_all_[fi_mon];
+        for(size_t s = 0; s < ns; s++){
+            for(size_t i = 0; i<nmon; ++i){
+                if(use_pbc){
+                    double x = box_inverse[0]*xyz_all_[fi_crd+i] + box_inverse[3]*xyz_all_[fi_crd+i+nmon] + box_inverse[6]*xyz_all_[fi_crd+i+2*nmon],
+                        y = box_inverse[1]*xyz_all_[fi_crd+i] + box_inverse[4]*xyz_all_[fi_crd+i+nmon] + box_inverse[7]*xyz_all_[fi_crd+i+2*nmon],
+                        z = box_inverse[2]*xyz_all_[fi_crd+i] + box_inverse[5]*xyz_all_[fi_crd+i+nmon] + box_inverse[8]*xyz_all_[fi_crd+i+2*nmon];
+                    
+                    x -= std::floor(x + 0.5);
+                    y -= std::floor(y + 0.5);
+                    z -= std::floor(z + 0.5);
+
+                    xyz_rearranged[fi_crd+3*i] = box[0]*x + box[3]*y + box[6]*z;
+                    xyz_rearranged[fi_crd+3*i+1] = box[1]*x + box[4]*y + box[7]*z;
+                    xyz_rearranged[fi_crd+3*i+2] = box[2]*x + box[5]*y + box[8]*z;
+                }
+                else{
+                    xyz_rearranged[fi_crd+3*i] = xyz_all_[fi_crd+i];
+                    xyz_rearranged[fi_crd+3*i+1] = xyz_all_[fi_crd+i+nmon];
+                    xyz_rearranged[fi_crd+3*i+2] = xyz_all_[fi_crd+i+nmon*2];
+                }
+            }
+            fi_crd += nmon*3;
+        }
+        fi_mon += nmon;
+    }
+        typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                        kdtutils::PointCloud<double>, 3 /* dim */>
+            my_kd_tree_t;
+        for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
-        size_t nmon12 = nmon1 * 2;
+        //size_t nmon12 = nmon1 * 2;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
@@ -6422,8 +6463,23 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         fi_sitetypes2 = 0;
 
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+            // making mini trees for each site in mon2 (one tree per site)
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
+
+            //trees and associated point clouds need to be allocated on the heap
+            std::vector<my_kd_tree_t*> trees(ns2);
+            std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
+            if(nmon2 >= 2048) {        //pt 1/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
+                for(int i = 0; i<ns2; ++i){
+                    std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
+                    kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box, box_inverse));
+                    my_kd_tree_t* index = new my_kd_tree_t(3 /*dim*/, *ptc, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+                    index->buildIndex();
+                    trees[i] = index;
+                }
+            }
+
             bool same = (mt1 == mt2);
             // Prepare for parallelization
             // /*
@@ -6450,7 +6506,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             #ifdef _OPENMP
             #pragma omp parallel for schedule(dynamic)
             #endif
-
+            //for each monomer in mt1...
             for (size_t m1 = m1start; m1 < nmon1; m1 += m1_step_size) {
                 //            for (size_t m1 = 0; m1 < nmon1; m1++) {
                 // size_t isl1_offset = fi_mon1 + m1;
@@ -6463,8 +6519,17 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 std::shared_ptr<ElectricFieldHolder> local_field = field_pool[rank];
                 size_t m2init = same ? m1 + 1 : 0;
 
+                //for each site in the monomer m1...
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon13 = 3 * nmon1 * i;
+                    //first getting the point:
+                    //islocal_all_
+                    bool point1_local = islocal_all_[fi_mon1+m1]==1;
+                    double point[3];
+                    point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
+                    point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
+                    point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
+
                     for (size_t j = 0; j < ns2; j++) {
                         double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
                         double Ai = 0.0;
@@ -6477,31 +6542,51 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                             Ai = BIGNUM;
                             Asqsqi = Ai;
                         }
-
                         // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
-                        std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];
-                        std::fill(bool_mon2_indices.begin(), bool_mon2_indices.end(), 0.0);
-                        local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
-                                                                    nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
-                                                                    m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
+                        // goes over all mt2 site j
+                        
+                        std::vector<size_t> good_mon2_indices;
 
-                        int num_good_mon2 = 0;
-                        for (int ind = 0; ind < nmon2; ind++) {
-                            if (bool_mon2_indices[ind] == 1) {
-                                num_good_mon2++;
+                        if(nmon2 >= 2048) {  //pt 2/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
+                            std::vector<std::pair<size_t, double>> site2_indices;
+                            nanoflann::SearchParams params(32, 0, false);
+
+                            const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                            
+                            for(size_t s = 0; s<nMatches; ++s){
+                                //getting the actual index (not periodic index) of the monomer
+                                size_t idx = site2_indices[s].first % nmon2;
+                                if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_mon2+idx]))) && idx >= m2init){
+                                    //add the monomer, indexed relative to mt2
+                                    if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
+                                        good_mon2_indices.push_back(idx);
+                                }
+                            }
+                        } else {
+                            std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];
+                            std::fill(bool_mon2_indices.begin(), bool_mon2_indices.end(), 0.0);
+                            local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
+                                                                        nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
+                                                                        m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
+
+                            int num_good_mon2 = 0;
+                            for (int ind = 0; ind < nmon2; ind++) {
+                                if (bool_mon2_indices[ind] == 1) {
+                                    num_good_mon2++;
+                                }
+                            }
+
+                            good_mon2_indices = std::vector<size_t>(num_good_mon2);
+                            int current_good_mon2_index = 0;
+                            // monomer 2s within the cutoff are stored in good_mon2_indices
+                            for (int ind = 0; ind < nmon2; ind++) {
+                                if (bool_mon2_indices[ind] == 1) {
+                                    good_mon2_indices[current_good_mon2_index] = ind;
+                                    current_good_mon2_index++;
+                                }
                             }
                         }
-
-                        std::vector<size_t> good_mon2_indices(num_good_mon2);
-                        int current_good_mon2_index = 0;
-                        // monomer 2s within the cutoff are stored in good_mon2_indices
-                        for (int ind = 0; ind < nmon2; ind++) {
-                            if (bool_mon2_indices[ind] == 1) {
-                                good_mon2_indices[current_good_mon2_index] = ind;
-                                current_good_mon2_index++;
-                            }
-                        }
-
+                        
                         precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j] = new PrecomputedInfo();
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
 
@@ -6546,6 +6631,14 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+
+            //freeing trees
+            if(nmon2 >= 2048) { //pt 3/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
+                for(int i = 0; i<ns2; ++i){
+                    delete trees[i];
+                    delete clouds[i];
+                }
+            }
             fi_sitetypes2 += ns2;
         }
         // Update first indexes
@@ -8235,24 +8328,24 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& p
                 size_t kend1 = grad_1_pool[rank].size();
                 size_t kend2 = grad_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     grad_[fi_crd1 + k] += grad_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     grad_[fi_crd2 + k] += grad_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
@@ -9110,24 +9203,24 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
                 size_t kend1 = grad_1_pool[rank].size();
                 size_t kend2 = grad_2_pool[rank].size();
 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     grad_[fi_crd1 + k] += grad_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     grad_[fi_crd2 + k] += grad_2_pool[rank][k];
                 }
                 kend1 = phi_1_pool[rank].size();
                 kend2 = phi_2_pool[rank].size();
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend1; k++) {
                     phi_all_[fi_sites1 + k] += phi_1_pool[rank][k];
                 }
                 
-                #pragma omp simd simdlen(8)
+                #pragma omp simd
                 for (size_t k = 0; k < kend2; k++) {
                     phi_all_[fi_sites2 + k] += phi_2_pool[rank][k];
                 }
