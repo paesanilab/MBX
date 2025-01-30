@@ -194,7 +194,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg) {
     mol_type = NULL;
     mol_anchor = NULL;
     mol_local = NULL;
-    mol_order = NULL;
+    // mol_order = NULL;
 
     grow_arrays(atom->nmax);
 
