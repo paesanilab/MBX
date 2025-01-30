@@ -60,9 +60,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 constexpr double TOL = 1E-6;
 
-// TODO: ADD HALIDE UNITTESTS
-
-
 TEST_CASE("mbnrg_A1_B1C2X2_deg5_v1::struct") {
     SECTION("f--h2o") {
         std::vector<double> xyz1 = {0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00,

@@ -65,7 +65,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 1.4662741082e-01;
+        double energy_expected = 1.4662741082e-01;
 
         std::vector<double> grad1_expected = {2.1927978974e-01,  8.2950770558e-02, 1.3988974052e-01,
                                               -3.9453362980e-02, 9.6759816186e-02, -7.3546733882e-02,
@@ -85,15 +85,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -106,7 +106,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -120,7 +120,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -134,7 +134,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -220,7 +220,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 6.6537845821e-01;
+        double energy_expected = 6.6537845821e-01;
 
         std::vector<double> grad1_expected = {
             -3.8764486752e-01, 2.5932076282e-01,  -1.0179753554e-01, -5.1792690727e-01, 9.7128747562e-01,
@@ -297,15 +297,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -318,7 +318,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -332,7 +332,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -346,7 +346,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -383,7 +383,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 7.3272385776e-02;
+        double energy_expected = 7.3272385776e-02;
 
         std::vector<double> grad1_expected = {-1.4599009063e-02, 2.6487559922e-01, -4.5991578026e-01,
                                               0.0000000000e+00,  0.0000000000e+00, 0.0000000000e+00,
@@ -411,15 +411,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -432,7 +432,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -446,7 +446,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -460,7 +460,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -490,7 +490,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = -8.6542153165e-01;
+        double energy_expected = -8.6542153165e-01;
 
         std::vector<double> grad1_expected = {
             -1.2986363504e-01, -2.1298329637e-01, -4.2909417537e-01, -1.6020735854e+00, -1.1598726850e-01,
@@ -511,15 +511,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -532,7 +532,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -546,7 +546,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -560,7 +560,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -616,7 +616,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //    std::vector<double> grad3(xyz3.size(), 0.0);
     //    std::vector<double> virial(9, 0.0);
 
-    //    double expected_energy = -2.9409183708e-02;
+    //    double energy_expected = -2.9409183708e-02;
 
     //    std::vector<double> grad1_expected = {
     //        -2.2393574060e-01, -6.1256986419e-02, 2.3264725800e-01,  1.1782780887e-01,  3.5096359374e-02,
@@ -663,15 +663,15 @@ TEST_CASE("energy3b::get_3b_energy") {
     //        double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
     //        double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
     //        double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-    //        REQUIRE(e == Approx(expected_energy).margin(TOL));
-    //        REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-    //        REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-    //        REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+    //        REQUIRE(e == Approx(energy_expected).margin(TOL));
+    //        REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+    //        REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+    //        REQUIRE(e4 == Approx(energy_expected).margin(TOL));
     //    }
 
     //    SECTION("With gradients") {
     //        double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-    //        REQUIRE(e == Approx(expected_energy).margin(TOL));
+    //        REQUIRE(e == Approx(energy_expected).margin(TOL));
     //        REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
     //        REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //        REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -684,7 +684,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //            std::fill(virial.begin(), virial.end(), 0.0);
 
     //            double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-    //            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
     //            REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -698,7 +698,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //            std::fill(virial.begin(), virial.end(), 0.0);
 
     //            double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-    //            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
     //            REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -712,7 +712,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //            std::fill(virial.begin(), virial.end(), 0.0);
 
     //            double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-    //            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
     //            REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -735,7 +735,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 0.0;
+        double energy_expected = 0.0;
 
         std::vector<double> grad1_expected = {0.0, 0.0, 0.0};
         std::vector<double> grad2_expected = {0.0, 0.0, 0.0};
@@ -747,15 +747,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -768,7 +768,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -782,7 +782,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -796,7 +796,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -827,7 +827,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 1.0921723601e-01;
+        double energy_expected = 1.0921723601e-01;
 
         std::vector<double> grad1_expected = {
             3.9701702165e-01,  9.4431286256e-01,  2.0926085554e-01,  -1.1828330492e+00, -7.5752865090e-01,
@@ -850,15 +850,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -871,7 +871,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -885,7 +885,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -899,7 +899,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -928,7 +928,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = -2.0316534362e-01;
+        double energy_expected = -2.0316534362e-01;
 
         std::vector<double> grad1_expected = {7.8415243415e-02,  9.1636143540e-01,  2.5339811127e-01,
                                               -2.3656708270e-01, -1.0606683685e+00, -2.8727812353e-01,
@@ -948,15 +948,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -969,7 +969,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -983,7 +983,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -997,7 +997,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1025,7 +1025,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 5.0687766455e-01;
+        double energy_expected = 5.0687766455e-01;
 
         std::vector<double> grad1_expected = {3.7209818560e-15 , 2.1798052479e+00 , -1.5408371593e-01 , };
         std::vector<double> grad2_expected = {4.0106806765e-15 , -1.7593411089e+00 , -2.1748585437e+00 ,
@@ -1043,15 +1043,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1064,7 +1064,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1078,7 +1078,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1092,7 +1092,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1119,7 +1119,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 5.1462341984e-01;
+        double energy_expected = 5.1462341984e-01;
 
         std::vector<double> grad1_expected = {4.4859949089e-15 , 9.4652221531e-01 , -9.5373625586e-02 ,};
         std::vector<double> grad2_expected = {7.2164496601e-16 , -8.8798758353e-01 , -5.0746836790e-01 ,
@@ -1137,15 +1137,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1158,7 +1158,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1172,7 +1172,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1186,7 +1186,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1213,7 +1213,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 7.4307791410e-01;
+        double energy_expected = 7.4307791410e-01;
 
         std::vector<double> grad1_expected = {-1.2073675393e-15 , 2.5813255975e+00 , -3.0828538557e-01 , };
         std::vector<double> grad2_expected = {-3.7747582837e-15 , -1.5600043354e+00 , 8.5827474989e-01 ,
@@ -1231,15 +1231,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1252,7 +1252,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1266,7 +1266,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1280,7 +1280,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1307,7 +1307,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 1.2214518270e+00;
+        double energy_expected = 1.2214518270e+00;
 
         std::vector<double> grad1_expected = {-2.1649348980e-15 , 1.7725016239e+00 , 2.5315536587e-01 , };
         std::vector<double> grad2_expected = {5.2735593670e-16 , -3.0644616446e+00 , -1.7905535774e+00 ,
@@ -1325,15 +1325,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1346,7 +1346,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1360,7 +1360,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1374,7 +1374,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1403,7 +1403,7 @@ TEST_CASE("energy3b::get_3b_energy") {
         std::vector<double> grad3(xyz3.size(), 0.0);
         std::vector<double> virial(9, 0.0);
 
-        double expected_energy = 4.9621879400e-02;
+        double energy_expected = 4.9621879400e-02;
 
         std::vector<double> grad1_expected = {3.6357674014e-01,  9.6923976481e-01,  1.3785438769e-01,
                                               -2.9794723035e-03, -6.0388048170e-01, -7.7520112915e-02,
@@ -1423,15 +1423,15 @@ TEST_CASE("energy3b::get_3b_energy") {
             double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
             double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
             double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
-            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
+            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
         }
 
         SECTION("With gradients") {
             double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-            REQUIRE(e == Approx(expected_energy).margin(TOL));
+            REQUIRE(e == Approx(energy_expected).margin(TOL));
             REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
             REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
             REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1444,7 +1444,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1458,7 +1458,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1472,7 +1472,7 @@ TEST_CASE("energy3b::get_3b_energy") {
                 std::fill(virial.begin(), virial.end(), 0.0);
 
                 double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2, &virial);
-                REQUIRE(e2 == Approx(expected_energy).margin(TOL));
+                REQUIRE(e2 == Approx(energy_expected).margin(TOL));
                 REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
                 REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1494,7 +1494,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //        std::vector<double> grad3(xyz3.size(), 0.0);
     //        std::vector<double> virial(9, 0.0);
     //
-    //        double expected_energy = ;
+    //        double energy_expected = ;
     //
     //        std::vector<double> grad1_expected = {};
     //        std::vector<double> grad2_expected = {};
@@ -1506,15 +1506,15 @@ TEST_CASE("energy3b::get_3b_energy") {
     //            double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
     //            double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
     //            double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-    //            REQUIRE(e == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
     //        }
     //
     //        SECTION("With gradients") {
     //            double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-    //            REQUIRE(e == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e == Approx(energy_expected).margin(TOL));
     //            REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1527,7 +1527,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
@@ -1540,7 +1540,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
@@ -1553,7 +1553,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
@@ -1574,7 +1574,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //        std::vector<double> grad3(xyz3.size(), 0.0);
     //        std::vector<double> virial(9, 0.0);
     //
-    //        double expected_energy = ;
+    //        double energy_expected = ;
     //
     //        std::vector<double> grad1_expected = {};
     //        std::vector<double> grad2_expected = {};
@@ -1586,15 +1586,15 @@ TEST_CASE("energy3b::get_3b_energy") {
     //            double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
     //            double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
     //            double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-    //            REQUIRE(e == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
     //        }
     //
     //        SECTION("With gradients") {
     //            double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-    //            REQUIRE(e == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e == Approx(energy_expected).margin(TOL));
     //            REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1607,7 +1607,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
@@ -1620,7 +1620,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
@@ -1633,7 +1633,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
@@ -1654,7 +1654,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //        std::vector<double> grad3(xyz3.size(), 0.0);
     //        std::vector<double> virial(9, 0.0);
     //
-    //        double expected_energy = ;
+    //        double energy_expected = ;
     //
     //        std::vector<double> grad1_expected = {};
     //        std::vector<double> grad2_expected = {};
@@ -1666,15 +1666,15 @@ TEST_CASE("energy3b::get_3b_energy") {
     //            double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3);
     //            double e3 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2);
     //            double e4 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1);
-    //            REQUIRE(e == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e2 == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e3 == Approx(expected_energy).margin(TOL));
-    //            REQUIRE(e4 == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e2 == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e3 == Approx(energy_expected).margin(TOL));
+    //            REQUIRE(e4 == Approx(energy_expected).margin(TOL));
     //        }
     //
     //        SECTION("With gradients") {
     //            double e = e3b::get_3b_energy(mon1, mon2, mon3, nm, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
-    //            REQUIRE(e == Approx(expected_energy).margin(TOL));
+    //            REQUIRE(e == Approx(energy_expected).margin(TOL));
     //            REQUIRE(VectorsAreEqual(grad1, grad1_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //            REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
@@ -1687,7 +1687,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon2, mon1, mon3, nm, xyz2, xyz1, xyz3, grad2, grad1, grad3,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
@@ -1700,7 +1700,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon3, mon2, mon1, nm, xyz3, xyz2, xyz1, grad3, grad2, grad1,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
@@ -1713,7 +1713,7 @@ TEST_CASE("energy3b::get_3b_energy") {
     //                std::fill(virial.begin(), virial.end(), 0.0);
     //
     //                double e2 = e3b::get_3b_energy(mon1, mon3, mon2, nm, xyz1, xyz3, xyz2, grad1, grad3, grad2,
-    //                &virial); REQUIRE(e2 == Approx(expected_energy).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
+    //                &virial); REQUIRE(e2 == Approx(energy_expected).margin(TOL)); REQUIRE(VectorsAreEqual(grad1,
     //                grad1_expected, TOL)); REQUIRE(VectorsAreEqual(grad2, grad2_expected, TOL));
     //                REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
     //                REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
