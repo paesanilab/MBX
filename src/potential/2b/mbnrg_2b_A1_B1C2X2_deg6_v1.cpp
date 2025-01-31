@@ -9,7 +9,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
     // =====>> BEGIN SECTION CONSTRUCTOR <<=====
     // =>> PASTE RIGHT BELOW THIS LINE <==
 
-    if ((mon1 == "f-" or mon1 == "f-poleff") and mon2 == "h2o") {
+    if (mon1 == "f-poleff" and mon2 == "h2o") {
         coefficients = std::vector<double> {
              2.180466384860305e+02, // 0
             -4.281419083543524e+02, // 1
@@ -926,7 +926,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
           m_ro =  7.300000000000000e+00; // A
     } // end if mon1 == "f-" and mon2 == "h2o"
 
-    if ((mon1 == "cl-" or mon1 == "cl-poleff") and mon2 == "h2o") {
+    if (mon1 == "cl-poleff" and mon2 == "h2o") {
         coefficients = std::vector<double> {
             -1.639775882261524e+02, // 0
             -5.061774837432198e+01, // 1
@@ -1843,7 +1843,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
           m_ro =  7.800000000000000e+00; // A
     } // end if mon1 == "cl-" and mon2 == "h2o"
 
-    if ((mon1 == "br-" or mon1 == "br-poleff") and mon2 == "h2o") {
+    if (mon1 == "br-poleff" and mon2 == "h2o") {
         coefficients = std::vector<double> {
             -1.103037084046306e+02, // 0
              7.356299013607112e+01, // 1
@@ -2760,7 +2760,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
           m_ro =  7.900000000000000e+00; // A
     } // end if mon1 == "br-" and mon2 == "h2o"
 
-    if ((mon1 == "i-" or mon1 == "i-poleff") and mon2 == "h2o") {
+    if (mon1 == "i-poleff" and mon2 == "h2o") {
         coefficients = std::vector<double> {
             -1.096976855736687e+02, // 0
             -5.934416090933099e+01, // 1
@@ -3677,7 +3677,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
           m_ro =  8.199999999999999e+00; // A
     } // end if mon1 == "i-" and mon2 == "h2o"
 
-    if (mon1 == "f-pol100" and mon2 == "h2o") {
+    if ((mon1 == "f-" or mon1 == "f-pol100") and mon2 == "h2o") {
         coefficients = std::vector<double> {
             -2.682991242672700e+02, // 0
             -4.382787828044844e+02, // 1
@@ -4594,7 +4594,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
           m_ro =  7.300000000000000e+00; // A
     } // end if mon1 == "f-" and mon2 == "h2o"
 
-    if (mon1 == "cl-pol100" and mon2 == "h2o") {
+    if ((mon1 == "cl-" or mon1 == "cl-pol100") and mon2 == "h2o") {
         coefficients = std::vector<double> {
             -2.202898219546381e+02, // 0
              3.159877587587743e+01, // 1
@@ -5511,7 +5511,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
           m_ro =  7.800000000000000e+00; // A
     } // end if mon1 == "cl-" and mon2 == "h2o"
 
-    if (mon1 == "br-pol100" and mon2 == "h2o") {
+    if ((mon1 == "br-" or mon1 == "br-pol100") and mon2 == "h2o") {
         coefficients = std::vector<double> {
             -2.793857076522015e+01, // 0
              5.027275995699865e+01, // 1
@@ -6428,7 +6428,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
           m_ro =  7.900000000000000e+00; // A
     } // end if mon1 == "br-" and mon2 == "h2o"
 
-    if (mon1 == "i-pol100" and mon2 == "h2o") {
+    if ((mon1 == "i-" or mon1 == "i-pol100") and mon2 == "h2o") {
         coefficients = std::vector<double> {
             -2.325975014901322e+02, // 0
              2.039422493273982e+01, // 1

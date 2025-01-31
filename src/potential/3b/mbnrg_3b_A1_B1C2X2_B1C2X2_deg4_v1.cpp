@@ -10,7 +10,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
     // =>> PASTE RIGHT BELOW THIS LINE <==
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if ((mon1 == "f-" or mon1 == "f-poleff") and mon2 == "h2o" and mon3 == "h2o") {
+        if (mon1 == "f-poleff" and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                  1.498335061910547e+02, // 0
                 -7.744711644553023e+01, // 1
@@ -3201,7 +3201,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         } // end if mon1 == "f-" and mon2 == "h2o" and mon3 == "h2o"
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if ((mon1 == "cl-" or mon1 == "cl-poleff") and mon2 == "h2o" and mon3 == "h2o") {
+        if (mon1 == "cl-poleff" and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                  7.757832476311427e+01, // 0
                  6.451587777834241e+00, // 1
@@ -6392,7 +6392,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         } // end if mon1 == "cl-" and mon2 == "h2o" and mon3 == "h2o"
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if ((mon1 == "br-" or mon1 == "br-poleff") and mon2 == "h2o" and mon3 == "h2o") {
+        if (mon1 == "br-poleff" and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                  1.660661625449150e+02, // 0
                  2.411477240576701e+00, // 1
@@ -9583,7 +9583,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         } // end if mon1 == "br-" and mon2 == "h2o" and mon3 == "h2o"
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if ((mon1 == "i-" or mon1 == "i-poleff") and mon2 == "h2o" and mon3 == "h2o") {
+        if (mon1 == "i-poleff" and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                  1.133390675910169e+02, // 0
                 -7.577216416046022e+00, // 1
@@ -12774,7 +12774,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         } // end if mon1 == "i-" and mon2 == "h2o" and mon3 == "h2o"
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if (mon1 == "f-pol100" and mon2 == "h2o" and mon3 == "h2o") {
+        if ((mon1 == "f-" or mon1 == "f-pol100") and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                 -7.411014082139889e+01, // 0
                 -1.699663431119722e+02, // 1
@@ -15965,7 +15965,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         } // end if mon1 == "f-" and mon2 == "h2o" and mon3 == "h2o"
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if (mon1 == "cl-pol100" and mon2 == "h2o" and mon3 == "h2o") {
+        if ((mon1 == "cl-" or mon1 == "cl-pol100") and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                  1.208677811862448e+02, // 0
                  2.586736053700037e+01, // 1
@@ -19156,7 +19156,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         } // end if mon1 == "cl-" and mon2 == "h2o" and mon3 == "h2o"
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if (mon1 == "br-pol100" and mon2 == "h2o" and mon3 == "h2o") {
+        if ((mon1 == "br-" or mon1 == "br-pol100") and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                  8.356696780558521e+01, // 0
                  1.792127330362026e+01, // 1
@@ -22347,7 +22347,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         } // end if mon1 == "br-" and mon2 == "h2o" and mon3 == "h2o"
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if (mon1 == "i-pol100" and mon2 == "h2o" and mon3 == "h2o") {
+        if ((mon1 == "i-" or mon1 == "i-pol100") and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                  2.277397100592191e+02, // 0
                  2.416117609958489e+01, // 1
