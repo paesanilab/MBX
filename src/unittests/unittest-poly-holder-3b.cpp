@@ -211,7 +211,7 @@ TEST_CASE("mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::struct") {
         REQUIRE(VectorsAreEqual(grad3, grad3_expected, TOL));
         REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
     }
-    SECTION("c---h2o-h2o") {
+    SECTION("cl--h2o-h2o") {
         std::vector<double> xyz1 = {0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
         std::vector<double> xyz2 = {0.0000000000e+00,  2.0000000000e+00, -1.9611387200e-03,
                                     -7.5739101100e-01, 2.0000000000e+00, -5.8831383900e-01,
@@ -292,7 +292,7 @@ TEST_CASE("mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::struct") {
         REQUIRE(VectorsAreEqual(virial, virial_expected, TOL));
     }
 
-    SECTION("i-h2o-h2o") {
+    SECTION("i--h2o-h2o") {
         std::vector<double> xyz1 = {0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
         std::vector<double> xyz2 = {0.0000000000e+00,  2.0000000000e+00, -1.9611387200e-03,
                                     -7.5739101100e-01, 2.0000000000e+00, -5.8831383900e-01,
