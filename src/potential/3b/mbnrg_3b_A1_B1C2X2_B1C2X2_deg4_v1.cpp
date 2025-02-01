@@ -10,7 +10,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
     // =>> PASTE RIGHT BELOW THIS LINE <==
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if (mon1 == "f-"and mon2 == "h2o" and mon3 == "h2o") {
+        if (mon1 == "f-" and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                 -7.411014082139889e+01, // 0
                 -1.699663431119722e+02, // 1
@@ -9583,7 +9583,7 @@ mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string
         } // end if mon1 == "br-" and mon2 == "h2o" and mon3 == "h2o"
 
     // mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.cpp
-        if (mon1 == "i-"and mon2 == "h2o" and mon3 == "h2o") {
+        if (mon1 == "i-" and mon2 == "h2o" and mon3 == "h2o") {
             coefficients = std::vector<double> {
                  2.277397100592191e+02, // 0
                  2.416117609958489e+01, // 1
