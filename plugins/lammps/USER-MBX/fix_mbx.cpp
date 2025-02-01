@@ -2457,37 +2457,13 @@ int FixMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
     else if (strcmp("dp1", name) == 0) {
         na = 1;
         inc_e = true;
-    } else if (strcmp("f-", name) == 0 ||
-               strcmp("f-poleff", name) == 0 ||
-               strcmp("f-pol100", name) == 0 ||
-               strcmp("f-pol75", name) == 0 ||
-               strcmp("f-pol50", name) == 0 ||
-               strcmp("f-pol25", name) == 0 ||
-               strcmp("f-pol0", name) == 0)
+    } else if (strcmp("f-", name) == 0)
         na = 1;
-    else if (strcmp("cl-", name) == 0 ||
-             strcmp("cl-poleff", name) == 0 ||
-             strcmp("cl-pol100", name) == 0 ||
-             strcmp("cl-pol75", name) == 0 ||
-             strcmp("cl-pol50", name) == 0 ||
-             strcmp("cl-pol25", name) == 0 ||
-             strcmp("cl-pol0", name) == 0)
+    else if (strcmp("cl-", name) == 0)
         na = 1;
-    else if (strcmp("br-", name) == 0 ||
-             strcmp("br-poleff", name) == 0 ||
-             strcmp("br-pol100", name) == 0 ||
-             strcmp("br-pol75", name) == 0 ||
-             strcmp("br-pol50", name) == 0 ||
-             strcmp("br-pol25", name) == 0 ||
-             strcmp("br-pol0", name) == 0)
+    else if (strcmp("br-", name) == 0)
         na = 1;
-    else if (strcmp("i-", name) == 0 ||
-             strcmp("i-poleff", name) == 0 ||
-             strcmp("i-pol100", name) == 0 ||
-             strcmp("i-pol75", name) == 0 ||
-             strcmp("i-pol50", name) == 0 ||
-             strcmp("i-pol25", name) == 0 ||
-             strcmp("i-pol0", name) == 0)
+    else if (strcmp("i-", name) == 0)
         na = 1;
     else if (strcmp("co2", name) == 0)
         na = 3;
@@ -2562,37 +2538,13 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
     } else if (strcmp("dp1", name) == 0) {
         n.push_back("X");
 #endif
-    } else if (strcmp("f-", name) == 0 ||
-               strcmp("f-poleff", name) == 0 ||
-               strcmp("f-pol100", name) == 0 ||
-               strcmp("f-pol75", name) == 0 ||
-               strcmp("f-pol50", name) == 0 ||
-               strcmp("f-pol25", name) == 0 ||
-               strcmp("f-pol0", name) == 0) {
+    } else if (strcmp("f-", name) == 0) {
         n.push_back("F");
-    } else if (strcmp("cl-", name) == 0 ||
-               strcmp("cl-poleff", name) == 0 ||
-               strcmp("cl-pol100", name) == 0 ||
-               strcmp("cl-pol75", name) == 0 ||
-               strcmp("cl-pol50", name) == 0 ||
-               strcmp("cl-pol25", name) == 0 ||
-               strcmp("cl-pol0", name) == 0) {
+    } else if (strcmp("cl-", name) == 0) {
         n.push_back("Cl");
-    } else if (strcmp("br-", name) == 0 ||
-               strcmp("br-poleff", name) == 0 ||
-               strcmp("br-pol100", name) == 0 ||
-               strcmp("br-pol75", name) == 0 ||
-               strcmp("br-pol50", name) == 0 ||
-               strcmp("br-pol25", name) == 0 ||
-               strcmp("br-pol0", name) == 0) {
+    } else if (strcmp("br-", name) == 0) {
         n.push_back("Br");
-    } else if (strcmp("i-", name) == 0 ||
-               strcmp("i-poleff", name) == 0 ||
-               strcmp("i-pol100", name) == 0 ||
-               strcmp("i-pol75", name) == 0 ||
-               strcmp("i-pol50", name) == 0 ||
-               strcmp("i-pol25", name) == 0 ||
-               strcmp("i-pol0", name) == 0) {
+    } else if (strcmp("i-", name) == 0) {
         n.push_back("I");
     } else if (strcmp("he", name) == 0) {
         n.push_back("He");

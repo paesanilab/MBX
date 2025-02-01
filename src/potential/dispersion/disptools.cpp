@@ -532,24 +532,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(9.775202425217957e+00);  // A^(-1)
         d6.push_back(9.406475169954112e+00);  // A^(-1)
 
-    } else if (mon_id1 == "f-poleff" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(3.488640000000000e+02);  // kcal/mol * A^(-6) F -- O
-        C6.push_back(1.286780000000000e+02);  // kcal/mol * A^(-6) F -- H
-
-        d6.push_back(3.65841);  // A^(-1)
-        d6.push_back(2.99892);  // A^(-1)
-    } else if ((mon_id1 == "f-" || mon_id1 == "f-pol100") and mon_id2 == "h2o") {
+    } else if (mon_id1 == "f-"  and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -566,92 +549,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.57999);  // A^(-1)
         d6.push_back(2.70536);  // A^(-1)
-    } else if (mon_id1 == "f-pol75" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(3.488640000000000e+02);  // kcal/mol * A^(-6) F -- O
-        C6.push_back(1.286780000000000e+02);  // kcal/mol * A^(-6) F -- H
-
-        d6.push_back(3.58864);  // A^(-1)
-        d6.push_back(2.79262);  // A^(-1)
-    } else if (mon_id1 == "f-pol50" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(3.488640000000000e+02);  // kcal/mol * A^(-6) F -- O
-        C6.push_back(1.286780000000000e+02);  // kcal/mol * A^(-6) F -- H
-
-        d6.push_back(3.62164);  // A^(-1)
-        d6.push_back(2.89671);  // A^(-1)
-    } else if (mon_id1 == "f-pol25" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(3.488640000000000e+02);  // kcal/mol * A^(-6) F -- O
-        C6.push_back(1.286780000000000e+02);  // kcal/mol * A^(-6) F -- H
-
-        d6.push_back(3.67265);  // A^(-1)
-        d6.push_back(3.06551);  // A^(-1)
-    } else if (mon_id1 == "f-pol0" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(3.488640000000000e+02);  // kcal/mol * A^(-6) F -- O
-        C6.push_back(1.286780000000000e+02);  // kcal/mol * A^(-6) F -- H
-
-        d6.push_back(3.28017);  // A^(-1)
-        d6.push_back(4.19907);  // A^(-1)
-    } else if (mon_id1 == "cl-poleff" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(7.461990000000000e+02);  // kcal/mol * A^(-6) Cl -- O
-        C6.push_back(3.068900000000000e+02);  // kcal/mol * A^(-6) Cl -- H
-
-        d6.push_back(3.27758);  // A^(-1)
-        d6.push_back(2.92664);  // A^(-1)
-    } else if ((mon_id1 == "cl-" || mon_id1 == "cl-pol100") and mon_id2 == "h2o") {
+    } else if (mon_id1 == "cl-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -668,92 +566,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.27293);  // A^(-1)
         d6.push_back(2.79252);  // A^(-1)
-    } else if (mon_id1 == "cl-pol75" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(7.461990000000000e+02);  // kcal/mol * A^(-6) Cl -- O
-        C6.push_back(3.068900000000000e+02);  // kcal/mol * A^(-6) Cl -- H
-
-        d6.push_back(3.27071);  // A^(-1)
-        d6.push_back(2.8562);  // A^(-1)
-    } else if (mon_id1 == "cl-pol50" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(7.461990000000000e+02);  // kcal/mol * A^(-6) Cl -- O
-        C6.push_back(3.068900000000000e+02);  // kcal/mol * A^(-6) Cl -- H
-
-        d6.push_back(3.27741);  // A^(-1)
-        d6.push_back(2.92533);  // A^(-1)
-    } else if (mon_id1 == "cl-pol25" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(7.461990000000000e+02);  // kcal/mol * A^(-6) Cl -- O
-        C6.push_back(3.068900000000000e+02);  // kcal/mol * A^(-6) Cl -- H
-
-        d6.push_back(3.27832);  // A^(-1)
-        d6.push_back(3.01688);  // A^(-1)
-    } else if (mon_id1 == "cl-pol0" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(7.461990000000000e+02);  // kcal/mol * A^(-6) Cl -- O
-        C6.push_back(3.068900000000000e+02);  // kcal/mol * A^(-6) Cl -- H
-
-        d6.push_back(3.2164);  // A^(-1)
-        d6.push_back(3.20482);  // A^(-1)
-    } else if (mon_id1 == "br-poleff" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(9.426500000000000e+02);  // kcal/mol * A^(-6) Br -- O
-        C6.push_back(3.941680000000000e+02);  // kcal/mol * A^(-6) Br -- H
-
-        d6.push_back(3.06017);  // A^(-1)
-        d6.push_back(2.91132);  // A^(-1)
-    } else if ((mon_id1 == "br-" || mon_id1 == "br-pol100") and mon_id2 == "h2o") {
+    } else if (mon_id1 == "br-"and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -770,92 +583,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(3.05463);  // A^(-1)
         d6.push_back(2.81519);  // A^(-1)
-    } else if (mon_id1 == "br-pol75" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(9.426500000000000e+02);  // kcal/mol * A^(-6) Br -- O
-        C6.push_back(3.941680000000000e+02);  // kcal/mol * A^(-6) Br -- H
-
-        d6.push_back(3.05395);  // A^(-1)
-        d6.push_back(2.86428);  // A^(-1)
-    } else if (mon_id1 == "br-pol50" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(9.426500000000000e+02);  // kcal/mol * A^(-6) Br -- O
-        C6.push_back(3.941680000000000e+02);  // kcal/mol * A^(-6) Br -- H
-
-        d6.push_back(3.06123);  // A^(-1)
-        d6.push_back(2.91776);  // A^(-1)
-    } else if (mon_id1 == "br-pol25" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(9.426500000000000e+02);  // kcal/mol * A^(-6) Br -- O
-        C6.push_back(3.941680000000000e+02);  // kcal/mol * A^(-6) Br -- H
-
-        d6.push_back(3.06682);  // A^(-1)
-        d6.push_back(2.98962);  // A^(-1)
-    } else if (mon_id1 == "br-pol0" and mon_id2 == "h2o") {
-        // Define the type of atom in each mon
-        types1.push_back(0);
-
-        types2.push_back(0);
-        types2.push_back(1);
-        types2.push_back(1);
-
-        // Set the number of different types
-        nt2 = 2;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(9.426500000000000e+02);  // kcal/mol * A^(-6) Br -- O
-        C6.push_back(3.941680000000000e+02);  // kcal/mol * A^(-6) Br -- H
-
-        d6.push_back(3.01321);  // A^(-1)
-        d6.push_back(3.14144);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i-poleff") {
-        // Define the type of atom in each mon
-        types2.push_back(0);
-
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        // Set the number of different types
-        nt2 = 1;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(1.294680000000000e+03);  // kcal/mol * A^(-6) I -- O
-        C6.push_back(5.681559999999999e+02);  // kcal/mol * A^(-6) I -- H
-
-        d6.push_back(2.71045);  // A^(-1)
-        d6.push_back(2.87024);  // A^(-1)
-    } else if (mon_id1 == "h2o" and (mon_id2 == "i-" || mon_id2 == "i-pol100")) {
+    } else if (mon_id1 == "h2o" and mon_id2 == "i-") {
         // Define the type of atom in each mon
         types2.push_back(0);
 
@@ -872,74 +600,6 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         d6.push_back(2.72259);  // A^(-1)
         d6.push_back(2.80139);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i-pol75") {
-        // Define the type of atom in each mon
-        types2.push_back(0);
-
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        // Set the number of different types
-        nt2 = 1;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(1.294680000000000e+03);  // kcal/mol * A^(-6) I -- O
-        C6.push_back(5.681559999999999e+02);  // kcal/mol * A^(-6) I -- H
-
-        d6.push_back(2.71173);  // A^(-1)
-        d6.push_back(2.84378);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i-pol50") {
-        // Define the type of atom in each mon
-        types2.push_back(0);
-
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        // Set the number of different types
-        nt2 = 1;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(1.294680000000000e+03);  // kcal/mol * A^(-6) I -- O
-        C6.push_back(5.681559999999999e+02);  // kcal/mol * A^(-6) I -- H
-
-        d6.push_back(2.71169);  // A^(-1)
-        d6.push_back(2.88502);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i-pol25") {
-        // Define the type of atom in each mon
-        types2.push_back(0);
-
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        // Set the number of different types
-        nt2 = 1;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(1.294680000000000e+03);  // kcal/mol * A^(-6) I -- O
-        C6.push_back(5.681559999999999e+02);  // kcal/mol * A^(-6) I -- H
-
-        d6.push_back(2.71978);  // A^(-1)
-        d6.push_back(2.9324);  // A^(-1)
-    } else if (mon_id1 == "h2o" and mon_id2 == "i-pol0") {
-        // Define the type of atom in each mon
-        types2.push_back(0);
-
-        types1.push_back(0);
-        types1.push_back(1);
-        types1.push_back(1);
-
-        // Set the number of different types
-        nt2 = 1;
-
-        // Fill in (in order) the C6 and d6 coefficients
-        C6.push_back(1.294680000000000e+03);  // kcal/mol * A^(-6) I -- O
-        C6.push_back(5.681559999999999e+02);  // kcal/mol * A^(-6) I -- H
-
-        d6.push_back(2.68628);  // A^(-1)
-        d6.push_back(3.0327);  // A^(-1)
     } else if (mon_id1 == "h2o" and mon_id2 == "li+") {
         // Define the type of atom in each mon
         types2.push_back(0);
