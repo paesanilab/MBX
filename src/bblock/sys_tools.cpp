@@ -218,7 +218,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 nat.push_back(1);
 
                 // Halides and alkali metal ions
-            } else if (mon[i] == "f-"        || mon[i] == "cl-"        || mon[i] == "br-"        || mon[i] == "i-"        || // Halides
+            } else if (mon[i] == "f-" || mon[i] == "cl-" || mon[i] == "br-" || mon[i] == "i-" || // Halides
                        mon[i] == "li+" || mon[i] == "na+" ||  // Alkali metal ions
                        mon[i] == "k+" || mon[i] == "rb+" || mon[i] == "cs+") {
                 sites.push_back(1);
@@ -935,7 +935,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
 
     if (is_in_json) return;
     // Halide charges
-    if (mon_id == "f-"        || mon_id == "cl-"        || mon_id == "br-"        || mon_id == "i-") {
+    if (mon_id == "f-" || mon_id == "cl-" || mon_id == "br-" || mon_id == "i-") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv] = -1.0 * CHARGECON;
         }
@@ -1351,24 +1351,24 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
 
     if (mon_id == "f-") {  // Fluoride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.4669;
-    } else if (mon_id == "cl-") {  // Chloride                      
+    } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3602;
-    } else if (mon_id == "br-") {  // Bromide                       
+    } else if (mon_id == "br-") {  // Bromide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 7.1668;
-    } else if (mon_id == "i-") {  // Iodide                         
+    } else if (mon_id == "i-") {  // Iodide
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 10.1184;
-    }                                                                   
-                                                                        
-    // Alkali metal ions                                                
-    if (mon_id == "li+") {  // Lithium                                  
+    }
+
+    // Alkali metal ion
+    if (mon_id == "li+") {  // Lithium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0285;
-    } else if (mon_id == "na+") {  // Sodium                            
+    } else if (mon_id == "na+") {  // Sodium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.1476;
-    } else if (mon_id == "k+") {  // Potassium                          
+    } else if (mon_id == "k+") {  // Potassium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8184;
-    } else if (mon_id == "rb+") {  // Rubidium                          
+    } else if (mon_id == "rb+") {  // Rubidium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 1.3614;
-    } else if (mon_id == "cs+") {  // Cesium                            
+    } else if (mon_id == "cs+") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.3660;
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
