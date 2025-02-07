@@ -1657,7 +1657,10 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
     }
 
     double e = 0.0;
-    std::vector<double> e2b = poly_2b_v6x::eval(ndtd, thefit, vv, gg);
+    double t[3580*8];
+    // double t[20000];
+    // std::vector<double> e2b = poly_2b_v6x::eval(ndtd, thefit, vv, gg);
+    std::vector<double> e2b = poly_2b_v6x::eval(ndtd, thefit, vv, t, gg);
 
     for (size_t i = 0; i < ndtd; i++) {
         // offsets
