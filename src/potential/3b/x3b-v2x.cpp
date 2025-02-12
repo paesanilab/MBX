@@ -1,3 +1,4 @@
+
 /******************************************************************************
 Copyright 2019 The Regents of the University of California.
 All Rights Reserved.
@@ -1520,7 +1521,6 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
         const double* Hc2 = w3 + sh9 + 6;
 
         if (skip) {
-            std::cout << "SKIPPING A TRIMER" << std::endl;
             if(i < nt - 1 || idx == 0) continue;
             if(idx > 0) goto eval_energy;
         }
@@ -1584,19 +1584,9 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
 
 eval_energy:
         int numEvals = (idx == 0) ? 8 : idx;
-
-        // double time1 = MPI_Wtime();
-
         double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
-
-        // double time2 = MPI_Wtime();
-
-        // poly_time += time2 - time1;
-
         std::copy(e3b, e3b + numEvals, energy.begin() + copyIdx);
         delete[] e3b;
-
-        num_evals += 1;
 
         for(size_t j = 0; j < numEvals; j++) {
             sh = eval_sh[j];

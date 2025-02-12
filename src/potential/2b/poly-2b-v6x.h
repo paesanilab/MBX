@@ -34,9 +34,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #ifndef POLY_2B_V6X_H
 #define POLY_2B_V6X_H
+// #define DEBUG 1
+
+#include <iostream>
 
 #ifdef DEBUG
-#include <iostream>
 #include <iomanip>
 #endif
 
@@ -89,7 +91,8 @@ struct poly_2b_v6x {
      * means that the order is var1_sys1 var1_sys2 ... var1_sysnd var2_sys1 ...
      * @return Vector of nd elements with the polynomial evaluation of each system
      */
-    static std::vector<double> eval(const size_t nd, const double* a, const double* x, double* g);
+    // static std::vector<double> eval(const size_t nd, const double* a, const double* x, double* g);
+    static std::vector<double> eval(const size_t nd, const double* a, const double* x, double* t, double* g);
 };
 
 }  // namespace x2o
