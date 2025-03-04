@@ -1319,8 +1319,6 @@ TEST_CASE("energy2b::get_2b_energy") {
     }
 
 
-    // TODO: ADD HALIDE UNITTESTS
-
     SECTION("f--h2o") {
         std::vector<double> xyz1 = {0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00,
                                     0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00};
