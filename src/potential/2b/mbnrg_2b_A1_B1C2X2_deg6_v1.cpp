@@ -3674,7 +3674,7 @@ mbnrg_A1_B1C2X2_deg6_v1::mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const s
           m_k_x_intra_B_C_1 =  3.002335368068454e-01; // A^(-1))
           m_k_x_intra_C_C_1 =  2.183115173238724e-01; // A^(-1))
           m_ri =  6.200000000000000e+00; // A
-          m_ro =  8.199999999999999e+00; // A
+          m_ro =  8.200000000000000e+00; // A
     } // end if mon1 == "i-" and mon2 == "h2o"
 
     // =====>> END SECTION CONSTRUCTOR <<=====
