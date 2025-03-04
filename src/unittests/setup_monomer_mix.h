@@ -35,6 +35,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_MONMIX_H
 #define UNITTESTS_SETUP_MONMIX_H
 
+// TODO: Refactor this file to be more object oriented, as the current implementation is difficult to read and maintain
+
+// This file contains the parameters for many monomers that can be used in the unit tests.
 #define SETUP_MONMIX                                                                                                 \
     std::vector<std::string> atom_names = {                                                                          \
         "C", "H",  "H",  "H", "H",  "O",  "H", "H",  "C",  "O", "O", "X", "He", "Ar",                                \

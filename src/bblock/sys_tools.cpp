@@ -1359,7 +1359,7 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 10.1184;
     }
 
-    // Alkali metal ion
+    // Alkali metal ions
     if (mon_id == "li+") {  // Lithium
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.0285;
     } else if (mon_id == "na+") {  // Sodium

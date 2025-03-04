@@ -36,7 +36,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/dispersion/disptools.h"
 #include "tools/math_tools.h"
-#include "setup_monomer_mix.h"
 #include "json/json.h"
 
 #include <vector>
@@ -401,6 +400,10 @@ TEST_CASE("disptools::GetC6") {
                                      "h2o",      "h2o",   "h2o", "h2o", "he",          "h2o", "h2o",  "co2_archive",
                                      "ch4",      "h2o",   "h2o", "cs+", "nh3pbe0d3bj", "nh3", "ar",   "h2",
                                      "h2o",      "h2o",   "h2",  "na+", "cl-",         "na+", "n2o5", "n2o5"};
+
+// index1 and index2 are the atom indexes of the atoms in mon1 and mon2 that are being tested.
+// Only one dispersion pair is currently tested per mon1-mon2 pair.
+// Example, for mon1 = "f-" and mon2 = "h2o", index1=0 and index2=0 is the F-O interaction, while index1=0 and index2=1 is the F-H interaction.
     std::vector<size_t> index1 = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
                                   4, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1};
     std::vector<size_t> index2 = {0, 0, 1, 0, 0, 0, 0, 2, 1, 2, 1, 0, 0, 2, 1, 1,
