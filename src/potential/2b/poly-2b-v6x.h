@@ -36,9 +36,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define POLY_2B_V6X_H
 // #define DEBUG 1
 
-#include <iostream>
-
 #ifdef DEBUG
+#include <iostream>
 #include <iomanip>
 #endif
 
