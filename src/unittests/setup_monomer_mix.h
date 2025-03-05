@@ -37,8 +37,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 // TODO: Refactor this file to be more object oriented, as the current implementation is difficult to read and maintain
 
-// This file contains the macro definition SETUP_MONMIX, which when called defines variables
-// for the monomer and atom parameters.
+// This file contains the macro definition SETUP_MONMIX, which is used in some of the unittests
+// to defines variables for the monomer and atom parameters.
 // These vectors should be extended as additional monomers are implemented into MBX.
 #define SETUP_MONMIX                                                                                                 \
     std::vector<std::string> atom_names = {                                                                          \
