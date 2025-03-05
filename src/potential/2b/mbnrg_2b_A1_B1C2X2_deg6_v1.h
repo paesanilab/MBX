@@ -33,8 +33,8 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
-#ifndef MBNRG_3B_A1_B1C2X2_B1C2X2_DEG4_V1_H
-#define MBNRG_3B_A1_B1C2X2_B1C2X2_DEG4_V1_H
+#ifndef MBNRG_2B_A1_B1C2X2_DEG6_V1_H
+#define MBNRG_2B_A1_B1C2X2_DEG6_V1_H
 
 #include <cmath>
 #include <string>
@@ -43,41 +43,40 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/constants.h"
 #include "tools/variable.h"
 #include "tools/water_monomer_lp.h"
-#include "poly_3b_A1_B1C2X2_B1C2X2_deg4_v1.h" 
+#include "poly_2b_A1_B1C2X2_deg6_v1.h" 
 
 
 /**
- * @file mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.h
- * @brief Contains the structure of the polynomial holder for symmetry A1_B1C2X2_B1C2X2
+ * @file mbnrg_2b_A1_B1C2X2_deg6_v1.h
+ * @brief Contains the structure of the polynomial holder for symmetry A1_B1C2X2
  */
 
 /**
- * @namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
- * @brief Encloses the structure of the polynomial holder for symmetry A1_B1C2X2_B1C2X2
+ * @namespace mbnrg_A1_B1C2X2_deg6
+ * @brief Encloses the structure of the polynomial holder for symmetry A1_B1C2X2
  */
 
-namespace mbnrg_A1_B1C2X2_B1C2X2_deg4 {
+namespace mbnrg_A1_B1C2X2_deg6 {
 
 //----------------------------------------------------------------------------//
 
-struct mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 {
+struct mbnrg_A1_B1C2X2_deg6_v1 {
     // Creates an empty class
-    mbnrg_A1_B1C2X2_B1C2X2_deg4_v1() {};
+    mbnrg_A1_B1C2X2_deg6_v1() {};
 
     /**
      * @brief Creates a class and initializes the parameters corresponding to mon
      * @param[in] mon0 Monomer id of the first monomer of interest
      * @param[in] mon1 Monomer id of the first monomer of interest
-     * @param[in] mon2 Monomer id of the first monomer of interest
 
      */
-    mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(const std::string mon1, const std::string mon2, const std::string mon3);
+    mbnrg_A1_B1C2X2_deg6_v1(const std::string mon1, const std::string mon2);
 
     // Destroys the class
-    ~mbnrg_A1_B1C2X2_B1C2X2_deg4_v1() {};
+    ~mbnrg_A1_B1C2X2_deg6_v1() {};
     
     // Polynomial for this symmetry
-    typedef poly_A1_B1C2X2_B1C2X2_deg4_v1 polynomial;
+    typedef poly_A1_B1C2X2_deg6_v1 polynomial;
 
     /**
      * @brief Computes the one body energy for the monomers
@@ -86,12 +85,11 @@ struct mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 {
 urns a vector with them.
      * @param[in] xyz0 Pointer to a double array with the coordinates of monomer 0 of the n-mer.
      * @param[in] xyz1 Pointer to a double array with the coordinates of monomer 1 of the n-mer.
-     * @param[in] xyz2 Pointer to a double array with the coordinates of monomer 2 of the n-mer.
      
      * @param[in] n Number of monomers passed in the xyz array.
      * @return Double with the energy.
      */
-    double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n);
+    double eval(const double *xyz1, const double *xyz2, const size_t n);
 
     /**
      * @brief Computes the one body energy for the monomers
@@ -100,35 +98,27 @@ urns a vector with them.
 urns a vector with them.
      * @param[in] xyz0 Pointer to a double array with the coordinates of monomer 0 of the n-mer.
      * @param[in] xyz1 Pointer to a double array with the coordinates of monomer 1 of the n-mer.
-     * @param[in] xyz2 Pointer to a double array with the coordinates of monomer 2 of the n-mer.
      * @param[out] grad0 Pointer to a double array with the gradients of monomer 0 of the n-mer.
      * @param[out] grad1 Pointer to a double array with the gradients of monomer 1 of the n-mer.
-     * @param[out] grad2 Pointer to a double array with the gradients of monomer 2 of the n-mer.
     
      * @param[in] n Number of monomers passed in the xyz array.
      * @return Double with the energy.
      */
-    double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3 , const size_t n, std::vector<double> *virial=0);
+    double eval(const double *xyz1, const double *xyz2, double *grad1, double *grad2 , const size_t n, std::vector<double> *virial=0);
 
   private:
     // Non-linear constants
     double m_k_x_inter_A_B_0;
     double m_k_x_inter_A_C_0;
     double m_k_x_inter_A_X_0;
-    double m_k_x_inter_B_B_0;
     double m_k_x_intra_B_C_1;
-    double m_k_x_inter_B_C_0;
-    double m_k_x_inter_B_X_0;
     double m_k_x_intra_C_C_1;
-    double m_k_x_inter_C_C_0;
-    double m_k_x_inter_C_X_0;
-    double m_k_x_inter_X_X_0;
 
     // Inner cutoff
-    double m_ri = 0.0;
+    double m_ri = 6.2;
     
     // Outer cutoff
-    double m_ro = 6.0;
+    double m_ro = 8.2;
 
     // Switch function
     double f_switch(const double, double&);
@@ -139,7 +129,7 @@ urns a vector with them.
 
 //----------------------------------------------------------------------------//
 
-} // namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
+} // namespace mbnrg_A1_B1C2X2_deg6
 
 ////////////////////////////////////////////////////////////////////////////////
 
