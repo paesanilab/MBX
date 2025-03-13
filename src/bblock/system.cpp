@@ -42,6 +42,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifdef TIMING
 #include <chrono>
 #include <iostream>
+#include <iostream>
 #endif
 
 #include <mpi.h>
@@ -2384,7 +2385,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     // this variable is the maximum number of dimers that will be dispached to a thread at a time.
     // the number of trimers will be smaller near the end of the evaluaton when there are fewer dimers.
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
-    const size_t batch_size = 16;
+    const size_t batch_size = 8;
+    const size_t batch_size_factor = 8;
 
     // actually calculate the dimers
 #ifdef _OPENMP
@@ -2401,7 +2403,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         #pragma omp critical(dimers_pool_index)
         {
             start_index = dimers_pool_index;
-            this_batch_size = std::min(batch_size, (dimers_pool.size() - start_index) / 2);
+            size_t truncated_batch_size = batch_size_factor*std::ceil(((dimers_pool.size() - start_index) / 3) / (batch_size_factor*num_threads)) + batch_size_factor;
+            this_batch_size = std::min(truncated_batch_size, (dimers_pool.size() - start_index) / 2);
             dimers_pool_index += this_batch_size * 2;
         }
         dimers.insert(dimers.end(), dimers_pool.begin() + start_index, dimers_pool.begin() + start_index + this_batch_size*2);
@@ -2554,7 +2557,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
                 #pragma omp critical(dimers_pool_index)
                 {
                     start_index = dimers_pool_index;
-                    this_batch_size = std::min(batch_size, (dimers_pool.size() - start_index) / 2);
+                    size_t truncated_batch_size = batch_size_factor*std::ceil(((dimers_pool.size() - start_index) / 3) / (batch_size_factor*num_threads)) + batch_size_factor;
+                    this_batch_size = std::min(truncated_batch_size, (dimers_pool.size() - start_index) / 2);
                     dimers_pool_index += this_batch_size * 2;
 
                 }
