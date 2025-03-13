@@ -36,32 +36,28 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace x2o {
 
-std::vector<double> poly_2b_v6x::eval(const size_t nd, const double* a, const double* x, double* t, double* g) {
-    std::vector<double> energy(nd, 0.0);
-    size_t nv = 0;
-    for (size_t j = 0; j < nd / 8; j++) {
-        #pragma omp simd simdlen(8)
-        for(size_t i = 0; i < 8; i++) {
-            nv = j*8 + i;
-        t[(1)*8 + i] = x[nv + nd * 30];
+void f0(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        t[(1)*8 + i] = x[nv0 + i + nd * 30];
         t[(0)*8 + i] = a[474] * t[(1)*8 + i];
         t[(2)*8 + i] = (a[57] + t[(0)*8 + i]) * t[(1)*8 + i];
         t[(3)*8 + i] = a[465] * t[(1)*8 + i];
-        t[(9)*8 + i] = x[nv + nd * 29];
+        t[(9)*8 + i] = x[nv0 + i + nd * 29];
         t[(4)*8 + i] = a[474] * t[(9)*8 + i];
         t[(6)*8 + i] = a[454] * t[(9)*8 + i];
         t[(7)*8 + i] = a[226] * t[(1)*8 + i];
-        t[(14)*8 + i] = x[nv + nd * 28];
+        t[(14)*8 + i] = x[nv0 + i + nd * 28];
         t[(8)*8 + i] = a[314] * t[(14)*8 + i];
         t[(11)*8 + i] = a[454] * t[(1)*8 + i];
         t[(12)*8 + i] = a[226] * t[(9)*8 + i];
-        t[(22)*8 + i] = x[nv + nd * 27];
+        t[(22)*8 + i] = x[nv0 + i + nd * 27];
         t[(13)*8 + i] = a[314] * t[(22)*8 + i];
         t[(16)*8 + i] = a[466] * t[(1)*8 + i];
         t[(17)*8 + i] = a[466] * t[(9)*8 + i];
         t[(18)*8 + i] = a[466] * t[(14)*8 + i];
         t[(19)*8 + i] = a[466] * t[(22)*8 + i];
-        t[(28)*8 + i] = x[nv + nd * 26];
+        t[(28)*8 + i] = x[nv0 + i + nd * 26];
         t[(20)*8 + i] = a[487] * t[(28)*8 + i];
         t[(23)*8 + i] = a[449] * t[(1)*8 + i];
         t[(24)*8 + i] = a[449] * t[(9)*8 + i];
@@ -72,13 +68,13 @@ std::vector<double> poly_2b_v6x::eval(const size_t nd, const double* a, const do
         t[(31)*8 + i] = a[210] * t[(14)*8 + i];
         t[(32)*8 + i] = a[201] * t[(22)*8 + i];
         t[(33)*8 + i] = a[250] * t[(28)*8 + i];
-        t[(37)*8 + i] = x[nv + nd * 25];
+        t[(37)*8 + i] = x[nv0 + i + nd * 25];
         t[(34)*8 + i] = a[250] * t[(37)*8 + i];
-        t[(38)*8 + i] = x[nv + nd * 24];
+        t[(38)*8 + i] = x[nv0 + i + nd * 24];
         t[(35)*8 + i] = a[333] * t[(38)*8 + i];
-        t[(39)*8 + i] = x[nv + nd * 23];
+        t[(39)*8 + i] = x[nv0 + i + nd * 23];
         t[(36)*8 + i] = a[189] * t[(39)*8 + i];
-        t[(40)*8 + i] = x[nv + nd * 22];
+        t[(40)*8 + i] = x[nv0 + i + nd * 22];
         t[(5)*8 + i] = a[203] * t[(40)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -111,13 +107,13 @@ t[(43)*8 + i] = (((a[17]))+((t[(15)*8 + i]))+((t[(21)*8 + i]))+((t[(30)*8 + i]))
         t[(48)*8 + i] = a[250] * t[(38)*8 + i];
         t[(49)*8 + i] = a[250] * t[(39)*8 + i];
         t[(50)*8 + i] = a[119] * t[(40)*8 + i];
-        t[(66)*8 + i] = x[nv + nd * 21];
+        t[(66)*8 + i] = x[nv0 + i + nd * 21];
         t[(51)*8 + i] = a[361] * t[(66)*8 + i];
-        t[(70)*8 + i] = x[nv + nd * 20];
+        t[(70)*8 + i] = x[nv0 + i + nd * 20];
         t[(52)*8 + i] = a[119] * t[(70)*8 + i];
-        t[(71)*8 + i] = x[nv + nd * 19];
+        t[(71)*8 + i] = x[nv0 + i + nd * 19];
         t[(53)*8 + i] = a[361] * t[(71)*8 + i];
-        t[(72)*8 + i] = x[nv + nd * 18];
+        t[(72)*8 + i] = x[nv0 + i + nd * 18];
         t[(54)*8 + i] = a[203] * t[(72)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -154,10 +150,10 @@ t[(32)*8 + i] = (((t[(27)*8 + i]))+((t[(29)*8 + i])))*((t[(22)*8 + i]));
         t[(60)*8 + i] = a[197] * t[(37)*8 + i];
         t[(61)*8 + i] = a[304] * t[(38)*8 + i];
         t[(62)*8 + i] = a[304] * t[(39)*8 + i];
-        t[(74)*8 + i] = x[nv + nd * 9];
+        t[(74)*8 + i] = x[nv0 + i + nd * 9];
         t[(63)*8 + i] = a[402] * t[(74)*8 + i];
         t[(64)*8 + i] = a[219] * t[(72)*8 + i];
-        t[(75)*8 + i] = x[nv + nd * 17];
+        t[(75)*8 + i] = x[nv0 + i + nd * 17];
         t[(65)*8 + i] = a[219] * t[(75)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -165,26 +161,33 @@ t[(50)*8 + i] = ((a[44]))+((t[(50)*8 + i]))+((t[(56)*8 + i]))+((t[(57)*8 + i]))+
 t[(58)*8 + i] = (t[(50)*8 + i]);
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f1(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(57)*8 + i] = ((t[(59)*8 + i]))+((t[(60)*8 + i]))+((t[(61)*8 + i]))+((t[(62)*8 + i]));
 // REPEATED COMPUTATION
 t[(65)*8 + i] = ((t[(64)*8 + i]))+((t[(65)*8 + i]));
 // REPEATED COMPUTATION
 t[(62)*8 + i] = ((t[(58)*8 + i]))+((t[(65)*8 + i]))+((t[(63)*8 + i]))+((t[(57)*8 + i]));
-        t[(61)*8 + i] = x[nv + nd * 16];
+        t[(61)*8 + i] = x[nv0 + i + nd * 16];
         t[(60)*8 + i] = a[219] * t[(61)*8 + i];
-        t[(59)*8 + i] = x[nv + nd * 15];
+        t[(59)*8 + i] = x[nv0 + i + nd * 15];
         t[(64)*8 + i] = a[219] * t[(59)*8 + i];
-        t[(56)*8 + i] = x[nv + nd * 14];
+        t[(56)*8 + i] = x[nv0 + i + nd * 14];
         t[(67)*8 + i] = a[479] * t[(56)*8 + i];
-        t[(100)*8 + i] = x[nv + nd * 11];
+        t[(100)*8 + i] = x[nv0 + i + nd * 11];
         t[(68)*8 + i] = a[310] * t[(100)*8 + i];
-        t[(102)*8 + i] = x[nv + nd * 10];
+        t[(102)*8 + i] = x[nv0 + i + nd * 10];
         t[(69)*8 + i] = a[310] * t[(102)*8 + i];
-        t[(107)*8 + i] = x[nv + nd * 7];
+        t[(107)*8 + i] = x[nv0 + i + nd * 7];
         t[(73)*8 + i] = a[494] * t[(107)*8 + i];
-        t[(111)*8 + i] = x[nv + nd * 12];
-        t[(117)*8 + i] = x[nv + nd * 13];
-        t[(136)*8 + i] = x[nv + nd * 8];
+        t[(111)*8 + i] = x[nv0 + i + nd * 12];
+        t[(117)*8 + i] = x[nv0 + i + nd * 13];
+        t[(136)*8 + i] = x[nv0 + i + nd * 8];
 // REPEATED COMPUTATION
 t[(64)*8 + i] = ((t[(60)*8 + i]))+((t[(64)*8 + i]))+((t[(67)*8 + i]))+((t[(68)*8 + i]))+((t[(69)*8 + i]));
 t[(60)*8 + i] = (((a[192]))*((t[(66)*8 + i])))+(((a[192]))*((t[(71)*8 + i])))+(((a[244]))*((t[(117)*8 + i])))+(((a[401]))*((t[(111)*8 + i])))+(((a[402]))*((t[(136)*8 + i])))+(((a[506]))*((t[(40)*8 + i])))+(((a[506]))*((t[(70)*8 + i])))+((t[(73)*8 + i]))+((t[(64)*8 + i]));
@@ -287,6 +290,13 @@ t[(96)*8 + i] = ((a[22]))+((t[(92)*8 + i]))+((t[(98)*8 + i]))+((t[(97)*8 + i]))+
 // REPEATED COMPUTATION
 t[(97)*8 + i] = ((t[(89)*8 + i]))+((t[(90)*8 + i]))+((t[(85)*8 + i]))+((t[(84)*8 + i]))+((t[(103)*8 + i]))+((t[(104)*8 + i]))+((t[(105)*8 + i]))+((t[(106)*8 + i]))+((t[(108)*8 + i]));
 // REPEATED COMPUTATION
+}
+}
+
+void f2(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(98)*8 + i] = ((t[(89)*8 + i]))+((t[(90)*8 + i]))+((t[(85)*8 + i]))+((t[(84)*8 + i]))+((t[(108)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -409,6 +419,13 @@ t[(105)*8 + i] = (((t[(131)*8 + i]))+((t[(112)*8 + i]))+((t[(2325)*8 + i]))+((t[
         t[(123)*8 + i] = a[358] * t[(38)*8 + i];
         t[(2700)*8 + i] = a[154] * t[(39)*8 + i];
         t[(137)*8 + i] = a[290] * t[(40)*8 + i];
+}
+}
+
+void f3(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(138)*8 + i] = a[206] * t[(70)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -431,7 +448,7 @@ t[(137)*8 + i] = (((a[122]))*((t[(71)*8 + i])))+(((a[174]))*((t[(66)*8 + i])))+(
         t[(148)*8 + i] = a[345] * t[(38)*8 + i];
         t[(149)*8 + i] = a[345] * t[(39)*8 + i];
         t[(150)*8 + i] = a[82] * t[(72)*8 + i];
-        t[(204)*8 + i] = x[nv + nd * 6];
+        t[(204)*8 + i] = x[nv0 + i + nd * 6];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(149)*8 + i] = ((a[20]))+((t[(141)*8 + i]))+((t[(142)*8 + i]))+((t[(143)*8 + i]))+((t[(145)*8 + i]))+((t[(146)*8 + i]))+((t[(147)*8 + i]))+((t[(148)*8 + i]))+((t[(149)*8 + i]));
@@ -531,6 +548,13 @@ t[(171)*8 + i] = ((t[(161)*8 + i]))+((t[(166)*8 + i]))+((t[(165)*8 + i]))+((t[(1
         t[(185)*8 + i] = a[155] * t[(72)*8 + i];
         t[(186)*8 + i] = a[301] * t[(75)*8 + i];
         t[(187)*8 + i] = a[155] * t[(61)*8 + i];
+}
+}
+
+void f4(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(188)*8 + i] = a[301] * t[(59)*8 + i];
         t[(190)*8 + i] = a[480] * t[(56)*8 + i];
         t[(191)*8 + i] = a[533] * t[(117)*8 + i];
@@ -653,6 +677,13 @@ t[(221)*8 + i] = ((a[11]))+((t[(225)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(224)*8 + i] = ((t[(220)*8 + i]))+((t[(224)*8 + i]));
+}
+}
+
+void f5(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(220)*8 + i] = ((a[11]))+((t[(224)*8 + i]));
 t[(224)*8 + i] = ((t[(223)*8 + i]))+((t[(225)*8 + i]))+((t[(224)*8 + i]));
         t[(225)*8 + i] = t[(224)*8 + i] * t[(37)*8 + i];
@@ -775,6 +806,13 @@ t[(244)*8 + i] = ((t[(244)*8 + i]))+((t[(239)*8 + i]))+((t[(238)*8 + i]));
         t[(257)*8 + i] = t[(257)*8 + i] * t[(71)*8 + i];
 // REPEATED COMPUTATION
 t[(232)*8 + i] = ((a[0]))+((t[(122)*8 + i]))+((t[(206)*8 + i]))+((t[(210)*8 + i]))+((t[(214)*8 + i]))+((t[(215)*8 + i]))+((t[(225)*8 + i]))+((t[(2708)*8 + i]))+((t[(232)*8 + i]));
+}
+}
+
+void f6(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2708)*8 + i] = (((t[(244)*8 + i]))*((t[(40)*8 + i])))+(((t[(252)*8 + i]))*((t[(66)*8 + i])))+(((t[(249)*8 + i]))*((t[(70)*8 + i])))+((t[(257)*8 + i]))+((t[(232)*8 + i]));
         t[(225)*8 + i] = a[122] * t[(40)*8 + i];
 t[(215)*8 + i] = (((t[(114)*8 + i]))+((t[(115)*8 + i]))+((t[(225)*8 + i]))+((t[(2328)*8 + i]))+((t[(2690)*8 + i]))+((t[(2691)*8 + i])))*((t[(40)*8 + i]));
@@ -897,6 +935,13 @@ t[(237)*8 + i] = (((a[288]))*((t[(136)*8 + i])))+((t[(150)*8 + i]))+((t[(170)*8 
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(240)*8 + i] = ((t[(206)*8 + i]))+((t[(240)*8 + i]))+((t[(2333)*8 + i]))+((t[(160)*8 + i]));
+}
+}
+
+void f7(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2714)*8 + i] = t[(67)*8 + i] + t[(2714)*8 + i];
         t[(64)*8 + i] = t[(57)*8 + i] + t[(64)*8 + i];
         t[(237)*8 + i] = (t[(65)*8 + i] + t[(237)*8 + i]) * t[(136)*8 + i];
@@ -1019,6 +1064,13 @@ t[(285)*8 + i] = ((t[(288)*8 + i]))+((t[(289)*8 + i]))+((t[(290)*8 + i]))+((t[(2
         t[(2346)*8 + i] = a[79] * t[(40)*8 + i];
         t[(291)*8 + i] = a[354] * t[(66)*8 + i];
         t[(292)*8 + i] = a[84] * t[(70)*8 + i];
+}
+}
+
+void f8(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(293)*8 + i] = a[255] * t[(71)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -1141,6 +1193,13 @@ t[(309)*8 + i] = ((t[(309)*8 + i]))+((t[(2732)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(314)*8 + i] = (((a[120]))*((t[(70)*8 + i])))+(((a[501]))*((t[(40)*8 + i])))+(((a[536]))*((t[(66)*8 + i])))+((t[(308)*8 + i]))+((t[(2732)*8 + i]));
+}
+}
+
+void f9(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2732)*8 + i] = (((a[120]))*((t[(71)*8 + i])))+(((a[475]))*((t[(70)*8 + i])))+(((a[501]))*((t[(66)*8 + i])))+(((a[536]))*((t[(40)*8 + i])))+((t[(308)*8 + i]))+((t[(2732)*8 + i]));
         t[(313)*8 + i] = a[459] * t[(28)*8 + i];
         t[(2352)*8 + i] = a[519] * t[(37)*8 + i];
@@ -1263,6 +1322,13 @@ t[(342)*8 + i] = (((t[(325)*8 + i]))+((t[(326)*8 + i]))+((t[(2355)*8 + i]))+((t[
 // REPEATED COMPUTATION
 t[(346)*8 + i] = ((a[51]))+((t[(344)*8 + i]))+((t[(346)*8 + i]));
 t[(344)*8 + i] = (t[(346)*8 + i]);
+}
+}
+
+void f10(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(2744)*8 + i] = ((t[(343)*8 + i]))+((t[(345)*8 + i]));
@@ -1385,6 +1451,13 @@ t[(2754)*8 + i] = (((a[230]))*((t[(72)*8 + i])))+((t[(368)*8 + i]))+((t[(369)*8 
         t[(379)*8 + i] = a[70] * t[(38)*8 + i];
         t[(380)*8 + i] = a[70] * t[(39)*8 + i];
         t[(381)*8 + i] = a[74] * t[(40)*8 + i];
+}
+}
+
+void f11(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(382)*8 + i] = a[74] * t[(66)*8 + i];
         t[(383)*8 + i] = a[74] * t[(70)*8 + i];
         t[(384)*8 + i] = a[74] * t[(71)*8 + i];
@@ -1507,6 +1580,13 @@ t[(396)*8 + i] = ((t[(412)*8 + i]))+((t[(396)*8 + i]));
         t[(411)*8 + i] = a[339] * t[(66)*8 + i];
         t[(410)*8 + i] = a[171] * t[(70)*8 + i];
         t[(409)*8 + i] = a[339] * t[(71)*8 + i];
+}
+}
+
+void f12(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(397)*8 + i] = a[514] * t[(117)*8 + i];
         t[(398)*8 + i] = a[416] * t[(111)*8 + i];
 // REPEATED COMPUTATION
@@ -1629,6 +1709,13 @@ t[(367)*8 + i] = (((a[230]))*((t[(71)*8 + i])))+(((a[467]))*((t[(66)*8 + i])))+(
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f13(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(355)*8 + i] = ((t[(386)*8 + i]))+((t[(429)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -1751,6 +1838,13 @@ t[(445)*8 + i] = (((a[222]))*((t[(66)*8 + i])))+((t[(447)*8 + i]))+((t[(449)*8 +
 t[(454)*8 + i] = ((a[55]))+((t[(452)*8 + i]))+((t[(453)*8 + i]))+((t[(454)*8 + i]));
 // REPEATED COMPUTATION
 t[(453)*8 + i] = ((t[(2715)*8 + i]))+((t[(2712)*8 + i]))+((t[(2777)*8 + i]))+((t[(451)*8 + i]));
+}
+}
+
+void f14(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(457)*8 + i] = ((t[(455)*8 + i]))+((t[(456)*8 + i]))+((t[(457)*8 + i]))+((t[(454)*8 + i]))+((t[(453)*8 + i]));
 // REPEATED COMPUTATION
 t[(456)*8 + i] = (t[(454)*8 + i]);
@@ -1873,6 +1967,13 @@ t[(493)*8 + i] = ((t[(491)*8 + i]))+((t[(494)*8 + i]))+((t[(490)*8 + i]));
         t[(498)*8 + i] = a[896] * t[(59)*8 + i];
         t[(499)*8 + i] = a[954] * t[(56)*8 + i];
         t[(500)*8 + i] = a[1150] * t[(117)*8 + i];
+}
+}
+
+void f15(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(501)*8 + i] = a[739] * t[(111)*8 + i];
         t[(502)*8 + i] = a[1023] * t[(100)*8 + i];
         t[(503)*8 + i] = a[1044] * t[(102)*8 + i];
@@ -1995,6 +2096,13 @@ t[(2385)*8 + i] = (t[(2791)*8 + i]);
 t[(521)*8 + i] = ((a[256]))+((t[(518)*8 + i]))+((t[(521)*8 + i]));
 t[(518)*8 + i] = (t[(521)*8 + i]);
 // REPEATED COMPUTATION
+}
+}
+
+void f16(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2386)*8 + i] = ((a[256]))+((t[(519)*8 + i]))+((t[(520)*8 + i]));
 // REPEATED COMPUTATION
 t[(515)*8 + i] = ((t[(519)*8 + i]))+((t[(520)*8 + i]))+((t[(2385)*8 + i]))+((t[(518)*8 + i]))+((t[(515)*8 + i]));
@@ -2117,6 +2225,13 @@ t[(2387)*8 + i] = ((a[25]))+((t[(2793)*8 + i]));
 // REPEATED COMPUTATION
 t[(2388)*8 + i] = ((a[25]))+((t[(2794)*8 + i]));
 // REPEATED COMPUTATION
+}
+}
+
+void f17(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(570)*8 + i] = (((a[335]))*((t[(70)*8 + i])))+(((a[393]))*((t[(40)*8 + i])))+((t[(571)*8 + i]))+((t[(2764)*8 + i]))+((t[(2792)*8 + i]));
         t[(569)*8 + i] = a[147] * t[(9)*8 + i];
         t[(568)*8 + i] = a[388] * t[(1)*8 + i];
@@ -2239,6 +2354,13 @@ t[(599)*8 + i] = (((t[(557)*8 + i]))+((t[(597)*8 + i]))+((t[(2808)*8 + i])))*((t
         t[(604)*8 + i] = a[348] * t[(22)*8 + i];
         t[(605)*8 + i] = a[148] * t[(28)*8 + i];
         t[(606)*8 + i] = a[148] * t[(37)*8 + i];
+}
+}
+
+void f18(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(607)*8 + i] = a[343] * t[(38)*8 + i];
         t[(608)*8 + i] = a[343] * t[(39)*8 + i];
         t[(609)*8 + i] = a[172] * t[(40)*8 + i];
@@ -2361,6 +2483,13 @@ t[(655)*8 + i] = (((a[1000]))*((t[(66)*8 + i])))+(((a[1000]))*((t[(71)*8 + i])))
         t[(648)*8 + i] = a[699] * t[(37)*8 + i];
         t[(647)*8 + i] = a[568] * t[(38)*8 + i];
         t[(646)*8 + i] = a[568] * t[(39)*8 + i];
+}
+}
+
+void f19(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(660)*8 + i] = a[839] * t[(40)*8 + i];
         t[(661)*8 + i] = a[583] * t[(66)*8 + i];
         t[(662)*8 + i] = a[839] * t[(70)*8 + i];
@@ -2483,6 +2612,13 @@ t[(693)*8 + i] = (((a[1053]))*((t[(14)*8 + i])))+(((a[983]))*((t[(9)*8 + i])))+(
 t[(690)*8 + i] = ((a[127]))+((t[(690)*8 + i]))+((t[(700)*8 + i]));
 t[(700)*8 + i] = (t[(690)*8 + i]);
 // REPEATED COMPUTATION
+}
+}
+
+void f20(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(2826)*8 + i] = ((t[(688)*8 + i]))+((t[(699)*8 + i]));
 t[(2411)*8 + i] = ((a[127]))+((t[(2826)*8 + i]));
@@ -2605,6 +2741,13 @@ t[(728)*8 + i] = (t[(2832)*8 + i]);
 t[(726)*8 + i] = (t[(2833)*8 + i]);
 // REPEATED COMPUTATION
 t[(722)*8 + i] = (t[(722)*8 + i]);
+}
+}
+
+void f21(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(725)*8 + i] = (t[(729)*8 + i]);
         t[(730)*8 + i] = a[824] * t[(70)*8 + i];
         t[(731)*8 + i] = a[744] * t[(71)*8 + i];
@@ -2727,6 +2870,13 @@ t[(2413)*8 + i] = (((a[632]))*((t[(66)*8 + i])))+((t[(766)*8 + i]))+((t[(767)*8 
         t[(770)*8 + i] = a[759] * t[(9)*8 + i];
 t[(621)*8 + i] = ((a[241]))+((t[(769)*8 + i]))+((t[(770)*8 + i]));
         t[(771)*8 + i] = t[(621)*8 + i] * t[(9)*8 + i];
+}
+}
+
+void f22(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(638)*8 + i] = t[(632)*8 + i] + t[(638)*8 + i];
         t[(739)*8 + i] = t[(725)*8 + i] + t[(739)*8 + i];
         t[(725)*8 + i] = a[652] * t[(40)*8 + i];
@@ -2755,9 +2905,9 @@ t[(459)*8 + i] = ((t[(605)*8 + i]))+((t[(606)*8 + i]))+((t[(607)*8 + i]))+((t[(6
 // REPEATED COMPUTATION
 t[(2414)*8 + i] = (t[(532)*8 + i]);
 t[(620)*8 + i] = ((t[(609)*8 + i]))+((t[(620)*8 + i]))+((t[(459)*8 + i]));
-        t[(751)*8 + i] = x[nv + nd * 2];
+        t[(751)*8 + i] = x[nv0 + i + nd * 2];
         t[(742)*8 + i] = (t[(691)*8 + i] + t[(742)*8 + i]) * t[(751)*8 + i];
-        t[(691)*8 + i] = x[nv + nd * 3];
+        t[(691)*8 + i] = x[nv0 + i + nd * 3];
 // REPEATED COMPUTATION
 t[(569)*8 + i] = ((t[(564)*8 + i]))+((t[(569)*8 + i]))+((t[(575)*8 + i]));
 // REPEATED COMPUTATION
@@ -2849,6 +2999,13 @@ t[(610)*8 + i] = ((t[(609)*8 + i]))+((t[(610)*8 + i]))+((t[(459)*8 + i]));
         t[(790)*8 + i] = a[305] * t[(61)*8 + i];
         t[(458)*8 + i] = a[186] * t[(59)*8 + i];
         t[(789)*8 + i] = a[341] * t[(100)*8 + i];
+}
+}
+
+void f23(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(467)*8 + i] = a[182] * t[(102)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -2971,6 +3128,13 @@ t[(843)*8 + i] = ((t[(833)*8 + i]))+((t[(841)*8 + i]))+((t[(843)*8 + i]));
         t[(836)*8 + i] = a[798] * t[(14)*8 + i];
         t[(835)*8 + i] = a[798] * t[(22)*8 + i];
         t[(834)*8 + i] = a[669] * t[(28)*8 + i];
+}
+}
+
+void f24(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(835)*8 + i] = ((a[329]))+((t[(838)*8 + i]))+((t[(835)*8 + i]));
 // REPEATED COMPUTATION
@@ -3093,6 +3257,13 @@ t[(2423)*8 + i] = (((a[612]))*((t[(66)*8 + i])))+((t[(879)*8 + i]))+((t[(880)*8 
         t[(888)*8 + i] = a[720] * t[(37)*8 + i];
         t[(889)*8 + i] = a[702] * t[(38)*8 + i];
         t[(890)*8 + i] = a[702] * t[(39)*8 + i];
+}
+}
+
+void f25(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(891)*8 + i] = a[961] * t[(40)*8 + i];
         t[(892)*8 + i] = a[641] * t[(66)*8 + i];
         t[(893)*8 + i] = a[961] * t[(70)*8 + i];
@@ -3215,6 +3386,13 @@ t[(864)*8 + i] = ((t[(844)*8 + i]))+((t[(915)*8 + i]))+((t[(924)*8 + i]))+((t[(9
         t[(933)*8 + i] = a[671] * t[(111)*8 + i];
         t[(934)*8 + i] = a[628] * t[(66)*8 + i];
         t[(935)*8 + i] = a[946] * t[(70)*8 + i];
+}
+}
+
+void f26(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(936)*8 + i] = a[628] * t[(71)*8 + i];
         t[(937)*8 + i] = a[687] * t[(117)*8 + i];
         t[(938)*8 + i] = a[1079] * t[(56)*8 + i];
@@ -3337,6 +3515,13 @@ t[(956)*8 + i] = ((t[(958)*8 + i]))+((t[(959)*8 + i]))+((t[(960)*8 + i]))+((t[(9
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f27(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(972)*8 + i] = ((t[(966)*8 + i]))+((t[(967)*8 + i]))+((t[(968)*8 + i]))+((t[(969)*8 + i]))+((t[(2424)*8 + i]))+((t[(957)*8 + i]));
@@ -3459,6 +3644,13 @@ t[(997)*8 + i] = ((t[(995)*8 + i]))+((t[(996)*8 + i]))+((t[(2424)*8 + i]))+((t[(
         t[(1002)*8 + i] = a[982] * t[(61)*8 + i];
         t[(1003)*8 + i] = a[577] * t[(59)*8 + i];
         t[(1004)*8 + i] = a[569] * t[(117)*8 + i];
+}
+}
+
+void f28(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1005)*8 + i] = a[1111] * t[(111)*8 + i];
         t[(1006)*8 + i] = a[1071] * t[(100)*8 + i];
         t[(1007)*8 + i] = a[991] * t[(102)*8 + i];
@@ -3581,6 +3773,13 @@ t[(858)*8 + i] = ((t[(852)*8 + i]))+((t[(853)*8 + i]))+((t[(1005)*8 + i]))+((t[(
 t[(1027)*8 + i] = ((t[(995)*8 + i]))+((t[(1027)*8 + i]))+((t[(2424)*8 + i]))+((t[(2871)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f29(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(942)*8 + i] = ((t[(845)*8 + i]))+((t[(942)*8 + i]))+((t[(825)*8 + i]));
 t[(882)*8 + i] = (((t[(100)*8 + i]))*((t[(1027)*8 + i])))+(((t[(1021)*8 + i]))*((t[(74)*8 + i])))+(((t[(1024)*8 + i]))*((t[(75)*8 + i])))+(((t[(1029)*8 + i]))*((t[(61)*8 + i])))+(((t[(858)*8 + i]))*((t[(59)*8 + i])))+((t[(825)*8 + i]))+((t[(882)*8 + i]));
         t[(845)*8 + i] = a[790] * t[(72)*8 + i];
@@ -3703,10 +3902,17 @@ t[(1049)*8 + i] = (((a[211]))*((t[(117)*8 + i])))+(((a[261]))*((t[(40)*8 + i])))
         t[(467)*8 + i] = t[(610)*8 + i] + t[(467)*8 + i];
         t[(805)*8 + i] = t[(797)*8 + i] + t[(805)*8 + i];
         t[(846)*8 + i] = t[(897)*8 + i] + t[(846)*8 + i];
+}
+}
+
+void f30(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(802)*8 + i] = t[(612)*8 + i] + t[(802)*8 + i];
         t[(988)*8 + i] = t[(882)*8 + i] + t[(988)*8 + i];
-        t[(882)*8 + i] = x[nv + nd * 4];
-        t[(612)*8 + i] = x[nv + nd * 5];
+        t[(882)*8 + i] = x[nv0 + i + nd * 4];
+        t[(612)*8 + i] = x[nv0 + i + nd * 5];
 // REPEATED COMPUTATION
 t[(1018)*8 + i] = ((t[(812)*8 + i]))+((t[(817)*8 + i]))+((t[(1018)*8 + i]));
 t[(817)*8 + i] = (((t[(56)*8 + i]))*((t[(795)*8 + i])))+(((t[(777)*8 + i]))*((t[(72)*8 + i])))+(((t[(782)*8 + i]))*((t[(59)*8 + i])))+(((t[(102)*8 + i]))*((t[(467)*8 + i])))+(((t[(792)*8 + i]))*((t[(75)*8 + i])))+(((t[(827)*8 + i]))*((t[(111)*8 + i])))+(((t[(107)*8 + i]))*((t[(805)*8 + i])))+(((t[(788)*8 + i]))*((t[(74)*8 + i])))+(((t[(846)*8 + i]))*((t[(882)*8 + i])))+(((t[(802)*8 + i]))*((t[(204)*8 + i])))+(((t[(988)*8 + i]))*((t[(612)*8 + i])))+(((t[(117)*8 + i]))*((t[(1049)*8 + i])))+((t[(1018)*8 + i]));
@@ -3825,6 +4031,13 @@ t[(2882)*8 + i] = ((t[(1076)*8 + i]))+((t[(1077)*8 + i]));
 // REPEATED COMPUTATION
 t[(2883)*8 + i] = ((t[(1071)*8 + i]))+((t[(1078)*8 + i]));
 // REPEATED COMPUTATION
+}
+}
+
+void f31(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2431)*8 + i] = (t[(1081)*8 + i]);
 // REPEATED COMPUTATION
 t[(2432)*8 + i] = ((a[8]))+((t[(2882)*8 + i]));
@@ -3947,6 +4160,13 @@ t[(2444)*8 + i] = (t[(2898)*8 + i]);
 t[(2897)*8 + i] = ((a[213]))+((t[(1104)*8 + i]))+((t[(2897)*8 + i]));
 t[(1104)*8 + i] = (t[(2897)*8 + i]);
 // REPEATED COMPUTATION
+}
+}
+
+void f32(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(2899)*8 + i] = ((t[(1103)*8 + i]))+((t[(1110)*8 + i]));
 t[(2445)*8 + i] = ((a[213]))+((t[(2899)*8 + i]));
@@ -4069,6 +4289,13 @@ t[(1150)*8 + i] = (((t[(1145)*8 + i]))+((t[(2444)*8 + i]))+((t[(2449)*8 + i]))+(
         t[(1158)*8 + i] = a[850] * t[(117)*8 + i];
         t[(1159)*8 + i] = a[887] * t[(61)*8 + i];
         t[(1160)*8 + i] = a[581] * t[(59)*8 + i];
+}
+}
+
+void f33(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1161)*8 + i] = a[736] * t[(66)*8 + i];
 // REPEATED COMPUTATION
 t[(1161)*8 + i] = ((a[106]))+((t[(1151)*8 + i]))+((t[(1156)*8 + i]))+((t[(1158)*8 + i]))+((t[(1161)*8 + i]));
@@ -4191,6 +4418,13 @@ t[(1191)*8 + i] = ((t[(2435)*8 + i]))+((t[(2437)*8 + i]))+((t[(2438)*8 + i]))+((
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f34(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1152)*8 + i] = ((a[106]))+((t[(1154)*8 + i]))+((t[(1152)*8 + i]))+((t[(1162)*8 + i]))+((t[(1164)*8 + i]));
 t[(1154)*8 + i] = ((a[106]))+((t[(2905)*8 + i]));
 // REPEATED COMPUTATION
@@ -4313,6 +4547,13 @@ t[(1124)*8 + i] = (t[(1222)*8 + i]);
 t[(1218)*8 + i] = (((a[625]))*((t[(40)*8 + i])))+(((a[625]))*((t[(70)*8 + i])))+(((a[993]))*((t[(66)*8 + i])))+(((a[993]))*((t[(71)*8 + i])))+((t[(1127)*8 + i]));
         t[(1221)*8 + i] = a[906] * t[(1)*8 + i];
         t[(1232)*8 + i] = (a[437] + t[(1221)*8 + i]) * t[(1)*8 + i];
+}
+}
+
+void f35(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1231)*8 + i] = a[952] * t[(1)*8 + i];
         t[(1230)*8 + i] = a[906] * t[(9)*8 + i];
 t[(1229)*8 + i] = ((a[437]))+((t[(1231)*8 + i]))+((t[(1230)*8 + i]));
@@ -4435,6 +4676,13 @@ t[(1258)*8 + i] = ((t[(1258)*8 + i]))+((t[(1261)*8 + i]))+((t[(1262)*8 + i]))+((
 // REPEATED COMPUTATION
 t[(1264)*8 + i] = (t[(1259)*8 + i]);
 t[(1263)*8 + i] = ((t[(1265)*8 + i]))+((t[(1258)*8 + i]));
+}
+}
+
+void f36(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1262)*8 + i] = a[746] * t[(70)*8 + i];
         t[(1261)*8 + i] = a[746] * t[(71)*8 + i];
         t[(2454)*8 + i] = a[1094] * t[(56)*8 + i];
@@ -4557,6 +4805,13 @@ t[(1287)*8 + i] = (t[(1288)*8 + i]);
 t[(2456)*8 + i] = ((a[502]))+((t[(1272)*8 + i]))+((t[(1281)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f37(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2918)*8 + i] = ((t[(1289)*8 + i]))+((t[(1292)*8 + i]));
 // REPEATED COMPUTATION
 t[(2457)*8 + i] = ((a[547]))+((t[(1294)*8 + i]))+((t[(1295)*8 + i]));
@@ -4679,6 +4934,13 @@ t[(1317)*8 + i] = ((a[315]))+((t[(1320)*8 + i]))+((t[(1321)*8 + i]))+((t[(1317)*
 t[(2930)*8 + i] = ((a[315]))+((t[(1316)*8 + i]))+((t[(1319)*8 + i]))+((t[(1320)*8 + i]))+((t[(1321)*8 + i]))+((t[(1322)*8 + i]))+((t[(1339)*8 + i]))+((t[(2463)*8 + i]));
 t[(2920)*8 + i] = ((t[(2920)*8 + i]))+((t[(2930)*8 + i]));
 // REPEATED COMPUTATION
+}
+}
+
+void f38(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2464)*8 + i] = (t[(1314)*8 + i]);
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -4785,7 +5047,7 @@ t[(1357)*8 + i] = (((a[397]))*((t[(72)*8 + i])))+(((a[419]))*((t[(75)*8 + i])))+
         t[(1311)*8 + i] = a[477] * t[(28)*8 + i];
         t[(1257)*8 + i] = t[(1254)*8 + i] + t[(1257)*8 + i];
         t[(457)*8 + i] = t[(1062)*8 + i] + t[(457)*8 + i];
-        t[(1062)*8 + i] = x[nv + nd * 1];
+        t[(1062)*8 + i] = x[nv0 + i + nd * 1];
         t[(2931)*8 + i] = (t[(1310)*8 + i] + t[(2931)*8 + i]) * t[(1062)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -4801,6 +5063,13 @@ t[(2467)*8 + i] = ((a[61]))+((t[(1250)*8 + i]))+((t[(1251)*8 + i]));
 // REPEATED COMPUTATION
 t[(2937)*8 + i] = ((t[(1249)*8 + i]))+((t[(1252)*8 + i]));
 // REPEATED COMPUTATION
+}
+}
+
+void f39(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(1225)*8 + i] = ((a[54]))+((t[(1214)*8 + i]))+((t[(1225)*8 + i]));
 t[(1214)*8 + i] = (t[(1225)*8 + i]);
@@ -4923,6 +5192,13 @@ t[(1397)*8 + i] = (((a[712]))*((t[(14)*8 + i])))+(((a[900]))*((t[(9)*8 + i])))+(
 t[(1406)*8 + i] = ((t[(1404)*8 + i]))+((t[(1406)*8 + i]));
 t[(1404)*8 + i] = (t[(1406)*8 + i]);
 // REPEATED COMPUTATION
+}
+}
+
+void f40(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(1401)*8 + i] = ((t[(1400)*8 + i]))+((t[(1401)*8 + i]));
 // REPEATED COMPUTATION
@@ -5045,6 +5321,13 @@ t[(1424)*8 + i] = ((a[218]))+((t[(1421)*8 + i]))+((t[(1422)*8 + i]))+((t[(1423)*
 t[(1429)*8 + i] = ((t[(1425)*8 + i]))+((t[(1426)*8 + i]))+((t[(1427)*8 + i]))+((t[(1428)*8 + i]))+((t[(1429)*8 + i]))+((t[(1424)*8 + i]));
 // REPEATED COMPUTATION
 t[(1428)*8 + i] = (t[(1424)*8 + i]);
+}
+}
+
+void f41(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1431)*8 + i] = ((t[(1431)*8 + i]))+((t[(1429)*8 + i]));
         t[(1441)*8 + i] = t[(1442)*8 + i] + t[(1441)*8 + i];
 // REPEATED COMPUTATION
@@ -5167,6 +5450,13 @@ t[(1460)*8 + i] = (((a[722]))*((t[(75)*8 + i])))+((t[(1471)*8 + i]))+((t[(2481)*
         t[(1463)*8 + i] = a[996] * t[(28)*8 + i];
         t[(1472)*8 + i] = a[623] * t[(37)*8 + i];
         t[(1473)*8 + i] = a[949] * t[(72)*8 + i];
+}
+}
+
+void f42(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1474)*8 + i] = a[1024] * t[(61)*8 + i];
 // REPEATED COMPUTATION
 t[(1474)*8 + i] = ((t[(1473)*8 + i]))+((t[(1474)*8 + i]));
@@ -5289,6 +5579,13 @@ t[(1507)*8 + i] = (t[(1491)*8 + i]);
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(1490)*8 + i] = ((t[(1490)*8 + i]))+((t[(1502)*8 + i]))+((t[(1503)*8 + i]))+((t[(1504)*8 + i]))+((t[(1510)*8 + i]))+((t[(1511)*8 + i]));
+}
+}
+
+void f43(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(1511)*8 + i] = (t[(1492)*8 + i]);
 t[(1510)*8 + i] = ((t[(1508)*8 + i]))+((t[(1490)*8 + i]));
@@ -5411,6 +5708,13 @@ t[(1055)*8 + i] = ((t[(2916)*8 + i]))+((t[(2429)*8 + i]))+((t[(1070)*8 + i]))+((
 t[(1360)*8 + i] = ((t[(1367)*8 + i]))+((t[(1446)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f44(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1421)*8 + i] = ((t[(2494)*8 + i]))+((t[(1444)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -5533,6 +5837,13 @@ t[(1239)*8 + i] = ((t[(1239)*8 + i]))+((t[(1243)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(2478)*8 + i] = ((a[40]))+((t[(1451)*8 + i]))+((t[(2478)*8 + i]));
+}
+}
+
+void f45(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1451)*8 + i] = (t[(2478)*8 + i]);
 t[(1243)*8 + i] = ((((t[(1430)*8 + i]))+((t[(1473)*8 + i]))+((t[(1395)*8 + i]))+((t[(1065)*8 + i]))+((t[(1360)*8 + i]))+((t[(1421)*8 + i])))*((t[(40)*8 + i])))+((((a[40]))+((t[(1244)*8 + i]))+((t[(1114)*8 + i])))*((t[(9)*8 + i])))+((((t[(1429)*8 + i]))+((t[(1451)*8 + i])))*((t[(14)*8 + i])))+(((t[(751)*8 + i]))*((t[(1223)*8 + i])))+(((t[(100)*8 + i]))*((t[(1239)*8 + i])))+(((t[(111)*8 + i]))*((t[(833)*8 + i])))+(((t[(882)*8 + i]))*((t[(1368)*8 + i])))+(((t[(612)*8 + i]))*((t[(1479)*8 + i])))+(((t[(136)*8 + i]))*((t[(1055)*8 + i])))+(((t[(22)*8 + i]))*((t[(1070)*8 + i])))+(((t[(1064)*8 + i]))*((t[(70)*8 + i])))+(((t[(2934)*8 + i]))*((t[(59)*8 + i])))+(((t[(2495)*8 + i]))*((t[(66)*8 + i])))+(((t[(2881)*8 + i]))*((t[(72)*8 + i])))+((t[(1359)*8 + i]));
 t[(425)*8 + i] = (((a[86]))*((t[(66)*8 + i])))+((t[(2367)*8 + i]))+((t[(414)*8 + i]))+((t[(416)*8 + i]))+((t[(425)*8 + i]))+((t[(2762)*8 + i]))+((t[(2768)*8 + i]));
@@ -5655,6 +5966,13 @@ t[(384)*8 + i] = (((a[60]))+((t[(2499)*8 + i]))+((t[(57)*8 + i]))+((t[(406)*8 + 
         t[(382)*8 + i] = a[471] * t[(1)*8 + i];
         t[(374)*8 + i] = (a[60] + t[(382)*8 + i]) * t[(1)*8 + i];
 t[(372)*8 + i] = ((((a[3]))+((t[(221)*8 + i]))+((t[(147)*8 + i]))+((t[(255)*8 + i]))+((t[(17)*8 + i]))+((t[(25)*8 + i]))+((t[(2)*8 + i])))*((t[(37)*8 + i])))+((((a[1]))+((t[(2970)*8 + i]))+((t[(384)*8 + i]))+((t[(180)*8 + i])))*((t[(14)*8 + i])))+((((a[1]))+((t[(2972)*8 + i]))+((t[(180)*8 + i])))*((t[(9)*8 + i])))+((((a[1]))+((t[(374)*8 + i])))*((t[(1)*8 + i])))+((((t[(411)*8 + i]))+((t[(817)*8 + i])))*((t[(751)*8 + i])))+((((t[(31)*8 + i]))+((t[(2706)*8 + i])))*((t[(204)*8 + i])))+((((t[(1358)*8 + i]))+((t[(1243)*8 + i])))*((t[(1062)*8 + i])))+((((t[(215)*8 + i]))+((t[(65)*8 + i])))*((t[(136)*8 + i])))+((((t[(351)*8 + i]))+((t[(363)*8 + i])))*((t[(102)*8 + i])))+(((t[(56)*8 + i]))*((t[(223)*8 + i])))+(((t[(111)*8 + i]))*((t[(2765)*8 + i])))+(((t[(117)*8 + i]))*((t[(341)*8 + i])))+(((t[(212)*8 + i]))*((t[(66)*8 + i])))+(((t[(2708)*8 + i]))*((t[(71)*8 + i])))+(((t[(282)*8 + i]))*((t[(59)*8 + i])));
+}
+}
+
+void f46(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2767)*8 + i] = a[314] * t[(1)*8 + i];
         t[(2365)*8 + i] = (a[48] + t[(2767)*8 + i]) * t[(1)*8 + i];
         t[(426)*8 + i] = a[236] * t[(1)*8 + i];
@@ -5777,6 +6095,13 @@ t[(983)*8 + i] = (((a[962]))*((t[(66)*8 + i])))+(((a[995]))*((t[(71)*8 + i])))+(
         t[(873)*8 + i] = a[562] * t[(40)*8 + i];
         t[(794)*8 + i] = a[834] * t[(66)*8 + i];
         t[(775)*8 + i] = a[562] * t[(70)*8 + i];
+}
+}
+
+void f47(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(774)*8 + i] = a[834] * t[(71)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -5899,6 +6224,13 @@ t[(894)*8 + i] = ((t[(913)*8 + i]))+((t[(894)*8 + i]))+((t[(850)*8 + i]));
 // REPEATED COMPUTATION
 t[(855)*8 + i] = ((t[(1005)*8 + i]))+((t[(855)*8 + i]))+((t[(908)*8 + i]));
 t[(1046)*8 + i] = (((a[1055]))*((t[(204)*8 + i])))+((t[(1034)*8 + i]))+((t[(854)*8 + i]))+((t[(908)*8 + i]))+((t[(1046)*8 + i]))+((t[(850)*8 + i]));
+}
+}
+
+void f48(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1034)*8 + i] = a[862] * t[(71)*8 + i];
         t[(1005)*8 + i] = a[700] * t[(70)*8 + i];
         t[(2984)*8 + i] = a[862] * t[(66)*8 + i];
@@ -6021,6 +6353,13 @@ t[(2869)*8 + i] = ((t[(842)*8 + i]))+((t[(954)*8 + i]))+((t[(1030)*8 + i]))+((t[
 t[(1034)*8 + i] = ((t[(966)*8 + i]))+((t[(967)*8 + i]))+((t[(968)*8 + i]))+((t[(969)*8 + i]))+((t[(930)*8 + i]))+((t[(895)*8 + i]))+((t[(2513)*8 + i]))+((t[(1005)*8 + i]))+((t[(1034)*8 + i]))+((t[(2424)*8 + i]))+((t[(956)*8 + i]));
 t[(2988)*8 + i] = ((t[(995)*8 + i]))+((t[(2988)*8 + i]))+((t[(933)*8 + i]))+((t[(934)*8 + i]));
         t[(854)*8 + i] = t[(2750)*8 + i] + t[(854)*8 + i];
+}
+}
+
+void f49(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2869)*8 + i] = t[(2976)*8 + i] + t[(2869)*8 + i];
 t[(901)*8 + i] = (((t[(56)*8 + i]))*((t[(209)*8 + i])))+(((t[(100)*8 + i]))*((t[(2988)*8 + i])))+(((t[(117)*8 + i]))*((t[(1034)*8 + i])))+(((t[(854)*8 + i]))*((t[(204)*8 + i])))+(((t[(2869)*8 + i]))*((t[(74)*8 + i])))+(((t[(923)*8 + i]))*((t[(59)*8 + i])))+((t[(874)*8 + i]))+((t[(901)*8 + i]));
 t[(867)*8 + i] = ((t[(950)*8 + i]))+((t[(951)*8 + i]))+((t[(952)*8 + i]))+((t[(848)*8 + i]))+((t[(867)*8 + i]))+((t[(2865)*8 + i]))+((t[(2866)*8 + i]))+((t[(921)*8 + i]));
@@ -6143,6 +6482,13 @@ t[(2994)*8 + i] = ((t[(631)*8 + i]))+((t[(653)*8 + i]))+((t[(2812)*8 + i]))+((t[
         t[(2994)*8 + i] = t[(652)*8 + i] + t[(2994)*8 + i];
         t[(652)*8 + i] = a[632] * t[(40)*8 + i];
 t[(771)*8 + i] = ((((t[(766)*8 + i]))+((t[(767)*8 + i]))+((t[(652)*8 + i]))+((t[(756)*8 + i]))+((t[(2838)*8 + i]))+((t[(2839)*8 + i])))*((t[(40)*8 + i])))+(((t[(102)*8 + i]))*((t[(582)*8 + i])))+(((t[(107)*8 + i]))*((t[(740)*8 + i])))+(((t[(111)*8 + i]))*((t[(711)*8 + i])))+(((t[(117)*8 + i]))*((t[(657)*8 + i])))+(((t[(136)*8 + i]))*((t[(2522)*8 + i])))+(((t[(2992)*8 + i]))*((t[(204)*8 + i])))+(((t[(2994)*8 + i]))*((t[(74)*8 + i])))+(((t[(718)*8 + i]))*((t[(72)*8 + i])))+(((t[(2816)*8 + i]))*((t[(75)*8 + i])))+(((t[(758)*8 + i]))*((t[(59)*8 + i])))+((t[(761)*8 + i]))+((t[(771)*8 + i]));
+}
+}
+
+void f50(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2803)*8 + i] = ((t[(778)*8 + i]))+((t[(779)*8 + i]))+((t[(780)*8 + i]))+((t[(781)*8 + i]))+((t[(2392)*8 + i]))+((t[(1026)*8 + i]))+((t[(254)*8 + i]))+((t[(2803)*8 + i]));
         t[(789)*8 + i] = t[(459)*8 + i] + t[(789)*8 + i];
         t[(819)*8 + i] = t[(608)*8 + i] + t[(819)*8 + i];
@@ -6265,6 +6611,13 @@ t[(162)*8 + i] = ((t[(2703)*8 + i]))+((t[(162)*8 + i]))+((t[(2326)*8 + i]))+((t[
         t[(184)*8 + i] = t[(182)*8 + i] + t[(184)*8 + i];
 t[(152)*8 + i] = (((t[(56)*8 + i]))*((t[(94)*8 + i])))+(((t[(100)*8 + i]))*((t[(162)*8 + i])))+(((t[(102)*8 + i]))*((t[(184)*8 + i])))+(((t[(111)*8 + i]))*((t[(101)*8 + i])))+(((t[(117)*8 + i]))*((t[(185)*8 + i])))+(((t[(136)*8 + i]))*((t[(140)*8 + i])))+(((t[(164)*8 + i]))*((t[(61)*8 + i])))+(((t[(2698)*8 + i]))*((t[(72)*8 + i])))+((t[(104)*8 + i]))+((t[(152)*8 + i]));
         t[(182)*8 + i] = a[226] * t[(14)*8 + i];
+}
+}
+
+void f51(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(86)*8 + i] = a[330] * t[(1)*8 + i];
         t[(2703)*8 + i] = a[330] * t[(22)*8 + i];
         t[(201)*8 + i] = a[447] * t[(28)*8 + i];
@@ -6387,6 +6740,13 @@ t[(297)*8 + i] = ((t[(606)*8 + i]))+((t[(830)*8 + i]))+((t[(619)*8 + i]))+((t[(2
 t[(259)*8 + i] = ((t[(2523)*8 + i]))+((t[(896)*8 + i]))+((t[(2995)*8 + i]));
         t[(619)*8 + i] = a[100] * t[(70)*8 + i];
         t[(830)*8 + i] = a[100] * t[(71)*8 + i];
+}
+}
+
+void f52(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(606)*8 + i] = a[446] * t[(100)*8 + i];
 // REPEATED COMPUTATION
 t[(830)*8 + i] = ((t[(618)*8 + i]))+((t[(1053)*8 + i]))+((t[(605)*8 + i]))+((t[(619)*8 + i]))+((t[(830)*8 + i]));
@@ -6509,6 +6869,13 @@ t[(2396)*8 + i] = ((t[(2846)*8 + i]))+((t[(2396)*8 + i]));
 t[(2846)*8 + i] = ((t[(3013)*8 + i]))+((t[(772)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f53(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(453)*8 + i] = ((a[55]))+((t[(2537)*8 + i]))+((t[(146)*8 + i]))+((t[(453)*8 + i]))+((t[(2396)*8 + i]))+((t[(2846)*8 + i]));
 // REPEATED COMPUTATION
@@ -6631,6 +6998,13 @@ t[(779)*8 + i] = ((t[(608)*8 + i]))+((t[(459)*8 + i]))+((t[(2392)*8 + i]))+((t[(
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(780)*8 + i] = ((t[(3019)*8 + i]))+((t[(3007)*8 + i]))+((t[(220)*8 + i]));
+}
+}
+
+void f54(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(781)*8 + i] = ((t[(220)*8 + i]))+((t[(726)*8 + i]));
 // REPEATED COMPUTATION
@@ -6753,6 +7127,13 @@ t[(2833)*8 + i] = ((t[(220)*8 + i]))+((t[(3019)*8 + i]))+((t[(701)*8 + i]))+((t[
 // REPEATED COMPUTATION
 t[(220)*8 + i] = ((t[(2403)*8 + i]))+((t[(708)*8 + i]))+((t[(2532)*8 + i]))+((t[(220)*8 + i]))+((t[(3019)*8 + i]))+((t[(701)*8 + i]))+((t[(728)*8 + i]))+((t[(726)*8 + i]));
 t[(2532)*8 + i] = ((t[(3019)*8 + i]))+((t[(701)*8 + i]))+((t[(2544)*8 + i]))+((t[(728)*8 + i]))+((t[(724)*8 + i]))+((t[(781)*8 + i]));
+}
+}
+
+void f55(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(708)*8 + i] = a[618] * t[(71)*8 + i];
         t[(2403)*8 + i] = a[1075] * t[(117)*8 + i];
         t[(3028)*8 + i] = a[1008] * t[(111)*8 + i];
@@ -6875,6 +7256,13 @@ t[(3024)*8 + i] = ((t[(639)*8 + i]))+((t[(640)*8 + i]))+((t[(651)*8 + i]))+((t[(
 // REPEATED COMPUTATION
 t[(642)*8 + i] = ((t[(761)*8 + i]))+((t[(676)*8 + i]))+((t[(670)*8 + i]))+((t[(642)*8 + i]));
 t[(670)*8 + i] = (((t[(56)*8 + i]))*((t[(635)*8 + i])))+(((t[(107)*8 + i]))*((t[(3024)*8 + i])))+(((t[(111)*8 + i]))*((t[(680)*8 + i])))+(((t[(117)*8 + i]))*((t[(661)*8 + i])))+(((t[(136)*8 + i]))*((t[(779)*8 + i])))+(((t[(2812)*8 + i]))*((t[(74)*8 + i])))+(((t[(765)*8 + i]))*((t[(72)*8 + i])))+(((t[(695)*8 + i]))*((t[(75)*8 + i])))+(((t[(672)*8 + i]))*((t[(61)*8 + i])))+((t[(642)*8 + i]));
+}
+}
+
+void f56(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(676)*8 + i] = a[176] * t[(66)*8 + i];
         t[(761)*8 + i] = a[438] * t[(40)*8 + i];
         t[(2542)*8 + i] = a[296] * t[(111)*8 + i];
@@ -6997,6 +7385,13 @@ t[(528)*8 + i] = (((a[1014]))*((t[(28)*8 + i])))+(((a[1014]))*((t[(37)*8 + i])))
         t[(110)*8 + i] = a[780] * t[(40)*8 + i];
         t[(3001)*8 + i] = a[780] * t[(66)*8 + i];
         t[(591)*8 + i] = a[780] * t[(70)*8 + i];
+}
+}
+
+void f57(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(589)*8 + i] = a[780] * t[(71)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -7119,6 +7514,13 @@ t[(3005)*8 + i] = (((a[1087]))*((t[(72)*8 + i])))+((t[(602)*8 + i]))+((t[(2782)*
 t[(480)*8 + i] = ((t[(539)*8 + i]))+((t[(551)*8 + i]))+((t[(483)*8 + i]))+((t[(514)*8 + i]))+((t[(481)*8 + i]))+((t[(480)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f58(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(479)*8 + i] = ((t[(539)*8 + i]))+((t[(479)*8 + i]))+((t[(526)*8 + i]));
 // REPEATED COMPUTATION
 t[(514)*8 + i] = ((a[276]))+((t[(539)*8 + i]))+((t[(551)*8 + i]))+((t[(483)*8 + i]))+((t[(514)*8 + i]))+((t[(2780)*8 + i]))+((t[(464)*8 + i]))+((t[(2379)*8 + i]))+((t[(482)*8 + i]))+((t[(476)*8 + i]));
@@ -7241,6 +7643,13 @@ t[(2370)*8 + i] = (((a[452]))*((t[(72)*8 + i])))+(((a[452]))*((t[(61)*8 + i])))+
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(388)*8 + i] = ((t[(380)*8 + i]))+((t[(375)*8 + i]))+((t[(2760)*8 + i]))+((t[(388)*8 + i]));
+}
+}
+
+void f59(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(405)*8 + i] = ((t[(405)*8 + i]))+((t[(388)*8 + i]));
 t[(408)*8 + i] = ((t[(408)*8 + i]))+((t[(388)*8 + i]));
 t[(388)*8 + i] = ((t[(407)*8 + i]))+((t[(409)*8 + i]))+((t[(388)*8 + i]));
@@ -7363,6 +7772,13 @@ t[(786)*8 + i] = (((a[1033]))*((t[(40)*8 + i])))+(((a[1033]))*((t[(70)*8 + i])))
         t[(575)*8 + i] = a[674] * t[(71)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f60(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(3054)*8 + i] = ((a[94]))+((t[(769)*8 + i]))+((t[(3054)*8 + i]));
 // REPEATED COMPUTATION
 t[(769)*8 + i] = ((a[94]))+((t[(452)*8 + i]))+((t[(3000)*8 + i]))+((t[(576)*8 + i]))+((t[(169)*8 + i]))+((t[(254)*8 + i]))+((t[(575)*8 + i]));
@@ -7485,6 +7901,13 @@ t[(3053)*8 + i] = (((a[1033]))*((t[(66)*8 + i])))+(((a[1033]))*((t[(71)*8 + i]))
         t[(393)*8 + i] = a[1054] * t[(38)*8 + i];
         t[(673)*8 + i] = a[1066] * t[(39)*8 + i];
 // REPEATED COMPUTATION
+}
+}
+
+void f61(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(2394)*8 + i] = ((t[(393)*8 + i]))+((t[(673)*8 + i]))+((t[(2394)*8 + i]))+((t[(2523)*8 + i]))+((t[(3002)*8 + i]));
 // REPEATED COMPUTATION
@@ -7607,6 +8030,13 @@ t[(3058)*8 + i] = (((a[132]))*((t[(72)*8 + i])))+(((a[132]))*((t[(61)*8 + i])))+
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(2883)*8 + i] = ((a[8]))+((t[(1242)*8 + i]))+((t[(375)*8 + i]))+((t[(2883)*8 + i]))+((t[(2936)*8 + i]))+((t[(2374)*8 + i]));
+}
+}
+
+void f62(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(3060)*8 + i] = ((t[(1352)*8 + i]))+((t[(1351)*8 + i]))+((t[(1085)*8 + i]))+((t[(3060)*8 + i]))+((t[(1242)*8 + i]))+((t[(375)*8 + i]))+((t[(2433)*8 + i]));
 t[(1085)*8 + i] = (((a[384]))*((t[(40)*8 + i])))+(((a[423]))*((t[(66)*8 + i])))+((t[(1242)*8 + i]))+((t[(375)*8 + i]))+((t[(2433)*8 + i]))+((t[(2936)*8 + i]))+((t[(2374)*8 + i]));
@@ -7729,6 +8159,13 @@ t[(1342)*8 + i] = (((a[751]))*((t[(72)*8 + i])))+(((a[888]))*((t[(61)*8 + i])))+
         t[(1337)*8 + i] = a[733] * t[(38)*8 + i];
         t[(1336)*8 + i] = a[733] * t[(39)*8 + i];
         t[(1335)*8 + i] = a[746] * t[(72)*8 + i];
+}
+}
+
+void f63(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2526)*8 + i] = a[746] * t[(75)*8 + i];
         t[(2880)*8 + i] = a[746] * t[(61)*8 + i];
         t[(3063)*8 + i] = a[746] * t[(59)*8 + i];
@@ -7851,6 +8288,13 @@ t[(1054)*8 + i] = ((t[(407)*8 + i]))+((t[(898)*8 + i]))+((t[(1054)*8 + i]));
 t[(2574)*8 + i] = (((a[132]))*((t[(75)*8 + i])))+(((a[132]))*((t[(59)*8 + i])))+(((a[356]))*((t[(72)*8 + i])))+(((a[356]))*((t[(61)*8 + i])))+(((a[505]))*((t[(102)*8 + i])))+(((a[511]))*((t[(100)*8 + i])))+((t[(1240)*8 + i]))+((t[(2574)*8 + i]));
         t[(1240)*8 + i] = a[575] * t[(28)*8 + i];
         t[(407)*8 + i] = a[833] * t[(37)*8 + i];
+}
+}
+
+void f64(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(898)*8 + i] = a[631] * t[(38)*8 + i];
         t[(610)*8 + i] = a[631] * t[(39)*8 + i];
         t[(254)*8 + i] = a[1118] * t[(72)*8 + i];
@@ -7973,6 +8417,13 @@ t[(3071)*8 + i] = ((t[(1438)*8 + i]))+((t[(3085)*8 + i]))+((t[(2597)*8 + i]))+((
 t[(1439)*8 + i] = ((t[(1439)*8 + i]))+((t[(3071)*8 + i]));
 // REPEATED COMPUTATION
 t[(3082)*8 + i] = ((t[(1438)*8 + i]))+((t[(3085)*8 + i]))+((t[(2597)*8 + i]))+((t[(1456)*8 + i]))+((t[(1455)*8 + i]))+((t[(2596)*8 + i]))+((t[(1006)*8 + i]))+((t[(1294)*8 + i]))+((t[(3082)*8 + i]))+((t[(1443)*8 + i]));
+}
+}
+
+void f65(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1294)*8 + i] = (((a[697]))*((t[(117)*8 + i])))+(((a[859]))*((t[(40)*8 + i])))+(((a[859]))*((t[(70)*8 + i])))+(((a[935]))*((t[(66)*8 + i])))+(((a[935]))*((t[(71)*8 + i])))+((t[(1443)*8 + i]))+((t[(3071)*8 + i]));
         t[(1006)*8 + i] = a[968] * t[(117)*8 + i];
         t[(2596)*8 + i] = a[958] * t[(111)*8 + i];
@@ -8095,6 +8546,13 @@ t[(1484)*8 + i] = ((t[(3086)*8 + i]))+((t[(2600)*8 + i]))+((t[(2940)*8 + i]))+((
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f66(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(1465)*8 + i] = ((t[(3086)*8 + i]))+((t[(2600)*8 + i]))+((t[(1433)*8 + i]))+((t[(3090)*8 + i]))+((t[(1496)*8 + i]))+((t[(2472)*8 + i]))+((t[(2482)*8 + i]))+((t[(2489)*8 + i]))+((t[(1422)*8 + i]))+((t[(1252)*8 + i]));
@@ -8217,6 +8675,13 @@ t[(1365)*8 + i] = ((t[(1132)*8 + i]))+((t[(2604)*8 + i]))+((t[(1075)*8 + i]))+((
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
 t[(1375)*8 + i] = ((t[(1403)*8 + i]))+((t[(3095)*8 + i]))+((t[(2603)*8 + i]))+((t[(1449)*8 + i]))+((t[(2596)*8 + i]))+((t[(1455)*8 + i]))+((t[(2448)*8 + i]))+((t[(3097)*8 + i]));
+}
+}
+
+void f67(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1495)*8 + i] = a[929] * t[(28)*8 + i];
         t[(2946)*8 + i] = a[1103] * t[(37)*8 + i];
         t[(3098)*8 + i] = a[841] * t[(38)*8 + i];
@@ -8339,6 +8804,13 @@ t[(2590)*8 + i] = ((t[(1269)*8 + i]))+((t[(1133)*8 + i]))+((t[(1228)*8 + i]))+((
         t[(2587)*8 + i] = a[826] * t[(117)*8 + i];
         t[(1283)*8 + i] = a[852] * t[(111)*8 + i];
         t[(3075)*8 + i] = a[850] * t[(100)*8 + i];
+}
+}
+
+void f68(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2586)*8 + i] = a[1048] * t[(102)*8 + i];
 // REPEATED COMPUTATION
 t[(3075)*8 + i] = ((t[(1151)*8 + i]))+((t[(1327)*8 + i]))+((t[(3076)*8 + i]))+((t[(2589)*8 + i]))+((t[(2588)*8 + i]))+((t[(3075)*8 + i]));
@@ -8461,6 +8933,13 @@ t[(1079)*8 + i] = ((t[(1153)*8 + i]))+((t[(1079)*8 + i]))+((t[(2889)*8 + i]))+((
         t[(3113)*8 + i] = a[627] * t[(117)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
+}
+}
+
+void f69(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1195)*8 + i] = ((t[(1122)*8 + i]))+((t[(3113)*8 + i]));
 t[(1092)*8 + i] = ((t[(1092)*8 + i]))+((t[(1195)*8 + i]));
 // REPEATED COMPUTATION
@@ -8583,6 +9062,13 @@ t[(1268)*8 + i] = ((t[(2599)*8 + i]))+((t[(1448)*8 + i]))+((t[(2597)*8 + i]))+((
 t[(1435)*8 + i] = ((t[(1428)*8 + i]))+((t[(1435)*8 + i]))+((t[(1511)*8 + i]))+((t[(3089)*8 + i]));
         t[(2597)*8 + i] = a[728] * t[(40)*8 + i];
         t[(3092)*8 + i] = t[(3118)*8 + i] + t[(3092)*8 + i];
+}
+}
+
+void f70(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1409)*8 + i] = ((((t[(1487)*8 + i]))+((t[(1469)*8 + i]))+((t[(2597)*8 + i]))+((t[(2490)*8 + i]))+((t[(2964)*8 + i]))+((t[(2977)*8 + i])))*((t[(40)*8 + i])))+(((t[(56)*8 + i]))*((t[(1320)*8 + i])))+(((t[(100)*8 + i]))*((t[(1435)*8 + i])))+(((t[(117)*8 + i]))*((t[(2598)*8 + i])))+(((t[(136)*8 + i]))*((t[(3092)*8 + i])))+(((t[(1467)*8 + i]))*((t[(66)*8 + i])))+((t[(1409)*8 + i]));
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -8635,7 +9121,7 @@ t[(3093)*8 + i] = (((t[(102)*8 + i]))*((t[(1449)*8 + i])))+(((t[(107)*8 + i]))*(
 t[(2481)*8 + i] = (((a[175]))*((t[(14)*8 + i])))+(((a[90]))*((t[(9)*8 + i])))+((t[(2481)*8 + i]));
         t[(1369)*8 + i] = a[80] * t[(28)*8 + i];
         t[(1068)*8 + i] = t[(1069)*8 + i] + t[(1068)*8 + i];
-        t[(1069)*8 + i] = x[nv + nd * 0];
+        t[(1069)*8 + i] = x[nv0 + i + nd * 0];
         t[(1330)*8 + i] = (t[(1291)*8 + i] + t[(1330)*8 + i]) * t[(1069)*8 + i];
         t[(1053)*8 + i] = t[(1249)*8 + i] + t[(1053)*8 + i];
         t[(2574)*8 + i] = t[(1054)*8 + i] + t[(2574)*8 + i];
@@ -8705,6 +9191,13 @@ t[(2703)*8 + i] = ((a[39]))+((t[(86)*8 + i]))+((t[(2703)*8 + i]));
 t[(86)*8 + i] = (((a[476]))*((t[(14)*8 + i])))+(((a[498]))*((t[(9)*8 + i])))+((t[(201)*8 + i]))+((t[(2703)*8 + i]));
         t[(13)*8 + i] = t[(86)*8 + i] * t[(28)*8 + i];
         t[(11)*8 + i] = a[476] * t[(1)*8 + i];
+}
+}
+
+void f71(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2492)*8 + i] = a[498] * t[(22)*8 + i];
 // REPEATED COMPUTATION
 // REPEATED COMPUTATION
@@ -8827,6 +9320,13 @@ t[(2889)*8 + i] = ((t[(1129)*8 + i]))+((t[(1372)*8 + i]));
         t[(3099)*8 + i] = t[(1185)*8 + i] * t[(74)*8 + i];
 t[(1192)*8 + i] = ((t[(3099)*8 + i]))+((t[(1476)*8 + i]));
 // REPEATED COMPUTATION
+}
+}
+
+void f72(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1105)*8 + i] = ((t[(3099)*8 + i]))+((t[(1420)*8 + i]));
 t[(1196)*8 + i] = (t[(1105)*8 + i]);
 // REPEATED COMPUTATION
@@ -8949,6 +9449,13 @@ t[(2606)*8 + i] = ((t[(2613)*8 + i]))+((t[(2617)*8 + i]));
         t[(2610)*8 + i] = t[(1177)*8 + i] * t[(72)*8 + i];
         t[(1090)*8 + i] = t[(1177)*8 + i] * t[(102)*8 + i];
         t[(2607)*8 + i] = t[(1177)*8 + i] * t[(75)*8 + i];
+}
+}
+
+void f73(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1111)*8 + i] = ((t[(2607)*8 + i]))+((t[(2610)*8 + i]));
         t[(1112)*8 + i] = t[(1177)*8 + i] * t[(74)*8 + i];
 t[(2608)*8 + i] = ((t[(1112)*8 + i]))+((t[(2617)*8 + i]));
@@ -9071,6 +9578,13 @@ t[(562)*8 + i] = ((t[(483)*8 + i]))+((t[(537)*8 + i]));
         t[(536)*8 + i] = t[(2800)*8 + i] * t[(111)*8 + i];
 t[(547)*8 + i] = ((t[(536)*8 + i]))+((t[(2531)*8 + i]));
         t[(504)*8 + i] = t[(2800)*8 + i] * t[(61)*8 + i];
+}
+}
+
+void f74(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(518)*8 + i] = t[(2800)*8 + i] * t[(74)*8 + i];
 t[(2379)*8 + i] = ((t[(518)*8 + i]))+((t[(3049)*8 + i]));
         t[(543)*8 + i] = t[(882)*8 + i] * t[(102)*8 + i];
@@ -9193,6 +9707,13 @@ t[(2680)*8 + i] = ((t[(2704)*8 + i]))+((t[(483)*8 + i]));
         t[(134)*8 + i] = t[(165)*8 + i] * t[(71)*8 + i];
         t[(47)*8 + i] = t[(165)*8 + i] * t[(70)*8 + i];
 t[(46)*8 + i] = ((t[(47)*8 + i]))+((t[(134)*8 + i]));
+}
+}
+
+void f75(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2696)*8 + i] = t[(165)*8 + i] * t[(66)*8 + i];
         t[(2324)*8 + i] = t[(165)*8 + i] * t[(40)*8 + i];
 t[(127)*8 + i] = ((t[(2324)*8 + i]))+((t[(2696)*8 + i]));
@@ -9315,6 +9836,13 @@ t[(2870)*8 + i] = ((t[(852)*8 + i]))+((t[(2854)*8 + i]));
 t[(2862)*8 + i] = ((t[(851)*8 + i]))+((t[(2704)*8 + i]));
         t[(2422)*8 + i] = t[(2855)*8 + i] * t[(107)*8 + i];
 t[(993)*8 + i] = ((t[(2422)*8 + i]))+((t[(851)*8 + i]));
+}
+}
+
+void f76(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(992)*8 + i] = ((t[(2422)*8 + i]))+((t[(3049)*8 + i]));
 t[(848)*8 + i] = (t[(992)*8 + i]);
@@ -9437,6 +9965,13 @@ t[(278)*8 + i] = ((t[(290)*8 + i]))+((t[(280)*8 + i]));
         t[(291)*8 + i] = t[(66)*8 + i] * t[(66)*8 + i];
         t[(2974)*8 + i] = t[(40)*8 + i] * t[(40)*8 + i];
 t[(2975)*8 + i] = ((t[(2974)*8 + i]))+((t[(291)*8 + i]));
+}
+}
+
+void f77(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(287)*8 + i] = ((t[(2974)*8 + i]))+((t[(291)*8 + i]))+((t[(775)*8 + i]))+((t[(2978)*8 + i]));
 // REPEATED COMPUTATION
 t[(286)*8 + i] = ((t[(40)*8 + i]))*((t[(66)*8 + i]));
@@ -9559,6 +10094,13 @@ t[(2262)*8 + i] = ((t[(2263)*8 + i]))+((t[(2267)*8 + i]));
 t[(2259)*8 + i] = ((t[(2261)*8 + i]))+((t[(2265)*8 + i]));
 t[(2258)*8 + i] = ((t[(2261)*8 + i]))+((t[(2265)*8 + i]))+((t[(2946)*8 + i]))+((t[(1443)*8 + i]));
 t[(2257)*8 + i] = ((t[(1203)*8 + i]))+((t[(2261)*8 + i]))+((t[(2265)*8 + i]))+((t[(2618)*8 + i]));
+}
+}
+
+void f78(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2256)*8 + i] = t[(2264)*8 + i] * t[(111)*8 + i];
 t[(2255)*8 + i] = ((t[(2256)*8 + i]))+((t[(2280)*8 + i]));
 // REPEATED COMPUTATION
@@ -9681,6 +10223,13 @@ t[(1523)*8 + i] = ((t[(1523)*8 + i]))+((t[(2213)*8 + i]))+((t[(2224)*8 + i]))+((
 t[(3127)*8 + i] = ((t[(2213)*8 + i]))+((t[(2224)*8 + i]))+((t[(3127)*8 + i]));
 t[(3087)*8 + i] = ((t[(2213)*8 + i]))+((t[(2224)*8 + i]))+((t[(3087)*8 + i]));
         t[(2211)*8 + i] = t[(2264)*8 + i] * t[(204)*8 + i];
+}
+}
+
+void f79(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2229)*8 + i] = ((t[(2211)*8 + i]))+((t[(2229)*8 + i]));
 t[(2210)*8 + i] = ((t[(2211)*8 + i]))+((t[(2279)*8 + i]));
 // REPEATED COMPUTATION
@@ -9803,6 +10352,13 @@ t[(2157)*8 + i] = (t[(2641)*8 + i]);
         t[(2155)*8 + i] = t[(1544)*8 + i] + t[(1545)*8 + i];
         t[(1546)*8 + i] = t[(1069)*8 + i] * t[(37)*8 + i];
         t[(1545)*8 + i] = t[(1546)*8 + i] + t[(1545)*8 + i];
+}
+}
+
+void f80(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2154)*8 + i] = t[(1062)*8 + i] * t[(102)*8 + i];
 t[(2153)*8 + i] = ((t[(2154)*8 + i]))+((t[(1400)*8 + i]))+((t[(2577)*8 + i]))+((t[(1193)*8 + i]));
 t[(2152)*8 + i] = ((t[(2154)*8 + i]))+((t[(1400)*8 + i]))+((t[(664)*8 + i]))+((t[(780)*8 + i]));
@@ -9925,6 +10481,13 @@ t[(1557)*8 + i] = ((t[(39)*8 + i]))*((t[(2149)*8 + i]));
         t[(1556)*8 + i] = t[(1556)*8 + i] + t[(1557)*8 + i];
         t[(1476)*8 + i] = t[(1476)*8 + i] + t[(1557)*8 + i];
         t[(1557)*8 + i] = t[(1544)*8 + i] * t[(66)*8 + i];
+}
+}
+
+void f81(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1554)*8 + i] = t[(2308)*8 + i] + t[(1557)*8 + i];
         t[(1552)*8 + i] = t[(1514)*8 + i] * t[(40)*8 + i];
 t[(2102)*8 + i] = ((t[(1552)*8 + i]))+((t[(1557)*8 + i]));
@@ -10047,6 +10610,13 @@ t[(2037)*8 + i] = ((t[(2038)*8 + i]))+((t[(2077)*8 + i]))+((t[(840)*8 + i]))+((t
 t[(2033)*8 + i] = ((t[(2034)*8 + i]))+((t[(1030)*8 + i]));
 t[(2032)*8 + i] = ((t[(2034)*8 + i]))+((t[(2076)*8 + i]))+((t[(456)*8 + i]))+((t[(1030)*8 + i]));
 // REPEATED COMPUTATION
+}
+}
+
+void f82(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(2054)*8 + i] = ((t[(2034)*8 + i]))+((t[(2054)*8 + i]));
 t[(2034)*8 + i] = (t[(2054)*8 + i]);
@@ -10169,6 +10739,13 @@ t[(2052)*8 + i] = ((t[(1988)*8 + i]))+((t[(2052)*8 + i]))+((t[(1008)*8 + i]))+((
 t[(2056)*8 + i] = ((t[(1988)*8 + i]))+((t[(2056)*8 + i]));
 t[(2072)*8 + i] = ((t[(2072)*8 + i]))+((t[(2056)*8 + i]));
 // REPEATED COMPUTATION
+}
+}
+
+void f83(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2656)*8 + i] = (t[(2056)*8 + i]);
 t[(1008)*8 + i] = ((t[(1008)*8 + i]))+((t[(2989)*8 + i]))+((t[(844)*8 + i]))+((t[(1040)*8 + i]))+((t[(842)*8 + i]))+((t[(2656)*8 + i]));
 t[(842)*8 + i] = ((t[(842)*8 + i]))+((t[(2656)*8 + i]));
@@ -10291,6 +10868,13 @@ t[(1951)*8 + i] = ((t[(1941)*8 + i]))+((t[(1951)*8 + i]));
 t[(1941)*8 + i] = (t[(1951)*8 + i]);
 t[(1938)*8 + i] = (t[(1941)*8 + i]);
 // REPEATED COMPUTATION
+}
+}
+
+void f84(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1951)*8 + i] = ((t[(2422)*8 + i]))+((t[(851)*8 + i]))+((t[(1951)*8 + i]));
 // REPEATED COMPUTATION
 t[(93)*8 + i] = ((t[(2422)*8 + i]))+((t[(93)*8 + i]));
@@ -10413,6 +10997,13 @@ t[(1041)*8 + i] = (t[(1041)*8 + i]);
         t[(956)*8 + i] = t[(1559)*8 + i] + t[(956)*8 + i];
         t[(1579)*8 + i] = t[(104)*8 + i] * t[(9)*8 + i];
         t[(1580)*8 + i] = t[(2040)*8 + i] * t[(9)*8 + i];
+}
+}
+
+void f85(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1906)*8 + i] = t[(1579)*8 + i] + t[(1580)*8 + i];
         t[(1581)*8 + i] = t[(104)*8 + i] * t[(14)*8 + i];
         t[(1580)*8 + i] = t[(1581)*8 + i] + t[(1580)*8 + i];
@@ -10535,6 +11126,13 @@ t[(1862)*8 + i] = ((t[(1863)*8 + i]))+((t[(1887)*8 + i]));
 t[(1861)*8 + i] = ((t[(1863)*8 + i]))+((t[(1887)*8 + i]))+((t[(475)*8 + i]))+((t[(2377)*8 + i]));
 t[(1860)*8 + i] = ((t[(1863)*8 + i]))+((t[(1887)*8 + i]))+((t[(2783)*8 + i]))+((t[(476)*8 + i]));
         t[(1859)*8 + i] = t[(1897)*8 + i] * t[(66)*8 + i];
+}
+}
+
+void f86(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1595)*8 + i] = t[(1897)*8 + i] * t[(40)*8 + i];
 t[(1858)*8 + i] = ((t[(1595)*8 + i]))+((t[(1859)*8 + i]));
 t[(1857)*8 + i] = ((t[(1595)*8 + i]))+((t[(1859)*8 + i]))+((t[(1863)*8 + i]))+((t[(1887)*8 + i]));
@@ -10657,6 +11255,13 @@ t[(2496)*8 + i] = ((t[(1795)*8 + i]))+((t[(1805)*8 + i]))+((t[(828)*8 + i]))+((t
 t[(1839)*8 + i] = ((t[(1843)*8 + i]))+((t[(1839)*8 + i]));
 t[(1843)*8 + i] = ((t[(1795)*8 + i]))+((t[(1805)*8 + i]))+((t[(828)*8 + i]))+((t[(741)*8 + i]))+((t[(1839)*8 + i]));
 t[(1793)*8 + i] = ((t[(1795)*8 + i]))+((t[(1805)*8 + i]))+((t[(828)*8 + i]))+((t[(741)*8 + i]));
+}
+}
+
+void f87(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(1792)*8 + i] = ((t[(1795)*8 + i]))+((t[(828)*8 + i]));
 t[(1599)*8 + i] = ((t[(1599)*8 + i]))+((t[(1795)*8 + i]))+((t[(1363)*8 + i]))+((t[(828)*8 + i]));
 t[(1791)*8 + i] = ((t[(1795)*8 + i]))+((t[(1831)*8 + i]))+((t[(1407)*8 + i]))+((t[(828)*8 + i]));
@@ -10779,6 +11384,13 @@ t[(1728)*8 + i] = (t[(1728)*8 + i]);
         t[(2982)*8 + i] = t[(1740)*8 + i] * t[(39)*8 + i];
         t[(884)*8 + i] = t[(1175)*8 + i] + t[(2982)*8 + i];
         t[(1613)*8 + i] = t[(1094)*8 + i] + t[(2982)*8 + i];
+}
+}
+
+void f88(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1614)*8 + i] = t[(1740)*8 + i] * t[(38)*8 + i];
         t[(1724)*8 + i] = t[(1126)*8 + i] + t[(1614)*8 + i];
         t[(1723)*8 + i] = t[(1158)*8 + i] + t[(1614)*8 + i];
@@ -10901,6 +11513,13 @@ t[(1674)*8 + i] = (t[(683)*8 + i]);
 t[(1670)*8 + i] = ((t[(1671)*8 + i]))+((t[(1711)*8 + i]));
 t[(1669)*8 + i] = ((t[(1671)*8 + i]))+((t[(1713)*8 + i]))+((t[(681)*8 + i]))+((t[(1019)*8 + i]));
 t[(1668)*8 + i] = ((t[(1671)*8 + i]))+((t[(681)*8 + i]));
+}
+}
+
+void f89(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(683)*8 + i] = ((t[(1671)*8 + i]))+((t[(1711)*8 + i]))+((t[(681)*8 + i]))+((t[(123)*8 + i]))+((t[(683)*8 + i]));
 t[(1671)*8 + i] = ((t[(1671)*8 + i]))+((t[(1711)*8 + i]))+((t[(681)*8 + i]))+((t[(123)*8 + i]));
         t[(1667)*8 + i] = t[(204)*8 + i] * t[(61)*8 + i];
@@ -11023,6 +11642,13 @@ t[(1631)*8 + i] = ((t[(1625)*8 + i]))+((t[(1694)*8 + i]));
 t[(1630)*8 + i] = ((t[(1625)*8 + i]))+((t[(1647)*8 + i]))+((t[(1694)*8 + i]))+((t[(1696)*8 + i]));
 t[(877)*8 + i] = ((t[(1625)*8 + i]))+((t[(1694)*8 + i]))+((t[(877)*8 + i]));
 t[(1667)*8 + i] = ((t[(1625)*8 + i]))+((t[(1694)*8 + i]))+((t[(1667)*8 + i]));
+}
+}
+
+void f90(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(1625)*8 + i] = t[(37)*8 + i] * t[(37)*8 + i];
         t[(305)*8 + i] = t[(305)*8 + i] + t[(1625)*8 + i];
         t[(1625)*8 + i] = t[(2868)*8 + i] + t[(1625)*8 + i];
@@ -11145,6 +11771,13 @@ t[(2733)*8 + i] = ((t[(2366)*8 + i]))+((t[(394)*8 + i]))+((t[(2733)*8 + i]));
 t[(394)*8 + i] = (((a[176]))*((t[(1854)*8 + i])))+(((a[423]))*((t[(2288)*8 + i])))+(((a[562]))*((t[(915)*8 + i])))+(((a[618]))*((t[(1939)*8 + i])))+(((a[708]))*((t[(3121)*8 + i])))+(((a[716]))*((t[(2172)*8 + i])))+(((a[722]))*((t[(2244)*8 + i])))+(((a[820]))*((t[(1942)*8 + i])))+(((a[842]))*((t[(2622)*8 + i])))+(((a[875]))*((t[(1920)*8 + i])))+((t[(352)*8 + i]))+((t[(2934)*8 + i]))+((t[(2733)*8 + i]));
         t[(2366)*8 + i] = t[(2164)*8 + i] * a[1088];
         t[(174)*8 + i] = t[(2565)*8 + i] * a[540];
+}
+}
+
+void f91(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(782)*8 + i] = t[(761)*8 + i] * a[261];
         t[(203)*8 + i] = t[(1400)*8 + i] * a[101];
         t[(731)*8 + i] = t[(639)*8 + i] * a[321];
@@ -11267,6 +11900,13 @@ t[(2069)*8 + i] = (((a[562]))*((t[(2065)*8 + i])))+(((a[997]))*((t[(586)*8 + i])
 t[(2537)*8 + i] = (((a[155]))*((t[(1670)*8 + i])))+(((a[305]))*((t[(1981)*8 + i])))+(((a[637]))*((t[(2399)*8 + i])))+(((a[666]))*((t[(2177)*8 + i])))+(((a[700]))*((t[(2073)*8 + i])))+(((a[879]))*((t[(2405)*8 + i])))+(((t[(2537)*8 + i]))*((t[(3025)*8 + i])))+((t[(2400)*8 + i]))+((t[(989)*8 + i]))+((t[(2229)*8 + i]))+((t[(639)*8 + i]))+((t[(2069)*8 + i]));
         t[(1372)*8 + i] = t[(1372)*8 + i] * a[844];
         t[(3048)*8 + i] = t[(3048)*8 + i] * a[1036];
+}
+}
+
+void f92(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(3048)*8 + i] = ((t[(1372)*8 + i]))+((t[(3048)*8 + i]));
 // REPEATED COMPUTATION
@@ -11389,6 +12029,13 @@ t[(3061)*8 + i] = (((a[230]))*((t[(1834)*8 + i])))+(((a[885]))*((t[(134)*8 + i])
 t[(430)*8 + i] = ((a[688]))*((t[(132)*8 + i]));
 t[(1074)*8 + i] = ((a[673]))*((t[(1434)*8 + i]));
 t[(581)*8 + i] = ((a[774]))*((t[(2889)*8 + i]));
+}
+}
+
+void f93(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(581)*8 + i] = ((t[(1074)*8 + i]))+((t[(581)*8 + i]));
 // REPEATED COMPUTATION
@@ -11511,6 +12158,13 @@ t[(2458)*8 + i] = (((a[305]))*((t[(614)*8 + i])))+(((a[351]))*((t[(2632)*8 + i])
         t[(2427)*8 + i] = t[(2307)*8 + i] * a[1138];
         t[(1483)*8 + i] = t[(2301)*8 + i] * a[773];
 t[(2266)*8 + i] = ((a[735]))*((t[(2549)*8 + i]));
+}
+}
+
+void f94(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(1483)*8 + i] = ((t[(2470)*8 + i]))+((t[(1192)*8 + i]))+((t[(867)*8 + i]))+((t[(2427)*8 + i]))+((t[(1483)*8 + i]));
 t[(1201)*8 + i] = (((a[1005]))*((t[(1366)*8 + i])))+(((a[1029]))*((t[(2031)*8 + i])))+(((a[1087]))*((t[(1863)*8 + i])))+(((a[653]))*((t[(878)*8 + i])))+(((a[708]))*((t[(2310)*8 + i])))+(((a[722]))*((t[(1371)*8 + i])))+(((a[842]))*((t[(2315)*8 + i])))+(((a[895]))*((t[(2036)*8 + i])))+(((a[903]))*((t[(2302)*8 + i])))+(((t[(1201)*8 + i]))*((t[(1514)*8 + i])))+((t[(2266)*8 + i]))+((t[(1483)*8 + i]));
@@ -11633,6 +12287,13 @@ t[(1705)*8 + i] = (((a[284]))*((t[(737)*8 + i])))+(((a[605]))*((t[(2018)*8 + i])
         t[(2530)*8 + i] = t[(2530)*8 + i] * a[692];
 // REPEATED COMPUTATION
 t[(895)*8 + i] = ((t[(2307)*8 + i]))+((t[(2674)*8 + i]))+((t[(895)*8 + i]));
+}
+}
+
+void f95(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(935)*8 + i] = (((a[862]))*((t[(1997)*8 + i])))+(((a[946]))*((t[(2010)*8 + i])))+((t[(935)*8 + i]));
 // REPEATED COMPUTATION
@@ -11755,6 +12416,13 @@ t[(331)*8 + i] = (((((2.0))*((t[(331)*8 + i])))+((t[(229)*8 + i]))+((t[(230)*8 +
         t[(632)*8 + i] = t[(632)*8 + i] * a[602];
         t[(1087)*8 + i] = t[(1087)*8 + i] * a[180];
         t[(663)*8 + i] = t[(663)*8 + i] * a[297];
+}
+}
+
+void f96(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2567)*8 + i] = (((((2.0))*((t[(3059)*8 + i])))+((t[(2567)*8 + i])))*((t[(3025)*8 + i])))+(((((2.0))*((t[(1036)*8 + i])))+((t[(1035)*8 + i]))+((t[(2444)*8 + i]))+((t[(1104)*8 + i]))+((t[(2899)*8 + i])))*((t[(2149)*8 + i])))+(((((2.0))*((t[(2796)*8 + i])))+((t[(3009)*8 + i]))+((t[(2390)*8 + i]))+((t[(2397)*8 + i]))+((t[(2874)*8 + i])))*((t[(104)*8 + i])))+(((a[1054]))*((t[(778)*8 + i])))+(((a[1066]))*((t[(3021)*8 + i])))+(((a[196]))*((t[(728)*8 + i])))+(((a[216]))*((t[(724)*8 + i])))+(((a[763]))*((t[(2820)*8 + i])))+(((a[85]))*((t[(1832)*8 + i])))+(((a[908]))*((t[(885)*8 + i])))+(((a[937]))*((t[(2253)*8 + i])))+((t[(632)*8 + i]))+((t[(1087)*8 + i]))+((t[(663)*8 + i]))+((t[(2342)*8 + i]));
         t[(3059)*8 + i] = t[(1773)*8 + i] * a[450];
         t[(2047)*8 + i] = t[(2047)*8 + i] * a[812];
@@ -11877,6 +12545,13 @@ t[(2021)*8 + i] = (((a[1043]))*((t[(2259)*8 + i])))+(((a[1054]))*((t[(721)*8 + i
         t[(2820)*8 + i] = t[(2820)*8 + i] * a[1064];
 // REPEATED COMPUTATION
 t[(2820)*8 + i] = ((t[(873)*8 + i]))+((t[(2820)*8 + i]));
+}
+}
+
+void f97(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 // REPEATED COMPUTATION
 t[(1742)*8 + i] = ((t[(2642)*8 + i]))+((t[(1742)*8 + i]));
 // REPEATED COMPUTATION
@@ -11999,6 +12674,13 @@ t[(2454)*8 + i] = (((((2.0))*((t[(16)*8 + i])))+((t[(20)*8 + i]))+((t[(26)*8 + i
         t[(2279)*8 + i] = t[(2279)*8 + i] * a[696];
         t[(2654)*8 + i] = t[(2654)*8 + i] * a[720];
         t[(2655)*8 + i] = t[(2655)*8 + i] * a[657];
+}
+}
+
+void f98(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
         t[(2101)*8 + i] = t[(2101)*8 + i] * a[647];
         t[(2974)*8 + i] = t[(2974)*8 + i] * a[312];
         t[(2502)*8 + i] = t[(2502)*8 + i] * a[460];
@@ -12120,6 +12802,13 @@ t[(2116)*8 + i] = ((a[770]))*((t[(2116)*8 + i]));
 t[(1665)*8 + i] = ((a[75]))*((t[(1665)*8 + i]));
 t[(2254)*8 + i] = ((a[626]))*((t[(2254)*8 + i]));
         t[(1131)*8 + i] = t[(2149)*8 + i] * t[(1131)*8 + i] + t[(1550)*8 + i] * a[906] + t[(2116)*8 + i] + t[(1776)*8 + i] * a[444] + t[(1601)*8 + i] * a[123] +                               t[(1606)*8 + i] * a[156] + t[(1607)*8 + i] * a[98] + t[(1786)*8 + i] * t[(321)*8 + i] + t[(1774)*8 + i] * a[77] + t[(1703)*8 + i] * a[108] +                               t[(2119)*8 + i] * a[761] + t[(1665)*8 + i] + t[(2254)*8 + i] + t[(2247)*8 + i] * a[1096] + t[(2245)*8 + i] * a[869];
+}
+}
+
+void f99(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
+    #pragma omp simd simdlen(8)
+    for(size_t i = 0; i < 8; i++) {
+        
 t[(2220)*8 + i] = ((a[832]))*((t[(2220)*8 + i]));
 t[(1572)*8 + i] = ((a[724]))*((t[(1572)*8 + i]));
 t[(1447)*8 + i] = (((((a[922]))*((t[(22)*8 + i])))+((t[(530)*8 + i]))+((t[(535)*8 + i])))*((t[(505)*8 + i])))+(((a[150]))*((t[(1750)*8 + i])))+(((a[183]))*((t[(1746)*8 + i])))+(((a[400]))*((t[(743)*8 + i])))+(((a[589]))*((t[(2240)*8 + i])))+(((a[663]))*((t[(1519)*8 + i])))+(((a[757]))*((t[(2663)*8 + i])))+(((a[759]))*((t[(1569)*8 + i])))+(((a[840]))*((t[(2225)*8 + i])))+(((a[959]))*((t[(1526)*8 + i])))+(((t[(643)*8 + i]))*((t[(1966)*8 + i])))+(((t[(1447)*8 + i]))*((t[(2252)*8 + i])))+((t[(2220)*8 + i]))+((t[(1572)*8 + i]));
@@ -12241,41 +12930,151 @@ t[(2203)*8 + i] = (((a[1039]))*((t[(1891)*8 + i])))+(((a[1046]))*((t[(1880)*8 + 
         t[(1280)*8 + i] = t[(684)*8 + i] + t[(1231)*8 + i] + t[(213)*8 + i] + t[(1105)*8 + i] + t[(141)*8 + i] + t[(1718)*8 + i] + t[(1482)*8 + i] + t[(1131)*8 + i] + t[(1447)*8 + i] + t[(530)*8 + i] +                               t[(2498)*8 + i] + t[(2364)*8 + i] + t[(428)*8 + i] + t[(1013)*8 + i] + t[(322)*8 + i] + t[(1280)*8 + i];
         t[(21)*8 + i] = t[(1246)*8 + i] + t[(384)*8 + i] + t[(2970)*8 + i] + t[(1606)*8 + i] + t[(1625)*8 + i] + t[(1607)*8 + i] + t[(1562)*8 + i] + t[(2827)*8 + i] + t[(150)*8 + i] + t[(1573)*8 + i] +                               t[(1627)*8 + i] + t[(1161)*8 + i] + t[(1729)*8 + i] + t[(1265)*8 + i] + t[(644)*8 + i] + t[(21)*8 + i];
         t[(2540)*8 + i] = t[(2676)*8 + i] + t[(1667)*8 + i] + t[(151)*8 + i] + t[(1818)*8 + i] + t[(2079)*8 + i] + t[(2116)*8 + i] + t[(2162)*8 + i] + t[(2142)*8 + i] + t[(906)*8 + i] + t[(37)*8 + i] +                               t[(197)*8 + i] + t[(2254)*8 + i] + t[(2173)*8 + i] + t[(2008)*8 + i] + t[(2203)*8 + i] + t[(2540)*8 + i];
+}
+}
 
-        g[nv + nd * 0] = t[(1359)*8 + i] + t[(1248)*8 + i] + t[(1330)*8 + i];
-        g[nv + nd * 1] = t[(1069)*8 + i] * t[(3057)*8 + i] + t[(1358)*8 + i] + t[(1243)*8 + i] + t[(2931)*8 + i];
-        g[nv + nd * 2] = t[(1069)*8 + i] * t[(3093)*8 + i] + t[(411)*8 + i] + t[(817)*8 + i] + t[(1062)*8 + i] * t[(1223)*8 + i] + t[(742)*8 + i];
-        g[nv + nd * 3] = t[(569)*8 + i] + t[(1018)*8 + i] + t[(1069)*8 + i] * t[(3080)*8 + i] + t[(771)*8 + i] + t[(1062)*8 + i] * t[(1215)*8 + i] + t[(751)*8 + i] * t[(553)*8 + i];
-        g[nv + nd * 4] = t[(773)*8 + i] + t[(799)*8 + i] + t[(1069)*8 + i] * t[(1171)*8 + i] + t[(642)*8 + i] + t[(691)*8 + i] * t[(976)*8 + i] + t[(1062)*8 + i] * t[(1368)*8 + i] + t[(751)*8 + i] * t[(846)*8 + i];
-        g[nv + nd * 5] =
-            t[(997)*8 + i] + t[(2797)*8 + i] + t[(1069)*8 + i] * t[(1143)*8 + i] + t[(882)*8 + i] * t[(552)*8 + i] + t[(670)*8 + i] + t[(691)*8 + i] * t[(825)*8 + i] + t[(1062)*8 + i] * t[(1479)*8 + i] + t[(751)*8 + i] * t[(988)*8 + i];
-        g[nv + nd * 6] = t[(270)*8 + i] + t[(2634)*8 + i] + t[(392)*8 + i] + t[(1711)*8 + i];
-        g[nv + nd * 7] = t[(1983)*8 + i] + t[(2422)*8 + i] + t[(2064)*8 + i] + t[(1420)*8 + i];
-        g[nv + nd * 8] = t[(3012)*8 + i] + t[(2511)*8 + i];
-        g[nv + nd * 9] = t[(2020)*8 + i] + t[(1884)*8 + i];
-        g[nv + nd * 10] = t[(2574)*8 + i] + t[(1136)*8 + i] + t[(3068)*8 + i] + t[(580)*8 + i] + t[(2879)*8 + i] + t[(2384)*8 + i] + t[(1449)*8 + i] + t[(3077)*8 + i];
-        g[nv + nd * 11] = t[(3058)*8 + i] + t[(676)*8 + i] + t[(681)*8 + i] + t[(696)*8 + i] + t[(1195)*8 + i] + t[(3070)*8 + i] + t[(130)*8 + i] + t[(2748)*8 + i];
-        g[nv + nd * 12] = t[(45)*8 + i] + t[(918)*8 + i] + t[(651)*8 + i] + t[(2880)*8 + i] + t[(1212)*8 + i] + t[(3081)*8 + i] + t[(3053)*8 + i] + t[(1375)*8 + i];
-        g[nv + nd * 13] = t[(2993)*8 + i] + t[(2538)*8 + i] + t[(1120)*8 + i] + t[(886)*8 + i] + t[(1586)*8 + i] + t[(2163)*8 + i] + t[(2664)*8 + i] + t[(2153)*8 + i];
-        g[nv + nd * 14] = t[(1315)*8 + i] + t[(1327)*8 + i] + t[(2464)*8 + i] + t[(2589)*8 + i] + t[(1301)*8 + i] + t[(452)*8 + i] + t[(1320)*8 + i] + t[(2534)*8 + i];
-        g[nv + nd * 15] = t[(3103)*8 + i];
-        g[nv + nd * 16] = t[(2721)*8 + i];
-        g[nv + nd * 17] = t[(303)*8 + i];
-        g[nv + nd * 18] = t[(3118)*8 + i];
-        g[nv + nd * 19] = t[(137)*8 + i];
-        g[nv + nd * 20] = t[(362)*8 + i];
-        g[nv + nd * 21] = t[(1023)*8 + i];
-        g[nv + nd * 22] = t[(1871)*8 + i];
-        g[nv + nd * 23] = t[(419)*8 + i];
-        g[nv + nd * 24] = t[(3107)*8 + i];
-        g[nv + nd * 25] = t[(2686)*8 + i];
-        g[nv + nd * 26] = t[(734)*8 + i];
-        g[nv + nd * 27] = t[(2491)*8 + i];
-        g[nv + nd * 28] = t[(1280)*8 + i];
-        g[nv + nd * 29] = t[(21)*8 + i];
-        g[nv + nd * 30] = t[(2540)*8 + i];
+std::vector<double> poly_2b_v6x::eval(const size_t nd, const double* a, const double* x, double* t, double* g) {
+    std::vector<double> energy(nd, 0.0);
+    size_t nv = 0;
+    
+    for(size_t j = 0; j < nd / 8; j++) {
+        f0(x, a, t, j*8, nd);
+        f1(x, a, t, j*8, nd);
+        f2(x, a, t, j*8, nd);
+        f3(x, a, t, j*8, nd);
+        f4(x, a, t, j*8, nd);
+        f5(x, a, t, j*8, nd);
+        f6(x, a, t, j*8, nd);
+        f7(x, a, t, j*8, nd);
+        f8(x, a, t, j*8, nd);
+        f9(x, a, t, j*8, nd);
+        f10(x, a, t, j*8, nd);
+        f11(x, a, t, j*8, nd);
+        f12(x, a, t, j*8, nd);
+        f13(x, a, t, j*8, nd);
+        f14(x, a, t, j*8, nd);
+        f15(x, a, t, j*8, nd);
+        f16(x, a, t, j*8, nd);
+        f17(x, a, t, j*8, nd);
+        f18(x, a, t, j*8, nd);
+        f19(x, a, t, j*8, nd);
+        f20(x, a, t, j*8, nd);
+        f21(x, a, t, j*8, nd);
+        f22(x, a, t, j*8, nd);
+        f23(x, a, t, j*8, nd);
+        f24(x, a, t, j*8, nd);
+        f25(x, a, t, j*8, nd);
+        f26(x, a, t, j*8, nd);
+        f27(x, a, t, j*8, nd);
+        f28(x, a, t, j*8, nd);
+        f29(x, a, t, j*8, nd);
+        f30(x, a, t, j*8, nd);
+        f31(x, a, t, j*8, nd);
+        f32(x, a, t, j*8, nd);
+        f33(x, a, t, j*8, nd);
+        f34(x, a, t, j*8, nd);
+        f35(x, a, t, j*8, nd);
+        f36(x, a, t, j*8, nd);
+        f37(x, a, t, j*8, nd);
+        f38(x, a, t, j*8, nd);
+        f39(x, a, t, j*8, nd);
+        f40(x, a, t, j*8, nd);
+        f41(x, a, t, j*8, nd);
+        f42(x, a, t, j*8, nd);
+        f43(x, a, t, j*8, nd);
+        f44(x, a, t, j*8, nd);
+        f45(x, a, t, j*8, nd);
+        f46(x, a, t, j*8, nd);
+        f47(x, a, t, j*8, nd);
+        f48(x, a, t, j*8, nd);
+        f49(x, a, t, j*8, nd);
+        f50(x, a, t, j*8, nd);
+        f51(x, a, t, j*8, nd);
+        f52(x, a, t, j*8, nd);
+        f53(x, a, t, j*8, nd);
+        f54(x, a, t, j*8, nd);
+        f55(x, a, t, j*8, nd);
+        f56(x, a, t, j*8, nd);
+        f57(x, a, t, j*8, nd);
+        f58(x, a, t, j*8, nd);
+        f59(x, a, t, j*8, nd);
+        f60(x, a, t, j*8, nd);
+        f61(x, a, t, j*8, nd);
+        f62(x, a, t, j*8, nd);
+        f63(x, a, t, j*8, nd);
+        f64(x, a, t, j*8, nd);
+        f65(x, a, t, j*8, nd);
+        f66(x, a, t, j*8, nd);
+        f67(x, a, t, j*8, nd);
+        f68(x, a, t, j*8, nd);
+        f69(x, a, t, j*8, nd);
+        f70(x, a, t, j*8, nd);
+        f71(x, a, t, j*8, nd);
+        f72(x, a, t, j*8, nd);
+        f73(x, a, t, j*8, nd);
+        f74(x, a, t, j*8, nd);
+        f75(x, a, t, j*8, nd);
+        f76(x, a, t, j*8, nd);
+        f77(x, a, t, j*8, nd);
+        f78(x, a, t, j*8, nd);
+        f79(x, a, t, j*8, nd);
+        f80(x, a, t, j*8, nd);
+        f81(x, a, t, j*8, nd);
+        f82(x, a, t, j*8, nd);
+        f83(x, a, t, j*8, nd);
+        f84(x, a, t, j*8, nd);
+        f85(x, a, t, j*8, nd);
+        f86(x, a, t, j*8, nd);
+        f87(x, a, t, j*8, nd);
+        f88(x, a, t, j*8, nd);
+        f89(x, a, t, j*8, nd);
+        f90(x, a, t, j*8, nd);
+        f91(x, a, t, j*8, nd);
+        f92(x, a, t, j*8, nd);
+        f93(x, a, t, j*8, nd);
+        f94(x, a, t, j*8, nd);
+        f95(x, a, t, j*8, nd);
+        f96(x, a, t, j*8, nd);
+        f97(x, a, t, j*8, nd);
+        f98(x, a, t, j*8, nd);
+        f99(x, a, t, j*8, nd);
 
-        energy[nv] = t[(372)*8 + i] + t[(337)*8 + i];
+        for(size_t i = 0; i < 8; i++) {
+            nv = j*8 + i;
+            g[nv + nd * 0] = t[(1359)*8 + i] + t[(1248)*8 + i] + t[(1330)*8 + i];
+            g[nv + nd * 1] = t[(1069)*8 + i] * t[(3057)*8 + i] + t[(1358)*8 + i] + t[(1243)*8 + i] + t[(2931)*8 + i];
+            g[nv + nd * 2] = t[(1069)*8 + i] * t[(3093)*8 + i] + t[(411)*8 + i] + t[(817)*8 + i] + t[(1062)*8 + i] * t[(1223)*8 + i] + t[(742)*8 + i];
+            g[nv + nd * 3] = t[(569)*8 + i] + t[(1018)*8 + i] + t[(1069)*8 + i] * t[(3080)*8 + i] + t[(771)*8 + i] + t[(1062)*8 + i] * t[(1215)*8 + i] + t[(751)*8 + i] * t[(553)*8 + i];
+            g[nv + nd * 4] = t[(773)*8 + i] + t[(799)*8 + i] + t[(1069)*8 + i] * t[(1171)*8 + i] + t[(642)*8 + i] + t[(691)*8 + i] * t[(976)*8 + i] + t[(1062)*8 + i] * t[(1368)*8 + i] + t[(751)*8 + i] * t[(846)*8 + i];
+            g[nv + nd * 5] =
+                t[(997)*8 + i] + t[(2797)*8 + i] + t[(1069)*8 + i] * t[(1143)*8 + i] + t[(882)*8 + i] * t[(552)*8 + i] + t[(670)*8 + i] + t[(691)*8 + i] * t[(825)*8 + i] + t[(1062)*8 + i] * t[(1479)*8 + i] + t[(751)*8 + i] * t[(988)*8 + i];
+            g[nv + nd * 6] = t[(270)*8 + i] + t[(2634)*8 + i] + t[(392)*8 + i] + t[(1711)*8 + i];
+            g[nv + nd * 7] = t[(1983)*8 + i] + t[(2422)*8 + i] + t[(2064)*8 + i] + t[(1420)*8 + i];
+            g[nv + nd * 8] = t[(3012)*8 + i] + t[(2511)*8 + i];
+            g[nv + nd * 9] = t[(2020)*8 + i] + t[(1884)*8 + i];
+            g[nv + nd * 10] = t[(2574)*8 + i] + t[(1136)*8 + i] + t[(3068)*8 + i] + t[(580)*8 + i] + t[(2879)*8 + i] + t[(2384)*8 + i] + t[(1449)*8 + i] + t[(3077)*8 + i];
+            g[nv + nd * 11] = t[(3058)*8 + i] + t[(676)*8 + i] + t[(681)*8 + i] + t[(696)*8 + i] + t[(1195)*8 + i] + t[(3070)*8 + i] + t[(130)*8 + i] + t[(2748)*8 + i];
+            g[nv + nd * 12] = t[(45)*8 + i] + t[(918)*8 + i] + t[(651)*8 + i] + t[(2880)*8 + i] + t[(1212)*8 + i] + t[(3081)*8 + i] + t[(3053)*8 + i] + t[(1375)*8 + i];
+            g[nv + nd * 13] = t[(2993)*8 + i] + t[(2538)*8 + i] + t[(1120)*8 + i] + t[(886)*8 + i] + t[(1586)*8 + i] + t[(2163)*8 + i] + t[(2664)*8 + i] + t[(2153)*8 + i];
+            g[nv + nd * 14] = t[(1315)*8 + i] + t[(1327)*8 + i] + t[(2464)*8 + i] + t[(2589)*8 + i] + t[(1301)*8 + i] + t[(452)*8 + i] + t[(1320)*8 + i] + t[(2534)*8 + i];
+            g[nv + nd * 15] = t[(3103)*8 + i];
+            g[nv + nd * 16] = t[(2721)*8 + i];
+            g[nv + nd * 17] = t[(303)*8 + i];
+            g[nv + nd * 18] = t[(3118)*8 + i];
+            g[nv + nd * 19] = t[(137)*8 + i];
+            g[nv + nd * 20] = t[(362)*8 + i];
+            g[nv + nd * 21] = t[(1023)*8 + i];
+            g[nv + nd * 22] = t[(1871)*8 + i];
+            g[nv + nd * 23] = t[(419)*8 + i];
+            g[nv + nd * 24] = t[(3107)*8 + i];
+            g[nv + nd * 25] = t[(2686)*8 + i];
+            g[nv + nd * 26] = t[(734)*8 + i];
+            g[nv + nd * 27] = t[(2491)*8 + i];
+            g[nv + nd * 28] = t[(1280)*8 + i];
+            g[nv + nd * 29] = t[(21)*8 + i];
+            g[nv + nd * 30] = t[(2540)*8 + i];
+
+            energy[nv] = t[(372)*8 + i] + t[(337)*8 + i];
         }
     }
 
