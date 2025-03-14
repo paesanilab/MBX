@@ -34,6 +34,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/2b/poly-2b-v6x.h"
 
+#include <iostream>
+
 namespace x2o {
 
 void f0(const double *x, const double *a, double *t, const size_t nv0, const size_t nd) {
@@ -13077,6 +13079,8 @@ std::vector<double> poly_2b_v6x::eval(const size_t nd, const double* a, const do
             energy[nv] = t[(372)*8 + i] + t[(337)*8 + i];
         }
     }
+
+    nv += 1;
 
     for(size_t i = 0; nv < nd; i++) {
         t[(1)*8 + i] = x[nv + nd * 30];
