@@ -37,6 +37,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <vector>
 #include <cmath>
+#include <memory>
 
 #include "potential/3b/poly-3b-v2x.h"
 
