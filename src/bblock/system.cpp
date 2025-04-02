@@ -45,8 +45,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #endif
 
-#include <mpi.h>
-
 /**
  * @file system.cpp
  * @brief System class implementation
