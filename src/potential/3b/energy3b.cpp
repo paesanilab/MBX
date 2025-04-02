@@ -135,7 +135,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
 
 double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grad1,
-                     std::vector<double> &grad2, std::vector<double> &grad3, double* t, double& poly_time, size_t& num_evals, std::vector<double> *virial) {
+                     std::vector<double> &grad2, std::vector<double> &grad3, std::vector<double> *virial) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -216,7 +216,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
     // Note: in the conditional, mon2 >= mon1 ALWAYS
     if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "h2o") {
         x2o::x3b_v2x pot;
-        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, t, poly_time, num_evals, virial);
+        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
     } else if (mon1 == "h2o" and mon2 == "h2o" and (mon3 == "li+" or mon3 == "na+" or mon3 == "k+" or mon3 == "rb+")) {
         x3b_h2o_ion_v1x_deg4_filtered pot(mon3);
         energy = pot(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);

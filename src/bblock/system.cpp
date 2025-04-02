@@ -2775,32 +2775,6 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
     const size_t max_profile_index = 200;
 
-    std::vector<size_t> num_evals(num_threads, 0);
-    std::vector<std::vector<size_t>> first_num_evals(max_profile_index, std::vector<size_t>(num_threads, 0));
-
-    std::vector<double> total_poly_time(num_threads, 0.0);
-    std::vector<std::vector<double>> first_poly_time(max_profile_index, std::vector<double>(num_threads, 0.0));
-
-    // allocate all the temporary working memory vectors in sequential memory, to reduce conflict misses.
-    
-    // double bigmem[8283*8*num_threads];
-
-    // void* pool = reinterpret_cast<void *>(bigmem);
-
-    // size_t space = 8283*8*8*num_threads;
-
-    // std::vector<double*> t(num_threads);
-
-    // for(size_t i = 0; i < num_threads; i++) {
-    //     t[i] = reinterpret_cast<double *>(std::align(128, 8279*8*8, pool, space));
-    //     pool = reinterpret_cast<void *>(reinterpret_cast<char *>(pool) + 8279*8*8);
-    //     space -= 8279*8*8;
-    // }
-
-    // double end_overhead = MPI_Wtime();
-
-    // std::cout << "Overhead time: " << end_overhead - start_overhead << std::endl;
-
     // actually calculate the trimers
 #ifdef _OPENMP
 #pragma omp parallel private(rank, idxs) shared(trimers_pool)
@@ -2831,14 +2805,6 @@ double System::Get3B(bool do_grads, bool use_ghost) {
             skip = true;
             trimers.clear();
         }
-
-        double bigmem[6610*8];
-
-        void* pool = reinterpret_cast<void *>(bigmem);
-
-        size_t space = 6610*8*8;
-
-        double* t = reinterpret_cast<double *>(std::align(128, 6592*8*8, pool, space));
 
         // The way the XYZ are set, they include the virtual site,
         // but we don't need the electrostatic virtual site for teh 2B
@@ -2935,19 +2901,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                         std::vector<double> virial(9, 0.0);  // declare virial tensor
                         // POLYNOMIALS
 
-                        double poly_time = 0.0;
-
-                        size_t this_num_evals = 0;
-
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, t, poly_time, this_num_evals, &virial);
-
-                        num_evals[rank] += this_num_evals;
-                        total_poly_time[rank] += poly_time;
-
-                        if (cur_profile_index < max_profile_index) {
-                            first_poly_time[cur_profile_index][rank] = poly_time;
-                            first_num_evals[cur_profile_index][rank] = this_num_evals;
-                        }
+                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
 
                         cur_profile_index += 1;
 
@@ -3046,36 +3000,6 @@ double System::Get3B(bool do_grads, bool use_ghost) {
             virial_[j] += virial_pool[i][j];
         }
     }
-
-    size_t total_evals = 0;
-    for (size_t i: num_evals) {
-        total_evals += i;
-    }
-
-    double final_poly_time = 0.0;
-    for (double i: total_poly_time) {
-        final_poly_time += i;
-    }
-
-    std::vector<size_t> total_first_evals(max_profile_index, 0);
-    std::vector<double> final_first_poly_time(max_profile_index, 0.0);
-    for (size_t i = 0; i < max_profile_index; i++) {
-        for (size_t j: first_num_evals[i]) {
-            total_first_evals[i] += j;
-        }
-        for (double j: first_poly_time[i]) {
-            final_first_poly_time[i] += j;
-        }
-    }
-
-    // std::cout << "Total number of 3B evaluations: " << total_evals << " in " << final_poly_time << " (average=" << final_poly_time/total_evals << ")" << std::endl;
-
-    // for(size_t i = 0; i < max_profile_index; i++) {
-    //     std::cout << "Eval period " << i << " evaluated " << total_first_evals[i] << " polys in " << final_first_poly_time[i] << " (average=" << final_first_poly_time[i]/total_first_evals[i] << ")" << std::endl;
-    // }
-
-    // grand_total_poly_time += final_poly_time;
-    // std::cout << "Cumulative total poly time: " << grand_total_poly_time << std::endl;
 
     return e3b_t;
 }
