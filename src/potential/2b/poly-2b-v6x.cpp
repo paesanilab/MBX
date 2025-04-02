@@ -13076,6 +13076,7 @@ std::vector<double> poly_2b_v6x::eval(const size_t nd, const double* a, const do
 
             energy[nv] = t[(372)*8 + i] + t[(337)*8 + i];
         }
+        nv += 1;
     }
 
     for(size_t i = 0; nv < nd; i++) {
