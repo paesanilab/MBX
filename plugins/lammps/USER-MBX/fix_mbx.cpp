@@ -1277,11 +1277,17 @@ void FixMBX::mbx_init() {
 
         // make sure cutoffs are consistent
 
-        double mbx_cut = ptr_mbx->Get2bCutoff();
+        double mbx_cut = ptr_mbx->GetRealspaceCutoff();
         double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
         if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
+        double mbx_2b_cut = ptr_mbx->Get2bCutoff();
+        if (mbx_2b_cut > mbx_cut) error->one(FLERR, "[MBX] 2-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
+        double mbx_3b_cut = ptr_mbx->Get3bCutoff();
+        if (mbx_3b_cut > mbx_cut) error->one(FLERR, "[MBX] 3-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
+        double mbx_4b_cut = ptr_mbx->Get4bCutoff();
+        if (mbx_4b_cut > mbx_cut) error->one(FLERR, "[MBX] 4-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
     } else {
-        ptr_mbx->Set2bCutoff(pair_mbx->cut_global);
+        ptr_mbx->SetRealspaceCutoff(pair_mbx->cut_global);
         ptr_mbx->SetUpFromJson();
     }
 
@@ -1503,11 +1509,17 @@ void FixMBX::mbx_init_local() {
 
         // make sure cutoffs are consistent
 
-        double mbx_cut = ptr_mbx_local->Get2bCutoff();
+        double mbx_cut = ptr_mbx_local->GetRealspaceCutoff();
         double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
         if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
+        double mbx_2b_cut = ptr_mbx->Get2bCutoff();
+        if (mbx_2b_cut > mbx_cut) error->one(FLERR, "[MBX] 2-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
+        double mbx_3b_cut = ptr_mbx->Get3bCutoff();
+        if (mbx_3b_cut > mbx_cut) error->one(FLERR, "[MBX] 3-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
+        double mbx_4b_cut = ptr_mbx->Get4bCutoff();
+        if (mbx_4b_cut > mbx_cut) error->one(FLERR, "[MBX] 4-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
     } else {
-        ptr_mbx_local->Set2bCutoff(pair_mbx->cut_global);
+        ptr_mbx_local->SetRealspaceCutoff(pair_mbx->cut_global);
         ptr_mbx_local->SetUpFromJson();
     }
 
@@ -1752,11 +1764,17 @@ void FixMBX::mbx_init_full() {
 
         // make sure cutoffs are consistent
 
-        double mbx_cut = ptr_mbx_full->Get2bCutoff();
+        double mbx_cut = ptr_mbx_full->GetRealspaceCutoff();
         double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
         if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
+        double mbx_2b_cut = ptr_mbx->Get2bCutoff();
+        if (mbx_2b_cut > mbx_cut) error->one(FLERR, "[MBX] 2-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
+        double mbx_3b_cut = ptr_mbx->Get3bCutoff();
+        if (mbx_3b_cut > mbx_cut) error->one(FLERR, "[MBX] 3-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
+        double mbx_4b_cut = ptr_mbx->Get4bCutoff();
+        if (mbx_4b_cut > mbx_cut) error->one(FLERR, "[MBX] 4-body PIP cutoff must be less than or equal to realspace cutoff. (This may be changed in a future release.)");
     } else {
-        ptr_mbx_full->Set2bCutoff(pair_mbx->cut_global);
+        ptr_mbx_full->SetRealspaceCutoff(pair_mbx->cut_global);
         ptr_mbx_full->SetUpFromJson();
     }
 
