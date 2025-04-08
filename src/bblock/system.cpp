@@ -2463,8 +2463,10 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         #pragma omp critical(dimers_pool_index)
         {
             start_index = dimers_pool_index;
-            size_t truncated_batch_size = batch_size_factor*std::ceil(((dimers_pool.size() - start_index) / 3) / (batch_size_factor*num_threads)) + batch_size_factor;
-            this_batch_size = std::min(truncated_batch_size, (dimers_pool.size() - start_index) / 2);
+            size_t num_remaining_nmers = (dimers_pool.size() - start_index) / 2;
+            size_t num_nmers_in_full_round = batch_size_factor*num_threads;
+            size_t truncated_batch_size = batch_size_factor * (num_remaining_nmers / num_nmers_in_full_round) + (num_remaining_nmers % num_nmers_in_full_round == 0 ? 0 : batch_size_factor);
+            this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (dimers_pool.size() - start_index) / 2));
             dimers_pool_index += this_batch_size * 2;
         }
         dimers.insert(dimers.end(), dimers_pool.begin() + start_index, dimers_pool.begin() + start_index + this_batch_size*2);
@@ -2617,8 +2619,10 @@ double System::Get2B(bool do_grads, bool use_ghost) {
                 #pragma omp critical(dimers_pool_index)
                 {
                     start_index = dimers_pool_index;
-                    size_t truncated_batch_size = batch_size_factor*std::ceil(((dimers_pool.size() - start_index) / 3) / (batch_size_factor*num_threads)) + batch_size_factor;
-                    this_batch_size = std::min(truncated_batch_size, (dimers_pool.size() - start_index) / 2);
+                    size_t num_remaining_nmers = (dimers_pool.size() - start_index) / 2;
+                    size_t num_nmers_in_full_round = batch_size_factor*num_threads;
+                    size_t truncated_batch_size = batch_size_factor * (num_remaining_nmers / num_nmers_in_full_round) + (num_remaining_nmers % num_nmers_in_full_round == 0 ? 0 : batch_size_factor);
+                    this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (dimers_pool.size() - start_index) / 2));
                     dimers_pool_index += this_batch_size * 2;
 
                 }
@@ -2804,7 +2808,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
         {
 
             start_index = trimers_pool_index;
-            size_t truncated_batch_size = batch_size_factor*std::ceil(((trimers_pool.size() - start_index) / 3) / (batch_size_factor*num_threads)) + batch_size_factor;
+            size_t num_remaining_nmers = (trimers_pool.size() - start_index) / 3;
+            size_t num_nmers_in_full_round = batch_size_factor*num_threads;
+            size_t truncated_batch_size = batch_size_factor * (num_remaining_nmers / num_nmers_in_full_round) + (num_remaining_nmers % num_nmers_in_full_round == 0 ? 0 : batch_size_factor);
             this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (trimers_pool.size() - start_index) / 3));
             trimers_pool_index += this_batch_size * 3;
         }
@@ -2968,7 +2974,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                 {
 
                     start_index = trimers_pool_index;
-                    size_t truncated_batch_size = batch_size_factor*std::ceil(((trimers_pool.size() - start_index) / 3) / (batch_size_factor*num_threads)) + batch_size_factor;
+                    size_t num_remaining_nmers = (trimers_pool.size() - start_index) / 3;
+                    size_t num_nmers_in_full_round = batch_size_factor*num_threads;
+                    size_t truncated_batch_size = batch_size_factor * (num_remaining_nmers / num_nmers_in_full_round) + (num_remaining_nmers % num_nmers_in_full_round == 0 ? 0 : batch_size_factor);
                     this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (trimers_pool.size() - start_index) / 3));
                     trimers_pool_index += this_batch_size * 3;
 
