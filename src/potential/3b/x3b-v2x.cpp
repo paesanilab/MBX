@@ -43,7 +43,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iomanip>
 #endif
 
-#include <mpi.h>
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace {
