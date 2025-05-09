@@ -6476,6 +6476,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                     kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box, box_inverse));
                     my_kd_tree_t* index = new my_kd_tree_t(3 /*dim*/, *ptc, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
                     index->buildIndex();
+                    clouds[i] = ptc;
                     trees[i] = index;
                 }
             }
