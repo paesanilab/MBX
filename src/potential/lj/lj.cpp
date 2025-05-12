@@ -608,6 +608,49 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
 
+    //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
+    std::vector<double> xyz_rearranged(xyz_.size());
+    fi_mon = 0;
+    fi_crd = 0;
+    size_t site_count = xyz_rearranged.size()/3;
+    bool use_pbc = box_.size();
+    //fi_mon has the index of the first monomer of this monomer type
+    //for each monomer type
+    for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
+        //for each site of that monomer type
+        //nmon = number of monomers of that type
+        size_t nmon = mon_type_count_[mt].second;
+        size_t ns = num_atoms_[fi_mon];
+        for(size_t s = 0; s < ns; s++){
+            for(size_t i = 0; i<nmon; ++i){
+                if(use_pbc){
+                    double x = box_inverse_[0]*xyz_[fi_crd+i] + box_inverse_[3]*xyz_[fi_crd+i+nmon] + box_inverse_[6]*xyz_[fi_crd+i+2*nmon],
+                        y = box_inverse_[1]*xyz_[fi_crd+i] + box_inverse_[4]*xyz_[fi_crd+i+nmon] + box_inverse_[7]*xyz_[fi_crd+i+2*nmon],
+                        z = box_inverse_[2]*xyz_[fi_crd+i] + box_inverse_[5]*xyz_[fi_crd+i+nmon] + box_inverse_[8]*xyz_[fi_crd+i+2*nmon];
+                    
+                    x -= std::floor(x + 0.5);
+                    y -= std::floor(y + 0.5);
+                    z -= std::floor(z + 0.5);
+
+                    xyz_rearranged[fi_crd+3*i] = box_[0]*x + box_[3]*y + box_[6]*z;
+                    xyz_rearranged[fi_crd+3*i+1] = box_[1]*x + box_[4]*y + box_[7]*z;
+                    xyz_rearranged[fi_crd+3*i+2] = box_[2]*x + box_[5]*y + box_[8]*z;
+                }
+                else{
+                    xyz_rearranged[fi_crd+3*i] = xyz_[fi_crd+i];
+                    xyz_rearranged[fi_crd+3*i+1] = xyz_[fi_crd+i+nmon];
+                    xyz_rearranged[fi_crd+3*i+2] = xyz_[fi_crd+i+nmon*2];
+                }
+            }
+            fi_crd += nmon*3;
+        }
+        fi_mon += nmon;
+    }
+
+    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                kdtutils::PointCloud<double>, 3 /* dim */>
+    my_kd_tree_t;
+
     // Loop over all monomer types
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = num_atoms_[fi_mon1];
@@ -622,6 +665,17 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
+
+            std::vector<my_kd_tree_t*> trees(ns2);
+            std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
+            for(int i = 0; i < ns2; i++){
+                std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
+                kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box_, box_inverse_));
+                my_kd_tree_t* index = new my_kd_tree_t(3 /*dim*/, *ptc, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+                index->buildIndex();
+                clouds[i] = ptc;
+                trees[i] = index;
+            }
 
             double dummy_eps, dummy_sigma;
             bool do_lj =
@@ -660,6 +714,13 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
+
+                    bool point1_local = islocal_[fi_mon1+m1]==1;
+                    double point[3];
+                    point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
+                    point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
+                    point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
+
                     double ljchgi = lj_long_range_[fi_sites1 + i * nmon1];
                     std::vector<double> xyz_sitei(3);
                     std::vector<double> g1(3, 0.0);
@@ -674,10 +735,57 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                         double ljchgj = lj_long_range_[fi_sites2 + j * nmon2];
                         double eps, sigma;
                         GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, eps, sigma, use_lj_, repdisp_j_);
-                        energy_pool[rank] += lj(eps, sigma, ljchgi, ljchgj, xyz_sitei, xyz_mt2, g1, grad2_pool[rank],
-                                                phi_i, phi2_pool[rank], nmon1, nmon2, m2init, nmon2, i, j,
+
+                        std::vector<size_t> good_mon2_indices;
+                        std::vector<std::pair<size_t, double>> site2_indices;
+                        nanoflann::SearchParams params(32, 0, false);
+
+                        const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                        
+                        for(size_t s = 0; s<nMatches; ++s){
+                            //getting the actual index (not periodic index) of the monomer
+                            size_t idx = site2_indices[s].first % nmon2;
+                            if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_mon2+idx]))) && idx >= m2init){
+                                //add the monomer, indexed relative to mt2
+                                if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
+                                    good_mon2_indices.push_back(idx);
+                            }
+                        }
+
+                        std::size_t reordered_mon2_size = good_mon2_indices.size();
+
+                        std::vector<double> reordered_xyz2(3*good_mon2_indices.size());
+                        std::vector<std::size_t> reordered_islocal(good_mon2_indices.size());
+                        std::vector<double> reordered_grad2(3*good_mon2_indices.size(), 0.0);
+                        std::vector<double> reordered_phi2(3*good_mon2_indices.size(), 0.0);
+
+                        reordered_islocal[0] = islocal_[fi_mon1 + m1];
+
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            reordered_xyz2[new_mon2_index] = xyz_mt2[old_mon2_index + nmon2 * j * 3];
+                            reordered_xyz2[new_mon2_index + reordered_mon2_size] = xyz_mt2[old_mon2_index + nmon2 + nmon2 * j * 3];
+                            reordered_xyz2[new_mon2_index + 2*reordered_mon2_size] = xyz_mt2[old_mon2_index + 2*nmon2 + nmon2 * j * 3];
+                            reordered_islocal[new_mon2_index + 1] = islocal_[fi_mon2 + old_mon2_index];
+                        }
+
+                        energy_pool[rank] += lj(eps, sigma, ljchgi, ljchgj, xyz_sitei, reordered_xyz2, g1, reordered_grad2,
+                                                phi_i, reordered_phi2, nmon1, good_mon2_indices.size(), 0, good_mon2_indices.size(), i, 0,
                                                 lj_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
-                                                use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+                                                use_ghost, reordered_islocal, 0, 1, &virial_pool[rank]);
+
+                        // energy_pool[rank] += lj(eps, sigma, ljchgi, ljchgj, xyz_sitei, xyz_mt2, g1, grad2_pool[rank],
+                        //                         phi_i, phi2_pool[rank], nmon1, nmon2, m2init, nmon2, i, j,
+                        //                         lj_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
+                        //                         use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank]);
+
+                        for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
+                            int old_mon2_index = good_mon2_indices[new_mon2_index];
+                            phi2_pool[rank][nmon2 * j * 3 + old_mon2_index] += reordered_phi2[new_mon2_index];
+                            grad2_pool[rank][nmon2 * j * 3 + old_mon2_index] += reordered_grad2[new_mon2_index];
+                            grad2_pool[rank][nmon2 * j * 3 + nmon2 + old_mon2_index] += reordered_grad2[reordered_mon2_size + new_mon2_index];
+                            grad2_pool[rank][nmon2 * j * 3 + 2*nmon2 + old_mon2_index] += reordered_grad2[2*reordered_mon2_size + new_mon2_index];
+                        }
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
                     grad1_pool[rank][inmon13 + nmon1 + m1] += g1[1];

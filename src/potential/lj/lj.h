@@ -51,6 +51,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
+#include "kdtree/kdtree_utils.h"
 
 #ifndef MPI_VERSION
 // typedef struct ompi_communicator_t *MPI_Comm;
