@@ -268,14 +268,14 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
 
             grad[nv] += lj_scale_factor * (lj_attr_sw_grad + chg_attr_sw_grad + lj_rep_grad);
 
-            gradx += dx[nv] * grad[nv];
-            grad2[shift2 + nv] -= dx[nv] * grad[nv];
+            gradx += dx[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nv] -= dx[nv] * grad[nv] * vscale[nv];
 
-            grady += dy[nv] * grad[nv];
-            grad2[shift2 + nv] -= dy[nv] * grad[nv];
+            grady += dy[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nv] -= dy[nv] * grad[nv] * vscale[nv];
 
-            gradz += dz[nv] * grad[nv];
-            grad2[shift2  + nv] -= dz[nv] * grad[nv];
+            gradz += dz[nv] * grad[nv] * vscale[nv];
+            grad2[shift2  + nv] -= dz[nv] * grad[nv] * vscale[nv];
         }
 
 

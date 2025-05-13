@@ -195,6 +195,11 @@ void PairMBX::compute(int eflag, int vflag) {
         mbx_buck = ptr_mbx->Buckingham(true, true);
         fix_mbx->mbxt_stop(MBXT_BUCK);
         accumulate_f(false);
+
+        fix_mbx->mbxt_start(MBXT_BUCK);
+        mbx_buck += ptr_mbx_local->LennardJones(true, true);
+        fix_mbx->mbxt_stop(MBXT_BUCK);
+        accumulate_f_local(false);
 #else
         fix_mbx->mbxt_start(MBXT_BUCK);
         mbx_buck = 0.0;
