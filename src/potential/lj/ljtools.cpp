@@ -48,7 +48,7 @@ namespace lj {
 double lj(const double eps, const double sigma, double ljchgi, double ljchgj, const std::vector<double>& p1,
           const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
           std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
-          const size_t atom_index1, const size_t atom_index2, const double lj_scale_factor, bool do_grads,
+          const size_t atom_index1, const size_t atom_index2, const double lj_scale_factor, bool do_grads, bool do_field,
           const double cutoff, const double ewald_alpha, const std::vector<double>& box,
           const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
           const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial) {
@@ -187,14 +187,16 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
         inv_r12[nv] = inv_r6[nv] * inv_r6[nv];
 
         size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
-        vscale[nv] = (isls == 1) ? 0.5 : 1.0;
+        vscale[nv] = (isls == 0) ? 0.0 : ((isls == 1) ? 0.5 : 1.0);
     }
 
     // Calculate contribution to lj field.
-    #pragma omp simd simdlen(8)
-    for (size_t nv = start2; nv < end2; nv++) {
-        phi1 -= ljchgj * inv_r6[nv];
-        phi2[shift_phi + nv] -= ljchgi * inv_r6[nv];
+    if (do_field) {
+        #pragma omp simd simdlen(8)
+        for (size_t nv = start2; nv < end2; nv++) {
+            phi1 -= ljchgj * inv_r6[nv];
+            phi2[shift_phi + nv] -= ljchgi * inv_r6[nv];
+        }
     }
 
     double ljsw_grad[end2];
@@ -228,14 +230,16 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
     double ar6[end2];
     double expterm[end2];
 
-    #pragma omp simd simdlen(8) reduction(+ : lj_energy)
-    for (size_t nv = start2; nv < end2; nv++) {
-        // Intermediates used in the dispersion PME terms
-        ar2[nv] = ewald_alpha * ewald_alpha * rsq[nv];
-        ar4[nv] = ar2[nv] * ar2[nv];
-        expterm[nv] = ewald_alpha ? std::exp(-ar2[nv]) : 1;
-        double pmeterm = ljchgi * ljchgj * (1 - (1 + ar2[nv] + ar4[nv] / 2) * expterm[nv]) * inv_r6[nv];
-        lj_energy += pmeterm * vscale[nv];
+    if (ewald_alpha > 0.0) {
+        #pragma omp simd simdlen(8) reduction(+ : lj_energy)
+        for (size_t nv = start2; nv < end2; nv++) {
+            // Intermediates used in the dispersion PME terms
+            ar2[nv] = ewald_alpha * ewald_alpha * rsq[nv];
+            ar4[nv] = ar2[nv] * ar2[nv];
+            expterm[nv] = ewald_alpha ? std::exp(-ar2[nv]) : 1;
+            double pmeterm = ljchgi * ljchgj * (1 - (1 + ar2[nv] + ar4[nv] / 2) * expterm[nv]) * inv_r6[nv];
+            lj_energy += pmeterm * vscale[nv];
+        }
     }
 
     
@@ -243,14 +247,16 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
         double grad[nmon2];
         std::fill(grad, grad + nmon2, 0.0);
 
-        for (size_t nv = start2; nv < end2; nv++) {
+        if (ewald_alpha > 0.0) {
+            for (size_t nv = start2; nv < end2; nv++) {
 
-            double ar6 = ar4[nv] * ar2[nv];
+                double ar6 = ar4[nv] * ar2[nv];
 
-            const double pmeterm_grad =
-                6 * ljchgi * ljchgj * (1 - (1 + ar2[nv] + ar4[nv] / 2 + ar6 / 6) * expterm[nv]) * inv_r6[nv] * inv_rsq[nv];
+                const double pmeterm_grad =
+                    6 * ljchgi * ljchgj * (1 - (1 + ar2[nv] + ar4[nv] / 2 + ar6 / 6) * expterm[nv]) * inv_r6[nv] * inv_rsq[nv];
 
-            grad[nv] -= pmeterm_grad;
+                grad[nv] -= pmeterm_grad;
+            }
         }
 
         double gradx = 0.0;

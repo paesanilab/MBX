@@ -125,6 +125,7 @@ void LennardJones::Initialize(const std::vector<double> sys_ljchg, const std::ve
     num_atoms_ = num_atoms;
     mon_type_count_ = mon_type_count;
     do_grads_ = do_grads;
+    do_field_ = false;
     box_ = box;
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
@@ -220,6 +221,7 @@ void LennardJones::SetNewParameters(const std::vector<double> &xyz,
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     use_pbc_ = box.size();
     do_grads_ = do_grads;
+    do_field_ = false;
     cutoff_ = cutoff;
     std::fill(grad_.begin(), grad_.end(), 0.0);
     std::fill(phi_.begin(), phi_.end(), 0.0);
@@ -567,7 +569,7 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                         p1[2] = xyz_mt[inmon3 + nmon2 + m];
                         energy_pool[rank] +=
                             lj(eps, sigma, ljchgi, ljchgj, p1, xyz_mt, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon,
-                               nmon, m, m + 1, i, j, lj_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
+                               nmon, m, m + 1, i, j, lj_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                                box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank]);
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
@@ -737,20 +739,29 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                         GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, eps, sigma, use_lj_, repdisp_j_);
 
                         std::vector<size_t> good_mon2_indices;
-                        std::vector<std::pair<size_t, double>> site2_indices;
-                        nanoflann::SearchParams params(32, 0, false);
-
-                        const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
                         
-                        for(size_t s = 0; s<nMatches; ++s){
-                            //getting the actual index (not periodic index) of the monomer
-                            size_t idx = site2_indices[s].first % nmon2;
-                            if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_mon2+idx]))) && idx >= m2init){
-                                //add the monomer, indexed relative to mt2
-                                if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
-                                    good_mon2_indices.push_back(idx);
+                        if (do_field_) {
+                            for(size_t idx = m2init; idx < nmon2; ++idx){
+                                good_mon2_indices.push_back(idx);
+                            }
+                        } else {
+                            std::vector<std::pair<size_t, double>> site2_indices;
+                            nanoflann::SearchParams params(32, 0, false);
+
+                            const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                            
+                            for(size_t s = 0; s<nMatches; ++s){
+                                //getting the actual index (not periodic index) of the monomer
+                                size_t idx = site2_indices[s].first % nmon2;
+                                if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_mon2+idx]))) && idx >= m2init){
+                                    //add the monomer, indexed relative to mt2
+                                    if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
+                                        good_mon2_indices.push_back(idx);
+                                }
                             }
                         }
+                        
+
 
                         std::size_t reordered_mon2_size = good_mon2_indices.size();
 
@@ -771,7 +782,7 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
 
                         energy_pool[rank] += lj(eps, sigma, ljchgi, ljchgj, xyz_sitei, reordered_xyz2, g1, reordered_grad2,
                                                 phi_i, reordered_phi2, nmon1, good_mon2_indices.size(), 0, good_mon2_indices.size(), i, 0,
-                                                lj_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_, box_inverse_,
+                                                lj_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_, box_inverse_,
                                                 use_ghost, reordered_islocal, 0, 1, &virial_pool[rank]);
 
                         // energy_pool[rank] += lj(eps, sigma, ljchgi, ljchgj, xyz_sitei, xyz_mt2, g1, grad2_pool[rank],
