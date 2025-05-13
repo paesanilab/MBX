@@ -203,8 +203,16 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
     double ljsw[end2];
 
     // Loop not vectorized, since current switch_function is not vectorized
-    for (size_t nv = start2; nv < end2; nv++) {
-        ljsw[nv] = switch_function(r[nv], cutoff - 1.0, cutoff, ljsw_grad[nv]);
+    if (ewald_alpha > 0.0) {
+        for (size_t nv = start2; nv < end2; nv++) {
+            ljsw[nv] = switch_function(r[nv], cutoff - 1.0, cutoff, ljsw_grad[nv]);
+        }
+    } else {
+        #pragma omp simd simdlen(8)
+        for (size_t nv = start2; nv < end2; nv++) {
+            ljsw[nv] = 1.0;
+            ljsw_grad[nv] = 0.0;
+        }
     }
 
     double chgsw[end2];
@@ -217,12 +225,19 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
         const double ljrep_e = 4 * eps * sigma12 * inv_r12[nv];
         ljattr_e[nv] = 4 * eps * sigma6 * inv_r6[nv];
 
-        chgsw[nv] = 1 - ljsw[nv];
-        chgsw_grad[nv] = -ljsw_grad[nv];
-        chgterm[nv] = ljchgi * ljchgj * inv_r6[nv];
-
         lj_energy += lj_scale_factor * ljrep_e * vscale[nv];
-        lj_energy -= ljsw[nv] * (lj_scale_factor * ljattr_e[nv]) + chgsw[nv] * lj_scale_factor * chgterm[nv] * vscale[nv];
+        lj_energy -= lj_scale_factor * ljsw[nv] * ljattr_e[nv] * vscale[nv];
+    }
+
+    if (ewald_alpha > 0.0) {
+        #pragma omp simd simdlen(8) reduction(+ : lj_energy)
+        for (size_t nv = start2; nv < end2; nv++) {
+            chgsw[nv] = 1 - ljsw[nv];
+            chgsw_grad[nv] = -ljsw_grad[nv];
+            chgterm[nv] = ljchgi * ljchgj * inv_r6[nv];
+
+            lj_energy += lj_scale_factor * chgsw[nv] * chgterm[nv] * vscale[nv];
+        }
     }
 
     double ar2[end2];
@@ -255,7 +270,10 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
                 const double pmeterm_grad =
                     6 * ljchgi * ljchgj * (1 - (1 + ar2[nv] + ar4[nv] / 2 + ar6 / 6) * expterm[nv]) * inv_r6[nv] * inv_rsq[nv];
 
-                grad[nv] -= pmeterm_grad;
+                const double chg_attr_grad = 6 * ljchgi * ljchgj * inv_r6[nv] * inv_rsq[nv];
+                const double chg_attr_sw_grad = chgsw[nv] * chg_attr_grad - chgsw_grad[nv] * chgterm[nv] / r[nv];
+            
+                grad[nv] += lj_scale_factor * chg_attr_sw_grad - pmeterm_grad;
             }
         }
 
@@ -267,12 +285,10 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
         for (size_t nv = start2; nv < end2; nv++) {
             const double lj_attr_grad = 6 * sigma6 * inv_r6[nv] * 4 * eps * inv_rsq[nv];
             const double lj_rep_grad = -12 * sigma12 * inv_r12[nv] * 4 * eps * inv_rsq[nv];
-            const double chg_attr_grad = 6 * ljchgi * ljchgj * inv_r6[nv] * inv_rsq[nv];
 
             const double lj_attr_sw_grad = ljsw[nv] * lj_attr_grad - ljsw_grad[nv] * ljattr_e[nv] / r[nv];
-            const double chg_attr_sw_grad = chgsw[nv] * chg_attr_grad - chgsw_grad[nv] * chgterm[nv] / r[nv];
 
-            grad[nv] += lj_scale_factor * (lj_attr_sw_grad + chg_attr_sw_grad + lj_rep_grad);
+            grad[nv] += lj_scale_factor * (lj_attr_sw_grad + lj_rep_grad);
 
             gradx += dx[nv] * grad[nv] * vscale[nv];
             grad2[shift2 + nv] -= dx[nv] * grad[nv] * vscale[nv];
