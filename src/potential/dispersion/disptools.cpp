@@ -387,22 +387,31 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         }
 
         if (virial != 0) {
-            #pragma omp simd simdlen(8)
+
+            double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+            #pragma omp simd simdlen(8) reduction(+ : v[0:6])
             for (size_t nv = start2; nv < end2; nv++) {
+                v[0] -= dx[nv] * dx[nv] * grad[nv] * vscale[nv];  //  update the virial for the atom pair
+                v[1] -= dx[nv] * dy[nv] * grad[nv] * vscale[nv];
+                v[2] -= dx[nv] * dz[nv] * grad[nv] * vscale[nv];
 
-                (*virial)[0] -= dx[nv] * dx[nv] * grad[nv] * vscale[nv];  //  update the virial for the atom pair
-                (*virial)[1] -= dx[nv] * dy[nv] * grad[nv] * vscale[nv];
-                (*virial)[2] -= dx[nv] * dz[nv] * grad[nv] * vscale[nv];
+                v[3] -= dy[nv] * dy[nv] * grad[nv] * vscale[nv];
+                v[4] -= dy[nv] * dz[nv] * grad[nv] * vscale[nv];
 
-                (*virial)[4] -= dy[nv] * dy[nv] * grad[nv] * vscale[nv];
-                (*virial)[5] -= dy[nv] * dz[nv] * grad[nv] * vscale[nv];
-
-                (*virial)[8] -= dz[nv] * dz[nv] * grad[nv] * vscale[nv];
+                v[5] -= dz[nv] * dz[nv] * grad[nv] * vscale[nv];
             }
 
-            (*virial)[3] = (*virial)[1];
-            (*virial)[6] = (*virial)[2];
-            (*virial)[7] = (*virial)[5];
+            (*virial)[0] += v[0];
+            (*virial)[1] += v[1];
+            (*virial)[2] += v[2];
+            (*virial)[4] += v[3];
+            (*virial)[5] += v[4];
+            (*virial)[8] += v[5];
+
+            (*virial)[3] += v[1];
+            (*virial)[6] += v[2];
+            (*virial)[7] += v[4];
         }
 
         grad1[0] += gradx;

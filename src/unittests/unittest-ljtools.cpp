@@ -331,7 +331,6 @@ TEST_CASE("ljtools::lj") {
                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             p1[i] += s;
             double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
-            std::cerr << "i: " << i << std::endl;
             REQUIRE(numgrad == Approx(grad1[i]).margin(TOL));
         }
 
