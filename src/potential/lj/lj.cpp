@@ -682,7 +682,7 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
             double dummy_eps, dummy_sigma;
             bool do_lj =
                 GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], 0, 0, dummy_eps, dummy_sigma, use_lj_, repdisp_j_);
-            std::vector<double> xyz_mt2(xyz_.begin() + fi_crd2, xyz_.begin() + fi_crd2 + nmon2 * ns2 * 3);
+            double* xyz_mt2 = xyz_.data() + fi_crd2;
             double lj_scale_factor = do_lj ? 1.0 : 0.0;
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
@@ -781,7 +781,7 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                         }
 
                         energy_pool[rank] += lj(eps, sigma, ljchgi, ljchgj, xyz_sitei, reordered_xyz2, g1, reordered_grad2,
-                                                phi_i, reordered_phi2, nmon1, good_mon2_indices.size(), 0, good_mon2_indices.size(), i, 0,
+                                                phi_i, reordered_phi2, nmon1, reordered_mon2_size, 0, reordered_mon2_size, i, 0,
                                                 lj_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_, box_inverse_,
                                                 use_ghost, reordered_islocal, 0, 1, &virial_pool[rank]);
 
