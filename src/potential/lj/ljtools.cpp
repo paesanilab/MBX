@@ -188,6 +188,7 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
 
         size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
         vscale[nv] = (isls == 0) ? 0.0 : ((isls == 1) ? 0.5 : 1.0);
+        vscale[nv] = r[nv] > cutoff ? 0.0 : vscale[nv];
     }
 
     // Calculate contribution to lj field.

@@ -266,6 +266,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
         size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
         vscale[nv] = (isls == 0) ? 0.0 : ((isls == 1) ? 0.5 : 1.0);
+        vscale[nv] = r[nv] > cutoff ? 0.0 : vscale[nv];
     }
 
     if (do_field) {
