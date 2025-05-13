@@ -263,6 +263,7 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
         std::fill(grad, grad + end2, 0.0);
 
         if (ewald_alpha > 0.0) {
+            #pragma omp simd simdlen(8)
             for (size_t nv = start2; nv < end2; nv++) {
 
                 double ar6 = ar4[nv] * ar2[nv];
@@ -294,10 +295,10 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
             grad2[shift2 + nv] -= dx[nv] * grad[nv] * vscale[nv];
 
             grady += dy[nv] * grad[nv] * vscale[nv];
-            grad2[shift2 + nv] -= dy[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nmon2 + nv] -= dy[nv] * grad[nv] * vscale[nv];
 
             gradz += dz[nv] * grad[nv] * vscale[nv];
-            grad2[shift2  + nv] -= dz[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nmon22 + nv] -= dz[nv] * grad[nv] * vscale[nv];
         }
 
 

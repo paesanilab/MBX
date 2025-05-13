@@ -96,7 +96,7 @@ TEST_CASE("ljtools::lj") {
             for (size_t i = 0; i < grad2.size(); i++) expected_grad2_ndiff[i] = expected_grad2[i] - grad2[i];
 
             double energy = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
 
             REQUIRE(energy == Approx(expected_energy).margin(TOL));
@@ -112,21 +112,21 @@ TEST_CASE("ljtools::lj") {
             for (size_t i = 0; i < p1.size(); i++) {
                 p1[i] += s;
                 double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double epp =
                     lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box, box_inverse,
                            use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] -= 4 * s;
                 double emm =
                     lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box, box_inverse,
                            use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
@@ -136,21 +136,21 @@ TEST_CASE("ljtools::lj") {
             for (size_t i = 0; i < xyz2.size(); i++) {
                 xyz2[i] += s;
                 double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double epp =
                     lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box, box_inverse,
                            use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] -= 4 * s;
                 double emm =
                     lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box, box_inverse,
                            use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
@@ -204,7 +204,7 @@ TEST_CASE("ljtools::lj") {
             for (size_t i = 0; i < grad2.size(); i++) expected_grad2_ndiff[i] = expected_grad2[i] - grad2[i];
 
             double energy = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
 
             REQUIRE(energy == Approx(expected_energy).margin(TOL));
@@ -220,21 +220,21 @@ TEST_CASE("ljtools::lj") {
             for (size_t i = 0; i < p1.size(); i++) {
                 p1[i] += s;
                 double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double epp =
                     lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box, box_inverse,
                            use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] -= 4 * s;
                 double emm =
                     lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box, box_inverse,
                            use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
@@ -244,21 +244,21 @@ TEST_CASE("ljtools::lj") {
             for (size_t i = 0; i < xyz2.size(); i++) {
                 xyz2[i] += s;
                 double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double epp =
                     lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box, box_inverse,
                            use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] -= 4 * s;
                 double emm =
                     lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                           atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box, box_inverse,
+                           atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box, box_inverse,
                            use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                   end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                    box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
@@ -307,7 +307,7 @@ TEST_CASE("ljtools::lj") {
         size_t isl2_offset = 1;
 
         double energy = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
 
         do_grads = false;
@@ -315,41 +315,42 @@ TEST_CASE("ljtools::lj") {
         for (size_t i = 0; i < p1.size(); i++) {
             p1[i] += s;
             double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             p1[i] += s;
             double epp = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             p1[i] -= 4 * s;
             double emm = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             p1[i] += s;
             double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             p1[i] += s;
             double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+            std::cerr << "i: " << i << std::endl;
             REQUIRE(numgrad == Approx(grad1[i]).margin(TOL));
         }
 
         for (size_t i = 0; i < xyz2.size(); i++) {
             xyz2[i] += s;
             double ep = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             xyz2[i] += s;
             double epp = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             xyz2[i] -= 4 * s;
             double emm = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             xyz2[i] += s;
             double em = lj::lj(eps, sigma, ljchgi, ljchgj, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2,
-                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                               end2, atom_index1, atom_index2, lj_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
             xyz2[i] += s;
             double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
