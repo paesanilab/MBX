@@ -350,6 +350,9 @@ class Dispersion {
     // Bool that if true will perform the gradients calculation.
     bool do_grads_;
 
+    // If true, then calculate the dispersion field, otherwise, do not. In that case, the functions that get the field may return 0.0 or nonsense.
+    bool do_field_;
+
     // Gradients in the original order (same as xyz). This is the vector in
     // which the electrostatics gradients will be added.
     std::vector<double> sys_grad_;

@@ -117,6 +117,7 @@ void Dispersion::Initialize(const std::vector<double> sys_c6_long_range, const s
     num_atoms_ = num_atoms;
     mon_type_count_ = mon_type_count;
     do_grads_ = do_grads;
+    do_field_ = false;
     box_ = box;
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     box_inverse_ = box.size() ? InvertUnitCell(box) : std::vector<double>{};
@@ -214,6 +215,7 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz,
     use_pbc_ = box.size();
     ignore_disp_ = ignore_disp;
     do_grads_ = do_grads;
+    do_field_ = false;
     cutoff_ = cutoff;
     std::fill(grad_.begin(), grad_.end(), 0.0);
     std::fill(phi_.begin(), phi_.end(), 0.0);
@@ -596,7 +598,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                         energy_pool[rank] +=
                             disp6(c6, d6, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
-                                  m, m + 1, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
+                                  m, m + 1, i, j, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                                   box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank], fi_crd);
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
@@ -717,7 +719,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         d6 = d6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                         energy_pool[rank] += disp6(
                             c6, d6, c6i, c6j, xyz_sitei, xyz_, g1, grad2_pool[rank], phi_i, phi2_pool[rank], nmon1,
-                            nmon2, m2init, nmon2, i, j, disp_scale_factor, do_grads_, cutoff_, ewald_alpha_, box_,
+                            nmon2, m2init, nmon2, i, j, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                             box_inverse_, use_ghost, islocal_, fi_mon1 + m1, fi_mon2, &virial_pool[rank], fi_crd2);
                     }
                     grad1_pool[rank][inmon13 + m1] += g1[0];
