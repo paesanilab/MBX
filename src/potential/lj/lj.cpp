@@ -749,7 +749,7 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                             nanoflann::SearchParams params(32, 0, false);
 
                             const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
-                            
+
                             for(size_t s = 0; s<nMatches; ++s){
                                 //getting the actual index (not periodic index) of the monomer
                                 size_t idx = site2_indices[s].first % nmon2;

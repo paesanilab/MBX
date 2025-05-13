@@ -6470,14 +6470,13 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             //trees and associated point clouds need to be allocated on the heap
             std::vector<my_kd_tree_t*> trees(ns2);
             std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
-            if(nmon2 >= 2048) {        //pt 1/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
-                for(int i = 0; i<ns2; ++i){
-                    std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
-                    kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box, box_inverse));
-                    my_kd_tree_t* index = new my_kd_tree_t(3 /*dim*/, *ptc, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
-                    index->buildIndex();
-                    trees[i] = index;
-                }
+
+            for(int i = 0; i<ns2; ++i){
+                std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
+                kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box, box_inverse));
+                my_kd_tree_t* index = new my_kd_tree_t(3 /*dim*/, *ptc, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+                index->buildIndex();
+                trees[i] = index;
             }
 
             bool same = (mt1 == mt2);
@@ -6547,43 +6546,18 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         
                         std::vector<size_t> good_mon2_indices;
 
-                        if(nmon2 >= 2048) {  //pt 2/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
-                            std::vector<std::pair<size_t, double>> site2_indices;
-                            nanoflann::SearchParams params(32, 0, false);
+                        std::vector<std::pair<size_t, double>> site2_indices;
+                        nanoflann::SearchParams params(32, 0, false);
 
-                            const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
-                            
-                            for(size_t s = 0; s<nMatches; ++s){
-                                //getting the actual index (not periodic index) of the monomer
-                                size_t idx = site2_indices[s].first % nmon2;
-                                if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_mon2+idx]))) && idx >= m2init){
-                                    //add the monomer, indexed relative to mt2
-                                    if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
-                                        good_mon2_indices.push_back(idx);
-                                }
-                            }
-                        } else {
-                            std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];
-                            std::fill(bool_mon2_indices.begin(), bool_mon2_indices.end(), 0.0);
-                            local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
-                                                                        nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
-                                                                        m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
-
-                            int num_good_mon2 = 0;
-                            for (int ind = 0; ind < nmon2; ind++) {
-                                if (bool_mon2_indices[ind] == 1) {
-                                    num_good_mon2++;
-                                }
-                            }
-
-                            good_mon2_indices = std::vector<size_t>(num_good_mon2);
-                            int current_good_mon2_index = 0;
-                            // monomer 2s within the cutoff are stored in good_mon2_indices
-                            for (int ind = 0; ind < nmon2; ind++) {
-                                if (bool_mon2_indices[ind] == 1) {
-                                    good_mon2_indices[current_good_mon2_index] = ind;
-                                    current_good_mon2_index++;
-                                }
+                        const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                        
+                        for(size_t s = 0; s<nMatches; ++s){
+                            //getting the actual index (not periodic index) of the monomer
+                            size_t idx = site2_indices[s].first % nmon2;
+                            if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_mon2+idx]))) && idx >= m2init){
+                                //add the monomer, indexed relative to mt2
+                                if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
+                                    good_mon2_indices.push_back(idx);
                             }
                         }
                         
@@ -6633,12 +6607,12 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             fi_crd2 += nmon2 * ns2 * 3;
 
             //freeing trees
-            if(nmon2 >= 2048) { //pt 3/3: 2048 was observed to be the size at which the kdtree yielded a benefit in performance
-                for(int i = 0; i<ns2; ++i){
-                    delete trees[i];
-                    delete clouds[i];
-                }
+
+            for(int i = 0; i<ns2; ++i){
+                delete trees[i];
+                delete clouds[i];
             }
+            
             fi_sitetypes2 += ns2;
         }
         // Update first indexes
