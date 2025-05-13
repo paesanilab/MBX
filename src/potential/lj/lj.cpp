@@ -599,15 +599,6 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
         fi_crd += nmon * ns * 3;
     }
 
-    // Sites corresponding to different monomers
-    // Declaring first indexes
-    size_t fi_mon1 = 0;
-    size_t fi_sites1 = 0;
-    size_t fi_mon2 = 0;
-    size_t fi_sites2 = 0;
-    size_t fi_crd1 = 0;
-    size_t fi_crd2 = 0;
-
     //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
     std::vector<double> xyz_rearranged(xyz_.size());
     fi_mon = 0;
@@ -650,6 +641,15 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
     typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
                                                 kdtutils::PointCloud<double>, 3 /* dim */>
     my_kd_tree_t;
+
+    // Sites corresponding to different monomers
+    // Declaring first indexes
+    size_t fi_mon1 = 0;
+    size_t fi_sites1 = 0;
+    size_t fi_mon2 = 0;
+    size_t fi_sites2 = 0;
+    size_t fi_crd1 = 0;
+    size_t fi_crd2 = 0;
 
     // Loop over all monomer types
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
@@ -754,10 +754,10 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
 
                         std::size_t reordered_mon2_size = good_mon2_indices.size();
 
-                        std::vector<double> reordered_xyz2(3*good_mon2_indices.size());
-                        std::vector<std::size_t> reordered_islocal(good_mon2_indices.size());
-                        std::vector<double> reordered_grad2(3*good_mon2_indices.size(), 0.0);
-                        std::vector<double> reordered_phi2(3*good_mon2_indices.size(), 0.0);
+                        std::vector<double> reordered_xyz2(3*reordered_mon2_size);
+                        std::vector<std::size_t> reordered_islocal(reordered_mon2_size + 1);
+                        std::vector<double> reordered_grad2(3*reordered_mon2_size, 0.0);
+                        std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
 
                         reordered_islocal[0] = islocal_[fi_mon1 + m1];
 
@@ -781,7 +781,7 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
 
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
-                            phi2_pool[rank][nmon2 * j * 3 + old_mon2_index] += reordered_phi2[new_mon2_index];
+                            phi2_pool[rank][nmon2 * j + old_mon2_index] += reordered_phi2[new_mon2_index];
                             grad2_pool[rank][nmon2 * j * 3 + old_mon2_index] += reordered_grad2[new_mon2_index];
                             grad2_pool[rank][nmon2 * j * 3 + nmon2 + old_mon2_index] += reordered_grad2[reordered_mon2_size + new_mon2_index];
                             grad2_pool[rank][nmon2 * j * 3 + 2*nmon2 + old_mon2_index] += reordered_grad2[2*reordered_mon2_size + new_mon2_index];
@@ -822,6 +822,12 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+
+            //freeing trees
+            for(int i = 0; i<ns2; ++i){
+                delete trees[i];
+                delete clouds[i];
+            }
         }
         // Update first indexes
         fi_mon1 += nmon1;

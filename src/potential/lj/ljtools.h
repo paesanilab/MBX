@@ -122,7 +122,7 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
  * @return True if pair found or used, false otherwise
  */
 bool GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon,
-                 double& out_sigma, std::vector<std::pair<std::string, std::string> > use_lj, nlohmann::json lj_j = {});
+                 double& out_sigma, std::vector<std::pair<std::string, std::string>>& use_lj, const nlohmann::json& lj_j = {});
 
 }  // namespace lj
 
