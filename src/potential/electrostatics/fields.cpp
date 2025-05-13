@@ -760,37 +760,48 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
         double ts2z = ts2z_vec[m - mon2_index_start];
         double s1r3 = s1r3_vec[m - mon2_index_start];
 
+        double ts2x_rijx_s1r3 = ts2x * rijx - s1r3;
+        double ts2z_rijz_s1r3 = ts2z * rijz - s1r3;
+        double ts2y_rijy_s1r3 = ts2y * rijy - s1r3;
+        
+        double ts2x_rijy = ts2x * rijy;
+        double ts2x_rijz = ts2x * rijz;
+        double ts2y_rijx = ts2y * rijx;
+        double ts2y_rijz = ts2y * rijz;
+        double ts2z_rijx = ts2z * rijx;
+        double ts2z_rijy = ts2z * rijy;
+
         // Get screening functions
         // Contributions to the dipole electric field to site i of mon1
         // Stored in vectors to make the loop vectorizable
         
         // Component x
-        v0 += (ts2x * rijx - s1r3) * mu2[site_jnmon23 + m] + ts2x * rijy * mu2[site_jnmon23 + nmon2 + m] +
-                ts2x * rijz * mu2[site_jnmon23 + nmon22 + m];
+        v0 += ts2x_rijx_s1r3 * mu2[site_jnmon23 + m] + ts2x_rijy * mu2[site_jnmon23 + nmon2 + m] +
+                ts2x_rijz * mu2[site_jnmon23 + nmon22 + m];
 
         // Component y
-        v1 += ts2y * rijx * mu2[site_jnmon23 + m] + (ts2y * rijy - s1r3) * mu2[site_jnmon23 + nmon2 + m] +
-                ts2y * rijz * mu2[site_jnmon23 + nmon22 + m];
+        v1 += ts2y_rijx * mu2[site_jnmon23 + m] + ts2y_rijy_s1r3 * mu2[site_jnmon23 + nmon2 + m] +
+        ts2y_rijz * mu2[site_jnmon23 + nmon22 + m];
 
         // Component z
-        v2 += ts2z * rijx * mu2[site_jnmon23 + m] + ts2z * rijy * mu2[site_jnmon23 + nmon2 + m] +
-                (ts2z * rijz - s1r3) * mu2[site_jnmon23 + nmon22 + m];
+        v2 += ts2z_rijx * mu2[site_jnmon23 + m] + ts2z_rijy * mu2[site_jnmon23 + nmon2 + m] +
+                ts2z_rijz_s1r3 * mu2[site_jnmon23 + nmon22 + m];
 
         // Contributions to the dipole electric field to site j of mon2
         // Component x
-        Efd2[site_jnmon23 + m] += (ts2x * rijx - s1r3) * mu1[site_inmon13 + mon1_index] +
-                                    ts2x * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                    ts2x * rijz * mu1[site_inmon13 + nmon12 + mon1_index];
+        Efd2[site_jnmon23 + m] += ts2x_rijx_s1r3 * mu1[site_inmon13 + mon1_index] +
+                                    ts2x_rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                    ts2x_rijz * mu1[site_inmon13 + nmon12 + mon1_index];
 
         // Component y
-        Efd2[site_jnmon23 + nmon2 + m] += (ts2y * rijx) * mu1[site_inmon13 + mon1_index] +
-                                            (ts2y * rijy - s1r3) * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                            ts2y * rijz * mu1[site_inmon13 + nmon12 + mon1_index];
+        Efd2[site_jnmon23 + nmon2 + m] += ts2y_rijx * mu1[site_inmon13 + mon1_index] +
+                                    ts2y_rijy_s1r3 * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                    ts2y_rijz * mu1[site_inmon13 + nmon12 + mon1_index];
 
         // Component z
-        Efd2[site_jnmon23 + nmon22 + m] += (ts2z * rijx) * mu1[site_inmon13 + mon1_index] +
-                                            ts2z * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                            (ts2z * rijz - s1r3) * mu1[site_inmon13 + nmon12 + mon1_index];
+        Efd2[site_jnmon23 + nmon22 + m] += ts2z_rijx * mu1[site_inmon13 + mon1_index] +
+                                    ts2z_rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                    ts2z_rijz_s1r3 * mu1[site_inmon13 + nmon12 + mon1_index];
     
     }
 
