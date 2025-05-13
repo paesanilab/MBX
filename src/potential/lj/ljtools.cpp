@@ -192,7 +192,7 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
 
     // Calculate contribution to lj field.
     if (do_field) {
-        #pragma omp simd simdlen(8)
+        #pragma omp simd simdlen(8) reduction(+: phi1)
         for (size_t nv = start2; nv < end2; nv++) {
             phi1 -= ljchgj * inv_r6[nv];
             phi2[shift_phi + nv] -= ljchgi * inv_r6[nv];
@@ -259,8 +259,8 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
 
     
     if (do_grads) {
-        double grad[nmon2];
-        std::fill(grad, grad + nmon2, 0.0);
+        double grad[end2];
+        std::fill(grad, grad + end2, 0.0);
 
         if (ewald_alpha > 0.0) {
             for (size_t nv = start2; nv < end2; nv++) {
