@@ -185,6 +185,7 @@ MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
+MBX_CONFIG_ENABLE([tbb],[enable intel tbb library],[no])
 MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
 MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization],[no])
 MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
@@ -213,6 +214,17 @@ fi
 if test $ttmnrg == true; then
     AC_MSG_WARN([ttm-nrg is deprecated.])
     MBX_CHECK_CXXFLAG([-DTTMNRG])
+fi
+
+if test $tbb == true; then
+    MBX_CHECK_REQ_CXXFLAG([-qtbb])
+    #AC_CHECK_LIB([tbb],[scalable_allocator],[
+    #    CPPFLAGS="$CPPFLAGS"
+    #    LIBS="-ltbb -ltbbmalloc $LIBS"
+    #],[
+    #    AC_MSG_ERROR([ttb cannot be linked.])
+    #])
+    LIBS="$LIBS -ltbb -ltbbmalloc"
 fi
 
 if test $optreport == true; then

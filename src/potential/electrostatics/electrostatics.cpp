@@ -6480,17 +6480,15 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             }
 
             bool same = (mt1 == mt2);
+
             // Prepare for parallelization
-            // /*
-            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-            // std::vector<std::shared_ptr<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>> precomputedInformation_pool;
-            std::vector<std::shared_ptr<std::vector<size_t>>> bool_mon2_indices_pool;
+            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+
+            #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
-                field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
-                // precomputedInformation_pool.push_back(std::make_shared<std::unordered_map<key_precomputed_info, PrecomputedInfo, key_hash>>());
-                bool_mon2_indices_pool.push_back(std::make_shared<std::vector<size_t>>(nmon2));
+                field_pool[i] = std::make_shared<ElectricFieldHolder>(maxnmon);
             }
-            // */
+            
             // Parallel loop
             size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
             size_t m1_step_size;
