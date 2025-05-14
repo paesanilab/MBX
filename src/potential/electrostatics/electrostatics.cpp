@@ -2298,19 +2298,21 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
             bool same = (mt1 == mt2);
 
             // Loop over all pair of sites
-            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-            std::vector<std::vector<double>> Efq_1_pool;
-            std::vector<std::vector<double>> Efq_2_pool;
-            std::vector<std::vector<double>> phi_1_pool;
-            std::vector<std::vector<double>> phi_2_pool;
-            std::vector<std::vector<double>> virial_pool;
+            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> Efq_1_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> Efq_2_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> phi_1_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> phi_2_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> virial_pool(nthreads);
+
+            #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
-                field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
-                Efq_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-                Efq_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
-                phi_1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
-                phi_2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
-                virial_pool.push_back(std::vector<double>(9, 0.0));
+                field_pool[i] = std::make_shared<ElectricFieldHolder>(maxnmon);
+                Efq_1_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon1 * ns1 * 3, 0.0);
+                Efq_2_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon2 * ns2 * 3, 0.0);
+                phi_1_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon1 * ns1, 0.0);
+                phi_2_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon2 * ns2, 0.0);
+                virial_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(9, 0.0);
             }
 
             size_t m1start = (mpi_rank_ < nmon1) ? mpi_rank_ : nmon1;
@@ -2347,26 +2349,10 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                         // that are close to site i of the monomer m1 we are looking at
                         size_t start_j = fi_crd2 + jnmon23;
                         size_t size_j = nmon2 - m2init;
-                        std::vector<double> xyz_sitej(3 * size_j);
-                        // Copy x
-                        std::copy(xyz_all_.begin() + start_j + m2init, xyz_all_.begin() + start_j + nmon2,
-                                  xyz_sitej.begin());
-                        // Copy y
-                        std::copy(xyz_all_.begin() + start_j + nmon2 + m2init, xyz_all_.begin() + start_j + 2 * nmon2,
-                                  xyz_sitej.begin() + size_j);
-                        // Copy y
-                        std::copy(xyz_all_.begin() + start_j + 2 * nmon2 + m2init,
-                                  xyz_all_.begin() + start_j + 3 * nmon2, xyz_sitej.begin() + 2 * size_j);
 
                         // Vector that will tell the original position of the new sites
-                        std::vector<double> chg_sitej(size_j);
-                        std::vector<double> phi_sitej(size_j, 0.0);
-                        std::vector<double> Efq_sitej(3 * size_j, 0.0);
                         // declare temporary virial for each pair
                         std::vector<double> virial_thread(9, 0.0);
-
-                        std::copy(chg_all_.begin() + fi_sites2 + nmon2 * j + m2init,
-                                  chg_all_.begin() + fi_sites2 + nmon2 * (j + 1), chg_sitej.begin());
 
                         // Check if A = 0 and call the proper field calculation
                         double A = polfac_all_[fi_sites1 + i] * polfac_all_[fi_sites2 + j];
@@ -2393,13 +2379,12 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2; 
                         std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal;
-                        std::vector<double> reordered_Efq2(reordered_xyz2.size(), 0.0);
-                        std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
-                        std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
+                        std::vector<double, tbb::scalable_allocator<double>> reordered_Efq2(reordered_xyz2.size(), 0.0);
+                        std::vector<double, tbb::scalable_allocator<double>> reordered_phi2(reordered_mon2_size, 0.0);
+                        std::vector<double, tbb::scalable_allocator<double>> reordered_chg(reordered_mon2_size, 0.0);
 
                         // populates reordered_chg
-                        const size_t site_jnmon23 = nmon2 * j;
-                        double *chg = chg_sitej.data();
+                        double *chg = chg_all_.data() + fi_sites2 + nmon2 * j + m2init;
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
 
@@ -2414,27 +2399,27 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                             ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0,
                             1, 0, precomp_info, &virial_thread);
                         
-                        double *Efq2 = Efq_sitej.data();
-                        double *phi2 = phi_sitej.data();
+                        double *Efq2 = Efq_2_pool[rank].data() + jnmon23;
+                        double *phi2 = phi_2_pool[rank].data() + jnmon2;
 
                         // Update the original phi2 and Efq2 (unreorder reordered_phi2 and reordered_Efq2 and add their values)
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++ ){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
                             
-                            phi2[old_mon2_index - m2init] += reordered_phi2[new_mon2_index];
-                            Efq2[old_mon2_index - m2init] += reordered_Efq2[new_mon2_index];
-                            Efq2[nmon2 + old_mon2_index - m2init*2] += reordered_Efq2[reordered_mon2_size + new_mon2_index];
-                            Efq2[2*nmon2 + old_mon2_index - m2init*3] += reordered_Efq2[2*reordered_mon2_size + new_mon2_index];
+                            phi2[old_mon2_index] += reordered_phi2[new_mon2_index];
+                            Efq2[old_mon2_index] += reordered_Efq2[new_mon2_index];
+                            Efq2[nmon2 + old_mon2_index] += reordered_Efq2[reordered_mon2_size + new_mon2_index];
+                            Efq2[2*nmon2 + old_mon2_index] += reordered_Efq2[2*reordered_mon2_size + new_mon2_index];
 
                         }
 
-                        // Put proper data in field and electric field of j
-                        for (size_t ind = 0; ind < size_j; ind++) {
-                            phi_2_pool[rank][jnmon2 + m2init + ind] += phi_sitej[ind];
-                            for (size_t dim = 0; dim < 3; dim++) {
-                                Efq_2_pool[rank][jnmon23 + nmon2 * dim + m2init + ind] += Efq_sitej[dim * size_j + ind];
-                            }
-                        }
+                        // // Put proper data in field and electric field of j
+                        // for (size_t ind = 0; ind < size_j; ind++) {
+                        //     phi_2_pool[rank][jnmon2 + m2init + ind] += phi_sitej[ind];
+                        //     for (size_t dim = 0; dim < 3; dim++) {
+                        //         Efq_2_pool[rank][jnmon23 + nmon2 * dim + m2init + ind] += Efq_sitej[dim * size_j + ind];
+                        //     }
+                        // }
 
                         phi_1_pool[rank][inmon1 + m1] += phi1_thread;
                         Efq_1_pool[rank][inmon13 + m1] += ex_thread;
@@ -7410,13 +7395,15 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
             // Prepare for parallelization
-            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-            std::vector<std::vector<double>> Efd_1_pool;
-            std::vector<std::vector<double>> Efd_2_pool;
+            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> Efd_1_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> Efd_2_pool(nthreads);
+
+            #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
-                field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
-                Efd_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-                Efd_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
+                field_pool[i] = std::make_shared<ElectricFieldHolder>(maxnmon);
+                Efd_1_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon1 * ns1 * 3, 0.0);
+                Efd_2_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon2 * ns2 * 3, 0.0);
             }
 
             // Parallel loop
@@ -9063,20 +9050,23 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
             bool same = (mt1 == mt2);
-            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool;
-            std::vector<std::vector<double>> grad_1_pool;
-            std::vector<std::vector<double>> grad_2_pool;
-            std::vector<std::vector<double>> phi_1_pool;
-            std::vector<std::vector<double>> phi_2_pool;
-            std::vector<std::vector<double>> virial_pool;
+            std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> grad_1_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> grad_2_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> phi_1_pool(nthreads);
+            std::vector<std::vector<double, tbb::scalable_allocator<double>>, tbb::scalable_allocator<std::vector<double, tbb::scalable_allocator<double>>>> phi_2_pool(nthreads);
+            std::vector<std::vector<double>> virial_pool(nthreads);
+
+            #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
-                field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
-                grad_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-                grad_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
-                phi_1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
-                phi_2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
-                virial_pool.push_back(std::vector<double>(9, 0.0));
+                field_pool[i] = std::make_shared<ElectricFieldHolder>(maxnmon);
+                grad_1_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon1 * ns1 * 3, 0.0);
+                grad_2_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon2 * ns2 * 3, 0.0);
+                phi_1_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon1 * ns1, 0.0);
+                phi_2_pool[i] = std::vector<double, tbb::scalable_allocator<double>>(nmon2 * ns2, 0.0);
+                virial_pool[i] = std::vector<double>(9, 0.0);
             }
+
 #pragma omp parallel for schedule(dynamic)
             for (size_t m1 = 0; m1 < nmon1; m1++) {
                 int rank = 0;
@@ -9115,10 +9105,10 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal; 
-                        std::vector<double> reordered_grad2(reordered_xyz2.size(), 0.0);
-                        std::vector<double> reordered_mu(reordered_xyz2.size(), 0.0);
-                        std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
-                        std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
+                        std::vector<double, tbb::scalable_allocator<double>> reordered_grad2(reordered_xyz2.size(), 0.0);
+                        std::vector<double, tbb::scalable_allocator<double>> reordered_mu(reordered_xyz2.size(), 0.0);
+                        std::vector<double, tbb::scalable_allocator<double>> reordered_phi2(reordered_mon2_size, 0.0);
+                        std::vector<double, tbb::scalable_allocator<double>> reordered_chg(reordered_mon2_size, 0.0);
                         
                 
                         double *chg = chg_all_.data() + fi_sites2;
