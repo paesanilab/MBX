@@ -6437,7 +6437,8 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
                                                         kdtutils::PointCloud<double>, 3 /* dim */>
             my_kd_tree_t;
-        for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+            
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         //size_t nmon12 = nmon1 * 2;
