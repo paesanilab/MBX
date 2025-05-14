@@ -81,7 +81,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
 
     // Fill vectors with zeros in the desired range
     // temporary virial holder
-    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
+    // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
 
     const double PIQSRT = std::sqrt(M_PI);
 
@@ -267,7 +267,7 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
 
     // Fill vectors with zeros in the desired range
     // temporary virial holder
-    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
+    // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
 
     const double PIQSRT = std::sqrt(M_PI);
 
@@ -1033,11 +1033,11 @@ void ElectricFieldHolder::CalcElecFieldGrads(
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
     // Fill vectors with zeros in the desired range
-    std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-    std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-    std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-    std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
+    // std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
+    // std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
+    // std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
+    // std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
+    // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
 
 #pragma omp simd
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -1326,11 +1326,11 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
     // Fill vectors with zeros in the desired range
-    std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-    std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-    std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-    std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
+    // std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
+    // std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
+    // std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
+    // std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
+    // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
