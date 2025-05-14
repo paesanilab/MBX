@@ -85,7 +85,9 @@ derived.
 #include "tools/constants.h"
 #include "tools/definitions.h"
 
+#ifdef TBB
 #include "tbb/scalable_allocator.h"
+#endif
 
 namespace elec {
 
