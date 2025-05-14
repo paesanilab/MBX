@@ -708,9 +708,12 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
             std::vector<my_kd_tree_t*> trees(ns2);
             std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
+            std::vector<std::vector<size_t>> tree_indices(ns2, std::vector<size_t>());
+
             for(int i = 0; i < ns2; i++){
                 std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
-                kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box_, box_inverse_));
+                // kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box_, box_inverse_));
+                kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(sitexyz, cutoff_, use_pbc, box_, box_inverse_, tree_indices[i]));
                 my_kd_tree_t* index = new my_kd_tree_t(3 /*dim*/, *ptc, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
                 index->buildIndex();
                 clouds[i] = ptc;
@@ -796,7 +799,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                             
                             for(size_t s = 0; s<nMatches; ++s){
                                 //getting the actual index (not periodic index) of the monomer
-                                size_t idx = site2_indices[s].first % nmon2;
+                                // size_t idx = site2_indices[s].first % nmon2;
+                                size_t idx = tree_indices[j][site2_indices[s].first];
                                 if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_mon2+idx]))) && idx >= m2init){
                                     //add the monomer, indexed relative to mt2
                                     if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
