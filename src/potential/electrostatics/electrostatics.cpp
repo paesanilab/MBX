@@ -1822,14 +1822,14 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                         // contains precomputed atom coordinate-dependant calculations
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
-                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
 
 
                         // Reordered versions of xyz2, islocal,...  which only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless- eliminating them saves CPU time
-                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2; 
-                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2; 
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal;
                         std::vector<double> reordered_Efq2(reordered_xyz2.size(), 0.0);
                         std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
                         std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
@@ -2385,14 +2385,14 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                         // contains precomputed atom coordinate-dependant calculations
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         //contains all indices of monomer type 2s which are withing a 9A cutoff
-                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
 
 
                         // Reordered versions of xyz2, islocal,...  which only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
-                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2; 
-                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2; 
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal;
                         std::vector<double> reordered_Efq2(reordered_xyz2.size(), 0.0);
                         std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
                         std::vector<double> reordered_chg(reordered_mon2_size, 0.0);
@@ -6033,15 +6033,15 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                         // contains precomputed atom coordinate-dependant calculations
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
-                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
                         
                         // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within a twobody_cutoff from mon 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
-                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
-                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
-                        std::vector<double>& reordered_mu2 = precomp_info.reordered_mu2;
-                        std::vector<double>& reordered_Efd2 = precomp_info.reordered_Efd2;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_mu2 = precomp_info.reordered_mu2;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_Efd2 = precomp_info.reordered_Efd2;
                         std::fill(reordered_Efd2.begin(), reordered_Efd2.end(), 0.0);
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
@@ -6544,7 +6544,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
                         // goes over all mt2 site j
                         
-                        std::vector<size_t> good_mon2_indices;
+                        std::vector<size_t, tbb::scalable_allocator<size_t>> good_mon2_indices;
 
                         std::vector<std::pair<size_t, double>> site2_indices;
                         nanoflann::SearchParams params(32, 0, false);
@@ -6568,14 +6568,14 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
                         // Store versions of xyz2 and islocal which only include monomers within the cutoff
                         // and a list of monomers within the cutoff in precomputedInformation
-                        precomp_info.reordered_xyz2 = std::vector<double>(3*reordered_mon2_size, 0.0);
-                        precomp_info.reordered_islocal = std::vector<size_t>(reordered_mon2_size + 1, 0.0);
+                        precomp_info.reordered_xyz2 = std::vector<double, tbb::scalable_allocator<double>>(3*reordered_mon2_size, 0.0);
+                        precomp_info.reordered_islocal = std::vector<size_t, tbb::scalable_allocator<size_t>>(reordered_mon2_size + 1, 0.0);
                         precomp_info.good_mon2 = good_mon2_indices;
-                        precomp_info.reordered_mu2 = std::vector<double>(3*reordered_mon2_size, 0.0);
-                        precomp_info.reordered_Efd2 = std::vector<double>(3*reordered_mon2_size, 0.0);
+                        precomp_info.reordered_mu2 = std::vector<double, tbb::scalable_allocator<double>>(3*reordered_mon2_size, 0.0);
+                        precomp_info.reordered_Efd2 = std::vector<double, tbb::scalable_allocator<double>>(3*reordered_mon2_size, 0.0);
 
-                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
-                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal;
                         size_t site_j3 = j * 3;
                         size_t site_jnmon23 = nmon2 * site_j3;
                         reordered_islocal[0] = islocal_all_[fi_mon1 + m1];
@@ -7456,15 +7456,15 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                         // contains precomputed atom coordinate-dependant calculations
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
-                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
                         
                         // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within a twobody_cutoff from mon 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
-                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
-                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
-                        std::vector<double>& reordered_mu2 = precomp_info.reordered_mu2;
-                        std::vector<double>& reordered_Efd2 = precomp_info.reordered_Efd2;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_mu2 = precomp_info.reordered_mu2;
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_Efd2 = precomp_info.reordered_Efd2;
                         std::fill(reordered_Efd2.begin(), reordered_Efd2.end(), 0.0);
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
@@ -8234,13 +8234,13 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& p
                         // contains precomputed atom coordinate-dependant calculations
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
-                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
 
                         // Reordered versions of xyz2, islocal ,..., chg  so they only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
-                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
-                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal; 
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal; 
                         std::vector<double> reordered_grad2(reordered_xyz2.size(), 0.0);
                         std::vector<double> reordered_mu(reordered_xyz2.size(), 0.0);
                         std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);
@@ -9110,13 +9110,13 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
                         // contains precomputed atom coordinate-dependant calculations
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
-                        std::vector<size_t>& good_mon2_indices = precomp_info.good_mon2; 
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& good_mon2_indices = precomp_info.good_mon2; 
                         int reordered_mon2_size = good_mon2_indices.size();
 
                         // Reordered versions of xyz2, islocal ,..., chg  so they only contain monomers of type 2 which are within a twobody_cutoff from monomer 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
-                        std::vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
-                        std::vector<size_t>& reordered_islocal = precomp_info.reordered_islocal; 
+                        std::vector<double, tbb::scalable_allocator<double>>& reordered_xyz2 = precomp_info.reordered_xyz2;
+                        std::vector<size_t, tbb::scalable_allocator<size_t>>& reordered_islocal = precomp_info.reordered_islocal; 
                         std::vector<double> reordered_grad2(reordered_xyz2.size(), 0.0);
                         std::vector<double> reordered_mu(reordered_xyz2.size(), 0.0);
                         std::vector<double> reordered_phi2(reordered_mon2_size, 0.0);

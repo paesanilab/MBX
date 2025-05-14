@@ -85,21 +85,22 @@ derived.
 #include "tools/constants.h"
 #include "tools/definitions.h"
 
+#include "tbb/scalable_allocator.h"
 
 namespace elec {
     struct PrecomputedInfo {
-        std::vector<size_t> good_mon2;
-        std::vector<double> reordered_xyz2;
-        std::vector<size_t> reordered_islocal;
-        std::vector<double> reordered_mu2;
-        std::vector<double> reordered_Efd2;
-        std::vector<double> rijx;
-        std::vector<double> rijy;
-        std::vector<double> rijz;
-        std::vector<double> ts2x;
-        std::vector<double> ts2y;
-        std::vector<double> ts2z;
-        std::vector<double> s1r3;
+        std::vector<size_t, tbb::scalable_allocator<size_t>> good_mon2;
+        std::vector<double, tbb::scalable_allocator<double>> reordered_xyz2;
+        std::vector<size_t, tbb::scalable_allocator<size_t>> reordered_islocal;
+        std::vector<double, tbb::scalable_allocator<double>> reordered_mu2;
+        std::vector<double, tbb::scalable_allocator<double>> reordered_Efd2;
+        std::vector<double, tbb::scalable_allocator<double>> rijx;
+        std::vector<double, tbb::scalable_allocator<double>> rijy;
+        std::vector<double, tbb::scalable_allocator<double>> rijz;
+        std::vector<double, tbb::scalable_allocator<double>> ts2x;
+        std::vector<double, tbb::scalable_allocator<double>> ts2y;
+        std::vector<double, tbb::scalable_allocator<double>> ts2z;
+        std::vector<double, tbb::scalable_allocator<double>> s1r3;
     };
 
     typedef std::tuple<size_t, size_t, size_t, size_t, size_t> key_precomputed_info;
@@ -180,7 +181,7 @@ class ElectricFieldHolder {
                                 const std::vector<double> &box_inverse,  // The inverse lattice vectors
                                 double cutoff,                           // The real space cutoff for pairs
                                 bool use_ghost,                          // use ghost monomers
-                                const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
+                                const std::vector<size_t, tbb::scalable_allocator<size_t>> &islocal, const size_t isl1_offset, const size_t isl2_offset,
                                 const size_t m2_offset,
                                 PrecomputedInfo& precomputedInformation, // Contains precomputed coordinate-dependant calculations
                                 std::vector<double> *virial = 0);  // The virial);
@@ -293,7 +294,7 @@ class ElectricFieldHolder {
                                     const std::vector<double> &box_inverse,  // The inverse lattice vectors
                                     double cutoff,                           // The real space cutoff for pairs
                                     bool use_ghost,                          // use ghost monomers
-                                    const std::vector<size_t> &islocal, 
+                                    const std::vector<size_t, tbb::scalable_allocator<size_t>> &islocal, 
                                     const size_t isl1_offset,
                                     const size_t isl2_offset,
                                     PrecomputedInfo& precomputedInformation, // Contains precomputed coordinate-dependant calculations
@@ -359,7 +360,7 @@ class ElectricFieldHolder {
                             const std::vector<double> &box_inverse,  // The inverse lattice vectors
                             double cutoff,                           // The real space cutoff for pairs
                             bool use_ghost,                          // use ghost monomers
-                            const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
+                            const std::vector<size_t, tbb::scalable_allocator<size_t>> &islocal, const size_t isl1_offset, const size_t isl2_offset,
                             PrecomputedInfo& precomputedInformation,
                             std::vector<double> *virial = 0  // the virial
     );

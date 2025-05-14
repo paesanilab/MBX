@@ -242,7 +242,7 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     double aCC, double aCC1_4, double g34, double *Efqx_mon1, double *Efqy_mon1, double *Efqz_mon1, double *phi1,
     double *phi2, double *Efq2, double elec_scale_factor, double ewald_alpha, bool use_pbc,
     const std::vector<double> &box, const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
-    const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
+    const std::vector<size_t, tbb::scalable_allocator<size_t>> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
     PrecomputedInfo& precomputedInformation,
     std::vector<double> *virial) {
 
@@ -894,7 +894,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double ewald_alpha, bool use_pbc, const std::vector<double> &box,
                                               const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
-                                              const std::vector<size_t> &islocal, const size_t isl1_offset,
+                                              const std::vector<size_t, tbb::scalable_allocator<size_t>> &islocal, const size_t isl1_offset,
                                               const size_t isl2_offset,
                                               PrecomputedInfo& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
@@ -917,13 +917,13 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 
     const double cutoffsq = cutoff * cutoff;
 
-    precomputedInformation.rijx = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.rijy = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.rijz = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.ts2x = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.ts2y = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.ts2z = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.s1r3 = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.rijx = std::vector<double, tbb::scalable_allocator<double>>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.rijy = std::vector<double, tbb::scalable_allocator<double>>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.rijz = std::vector<double, tbb::scalable_allocator<double>>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.ts2x = std::vector<double, tbb::scalable_allocator<double>>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.ts2y = std::vector<double, tbb::scalable_allocator<double>>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.ts2z = std::vector<double, tbb::scalable_allocator<double>>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.s1r3 = std::vector<double, tbb::scalable_allocator<double>>(mon2_index_end - mon2_index_start, 0.0);
 
     double *rijx_vec = precomputedInformation.rijx.data();
     double *rijy_vec = precomputedInformation.rijy.data();
@@ -1298,7 +1298,7 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
     size_t mon2_index_start, size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
     double aDD, double aCD, double Asqsqi, double *grdx, double *grdy, double *grdz, double *phi1, double *phi2,
     double *grd2, double elec_scale_factor, double ewald_alpha, bool use_pbc, const std::vector<double> &box,
-    const std::vector<double> &box_inverse, double cutoff, bool use_ghost, const std::vector<size_t> &islocal,
+    const std::vector<double> &box_inverse, double cutoff, bool use_ghost, const std::vector<size_t, tbb::scalable_allocator<size_t>> &islocal,
     const size_t isl1_offset, const size_t isl2_offset, PrecomputedInfo& precomputedInformation, std::vector<double> *virial) {
 
     
