@@ -218,6 +218,7 @@ fi
 
 if test $tbb == true; then
     MBX_CHECK_REQ_CXXFLAG([-qtbb])
+    MBX_CHECK_CXXFLAG([-DTBB])
     #AC_CHECK_LIB([tbb],[scalable_allocator],[
     #    CPPFLAGS="$CPPFLAGS"
     #    LIBS="-ltbb -ltbbmalloc $LIBS"
