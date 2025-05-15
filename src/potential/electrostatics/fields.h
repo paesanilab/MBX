@@ -72,10 +72,10 @@ derived.
 
 #include <vector>
 #include <cstddef>
-
+// #include <cmath>
 
 #ifdef __INTEL_COMPILER
-#include <mathimf.h>
+// #include <mathimf.h>
 #endif
 
 #include <functional>

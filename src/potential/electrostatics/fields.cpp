@@ -1325,6 +1325,8 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
+    const double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
+
     // Fill vectors with zeros in the desired range
     // std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
     // std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
@@ -1332,96 +1334,146 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
     // std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
     // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
 
+    double rijx[mon2_index_end];
+    double rijy[mon2_index_end];
+    double rijz[mon2_index_end];
+    double rijx2[mon2_index_end];
+    double rijy2[mon2_index_end];
+    double rijz2[mon2_index_end];
+    double r[mon2_index_end];
+    double ri[mon2_index_end];
+    double risq[mon2_index_end];
+    double rA4[mon2_index_end];
+    double adrA4[mon2_index_end];
+    double acrA4[mon2_index_end];
+    double r_alpha[mon2_index_end];
+
+    double vscale[mon2_index_end];
+
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
 
-        double rijx = rijx_vec[m - mon2_index_start];
-        double rijy = rijy_vec[m - mon2_index_start];
-        double rijz = rijz_vec[m - mon2_index_start];
+        rijx[m] = rijx_vec[m - mon2_index_start];
+        rijy[m] = rijy_vec[m - mon2_index_start];
+        rijz[m] = rijz_vec[m - mon2_index_start];
 
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
-        
-        double scale = 1.0;
-        if (use_ghost && (isls == 1)) scale = 0.5;
 
-        const double rijx2 = rijx * rijx;
-        const double rijy2 = rijy * rijy;
-        const double rijz2 = rijz * rijz;
-        const double rsq = rijx2 + rijy2 + rijz2;
-        const double r = std::sqrt(rsq);
-        const double ri = r < cutoff ? 1 / r : 0;
-        const double risq = ri * ri;
+        vscale[m] = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
+
+        rijx2[m] = rijx[m] * rijx[m];
+        rijy2[m] = rijy[m] * rijy[m];
+        rijz2[m] = rijz[m] * rijz[m];
+        const double rsq = rijx2[m] + rijy2[m] + rijz2[m];
+        r[m] = std::sqrt(rsq);
+        ri[m] = r[m] < cutoff ? 1 / r[m] : 0;
+        risq[m] = ri[m] * ri[m];
         const double rsqsq = rsq * rsq;
         // Some values that will be used in the screening functions
-        const double rA4 = rsqsq * Asqsqi;
+        rA4[m] = rsqsq * Asqsqi;
         // TODO look at the exponential function intel vec
 
-        const double adrA4 = aDD * 4.0 * rA4;
-        const double acrA4 = aCD * 4.0 * rA4;
+        adrA4[m] = aDD * 4.0 * rA4[m];
+        acrA4[m] = aCD * 4.0 * rA4[m];
+
+        r_alpha[m] = ewald_alpha * r[m];
+    }
+
+    double exp1d[mon2_index_end];
+    double exp1c[mon2_index_end];
+
 #if NO_THOLE
-        const double exp1d = 0;
-        const double exp1c = 0;
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1d[m] = 0;
+        exp1c[m] = 0;
+    }
 #else
-        const double exp1d = std::exp(-aDD * rA4);
-        const double exp1c = elec_scale_factor * std::exp(-aCD * rA4);
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1d[m] = std::exp(-aDD * rA4[m]);
+        exp1c[m] = elec_scale_factor * std::exp(-aCD * rA4[m]);
+    }
 #endif
 
+    double erfterm[mon2_index_end];
+    double alpha_pi_term[mon2_index_end];
+    double exp_alpha2_r2[mon2_index_end];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        alpha_pi_term[m] = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+        exp_alpha2_r2[m] = exp(-r_alpha[m] * r_alpha[m]);
+    }
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erfterm[m] = erf(r_alpha[m]);
+    }
+
+
+    double individual_gradx[mon2_index_end];
+    double individual_grady[mon2_index_end];
+    double individual_gradz[mon2_index_end];
+
+    double gradx = 0.0;
+    double grady = 0.0;
+    double gradz = 0.0;
+    double phi_temp = 0.0;
+
+    #pragma omp simd simdlen(8) reduction(+ : gradx, grady, gradz, phi_temp)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
         // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
         // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
         // r^-1, r^-3, r^-5
-        double r_alpha = ewald_alpha * r;
-        double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
-        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
-        double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
-        double erfterm = erf(r_alpha);
-        double bn0 = (1 - erfterm) * ri;
-        double bn0_cd = (elec_scale_factor - erfterm) * ri;
-        alpha_pi_term *= two_alpha_squared;
-        double bn1 = (bn0 + alpha_pi_term * exp_alpha2_r2) * risq;
-        double bn1_cd = (bn0_cd + alpha_pi_term * exp_alpha2_r2) * risq;
-        alpha_pi_term *= two_alpha_squared;
-        double bn2 = (3 * bn1 + alpha_pi_term * exp_alpha2_r2) * risq;
-        double bn2_cd = (3 * bn1_cd + alpha_pi_term * exp_alpha2_r2) * risq;
-        alpha_pi_term *= two_alpha_squared;
-        double bn3 = (5 * bn2 + alpha_pi_term * exp_alpha2_r2) * risq;
+        double bn0 = (1 - erfterm[m]) * ri[m];
+        double bn0_cd = (elec_scale_factor - erfterm[m]) * ri[m];
+        alpha_pi_term[m] *= two_alpha_squared;
+        double bn1 = (bn0 + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
+        double bn1_cd = (bn0_cd + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
+        alpha_pi_term[m] *= two_alpha_squared;
+        double bn2 = (3 * bn1 + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
+        double bn2_cd = (3 * bn1_cd + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
+        alpha_pi_term[m] *= two_alpha_squared;
+        double bn3 = (5 * bn2 + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
 
         // Get screening functions - old version to be untouched and then deleted
-        const double s2r5_3d = bn2 - (3 + adrA4) * exp1d * ri * risq * risq;
+        const double s2r5_3d = bn2 - (3 + adrA4[m]) * exp1d[m] * ri[m] * risq[m] * risq[m];
 
-        const double s3r7_15d = bn3 - (15 + 4 * adrA4 + adrA4 * adrA4) * exp1d * risq * risq * ri * risq;
-        const double s3r7_15x2 = s3r7_15d * rijx2;
-        const double s3r7_15y2 = s3r7_15d * rijy2;
-        const double s3r7_15z2 = s3r7_15d * rijz2;
-        const double s1r3c = bn1_cd - exp1c * ri * risq;
-        const double rxs1r3c = rijx * s1r3c;
-        const double rys1r3c = rijy * s1r3c;
-        const double rzs1r3c = rijz * s1r3c;
-        const double s2r5_3c = bn2_cd - (3 + acrA4) * exp1c * risq * ri * risq;
+        const double s3r7_15d = bn3 - (15 + 4 * adrA4[m] + adrA4[m] * adrA4[m]) * exp1d[m] * risq[m] * risq[m] * ri[m] * risq[m];
+        const double s3r7_15x2 = s3r7_15d * rijx2[m];
+        const double s3r7_15y2 = s3r7_15d * rijy2[m];
+        const double s3r7_15z2 = s3r7_15d * rijz2[m];
+        const double s1r3c = bn1_cd - exp1c[m] * ri[m] * risq[m];
+        const double rxs1r3c = rijx[m] * s1r3c;
+        const double rys1r3c = rijy[m] * s1r3c;
+        const double rzs1r3c = rijz[m] * s1r3c;
+        const double s2r5_3c = bn2_cd - (3 + acrA4[m]) * exp1c[m] * risq[m] * ri[m] * risq[m];
         // Tensors
-        const double ts2x = s2r5_3c * rijx;
-        const double ts2y = s2r5_3c * rijy;
-        const double ts2z = s2r5_3c * rijz;
+        const double ts2x = s2r5_3c * rijx[m];
+        const double ts2y = s2r5_3c * rijy[m];
+        const double ts2z = s2r5_3c * rijz[m];
 
         // T_alpha_beta_gamma tensor
-        const double t3_0 = s3r7_15x2 * rijx - s2r5_3d * 3.0 * rijx;         // x x x
-        const double t3_1 = s3r7_15x2 * rijy - s2r5_3d * rijy;               // x x y
-        const double t3_2 = s3r7_15x2 * rijz - s2r5_3d * rijz;               // x x z
-        const double t3_3 = s3r7_15y2 * rijx - s2r5_3d * rijx;               // x y y
-        const double t3_4 = s3r7_15d * rijx * rijy * rijz;                   // x y z
-        const double t3_5 = s3r7_15z2 * rijx - s2r5_3d * rijx;               // x z z
-        const double t3_6 = s3r7_15d * rijy2 * rijy - s2r5_3d * 3.0 * rijy;  // y y y
-        const double t3_7 = s3r7_15y2 * rijz - s2r5_3d * rijz;               // y y z
-        const double t3_8 = s3r7_15z2 * rijy - s2r5_3d * rijy;               // y z z
-        const double t3_9 = s3r7_15z2 * rijz - s2r5_3d * 3.0 * rijz;         // z z z
+        const double t3_0 = s3r7_15x2 * rijx[m] - s2r5_3d * 3.0 * rijx[m];         // x x x
+        const double t3_1 = s3r7_15x2 * rijy[m] - s2r5_3d * rijy[m];               // x x y
+        const double t3_2 = s3r7_15x2 * rijz[m] - s2r5_3d * rijz[m];               // x x z
+        const double t3_3 = s3r7_15y2 * rijx[m] - s2r5_3d * rijx[m];               // x y y
+        const double t3_4 = s3r7_15d * rijx[m] * rijy[m] * rijz[m];                   // x y z
+        const double t3_5 = s3r7_15z2 * rijx[m] - s2r5_3d * rijx[m];               // x z z
+        const double t3_6 = s3r7_15d * rijy2[m] * rijy[m] - s2r5_3d * 3.0 * rijy[m];  // y y y
+        const double t3_7 = s3r7_15y2 * rijz[m] - s2r5_3d * rijz[m];               // y y z
+        const double t3_8 = s3r7_15z2 * rijy[m] - s2r5_3d * rijy[m];               // y z z
+        const double t3_9 = s3r7_15z2 * rijz[m] - s2r5_3d * 3.0 * rijz[m];         // z z z
 
         // T_alpha_beta tensor
-        const double t2_0 = ts2x * rijx - s1r3c;  // alpha = x, beta = x
-        const double t2_1 = ts2x * rijy;
-        const double t2_2 = ts2x * rijz;
-        const double t2_3 = ts2y * rijy - s1r3c;
-        const double t2_4 = ts2y * rijz;
-        const double t2_5 = ts2z * rijz - s1r3c;
+        const double t2_0 = ts2x * rijx[m] - s1r3c;  // alpha = x, beta = x
+        const double t2_1 = ts2x * rijy[m];
+        const double t2_2 = ts2x * rijz[m];
+        const double t2_3 = ts2y * rijy[m] - s1r3c;
+        const double t2_4 = ts2y * rijz[m];
+        const double t2_5 = ts2z * rijz[m] - s1r3c;
 
         // Charge times the dipole component
         const double ci_mjx = chg1[site_inmon1 + mon1_index] * mu2[site_jnmon23 + m];
@@ -1445,29 +1497,24 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         // Gradients Charge-Dipole
         // Site site_i
         // Note. Sign changed
-        v0_[m] = scale * ((cj_mix - ci_mjx) * t2_0      // x x
+        individual_gradx[m] = vscale[m] * ((cj_mix - ci_mjx) * t2_0      // x x
                             + (cj_miy - ci_mjy) * t2_1    // x y
                             + (cj_miz - ci_mjz) * t2_2);  // x z
-        v1_[m] = scale * ((cj_mix - ci_mjx) * t2_1      // y x
+        individual_grady[m] += vscale[m] * ((cj_mix - ci_mjx) * t2_1      // y x
                             + (cj_miy - ci_mjy) * t2_3    // y y
                             + (cj_miz - ci_mjz) * t2_4);  // y z
-        v2_[m] = scale * ((cj_mix - ci_mjx) * t2_2      // z x
+        individual_gradz[m] += vscale[m] * ((cj_mix - ci_mjx) * t2_2      // z x
                             + (cj_miy - ci_mjy) * t2_4    // z y
                             + (cj_miz - ci_mjz) * t2_5);  // z z
 
-        // Site site_j
-        grd2[site_jnmon23 + m] -= v0_[m];
-        grd2[site_jnmon23 + nmon2 + m] -= v1_[m];
-        grd2[site_jnmon23 + nmon22 + m] -= v2_[m];
-
         // Update field
         // Site site_i
-        v3_[m] = scale * (rxs1r3c * mu2[site_jnmon23 + m] + rys1r3c * mu2[site_jnmon23 + nmon2 + m] +
+        phi_temp += vscale[m] * (rxs1r3c * mu2[site_jnmon23 + m] + rys1r3c * mu2[site_jnmon23 + nmon2 + m] +
                             rzs1r3c * mu2[site_jnmon23 + nmon22 + m]);
 
         // Site site_j
         phi2[site_jnmon2 + m] -=
-            scale * (rxs1r3c * mu1[site_inmon13 + mon1_index] + rys1r3c * mu1[site_inmon13 + nmon1 + mon1_index] +
+            vscale[m] * (rxs1r3c * mu1[site_inmon13 + mon1_index] + rys1r3c * mu1[site_inmon13 + nmon1 + mon1_index] +
                         rzs1r3c * mu1[site_inmon13 + nmon12 + mon1_index]);
 
         // Gradients Dipole-Dipole
@@ -1507,54 +1554,59 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
                             + mu1zmu2z * t3_9;  // z z z
 #endif
         // Site site_i
-        v0_[m] += scale * gx;
-        v1_[m] += scale * gy;
-        v2_[m] += scale * gz;
+        individual_gradx[m] += vscale[m] * gx;
+        individual_grady[m] += vscale[m] * gy;
+        individual_gradz[m] += vscale[m] * gz;
+
+        // // Site site_j
+        // grd2[site_jnmon23 + m] -= vscale[m] * gx;
+        // grd2[site_jnmon23 + nmon2 + m] -= vscale[m] * gy;
+        // grd2[site_jnmon23 + nmon22 + m] -= vscale[m] * gz;
+
+        gradx += individual_gradx[m];
+        grady += individual_grady[m];
+        gradz += individual_gradz[m];
 
         // Site site_j
-        grd2[site_jnmon23 + m] -= scale * gx;
-        grd2[site_jnmon23 + nmon2 + m] -= scale * gy;
-        grd2[site_jnmon23 + nmon22 + m] -= scale * gz;
+        grd2[site_jnmon23 + m] -= individual_gradx[m];
+        grd2[site_jnmon23 + nmon2 + m] -= individual_grady[m];
+        grd2[site_jnmon23 + nmon22 + m] -= individual_gradz[m];
 
+    }
         // update virial
-        if (virial != 0) {
-            v11_[0 * mon2_index_end + m] = -rijx * v0_[m] * constants::COULOMB;
-            v11_[1 * mon2_index_end + m] = -rijx * v1_[m] * constants::COULOMB;
-            v11_[2 * mon2_index_end + m] = -rijx * v2_[m] * constants::COULOMB;
+    if (virial != 0) {
 
-            v11_[3 * mon2_index_end + m] = -rijy * v1_[m] * constants::COULOMB;
-            v11_[4 * mon2_index_end + m] = -rijy * v2_[m] * constants::COULOMB;
+        double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        
+        #pragma omp simd simdlen(8) reduction(+ : v[0:6])
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v[0] = -rijx[m] * individual_gradx[m] * constants::COULOMB;
+            v[1] = -rijx[m] * individual_grady[m] * constants::COULOMB;
+            v[2] = -rijx[m] * individual_gradz[m] * constants::COULOMB;
 
-            v11_[5 * mon2_index_end + m] = -rijz * v2_[m] * constants::COULOMB;
+            v[3] = -rijy[m] * individual_grady[m] * constants::COULOMB;
+            v[4] = -rijy[m] * individual_gradz[m] * constants::COULOMB;
+
+            v[5] = -rijz[m] * individual_gradz[m] * constants::COULOMB;
         }
+
+        (*virial)[0] += v[0];
+        (*virial)[1] += v[1];
+        (*virial)[2] += v[2];
+        (*virial)[4] += v[3];
+        (*virial)[5] += v[4];
+        (*virial)[8] += v[5];
+
+        (*virial)[3] += v[1];
+        (*virial)[6] += v[2];
+        (*virial)[7] += v[4];
     }
 
     // Compress vectors to double
-    *grdx = 0.0;
-    *grdy = 0.0;
-    *grdz = 0.0;
-    *phi1 = 0.0;
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        *grdx += v0_[m];
-        *grdy += v1_[m];
-        *grdz += v2_[m];
-        *phi1 += v3_[m];
-        // condensate virial
-        if (virial != 0) {
-            (*virial)[0] += v11_[0 * mon2_index_end + m];
-            (*virial)[1] += v11_[1 * mon2_index_end + m];
-            (*virial)[2] += v11_[2 * mon2_index_end + m];
-
-            (*virial)[4] += v11_[3 * mon2_index_end + m];
-            (*virial)[5] += v11_[4 * mon2_index_end + m];
-
-            (*virial)[8] += v11_[5 * mon2_index_end + m];
-
-            (*virial)[3] = (*virial)[1];
-            (*virial)[6] = (*virial)[2];
-            (*virial)[7] = (*virial)[5];
-        }
-    }
+    *grdx = gradx;
+    *grdy = grady;
+    *grdz = gradz;
+    *phi1 = phi_temp;
 }
 
 
