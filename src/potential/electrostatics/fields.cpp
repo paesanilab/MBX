@@ -91,7 +91,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
     double v10 = 0.0;
 
 // Store rijx, rijy and rijz in vectors
-#pragma omp simd reduction(+ : v7, v8, v9, v10)
+#pragma omp simd simdlen(8) reduction(+ : v7, v8, v9, v10)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = false;
         if (!use_ghost) accum2 = true;
@@ -473,7 +473,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
     alpha_pi_term *= two_alpha_squared;
 
     const double cutoffsq = cutoff * cutoff;
-#pragma omp simd reduction(+ : v0, v1, v2)
+#pragma omp simd simdlen(8) reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
@@ -613,7 +613,7 @@ void ElectricFieldHolder::CalcDipoleElecField_WithinCutoff(double *xyz1, double 
     alpha_pi_term *= two_alpha_squared;
 
     const double cutoffsq = cutoff * cutoff;
-#pragma omp simd reduction(+ : v0, v1, v2)
+#pragma omp simd simdlen(8) reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
@@ -750,7 +750,7 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
     double v1 = 0.0;
     double v2 = 0.0;
 
-    #pragma omp simd reduction(+ : v0, v1, v2)
+    #pragma omp simd simdlen(8) reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         double rijx = rijx_vec[m - mon2_index_start];
         double rijy = rijy_vec[m - mon2_index_start];
@@ -836,7 +836,7 @@ void ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double 
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
-#pragma omp simd 
+#pragma omp simd simdlen(8)
     for (size_t m = m2init; m < nmon2; m++) {
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
         // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
@@ -933,7 +933,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
     double *ts2z_vec = precomputedInformation.ts2z.data();
     double *s1r3_vec = precomputedInformation.s1r3.data();
 
-    #pragma omp simd 
+    #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
         
@@ -1039,7 +1039,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(
     // std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
     // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
 
-#pragma omp simd
+#pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = false;
         if (!use_ghost) accum2 = true;
