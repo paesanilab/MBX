@@ -2907,7 +2907,6 @@ class PMEInstance {
             int threadID = 0;
 #endif
 
-            #pragma omp parallel for schedule(static)
             for (size_t point = 0; point < nPoints; ++point) {
 
                 size_t rank = omp_get_thread_num();
