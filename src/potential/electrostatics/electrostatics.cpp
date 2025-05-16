@@ -6458,17 +6458,17 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 std::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
 
 
-                fi_mon2 = fi_mon1;
-                size_t fi_sitetypes = 0;
+                size_t fi_mon2_iter = fi_mon1;
+                size_t fi_sitetypes_iter = 0;
                 for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-                    size_t ns2 = sites_all_[fi_mon2];
+                    size_t ns2 = sites_all_[fi_mon2_iter];
                     size_t nmon2 = mon_type_count_[mt2].second;
                     for (size_t j = 0; j < ns2; j++) {
-                        precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes + j] = new PrecomputedInfo();
+                        precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes_iter + j] = new PrecomputedInfo();
                     }
-                    point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes;
-                    fi_sitetypes += ns2;
-                    fi_mon2 += nmon2;
+                    point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes_iter;
+                    fi_sitetypes_iter += ns2;
+                    fi_mon2_iter += nmon2;
                 }
 
                 size_t inmon13 = 3 * nmon1 * i;

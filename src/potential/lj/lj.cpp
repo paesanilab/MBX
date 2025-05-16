@@ -696,14 +696,14 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                 std::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
 
 
-                fi_mon2 = fi_mon1;
-                size_t fi_sitetypes = 0;
+                size_t fi_mon2_iter = fi_mon1;
+                size_t fi_sitetypes_iter = 0;
                 for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-                    size_t ns2 = num_atoms_[fi_mon2];
+                    size_t ns2 = num_atoms_[fi_mon2_iter];
                     size_t nmon2 = mon_type_count_[mt2].second;
-                    point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes;
-                    fi_sitetypes += ns2;
-                    fi_mon2 += nmon2;
+                    point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes_iter;
+                    fi_sitetypes_iter += ns2;
+                    fi_mon2_iter += nmon2;
                 }
 
                 size_t inmon13 = 3 * nmon1 * i;
