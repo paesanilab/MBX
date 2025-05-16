@@ -637,6 +637,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         fi_sites += nmon * ns;
         fi_crd += nmon * ns * 3;
     }
+    
+    bool use_pbc = box_.size();
 
     
     //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
@@ -645,11 +647,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     std::vector<size_t> point_site_indices(xyz_.size()/3);
     std::vector<size_t> point_monomer_indices(xyz_.size()/3);
     std::vector<size_t> point_fi_mon2(xyz_.size()/3);
+
     fi_mon = 0;
     fi_crd = 0;
     size_t fi_sitetypes = 0;
     size_t site_count = xyz_rearranged.size()/3;
-    bool use_pbc = box_.size();
     //fi_mon has the index of the first monomer of this monomer type
     //for each monomer type
     for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
@@ -801,6 +803,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
+
+        fi_sitetypes2 = 0;
 
         // For each monomer type mt1, loop over all the other monomer types
         // mt2 >= mt1 to avoid double counting
@@ -979,6 +983,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
+            
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
