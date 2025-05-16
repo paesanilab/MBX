@@ -603,8 +603,13 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
 
     //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
     std::vector<double> xyz_rearranged(xyz_.size());
+    std::vector<size_t> point_monomer_type_indices(xyz_.size()/3);
+    std::vector<size_t> point_site_indices(xyz_.size()/3);
+    std::vector<size_t> point_monomer_indices(xyz_.size()/3);
+    std::vector<size_t> point_fi_mon2(xyz_.size()/3);
     fi_mon = 0;
     fi_crd = 0;
+    size_t fi_sitetypes = 0;
     size_t site_count = xyz_rearranged.size()/3;
     bool use_pbc = box_.size();
     //fi_mon has the index of the first monomer of this monomer type
@@ -634,24 +639,121 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                     xyz_rearranged[fi_crd+3*i+1] = xyz_[fi_crd+i+nmon];
                     xyz_rearranged[fi_crd+3*i+2] = xyz_[fi_crd+i+nmon*2];
                 }
+                point_monomer_type_indices[fi_crd/3+i] = mt;
+                point_site_indices[fi_crd/3+i] = s;
+                point_monomer_indices[fi_crd/3+i] = i;
+                point_fi_mon2[fi_crd/3+i] = fi_mon;
             }
             fi_crd += nmon*3;
         }
         fi_mon += nmon;
     }
 
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                kdtutils::PointCloud<double>, 3 /* dim */>
-    my_kd_tree_t;
+    
+    int nsite_types = 0;
+    size_t fi_mon1 = 0;
+    for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
+        nsite_types += num_atoms_[fi_mon1];
+        fi_mon1 += mon_type_count_[mt1].second;
+    }
 
+    
     // Sites corresponding to different monomers
     // Declaring first indexes
-    size_t fi_mon1 = 0;
     size_t fi_sites1 = 0;
     size_t fi_mon2 = 0;
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
+
+    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                    kdtutils::PointCloud<double>, 3 /* dim */>
+        my_kd_tree_t;
+
+    //trees and associated point clouds need to be allocated on the heap
+    std::vector<size_t> tree_indices(0);
+    kdtutils::PointCloud<double>* cloud = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices));
+    my_kd_tree_t* tree = new my_kd_tree_t(3 /*dim*/, *cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+    tree->buildIndex();
+
+    fi_mon1 = 0;
+    fi_crd1 = 0;
+    fi_sites1 = 0;
+    fi_mon2 = 0;
+    size_t fi_sitetypes2 = 0;
+
+    std::vector<std::vector<size_t>> neighbor_list(natoms_  * nsite_types);
+
+    for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
+
+        size_t ns1 = num_atoms_[fi_mon1];
+        size_t nmon1 = mon_type_count_[mt1].second;
+
+        #pragma omp parallel for schedule(dynamic)
+        for (size_t m1 = 0; m1 < nmon1; m1++) {
+            for (size_t i = 0; i < ns1; i++) {
+
+                std::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
+
+
+                fi_mon2 = fi_mon1;
+                size_t fi_sitetypes = 0;
+                for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+                    size_t ns2 = num_atoms_[fi_mon2];
+                    size_t nmon2 = mon_type_count_[mt2].second;
+                    point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes;
+                    fi_sitetypes += ns2;
+                    fi_mon2 += nmon2;
+                }
+
+                size_t inmon13 = 3 * nmon1 * i;
+                
+                bool point1_local = islocal_[fi_mon1+m1]==1;
+
+                double point[3];
+                point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
+                point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
+                point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
+
+                std::vector<std::pair<size_t, double>> site2_indices;
+                nanoflann::SearchParams params(32, 0, false);
+
+                const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                
+                for(size_t s = 0; s<nMatches; ++s){
+                    //getting the actual index (not periodic index) of the monomer
+                    // size_t idx = site2_indices[s].first % nmon2;
+                    size_t idx = tree_indices[site2_indices[s].first];
+                    size_t mt2 = point_monomer_type_indices[idx];
+                    size_t j = point_site_indices[idx];
+                    size_t m2 = point_monomer_indices[idx];
+
+                    if (mt2 >= mt1) { 
+                        size_t fi_selected_mon2 = point_fi_mon2[idx];
+                        size_t fi_selected_sitetypes2 = point_fi_sitetypes2[mt2 - mt1];
+                        
+                        size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
+
+                        if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_selected_mon2+m2]))) && m2 >= m2init){
+                            // if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
+                            neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].push_back(m2);
+                        }
+                    }
+                }
+                        
+            }
+
+        }
+        fi_mon1 += nmon1;
+        fi_crd1 += nmon1 * ns1 * 3;
+        fi_sites1 += nmon1 * ns1;
+    }
+
+    fi_mon1 = 0;
+    fi_crd1 = 0;
+    fi_sites1 = 0;
+    fi_mon2 = 0;
+    fi_sitetypes2 = 0;
 
     // Loop over all monomer types
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
@@ -662,25 +764,13 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
 
+        fi_sitetypes2 = 0;
+
         // For each monomer type mt1, loop over all the other monomer types
         // mt2 >= mt1 to avoid double counting
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = num_atoms_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
-
-            std::vector<my_kd_tree_t*> trees(ns2);
-            std::vector<kdtutils::PointCloud<double>*> clouds(ns2);
-            std::vector<std::vector<size_t>> tree_indices(ns2, std::vector<size_t>());
-
-            for(int i = 0; i < ns2; i++){
-                std::vector<double> sitexyz(xyz_rearranged.begin()+fi_crd2+i*nmon2*3, xyz_rearranged.begin()+fi_crd2+i*nmon2*3+nmon2*3);
-                // kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloud(sitexyz,use_pbc, box_, box_inverse_));
-                kdtutils::PointCloud<double>* ptc = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(sitexyz, cutoff_, use_pbc, box_, box_inverse_, tree_indices[i]));
-                my_kd_tree_t* index = new my_kd_tree_t(3 /*dim*/, *ptc, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
-                index->buildIndex();
-                clouds[i] = ptc;
-                trees[i] = index;
-            }
 
             double dummy_eps, dummy_sigma;
             bool do_lj =
@@ -720,12 +810,6 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
 
-                    bool point1_local = islocal_[fi_mon1+m1]==1;
-                    double point[3];
-                    point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
-                    point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
-                    point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
-
                     double ljchgi = lj_long_range_[fi_sites1 + i * nmon1];
                     std::vector<double> xyz_sitei(3);
                     std::vector<double> g1(3, 0.0);
@@ -748,21 +832,7 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                                 good_mon2_indices.push_back(idx);
                             }
                         } else {
-                            std::vector<std::pair<size_t, double>> site2_indices;
-                            nanoflann::SearchParams params(32, 0, false);
-
-                            const size_t nMatches = trees[j]->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
-
-                            for(size_t s = 0; s<nMatches; ++s){
-                                //getting the actual index (not periodic index) of the monomer
-                                // size_t idx = site2_indices[s].first % nmon2;
-                                size_t idx = tree_indices[j][site2_indices[s].first];
-                                if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_mon2+idx]))) && idx >= m2init){
-                                    //add the monomer, indexed relative to mt2
-                                    if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
-                                        good_mon2_indices.push_back(idx);
-                                }
-                            }
+                            good_mon2_indices = neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j];
                         }
                         
 
@@ -837,18 +907,17 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
             fi_mon2 += nmon2;
             fi_sites2 += nmon2 * ns2;
             fi_crd2 += nmon2 * ns2 * 3;
-
-            //freeing trees
-            for(int i = 0; i<ns2; ++i){
-                delete trees[i];
-                delete clouds[i];
-            }
+            
+            fi_sitetypes2 += ns2;
         }
         // Update first indexes
         fi_mon1 += nmon1;
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
     }
+
+    delete tree;
+    delete cloud;
 
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;

@@ -6369,8 +6369,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
 
-    size_t fi_sitetypes2 = 0;
-
     int nsite_types = 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
@@ -6431,10 +6429,10 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         }
         fi_mon += nmon;
     }
+
     typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
                                                     kdtutils::PointCloud<double>, 3 /* dim */>
         my_kd_tree_t;
-
     
     //trees and associated point clouds need to be allocated on the heap
     std::vector<size_t> tree_indices(0);
@@ -6446,7 +6444,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     fi_crd1 = 0;
     fi_sites1 = 0;
     fi_mon2 = 0;
-    fi_sitetypes2 = 0;
+    size_t fi_sitetypes2 = 0;
 
     for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
 
@@ -7498,12 +7496,18 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
 
+                        size_t old_offset2 = nmon2 + site_jnmon23;
+                        size_t old_offset3 = 2*nmon2 + site_jnmon23;
+
+                        size_t new_offset3 = 2*reordered_mon2_size;
+
                         // populates reordered_mu2
                         for (int new_mon2_index = 0; new_mon2_index < reordered_mon2_size; new_mon2_index++){
                             int old_mon2_index = good_mon2_indices[new_mon2_index];
-                            reordered_mu2[new_mon2_index] = mu2[old_mon2_index + site_jnmon23];
-                            reordered_mu2[new_mon2_index + reordered_mon2_size] = mu2[old_mon2_index + nmon2 + site_jnmon23];
-                            reordered_mu2[new_mon2_index + 2*reordered_mon2_size] = mu2[old_mon2_index + 2*nmon2 + site_jnmon23];
+
+                            reordered_mu2[new_mon2_index] = mu2[site_jnmon23 + old_mon2_index];
+                            reordered_mu2[reordered_mon2_size + new_mon2_index] = mu2[old_offset2 + old_mon2_index];
+                            reordered_mu2[new_offset3 + new_mon2_index] = mu2[old_offset3 + old_mon2_index];
                         }
 
                         // populates reordered_Efd2 (electric field on mon 2)
