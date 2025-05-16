@@ -1395,8 +1395,6 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         exp1c[m] = elec_scale_factor * std::exp(-aCD * rA4[m]);
     }
 #endif
-
-    double erfterm[mon2_index_end];
     double alpha_pi_term[mon2_index_end];
     double exp_alpha2_r2[mon2_index_end];
 
@@ -1405,6 +1403,8 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         alpha_pi_term[m] = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
         exp_alpha2_r2[m] = exp(-r_alpha[m] * r_alpha[m]);
     }
+
+    double erfterm[mon2_index_end];
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -1500,10 +1500,10 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         individual_gradx[m] = vscale[m] * ((cj_mix - ci_mjx) * t2_0      // x x
                             + (cj_miy - ci_mjy) * t2_1    // x y
                             + (cj_miz - ci_mjz) * t2_2);  // x z
-        individual_grady[m] += vscale[m] * ((cj_mix - ci_mjx) * t2_1      // y x
+        individual_grady[m] = vscale[m] * ((cj_mix - ci_mjx) * t2_1      // y x
                             + (cj_miy - ci_mjy) * t2_3    // y y
                             + (cj_miz - ci_mjz) * t2_4);  // y z
-        individual_gradz[m] += vscale[m] * ((cj_mix - ci_mjx) * t2_2      // z x
+        individual_gradz[m] = vscale[m] * ((cj_mix - ci_mjx) * t2_2      // z x
                             + (cj_miy - ci_mjy) * t2_4    // z y
                             + (cj_miz - ci_mjz) * t2_5);  // z z
 
@@ -1580,14 +1580,14 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         
         #pragma omp simd simdlen(8) reduction(+ : v[0:6])
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            v[0] = -rijx[m] * individual_gradx[m] * constants::COULOMB;
-            v[1] = -rijx[m] * individual_grady[m] * constants::COULOMB;
-            v[2] = -rijx[m] * individual_gradz[m] * constants::COULOMB;
+            v[0] += -rijx[m] * individual_gradx[m] * constants::COULOMB;
+            v[1] += -rijx[m] * individual_grady[m] * constants::COULOMB;
+            v[2] += -rijx[m] * individual_gradz[m] * constants::COULOMB;
 
-            v[3] = -rijy[m] * individual_grady[m] * constants::COULOMB;
-            v[4] = -rijy[m] * individual_gradz[m] * constants::COULOMB;
+            v[3] += -rijy[m] * individual_grady[m] * constants::COULOMB;
+            v[4] += -rijy[m] * individual_gradz[m] * constants::COULOMB;
 
-            v[5] = -rijz[m] * individual_gradz[m] * constants::COULOMB;
+            v[5] += -rijz[m] * individual_gradz[m] * constants::COULOMB;
         }
 
         (*virial)[0] += v[0];
