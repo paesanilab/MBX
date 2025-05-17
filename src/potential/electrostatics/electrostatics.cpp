@@ -1597,29 +1597,29 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
 
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t j = i + 1; j < ns; j++) {
-                // Continue only if i and j are not bonded
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
-                // Get a1a2 and check if is not 0.
-                double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
-                double Ai = 0.0;
-                double Asqsqi = 0.0;
-                if (A > constants::EPS) {
-                    A = std::pow(A, 1.0 / 6.0);
-                    Ai = 1 / A;
-                    Asqsqi = Ai * Ai * Ai * Ai;
-                } else {
-                    Ai = BIGNUM;
-                    Asqsqi = Ai;
-                }
-                for (size_t m = 0; m < nmon; m++) {
+        for (size_t m = 0; m < nmon; m++) {
+            // Loop over each pair of sites
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = inmon * 3;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Continue only if i and j are not bonded
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
+                    // Get a1a2 and check if is not 0.
+                    double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
+                    double Ai = 0.0;
+                    double Asqsqi = 0.0;
+                    if (A > constants::EPS) {
+                        A = std::pow(A, 1.0 / 6.0);
+                        Ai = 1 / A;
+                        Asqsqi = Ai * Ai * Ai * Ai;
+                    } else {
+                        Ai = BIGNUM;
+                        Asqsqi = Ai;
+                    }
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_all_[fi_mon + m]) include_monomer = true;
@@ -2126,12 +2126,6 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
     size_t fi_crd = 0;
     size_t fi_sites = 0;
 
-    // Auxiliary variables
-    double ex = 0.0;
-    double ey = 0.0;
-    double ez = 0.0;
-    double phi1 = 0.0;
-
     std::fill(phi_all_.begin(), phi_all_.end(), 0);
     std::fill(Efq_all_.begin(), Efq_all_.end(), 0);
 
@@ -2149,32 +2143,39 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
 
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t j = i + 1; j < ns; j++) {
-                // Continue only if i and j are not bonded
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
+        size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
+        #pragma omp parallel for
+        for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
+            // Loop over each pair of sites
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = inmon * 3;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Continue only if i and j are not bonded
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
 
-                // Get a1a2 and check if is not 0.
-                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
-                double Ai = 0.0;
-                double Asqsqi = 0.0;
-                if (A > constants::EPS) {
-                    A = std::pow(A, 1.0 / 6.0);
-                    Ai = 1 / A;
-                    Asqsqi = Ai * Ai * Ai * Ai;
-                } else {
-                    Ai = BIGNUM;
-                    Asqsqi = Ai;
-                }
-                //                for (size_t m = 0; m < nmon; m++) {
-                size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
-                for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
+                    // Get a1a2 and check if is not 0.
+                    double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+                    double Ai = 0.0;
+                    double Asqsqi = 0.0;
+                    if (A > constants::EPS) {
+                        A = std::pow(A, 1.0 / 6.0);
+                        Ai = 1 / A;
+                        Asqsqi = Ai * Ai * Ai * Ai;
+                    } else {
+                        Ai = BIGNUM;
+                        Asqsqi = Ai;
+                    }
+
+                    // Auxiliary variables
+                    double ex = 0.0;
+                    double ey = 0.0;
+                    double ez = 0.0;
+                    double phi1 = 0.0;
+                    
                     elec_field.CalcPermanentElecField(
                         xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,
                         chg_all_.data() + fi_sites, m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex,
@@ -8980,6 +8981,7 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
+        
         for (size_t i = 0; i < ns - 1; i++) {
             size_t inmon = i * nmon;
             size_t inmon3 = 3 * inmon;
