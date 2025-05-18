@@ -561,30 +561,31 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             grad_pool[i] = std::vector<double>(nmon * ns * 3, 0.0);
             virial_pool[i] = std::vector<double>(9, 0.0);
         }
-        // Loop over each pair of sites
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
-            for (size_t j = i + 1; j < ns; j++) {
-                // Continue only if i and j are not bonded
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                double disp_scale_factor = (is12 || is13 || is14 || !do_disp) ? 0 : 1;
-                double c6, d6;
-                double c6i = c6_long_range_[fi_sites + i * nmon];
-                double c6j = c6_long_range_[fi_sites + j * nmon];
-                // GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
-                c6 = c6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
-                d6 = d6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
-#ifdef _OPENMP
+        #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
-                for (size_t m = 0; m < nmon; m++) {
-                    int rank = 0;
+        for (size_t m = 0; m < nmon; m++) {
+            int rank = 0;
 #ifdef _OPENMP
-                    rank = omp_get_thread_num();
+        rank = omp_get_thread_num();
 #endif
+            // Loop over each pair of sites
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = inmon * 3;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Continue only if i and j are not bonded
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    double disp_scale_factor = (is12 || is13 || is14 || !do_disp) ? 0 : 1;
+                    double c6, d6;
+                    double c6i = c6_long_range_[fi_sites + i * nmon];
+                    double c6j = c6_long_range_[fi_sites + j * nmon];
+                    // GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                    c6 = c6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                    d6 = d6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
@@ -598,8 +599,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                         energy_pool[rank] +=
                             disp6(c6, d6, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
-                                  m, m + 1, i, j, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
-                                  box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank], fi_crd);
+                                m, m + 1, i, j, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
+                                box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank], fi_crd);
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
                         grad_pool[rank][inmon3 + nmon2 + m] += g1[2];

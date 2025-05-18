@@ -534,28 +534,39 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
             grad_pool.push_back(std::vector<double>(nmon * ns * 3, 0.0));
             virial_pool.push_back(std::vector<double>(9, 0.0));
         }
-        // Loop over each pair of sites
+
+        std::vector<double> sigmas(ns*ns, 0.0);
+        std::vector<double> epss(ns*ns, 0.0);
+
         for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = inmon * 3;
             for (size_t j = i + 1; j < ns; j++) {
-                // Continue only if i and j are not bonded
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                double lj_scale_factor = (is12 || is13 || is14 || !do_lj) ? 0 : 1;
-                double sigma, eps;
-                double ljchgi = lj_long_range_[fi_sites + i * nmon];
-                double ljchgj = lj_long_range_[fi_sites + j * nmon];
-                GetLjParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, eps, sigma, use_lj_, repdisp_j_);
+                GetLjParams(mon_id_[fi_mon], mon_id_[fi_mon], i, j, epss[i*ns + j], sigmas[i*ns + j], use_lj_, repdisp_j_);
+            }
+        }
+        
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
-                for (size_t m = 0; m < nmon; m++) {
-                    int rank = 0;
+        for (size_t m = 0; m < nmon; m++) {
+            int rank = 0;
 #ifdef _OPENMP
-                    rank = omp_get_thread_num();
+            rank = omp_get_thread_num();
 #endif
+            // Loop over each pair of sites
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = inmon * 3;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Continue only if i and j are not bonded
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    double lj_scale_factor = (is12 || is13 || is14 || !do_lj) ? 0 : 1;
+                    double eps = epss[i*ns + j];
+                    double sigma = sigmas[i*ns + j];
+                    double ljchgi = lj_long_range_[fi_sites + i * nmon];
+                    double ljchgj = lj_long_range_[fi_sites + j * nmon];
+
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true;
@@ -569,8 +580,8 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                         p1[2] = xyz_mt[inmon3 + nmon2 + m];
                         energy_pool[rank] +=
                             lj(eps, sigma, ljchgi, ljchgj, p1, xyz_mt, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon,
-                               nmon, m, m + 1, i, j, lj_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
-                               box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank]);
+                            nmon, m, m + 1, i, j, lj_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
+                            box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank]);
                         grad_pool[rank][inmon3 + m] += g1[0];
                         grad_pool[rank][inmon3 + nmon + m] += g1[1];
                         grad_pool[rank][inmon3 + nmon2 + m] += g1[2];
