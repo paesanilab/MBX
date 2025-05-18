@@ -727,7 +727,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
                 std::vector<double> phi_sitej(size_j, 0.0);
                 std::vector<double> Efq_sitej(3 * size_j, 0.0);
                 // declare temporary virial for each pair
-                std::vector<double> virial_thread(9, 0.0);
+                vector<double> virial_thread(9, 0.0);
 
                 // Check if A = 0 and call the proper field calculation
                 double A = 0.0;
@@ -1042,14 +1042,14 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
         std::vector<std::vector<double>> grad_2_pool;
         std::vector<std::vector<double>> phi_1_pool;
         std::vector<std::vector<double>> phi_2_pool;
-        std::vector<std::vector<double>> virial_pool;
+        std::vector<vector<double>> virial_pool;
         for (size_t i = 0; i < nthreads; i++) {
             field_pool.push_back(std::make_shared<ElectricFieldHolder>(maxnmon));
             grad_1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
             grad_2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
             phi_1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
             phi_2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
-            virial_pool.push_back(std::vector<double>(9, 0.0));
+            virial_pool.push_back(vector<double>(9, 0.0));
         }
 #pragma omp parallel for schedule(dynamic)
         for (size_t m1 = 0; m1 < nmon1; m1++) {
@@ -1572,12 +1572,6 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
     size_t fi_crd = 0;
     size_t fi_sites = 0;
 
-    // Auxiliary variables
-    double ex = 0.0;
-    double ey = 0.0;
-    double ez = 0.0;
-    double phi1 = 0.0;
-
     if (nsites_all_ > 0) {
         std::fill(phi_all_.begin(), phi_all_.end(), 0);
         std::fill(Efq_all_.begin(), Efq_all_.end(), 0);
@@ -1595,8 +1589,19 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
         size_t nmon2 = 2 * nmon;
 
         // Obtain excluded pairs for monomer type mt
+        
+
         systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
 
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+        vector<vector<double>> thread_virials(nthreads, vector<double>(9, 0.0));
+
+        #pragma omp parallel for schedule(static, 1)
+        for(size_t rank = 0; rank < nthreads; rank++) {
+            field_pool[rank] = std::make_shared<ElectricFieldHolder>(maxnmon);
+        }
+
+        #pragma omp parallel for
         for (size_t m = 0; m < nmon; m++) {
             // Loop over each pair of sites
             for (size_t i = 0; i < ns - 1; i++) {
@@ -1620,23 +1625,39 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                         Ai = BIGNUM;
                         Asqsqi = Ai;
                     }
+
+                    // Auxiliary variables
+                    double ex = 0.0;
+                    double ey = 0.0;
+                    double ez = 0.0;
+                    double phi1 = 0.0;
+
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_all_[fi_mon + m]) include_monomer = true;
 
+                    int rank = omp_get_thread_num();
+
                     if (include_monomer) {
-                        elec_field.CalcPermanentElecField(
+                        field_pool[rank]->CalcPermanentElecField(
                             xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,
                             chg_all_.data() + fi_sites, m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_,
                             &ex, &ey, &ez, &phi1, phi_all_.data() + fi_sites, Efq_all_.data() + fi_crd,
                             elec_scale_factor, ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_,
-                            cutoff_, use_ghost, islocal_all_, fi_mon + m, fi_mon, 0, &virial_);
+                            cutoff_, use_ghost, islocal_all_, fi_mon + m, fi_mon, 0, &thread_virials[rank]);
+
                         phi_all_[fi_sites + inmon + m] += phi1;
                         Efq_all_[fi_crd + inmon3 + m] += ex;
                         Efq_all_[fi_crd + inmon3 + nmon + m] += ey;
                         Efq_all_[fi_crd + inmon3 + nmon2 + m] += ez;
                     }
                 }
+            }
+        }
+
+        for (size_t rank = 0; rank < nthreads; rank++) {
+            for (size_t i = 0; i < 9; i++) {
+                virial_[i] += thread_virials[rank][i];
             }
         }
 
@@ -2143,7 +2164,16 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
 
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+        vector<vector<double>> thread_virials(nthreads, vector<double>(9, 0.0));
+
+        #pragma omp parallel for schedule(static, 1)
+        for(size_t rank = 0; rank < nthreads; rank++) {
+            field_pool[rank] = std::make_shared<ElectricFieldHolder>(maxnmon);
+        }
+
         size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
+
         #pragma omp parallel for
         for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
             // Loop over each pair of sites
@@ -2175,18 +2205,27 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                     double ey = 0.0;
                     double ez = 0.0;
                     double phi1 = 0.0;
+
+                    int rank = omp_get_thread_num();
                     
-                    elec_field.CalcPermanentElecField(
+                    field_pool[rank]->CalcPermanentElecField(
                         xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,
                         chg_all_.data() + fi_sites, m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex,
                         &ey, &ez, &phi1, phi_all_.data() + fi_sites, Efq_all_.data() + fi_crd, elec_scale_factor,
                         ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon,
-                        fi_mon, &virial_);
+                        fi_mon, &thread_virials[rank]);
+
                     phi_all_[fi_sites + inmon + m] += phi1;
                     Efq_all_[fi_crd + inmon3 + m] += ex;
                     Efq_all_[fi_crd + inmon3 + nmon + m] += ey;
                     Efq_all_[fi_crd + inmon3 + nmon2 + m] += ez;
                 }
+            }
+        }
+
+        for (size_t rank = 0; rank < nthreads; rank++) {
+            for (size_t i = 0; i < 9; i++) {
+                virial_[i] += thread_virials[rank][i];
             }
         }
 
@@ -5830,50 +5869,57 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon3 = 3 * i * nmon;
-            for (size_t j = i + 1; j < ns; j++) {
-                // Set the proper aDD
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
-                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
-                double Ai = 0.0;
-                double Asqsqi = 0.0;
-                if (A > constants::EPS) {
-                    A = std::pow(A, 1.0 / 6.0);
-                    Ai = 1 / A;
-                    Asqsqi = Ai * Ai * Ai * Ai;
-                } else {
-                    Ai = BIGNUM;
-                    Asqsqi = Ai;
-                }
 
-                #pragma omp parallel for
-                for (size_t m = 0; m < nmon; m++) {
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+
+        #pragma omp parallel for schedule(static, 1)
+        for(size_t rank = 0; rank < nthreads; rank++) {
+            field_pool[rank] = std::make_shared<ElectricFieldHolder>(maxnmon);
+        }
+
+        #pragma omp parallel for
+        for (size_t m = 0; m < nmon; m++) {
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon3 = 3 * i * nmon;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Set the proper aDD
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    double thread_aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
+                    double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+                    double Ai = 0.0;
+                    double Asqsqi = 0.0;
+                    if (A > constants::EPS) {
+                        A = std::pow(A, 1.0 / 6.0);
+                        Ai = 1 / A;
+                        Asqsqi = Ai * Ai * Ai * Ai;
+                    } else {
+                        Ai = BIGNUM;
+                        Asqsqi = Ai;
+                    }
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true; 
                     if (include_monomer) {
-
                         
-
                         // Auxiliary variables
                         double ex = 0.0;
                         double ey = 0.0;
                         double ez = 0.0;
 
-                        elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
-                                                       in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
-                                                       out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_,
-                                                       simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_,
-                                                       use_ghost, islocal_, fi_mon + m, fi_mon);
+                        int rank = omp_get_thread_num();
+
+                        field_pool[rank]->CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
+                                                    in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, thread_aDD,
+                                                    out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_,
+                                                    simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_,
+                                                    use_ghost, islocal_, fi_mon + m, fi_mon);
                         out_v[fi_crd + inmon3 + m] += ex;
                         out_v[fi_crd + inmon3 + nmon + m] += ey;
                         out_v[fi_crd + inmon3 + nmon2 + m] += ez;
-                    }  // if(include_monomer)
-                }      // for(m)
+                    }
+                }
             }
         }
         // Update first indexes
@@ -7312,44 +7358,53 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
         size_t nmon2 = 2 * nmon;
         // Get excluded pairs for this monomer
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon3 = 3 * i * nmon;
-            for (size_t j = i + 1; j < ns; j++) {
-                // Set the proper aDD
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
-                double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
-                double Ai = 0.0;
-                double Asqsqi = 0.0;
-                if (A > constants::EPS) {
-                    A = std::pow(A, 1.0 / 6.0);
-                    Ai = 1 / A;
-                    Asqsqi = Ai * Ai * Ai * Ai;
-                } else {
-                    Ai = BIGNUM;
-                    Asqsqi = Ai;
-                }
 
-                //                for (size_t m = 0; m < nmon; m++) {
-                size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
-                #pragma omp parallel for
-                for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+
+        #pragma omp parallel for schedule(static, 1)
+        for(size_t rank = 0; rank < nthreads; rank++) {
+            field_pool[rank] = std::make_shared<ElectricFieldHolder>(maxnmon);
+        }
+
+        //                for (size_t m = 0; m < nmon; m++) {
+        size_t mstart = (mpi_rank_ < nmon) ? mpi_rank_ : nmon;
+        #pragma omp parallel for
+        for (size_t m = mstart; m < nmon; m += num_mpi_ranks_) {
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon3 = 3 * i * nmon;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Set the proper aDD
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    double thread_aDD = systools::GetAdd(is12, is13, is14, mon_id_[fi_mon]);
+                    double A = polfac_[fi_sites + i] * polfac_[fi_sites + j];
+                    double Ai = 0.0;
+                    double Asqsqi = 0.0;
+                    if (A > constants::EPS) {
+                        A = std::pow(A, 1.0 / 6.0);
+                        Ai = 1 / A;
+                        Asqsqi = Ai * Ai * Ai * Ai;
+                    } else {
+                        Ai = BIGNUM;
+                        Asqsqi = Ai;
+                    }
 
                     // Auxiliary variables
                     double ex = 0.0;
                     double ey = 0.0;
                     double ez = 0.0;
+
+                    int rank = omp_get_thread_num();
                     
-                    elec_field.CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
-                                                   in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, aDD,
-                                                   out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
-                                                   box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon);
+                    field_pool[rank]->CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
+                                                in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, thread_aDD,
+                                                out_v.data() + fi_crd, &ex, &ey, &ez, ewald_alpha_, use_pbc_, box_,
+                                                box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon);
                     out_v[fi_crd + inmon3 + m] += ex;
                     out_v[fi_crd + inmon3 + nmon + m] += ey;
                     out_v[fi_crd + inmon3 + nmon2 + m] += ez;
-                }  // for(m)
+                }
             }
         }
         // Update first indexes
@@ -7994,12 +8049,6 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& p
     excluded_set_type exc13;
     excluded_set_type exc14;
 
-    // Auxiliary variables
-    double ex = 0.0;
-    double ey = 0.0;
-    double ez = 0.0;
-    double phi1 = 0.0;
-
     double aDD = 0.0;
     size_t nsites3 = 3 * nsites_;
 
@@ -8092,41 +8141,61 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& p
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = 3 * inmon;
-            for (size_t j = i + 1; j < ns; j++) {
-                // Set the proper aDD
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                // Don't do charge-dipole and modify phi if pair is excluded
-                // TODO check this for distances more than 1-4
-                double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
-                aDD = systools::GetAdd(is12, is13, is14, mon_id_all_[fi_mon]);
-                double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
-                double Ai = 0.0;
-                double Asqsqi = 0.0;
-                if (A > constants::EPS) {
-                    A = std::pow(A, 1.0 / 6.0);
-                    Ai = 1 / A;
-                    Asqsqi = Ai * Ai * Ai * Ai;
-                } else {
-                    Ai = BIGNUM;
-                    Asqsqi = Ai;
-                }
-                for (size_t m = 0; m < nmon; m++) {
+
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+        vector<vector<double>> thread_virials(nthreads, vector<double>(9, 0.0));
+
+        #pragma omp parallel for schedule(static, 1)
+        for(size_t rank = 0; rank < nthreads; rank++) {
+            field_pool[rank] = std::make_shared<ElectricFieldHolder>(maxnmon);
+        }
+
+        #pragma omp parallel for
+        for (size_t m = 0; m < nmon; m++) {
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Set the proper aDD
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    // Don't do charge-dipole and modify phi if pair is excluded
+                    // TODO check this for distances more than 1-4
+                    double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
+                    double thread_aDD = systools::GetAdd(is12, is13, is14, mon_id_all_[fi_mon]);
+                    double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
+                    double Ai = 0.0;
+                    double Asqsqi = 0.0;
+                    if (A > constants::EPS) {
+                        A = std::pow(A, 1.0 / 6.0);
+                        Ai = 1 / A;
+                        Asqsqi = Ai * Ai * Ai * Ai;
+                    } else {
+                        Ai = BIGNUM;
+                        Asqsqi = Ai;
+                    }
+
+                    // Auxiliary variables
+                    double ex = 0.0;
+                    double ey = 0.0;
+                    double ez = 0.0;
+                    double phi1 = 0.0;
+
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_all_[fi_mon + m]) include_monomer = true;
 
+                    int rank = omp_get_thread_num();
+
                     if (include_monomer) {
-                        elec_field.CalcElecFieldGrads(
+                        field_pool[rank]->CalcElecFieldGrads(
                             xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,
                             chg_all_.data() + fi_sites, mu_all_.data() + fi_crd, mu_all_.data() + fi_crd, m, m, m + 1,
-                            nmon, nmon, i, j, aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1, phi_all_.data() + fi_sites,
+                            nmon, nmon, i, j, thread_aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1, phi_all_.data() + fi_sites,
                             grad_.data() + fi_crd, elec_scale_factor, ewald_alpha_, simcell_periodic_, box_PMElocal_,
-                            box_inverse_PMElocal_, cutoff_, use_ghost, islocal_all_, fi_mon + m, fi_mon, &virial_);
+                            box_inverse_PMElocal_, cutoff_, use_ghost, islocal_all_, fi_mon + m, fi_mon, &thread_virials[rank]);
+                        
                         phi_all_[fi_sites + inmon + m] += phi1;
                         grad_[fi_crd + inmon3 + m] += ex;
                         grad_[fi_crd + inmon3 + nmon + m] += ey;
@@ -8135,6 +8204,13 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& p
                 }
             }
         }
+
+        for (size_t rank = 0; rank < nthreads; rank++) {
+            for (size_t i = 0; i < 9; i++) {
+                virial_[i] += thread_virials[rank][i];
+            }
+        }
+
         // Update first indexes
         fi_mon += nmon;
         fi_sites += nmon * ns;
@@ -8891,12 +8967,6 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
     excluded_set_type exc13;
     excluded_set_type exc14;
 
-    // Auxiliary variables
-    double ex = 0.0;
-    double ey = 0.0;
-    double ez = 0.0;
-    double phi1 = 0.0;
-
     double aDD = 0.0;
     size_t nsites3 = 3 * nsites_;
 
@@ -8981,37 +9051,56 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         systools::GetExcluded(mon_id_all_[fi_mon], mon_j_, exc12, exc13, exc14);
+
+        std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+        vector<vector<double>> thread_virials(nthreads, vector<double>(9, 0.0));
+
+        #pragma omp parallel for schedule(static, 1)
+        for(size_t rank = 0; rank < nthreads; rank++) {
+            field_pool[rank] = std::make_shared<ElectricFieldHolder>(maxnmon);
+        }
         
-        for (size_t i = 0; i < ns - 1; i++) {
-            size_t inmon = i * nmon;
-            size_t inmon3 = 3 * inmon;
-            for (size_t j = i + 1; j < ns; j++) {
-                // Set the proper aDD
-                bool is12 = systools::IsExcluded(exc12, i, j);
-                bool is13 = systools::IsExcluded(exc13, i, j);
-                bool is14 = systools::IsExcluded(exc14, i, j);
-                // Don't do charge-dipole and modify phi if pair is excluded
-                // TODO check this for distances more than 1-4
-                double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
-                aDD = systools::GetAdd(is12, is13, is14, mon_id_all_[fi_mon]);
-                double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
-                double Ai = 0.0;
-                double Asqsqi = 0.0;
-                if (A > constants::EPS) {
-                    A = std::pow(A, 1.0 / 6.0);
-                    Ai = 1 / A;
-                    Asqsqi = Ai * Ai * Ai * Ai;
-                } else {
-                    Ai = BIGNUM;
-                    Asqsqi = Ai;
-                }
-                for (size_t m = 0; m < nmon; m++) {
-                    elec_field.CalcElecFieldGrads(
+        // #pragma omp parallel for
+        for (size_t m = 0; m < nmon; m++) {
+            for (size_t i = 0; i < ns - 1; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                for (size_t j = i + 1; j < ns; j++) {
+                    // Set the proper aDD
+                    bool is12 = systools::IsExcluded(exc12, i, j);
+                    bool is13 = systools::IsExcluded(exc13, i, j);
+                    bool is14 = systools::IsExcluded(exc14, i, j);
+                    // Don't do charge-dipole and modify phi if pair is excluded
+                    // TODO check this for distances more than 1-4
+                    double elec_scale_factor = (is12 || is13 || is14) ? 0 : 1;
+                    double thread_aDD = systools::GetAdd(is12, is13, is14, mon_id_all_[fi_mon]);
+                    double A = polfac_all_[fi_sites + i] * polfac_all_[fi_sites + j];
+                    double Ai = 0.0;
+                    double Asqsqi = 0.0;
+                    if (A > constants::EPS) {
+                        A = std::pow(A, 1.0 / 6.0);
+                        Ai = 1 / A;
+                        Asqsqi = Ai * Ai * Ai * Ai;
+                    } else {
+                        Ai = BIGNUM;
+                        Asqsqi = Ai;
+                    }
+
+                    // Auxiliary variables
+                    double ex = 0.0;
+                    double ey = 0.0;
+                    double ez = 0.0;
+                    double phi1 = 0.0;
+
+                    int rank = omp_get_thread_num();
+
+                    field_pool[rank]->CalcElecFieldGrads(
                         xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,
                         chg_all_.data() + fi_sites, mu_all_.data() + fi_crd, mu_all_.data() + fi_crd, m, m, m + 1, nmon,
-                        nmon, i, j, aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1, phi_all_.data() + fi_sites,
+                        nmon, i, j, thread_aDD, aCD_, Asqsqi, &ex, &ey, &ez, &phi1, phi_all_.data() + fi_sites,
                         grad_.data() + fi_crd, elec_scale_factor, ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_,
-                        use_ghost, islocal_all_, fi_mon + m, fi_mon, &virial_);
+                        use_ghost, islocal_all_, fi_mon + m, fi_mon, &thread_virials[rank]);
+                    
                     phi_all_[fi_sites + inmon + m] += phi1;
                     grad_[fi_crd + inmon3 + m] += ex;
                     grad_[fi_crd + inmon3 + nmon + m] += ey;
@@ -9019,6 +9108,13 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
                 }
             }
         }
+
+        for (size_t rank = 0; rank < nthreads; rank++) {
+            for (size_t i = 0; i < 9; i++) {
+                virial_[i] += thread_virials[rank][i];
+            }
+        }
+
         // Update first indexes
         fi_mon += nmon;
         fi_sites += nmon * ns;
