@@ -5902,7 +5902,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_[fi_mon + m]) include_monomer = true; 
                     if (include_monomer) {
-                        
+
                         // Auxiliary variables
                         double ex = 0.0;
                         double ey = 0.0;
@@ -9060,7 +9060,7 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
             field_pool[rank] = std::make_shared<ElectricFieldHolder>(maxnmon);
         }
         
-        // #pragma omp parallel for
+        #pragma omp parallel for
         for (size_t m = 0; m < nmon; m++) {
             for (size_t i = 0; i < ns - 1; i++) {
                 size_t inmon = i * nmon;
