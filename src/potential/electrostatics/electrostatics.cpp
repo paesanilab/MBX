@@ -6011,12 +6011,16 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
             vector<vector<double>> Efd_1_pool(nthreads);
             vector<vector<double>> Efd_2_pool(nthreads);
+            vector<vector<double>> temp_pool(nthreads);
+            vector<vector<double>> temp_pool2(nthreads);
 
             #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
                 field_pool[i] = std::make_shared<ElectricFieldHolder>(maxnmon);
                 Efd_1_pool[i] = vector<double>(nmon1 * ns1 * 3, 0.0);
                 Efd_2_pool[i] = vector<double>(nmon2 * ns2 * 3, 0.0);
+                temp_pool[i] = vector<double>(nmon2 * ns2 * 3, 0.0);
+                temp_pool2[i] = vector<double>(nmon2 * ns2 * 3, 0.0);
             }
 
 // Parallel loop
@@ -6057,8 +6061,10 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
                         vector<double>& reordered_xyz2 = precomp_info.reordered_xyz2;
                         vector<size_t>& reordered_islocal = precomp_info.reordered_islocal;
-                        vector<double>& reordered_mu2 = precomp_info.reordered_mu2;
-                        vector<double>& reordered_Efd2 = precomp_info.reordered_Efd2;
+                        // vector<double>& reordered_mu2 = precomp_info.reordered_mu2;
+                        vector<double>& reordered_mu2 = temp_pool2[rank];
+                        // vector<double>& reordered_Efd2 = precomp_info.reordered_Efd2;
+                        vector<double>& reordered_Efd2 = temp_pool[rank];
                         // std::fill(reordered_Efd2.begin(), reordered_Efd2.end(), 0.0);
                         const size_t site_jnmon23 = nmon2 * j * 3;
                         double *mu2 = in_ptr + fi_crd2;
@@ -7504,8 +7510,8 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                 field_pool[i] = std::make_shared<ElectricFieldHolder>(maxnmon);
                 Efd_1_pool[i] = vector<double>(nmon1 * ns1 * 3, 0.0);
                 Efd_2_pool[i] = vector<double>(nmon2 * ns2 * 3, 0.0);
-                temp_pool[i] = vector<double>(nmon1 * ns1 * 3, 0.0);
-                temp_pool2[i] = vector<double>(nmon1 * ns1 * 3, 0.0);
+                temp_pool[i] = vector<double>(nmon2 * ns2 * 3, 0.0);
+                temp_pool2[i] = vector<double>(nmon2 * ns2 * 3, 0.0);
             }
 
             // Parallel loop
