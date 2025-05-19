@@ -1312,10 +1312,6 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
     double *rijx_vec = precomputedInformation.rijx.data();
     double *rijy_vec = precomputedInformation.rijy.data(); 
     double *rijz_vec = precomputedInformation.rijz.data();
-    double *ts2x_vec = precomputedInformation.ts2x.data();
-    double *ts2y_vec = precomputedInformation.ts2y.data();
-    double *ts2z_vec = precomputedInformation.ts2z.data();
-    double *s1r3_vec = precomputedInformation.s1r3.data();
 
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
