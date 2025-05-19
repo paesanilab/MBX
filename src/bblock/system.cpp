@@ -36,7 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 //#define DEBUG
 //#define TIMING
-#define PRINT_INDIVIDUAL_TERMS
+// #define PRINT_INDIVIDUAL_TERMS
 
 #ifdef TIMING
 #include <chrono>
@@ -2258,10 +2258,19 @@ double System::Get1B(bool do_grads) {
 
     size_t indx = 0;
 
+    int num_threads = 1;
+
+#ifdef _OPENMP
+#pragma omp parallel
+    {
+        // Get the number of threads
+        if (omp_get_thread_num() == 0) num_threads = omp_get_num_threads();
+    }
+#endif  // _OPENMP
+
+    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0));
+
     for (size_t k = 0; k < mon_type_count_.size(); k++) {
-        // Useful variables
-        size_t istart = 0;
-        size_t iend = 0;
 
         if (std::find(ignore_1b_poly_.begin(), ignore_1b_poly_.end(), mon_type_count_[k].first) !=
             ignore_1b_poly_.end()) {
@@ -2279,7 +2288,6 @@ double System::Get1B(bool do_grads) {
 #endif  // _OPENMP
 
             // while (istart < mon_type_count_[k].second) {
-            oneb_loop:
             while (true) {
 
                 size_t istart;
@@ -2330,7 +2338,7 @@ double System::Get1B(bool do_grads) {
 
                 // Get energy of the chunk as function of monomer
                 if (do_grads) {
-                    e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, indexes, &virial_);
+                    e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, indexes, &virial_pool[rank]);
 
                     // Reorganize gradients
                     size_t ii = 0;
@@ -2361,7 +2369,13 @@ double System::Get1B(bool do_grads) {
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
         curr_mon_type += mon_type_count_[k].second;
-        indx += iend;
+        indx += mon_type_count_[k].second;
+    }
+
+    for (size_t i = 0; i < num_threads; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            virial_[j] += virial_pool[i][j];
+        }
     }
 
     return e1b;
