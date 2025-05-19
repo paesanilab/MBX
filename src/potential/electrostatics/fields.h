@@ -73,6 +73,7 @@ derived.
 #include <vector>
 #include <cstddef>
 // #include <cmath>
+#include <algorithm>
 
 #ifdef __INTEL_COMPILER
 // #include <mathimf.h>

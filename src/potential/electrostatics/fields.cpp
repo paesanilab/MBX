@@ -729,12 +729,13 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
                                               PrecomputedInfo& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
+
     double *rijx_vec = precomputedInformation.rijx.data();
     double *rijy_vec = precomputedInformation.rijy.data(); 
     double *rijz_vec = precomputedInformation.rijz.data();
     double *ts2x_vec = precomputedInformation.ts2x.data();
-    double *ts2y_vec = precomputedInformation.ts2y.data();
-    double *ts2z_vec = precomputedInformation.ts2z.data();
+    // double *ts2y_vec = precomputedInformation.ts2y.data();
+    // double *ts2z_vec = precomputedInformation.ts2z.data();
     double *s1r3_vec = precomputedInformation.s1r3.data();
     
     
@@ -752,13 +753,19 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
 
     #pragma omp simd simdlen(8) reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+
         double rijx = rijx_vec[m - mon2_index_start];
         double rijy = rijy_vec[m - mon2_index_start];
         double rijz = rijz_vec[m - mon2_index_start];
-        double ts2x = ts2x_vec[m - mon2_index_start];
-        double ts2y = ts2y_vec[m - mon2_index_start];
-        double ts2z = ts2z_vec[m - mon2_index_start];
+        // double ts2x = ts2x_vec[m - mon2_index_start];
+        // double ts2y = ts2y_vec[m - mon2_index_start];
+        // double ts2z = ts2z_vec[m - mon2_index_start];
         double s1r3 = s1r3_vec[m - mon2_index_start];
+        
+        double s2r5_3 = ts2x_vec[m - mon2_index_start];
+        const double ts2x = s2r5_3 * rijx;
+        const double ts2y = s2r5_3 * rijy;
+        const double ts2z = s2r5_3 * rijz;
 
         double ts2x_rijx_s1r3 = ts2x * rijx - s1r3;
         double ts2z_rijz_s1r3 = ts2z * rijz - s1r3;
@@ -781,7 +788,7 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
 
         // Component y
         v1 += ts2y_rijx * mu2[site_jnmon23 + m] + ts2y_rijy_s1r3 * mu2[site_jnmon23 + nmon2 + m] +
-        ts2y_rijz * mu2[site_jnmon23 + nmon22 + m];
+                ts2y_rijz * mu2[site_jnmon23 + nmon22 + m];
 
         // Component z
         v2 += ts2z_rijx * mu2[site_jnmon23 + m] + ts2z_rijy * mu2[site_jnmon23 + nmon2 + m] +
@@ -921,8 +928,8 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
     precomputedInformation.rijy = vector<double>(mon2_index_end - mon2_index_start, 0.0);
     precomputedInformation.rijz = vector<double>(mon2_index_end - mon2_index_start, 0.0);
     precomputedInformation.ts2x = vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.ts2y = vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.ts2z = vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    // precomputedInformation.ts2y = vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    // precomputedInformation.ts2z = vector<double>(mon2_index_end - mon2_index_start, 0.0);
     precomputedInformation.s1r3 = vector<double>(mon2_index_end - mon2_index_start, 0.0);
 
     double *rijx_vec = precomputedInformation.rijx.data();
@@ -1000,9 +1007,9 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
         rijx_vec[m - mon2_index_start] = rijx;
         rijy_vec[m - mon2_index_start] = rijy;
         rijz_vec[m - mon2_index_start] = rijz;
-        ts2x_vec[m - mon2_index_start] = ts2x;
-        ts2y_vec[m - mon2_index_start] = ts2y;
-        ts2z_vec[m - mon2_index_start] = ts2z;
+        ts2x_vec[m - mon2_index_start] = s2r5_3;
+        // ts2y_vec[m - mon2_index_start] = ts2y;
+        // ts2z_vec[m - mon2_index_start] = ts2z;
         s1r3_vec[m - mon2_index_start] = s1r3;
     
     }
