@@ -312,10 +312,45 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
 
     double v_erf[mon2_index_end - mon2_index_start];
 
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+    // for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
 
-        v_erf[m - mon2_index_start] = erf(ewald_alpha / (v3[m - mon2_index_start] + 1e-30));
+    //     v_erf[m - mon2_index_start] = erf(ewald_alpha / (v3[m - mon2_index_start] + 1e-30));
+    // }
+
+    double* buffer = new double[((mon2_index_end - mon2_index_start + 7) / 8) * 8 + 4];
+
+    void* unaligned = reinterpret_cast<void *>(buffer);
+
+    size_t space = (((mon2_index_end - mon2_index_start + 7) / 8) * 8 + 4) * 8;
+
+    double* erf_input = reinterpret_cast<double*>(std::align(32, ((mon2_index_end - mon2_index_start + 7) / 8) * 8 * 8, unaligned, space));
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erf_input[m - mon2_index_start] = ewald_alpha / (v3[m - mon2_index_start] + 1e-30);
     }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(erf_input + m - mon2_index_start);
+        __m256d b = _mm256_erf_pd(a);
+        _mm256_store_pd(erf_input + m - mon2_index_start, b);
+    }
+
+    // std::cout << "start: " << mon2_index_start << ", " << mon2_index_end <<  std::endl;
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v_erf[m - mon2_index_start] = erf_input[m - mon2_index_start];
+        // double t = erf(ewald_alpha / (v3[m - mon2_index_start] + 1e-30));
+        // if (abs(t - v_erf[m - mon2_index_start]) > 0.00001) {
+        //     std::cout << "Mismatch at m: " << m << "/" << mon2_index_end << " erf: " << t << " v_erf: " << v_erf[m - mon2_index_start] << std::endl;
+        // }
+        // std::cout << "v_erf: " << v_erf[m - mon2_index_start] << " erf: " << t << std::endl;
+    }
+
+    delete[] buffer;
+
+    // _mm256_erf_pd(erf_input);
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
