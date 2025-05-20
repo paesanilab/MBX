@@ -1446,13 +1446,20 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         exp_alpha2_r2[m] = exp(-r_alpha[m] * r_alpha[m]);
     }
 
-    double erfterm[mon2_index_end];
+    // double erfterm[mon2_index_end];
+
+    double* erfterm = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        erfterm[m] = erf(r_alpha[m]);
+        erfterm[m - mon2_index_start] = r_alpha[m];
     }
 
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(erfterm + m - mon2_index_start);
+        __m256d b = _mm256_erf_pd(a);
+        _mm256_store_pd(erfterm + m - mon2_index_start, b);
+    }
 
     double individual_gradx[mon2_index_end];
     double individual_grady[mon2_index_end];
@@ -1469,8 +1476,8 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
         // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
         // r^-1, r^-3, r^-5
-        double bn0 = (1 - erfterm[m]) * ri[m];
-        double bn0_cd = (elec_scale_factor - erfterm[m]) * ri[m];
+        double bn0 = (1 - erfterm[m - mon2_index_start]) * ri[m];
+        double bn0_cd = (elec_scale_factor - erfterm[m - mon2_index_start]) * ri[m];
         alpha_pi_term[m] *= two_alpha_squared;
         double bn1 = (bn0 + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
         double bn1_cd = (bn0_cd + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
@@ -1615,6 +1622,9 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         grd2[site_jnmon23 + nmon22 + m] -= individual_gradz[m];
 
     }
+
+    delete[] erfterm;
+
         // update virial
     if (virial != 0) {
 
