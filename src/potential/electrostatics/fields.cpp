@@ -310,47 +310,18 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         v3[m - mon2_index_start] *= (v3[m - mon2_index_start] < 1.0 / cutoff ? 0 : 1);
     }
 
-    double v_erf[mon2_index_end - mon2_index_start];
-
-    // for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-
-    //     v_erf[m - mon2_index_start] = erf(ewald_alpha / (v3[m - mon2_index_start] + 1e-30));
-    // }
-
-    double* buffer = new double[((mon2_index_end - mon2_index_start + 7) / 8) * 8 + 4];
-
-    void* unaligned = reinterpret_cast<void *>(buffer);
-
-    size_t space = (((mon2_index_end - mon2_index_start + 7) / 8) * 8 + 4) * 8;
-
-    double* erf_input = reinterpret_cast<double*>(std::align(32, ((mon2_index_end - mon2_index_start + 7) / 8) * 8 * 8, unaligned, space));
+    double* v_erf = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        erf_input[m - mon2_index_start] = ewald_alpha / (v3[m - mon2_index_start] + 1e-30);
+        v_erf[m - mon2_index_start] = ewald_alpha / (v3[m - mon2_index_start] + 1e-30);
     }
 
     for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
-        __m256d a = _mm256_load_pd(erf_input + m - mon2_index_start);
+        __m256d a = _mm256_load_pd(v_erf + m - mon2_index_start);
         __m256d b = _mm256_erf_pd(a);
-        _mm256_store_pd(erf_input + m - mon2_index_start, b);
+        _mm256_store_pd(v_erf + m - mon2_index_start, b);
     }
-
-    // std::cout << "start: " << mon2_index_start << ", " << mon2_index_end <<  std::endl;
-
-    #pragma omp simd simdlen(8)
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        v_erf[m - mon2_index_start] = erf_input[m - mon2_index_start];
-        // double t = erf(ewald_alpha / (v3[m - mon2_index_start] + 1e-30));
-        // if (abs(t - v_erf[m - mon2_index_start]) > 0.00001) {
-        //     std::cout << "Mismatch at m: " << m << "/" << mon2_index_end << " erf: " << t << " v_erf: " << v_erf[m - mon2_index_start] << std::endl;
-        // }
-        // std::cout << "v_erf: " << v_erf[m - mon2_index_start] << " erf: " << t << std::endl;
-    }
-
-    delete[] buffer;
-
-    // _mm256_erf_pd(erf_input);
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -358,6 +329,8 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         // Store the attenuated coulomb operator in vector
         v4[m - mon2_index_start] = (elec_scale_factor - v_erf[m - mon2_index_start]) * v3[m - mon2_index_start];  // (1-erf(alpha r))/r
     }
+
+    delete[] v_erf;
 
     if (!use_pbc) {
         #pragma omp simd simdlen(8)
@@ -369,29 +342,57 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     }
 
     double alpha2r2[mon2_index_end - mon2_index_start];
+
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         alpha2r2[m - mon2_index_start] = -ewald_alpha * ewald_alpha / (v3[m - mon2_index_start] * v3[m - mon2_index_start]);
     }
 
     double v6[mon2_index_end - mon2_index_start];
-    double exp_alpha2r2[mon2_index_end - mon2_index_start];
-    double exp1[mon2_index_end - mon2_index_start];
+    // double exp1[mon2_index_end - mon2_index_start];
     
     // Cannot be vectorized because of call to gammq and exp unvectorized function
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         // Compute gammq and store result in vector. This loop is not vectorizable
         v6[m - mon2_index_start] = gammq(0.75, v5[m - mon2_index_start]) * elec_scale_factor;  // gammq
+    }
+
+    double* exp1 = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
 
 #if NO_THOLE
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         exp1[m - mon2_index_start] = 0;
         v6[m - mon2_index_start] = 0;
+    }
 #else
-        exp1[m - mon2_index_start] = elec_scale_factor * std::exp(-v5[m - mon2_index_start]);
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1[m - mon2_index_start] = -v5[m - mon2_index_start];
+    }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(exp1 + m - mon2_index_start);
+        __m256d b = _mm256_exp_pd(a);
+        _mm256_store_pd(exp1 + m - mon2_index_start, b);
+    }
+        // exp1[m - mon2_index_start] = elec_scale_factor * std::exp(-v5[m - mon2_index_start]);
 #endif
-        // Terms needed for the Ewald direct space field, see equation 2.8 of
-        // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
-        exp_alpha2r2[m - mon2_index_start] = std::exp(alpha2r2[m - mon2_index_start]);
+    double* exp_alpha2r2 = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
+
+    // Terms needed for the Ewald direct space field, see equation 2.8 of
+    // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
+    
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp_alpha2r2[m - mon2_index_start] = alpha2r2[m - mon2_index_start];
+    }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(exp_alpha2r2 + m - mon2_index_start);
+        __m256d b = _mm256_exp_pd(a);
+        _mm256_store_pd(exp_alpha2r2 + m - mon2_index_start, b);
     }
 
     // Finalize computation of electric field
@@ -428,6 +429,9 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         Efq2[site_jnmon23 + nmon22 + m] -= s1r3ci * rijz[m - mon2_index_start];
 
     }
+
+    delete[] exp1;
+    delete[] exp_alpha2r2;
 
     // Add up the contributions to the mon1 site
     *phi1 = v7;
