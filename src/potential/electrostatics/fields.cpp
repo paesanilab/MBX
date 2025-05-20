@@ -981,52 +981,81 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        bool accum2 = !use_ghost;
-        
-        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
-        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
-        
-        double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
-
         // Distances between sites i and j from mon1 and mon2
-        double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
-        double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-        double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
-        
-        // Apply the minimum image convention via fractional coordinates
-        // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-        if (use_pbc) {
+        rijx_vec[m - mon2_index_start] = xyzmon1_x - xyz2[site_jnmon23 + m];
+        rijy_vec[m - mon2_index_start] = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+        rijz_vec[m - mon2_index_start] = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+    }
+
+    // Apply the minimum image convention via fractional coordinates
+    // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+    if (use_pbc) {
+        #pragma omp simd simdlen(8)
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             // Convert to fractional coordinates
-            double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
-            double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
-            double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
+            double fracrijx = box_inverse[0] * rijx_vec[m - mon2_index_start] + box_inverse[3] * rijy_vec[m - mon2_index_start] + box_inverse[6] * rijz_vec[m - mon2_index_start];
+            double fracrijy = box_inverse[1] * rijx_vec[m - mon2_index_start] + box_inverse[4] * rijy_vec[m - mon2_index_start] + box_inverse[7] * rijz_vec[m - mon2_index_start];
+            double fracrijz = box_inverse[2] * rijx_vec[m - mon2_index_start] + box_inverse[5] * rijy_vec[m - mon2_index_start] + box_inverse[8] * rijz_vec[m - mon2_index_start];
             // Put in the range 0 to 1
             fracrijx -= std::floor(fracrijx + 0.5);
             fracrijy -= std::floor(fracrijy + 0.5);
             fracrijz -= std::floor(fracrijz + 0.5);
             // Convert back to Cartesian coordinates
-            rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
-            rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
-            rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
+            rijx_vec[m - mon2_index_start] = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
+            rijy_vec[m - mon2_index_start] = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
+            rijz_vec[m - mon2_index_start] = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
         }
+    }
 
-        const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
+    double vscale[mon2_index_end - mon2_index_start];
+    double rsq[mon2_index_end - mon2_index_start];
+    double ri[mon2_index_end - mon2_index_start];
+    double risq[mon2_index_end - mon2_index_start];
+    double r_alpha[mon2_index_end - mon2_index_start];
+    double exp_alpha2_r2[mon2_index_end - mon2_index_start];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+
+        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
+        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
+        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         
-        const double ri = 1 / sqrt(rsq);
-        const double risq = ri * ri;
+        vscale[m - mon2_index_start] = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
+
+        rsq[m - mon2_index_start] = rijx_vec[m - mon2_index_start] * rijx_vec[m - mon2_index_start] + rijy_vec[m - mon2_index_start] * rijy_vec[m - mon2_index_start] + rijz_vec[m - mon2_index_start] * rijz_vec[m - mon2_index_start];
+        
+        ri[m - mon2_index_start] = 1 / sqrt(rsq[m - mon2_index_start]);
+        risq[m - mon2_index_start] = ri[m - mon2_index_start] * ri[m - mon2_index_start];
 
         // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
         // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
         // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
         // r^-1, r^-3, r^-5
-        double r_alpha = ewald_alpha * sqrt(rsq);
-        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
-        double bn1 = (erfc(r_alpha) * ri + alpha_pi_term * exp_alpha2_r2) * risq;
-        double bn2 = (3 * bn1 + alpha_pi_term * two_alpha_squared * exp_alpha2_r2) * risq;
+        r_alpha[m - mon2_index_start] = ewald_alpha * sqrt(rsq[m - mon2_index_start]);
+        exp_alpha2_r2[m - mon2_index_start] = exp(-r_alpha[m - mon2_index_start] * r_alpha[m - mon2_index_start]);
+    }
+
+    double* erfc_eval = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erfc_eval[m - mon2_index_start] = r_alpha[m - mon2_index_start];
+    }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(erfc_eval + m - mon2_index_start);
+        __m256d b = _mm256_erfc_pd(a);
+        _mm256_store_pd(erfc_eval + m - mon2_index_start, b);
+    }
+    
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        double bn1 = (erfc_eval[m - mon2_index_start] * ri[m - mon2_index_start] + alpha_pi_term * exp_alpha2_r2[m - mon2_index_start]) * risq[m - mon2_index_start];
+        double bn2 = (3 * bn1 + alpha_pi_term * two_alpha_squared * exp_alpha2_r2[m - mon2_index_start]) * risq[m - mon2_index_start];
 
         // Some values that will be used in the screening functions
-        const double rA4 = rsq * rsq * Asqsqi;
+        const double rA4 = rsq[m - mon2_index_start] * rsq[m - mon2_index_start] * Asqsqi;
 // TODO look at the exponential function intel vec
 #if NO_THOLE
         const double exp1 = 0;
@@ -1035,23 +1064,22 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 #endif
 
         // Get screening functions
-        const double s1r3 = scale * (bn1 - exp1 * ri * risq);
-        const double s2r5_3 = scale * (bn2 - (3 + 4 * aDD * rA4) * exp1 * ri * risq * risq);
-        const double ts2x = s2r5_3 * rijx;
-        const double ts2y = s2r5_3 * rijy;
-        const double ts2z = s2r5_3 * rijz;
+        const double s1r3 = vscale[m - mon2_index_start] * (bn1 - exp1 * ri[m - mon2_index_start] * risq[m - mon2_index_start]);
+        const double s2r5_3 = vscale[m - mon2_index_start] * (bn2 - (3 + 4 * aDD * rA4) * exp1 * ri[m - mon2_index_start] * risq[m - mon2_index_start] * risq[m - mon2_index_start]);
+        const double ts2x = s2r5_3 * rijx_vec[m - mon2_index_start];
+        const double ts2y = s2r5_3 * rijy_vec[m - mon2_index_start];
+        const double ts2z = s2r5_3 * rijz_vec[m - mon2_index_start];
 
         // Contributions to the dipole electric field to site i of mon1
         // Stored in vectors to make the loop vectorizable
-        rijx_vec[m - mon2_index_start] = rijx;
-        rijy_vec[m - mon2_index_start] = rijy;
-        rijz_vec[m - mon2_index_start] = rijz;
         ts2x_vec[m - mon2_index_start] = s2r5_3;
         // ts2y_vec[m - mon2_index_start] = ts2y;
         // ts2z_vec[m - mon2_index_start] = ts2z;
         s1r3_vec[m - mon2_index_start] = s1r3;
     
     }
+
+    delete[] erfc_eval;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
