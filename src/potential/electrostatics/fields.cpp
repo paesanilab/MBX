@@ -310,7 +310,7 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         v3[m - mon2_index_start] *= (v3[m - mon2_index_start] < 1.0 / cutoff ? 0 : 1);
     }
 
-    double* v_erf = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
+    double* v_erf = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -357,7 +357,7 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         v6[m - mon2_index_start] = gammq(0.75, v5[m - mon2_index_start]) * elec_scale_factor;  // gammq
     }
 
-    double* exp1 = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
+    double* exp1 = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
 
 #if NO_THOLE
     #pragma omp simd simdlen(8)
@@ -379,7 +379,7 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     }
         // exp1[m - mon2_index_start] = elec_scale_factor * std::exp(-v5[m - mon2_index_start]);
 #endif
-    double* exp_alpha2r2 = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
+    double* exp_alpha2r2 = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
 
     // Terms needed for the Ewald direct space field, see equation 2.8 of
     // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
@@ -1036,7 +1036,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
         exp_alpha2_r2[m - mon2_index_start] = exp(-r_alpha[m - mon2_index_start] * r_alpha[m - mon2_index_start]);
     }
 
-    double* erfc_eval = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
+    double* erfc_eval = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -1476,7 +1476,7 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
 
     // double erfterm[mon2_index_end];
 
-    double* erfterm = new (std::align_val_t(32)) double[mon2_index_end - mon2_index_start];
+    double* erfterm = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
