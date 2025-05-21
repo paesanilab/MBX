@@ -74,6 +74,7 @@ derived.
 #include <cstddef>
 // #include <cmath>
 #include <algorithm>
+#include <new>
 
 #ifdef __INTEL_COMPILER
 // #include <mathimf.h>

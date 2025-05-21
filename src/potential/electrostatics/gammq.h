@@ -47,6 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <limits>
 #include <algorithm>
+#include <new>
 
 #ifdef TBB
 #include "tbb/scalable_allocator.h"
