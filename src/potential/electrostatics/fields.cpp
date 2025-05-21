@@ -310,6 +310,9 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         v3[m - mon2_index_start] *= (v3[m - mon2_index_start] < 1.0 / cutoff ? 0 : 1);
     }
 
+
+#ifdef INTEL_INTRINSICS
+
     double* v_erf = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
 
     #pragma omp simd simdlen(8)
@@ -322,6 +325,16 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         __m256d b = _mm256_erf_pd(a);
         _mm256_store_pd(v_erf + m - mon2_index_start, b);
     }
+
+#else
+
+    double* v_erf = new double[mon2_index_end - mon2_index_start];
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v_erf[m - mon2_index_start] = erf(ewald_alpha / (v3[m - mon2_index_start] + 1e-30));
+    }
+
+#endif
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -366,7 +379,12 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         v6[m - mon2_index_start] *= elec_scale_factor;
     }
 
+
+#ifdef INTEL_INTRINSICS
     double* exp1 = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
+#else
+    double* exp1 = new double[mon2_index_end - mon2_index_start];
+#endif
 
 #if NO_THOLE
     #pragma omp simd simdlen(8)
@@ -375,6 +393,8 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         v6[m - mon2_index_start] = 0;
     }
 #else
+
+#ifdef INTEL_INTRINSICS
 
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -386,13 +406,30 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         __m256d b = _mm256_exp_pd(a);
         _mm256_store_pd(exp1 + m - mon2_index_start, b);
     }
-        // exp1[m - mon2_index_start] = elec_scale_factor * std::exp(-v5[m - mon2_index_start]);
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1[m - mon2_index_start] *= elec_scale_factor;
+    }
+
+#else
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1[m - mon2_index_start] = elec_scale_factor * std::exp(-v5[m - mon2_index_start]);
+    }
+
 #endif
-    double* exp_alpha2r2 = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
+
+#endif
 
     // Terms needed for the Ewald direct space field, see equation 2.8 of
     // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
     
+#ifdef INTEL_INTRINSICS
+
+    double* exp_alpha2r2 = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
+
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         exp_alpha2r2[m - mon2_index_start] = alpha2r2[m - mon2_index_start];
@@ -403,6 +440,17 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         __m256d b = _mm256_exp_pd(a);
         _mm256_store_pd(exp_alpha2r2 + m - mon2_index_start, b);
     }
+
+#else
+
+    double* exp_alpha2r2 = new double[mon2_index_end - mon2_index_start];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp_alpha2r2[m - mon2_index_start] = std::exp(alpha2r2[m - mon2_index_start]);
+    }
+
+#endif
 
     // Finalize computation of electric field
     #pragma omp simd simdlen(8) reduction(+ : v7, v8, v9, v10)
@@ -1045,6 +1093,9 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
         exp_alpha2_r2[m - mon2_index_start] = exp(-r_alpha[m - mon2_index_start] * r_alpha[m - mon2_index_start]);
     }
 
+
+#ifdef INTEL_INTRINSICS
+
     double* erfc_eval = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
 
     #pragma omp simd simdlen(8)
@@ -1057,6 +1108,17 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
         __m256d b = _mm256_erfc_pd(a);
         _mm256_store_pd(erfc_eval + m - mon2_index_start, b);
     }
+
+#else
+
+    double* erfc_eval = new double[mon2_index_end - mon2_index_start];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erfc_eval[m - mon2_index_start] = erfc(r_alpha[m - mon2_index_start]);
+    }
+
+#endif
     
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
@@ -1485,6 +1547,9 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
 
     // double erfterm[mon2_index_end];
 
+
+#ifdef INTEL_INTRINSICS
+
     double* erfterm = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
 
     #pragma omp simd simdlen(8)
@@ -1497,6 +1562,16 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         __m256d b = _mm256_erf_pd(a);
         _mm256_store_pd(erfterm + m - mon2_index_start, b);
     }
+
+#else
+
+    double* erfterm = new double[mon2_index_end - mon2_index_start];
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erfterm[m - mon2_index_start] = erf(r_alpha[m]);
+    }
+
+#endif
 
     double individual_gradx[mon2_index_end];
     double individual_grady[mon2_index_end];

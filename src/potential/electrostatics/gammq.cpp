@@ -264,12 +264,18 @@ void gammq_optimized(const double a, const double* x, const double gammlna, cons
         assert(x[i] >= 0.0);
     }
 
+#ifdef INTEL_INTRINSICS
     double* exp_parts = new (std::align_val_t(32)) double[(n + 7) / 8 * 8];
+#else
+    double* exp_parts = new double[n];
+#endif
 
     #pragma omp simd simdlen(8)
     for (size_t i = 0; i < n; i++) {
         exp_parts[i] = x[i];
     }
+
+#ifdef INTEL_INTRINSICS
 
     for (size_t i = 0; i < n; i += 4) {
         __m256d a = _mm256_load_pd(exp_parts + i);
@@ -277,14 +283,21 @@ void gammq_optimized(const double a, const double* x, const double gammlna, cons
         _mm256_store_pd(exp_parts + i, b);
     }
 
-    // for (size_t i = 0; i < n; i++) {
-    //     exp_parts[i] = std::log(exp_parts[i]);
-    // }
+#else
+
+    #pragma omp simd simdlen(8)
+    for (size_t i = 0; i < n; i++) {
+        exp_parts[i] = std::log(exp_parts[i]);
+    }
+
+#endif
 
     #pragma omp simd simdlen(8)
     for (size_t i = 0; i < n; i++) {
         exp_parts[i] = -x[i] + a * exp_parts[i] - gammlna;
     }
+
+#ifdef INTEL_INTRINSICS
 
     for (size_t i = 0; i < n; i += 4) {
         __m256d a = _mm256_load_pd(exp_parts + i);
@@ -292,9 +305,14 @@ void gammq_optimized(const double a, const double* x, const double gammlna, cons
         _mm256_store_pd(exp_parts + i, b);
     }
 
-    // for (size_t i = 0; i < n; i++) {
-    //     exp_parts[i] = std::exp(exp_parts[i]);
-    // }
+#else
+
+    #pragma omp simd simdlen(8)
+    for (size_t i = 0; i < n; i++) {
+        exp_parts[i] = std::exp(exp_parts[i]);
+    }
+
+#endif
 
     for (size_t i = 0; i < n; i++) {
         if (x[i] < SMALL)

@@ -186,6 +186,7 @@ MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
 MBX_CONFIG_ENABLE([tbb],[enable intel tbb library],[no])
+MBX_CONFIG_ENABLE([intel_intrinsics],[enable intel intrinsic math functions. only works with --enable-cpp17],[no])
 MBX_CONFIG_ENABLE([mkl],[enable intel mkl library],[no])
 MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
 MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization; use this for intel machines or AMD machines with icpc],[no])
@@ -228,6 +229,13 @@ if test $tbb == true; then
     #    AC_MSG_ERROR([ttb cannot be linked.])
     #])
     LIBS="$LIBS -ltbb -ltbbmalloc"
+fi
+
+if test $intel_intrinsics == true; then
+    if test $cpp17 == false; then
+        AC_MSG_WARN([You have enabled intel intrinsics without enabling cpp17. You will probably get compile time errors!])
+    fi
+    MBX_CHECK_REQ_CXXFLAG([-DINTEL_INTRINSICS])
 fi
 
 if test $mkl == true; then

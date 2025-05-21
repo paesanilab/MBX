@@ -53,7 +53,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tbb/scalable_allocator.h"
 #endif
 
+#ifdef INTEL_INTRINSICS
 #include <immintrin.h>
+#endif
 
 namespace elec {
 
