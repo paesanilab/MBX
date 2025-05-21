@@ -90,6 +90,8 @@ derived.
 #include "tbb/scalable_allocator.h"
 #endif
 
+#include <immintrin.h>
+
 namespace elec {
 
     #ifdef TBB

@@ -52,6 +52,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tbb/scalable_allocator.h"
 #endif
 
+#include <immintrin.h>
+
 namespace elec {
 
 double gammq(const double a, const double x);
