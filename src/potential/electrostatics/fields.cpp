@@ -351,10 +351,19 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     double v6[mon2_index_end - mon2_index_start];
     // double exp1[mon2_index_end - mon2_index_start];
     
-    // Cannot be vectorized because of call to gammq and exp unvectorized function
+    // // Cannot be vectorized because of call to gammq and exp unvectorized function
+    // for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+    //     // Compute gammq and store result in vector. This loop is not vectorizable
+    //     v6[m - mon2_index_start] = gammq(0.75, v5[m - mon2_index_start]) * elec_scale_factor;  // gammq
+    // }
+
+    double g34log = std::log(g34);
+
+    gammq_optimized(0.75, v5, g34log, mon2_index_end - mon2_index_start, v6);
+
+    #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        // Compute gammq and store result in vector. This loop is not vectorizable
-        v6[m - mon2_index_start] = gammq(0.75, v5[m - mon2_index_start]) * elec_scale_factor;  // gammq
+        v6[m - mon2_index_start] *= elec_scale_factor;
     }
 
     double* exp1 = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
