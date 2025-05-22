@@ -186,6 +186,7 @@ MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
 MBX_CONFIG_ENABLE([tbb],[enable intel tbb library],[no])
+MBX_CONFIG_ENABLE([tbb_old_compiler_version],[enable intel tbb library, use this for older versions of the intel compiler],[no])
 MBX_CONFIG_ENABLE([intel_intrinsics],[enable intel intrinsic math functions. only works with --enable-cpp17],[no])
 MBX_CONFIG_ENABLE([mkl],[enable intel mkl library],[no])
 MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
@@ -221,6 +222,18 @@ fi
 
 if test $tbb == true; then
     MBX_CHECK_REQ_CXXFLAG([-qtbb])
+    MBX_CHECK_CXXFLAG([-DTBB])
+    #AC_CHECK_LIB([tbb],[scalable_allocator],[
+    #    CPPFLAGS="$CPPFLAGS"
+    #    LIBS="-ltbb -ltbbmalloc $LIBS"
+    #],[
+    #    AC_MSG_ERROR([ttb cannot be linked.])
+    #])
+    LIBS="$LIBS -ltbb -ltbbmalloc"
+fi
+
+if test $tbb_old_compiler_version == true; then
+    MBX_CHECK_REQ_CXXFLAG([-tbb])
     MBX_CHECK_CXXFLAG([-DTBB])
     #AC_CHECK_LIB([tbb],[scalable_allocator],[
     #    CPPFLAGS="$CPPFLAGS"
