@@ -106,6 +106,7 @@ namespace elec {
     #endif
 
     struct PrecomputedInfo {
+        size_t good_mon2_size;
         vector<size_t> good_mon2;
         vector<double> reordered_xyz2;
         vector<size_t> reordered_islocal;

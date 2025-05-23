@@ -6648,6 +6648,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
                         vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
+                        precomp_info.good_mon2_size = reordered_mon2_size;
 
                         // Store versions of xyz2 and islocal which only include monomers within the cutoff
                         // and a list of monomers within the cutoff in precomputedInformation
@@ -7550,7 +7551,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
                         // contains indices of all mon 2s which are within a 9A cutoff from mon1
                         vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
-                        int reordered_mon2_size = good_mon2_indices.size();
+                        int reordered_mon2_size = precomp_info.good_mon2_size;
                         
                         // Reordered versions of xyz2, islocal,...  which only contain mon 2s which are within a twobody_cutoff from mon 1
                         // All calculations between mon1 and  mon2's which are outside of 9A cutoff are useless-- eliminating them saves CPU time
