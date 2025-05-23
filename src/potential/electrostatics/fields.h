@@ -118,6 +118,22 @@ namespace elec {
         vector<double> ts2y;
         vector<double> ts2z;
         vector<double> s1r3;
+
+        void * operator new(size_t size) {
+            #ifdef TBB
+            return scalable_malloc(size);
+            #else
+            return ::operator new(size);
+            #endif
+        }
+
+        void operator delete(void * p) {
+            #ifdef TBB
+            scalable_free(p);
+            #else
+            return ::operator delete(size);
+            #endif
+        }
     };
 
     typedef std::tuple<size_t, size_t, size_t, size_t, size_t> key_precomputed_info;
