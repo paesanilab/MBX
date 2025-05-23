@@ -38,6 +38,10 @@
 #include <unistd.h>
 #include <vector>
 
+#ifdef TBB
+#include "tbb/scalable_allocator.h"
+#endif
+
 // original file: ../src/cartesiantransform.h
 
 // BEGINLICENSE
@@ -451,8 +455,13 @@ class FFTWAllocator {
     size_type max_size() const throw() { return std::numeric_limits<std::size_t>::max() / sizeof(T); }
 
     // allocate but don't initialize num elements of type T
-    pointer allocate(size_type num, const void * = 0) { return static_cast<pointer>(fftw_malloc(num * sizeof(T))); }
-
+    pointer allocate(size_type num, const void * = 0) {
+        #ifdef TBB
+        return static_cast<pointer>(scalable_aligned_malloc(num * sizeof(T), 128));
+        #else
+        return static_cast<pointer>(fftw_malloc(num * sizeof(T)));
+        #endif
+    }
     // initialize elements of allocated storage p with value value
     void construct(pointer p, const T &value) {
         // initialize memory with placement new
@@ -463,7 +472,13 @@ class FFTWAllocator {
     void destroy(pointer p) {}
 
     // deallocate storage p of deleted elements
-    void deallocate(pointer p, size_type num) { fftw_free(static_cast<void *>(p)); }
+    void deallocate(pointer p, size_type num) {
+        #ifdef TBB
+        scalable_aligned_free(static_cast<void *>(p));
+        #else
+        fftw_free(static_cast<void *>(p));
+        #endif
+    }
 };
 
 // return that all specializations of this allocator are interchangeable
