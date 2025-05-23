@@ -132,7 +132,7 @@ namespace elec {
             #ifdef TBB
             scalable_free(p);
             #else
-            return ::operator delete(size);
+            return ::operator delete(p);
             #endif
         }
     };
