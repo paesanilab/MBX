@@ -249,6 +249,7 @@ if test $intel_intrinsics == true; then
         AC_MSG_WARN([You have enabled intel intrinsics without enabling cpp17. You will probably get compile time errors!])
     fi
     MBX_CHECK_REQ_CXXFLAG([-DINTEL_INTRINSICS])
+    MBX_CHECK_REQ_CXXFLAG([-D__cpp_aligned_new])
 fi
 
 if test $mkl == true; then
