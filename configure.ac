@@ -190,9 +190,11 @@ MBX_CONFIG_ENABLE([tbb_old_compiler_version],[enable intel tbb library, use this
 MBX_CONFIG_ENABLE([intel_intrinsics],[enable intel intrinsic math functions. only works with --enable-cpp17],[no])
 MBX_CONFIG_ENABLE([mkl],[enable intel mkl library],[no])
 MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
-MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization; use this for intel machines or AMD machines with icpc],[no])
-MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization; use this for intel machines or AMD machines with icpc],[no])
-MBX_CONFIG_ENABLE([march_x86_64_v3],[tells intel compiler to compile for the architecture x86-64-v3; use this for AMD machines with icpx to use AVX2],[no])
+MBX_CONFIG_ENABLE([avx2],[*INTEL COMPILER ON INTEL PROCESSORS*: enable the avx2 vector instruction set.],[no])
+MBX_CONFIG_ENABLE([avx512],[*INTEL COMPILER ON INTEL PROCESSORS*: enable the avx-512 vector instruction set.],[no])
+MBX_CONFIG_ENABLE([march_avx2],[*INTEL COMPILER ON AMD PROCESSORS*: tells intel compiler to compile for the architecture avx2; use this instead of --enable-avx2 on AMD machines.],[no])
+MBX_CONFIG_ENABLE([march_avx512],[*INTEL COMPILER ON AMD PROCESSORS*: tells intel compiler to compile for the architecture avx512; use this instead of --enable-avx512 on AMD machines.],[no])
+MBX_CONFIG_ENABLE([march_x86_64_v3],[*INTEL COMPILER ON AMD PROCESSORS*: tells intel compiler to compile for the architecture x86-64-v3; this does almost the same thing as --enable-march_avx2, but that one may not work on certain AMD machines or with certain intel compiler versions, in which case, use this instead.],[no])
 
 # Act on enable flags
 
@@ -280,6 +282,14 @@ fi
 
 if test $avx512 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
+fi
+
+if test $march_avx2 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=core-avx2])
+fi
+
+if test $march_avx512 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=core-avx512])
 fi
 
 if test $march_x86_64_v3 == true; then
