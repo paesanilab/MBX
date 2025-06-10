@@ -188,6 +188,7 @@ MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
 MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
 MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization],[no])
 MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
+MBX_CONFIG_ENABLE([fpic],[enable -fPIC when compiling mbx library, required for RASPA3 interface.],[no])
 
 # Act on enable flags
 
@@ -232,6 +233,10 @@ fi
 
 if test $avx512 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
+fi
+
+if test $fpic == true; then
+    MBX_CHECK_REQ_CXXFLAG([-fPIC])
 fi
 
 # Add flags to variable
