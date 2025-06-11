@@ -3869,11 +3869,12 @@ class PMEInstance {
                 splineModA_.resize(myNumKSumTermsA_);
                 splineModB_.resize(myNumKSumTermsB_);
                 splineModC_.resize(myNumKSumTermsC_);
-                std::copy(&fullSplineModA[firstKSumTermA_], &fullSplineModA[firstKSumTermA_ + myNumKSumTermsA_],
+
+                std::copy(fullSplineModA.begin() + firstKSumTermA_, fullSplineModA.begin() + firstKSumTermA_ + myNumKSumTermsA_,
                           splineModA_.begin());
-                std::copy(&fullSplineModB[firstKSumTermB_], &fullSplineModB[firstKSumTermB_ + myNumKSumTermsB_],
+                std::copy(fullSplineModB.begin() + firstKSumTermB_, fullSplineModB.begin() + firstKSumTermB_ + myNumKSumTermsB_,
                           splineModB_.begin());
-                std::copy(&fullSplineModC[firstKSumTermC_], &fullSplineModC[firstKSumTermC_ + myNumKSumTermsC_],
+                std::copy(fullSplineModC.begin() + firstKSumTermC_, fullSplineModC.begin() + firstKSumTermC_ + myNumKSumTermsC_,
                           splineModC_.begin());
             }
 
