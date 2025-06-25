@@ -202,6 +202,8 @@ MBX_CONFIG_ENABLE([march-x86-64-v2],[compilation for x86-64-v2 processors (no AV
 MBX_CONFIG_ENABLE([march-x86-64-v3],[compilation for x86-64-v3 processors (includes AVX2), use with intel or gcc compiler],[no])
 MBX_CONFIG_ENABLE([march-x86-64-v4],[compilation for x86-64-v4 processors (includes AVX-512), use with intel or gcc compiler],[no])
 
+MBX_CONFIG_ENABLE([aligned-new],[compilation with aligned new, use this only if you get an error about calls to new when using --enable-intel-intrinsics],[no])
+
 # Act on enable flags
 
 if test $debug == true; then
@@ -257,8 +259,11 @@ if test $intel_intrinsics == true; then
         AC_MSG_WARN([You have enabled intel intrinsics without enabling cpp17. You will probably get compile time errors!])
     fi
     MBX_CHECK_REQ_CXXFLAG([-DINTEL_INTRINSICS])
-    MBX_CHECK_REQ_CXXFLAG([-D__cpp_aligned_new])
 fi
+
+if test $aligned_new == true; then
+    MBX_CHECK_REQ_CXXFLAG([-D__cpp_aligned_new])
+if
 
 if test $mkl == true; then
     MBX_CHECK_REQ_CXXFLAG([-mkl])
