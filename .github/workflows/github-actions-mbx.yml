@@ -59,6 +59,10 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
+          ls /opt/intel/oneapi
+          ls /opt/intel/oneapi/tbb
+          ls /opt/intel/oneapi/tbb/latest
+          ls /opt/intel/oneapi/tbb/latest/include
           export CPATH=$CPATH:/opt/intel/oneapi/tbb/latest/include
 
       - name: Check out repository code
