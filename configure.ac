@@ -180,21 +180,27 @@ AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
 MBX_CONFIG_ENABLE([verbose],[verbose debug output],[no])
-MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
+MBX_CONFIG_ENABLE([optimization],[compiler optimizations via "-O3" compiler argument],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
-MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
-MBX_CONFIG_ENABLE([tbb],[enable intel tbb library],[no])
-MBX_CONFIG_ENABLE([tbb_old_compiler_version],[enable intel tbb library, use this for older versions of the intel compiler],[no])
-MBX_CONFIG_ENABLE([intel_intrinsics],[enable intel intrinsic math functions. only works with --enable-cpp17],[no])
-MBX_CONFIG_ENABLE([mkl],[enable intel mkl library],[no])
-MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
-MBX_CONFIG_ENABLE([avx2],[*INTEL COMPILER ON INTEL PROCESSORS*: enable the avx2 vector instruction set.],[no])
-MBX_CONFIG_ENABLE([avx512],[*INTEL COMPILER ON INTEL PROCESSORS*: enable the avx-512 vector instruction set.],[no])
-MBX_CONFIG_ENABLE([march_avx2],[*INTEL COMPILER ON AMD PROCESSORS*: tells intel compiler to compile for the architecture avx2; use this instead of --enable-avx2 on AMD machines.],[no])
-MBX_CONFIG_ENABLE([march_avx512],[*INTEL COMPILER ON AMD PROCESSORS*: tells intel compiler to compile for the architecture avx512; use this instead of --enable-avx512 on AMD machines.],[no])
-MBX_CONFIG_ENABLE([march_x86_64_v3],[*INTEL COMPILER ON AMD PROCESSORS*: tells intel compiler to compile for the architecture x86-64-v3; this does almost the same thing as --enable-march_avx2, but that one may not work on certain AMD machines or with certain intel compiler versions, in which case, use this instead.],[no])
+MBX_CONFIG_ENABLE([ttmnrg],[TTM-nrg PEFs via "-DTTMNRG" define.],[no])
+
+MBX_CONFIG_ENABLE([cpp17],[compiling with C++17 standard],[no])
+
+MBX_CONFIG_ENABLE([tbb],[intel threading building blocks library],[no])
+MBX_CONFIG_ENABLE([tbb_old_compiler_version],[intel threading building blocks library, use this for older versions of the intel compiler instead of --enable-tbb],[no])
+
+MBX_CONFIG_ENABLE([intel-intrinsics],[intel intrinsic math functions. only works with --enable-cpp17],[no])
+MBX_CONFIG_ENABLE([mkl],[enable intel math kernel library],[no])
+
+MBX_CONFIG_ENABLE([core-avx2],[compilation with the AVX2 vector instruction set, use this with intel compiler on intel and some AMD processors with a compatible architecture],[no])
+MBX_CONFIG_ENABLE([core-avx512],[compilation with the AVX-512 vector instruction set, use this with intel compiler on intel and some AMD processors with a compatible architecture],[no])
+MBX_CONFIG_ENABLE([march-avx2],[compilation with the AVX2 vector instruction set, use with intel compiler or gcc on intel or AMD machines with a compatible architecture],[no])
+MBX_CONFIG_ENABLE([march-avx512],[compilation with the AVX-512 vector instruction set, use with intel compiler on intel or AMD machines with a compatible architecture],[no])
+MBX_CONFIG_ENABLE([march-x86-64-v2],[compilation for x86-64-v2 processors (no AVX2 or AVX-512), use with intel or gcc compiler],[no])
+MBX_CONFIG_ENABLE([march-x86-64-v3],[compilation for x86-64-v3 processors (includes AVX2), use with intel or gcc compiler],[no])
+MBX_CONFIG_ENABLE([march-x86-64-v4],[compilation for x86-64-v4 processors (includes AVX-512), use with intel or gcc compiler],[no])
 
 # Act on enable flags
 
@@ -276,7 +282,7 @@ else
     MBX_CHECK_REQ_CXXFLAG([-std=c++11])
 fi
 
-if test $avx2 == true; then
+if test $core_avx2 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX2])
 fi
 
@@ -292,8 +298,16 @@ if test $march_avx512 == true; then
     MBX_CHECK_REQ_CXXFLAG([-march=core-avx512])
 fi
 
+if test $march_x86_64_v2 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=x86-64-v2])
+fi
+
 if test $march_x86_64_v3 == true; then
     MBX_CHECK_REQ_CXXFLAG([-march=x86-64-v3])
+fi
+
+if test $march_x86_64_v4 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=x86-64-v4])
 fi
 
 # Add flags to variable
