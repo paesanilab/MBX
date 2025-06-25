@@ -70,7 +70,7 @@ jobs:
           ${{matrix.compiler}} -v | tee compiler_version.txt
           ls ${{ github.workspace }}
           autoreconf -fi
-          ./configure --disable-optimization $coverageflag --enable-shared CXX=${{matrix.compiler}}
+          ./configure --disable-optimization $coverageflag --enable-shared ${{matrix.configure_arguments}} CXX=${{matrix.compiler}}
           make -j2
           make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
