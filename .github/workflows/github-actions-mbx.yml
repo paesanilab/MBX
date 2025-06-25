@@ -59,7 +59,7 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-          export INCLUDE=$INCLUDE:/opt/intel/oneapi/tbb/latest/include
+          export CPATH=$CPATH:/opt/intel/oneapi/tbb/latest/include
 
       - name: Check out repository code
         uses: actions/checkout@v4
