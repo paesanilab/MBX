@@ -263,7 +263,7 @@ fi
 
 if test $aligned_new == true; then
     MBX_CHECK_REQ_CXXFLAG([-D__cpp_aligned_new])
-if
+fi
 
 if test $mkl == true; then
     MBX_CHECK_REQ_CXXFLAG([-mkl])
