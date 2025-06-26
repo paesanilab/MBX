@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         compiler: [g++, icpx]
-        configure_arguments: ["","--enable-march-avx2", "--enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"]
+        configure_arguments: ["","--enable-march-avx2", "--enable-march-avx2 --enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"]
         exclude:
           - compiler: g++
             configure_arguments: "--enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"
