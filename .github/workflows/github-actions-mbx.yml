@@ -59,10 +59,9 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-          echo "lsing"
-          echo $CPATH
+          echo "pkg-config"
+          pkg-config --cflags tbb
           source /opt/intel/oneapi/tbb/latest/env/vars.sh
-          echo $CPATH
 
       - name: Check out repository code
         uses: actions/checkout@v4
