@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         compiler: [g++, icpx]
-        configure_arguments: ["--enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"]
+        configure_arguments: ["","--enable-march-avx2", "--enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"]
         exclude:
           - compiler: g++
             configure_arguments: "--enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"
@@ -59,11 +59,10 @@ jobs:
         run: |
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
-          ls /opt/intel/oneapi
-          ls /opt/intel/oneapi/tbb
+          echo "lsing"
           ls /opt/intel/oneapi/tbb/latest
-          ls /opt/intel/oneapi/tbb/latest/include
-          export CPATH=$CPATH:/opt/intel/oneapi/tbb/latest/include
+          ls /opt/intel/oneapi/tbb/latest/env
+          source /opt/intel/oneapi/tbb/latest/env/vars.sh
 
       - name: Check out repository code
         uses: actions/checkout@v4
