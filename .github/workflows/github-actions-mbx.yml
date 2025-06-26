@@ -60,9 +60,9 @@ jobs:
           source /opt/intel/oneapi/setvars.sh
           printenv >> $GITHUB_ENV
           echo "lsing"
-          ls /opt/intel/oneapi/tbb/latest
-          ls /opt/intel/oneapi/tbb/latest/env
+          echo $CPATH
           source /opt/intel/oneapi/tbb/latest/env/vars.sh
+          echo $CPATH
 
       - name: Check out repository code
         uses: actions/checkout@v4
