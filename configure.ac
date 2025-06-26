@@ -189,7 +189,7 @@ MBX_CONFIG_ENABLE([ttmnrg],[TTM-nrg PEFs via "-DTTMNRG" define.],[no])
 MBX_CONFIG_ENABLE([cpp17],[compiling with C++17 standard],[no])
 
 MBX_CONFIG_ENABLE([tbb],[intel threading building blocks library],[no])
-MBX_CONFIG_ENABLE([tbb_old_compiler_version],[intel threading building blocks library, use this for older versions of the intel compiler instead of --enable-tbb],[no])
+MBX_CONFIG_ENABLE([tbb-old-compiler-version],[intel threading building blocks library, use this for older versions of the intel compiler instead of --enable-tbb],[no])
 
 MBX_CONFIG_ENABLE([intel-intrinsics],[intel intrinsic math functions. only works with --enable-cpp17],[no])
 MBX_CONFIG_ENABLE([mkl],[enable intel math kernel library],[no])
