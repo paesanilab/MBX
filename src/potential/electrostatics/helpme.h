@@ -3811,8 +3811,8 @@ class PMEInstance {
                 for (int cGridPoint = 0; cGridPoint < gridDimensionC_; ++cGridPoint) {
                     std::vector<std::pair<short, short>> splineIterator;
                     for (const auto &fullIterator : gridIteratorC_[cGridPoint]) {
-                        // if (fullIterator.first % nThreads_ == thread) {
-                        if (fullIterator.first / ((myGridDimensionC_ + nThreads_ - 1) / nThreads_) == thread) {
+                        if (fullIterator.first % nThreads_ == thread) {
+                        // if (fullIterator.first / ((myGridDimensionC_ + nThreads_ - 1) / nThreads_) == thread) {
                             splineIterator.push_back(fullIterator);
                         }
                     }
@@ -4008,8 +4008,8 @@ class PMEInstance {
 #else
             int threadID = 0;
 #endif
-            // for (size_t row = threadID; row < myGridDimensionC_; row += nThreads_) {
-            for (size_t row = threadID * ((myGridDimensionC_ + nThreads_ - 1) / nThreads_); row < std::min(myGridDimensionC_, (threadID + 1) * ((myGridDimensionC_ + nThreads_ - 1) / nThreads_)); row += 1) {
+            for (size_t row = threadID; row < myGridDimensionC_; row += nThreads_) {
+            // for (size_t row = threadID * ((myGridDimensionC_ + nThreads_ - 1) / nThreads_); row < std::min(myGridDimensionC_, (threadID + 1) * ((myGridDimensionC_ + nThreads_ - 1) / nThreads_)); row += 1) {
                 std::fill(&realGrid[row * numBA], &realGrid[(row + 1) * numBA], Real(0));
             }
             for (const auto &spline : splinesPerThread_[threadID]) {
@@ -4047,8 +4047,8 @@ class PMEInstance {
 #else
             int threadID = 0;
 #endif
-            for (size_t row = threadID * ((gridDimensionC_ + nThreads_ - 1) / nThreads_); row < std::min(gridDimensionC_, (threadID + 1) * ((gridDimensionC_ + nThreads_ - 1) / nThreads_)); row += 1) {
-            // for (size_t row = threadID; row < gridDimensionC_; row += nThreads_) {
+            // for (size_t row = threadID * ((gridDimensionC_ + nThreads_ - 1) / nThreads_); row < std::min(gridDimensionC_, (threadID + 1) * ((gridDimensionC_ + nThreads_ - 1) / nThreads_)); row += 1) {
+            for (size_t row = threadID; row < gridDimensionC_; row += nThreads_) {
                 gridAtomList_[row].clear();
             }
             auto &mySplineList = splinesPerThread_[threadID];
@@ -4061,8 +4061,8 @@ class PMEInstance {
                               atomCoords[2] * recVecs_(2, 2) - EPS;
                 cCoord -= floor(cCoord);
                 short cStartingGridPoint = gridDimensionC_ * cCoord;
-                // size_t thisAtomsThread = cStartingGridPoint % nThreads_;
-                size_t thisAtomsThread = cStartingGridPoint / ((myGridDimensionC_ + nThreads_ - 1) / nThreads_);
+                size_t thisAtomsThread = cStartingGridPoint % nThreads_;
+                // size_t thisAtomsThread = cStartingGridPoint / ((myGridDimensionC_ + nThreads_ - 1) / nThreads_);
                 const auto &cGridIterator = gridIteratorC_[cStartingGridPoint];
                 if (cGridIterator.size() && thisAtomsThread == threadID) {
                     Real aCoord = atomCoords[0] * recVecs_(0, 0) + atomCoords[1] * recVecs_(1, 0) +
@@ -4118,8 +4118,8 @@ class PMEInstance {
 #endif
             size_t entry = threadOffset[threadID];
 
-            for (size_t cRow = threadID * ((gridDimensionC_ + nThreads_ - 1) / nThreads_); cRow < std::min(gridDimensionC_, (threadID + 1) * ((gridDimensionC_ + nThreads_ - 1) / nThreads_)); cRow += 1) {
-            // for (size_t cRow = threadID; cRow < gridDimensionC_; cRow += nThreads_) {
+            // for (size_t cRow = threadID * ((gridDimensionC_ + nThreads_ - 1) / nThreads_); cRow < std::min(gridDimensionC_, (threadID + 1) * ((gridDimensionC_ + nThreads_ - 1) / nThreads_)); cRow += 1) {
+            for (size_t cRow = threadID; cRow < gridDimensionC_; cRow += nThreads_) {
                 for (const auto &gridPointAndAtom : gridAtomList_[cRow]) {
                     size_t atom = gridPointAndAtom.second;
                     const Real *atomCoords = coords[atom];
