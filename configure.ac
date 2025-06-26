@@ -291,7 +291,7 @@ if test $core_avx2 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX2])
 fi
 
-if test $avx512 == true; then
+if test $core_avx512 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
 fi
 
