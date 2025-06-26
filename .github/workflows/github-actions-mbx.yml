@@ -58,7 +58,7 @@ jobs:
         if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
         run: |
           source /opt/intel/oneapi/setvars.sh
-          tree /opt/intel/oneapi
+          ls /opt/intel/oneapi/tbb/2022.2/env/../include
           printenv >> $GITHUB_ENV
 
       - name: Check out repository code
