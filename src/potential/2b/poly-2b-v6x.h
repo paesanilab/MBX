@@ -86,6 +86,7 @@ struct poly_2b_v6x {
      * @param[in] a Double array of 1153 elements with the linear parameters of the polynomial
      * @param[in] x Double array of length 31*nd with the variable values. It is in vectorized form, which means that
      * the order is var1_sys1 var1_sys2 ... var1_sysnd var2_sys1 ...
+     * @param[in] t Double array of workspace to use to store temporary values during evaluation of the PIPs, must be at least 3133*8 doubles long. 
      * @param[out] g Double array of length 31*nd that will store the gradients dP/dxi. It is in vectorized form, which
      * means that the order is var1_sys1 var1_sys2 ... var1_sysnd var2_sys1 ...
      * @return Vector of nd elements with the polynomial evaluation of each system
