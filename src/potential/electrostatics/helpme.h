@@ -38,6 +38,10 @@
 #include <unistd.h>
 #include <vector>
 
+#ifdef TBB
+#include "tbb/scalable_allocator.h"
+#endif
+
 // original file: ../src/cartesiantransform.h
 
 // BEGINLICENSE
@@ -451,8 +455,13 @@ class FFTWAllocator {
     size_type max_size() const throw() { return std::numeric_limits<std::size_t>::max() / sizeof(T); }
 
     // allocate but don't initialize num elements of type T
-    pointer allocate(size_type num, const void * = 0) { return static_cast<pointer>(fftw_malloc(num * sizeof(T))); }
-
+    pointer allocate(size_type num, const void * = 0) {
+        #ifdef TBB
+        return static_cast<pointer>(scalable_aligned_malloc(num * sizeof(T), 128));
+        #else
+        return static_cast<pointer>(fftw_malloc(num * sizeof(T)));
+        #endif
+    }
     // initialize elements of allocated storage p with value value
     void construct(pointer p, const T &value) {
         // initialize memory with placement new
@@ -463,7 +472,13 @@ class FFTWAllocator {
     void destroy(pointer p) {}
 
     // deallocate storage p of deleted elements
-    void deallocate(pointer p, size_type num) { fftw_free(static_cast<void *>(p)); }
+    void deallocate(pointer p, size_type num) {
+        #ifdef TBB
+        scalable_aligned_free(static_cast<void *>(p));
+        #else
+        fftw_free(static_cast<void *>(p));
+        #endif
+    }
 };
 
 // return that all specializations of this allocator are interchangeable
@@ -2886,37 +2901,84 @@ class PMEInstance {
         int nPotentialComponents = nCartesian(derivativeLevel) - cartesianOffset;
         size_t nPoints = gridPoints.nRows();
 
+        std::vector<RealMat> threadFracPotentials(nThreads_);
+        #pragma omp parallel for schedule(static, 1)
+        for (size_t rank = 0; rank < nThreads_; ++rank) {
+            threadFracPotentials[rank] = RealMat(nPoints, nPotentialComponents);
+        }
+        std::vector<std::tuple<Spline, Spline, Spline>> bSplines2(nPoints);
+
         #pragma omp parallel for
         for (size_t point = 0; point < nPoints; ++point) {
-            Real *phiPtr = fracPotential[point];
-            auto bSplines = makeBSplines(gridPoints[point], derivativeLevel);
-            auto splineA = std::get<0>(bSplines);
-            auto splineB = std::get<1>(bSplines);
-            auto splineC = std::get<2>(bSplines);
-            const auto &aGridIterator = gridIteratorA_[splineA.startingGridPoint()];
-            const auto &bGridIterator = gridIteratorB_[splineB.startingGridPoint()];
-            const auto &cGridIterator = gridIteratorC_[splineC.startingGridPoint()];
-            const Real *splineStartA = splineA[0];
-            const Real *splineStartB = splineB[0];
-            const Real *splineStartC = splineC[0];
-            for (const auto &cPoint : cGridIterator) {
-                for (const auto &bPoint : bGridIterator) {
-                    const Real *cbRow = potentialGrid + cPoint.first * myGridDimensionA_ * myGridDimensionB_ +
-                                        bPoint.first * myGridDimensionA_;
-                    for (const auto &aPoint : aGridIterator) {
-                        Real gridVal = cbRow[aPoint.first];
-                        for (int component = 0; component < nPotentialComponents; ++component) {
-                            const auto &quanta = angMomIterator_[component + cartesianOffset];
-                            const Real *splineValsA = splineStartA + quanta[0] * splineOrder_;
-                            const Real *splineValsB = splineStartB + quanta[1] * splineOrder_;
-                            const Real *splineValsC = splineStartC + quanta[2] * splineOrder_;
-                            phiPtr[component] += gridVal * splineValsA[aPoint.second] * splineValsB[bPoint.second] *
-                                                 splineValsC[cPoint.second];
+            bSplines2[point] = makeBSplines(gridPoints[point], derivativeLevel);
+        }
+
+
+#pragma omp parallel num_threads(nThreads_)
+        {
+#ifdef _OPENMP
+            int threadID = omp_get_thread_num();
+#else
+            int threadID = 0;
+#endif
+
+            for (size_t point = 0; point < nPoints; ++point) {
+
+                size_t rank = omp_get_thread_num();
+
+                RealMat& threadFracPotential = threadFracPotentials[threadID];
+
+                auto& bSplines = bSplines2[point];
+                auto& splineA = std::get<0>(bSplines);
+                auto& splineB = std::get<1>(bSplines);
+                auto& splineC = std::get<2>(bSplines);
+                const auto &aGridIterator = gridIteratorA_[splineA.startingGridPoint()];
+                const auto &bGridIterator = gridIteratorB_[splineB.startingGridPoint()];
+                // const auto &cGridIterator = gridIteratorC_[splineC.startingGridPoint()];
+                const auto &cGridIterator = threadedGridIteratorC_[threadID][splineC.startingGridPoint()];
+                const Real *splineStartA = splineA[0];
+                const Real *splineStartB = splineB[0];
+                const Real *splineStartC = splineC[0];
+
+                for (int component = 0; component < nPotentialComponents; ++component) {
+                    const auto &quanta = angMomIterator_[component + cartesianOffset];
+                    const Real *splineValsA = splineStartA + quanta[0] * splineOrder_;
+                    const Real *splineValsB = splineStartB + quanta[1] * splineOrder_;
+                    const Real *splineValsC = splineStartC + quanta[2] * splineOrder_;
+                    Real phiAccumulator = 0;
+                    for (const auto &cPoint : cGridIterator) {
+                        const Real cVal = splineValsC[cPoint.second];
+                        for (const auto &bPoint : bGridIterator) {
+                            const Real cbVal = splineValsB[bPoint.second] * cVal;
+                            const Real *cbRow = potentialGrid + cPoint.first * myGridDimensionA_ * myGridDimensionB_ +
+                                                bPoint.first * myGridDimensionA_;
+                            for (const auto &aPoint : aGridIterator) {
+                                const Real gridVal = cbRow[aPoint.first];
+                                const Real test = splineValsA[aPoint.second];
+                                const Real temp1 = gridVal * test * cbVal;
+                                phiAccumulator += temp1;
+                            }
                         }
                     }
+                    threadFracPotential[point][component] = phiAccumulator;
                 }
             }
         }
+
+        for (size_t rank = 0; rank < nThreads_; ++rank) {
+            RealMat& threadFracPotential = threadFracPotentials[rank];
+            for (size_t point = 0; point < nPoints; ++point) {
+                for (int component = 0; component < nPotentialComponents; ++component) {
+                    fracPotential[point][component] += threadFracPotential[point][component];
+                }
+            }
+        }
+
+        #pragma omp parallel for
+        for (size_t point = 0; point < nPoints; ++point) {
+            bSplines2[point] = std::make_tuple<Spline, Spline, Spline>(Spline(), Spline(), Spline());
+        }
+
         potential += cartesianTransform(derivativeLevel, onlyOneShellForOutput, scaledRecVecs_, fracPotential);
     }
 
@@ -3750,6 +3812,7 @@ class PMEInstance {
                     std::vector<std::pair<short, short>> splineIterator;
                     for (const auto &fullIterator : gridIteratorC_[cGridPoint]) {
                         if (fullIterator.first % nThreads_ == thread) {
+                        // if (fullIterator.first / ((myGridDimensionC_ + nThreads_ - 1) / nThreads_) == thread) {
                             splineIterator.push_back(fullIterator);
                         }
                     }
@@ -3946,6 +4009,7 @@ class PMEInstance {
             int threadID = 0;
 #endif
             for (size_t row = threadID; row < myGridDimensionC_; row += nThreads_) {
+            // for (size_t row = threadID * ((myGridDimensionC_ + nThreads_ - 1) / nThreads_); row < std::min(myGridDimensionC_, (threadID + 1) * ((myGridDimensionC_ + nThreads_ - 1) / nThreads_)); row += 1) {
                 std::fill(&realGrid[row * numBA], &realGrid[(row + 1) * numBA], Real(0));
             }
             for (const auto &spline : splinesPerThread_[threadID]) {
@@ -3983,6 +4047,7 @@ class PMEInstance {
 #else
             int threadID = 0;
 #endif
+            // for (size_t row = threadID * ((gridDimensionC_ + nThreads_ - 1) / nThreads_); row < std::min(gridDimensionC_, (threadID + 1) * ((gridDimensionC_ + nThreads_ - 1) / nThreads_)); row += 1) {
             for (size_t row = threadID; row < gridDimensionC_; row += nThreads_) {
                 gridAtomList_[row].clear();
             }
@@ -3997,6 +4062,7 @@ class PMEInstance {
                 cCoord -= floor(cCoord);
                 short cStartingGridPoint = gridDimensionC_ * cCoord;
                 size_t thisAtomsThread = cStartingGridPoint % nThreads_;
+                // size_t thisAtomsThread = cStartingGridPoint / ((myGridDimensionC_ + nThreads_ - 1) / nThreads_);
                 const auto &cGridIterator = gridIteratorC_[cStartingGridPoint];
                 if (cGridIterator.size() && thisAtomsThread == threadID) {
                     Real aCoord = atomCoords[0] * recVecs_(0, 0) + atomCoords[1] * recVecs_(1, 0) +
@@ -4051,6 +4117,8 @@ class PMEInstance {
             int threadID = 0;
 #endif
             size_t entry = threadOffset[threadID];
+
+            // for (size_t cRow = threadID * ((gridDimensionC_ + nThreads_ - 1) / nThreads_); cRow < std::min(gridDimensionC_, (threadID + 1) * ((gridDimensionC_ + nThreads_ - 1) / nThreads_)); cRow += 1) {
             for (size_t cRow = threadID; cRow < gridDimensionC_; cRow += nThreads_) {
                 for (const auto &gridPointAndAtom : gridAtomList_[cRow]) {
                     size_t atom = gridPointAndAtom.second;

@@ -44,7 +44,7 @@ print("Energy(grad):",energy_g)
 print("Grads:",grad)
 
 # Define a 9-element box
-box = [10.0,0.0,0.0,0.0,10.0,0.0,0.0,0.0,10.0]
+box = [20.0,0.0,0.0,0.0,20.0,0.0,0.0,0.0,20.0]
 
 # Get energy, no grads, pbc
 energy = mbx.get_energy_pbc_nograd(xyz,len(atom_names),box)
