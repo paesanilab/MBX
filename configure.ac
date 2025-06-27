@@ -184,18 +184,6 @@ MBX_CONFIG_ENABLE([optimization],[compiler optimizations via "-O3" compiler argu
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
-<<<<<<< HEAD
-MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
-MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
-MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization],[no])
-MBX_CONFIG_ENABLE([host],[pass the xHost argument to the intel compiler, exploiting the best instruction set for your machine],[no])
-MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
-||||||| 32bd2396
-MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
-MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
-MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization],[no])
-MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
-=======
 MBX_CONFIG_ENABLE([ttmnrg],[TTM-nrg PEFs via "-DTTMNRG" define.],[no])
 
 MBX_CONFIG_ENABLE([cpp17],[compiling with C++17 standard],[no])
@@ -215,7 +203,6 @@ MBX_CONFIG_ENABLE([march-x86-64-v3],[compilation for x86-64-v3 processors (inclu
 MBX_CONFIG_ENABLE([march-x86-64-v4],[compilation for x86-64-v4 processors (includes AVX-512), use with intel or gcc compiler],[no])
 
 MBX_CONFIG_ENABLE([aligned-new],[compilation with aligned new, use this only if you get an error about calls to new when using --enable-intel-intrinsics],[no])
->>>>>>> kdtree_memleak_fix
 
 # Act on enable flags
 
@@ -308,13 +295,6 @@ if test $core_avx512 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
 fi
 
-<<<<<<< HEAD
-if test $host == true; then
-    MBX_CHECK_REQ_CXXFLAG([-xHOST])
-fi
-
-||||||| 32bd2396
-=======
 if test $march_avx2 == true; then
     MBX_CHECK_REQ_CXXFLAG([-march=core-avx2])
 fi
@@ -335,7 +315,6 @@ if test $march_x86_64_v4 == true; then
     MBX_CHECK_REQ_CXXFLAG([-march=x86-64-v4])
 fi
 
->>>>>>> kdtree_memleak_fix
 # Add flags to variable
 AC_SUBST(EXTRA_CXXFLAGS_AM,["$EXTRA_CXXFLAGS "])
 
