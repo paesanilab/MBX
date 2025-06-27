@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.2.4], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.2.5], [mbx-users@googlegroups.com])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
