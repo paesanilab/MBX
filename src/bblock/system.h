@@ -1447,7 +1447,7 @@ class System {
     size_t lj_spline_order_;
 
     /**
-     * Cutoff used to divide real space and recriprocal space in dispersion, electrostatics, and lj.
+     * Cutoff used to divide real space and reciprocal space in dispersion, electrostatics, and lj.
      */
     double cutoff_realspace_;
 
