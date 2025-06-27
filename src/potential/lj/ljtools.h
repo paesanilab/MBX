@@ -100,7 +100,7 @@ namespace lj {
 double lj(const double eps, const double sigma, double ljchgi, double ljchgj, const std::vector<double>& p1,
           const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
           std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
-          const size_t atom_index1, const size_t atom_index2, const double lj_scale_factor, bool do_grads,
+          const size_t atom_index1, const size_t atom_index2, const double lj_scale_factor, bool do_grads, bool do_field,
           const double cutoff, const double ewald_alpha, const std::vector<double>& box,
           const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
           const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial = 0);
@@ -122,7 +122,7 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
  * @return True if pair found or used, false otherwise
  */
 bool GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon,
-                 double& out_sigma, std::vector<std::pair<std::string, std::string> > use_lj, nlohmann::json lj_j = {});
+                 double& out_sigma, std::vector<std::pair<std::string, std::string>>& use_lj, const nlohmann::json& lj_j = {});
 
 }  // namespace lj
 

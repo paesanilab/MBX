@@ -62,7 +62,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
     double *phi2, double *Efq2, double elec_scale_factor, double ewald_alpha, bool use_pbc,
     const std::vector<double> &box, const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
     const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
-    std::vector<double> *virial) {
+    vector<double> *virial) {
 
     // These shifts are for vector indexing and will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
@@ -81,7 +81,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
 
     // Fill vectors with zeros in the desired range
     // temporary virial holder
-    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
+    // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
 
     const double PIQSRT = std::sqrt(M_PI);
 
@@ -91,7 +91,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
     double v10 = 0.0;
 
 // Store rijx, rijy and rijz in vectors
-#pragma omp simd reduction(+ : v7, v8, v9, v10)
+#pragma omp simd simdlen(8) reduction(+ : v7, v8, v9, v10)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = false;
         if (!use_ghost) accum2 = true;
@@ -242,13 +242,13 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     double aCC, double aCC1_4, double g34, double *Efqx_mon1, double *Efqy_mon1, double *Efqz_mon1, double *phi1,
     double *phi2, double *Efq2, double elec_scale_factor, double ewald_alpha, bool use_pbc,
     const std::vector<double> &box, const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
-    const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
+    const vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
     PrecomputedInfo& precomputedInformation,
     std::vector<double> *virial) {
 
-    double *rijx_vec = precomputedInformation.rijx.data();
-    double *rijy_vec = precomputedInformation.rijy.data(); 
-    double *rijz_vec = precomputedInformation.rijz.data();
+    double *rijx = precomputedInformation.rijx.data();
+    double *rijy = precomputedInformation.rijy.data(); 
+    double *rijz = precomputedInformation.rijz.data();
 
     // These shifts are for vector indexing and will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
@@ -267,7 +267,7 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
 
     // Fill vectors with zeros in the desired range
     // temporary virial holder
-    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
+    // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
 
     const double PIQSRT = std::sqrt(M_PI);
 
@@ -276,130 +276,219 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     double v9 = 0.0;
     double v10 = 0.0;
 
+    double s1r3[mon2_index_end - mon2_index_start];
+    double scale[mon2_index_end - mon2_index_start];
+    double v3[mon2_index_end - mon2_index_start];
+    double v4[mon2_index_end - mon2_index_start];
+    double v5[mon2_index_end - mon2_index_start];
+
     // Store rijx, rijy and rijz in vectors
-    #pragma omp simd reduction(+ : v7, v8, v9, v10)
+    #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
 
-        double rijx = rijx_vec[m - mon2_index_start];
-        double rijy = rijy_vec[m - mon2_index_start];
-        double rijz = rijz_vec[m - mon2_index_start];
-
-        // bool accum2 = false;
-        // if (!use_ghost) accum2 = true;
-        // // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
-        // // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset + m2_offset];
-        // if (use_ghost && isls) accum2 = true;
 
-        // if (accum2) {
-        double scale = 1.0;
-        if (use_ghost && (isls == 1)) scale = 0.5;
+        scale[m - mon2_index_start] = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
 
-        //     double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];           // rijx
-        //     double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];   // rijy
-        //     double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];  // rijz
-            
-
-        //     // Apply the minimum image convention via fractional coordinates
-        //     // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-        //     if (use_pbc) {
-        //         // Convert to fractional coordinates
-        //         double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
-        //         double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
-        //         double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
-
-        //         // Put in the range 0 to 1
-        //         fracrijx -= std::floor(fracrijx + 0.5);
-        //         fracrijy -= std::floor(fracrijy + 0.5);
-        //         fracrijz -= std::floor(fracrijz + 0.5);
-
-        //         // Convert back to cartesian coordinates
-        //         rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
-        //         rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
-        //         rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
-        //     }
-
-        double v3 = rijx * rijx + rijy * rijy + rijz * rijz;  // r2
+        v3[m - mon2_index_start] = rijx[m - mon2_index_start] * rijx[m - mon2_index_start] + rijy[m - mon2_index_start] * rijy[m - mon2_index_start] + rijz[m - mon2_index_start] * rijz[m - mon2_index_start];  // r2
 
         // Store a*(r/A)^4 in vector
-        double v5 = aCC * v3 * v3 * Asqsqi;  // a*(r/A)^4
+        v5[m - mon2_index_start] = aCC * v3[m - mon2_index_start] * v3[m - mon2_index_start] * Asqsqi;  // a*(r/A)^4
+    }
 
-        // Convert r2 -> 1/r
-        v3 = 1 / std::sqrt(v3);
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        // Convert r2 -> r
+        v3[m - mon2_index_start] = std::sqrt(v3[m - mon2_index_start]);
+    }
 
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+
+        // Convert r -> 1/r
+        v3[m - mon2_index_start] = 1 / v3[m - mon2_index_start];
         // Cheesy way to apply cutoffs, for now!
-        v3 *= (v3 < 1.0 / cutoff ? 0 : 1);
+        v3[m - mon2_index_start] *= (v3[m - mon2_index_start] < 1.0 / cutoff ? 0 : 1);
+    }
+
+
+#ifdef INTEL_INTRINSICS
+
+    double* v_erf = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v_erf[m - mon2_index_start] = ewald_alpha / (v3[m - mon2_index_start] + 1e-30);
+    }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(v_erf + m - mon2_index_start);
+        __m256d b = _mm256_erf_pd(a);
+        _mm256_store_pd(v_erf + m - mon2_index_start, b);
+    }
+
+#else
+
+    double* v_erf = new double[mon2_index_end - mon2_index_start];
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v_erf[m - mon2_index_start] = erf(ewald_alpha / (v3[m - mon2_index_start] + 1e-30));
+    }
+
+#endif
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
 
         // Store the attenuated coulomb operator in vector
-        double v4 = (elec_scale_factor - erf(ewald_alpha / (v3 + 1e-30))) * v3;  // (1-erf(alpha r))/r
+        v4[m - mon2_index_start] = (elec_scale_factor - v_erf[m - mon2_index_start]) * v3[m - mon2_index_start];  // (1-erf(alpha r))/r
+    }
 
-        if (!use_pbc) {
+    delete[] v_erf;
+
+    if (!use_pbc) {
+        #pragma omp simd simdlen(8)
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             // Rescale v3 to ensure right behavior in no PBC conditions
-            v3 *= elec_scale_factor;
-            v4 = v3;
+            v3[m - mon2_index_start] *= elec_scale_factor;
+            v4[m - mon2_index_start] = v3[m - mon2_index_start];
         }
+    }
 
-        // Compute gammq and store result in vector. This loop is not vectorizable
-        double v6 = gammq(0.75, v5) * elec_scale_factor;  // gammq
+    double alpha2r2[mon2_index_end - mon2_index_start];
 
-        // Finalize computation of electric field
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        alpha2r2[m - mon2_index_start] = -ewald_alpha * ewald_alpha / (v3[m - mon2_index_start] * v3[m - mon2_index_start]);
+    }
+
+    double v6[mon2_index_end - mon2_index_start];
+    // double exp1[mon2_index_end - mon2_index_start];
+    
+    // // Cannot be vectorized because of call to gammq and exp unvectorized function
+    // for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+    //     // Compute gammq and store result in vector. This loop is not vectorizable
+    //     v6[m - mon2_index_start] = gammq(0.75, v5[m - mon2_index_start]) * elec_scale_factor;  // gammq
+    // }
+
+    double g34log = std::log(g34);
+
+    gammq_optimized(0.75, v5, g34log, mon2_index_end - mon2_index_start, v6);
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        v6[m - mon2_index_start] *= elec_scale_factor;
+    }
+
+
+#ifdef INTEL_INTRINSICS
+    double* exp1 = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
+#else
+    double* exp1 = new double[mon2_index_end - mon2_index_start];
+#endif
 
 #if NO_THOLE
-        const double exp1 = 0;
-        v6 = 0;
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1[m - mon2_index_start] = 0;
+        v6[m - mon2_index_start] = 0;
+    }
 #else
-        const double exp1 = elec_scale_factor * std::exp(-v5);
+
+#ifdef INTEL_INTRINSICS
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1[m - mon2_index_start] = -v5[m - mon2_index_start];
+    }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(exp1 + m - mon2_index_start);
+        __m256d b = _mm256_exp_pd(a);
+        _mm256_store_pd(exp1 + m - mon2_index_start, b);
+    }
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1[m - mon2_index_start] *= elec_scale_factor;
+    }
+
+#else
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1[m - mon2_index_start] = elec_scale_factor * std::exp(-v5[m - mon2_index_start]);
+    }
+
 #endif
-        // Terms needed for the Ewald direct space field, see equation 2.8 of
-        // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
-        const double exp_alpha2r2 = std::exp(-ewald_alpha * ewald_alpha / (v3 * v3));
+
+#endif
+
+    // Terms needed for the Ewald direct space field, see equation 2.8 of
+    // A. Y. Toukmaji, C. Sagui, J. Board and T. A. Darden, J. Chem. Phys., 113 10913 (2000).
+    
+#ifdef INTEL_INTRINSICS
+
+    double* exp_alpha2r2 = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp_alpha2r2[m - mon2_index_start] = alpha2r2[m - mon2_index_start];
+    }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(exp_alpha2r2 + m - mon2_index_start);
+        __m256d b = _mm256_exp_pd(a);
+        _mm256_store_pd(exp_alpha2r2 + m - mon2_index_start, b);
+    }
+
+#else
+
+    double* exp_alpha2r2 = new double[mon2_index_end - mon2_index_start];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp_alpha2r2[m - mon2_index_start] = std::exp(alpha2r2[m - mon2_index_start]);
+    }
+
+#endif
+
+    // Finalize computation of electric field
+    #pragma omp simd simdlen(8) reduction(+ : v7, v8, v9, v10)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         const bool use_ewald = use_pbc;
-        const double ewaldterm = use_ewald ? 2 * exp_alpha2r2 * ewald_alpha / PIQSRT : 0;
+        const double ewaldterm = use_ewald ? 2 * exp_alpha2r2[m - mon2_index_start] * ewald_alpha / PIQSRT : 0;
 
         // Screening functions
-        const double s1r = v4 - exp1 * v3;
-        const double s0r = (s1r + aCC1_4 * Ai * g34 * v6);
-        const double s1r3 = (s1r + ewaldterm) * v3 * v3;
+        const double s1r = v4[m - mon2_index_start] - exp1[m - mon2_index_start] * v3[m - mon2_index_start];
+        const double s0r = (s1r + aCC1_4 * Ai * g34 * v6[m - mon2_index_start]);
+        s1r3[m - mon2_index_start] = (s1r + ewaldterm) * v3[m - mon2_index_start] * v3[m - mon2_index_start];
 
         // Compute contribution to the field phi
         // Storing the contrib to mon 1 in vector to make it vectorizable
 
         // Assuming phi will be at1mon1_index at1m2 at1m3 .. for same type of mons
-        v7 += scale * s0r * chg2[site_jnmon2 + m];
-        phi2[site_jnmon2 + m] += scale * s0r * chg1[site_inmon1 + mon1_index];
+        v7 += scale[m - mon2_index_start] * s0r * chg2[site_jnmon2 + m];
+        phi2[site_jnmon2 + m] += scale[m - mon2_index_start] * s0r * chg1[site_inmon1 + mon1_index];
 
         // Field will be as xyz xxxxyyyyzzzzat1 xxxxxyyyyzzzz at2...
-        const double s1r3ci = scale * s1r3 * chg1[site_inmon1 + mon1_index];
-        const double s1r3cj = scale * s1r3 * chg2[site_jnmon2 + m];
+        const double s1r3ci = scale[m - mon2_index_start] * s1r3[m - mon2_index_start] * chg1[site_inmon1 + mon1_index];
+        const double s1r3cj = scale[m - mon2_index_start] * s1r3[m - mon2_index_start] * chg2[site_jnmon2 + m];
 
         // Compute the three components of the permanent electric field
         // Storing contributions to mon1 in vectors to make the loop vectorizable
 
-        v8 += s1r3cj * rijx;
-        v9 += s1r3cj * rijy;
-        v10 += s1r3cj * rijz;
+        v8 += s1r3cj * rijx[m - mon2_index_start];
+        v9 += s1r3cj * rijy[m - mon2_index_start];
+        v10 += s1r3cj * rijz[m - mon2_index_start];
 
-        Efq2[site_jnmon23 + m] -= s1r3ci * rijx;
-        Efq2[site_jnmon23 + nmon2 + m] -= s1r3ci * rijy;
-        Efq2[site_jnmon23 + nmon22 + m] -= s1r3ci * rijz;
+        Efq2[site_jnmon23 + m] -= s1r3ci * rijx[m - mon2_index_start];
+        Efq2[site_jnmon23 + nmon2 + m] -= s1r3ci * rijy[m - mon2_index_start];
+        Efq2[site_jnmon23 + nmon22 + m] -= s1r3ci * rijz[m - mon2_index_start];
 
-        // update virial
-        if (virial != 0) {
-            double dvr = scale * chg2[site_jnmon2 + m] * chg1[site_inmon1 + mon1_index] * s1r3 * constants::COULOMB;
-            double dvx = dvr * rijx;
-            double dvy = dvr * rijy;
-            double dvz = dvr * rijz;
-
-            v11_[0 * mon2_index_end + m] = rijx * dvx;
-            v11_[1 * mon2_index_end + m] = rijx * dvy;
-            v11_[2 * mon2_index_end + m] = rijx * dvz;
-            v11_[3 * mon2_index_end + m] = rijy * dvy;
-            v11_[4 * mon2_index_end + m] = rijy * dvz;
-            v11_[5 * mon2_index_end + m] = rijz * dvz;
-        }
-
-        // }  // if(accum2)
     }
+
+    delete[] exp1;
+    delete[] exp_alpha2r2;
 
     // Add up the contributions to the mon1 site
     *phi1 = v7;
@@ -407,22 +496,39 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     *Efqy_mon1 = v9;
     *Efqz_mon1 = v10;
 
+    // update virial
     if (virial != 0) {
+
+        double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        
+        #pragma omp simd simdlen(8) reduction(+ : v[0:6])
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-            // condensate virial
-            (*virial)[0] += v11_[0 * mon2_index_end + m];
-            (*virial)[1] += v11_[1 * mon2_index_end + m];
-            (*virial)[2] += v11_[2 * mon2_index_end + m];
+            double dvr = scale[m - mon2_index_start] * chg2[site_jnmon2 + m] * chg1[site_inmon1 + mon1_index] * s1r3[m - mon2_index_start] * constants::COULOMB;
+            
+            double dvx = dvr * rijx[m - mon2_index_start];
+            double dvy = dvr * rijy[m - mon2_index_start];
+            double dvz = dvr * rijz[m - mon2_index_start];
 
-            (*virial)[4] += v11_[3 * mon2_index_end + m];
-            (*virial)[5] += v11_[4 * mon2_index_end + m];
+            v[0] += rijx[m - mon2_index_start] * dvx;
+            v[1] += rijx[m - mon2_index_start] * dvy;
+            v[2] += rijx[m - mon2_index_start] * dvz;
 
-            (*virial)[8] += v11_[5 * mon2_index_end + m];
+            v[3] += rijy[m - mon2_index_start] * dvy;
+            v[4] += rijy[m - mon2_index_start] * dvz;
 
-            (*virial)[3] = (*virial)[1];
-            (*virial)[6] = (*virial)[2];
-            (*virial)[7] = (*virial)[5];
+            v[5] += rijz[m - mon2_index_start] * dvz;
         }
+
+        (*virial)[0] += v[0];
+        (*virial)[1] += v[1];
+        (*virial)[2] += v[2];
+        (*virial)[4] += v[3];
+        (*virial)[5] += v[4];
+        (*virial)[8] += v[5];
+
+        (*virial)[3] += v[1];
+        (*virial)[6] += v[2];
+        (*virial)[7] += v[4];
     }
 }
 
@@ -463,7 +569,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
     alpha_pi_term *= two_alpha_squared;
 
     const double cutoffsq = cutoff * cutoff;
-#pragma omp simd reduction(+ : v0, v1, v2)
+#pragma omp simd simdlen(8) reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
@@ -603,7 +709,7 @@ void ElectricFieldHolder::CalcDipoleElecField_WithinCutoff(double *xyz1, double 
     alpha_pi_term *= two_alpha_squared;
 
     const double cutoffsq = cutoff * cutoff;
-#pragma omp simd reduction(+ : v0, v1, v2)
+#pragma omp simd simdlen(8) reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = !use_ghost;
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
@@ -719,12 +825,13 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
                                               double *Efd2, double *Efdx_mon1, double *Efdy_mon1, double *Efdz_mon1,
                                               PrecomputedInfo& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
+
     double *rijx_vec = precomputedInformation.rijx.data();
     double *rijy_vec = precomputedInformation.rijy.data(); 
     double *rijz_vec = precomputedInformation.rijz.data();
     double *ts2x_vec = precomputedInformation.ts2x.data();
-    double *ts2y_vec = precomputedInformation.ts2y.data();
-    double *ts2z_vec = precomputedInformation.ts2z.data();
+    // double *ts2y_vec = precomputedInformation.ts2y.data();
+    // double *ts2z_vec = precomputedInformation.ts2z.data();
     double *s1r3_vec = precomputedInformation.s1r3.data();
     
     
@@ -740,52 +847,64 @@ void ElectricFieldHolder::CalcDipoleElecField_Optimized(double *xyz1, double *xy
     double v1 = 0.0;
     double v2 = 0.0;
 
-    #pragma omp simd reduction(+ : v0, v1, v2)
+    #pragma omp simd simdlen(8) reduction(+ : v0, v1, v2)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+
         double rijx = rijx_vec[m - mon2_index_start];
         double rijy = rijy_vec[m - mon2_index_start];
         double rijz = rijz_vec[m - mon2_index_start];
-        double ts2x = ts2x_vec[m - mon2_index_start];
-        double ts2y = ts2y_vec[m - mon2_index_start];
-        double ts2z = ts2z_vec[m - mon2_index_start];
+        // double ts2x = ts2x_vec[m - mon2_index_start];
+        // double ts2y = ts2y_vec[m - mon2_index_start];
+        // double ts2z = ts2z_vec[m - mon2_index_start];
         double s1r3 = s1r3_vec[m - mon2_index_start];
+        
+        double s2r5_3 = ts2x_vec[m - mon2_index_start];
+        const double ts2x = s2r5_3 * rijx;
+        const double ts2y = s2r5_3 * rijy;
+        const double ts2z = s2r5_3 * rijz;
 
-#if NO_THOLE
-        const double exp1 = 0;
-#else
-#endif
+        double ts2x_rijx_s1r3 = ts2x * rijx - s1r3;
+        double ts2z_rijz_s1r3 = ts2z * rijz - s1r3;
+        double ts2y_rijy_s1r3 = ts2y * rijy - s1r3;
+        
+        double ts2x_rijy = ts2x * rijy;
+        double ts2x_rijz = ts2x * rijz;
+        double ts2y_rijx = ts2y * rijx;
+        double ts2y_rijz = ts2y * rijz;
+        double ts2z_rijx = ts2z * rijx;
+        double ts2z_rijy = ts2z * rijy;
 
         // Get screening functions
         // Contributions to the dipole electric field to site i of mon1
         // Stored in vectors to make the loop vectorizable
         
         // Component x
-        v0 += (ts2x * rijx - s1r3) * mu2[site_jnmon23 + m] + ts2x * rijy * mu2[site_jnmon23 + nmon2 + m] +
-                ts2x * rijz * mu2[site_jnmon23 + nmon22 + m];
+        v0 += ts2x_rijx_s1r3 * mu2[site_jnmon23 + m] + ts2x_rijy * mu2[site_jnmon23 + nmon2 + m] +
+                ts2x_rijz * mu2[site_jnmon23 + nmon22 + m];
 
         // Component y
-        v1 += ts2y * rijx * mu2[site_jnmon23 + m] + (ts2y * rijy - s1r3) * mu2[site_jnmon23 + nmon2 + m] +
-                ts2y * rijz * mu2[site_jnmon23 + nmon22 + m];
+        v1 += ts2y_rijx * mu2[site_jnmon23 + m] + ts2y_rijy_s1r3 * mu2[site_jnmon23 + nmon2 + m] +
+                ts2y_rijz * mu2[site_jnmon23 + nmon22 + m];
 
         // Component z
-        v2 += ts2z * rijx * mu2[site_jnmon23 + m] + ts2z * rijy * mu2[site_jnmon23 + nmon2 + m] +
-                (ts2z * rijz - s1r3) * mu2[site_jnmon23 + nmon22 + m];
+        v2 += ts2z_rijx * mu2[site_jnmon23 + m] + ts2z_rijy * mu2[site_jnmon23 + nmon2 + m] +
+                ts2z_rijz_s1r3 * mu2[site_jnmon23 + nmon22 + m];
 
         // Contributions to the dipole electric field to site j of mon2
         // Component x
-        Efd2[site_jnmon23 + m] += (ts2x * rijx - s1r3) * mu1[site_inmon13 + mon1_index] +
-                                    ts2x * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                    ts2x * rijz * mu1[site_inmon13 + nmon12 + mon1_index];
+        Efd2[site_jnmon23 + m] = ts2x_rijx_s1r3 * mu1[site_inmon13 + mon1_index] +
+                                    ts2x_rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                    ts2x_rijz * mu1[site_inmon13 + nmon12 + mon1_index];
 
         // Component y
-        Efd2[site_jnmon23 + nmon2 + m] += (ts2y * rijx) * mu1[site_inmon13 + mon1_index] +
-                                            (ts2y * rijy - s1r3) * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                            ts2y * rijz * mu1[site_inmon13 + nmon12 + mon1_index];
+        Efd2[site_jnmon23 + nmon2 + m] = ts2y_rijx * mu1[site_inmon13 + mon1_index] +
+                                    ts2y_rijy_s1r3 * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                    ts2y_rijz * mu1[site_inmon13 + nmon12 + mon1_index];
 
         // Component z
-        Efd2[site_jnmon23 + nmon22 + m] += (ts2z * rijx) * mu1[site_inmon13 + mon1_index] +
-                                            ts2z * rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
-                                            (ts2z * rijz - s1r3) * mu1[site_inmon13 + nmon12 + mon1_index];
+        Efd2[site_jnmon23 + nmon22 + m] = ts2z_rijx * mu1[site_inmon13 + mon1_index] +
+                                    ts2z_rijy * mu1[site_inmon13 + nmon1 + mon1_index] +
+                                    ts2z_rijz_s1r3 * mu1[site_inmon13 + nmon12 + mon1_index];
     
     }
 
@@ -820,7 +939,7 @@ void ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double 
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
-#pragma omp simd 
+#pragma omp simd simdlen(8)
     for (size_t m = m2init; m < nmon2; m++) {
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
         // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
@@ -878,7 +997,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
                                               size_t nmon2, size_t site_i, size_t site_j, double Asqsqi, double aDD,
                                               double ewald_alpha, bool use_pbc, const std::vector<double> &box,
                                               const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
-                                              const std::vector<size_t> &islocal, const size_t isl1_offset,
+                                              const vector<size_t> &islocal, const size_t isl1_offset,
                                               const size_t isl2_offset,
                                               PrecomputedInfo& precomputedInformation,
                                               int mt1, int mt2, int m1, int i, int j) {
@@ -901,13 +1020,13 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 
     const double cutoffsq = cutoff * cutoff;
 
-    precomputedInformation.rijx = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.rijy = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.rijz = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.ts2x = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.ts2y = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.ts2z = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
-    precomputedInformation.s1r3 = std::vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.rijx = vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.rijy = vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.rijz = vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.ts2x = vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    // precomputedInformation.ts2y = vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    // precomputedInformation.ts2z = vector<double>(mon2_index_end - mon2_index_start, 0.0);
+    precomputedInformation.s1r3 = vector<double>(mon2_index_end - mon2_index_start, 0.0);
 
     double *rijx_vec = precomputedInformation.rijx.data();
     double *rijy_vec = precomputedInformation.rijy.data();
@@ -917,54 +1036,97 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
     double *ts2z_vec = precomputedInformation.ts2z.data();
     double *s1r3_vec = precomputedInformation.s1r3.data();
 
-    #pragma omp simd 
+    #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        bool accum2 = !use_ghost;
-        
-        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
-        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
-        
-        double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
-
         // Distances between sites i and j from mon1 and mon2
-        double rijx = xyzmon1_x - xyz2[site_jnmon23 + m];
-        double rijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-        double rijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
-        
-        // Apply the minimum image convention via fractional coordinates
-        // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-        if (use_pbc) {
+        rijx_vec[m - mon2_index_start] = xyzmon1_x - xyz2[site_jnmon23 + m];
+        rijy_vec[m - mon2_index_start] = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
+        rijz_vec[m - mon2_index_start] = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
+    }
+
+    // Apply the minimum image convention via fractional coordinates
+    // It is probably a good idea to identify orthorhombic cases and write a faster version for them
+    if (use_pbc) {
+        #pragma omp simd simdlen(8)
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             // Convert to fractional coordinates
-            double fracrijx = box_inverse[0] * rijx + box_inverse[3] * rijy + box_inverse[6] * rijz;
-            double fracrijy = box_inverse[1] * rijx + box_inverse[4] * rijy + box_inverse[7] * rijz;
-            double fracrijz = box_inverse[2] * rijx + box_inverse[5] * rijy + box_inverse[8] * rijz;
+            double fracrijx = box_inverse[0] * rijx_vec[m - mon2_index_start] + box_inverse[3] * rijy_vec[m - mon2_index_start] + box_inverse[6] * rijz_vec[m - mon2_index_start];
+            double fracrijy = box_inverse[1] * rijx_vec[m - mon2_index_start] + box_inverse[4] * rijy_vec[m - mon2_index_start] + box_inverse[7] * rijz_vec[m - mon2_index_start];
+            double fracrijz = box_inverse[2] * rijx_vec[m - mon2_index_start] + box_inverse[5] * rijy_vec[m - mon2_index_start] + box_inverse[8] * rijz_vec[m - mon2_index_start];
             // Put in the range 0 to 1
             fracrijx -= std::floor(fracrijx + 0.5);
             fracrijy -= std::floor(fracrijy + 0.5);
             fracrijz -= std::floor(fracrijz + 0.5);
             // Convert back to Cartesian coordinates
-            rijx = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
-            rijy = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
-            rijz = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
+            rijx_vec[m - mon2_index_start] = box[0] * fracrijx + box[3] * fracrijy + box[6] * fracrijz;
+            rijy_vec[m - mon2_index_start] = box[1] * fracrijx + box[4] * fracrijy + box[7] * fracrijz;
+            rijz_vec[m - mon2_index_start] = box[2] * fracrijx + box[5] * fracrijy + box[8] * fracrijz;
         }
+    }
 
-        const double rsq = rijx * rijx + rijy * rijy + rijz * rijz;
+    double vscale[mon2_index_end - mon2_index_start];
+    double rsq[mon2_index_end - mon2_index_start];
+    double ri[mon2_index_end - mon2_index_start];
+    double risq[mon2_index_end - mon2_index_start];
+    double r_alpha[mon2_index_end - mon2_index_start];
+    double exp_alpha2_r2[mon2_index_end - mon2_index_start];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+
+        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
+        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
+        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         
-        const double ri = 1 / sqrt(rsq);
-        const double risq = ri * ri;
+        vscale[m - mon2_index_start] = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
+
+        rsq[m - mon2_index_start] = rijx_vec[m - mon2_index_start] * rijx_vec[m - mon2_index_start] + rijy_vec[m - mon2_index_start] * rijy_vec[m - mon2_index_start] + rijz_vec[m - mon2_index_start] * rijz_vec[m - mon2_index_start];
+        
+        ri[m - mon2_index_start] = 1 / sqrt(rsq[m - mon2_index_start]);
+        risq[m - mon2_index_start] = ri[m - mon2_index_start] * ri[m - mon2_index_start];
 
         // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
         // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
         // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
         // r^-1, r^-3, r^-5
-        double r_alpha = ewald_alpha * sqrt(rsq);
-        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
-        double bn1 = (erfc(r_alpha) * ri + alpha_pi_term * exp_alpha2_r2) * risq;
-        double bn2 = (3 * bn1 + alpha_pi_term * two_alpha_squared * exp_alpha2_r2) * risq;
+        r_alpha[m - mon2_index_start] = ewald_alpha * sqrt(rsq[m - mon2_index_start]);
+        exp_alpha2_r2[m - mon2_index_start] = exp(-r_alpha[m - mon2_index_start] * r_alpha[m - mon2_index_start]);
+    }
+
+
+#ifdef INTEL_INTRINSICS
+
+    double* erfc_eval = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erfc_eval[m - mon2_index_start] = r_alpha[m - mon2_index_start];
+    }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(erfc_eval + m - mon2_index_start);
+        __m256d b = _mm256_erfc_pd(a);
+        _mm256_store_pd(erfc_eval + m - mon2_index_start, b);
+    }
+
+#else
+
+    double* erfc_eval = new double[mon2_index_end - mon2_index_start];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erfc_eval[m - mon2_index_start] = erfc(r_alpha[m - mon2_index_start]);
+    }
+
+#endif
+    
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        double bn1 = (erfc_eval[m - mon2_index_start] * ri[m - mon2_index_start] + alpha_pi_term * exp_alpha2_r2[m - mon2_index_start]) * risq[m - mon2_index_start];
+        double bn2 = (3 * bn1 + alpha_pi_term * two_alpha_squared * exp_alpha2_r2[m - mon2_index_start]) * risq[m - mon2_index_start];
 
         // Some values that will be used in the screening functions
-        const double rA4 = rsq * rsq * Asqsqi;
+        const double rA4 = rsq[m - mon2_index_start] * rsq[m - mon2_index_start] * Asqsqi;
 // TODO look at the exponential function intel vec
 #if NO_THOLE
         const double exp1 = 0;
@@ -973,23 +1135,22 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 #endif
 
         // Get screening functions
-        const double s1r3 = scale * (bn1 - exp1 * ri * risq);
-        const double s2r5_3 = scale * (bn2 - (3 + 4 * aDD * rA4) * exp1 * ri * risq * risq);
-        const double ts2x = s2r5_3 * rijx;
-        const double ts2y = s2r5_3 * rijy;
-        const double ts2z = s2r5_3 * rijz;
+        const double s1r3 = vscale[m - mon2_index_start] * (bn1 - exp1 * ri[m - mon2_index_start] * risq[m - mon2_index_start]);
+        const double s2r5_3 = vscale[m - mon2_index_start] * (bn2 - (3 + 4 * aDD * rA4) * exp1 * ri[m - mon2_index_start] * risq[m - mon2_index_start] * risq[m - mon2_index_start]);
+        const double ts2x = s2r5_3 * rijx_vec[m - mon2_index_start];
+        const double ts2y = s2r5_3 * rijy_vec[m - mon2_index_start];
+        const double ts2z = s2r5_3 * rijz_vec[m - mon2_index_start];
 
         // Contributions to the dipole electric field to site i of mon1
         // Stored in vectors to make the loop vectorizable
-        rijx_vec[m - mon2_index_start] = rijx;
-        rijy_vec[m - mon2_index_start] = rijy;
-        rijz_vec[m - mon2_index_start] = rijz;
-        ts2x_vec[m - mon2_index_start] = ts2x;
-        ts2y_vec[m - mon2_index_start] = ts2y;
-        ts2z_vec[m - mon2_index_start] = ts2z;
+        ts2x_vec[m - mon2_index_start] = s2r5_3;
+        // ts2y_vec[m - mon2_index_start] = ts2y;
+        // ts2z_vec[m - mon2_index_start] = ts2z;
         s1r3_vec[m - mon2_index_start] = s1r3;
     
     }
+
+    delete[] erfc_eval;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1000,7 +1161,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(
     double aDD, double aCD, double Asqsqi, double *grdx, double *grdy, double *grdz, double *phi1, double *phi2,
     double *grd2, double elec_scale_factor, double ewald_alpha, bool use_pbc, const std::vector<double> &box,
     const std::vector<double> &box_inverse, double cutoff, bool use_ghost, const std::vector<size_t> &islocal,
-    const size_t isl1_offset, const size_t isl2_offset, std::vector<double> *virial) {
+    const size_t isl1_offset, const size_t isl2_offset, vector<double> *virial) {
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
     const size_t nmon22 = nmon2 * 2;
@@ -1017,13 +1178,13 @@ void ElectricFieldHolder::CalcElecFieldGrads(
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
     // Fill vectors with zeros in the desired range
-    std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-    std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-    std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-    std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
+    // std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
+    // std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
+    // std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
+    // std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
+    // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
 
-#pragma omp simd
+#pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         bool accum2 = false;
         if (!use_ghost) accum2 = true;
@@ -1282,17 +1443,13 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
     size_t mon2_index_start, size_t mon2_index_end, size_t nmon1, size_t nmon2, size_t site_i, size_t site_j,
     double aDD, double aCD, double Asqsqi, double *grdx, double *grdy, double *grdz, double *phi1, double *phi2,
     double *grd2, double elec_scale_factor, double ewald_alpha, bool use_pbc, const std::vector<double> &box,
-    const std::vector<double> &box_inverse, double cutoff, bool use_ghost, const std::vector<size_t> &islocal,
+    const std::vector<double> &box_inverse, double cutoff, bool use_ghost, const vector<size_t> &islocal,
     const size_t isl1_offset, const size_t isl2_offset, PrecomputedInfo& precomputedInformation, std::vector<double> *virial) {
 
     
     double *rijx_vec = precomputedInformation.rijx.data();
     double *rijy_vec = precomputedInformation.rijy.data(); 
     double *rijz_vec = precomputedInformation.rijz.data();
-    double *ts2x_vec = precomputedInformation.ts2x.data();
-    double *ts2y_vec = precomputedInformation.ts2y.data();
-    double *ts2z_vec = precomputedInformation.ts2z.data();
-    double *s1r3_vec = precomputedInformation.s1r3.data();
 
     // Shifts that will be useful in the loops
     const size_t nmon12 = nmon1 * 2;
@@ -1309,135 +1466,175 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
-    // Fill vectors with zeros in the desired range
-    std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
-    std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
-    std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
-    std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
-    std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
+    const double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
 
-    #pragma omp simd
+    // Fill vectors with zeros in the desired range
+    // std::fill(v0_.begin() + mon2_index_start, v0_.begin() + mon2_index_end, 0.0);
+    // std::fill(v1_.begin() + mon2_index_start, v1_.begin() + mon2_index_end, 0.0);
+    // std::fill(v2_.begin() + mon2_index_start, v2_.begin() + mon2_index_end, 0.0);
+    // std::fill(v3_.begin() + mon2_index_start, v3_.begin() + mon2_index_end, 0.0);
+    // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);  // holders for the virial during vectorized loop
+
+    double rijx[mon2_index_end];
+    double rijy[mon2_index_end];
+    double rijz[mon2_index_end];
+    double rijx2[mon2_index_end];
+    double rijy2[mon2_index_end];
+    double rijz2[mon2_index_end];
+    double r[mon2_index_end];
+    double ri[mon2_index_end];
+    double risq[mon2_index_end];
+    double rA4[mon2_index_end];
+    double adrA4[mon2_index_end];
+    double acrA4[mon2_index_end];
+    double r_alpha[mon2_index_end];
+
+    double vscale[mon2_index_end];
+
+    #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
 
-        double rijx = rijx_vec[m - mon2_index_start];
-        double rijy = rijy_vec[m - mon2_index_start];
-        double rijz = rijz_vec[m - mon2_index_start];
+        rijx[m] = rijx_vec[m - mon2_index_start];
+        rijy[m] = rijy_vec[m - mon2_index_start];
+        rijz[m] = rijz_vec[m - mon2_index_start];
 
-        // bool accum2 = false;
-        // if (!use_ghost) accum2 = true;
-        // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
-        // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
         size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
-        // if (use_ghost && isls) accum2 = true;
 
-        // if (accum2) {
-        double scale = 1.0;
-        if (use_ghost && (isls == 1)) scale = 0.5;
+        vscale[m] = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
 
-            // // Distances between sites i and j from mon1 and mon2
-            // const double rawrijx = xyzmon1_x - xyz2[site_jnmon23 + m];
-            // const double rawrijy = xyzmon1_y - xyz2[site_jnmon23 + nmon2 + m];
-            // const double rawrijz = xyzmon1_z - xyz2[site_jnmon23 + nmon22 + m];
-
-            // // Apply the minimum image convention via fractional coordinates
-            // // It is probably a good idea to identify orthorhombic cases and write a faster version for them
-            // double minrijx, minrijy, minrijz;
-            // if (use_pbc) {
-            //     // Convert to fractional coordinates
-            //     const double fracrijx = box_inverse[0] * rawrijx + box_inverse[3] * rawrijy + box_inverse[6] * rawrijz;
-            //     const double fracrijy = box_inverse[1] * rawrijx + box_inverse[4] * rawrijy + box_inverse[7] * rawrijz;
-            //     const double fracrijz = box_inverse[2] * rawrijx + box_inverse[5] * rawrijy + box_inverse[8] * rawrijz;
-            //     // Put in the range 0 to 1
-            //     const double minfracrijx = fracrijx - std::floor(fracrijx + 0.5);
-            //     const double minfracrijy = fracrijy - std::floor(fracrijy + 0.5);
-            //     const double minfracrijz = fracrijz - std::floor(fracrijz + 0.5);
-            //     // Convert back to Cartesian coordinates
-            //     minrijx = box[0] * minfracrijx + box[3] * minfracrijy + box[6] * minfracrijz;
-            //     minrijy = box[1] * minfracrijx + box[4] * minfracrijy + box[7] * minfracrijz;
-            //     minrijz = box[2] * minfracrijx + box[5] * minfracrijy + box[8] * minfracrijz;
-            // }
-            // const double rijx = use_pbc ? minrijx : rawrijx;
-            // const double rijy = use_pbc ? minrijy : rawrijy;
-            // const double rijz = use_pbc ? minrijz : rawrijz;
-
-        const double rijx2 = rijx * rijx;
-        const double rijy2 = rijy * rijy;
-        const double rijz2 = rijz * rijz;
-        const double rsq = rijx2 + rijy2 + rijz2;
-        const double r = std::sqrt(rsq);
-        const double ri = r < cutoff ? 1 / r : 0;
-        const double risq = ri * ri;
+        rijx2[m] = rijx[m] * rijx[m];
+        rijy2[m] = rijy[m] * rijy[m];
+        rijz2[m] = rijz[m] * rijz[m];
+        const double rsq = rijx2[m] + rijy2[m] + rijz2[m];
+        r[m] = std::sqrt(rsq);
+        ri[m] = r[m] < cutoff ? 1 / r[m] : 0;
+        risq[m] = ri[m] * ri[m];
         const double rsqsq = rsq * rsq;
         // Some values that will be used in the screening functions
-        const double rA4 = rsqsq * Asqsqi;
+        rA4[m] = rsqsq * Asqsqi;
         // TODO look at the exponential function intel vec
 
-        const double adrA4 = aDD * 4.0 * rA4;
-        const double acrA4 = aCD * 4.0 * rA4;
+        adrA4[m] = aDD * 4.0 * rA4[m];
+        acrA4[m] = aCD * 4.0 * rA4[m];
+
+        r_alpha[m] = ewald_alpha * r[m];
+    }
+
+    double exp1d[mon2_index_end];
+    double exp1c[mon2_index_end];
+
 #if NO_THOLE
-        const double exp1d = 0;
-        const double exp1c = 0;
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1d[m] = 0;
+        exp1c[m] = 0;
+    }
 #else
-        const double exp1d = std::exp(-aDD * rA4);
-        const double exp1c = elec_scale_factor * std::exp(-aCD * rA4);
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        exp1d[m] = std::exp(-aDD * rA4[m]);
+        exp1c[m] = elec_scale_factor * std::exp(-aCD * rA4[m]);
+    }
+#endif
+    double alpha_pi_term[mon2_index_end];
+    double exp_alpha2_r2[mon2_index_end];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        alpha_pi_term[m] = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+        exp_alpha2_r2[m] = exp(-r_alpha[m] * r_alpha[m]);
+    }
+
+    // double erfterm[mon2_index_end];
+
+
+#ifdef INTEL_INTRINSICS
+
+    double* erfterm = new (std::align_val_t(32)) double[(mon2_index_end - mon2_index_start + 7) / 8 * 8];
+
+    #pragma omp simd simdlen(8)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erfterm[m - mon2_index_start] = r_alpha[m];
+    }
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m += 4) {
+        __m256d a = _mm256_load_pd(erfterm + m - mon2_index_start);
+        __m256d b = _mm256_erf_pd(a);
+        _mm256_store_pd(erfterm + m - mon2_index_start, b);
+    }
+
+#else
+
+    double* erfterm = new double[mon2_index_end - mon2_index_start];
+
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+        erfterm[m - mon2_index_start] = erf(r_alpha[m]);
+    }
+
 #endif
 
+    double individual_gradx[mon2_index_end];
+    double individual_grady[mon2_index_end];
+    double individual_gradz[mon2_index_end];
+
+    double gradx = 0.0;
+    double grady = 0.0;
+    double gradz = 0.0;
+    double phi_temp = 0.0;
+
+    #pragma omp simd simdlen(8) reduction(+ : gradx, grady, gradz, phi_temp)
+    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
         // Now build the Ewald generalization of the Coulomb operator and its derivatives, see
         // Toukmaji, Sagui, Board, and Darden, JCP, 113 10913 (2000)
         // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
         // r^-1, r^-3, r^-5
-        double r_alpha = ewald_alpha * r;
-        double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
-        double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
-        double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
-        double erfterm = erf(r_alpha);
-        double bn0 = (1 - erfterm) * ri;
-        double bn0_cd = (elec_scale_factor - erfterm) * ri;
-        alpha_pi_term *= two_alpha_squared;
-        double bn1 = (bn0 + alpha_pi_term * exp_alpha2_r2) * risq;
-        double bn1_cd = (bn0_cd + alpha_pi_term * exp_alpha2_r2) * risq;
-        alpha_pi_term *= two_alpha_squared;
-        double bn2 = (3 * bn1 + alpha_pi_term * exp_alpha2_r2) * risq;
-        double bn2_cd = (3 * bn1_cd + alpha_pi_term * exp_alpha2_r2) * risq;
-        alpha_pi_term *= two_alpha_squared;
-        double bn3 = (5 * bn2 + alpha_pi_term * exp_alpha2_r2) * risq;
+        double bn0 = (1 - erfterm[m - mon2_index_start]) * ri[m];
+        double bn0_cd = (elec_scale_factor - erfterm[m - mon2_index_start]) * ri[m];
+        alpha_pi_term[m] *= two_alpha_squared;
+        double bn1 = (bn0 + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
+        double bn1_cd = (bn0_cd + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
+        alpha_pi_term[m] *= two_alpha_squared;
+        double bn2 = (3 * bn1 + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
+        double bn2_cd = (3 * bn1_cd + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
+        alpha_pi_term[m] *= two_alpha_squared;
+        double bn3 = (5 * bn2 + alpha_pi_term[m] * exp_alpha2_r2[m]) * risq[m];
 
         // Get screening functions - old version to be untouched and then deleted
-        const double s2r5_3d = bn2 - (3 + adrA4) * exp1d * ri * risq * risq;
+        const double s2r5_3d = bn2 - (3 + adrA4[m]) * exp1d[m] * ri[m] * risq[m] * risq[m];
 
-        const double s3r7_15d = bn3 - (15 + 4 * adrA4 + adrA4 * adrA4) * exp1d * risq * risq * ri * risq;
-        const double s3r7_15x2 = s3r7_15d * rijx2;
-        const double s3r7_15y2 = s3r7_15d * rijy2;
-        const double s3r7_15z2 = s3r7_15d * rijz2;
-        const double s1r3c = bn1_cd - exp1c * ri * risq;
-        const double rxs1r3c = rijx * s1r3c;
-        const double rys1r3c = rijy * s1r3c;
-        const double rzs1r3c = rijz * s1r3c;
-        const double s2r5_3c = bn2_cd - (3 + acrA4) * exp1c * risq * ri * risq;
+        const double s3r7_15d = bn3 - (15 + 4 * adrA4[m] + adrA4[m] * adrA4[m]) * exp1d[m] * risq[m] * risq[m] * ri[m] * risq[m];
+        const double s3r7_15x2 = s3r7_15d * rijx2[m];
+        const double s3r7_15y2 = s3r7_15d * rijy2[m];
+        const double s3r7_15z2 = s3r7_15d * rijz2[m];
+        const double s1r3c = bn1_cd - exp1c[m] * ri[m] * risq[m];
+        const double rxs1r3c = rijx[m] * s1r3c;
+        const double rys1r3c = rijy[m] * s1r3c;
+        const double rzs1r3c = rijz[m] * s1r3c;
+        const double s2r5_3c = bn2_cd - (3 + acrA4[m]) * exp1c[m] * risq[m] * ri[m] * risq[m];
         // Tensors
-        const double ts2x = s2r5_3c * rijx;
-        const double ts2y = s2r5_3c * rijy;
-        const double ts2z = s2r5_3c * rijz;
+        const double ts2x = s2r5_3c * rijx[m];
+        const double ts2y = s2r5_3c * rijy[m];
+        const double ts2z = s2r5_3c * rijz[m];
 
         // T_alpha_beta_gamma tensor
-        const double t3_0 = s3r7_15x2 * rijx - s2r5_3d * 3.0 * rijx;         // x x x
-        const double t3_1 = s3r7_15x2 * rijy - s2r5_3d * rijy;               // x x y
-        const double t3_2 = s3r7_15x2 * rijz - s2r5_3d * rijz;               // x x z
-        const double t3_3 = s3r7_15y2 * rijx - s2r5_3d * rijx;               // x y y
-        const double t3_4 = s3r7_15d * rijx * rijy * rijz;                   // x y z
-        const double t3_5 = s3r7_15z2 * rijx - s2r5_3d * rijx;               // x z z
-        const double t3_6 = s3r7_15d * rijy2 * rijy - s2r5_3d * 3.0 * rijy;  // y y y
-        const double t3_7 = s3r7_15y2 * rijz - s2r5_3d * rijz;               // y y z
-        const double t3_8 = s3r7_15z2 * rijy - s2r5_3d * rijy;               // y z z
-        const double t3_9 = s3r7_15z2 * rijz - s2r5_3d * 3.0 * rijz;         // z z z
+        const double t3_0 = s3r7_15x2 * rijx[m] - s2r5_3d * 3.0 * rijx[m];         // x x x
+        const double t3_1 = s3r7_15x2 * rijy[m] - s2r5_3d * rijy[m];               // x x y
+        const double t3_2 = s3r7_15x2 * rijz[m] - s2r5_3d * rijz[m];               // x x z
+        const double t3_3 = s3r7_15y2 * rijx[m] - s2r5_3d * rijx[m];               // x y y
+        const double t3_4 = s3r7_15d * rijx[m] * rijy[m] * rijz[m];                   // x y z
+        const double t3_5 = s3r7_15z2 * rijx[m] - s2r5_3d * rijx[m];               // x z z
+        const double t3_6 = s3r7_15d * rijy2[m] * rijy[m] - s2r5_3d * 3.0 * rijy[m];  // y y y
+        const double t3_7 = s3r7_15y2 * rijz[m] - s2r5_3d * rijz[m];               // y y z
+        const double t3_8 = s3r7_15z2 * rijy[m] - s2r5_3d * rijy[m];               // y z z
+        const double t3_9 = s3r7_15z2 * rijz[m] - s2r5_3d * 3.0 * rijz[m];         // z z z
 
         // T_alpha_beta tensor
-        const double t2_0 = ts2x * rijx - s1r3c;  // alpha = x, beta = x
-        const double t2_1 = ts2x * rijy;
-        const double t2_2 = ts2x * rijz;
-        const double t2_3 = ts2y * rijy - s1r3c;
-        const double t2_4 = ts2y * rijz;
-        const double t2_5 = ts2z * rijz - s1r3c;
+        const double t2_0 = ts2x * rijx[m] - s1r3c;  // alpha = x, beta = x
+        const double t2_1 = ts2x * rijy[m];
+        const double t2_2 = ts2x * rijz[m];
+        const double t2_3 = ts2y * rijy[m] - s1r3c;
+        const double t2_4 = ts2y * rijz[m];
+        const double t2_5 = ts2z * rijz[m] - s1r3c;
 
         // Charge times the dipole component
         const double ci_mjx = chg1[site_inmon1 + mon1_index] * mu2[site_jnmon23 + m];
@@ -1461,29 +1658,24 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         // Gradients Charge-Dipole
         // Site site_i
         // Note. Sign changed
-        v0_[m] = scale * ((cj_mix - ci_mjx) * t2_0      // x x
+        individual_gradx[m] = vscale[m] * ((cj_mix - ci_mjx) * t2_0      // x x
                             + (cj_miy - ci_mjy) * t2_1    // x y
                             + (cj_miz - ci_mjz) * t2_2);  // x z
-        v1_[m] = scale * ((cj_mix - ci_mjx) * t2_1      // y x
+        individual_grady[m] = vscale[m] * ((cj_mix - ci_mjx) * t2_1      // y x
                             + (cj_miy - ci_mjy) * t2_3    // y y
                             + (cj_miz - ci_mjz) * t2_4);  // y z
-        v2_[m] = scale * ((cj_mix - ci_mjx) * t2_2      // z x
+        individual_gradz[m] = vscale[m] * ((cj_mix - ci_mjx) * t2_2      // z x
                             + (cj_miy - ci_mjy) * t2_4    // z y
                             + (cj_miz - ci_mjz) * t2_5);  // z z
 
-        // Site site_j
-        grd2[site_jnmon23 + m] -= v0_[m];
-        grd2[site_jnmon23 + nmon2 + m] -= v1_[m];
-        grd2[site_jnmon23 + nmon22 + m] -= v2_[m];
-
         // Update field
         // Site site_i
-        v3_[m] = scale * (rxs1r3c * mu2[site_jnmon23 + m] + rys1r3c * mu2[site_jnmon23 + nmon2 + m] +
+        phi_temp += vscale[m] * (rxs1r3c * mu2[site_jnmon23 + m] + rys1r3c * mu2[site_jnmon23 + nmon2 + m] +
                             rzs1r3c * mu2[site_jnmon23 + nmon22 + m]);
 
         // Site site_j
         phi2[site_jnmon2 + m] -=
-            scale * (rxs1r3c * mu1[site_inmon13 + mon1_index] + rys1r3c * mu1[site_inmon13 + nmon1 + mon1_index] +
+            vscale[m] * (rxs1r3c * mu1[site_inmon13 + mon1_index] + rys1r3c * mu1[site_inmon13 + nmon1 + mon1_index] +
                         rzs1r3c * mu1[site_inmon13 + nmon12 + mon1_index]);
 
         // Gradients Dipole-Dipole
@@ -1523,55 +1715,62 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
                             + mu1zmu2z * t3_9;  // z z z
 #endif
         // Site site_i
-        v0_[m] += scale * gx;
-        v1_[m] += scale * gy;
-        v2_[m] += scale * gz;
+        individual_gradx[m] += vscale[m] * gx;
+        individual_grady[m] += vscale[m] * gy;
+        individual_gradz[m] += vscale[m] * gz;
+
+        // // Site site_j
+        // grd2[site_jnmon23 + m] -= vscale[m] * gx;
+        // grd2[site_jnmon23 + nmon2 + m] -= vscale[m] * gy;
+        // grd2[site_jnmon23 + nmon22 + m] -= vscale[m] * gz;
+
+        gradx += individual_gradx[m];
+        grady += individual_grady[m];
+        gradz += individual_gradz[m];
 
         // Site site_j
-        grd2[site_jnmon23 + m] -= scale * gx;
-        grd2[site_jnmon23 + nmon2 + m] -= scale * gy;
-        grd2[site_jnmon23 + nmon22 + m] -= scale * gz;
+        grd2[site_jnmon23 + m] -= individual_gradx[m];
+        grd2[site_jnmon23 + nmon2 + m] -= individual_grady[m];
+        grd2[site_jnmon23 + nmon22 + m] -= individual_gradz[m];
+
+    }
+
+    delete[] erfterm;
 
         // update virial
-        if (virial != 0) {
-            v11_[0 * mon2_index_end + m] = -rijx * v0_[m] * constants::COULOMB;
-            v11_[1 * mon2_index_end + m] = -rijx * v1_[m] * constants::COULOMB;
-            v11_[2 * mon2_index_end + m] = -rijx * v2_[m] * constants::COULOMB;
+    if (virial != 0) {
 
-            v11_[3 * mon2_index_end + m] = -rijy * v1_[m] * constants::COULOMB;
-            v11_[4 * mon2_index_end + m] = -rijy * v2_[m] * constants::COULOMB;
+        double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+        
+        #pragma omp simd simdlen(8) reduction(+ : v[0:6])
+        for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
+            v[0] += -rijx[m] * individual_gradx[m] * constants::COULOMB;
+            v[1] += -rijx[m] * individual_grady[m] * constants::COULOMB;
+            v[2] += -rijx[m] * individual_gradz[m] * constants::COULOMB;
 
-            v11_[5 * mon2_index_end + m] = -rijz * v2_[m] * constants::COULOMB;
+            v[3] += -rijy[m] * individual_grady[m] * constants::COULOMB;
+            v[4] += -rijy[m] * individual_gradz[m] * constants::COULOMB;
+
+            v[5] += -rijz[m] * individual_gradz[m] * constants::COULOMB;
         }
-        // }  // if(accum2)
+
+        (*virial)[0] += v[0];
+        (*virial)[1] += v[1];
+        (*virial)[2] += v[2];
+        (*virial)[4] += v[3];
+        (*virial)[5] += v[4];
+        (*virial)[8] += v[5];
+
+        (*virial)[3] += v[1];
+        (*virial)[6] += v[2];
+        (*virial)[7] += v[4];
     }
 
     // Compress vectors to double
-    *grdx = 0.0;
-    *grdy = 0.0;
-    *grdz = 0.0;
-    *phi1 = 0.0;
-    for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
-        *grdx += v0_[m];
-        *grdy += v1_[m];
-        *grdz += v2_[m];
-        *phi1 += v3_[m];
-        // condensate virial
-        if (virial != 0) {
-            (*virial)[0] += v11_[0 * mon2_index_end + m];
-            (*virial)[1] += v11_[1 * mon2_index_end + m];
-            (*virial)[2] += v11_[2 * mon2_index_end + m];
-
-            (*virial)[4] += v11_[3 * mon2_index_end + m];
-            (*virial)[5] += v11_[4 * mon2_index_end + m];
-
-            (*virial)[8] += v11_[5 * mon2_index_end + m];
-
-            (*virial)[3] = (*virial)[1];
-            (*virial)[6] = (*virial)[2];
-            (*virial)[7] = (*virial)[5];
-        }
-    }
+    *grdx = gradx;
+    *grdy = grady;
+    *grdz = gradz;
+    *phi1 = phi_temp;
 }
 
 

@@ -63,6 +63,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "helpme.h"
 #include "json/json.h"
 
+#ifdef TBB
+#include "tbb/scalable_allocator.h"
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 
 /**

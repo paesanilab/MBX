@@ -185,21 +185,6 @@ void PairMBX::compute(int eflag, int vflag) {
         accumulate_f_all(false);
 
         mbx_e4b = mbx_e4b_local + mbx_e4b_ghost;
-
-#ifdef _DEBUG
-        printf("[MBX] (%i) -- Computing buck\n", me);
-#endif
-
-#ifdef TTMNRG
-        fix_mbx->mbxt_start(MBXT_BUCK);
-        mbx_buck = ptr_mbx->Buckingham(true, true);
-        fix_mbx->mbxt_stop(MBXT_BUCK);
-        accumulate_f(false);
-#else
-        fix_mbx->mbxt_start(MBXT_BUCK);
-        mbx_buck = 0.0;
-        fix_mbx->mbxt_stop(MBXT_BUCK);
-#endif
     }
 
     if (mbx_parallel) {
@@ -250,6 +235,31 @@ void PairMBX::compute(int eflag, int vflag) {
         if (comm->me == 0) mbx_disp_real = ptr_mbx_full->Dispersion(true);  // compute full dispersion on rank 0
         fix_mbx->mbxt_stop(MBXT_DISP);
         accumulate_f_full(false);
+    }
+
+    
+
+
+    if (fix_mbx->mbx_num_atoms > 0) {
+        
+#ifdef _DEBUG
+        printf("[MBX] (%i) -- Computing buck\n", me);
+#endif
+#ifdef TTMNRG
+        fix_mbx->mbxt_start(MBXT_BUCK);
+        mbx_buck = ptr_mbx->Buckingham(true, true);
+        fix_mbx->mbxt_stop(MBXT_BUCK);
+        accumulate_f(false);
+
+        fix_mbx->mbxt_start(MBXT_BUCK);
+        mbx_buck += ptr_mbx_local->LennardJones(true, true);
+        fix_mbx->mbxt_stop(MBXT_BUCK);
+        accumulate_f_local(false);
+#else
+        fix_mbx->mbxt_start(MBXT_BUCK);
+        mbx_buck = 0.0;
+        fix_mbx->mbxt_stop(MBXT_BUCK);
+#endif
     }
 
     mbx_disp = mbx_disp_real + mbx_disp_pme;

@@ -24,6 +24,10 @@ jobs:
     strategy:
       matrix:
         compiler: [g++, icpx]
+        configure_arguments: ["","--enable-march-avx2", "--enable-march-avx2 --enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"]
+        exclude:
+          - compiler: g++
+            configure_arguments: "--enable-march-avx2 --enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server hosted by GitHub!"
@@ -49,11 +53,12 @@ jobs:
           rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
           sudo apt-get update
-          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel intel-oneapi-mkl
+          sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic intel-oneapi-mpi intel-oneapi-mpi-devel intel-oneapi-mkl intel-oneapi-tbb
       - name: activate intel oneAPI
         if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
         run: |
           source /opt/intel/oneapi/setvars.sh
+          export CPATH=$CPATH:/opt/intel/oneapi/tbb/2021.10.0/include
           printenv >> $GITHUB_ENV
 
       - name: Check out repository code
@@ -66,7 +71,7 @@ jobs:
           ${{matrix.compiler}} -v | tee compiler_version.txt
           ls ${{ github.workspace }}
           autoreconf -fi
-          ./configure --disable-optimization $coverageflag --enable-shared CXX=${{matrix.compiler}}
+          ./configure --disable-optimization $coverageflag --enable-shared ${{matrix.configure_arguments}} CXX=${{matrix.compiler}}
           make -j2
           make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"

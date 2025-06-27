@@ -153,7 +153,7 @@ TEST_CASE("disptools::disp6") {
 
             double energy =
                 disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                            atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                            atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                             box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
 
             REQUIRE(energy == Approx(expected_energy).margin(TOL));
@@ -170,22 +170,22 @@ TEST_CASE("disptools::disp6") {
                 p1[i] += s;
                 double ep =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double epp =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] -= 4 * s;
                 double emm =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double em =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
@@ -196,22 +196,22 @@ TEST_CASE("disptools::disp6") {
                 xyz2[i] += s;
                 double ep =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double epp =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] -= 4 * s;
                 double emm =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double em =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
@@ -306,7 +306,7 @@ TEST_CASE("disptools::disp6") {
 
             double energy =
                 disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                            atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                            atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                             box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
 
             REQUIRE(energy == Approx(expected_energy).margin(TOL));
@@ -323,22 +323,22 @@ TEST_CASE("disptools::disp6") {
                 p1[i] += s;
                 double ep =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double epp =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] -= 4 * s;
                 double emm =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double em =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 p1[i] += s;
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
@@ -349,22 +349,22 @@ TEST_CASE("disptools::disp6") {
                 xyz2[i] += s;
                 double ep =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double epp =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] -= 4 * s;
                 double emm =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double em =
                     disp::disp6(C6, d6, c6i, c6j, p1, xyz2, grad1, grad2, phi1, phi2, nmon1, nmon2, start2, end2,
-                                atom_index1, atom_index2, disp_scale_factor, do_grads, cutoff, ewald_alpha, box,
+                                atom_index1, atom_index2, disp_scale_factor, do_grads, true, cutoff, ewald_alpha, box,
                                 box_inverse, use_ghost, islocal, isl1_offset, isl2_offset, &virial);
                 xyz2[i] += s;
                 double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
