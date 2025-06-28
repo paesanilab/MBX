@@ -47,6 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #endif 
 
 #include <unordered_map>
+#include <set>
 
 #ifdef _OPENMP
 #include <omp.h>
