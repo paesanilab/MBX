@@ -295,7 +295,9 @@ PointCloud<T> XyzToCloudCutoff(std::vector<T>& xyz, const double cutoff, const b
     std::vector<int> indxs = {0, -1, 1};
     std::vector<double> uvw;
 
-    std::vector<double> cutoff_frac_coordinates = GetFractionalCoordinates(box, {cutoff, cutoff, cutoff});
+    std::vector<double> cutoff_frac_coordinates;
+
+    if(use_pbc) cutoff_frac_coordinates = GetFractionalCoordinates(box, {cutoff, cutoff, cutoff});
 
     for (size_t i = 0; i < np; i++) {
         size_t i3 = 3 * i;
