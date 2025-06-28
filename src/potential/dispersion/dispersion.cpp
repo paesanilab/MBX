@@ -724,6 +724,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     size_t fi_sitetypes2 = 0;
 
     std::vector<std::vector<size_t>> neighbor_list(natoms_  * nsite_types);
+    std::vector<std::set<size_t>> neighbor_list_lookup(natoms_  * nsite_types);
 
     for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
 
@@ -763,7 +764,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 
                 for(size_t s = 0; s<nMatches; ++s){
                     //getting the actual index (not periodic index) of the monomer
-                    // size_t idx = site2_indices[s].first % nmon2;
+                    // size_t idx = site2_indices[s].first % natoms_;
                     size_t idx = tree_indices[site2_indices[s].first];
                     size_t mt2 = point_monomer_type_indices[idx];
                     size_t j = point_site_indices[idx];
@@ -775,9 +776,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         
                         size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
 
-                        if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_selected_mon2+m2]))) && m2 >= m2init){
-                            // if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
-                            neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].push_back(m2);
+                        if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_selected_mon2+m2]))) && m2 >= m2init) {
+                            if(neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].find(m2) == neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].end()) {
+                                neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].push_back(m2);
+                                neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].insert(m2);
+                            }
                         }
                     }
                 }

@@ -295,6 +295,10 @@ PointCloud<T> XyzToCloudCutoff(std::vector<T>& xyz, const double cutoff, const b
     std::vector<int> indxs = {0, -1, 1};
     std::vector<double> uvw;
 
+    std::vector<double> cutoff_frac_coordinates;
+
+    if(use_pbc) cutoff_frac_coordinates = GetFractionalCoordinates(box, {cutoff, cutoff, cutoff});
+
     for (size_t i = 0; i < np; i++) {
         size_t i3 = 3 * i;
         if (use_pbc) {
@@ -323,52 +327,27 @@ PointCloud<T> XyzToCloudCutoff(std::vector<T>& xyz, const double cutoff, const b
         if (use_pbc) {
             for (size_t m2 = 0; m2 < 3; m2++) {
                 int m = indxs[m2];
-                if ((uvw[0] + m) > 1.0 || (uvw[0] + m) < -1.0) continue;
+                if ((uvw[0] + m) > 0.5 + cutoff_frac_coordinates[0] || (uvw[0] + m) < -0.5 - cutoff_frac_coordinates[0]) continue;
                 for (size_t n2 = 0; n2 < 3; n2++) {
                     int n = indxs[n2];
-                    if ((uvw[1] + n) > 1.0 || (uvw[1] + n) < -1.0) continue;
+                    if ((uvw[1] + n) > 0.5 + cutoff_frac_coordinates[1] || (uvw[1] + n) < -0.5 - cutoff_frac_coordinates[1]) continue;
                     for (size_t l2 = 0; l2 < 3; l2++) {
                         if (m2 == 0 && n2 == 0 && l2 == 0) continue;
                         int l = indxs[l2];
-                        if ((uvw[2] + l) > 1.0 || (uvw[2] + l) < -1.0) continue;
+                        if ((uvw[2] + l) > 0.5 + cutoff_frac_coordinates[2] || (uvw[2] + l) < -0.5 - cutoff_frac_coordinates[2]) continue;
 
-                        size_t shift;
-                        if (m == 0 && n == 0)
-                            shift = 1;  // half box +z half -z
-                        else if (m == 0 && l == 0)
-                            shift = 2;  // half box +y half -y
-                        else if (n == 0 && l == 0)
-                            shift = 3;  // half box +x half -x
-                        else if (m != 0 && n != 0 && l != 0)
-                            shift = 4;  // the 8 corners
-                        else if (m == 0)
-                            shift = 5;  // 4 1/4s left for x == 0
-                        else if (n == 0)
-                            shift = 6;  // 4 1/4 left for y == 0
-                        else
-                            shift = 7;  // 4 1/4 left for z == 0
-
-                        shift *= np;
                         T sx = T(m) * box[0] + T(n) * box[3] + T(l) * box[6];
                         T sy = T(m) * box[1] + T(n) * box[4] + T(l) * box[7];
                         T sz = T(m) * box[2] + T(n) * box[5] + T(l) * box[8];
-
-                        //            std::vector<double> shifti = {(double(m) - 1) * box[0],
-                        //                                          (double(n) - 1) * box[1],
-                        //                                          (double(l) - 1) * box[2]};
-
-                        if (xyz[i3] + sx > -box[0]/2 - cutoff && xyz[i3] + sx < box[0]/2 + cutoff &&
-                            xyz[i3 + 1] + sy > -box[4]/2 - cutoff && xyz[i3 + 1] + sy < box[4]/2 + cutoff &&
-                            xyz[i3 + 2] + sz > -box[8]/2 - cutoff && xyz[i3 + 2] + sz < box[8]/2 + cutoff) {
                         
-                            ptc.pts.resize(ptc.pts.size() + 1);
-                            
-                            ptc.pts[ptc.pts.size() - 1].x = xyz[i3] + sx;
-                            ptc.pts[ptc.pts.size() - 1].y = xyz[i3 + 1] + sy;
-                            ptc.pts[ptc.pts.size() - 1].z = xyz[i3 + 2] + sz;
-                            indexes.push_back(i);
+                        ptc.pts.resize(ptc.pts.size() + 1);
+                        
+                        ptc.pts[ptc.pts.size() - 1].x = xyz[i3 + 0] + sx;
+                        ptc.pts[ptc.pts.size() - 1].y = xyz[i3 + 1] + sy;
+                        ptc.pts[ptc.pts.size() - 1].z = xyz[i3 + 2] + sz;
+                        indexes.push_back(i);
 
-                        }
+                        // }
                     }
                 }
             }

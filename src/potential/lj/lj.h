@@ -36,6 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define LENNARDJONES_H
 
 #include <vector>
+#include <set>
 
 #if HAVE_MPI
 #include <mpi.h>
