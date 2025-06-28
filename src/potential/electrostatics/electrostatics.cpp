@@ -6455,9 +6455,9 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             #pragma omp parallel for schedule(dynamic)
             for(size_t i = 0; i<nmon; ++i){
                 if(use_pbc){
-                    double x = box_inverse[0]*xyz_all_[fi_crd+i] + box_inverse[3]*xyz_all_[fi_crd+i+nmon] + box_inverse[6]*xyz_all_[fi_crd+i+2*nmon],
-                        y = box_inverse[1]*xyz_all_[fi_crd+i] + box_inverse[4]*xyz_all_[fi_crd+i+nmon] + box_inverse[7]*xyz_all_[fi_crd+i+2*nmon],
-                        z = box_inverse[2]*xyz_all_[fi_crd+i] + box_inverse[5]*xyz_all_[fi_crd+i+nmon] + box_inverse[8]*xyz_all_[fi_crd+i+2*nmon];
+                    double x = box_inverse[0]*xyz_all_[fi_crd+i] + box_inverse[3]*xyz_all_[fi_crd+i+nmon] + box_inverse[6]*xyz_all_[fi_crd+i+2*nmon];
+                    double y = box_inverse[1]*xyz_all_[fi_crd+i] + box_inverse[4]*xyz_all_[fi_crd+i+nmon] + box_inverse[7]*xyz_all_[fi_crd+i+2*nmon];
+                    double z = box_inverse[2]*xyz_all_[fi_crd+i] + box_inverse[5]*xyz_all_[fi_crd+i+nmon] + box_inverse[8]*xyz_all_[fi_crd+i+2*nmon];
                     
                     x -= std::floor(x + 0.5);
                     y -= std::floor(y + 0.5);
@@ -6498,6 +6498,8 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     fi_sites1 = 0;
     fi_mon2 = 0;
     size_t fi_sitetypes2 = 0;
+
+    std::vector<std::set<size_t>> neighbor_list_lookup(nsites_all_  * nsite_types);
 
     for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
 
@@ -6540,7 +6542,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 
                 for(size_t s = 0; s<nMatches; ++s){
                     //getting the actual index (not periodic index) of the monomer
-                    // size_t idx = site2_indices[s].first % nmon2;
+                    // size_t idx = site2_indices[s].first % nsites_all_;
                     size_t idx = tree_indices[site2_indices[s].first];
                     size_t mt2 = point_monomer_type_indices[idx];
                     size_t j = point_site_indices[idx];
@@ -6552,9 +6554,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         
                         size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
 
-                        if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_selected_mon2+m2]))) && m2 >= m2init){
-                            // if(std::find(good_mon2_indices.begin(), good_mon2_indices.end(), idx) == good_mon2_indices.end())
-                            precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j]->good_mon2.push_back(m2);
+                        if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_selected_mon2+m2]))) && m2 >= m2init) {
+                            if(neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].find(m2) == neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].end()) {
+                                precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j]->good_mon2.push_back(m2);
+                                neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].insert(m2);
+                            }
                         }
                     }
                 }
