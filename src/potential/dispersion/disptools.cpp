@@ -532,7 +532,7 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         d6.push_back(9.775202425217957e+00);  // A^(-1)
         d6.push_back(9.406475169954112e+00);  // A^(-1)
 
-    } else if (mon_id1 == "f-" and mon_id2 == "h2o") {
+    } else if (mon_id1 == "f-"  and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
 
@@ -547,8 +547,8 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(3.488640000000000e+02);  // kcal/mol * A^(-6) F -- O
         C6.push_back(1.286780000000000e+02);  // kcal/mol * A^(-6) F -- H
 
-        d6.push_back(3.586190000000000e+00);  // A^(-1)
-        d6.push_back(2.697680000000000e+00);  // A^(-1)
+        d6.push_back(3.57999);  // A^(-1)
+        d6.push_back(2.70536);  // A^(-1)
     } else if (mon_id1 == "cl-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -564,8 +564,8 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(7.461990000000000e+02);  // kcal/mol * A^(-6) Cl -- O
         C6.push_back(3.068900000000000e+02);  // kcal/mol * A^(-6) Cl -- H
 
-        d6.push_back(3.275420000000000e+00);  // A^(-1)
-        d6.push_back(2.782260000000000e+00);  // A^(-1)
+        d6.push_back(3.27293);  // A^(-1)
+        d6.push_back(2.79252);  // A^(-1)
     } else if (mon_id1 == "br-" and mon_id2 == "h2o") {
         // Define the type of atom in each mon
         types1.push_back(0);
@@ -581,8 +581,8 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(9.426500000000000e+02);  // kcal/mol * A^(-6) Br -- O
         C6.push_back(3.941680000000000e+02);  // kcal/mol * A^(-6) Br -- H
 
-        d6.push_back(3.058250000000000e+00);  // A^(-1)
-        d6.push_back(2.798040000000000e+00);  // A^(-1)
+        d6.push_back(3.05463);  // A^(-1)
+        d6.push_back(2.81519);  // A^(-1)
     } else if (mon_id1 == "h2o" and mon_id2 == "i-") {
         // Define the type of atom in each mon
         types2.push_back(0);
@@ -598,8 +598,8 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         C6.push_back(1.294680000000000e+03);  // kcal/mol * A^(-6) I -- O
         C6.push_back(5.681559999999999e+02);  // kcal/mol * A^(-6) I -- H
 
-        d6.push_back(2.723140000000000e+00);  // A^(-1)
-        d6.push_back(2.799110000000000e+00);  // A^(-1)
+        d6.push_back(2.72259);  // A^(-1)
+        d6.push_back(2.80139);  // A^(-1)
     } else if (mon_id1 == "h2o" and mon_id2 == "li+") {
         // Define the type of atom in each mon
         types2.push_back(0);

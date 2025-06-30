@@ -78,7 +78,7 @@ TEST_CASE("systools::SetupMonomers") {
     }
 
     SECTION("General behavior monomer mix") {
-        SETUP_MONMIX
+        SETUP_MONMIX // use values from setup_monomer_mix.h
 
         // Prepare variables for SetUpMonomers
         std::vector<size_t> sites_out;

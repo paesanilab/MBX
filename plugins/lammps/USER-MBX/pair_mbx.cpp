@@ -38,6 +38,8 @@
 //#define _DEBUG
 //#define _DEBUG_VIRIAL
 
+#define TTMNRG
+
 //#define _DEBUG_EFIELD
 
 // subject for removal
