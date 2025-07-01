@@ -251,7 +251,6 @@ TEST_CASE("system::energy") {
 
 
 TEST_CASE("large system system::energy") {
-    SETUP_H2O_2_CH4_1
 
     // Set up system
     std::vector<bblock::System> systems;
