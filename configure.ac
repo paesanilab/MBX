@@ -180,7 +180,7 @@ AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
 MBX_CONFIG_ENABLE([verbose],[verbose debug output],[no])
-MBX_CONFIG_ENABLE([optimization],[compiler optimizations via "-O3" compiler argument],[yes])
+MBX_CONFIG_ENABLE([optimization],[compiler optimizations via "-O2" compiler argument],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
