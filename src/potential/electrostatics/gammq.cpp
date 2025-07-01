@@ -82,6 +82,40 @@ double GammaPse(const double& a, const double& x) {
     return sum * std::exp(a * std::log(x) - x - gammaln);
 }
 
+double GammaPseIterations(const double a, const double x) {
+    // power series expansion
+    // See https://en.wikipedia.org/wiki/Incomplete_gamma_function#Evaluation_formulae
+    // Look at lower case gamma(s,z)
+
+    // We can say that:
+    // a*(a+1)*)a+2)*...*(a+k) = gamma(a+k+1)/gamma(a)
+
+    // We also know that gamma(a+1) = a*gamma(a)
+
+    // Start with k=0
+    double ak = a;
+    double sum = 1.0 / a;
+    double delta = sum;
+
+    // Loop until convergence
+    while (true) {
+        // Increase ak
+        ak++;
+        // Update delta from previous by multiplying by x/ak
+        delta *= x / ak;
+        // Add the new term to the sum
+        sum += delta;
+
+        // Check convergence
+        if (std::fabs(delta) < std::fabs(sum) * EPS) {
+            break;
+        }
+    }
+
+    // Return P(a,x)
+    return sum;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 double GammaCf(const double a, const double x) {
@@ -138,6 +172,57 @@ double GammaCf(const double a, const double x) {
     return std::exp(-x + a * std::log(x) - gammaln) / h;
 }
 
+double GammaCfIterations(const double a, const double x) {
+    // Modified Lentz's algorithm for continued fractions evaluation
+    // See Thompson, I.J., and Barnett, A.R. 1986, Journal of Computational Physics, vol. 64, pp. 490–509.
+    // Concretely, the appendix.
+    // See https://en.wikipedia.org/wiki/Incomplete_gamma_function#Evaluation_formulae
+
+    // We will compute lim(n->inf) hn
+    // h will be:
+    // h = b0 + a1/(b1 + a2/(b2 + a3/...))
+
+    // Set b0
+    double b = x + 1.0 - a;
+    // Set h0
+    double h = b;
+    if (std::fabs(b) < SMALL) h = SMALL;
+    // Set d0
+    double d = 0.0;
+    // Set c0
+    double c = h;
+
+    int i = 0;
+    while (true) {
+        i++;
+
+        // Get an and bn
+        const double an = i * (a - i);
+        b += 2.0;
+
+        // get dn
+        d = an * d + b;
+        if (std::fabs(d) < SMALL) d = SMALL;
+
+        // Get cn
+        c = b + an / c;
+        if (std::fabs(c) < SMALL) c = SMALL;
+
+        // Update d
+        d = 1.0 / d;
+
+        // Get Delta_n
+        const double deltan = d * c;
+
+        // Get hn
+        h *= deltan;
+
+        if (std::fabs(deltan - 1.0) <= EPS) break;
+    }
+
+    // Now we need to return gamma(a,x)/gamma(a)
+    return h;
+}
 ////////////////////////////////////////////////////////////////////////////////
 
 }  // namespace
@@ -163,6 +248,86 @@ double gammq(const double a, const double x) {
         return 1.0 - GammaPse(a, x);
     else
         return GammaCf(a, x);
+}
+
+void gammq_optimized(const double a, const double* x, const double gammlna, const size_t n, double* output) {
+
+    if (a <= 0.0) {
+        std::cerr << "gammq: a = " << a << std::endl;
+    }
+    assert(a > 0.0);
+
+    for (size_t i = 0; i < n; i++) {
+        if (x[i] < 0.0) {
+            std::cerr << "gammq: x = " << x[i] << std::endl;
+        }
+        assert(x[i] >= 0.0);
+    }
+
+#ifdef INTEL_INTRINSICS
+    double* exp_parts = new (std::align_val_t(32)) double[(n + 7) / 8 * 8];
+#else
+    double* exp_parts = new double[n];
+#endif
+
+    #pragma omp simd simdlen(8)
+    for (size_t i = 0; i < n; i++) {
+        exp_parts[i] = x[i];
+    }
+
+#ifdef INTEL_INTRINSICS
+
+    for (size_t i = 0; i < n; i += 4) {
+        __m256d a = _mm256_load_pd(exp_parts + i);
+        __m256d b = _mm256_log_pd(a);
+        _mm256_store_pd(exp_parts + i, b);
+    }
+
+#else
+
+    #pragma omp simd simdlen(8)
+    for (size_t i = 0; i < n; i++) {
+        exp_parts[i] = std::log(exp_parts[i]);
+    }
+
+#endif
+
+    #pragma omp simd simdlen(8)
+    for (size_t i = 0; i < n; i++) {
+        exp_parts[i] = -x[i] + a * exp_parts[i] - gammlna;
+    }
+
+#ifdef INTEL_INTRINSICS
+
+    for (size_t i = 0; i < n; i += 4) {
+        __m256d a = _mm256_load_pd(exp_parts + i);
+        __m256d b = _mm256_exp_pd(a);
+        _mm256_store_pd(exp_parts + i, b);
+    }
+
+#else
+
+    #pragma omp simd simdlen(8)
+    for (size_t i = 0; i < n; i++) {
+        exp_parts[i] = std::exp(exp_parts[i]);
+    }
+
+#endif
+
+    for (size_t i = 0; i < n; i++) {
+        if (x[i] < SMALL)
+            output[i] = 1.0;
+        else if (x[i] > BIG)
+            output[i] = 0.0;
+        else if (x[i] < a + 1.0) {
+            output[i] = 1.0 - exp_parts[i]*GammaPseIterations(a, x[i]);
+        } else {
+            output[i] = exp_parts[i]/GammaCfIterations(a, x[i]);
+        }
+    }
+
+    delete[] exp_parts;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////

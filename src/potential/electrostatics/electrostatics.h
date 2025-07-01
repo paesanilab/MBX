@@ -47,6 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #endif 
 
 #include <unordered_map>
+#include <set>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -62,6 +63,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "kdtree/kdtree_utils.h"
 #include "helpme.h"
 #include "json/json.h"
+
+#ifdef TBB
+#include "tbb/scalable_allocator.h"
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 

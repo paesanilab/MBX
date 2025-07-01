@@ -112,7 +112,7 @@ double tang_toennies(const double& x) {
 double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,
              const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
              std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
-             const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
+             const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads, bool do_field,
              const double cutoff, const double ewald_alpha, const std::vector<double>& box,
              const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
              const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial, const size_t xyz2_offset) {
@@ -190,21 +190,17 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 
 #endif
 
-    double disp = 0.0;
-
     size_t nmon22 = nmon2 * 2;
 
     size_t shift_phi = atom_index2 * nmon2;
     size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
-    double g1[3];
-    std::fill(g1, g1 + 3, 0.0);
+
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
-    double dispersion_energy = 0;
 
-    const std::vector<double>& x1 = p1;
+    double dispersion_energy = 0;
 
     double x1_r, y1_r, z1_r;
 
@@ -215,177 +211,213 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     }
 
     const size_t N = end2 - start2;
-    double dx[N];
-    double dy[N];
-    double dz[N];
 
-    #pragma omp simd
+    double x[end2];
+    double y[end2];
+    double z[end2];
+
+    double dx[end2];
+    double dy[end2];
+    double dz[end2];
+
+    #pragma omp simd simdlen(8)
     for (size_t nv = start2; nv < end2; nv++) {
-        double x2[3];
-        x2[0] = xyz2[xyz2_offset + shift2 + nv];
-        x2[1] = xyz2[xyz2_offset + nmon2 + shift2 + nv];
-        x2[2] = xyz2[xyz2_offset + nmon22 + shift2 + nv];
+        x[nv] = xyz2[xyz2_offset + shift2 + nv];
+        y[nv] = xyz2[xyz2_offset + nmon2 + shift2 + nv];
+        z[nv] = xyz2[xyz2_offset + nmon22 + shift2 + nv];
+    }
 
-        // Apply minimum image convetion
-        if (use_pbc) {
-            double tmp1 = boxinv[0] * x2[0] + boxinv[3] * x2[1] + boxinv[6] * x2[2];
-            double tmp2 = boxinv[1] * x2[0] + boxinv[4] * x2[1] + boxinv[7] * x2[2];
-            double tmp3 = boxinv[2] * x2[0] + boxinv[5] * x2[1] + boxinv[8] * x2[2];
+    // Apply minimum image convetion
+    if (use_pbc) {
+        #pragma omp simd simdlen(8)
+        for (size_t nv = start2; nv < end2; nv++) {
+            double tmp1 = boxinv[0] * x[nv] + boxinv[3] * y[nv] + boxinv[6] * z[nv];
+            double tmp2 = boxinv[1] * x[nv] + boxinv[4] * y[nv] + boxinv[7] * z[nv];
+            double tmp3 = boxinv[2] * x[nv] + boxinv[5] * y[nv] + boxinv[8] * z[nv];
 
             tmp1 -= std::round(tmp1 - x1_r);
             tmp2 -= std::round(tmp2 - y1_r);
             tmp3 -= std::round(tmp3 - z1_r);
 
-            x2[0] = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
-            x2[1] = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
-            x2[2] = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
-        }
-
-        dx[nv - start2] = x1[0] - x2[0];
-        dy[nv - start2] = x1[1] - x2[1];
-        dz[nv - start2] = x1[2] - x2[2];
-    }
-
-    double rsq[N], r[N], inv_rsq[N], inv_r6[N];
-
-    #pragma omp simd reduction(+: phi1)
-    for (size_t i = 0; i < N; i++) {
-        rsq[i] = dx[i] * dx[i] + dy[i] * dy[i] + dz[i] * dz[i];
-        r[i] = std::sqrt(rsq[i]);
-
-        inv_rsq[i] = 1.0 / rsq[i];
-        inv_r6[i] = inv_rsq[i] * inv_rsq[i] * inv_rsq[i];
-
-        // Update phi for long range interactions
-        // phi2 is a double array
-        // phi1 is a double value passed by reference
-        phi2[shift_phi + start2 + i] -= c6i * inv_r6[i];
-        phi1 -= c6j * inv_r6[i];
-    }
-
-    // Figure out which are the pairs to be included
-    // Kinda buzzed right now, so hopefully nothing breaks...
-
-    std::vector<size_t> indexes_to_include, iisls;
-    for (size_t i = 0; i < N; i++) {
-        bool include_pair = false;
-        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + i + start2];
-        if (!use_ghost) include_pair = true;
-        if (use_ghost && isls) include_pair = true;
-
-        // If using cutoff, check for distances and get proper dispersion
-        if (r[i] <= cutoff && include_pair) {
-            indexes_to_include.push_back(i);
-            iisls.push_back(isls);
+            x[nv] = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
+            y[nv] = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
+            z[nv] = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
     }
 
-    size_t n_idxs = indexes_to_include.size();
+    double rsq[end2];
+    double r[end2];
+    double inv_rsq[end2];
+    double inv_r6[end2];
 
-    double idx[n_idxs];
-    double idy[n_idxs];
-    double idz[n_idxs];
+    double vscale[end2];
 
-    double irsq[n_idxs], ir[n_idxs], iinv_rsq[n_idxs], iinv_r6[n_idxs];
+    #pragma omp simd simdlen(8)
+    for (size_t nv = start2; nv < end2; nv++) {
+        dx[nv] = p1[0] - x[nv];
+        dy[nv] = p1[1] - y[nv];
+        dz[nv] = p1[2] - z[nv];
 
-    for (size_t i = 0; i < n_idxs; i++) {
-        idx[i] = dx[indexes_to_include[i]];
-        idy[i] = dy[indexes_to_include[i]];
-        idz[i] = dz[indexes_to_include[i]];
+        rsq[nv] = dx[nv] * dx[nv] + dy[nv] * dy[nv] + dz[nv] * dz[nv];
+        r[nv] = std::sqrt(rsq[nv]);
 
-        irsq[i] = rsq[indexes_to_include[i]];
-        ir[i] = r[indexes_to_include[i]];
-        iinv_rsq[i] = inv_rsq[indexes_to_include[i]];
-        iinv_r6[i] = inv_r6[indexes_to_include[i]];
+        inv_rsq[nv] = 1.0 / rsq[nv];
+        inv_r6[nv] = inv_rsq[nv] * inv_rsq[nv] * inv_rsq[nv];
+
+        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
+        vscale[nv] = (isls == 0) ? 0.0 : ((isls == 1) ? 0.5 : 1.0);
+        vscale[nv] = r[nv] > cutoff ? 0.0 : vscale[nv];
     }
 
-    double tt6[n_idxs], ttsw_grad[n_idxs], ttsw[n_idxs];
-    double ipair_energy[n_idxs];
-    double d6r[n_idxs];
-    for (size_t i = 0; i < n_idxs; i++) {
-        d6r[i] = d6 * ir[i];
-        tt6[i] = disp::tang_toennies(d6r[i]);
-        ttsw[i] = switch_function(ir[i], cutoff - 1.0, cutoff, ttsw_grad[i]);
+    if (do_field) {
+        #pragma omp simd simdlen(8) reduction(+: phi1)
+        for (size_t nv = start2; nv < end2; nv++) {
+            phi2[shift_phi + start2 + nv] -= c6i * inv_r6[nv];
+            phi1 -= c6j * inv_r6[nv];
+        }
     }
 
-    double pmeterm[n_idxs], pmeterm2[n_idxs], e6[n_idxs], expterm[n_idxs], c6term[n_idxs];
-    for (size_t i = 0; i < n_idxs; i++) {
-        // Intermediates used in the dispersion PME terms
-        double ar2 = ewald_alpha * ewald_alpha * irsq[i];
-        double ar4 = ar2 * ar2;
-        double ar6 = ar4 * ar2;
-        expterm[i] = ewald_alpha ? std::exp(-ar2) : 1;
+    double tt6[end2];
+    double ttsw_grad[end2];
+    double ttsw[end2];
+    double ipair_energy[end2];
+    double d6r[end2];
 
-        e6[i] = C6 * tt6[i] * iinv_r6[i];
-
-        // The idea here is quite simple.  At short range we want the TT term (e6) to model dispersion.  At long
-        // range this becomes C6i C6j / Rij^6, which is handled by PME.  The reciprocal space part of PME always
-        // includes extra terms that contribute below the cutoff, even if that pair shouldn't contribute.  For
-        // intermonomer pairs, this means there is the TT contribution that we want, but we have to remove the
-        // part of the reciprocal space from C6i C6j / Rij^6 that was added in the reciprocal space term.  Similarly
-        // for intramonomer terms, there should be no TT contribution or C6i C6j / Rij^6 term, so we use the scale
-        // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
-        // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
-        c6term[i] = c6i * c6j * iinv_r6[i];
-        pmeterm[i] = (1 - (1 + ar2 + ar4 / 2) * expterm[i]) * c6term[i];
-        pmeterm2[i] = (1 - (1 + ar2 + ar4 / 2 + ar6 / 6) * expterm[i]) * c6term[i];
-        ipair_energy[i] =
-            ttsw[i] * (disp_scale_factor * e6[i]) + (1 - ttsw[i]) * disp_scale_factor * c6term[i] - pmeterm[i];
+    #pragma omp simd simdlen(8)
+    for (size_t nv = start2; nv < end2; nv++) {
+        d6r[nv] = d6 * r[nv];
+    }
+    
+    // Loop not vectorized because this functions are not yet vectorizable.
+    for (size_t nv = start2; nv < end2; nv++) {
+        tt6[nv] = disp::tang_toennies(d6r[nv]);
     }
 
-    for (size_t i = 0; i < n_idxs; i++) {
-        if (iisls[i] == 1) ipair_energy[i] *= 0.5;
-        dispersion_energy -= ipair_energy[i];
+    if (ewald_alpha > 0.0) {
+        // Loop not vectorized because this functions are not yet vectorizable.
+        for (size_t nv = start2; nv < end2; nv++) {
+            ttsw[nv] = switch_function(r[nv], cutoff - 1.0, cutoff, ttsw_grad[nv]);
+        }
+    } else {
+        #pragma omp simd simdlen(8)
+        for (size_t nv = start2; nv < end2; nv++) {
+            ttsw[nv] = 1.0;
+            ttsw_grad[nv] = 0.0;
+        }
+    }
+    
+
+    // The idea here is quite simple.  At short range we want the TT term (e6) to model dispersion.  At long
+    // range this becomes C6i C6j / Rij^6, which is handled by PME.  The reciprocal space part of PME always
+    // includes extra terms that contribute below the cutoff, even if that pair shouldn't contribute.  For
+    // intermonomer pairs, this means there is the TT contribution that we want, but we have to remove the
+    // part of the reciprocal space from C6i C6j / Rij^6 that was added in the reciprocal space term.  Similarly
+    // for intramonomer terms, there should be no TT contribution or C6i C6j / Rij^6 term, so we use the scale
+    // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
+    // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
+
+    double e6[end2];
+    double expterm[end2];
+    double ar2[end2];
+    double ar4[end2];
+    double c6term[end2];
+
+    #pragma omp simd simdlen(8) reduction(+ : dispersion_energy)
+    for (size_t nv = start2; nv < end2; nv++) {
+        e6[nv] = C6 * tt6[nv] * inv_r6[nv];
+        dispersion_energy -= disp_scale_factor * ttsw[nv] * e6[nv] * vscale[nv];
+    }
+    
+    if (ewald_alpha > 0.0) {
+        #pragma omp simd simdlen(8) reduction(+ : dispersion_energy)
+        for (size_t nv = start2; nv < end2; nv++) {
+            c6term[nv] = c6i * c6j * inv_r6[nv];
+            
+            // Intermediates used in the dispersion PME terms
+            ar2[nv] = ewald_alpha * ewald_alpha * rsq[nv];
+            ar4[nv] = ar2[nv] * ar2[nv];
+            expterm[nv] = ewald_alpha ? std::exp(-ar2[nv]) : 1;
+
+            double pmeterm = c6i * c6j * (1 - (1 + ar2[nv] + ar4[nv] / 2) * expterm[nv]) * inv_r6[nv];
+
+            dispersion_energy -= disp_scale_factor * (1 - ttsw[nv]) * c6term[nv] * vscale[nv] - pmeterm * vscale[nv];
+        }
     }
 
     if (do_grads) {
-        double grad[n_idxs];
-        for (size_t i = 0; i < n_idxs; i++) {
-            const double c6sw = 1 - ttsw[i];
-            const double c6sw_grad = -ttsw_grad[i];
-            const double e6term_grad = 6 * e6[i] * iinv_rsq[i] - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r[i]) / ir[i];
-            const double c6term_grad = 6 * c6term[i] * iinv_rsq[i];
-            const double pmeterm_grad = 6 * pmeterm2[i] * iinv_rsq[i];
-            const double ttgrad = ttsw[i] * e6term_grad - ttsw_grad[i] * e6[i] / ir[i];
-            const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[i] / ir[i];
-            grad[i] = disp_scale_factor * (ttgrad + c6grad) - pmeterm_grad;
-        }
-
-        // #pragma omp simd
-        for (size_t i = 0; i < n_idxs; i++) {
-            const double vscale = (iisls[i] == 1) ? 0.5 : 1.0;
-
-            size_t index = indexes_to_include[i] + start2;
-            g1[0] += idx[i] * grad[i] * vscale;
-
-            g1[1] += idy[i] * grad[i] * vscale;
-
-            g1[2] += idz[i] * grad[i] * vscale;
-
-            grad2[shift2 + index] -= idx[i] * grad[i] * vscale;
-            grad2[shift2 + nmon2 + index] -= idy[i] * grad[i] * vscale;
-            grad2[shift2 + nmon22 + index] -= idz[i] * grad[i] * vscale;
-
-            if (virial != 0) {
-
-                (*virial)[0] -= idx[i] * idx[i] * grad[i] * vscale;  //  update the virial for the atom pair
-                (*virial)[1] -= idx[i] * idy[i] * grad[i] * vscale;
-                (*virial)[2] -= idx[i] * idz[i] * grad[i] * vscale;
-
-                (*virial)[4] -= idy[i] * idy[i] * grad[i] * vscale;
-                (*virial)[5] -= idy[i] * idz[i] * grad[i] * vscale;
-
-                (*virial)[8] -= idz[i] * idz[i] * grad[i] * vscale;
-
-                (*virial)[3] = (*virial)[1];
-                (*virial)[6] = (*virial)[2];
-                (*virial)[7] = (*virial)[5];
+        double grad[end2];
+        std::fill(grad, grad + end2, 0.0);
+        
+        if (ewald_alpha > 0.0) {
+            #pragma omp simd simdlen(8)
+            for (size_t nv = start2; nv < end2; nv++) {
+                const double c6sw = 1 - ttsw[nv];
+                const double c6sw_grad = -ttsw_grad[nv];
+                const double c6term_grad = 6 * c6term[nv] * inv_rsq[nv];
+                double ar6 = ar4[nv] * ar2[nv];
+                double pmeterm2 = c6i * c6j * (1 - (1 + ar2[nv] + ar4[nv] / 2 + ar6 / 6) * expterm[nv]) * inv_r6[nv];
+                const double pmeterm_grad = 6 * pmeterm2 * inv_rsq[nv];
+                const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[nv] / r[nv];
+                grad[nv] += disp_scale_factor * c6grad - pmeterm_grad;
             }
         }
 
-        grad1[0] += g1[0];
-        grad1[1] += g1[1];
-        grad1[2] += g1[2];
+        double gradx = 0.0;
+        double grady = 0.0;
+        double gradz = 0.0;
+
+        double C6_d6_7 = C6 * std::pow(d6, 7);
+
+        #pragma omp simd simdlen(8) reduction(+ : gradx, grady, gradz)
+        for (size_t nv = start2; nv < end2; nv++) {
+
+            const double e6term_grad = 6 * e6[nv] * inv_rsq[nv] - C6_d6_7 * if6 * std::exp(-d6r[nv]) / r[nv];
+            const double ttgrad = ttsw[nv] * e6term_grad - ttsw_grad[nv] * e6[nv] / r[nv];
+            
+            grad[nv] += disp_scale_factor * ttgrad;
+
+            gradx += dx[nv] * grad[nv] * vscale[nv];
+
+            grady += dy[nv] * grad[nv] * vscale[nv];
+
+            gradz += dz[nv] * grad[nv] * vscale[nv];
+
+            grad2[shift2 + nv] -= dx[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nmon2 + nv] -= dy[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nmon22 + nv] -= dz[nv] * grad[nv] * vscale[nv];
+        }
+
+        if (virial != 0) {
+
+            double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+            #pragma omp simd simdlen(8) reduction(+ : v[0:6])
+            for (size_t nv = start2; nv < end2; nv++) {
+                v[0] -= dx[nv] * dx[nv] * grad[nv] * vscale[nv];  //  update the virial for the atom pair
+                v[1] -= dx[nv] * dy[nv] * grad[nv] * vscale[nv];
+                v[2] -= dx[nv] * dz[nv] * grad[nv] * vscale[nv];
+
+                v[3] -= dy[nv] * dy[nv] * grad[nv] * vscale[nv];
+                v[4] -= dy[nv] * dz[nv] * grad[nv] * vscale[nv];
+
+                v[5] -= dz[nv] * dz[nv] * grad[nv] * vscale[nv];
+            }
+
+            (*virial)[0] += v[0];
+            (*virial)[1] += v[1];
+            (*virial)[2] += v[2];
+            (*virial)[4] += v[3];
+            (*virial)[5] += v[4];
+            (*virial)[8] += v[5];
+
+            (*virial)[3] += v[1];
+            (*virial)[6] += v[2];
+            (*virial)[7] += v[4];
+        }
+
+        grad1[0] += gradx;
+        grad1[1] += grady;
+        grad1[2] += gradz;
     }
 
 #ifdef DEBUG
@@ -427,7 +459,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 }
 
 bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6,
-           std::vector<std::pair<std::string, std::string> > ignore_disp, const nlohmann::json& repdisp_j) {
+           std::vector<std::pair<std::string, std::string>>& ignore_disp, const nlohmann::json& repdisp_j) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon_id2 < mon_id1) {

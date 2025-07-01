@@ -144,7 +144,7 @@ double tang_toennies(const double& x);
 double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,
              const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
              std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
-             const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads,
+             const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads, bool do_field,
              const double cutoff, const double ewald_alpha, const std::vector<double>& box,
              const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
              const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial = 0, const size_t xyz2_offset = 0);
@@ -164,7 +164,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
  * @param[in] repdisp_j JSON object witht the extra nonbonded pair information
  */
 bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6,
-           std::vector<std::pair<std::string, std::string> > ignore_disp, const nlohmann::json& repdisp_j = {});
+           std::vector<std::pair<std::string, std::string>>& ignore_disp, const nlohmann::json& repdisp_j = {});
 
 }  // namespace disp
 

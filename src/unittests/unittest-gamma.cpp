@@ -66,4 +66,49 @@ TEST_CASE("test the gamma function") {
 
     // Gammq
     REQUIRE(VectorsAreEqual(gammq_v, gammq_vref));
+
+    // Optimized gammq
+
+    double a = 0.75;
+    std::vector<double> x_inp = {0.5, 5.0, 200.0};
+    double gammlna = elec::gammln(a);
+
+    std::vector<double> gammq_out(3, 0.0);
+    std::vector<double> gammq_out_ref = {
+            0.4720628901653282,
+            0.00352609578734717,
+            2.999317744047559e-88
+    };
+
+    elec::gammq_optimized(a, x_inp.data(), gammlna, 3, gammq_out.data());
+    REQUIRE(VectorsAreEqual(gammq_out, gammq_out_ref));
+
+    a = 10.0;
+    x_inp = {0.5, 5.0, 200.0};
+    gammlna = elec::gammln(a);
+
+    gammq_out = {0.0, 0.0, 0.0};
+    gammq_out_ref = {
+            0.999999999829033,
+            0.9681719426937953,
+            2.044095593580745e-72,
+    };
+
+    elec::gammq_optimized(a, x_inp.data(), gammlna, 3, gammq_out.data());
+    REQUIRE(VectorsAreEqual(gammq_out, gammq_out_ref));
+
+    a = 100.0;
+    x_inp = {0.5, 5.0, 200.0};
+    gammlna = elec::gammln(a);
+
+    gammq_out = {0.0, 0.0, 0.0};
+    gammq_out_ref = {
+            1.0,
+            1.0,
+            0.000000000000001843893649711603
+
+    };
+
+    elec::gammq_optimized(a, x_inp.data(), gammlna, 3, gammq_out.data());
+    REQUIRE(VectorsAreEqual(gammq_out, gammq_out_ref));
 }

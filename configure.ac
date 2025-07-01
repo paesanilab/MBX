@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.2.3], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.2.4], [mbx-users@googlegroups.com])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -180,14 +180,29 @@ AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
 MBX_CONFIG_ENABLE([verbose],[verbose debug output],[no])
-MBX_CONFIG_ENABLE([optimization],[compile with optimization],[yes])
+MBX_CONFIG_ENABLE([optimization],[compiler optimizations via "-O2" compiler argument],[yes])
 MBX_CONFIG_ENABLE([mpi],[compile with mpi],[no])
 MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
-MBX_CONFIG_ENABLE([ttmnrg],[enable ttm-nrg calculations],[no])
-MBX_CONFIG_ENABLE([cpp17],[enable C++17 standard, allowing some additional optimizations],[no])
-MBX_CONFIG_ENABLE([avx2],[enable the avx2 vector instruction set, improving vetorization],[no])
-MBX_CONFIG_ENABLE([avx512],[enable the avx-512 vector instruction set, further improving vetorization],[no])
+MBX_CONFIG_ENABLE([ttmnrg],[TTM-nrg PEFs via "-DTTMNRG" define.],[no])
+
+MBX_CONFIG_ENABLE([cpp17],[compiling with C++17 standard],[no])
+
+MBX_CONFIG_ENABLE([tbb],[intel threading building blocks library],[no])
+MBX_CONFIG_ENABLE([tbb-old-compiler-version],[intel threading building blocks library, use this for older versions of the intel compiler instead of --enable-tbb],[no])
+
+MBX_CONFIG_ENABLE([intel-intrinsics],[intel intrinsic math functions. only works with --enable-cpp17],[no])
+MBX_CONFIG_ENABLE([mkl],[enable intel math kernel library],[no])
+
+MBX_CONFIG_ENABLE([core-avx2],[compilation with the AVX2 vector instruction set, use this with intel compiler on intel and some AMD processors with a compatible architecture],[no])
+MBX_CONFIG_ENABLE([core-avx512],[compilation with the AVX-512 vector instruction set, use this with intel compiler on intel and some AMD processors with a compatible architecture],[no])
+MBX_CONFIG_ENABLE([march-avx2],[compilation with the AVX2 vector instruction set, use with intel compiler or gcc on intel or AMD machines with a compatible architecture],[no])
+MBX_CONFIG_ENABLE([march-avx512],[compilation with the AVX-512 vector instruction set, use with intel compiler on intel or AMD machines with a compatible architecture],[no])
+MBX_CONFIG_ENABLE([march-x86-64-v2],[compilation for x86-64-v2 processors (no AVX2 or AVX-512), use with intel or gcc compiler],[no])
+MBX_CONFIG_ENABLE([march-x86-64-v3],[compilation for x86-64-v3 processors (includes AVX2), use with intel or gcc compiler],[no])
+MBX_CONFIG_ENABLE([march-x86-64-v4],[compilation for x86-64-v4 processors (includes AVX-512), use with intel or gcc compiler],[no])
+
+MBX_CONFIG_ENABLE([aligned-new],[compilation with aligned new, use this only if you get an error about calls to new when using --enable-intel-intrinsics],[no])
 
 # Act on enable flags
 
@@ -215,6 +230,52 @@ if test $ttmnrg == true; then
     MBX_CHECK_CXXFLAG([-DTTMNRG])
 fi
 
+if test $tbb == true; then
+    MBX_CHECK_REQ_CXXFLAG([-qtbb])
+    MBX_CHECK_CXXFLAG([-DTBB])
+    #AC_CHECK_LIB([tbb],[scalable_allocator],[
+    #    CPPFLAGS="$CPPFLAGS"
+    #    LIBS="-ltbb -ltbbmalloc $LIBS"
+    #],[
+    #    AC_MSG_ERROR([ttb cannot be linked.])
+    #])
+    LIBS="$LIBS -ltbb -ltbbmalloc"
+fi
+
+if test $tbb_old_compiler_version == true; then
+    MBX_CHECK_REQ_CXXFLAG([-tbb])
+    MBX_CHECK_CXXFLAG([-DTBB])
+    #AC_CHECK_LIB([tbb],[scalable_allocator],[
+    #    CPPFLAGS="$CPPFLAGS"
+    #    LIBS="-ltbb -ltbbmalloc $LIBS"
+    #],[
+    #    AC_MSG_ERROR([ttb cannot be linked.])
+    #])
+    LIBS="$LIBS -ltbb -ltbbmalloc"
+fi
+
+if test $intel_intrinsics == true; then
+    if test $cpp17 == false; then
+        AC_MSG_WARN([You have enabled intel intrinsics without enabling cpp17. You will probably get compile time errors!])
+    fi
+    MBX_CHECK_REQ_CXXFLAG([-DINTEL_INTRINSICS])
+fi
+
+if test $aligned_new == true; then
+    MBX_CHECK_REQ_CXXFLAG([-D__cpp_aligned_new])
+fi
+
+if test $mkl == true; then
+    MBX_CHECK_REQ_CXXFLAG([-mkl])
+    #AC_CHECK_LIB([mkl],[vdErf],[
+    #    CPPFLAGS="$CPPFLAGS"
+    #    LIBS="-lmkl_rt $LIBS"
+    #],[
+    #    AC_MSG_ERROR([mkl cannot be linked.])
+    #])
+    LIBS="$LIBS -lmkl_rt"
+fi
+
 if test $optreport == true; then
     MBX_CHECK_CXXFLAG([-qopt-report=1])
     MBX_CHECK_CXXFLAG([-qopt-report-phase=vec])
@@ -226,12 +287,32 @@ else
     MBX_CHECK_REQ_CXXFLAG([-std=c++11])
 fi
 
-if test $avx2 == true; then
+if test $core_avx2 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX2])
 fi
 
-if test $avx512 == true; then
+if test $core_avx512 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
+fi
+
+if test $march_avx2 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=core-avx2])
+fi
+
+if test $march_avx512 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=core-avx512])
+fi
+
+if test $march_x86_64_v2 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=x86-64-v2])
+fi
+
+if test $march_x86_64_v3 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=x86-64-v3])
+fi
+
+if test $march_x86_64_v4 == true; then
+    MBX_CHECK_REQ_CXXFLAG([-march=x86-64-v4])
 fi
 
 # Add flags to variable

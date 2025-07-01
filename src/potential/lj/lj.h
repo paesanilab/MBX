@@ -36,6 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define LENNARDJONES_H
 
 #include <vector>
+#include <set>
 
 #if HAVE_MPI
 #include <mpi.h>
@@ -51,6 +52,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
+#include "kdtree/kdtree_utils.h"
 
 #ifndef MPI_VERSION
 // typedef struct ompi_communicator_t *MPI_Comm;
@@ -326,6 +328,9 @@ class LennardJones {
 
     // Bool that if true will perform the gradients calculation.
     bool do_grads_;
+
+    // If true, calcualte phi. Otherwise phi will not be calculated and GetInternalLennardJonesField / GetSystemLennardJonesField may return garbage.
+    bool do_field_;
 
     // Gradients in the original order (same as xyz). This is the vector in
     // which the electrostatics gradients will be added.

@@ -2258,77 +2258,124 @@ double System::Get1B(bool do_grads) {
 
     size_t indx = 0;
 
+    int num_threads = 1;
+
+#ifdef _OPENMP
+#pragma omp parallel
+    {
+        // Get the number of threads
+        if (omp_get_thread_num() == 0) num_threads = omp_get_num_threads();
+    }
+#endif  // _OPENMP
+
+    std::vector<std::vector<double>> virial_pool(num_threads, std::vector<double>(9, 0.0));
+
     for (size_t k = 0; k < mon_type_count_.size(); k++) {
-        // Useful variables
-        size_t istart = 0;
-        size_t iend = 0;
 
         if (std::find(ignore_1b_poly_.begin(), ignore_1b_poly_.end(), mon_type_count_[k].first) !=
             ignore_1b_poly_.end()) {
             continue;
         }
 
-        while (istart < mon_type_count_[k].second) {
-            std::vector<size_t> mon_idxs;
-            iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
-            std::vector<size_t> indexes;
-            size_t nmon = 0;
-            for (size_t i = istart; i < iend; i++) {
-                if (islocal_[indx + i]) {
-                    mon_idxs.push_back(current_mon);
-                    nmon++;
+        size_t monomers_pool_index = 0;
+
+        const size_t batch_size = 16;
+
+#ifdef _OPENMP
+#pragma omp parallel shared(monomers_pool_index) reduction(+: e1b)
+        {
+            size_t rank = omp_get_thread_num();
+#endif  // _OPENMP
+
+            // while (istart < mon_type_count_[k].second) {
+            while (true) {
+
+                size_t istart;
+                size_t this_batch_size;
+                
+                #pragma omp critical(monomers_pool_index)
+                {
+                    istart = monomers_pool_index;
+                    this_batch_size = std::min(batch_size, (mon_type_count_[k].second - istart));
+                    monomers_pool_index += this_batch_size;
                 }
-                current_mon++;
-            }
 
-            size_t ncoord = 3 * nat_[curr_mon_type] * nmon;
-            std::string mon = mon_type_count_[k].first;
+                size_t iend = istart + this_batch_size;
 
-            // XYZ with real sites
-            std::vector<double> xyz(ncoord, 0.0);
-            std::vector<double> grad2(ncoord, 0.0);
-
-            // Set up real coordinates
-            size_t ii = istart;
-            for (size_t i = istart; i < iend; i++) {
-                if (islocal_[indx + i]) {
-                    std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
-                              xyz_.begin() + current_coord + 3 * (i * sites_[curr_mon_type] + nat_[curr_mon_type]),
-                              xyz.begin() + 3 * (ii - istart) * nat_[curr_mon_type]);
-                    ii++;
+                if (istart == iend) {
+                    break;
                 }
-            }
+                // iend = std::min(istart + maxNMonEval_, mon_type_count_[k].second);
 
-            // Get energy of the chunk as function of monomer
-            if (do_grads) {
-                e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, indexes, &virial_);
-
-                // Reorganize gradients
-                size_t ii = 0;
+                std::vector<size_t> mon_idxs;
+                std::vector<size_t> indexes;
+                size_t nmon = 0;
                 for (size_t i = istart; i < iend; i++) {
                     if (islocal_[indx + i]) {
-                        for (size_t j = 0; j < 3 * nat_[curr_mon_type]; j++) {
-                            grad_[current_coord + 3 * (ii + istart) * sites_[curr_mon_type] + j] +=
-                                grad2[3 * ii * nat_[curr_mon_type] + j];
-                        }
+                        mon_idxs.push_back(current_mon);
+                        nmon++;
+                    }
+                    current_mon++;
+                }
+
+                size_t ncoord = 3 * nat_[curr_mon_type] * nmon;
+                std::string mon = mon_type_count_[k].first;
+
+                // XYZ with real sites
+                std::vector<double> xyz(ncoord, 0.0);
+                std::vector<double> grad2(ncoord, 0.0);
+
+                // Set up real coordinates
+                size_t ii = istart;
+                for (size_t i = istart; i < iend; i++) {
+                    if (islocal_[indx + i]) {
+                        std::copy(xyz_.begin() + current_coord + 3 * i * sites_[curr_mon_type],
+                                xyz_.begin() + current_coord + 3 * (i * sites_[curr_mon_type] + nat_[curr_mon_type]),
+                                xyz.begin() + 3 * (ii - istart) * nat_[curr_mon_type]);
                         ii++;
                     }
                 }
-            } else {
-                e1b += e1b::get_1b_energy(mon, nmon, xyz, indexes);
+
+                // Get energy of the chunk as function of monomer
+                if (do_grads) {
+                    e1b += e1b::get_1b_energy(mon, nmon, xyz, grad2, indexes, &virial_pool[rank]);
+
+                    // Reorganize gradients
+                    size_t ii = 0;
+                    for (size_t i = istart; i < iend; i++) {
+                        if (islocal_[indx + i]) {
+                            for (size_t j = 0; j < 3 * nat_[curr_mon_type]; j++) {
+                                grad_[current_coord + 3 * (ii + istart) * sites_[curr_mon_type] + j] +=
+                                    grad2[3 * ii * nat_[curr_mon_type] + j];
+                            }
+                            ii++;
+                        }
+                    }
+                } else {
+                    e1b += e1b::get_1b_energy(mon, nmon, xyz, indexes);
+                }
+
+                // for (size_t i = 0; i < indexes.size(); i++) {
+                //     enforce_ttm_for_idx_.push_back(mon_idxs[indexes[i]]);
+                // }
+
+                istart = iend;
             }
 
-            for (size_t i = 0; i < indexes.size(); i++) {
-                enforce_ttm_for_idx_.push_back(mon_idxs[indexes[i]]);
-            }
-
-            istart = iend;
+#ifdef _OPENMP  
         }
+#endif
 
         // Update current_coord and curr_mon_type
         current_coord += 3 * mon_type_count_[k].second * sites_[curr_mon_type];
         curr_mon_type += mon_type_count_[k].second;
-        indx += iend;
+        indx += mon_type_count_[k].second;
+    }
+
+    for (size_t i = 0; i < num_threads; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            virial_[j] += virial_pool[i][j];
+        }
     }
 
     return e1b;
