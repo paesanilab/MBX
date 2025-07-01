@@ -29,7 +29,7 @@ CXXFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 CXXFLAGS +=      -I$(MBX_INC)
 CXXFLAGS +=      -I$(FFTW)/include
 
-# comment this in to compile with threading building blocks library
+# enable these lines to compile with the threading building blocks library
 #CXXFLAGS += 	-qtbb -DTBB
 #CXXFLAGS += 	-gcc-name=gcc-12
 
@@ -40,7 +40,7 @@ LINKFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 LIB = 
 LIB +=          $(MBX_LIB)/libmbx.a
 
-# comment this in to compile with threading building blocks library
+# enable these lines to compile with the threading building blocks library
 #LIB +=          -ltbb -ltbbmalloc
 
 SIZE =		size
