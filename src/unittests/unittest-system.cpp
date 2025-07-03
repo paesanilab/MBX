@@ -249,6 +249,30 @@ TEST_CASE("system::energy") {
     //    }
 }
 
+
+TEST_CASE("large system system::energy") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/2048_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/2048_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/2048_water.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    REQUIRE(e == Approx(-1.9374925825e+04).margin(TOL));
+
+}
+
 TEST_CASE("system::getters") {
     SECTION("System Information") {
         // Set up system
