@@ -251,7 +251,6 @@ TEST_CASE("system::energy") {
 
 
 TEST_CASE("large system system::energy") {
-    SETUP_H2O_2_CH4_1
 
     // Set up system
     std::vector<bblock::System> systems;
@@ -265,8 +264,6 @@ TEST_CASE("large system system::energy") {
         REQUIRE(1 == 2);
     }
 
-
-    nlohmann::json j(testData.json_mbx);
     char json_path[] = "unittests_inputs/2048_water.json";
     systems[0].SetUpFromJson(json_path);
 
