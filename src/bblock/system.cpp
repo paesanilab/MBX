@@ -33,6 +33,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "system.h"
+#include "../potential/3b/x3b-v2x.h"
 
 //#define DEBUG
 //#define TIMING
@@ -40,6 +41,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #ifdef TIMING
 #include <chrono>
+#include <iostream>
 #include <iostream>
 #endif
 
@@ -49,6 +51,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 
 ////////////////////////////////////////////////////////////////////////////////
+
+double grand_total_poly_time = 0.0;
 
 namespace bblock {  // Building Block :: System
 
@@ -71,9 +75,10 @@ System::System() {
     /////////////
 
     // Setting 2B cutoff
-    // Affects the 2B dispersion and 2B polynomials
-    // TODO make it effective for electrostatics too
     cutoff2b_ = 100.0;
+
+    // Setting realspace / reciprocal space cutoff
+    cutoff_realspace_ = 100.0;
 
     // Setting 3B cutoff
     // Affects the 3B polynomials
@@ -688,9 +693,11 @@ void System::GetTotalDipole(std::vector<double> &mu_perm, std::vector<double> &m
 //    return chg_der;
 //}
 
+void System::SetRealspaceCutoff(double cutoff_realspace) { cutoff_realspace_ = cutoff_realspace; }
 void System::Set2bCutoff(double cutoff2b) { cutoff2b_ = cutoff2b; }
 void System::Set3bCutoff(double cutoff3b) { cutoff3b_ = cutoff3b; }
 void System::Set4bCutoff(double cutoff4b) { cutoff4b_ = cutoff4b; }
+double System::GetRealspaceCutoff() { return cutoff_realspace_; }
 double System::Get2bCutoff() { return cutoff2b_; }
 double System::Get3bCutoff() { return cutoff3b_; }
 double System::Get4bCutoff() { return cutoff4b_; }
@@ -1256,6 +1263,17 @@ void System::SetUpFromJson(nlohmann::json j) {
     }
     mbx_j_["MBX"]["twobody_cutoff"] = cutoff2b_;
 
+    try {
+        cutoff_realspace_ = j["MBX"]["realspace_cutoff"];
+    } catch (...) {
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"twobody_cutoff\" is not defined in json file. Using " << cutoff2b_ << "\n";
+
+        // if cutoff realspace is not given, use 2-body PIP cutoff:
+        cutoff_realspace_ = cutoff2b_;
+    }
+    mbx_j_["MBX"]["realspace_cutoff"] = cutoff_realspace_;
+
     // Try to get 3b cutoff
     // Default: 5.0 Angstrom
     try {
@@ -1690,6 +1708,7 @@ std::string System::GetCurrentSystemConfig() {
     }
     ss << std::endl;
 
+    ss << std::left << std::setw(25) << "realspace cutoff:" << cutoff_realspace_ << std::endl;
     ss << std::left << std::setw(25) << "2B cutoff:" << cutoff2b_ << std::endl;
     ss << std::left << std::setw(25) << "3B cutoff:" << cutoff3b_ << std::endl;
     ss << std::left << std::setw(25) << "4B cutoff:" << cutoff4b_ << std::endl;
@@ -2473,7 +2492,8 @@ double System::Get2B(bool do_grads, bool use_ghost) {
     // this variable is the maximum number of dimers that will be dispached to a thread at a time.
     // the number of trimers will be smaller near the end of the evaluaton when there are fewer dimers.
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
-    const size_t batch_size = 16;
+    const size_t batch_size = 8;
+    const size_t batch_size_factor = 8;
 
     // actually calculate the dimers
 #ifdef _OPENMP
@@ -2490,7 +2510,10 @@ double System::Get2B(bool do_grads, bool use_ghost) {
         #pragma omp critical(dimers_pool_index)
         {
             start_index = dimers_pool_index;
-            this_batch_size = std::min(batch_size, (dimers_pool.size() - start_index) / 2);
+            size_t num_remaining_nmers = (dimers_pool.size() - start_index) / 2;
+            size_t num_nmers_in_full_round = batch_size_factor*num_threads;
+            size_t truncated_batch_size = batch_size_factor * (num_remaining_nmers / num_nmers_in_full_round) + (num_remaining_nmers % num_nmers_in_full_round == 0 ? 0 : batch_size_factor);
+            this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (dimers_pool.size() - start_index) / 2));
             dimers_pool_index += this_batch_size * 2;
         }
         dimers.insert(dimers.end(), dimers_pool.begin() + start_index, dimers_pool.begin() + start_index + this_batch_size*2);
@@ -2643,7 +2666,10 @@ double System::Get2B(bool do_grads, bool use_ghost) {
                 #pragma omp critical(dimers_pool_index)
                 {
                     start_index = dimers_pool_index;
-                    this_batch_size = std::min(batch_size, (dimers_pool.size() - start_index) / 2);
+                    size_t num_remaining_nmers = (dimers_pool.size() - start_index) / 2;
+                    size_t num_nmers_in_full_round = batch_size_factor*num_threads;
+                    size_t truncated_batch_size = batch_size_factor * (num_remaining_nmers / num_nmers_in_full_round) + (num_remaining_nmers % num_nmers_in_full_round == 0 ? 0 : batch_size_factor);
+                    this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (dimers_pool.size() - start_index) / 2));
                     dimers_pool_index += this_batch_size * 2;
 
                 }
@@ -2748,6 +2774,8 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     size_t step = 1;
     int num_threads = 1;
 
+    // double start_overhead = MPI_Wtime();
+
 #ifdef _OPENMP
 #pragma omp parallel
     {
@@ -2806,7 +2834,10 @@ double System::Get3B(bool do_grads, bool use_ghost) {
     // this variable is the maximum number of trimers that will be dispached to a thread at a time.
     // the number of trimers will be smaller near the end of the evaluaton when there are fewer trimers.
     // should probably be a multiple of 8 for compatibility with uncoming SIMD PIP evaluation.
-    const size_t batch_size = 16;
+    const size_t batch_size = 8;
+    const size_t batch_size_factor = 8;
+
+    const size_t max_profile_index = 200;
 
     // actually calculate the trimers
 #ifdef _OPENMP
@@ -2824,7 +2855,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
         {
 
             start_index = trimers_pool_index;
-            size_t truncated_batch_size = ((trimers_pool.size() - start_index) / 3) / (num_threads) + 1;
+            size_t num_remaining_nmers = (trimers_pool.size() - start_index) / 3;
+            size_t num_nmers_in_full_round = batch_size_factor*num_threads;
+            size_t truncated_batch_size = batch_size_factor * (num_remaining_nmers / num_nmers_in_full_round) + (num_remaining_nmers % num_nmers_in_full_round == 0 ? 0 : batch_size_factor);
             this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (trimers_pool.size() - start_index) / 3));
             trimers_pool_index += this_batch_size * 3;
         }
@@ -2860,6 +2893,8 @@ double System::Get3B(bool do_grads, bool use_ghost) {
         size_t i = 0;
         size_t nt = 0;
         size_t nt_tot = 0;
+        
+        size_t cur_profile_index = 0;
 
         // Loop over all the trimers
         while (3 * nt_tot < trimers.size()) {
@@ -2931,7 +2966,11 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                         std::vector<double> grad3(coord3.size(), 0.0);
                         std::vector<double> virial(9, 0.0);  // declare virial tensor
                         // POLYNOMIALS
+
                         e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+
+                        cur_profile_index += 1;
+
                         // Update gradients
                         size_t i0 = nt_tot * 3;
                         for (size_t k = 0; k < nt; k++) {
@@ -2982,7 +3021,9 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                 {
 
                     start_index = trimers_pool_index;
-                    size_t truncated_batch_size = ((trimers_pool.size() - start_index) / 3) / (num_threads  * 4) + 1;
+                    size_t num_remaining_nmers = (trimers_pool.size() - start_index) / 3;
+                    size_t num_nmers_in_full_round = batch_size_factor*num_threads;
+                    size_t truncated_batch_size = batch_size_factor * (num_remaining_nmers / num_nmers_in_full_round) + (num_remaining_nmers % num_nmers_in_full_round == 0 ? 0 : batch_size_factor);
                     this_batch_size = std::min(truncated_batch_size, std::min(batch_size, (trimers_pool.size() - start_index) / 3));
                     trimers_pool_index += this_batch_size * 3;
 
@@ -3622,7 +3663,7 @@ void System::SetPeriodicity(bool periodic) {
 ////////////////////////////////////////////////////////////////////////////////
 
 double System::GetElectrostatics(bool do_grads, bool use_ghost) {
-    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff_realspace_);
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
     electrostaticE_.SetEwaldAlpha(elec_alpha_);
@@ -3634,7 +3675,7 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
 }
 
 double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
-    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff2b_);
+    electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_, cutoff_realspace_);
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
     electrostaticE_.SetEwaldAlpha(elec_alpha_);
@@ -3657,7 +3698,7 @@ double System::GetDispersion(bool do_grads, bool use_ghost) {
         }
         count += 3 * nat_[i];
     }
-    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff_realspace_, box_);
     dispersionE_.SetEwaldAlpha(disp_alpha_);
     dispersionE_.SetEwaldGridDensity(disp_grid_density_);
     dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
@@ -3687,7 +3728,7 @@ double System::GetLennardJones(bool do_grads, bool use_ghost) {
         }
         count += 3 * nat_[i];
     }
-    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff_realspace_, box_);
     lennardJonesE_.SetEwaldAlpha(lj_alpha_);
     lennardJonesE_.SetEwaldGridDensity(lj_grid_density_);
     lennardJonesE_.SetEwaldSplineOrder(lj_spline_order_);
@@ -3718,7 +3759,7 @@ double System::GetDispersionPME(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff_realspace_, box_);
     dispersionE_.SetEwaldAlpha(disp_alpha_);
     dispersionE_.SetEwaldGridDensity(disp_grid_density_);
     dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
@@ -3749,7 +3790,7 @@ double System::GetDispersionPMElocal(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff2b_, box_);
+    dispersionE_.SetNewParameters(xyz_real, ignore_disp_, do_grads, cutoff_realspace_, box_);
     dispersionE_.SetEwaldAlpha(disp_alpha_);
     dispersionE_.SetEwaldGridDensity(disp_grid_density_);
     dispersionE_.SetEwaldSplineOrder(disp_spline_order_);
@@ -3780,7 +3821,7 @@ double System::GetLennardJonesPME(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff_realspace_, box_);
     lennardJonesE_.SetEwaldAlpha(lj_alpha_);
     lennardJonesE_.SetEwaldGridDensity(lj_grid_density_);
     lennardJonesE_.SetEwaldSplineOrder(lj_spline_order_);
@@ -3810,7 +3851,7 @@ double System::GetLennardJonesPMElocal(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff2b_, box_);
+    lennardJonesE_.SetNewParameters(xyz_real, lj_pairs_, do_grads, cutoff_realspace_, box_);
     lennardJonesE_.SetEwaldAlpha(lj_alpha_);
     lennardJonesE_.SetEwaldGridDensity(lj_grid_density_);
     lennardJonesE_.SetEwaldSplineOrder(lj_spline_order_);
@@ -3854,7 +3895,7 @@ double System::GetBuckingham(bool do_grads, bool use_ghost) {
         count += 3 * nat_[i];
     }
 
-    buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, enforce_ttm_for_idx_, do_grads, cutoff2b_, box_);
+    buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, enforce_ttm_for_idx_, do_grads, cutoff_realspace_, box_);
     // buckinghamE_.SetNewParameters(xyz_real, buck_pairs_, do_grads, cutoff2b_, box_);
     std::vector<double> real_grad(3 * numat_, 0.0);
     double e = buckinghamE_.GetRepulsion(real_grad, &virial_, use_ghost);
