@@ -5,20 +5,20 @@ MBX is interfaced with LAMMPS via a pair/fix combination. The source files are i
 LAMMPS can access some energy contributions from MBX, and one can print them in the output. To enable the variable calculation, one must add to the LAMMPS input the following lines:
 ```
 compute         mbx all pair mbx
-variable        e1    equal c_mbx[1]
-variable        e2    equal c_mbx[2]
-variable        e3    equal c_mbx[3]
-variable        e4    equal c_mbx[4]
-variable        ebuck equal c_mbx[5]
-variable        edisp equal c_mbx[6]
-variable        eele  equal c_mbx[7]
-variable        etot  equal c_mbx[8]
+variable        e1bpip    equal c_mbx[1]
+variable        e2bpip    equal c_mbx[2]
+variable        e3bpip    equal c_mbx[3]
+variable        e4bpip    equal c_mbx[4]
+variable        edisp     equal c_mbx[5]
+variable        ebuck     equal c_mbx[6]
+variable        eele      equal c_mbx[7]
+variable        etot      equal c_mbx[8]
 ```
-This will store the one- (e1), two- (e2), three- (e3), and foru-body (e4) energies, along with the deprecated classical repultion (ebuck), the dispersion energy (edisp), the electrostatic energu, both permanent and induced added together (eele), and the total energy.
+This will store the one- (e1), two- (e2), three- (e3), and four-body (e4) energies, along with the dispersion energy (edisp), the deprecated classical repultion (ebuck), the electrostatic energy, both permanent and induced added together (eele), and the total energy.
 
 One can define a thermo style such as:
 ```
-thermo_style    custom step time temp cella cellb cellc evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1 v_e2 v_e3 v_ebuck v_edisp v_eele v_etot pe etotal
+thermo_style    custom step time temp etotal ke pe enthalpy density lx ly lz vol pxx pyy pzz press v_e1bpip v_e2bpip v_e3bpip v_e4bpip v_edisp v_ebuck v_eele v_etot
 ```
 to print each of the contributions.
 

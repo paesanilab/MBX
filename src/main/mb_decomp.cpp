@@ -4,12 +4,14 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cstring>
 #include <stdexcept>
 #include <cstdlib>
 
 #include "io_tools/read_nrg.h"
 #include "io_tools/write_nrg.h"
+#include "io_tools/write_xyz.h"
 
 #include "bblock/system.h"
 
@@ -19,6 +21,7 @@ static std::vector<bblock::System> systems;
 static int max_order = -1; // maximum subset order
 static bool verbose = false;
 static bool do_decomp = true;
+static bool print_xyz = false;
 
 void show_usage();
 void parse_command_line(int, char**);
@@ -48,7 +51,7 @@ int main(int argc, char** argv) {
 
     for (size_t ii = 0; ii < systems.size(); ii++) {
 
-        if(verbose) std::cout << "--- frame " << ii << " ---" << std::endl;
+        if(verbose) std::cerr << "--- frame " << ii << " ---" << std::endl;
 
         // Load JSON file
         if (argc - optind > 1) {
@@ -89,6 +92,9 @@ int main(int argc, char** argv) {
                 // set up subsystem
                 bblock::System subsystem;
 
+                // output buffer
+                std::ostringstream oss;
+
                 // loop through subsystem monomers
                 for (size_t kk = 0; kk < subset[nn][jj].size() ; kk++) {
                     size_t mm = subset[nn][jj][kk];
@@ -96,11 +102,11 @@ int main(int argc, char** argv) {
                     std::vector<std::string> vAtNames(monomer_number_of_atoms[mm]);
 
                     std::copy(coordinates.begin() + 3 * first_index[mm], coordinates.begin() + 3 * (first_index[mm] + monomer_number_of_atoms[mm]), xyz.begin());
-                    std::copy(atom_names.begin() + count, atom_names.begin() + first_index[mm] + monomer_number_of_atoms[mm], vAtNames.begin());
+                    std::copy(atom_names.begin() + first_index[mm], atom_names.begin() + first_index[mm] + monomer_number_of_atoms[mm], vAtNames.begin());
                     std::string id = monomer_ids[mm];
                     subsystem.AddMonomer(xyz, vAtNames, id);
 
-                    if(verbose) std::cout << mm << ",";
+                    if(verbose) oss << mm << ",";
                 }
 
 //                subsystem.Initialize(); // in system.cpp, it seems this line does not have any effect before json is read.
@@ -133,9 +139,20 @@ int main(int argc, char** argv) {
 
                 }
 
-                std::cout << " " << std::setprecision(10) << energies[subset[nn][jj]];
+                oss << " " << std::setprecision(10) << energies[subset[nn][jj]];
+
+                // determine if print result in a single line, or print xyz with result as comment
+                if(print_xyz) {
+                    std::vector<std::string> subsystem_atom_names = subsystem.GetRealAtomNames();
+                    std::vector<double> subsystem_coordinates = subsystem.GetRealXyz();
+                    std::vector<double> box = subsystem.GetBox();
+                    tools::WriteXYZ(std::cout, subsystem_atom_names, subsystem_coordinates, box, oss.str());
+                } else {
+                    std::cout << oss.str();
+                    if(verbose) std::cout << std::endl;
+                }
                 std::cout.flush();
-                if(verbose) std::cout << std::endl;
+
             }
         }
         if(!verbose) std::cout << std::endl;
@@ -210,15 +227,18 @@ void show_usage()
     "\n"
     "Options:\n"
     "    -h      , help\n"
-    "    -v      , verbose\n"
-    "    -e      , skip_decomp (won't perform many-body decomposition)\n"
+    "    -v      , verbose (default: false)\n"
+    "    -e      , skip_decomp (default: false)\n"
     "    -o <int>, max_order (default: -1, calculate for all subsystems)\n"
+    "    -p      , print_xyz (default: true)\n"
     "\nIf -v is set, program prints monomer indices of each subsystem, followed"
     "\nby the energy value. Every subsystem uses one line. Otherwise, energies"
-    "\nof subsystems are printed without line-breaks. Each frame uses one line."
+    "\nof subsystems are printed without line-breaks. Each frame uses one line.\n"
     "\nIf -e is set, program prints singlepoint total energies of subsystems."
-    "\nOtherwise, program prints many-body energies of subsystems.\n"
-    "\n-o <int> if set, calculate for subsystems upto this order."
+    "\nOtherwise, program performs many-body decomposition and prints many-body"
+    "\nenergies of subsystems.\n"
+    "\nIf -o <int> is set, calculate for subsystems upto this order.\n"
+    "\nIf -p is set, program prints xyz with results in comment lines."
     "\n"
     "\nExample:"
     "\n$ ./mb_decomp -v -o 2 -e input.nrg"
@@ -231,7 +251,7 @@ void parse_command_line(int argc, char** argv)
 {
     int c;
 
-    static const char short_options[] = "hveo:";
+    static const char short_options[] = "hveo:p";
 
     while (true) {
 
@@ -252,6 +272,9 @@ void parse_command_line(int argc, char** argv)
                 break;
             case 'o':
                 max_order = atoi(optarg);
+                break;
+            case 'p':
+                print_xyz = true;
                 break;
             case '?':
                 std::exit(EXIT_FAILURE);

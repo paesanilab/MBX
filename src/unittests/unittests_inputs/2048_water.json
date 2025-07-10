@@ -1,13 +1,12 @@
 {
-   "Note" : "json file for MB-nrg CH4",
+   "Note" : "This is a cofiguration file",
    "MBX" : { 
-       "box" : [],
-       "realspace_cutoff": 9.0,
+       "box" : [39.46142,0.0,0.0,0.0,39.46142,0.0,0.0,0.0,39.46142],
        "twobody_cutoff"   : 9.0,
-       "threebody_cutoff" : 4.5,
-       "dipole_tolerance" : 1E-8,
+       "threebody_cutoff" : 6.0, 
+       "dipole_tolerance" : 1E-16,
        "dipole_max_it"    : 100,
-       "dipole_method"     : "cg",
+       "dipole_method"    : "cg",
        "alpha_ewald_elec" : 0.60,
        "grid_density_elec" : 2.5,
        "spline_order_elec" : 6,
@@ -15,7 +14,7 @@
        "grid_density_disp" : 2.5,
        "spline_order_disp" : 6,
        "ignore_2b_poly" : [],
-       "ignore_3b_poly" : [["h2o","h2o","ch4"]]
-   }   
+       "ignore_3b_poly" : []
+   }  
 }
 

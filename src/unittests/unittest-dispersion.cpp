@@ -36,7 +36,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/dispersion/dispersion.h"
 #include "tools/math_tools.h"
-#include "setup_monomer_mix.h"
 #include "json/json.h"
 
 #include <vector>

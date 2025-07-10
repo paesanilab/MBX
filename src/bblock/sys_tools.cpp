@@ -218,8 +218,8 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 nat.push_back(1);
 
                 // Halides and alkali metal ions
-            } else if (mon[i] == "f-" || mon[i] == "cl-" ||                                        // Halides
-                       mon[i] == "br-" || mon[i] == "i-" || mon[i] == "li+" || mon[i] == "na+" ||  // Alkali metal ions
+            } else if (mon[i] == "f-" || mon[i] == "cl-" || mon[i] == "br-" || mon[i] == "i-" || // Halides
+                       mon[i] == "li+" || mon[i] == "na+" ||  // Alkali metal ions
                        mon[i] == "k+" || mon[i] == "rb+" || mon[i] == "cs+") {
                 sites.push_back(1);
                 nat.push_back(1);
@@ -1174,15 +1174,15 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
 
     if (is_in_json) return;
 
-    // Halides
+
     if (mon_id == "f-") {  // Fluoride
-        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 0.8079;
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.4669;
     } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.3602;
     } else if (mon_id == "br-") {  // Bromide
-        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 3.7819;
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 7.1668;
     } else if (mon_id == "i-") {  // Iodide
-        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 5.9563;
+        for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 10.1184;
     }
 
     // Alkali metal ions
@@ -1348,14 +1348,15 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
     if (is_in_json) return;
 
     // Halides
+
     if (mon_id == "f-") {  // Fluoride
-        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 0.8079;
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 2.4669;
     } else if (mon_id == "cl-") {  // Chloride
         for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.3602;
     } else if (mon_id == "br-") {  // Bromide
-        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 3.7819;
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 7.1668;
     } else if (mon_id == "i-") {  // Iodide
-        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 5.9563;
+        for (size_t nv = 0; nv < n_mon; nv++) pol[fst_ind + nv] = 10.1184;
     }
 
     // Alkali metal ions

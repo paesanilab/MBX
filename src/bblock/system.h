@@ -380,7 +380,13 @@ class System {
     std::vector<std::string> GetMonId();
 
     /**
-     * Gets the two-body cutoff for dispersion and polynomials.
+     * Gets the realspace cutoff for dispersion, electrostatics, and lj.
+     * @return realspace cutoff
+     */
+    double GetRealspaceCutoff();
+
+    /**
+     * Gets the two-body cutoff for polynomials.
      * @return Two-body cutoff
      */
     double Get2bCutoff();
@@ -802,7 +808,13 @@ class System {
     nlohmann::json GetJsonConfigDispersionRepulsion();
 
     /**
-     * Sets the two-body cutoff for dispersion and polynomials.
+     * Sets the realspace cutoff for disp, elec, and lj.
+     * @param[in] cutoff_realspace Is the distance, in angstrom, of the cutoff
+     */
+    void SetRealspaceCutoff(double cutoff_realspace);
+
+    /**
+     * Sets the two-body cutoff for polynomials.
      * Molecules that are at a larger distance than the cutoff will not
      * be evaluated
      * @param[in] cutoff2b Is the distance, in angstrom, of the cutoff
@@ -1433,6 +1445,11 @@ class System {
      * Spline order for interpolation for dispersion
      */
     size_t lj_spline_order_;
+
+    /**
+     * Cutoff used to divide real space and reciprocal space in dispersion, electrostatics, and lj.
+     */
+    double cutoff_realspace_;
 
     /**
      * Cutoff in the search for clusters for the dimers.
