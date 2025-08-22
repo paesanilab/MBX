@@ -130,6 +130,10 @@ System::System() {
     proc_grid_x_ = 1;
     proc_grid_y_ = 1;
     proc_grid_z_ = 1;
+
+    field_x_ = 0.0;
+    field_y_ = 0.0;
+    field_z_ = 0.0;
 }
 System::~System() {}
 
@@ -1576,6 +1580,25 @@ void System::SetUpFromJson(nlohmann::json j) {
         // if (mpi_rank_ == 0) std::cerr << "**WARNING** \"monomers_file\" is not defined in json file.\n";
     }
     mbx_j_["MBX"]["monomers_file"] = monomers_json_file;
+
+
+    try {
+        field_x_ = j["MBX"]["field_x"];
+    } catch (...) {
+    }
+    mbx_j_["MBX"]["field_x"] = field_x_;
+
+    try {
+        field_y_ = j["MBX"]["field_y"];
+    } catch (...) {
+    }
+    mbx_j_["MBX"]["field_y"] = field_y_;
+
+    try {
+        field_z_ = j["MBX"]["field_z"];
+    } catch (...) {
+    }
+    mbx_j_["MBX"]["field_z"] = field_z_;
 
     SetPBC(box_);
 }
@@ -3581,9 +3604,60 @@ double System::ElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
 
     SetPBCElectrostaticsMPIlocal(box_);
 
+    init_external_field();
+
     energy_ = GetElectrostaticsMPIlocal(do_grads, use_ghost);
 
     return energy_;
+}
+
+void System::init_external_field() {
+    std::vector<double> phi(numsites_, 0.0), ef(3 * numsites_, 0.0), def(9 * numsites_, 0.0), dmui(9 * numsites_, 0.0);
+
+    const double X_FIELD = field_x_;
+    const double Y_FIELD = field_y_;
+    const double Z_FIELD = field_z_;
+
+    for (size_t i = 0; i < sites_.size(); i++) {
+
+        double x_rec = box_inverse_[0] * xyz_[i*3 + 0] + box_inverse_[3] * xyz_[i*3 + 1] + box_inverse_[6] * xyz_[i*3 + 2];
+        double y_rec = box_inverse_[1] * xyz_[i*3 + 0] + box_inverse_[4] * xyz_[i*3 + 1] + box_inverse_[7] * xyz_[i*3 + 2];
+        double z_rec = box_inverse_[2] * xyz_[i*3 + 0] + box_inverse_[5] * xyz_[i*3 + 1] + box_inverse_[8] * xyz_[i*3 + 2];
+
+        x_rec -= std::floor(x_rec);
+        y_rec -= std::floor(y_rec);
+        z_rec -= std::floor(z_rec);
+
+        double x = box_[0] * x_rec + box_[3] * y_rec + box_[6] * z_rec;
+        double y = box_[1] * x_rec + box_[4] * y_rec + box_[7] * z_rec;
+        double z = box_[2] * x_rec + box_[5] * y_rec + box_[8] * z_rec;
+
+
+        phi[i] = x * X_FIELD; // integrate the constant x field value
+        phi[i] = y * Y_FIELD; // integrate the constant y field value
+        phi[i] = z * Z_FIELD; // integrate the constant z field value
+    }
+
+    for (size_t i = 0; i < sites_.size(); i++) {
+
+        ef[i*3 + 0] = X_FIELD; // constant value for potential along x axis
+        ef[i*3 + 1] = Y_FIELD; // constant value for potential along x axis
+        ef[i*3 + 2] = Z_FIELD; // constant value for potential along x axis
+    }
+
+    for (size_t i = 0; i < sites_.size(); i++) {
+        for (size_t j = 0; j < 9; j++) {
+            def[i*9 + j] = 0.0; // field is constant, so no derivative.
+        }
+    }
+
+    for (size_t i = 0; i < sites_.size(); i++) {
+        for (size_t j = 0; j < 9; j++) {
+            dmui[i*9 + j] = 0.0; // not entirely sure what this is, but its 0.0 (probably, check this!).
+        }
+    }
+
+    electrostaticE_.SetExternalElectrostaticPotentialAndFieldInSites(phi, ef, def, dmui);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

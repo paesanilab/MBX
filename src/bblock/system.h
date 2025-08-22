@@ -1120,6 +1120,7 @@ class System {
     double ElectrostaticsTest(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPI(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
+    void init_external_field();
 
     /**
      * Obtains the dispersion energy for the whole system.
@@ -1824,6 +1825,9 @@ class System {
      * States if the initialization is PME only or not"
      */
     // bool isPME_;
+
+    // constant elec field along each cartesian axis.
+    double field_x_, field_y_, field_z_;
 };
 
 }  // namespace bblock
