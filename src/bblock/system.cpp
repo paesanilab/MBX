@@ -850,7 +850,7 @@ void System::SetRealXyz(std::vector<double> xyz) {
 }
 
 void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal,
-                        int tag) {
+                        int tag, std::vector<int> image_flags) {
     // If the system has been initialized, adding a monomer is not possible
     if (initialized_) {
         std::string text = std::string("The system has already been initialized. ") +
@@ -871,6 +871,16 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
         atom_tag_.push_back(tag == 0 ? tag_counter_ + i : tag + i);
     }
     tag_counter_ += atoms.size();
+
+    if(image_flags.size() != 3) {
+        std::string text = std::string("image flags must be len-3 vector. ");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+    monomer_image_flags_.push_back(image_flags[0]);
+    monomer_image_flags_.push_back(image_flags[1]);
+    monomer_image_flags_.push_back(image_flags[2]);
+
+    std::cerr << "Adding Monomer #" << tag << " with image flags: (" << image_flags[0] << ", " << image_flags[1] << ", " << image_flags[2] << ")" << std::endl;
 }
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
@@ -3618,15 +3628,28 @@ void System::init_external_field() {
     const double Y_FIELD = field_y_;
     const double Z_FIELD = field_z_;
 
-    for (size_t i = 0; i < sites_.size(); i++) {
+    int monomer_index = 0;
+
+    std::cerr << "Initializing External Field..." << std::endl;
+    std::cerr << "size of initial_order_: " << initial_order_.size() << std::endl;
+
+    for (size_t i = 0; i < numsites_; i++) {
+
+        if(first_index_[monomer_index] + sites_[monomer_index] == i) monomer_index += 1;
+
+        size_t j = initial_order_[monomer_index].first;
+
+        int image_x = monomer_image_flags_[3 * j + 0];
+        int image_y = monomer_image_flags_[3 * j + 1];
+        int image_z = monomer_image_flags_[3 * j + 2];
 
         double x_rec = box_inverse_[0] * xyz_[i*3 + 0] + box_inverse_[3] * xyz_[i*3 + 1] + box_inverse_[6] * xyz_[i*3 + 2];
         double y_rec = box_inverse_[1] * xyz_[i*3 + 0] + box_inverse_[4] * xyz_[i*3 + 1] + box_inverse_[7] * xyz_[i*3 + 2];
         double z_rec = box_inverse_[2] * xyz_[i*3 + 0] + box_inverse_[5] * xyz_[i*3 + 1] + box_inverse_[8] * xyz_[i*3 + 2];
 
-        x_rec -= std::floor(x_rec);
-        y_rec -= std::floor(y_rec);
-        z_rec -= std::floor(z_rec);
+        x_rec += image_x;
+        y_rec += image_y;
+        z_rec += image_z;
 
         double x = box_[0] * x_rec + box_[3] * y_rec + box_[6] * z_rec;
         double y = box_[1] * x_rec + box_[4] * y_rec + box_[7] * z_rec;
@@ -3636,22 +3659,24 @@ void System::init_external_field() {
         phi[i] = x * X_FIELD; // integrate the constant x field value
         phi[i] = y * Y_FIELD; // integrate the constant y field value
         phi[i] = z * Z_FIELD; // integrate the constant z field value
+
+        std::cerr << "zfield " << atom_tag_[i] << " " << image_x << " " << image_y << " " << image_z << " : " << phi[i] << std::endl;
     }
 
-    for (size_t i = 0; i < sites_.size(); i++) {
+    for (size_t i = 0; i < numsites_; i++) {
 
         ef[i*3 + 0] = X_FIELD; // constant value for potential along x axis
         ef[i*3 + 1] = Y_FIELD; // constant value for potential along x axis
         ef[i*3 + 2] = Z_FIELD; // constant value for potential along x axis
     }
 
-    for (size_t i = 0; i < sites_.size(); i++) {
+    for (size_t i = 0; i < numsites_; i++) {
         for (size_t j = 0; j < 9; j++) {
             def[i*9 + j] = 0.0; // field is constant, so no derivative.
         }
     }
 
-    for (size_t i = 0; i < sites_.size(); i++) {
+    for (size_t i = 0; i < numsites_; i++) {
         for (size_t j = 0; j < 9; j++) {
             dmui[i*9 + j] = 0.0; // not entirely sure what this is, but its 0.0 (probably, check this!).
         }

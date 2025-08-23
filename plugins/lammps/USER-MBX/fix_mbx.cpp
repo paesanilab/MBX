@@ -32,6 +32,7 @@
 #include "error.h"
 #include "universe.h"
 #include "modify.h"
+#include "library.h"
 
 #define _MAX_SIZE_MOL_NAME 16
 // Subject to further increase _MAX_SIZE_MOL_NAME
@@ -1344,6 +1345,8 @@ void FixMBX::mbx_init_local() {
     double **x = atom->x;
     double *q = atom->q;
 
+    imageint* image = atom->image;
+
 #ifdef _DEBUG
     printf("\n[MBX] (%i,%i) (mbx_init) atom->nlocal %i, atom->nghost %i, atom->nmax %i\n", universe->iworld, me,
            atom->nlocal, atom->nghost, atom->nmax);
@@ -1415,6 +1418,7 @@ void FixMBX::mbx_init_local() {
         if (mol_anchor[i] && mol_local[i]) {
             std::vector<std::string> names;
             std::vector<double> xyz;
+            std::vector<int> image_flags(3);
 
             const int mtype = mol_type[i];
 
@@ -1461,6 +1465,8 @@ void FixMBX::mbx_init_local() {
                 xyz.push_back(x[i][1] - ylo);
                 xyz.push_back(x[i][2] - zlo);
 
+                lammps_decode_image_flags(image[i], image_flags.data());
+
                 for (int j = 1; j < na; ++j) {
                     domain->closest_image(x[i], x[amap[j]], ximage);
                     xyz.push_back(ximage[0] - xlo);
@@ -1472,7 +1478,7 @@ void FixMBX::mbx_init_local() {
 
                 molec.push_back(nm++);
 
-                ptr_mbx_local->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
+                ptr_mbx_local->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor, image_flags);
                 ptr_mbx_local->AddMolecule(molec);
 
                 mbx_num_atoms_local += na;

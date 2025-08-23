@@ -558,7 +558,7 @@ class System {
      * Please read the documentation carefully.
      */
     void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1,
-                    int tag = 0);
+                    int tag = 0, std::vector<int> image_flags = std::vector<int>({0, 0, 0}));
 
     std::string GetCurrentSystemConfig();
 
@@ -1828,6 +1828,8 @@ class System {
 
     // constant elec field along each cartesian axis.
     double field_x_, field_y_, field_z_;
+
+    std::vector<int> monomer_image_flags_;
 };
 
 }  // namespace bblock
