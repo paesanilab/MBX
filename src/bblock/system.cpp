@@ -879,8 +879,6 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
     monomer_image_flags_.push_back(image_flags[0]);
     monomer_image_flags_.push_back(image_flags[1]);
     monomer_image_flags_.push_back(image_flags[2]);
-
-    std::cerr << "Adding Monomer #" << tag << " with image flags: (" << image_flags[0] << ", " << image_flags[1] << ", " << image_flags[2] << ")" << std::endl;
 }
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
@@ -3630,9 +3628,6 @@ void System::init_external_field() {
 
     int monomer_index = 0;
 
-    std::cerr << "Initializing External Field..." << std::endl;
-    std::cerr << "size of initial_order_: " << initial_order_.size() << std::endl;
-
     for (size_t i = 0; i < numsites_; i++) {
 
         if(first_index_[monomer_index] + sites_[monomer_index] == i) monomer_index += 1;
@@ -3659,8 +3654,6 @@ void System::init_external_field() {
         phi[i] = x * X_FIELD; // integrate the constant x field value
         phi[i] = y * Y_FIELD; // integrate the constant y field value
         phi[i] = z * Z_FIELD; // integrate the constant z field value
-
-        std::cerr << "zfield " << atom_tag_[i] << " " << image_x << " " << image_y << " " << image_z << " : " << phi[i] << std::endl;
     }
 
     for (size_t i = 0; i < numsites_; i++) {
