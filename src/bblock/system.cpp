@@ -3651,9 +3651,7 @@ void System::init_external_field() {
         double z = box_[2] * x_rec + box_[5] * y_rec + box_[8] * z_rec;
 
 
-        phi[i] = x * X_FIELD; // integrate the constant x field value
-        phi[i] = y * Y_FIELD; // integrate the constant y field value
-        phi[i] = z * Z_FIELD; // integrate the constant z field value
+        phi[i] = - x * X_FIELD - y * Y_FIELD - z * Z_FIELD; // integrate the field
     }
 
     for (size_t i = 0; i < numsites_; i++) {
