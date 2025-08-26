@@ -1258,6 +1258,15 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
                                                               external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
                                                                   sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
 
+                    // this should just be the same as above?
+                    // grad[fi_crd + m * ns * 3 + 3 * i + j] -= constants::COULOMB *
+                    //                                          (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] *
+                    //                                               sys_mu_all_[fi_crd + m * ns * 3 + 3 * i] +
+                    //                                           external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
+                    //                                               sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
+                    //                                           external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
+                    //                                               sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
+
                     // grad[fi_crd + m * ns * 3 + 3 * i + j] += constants::COULOMB *
                     //    (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j]* sys_mu_all_[fi_crd + m * ns * 3 + 3 * i]
                     //    +
@@ -7948,12 +7957,12 @@ void Electrostatics::CalculateDipolesIterative(std::vector<PrecomputedInfo*>& pr
 void Electrostatics::CalculateElecEnergyMPIlocal() {
     Eperm_ = 0.0;
     for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
-    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ += external_phi_[i] * sys_chg_all_[i];
+    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ += external_phi_[i] * sys_chg_all_[i]; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
     Eperm_ *= 0.5 * constants::COULOMB;
 
-    // Eperm_ext_ = 0.0;
-    // for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ext_ += external_phi_[i] * sys_chg_all_[i];
-    // Eperm_ext_ *= 0.5 * constants::COULOMB;
+    Eperm_ext_ = 0.0;
+    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ext_ += external_phi_[i] * sys_chg_all_[i];
+    Eperm_ext_ *= 0.5 * constants::COULOMB;
 
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;
@@ -7993,6 +8002,7 @@ void Electrostatics::CalculateElecEnergyMPIlocal() {
 void Electrostatics::CalculateElecEnergy() {
     Eperm_ = 0.0;
     for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
+    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ += external_phi_[i] * sys_chg_all_[i]; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
     Eperm_ *= 0.5 * constants::COULOMB;
 
     Eperm_ext_ = 0.0;
