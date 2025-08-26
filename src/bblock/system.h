@@ -1830,6 +1830,8 @@ class System {
     double field_x_, field_y_, field_z_;
 
     std::vector<int> monomer_image_flags_;
+
+    bool external_field_set_;
 };
 
 }  // namespace bblock

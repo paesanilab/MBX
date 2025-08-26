@@ -2104,12 +2104,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
 #endif
 
     // Copy back improtant imformation
+    mon_type_count_ = mon_type_count_cp;
+    
     if (external_phi_.size() and external_ef_.size()) {
         UpdatePhiAndEf();
     }
 
-    // Copy back improtant imformation
-    mon_type_count_ = mon_type_count_cp;
     for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
     for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
 
@@ -2679,10 +2679,11 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
 #endif
 
     // Copy back improtant imformation
+    mon_type_count_ = mon_type_count_cp;
+
     if (external_phi_.size() and external_ef_.size()) {
         UpdatePhiAndEf();
     }
-    mon_type_count_ = mon_type_count_cp;
     for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
     for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
 }

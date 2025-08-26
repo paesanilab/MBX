@@ -134,6 +134,8 @@ System::System() {
     field_x_ = 0.0;
     field_y_ = 0.0;
     field_z_ = 0.0;
+
+    external_field_set_ = false;
 }
 System::~System() {}
 
@@ -235,6 +237,8 @@ void System::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double
     }
 
     electrostaticE_.SetExternalElectrostaticPotentialAndFieldInSites(phi_ord, ef_ord, def_ord, dmui_ord);
+
+    external_field_set_ = true;
 }
 
 void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
@@ -3632,22 +3636,30 @@ void System::init_external_field() {
 
         size_t j = initial_order_[monomer_index].first;
 
-        int image_x = monomer_image_flags_[3 * j + 0];
-        int image_y = monomer_image_flags_[3 * j + 1];
-        int image_z = monomer_image_flags_[3 * j + 2];
+        double x, y, z;
 
-        double x_rec = box_inverse_[0] * xyz_[i*3 + 0] + box_inverse_[3] * xyz_[i*3 + 1] + box_inverse_[6] * xyz_[i*3 + 2];
-        double y_rec = box_inverse_[1] * xyz_[i*3 + 0] + box_inverse_[4] * xyz_[i*3 + 1] + box_inverse_[7] * xyz_[i*3 + 2];
-        double z_rec = box_inverse_[2] * xyz_[i*3 + 0] + box_inverse_[5] * xyz_[i*3 + 1] + box_inverse_[8] * xyz_[i*3 + 2];
+        if (use_pbc_) {
 
-        x_rec += image_x;
-        y_rec += image_y;
-        z_rec += image_z;
-
-        double x = box_[0] * x_rec + box_[3] * y_rec + box_[6] * z_rec;
-        double y = box_[1] * x_rec + box_[4] * y_rec + box_[7] * z_rec;
-        double z = box_[2] * x_rec + box_[5] * y_rec + box_[8] * z_rec;
-
+            int image_x = monomer_image_flags_[3 * j + 0];
+            int image_y = monomer_image_flags_[3 * j + 1];
+            int image_z = monomer_image_flags_[3 * j + 2];
+    
+            double x_rec = box_inverse_[0] * xyz_[i*3 + 0] + box_inverse_[3] * xyz_[i*3 + 1] + box_inverse_[6] * xyz_[i*3 + 2];
+            double y_rec = box_inverse_[1] * xyz_[i*3 + 0] + box_inverse_[4] * xyz_[i*3 + 1] + box_inverse_[7] * xyz_[i*3 + 2];
+            double z_rec = box_inverse_[2] * xyz_[i*3 + 0] + box_inverse_[5] * xyz_[i*3 + 1] + box_inverse_[8] * xyz_[i*3 + 2];
+    
+            x_rec += image_x;
+            y_rec += image_y;
+            z_rec += image_z;
+    
+            x = box_[0] * x_rec + box_[3] * y_rec + box_[6] * z_rec;
+            y = box_[1] * x_rec + box_[4] * y_rec + box_[7] * z_rec;
+            z = box_[2] * x_rec + box_[5] * y_rec + box_[8] * z_rec;
+        } else {
+            x = xyz_[i*3 + 0];
+            y = xyz_[i*3 + 1];
+            z = xyz_[i*3 + 2];
+        }
 
         phi[i] = - x * X_FIELD - y * Y_FIELD - z * Z_FIELD; // integrate the field
     }
@@ -3759,7 +3771,7 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
     electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
 
-    init_external_field();
+    if (!external_field_set_) init_external_field();
 
     return electrostaticE_.GetElectrostatics(grad_, &virial_, use_ghost);
 }
@@ -3773,7 +3785,7 @@ double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
     electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
 
-    init_external_field();
+    if (!external_field_set_) init_external_field();
 
     return electrostaticE_.GetElectrostaticsMPIlocal(grad_, &virial_, use_ghost);
 }
