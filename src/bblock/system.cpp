@@ -3564,8 +3564,6 @@ double System::Electrostatics(bool do_grads, bool use_ghost) {
 
     SetPBC(box_);
 
-    init_external_field();
-
     energy_ = GetElectrostatics(do_grads, use_ghost);
 
     return energy_;
@@ -3613,8 +3611,6 @@ double System::ElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     std::fill(virial_.begin(), virial_.end(), 0.0);
 
     SetPBCElectrostaticsMPIlocal(box_);
-
-    init_external_field();
 
     energy_ = GetElectrostaticsMPIlocal(do_grads, use_ghost);
 
@@ -3763,6 +3759,8 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
     electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
 
+    init_external_field();
+
     return electrostaticE_.GetElectrostatics(grad_, &virial_, use_ghost);
 }
 
@@ -3774,6 +3772,8 @@ double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
     electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
     electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
+
+    init_external_field();
 
     return electrostaticE_.GetElectrostaticsMPIlocal(grad_, &virial_, use_ghost);
 }
