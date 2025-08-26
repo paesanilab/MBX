@@ -3564,6 +3564,8 @@ double System::Electrostatics(bool do_grads, bool use_ghost) {
 
     SetPBC(box_);
 
+    init_external_field();
+
     energy_ = GetElectrostatics(do_grads, use_ghost);
 
     return energy_;
