@@ -523,11 +523,12 @@ TEST_CASE("External fields") {
     double enn2 = systems[2].Energy(true);
     double ep2 = systems[2].GetPermanentElectrostaticEnergy();
     double ei2 = systems[2].GetInducedElectrostaticEnergy();
+    double epext2 = systems[2].GetPermanentElectrostaticEnergyExternalFieldContribution();
 
     // Assert energies
     SECTION("Energy of the system combination") {
-        REQUIRE(enn + enn2 == Approx(en[0]).margin(TOL));
-        REQUIRE(ep + ep2 == Approx(eperm[0]).margin(TOL));
+        REQUIRE(enn - epext + enn2 - epext2 == Approx(en[0]).margin(TOL));
+        REQUIRE(ep - epext + ep2 - epext2 == Approx(eperm[0]).margin(TOL));
         REQUIRE(ei + ei2 == Approx(eind[0]).margin(TOL));
     }
 
