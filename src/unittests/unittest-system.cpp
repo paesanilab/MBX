@@ -544,6 +544,65 @@ TEST_CASE("External fields") {
     }
 }
 
+TEST_CASE("constant external field gas phase") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/constant_field.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/constant_field.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/constant_field.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+    double eperm = systems[0].GetPermanentElectrostaticEnergy();
+    double eind = systems[0].GetInducedElectrostaticEnergy();
+
+    // since we have a +1 charge at (10, 10, 10) in a constant (+1, +2, +3) field, we expect the following energy:
+    const double expected_e_perm = (-10.0*1 - 10.0*2 - 10.0*3) * constants::COULOMB;
+    // dipole = p * field, so expected dipole is 0.1476 * (1, 2, 3) = (0.1476, 0.2952, 0.4428)
+    // so e_ind = - (1/2) * dipole * field
+    const double expected_e_ind = -1.0332 * constants::COULOMB;
+
+    REQUIRE(eperm == Approx(expected_e_perm).margin(TOL));
+    REQUIRE(eind == Approx(expected_e_ind).margin(TOL));
+}
+
+TEST_CASE("constant external field in pbc") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/constant_field.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/constant_field.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/constant_field_pbc.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+    double eperm = systems[0].GetPermanentElectrostaticEnergy();
+    double eind = systems[0].GetInducedElectrostaticEnergy();
+
+    const double expected_e_perm = -19933.2328686465;
+    const double expected_e_ind = -343.0901395514;
+
+    REQUIRE(eperm == Approx(expected_e_perm).margin(TOL));
+    REQUIRE(eind == Approx(expected_e_ind).margin(TOL));
+}
+
 TEST_CASE("External charges") {
     // Read systems from input
     // 3 systems read: complete, without point charges, and only point charges
