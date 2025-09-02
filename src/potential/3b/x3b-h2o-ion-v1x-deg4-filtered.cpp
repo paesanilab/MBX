@@ -113,7 +113,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::f_switch(const double& r, double& g) const
 //----------------------------------------------------------------------------//
 
 double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const double* xyz2, const double* xyz3,
-                                                 size_t nt) const {
+                                                 size_t nt, double three_b_lambda) const {
     double energy = 0.0;
     for (size_t i = 0; i < nt; i++) {
         const double* w1 = xyz1 + 9 * i;
@@ -200,12 +200,21 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
         energy += retval;
     }
 
+    // --- Uniform 3B scaling (energy-only path) ---
+    // Keep gradients unchanged here (this overload returns energy only).
+    double e_unscaled = energy;
+    energy *= three_b_lambda;
+    // std::cout << "[3B scaling] Unscaled E = " << e_unscaled
+    //       << ", 3b_lambda = " << three_b_lambda
+    //       << ", Scaled E = " << energy
+    //       << std::endl;
+
     return energy;
 }
 
 double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const double* xyz2, const double* xyz3,
                                                  double* grad1, double* grad2, double* grad3, size_t nt,
-                                                 std::vector<double>* virial) const {
+                                                 double three_b_lambda, std::vector<double>* virial) const {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -413,6 +422,17 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
             grad3[3 * i + k] += g3[k];
         }
 
+        // --- Scale this dimer's gradients by lambda BEFORE virial ---
+        // std::cout << "[3B scaling] scaling the gradient 3B lambda = " << three_b_lambda << std::endl;
+        for (size_t k = 0; k < 9; k++) {
+            grad1[9 * i + k] += three_b_lambda * g1[k];
+            grad2[9 * i + k] += three_b_lambda * g2[k];
+        }
+        
+        for (size_t k = 0; k < 3; k++) {
+            grad3[3 * i + k] += three_b_lambda * g3[k];
+        }
+
         if (virial != 0) {
             (*virial)[0] += -w1[0 + 0] * g1[0 + 0] - w1[0 + 3] * g1[0 + 3] - w1[0 + 6] * g1[0 + 6] -
                             w2[0 + 0] * g2[0 + 0] - w2[0 + 3] * g2[0 + 3] - w2[0 + 6] * g2[0 + 6] -
@@ -475,6 +495,15 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
     }
     std::cerr << std::endl;
 #endif
+
+    // --- Uniform 3B scaling ---
+    // Keep gradients unchanged here (this overload returns energy only).
+    double e_unscaled = energy;
+    energy *= three_b_lambda;
+    // std::cout << "[3B scaling] Unscaled E = " << e_unscaled
+    //       << ", 3b_lambda = " << three_b_lambda
+    //       << ", Scaled E = " << energy
+    //       << std::endl;
 
     return energy;
 }

@@ -76,7 +76,8 @@ class x2b_h2o_ion_v2x {
      * @param[in,out] g1 Pointer to a double array with the gradients of the monomers of waer.
      * @param[in,out] g2 Pointer to a double array with the gradients of the monomers of monoatomic atom.
      * @param[in] nd Number of dimers passed in the xyz arrays.
-     * @param[in.out] virial Vector of doubles with the energies of each monomer, in the same order as the input.
+     * @param[in,out] virial Vector of doubles with the energies of each monomer, in the same order as the input.
+     * @param[in] two_b_lambda Parameter to scale the 2-body energy of ion-water
      * @return Double with the sum of the energies of each dimer.
      */
     double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd,
@@ -90,6 +91,7 @@ class x2b_h2o_ion_v2x {
      * @param[in] w1 Pointer to a double array with the coordinates of the monomers of water.
      * @param[in] x Pointer to a double array with the coordinates of the monomers of the monoatomic atom.
      * @param[in] nd Number of dimers passed in the xyz arrays.
+     * @param[in] two_b_lambda Parameter to scale the 2-body energy of ion-water
      * @return Double with the sum of the energies of each dimer.
      */
     double eval(const double* w1, const double* x, const size_t nd, double two_b_lambda);

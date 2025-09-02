@@ -2917,7 +2917,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
                         std::vector<double> grad3(coord3.size(), 0.0);
                         std::vector<double> virial(9, 0.0);  // declare virial tensor
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, &virial);
+                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, grad1, grad2, grad3, three_b_lambda_, &virial);
                         // Update gradients
                         size_t i0 = nt_tot * 3;
                         for (size_t k = 0; k < nt; k++) {
@@ -2944,7 +2944,7 @@ double System::Get3B(bool do_grads, bool use_ghost) {
 
                     } else {
                         // POLYNOMIALS
-                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3);
+                        e3b_pool[rank] += e3b::get_3b_energy(m1, m2, m3, nt, xyz1, xyz2, xyz3, three_b_lambda_);
                     }
                 }
 
