@@ -1578,8 +1578,8 @@ void System::SetUpFromJson(nlohmann::json j) {
     try {
         two_b_lambda_ = j["MBX"]["two_b_lambda"];
     } catch (...) {
-        if (mpi_rank_ == 0)
-            std::cerr << "**WARNING** \"two_b_lambda\" is not defined in json file. Using default value 1.0\n";
+        // if (mpi_rank_ == 0)
+        //     std::cerr << "**WARNING** \"two_b_lambda\" is not defined in json file. Using default value 1.0\n";
     }
     mbx_j_["MBX"]["two_b_lambda"] = two_b_lambda_;
 
