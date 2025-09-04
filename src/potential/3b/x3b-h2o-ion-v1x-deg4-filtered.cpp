@@ -424,14 +424,15 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
 
         // --- Scale this dimer's gradients by lambda BEFORE virial ---
         // std::cout << "[3B scaling] scaling the gradient 3B lambda = " << three_b_lambda << std::endl;
+        // --- Scale gradients by three_b_lambda ---
         for (size_t k = 0; k < 9; k++) {
-            grad1[9 * i + k] += three_b_lambda * g1[k];
-            grad2[9 * i + k] += three_b_lambda * g2[k];
+            grad1[9 * i + k] *= three_b_lambda;
+            grad2[9 * i + k] *= three_b_lambda;
         }
-        
         for (size_t k = 0; k < 3; k++) {
-            grad3[3 * i + k] += three_b_lambda * g3[k];
+            grad3[3 * i + k] *= three_b_lambda;
         }
+
 
         if (virial != 0) {
             (*virial)[0] += -w1[0 + 0] * g1[0 + 0] - w1[0 + 3] * g1[0 + 3] - w1[0 + 6] * g1[0 + 6] -
