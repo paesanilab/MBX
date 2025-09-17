@@ -145,6 +145,33 @@ void get_energy2_(double* coords, int* nat, double* energy, int* rank) {
 }
 
 /**
+ * Given the coordinates, calculates the decomposed system energy
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in he system
+ * @param[out] E1b 1-body energy term
+ * @param[out] E2b 2-body energy term
+ * @param[out] E3b 3-body energy term
+ * @param[out] E4b 4-body energy term
+ * @param[out] Edp Dispersion energy term
+ * @param[out] Eel Electrostatic energy term
+ */
+void get_energy_decomp_(
+    double* coords, int* nat, double* E1b, double* E2b,
+    double* E3b, double* E4b, double* Edp, double* Eel
+) {
+    std::vector<double> xyz(3 * (*nat));
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+
+    my_s->SetRealXyz(xyz);
+    *E1b = my_s->OneBodyEnergy(false);
+    *E2b = my_s->TwoBodyEnergy(false);
+    *E3b = my_s->ThreeBodyEnergy(false);
+    *E4b = my_s->FourBodyEnergy(false);
+    *Edp = my_s->Dispersion(false);
+    *Eel = my_s->Electrostatics(false);
+}
+
+/**
  * Given the coordinates, calculates the energy iand gradients for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
  * @param[in] nat Number of atoms in he system
@@ -189,6 +216,37 @@ void get_energy_pbc_(double* coords, int* nat, double* box, double* energy) {
     my_s->SetRealXyz(xyz);
     my_s->SetPBC(boxv);
     *energy = my_s->Energy(false);
+}
+
+/**
+ * Given the coordinates, calculates the decomposed system energy for PBC systems
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in he system
+ * @param[in] box Pointer to the array with the box (size 9)
+ * @param[out] E1b 1-body energy term
+ * @param[out] E2b 2-body energy term
+ * @param[out] E3b 3-body energy term
+ * @param[out] E4b 4-body energy term
+ * @param[out] Edp Dispersion energy term
+ * @param[out] Eel Electrostatic energy term
+ */
+void get_energy_decomp_pbc_(
+    double* coords, int* nat, double* box, double* E1b, double* E2b,
+    double* E3b, double* E4b, double* Edp, double* Eel
+) {
+    std::vector<double> xyz(3 * (*nat));
+    std::vector<double> boxv(9, 0.0);
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+    std::copy(box, box + 9, boxv.begin());
+
+    my_s->SetRealXyz(xyz);
+    my_s->SetPBC(boxv);
+    *E1b = my_s->OneBodyEnergy(false);
+    *E2b = my_s->TwoBodyEnergy(false);
+    *E3b = my_s->ThreeBodyEnergy(false);
+    *E4b = my_s->FourBodyEnergy(false);
+    *Edp = my_s->Dispersion(false);
+    *Eel = my_s->Electrostatics(false);
 }
 
 /**
