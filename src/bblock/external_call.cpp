@@ -153,11 +153,12 @@ void get_energy2_(double* coords, int* nat, double* energy, int* rank) {
  * @param[out] E3b 3-body energy term
  * @param[out] E4b 4-body energy term
  * @param[out] Edisp Dispersion energy term
+ * @param[out] Ebuck Buckingham energy term
  * @param[out] Eelec Electrostatic energy term
  */
 void get_energy_decomp_(
     double* coords, int* nat, double* E1b, double* E2b,
-    double* E3b, double* E4b, double* Edisp, double* Eelec
+    double* E3b, double* E4b, double* Edisp, double* Ebuck, double* Eelec
 ) {
     std::vector<double> xyz(3 * (*nat));
     std::copy(coords, coords + 3 * (*nat), xyz.begin());
@@ -168,6 +169,7 @@ void get_energy_decomp_(
     *E3b = my_s->ThreeBodyEnergy(false);
     *E4b = my_s->FourBodyEnergy(false);
     *Edisp = my_s->Dispersion(false);
+    *Ebuck = my_s->Buckingham(false);
     *Eelec = my_s->Electrostatics(false);
 }
 
@@ -228,11 +230,12 @@ void get_energy_pbc_(double* coords, int* nat, double* box, double* energy) {
  * @param[out] E3b 3-body energy term
  * @param[out] E4b 4-body energy term
  * @param[out] Edisp Dispersion energy term
+ * @param[out] Ebuck Buckingham energy term
  * @param[out] Eelec Electrostatic energy term
  */
 void get_energy_decomp_pbc_(
     double* coords, int* nat, double* box, double* E1b, double* E2b,
-    double* E3b, double* E4b, double* Edisp, double* Eelec
+    double* E3b, double* E4b, double* Edisp, double* Ebuck, double* Eelec
 ) {
     std::vector<double> xyz(3 * (*nat));
     std::vector<double> boxv(9, 0.0);
@@ -246,6 +249,7 @@ void get_energy_decomp_pbc_(
     *E3b = my_s->ThreeBodyEnergy(false);
     *E4b = my_s->FourBodyEnergy(false);
     *Edisp = my_s->Dispersion(false);
+    *Ebuck = my_s->Buckingham(false);
     *Eelec = my_s->Electrostatics(false);
 }
 
