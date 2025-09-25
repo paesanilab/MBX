@@ -167,29 +167,22 @@ export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 
 
 ### LAMMPS
-MBX can interface with [LAMMPS](https://lammps.sandia.gov/) using a plugin for LAMMPS. In order to use MBX with LAMMPS, you must first install MBX with MPI compilers. You must use `mpicxx` or `mpiicpc` instead of `g++` or `icpc`. This can be done by running the following commands:
-```console
-# install MBX with MPI
-autoreconf -fi
-./configure --enable-mpi CXX=mpiicpc
-make && make install
-```
-This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
+MBX is an official LAMMPS package,
+and needs to be installed using the [LAMMPS CMake buildchain](https://docs.lammps.org/Build_cmake.html):
 
-
- After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
 ```console
 git clone -b stable https://github.com/lammps/lammps.git LAMMPS-stable
-export LAMMPS_HOME=$PWD/LAMMPS-stable
+cd LAMMPS-stable           # change to the LAMMPS distribution directory
+mkdir build; cd build      # create and use a build directory
 
-cp -rf $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
-cd $LAMMPS_HOME/src/
-make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
-make mpi_mbx -j 4 CXX=mpiicpc
+# configuration reading CMake scripts from ../cmake
+cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes ../cmake
+make -j 4                  # compilation (can use higher j on powerful computers)
 ```
-After this, a new executable `lmp_mpi_mbx` in `$LAMMPS_HOME/src` should appear, and that is the executable you have to use for LAMMPS.
+This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other MBX plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
 
-Additional documentation will follow up. For now, please look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. For any questions, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
+Additional LAMMPS build options are available, such as using a different compiler or enabling additional packages. Please refer to the [LAMMPS CMake build documentation](https://docs.lammps.org/Build_basics.html) for more information.
+For any questions, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
 
 ### i-PI
