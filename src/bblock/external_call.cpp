@@ -174,6 +174,26 @@ void get_energy_decomp_(
 }
 
 /**
+ * Given the coordinates, calculates the decomposed electrostatic energy
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in he system
+ * @param[out] Eperm Permanent component of the electrostatics
+ * @param[out] Eind Induced component of the electrostatics
+ */
+void get_electrostatic_energy_decomp_(
+    double* coords, int* nat, double* Eperm, double* Eind,
+) {
+    std::vector<double> xyz(3 * (*nat));
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+
+    my_s->SetRealXyz(xyz);
+
+    _ = my_s->Electrostatics(false)
+    *Eperm = my_s->GetPermanentElectrostaticEnergy()
+    *Eind = my_s->GetInducedElectrostaticEnergy()
+}
+
+/**
  * Given the coordinates, calculates the energy iand gradients for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
  * @param[in] nat Number of atoms in he system
@@ -251,6 +271,30 @@ void get_energy_decomp_pbc_(
     *Edisp = my_s->Dispersion(false);
     *Ebuck = my_s->Buckingham(false);
     *Eelec = my_s->Electrostatics(false);
+}
+
+/**
+ * Given the coordinates, calculates the decomposed electrostatic energy for PBC systems
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in he system
+ * @param[in] box Pointer to the array with the box (size 9)
+ * @param[out] Eperm Permanent component of the electrostatics
+ * @param[out] Eind Induced component of the electrostatics
+ */
+void get_electrostatic_energy_decomp_pbc_(
+    double* coords, int* nat, double* box, double* Eperm, double* Eind,
+) {
+    std::vector<double> xyz(3 * (*nat));
+    std::vector<double> boxv(9, 0.0);
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+    std::copy(box, box + 9, boxv.begin())
+
+    my_s->SetRealXyz(xyz);
+    my_s->SetPBC(boxv);
+
+    _ = my_s->Electrostatics(false)
+    *Eperm = my_s->GetPermanentElectrostaticEnergy()
+    *Eind = my_s->GetInducedElectrostaticEnergy()
 }
 
 /**
