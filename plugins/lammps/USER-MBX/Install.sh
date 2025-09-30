@@ -3,45 +3,36 @@
 
 mode=$1
 
-
 # enforce using portable C locale
 LC_ALL=C
 export LC_ALL
 
-# $1 = file, $2 = file it depends on
 action () {
-  file=$1
-  dependency=$2
-  
-  if (test $mode = 0) then # uninstall
-    rm -f ../$file
-    echo "  uninstalling src/$file"
-
-  elif (test -n "$dependency" && test ! -e ../$dependency) then
-    echo "  ERROR:  src/$file missing dependency src/$dependency"
-    exit 1
-  
-  elif (! cmp -s $file ../$file) then # file is different or missing
-      if (test $mode = 1) then
-        echo "  installing src/$file"
-      else 
-        echo "  updating src/$file"
-      fi
-      cp $file ../
-  else
-    echo "  src/$file is unchanged"
+  if (test $mode = 0) then
+    rm -f ../$1
   fi
-
 }
 
-# list of files and necessary *.h dependencies
+# all package files with no dependencies
 
-action pair_mbx.h
-action pair_mbx.cpp pair_mbx.h
+for file in *.cpp *.h; do
+  test -f ${file} && action $file
+done
 
-action fix_mbx.h
-action fix_mbx.cpp fix_mbx.h
+# edit 2 Makefile.package files to include/exclude package info
 
-if (test mode != 0) then
-  cp Makefile.mpi_mbx ../MAKE/
+if (test $1 = 1 || test $1 = 2) then
+  echo "The MBX package does not supports the legacy build system. Please build LAMMPS with CMake instead."
+  exit 1
+
+elif (test $1 = 0) then
+
+  if (test -e ../Makefile.package) then
+    sed -i -e 's/[^ \t]*mbx[^ \t]* //g' ../Makefile.package
+  fi
+
+  if (test -e ../Makefile.package.settings) then
+    sed -i -e '/^[ \t]*include.*mbx.*$/d' ../Makefile.package.settings
+  fi
+
 fi
