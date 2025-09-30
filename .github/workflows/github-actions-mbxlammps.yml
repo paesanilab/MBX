@@ -32,7 +32,7 @@ jobs:
       - name: install-dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y libfftw3-dev libgsl-dev autoconf
+          sudo apt-get install -y libfftw3-dev libgsl-dev autoconf pkg-config
 
       - name: install-compiler g++
         if: matrix.compiler == 'g++'

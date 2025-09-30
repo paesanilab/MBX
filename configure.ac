@@ -7,6 +7,9 @@ AC_PREREQ([2.69])
 # Initialize AC
 AC_INIT([MBX], [1.3.1], [mbx-users@googlegroups.com])
 
+# Define MBX_PACKAGE_VERSION as a macro in config_mbx.h and include/config_mbx.h
+AC_DEFINE_UNQUOTED([MBX_VERSION], ["$PACKAGE_VERSION"], [MBX package version])
+
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
 
@@ -22,7 +25,8 @@ LT_INIT([disable-shared])
 # Initialize Automake. Warnings will be treated as errors.
 AM_INIT_AUTOMAKE([subdir-objects -Wall foreign])
 
-AC_CONFIG_HEADERS([config_mbx.h:config.h.in])
+# Generate config_mbx.h in both the top-level and include directories
+AC_CONFIG_HEADERS([config_mbx.h:config.h.in include/config_mbx.h:config.h.in])
 AC_CONFIG_FILES([
  Makefile
  src/Makefile
