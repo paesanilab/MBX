@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.3.0], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.3.1], [mbx-users@googlegroups.com])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -22,13 +22,14 @@ LT_INIT([disable-shared])
 # Initialize Automake. Warnings will be treated as errors.
 AM_INIT_AUTOMAKE([subdir-objects -Wall foreign])
 
-AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_HEADERS([config_mbx.h:config.h.in])
 AC_CONFIG_FILES([
  Makefile
  src/Makefile
  src/unittests/Makefile
  plugins/Makefile
  plugins/i-pi/Makefile
+ mbx.pc
 ])
 
 # Helper function to add the proper flags to CPPFLAGS and LDFLAGS

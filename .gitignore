@@ -70,3 +70,5 @@ aclocal.m4
 config.*
 libtool
 stamp-h1
+mbx.pc
+config_mbx.h

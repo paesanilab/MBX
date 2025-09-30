@@ -26982,8 +26982,7 @@ void f130(const double *x, const double *a, double *g, double *e, double *t) {
 double* poly_3b_v2x::eval(const double *a, const double *x, double *t, double *g) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(20);
-    std::cerr << "
-Entering " << __func__ << " in " << __FILE__ << std::endl;
+    std::cerr << "Entering " << __func__ << " in " << __FILE__ << std::endl;
 #endif
     double* e = new double[8];
     f0(x, a, g, e, t);
