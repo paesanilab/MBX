@@ -3,8 +3,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: MBX
-Description: Many-Body eXtension library
+Name: mbx
+Description: Many-Body eXpansion library
+URL: https://mbxsimulations.org
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir}
+Libs: -L${libdir} -lmbx
 Cflags: -I${includedir}
