@@ -9,12 +9,12 @@ variable        pressure equal 1.0
 
 processors * * * map xyz
 
-units		real	
-atom_style	full
+units        real    
+atom_style    full
 boundary        p p p
 
 box tilt large
-read_data	initial.data
+read_data    initial.data
 
 group mof type 1 2 3 4 5 6 
 #group co2 type 7 8
@@ -128,14 +128,7 @@ pair_coeff      1      8         lj/cut      0.000000      0.000000
 #pair_coeff      13 13 lj/cut/tip4p/long 0.0 0.0
 
 #MBX-water
-pair_coeff      7      7 mbx  0.0 0.0 
-pair_coeff      7      8 mbx  0.0 0.0 
-pair_coeff      8      8 mbx  0.0 0.0 
-
-#MBX-CO2
-#pair_coeff      7      7 mbx  0.0 0.0 
-#pair_coeff      7      8 mbx  0.0 0.0 
-#pair_coeff      8      8 mbx  0.0 0.0 
+pair_coeff      * * mbx 2 dp1 1*6 h2o 7 8 8 json mbx.json
 
 #coul exclude
 pair_coeff      1*6 1*6 coul/exclude
@@ -147,9 +140,10 @@ special_bonds   amber
 
 
 neighbor        2.0 bin
-neigh_modify	every 1 delay 1 check yes
+neigh_modify    every 1 delay 1 check yes
 
 timestep        ${dt}
+
 compute         mbx all pair mbx
 variable        e1bpip    equal c_mbx[1]
 variable        e2bpip    equal c_mbx[2]
@@ -157,8 +151,10 @@ variable        e3bpip    equal c_mbx[3]
 variable        e4bpip    equal c_mbx[4]
 variable        edisp     equal c_mbx[5]
 variable        ebuck     equal c_mbx[6]
-variable        eele      equal c_mbx[7]
-variable        etot      equal c_mbx[8]
+variable        eperm     equal c_mbx[7]
+variable        eind      equal c_mbx[8]
+variable        eele      equal c_mbx[9]
+variable        etot      equal c_mbx[10]
 
 #thermo_style    custom step time temp cella cellb cellc vol pe ke etotal
 thermo_style    custom step time temp cella cellb cellc evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1bpip v_e2bpip v_e3bpip v_e4bpip v_edisp v_ebuck v_eele v_etot pe etotal
@@ -166,9 +162,8 @@ thermo          1
 thermo_modify   flush yes
 
 #fix             wshake water shake 1e-5 50 0 b 14 a 24 mol h2o
-#fix		mynvt all nvt temp ${temp} ${temp} 100.0
+#fix        mynvt all nvt temp ${temp} ${temp} 100.0
 fix             mynpt all npt temp ${temp} ${temp} $(100.0*dt) iso ${pressure} ${pressure} $(1000.0*dt) tchain 4
-fix             1 all mbx 2 dp1 1 6 1 1 h2o 7 8 3 7 8 8 json mbx.json
 #fix             3 all npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
 #fix            4 mof npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
 #fix             5 water gcmc 100 100 0 0 54341 ${temp} ${mu} ${disp} mol h2o tfac_insert ${tfac} group water shake wshake
