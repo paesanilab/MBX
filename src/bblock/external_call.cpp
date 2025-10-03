@@ -188,7 +188,7 @@ void get_electrostatic_energy_decomp_(
 
     my_s->SetRealXyz(xyz);
 
-    _ = my_s->Electrostatics(false);
+    *Eperm = my_s->Electrostatics(false);
     *Eperm = my_s->GetPermanentElectrostaticEnergy();
     *Eind = my_s->GetInducedElectrostaticEnergy();
 }
@@ -287,12 +287,12 @@ void get_electrostatic_energy_decomp_pbc_(
     std::vector<double> xyz(3 * (*nat));
     std::vector<double> boxv(9, 0.0);
     std::copy(coords, coords + 3 * (*nat), xyz.begin());
-    std::copy(box, box + 9, boxv.begin())
+    std::copy(box, box + 9, boxv.begin());
 
     my_s->SetRealXyz(xyz);
     my_s->SetPBC(boxv);
 
-    _ = my_s->Electrostatics(false);
+    *Eperm = my_s->Electrostatics(false);
     *Eperm = my_s->GetPermanentElectrostaticEnergy();
     *Eind = my_s->GetInducedElectrostaticEnergy();
 }
