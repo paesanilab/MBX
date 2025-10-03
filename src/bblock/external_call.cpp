@@ -181,7 +181,7 @@ void get_energy_decomp_(
  * @param[out] Eind Induced component of the electrostatics
  */
 void get_electrostatic_energy_decomp_(
-    double* coords, int* nat, double* Eperm, double* Eind,
+    double* coords, int* nat, double* Eperm, double* Eind
 ) {
     std::vector<double> xyz(3 * (*nat));
     std::copy(coords, coords + 3 * (*nat), xyz.begin());
@@ -282,7 +282,7 @@ void get_energy_decomp_pbc_(
  * @param[out] Eind Induced component of the electrostatics
  */
 void get_electrostatic_energy_decomp_pbc_(
-    double* coords, int* nat, double* box, double* Eperm, double* Eind,
+    double* coords, int* nat, double* box, double* Eperm, double* Eind
 ) {
     std::vector<double> xyz(3 * (*nat));
     std::vector<double> boxv(9, 0.0);
