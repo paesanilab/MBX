@@ -42,9 +42,9 @@ variable        eind      equal c_mbx[8]
 variable        eele      equal c_mbx[9]
 variable        etot      equal c_mbx[10]
 
-fix             1 all npt temp 298 298 $(200.0*dt) iso 1.0 1.0 $(2000.0*dt)
+fix             1 all npt temp ${T} ${T} $(200.0*dt) iso 1.0 1.0 $(2000.0*dt)
 
-velocity        all create 298 428459 rot yes dist gaussian
+velocity        all create ${T} 428459 rot yes dist gaussian
 velocity        all zero linear
 velocity        all zero angular
 
@@ -77,7 +77,7 @@ dump_modify     1 append no sort id format line "%d %d %d %8.4f %15.8f %15.8f %1
 
 restart         10 restart.1 restart.2
 
-run             100  upto
+run             ${nsteps} upto
 
 write_data      final.data nocoeff
 write_restart   restart.new

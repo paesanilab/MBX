@@ -1,4 +1,10 @@
 # Depositing TIP3P water into MOF with QeQ charges obtained with Ongari scheme
+# Variable defiition
+variable        mu index -5.0  #chemical potential of reservoir for gcmc (in kcal/mol for real units)
+variable        disp index 0.1  # max MC translation distance for random molecular move
+variable        temp index 298.15  # simulation temperature
+variable        dt  equal  0.2
+variable        tfac equal 5.0/3.0 
 
 processors * * * map xyz
 
@@ -221,7 +227,8 @@ pair_coeff      1*11 1*11 coul/exclude
 neighbor        2.0 bin
 neigh_modify	every 1 delay 1 check yes
 
-timestep        0.2
+timestep        ${dt}
+
 compute         mbx all pair mbx
 variable        e1bpip    equal c_mbx[1]
 variable        e2bpip    equal c_mbx[2]
@@ -240,7 +247,7 @@ thermo          1
 thermo_modify   flush yes
 
 #fix             wshake water shake 1e-5 50 0 b 14 a 24 mol h2o
-fix              mynvt all nvt temp 298.15 298.15 $(100.0*dt)
+fix              mynvt all nvt temp ${temp} ${temp} $(100.0*dt)
 #fix             3 all npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
 #fix             4 mof npt temp 298.15 298.15 $(250.0*dt) iso 1.0 1.0 $(1000.0*dt)
 
