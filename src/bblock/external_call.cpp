@@ -188,9 +188,9 @@ void get_electrostatic_energy_decomp_(
 
     my_s->SetRealXyz(xyz);
 
-    _ = my_s->Electrostatics(false)
-    *Eperm = my_s->GetPermanentElectrostaticEnergy()
-    *Eind = my_s->GetInducedElectrostaticEnergy()
+    _ = my_s->Electrostatics(false);
+    *Eperm = my_s->GetPermanentElectrostaticEnergy();
+    *Eind = my_s->GetInducedElectrostaticEnergy();
 }
 
 /**
@@ -292,9 +292,9 @@ void get_electrostatic_energy_decomp_pbc_(
     my_s->SetRealXyz(xyz);
     my_s->SetPBC(boxv);
 
-    _ = my_s->Electrostatics(false)
-    *Eperm = my_s->GetPermanentElectrostaticEnergy()
-    *Eind = my_s->GetInducedElectrostaticEnergy()
+    _ = my_s->Electrostatics(false);
+    *Eperm = my_s->GetPermanentElectrostaticEnergy();
+    *Eind = my_s->GetInducedElectrostaticEnergy();
 }
 
 /**
