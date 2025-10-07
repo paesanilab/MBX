@@ -169,7 +169,13 @@ void get_energy_decomp_(
     *E3b = my_s->ThreeBodyEnergy(false);
     *E4b = my_s->FourBodyEnergy(false);
     *Edisp = my_s->Dispersion(false);
+
+
+    *Ebuck = 0.0;
+    #ifdef TTMNRG
     *Ebuck = my_s->Buckingham(false);
+    #endif
+
     *Eelec = my_s->Electrostatics(false);
 }
 
@@ -269,7 +275,12 @@ void get_energy_decomp_pbc_(
     *E3b = my_s->ThreeBodyEnergy(false);
     *E4b = my_s->FourBodyEnergy(false);
     *Edisp = my_s->Dispersion(false);
+
+    *Ebuck = 0.0;
+    #ifdef TTMNRG
     *Ebuck = my_s->Buckingham(false);
+    #endif
+    
     *Eelec = my_s->Electrostatics(false);
 }
 

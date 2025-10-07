@@ -87,4 +87,25 @@ mbx.mbxlib.get_virial_(virial)
 
 print(f"Virial: {[item for item in virial]}")
 
+# Get energy decomposition
+
+e1bpip, e2bpip, e3bpip, e4bpip, edisp, ebuck, eelec = mbx.get_energy_decomp(xyz,len(atom_names))
+print("Energy decomposition (no PBC):")
+print("1-body poly:",e1bpip)
+print("2-body poly:",e2bpip)
+print("3-body poly:",e3bpip)
+print("4-body poly:",e4bpip)
+print("Dispersion:",edisp)
+print("Buckingham:",ebuck)
+print("Electrostatics:",eelec)
+
+
+
+eperm, eind = mbx.get_electrostatic_energy_decomp(xyz,len(atom_names))
+print("Electrostatic energy decomposition (no PBC):")
+print("Permanent:",eperm)
+print("Induced:",eind)
+
+
+
 mbx.finalize_system()
