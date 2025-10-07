@@ -257,10 +257,8 @@ def get_electrostatic_energy_decomp(coordinates,number_of_atoms,units="mbx"):
     e_mbx2inp = MBXENERGY2AU
     e_inp2mbx = AUENERGY2MBX
 
-
   coordinates = [coordinates[i] * l_inp2mbx for i in range(len(coordinates))]
   crd = (ctypes.c_double * len(coordinates)) (*coordinates)
-
 
   nat = ctypes.c_int(number_of_atoms)
   Eperm = ctypes.c_double(0.0)

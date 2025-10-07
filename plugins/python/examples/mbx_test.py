@@ -99,13 +99,9 @@ print("Dispersion:",edisp)
 print("Buckingham:",ebuck)
 print("Electrostatics:",eelec)
 
-
-
 eperm, eind = mbx.get_electrostatic_energy_decomp(xyz,len(atom_names))
 print("Electrostatic energy decomposition (no PBC):")
 print("Permanent:",eperm)
 print("Induced:",eind)
-
-
 
 mbx.finalize_system()
