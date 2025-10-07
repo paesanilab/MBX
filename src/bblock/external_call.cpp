@@ -125,7 +125,7 @@ void initialize_system_py_(double* coords, int* nat_monomers, char** at_names, c
 /**
  * Given the coordinates, calculates the energy for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[out] energy Energy of the system
  */
 void get_energy_(double* coords, int* nat, double* energy) {
@@ -147,7 +147,7 @@ void get_energy2_(double* coords, int* nat, double* energy, int* rank) {
 /**
  * Given the coordinates, calculates the decomposed system energy
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[out] E1b 1-body energy term
  * @param[out] E2b 2-body energy term
  * @param[out] E3b 3-body energy term
@@ -182,7 +182,7 @@ void get_energy_decomp_(
 /**
  * Given the coordinates, calculates the decomposed electrostatic energy
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[out] Eperm Permanent component of the electrostatics
  * @param[out] Eind Induced component of the electrostatics
  */
@@ -194,7 +194,7 @@ void get_electrostatic_energy_decomp_(
 
     my_s->SetRealXyz(xyz);
 
-    *Eperm = my_s->Electrostatics(false);
+    my_s->Electrostatics(false);
     *Eperm = my_s->GetPermanentElectrostaticEnergy();
     *Eind = my_s->GetInducedElectrostaticEnergy();
 }
@@ -202,7 +202,7 @@ void get_electrostatic_energy_decomp_(
 /**
  * Given the coordinates, calculates the energy iand gradients for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[out] energy Energy of the system
  * @param[out] grads Pointer to the gradients of the system (size 3N)
  */
@@ -231,7 +231,7 @@ void get_energy_g2_(double* coords, int* nat, double* energy, double* grads, int
 /**
  * Given the coordinates, calculates the energy for PBC systems
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[in] box Pointer to the array with the box (size 9)
  * @param[out] energy Energy of the system
  */
@@ -249,7 +249,7 @@ void get_energy_pbc_(double* coords, int* nat, double* box, double* energy) {
 /**
  * Given the coordinates, calculates the decomposed system energy for PBC systems
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[in] box Pointer to the array with the box (size 9)
  * @param[out] E1b 1-body energy term
  * @param[out] E2b 2-body energy term
@@ -287,7 +287,7 @@ void get_energy_decomp_pbc_(
 /**
  * Given the coordinates, calculates the decomposed electrostatic energy for PBC systems
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[in] box Pointer to the array with the box (size 9)
  * @param[out] Eperm Permanent component of the electrostatics
  * @param[out] Eind Induced component of the electrostatics
@@ -303,7 +303,7 @@ void get_electrostatic_energy_decomp_pbc_(
     my_s->SetRealXyz(xyz);
     my_s->SetPBC(boxv);
 
-    *Eperm = my_s->Electrostatics(false);
+    my_s->Electrostatics(false);
     *Eperm = my_s->GetPermanentElectrostaticEnergy();
     *Eind = my_s->GetInducedElectrostaticEnergy();
 }
@@ -311,7 +311,7 @@ void get_electrostatic_energy_decomp_pbc_(
 /**
  * Given the coordinates, calculates the energy iand gradients for a PBC system
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[in] box Pointer to the array with the box (size 9)
  * @param[out] energy Energy of the system
  * @param[out] grads Pointer to the gradients of the system (size 3N)
