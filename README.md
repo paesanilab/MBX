@@ -75,6 +75,7 @@ The JSON file template is the following:
    "Note" : "This is a  MBX v1.0.0 configuration file",
    "MBX" : {
        "box" : [21.0,0.0,0.0,0.0,21.0,0.0,0.0,0.0,21.0],
+       "realspace_cutoff"   : 9.0,
        "twobody_cutoff"   : 9.0,
        "threebody_cutoff" : 7.0,
        "dipole_tolerance" : 1E-08,
@@ -97,7 +98,8 @@ The JSON file template is the following:
 ```
 In this file:
 - `box` is either a 9 element list, with the 3 vectors of the box: `[ax, ay, az, bx, by, bz, cx, cy, cz]` or an empty list `[]` if one wants to run gas-phase calculations.
-- `twobody_cutoff` is the distance at which the 2-body interactions will be cut in the real space. If you are using polynomials, that should be the largest polynomial cutoff that you are using (usually `9.0` Angstrom) in periodic boundary conditions. In gas phase calculations, that should be set to a large number so the real space electrostatics and dispersion are properly calculated and fully accounted for.
+- `realspace_cutoff` is the distance at which the dispersion, Lennard-Jones, and electrostatics interactions will switch from the real space to the reciprocal space (Particle-Mesh Ewald). Usually a value of about `9.0` is good for calculations in periodic boundary conditions. In gas phase calculations, this should be set to a large number that exceeds the farthest interatomic distance in your system so that all interactions are computed in the real space. For backwards compatibility reasons, if `realspace_cutoff` is not specified, then it will be set to the `twobody_cutoff`.
+- `twobody_cutoff` is the cutoff for the 2-body polynomials. If only water is used, one can set that to `6.5`, but if alkali metal ions or halides are used, it should be set to the maximum cutoff in any of the dimers used (`9.0`).
 - `threebody_cutoff` is the cutoff for the 3-body polynomials. If only water is used, one can set that to `4.5`, but if alkali metal ions or halides are used, it should be set to the maximum cutoff in any of the trimers used (`7.0`).
 - `dipole_tolerance` is the tolerance accepted for the induced dipoles iterative calculation. From one iteration to the other one, |mu(i,t+1) - mu(i,t)|^2 < dipole tolerance for any i. A value of `1E-08` is usually small enough. However, if the dipole solver used is aspc, the magnitude of the tolerance may have to be decreased up to `1E-10` or `1E-12`. It is recommended to run a few thousand steps using aspc and cg for the dipole solver, and decide which is the dipole tolerance needed.
 - `dipole_max_it` is the maximum number of iterations allowed in the dipole iterative method calculation. If the number of iterations exceeds this value, MBX will throw an error message saying that the dipoles have diverged.
