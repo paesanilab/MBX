@@ -27,6 +27,10 @@ PairStyle(mbx, PairMBX)
 
 #include "bblock/system.h"
 
+
+//TODO Re-enable this once MBX is properly versioned at >1.3.2
+// #include "config_mbx.h"
+
 namespace LAMMPS_NS {
 
 class PairMBX : public Pair {
@@ -40,9 +44,6 @@ class PairMBX : public Pair {
   void coeff(int, char **);
   void init_style();
   double init_one(int, int);
-  void write_data(FILE *);
-  void write_data_all(FILE *);
-  void *extract(const char *, int &);
 
  protected:
   double cut_global;
@@ -69,7 +70,6 @@ class PairMBX : public Pair {
 
   void accumulate_f(bool);
   void accumulate_f_all(bool);    // local + ghost
-  void accumulate_f_full(bool);
   void accumulate_f_local(bool);
 };
 

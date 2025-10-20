@@ -29,8 +29,6 @@ FixStyle(MBX, FixMBX)
 enum {
   MBXT_INIT = 0,
   MBXT_UPDATE_XYZ,
-  MBXT_INIT_FULL,
-  MBXT_UPDATE_XYZ_FULL,
   MBXT_INIT_LOCAL,
   MBXT_UPDATE_XYZ_LOCAL,
   MBXT_E1B,
@@ -45,7 +43,6 @@ enum {
   MBXT_BUCK,
   MBXT_ELE,
   MBXT_ACCUMULATE_F,
-  MBXT_ACCUMULATE_F_FULL,
   MBXT_ACCUMULATE_F_LOCAL,
 
   MBXT_ELE_PERMDIP_REAL,
@@ -113,13 +110,11 @@ class FixMBX : public Fix {
   class PairMBX *pair_mbx;    // pointer to MBX pair_style
 
   bblock::System *ptr_mbx;          // pointer to MBX object
-  bblock::System *ptr_mbx_full;     // pointer to MBX object for full system
   bblock::System *ptr_mbx_local;    // pointer to MBX object for local atoms
 
   int me, nprocs;
   bigint ngroup;
 
-  bool mbx_mpi_enabled;
   bool mbx_aspc_enabled;
   bool print_dipoles;
 
@@ -148,7 +143,6 @@ class FixMBX : public Fix {
   int *mol_local;    // per-molecule array 1/0 if molecule has at least one local particle
 
   int mbx_num_atoms, mbx_num_ext;
-  int mbx_num_atoms_full, mbx_num_ext_full;
   int mbx_num_atoms_local, mbx_num_ext_local;
 
   int *mbxt_count;
@@ -173,26 +167,10 @@ class FixMBX : public Fix {
 
   double **mbx_dip;
 
-  // rank 0's copy of all atoms in simulation cell
-
-  int *mol_anchor_full;
-  int *mol_type_full;
-  double **x_full;
-  double **f_full;
-  double **f_local;
-  tagint *tag_full;
-  int *atom_map_full;
-  int *nlocal_rank;
-  int *nlocal_disp;
-  int *nlocal_rank3;
-  int *nlocal_disp3;
-
   void mbx_init();
-  void mbx_init_full();
   void mbx_init_local();
 
   void mbx_update_xyz();
-  void mbx_update_xyz_full();
   void mbx_update_xyz_local();
 
   void mbx_fill_system_information_from_atom();
@@ -208,9 +186,6 @@ class FixMBX : public Fix {
 
   virtual int pack_forward_comm(int, int *, double *, int, int *);
   virtual void unpack_forward_comm(int, int, double *);
-  virtual int pack_reverse_comm(int, int, double *);
-  virtual void unpack_reverse_comm(int, int *, double *);
-  virtual double memory_usage();
   virtual void grow_arrays(int);
   virtual void copy_arrays(int, int, int);
   virtual int pack_exchange(int, double *);

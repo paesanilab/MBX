@@ -436,7 +436,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   // if (na != atom->natoms) error->all(FLERR, "[MBX] Inconsistent # of atoms");
 
-  mbx_mpi_enabled = true;
   mbx_aspc_enabled = false;
 
   pair_mbx = nullptr;
@@ -463,23 +462,6 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   mbx_num_atoms = 0;
   mbx_num_ext = 0;
 
-  // for terms not yet LAMMPS-parallelized
-
-  ptr_mbx_full = NULL;
-  mbx_num_atoms_full = 0;
-  mbx_num_ext_full = 0;
-
-  mol_anchor_full = NULL;
-  mol_type_full = NULL;
-  x_full = NULL;
-  f_full = NULL;
-  f_local = NULL;
-  tag_full = NULL;
-  atom_map_full = NULL;
-  nlocal_rank = NULL;
-  nlocal_disp = NULL;
-  nlocal_rank3 = NULL;
-  nlocal_disp3 = NULL;
 
   // instance of MBX with just local monomers
 
@@ -598,8 +580,6 @@ FixMBX::~FixMBX()
 
   if (ptr_mbx) delete ptr_mbx;
 
-  if (ptr_mbx_full) delete ptr_mbx_full;
-
   if (ptr_mbx_local) {
     // accumulate timing info from pme electrostatics
 
@@ -623,21 +603,6 @@ FixMBX::~FixMBX()
 
     delete ptr_mbx_local;
   }
-
-  if (!mbx_mpi_enabled) {
-    memory->destroy(mol_anchor_full);
-    memory->destroy(mol_type_full);
-    memory->destroy(x_full);
-    memory->destroy(f_full);
-    memory->destroy(f_local);
-    memory->destroy(tag_full);
-    memory->destroy(atom_map_full);
-  }
-
-  memory->destroy(nlocal_rank);
-  memory->destroy(nlocal_disp);
-  memory->destroy(nlocal_rank3);
-  memory->destroy(nlocal_disp3);
 
   mbxt_write_summary();    // this and collecting times should be gated by 'timer full' request
 
@@ -818,38 +783,10 @@ void FixMBX::post_neighbor()
 
   mbx_fill_system_information_from_atom();
 
-  // do we need to pre-compute and track molecule types?
-
-  // MRR not needed anymore
-  // for (int i = 0; i < nall; ++i) {
-  //    const int id = tag[i];
-
-  //    for (int j = 0; j < num_mol_types; ++j)
-  //        if (id <= mol_offset[j + 1]) {
-  //            mol_type[i] = j;
-  //            break;
-  //        }
-  //}
-
-  // do we need to pre-compute and track anchor-atoms?
-
-  // MRR not needed anymore
-  // for (int i = 0; i < nall; ++i) {
-  //    const int mol_id = molecule[i];
-  //    const int mtype = mol_type[i];
-
-  //    if ((tag[i] - 1 - mol_offset[mtype]) % num_atoms_per_mol[mtype] == 0)
-  //        mol_anchor[i] = 1;
-  //    else
-  //        mol_anchor[i] = 0;
-  //}
-
-  //    printf("\n[MBX] Deleting and Recreating MBX objects\n\n");
-
   // tear down existing MBX objects
 
   if (ptr_mbx) delete ptr_mbx;
-  if (ptr_mbx_full) delete ptr_mbx_full;
+
   if (ptr_mbx_local) {
     // accumulate timing info from pme electrostatics
 
@@ -877,18 +814,7 @@ void FixMBX::post_neighbor()
   // create main instance of MBX object
 
   ptr_mbx = new bblock::System();
-
-  // check if MBX compiled with MPI
-
-  int err = ptr_mbx->TestMPI();
-  if (err == -2) mbx_mpi_enabled = false;
-
-  // create helper MBX instances
-
-  if (mbx_mpi_enabled)
-    ptr_mbx_local = new bblock::System();
-  else
-    ptr_mbx_full = new bblock::System();
+  ptr_mbx_local = new bblock::System();
 
   // initialize all MBX instances
 
@@ -899,10 +825,7 @@ void FixMBX::post_neighbor()
   }
 
   mbx_init();
-  if (mbx_mpi_enabled)
-    mbx_init_local();
-  else
-    mbx_init_full();
+  mbx_init_local();
 
   if (mbx_aspc_enabled) aspc_step++;
 }
@@ -952,10 +875,7 @@ void FixMBX::pre_force(int vflag)
 
   if (has_gcmc) { post_neighbor(); }
   mbx_update_xyz();
-  if (mbx_mpi_enabled)
-    mbx_update_xyz_local();
-  else
-    mbx_update_xyz_full();
+  mbx_update_xyz_local();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -979,8 +899,6 @@ void FixMBX::pre_exchange()
   if (!mbx_aspc_enabled) return;
 
   // save copy of dipole history
-
-  if (!mbx_mpi_enabled) error->all(FLERR, "[MBX] Need to add support for mbx_full");
 
   aspc_num_hist = ptr_mbx_local->GetNumDipoleHistory();
 
@@ -1083,7 +1001,7 @@ void FixMBX::mbx_get_dipoles_local()
   for (int i = 0; i < atom->nmax; ++i)
     for (int j = 0; j < 9; ++j) mbx_dip[i][j] = 0.0;
 
-#if 1
+
   {
     std::vector<double> mu_perm;
     std::vector<double> mu_ind;
@@ -1140,70 +1058,6 @@ void FixMBX::mbx_get_dipoles_local()
 
     }    // for(nall)
   }
-#endif
-
-#if 0
-  {
-    std::vector<double> mu_perm;
-    std::vector<double> mu_ind;
-    std::vector<double> mu_tot;
-
-    ptr_mbx_local->GetDipoles(mu_perm, mu_ind); // problem with this one is how to handle
-
-    printf("GetDipoles: sizes:: mu_perm= %lu  mu_ind= %lu\n",mu_perm.size(), mu_ind.size());
-
-    // for(int i=0; i<mu_perm.size()/3; ++i) {
-    //   printf("  -- i= %i  mu_perm= %f %f %f   mu_ind= %f %f %f\n",i,mu_perm[i*3],mu_perm[i*3+1],mu_perm[i*3+2],mu_ind[i*3],mu_ind[i*3+1],mu_ind[i*3+2]);
-    // }
-
-    int indx = 0;
-    for (int i = 0; i < nall; ++i) {
-      if (mol_anchor[i] && mol_local[i]) {
-        const int mtype = mol_type[i];
-
-        // to be replaced with integer comparison
-
-        bool include_monomer = true;
-        tagint anchor = atom->tag[i];
-
-        // this will save history for both local and ghost particles
-        // comm->exchange() will sync ghost histories w/ local particles in new decomposition
-
-        int na = get_include_monomer(mol_names[mtype], anchor, include_monomer);
-
-        // add info
-
-        if (include_monomer) {
-          for (int j = 0; j < na; ++j) {
-            const int ii = atom->map(anchor + j);
-            // aspc_dip_hist[ii][h * 3] = mbx_dip_history[indx++];
-            // aspc_dip_hist[ii][h * 3 + 1] = mbx_dip_history[indx++];
-            // aspc_dip_hist[ii][h * 3 + 2] = mbx_dip_history[indx++];
-            printf("  -- ii= %i  tag= %i  mu_perm= %f %f %f   mu_ind= %f %f %f\n",ii,anchor+j,mu_perm[indx*3],mu_perm[indx*3+1],mu_perm[indx*3+2],mu_ind[indx*3],mu_ind[indx*3+1],mu_ind[indx*3+2]);
-            indx++;
-          }
-        }
-      }  // if(anchor)
-
-    }  // for(nall)
-  }
-#endif
-
-#if 0
-  {
-    std::vector<double> mu_perm;
-    std::vector<double> mu_ind;
-    std::vector<double> mu_tot;
-
-    ptr_mbx_local->GetTotalDipole(mu_perm, mu_ind, mu_tot);
-
-    printf("GetTotalDipole: sizes:: mu_perm= %lu  mu_ind= %lu  mu_tot= %lu\n",mu_perm.size(), mu_ind.size(), mu_tot.size());
-
-    for(int i=0; i<mu_perm.size()/3; ++i) {
-      printf("  -- i= %i  mu_perm= %f %f %f   mu_ind= %f %f %f  mu_tot= %f %f %f\n",i,mu_perm[i*3],mu_perm[i*3+1],mu_perm[i*3+2],mu_ind[i*3],mu_ind[i*3+1],mu_ind[i*3+2],mu_tot[i*3],mu_tot[i*3+1],mu_tot[i*3+2]);
-    }
-  }
-#endif
 
   array_atom = mbx_dip;
 }
@@ -1232,55 +1086,6 @@ void FixMBX::unpack_forward_comm(int n, int first, double *buf)
   }
 }
 
-/* ---------------------------------------------------------------------- */
-
-int FixMBX::pack_reverse_comm(int n, int first, double *buf)
-{
-  int i, m;
-  //  if (pack_flag == 5) {
-  // m = 0;
-  // int last = first + n;
-  // for(i = first; i < last; i++) {
-  //   int indxI = 2 * i;
-  //   buf[m++] = q[indxI  ];
-  //   buf[m++] = q[indxI+1];
-  // }
-  // return m;
-  //  } else {
-  //    for (m = 0, i = first; m < n; m++, i++) buf[m] = q[i];
-  return n;
-  //  }
-}
-
-/* ---------------------------------------------------------------------- */
-
-void FixMBX::unpack_reverse_comm(int n, int *list, double *buf)
-{
-  // if (pack_flag == 5) {
-  //   int m = 0;
-  //   for(int i = 0; i < n; i++) {
-  //     int indxI = 2 * list[i];
-  //     q[indxI  ] += buf[m++];
-  //     q[indxI+1] += buf[m++];
-  //   }
-  // } else {
-  //   for (int m = 0; m < n; m++) q[list[m]] += buf[m];
-  // }
-}
-
-/* ----------------------------------------------------------------------
-   memory usage of local atom-based arrays
-------------------------------------------------------------------------- */
-
-double FixMBX::memory_usage()
-{
-  double bytes;
-
-  bytes = 0;
-
-  return bytes;
-}
-
 /* ----------------------------------------------------------------------
    allocate fictitious charge arrays
 ------------------------------------------------------------------------- */
@@ -1291,16 +1096,6 @@ void FixMBX::grow_arrays(int nmax)
   memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
   memory->grow(mol_local, nmax, "fixmbx:mol_local");
   //memory->grow(mol_order, nmax, "fixmbx:mol_order");
-
-  if (!mbx_mpi_enabled) {
-    memory->grow(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
-    memory->grow(mol_type_full, atom->natoms, "fixmbx:mol_type_full");
-    memory->grow(x_full, atom->natoms, 3, "fixmbx:x_full");
-    memory->grow(f_full, atom->natoms, 3, "fixmbx:f_full");
-    memory->grow(f_local, atom->natoms, 3, "fixmbx:f_local");    // lazy allocation...
-    memory->grow(tag_full, atom->natoms, "fixmbx:tag_full");
-    memory->grow(atom_map_full, atom->natoms + 1, "fixmbx:atom_map_full");
-  }
 
   if (mbx_aspc_enabled)
     memory->grow(aspc_dip_hist, nmax, aspc_per_atom_size, "fixmbx:mbx_dip_hist");
@@ -1717,17 +1512,6 @@ void FixMBX::mbx_init_local()
   int *pg = comm->procgrid;
   ptr_mbx_local->SetMPI(world, pg[0], pg[1], pg[2]);
 
-  int err = ptr_mbx_local->TestMPI();
-  if (err == -1)
-    error->all(FLERR, "[MBX] MPI not initialized\n");
-  else if (err == -2) {
-    if (me == 0 && first_step)
-      error->all(FLERR, "[MBX] MPI not enabled. FULL terms computed on rank 0\n");
-    mbx_mpi_enabled = false;
-  }
-
-  // setup MBX solver(s); need to keep pbc turned off, which currently disables electrostatic solver
-
   // set MBX solvers
 
   if (use_json) {
@@ -1766,11 +1550,9 @@ void FixMBX::mbx_init_local()
 #endif
 
   std::vector<double> box;
-  // ptr_mbx_local->SetPBC(box);
 
   if (domain->nonperiodic && (domain->xperiodic || domain->yperiodic || domain->zperiodic))
     error->all(FLERR, "[MBX] System must be fully periodic or non-periodic with MBX");
-
 
   // get ewald values from MBX and verify they make sense relative to LAMMPS periodicity
   double elec_alpha, elec_grid, disp_alpha, disp_grid;
@@ -1780,10 +1562,15 @@ void FixMBX::mbx_init_local()
   ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
 
   if ((elec_alpha > 0.0) && (!domain->xperiodic && !domain->yperiodic && !domain->zperiodic))
-    error->all(FLERR, "[MBX] Electrostatic Ewald parameters set (alpha_ewald_elec = " + std::to_string(elec_alpha) + "), but system is not periodic");
+    error->all(FLERR,
+               "[MBX] Electrostatic Ewald parameters set (alpha_ewald_elec = " +
+                   std::to_string(elec_alpha) + "), but system is not periodic");
   if ((disp_alpha > 0.0) && (!domain->xperiodic && !domain->yperiodic && !domain->zperiodic))
-    error->all(FLERR, "[MBX] Dispersion Ewald parameters set (alpha_ewald_disp = " + std::to_string(disp_alpha) + "), but system is not periodic");
-  if ((elec_alpha == 0.0 || disp_alpha == 0.0) && (domain->xperiodic || domain->yperiodic || domain->zperiodic))
+    error->all(FLERR,
+               "[MBX] Dispersion Ewald parameters set (alpha_ewald_disp = " +
+                   std::to_string(disp_alpha) + "), but system is not periodic");
+  if ((elec_alpha == 0.0 || disp_alpha == 0.0) &&
+      (domain->xperiodic || domain->yperiodic || domain->zperiodic))
     error->warning(FLERR, "[MBX] System is periodic, but Ewald alpha parameters not set");
 
   box = std::vector<double>(9, 0.0);
@@ -1841,279 +1628,6 @@ void FixMBX::mbx_init_local()
   mbxt_stop(MBXT_INIT_LOCAL);
 }
 
-/* ----------------------------------------------------------------------
-   Initialize new MBX instance with local monomers as full system
-   (for debugging purposes)
-------------------------------------------------------------------------- */
-
-void FixMBX::mbx_init_full()
-{
-  mbxt_start(MBXT_INIT_FULL);
-
-  if (first_step) {
-    memory->create(nlocal_rank, comm->nprocs, "fixmbx::nlocal_rank");
-    memory->create(nlocal_disp, comm->nprocs, "fixmbx::nlocal_disp");
-    memory->create(nlocal_rank3, comm->nprocs, "fixmbx::nlocal_rank3");
-    memory->create(nlocal_disp3, comm->nprocs, "fixmbx::nlocal_disp3");
-
-    memory->grow(mol_anchor_full, atom->natoms, "fixmbx:mol_anchor_full");
-    memory->grow(mol_type_full, atom->natoms, "fixmbx:mol_type_full");
-    memory->grow(x_full, atom->natoms, 3, "fixmbx:x_full");
-    memory->grow(f_full, atom->natoms, 3, "fixmbx:f_full");
-    memory->grow(f_local, atom->natoms, 3, "fixmbx:f_local");    // lazy allocation...
-    memory->grow(tag_full, atom->natoms, "fixmbx:tag_full");
-    memory->grow(atom_map_full, atom->natoms + 1, "fixmbx:atom_map_full");
-  }
-
-  // gather data from other MPI ranks
-
-  int nlocal = atom->nlocal;
-  const int nall = nlocal + atom->nghost;
-  const int natoms = atom->natoms;
-  tagint *tag = atom->tag;
-  double **x = atom->x;
-  double *q = atom->q;
-
-  MPI_Gather(&nlocal, 1, MPI_INT, nlocal_rank, 1, MPI_INT, 0, world);
-
-  if (comm->me == 0) {
-    nlocal_disp[0] = 0;
-    for (int i = 1; i < comm->nprocs; ++i) nlocal_disp[i] = nlocal_disp[i - 1] + nlocal_rank[i - 1];
-
-    for (int i = 0; i < comm->nprocs; ++i) {
-      nlocal_rank3[i] = nlocal_rank[i] * 3;
-      nlocal_disp3[i] = nlocal_disp[i] * 3;
-    }
-  }
-
-  MPI_Gatherv(mol_anchor, nlocal, MPI_INT, mol_anchor_full, nlocal_rank, nlocal_disp, MPI_INT, 0,
-              world);
-  MPI_Gatherv(mol_type, nlocal, MPI_INT, mol_type_full, nlocal_rank, nlocal_disp, MPI_INT, 0,
-              world);
-  MPI_Gatherv(tag, nlocal, MPI_INT, tag_full, nlocal_rank, nlocal_disp, MPI_INT, 0,
-              world);    // not safe if BIG
-
-  MPI_Gatherv(&(x[0][0]), nlocal * 3, MPI_DOUBLE, &(x_full[0][0]), nlocal_rank3, nlocal_disp3,
-              MPI_DOUBLE, 0, world);
-
-  // if not master rank, then nothing else to do
-
-  if (comm->me) { return; }
-
-  // construct atom map
-
-  for (int i = 0; i < natoms; ++i) atom_map_full[tag_full[i]] = i;
-
-  std::vector<size_t> molec;
-
-  // loop over all atoms on proc (local + ghost)
-
-  const double xlo = domain->boxlo[0];
-  const double ylo = domain->boxlo[1];
-  const double zlo = domain->boxlo[2];
-
-  std::vector<double> xyz_ext;
-  std::vector<double> chg_ext;
-  std::vector<size_t> islocal_ext;
-  std::vector<int> tag_ext;
-
-  int nm = 0;
-
-  mbx_num_atoms_full = 0;
-  mbx_num_ext_full = 0;
-
-  for (int i = 0; i < natoms; ++i) {
-    // if anchor-atom, then add to MBX (currently assume molecule is intact)
-
-    if (mol_anchor_full[i]) {
-      std::vector<std::string> names;
-      std::vector<double> xyz;
-
-      const int mtype = mol_type_full[i];
-
-      int is_local = 1;
-
-      bool is_ext = false;
-      int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-
-      // ids of particles in molecule on proc
-
-      tagint anchor = tag_full[i];
-
-      int amap[_MAX_ATOMS_PER_MONOMER];
-      bool add_monomer = true;
-      for (int j = 1; j < na; ++j) {
-        amap[j] = atom_map_full[anchor + j];
-        if (amap[j] == -1) {
-          error->one(FLERR, "Molecule not intact");
-          add_monomer = false;
-        }
-      }
-
-      // test if external charged particle
-#ifndef _DEBUG_EFIELD
-      if (strcmp("dp1", mol_names[mtype]) == 0) {
-        add_monomer = false;
-
-        xyz_ext.push_back(x[i][0] - xlo);
-        xyz_ext.push_back(x[i][1] - ylo);
-        xyz_ext.push_back(x[i][2] - zlo);
-        chg_ext.push_back(q[i]);
-        islocal_ext.push_back(is_local);
-        tag_ext.push_back(anchor);
-
-        mbx_num_ext_full++;
-
-        // add info for monomer
-
-      } else if (add_monomer) {
-#else
-      if (add_monomer) {
-#endif
-
-        // add coordinates
-
-        xyz.push_back(x_full[i][0] - xlo);
-        xyz.push_back(x_full[i][1] - ylo);
-        xyz.push_back(x_full[i][2] - zlo);
-
-        for (int j = 1; j < na; ++j) {
-          xyz.push_back(x_full[amap[j]][0] - xlo);
-          xyz.push_back(x_full[amap[j]][1] - ylo);
-          xyz.push_back(x_full[amap[j]][2] - zlo);
-        }
-
-        // add types
-
-        add_monomer_atom_types(mol_names[mtype], names);
-
-        // add monomer
-
-        molec.push_back(nm);
-        nm++;
-
-        ptr_mbx_full->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
-        ptr_mbx_full->AddMolecule(molec);
-
-        mbx_num_atoms_full += na;
-      }
-
-    }    // if(mol_anchor)
-
-  }    // for(i<nall)
-
-  // set MBX solvers
-
-  if (use_json) {
-    ptr_mbx_full->SetUpFromJson(json_settings);
-
-    // make sure cutoffs are consistent
-
-    double mbx_cut = ptr_mbx_full->GetRealspaceCutoff();
-    double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
-    if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
-    double mbx_2b_cut = ptr_mbx_full->Get2bCutoff();
-    if (mbx_2b_cut > mbx_cut)
-      error->one(FLERR,
-                 "[MBX] 2-body PIP cutoff must be less than or equal to realspace cutoff. (This "
-                 "may be changed in a future release.)");
-    double mbx_3b_cut = ptr_mbx_full->Get3bCutoff();
-    if (mbx_3b_cut > mbx_cut)
-      error->one(FLERR,
-                 "[MBX] 3-body PIP cutoff must be less than or equal to realspace cutoff. (This "
-                 "may be changed in a future release.)");
-    double mbx_4b_cut = ptr_mbx_full->Get4bCutoff();
-    if (mbx_4b_cut > mbx_cut)
-      error->one(FLERR,
-                 "[MBX] 4-body PIP cutoff must be less than or equal to realspace cutoff. (This "
-                 "may be changed in a future release.)");
-  } else {
-    ptr_mbx_full->SetRealspaceCutoff(pair_mbx->cut_global);
-    ptr_mbx_full->SetUpFromJson();
-  }
-
-  // load external charged particles
-#ifndef _DEBUG_EFIELD
-  if (mbx_num_ext_full > 0) {
-    ptr_mbx_full->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
-  }
-#endif
-
-  std::vector<double> box;
-
-  if (!domain->nonperiodic) {
-    box = std::vector<double>(9, 0.0);
-
-    box[0] = domain->xprd;
-
-    box[3] = domain->xy;
-    box[4] = domain->yprd;
-
-    box[6] = domain->xz;
-    box[7] = domain->yz;
-    box[8] = domain->zprd;
-
-  } else if (domain->xperiodic || domain->yperiodic || domain->zperiodic)
-    error->one(FLERR, "System must be fully periodic or non-periodic with MBX");
-
-
-  // get ewald values from MBX and verify they make sense relative to LAMMPS periodicity
-  double elec_alpha, elec_grid, disp_alpha, disp_grid;
-  size_t elec_spline, disp_spline;
-
-  ptr_mbx_full->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
-  ptr_mbx_full->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
-
-  if ((elec_alpha > 0.0) && (!domain->xperiodic && !domain->yperiodic && !domain->zperiodic))
-    error->all(FLERR, "[MBX] Electrostatic Ewald parameters set (alpha_ewald_elec = " + std::to_string(elec_alpha) + "), but system is not periodic");
-  if ((disp_alpha > 0.0) && (!domain->xperiodic && !domain->yperiodic && !domain->zperiodic))
-    error->all(FLERR, "[MBX] Dispersion Ewald parameters set (alpha_ewald_disp = " + std::to_string(disp_alpha) + "), but system is not periodic");
-  if ((elec_alpha == 0.0 || disp_alpha == 0.0) && (domain->xperiodic || domain->yperiodic || domain->zperiodic))
-    error->warning(FLERR, "[MBX] System is periodic, but Ewald alpha parameters not set");
-
-  ptr_mbx_full->SetPBC(box);
-
-  std::vector<int> egrid = ptr_mbx_full->GetFFTDimensionElectrostatics(0);
-  std::vector<int> dgrid = ptr_mbx_full->GetFFTDimensionDispersion(0);
-
-  if (print_settings && first_step) {
-    std::string mbx_settings_ = ptr_mbx_full->GetCurrentSystemConfig();
-    if (screen) {
-      fprintf(screen, "\n[MBX] 'Full' Settings\n%s\n", mbx_settings_.c_str());
-      fprintf(screen, "[MBX] FULL electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1],
-              egrid[2]);
-      fprintf(screen, "[MBX] FULL dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
-    }
-    if (logfile) {
-      fprintf(logfile, "\n[MBX] 'Full' Settings\n%s\n", mbx_settings_.c_str());
-      fprintf(logfile, "[MBX] FULL electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1],
-              egrid[2]);
-      fprintf(logfile, "[MBX] FULL dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
-    }
-  }
-
-  // check if using cg or aspc integrator for MBX dipoles
-
-  if (first_step) {
-    std::string dip_method = ptr_mbx->GetDipoleMethod();
-
-    if (dip_method == "aspc") {
-      mbx_aspc_enabled = true;
-
-      memory->create(aspc_dip_hist, atom->nmax, aspc_per_atom_size, "fixmbx::aspc_dip_hist");
-    } else if (!(dip_method == "cg")) {
-      error->one(FLERR, "[MBX] requested dip_method not supported with LAMMPS");
-    }
-  }
-
-  if (mbx_aspc_enabled) {
-    error->one(FLERR,
-               "mbx_init_dipole_history_full() not yet implemented. Why are you using serial MBX?");
-    // mbx_init_dipole_history_full();
-  }
-
-  mbxt_stop(MBXT_INIT_FULL);
-}
 
 /* ----------------------------------------------------------------------
    Update MBX instance for all molecules
@@ -2242,20 +1756,25 @@ void FixMBX::mbx_update_xyz_local()
 
     } else if (domain->xperiodic || domain->yperiodic || domain->zperiodic)
       error->all(FLERR, "[MBX] System must be fully periodic or non-periodic with MBX");
-      
-  // get ewald values from MBX and verify they make sense relative to LAMMPS periodicity
-  double elec_alpha, elec_grid, disp_alpha, disp_grid;
-  size_t elec_spline, disp_spline;
 
-  ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
-  ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
+    // get ewald values from MBX and verify they make sense relative to LAMMPS periodicity
+    double elec_alpha, elec_grid, disp_alpha, disp_grid;
+    size_t elec_spline, disp_spline;
 
-  if ((elec_alpha > 0.0) && (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
-    error->all(FLERR, "[MBX] Electrostatic Ewald parameters set (alpha_ewald_elec = " + std::to_string(elec_alpha) + "), but system is not periodic");
-  if ((disp_alpha > 0.0) && (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
-    error->all(FLERR, "[MBX] Dispersion Ewald parameters set (alpha_ewald_disp = " + std::to_string(disp_alpha) + "), but system is not periodic");
-  if ((elec_alpha == 0.0 || disp_alpha == 0.0) && (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
-    error->warning(FLERR, "[MBX] System is periodic, but Ewald alpha parameters not set");
+    ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
+    ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
+
+    if ((elec_alpha > 0.0) && (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
+      error->all(FLERR,
+                 "[MBX] Electrostatic Ewald parameters set (alpha_ewald_elec = " +
+                     std::to_string(elec_alpha) + "), but system is not periodic");
+    if ((disp_alpha > 0.0) && (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
+      error->all(FLERR,
+                 "[MBX] Dispersion Ewald parameters set (alpha_ewald_disp = " +
+                     std::to_string(disp_alpha) + "), but system is not periodic");
+    if ((elec_alpha == 0.0 || disp_alpha == 0.0) &&
+        (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
+      error->warning(FLERR, "[MBX] System is periodic, but Ewald alpha parameters not set");
 
     ptr_mbx_local->SetPBC(box);
     ptr_mbx_local->SetBoxPMElocal(box);
@@ -2352,134 +1871,6 @@ void FixMBX::mbx_update_xyz_local()
   mbxt_stop(MBXT_UPDATE_XYZ_LOCAL);
 }
 
-/* ----------------------------------------------------------------------
-   Update MBX instance for all molecules
-------------------------------------------------------------------------- */
-
-void FixMBX::mbx_update_xyz_full()
-{
-  mbxt_start(MBXT_UPDATE_XYZ_FULL);
-
-  // gather coordinates
-
-  const int nlocal = atom->nlocal;
-  const int natoms = atom->natoms;
-  tagint *tag = atom->tag;
-  double **x = atom->x;
-  double *q = atom->q;
-
-  // update coordinates
-
-  MPI_Gatherv(&(x[0][0]), nlocal * 3, MPI_DOUBLE, &(x_full[0][0]), nlocal_rank3, nlocal_disp3,
-              MPI_DOUBLE, 0, world);
-
-  // if not master rank, then nothing else to do
-
-  if (comm->me) {
-    mbxt_stop(MBXT_UPDATE_XYZ_FULL);
-    return;
-  }
-
-  // update if box changes
-
-  if (domain->box_change) {
-    std::vector<double> box;
-
-    if (!domain->nonperiodic) {
-      box = std::vector<double>(9, 0.0);
-
-      box[0] = domain->xprd;
-
-      box[3] = domain->xy;
-      box[4] = domain->yprd;
-
-      box[6] = domain->xz;
-      box[7] = domain->yz;
-      box[8] = domain->zprd;
-
-    } else if (domain->xperiodic || domain->yperiodic || domain->zperiodic)
-      error->one(FLERR, "System must be fully periodic or non-periodic with MBX");
-
-    // get ewald values from MBX and verify they make sense relative to LAMMPS periodicity
-    double elec_alpha, elec_grid, disp_alpha, disp_grid;
-    size_t elec_spline, disp_spline;
-
-    ptr_mbx_full->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
-    ptr_mbx_full->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
-
-    if ((elec_alpha > 0.0) && (!domain->xperiodic && !domain->yperiodic && !domain->zperiodic))
-      error->all(FLERR, "[MBX] Electrostatic Ewald parameters set (alpha_ewald_elec = " + std::to_string(elec_alpha) + "), but system is not periodic");
-    if ((disp_alpha > 0.0) && (!domain->xperiodic && !domain->yperiodic && !domain->zperiodic))
-      error->all(FLERR, "[MBX] Dispersion Ewald parameters set (alpha_ewald_disp = " + std::to_string(disp_alpha) + "), but system is not periodic");
-    if ((elec_alpha == 0.0 || disp_alpha == 0.0) && (domain->xperiodic || domain->yperiodic || domain->zperiodic))
-      error->warning(FLERR, "[MBX] System is periodic, but Ewald alpha parameters not set");
-
-    ptr_mbx_full->SetPBC(box);
-  }
-
-  // update coordinates
-
-  const double xlo = domain->boxlo[0];
-  const double ylo = domain->boxlo[1];
-  const double zlo = domain->boxlo[2];
-
-  std::vector<double> xyz(natoms * 3);
-
-  std::vector<double> xyz_ext(mbx_num_ext * 3);
-  std::vector<double> chg_ext(mbx_num_ext);
-
-  int indx = 0;
-  int indx_ext = 0;
-  for (int i = 0; i < natoms; ++i) {
-    if (mol_anchor_full[i]) {
-      const int mtype = mol_type_full[i];
-
-      bool is_ext = false;
-      int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-
-      // test if external charged particle
-#ifndef _DEBUG_EFIELD
-      if (strcmp("dp1", mol_names[mtype]) == 0) {
-        xyz_ext[indx_ext * 3] = x[i][0] - xlo;
-        xyz_ext[indx_ext * 3 + 1] = x[i][1] - ylo;
-        xyz_ext[indx_ext * 3 + 2] = x[i][2] - zlo;
-        chg_ext[indx_ext] = q[i];
-
-        indx_ext++;
-
-      } else {
-#endif
-        tagint anchor = tag_full[i];
-
-        xyz[indx * 3] = x_full[i][0] - xlo;
-        xyz[indx * 3 + 1] = x_full[i][1] - ylo;
-        xyz[indx * 3 + 2] = x_full[i][2] - zlo;
-
-        for (int j = 1; j < na; ++j) {
-          int ii = atom_map_full[anchor + j];
-          int jndx = 3 * j;
-          xyz[indx * 3 + jndx] = x_full[ii][0] - xlo;
-          xyz[indx * 3 + jndx + 1] = x_full[ii][1] - ylo;
-          xyz[indx * 3 + jndx + 2] = x_full[ii][2] - zlo;
-        }
-
-        indx += na;
-#ifndef _DEBUG_EFIELD
-      }
-#endif
-
-    }    // if(mol_anchor)
-
-  }    // for(i<nall)
-
-  if (xyz.size() != indx * 3) error->one(FLERR, "Inconsistent # of atoms");
-  ptr_mbx_full->SetRealXyz(xyz);
-
-  if (xyz_ext.size() != indx_ext * 3) error->one(FLERR, "Inconsistent # of external charges");
-  ptr_mbx_full->SetExternalChargesAndPositions(chg_ext, xyz_ext);
-
-  mbxt_stop(MBXT_UPDATE_XYZ_FULL);
-}
 
 /* ----------------------------------------------------------------------
    Initialize dipole history for local molecules + plus halo
@@ -2664,11 +2055,6 @@ void FixMBX::mbxt_write_summary()
   mbxt_print_time("DISP_PME", MBXT_DISP_PME, t);
   mbxt_print_time("BUCK", MBXT_BUCK, t);
   mbxt_print_time("ELE", MBXT_ELE, t);
-
-  mbxt_print_time("INIT_FULL", MBXT_INIT_FULL, t);
-  mbxt_print_time("UPDATE_XYZ_FULL", MBXT_UPDATE_XYZ_FULL, t);
-  mbxt_print_time("ACCUMULATE_F_FULL", MBXT_ACCUMULATE_F_FULL, t);
-
   mbxt_print_time("INIT_LOCAL", MBXT_INIT_LOCAL, t);
   mbxt_print_time("UPDATE_XYZ_LOCAL", MBXT_UPDATE_XYZ_LOCAL, t);
   mbxt_print_time("ACCUMULATE_F_LOCAL", MBXT_ACCUMULATE_F_LOCAL, t);
