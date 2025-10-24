@@ -11,7 +11,8 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-#include "fix_MBX.h"
+#include "fix_mbx.h"
+
 #include "atom.h"
 #include "citeme.h"
 #include "comm.h"
@@ -29,6 +30,7 @@
 #include "respa.h"
 #include "universe.h"
 #include "update.h"
+
 #include <cmath>
 #include <cstring>
 #include <mpi.h>
@@ -45,19 +47,20 @@
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
-static const char cite_pair_mbx[] =
-    "pair mbx command:\n\n"
-    "@article{10.1063/5.0156036,\n"
-    " author = {Riera, Marc and Knight, Christopher and Bull-Vulpe, Ethan F. and Zhu, Xuanyu and "
-    "Agnew, Henry and Smith, Daniel G. A. and Simmonett, Andrew C. and Paesani, Francesco},\n"
-    " title = \"{MBX: A many-body energy and force calculator for data-driven many-body "
-    "simulations}\",\n"
-    " journal = {The Journal of Chemical Physics},\n"
-    " volume = {159},\n"
-    " number = {5},\n"
-    " pages = {054802},\n"
-    " year = {2023},\n"
-    " doi = {10.1063/5.0156036},\n"
+std::string FixMBX::cite_pair_mbx = std::string(
+    "pair mbx command:\n\n" \
+    "@article{10.1063/5.0156036,\n" \
+    " author = {Riera, Marc and Knight, Christopher and Bull-Vulpe, Ethan F. and Zhu, Xuanyu and " \
+    "Agnew, Henry and Smith, Daniel G. A. and Simmonett, Andrew C. and Paesani, Francesco},\n" \
+    " title = \"{MBX: A many-body energy and force calculator for data-driven many-body " \
+    "simulations}\",\n" \
+    " journal = {The Journal of Chemical Physics},\n" \
+    " volume = {159},\n" \
+    " number = {5},\n" \
+    " pages = {054802},\n" \
+    " year = {2023},\n" \
+    " doi = {10.1063/5.0156036},\n" \
+    " version = {") + bblock::System::get_mbx_version() + "}\n"  \
     "}\n\n";
 
 /* ---------------------------------------------------------------------- */
@@ -248,7 +251,7 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
       if (input_validation_index + 1 >= narg)
         error->all(FLERR, ("[MBX] Not enough arguments to read json filename"));
       input_validation_index += 2;
-    } else if (strcmp(arg[input_validation_index], "print/settings") == 0) {
+    } else if (strcmp(arg[input_validation_index], "print/verbose") == 0) {
       input_validation_index += 1;
     } else if (strcmp(arg[input_validation_index], "print/dipoles") ==
                0) {    // dipoles are now always printed by default
@@ -288,7 +291,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   // // validate input arguments
   bool validation_result = validateMBXFixParameters(narg - 3, &arg[3]);
-  if (validation_result) { fprintf(stderr, "MBX fix input validation successful.\n"); }
+  // if (validation_result) { fprintf(stderr, "MBX fix input validation successful.\n"); }
 
   if (narg < 6) error->all(FLERR, "[MBX] Illegal fix mbx command");
 
@@ -370,7 +373,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   use_json = 0;
   json_file = NULL;
-  print_settings = 0;
+  print_verbose = 0;
   print_dipoles = 1;    // dipoles are now always printed by default
   aspc_step_reset = 1000;
 
@@ -380,8 +383,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
       use_json = 1;
       json_file = new char[len];
       strcpy(json_file, arg[iarg]);
-    } else if (strcmp(arg[iarg], "print/settings") == 0) {
-      if (me == 0) print_settings = 1;
+    } else if (strcmp(arg[iarg], "print/verbose") == 0) {
+      print_verbose = 1;
     } else if (strcmp(arg[iarg], "print/dipoles") == 0) {
       print_dipoles = 1;    // dipoles are now always printed by default
     } else if (strcmp(arg[iarg], "aspc/reset") == 0) {
@@ -520,8 +523,8 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
     MPI_Bcast(&json_settings[0], size + 1, MPI_CHAR, 0, world);
   }
 
-  if (screen && universe->iworld == 0 && comm->me == 0)
-    std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
+  // if (screen && universe->iworld == 0 && comm->me == 0)
+  //   std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
 
   memory->create(mbxt_count, MBXT_NUM_TIMERS, "fixmbx:mbxt_count");
   memory->create(mbxt_time, MBXT_NUM_TIMERS, "fixmbx:mbxt_time");
@@ -604,7 +607,8 @@ FixMBX::~FixMBX()
     delete ptr_mbx_local;
   }
 
-  mbxt_write_summary();    // this and collecting times should be gated by 'timer full' request
+  if (print_verbose)
+      mbxt_write_summary();    // this and collecting times should be gated by 'timer full' request
 
   memory->destroy(mbxt_count);
   memory->destroy(mbxt_time);
@@ -1320,23 +1324,6 @@ void FixMBX::mbx_init()
   std::vector<double> box;
   ptr_mbx->SetPBC(box);
 
-  // std::vector<int> egrid = ptr_mbx->GetFFTDimensionElectrostatics(0);
-  // std::vector<int> dgrid = ptr_mbx->GetFFTDimensionDispersion(0);
-
-  // if (print_settings && first_step) {
-  //     std::string mbx_settings_ = ptr_mbx->GetCurrentSystemConfig();
-  //     if (screen) {
-  //         fprintf(screen, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
-  //         fprintf(screen, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
-  //         fprintf(screen, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
-  //     }
-  //     if (logfile) {
-  //         fprintf(logfile, "\n[MBX] Settings\n%s\n", mbx_settings_.c_str());
-  //         fprintf(logfile, "[MBX] electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1], egrid[2]);
-  //         fprintf(logfile, "[MBX] dispersion FFT grid= %i %i %i\n", dgrid[0], dgrid[1], dgrid[2]);
-  //     }
-  // }
-
   Pair *pairstyles_coullong = force->pair_match(".*coul/long.*", 0);
   Pair *pairstyles_coulcut = force->pair_match(".*coul/cut.*", 0);
   Pair *pairstyles_coulexclude = force->pair_match("coul/exclude", 0);
@@ -1593,7 +1580,7 @@ void FixMBX::mbx_init_local()
   std::vector<int> dgrid =
       ptr_mbx_local->GetFFTDimensionDispersion(1);    // will return mesh even for gas-phase
 
-  if (print_settings && first_step) {
+  if (print_verbose && first_step  && comm->me == 0) {
     std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
     if (screen) {
       fprintf(screen, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());

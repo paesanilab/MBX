@@ -2381,6 +2381,9 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 
+# Directory where the M4 macros are. Created automatically.
+
+
 # Look for the archiver AR to make the static lib
 # Expand $ac_aux_dir to an absolute path.
 am_aux_dir=`cd "$ac_aux_dir" && pwd`

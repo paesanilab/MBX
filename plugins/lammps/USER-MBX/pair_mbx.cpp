@@ -16,8 +16,10 @@
 ------------------------------------------------------------------------- */
 
 #include "pair_mbx.h"
+
 #include "atom.h"
 #include "comm.h"
+#include "domain.h"
 #include "error.h"
 #include "fix.h"
 #include "force.h"
@@ -29,11 +31,10 @@
 #include "neighbor.h"
 #include "respa.h"
 #include "update.h"
+
 #include <cmath>
 #include <cstring>
-#include <mpi.h>
 
-#include "domain.h"
 
 #define TTMNRG
 
@@ -48,7 +49,7 @@ using namespace MathConst;
 
 PairMBX::PairMBX(LAMMPS *lmp) : Pair(lmp)
 {
-  respa_enable = 1;
+  single_enable = 0;
   restartinfo = 0;
   no_virial_fdotr_compute = 1;
   one_coeff = 1;
@@ -70,8 +71,6 @@ PairMBX::~PairMBX()
   if (allocated) {
     memory->destroy(setflag);
     memory->destroy(cutsq);
-
-    memory->destroy(cut);
   }
 
   delete[] pvector;
@@ -260,12 +259,7 @@ void PairMBX::allocate()
   int n = atom->ntypes;
 
   memory->create(setflag, n + 1, n + 1, "pair:setflag");
-  for (int i = 1; i <= n; i++)
-    for (int j = i; j <= n; j++) setflag[i][j] = 0;
-
   memory->create(cutsq, n + 1, n + 1, "pair:cutsq");
-
-  memory->create(cut, n + 1, n + 1, "pair:cut");
 }
 
 /* ----------------------------------------------------------------------
@@ -282,14 +276,6 @@ void PairMBX::settings(int narg, char **arg)
 
   cut_global = utils::numeric(FLERR, arg[0], false, lmp);
 
-  // reset cutoffs that have been explicitly set
-
-  if (allocated) {
-    int i, j;
-    for (i = 1; i <= atom->ntypes; i++)
-      for (j = i; j <= atom->ntypes; j++)
-        if (setflag[i][j]) cut[i][j] = cut_global;
-  }
 }
 
 /* ----------------------------------------------------------------------
@@ -301,23 +287,9 @@ void PairMBX::coeff(int narg, char **arg)
   if (narg < 2) error->all(FLERR, "Incorrect num args for pair coefficients");
   if (!allocated) allocate();
 
-  int ilo, ihi, jlo, jhi;
-  utils::bounds(FLERR, arg[0], 1, atom->ntypes, ilo, ihi, error);
-  utils::bounds(FLERR, arg[1], 1, atom->ntypes, jlo, jhi, error);
-
-  double cut_one = cut_global;
-  // if (narg == 5) cut_one = utils::numeric(FLERR, arg[4], false, lmp);
-
-  int count = 0;
-  for (int i = ilo; i <= ihi; i++) {
-    for (int j = MAX(jlo, i); j <= jhi; j++) {
-      cut[i][j] = cut_one;
-      setflag[i][j] = 1;
-      count++;
-    }
+  for (int ntype = 1; ntype <= atom->ntypes; ntype++) {
+    setflag[ntype][ntype] = 1;
   }
-
-  if (count == 0) error->all(FLERR, "Incorrect args for pair coefficients");
 
   std::string fix_args = "";
   for (int i = 2; i < narg; ++i) { fix_args += std::string(arg[i]) + " "; }
@@ -328,50 +300,12 @@ void PairMBX::coeff(int narg, char **arg)
 }
 
 /* ----------------------------------------------------------------------
-   init specific to this pair style
-------------------------------------------------------------------------- */
-
-void PairMBX::init_style()
-{
-  // request regular or rRESPA neighbor list
-
-  int irequest;
-  int respa = 0;
-
-  if (update->whichflag == 1 && strstr(update->integrate_style, "respa")) {
-    if (((Respa *) update->integrate)->level_inner >= 0) respa = 1;
-    if (((Respa *) update->integrate)->level_middle >= 0) respa = 2;
-  }
-
-  // currently request neighbor list, but we don't use it for anything...
-
-  irequest = neighbor->request(this, instance_me);
-
-  // find id of MBX fix; ensure only one is found
-
-  // fix_MBX = NULL;
-  // int ifix = -1;
-  // for (int i = 0; i < modify->nfix; ++i)
-  //   if (strcmp(modify->fix[i]->style, "mbx") == 0) {
-  //     if (ifix == -1)
-  //       ifix = i;
-  //     else
-  //       error->all(FLERR, "Only one MBX fix instance allowed to be active");
-  //   }
-  // if (ifix < 0) error->all(FLERR, "Fix MBX not found");
-
-  // fix_MBX = (FixMBX *) modify->fix[ifix];
-}
-
-/* ----------------------------------------------------------------------
    init for one type pair i,j and corresponding j,i
 ------------------------------------------------------------------------- */
 
 double PairMBX::init_one(int i, int j)
 {
-  if (setflag[i][j] == 0) cut[i][j] = mix_distance(cut[i][i], cut[j][j]);
-
-  return cut[i][j];
+  return cut_global;
 }
 
 

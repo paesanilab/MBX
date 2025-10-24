@@ -13,6 +13,9 @@ AC_SUBST([MBX_VERSION], ["$PACKAGE_VERSION"])
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
 
+# Directory where the M4 macros are. Created automatically.
+AC_CONFIG_MACRO_DIR([m4])
+
 # Look for the archiver AR to make the static lib
 AM_PROG_AR
 

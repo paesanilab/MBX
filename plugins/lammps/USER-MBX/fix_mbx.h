@@ -112,6 +112,7 @@ class FixMBX : public Fix {
   bblock::System *ptr_mbx;          // pointer to MBX object
   bblock::System *ptr_mbx_local;    // pointer to MBX object for local atoms
 
+  static std::string cite_pair_mbx;
   int me, nprocs;
   bigint ngroup;
 
@@ -125,7 +126,7 @@ class FixMBX : public Fix {
   char *json_file;
   std::string json_settings;
 
-  int print_settings;
+  int print_verbose;
 
   int num_mol_types;    // # of unique molecule types
   int num_molecules;    // total # of molecules

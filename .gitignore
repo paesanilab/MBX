@@ -71,3 +71,4 @@ libtool
 stamp-h1
 mbx.pc
 config.h
+mbx_version.h
