@@ -5,16 +5,13 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.3.2], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.3.1], [mbx-users@googlegroups.com])
 
-# Define MBX_PACKAGE_VERSION as a macro in config_mbx.h and include/config_mbx.h
-AC_DEFINE_UNQUOTED([MBX_VERSION], ["$PACKAGE_VERSION"], [MBX package version])
+# Define MBX_PACKAGE_VERSION as a macro in config.h
+AC_SUBST([MBX_VERSION], ["$PACKAGE_VERSION"])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
-
-# Directory where the M4 macros are. Created automatically.
-AC_CONFIG_MACRO_DIR([m4])
 
 # Look for the archiver AR to make the static lib
 AM_PROG_AR
@@ -25,8 +22,8 @@ LT_INIT([disable-shared])
 # Initialize Automake. Warnings will be treated as errors.
 AM_INIT_AUTOMAKE([subdir-objects -Wall foreign])
 
-# Generate config_mbx.h in both the top-level and include directories
-AC_CONFIG_HEADERS([config_mbx.h:config.h.in include/config_mbx.h:config.h.in])
+# Generate config.h
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
  Makefile
  src/Makefile
@@ -34,6 +31,7 @@ AC_CONFIG_FILES([
  plugins/Makefile
  plugins/i-pi/Makefile
  mbx.pc
+ mbx_version.h
 ])
 
 # Helper function to add the proper flags to CPPFLAGS and LDFLAGS
