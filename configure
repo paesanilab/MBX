@@ -1463,7 +1463,7 @@ Optional Features:
   --enable-optreport      enable write optimization reports, default: no
   --enable-ttmnrg         enable TTM-nrg PEFs via "-DTTMNRG" define., default:
                           no
-  --enable-cpp17          enable compiling with C++17 standard, default: no
+  --enable-cpp17          enable compiling with C++17 standard, default: yes
   --enable-tbb            enable intel threading building blocks library,
                           default: no
   --enable-tbb-old-compiler-version
@@ -16391,8 +16391,6 @@ fi
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
-# Check for C++11
-#MBX_CHECK_REQ_CXXFLAG([-std=c++17])
 
 # Check for enable flags
 
@@ -16532,7 +16530,7 @@ if test "${enable_cpp17+set}" = set; then :
              (*)   as_fn_error $? "wrong argument to --enable-cpp17" "$LINENO" 5 ;;
   esac
 else
-  case "no" in
+  case "yes" in
              (yes) cpp17=true ;;
              (no)  cpp17=false ;;
   esac

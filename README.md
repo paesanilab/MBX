@@ -17,8 +17,8 @@ MBX is periodically updated with performance improvements and the addition of ot
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to successfully install the software:
-- g++/gcc v4.9 or higher
-- icpc/icc v2018 or higher [optional but recommended]
+- g++/gcc v9.3 or higher
+- icpc/icc v2020 or higher [optional but recommended]
 - MPI compilers [optional, needed only for LAMMPS]
 - FFTW libraries
 - GSL libraries [optional, needed only for normal_modes executable]

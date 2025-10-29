@@ -180,8 +180,6 @@ AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
-# Check for C++11
-#MBX_CHECK_REQ_CXXFLAG([-std=c++17])
 
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
@@ -192,7 +190,7 @@ MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[TTM-nrg PEFs via "-DTTMNRG" define.],[no])
 
-MBX_CONFIG_ENABLE([cpp17],[compiling with C++17 standard],[no])
+MBX_CONFIG_ENABLE([cpp17],[compiling with C++17 standard],[yes])
 
 MBX_CONFIG_ENABLE([tbb],[intel threading building blocks library],[no])
 MBX_CONFIG_ENABLE([tbb-old-compiler-version],[intel threading building blocks library, use this for older versions of the intel compiler instead of --enable-tbb],[no])

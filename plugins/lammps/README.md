@@ -1,5 +1,7 @@
 # The MBX fix for LAMMPS
-MBX is interfaced with LAMMPS via a pair/fix combination. The source files are in `USER-MBX`.
+MBX is interfaced with LAMMPS via pair_style MBX. The source files are in `USER-MBX`.
+
+For more information about MBX+LAMMPS, please refer to the [MBX documentation](https://docs.lammps.org/pair_mbx.html).
 
 ## Variables that can be printed
 LAMMPS can access some energy contributions from MBX, and one can print them in the output. To enable the variable calculation, one must add to the LAMMPS input the following lines:
@@ -14,7 +16,7 @@ variable        ebuck     equal c_mbx[6]
 variable        eele      equal c_mbx[7]
 variable        etot      equal c_mbx[8]
 ```
-This will store the one- (e1), two- (e2), three- (e3), and four-body (e4) energies, along with the dispersion energy (edisp), the deprecated classical repultion (ebuck), the electrostatic energy, both permanent and induced added together (eele), and the total energy.
+This will store the one- (e1bpip), two- (e2bpip), three- (e3bpip), and four-body (e4bpip) energies, along with the dispersion energy (edisp), the deprecated classical repultion (ebuck), the electrostatic energy, both permanent and induced added together (eele), and the total energy.
 
 One can define a thermo style such as:
 ```
@@ -24,7 +26,7 @@ to print each of the contributions.
 
 ## Fix format
 To invoque the MBX fix, one must use the `fix ID mbx` keyword. The fix arguments are as follows:
-`fix   ID  all mbx <number_of_monomer_types> <monomer_id_1> <lower_atom_type_index_of_mon1> <higher_atom_type_index_of_mon1> <number_of_atoms_of_mon1> <atom type of atom 1> <atom type of atom 2> ... <atom type of atom n1> <monomer_id_2> ... <monomer_id_N> ...  json <name_of_json_file>`
+`fix   ID  all mbx <number_of_monomer_types> <monomer_id_1> <atom type of atom 1> <atom type of atom 2> ... <atom type of atom n1> <monomer_id_2> ... <monomer_id_N> ...  json <name_of_json_file>`
 
 For example, for a simulation of water and methane, where methane has types 1 and 2, and water has types 3 and 4 (C:1, Hc:2, O:3, Ho:4), the fix would look like this:
-`fix    1  all mbx 2 ch4 1 2 5 1 2 2 2 2 h2o 3 4 3 3 4 4 json mbx.json`
+`fix    1  all mbx 2 ch4 1 2 2 2 2 h2o 3 4 4 json mbx.json`
