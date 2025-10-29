@@ -60,7 +60,7 @@ enum {
     DISP_NUM_TIMERS
 };
 
-#ifndef MPI_VERSION
+#if !defined(MPI_VERSION) && !defined(MPI_Comm)
 // typedef struct ompi_communicator_t *MPI_Comm;
 typedef int MPI_Comm;
 #endif

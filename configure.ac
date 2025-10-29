@@ -5,7 +5,10 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.3.0], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.3.2], [mbx-users@googlegroups.com])
+
+# Define MBX_PACKAGE_VERSION as a macro in config.h
+AC_SUBST([MBX_VERSION], ["$PACKAGE_VERSION"])
 
 # Put the auxiliary files in a different folder to not overcrowd the main directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -22,6 +25,7 @@ LT_INIT([disable-shared])
 # Initialize Automake. Warnings will be treated as errors.
 AM_INIT_AUTOMAKE([subdir-objects -Wall foreign])
 
+# Generate config.h
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
  Makefile
@@ -29,6 +33,8 @@ AC_CONFIG_FILES([
  src/unittests/Makefile
  plugins/Makefile
  plugins/i-pi/Makefile
+ mbx.pc
+ mbx_version.h
 ])
 
 # Helper function to add the proper flags to CPPFLAGS and LDFLAGS
@@ -174,8 +180,6 @@ AC_CHECK_LIB([gsl],[gsl_blas_dgemm],[
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
-# Check for C++11
-#MBX_CHECK_REQ_CXXFLAG([-std=c++17])
 
 # Check for enable flags
 MBX_CONFIG_ENABLE([debug],[debugging],[no])
@@ -186,7 +190,7 @@ MBX_CONFIG_ENABLE([coverage],[compile with coverage flags],[no])
 MBX_CONFIG_ENABLE([optreport],[write optimization reports],[no])
 MBX_CONFIG_ENABLE([ttmnrg],[TTM-nrg PEFs via "-DTTMNRG" define.],[no])
 
-MBX_CONFIG_ENABLE([cpp17],[compiling with C++17 standard],[no])
+MBX_CONFIG_ENABLE([cpp17],[compiling with C++17 standard],[yes])
 
 MBX_CONFIG_ENABLE([tbb],[intel threading building blocks library],[no])
 MBX_CONFIG_ENABLE([tbb-old-compiler-version],[intel threading building blocks library, use this for older versions of the intel compiler instead of --enable-tbb],[no])
