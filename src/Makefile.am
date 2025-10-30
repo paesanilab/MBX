@@ -59,8 +59,21 @@ libmbx_la_CPPFLAGS = $(CPPFLAGS) $(MPIFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS
 libmbx_la_LDFLAGS = $(LDFLAGS) $(LIBS) $(EXTRA_LDFLAGS_AM)
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
-nobase_include_HEADERS = tools/*.h io_tools/*.h bblock/*.h potential/1b/*.h potential/2b/*.h potential/3b/*.h potential/4b/*.h potential/buckingham/*.h potential/dispersion/*.h potential/electrostatics/*.h potential/force_field/*.h potential/lj/*.h json/json.h kdtree/*.h*
-
+nobase_include_HEADERS = \
+tools/constants.h tools/custom_exceptions.h tools/definitions.h tools/macros.h tools/math_tools.h tools/mpi_helper.h tools/mt19937.h tools/pbctools.h tools/properties.h tools/random-rotation.h tools/testutils.h tools/variable.h tools/water_monomer_lp.h tools/xmin.h \
+io_tools/read_connectivity.h io_tools/read_nrg.h io_tools/write_connectivity.h io_tools/read_xyz.h io_tools/write_xyz.h io_tools/write_nrg.h \
+bblock/sys_tools.h bblock/system.h \
+potential/1b/energy1b.h potential/1b/mbnrg_1b_A1B2_deg6_vmbpbe.h potential/1b/mbnrg_1b_A1B3_deg5_v1.h potential/1b/mbnrg_1b_A2_deg8_v1.h potential/1b/poly_1b_A1B2C4_deg5_v1x.h potential/1b/poly_1b_A1B2_deg4_v1x.h potential/1b/poly_1b_A1B2_deg6_vmbpbe.h potential/1b/poly_1b_A1B3_deg5_v1.h potential/1b/poly_1b_A1B4_deg5_exp0_v1x.h potential/1b/poly_1b_A2_deg8_v1.h potential/1b/ps.h potential/1b/x1b_A1B2C4_deg5_v1x.h potential/1b/x1b_A1B2_deg4_v1x.h potential/1b/x1b_A1B4_deg5_exp0_v1x.h \
+potential/2b/energy2b.h potential/2b/mbnrg_2b_A1B2Z2_A1B2Z2_deg4_vmbpbe.h potential/2b/mbnrg_2b_A1B2Z2_C2_deg5_v1.h potential/2b/mbnrg_2b_A1B3_A1B3_deg4_v1.h potential/2b/mbnrg_2b_A1B4_C1D2_deg4_v1.h potential/2b/mbnrg_2b_A1_A1_deg9_v1.h potential/2b/mbnrg_2b_A1_B1C2X2_deg5_v1.h potential/2b/mbnrg_2b_A1_B1C2X2_deg6_v1.h potential/2b/mbnrg_2b_A1_B1_deg9_v1.h potential/2b/mbnrg_2b_A1_B2_deg7_v1.h potential/2b/mbnrg_2b_A2_A2_deg6_v1.h potential/2b/poly-2b-A1B2Z2_C-v1x.h potential/2b/poly-2b-v6x.h potential/2b/poly_2b_A1B2C4_D1E2_deg3_v1x.h potential/2b/poly_2b_A1B2Z2_A1B2Z2_deg4_vmbpbe.h potential/2b/poly_2b_A1B2Z2_C1D2_v1x.h potential/2b/poly_2b_A1B2Z2_C1D4_deg3_exp0_v1x.h potential/2b/poly_2b_A1B2Z2_C1_deg5_v1x.h potential/2b/poly_2b_A1B2Z2_C2_deg5_v1.h potential/2b/poly_2b_A1B2_A1B2_v1x.h potential/2b/poly_2b_A1B3_A1B3_deg4_v1.h potential/2b/poly_2b_A1B4_A1B4_deg4_exp0_v1x.h potential/2b/poly_2b_A1B4_C1D2_deg4_v1.h potential/2b/poly_2b_A1_A1_deg23_v1x.h potential/2b/poly_2b_A1_A1_deg9_v1.h potential/2b/poly_2b_A1_B1C2X2_deg5_v1.h potential/2b/poly_2b_A1_B1C2X2_deg6_v1.h potential/2b/poly_2b_A1_B1_deg9_v1.h potential/2b/poly_2b_A1_B2_deg7_v1.h potential/2b/poly_2b_A2_A2_deg6_v1.h potential/2b/x2b-A1B2Z2_C-v1x.h potential/2b/x2b-v9x.h potential/2b/x2b_A1B2C4_D1E2_deg3_v1x.h potential/2b/x2b_A1B2Z2_C1D2_v1x.h potential/2b/x2b_A1B2Z2_C1D4_deg3_exp0_v1x.h potential/2b/x2b_A1B2Z2_C1_deg5_v1x.h potential/2b/x2b_A1B2_A1B2_v1x.h potential/2b/x2b_A1B4_A1B4_deg4_exp0_v1x.h potential/2b/x2b_A1_A1_deg23_v1x.h \
+potential/3b/energy3b.h potential/3b/mbnrg_3b_A1B2C4_D1E2_D1E2_deg3_v1.h potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_v1.h potential/3b/mbnrg_3b_A1B2_A1B2_A1B2_deg4_vmbpbe.h potential/3b/mbnrg_3b_A1B4_C1D2_C1D2_deg3_v1.h potential/3b/mbnrg_3b_A1_B1C2X2_B1C2X2_deg4_v1.h potential/3b/poly-3b-h2o-ion-v1x_deg4_filtered.h potential/3b/poly-3b-v2x.h potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_v1.h potential/3b/poly_3b_A1B2_A1B2_A1B2_deg4_vmbpbe.h potential/3b/poly_3b_A1B4_C1D2_C1D2_deg3_v1.h potential/3b/poly_3b_A1_B1C2X2_B1C2X2_deg4_v1.h potential/3b/x3b-h2o-ion-v1x-deg4-filtered.h potential/3b/x3b-v2x.h \
+potential/4b/energy4b.h potential/4b/mbnrg_4b_A1B2_A1B2_A1B2_A1B2_deg4_v1.h potential/4b/poly_4b_A1B2_A1B2_A1B2_A1B2_deg4_v1.h \
+potential/buckingham/buckingham.h potential/buckingham/bucktools.h \
+potential/dispersion/dispersion.h potential/dispersion/disptools.h \
+potential/electrostatics/electrostatics.h potential/electrostatics/fields.h potential/electrostatics/gammq.h \
+potential/force_field/angles.h potential/force_field/bond.h potential/force_field/calculators.h potential/force_field/connectivity.h potential/force_field/dihedral.h potential/force_field/energyff.h potential/force_field/inversion.h potential/force_field/topology.h \
+potential/lj/lj.h potential/lj/ljtools.h \
+json/json.h \
+kdtree/kdtree_utils.h kdtree/nanoflann.hpp
 
 # Only compile these binaries if is not MPI
 if !ISMPI
