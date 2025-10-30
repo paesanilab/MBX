@@ -19,6 +19,7 @@ bblock_src = bblock/external_call.cpp bblock/system.cpp bblock/sys_tools.cpp
 # Make N2O5 its ouwn minilib to allow compilation with no opt
 noinst_LTLIBRARIES = liba1b2c4.la
 liba1b2c4_la_SOURCES = potential/1b/poly_1b_A1B2C4_deg5_v1.cpp potential/1b/poly_1b_A1B2C4_deg5_v1x.cpp potential/1b/x1b_A1B2C4_deg5_v1x.cpp potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_grad_v1.cpp potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_nograd_v1.cpp 
+liba1b2c4_la_HEADERS = potential/1b/poly_1b_A1B2C4_deg5_v1.h   potential/1b/poly_1b_A1B2C4_deg5_v1x.h   potential/1b/x1b_A1B2C4_deg5_v1x.h   potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_grad_v1.h   potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_nograd_v1.h   
 liba1b2c4_la_CXXFLAGS = $(EXTRA_CXXFLAGS_AM) -O0
 
 # 1B poly sources and headers
@@ -73,7 +74,7 @@ bblock_headers = bblock/sys_tools.h bblock/system.h
 other_headers = json/json.hpp kdtree/kdtree_utils.h kdtree/nanoflann.hpp
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
-nobase_include_HEADERS = $(tools_headers) $(io_tools_headers) $(bblock_headers) $(oneb_headers) $(twob_headers) $(threeb_headers) $(fourb_headers) $(elec_headers) $(disp_headers) $(buck_headers) $(ff_headers) $(lj_headers) $(other_headers)
+nobase_include_HEADERS = $(liba1b2c4_la_HEADERS) $(oneb_headers) $(twob_headers) $(threeb_headers) $(fourb_headers) $(elec_headers) $(disp_headers) $(buck_headers) $(ff_headers) $(lj_headers) $(tools_headers) $(io_tools_headers) $(bblock_headers) $(other_headers)
 
 # Only compile these binaries if is not MPI
 if !ISMPI
