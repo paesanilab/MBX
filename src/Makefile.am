@@ -40,7 +40,7 @@ fourb_headers = potential/4b/energy4b.h    potential/4b/mbnrg_4b_A1B2_A1B2_A1B2_
 
 # Electrostatics sources and headers
 elec_sources = potential/electrostatics/electrostatics.cpp potential/electrostatics/fields.cpp potential/electrostatics/gammq.cpp
-elec_headers = potential/electrostatics/electrostatics.h   potential/electrostatics/fields.h   potential/electrostatics/gammq.h  
+elec_headers = potential/electrostatics/electrostatics.h   potential/electrostatics/fields.h   potential/electrostatics/gammq.h  potential/electrostatics/helpme.h
 
 # Dispersion sources and headers
 disp_sources = potential/dispersion/dispersion.cpp potential/dispersion/disptools.cpp
