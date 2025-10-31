@@ -724,7 +724,7 @@ liba1b2c4_la_CXXFLAGS = $(EXTRA_CXXFLAGS_AM) -O0
 
 # 1B poly sources and headers
 oneb_sources = potential/1b/energy1b.cpp potential/1b/mbnrg_1b_A1B3_deg5_v1.cpp potential/1b/mbnrg_1b_A2_deg8_v1.cpp potential/1b/poly_1b_A1B2_deg4_v1x.cpp potential/1b/poly_1b_A1B3_deg5_grad_v1.cpp potential/1b/poly_1b_A1B3_deg5_nograd_v1.cpp potential/1b/poly_1b_A1B4_deg5_exp0_v1.cpp potential/1b/poly_1b_A1B4_deg5_exp0_v1x.cpp potential/1b/poly_1b_A2_deg8_grad_v1.cpp potential/1b/poly_1b_A2_deg8_nograd_v1.cpp potential/1b/ps.cpp potential/1b/x1b_A1B2_deg4_v1x.cpp potential/1b/x1b_A1B4_deg5_exp0_v1x.cpp potential/1b/poly_1b_A1B2_deg6_grad_vmbpbe.cpp potential/1b/poly_1b_A1B2_deg6_nograd_vmbpbe.cpp  potential/1b/mbnrg_1b_A1B2_deg6_vmbpbe.cpp
-oneb_headers = potential/1b/energy1b.h potential/1b/x1b_A1B2_deg4_v1x.h potential/1b/mbnrg_1b_A1B2_deg6_vmbpbe.h potential/1b/poly_1b_A1B2_deg4_v1x.h potential/1b/poly_1b_A2_deg8_v1.h potential/1b/x1b_A1B4_deg5_exp0_v1x.h potential/1b/mbnrg_1b_A1B3_deg5_v1.h potential/1b/poly_1b_A1B2_deg6_vmbpbe.h potential/1b/ps.h potential/1b/mbnrg_1b_A2_deg8_v1.h potential/1b/poly_1b_A1B3_deg5_v1.h
+oneb_headers = potential/1b/energy1b.h potential/1b/poly_1b_A1B2_deg4_v1x.h potential/1b/ps.h potential/1b/mbnrg_1b_A1B2_deg6_vmbpbe.h  potential/1b/poly_1b_A1B2_deg6_vmbpbe.h potential/1b/mbnrg_1b_A1B3_deg5_v1.h potential/1b/poly_1b_A1B3_deg5_v1.h  potential/1b/x1b_A1B2_deg4_v1x.h potential/1b/mbnrg_1b_A2_deg8_v1.h  potential/1b/poly_1b_A1B4_deg5_exp0_v1x.h  potential/1b/x1b_A1B4_deg5_exp0_v1x.h potential/1b/poly_1b_A2_deg8_v1.h
 
 # 2B poly sources and headers
 twob_sources = potential/2b/energy2b.cpp \
