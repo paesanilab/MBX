@@ -370,8 +370,6 @@ class Dispersion {
     bool calc_virial_;
     // Total number of atoms
     size_t natoms_;
-    // Max number of monomers
-    size_t maxnmon_;
     // Dispersion energy
     double disp_energy_;
     // box of the system
