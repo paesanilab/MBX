@@ -73,3 +73,4 @@ mbx.pc
 config.h
 config.h.in~
 mbx_version.h
+*.pyc
