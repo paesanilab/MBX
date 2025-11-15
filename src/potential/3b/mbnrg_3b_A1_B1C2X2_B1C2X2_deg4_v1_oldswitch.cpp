@@ -1624,7 +1624,7 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::f_switch(const double r, double& g) {
 //----------------------------------------------------------------------------//
 
 double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double* xyz1, const double* xyz2, const double* xyz3,
-                                            const size_t n) {
+                                            const size_t n, const double three_b_lambda) {
     std::vector<double> energies(n, 0.0);
     std::vector<double> energies_sw(n, 0.0);
 
@@ -1760,13 +1760,15 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double* xyz1, const double* xy
     double energy = 0.0;
     for (size_t i = 0; i < n; i++) energy += energies_sw[i];
 
+    energy *= three_b_lambda; // scaling for lambda-dependent 3-body term
+
     return energy;
 }
 
 //----------------------------------------------------------------------------//
 
 double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double* xyz1, const double* xyz2, const double* xyz3, double* grad1,
-                                            double* grad2, double* grad3, const size_t n, std::vector<double>* virial) {
+                                            double* grad2, double* grad3, const size_t n, const double three_b_lambda, std::vector<double>* virial) {
     std::vector<double> energies(n, 0.0);
     std::vector<double> energies_sw(n, 0.0);
 
@@ -1998,6 +2000,15 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double* xyz1, const double* xy
             grad3[i + j * 9] += gradients[12 + i];
         }
 
+        // Scale this trimer's gradients before virial
+        for (size_t i = 0; i < 3; ++i) {
+            grad1[i + j * 3] *= three_b_lambda;
+        }
+        for (size_t i = 0; i < 9; ++i) {
+            grad2[i + j * 9] *= three_b_lambda;
+            grad3[i + j * 9] *= three_b_lambda;
+        }
+
         if (virial != 0) {
             (*virial)[0] += -coords_A_1_a[0] * coords_A_1_a_g[0] - coords_B_1_b[0] * coords_B_1_b_g[0] -
                             coords_C_1_b[0] * coords_C_1_b_g[0] - coords_C_2_b[0] * coords_C_2_b_g[0] -
@@ -2037,6 +2048,8 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double* xyz1, const double* xy
 
     double energy = 0.0;
     for (size_t i = 0; i < n; i++) energy += energies_sw[i];
+
+    energy *= three_b_lambda; // scaling for lambda-dependent 3-body term
 
     return energy;
 }

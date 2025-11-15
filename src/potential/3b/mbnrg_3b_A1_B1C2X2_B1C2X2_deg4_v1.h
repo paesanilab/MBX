@@ -24,9 +24,9 @@ struct mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 {
 
     typedef poly_A1_B1C2X2_B1C2X2_deg4_v1 polynomial;
 
-    double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n);
+    double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n, const double three_b_lambda);
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3,
-                const size_t n, std::vector<double> *virial = 0);
+                const size_t n,  const double three_b_lambda, std::vector<double> *virial = 0);
 
    private:
     double m_k_x_inter_A_B_0;
@@ -65,9 +65,9 @@ struct mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 {
 
     typedef poly_A1_B1C2X2_B1C2X2_deg4_v1 polynomial;
 
-    double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n);
+    double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n, const double three_b_lambda);
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3,
-                const size_t n, std::vector<double> *virial = 0);
+                const size_t n, const double three_b_lambda, std::vector<double> *virial = 0);
 
    private:
     double m_k_x_inter_A_B_0;
