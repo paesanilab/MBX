@@ -1,0 +1,1 @@
+#define MBX_VERSION "@PACKAGE_VERSION@"

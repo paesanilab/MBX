@@ -514,8 +514,6 @@ double Dispersion::GetDispersionPMElocal(std::vector<double> &grad, std::vector<
 void Dispersion::CalculateDispersion(bool use_ghost) {
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
-    // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP
@@ -1056,8 +1054,6 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 void Dispersion::CalculateDispersionPME(bool use_ghost) {
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
-    // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP
@@ -1172,8 +1168,6 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
-    // Max number of monomers
-    //    size_t maxnmon = mon_type_count_.back().second;
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP

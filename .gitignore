@@ -30,7 +30,7 @@ LAMMPS-stable/
 *.app
 
 # Build dirs
-build*
+build
 
 # General linux files
 *.swp
@@ -61,13 +61,16 @@ plugins/i-pi/bin/driver
 **/.deps
 .dirstamp
 Makefile
-Makefile.in
-configure
 configure~
 autom4te.cache
 m4/
 aclocal.m4
-config.*
+config.log
+config.status
 libtool
 stamp-h1
+mbx.pc
+config.h
+config.h.in~
+mbx_version.h
 *.pyc
