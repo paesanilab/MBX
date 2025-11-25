@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.3.2], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.3.3], [mbx-users@googlegroups.com])
 
 # Define MBX_PACKAGE_VERSION as a macro in config.h
 AC_SUBST([MBX_VERSION], ["$PACKAGE_VERSION"])
