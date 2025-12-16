@@ -6,3 +6,4 @@
 unittest-*.trs
 *.o
 *.Po
+Makefile.in
