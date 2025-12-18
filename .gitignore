@@ -69,6 +69,8 @@ config.log
 config.status
 libtool
 stamp-h1
-mbx.pc
 config.h
+*.pyc
+mbx-*.tar.gz
+mbx.pc
 mbx_version.h
