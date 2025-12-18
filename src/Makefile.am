@@ -16,7 +16,7 @@ iotools_src = io_tools/read_connectivity.cpp io_tools/read_nrg.cpp io_tools/writ
 # Sources from Building Block
 bblock_src = bblock/external_call.cpp bblock/system.cpp bblock/sys_tools.cpp
 
-# Make N2O5 its ouwn minilib to allow compilation with no opt
+# Make N2O5 its own minilib to allow compilation with no opt
 noinst_LTLIBRARIES = liba1b2c4.la
 liba1b2c4_la_SOURCES = potential/1b/poly_1b_A1B2C4_deg5_v1x.cpp potential/1b/x1b_A1B2C4_deg5_v1x.cpp potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_grad_v1.cpp potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_nograd_v1.cpp potential/1b/poly_1b_A1B2C4_deg5_v1.cpp 
 liba1b2c4_la_headers = potential/1b/poly_1b_A1B2C4_deg5_v1x.h   potential/1b/x1b_A1B2C4_deg5_v1x.h   potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_v1.h 
