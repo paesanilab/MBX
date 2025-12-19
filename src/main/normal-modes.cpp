@@ -1,7 +1,3 @@
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif  // HAVE_CONFIG_H
-
 #include <cmath>
 #include <cassert>
 #include <cstddef>
@@ -103,8 +99,8 @@ int main(int argc, char** argv) {
         std::ifstream ifs(argv[1]);
         tools::ReadNrg(argv[1], s);
         s[0].SetUpFromJson(argv[2]);
-        if (argc > 2) {
-            print_displacements = atoi(argv[3]);
+        if (argc > 3) {
+            print_displacements = std::stoi(argv[3]);
         }
 
     } catch (const std::exception& e) {

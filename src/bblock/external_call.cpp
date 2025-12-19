@@ -125,7 +125,7 @@ void initialize_system_py_(double* coords, int* nat_monomers, char** at_names, c
 /**
  * Given the coordinates, calculates the energy for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[out] energy Energy of the system
  */
 void get_energy_(double* coords, int* nat, double* energy) {
@@ -145,9 +145,63 @@ void get_energy2_(double* coords, int* nat, double* energy, int* rank) {
 }
 
 /**
+ * Given the coordinates, calculates the decomposed system energy
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in the system
+ * @param[out] E1b 1-body energy term
+ * @param[out] E2b 2-body energy term
+ * @param[out] E3b 3-body energy term
+ * @param[out] E4b 4-body energy term
+ * @param[out] Edisp Dispersion energy term
+ * @param[out] Ebuck Buckingham energy term
+ * @param[out] Eelec Electrostatic energy term
+ */
+void get_energy_decomp_(
+    double* coords, int* nat, double* E1b, double* E2b,
+    double* E3b, double* E4b, double* Edisp, double* Ebuck, double* Eelec
+) {
+    std::vector<double> xyz(3 * (*nat));
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+
+    my_s->SetRealXyz(xyz);
+    *E1b = my_s->OneBodyEnergy(false);
+    *E2b = my_s->TwoBodyEnergy(false);
+    *E3b = my_s->ThreeBodyEnergy(false);
+    *E4b = my_s->FourBodyEnergy(false);
+    *Edisp = my_s->Dispersion(false);
+
+    *Ebuck = 0.0;
+    #ifdef TTMNRG
+    *Ebuck = my_s->Buckingham(false);
+    #endif
+
+    *Eelec = my_s->Electrostatics(false);
+}
+
+/**
+ * Given the coordinates, calculates the decomposed electrostatic energy
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in the system
+ * @param[out] Eperm Permanent component of the electrostatics
+ * @param[out] Eind Induced component of the electrostatics
+ */
+void get_electrostatic_energy_decomp_(
+    double* coords, int* nat, double* Eperm, double* Eind
+) {
+    std::vector<double> xyz(3 * (*nat));
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+
+    my_s->SetRealXyz(xyz);
+
+    my_s->Electrostatics(false);
+    *Eperm = my_s->GetPermanentElectrostaticEnergy();
+    *Eind = my_s->GetInducedElectrostaticEnergy();
+}
+
+/**
  * Given the coordinates, calculates the energy iand gradients for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[out] energy Energy of the system
  * @param[out] grads Pointer to the gradients of the system (size 3N)
  */
@@ -176,7 +230,7 @@ void get_energy_g2_(double* coords, int* nat, double* energy, double* grads, int
 /**
  * Given the coordinates, calculates the energy for PBC systems
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[in] box Pointer to the array with the box (size 9)
  * @param[out] energy Energy of the system
  */
@@ -192,9 +246,71 @@ void get_energy_pbc_(double* coords, int* nat, double* box, double* energy) {
 }
 
 /**
+ * Given the coordinates, calculates the decomposed system energy for PBC systems
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in the system
+ * @param[in] box Pointer to the array with the box (size 9)
+ * @param[out] E1b 1-body energy term
+ * @param[out] E2b 2-body energy term
+ * @param[out] E3b 3-body energy term
+ * @param[out] E4b 4-body energy term
+ * @param[out] Edisp Dispersion energy term
+ * @param[out] Ebuck Buckingham energy term
+ * @param[out] Eelec Electrostatic energy term
+ */
+void get_energy_decomp_pbc_(
+    double* coords, int* nat, double* box, double* E1b, double* E2b,
+    double* E3b, double* E4b, double* Edisp, double* Ebuck, double* Eelec
+) {
+    std::vector<double> xyz(3 * (*nat));
+    std::vector<double> boxv(9, 0.0);
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+    std::copy(box, box + 9, boxv.begin());
+
+    my_s->SetRealXyz(xyz);
+    my_s->SetPBC(boxv);
+    *E1b = my_s->OneBodyEnergy(false);
+    *E2b = my_s->TwoBodyEnergy(false);
+    *E3b = my_s->ThreeBodyEnergy(false);
+    *E4b = my_s->FourBodyEnergy(false);
+    *Edisp = my_s->Dispersion(false);
+
+    *Ebuck = 0.0;
+    #ifdef TTMNRG
+    *Ebuck = my_s->Buckingham(false);
+    #endif
+
+    *Eelec = my_s->Electrostatics(false);
+}
+
+/**
+ * Given the coordinates, calculates the decomposed electrostatic energy for PBC systems
+ * @param[in] coords Pointer to the coordinates (size 3N)
+ * @param[in] nat Number of atoms in the system
+ * @param[in] box Pointer to the array with the box (size 9)
+ * @param[out] Eperm Permanent component of the electrostatics
+ * @param[out] Eind Induced component of the electrostatics
+ */
+void get_electrostatic_energy_decomp_pbc_(
+    double* coords, int* nat, double* box, double* Eperm, double* Eind
+) {
+    std::vector<double> xyz(3 * (*nat));
+    std::vector<double> boxv(9, 0.0);
+    std::copy(coords, coords + 3 * (*nat), xyz.begin());
+    std::copy(box, box + 9, boxv.begin());
+
+    my_s->SetRealXyz(xyz);
+    my_s->SetPBC(boxv);
+
+    my_s->Electrostatics(false);
+    *Eperm = my_s->GetPermanentElectrostaticEnergy();
+    *Eind = my_s->GetInducedElectrostaticEnergy();
+}
+
+/**
  * Given the coordinates, calculates the energy iand gradients for a PBC system
  * @param[in] coords Pointer to the coordinates (size 3N)
- * @param[in] nat Number of atoms in he system
+ * @param[in] nat Number of atoms in the system
  * @param[in] box Pointer to the array with the box (size 9)
  * @param[out] energy Energy of the system
  * @param[out] grads Pointer to the gradients of the system (size 3N)

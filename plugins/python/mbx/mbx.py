@@ -159,6 +159,113 @@ def get_energy_pbc_grad(coordinates,number_of_atoms,cell_vectors,units="mbx"):
 
   return energy.value*e_mbx2inp, grad_out
 
+def get_energy_decomp(coordinates, number_of_atoms, units="mbx"):
+  """
+  Calls the MBX get_energy_decomp_ function and returns the decomposed energy components:
+  E1b, E2b, E3b, E4b, Edisp, Ebuck, Eelec
+  """
+  # Define conversion factors
+  l_mbx2inp = 1.0
+  l_inp2mbx = 1.0
+  e_mbx2inp = 1.0
+  e_inp2mbx = 1.0
+  if units == "au":
+    l_mbx2inp = MBXLENGTH2AU
+    l_inp2mbx = AULENGTH2MBX
+    e_mbx2inp = MBXENERGY2AU
+    e_inp2mbx = AUENERGY2MBX
+
+  # Convert inputs to MBX units
+  coordinates = [coordinates[i] * l_inp2mbx for i in range(len(coordinates))]
+  crd = (ctypes.c_double * len(coordinates))(*coordinates)
+  nat = ctypes.c_int(number_of_atoms)
+
+  # Prepare output variables
+  E1b = ctypes.c_double(0.0)
+  E2b = ctypes.c_double(0.0)
+  E3b = ctypes.c_double(0.0)
+  E4b = ctypes.c_double(0.0)
+  Edisp = ctypes.c_double(0.0)
+  Ebuck = ctypes.c_double(0.0)
+  Eelec = ctypes.c_double(0.0)
+
+  mbxlib.get_energy_decomp_(crd, ctypes.byref(nat),
+                ctypes.byref(E1b), ctypes.byref(E2b), ctypes.byref(E3b),
+                ctypes.byref(E4b), ctypes.byref(Edisp), ctypes.byref(Ebuck), ctypes.byref(Eelec))
+
+  return (E1b.value * e_mbx2inp,
+      E2b.value * e_mbx2inp,
+      E3b.value * e_mbx2inp,
+      E4b.value * e_mbx2inp,
+      Edisp.value * e_mbx2inp,
+      Ebuck.value * e_mbx2inp,
+      Eelec.value * e_mbx2inp)
+
+def get_energy_decomp_pbc(coordinates, number_of_atoms, cell_vectors, units="mbx"):
+    """
+    Calls the MBX get_energy_decomp_pbc_ function and returns the decomposed energy components for PBC systems:
+    E1b, E2b, E3b, E4b, Edisp, Ebuck, Eelec
+    """
+    # Define conversion factors
+    l_mbx2inp = 1.0
+    l_inp2mbx = 1.0
+    e_mbx2inp = 1.0
+    e_inp2mbx = 1.0
+    if units == "au":
+        l_mbx2inp = MBXLENGTH2AU
+        l_inp2mbx = AULENGTH2MBX
+        e_mbx2inp = MBXENERGY2AU
+        e_inp2mbx = AUENERGY2MBX
+
+    # Convert inputs to MBX units
+    coordinates = [coordinates[i] * l_inp2mbx for i in range(len(coordinates))]
+    cell_vectors = [cell_vectors[i] * l_inp2mbx for i in range(len(cell_vectors))]
+    crd = (ctypes.c_double * len(coordinates))(*coordinates)
+    nat = ctypes.c_int(number_of_atoms)
+    box = (ctypes.c_double * len(cell_vectors))(*cell_vectors)
+
+    # Prepare output variables
+    E1b = ctypes.c_double(0.0)
+    E2b = ctypes.c_double(0.0)
+    E3b = ctypes.c_double(0.0)
+    E4b = ctypes.c_double(0.0)
+    Edisp = ctypes.c_double(0.0)
+    Ebuck = ctypes.c_double(0.0)
+    Eelec = ctypes.c_double(0.0)
+
+    mbxlib.get_energy_decomp_pbc_(crd, ctypes.byref(nat), box,
+                                  ctypes.byref(E1b), ctypes.byref(E2b), ctypes.byref(E3b),
+                                  ctypes.byref(E4b), ctypes.byref(Edisp), ctypes.byref(Ebuck), ctypes.byref(Eelec))
+
+    return (E1b.value * e_mbx2inp,
+            E2b.value * e_mbx2inp,
+            E3b.value * e_mbx2inp,
+            E4b.value * e_mbx2inp,
+            Edisp.value * e_mbx2inp,
+            Ebuck.value * e_mbx2inp,
+            Eelec.value * e_mbx2inp)
+
+def get_electrostatic_energy_decomp(coordinates,number_of_atoms,units="mbx"):
+  # Define conversion factors
+  l_mbx2inp = 1.0
+  l_inp2mbx = 1.0
+  e_mbx2inp = 1.0
+  e_inp2mbx = 1.0
+  if units == "au":
+    l_mbx2inp = MBXLENGTH2AU
+    l_inp2mbx = AULENGTH2MBX
+    e_mbx2inp = MBXENERGY2AU
+    e_inp2mbx = AUENERGY2MBX
+
+  coordinates = [coordinates[i] * l_inp2mbx for i in range(len(coordinates))]
+  crd = (ctypes.c_double * len(coordinates)) (*coordinates)
+
+  nat = ctypes.c_int(number_of_atoms)
+  Eperm = ctypes.c_double(0.0)
+  Eind = ctypes.c_double(0.0)
+  mbxlib.get_electrostatic_energy_decomp_(crd,ctypes.byref(nat),ctypes.byref(Eperm),ctypes.byref(Eind))
+  return Eperm.value*e_mbx2inp, Eind.value*e_mbx2inp
+
 def set_coordinates(coordinates,number_of_atoms,units="mbx"):
   # Define conversion factors
   l_mbx2inp = 1.0
@@ -409,4 +516,3 @@ def get_external_field_contribution_to_energy(units="mbx"):
 
 def finalize_system():
   mbxlib.finalize_system_()
-

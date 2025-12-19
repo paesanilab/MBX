@@ -25,7 +25,7 @@ ifeq ($(CXX),g++)
 CXX = mpicxx
 endif
 
-CXXFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
+CXXFLAGS =	-g -O2 -fopenmp -std=c++17 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 CXXFLAGS +=      -I$(MBX_INC)
 CXXFLAGS +=      -I$(FFTW)/include
 
@@ -36,7 +36,7 @@ CXXFLAGS +=      -I$(FFTW)/include
 SHFLAGS =	-fPIC
 DEPFLAGS =	-M
 
-LINKFLAGS =	-g -O3 -fopenmp -std=c++11 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
+LINKFLAGS =	-g -O2 -fopenmp -std=c++17 $(GITHUB_ACTIONS_MBX_LAMMPS_FLAGS)
 LIB = 
 LIB +=          $(MBX_LIB)/libmbx.a
 
