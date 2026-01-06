@@ -2213,7 +2213,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                         chg_all_.data() + fi_sites, m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex,
                         &ey, &ez, &phi1, phi_all_.data() + fi_sites, Efq_all_.data() + fi_crd, elec_scale_factor,
                         ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon,
-                        fi_mon, &thread_virials[rank]);
+                        0, &thread_virials[rank]);
 
                     phi_all_[fi_sites + inmon + m] += phi1;
                     Efq_all_[fi_crd + inmon3 + m] += ex;
