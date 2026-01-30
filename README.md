@@ -178,6 +178,7 @@ mkdir build; cd build      # create and use a build directory
 
 cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes ../cmake
 make -j 4                  # compilation (can use higher j on powerful computers)
+make install
 ```
 This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other MBX plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
 
