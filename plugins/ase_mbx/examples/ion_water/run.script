@@ -1,0 +1,60 @@
+#!/bin/bash
+
+###################### environment ######################
+source ~/.bashrc
+conda activate ase_mbx2
+
+OMP_THREADS=4
+export OMP_NUM_THREADS=${OMP_THREADS}
+
+###################### user parameters ######################
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+work_path=$(pwd)
+input_file="${work_path}/initial.extxyz"
+
+if [[ -z "${MBX_HOME:-}" ]]; then
+  echo "MBX_HOME is not set. Example: export MBX_HOME=/path/to/MBX"
+  exit 1
+fi
+
+realspace_cutoff=9.0
+twobody_cutoff=7.0
+threebody_cutoff=4.5
+
+sim_time=0.05       # ps (100 steps @ 0.5 fs)
+t_step=0.5          # fs
+temp=300            # K
+interv=100          # steps
+pbc=True            # True/False
+
+ensemble="nvt"      # nve | nvt | npt
+pressure_bar=1.0    # bar (only used for npt)
+npt_coupling="iso"  # iso | aniso (only used for npt)
+p_damp_fs=500.0     # fs (only used for npt)
+
+restart_file="${work_path}/restart.pkl"
+restart_arg=""
+if [[ -f "${restart_file}" ]]; then
+  echo "Found restart: ${restart_file}  -> using restart"
+  restart_arg="-restart ${restart_file}"
+fi
+
+###################### run MBX MD ######################
+export MBX_HOME
+
+python mbx_md.py \
+  -work_path "${work_path}" \
+  -init_file "${input_file}" \
+  -sim_time "${sim_time}" \
+  -time_step "${t_step}" \
+  -temp "${temp}" \
+  -interval "${interv}" \
+  -pbc "${pbc}" \
+  -realspace_cutoff "${realspace_cutoff}" \
+  -twobody_cutoff "${twobody_cutoff}" \
+  -threebody_cutoff "${threebody_cutoff}" \
+  -ensemble "${ensemble}" \
+  -pressure "${pressure_bar}" \
+  -npt_coupling "${npt_coupling}" \
+  -p_damp "${p_damp_fs}" \
+  ${restart_arg}
