@@ -32,7 +32,7 @@ jobs:
       - name: install-dependencies
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y libfftw3-dev libgsl-dev autoconf pkg-config cmake
+          sudo apt-get install -y libfftw3-dev libgsl-dev autoconf pkg-config
 
       - name: install-compiler g++
         if: matrix.compiler == 'g++'
@@ -81,9 +81,10 @@ jobs:
           cd $HOME
           export MBX_HOME=${{ env.MBX_HOME }}
           git clone https://github.com/lammps/lammps.git -b develop
+          cd lammps
           mkdir build && cd build
           export PKG_CONFIG_PATH=$MBX_HOME/lib/pkgconfig:$PKG_CONFIG_PATH
-          cmake -C cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D PKG_PLUMED=yes -D BUILD_MPI=yes -D CMAKE_CXX_COMPILER=${{env.MPI_COMPILER}} ../cmake
+          cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D PKG_PLUMED=yes -D BUILD_MPI=yes -D CMAKE_CXX_COMPILER=${{env.MPI_COMPILER}} ../cmake
           make -j2
           make install
 
