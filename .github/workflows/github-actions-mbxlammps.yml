@@ -42,7 +42,7 @@ jobs:
           echo "MPI_COMPILER=mpicxx" >> "$GITHUB_ENV"
 
       - name: install-compiler intel
-        if: matrix.compiler == 'icpc' || matrix.compiler == 'icpx' 
+        if: matrix.compiler == 'icpx' 
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -76,16 +76,16 @@ jobs:
           
 
       - name: LAMMPS-Install
+      # TODO Change LAMMPS to the stable branch when MBX is fully supported there
         run: |
           cd $HOME
           export MBX_HOME=${{ env.MBX_HOME }}
-          git clone https://github.com/lammps/lammps.git -b stable
-          export LAMMPS_HOME=$PWD/lammps
-          export GITHUB_ACTIONS_MBX_LAMMPS_FLAGS="-O0"
-          cp -r $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
-          cd $LAMMPS_HOME/src
-          make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
-          make mpi_mbx CXX=${{env.MPI_COMPILER}}
+          git clone https://github.com/lammps/lammps.git -b develop
+          mkdir build && cd build
+          export PKG_CONFIG_PATH=$MBX_HOME/lib/pkgconfig:$PKG_CONFIG_PATH
+          cmake -C cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D PKG_PLUMED=yes -D BUILD_MPI=yes -D CMAKE_CXX_COMPILER=${{env.MPI_COMPILER}} ../cmake
+          make -j2
+          make install
 
       - run: ls ${{ github.workspace }}/lib -lth
 
