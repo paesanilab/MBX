@@ -71,7 +71,7 @@ libmbx_la_LDFLAGS = $(LDFLAGS) $(LIBS) $(EXTRA_LDFLAGS_AM)
 tools_headers = tools/constants.h tools/custom_exceptions.h tools/definitions.h tools/macros.h tools/math_tools.h tools/mpi_helper.h tools/mt19937.h tools/pbctools.h tools/properties.h tools/random-rotation.h tools/testutils.h tools/variable.h tools/water_monomer_lp.h tools/xmin.h
 io_tools_headers = io_tools/read_connectivity.h io_tools/read_nrg.h io_tools/write_connectivity.h io_tools/read_xyz.h io_tools/write_xyz.h io_tools/write_nrg.h
 bblock_headers = bblock/sys_tools.h bblock/system.h
-other_headers = json/json.h kdtree/kdtree_utils.h kdtree/nanoflann.hpp
+other_headers = json/json.hpp kdtree/kdtree_utils.h kdtree/nanoflann.hpp
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
 nobase_include_HEADERS = $(liba1b2c4_la_headers) $(oneb_headers) $(twob_headers) $(threeb_headers) $(fourb_headers) $(elec_headers) $(disp_headers) $(buck_headers) $(ff_headers) $(lj_headers) $(tools_headers) $(io_tools_headers) $(bblock_headers) $(other_headers)

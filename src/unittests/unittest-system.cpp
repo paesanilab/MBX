@@ -37,7 +37,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/system.h"
 #include "io_tools/read_nrg.h"
 #include "tools/math_tools.h"
-#include "json/json.h"
+#include "json/json.hpp"
 #include "setup_h2o_2_ch4_1.h"
 #include "setup_co2_2_h2o_2.h"
 
