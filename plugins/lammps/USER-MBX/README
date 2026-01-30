@@ -15,7 +15,7 @@ take a long time and can be quite memory intensive. If MBX is already
 detected on your system using PKG_CONFIG, then LAMMPS will use that
 version of MBX instead of downloading and compiling it.
 
-Examples for MBX are located in `examples/PACKAGES/mbx`.
+Examples for MBX are located in `<lammps>/examples/PACKAGES/mbx`.
 These examples include scripts for running simulations
 with MB-pol and other MB-nrg potentials.
 
