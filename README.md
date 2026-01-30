@@ -9,8 +9,8 @@ MBX: A many-body energy and force calculator for data-driven many-body simulatio
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
 
-MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
-The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. 
+MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
+The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs.
 For details on the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
 MBX is periodically updated with performance improvements and the addition of other MB-nrg PEFs. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
@@ -18,19 +18,13 @@ MBX is periodically updated with performance improvements and the addition of ot
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to successfully install the software:
 - g++/gcc v9.3 or higher
-- icpc/icc v2020 or higher [optional but recommended]
-- MPI compilers [optional, needed only for LAMMPS]
+- icpx/icx v2020 or higher [optional]
 - FFTW libraries
-- GSL libraries [optional, needed only for normal_modes executable]
-- Read the entire README before doing anything!
+- **Read the entire README before doing anything!**
 
-### Setup
-The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be exported either manually or by sourcing `sourceme.sh`:
-```console
-git clone https://github.com/paesanilab/MBX.git
-cd MBX/
-export MBX_HOME=$PWD
-```
+The following requirements are optional, depending on how you plan to use MBX:
+- MPI compilers [sometimes used for MBX+LAMMPS]
+- GSL libraries [needed only for normal_modes executable]
 
 ### Compilation
 MBX has different compilation instructions depending on how you plan to use it:
@@ -39,13 +33,18 @@ MBX has different compilation instructions depending on how you plan to use it:
 
 #### Basic installation of MBX (for use with i-PI, Python, Fortran, or standalone. **NOT LAMMPS**)
 ```console
+git clone https://github.com/paesanilab/MBX.git
+cd MBX/
+
 autoreconf -fi
 ./configure
 make && make install
+
+export MBX_HOME=$(pwd) # optional
 ```
 
 `./configure` has additional flags and options if you want to customize your installation:
-- `CXX=` if you want to use a different compiler than the system default. Popular options include `CXX=icpc` or `CXX=g++`
+- `CXX=` if you want to use a different compiler than the system default. Popular options include `CXX=icpx` or `CXX=g++`
 - `--enable-shared` if you want to also compile MBX as a shared library. This is **required for using MBX with Python**.
 - `--enable-debug` for debugging using GDB.
 - `--enable-verbose` will turn on additional logging to the console.
@@ -169,21 +168,23 @@ export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 
 
 ### LAMMPS
-MBX is an official LAMMPS package,
-and needs to be installed using the [LAMMPS CMake buildchain](https://docs.lammps.org/Build_cmake.html):
+MBX is an official LAMMPS package (https://docs.lammps.org/pair_mbx.html),
+and needs to be installed using the [LAMMPS CMake build-chain](https://docs.lammps.org/Build_cmake.html):
 
 ```console
 git clone -b stable https://github.com/lammps/lammps.git LAMMPS-stable
 cd LAMMPS-stable           # change to the LAMMPS distribution directory
 mkdir build; cd build      # create and use a build directory
 
-# configuration reading CMake scripts from ../cmake
 cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes ../cmake
 make -j 4                  # compilation (can use higher j on powerful computers)
 ```
 This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other MBX plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
 
 Additional LAMMPS build options are available, such as using a different compiler or enabling additional packages. Please refer to the [LAMMPS CMake build documentation](https://docs.lammps.org/Build_basics.html) for more information.
+
+Examples for MBX+LAMMPS simulations are located in `$MBX_HOME/plugins/lammps/examples/`. Also see the LAMMPS documentation for more information about how to use MBX with LAMMPS: https://docs.lammps.org/pair_mbx.html.
+
 For any questions, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
 
