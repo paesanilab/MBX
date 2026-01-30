@@ -35,17 +35,31 @@
 #include <cstring>
 #include <mpi.h>
 
+#include "bblock/system.h"
+
 #define _MAX_SIZE_MOL_NAME 16
 // Subject to further increase _MAX_SIZE_MOL_NAME
 #define _MAX_ATOMS_PER_MONOMER 8
 #define SMALL 1.0e-4
 
-//#define _DEBUG
 
-//#define _DEBUG_EFIELD
+namespace LAMMPS_NS {
+//PImpl idiom to hide MBX implementation details
+struct MBXImpl {
+  MBXImpl() : ptr_mbx(nullptr), ptr_mbx_local(nullptr) {}
+  ~MBXImpl()
+  {
+    delete ptr_mbx;
+    delete ptr_mbx_local;
+  }
+  bblock::System *ptr_mbx;
+  bblock::System *ptr_mbx_local;
+};
+} // namespace LAMMPS_NS
 
 using namespace LAMMPS_NS;
 using namespace FixConst;
+
 
 std::string FixMBX::cite_pair_mbx = std::string(
     "pair mbx command:\n\n" \
@@ -65,6 +79,8 @@ std::string FixMBX::cite_pair_mbx = std::string(
 
 /* ---------------------------------------------------------------------- */
 
+// Parse atom ID or range for dp1 monomer
+// Input can be a single integer (e.g., "5") or a range (e.g., "1*11")
 std::pair<int, int> FixMBX::parse_dp1_range(const std::string &dp1_str)
 {
   try {
@@ -104,6 +120,8 @@ std::pair<int, int> FixMBX::parse_dp1_range(const std::string &dp1_str)
   return {start, end};
 }
 
+// Validate that the input arguments to fix mbx are correct
+// throws specific errors if the arguments are malformed
 bool FixMBX::validateMBXFixParameters(int narg, char **arg)
 {
   if (narg < 2) error->all(FLERR, ("[MBX] Input line too short"));
@@ -153,6 +171,9 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
     for (int i = 1; i <= n_atoms; ++i) current_monomer_atoms.push_back(current_monomer[i]);
     std::vector<std::string> expected_monomer_atom_ids;
 
+    // special handling for dp1 monomer
+    if (current_monomer_name == "dp1") return check_external_dp1(n_atoms, &current_monomer[1]);
+
     try {
       add_monomer_atom_types(const_cast<char *>(current_monomer_name.c_str()),
                              expected_monomer_atom_ids);
@@ -160,13 +181,12 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
       error->all(FLERR, ("[MBX] Invalid monomer name " + current_monomer_name));
     }
 
-    if (current_monomer_atoms.size() != n_atoms)
+    if (expected_monomer_atom_ids.size() != n_atoms)
       error->all(FLERR,
-                 ("[MBX] Wrong number of atoms: expected " + std::to_string(n_atoms) + ", got " +
-                  std::to_string(current_monomer_atoms.size())));
+                 ("[MBX] Wrong number of atoms: expected " + std::to_string(expected_monomer_atom_ids.size()) + ", got " +
+                  std::to_string(n_atoms)));
 
-    if (current_monomer_name == "dp1") return check_external_dp1(n_atoms, &current_monomer[1]);
-
+    // validate that atom IDs are positive integers
     std::vector<int> atom_ids;
     for (size_t i = 0; i < expected_monomer_atom_ids.size(); ++i) {
       int at = 0;
@@ -181,6 +201,8 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
       atom_ids.push_back(at);
     }
 
+    // check that number of unique atom IDs is correct
+    // this verifies that the monomer has the expected number of different elements
     std::set<int> unique_atom_ids(atom_ids.begin(), atom_ids.end());
     std::set<std::string> unique_monomer_atom_ids(expected_monomer_atom_ids.begin(),
                                                   expected_monomer_atom_ids.end());
@@ -192,18 +214,20 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
     std::map<int, std::string> atom_mapping;
 
     // check that atom ID mapping is consistent
+    // atom ID mapping must match expected, such as OHH for h2o
     for (size_t i = 0; i < atom_ids.size(); ++i) {
       int at = atom_ids[i];
       if (!atom_mapping.count(at))    // first time seeing this atom ID
         atom_mapping[at] = expected_monomer_atom_ids[i];
-      else if (atom_mapping[at] != expected_monomer_atom_ids[i]) {    // inconsistent mapping
-        std::string monomer_atom_ids_string = "";
-        for (const auto &mat : expected_monomer_atom_ids) { monomer_atom_ids_string += mat + " "; }
+      else if (atom_mapping[at] != expected_monomer_atom_ids[i]) {    // inconsistent mapping detected
+        // construct error message
+        std::string expected_monomer_atom_ids_string = "";
+        for (const auto &mat : expected_monomer_atom_ids) { expected_monomer_atom_ids_string += mat + " "; }
         std::string atom_ids_string = "";
         for (const auto &at2 : atom_ids) { atom_ids_string += std::to_string(at2) + " "; }
         error->all(FLERR,
                    ("[MBX] Incorrect atom ID mapping in " + current_monomer_name + ". Expected " +
-                    monomer_atom_ids_string + "but got " + atom_ids_string));
+                    expected_monomer_atom_ids_string + "but got " + atom_ids_string));
       }
       if (mbx_atom_id_mapping.count(at))    // atom ID already defined in another monomer
         error->all(FLERR,
@@ -211,6 +235,7 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
                     std::to_string(at)));
     }
 
+    // check that atom IDs are contiguous
     int minimum_index = *std::min_element(atom_ids.begin(), atom_ids.end());
     int maximum_index = *std::max_element(atom_ids.begin(), atom_ids.end());
     for (int i = minimum_index; i <= maximum_index; ++i) {
@@ -277,6 +302,7 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
 
 FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 {
+  // Constructor for fix mbx, called interally by pair mbx.
   // Expected arguments:
   // _FIX_MBX_INTERNAL all MBX num_mol_types mon_name atom_mapping <mon_name2> <atom_mapping2> ... json mbx.json
   // num_mol_types = number of monomer types in the system
@@ -288,10 +314,10 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   me = comm->me;
   nprocs = comm->nprocs;
+  mbx_impl = new MBXImpl; //PImpl idiom to hide MBX implementation details
 
   // // validate input arguments
   bool validation_result = validateMBXFixParameters(narg - 3, &arg[3]);
-  // if (validation_result) { fprintf(stderr, "MBX fix input validation successful.\n"); }
 
   if (narg < 6) error->all(FLERR, "[MBX] Illegal fix mbx command");
 
@@ -299,13 +325,11 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   if (num_mol_types < 1) error->all(FLERR, "[MBX] Illegal fix mbx command");
 
-  // num_mols = NULL;
   num_atoms_per_mol = NULL;
   mol_names = NULL;
   lower_atom_type_index_in_mol = NULL;
   higher_atom_type_index_in_mol = NULL;
 
-  // memory->create(num_mols, num_mol_types, "fixmbx:num_mols");
   memory->create(num_atoms_per_mol, num_mol_types, "fixmbx:num_atoms_per_mol");
   memory->create(mol_names, num_mol_types, _MAX_SIZE_MOL_NAME, "fixmbx:mol_names");
   memory->create(lower_atom_type_index_in_mol, num_mol_types,
@@ -372,17 +396,15 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
   // process remaining optional keywords
 
   use_json = 0;
-  json_file = NULL;
+  std::string json_file;
   print_verbose = 0;
   print_dipoles = 1;    // dipoles are now always printed by default
   aspc_step_reset = 1000;
 
   while (iarg < narg) {
     if (strcmp(arg[iarg], "json") == 0) {
-      int len = strlen(arg[++iarg]);
+      json_file = std::string(arg[++iarg]);
       use_json = 1;
-      json_file = new char[len];
-      strcpy(json_file, arg[iarg]);
     } else if (strcmp(arg[iarg], "print/verbose") == 0) {
       print_verbose = 1;
     } else if (strcmp(arg[iarg], "print/dipoles") == 0) {
@@ -396,63 +418,19 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
     iarg++;
   }
 
-  // mol_offset = NULL;
-  // memory->create(mol_offset, num_mol_types + 1, "fixmbx:mol_offset");
-
-  // assign # of atoms per molecule based on molecule name
-  // -- use this as first pass whether molecule supported by MBX
-
-  for (int i = 0; i < num_mol_types; ++i)
-    num_atoms_per_mol[i] = get_num_atoms_per_monomer(mol_names[i], is_ext);
-
-  int err = 0;
-  for (int i = 0; i < num_mol_types; ++i)
-    if (num_atoms_per_mol[i] > _MAX_ATOMS_PER_MONOMER) err++;
-
-  if (err)
-    error->all(
-        FLERR,
-        "[MBX] num_atoms_per_mol > _MAX_ATOMS_PER_MONOMER : did developer correctly add support "
-        "for monomer?");
-
-  // check that total number of atoms matches what is expected
-
-  // int na = 0;
-  // for (int i = 0; i < num_mol_types; ++i) na += num_mols[i] * num_atoms_per_mol[i];
-
-  // mol_offset[0] = 0;
-  // mol_offset[1] = num_mols[0] * num_atoms_per_mol[0];
-  // for (int i = 1; i < num_mol_types; ++i) mol_offset[i + 1] = mol_offset[i] + num_mols[i] * num_atoms_per_mol[i];
-
-  // num_molecules = 0;
-  // for (int i = 0; i < num_mol_types; ++i) num_molecules += num_mols[i];
-
-  // if (screen && comm->me == 0) {
-  //     if (use_json) fprintf(screen, "\n[MBX] Using json_file= %s\n", json_file);
-  //     fprintf(screen, "[MBX] # molecule types= %i\n", num_mol_types);
-  //     fprintf(screen, "[MBX] # molecules=      %i\n", num_molecules);
-  //     for (int i = 0; i < num_mol_types; ++i)
-  //         fprintf(screen, "[MBX]  i= %i  # of molecules= %i  name= '%4s'  offset= %i\n", i, num_mols[i],
-  //                 mol_names[i], mol_offset[i]);
-  //     fprintf(screen, "\n");
-  // }
-
-  // if (na != atom->natoms) error->all(FLERR, "[MBX] Inconsistent # of atoms");
-
   mbx_aspc_enabled = false;
 
+  // verify that this fix is not called directly
+  // fix mbx should only be called indirectly by pair mbx
   pair_mbx = nullptr;
   pair_mbx = (PairMBX *) force->pair_match("^mbx", 0);
   if (!pair_mbx) error->all(FLERR, "[MBX] Pair mbx is missing");
-
-  ptr_mbx = NULL;
 
   array_atom = NULL;
   mbx_dip = NULL;
   mol_type = NULL;
   mol_anchor = NULL;
   mol_local = NULL;
-  // mol_order = NULL;
 
   grow_arrays(atom->nmax);
 
@@ -468,23 +446,24 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
 
   // instance of MBX with just local monomers
 
-  ptr_mbx_local = NULL;
   mbx_num_atoms_local = 0;
   mbx_num_ext_local = 0;
 
   // check that LAMMPS proc mapping matches PME solver
-
+  // MPI ranks must be mapped in "xyz" order for PME
   if (comm->style != 0) error->all(FLERR, "[MBX] Fix mbx must be used with comm_style brick");
 
   if (comm->layout != Comm::LAYOUT_UNIFORM)
     error->all(FLERR, "[MBX] Fix mbx must be used with comm layout of equal-sized bricks");
 
   {
+    // compute expected proc coordinates for this MPI rank
     int proc_x = me % comm->procgrid[0];
     int proc_y = (me % (comm->procgrid[0] * comm->procgrid[1])) / comm->procgrid[0];
     int proc_z = me / (comm->procgrid[0] * comm->procgrid[1]);
 
     int e = 0;
+    // compare actual location to expected
     if ((proc_x != comm->myloc[0]) || (proc_y != comm->myloc[1]) || (proc_z != comm->myloc[2]))
       e = 1;
     int err = 0;
@@ -492,7 +471,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
     if (err)
       error->all(
           FLERR,
-          "[MBX] Inconsistent proc mapping; 'processors * * * map xyz' required for PME solver");
+          "[MBX] Inconsistent proc mapping: 'processors * * * map xyz' required for PME solver");
   }
 
   // setup json, if requested
@@ -501,11 +480,9 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
     int size = 0;
     if (me == 0) {
       // Test if file present
-      FILE *fp = fopen(json_file, "r");
+      FILE *fp = fopen(json_file.c_str(), "r");
       if (fp == NULL) {
-        char str[128];
-        snprintf(str, 128, "Cannot open file %s", json_file);
-        error->one(FLERR, str);
+        error->one(FLERR, "Cannot open file " + json_file);
       } else
         fclose(fp);
 
@@ -523,14 +500,11 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
     MPI_Bcast(&json_settings[0], size + 1, MPI_CHAR, 0, world);
   }
 
-  // if (screen && universe->iworld == 0 && comm->me == 0)
-  //   std::cout << "[" << me << "] json_settings= " << json_settings << std::endl;
+  memory->create(mbxt_count, FixMBX::MBXT_LABELS::NUM_TIMERS, "fixmbx:mbxt_count");
+  memory->create(mbxt_time, FixMBX::MBXT_LABELS::NUM_TIMERS, "fixmbx:mbxt_time");
+  memory->create(mbxt_time_start, FixMBX::MBXT_LABELS::NUM_TIMERS, "fixmbx:mbxt_time_start");
 
-  memory->create(mbxt_count, MBXT_NUM_TIMERS, "fixmbx:mbxt_count");
-  memory->create(mbxt_time, MBXT_NUM_TIMERS, "fixmbx:mbxt_time");
-  memory->create(mbxt_time_start, MBXT_NUM_TIMERS, "fixmbx:mbxt_time_start");
-
-  for (int i = 0; i < MBXT_NUM_TIMERS; ++i) {
+  for (int i = 0; i < FixMBX::MBXT_LABELS::NUM_TIMERS; ++i) {
     mbxt_time[i] = 0.0;
     mbxt_count[i] = 0;
   }
@@ -565,9 +539,8 @@ FixMBX::~FixMBX()
 
   if (print_dipoles) memory->destroy(mbx_dip);
 
-  // memory->destroy(mol_offset);
+  memory->destroy(num_atoms_per_mol);
   memory->destroy(mol_names);
-  // memory->destroy(num_mols);
 
   // unregister callbacks to this fix from Atom class
 
@@ -581,31 +554,29 @@ FixMBX::~FixMBX()
   memory->destroy(higher_atom_type_index_in_mol);
   memory->destroy(order_in_mol);
 
-  if (ptr_mbx) delete ptr_mbx;
-
-  if (ptr_mbx_local) {
+  if (mbx_impl->ptr_mbx_local) {
     // accumulate timing info from pme electrostatics
 
-    std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
-    std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
+    std::vector<size_t> tmpi = mbx_impl->ptr_mbx_local->GetInfoElectrostaticsCounts();
+    std::vector<double> tmpd = mbx_impl->ptr_mbx_local->GetInfoElectrostaticsTimings();
 
     for (int i = 0; i < tmpi.size(); ++i) {
-      mbxt_count[MBXT_ELE_PERMDIP_REAL + i] += tmpi[i];
-      mbxt_time[MBXT_ELE_PERMDIP_REAL + i] += tmpd[i];
+      mbxt_count[FixMBX::MBXT_LABELS::ELE_PERMDIP_REAL + i] += tmpi[i];
+      mbxt_time[FixMBX::MBXT_LABELS::ELE_PERMDIP_REAL + i] += tmpd[i];
     }
 
     // accumulate timing info from dispersion pme
 
-    std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
-    std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
+    std::vector<size_t> tmpi_d = mbx_impl->ptr_mbx_local->GetInfoDispersionCounts();
+    std::vector<double> tmpd_d = mbx_impl->ptr_mbx_local->GetInfoDispersionTimings();
 
     for (int i = 0; i < tmpi_d.size(); ++i) {
-      mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
-      mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
+      mbxt_count[FixMBX::MBXT_LABELS::DISP_PME_SETUP + i] += tmpi_d[i];
+      mbxt_time[FixMBX::MBXT_LABELS::DISP_PME_SETUP + i] += tmpd_d[i];
     }
 
-    delete ptr_mbx_local;
   }
+  delete mbx_impl;
 
   if (print_verbose)
       mbxt_write_summary();    // this and collecting times should be gated by 'timer full' request
@@ -646,29 +617,17 @@ void FixMBX::init()
   ngroup = group->count(igroup);
   if (ngroup == 0) error->all(FLERR, "[MBX] Fix mbx group has no atoms");
 
-  // I don't think we need neighbor lists yet...
-
-  // need a half neighbor list w/ Newton off
-  // built whenever re-neighboring occurs
-
-  // int irequest = neighbor->request(this,instance_me);
-  // neighbor->requests[irequest]->pair = 0;
-  // neighbor->requests[irequest]->fix = 1;
-  // neighbor->requests[irequest]->newton = 2;
-  // neighbor->requests[irequest]->ghost = 0;
 }
 
 /* ---------------------------------------------------------------------- */
 
+// Fill mol_type and mol_anchor arrays from atom data
 void FixMBX::mbx_fill_system_information_from_atom()
 {
-  // mol_type, mol_anchor
   const int nlocal = atom->nlocal;
   const int nghost = atom->nghost;
   const int nall = nlocal + nghost;
 
-  // printf("\n[MBX] (%i,%i) Inside mbx_fill_system_information_from_atom() natoms = %i \n", universe->iworld, me,
-  // atom->natoms);
 
   bigint natoms = atom->natoms;
 
@@ -692,30 +651,9 @@ void FixMBX::mbx_fill_system_information_from_atom()
       }
   }
 
-  // Idea of this loop: fill an array that will say the position
-  // of each atom in the monomer
-  // PROBLEM CHRIS: no idea how to get when mroe than 1 rank is involved
-
-  //    bigint itag = 1;
-  //    while( itag < natoms+1) {
-  //        int indx = atom->map(itag);
-  //        //if (indx < 0) continue;
-  //        mol_order[indx] = 1;
-  //        int mtype = mol_type[indx];
-  //        bool is_ext = strcmp("dp1", mol_names[mtype]) == 0;
-  //        int na = get_num_atoms_per_monomer(mol_names[mtype], is_ext);
-  //        for (int j = 1; j < na; j++) {
-  //            mol_order[atom->map(itag+j)] = j+1;
-  //        }
-  //        itag += na;
-  //    }
-  //
-  //    // Tag must be na at this point:
-  //    if (itag != natoms+1) error->all(FLERR, "[MBX] Inconsistent number of atoms in
-  //    mbx_fill_system_information_from_atom()");
-
   // Reset anchors
-  std::fill(mol_anchor, mol_anchor + nall, 0);
+  int * last_anchor = mol_anchor + nall;
+  std::fill(mol_anchor, last_anchor, 0);
 
   for (int i = 0; i < nall; ++i) {
     // Assign anchor TODO careful, not necessarily true
@@ -737,7 +675,7 @@ void FixMBX::mbx_fill_system_information_from_atom()
         break;
       }
 
-      isanchor = isanchor and atom->type[idx] == order_in_mol[mtype][j];
+      isanchor = isanchor && atom->type[idx] == order_in_mol[mtype][j];
       if (!isanchor) break;
     }
 
@@ -789,41 +727,41 @@ void FixMBX::post_neighbor()
 
   // tear down existing MBX objects
 
-  if (ptr_mbx) delete ptr_mbx;
+  if (mbx_impl->ptr_mbx) delete mbx_impl->ptr_mbx;
 
-  if (ptr_mbx_local) {
+  if (mbx_impl->ptr_mbx_local) {
     // accumulate timing info from pme electrostatics
 
-    std::vector<size_t> tmpi = ptr_mbx_local->GetInfoElectrostaticsCounts();
-    std::vector<double> tmpd = ptr_mbx_local->GetInfoElectrostaticsTimings();
+    std::vector<size_t> tmpi = mbx_impl->ptr_mbx_local->GetInfoElectrostaticsCounts();
+    std::vector<double> tmpd = mbx_impl->ptr_mbx_local->GetInfoElectrostaticsTimings();
 
     for (int i = 0; i < tmpi.size(); ++i) {
-      mbxt_count[MBXT_ELE_PERMDIP_REAL + i] += tmpi[i];
-      mbxt_time[MBXT_ELE_PERMDIP_REAL + i] += tmpd[i];
+      mbxt_count[MBXT_LABELS::ELE_PERMDIP_REAL + i] += tmpi[i];
+      mbxt_time[MBXT_LABELS::ELE_PERMDIP_REAL + i] += tmpd[i];
     }
 
     // accumulate timing info from dispersion pme
 
-    std::vector<size_t> tmpi_d = ptr_mbx_local->GetInfoDispersionCounts();
-    std::vector<double> tmpd_d = ptr_mbx_local->GetInfoDispersionTimings();
+    std::vector<size_t> tmpi_d = mbx_impl->ptr_mbx_local->GetInfoDispersionCounts();
+    std::vector<double> tmpd_d = mbx_impl->ptr_mbx_local->GetInfoDispersionTimings();
 
     for (int i = 0; i < tmpi_d.size(); ++i) {
-      mbxt_count[MBXT_DISP_PME_SETUP + i] += tmpi_d[i];
-      mbxt_time[MBXT_DISP_PME_SETUP + i] += tmpd_d[i];
+      mbxt_count[MBXT_LABELS::DISP_PME_SETUP + i] += tmpi_d[i];
+      mbxt_time[MBXT_LABELS::DISP_PME_SETUP + i] += tmpd_d[i];
     }
 
-    delete ptr_mbx_local;
+    delete mbx_impl->ptr_mbx_local;
   }
 
-  // create main instance of MBX object
+  // recreate main instance of MBX object
 
-  ptr_mbx = new bblock::System();
-  ptr_mbx_local = new bblock::System();
+  mbx_impl->ptr_mbx = new bblock::System();
+  mbx_impl->ptr_mbx_local = new bblock::System();
 
   // initialize all MBX instances
 
   if (aspc_step == aspc_step_reset) {
-    ptr_mbx_local->ResetDipoleHistory();
+    mbx_impl->ptr_mbx_local->ResetDipoleHistory();
     aspc_num_hist = 0;
     aspc_step = 0;
   }
@@ -904,7 +842,7 @@ void FixMBX::pre_exchange()
 
   // save copy of dipole history
 
-  aspc_num_hist = ptr_mbx_local->GetNumDipoleHistory();
+  aspc_num_hist = mbx_impl->ptr_mbx_local->GetNumDipoleHistory();
 
   //  printf("# of histories= %i\n",aspc_num_hist);
 
@@ -920,20 +858,9 @@ void FixMBX::pre_exchange()
 
   if (mbx_num_atoms_local == 0) { return; }
 
-  // for(int i=0; i<nlocal; ++i) {
-  //   printf("i= %i  tag= %i  xyz= %f %f %f\n",i,atom->tag[i],x[i][0]+10.,x[i][1]+10.,x[i][2]+10.);
-  // }
-
-  // following debug only works if all ranks contribute
-
   for (int h = 0; h < aspc_num_hist; ++h) {
-    std::vector<double> mbx_dip_history = ptr_mbx_local->GetDipoleHistory(h);
+    std::vector<double> mbx_dip_history = mbx_impl->ptr_mbx_local->GetDipoleHistory(h);
 
-    // printf("\nh= %i  mbx_dip_history.size()= %lu\n",h,mbx_dip_history.size());
-    // for(int i=0; i<mbx_num_atoms_local; ++i) {
-    //   printf("i= %i  mbx_dip_history= %f %f
-    //   %f\n",i,mbx_dip_history[i*3],mbx_dip_history[i*3+1],mbx_dip_history[i*3+2]);
-    // }
 
     int indx = 0;
     for (int i = 0; i < nall; ++i) {
@@ -997,8 +924,7 @@ void FixMBX::mbx_get_dipoles_local()
   tagint *tag = atom->tag;
 
   // conversion factor for e*Anstrom --> Debye
-
-  //    const double qe_Debye = 1.0 / 0.2081943;
+  // const double qe_Debye = 1.0 / 0.2081943;
 
   // zero dipole array
 
@@ -1011,14 +937,7 @@ void FixMBX::mbx_get_dipoles_local()
     std::vector<double> mu_ind;
     std::vector<double> mu_tot;
 
-    ptr_mbx_local->GetMolecularDipoles(mu_perm, mu_ind);
-
-    // printf("GetMolecularDipoles: sizes:: mu_perm= %lu  mu_ind= %lu\n",mu_perm.size(), mu_ind.size());
-
-    // for(int i=0; i<mu_perm.size()/3; ++i) {
-    //   printf("  -- i= %i  mu_perm= %f %f %f   mu_ind= %f %f
-    //   %f\n",i,mu_perm[i*3],mu_perm[i*3+1],mu_perm[i*3+2],mu_ind[i*3],mu_ind[i*3+1],mu_ind[i*3+2]);
-    // }
+    mbx_impl->ptr_mbx_local->GetMolecularDipoles(mu_perm, mu_ind);
 
     int indx = 0;
     for (int i = 0; i < nall; ++i) {
@@ -1053,8 +972,6 @@ void FixMBX::mbx_get_dipoles_local()
             mbx_dip[ii][7] = mbx_dip[ii][1] + mbx_dip[ii][4];
             mbx_dip[ii][8] = mbx_dip[ii][2] + mbx_dip[ii][5];
 
-            // printf("  -- ii= %i  tag= %i  indx= %i  mu_perm= %f %f %f   mu_ind= %f %f
-            // %f\n",ii,anchor+j,indx,mu_perm[indx*3],mu_perm[indx*3+1],mu_perm[indx*3+2],mu_ind[indx*3],mu_ind[indx*3+1],mu_ind[indx*3+2]);
             indx++;
           }
         }
@@ -1073,7 +990,6 @@ int FixMBX::pack_forward_comm(int n, int *list, double *buf, int /*pbc_flag*/, i
   int m = 0;
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < aspc_per_atom_size; ++j) buf[m++] = aspc_dip_hist[list[i]][j];
-    //  for (int j = 0; j < 9; ++j) buf[m++] = mbx_dip[list[i]][j];
   }
 
   return m;
@@ -1086,7 +1002,6 @@ void FixMBX::unpack_forward_comm(int n, int first, double *buf)
   int m = 0;
   for (int i = first; i < first + n; ++i) {
     for (int j = 0; j < aspc_per_atom_size; ++j) aspc_dip_hist[i][j] = buf[m++];
-    //  for (int j = 0; j < 9; ++j) mbx_dip[i][j] = buf[m++];
   }
 }
 
@@ -1099,7 +1014,6 @@ void FixMBX::grow_arrays(int nmax)
   memory->grow(mol_type, nmax, "fixmbx:mol_type");
   memory->grow(mol_anchor, nmax, "fixmbx:mol_anchor");
   memory->grow(mol_local, nmax, "fixmbx:mol_local");
-  //memory->grow(mol_order, nmax, "fixmbx:mol_order");
 
   if (mbx_aspc_enabled)
     memory->grow(aspc_dip_hist, nmax, aspc_per_atom_size, "fixmbx:mbx_dip_hist");
@@ -1135,10 +1049,6 @@ int FixMBX::pack_exchange(int i, double *buf)
   if (mbx_aspc_enabled)
     for (int j = 0; j < aspc_per_atom_size; ++j) buf[n++] = aspc_dip_hist[i][j];
 
-  // don't need to exchange dipoles that will be written to dump file
-  // if (print_dipoles)
-  //   for(int j = 0; j<9; ++j) buf[n++] = mbx_dip[i][j];
-
   return n;
 }
 
@@ -1156,10 +1066,6 @@ int FixMBX::unpack_exchange(int nlocal, double *buf)
   if (mbx_aspc_enabled)
     for (int j = 0; j < aspc_per_atom_size; ++j) aspc_dip_hist[nlocal][j] = buf[n++];
 
-  // don't need to exchange dipoles that will be written to dump file
-  // if (print_dipoles)
-  //   for (int j=0; j<9; ++j) mbx_dip[nlocal][j] = buf[n++];
-
   return n;
 }
 
@@ -1169,7 +1075,7 @@ int FixMBX::unpack_exchange(int nlocal, double *buf)
 
 void FixMBX::mbx_init()
 {
-  mbxt_start(MBXT_INIT);
+  mbxt_start(MBXT_LABELS::INIT);
 
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
@@ -1223,7 +1129,6 @@ void FixMBX::mbx_init()
       }
 
       // test if external charged particle
-#ifndef _DEBUG_EFIELD
       if (strcmp("dp1", mol_names[mtype]) == 0) {
         add_monomer = false;
 
@@ -1239,9 +1144,6 @@ void FixMBX::mbx_init()
         // add info for monomer
 
       } else if (add_monomer) {
-#else
-      if (add_monomer) {
-#endif
         // add coordinates
 
         xyz.push_back(x[i][0] - xlo);
@@ -1263,8 +1165,8 @@ void FixMBX::mbx_init()
         molec.push_back(nm);
         nm++;
 
-        ptr_mbx->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
-        ptr_mbx->AddMolecule(molec);
+        mbx_impl->ptr_mbx->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
+        mbx_impl->ptr_mbx->AddMolecule(molec);
 
         mbx_num_atoms += na;
       }
@@ -1274,56 +1176,57 @@ void FixMBX::mbx_init()
   }    // for(i<nall)
 
   if (mbx_num_atoms + mbx_num_ext == 0) {
-    mbxt_stop(MBXT_INIT);
+    mbxt_stop(MBXT_LABELS::INIT);
 
     return;
   }
 
   int *pg = comm->procgrid;
-  ptr_mbx->SetMPI(world, pg[0], pg[1], pg[2]);
+  mbx_impl->ptr_mbx->SetMPI(world, pg[0], pg[1], pg[2]);
 
   // set MBX solvers
 
   if (use_json) {
-    ptr_mbx->SetUpFromJson(json_settings);
+    mbx_impl->ptr_mbx->SetUpFromJson(json_settings);
 
     // make sure cutoffs are consistent
 
-    double mbx_cut = ptr_mbx->GetRealspaceCutoff();
+    double mbx_cut = mbx_impl->ptr_mbx->GetRealspaceCutoff();
     double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
     if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
-    double mbx_2b_cut = ptr_mbx->Get2bCutoff();
+    double mbx_2b_cut = mbx_impl->ptr_mbx->Get2bCutoff();
     if (mbx_2b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 2-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
-    double mbx_3b_cut = ptr_mbx->Get3bCutoff();
+    double mbx_3b_cut = mbx_impl->ptr_mbx->Get3bCutoff();
     if (mbx_3b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 3-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
-    double mbx_4b_cut = ptr_mbx->Get4bCutoff();
+    double mbx_4b_cut = mbx_impl->ptr_mbx->Get4bCutoff();
     if (mbx_4b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 4-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
   } else {
-    ptr_mbx->SetRealspaceCutoff(pair_mbx->cut_global);
-    ptr_mbx->SetUpFromJson();
+    mbx_impl->ptr_mbx->SetRealspaceCutoff(pair_mbx->cut_global);
+    mbx_impl->ptr_mbx->SetUpFromJson();
   }
 
   // load external charged particles
-#ifndef _DEBUG_EFIELD
   if (mbx_num_ext > 0) {
-    ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
+    mbx_impl->ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
   }
-#endif
 
   // setup MBX solver(s); need to keep pbc turned off, which currently disables electrostatic solver
 
   std::vector<double> box;
-  ptr_mbx->SetPBC(box);
+  mbx_impl->ptr_mbx->SetPBC(box);
 
+
+  // check for incompatible pair styles
+  // electrostatics should be handled entirely by MBX
   Pair *pairstyles_coullong = force->pair_match(".*coul/long.*", 0);
   Pair *pairstyles_coulcut = force->pair_match(".*coul/cut.*", 0);
   Pair *pairstyles_coulexclude = force->pair_match("coul/exclude", 0);
@@ -1332,19 +1235,18 @@ void FixMBX::mbx_init()
     error->warning(FLERR,
                    "[MBX] dp1 monomers present, but coul/exclude pair style not found. If using "
                    "special_bonds, please include coul/exclude: ");
-
   if (pairstyles_coulcut) {
-    error->warning(FLERR,
+    error->all(FLERR,
                    "[MBX] Incompatible coul/cut pair style: coulombic interactions should be "
                    "handled internally by MBX: ");
   }
   if (pairstyles_coullong) {
-    error->warning(FLERR,
+    error->all(FLERR,
                    "[MBX] Incompatible  coul/long pair style: coulombic interactions should be "
                    "handled internally by MBX: ");
   }
 
-  mbxt_stop(MBXT_INIT);
+  mbxt_stop(MBXT_LABELS::INIT);
 }
 
 /* ----------------------------------------------------------------------
@@ -1353,7 +1255,7 @@ void FixMBX::mbx_init()
 
 void FixMBX::mbx_init_local()
 {
-  mbxt_start(MBXT_INIT_LOCAL);
+  mbxt_start(MBXT_LABELS::INIT_LOCAL);
 
   const int nlocal = atom->nlocal;
   const int nall = nlocal + atom->nghost;
@@ -1448,7 +1350,6 @@ void FixMBX::mbx_init_local()
       }
 
       // test if external charged particle
-#ifndef _DEBUG_EFIELD
       if (strcmp("dp1", mol_names[mtype]) == 0) {
         add_monomer = false;
 
@@ -1464,9 +1365,6 @@ void FixMBX::mbx_init_local()
         // add info for monomer
 
       } else if (add_monomer) {
-#else
-      if (add_monomer) {
-#endif
         // add coordinates
 
         xyz.push_back(x[i][0] - xlo);
@@ -1484,8 +1382,8 @@ void FixMBX::mbx_init_local()
 
         molec.push_back(nm++);
 
-        ptr_mbx_local->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
-        ptr_mbx_local->AddMolecule(molec);
+        mbx_impl->ptr_mbx_local->AddMonomer(xyz, names, mol_names[mtype], is_local, anchor);
+        mbx_impl->ptr_mbx_local->AddMolecule(molec);
 
         mbx_num_atoms_local += na;
       }
@@ -1497,44 +1395,42 @@ void FixMBX::mbx_init_local()
   // setup MPI in MBX solver
 
   int *pg = comm->procgrid;
-  ptr_mbx_local->SetMPI(world, pg[0], pg[1], pg[2]);
+  mbx_impl->ptr_mbx_local->SetMPI(world, pg[0], pg[1], pg[2]);
 
   // set MBX solvers
 
   if (use_json) {
-    ptr_mbx_local->SetUpFromJson(json_settings);
+    mbx_impl->ptr_mbx_local->SetUpFromJson(json_settings);
 
     // make sure cutoffs are consistent
 
-    double mbx_cut = ptr_mbx_local->GetRealspaceCutoff();
+    double mbx_cut = mbx_impl->ptr_mbx_local->GetRealspaceCutoff();
     double diff_sq = (mbx_cut - pair_mbx->cut_global) * (mbx_cut - pair_mbx->cut_global);
     if (diff_sq > 1e-9) error->one(FLERR, "[MBX] cutoff not consistent with LAMMPS");
-    double mbx_2b_cut = ptr_mbx_local->Get2bCutoff();
+    double mbx_2b_cut = mbx_impl->ptr_mbx_local->Get2bCutoff();
     if (mbx_2b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 2-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
-    double mbx_3b_cut = ptr_mbx_local->Get3bCutoff();
+    double mbx_3b_cut = mbx_impl->ptr_mbx_local->Get3bCutoff();
     if (mbx_3b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 3-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
-    double mbx_4b_cut = ptr_mbx_local->Get4bCutoff();
+    double mbx_4b_cut = mbx_impl->ptr_mbx_local->Get4bCutoff();
     if (mbx_4b_cut > mbx_cut)
       error->one(FLERR,
                  "[MBX] 4-body PIP cutoff must be less than or equal to realspace cutoff. (This "
                  "may be changed in a future release.)");
   } else {
-    ptr_mbx_local->SetRealspaceCutoff(pair_mbx->cut_global);
-    ptr_mbx_local->SetUpFromJson();
+    mbx_impl->ptr_mbx_local->SetRealspaceCutoff(pair_mbx->cut_global);
+    mbx_impl->ptr_mbx_local->SetUpFromJson();
   }
 
   // load external charged particles
-#ifndef _DEBUG_EFIELD
   if (mbx_num_ext_local > 0) {
-    ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
+    mbx_impl->ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext, islocal_ext, tag_ext);
   }
-#endif
 
   std::vector<double> box;
 
@@ -1545,8 +1441,8 @@ void FixMBX::mbx_init_local()
   double elec_alpha, elec_grid, disp_alpha, disp_grid;
   size_t elec_spline, disp_spline;
 
-  ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
-  ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
+  mbx_impl->ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
+  mbx_impl->ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
 
   if ((elec_alpha > 0.0) && (!domain->xperiodic && !domain->yperiodic && !domain->zperiodic))
     error->all(FLERR,
@@ -1571,17 +1467,17 @@ void FixMBX::mbx_init_local()
   box[7] = domain->yz;
   box[8] = domain->zprd;
 
-  ptr_mbx_local->SetPBC(box);
-  ptr_mbx_local->SetBoxPMElocal(box);
+  mbx_impl->ptr_mbx_local->SetPBC(box);
+  mbx_impl->ptr_mbx_local->SetBoxPMElocal(box);
 
-  ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
+  mbx_impl->ptr_mbx_local->SetPeriodicity(!domain->nonperiodic);
 
-  std::vector<int> egrid = ptr_mbx_local->GetFFTDimensionElectrostatics(1);
+  std::vector<int> egrid = mbx_impl->ptr_mbx_local->GetFFTDimensionElectrostatics(1);
   std::vector<int> dgrid =
-      ptr_mbx_local->GetFFTDimensionDispersion(1);    // will return mesh even for gas-phase
+      mbx_impl->ptr_mbx_local->GetFFTDimensionDispersion(1);    // will return mesh even for gas-phase
 
   if (print_verbose && first_step  && comm->me == 0) {
-    std::string mbx_settings_ = ptr_mbx_local->GetCurrentSystemConfig();
+    std::string mbx_settings_ = mbx_impl->ptr_mbx_local->GetCurrentSystemConfig();
     if (screen) {
       fprintf(screen, "\n[MBX] 'Local' Settings\n%s\n", mbx_settings_.c_str());
       fprintf(screen, "[MBX] LOCAL electrostatics FFT grid= %i %i %i\n", egrid[0], egrid[1],
@@ -1599,7 +1495,7 @@ void FixMBX::mbx_init_local()
   // check if using cg or aspc integrator for MBX dipoles
 
   if (first_step) {
-    std::string dip_method = ptr_mbx->GetDipoleMethod();
+    std::string dip_method = mbx_impl->ptr_mbx->GetDipoleMethod();
 
     if (dip_method == "aspc") {
       mbx_aspc_enabled = true;
@@ -1612,7 +1508,7 @@ void FixMBX::mbx_init_local()
 
   if (mbx_aspc_enabled) mbx_init_dipole_history_local();
 
-  mbxt_stop(MBXT_INIT_LOCAL);
+  mbxt_stop(MBXT_LABELS::INIT_LOCAL);
 }
 
 
@@ -1622,7 +1518,7 @@ void FixMBX::mbx_init_local()
 
 void FixMBX::mbx_update_xyz()
 {
-  mbxt_start(MBXT_UPDATE_XYZ);
+  mbxt_start(MBXT_LABELS::UPDATE_XYZ);
 
   // update coordinates
 
@@ -1633,7 +1529,7 @@ void FixMBX::mbx_update_xyz()
   double *q = atom->q;
 
   if (mbx_num_atoms + mbx_num_ext == 0) {
-    mbxt_stop(MBXT_UPDATE_XYZ);
+    mbxt_stop(MBXT_LABELS::UPDATE_XYZ);
     return;
   }
 
@@ -1669,7 +1565,6 @@ void FixMBX::mbx_update_xyz()
       }
 
       // test if external charged particle
-#ifndef _DEBUG_EFIELD
       if (strcmp("dp1", mol_names[mtype]) == 0) {
         add_monomer = false;
 
@@ -1683,9 +1578,6 @@ void FixMBX::mbx_update_xyz()
         // add info for monomer
 
       } else if (add_monomer) {
-#else
-      if (add_monomer) {
-#endif
         // add coordinates
 
         xyz[indx * 3] = x[i][0] - xlo;
@@ -1707,12 +1599,12 @@ void FixMBX::mbx_update_xyz()
   }    // for(i<nall)
 
   if (xyz.size() != indx * 3) error->one(FLERR, "Inconsistent # of atoms");
-  ptr_mbx->SetRealXyz(xyz);
+  mbx_impl->ptr_mbx->SetRealXyz(xyz);
 
   if (xyz_ext.size() != indx_ext * 3) error->one(FLERR, "Inconsistent # of external charges");
-  if (mbx_num_ext > 0) { ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext); }
+  if (mbx_num_ext > 0) { mbx_impl->ptr_mbx->SetExternalChargesAndPositions(chg_ext, xyz_ext); }
 
-  mbxt_stop(MBXT_UPDATE_XYZ);
+  mbxt_stop(MBXT_LABELS::UPDATE_XYZ);
 }
 
 /* ----------------------------------------------------------------------
@@ -1721,7 +1613,7 @@ void FixMBX::mbx_update_xyz()
 
 void FixMBX::mbx_update_xyz_local()
 {
-  mbxt_start(MBXT_UPDATE_XYZ_LOCAL);
+  mbxt_start(MBXT_LABELS::UPDATE_XYZ_LOCAL);
 
   // update if box changes
   // need to update box passed to PME solver
@@ -1748,8 +1640,8 @@ void FixMBX::mbx_update_xyz_local()
     double elec_alpha, elec_grid, disp_alpha, disp_grid;
     size_t elec_spline, disp_spline;
 
-    ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
-    ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
+    mbx_impl->ptr_mbx_local->GetEwaldParamsElectrostatics(elec_alpha, elec_grid, elec_spline);
+    mbx_impl->ptr_mbx_local->GetEwaldParamsDispersion(disp_alpha, disp_grid, disp_spline);
 
     if ((elec_alpha > 0.0) && (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
       error->all(FLERR,
@@ -1763,8 +1655,8 @@ void FixMBX::mbx_update_xyz_local()
         (!domain->xperiodic || !domain->yperiodic || !domain->zperiodic))
       error->warning(FLERR, "[MBX] System is periodic, but Ewald alpha parameters not set");
 
-    ptr_mbx_local->SetPBC(box);
-    ptr_mbx_local->SetBoxPMElocal(box);
+    mbx_impl->ptr_mbx_local->SetPBC(box);
+    mbx_impl->ptr_mbx_local->SetBoxPMElocal(box);
   }
 
   // update coordinates
@@ -1776,7 +1668,7 @@ void FixMBX::mbx_update_xyz_local()
   double *q = atom->q;
 
   if (mbx_num_atoms_local + mbx_num_ext_local == 0) {
-    mbxt_stop(MBXT_UPDATE_XYZ);
+    mbxt_stop(MBXT_LABELS::UPDATE_XYZ);
     return;
   }
 
@@ -1812,7 +1704,6 @@ void FixMBX::mbx_update_xyz_local()
       }
 
       // test if external charged particle
-#ifndef _DEBUG_EFIELD
       if (strcmp("dp1", mol_names[mtype]) == 0) {
         add_monomer = false;
 
@@ -1826,9 +1717,6 @@ void FixMBX::mbx_update_xyz_local()
         // add info for monomer
 
       } else if (add_monomer) {
-#else
-      if (add_monomer) {
-#endif
         // add coordinates
 
         xyz[indx * 3] = x[i][0] - xlo;
@@ -1850,12 +1738,12 @@ void FixMBX::mbx_update_xyz_local()
   }    // for(i<nall)
 
   if (xyz.size() != indx * 3) error->one(FLERR, "Inconsistent # of atoms");
-  ptr_mbx_local->SetRealXyz(xyz);
+  mbx_impl->ptr_mbx_local->SetRealXyz(xyz);
 
   if (xyz_ext.size() != indx_ext * 3) error->one(FLERR, "Inconsistent # of external charges");
-  if (mbx_num_ext_local > 0) { ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext); }
+  if (mbx_num_ext_local > 0) { mbx_impl->ptr_mbx_local->SetExternalChargesAndPositions(chg_ext, xyz_ext); }
 
-  mbxt_stop(MBXT_UPDATE_XYZ_LOCAL);
+  mbxt_stop(MBXT_LABELS::UPDATE_XYZ_LOCAL);
 }
 
 
@@ -1865,7 +1753,6 @@ void FixMBX::mbx_update_xyz_local()
 
 void FixMBX::mbx_init_dipole_history_local()
 {
-  //    mbxt_start(MBXT_INIT_DIPOLE_LOCAL);
 
   if (aspc_num_hist == 0) return;
 
@@ -1881,7 +1768,6 @@ void FixMBX::mbx_init_dipole_history_local()
   double **x = atom->x;
 
   if (mbx_num_atoms_local == 0) {
-    //        mbxt_stop(MBXT_INIT_DIPOLE_LOCAL);
     return;
   }
 
@@ -1891,20 +1777,13 @@ void FixMBX::mbx_init_dipole_history_local()
 
   double ximage[3];
 
-  ptr_mbx_local->SetNumDipoleHistory(aspc_num_hist);
+  mbx_impl->ptr_mbx_local->SetNumDipoleHistory(aspc_num_hist);
 
   std::vector<double> mbx_dip_history = std::vector<double>(mbx_num_atoms_local * 3);
 
   // following debug only works if all ranks contribute
 
   for (int h = 0; h < aspc_num_hist; ++h) {
-    // printf("setting history h= %i / %i  mbx_num_atoms_local= %i  nall=
-    // %i\n",h,aspc_num_hist,mbx_num_atoms_local,nall);
-
-    // for(int i=0; i<nall; ++i) {
-    //      printf("  i= %i  local= %i  aspc_dip_hist= %f %f
-    // %f\n",i,i<nlocal,aspc_dip_hist[i][h*3],aspc_dip_hist[i][h*3+1],aspc_dip_hist[i][h*3+2]);
-    // }
 
     int indx = 0;
     for (int i = 0; i < nall; ++i) {
@@ -1946,11 +1825,10 @@ void FixMBX::mbx_init_dipole_history_local()
 
     if (mbx_num_atoms_local * 3 != indx) error->one(FLERR, "Inconsistent # of atoms");
     //      printf("calling SetDipoleHistory");
-    ptr_mbx_local->SetDipoleHistory(h, mbx_dip_history);
+    mbx_impl->ptr_mbx_local->SetDipoleHistory(h, mbx_dip_history);
 
   }    // for(hist)
 
-  //    mbxt_stop(MBXT_UPDATE_INIT_DIPOLE_LOCAL);
 }
 
 /* ----------------------------------------------------------------------
@@ -1971,10 +1849,10 @@ void FixMBX::mbxt_stop(int T)
 void FixMBX::mbxt_print_time(const char *name, int T, double *d)
 {
   double tavg = d[T];
-  double tmin = d[MBXT_NUM_TIMERS + T];
-  double tmax = d[MBXT_NUM_TIMERS * 2 + T];
+  double tmin = d[MBXT_LABELS::NUM_TIMERS + T];
+  double tmax = d[MBXT_LABELS::NUM_TIMERS * 2 + T];
 
-  double p = tmax / d[MBXT_NUM_TIMERS * 3] * 100.0;
+  double p = tmax / d[MBXT_LABELS::NUM_TIMERS * 3] * 100.0;
 
   if (screen)
     fprintf(screen, "[MBX] %-20s:  %12.5g  %12.5g  %12.5g  %8i %8.2f%%\n", name, tmin, tavg, tmax,
@@ -1987,25 +1865,25 @@ void FixMBX::mbxt_print_time(const char *name, int T, double *d)
 
 void FixMBX::mbxt_write_summary()
 {
-  double t[MBXT_NUM_TIMERS * 3 + 1];
+  double t[MBXT_LABELS::NUM_TIMERS * 3 + 1];
   double *tavg = &t[0];
-  double *tmin = &t[MBXT_NUM_TIMERS];
-  double *tmax = &t[MBXT_NUM_TIMERS * 2];
+  double *tmin = &t[MBXT_LABELS::NUM_TIMERS];
+  double *tmax = &t[MBXT_LABELS::NUM_TIMERS * 2];
 
   // total runtime since fix created
 
-  t[MBXT_NUM_TIMERS * 3] = MPI_Wtime() - mbxt_initial_time;
+  t[MBXT_LABELS::NUM_TIMERS * 3] = MPI_Wtime() - mbxt_initial_time;
 
-  MPI_Reduce(mbxt_time, tavg, MBXT_NUM_TIMERS, MPI_DOUBLE, MPI_SUM, 0, world);
-  MPI_Reduce(mbxt_time, tmin, MBXT_NUM_TIMERS, MPI_DOUBLE, MPI_MIN, 0, world);
-  MPI_Reduce(mbxt_time, tmax, MBXT_NUM_TIMERS, MPI_DOUBLE, MPI_MAX, 0, world);
+  MPI_Reduce(mbxt_time, tavg, MBXT_LABELS::NUM_TIMERS, MPI_DOUBLE, MPI_SUM, 0, world);
+  MPI_Reduce(mbxt_time, tmin, MBXT_LABELS::NUM_TIMERS, MPI_DOUBLE, MPI_MIN, 0, world);
+  MPI_Reduce(mbxt_time, tmax, MBXT_LABELS::NUM_TIMERS, MPI_DOUBLE, MPI_MAX, 0, world);
 
   if (me) return;
 
-  for (int i = 0; i < MBXT_NUM_TIMERS; ++i) tavg[i] /= (double) nprocs;
+  for (int i = 0; i < MBXT_LABELS::NUM_TIMERS; ++i) tavg[i] /= (double) nprocs;
 
   if (screen) {
-    fprintf(screen, "\n[MBX] Total MBX fix/pair time= %f seconds\n", t[MBXT_NUM_TIMERS * 3]);
+    fprintf(screen, "\n[MBX] Total MBX fix/pair time= %f seconds\n", t[MBXT_LABELS::NUM_TIMERS * 3]);
     fprintf(screen, "[MBX] Timing Summary\n");
     fprintf(screen,
             "[MBX] kernel                      tmin          tavg          tmax         count   "
@@ -2016,7 +1894,7 @@ void FixMBX::mbxt_write_summary()
         "-----------------------------------------------------------------------------------\n");
   }
   if (logfile) {
-    fprintf(logfile, "\n[MBX] Total MBX fix/pair time= %f seconds\n", t[MBXT_NUM_TIMERS * 3]);
+    fprintf(logfile, "\n[MBX] Total MBX fix/pair time= %f seconds\n", t[MBXT_LABELS::NUM_TIMERS * 3]);
     fprintf(logfile, "[MBX] Timing Summary\n");
     fprintf(logfile,
             "[MBX] kernel                      tmin          tavg          tmax         count   "
@@ -2027,24 +1905,21 @@ void FixMBX::mbxt_write_summary()
         "-----------------------------------------------------------------------------------\n");
   }
 
-  mbxt_print_time("INIT", MBXT_INIT, t);
-  mbxt_print_time("UPDATE_XYZ", MBXT_UPDATE_XYZ, t);
-  mbxt_print_time("ACCUMULATE_F", MBXT_ACCUMULATE_F, t);
+  mbxt_print_time("INIT", MBXT_LABELS::INIT, t);
+  mbxt_print_time("UPDATE_XYZ", MBXT_LABELS::UPDATE_XYZ, t);
+  mbxt_print_time("ACCUMULATE_F", MBXT_LABELS::ACCUMULATE_F, t);
 
-  mbxt_print_time("E1B", MBXT_E1B, t);
-  mbxt_print_time("E2B_LOCAL", MBXT_E2B_LOCAL, t);
-  mbxt_print_time("E2B_GHOST", MBXT_E2B_GHOST, t);
-  mbxt_print_time("E3B_LOCAL", MBXT_E3B_LOCAL, t);
-  mbxt_print_time("E3B_GHOST", MBXT_E3B_GHOST, t);
-  mbxt_print_time("E4B_LOCAL", MBXT_E4B_LOCAL, t);
-  mbxt_print_time("E4B_GHOST", MBXT_E4B_GHOST, t);
-  mbxt_print_time("DISP", MBXT_DISP, t);
-  mbxt_print_time("DISP_PME", MBXT_DISP_PME, t);
-  mbxt_print_time("BUCK", MBXT_BUCK, t);
-  mbxt_print_time("ELE", MBXT_ELE, t);
-  mbxt_print_time("INIT_LOCAL", MBXT_INIT_LOCAL, t);
-  mbxt_print_time("UPDATE_XYZ_LOCAL", MBXT_UPDATE_XYZ_LOCAL, t);
-  mbxt_print_time("ACCUMULATE_F_LOCAL", MBXT_ACCUMULATE_F_LOCAL, t);
+  mbxt_print_time("E1B", MBXT_LABELS::E1B, t);
+  mbxt_print_time("E2B", MBXT_LABELS::E2B_GHOST, t);
+  mbxt_print_time("E3B", MBXT_LABELS::E3B_GHOST, t);
+  mbxt_print_time("E4B", MBXT_LABELS::E4B_GHOST, t);
+  mbxt_print_time("DISP", MBXT_LABELS::DISP, t);
+  mbxt_print_time("DISP_PME", MBXT_LABELS::DISP_PME, t);
+  mbxt_print_time("BUCK", MBXT_LABELS::BUCK, t);
+  mbxt_print_time("ELE", MBXT_LABELS::ELE, t);
+  mbxt_print_time("INIT_LOCAL", MBXT_LABELS::INIT_LOCAL, t);
+  mbxt_print_time("UPDATE_XYZ_LOCAL", MBXT_LABELS::UPDATE_XYZ_LOCAL, t);
+  mbxt_print_time("ACCUMULATE_F_LOCAL", MBXT_LABELS::ACCUMULATE_F_LOCAL, t);
 
   if (screen) {
     fprintf(screen, "\n\n[MBX] Electrostatics Summary\n");
@@ -2067,29 +1942,29 @@ void FixMBX::mbxt_write_summary()
         "-----------------------------------------------------------------------------------\n");
   }
 
-  mbxt_print_time("ELE_PERMDIP_REAL", MBXT_ELE_PERMDIP_REAL, t);
-  mbxt_print_time("ELE_PERMDIP_PME", MBXT_ELE_PERMDIP_PME, t);
+  mbxt_print_time("ELE_PERMDIP_REAL", MBXT_LABELS::ELE_PERMDIP_REAL, t);
+  mbxt_print_time("ELE_PERMDIP_PME", MBXT_LABELS::ELE_PERMDIP_PME, t);
 
-  mbxt_print_time("ELE_DIPFIELD_REAL", MBXT_ELE_DIPFIELD_REAL, t);
-  mbxt_print_time("ELE_DIPFIELD_PME", MBXT_ELE_DIPFIELD_PME, t);
+  mbxt_print_time("ELE_DIPFIELD_REAL", MBXT_LABELS::ELE_DIPFIELD_REAL, t);
+  mbxt_print_time("ELE_DIPFIELD_PME", MBXT_LABELS::ELE_DIPFIELD_PME, t);
 
-  mbxt_print_time("ELE_GRAD_REAL", MBXT_ELE_GRAD_REAL, t);
-  mbxt_print_time("ELE_GRAD_PME", MBXT_ELE_GRAD_PME, t);
-  mbxt_print_time("ELE_GRAD_FIN", MBXT_ELE_GRAD_FIN, t);
+  mbxt_print_time("ELE_GRAD_REAL", MBXT_LABELS::ELE_GRAD_REAL, t);
+  mbxt_print_time("ELE_GRAD_PME", MBXT_LABELS::ELE_GRAD_PME, t);
+  mbxt_print_time("ELE_GRAD_FIN", MBXT_LABELS::ELE_GRAD_FIN, t);
 
-  mbxt_print_time("ELE_PME_SETUP", MBXT_ELE_PME_SETUP, t);
-  mbxt_print_time("ELE_PME_C", MBXT_ELE_PME_C, t);
-  mbxt_print_time("ELE_PME_D", MBXT_ELE_PME_D, t);
-  mbxt_print_time("ELE_PME_E", MBXT_ELE_PME_E, t);
+  mbxt_print_time("ELE_PME_SETUP", MBXT_LABELS::ELE_PME_SETUP, t);
+  mbxt_print_time("ELE_PME_C", MBXT_LABELS::ELE_PME_C, t);
+  mbxt_print_time("ELE_PME_D", MBXT_LABELS::ELE_PME_D, t);
+  mbxt_print_time("ELE_PME_E", MBXT_LABELS::ELE_PME_E, t);
 
-  mbxt_print_time("DISP_PME_SETUP", MBXT_DISP_PME_SETUP, t);
-  mbxt_print_time("DISP_PME_E", MBXT_DISP_PME_E, t);
+  mbxt_print_time("DISP_PME_SETUP", MBXT_LABELS::DISP_PME_SETUP, t);
+  mbxt_print_time("DISP_PME_E", MBXT_LABELS::DISP_PME_E, t);
 
-  mbxt_print_time("ELE_COMM_REVFOR", MBXT_ELE_COMM_REVFOR, t);
-  mbxt_print_time("ELE_COMM_REVSET", MBXT_ELE_COMM_REVSET, t);
-  mbxt_print_time("ELE_COMM_REV", MBXT_ELE_COMM_REV, t);
-  mbxt_print_time("ELE_COMM_FORSET", MBXT_ELE_COMM_FORSET, t);
-  mbxt_print_time("ELE_COMM_FOR", MBXT_ELE_COMM_FOR, t);
+  mbxt_print_time("ELE_COMM_REVFOR", MBXT_LABELS::ELE_COMM_REVFOR, t);
+  mbxt_print_time("ELE_COMM_REVSET", MBXT_LABELS::ELE_COMM_REVSET, t);
+  mbxt_print_time("ELE_COMM_REV", MBXT_LABELS::ELE_COMM_REV, t);
+  mbxt_print_time("ELE_COMM_FORSET", MBXT_LABELS::ELE_COMM_FORSET, t);
+  mbxt_print_time("ELE_COMM_FOR", MBXT_LABELS::ELE_COMM_FOR, t);
 }
 
 /* ----------------------------------------------------------------------
@@ -2166,12 +2041,10 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e)
     }
   }
 
-#ifndef _DEBUG_EFIELD
   if (strcmp("dp1", name) == 0) {
     inc = false;
     inc_e = true;
   }
-#endif
 
   return na;
 }
@@ -2248,4 +2121,6 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n)
     n.push_back("X");
     n.push_back("X");
   }
+  else
+    error->one(FLERR, "Unsupported molecule type in MBX");
 }

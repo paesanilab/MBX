@@ -22,60 +22,7 @@ FixStyle(MBX, FixMBX)
 
 #include "fix.h"
 
-// MBX
 
-#include "bblock/system.h"
-
-enum {
-  MBXT_INIT = 0,
-  MBXT_UPDATE_XYZ,
-  MBXT_INIT_LOCAL,
-  MBXT_UPDATE_XYZ_LOCAL,
-  MBXT_E1B,
-  MBXT_E2B_LOCAL,
-  MBXT_E2B_GHOST,
-  MBXT_E3B_LOCAL,
-  MBXT_E3B_GHOST,
-  MBXT_E4B_LOCAL,
-  MBXT_E4B_GHOST,
-  MBXT_DISP,
-  MBXT_DISP_PME,
-  MBXT_BUCK,
-  MBXT_ELE,
-  MBXT_ACCUMULATE_F,
-  MBXT_ACCUMULATE_F_LOCAL,
-
-  MBXT_ELE_PERMDIP_REAL,
-  MBXT_ELE_PERMDIP_PME,
-
-  MBXT_ELE_DIPFIELD_REAL,
-  MBXT_ELE_DIPFIELD_PME,
-
-  MBXT_ELE_GRAD_REAL,
-  MBXT_ELE_GRAD_PME,
-  MBXT_ELE_GRAD_FIN,
-
-  MBXT_ELE_COMM_REVFOR,
-  MBXT_ELE_COMM_REVSET,
-  MBXT_ELE_COMM_REV,
-  MBXT_ELE_COMM_FORSET,
-  MBXT_ELE_COMM_FOR,
-
-  MBXT_ELE_PME_SETUP,
-  MBXT_ELE_PME_C,
-  MBXT_ELE_PME_D,
-  MBXT_ELE_PME_E,
-
-  MBXT_DISP_PME_SETUP,
-  MBXT_DISP_PME_E,
-
-  MBXT_NUM_TIMERS
-};
-
-struct MBXParseResult {
-  bool success;
-  std::string message;
-};
 
 namespace LAMMPS_NS {
 
@@ -107,10 +54,8 @@ class FixMBX : public Fix {
   void min_post_force(int);
 
  protected:
+  struct MBXImpl *mbx_impl;
   class PairMBX *pair_mbx;    // pointer to MBX pair_style
-
-  bblock::System *ptr_mbx;          // pointer to MBX object
-  bblock::System *ptr_mbx_local;    // pointer to MBX object for local atoms
 
   static std::string cite_pair_mbx;
   int me, nprocs;
@@ -123,24 +68,20 @@ class FixMBX : public Fix {
   bool has_gcmc;
 
   int use_json;
-  char *json_file;
   std::string json_settings;
 
   int print_verbose;
 
   int num_mol_types;    // # of unique molecule types
   int num_molecules;    // total # of molecules
-  // int *num_mols;           // array of # of molecules of each type
   int *num_atoms_per_mol;                // array of # of atoms per molecule for each type
   int *lower_atom_type_index_in_mol;     // array with the lowest atom type index in the monomer
   int *higher_atom_type_index_in_mol;    // array with the highest atom type index in the monomer
   int **order_in_mol;                    // array with the atom order for each monomer
-  // tagint *mol_offset;      // array of atom count per molecule prefix sum
   char **mol_names;    // array of molecule names
 
   int *mol_type;      // per-atom array of molecule type
   int *mol_anchor;    // per-atom array 1/0 if anchor atom of a molecule
-  // int *mol_order;   // per-atom array 1/2/3/4... with position of atom in molecule
   int *mol_local;    // per-molecule array 1/0 if molecule has at least one local particle
 
   int mbx_num_atoms, mbx_num_ext;
@@ -154,6 +95,48 @@ class FixMBX : public Fix {
   void mbxt_stop(int);
   void mbxt_write_summary();
   void mbxt_print_time(const char *, int, double *);
+  enum MBXT_LABELS : int {
+    INIT = 0,
+    UPDATE_XYZ,
+    INIT_LOCAL,
+    UPDATE_XYZ_LOCAL,
+    E1B,
+    E2B_GHOST,
+    E3B_GHOST,
+    E4B_GHOST,
+    DISP,
+    DISP_PME,
+    BUCK,
+    ELE,
+    ACCUMULATE_F,
+    ACCUMULATE_F_LOCAL,
+
+    ELE_PERMDIP_REAL,
+    ELE_PERMDIP_PME,
+
+    ELE_DIPFIELD_REAL,
+    ELE_DIPFIELD_PME,
+
+    ELE_GRAD_REAL,
+    ELE_GRAD_PME,
+    ELE_GRAD_FIN,
+
+    ELE_COMM_REVFOR,
+    ELE_COMM_REVSET,
+    ELE_COMM_REV,
+    ELE_COMM_FORSET,
+    ELE_COMM_FOR,
+
+    ELE_PME_SETUP,
+    ELE_PME_C,
+    ELE_PME_D,
+    ELE_PME_E,
+
+    DISP_PME_SETUP,
+    DISP_PME_E,
+
+    NUM_TIMERS
+  };
 
   bool validateMBXFixParameters(int narg, char **arg);
 
