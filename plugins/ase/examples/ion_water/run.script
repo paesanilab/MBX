@@ -1,8 +1,6 @@
 #!/bin/bash
 
 ###################### environment ######################
-source ~/.bashrc
-conda activate ase_mbx2
 
 OMP_THREADS=4
 export OMP_NUM_THREADS=${OMP_THREADS}
