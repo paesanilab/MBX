@@ -21,7 +21,7 @@ make install
 ## Install the ASE plugin
 From the MBX repo root:
 ```
-cd plugins/ase_mbx
+cd plugins/ase
 pip install -e .
 ```
 
@@ -29,7 +29,7 @@ pip install -e .
 From the MBX repo root:
 ```
 export MBX_HOME="$PWD"
-cd plugins/ase_mbx/examples/water
+cd plugins/ase/examples/water
 python ../ase_mbx_energy.py
 ```
 

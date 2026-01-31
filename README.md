@@ -166,6 +166,9 @@ export LD_LIBRARY_PATH=$MBX_HOME/lib/:$LD_LIBRARY_PATH
 export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 ```
 
+### ASE
+An ASE calculator plugin is available in `plugins/ase`. See `plugins/ase/README.md` for install and usage.
+
 
 ### LAMMPS
 MBX is an official LAMMPS package (https://docs.lammps.org/pair_mbx.html),
@@ -220,5 +223,4 @@ The unit tests implemented should cover a big part of the code. This sunburst gr
 <p align="center">
   <img src="https://codecov.io/gh/paesanilab/MBX/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>
-
 
