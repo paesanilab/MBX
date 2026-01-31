@@ -37,6 +37,9 @@ You should see non-zero energy and forces printed to the console.
 
 More examples (bulk water and ion + water) are under `plugins/ase/examples/water` and `plugins/ase/examples/ion_water`.
 
+## MBXCalculator usage
+The ASE `MBXCalculator` requires an `mbx.json` file (see `plugins/ase/examples/water/mbx.json` for a template). The MD example scripts (`mbx_md.py`) do not require `mbx.json` because they generate it automatically from the run settings.
+
 ## Notes
 - MBX uses kcal/mol and Angstrom; energies and forces are converted to ASE units (eV, eV/A).
 - MBX needs the O/H/H ordering per water. If the input file isn't ordered as O H H for each monomer (e.g., all O's first, then H's), the grouping will be wrong and MBX results will be incorrect. In that case you must reorder the atoms or explicitly provide nat_monomers/monomer_names/atom_names that match the correct per-monomer ordering.
