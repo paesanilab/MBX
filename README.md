@@ -31,7 +31,7 @@ MBX has different compilation instructions depending on how you plan to use it:
 - For use with **i-PI**, **Python**, **Fortran**, or **standalone**, perform a [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps)
 - For use with **LAMMPS**, perform an [alternative MBX_MPI installation](#lammps)
 
-#### Basic installation of MBX (for use with i-PI, Python, Fortran, or standalone. **NOT LAMMPS**)
+#### Basic installation of MBX (for use with i-PI, Python, ASE, Fortran, or standalone. **NOT LAMMPS**)
 ```console
 git clone https://github.com/paesanilab/MBX.git
 cd MBX/
@@ -223,4 +223,3 @@ The unit tests implemented should cover a big part of the code. This sunburst gr
 <p align="center">
   <img src="https://codecov.io/gh/paesanilab/MBX/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>
-
