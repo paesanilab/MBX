@@ -176,7 +176,7 @@ velocity        all create ${temp} 428879 rot yes dist gaussian
 #velocity        all zero linear
 #velocity        all zero angular
 
-dump            1 all custom 1 traj.lammpstrj id type x y z
+dump            1 all custom 1 dump.lammpstrj id type x y z
 dump_modify     1 sort id
 
 restart         5 restart.inter.1 restart.inter.2
