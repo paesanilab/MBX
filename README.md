@@ -173,11 +173,11 @@ and needs to be installed using the [LAMMPS CMake build-chain](https://docs.lamm
 
 ```console
 git clone -b stable https://github.com/lammps/lammps.git LAMMPS-stable
-cd LAMMPS-stable           # change to the LAMMPS distribution directory
-mkdir build; cd build      # create and use a build directory
+cd LAMMPS-stable
+mkdir build; cd build
 
 cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes ../cmake
-make -j 4                  # compilation (can use higher j on powerful computers)
+make -j 4                              # compilation (can use higher j on powerful computers)
 make install
 ```
 This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other MBX plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
