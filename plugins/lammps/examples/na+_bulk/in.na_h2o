@@ -14,7 +14,6 @@ read_data       initial.data
 #read_restart    restart.old
 
 pair_style      mbx 9.0
-pair_modify     mix arithmetic
 
 bond_style      none
 angle_style     none
