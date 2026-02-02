@@ -172,13 +172,11 @@ MBX is an official LAMMPS package (https://docs.lammps.org/pair_mbx.html),
 and needs to be installed using the [LAMMPS CMake build-chain](https://docs.lammps.org/Build_cmake.html):
 
 ```console
-git clone -b stable https://github.com/lammps/lammps.git LAMMPS-stable
-cd LAMMPS-stable
-mkdir build; cd build
+git clone -b stable https://github.com/lammps/lammps.git
+cd lammps
 
-cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes ../cmake
-make -j 4                              # compilation (can use higher j on powerful computers)
-make install
+cmake -S cmake -B build -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes
+cmake --build build --parallel 4                   # compilation (can use higher --parallel on powerful computers)
 ```
 This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other MBX plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
 
