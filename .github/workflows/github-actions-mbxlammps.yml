@@ -82,11 +82,9 @@ jobs:
           export MBX_HOME=${{ env.MBX_HOME }}
           git clone https://github.com/lammps/lammps.git -b develop
           cd lammps
-          mkdir build && cd build
           export PKG_CONFIG_PATH=$MBX_HOME/lib/pkgconfig:$PKG_CONFIG_PATH
-          cmake -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D PKG_PLUMED=yes -D BUILD_MPI=yes -D CMAKE_CXX_COMPILER=${{env.MPI_COMPILER}} ../cmake
-          make -j2
-          make install
+          cmake -S cmake -B build -C ../cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D PKG_PLUMED=yes -D BUILD_MPI=yes -D CMAKE_CXX_COMPILER=${{env.MPI_COMPILER}}
+          cmake --build build --parallel 2
 
       - run: ls ${{ github.workspace }}/lib -lth
 
