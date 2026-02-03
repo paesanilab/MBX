@@ -1173,7 +1173,6 @@ class System {
 
    private:
     static constexpr const char* mbx_version = MBX_VERSION;
-
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
      * i < j < k. These i,j,k are the index of the corresponding monomer

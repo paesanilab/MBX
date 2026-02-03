@@ -199,7 +199,7 @@ void get_electrostatic_energy_decomp_(
 }
 
 /**
- * Given the coordinates, calculates the energy iand gradients for a gas phase system
+ * Given the coordinates, calculates the energy and gradients for a gas phase system
  * @param[in] coords Pointer to the coordinates (size 3N)
  * @param[in] nat Number of atoms in the system
  * @param[out] energy Energy of the system
