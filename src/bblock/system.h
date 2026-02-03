@@ -47,7 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // Tools
 #include "kdtree/nanoflann.hpp"
 #include "kdtree/kdtree_utils.h"
-#include "json/json.h"
+#include "json/json.hpp"
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
 #include "tools/custom_exceptions.h"

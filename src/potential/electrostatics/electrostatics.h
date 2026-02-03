@@ -62,7 +62,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "kdtree/kdtree_utils.h"
 #include "helpme.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 #ifdef TBB
 #include "tbb/scalable_allocator.h"

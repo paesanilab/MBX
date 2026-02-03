@@ -48,7 +48,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/system.h"
 
 #include "../external/mbx_sockets.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 //#define PRINT_GRADS
 //#define NUM_GRADS
