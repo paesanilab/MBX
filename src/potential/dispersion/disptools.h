@@ -43,7 +43,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iomanip>
 
 #include "tools/math_tools.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 /**
  * @file bucktools.h

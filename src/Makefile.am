@@ -16,7 +16,7 @@ iotools_src = io_tools/read_connectivity.cpp io_tools/read_nrg.cpp io_tools/writ
 # Sources from Building Block
 bblock_src = bblock/external_call.cpp bblock/system.cpp bblock/sys_tools.cpp
 
-# Make N2O5 its ouwn minilib to allow compilation with no opt
+# Make N2O5 its own minilib to allow compilation with no opt
 noinst_LTLIBRARIES = liba1b2c4.la
 liba1b2c4_la_SOURCES = potential/1b/poly_1b_A1B2C4_deg5_v1x.cpp potential/1b/x1b_A1B2C4_deg5_v1x.cpp potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_grad_v1.cpp potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_nograd_v1.cpp potential/1b/poly_1b_A1B2C4_deg5_v1.cpp 
 liba1b2c4_la_headers = potential/1b/poly_1b_A1B2C4_deg5_v1x.h   potential/1b/x1b_A1B2C4_deg5_v1x.h   potential/3b/poly_3b_A1B2C4_D1E2_D1E2_deg3_v1.h 
@@ -71,7 +71,7 @@ libmbx_la_LDFLAGS = $(LDFLAGS) $(LIBS) $(EXTRA_LDFLAGS_AM)
 tools_headers = tools/constants.h tools/custom_exceptions.h tools/definitions.h tools/macros.h tools/math_tools.h tools/mpi_helper.h tools/mt19937.h tools/pbctools.h tools/properties.h tools/random-rotation.h tools/testutils.h tools/variable.h tools/water_monomer_lp.h tools/xmin.h
 io_tools_headers = io_tools/read_connectivity.h io_tools/read_nrg.h io_tools/write_connectivity.h io_tools/read_xyz.h io_tools/write_xyz.h io_tools/write_nrg.h
 bblock_headers = bblock/sys_tools.h bblock/system.h
-other_headers = json/json.h kdtree/kdtree_utils.h kdtree/nanoflann.hpp
+other_headers = json/json.hpp kdtree/kdtree_utils.h kdtree/nanoflann.hpp
 
 # Headers (the ‘nobase_’ prefix can be used to circumvent this path stripping)
 nobase_include_HEADERS = $(liba1b2c4_la_headers) $(oneb_headers) $(twob_headers) $(threeb_headers) $(fourb_headers) $(elec_headers) $(disp_headers) $(buck_headers) $(ff_headers) $(lj_headers) $(tools_headers) $(io_tools_headers) $(bblock_headers) $(other_headers)

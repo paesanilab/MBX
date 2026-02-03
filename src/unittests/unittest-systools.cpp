@@ -39,7 +39,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "setup_co2_2_h2o_2.h"
 #include "setup_monomer_mix.h"
 #include "setup_monomer_custom_json.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 #include <vector>
 #include <iostream>

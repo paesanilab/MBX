@@ -1,5 +1,5 @@
 {
-   "Note" : "json file for MB-nrg CH4",
+   "Note" : "MBX v1.3 json file for MB-nrg CH4",
    "MBX" : { 
        "box" : [],
        "realspace_cutoff": 9.0,
