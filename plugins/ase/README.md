@@ -13,7 +13,7 @@ From the MBX repo root:
 ```
 export MBX_HOME="$PWD"
 autoreconf -fi
-./configure --enable-shared --prefix="$MBX_HOME"
+./configure --enable-shared
 make
 make install
 ```
