@@ -2950,8 +2950,10 @@ TEST_CASE(":poly_2b_v6x:struct") {
 
     x2o::poly_2b_v6x p;
 
+    double t[3133*8];
+
     std::vector<double> e_nograd = p.eval(1, a.data(), x.data());
-    std::vector<double> e = p.eval(1, a.data(), x.data(), g.data());
+    std::vector<double> e = p.eval(1, a.data(), x.data(), t, g.data());
 
     REQUIRE(VectorsAreEqual(g, g_expected, TOL));
     REQUIRE(VectorsAreEqual(e_nograd, e_expected, TOL));
@@ -3002,7 +3004,7 @@ TEST_CASE(":poly_2b_v6x:struct") {
     std::vector<double> e_2_expected = {-2.35607295155091378547e-02, 4.33858649187027367589e+00};
 
     e_nograd = p.eval(2, a.data(), x_2.data());
-    e = p.eval(2, a.data(), x_2.data(), g_2.data());
+    e = p.eval(2, a.data(), x_2.data(), t, g_2.data());
 
     REQUIRE(VectorsAreEqual(g_2, g_2_expected, TOL));
     REQUIRE(VectorsAreEqual(e_nograd, e_2_expected, TOL));

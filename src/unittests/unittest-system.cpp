@@ -37,7 +37,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "bblock/system.h"
 #include "io_tools/read_nrg.h"
 #include "tools/math_tools.h"
-#include "json/json.h"
+#include "json/json.hpp"
 #include "setup_h2o_2_ch4_1.h"
 #include "setup_co2_2_h2o_2.h"
 
@@ -247,6 +247,30 @@ TEST_CASE("system::energy") {
     //
     //        REQUIRE(failed);
     //    }
+}
+
+
+TEST_CASE("large system system::energy") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/2048_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/2048_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/2048_water.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    REQUIRE(e == Approx(-1.9374925825e+04).margin(TOL));
+
 }
 
 TEST_CASE("system::getters") {

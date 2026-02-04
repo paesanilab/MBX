@@ -2135,14 +2135,26 @@ TEST_CASE("poly-3b-v2x::class") {
         -1.69592374848519966690e-01, 6.75815828205166724274e-01,  -2.40067692790475462061e-02,
         6.87406021506685647182e+01,  5.57877082062145746022e+01,  -2.68982689045833467389e+01};
     double e_expected = 9.33907543812438234454e-01;
-    std::vector<double> t(32609, 0.0);
+    std::vector<double> t(6592*8, 0.0);
+
+    std::vector<double> vectorized_x(x.size()*8, 0.0);
+    for (size_t i = 0; i < x.size(); ++i) {
+            vectorized_x[i*8 + 0] = x[i];
+    }
+    std::vector<double> vectorized_g(g.size()*8, 0.0);
 
     x2o::poly_3b_v2x p;
 
     double e_nograd = p.eval(a.data(), x.data());
-    double e = p.eval(a.data(), x.data(), t.data(), g.data());
+    double* es = p.eval(a.data(), vectorized_x.data(), t.data(), vectorized_g.data());
+
+    for (size_t i = 0; i < g.size(); ++i) {
+        g[i] = vectorized_g[i*8 + 0];
+    }
 
     REQUIRE(VectorsAreEqual(g, g_expected, TOL));
     REQUIRE(e_nograd == Approx(e_expected).margin(TOL));
-    REQUIRE(e == Approx(e_expected).margin(TOL));
+    REQUIRE(es[0] == Approx(e_expected).margin(TOL));
+
+    delete[] es;
 }

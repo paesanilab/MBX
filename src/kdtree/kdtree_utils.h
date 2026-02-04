@@ -278,6 +278,85 @@ PointCloud<T> XyzToCloud(std::vector<T> xyz, bool use_pbc, std::vector<T> box, s
     return ptc;
 }
 
+
+// Gets a vector of XYZ and returns the point cloud. Only includes points within cutoff distance of bounds of box.
+template <typename T>
+PointCloud<T> XyzToCloudCutoff(std::vector<T>& xyz, const double cutoff, const bool use_pbc, const std::vector<T>& box, const std::vector<T>& box_inv, std::vector<size_t>& indexes) {
+    PointCloud<T> ptc;
+    ptc.PBC = use_pbc;
+    ptc.pbcbox = box;
+    ptc.pbcbox_inv = box_inv;
+
+    size_t np = xyz.size() / 3;
+    std::vector<T> pp(3);
+
+    // ptc.pts.resize(size);
+
+    std::vector<int> indxs = {0, -1, 1};
+    std::vector<double> uvw;
+
+    std::vector<double> cutoff_frac_coordinates;
+
+    if(use_pbc) cutoff_frac_coordinates = GetFractionalCoordinates(box, {cutoff, cutoff, cutoff});
+
+    for (size_t i = 0; i < np; i++) {
+        size_t i3 = 3 * i;
+        if (use_pbc) {
+            // Fix Coordinates to be in central box
+            double x_rec = box_inv[0] * xyz[i3] + box_inv[3] * xyz[i3 + 1] + box_inv[6] * xyz[i3 + 2];
+            double y_rec = box_inv[1] * xyz[i3] + box_inv[4] * xyz[i3 + 1] + box_inv[7] * xyz[i3 + 2];
+            double z_rec = box_inv[2] * xyz[i3] + box_inv[5] * xyz[i3 + 1] + box_inv[8] * xyz[i3 + 2];
+
+            x_rec -= std::floor(x_rec + 0.5);
+            y_rec -= std::floor(y_rec + 0.5);
+            z_rec -= std::floor(z_rec + 0.5);
+
+            xyz[i3 + 0] = pp[0] = box[0] * x_rec + box[3] * y_rec + box[6] * z_rec;
+            xyz[i3 + 1] = pp[1] = box[1] * x_rec + box[4] * y_rec + box[7] * z_rec;
+            xyz[i3 + 2] = pp[2] = box[2] * x_rec + box[5] * y_rec + box[8] * z_rec;
+
+            uvw = GetFractionalCoordinates(box, pp);
+        }
+
+        ptc.pts.resize(ptc.pts.size() + 1);
+        ptc.pts[ptc.pts.size()-1].x = xyz[i3];
+        ptc.pts[ptc.pts.size()-1].y = xyz[i3 + 1];
+        ptc.pts[ptc.pts.size()-1].z = xyz[i3 + 2];
+        indexes.push_back(i);
+
+        if (use_pbc) {
+            for (size_t m2 = 0; m2 < 3; m2++) {
+                int m = indxs[m2];
+                if ((uvw[0] + m) > 0.5 + cutoff_frac_coordinates[0] || (uvw[0] + m) < -0.5 - cutoff_frac_coordinates[0]) continue;
+                for (size_t n2 = 0; n2 < 3; n2++) {
+                    int n = indxs[n2];
+                    if ((uvw[1] + n) > 0.5 + cutoff_frac_coordinates[1] || (uvw[1] + n) < -0.5 - cutoff_frac_coordinates[1]) continue;
+                    for (size_t l2 = 0; l2 < 3; l2++) {
+                        if (m2 == 0 && n2 == 0 && l2 == 0) continue;
+                        int l = indxs[l2];
+                        if ((uvw[2] + l) > 0.5 + cutoff_frac_coordinates[2] || (uvw[2] + l) < -0.5 - cutoff_frac_coordinates[2]) continue;
+
+                        T sx = T(m) * box[0] + T(n) * box[3] + T(l) * box[6];
+                        T sy = T(m) * box[1] + T(n) * box[4] + T(l) * box[7];
+                        T sz = T(m) * box[2] + T(n) * box[5] + T(l) * box[8];
+                        
+                        ptc.pts.resize(ptc.pts.size() + 1);
+                        
+                        ptc.pts[ptc.pts.size() - 1].x = xyz[i3 + 0] + sx;
+                        ptc.pts[ptc.pts.size() - 1].y = xyz[i3 + 1] + sy;
+                        ptc.pts[ptc.pts.size() - 1].z = xyz[i3 + 2] + sz;
+                        indexes.push_back(i);
+
+                        // }
+                    }
+                }
+            }
+        }
+    }
+    return ptc;
+}
+
+
 }  // namespace kdtutils
 
 #endif  // KDTREE_UTILS_H

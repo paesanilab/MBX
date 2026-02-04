@@ -48,7 +48,7 @@ namespace lj {
 double lj(const double eps, const double sigma, double ljchgi, double ljchgj, const std::vector<double>& p1,
           const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
           std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
-          const size_t atom_index1, const size_t atom_index2, const double lj_scale_factor, bool do_grads,
+          const size_t atom_index1, const size_t atom_index2, const double lj_scale_factor, bool do_grads, bool do_field,
           const double cutoff, const double ewald_alpha, const std::vector<double>& box,
           const std::vector<double>& box_inverse, bool use_ghost, const std::vector<size_t>& islocal,
           const size_t isl1_offset, const size_t isl2_offset, std::vector<double>* virial) {
@@ -126,159 +126,214 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
 
 #endif
 
-    double lj_rep = 0.0;
-    double lj_attr = 0.0;
-    double lj_lr_below_cutoff = 0.0;
-
     size_t nmon22 = nmon2 * 2;
 
     size_t shift_phi = atom_index2 * nmon2;
     size_t shift2 = shift_phi * 3;
 
     bool use_pbc = box.size();
-    double g1[3], g2[3 * nmon2];
-    std::fill(g1, g1 + 3, 0.0);
-    std::fill(g2, g2 + 3 * nmon2, 0.0);
+
     const double* boxinv = box_inverse.data();
     const double* boxptr = box.data();
-    double lj_energy = 0;
-    for (size_t nv = start2; nv < end2; nv++) {
-        double dx = p1[0] - xyz2[shift2 + nv];
-        double dy = p1[1] - xyz2[nmon2 + shift2 + nv];
-        double dz = p1[2] - xyz2[nmon22 + shift2 + nv];
 
-        // Apply minimum image convetion
-        if (use_pbc) {
-            double tmp1 = boxinv[0] * dx + boxinv[3] * dy + boxinv[6] * dz;
-            double tmp2 = boxinv[1] * dx + boxinv[4] * dy + boxinv[7] * dz;
-            double tmp3 = boxinv[2] * dx + boxinv[5] * dy + boxinv[8] * dz;
+    const double sigma2 = sigma * sigma;
+    const double sigma6 = sigma2 * sigma2 * sigma2;
+    const double sigma12 = sigma6 * sigma6;
+
+    double lj_energy = 0;
+
+    double dx[end2];
+    double dy[end2];
+    double dz[end2];
+
+    double rsq[end2];
+    double r[end2];
+    double inv_rsq[end2];
+    double inv_r6[end2];
+    double inv_r12[end2];
+    double vscale[end2];
+
+    #pragma omp simd simdlen(8)
+    for (size_t nv = start2; nv < end2; nv++) {
+        dx[nv] = p1[0] - xyz2[shift2 + nv];
+        dy[nv] = p1[1] - xyz2[nmon2 + shift2 + nv];
+        dz[nv] = p1[2] - xyz2[nmon22 + shift2 + nv];
+    }
+
+    // Apply minimum image convetion
+    if (use_pbc) {
+        #pragma omp simd simdlen(8)
+        for (size_t nv = start2; nv < end2; nv++) {
+            double tmp1 = boxinv[0] * dx[nv] + boxinv[3] * dy[nv] + boxinv[6] * dz[nv];
+            double tmp2 = boxinv[1] * dx[nv] + boxinv[4] * dy[nv] + boxinv[7] * dz[nv];
+            double tmp3 = boxinv[2] * dx[nv] + boxinv[5] * dy[nv] + boxinv[8] * dz[nv];
 
             tmp1 -= std::floor(tmp1 + 0.5);
             tmp2 -= std::floor(tmp2 + 0.5);
             tmp3 -= std::floor(tmp3 + 0.5);
 
-            dx = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
-            dy = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
-            dz = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
-        }
-
-        const double rsq = dx * dx + dy * dy + dz * dz;
-        const double r = std::sqrt(rsq);
-        const double inv_rsq = 1.0 / rsq;
-        const double inv_r6 = inv_rsq * inv_rsq * inv_rsq;
-        const double inv_r12 = inv_r6 * inv_r6;
-        const double sigma2 = sigma * sigma;
-        const double sigma6 = sigma2 * sigma2 * sigma2;
-        const double sigma12 = sigma6 * sigma6;
-
-        // Update phi for long range interactions
-        // phi1 is a double value passed by reference
-        // phi2 is a double array
-
-        phi1 -= ljchgj * inv_r6;
-        phi2[shift_phi + nv] -= ljchgi * inv_r6;
-
-        bool include_pair = false;
-        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
-        if (!use_ghost) include_pair = true;
-        if (use_ghost && isls) include_pair = true;
-
-        // If using cutoff, check for distances and get proper dispersion
-        if (r <= cutoff && include_pair) {
-            // Intermediates used in the dispersion PME terms
-            double ar2 = ewald_alpha * ewald_alpha * rsq;
-            double ar4 = ar2 * ar2;
-            double ar6 = ar4 * ar2;
-            double expterm = ewald_alpha ? std::exp(-ar2) : 1;
-
-            const double ljrep_e = 4 * eps * sigma12 * inv_r12;
-            const double ljattr_e = 4 * eps * sigma6 * inv_r6;
-
-            // lj will refer to the real space, in which the full functional form of LJ is accounted for
-            // chg will refer to the reciprocal space. We will transition from cutoff -1 to cutoff from full expression
-            // to the "charge like" expression.
-
-            double ljsw_grad = 0;
-            const double ljsw = switch_function(r, cutoff - 1.0, cutoff, ljsw_grad);
-            const double chgsw = 1 - ljsw;
-            const double chgsw_grad = -ljsw_grad;
-
-            // The idea here is quite simple.  At short range we want the full term (ljattr_e + ljrep_e) to model
-            // lennard.  At long range this becomes chgi*chgj / Rij^6, which is handled by PME.  The reciprocal space
-            // part of PME always includes extra terms that contribute below the cutoff, even if that pair shouldn't
-            // contribute.  For intermonomer pairs, this means there is the LJ contribution that we want, but we have to
-            // remove the part of the reciprocal space from chgi chgj / Rij^6 that was added in the reciprocal space
-            // term.  Similarly for intramonomer terms, there should be no LJ contribution or chgi chgj / Rij^6 term, so
-            // we use the scale factor to prevent LJ contributing, and then back out the reciprocal space chgi chgj /
-            // Rij^6 contribution. See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
-            double chgterm = ljchgi * ljchgj * inv_r6;
-            double pmeterm = ljchgi * ljchgj * (1 - (1 + ar2 + ar4 / 2) * expterm) * inv_r6;
-            double attr_pair_energy = ljsw * (lj_scale_factor * ljattr_e) + chgsw * lj_scale_factor * chgterm - pmeterm;
-            // The repulsion part does not have a switch
-            double rep_pair_energy = lj_scale_factor * ljrep_e;
-
-            if (isls == 1) {
-                attr_pair_energy *= 0.5;
-                rep_pair_energy *= 0.5;
-            }
-
-            lj_energy += rep_pair_energy - attr_pair_energy;
-
-            if (do_grads) {
-                const double lj_attr_grad = 6 * sigma6 * inv_r6 * 4 * eps * inv_rsq;
-                const double lj_rep_grad = -12 * sigma12 * inv_r12 * 4 * eps * inv_rsq;
-                const double chg_attr_grad = 6 * ljchgi * ljchgj * inv_r6 * inv_rsq;
-
-                // const double e6term_grad = 6 * e6 * inv_rsq - C6 * std::pow(d6, 7) * if6 * std::exp(-d6r) / r;
-                // const double c6term_grad = 6 * c6term * inv_rsq;
-                const double pmeterm_grad =
-                    6 * ljchgi * ljchgj * (1 - (1 + ar2 + ar4 / 2 + ar6 / 6) * expterm) * inv_r6 * inv_rsq;
-
-                const double lj_attr_sw_grad = ljsw * lj_attr_grad - ljsw_grad * ljattr_e / r;
-                const double chg_attr_sw_grad = chgsw * chg_attr_grad - chgsw_grad * chgterm / r;
-
-                // const double ttgrad = ttsw * e6term_grad - ttsw_grad * e6 / r;
-                // const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term / r;
-                const double grad = lj_scale_factor * (lj_attr_sw_grad + chg_attr_sw_grad + lj_rep_grad) - pmeterm_grad;
-
-                g1[0] += dx * grad;
-                g2[nv] -= dx * grad;
-
-                g1[1] += dy * grad;
-                g2[nmon2 + nv] -= dy * grad;
-
-                g1[2] += dz * grad;
-                g2[nmon22 + nv] -= dz * grad;
-
-                if (virial != 0) {
-                    const double vscale = (isls == 1) ? 0.5 : 1.0;
-
-                    (*virial)[0] -= dx * dx * grad * vscale;  //  update the virial for the atom pair
-                    (*virial)[1] -= dx * dy * grad * vscale;
-                    (*virial)[2] -= dx * dz * grad * vscale;
-
-                    (*virial)[4] -= dy * dy * grad * vscale;
-                    (*virial)[5] -= dy * dz * grad * vscale;
-
-                    (*virial)[8] -= dz * dz * grad * vscale;
-
-                    (*virial)[3] = (*virial)[1];
-                    (*virial)[6] = (*virial)[2];
-                    (*virial)[7] = (*virial)[5];
-                }
-            }
+            dx[nv] = boxptr[0] * tmp1 + boxptr[3] * tmp2 + boxptr[6] * tmp3;
+            dy[nv] = boxptr[1] * tmp1 + boxptr[4] * tmp2 + boxptr[7] * tmp3;
+            dz[nv] = boxptr[2] * tmp1 + boxptr[5] * tmp2 + boxptr[8] * tmp3;
         }
     }
 
-    if (do_grads) {
-        grad1[0] += g1[0];
-        grad1[1] += g1[1];
-        grad1[2] += g1[2];
-        for (size_t i = start2; i < end2; i++) {
-            grad2[shift2 + i] += g2[i];
-            grad2[shift2 + nmon2 + i] += g2[nmon2 + i];
-            grad2[shift2 + nmon22 + i] += g2[nmon22 + i];
+    #pragma omp simd simdlen(8)
+    for (size_t nv = start2; nv < end2; nv++) {
+        rsq[nv] = dx[nv] * dx[nv] + dy[nv] * dy[nv] + dz[nv] * dz[nv];
+        r[nv] = std::sqrt(rsq[nv]);
+        inv_rsq[nv] = 1.0 / rsq[nv];
+        inv_r6[nv] = inv_rsq[nv] * inv_rsq[nv] * inv_rsq[nv];
+        inv_r12[nv] = inv_r6[nv] * inv_r6[nv];
+
+        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
+        vscale[nv] = (isls == 0) ? 0.0 : ((isls == 1) ? 0.5 : 1.0);
+        vscale[nv] = r[nv] > cutoff ? 0.0 : vscale[nv];
+    }
+
+    // Calculate contribution to lj field.
+    if (do_field) {
+        #pragma omp simd simdlen(8) reduction(+: phi1)
+        for (size_t nv = start2; nv < end2; nv++) {
+            phi1 -= ljchgj * inv_r6[nv];
+            phi2[shift_phi + nv] -= ljchgi * inv_r6[nv];
         }
+    }
+
+    double ljsw_grad[end2];
+    double ljsw[end2];
+
+    // Loop not vectorized, since current switch_function is not vectorized
+    if (ewald_alpha > 0.0) {
+        for (size_t nv = start2; nv < end2; nv++) {
+            ljsw[nv] = switch_function(r[nv], cutoff - 1.0, cutoff, ljsw_grad[nv]);
+        }
+    } else {
+        #pragma omp simd simdlen(8)
+        for (size_t nv = start2; nv < end2; nv++) {
+            ljsw[nv] = 1.0;
+            ljsw_grad[nv] = 0.0;
+        }
+    }
+
+    double chgsw[end2];
+    double chgsw_grad[end2];
+    double ljattr_e[end2];
+    double chgterm[end2];
+
+    #pragma omp simd simdlen(8) reduction(+ : lj_energy)
+    for (size_t nv = start2; nv < end2; nv++) {
+        const double ljrep_e = 4 * eps * sigma12 * inv_r12[nv];
+        ljattr_e[nv] = 4 * eps * sigma6 * inv_r6[nv];
+
+        lj_energy += lj_scale_factor * ljrep_e * vscale[nv];
+        lj_energy -= lj_scale_factor * ljsw[nv] * ljattr_e[nv] * vscale[nv];
+    }
+
+    if (ewald_alpha > 0.0) {
+        #pragma omp simd simdlen(8) reduction(+ : lj_energy)
+        for (size_t nv = start2; nv < end2; nv++) {
+            chgsw[nv] = 1 - ljsw[nv];
+            chgsw_grad[nv] = -ljsw_grad[nv];
+            chgterm[nv] = ljchgi * ljchgj * inv_r6[nv];
+
+            lj_energy -= lj_scale_factor * chgsw[nv] * chgterm[nv] * vscale[nv];
+        }
+    }
+
+    double ar2[end2];
+    double ar4[end2];
+    double ar6[end2];
+    double expterm[end2];
+
+    if (ewald_alpha > 0.0) {
+        #pragma omp simd simdlen(8) reduction(+ : lj_energy)
+        for (size_t nv = start2; nv < end2; nv++) {
+            // Intermediates used in the dispersion PME terms
+            ar2[nv] = ewald_alpha * ewald_alpha * rsq[nv];
+            ar4[nv] = ar2[nv] * ar2[nv];
+            expterm[nv] = ewald_alpha ? std::exp(-ar2[nv]) : 1;
+            double pmeterm = ljchgi * ljchgj * (1 - (1 + ar2[nv] + ar4[nv] / 2) * expterm[nv]) * inv_r6[nv];
+            lj_energy += pmeterm * vscale[nv];
+        }
+    }
+
+    
+    if (do_grads) {
+        double grad[end2];
+        std::fill(grad, grad + end2, 0.0);
+
+        if (ewald_alpha > 0.0) {
+            #pragma omp simd simdlen(8)
+            for (size_t nv = start2; nv < end2; nv++) {
+
+                double ar6 = ar4[nv] * ar2[nv];
+
+                const double pmeterm_grad =
+                    6 * ljchgi * ljchgj * (1 - (1 + ar2[nv] + ar4[nv] / 2 + ar6 / 6) * expterm[nv]) * inv_r6[nv] * inv_rsq[nv];
+
+                const double chg_attr_grad = 6 * ljchgi * ljchgj * inv_r6[nv] * inv_rsq[nv];
+                const double chg_attr_sw_grad = chgsw[nv] * chg_attr_grad - chgsw_grad[nv] * chgterm[nv] / r[nv];
+            
+                grad[nv] += lj_scale_factor * chg_attr_sw_grad - pmeterm_grad;
+            }
+        }
+
+        double gradx = 0.0;
+        double grady = 0.0;
+        double gradz = 0.0;
+
+        #pragma omp simd simdlen(8) reduction(+ : gradx, grady, gradz)
+        for (size_t nv = start2; nv < end2; nv++) {
+            const double lj_attr_grad = 6 * sigma6 * inv_r6[nv] * 4 * eps * inv_rsq[nv];
+            const double lj_rep_grad = -12 * sigma12 * inv_r12[nv] * 4 * eps * inv_rsq[nv];
+
+            const double lj_attr_sw_grad = ljsw[nv] * lj_attr_grad - ljsw_grad[nv] * ljattr_e[nv] / r[nv];
+
+            grad[nv] += lj_scale_factor * (lj_attr_sw_grad + lj_rep_grad);
+
+            gradx += dx[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nv] -= dx[nv] * grad[nv] * vscale[nv];
+
+            grady += dy[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nmon2 + nv] -= dy[nv] * grad[nv] * vscale[nv];
+
+            gradz += dz[nv] * grad[nv] * vscale[nv];
+            grad2[shift2 + nmon22 + nv] -= dz[nv] * grad[nv] * vscale[nv];
+        }
+
+
+        if (virial != 0) {
+
+            double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+            #pragma omp simd simdlen(8) reduction(+ : v[0:6])
+            for (size_t nv = start2; nv < end2; nv++) {
+                v[0] -= dx[nv] * dx[nv] * grad[nv] * vscale[nv];  //  update the virial for the atom pair
+                v[1] -= dx[nv] * dy[nv] * grad[nv] * vscale[nv];
+                v[2] -= dx[nv] * dz[nv] * grad[nv] * vscale[nv];
+
+                v[3] -= dy[nv] * dy[nv] * grad[nv] * vscale[nv];
+                v[4] -= dy[nv] * dz[nv] * grad[nv] * vscale[nv];
+
+                v[5] -= dz[nv] * dz[nv] * grad[nv] * vscale[nv];
+            }
+
+            (*virial)[0] += v[0];
+            (*virial)[1] += v[1];
+            (*virial)[2] += v[2];
+            (*virial)[4] += v[3];
+            (*virial)[5] += v[4];
+            (*virial)[8] += v[5];
+
+            (*virial)[3] += v[1];
+            (*virial)[6] += v[2];
+            (*virial)[7] += v[4];
+        }
+
+        grad1[0] += gradx;
+        grad1[1] += grady;
+        grad1[2] += gradz;
     }
 
 #ifdef DEBUG
@@ -320,7 +375,7 @@ double lj(const double eps, const double sigma, double ljchgi, double ljchgj, co
 }
 
 bool GetLjParams(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_epsilon,
-                 double& out_sigma, std::vector<std::pair<std::string, std::string> > use_lj, nlohmann::json lj_j) {
+                 double& out_sigma, std::vector<std::pair<std::string, std::string>>& use_lj, const nlohmann::json& lj_j) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
     if (mon_id2 < mon_id1) {

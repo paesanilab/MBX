@@ -1,3 +1,4 @@
+
 /******************************************************************************
 Copyright 2019 The Regents of the University of California.
 All Rights Reserved.
@@ -34,11 +35,14 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/3b/x3b-v2x.h"
 //#define PRINT_GPU_DATA
+#include <memory>
+#include <iostream>
 
 #ifdef PRINT_GPU_DATA
 #include <iostream>
 #include <iomanip>
 #endif
+
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace {
@@ -1391,7 +1395,11 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, const
 }
 
 //----------------------------------------------------------------------------//
-
+/**
+ * Globally increment loop (keep outer loop with i)
+ * Have separate index counter for x, gg (increment only when skip is false)
+ * Do an evaluation once we fill up x (i.e. idx == 7)
+*/
 double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, double* g1, double* g2, double* g3,
                      size_t nt, std::vector<double>* virial) {
 #ifdef DEBUG
@@ -1457,7 +1465,33 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
     double dab[3 * nt], dac[3 * nt], dbc[3 * nt];
     double e = 0.0;
 
-    double t[32609];
+    
+
+    double bigmem[3460*8];
+
+    void* pool = reinterpret_cast<void *>(bigmem);
+
+    size_t space = 3460*8*8;
+
+    double* t = reinterpret_cast<double *>(std::align(128, 3449*8*8, pool, space));
+
+    double x[36*8];
+    double gg[36*8];
+
+    int eval_sh[8];
+    const double* eval_oa[8];
+    const double* eval_ob[8];
+    const double* eval_oc[8];
+    const double* eval_ha1[8];
+    const double* eval_hb1[8];
+    const double* eval_hc1[8];
+    const double* eval_ha2[8];
+    const double* eval_hb2[8];
+    const double* eval_hc2[8];
+
+    int idx = 0;
+    int copyIdx = 0;
+
     for (size_t i = 0; i < nt; i++) {
         for (size_t j = 0; j < 3; j++) {
             dab[3 * i + j] = w1[9 * i + j] - w2[9 * i + j];
@@ -1479,9 +1513,6 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
         rbc[i] = std::sqrt(rbcsq[i]);
 
         bool skip = (rab[i] > r3f && rac[i] > r3f) || (rab[i] > r3f && rbc[i] > r3f) || (rac[i] > r3f && rbc[i] > r3f);
-        if (skip) continue;
-
-        double gg[36];
 
         size_t sh = i;
         size_t sh9 = 9 * sh;
@@ -1498,163 +1529,205 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
         const double* Hc1 = w3 + sh9 + 3;
         const double* Hc2 = w3 + sh9 + 6;
 
-        double x[36];
+        if(!skip) {
+            // Keep track of last 8 indices that we don't skip
+            eval_sh[idx] = sh;
 
-        x[0] = var(kHH_intra, dHH_intra, Ha1, Ha2);
-        x[1] = var(kHH_intra, dHH_intra, Hb1, Hb2);
-        x[2] = var(kHH_intra, dHH_intra, Hc1, Hc2);
-        x[3] = var(kOH_intra, dOH_intra, Oa, Ha1);
-        x[4] = var(kOH_intra, dOH_intra, Oa, Ha2);
-        x[5] = var(kOH_intra, dOH_intra, Ob, Hb1);
-        x[6] = var(kOH_intra, dOH_intra, Ob, Hb2);
-        x[7] = var(kOH_intra, dOH_intra, Oc, Hc1);
-        x[8] = var(kOH_intra, dOH_intra, Oc, Hc2);
+            eval_oa[idx] = Oa;
+            eval_ob[idx] = Ob;
+            eval_oc[idx] = Oc;
 
-        x[9] = var(kHH, dHH, Ha1, Hb1);
-        x[10] = var(kHH, dHH, Ha1, Hb2);
-        x[11] = var(kHH, dHH, Ha1, Hc1);
-        x[12] = var(kHH, dHH, Ha1, Hc2);
-        x[13] = var(kHH, dHH, Ha2, Hb1);
-        x[14] = var(kHH, dHH, Ha2, Hb2);
-        x[15] = var(kHH, dHH, Ha2, Hc1);
-        x[16] = var(kHH, dHH, Ha2, Hc2);
-        x[17] = var(kHH, dHH, Hb1, Hc1);
-        x[18] = var(kHH, dHH, Hb1, Hc2);
-        x[19] = var(kHH, dHH, Hb2, Hc1);
-        x[20] = var(kHH, dHH, Hb2, Hc2);
-        x[21] = var(kOH, dOH, Oa, Hb1);
-        x[22] = var(kOH, dOH, Oa, Hb2);
-        x[23] = var(kOH, dOH, Oa, Hc1);
-        x[24] = var(kOH, dOH, Oa, Hc2);
-        x[25] = var(kOH, dOH, Ob, Ha1);
-        x[26] = var(kOH, dOH, Ob, Ha2);
-        x[27] = var(kOH, dOH, Ob, Hc1);
-        x[28] = var(kOH, dOH, Ob, Hc2);
-        x[29] = var(kOH, dOH, Oc, Ha1);
-        x[30] = var(kOH, dOH, Oc, Ha2);
-        x[31] = var(kOH, dOH, Oc, Hb1);
-        x[32] = var(kOH, dOH, Oc, Hb2);
-        x[33] = var(kOO, dOO, Oa, Ob);
-        x[34] = var(kOO, dOO, Oa, Oc);
-        x[35] = var(kOO, dOO, Ob, Oc);
+            eval_ha1[idx] = Ha1;
+            eval_hb1[idx] = Hb1;
+            eval_hc1[idx] = Hc1;
 
-        double e3b = poly_3b_v2x::eval(thefit, x, t, gg);
+            eval_ha2[idx] = Ha2;
+            eval_hb2[idx] = Hb2;
+            eval_hc2[idx] = Hc2;
 
-        energy[i] = e3b;
+            x[0*8 + idx] = var(kHH_intra, dHH_intra, Ha1, Ha2);
+            x[1*8 + idx] = var(kHH_intra, dHH_intra, Hb1, Hb2);
+            x[2*8 + idx] = var(kHH_intra, dHH_intra, Hc1, Hc2);
+            x[3*8 + idx] = var(kOH_intra, dOH_intra, Oa, Ha1);
+            x[4*8 + idx] = var(kOH_intra, dOH_intra, Oa, Ha2);
+            x[5*8 + idx] = var(kOH_intra, dOH_intra, Ob, Hb1);
+            x[6*8 + idx] = var(kOH_intra, dOH_intra, Ob, Hb2);
+            x[7*8 + idx] = var(kOH_intra, dOH_intra, Oc, Hc1);
+            x[8*8 + idx] = var(kOH_intra, dOH_intra, Oc, Hc2);
 
-        double gab, gac, gbc;
+            x[9*8 + idx] = var(kHH, dHH, Ha1, Hb1);
+            x[10*8 + idx] = var(kHH, dHH, Ha1, Hb2);
+            x[11*8 + idx] = var(kHH, dHH, Ha1, Hc1);
+            x[12*8 + idx] = var(kHH, dHH, Ha1, Hc2);
+            x[13*8 + idx] = var(kHH, dHH, Ha2, Hb1);
+            x[14*8 + idx] = var(kHH, dHH, Ha2, Hb2);
+            x[15*8 + idx] = var(kHH, dHH, Ha2, Hc1);
+            x[16*8 + idx] = var(kHH, dHH, Ha2, Hc2);
+            x[17*8 + idx] = var(kHH, dHH, Hb1, Hc1);
+            x[18*8 + idx] = var(kHH, dHH, Hb1, Hc2);
+            x[19*8 + idx] = var(kHH, dHH, Hb2, Hc1);
+            x[20*8 + idx] = var(kHH, dHH, Hb2, Hc2);
+            x[21*8 + idx] = var(kOH, dOH, Oa, Hb1);
+            x[22*8 + idx] = var(kOH, dOH, Oa, Hb2);
+            x[23*8 + idx] = var(kOH, dOH, Oa, Hc1);
+            x[24*8 + idx] = var(kOH, dOH, Oa, Hc2);
+            x[25*8 + idx] = var(kOH, dOH, Ob, Ha1);
+            x[26*8 + idx] = var(kOH, dOH, Ob, Ha2);
+            x[27*8 + idx] = var(kOH, dOH, Ob, Hc1);
+            x[28*8 + idx] = var(kOH, dOH, Ob, Hc2);
+            x[29*8 + idx] = var(kOH, dOH, Oc, Ha1);
+            x[30*8 + idx] = var(kOH, dOH, Oc, Ha2);
+            x[31*8 + idx] = var(kOH, dOH, Oc, Hb1);
+            x[32*8 + idx] = var(kOH, dOH, Oc, Hb2);
+            x[33*8 + idx] = var(kOO, dOO, Oa, Ob);
+            x[34*8 + idx] = var(kOO, dOO, Oa, Oc);
+            x[35*8 + idx] = var(kOO, dOO, Ob, Oc);
 
-        const double sab = f_switch(rab[sh], gab);
-        const double sac = f_switch(rac[sh], gac);
-        const double sbc = f_switch(rbc[sh], gbc);
+            idx = (idx + 1) % 8;
 
-        const double s = sab * sac + sab * sbc + sac * sbc;
-
-        for (size_t j = 0; j < 36; j++) {
-            gg[j] *= s;
+            if(idx > 0 && i < nt - 1) continue;
         }
 
-        double* gOa = g1 + sh9;
-        double* gHa1 = g1 + sh9 + 3;
-        double* gHa2 = g1 + sh9 + 6;
+        if(!skip || (skip && i >= nt - 1 && idx > 0)) {
+            int numEvals = (idx == 0) ? 8 : idx;
+            double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
+            std::copy(e3b, e3b + numEvals, energy.begin() + copyIdx);
+            delete[] e3b;
 
-        double* gOb = g2 + sh9;
-        double* gHb1 = g2 + sh9 + 3;
-        double* gHb2 = g2 + sh9 + 6;
+            for(size_t j = 0; j < numEvals; j++) {
+                sh = eval_sh[j];
+                sh9 = 9 * sh;
+                int energyIdx = copyIdx + j;
 
-        double* gOc = g3 + sh9;
-        double* gHc1 = g3 + sh9 + 3;
-        double* gHc2 = g3 + sh9 + 6;
+                const double* Oa_new = eval_oa[j];
+                const double* Ha1_new = eval_ha1[j];
+                const double* Ha2_new = eval_ha2[j];
 
-        g_var(gg[0], kHH_intra, dHH_intra, Ha1, Ha2, gHa1, gHa2);
-        g_var(gg[1], kHH_intra, dHH_intra, Hb1, Hb2, gHb1, gHb2);
-        g_var(gg[2], kHH_intra, dHH_intra, Hc1, Hc2, gHc1, gHc2);
-        g_var(gg[3], kOH_intra, dOH_intra, Oa, Ha1, gOa, gHa1);
-        g_var(gg[4], kOH_intra, dOH_intra, Oa, Ha2, gOa, gHa2);
-        g_var(gg[5], kOH_intra, dOH_intra, Ob, Hb1, gOb, gHb1);
-        g_var(gg[6], kOH_intra, dOH_intra, Ob, Hb2, gOb, gHb2);
-        g_var(gg[7], kOH_intra, dOH_intra, Oc, Hc1, gOc, gHc1);
-        g_var(gg[8], kOH_intra, dOH_intra, Oc, Hc2, gOc, gHc2);
+                const double* Ob_new = eval_ob[j];
+                const double* Hb1_new = eval_hb1[j];
+                const double* Hb2_new = eval_hb2[j];
 
-        g_var(gg[9], kHH, dHH, Ha1, Hb1, gHa1, gHb1);
-        g_var(gg[10], kHH, dHH, Ha1, Hb2, gHa1, gHb2);
-        g_var(gg[11], kHH, dHH, Ha1, Hc1, gHa1, gHc1);
-        g_var(gg[12], kHH, dHH, Ha1, Hc2, gHa1, gHc2);
-        g_var(gg[13], kHH, dHH, Ha2, Hb1, gHa2, gHb1);
-        g_var(gg[14], kHH, dHH, Ha2, Hb2, gHa2, gHb2);
-        g_var(gg[15], kHH, dHH, Ha2, Hc1, gHa2, gHc1);
-        g_var(gg[16], kHH, dHH, Ha2, Hc2, gHa2, gHc2);
-        g_var(gg[17], kHH, dHH, Hb1, Hc1, gHb1, gHc1);
-        g_var(gg[18], kHH, dHH, Hb1, Hc2, gHb1, gHc2);
-        g_var(gg[19], kHH, dHH, Hb2, Hc1, gHb2, gHc1);
-        g_var(gg[20], kHH, dHH, Hb2, Hc2, gHb2, gHc2);
-        g_var(gg[21], kOH, dOH, Oa, Hb1, gOa, gHb1);
-        g_var(gg[22], kOH, dOH, Oa, Hb2, gOa, gHb2);
-        g_var(gg[23], kOH, dOH, Oa, Hc1, gOa, gHc1);
-        g_var(gg[24], kOH, dOH, Oa, Hc2, gOa, gHc2);
-        g_var(gg[25], kOH, dOH, Ob, Ha1, gOb, gHa1);
-        g_var(gg[26], kOH, dOH, Ob, Ha2, gOb, gHa2);
-        g_var(gg[27], kOH, dOH, Ob, Hc1, gOb, gHc1);
-        g_var(gg[28], kOH, dOH, Ob, Hc2, gOb, gHc2);
-        g_var(gg[29], kOH, dOH, Oc, Ha1, gOc, gHa1);
-        g_var(gg[30], kOH, dOH, Oc, Ha2, gOc, gHa2);
-        g_var(gg[31], kOH, dOH, Oc, Hb1, gOc, gHb1);
-        g_var(gg[32], kOH, dOH, Oc, Hb2, gOc, gHb2);
-        g_var(gg[33], kOO, dOO, Oa, Ob, gOa, gOb);
-        g_var(gg[34], kOO, dOO, Oa, Oc, gOa, gOc);
-        g_var(gg[35], kOO, dOO, Ob, Oc, gOb, gOc);
+                const double* Oc_new = eval_oc[j];
+                const double* Hc1_new = eval_hc1[j];
+                const double* Hc2_new = eval_hc2[j];
 
-        gab *= (sac + sbc) * energy[sh] / rab[sh];
-        gac *= (sab + sbc) * energy[sh] / rac[sh];
-        gbc *= (sab + sac) * energy[sh] / rbc[sh];
+                double gab, gac, gbc;
 
-        e += s * energy[sh];
+                const double sab = f_switch(rab[sh], gab);
+                const double sac = f_switch(rac[sh], gac);
+                const double sbc = f_switch(rbc[sh], gbc);
 
-        for (int n = 0; n < 3; ++n) {
-            gOa[n] += gab * dab[3 * sh + n] + gac * dac[3 * sh + n];
-            gOb[n] += gbc * dbc[3 * sh + n] - gab * dab[3 * sh + n];
-            gOc[n] -= gac * dac[3 * sh + n] + gbc * dbc[3 * sh + n];
-        }
-        if (virial != 0) {
-            (*virial)[0] += -w1[0 + 0 + sh9] * g1[0 + 0 + sh9] - w1[0 + 3 + sh9] * g1[0 + 3 + sh9] -
-                            w1[0 + 6 + sh9] * g1[0 + 6 + sh9] - w2[0 + 0 + sh9] * g2[0 + 0 + sh9] -
-                            w2[0 + 3 + sh9] * g2[0 + 3 + sh9] - w2[0 + 6 + sh9] * g2[0 + 6 + sh9] -
-                            w3[0 + 0 + sh9] * g3[0 + 0 + sh9] - w3[0 + 3 + sh9] * g3[0 + 3 + sh9] -
-                            w3[0 + 6 + sh9] * g3[0 + 6 + sh9];
+                const double s = sab * sac + sab * sbc + sac * sbc;
 
-            (*virial)[1] += -w1[0 + 0 + sh9] * g1[0 + 1 + sh9] - w1[0 + 3 + sh9] * g1[0 + 4 + sh9] -
-                            w1[0 + 6 + sh9] * g1[0 + 7 + sh9] - w2[0 + 0 + sh9] * g2[0 + 1 + sh9] -
-                            w2[0 + 3 + sh9] * g2[0 + 4 + sh9] - w2[0 + 6 + sh9] * g2[0 + 7 + sh9] -
-                            w3[0 + 0 + sh9] * g3[0 + 1 + sh9] - w3[0 + 3 + sh9] * g3[0 + 4 + sh9] -
-                            w3[0 + 6 + sh9] * g3[0 + 7 + sh9];
+                for (size_t k = 0; k < 36; k++) {
+                    gg[k*8 + j] *= s;
+                }
 
-            (*virial)[2] += -w1[0 + 0 + sh9] * g1[0 + 2 + sh9] - w1[0 + 3 + sh9] * g1[0 + 5 + sh9] -
-                            w1[0 + 6 + sh9] * g1[0 + 8 + sh9] - w2[0 + 0 + sh9] * g2[0 + 2 + sh9] -
-                            w2[0 + 3 + sh9] * g2[0 + 5 + sh9] - w2[0 + 6 + sh9] * g2[0 + 8 + sh9] -
-                            w3[0 + 0 + sh9] * g3[0 + 2 + sh9] - w3[0 + 3 + sh9] * g3[0 + 5 + sh9] -
-                            w3[0 + 6 + sh9] * g3[0 + 8 + sh9];
+                double* gOa = g1 + sh9;
+                double* gHa1 = g1 + sh9 + 3;
+                double* gHa2 = g1 + sh9 + 6;
 
-            (*virial)[4] += -w1[0 + 1 + sh9] * g1[0 + 1 + sh9] - w1[0 + 4 + sh9] * g1[0 + 4 + sh9] -
-                            w1[0 + 7 + sh9] * g1[0 + 7 + sh9] - w2[0 + 1 + sh9] * g2[0 + 1 + sh9] -
-                            w2[0 + 4 + sh9] * g2[0 + 4 + sh9] - w2[0 + 7 + sh9] * g2[0 + 7 + sh9] -
-                            w3[0 + 1 + sh9] * g3[0 + 1 + sh9] - w3[0 + 4 + sh9] * g3[0 + 4 + sh9] -
-                            w3[0 + 7 + sh9] * g3[0 + 7 + sh9];
+                double* gOb = g2 + sh9;
+                double* gHb1 = g2 + sh9 + 3;
+                double* gHb2 = g2 + sh9 + 6;
 
-            (*virial)[5] += -w1[0 + 1 + sh9] * g1[0 + 2 + sh9] - w1[0 + 4 + sh9] * g1[0 + 5 + sh9] -
-                            w1[0 + 7 + sh9] * g1[0 + 8 + sh9] - w2[0 + 1 + sh9] * g2[0 + 2 + sh9] -
-                            w2[0 + 4 + sh9] * g2[0 + 5 + sh9] - w2[0 + 7 + sh9] * g2[0 + 8 + sh9] -
-                            w3[0 + 1 + sh9] * g3[0 + 2 + sh9] - w3[0 + 4 + sh9] * g3[0 + 5 + sh9] -
-                            w3[0 + 7 + sh9] * g3[0 + 8 + sh9];
+                double* gOc = g3 + sh9;
+                double* gHc1 = g3 + sh9 + 3;
+                double* gHc2 = g3 + sh9 + 6;
 
-            (*virial)[8] += -w1[0 + 2 + sh9] * g1[0 + 2 + sh9] - w1[0 + 5 + sh9] * g1[0 + 5 + sh9] -
-                            w1[0 + 8 + sh9] * g1[0 + 8 + sh9] - w2[0 + 2 + sh9] * g2[0 + 2 + sh9] -
-                            w2[0 + 5 + sh9] * g2[0 + 5 + sh9] - w2[0 + 8 + sh9] * g2[0 + 8 + sh9] -
-                            w3[0 + 2 + sh9] * g3[0 + 2 + sh9] - w3[0 + 5 + sh9] * g3[0 + 5 + sh9] -
-                            w3[0 + 8 + sh9] * g3[0 + 8 + sh9];
+                g_var(gg[0*8 + j], kHH_intra, dHH_intra, Ha1_new, Ha2_new, gHa1, gHa2);
+                g_var(gg[1*8 + j], kHH_intra, dHH_intra, Hb1_new, Hb2_new, gHb1, gHb2);
+                g_var(gg[2*8 + j], kHH_intra, dHH_intra, Hc1_new, Hc2_new, gHc1, gHc2);
+                g_var(gg[3*8 + j], kOH_intra, dOH_intra, Oa_new, Ha1_new, gOa, gHa1);
+                g_var(gg[4*8 + j], kOH_intra, dOH_intra, Oa_new, Ha2_new, gOa, gHa2);
+                g_var(gg[5*8 + j], kOH_intra, dOH_intra, Ob_new, Hb1_new, gOb, gHb1);
+                g_var(gg[6*8 + j], kOH_intra, dOH_intra, Ob_new, Hb2_new, gOb, gHb2);
+                g_var(gg[7*8 + j], kOH_intra, dOH_intra, Oc_new, Hc1_new, gOc, gHc1);
+                g_var(gg[8*8 + j], kOH_intra, dOH_intra, Oc_new, Hc2_new, gOc, gHc2);
 
-            (*virial)[3] = (*virial)[1];
-            (*virial)[6] = (*virial)[2];
-            (*virial)[7] = (*virial)[5];
+                g_var(gg[9*8 + j], kHH, dHH, Ha1_new, Hb1_new, gHa1, gHb1);
+                g_var(gg[10*8 + j], kHH, dHH, Ha1_new, Hb2_new, gHa1, gHb2);
+                g_var(gg[11*8 + j], kHH, dHH, Ha1_new, Hc1_new, gHa1, gHc1);
+                g_var(gg[12*8 + j], kHH, dHH, Ha1_new, Hc2_new, gHa1, gHc2);
+                g_var(gg[13*8 + j], kHH, dHH, Ha2_new, Hb1_new, gHa2, gHb1);
+                g_var(gg[14*8 + j], kHH, dHH, Ha2_new, Hb2_new, gHa2, gHb2);
+                g_var(gg[15*8 + j], kHH, dHH, Ha2_new, Hc1_new, gHa2, gHc1);
+                g_var(gg[16*8 + j], kHH, dHH, Ha2_new, Hc2_new, gHa2, gHc2);
+                g_var(gg[17*8 + j], kHH, dHH, Hb1_new, Hc1_new, gHb1, gHc1);
+                g_var(gg[18*8 + j], kHH, dHH, Hb1_new, Hc2_new, gHb1, gHc2);
+                g_var(gg[19*8 + j], kHH, dHH, Hb2_new, Hc1_new, gHb2, gHc1);
+                g_var(gg[20*8 + j], kHH, dHH, Hb2_new, Hc2_new, gHb2, gHc2);
+                g_var(gg[21*8 + j], kOH, dOH, Oa_new, Hb1_new, gOa, gHb1);
+                g_var(gg[22*8 + j], kOH, dOH, Oa_new, Hb2_new, gOa, gHb2);
+                g_var(gg[23*8 + j], kOH, dOH, Oa_new, Hc1_new, gOa, gHc1);
+                g_var(gg[24*8 + j], kOH, dOH, Oa_new, Hc2_new, gOa, gHc2);
+                g_var(gg[25*8 + j], kOH, dOH, Ob_new, Ha1_new, gOb, gHa1);
+                g_var(gg[26*8 + j], kOH, dOH, Ob_new, Ha2_new, gOb, gHa2);
+                g_var(gg[27*8 + j], kOH, dOH, Ob_new, Hc1_new, gOb, gHc1);
+                g_var(gg[28*8 + j], kOH, dOH, Ob_new, Hc2_new, gOb, gHc2);
+                g_var(gg[29*8 + j], kOH, dOH, Oc_new, Ha1_new, gOc, gHa1);
+                g_var(gg[30*8 + j], kOH, dOH, Oc_new, Ha2_new, gOc, gHa2);
+                g_var(gg[31*8 + j], kOH, dOH, Oc_new, Hb1_new, gOc, gHb1);
+                g_var(gg[32*8 + j], kOH, dOH, Oc_new, Hb2_new, gOc, gHb2);
+                g_var(gg[33*8 + j], kOO, dOO, Oa_new, Ob_new, gOa, gOb);
+                g_var(gg[34*8 + j], kOO, dOO, Oa_new, Oc_new, gOa, gOc);
+                g_var(gg[35*8 + j], kOO, dOO, Ob_new, Oc_new, gOb, gOc);
+
+                gab *= (sac + sbc) * energy[energyIdx] / rab[sh];
+                gac *= (sab + sbc) * energy[energyIdx] / rac[sh];
+                gbc *= (sab + sac) * energy[energyIdx] / rbc[sh];
+
+                e += s * energy[energyIdx];
+
+                for (int n = 0; n < 3; ++n) {
+                    gOa[n] += gab * dab[3 * sh + n] + gac * dac[3 * sh + n];
+                    gOb[n] += gbc * dbc[3 * sh + n] - gab * dab[3 * sh + n];
+                    gOc[n] -= gac * dac[3 * sh + n] + gbc * dbc[3 * sh + n];
+                }
+                if (virial != 0) {
+                    (*virial)[0] += -w1[0 + 0 + sh9] * g1[0 + 0 + sh9] - w1[0 + 3 + sh9] * g1[0 + 3 + sh9] -
+                                    w1[0 + 6 + sh9] * g1[0 + 6 + sh9] - w2[0 + 0 + sh9] * g2[0 + 0 + sh9] -
+                                    w2[0 + 3 + sh9] * g2[0 + 3 + sh9] - w2[0 + 6 + sh9] * g2[0 + 6 + sh9] -
+                                    w3[0 + 0 + sh9] * g3[0 + 0 + sh9] - w3[0 + 3 + sh9] * g3[0 + 3 + sh9] -
+                                    w3[0 + 6 + sh9] * g3[0 + 6 + sh9];
+
+                    (*virial)[1] += -w1[0 + 0 + sh9] * g1[0 + 1 + sh9] - w1[0 + 3 + sh9] * g1[0 + 4 + sh9] -
+                                    w1[0 + 6 + sh9] * g1[0 + 7 + sh9] - w2[0 + 0 + sh9] * g2[0 + 1 + sh9] -
+                                    w2[0 + 3 + sh9] * g2[0 + 4 + sh9] - w2[0 + 6 + sh9] * g2[0 + 7 + sh9] -
+                                    w3[0 + 0 + sh9] * g3[0 + 1 + sh9] - w3[0 + 3 + sh9] * g3[0 + 4 + sh9] -
+                                    w3[0 + 6 + sh9] * g3[0 + 7 + sh9];
+
+                    (*virial)[2] += -w1[0 + 0 + sh9] * g1[0 + 2 + sh9] - w1[0 + 3 + sh9] * g1[0 + 5 + sh9] -
+                                    w1[0 + 6 + sh9] * g1[0 + 8 + sh9] - w2[0 + 0 + sh9] * g2[0 + 2 + sh9] -
+                                    w2[0 + 3 + sh9] * g2[0 + 5 + sh9] - w2[0 + 6 + sh9] * g2[0 + 8 + sh9] -
+                                    w3[0 + 0 + sh9] * g3[0 + 2 + sh9] - w3[0 + 3 + sh9] * g3[0 + 5 + sh9] -
+                                    w3[0 + 6 + sh9] * g3[0 + 8 + sh9];
+
+                    (*virial)[4] += -w1[0 + 1 + sh9] * g1[0 + 1 + sh9] - w1[0 + 4 + sh9] * g1[0 + 4 + sh9] -
+                                    w1[0 + 7 + sh9] * g1[0 + 7 + sh9] - w2[0 + 1 + sh9] * g2[0 + 1 + sh9] -
+                                    w2[0 + 4 + sh9] * g2[0 + 4 + sh9] - w2[0 + 7 + sh9] * g2[0 + 7 + sh9] -
+                                    w3[0 + 1 + sh9] * g3[0 + 1 + sh9] - w3[0 + 4 + sh9] * g3[0 + 4 + sh9] -
+                                    w3[0 + 7 + sh9] * g3[0 + 7 + sh9];
+
+                    (*virial)[5] += -w1[0 + 1 + sh9] * g1[0 + 2 + sh9] - w1[0 + 4 + sh9] * g1[0 + 5 + sh9] -
+                                    w1[0 + 7 + sh9] * g1[0 + 8 + sh9] - w2[0 + 1 + sh9] * g2[0 + 2 + sh9] -
+                                    w2[0 + 4 + sh9] * g2[0 + 5 + sh9] - w2[0 + 7 + sh9] * g2[0 + 8 + sh9] -
+                                    w3[0 + 1 + sh9] * g3[0 + 2 + sh9] - w3[0 + 4 + sh9] * g3[0 + 5 + sh9] -
+                                    w3[0 + 7 + sh9] * g3[0 + 8 + sh9];
+
+                    (*virial)[8] += -w1[0 + 2 + sh9] * g1[0 + 2 + sh9] - w1[0 + 5 + sh9] * g1[0 + 5 + sh9] -
+                                    w1[0 + 8 + sh9] * g1[0 + 8 + sh9] - w2[0 + 2 + sh9] * g2[0 + 2 + sh9] -
+                                    w2[0 + 5 + sh9] * g2[0 + 5 + sh9] - w2[0 + 8 + sh9] * g2[0 + 8 + sh9] -
+                                    w3[0 + 2 + sh9] * g3[0 + 2 + sh9] - w3[0 + 5 + sh9] * g3[0 + 5 + sh9] -
+                                    w3[0 + 8 + sh9] * g3[0 + 8 + sh9];
+
+                    (*virial)[3] = (*virial)[1];
+                    (*virial)[6] = (*virial)[2];
+                    (*virial)[7] = (*virial)[5];
+                }
+            }
+
+            copyIdx += numEvals;
         }
     }
 

@@ -1,7 +1,8 @@
 {
-   "Note" : "json file for MB-nrg CH4 -- MB-pol H2O mixtures",
+   "Note" : "MBX v1.3 json file for MB-nrg CH4 -- MB-pol H2O mixtures",
    "MBX" : { 
        "box" : [],
+       "realspace_cutoff": 9.0,
        "twobody_cutoff"   : 9.0,
        "threebody_cutoff" : 4.5,
        "dipole_tolerance" : 1E-8,

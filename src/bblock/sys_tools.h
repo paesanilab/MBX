@@ -46,7 +46,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "kdtree/kdtree_utils.h"
 #include "tools/definitions.h"
 #include "potential/lj/ljtools.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 #include "potential/1b/ps.h"
 #include "tools/constants.h"
