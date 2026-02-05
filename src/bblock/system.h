@@ -47,7 +47,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // Tools
 #include "kdtree/nanoflann.hpp"
 #include "kdtree/kdtree_utils.h"
-#include "json/json.h"
+#include "json/json.hpp"
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
 #include "tools/custom_exceptions.h"
@@ -1173,7 +1173,6 @@ class System {
 
    private:
     static constexpr const char* mbx_version = MBX_VERSION;
-
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
      * i < j < k. These i,j,k are the index of the corresponding monomer

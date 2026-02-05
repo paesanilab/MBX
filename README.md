@@ -1,36 +1,30 @@
-[![MBX testing suite](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml/badge.svg)](https://github.com/paesanilab/MBX-dev/actions/workflows/github-actions-mbx.yml)
-[![codecov](https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX-dev)
+[![MBX testing suite](https://github.com/paesanilab/MBX/actions/workflows/github-actions-mbx.yml/badge.svg)](https://github.com/paesanilab/MBX/actions/workflows/github-actions-mbx.yml)
+[![codecov](https://codecov.io/gh/paesanilab/MBX/branch/master/graph/badge.svg?token=4OE0CPMHGR)](https://codecov.io/gh/paesanilab/MBX)
 [![Homepage](https://img.shields.io/badge/google%20groups-mbx--users-green)](https://groups.google.com/g/mbx-users)
 
 
 
-# MBX v1.3.3
+# MBX v1.3.5
 MBX: A many-body energy and force calculator for data-driven many-body simulations.
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
 
-MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics and Monte Carlo engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
-The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs. 
+MBX is a C++ software that can either be used as a standalone software for calculating energies and forces of MB-nrg potential energy functions (PEFs) for the molecular systems of interest or interfaced with external molecular dynamics engines to perform classical and quantum simulations of the molecular system of interest across different thermodynamic states and phases, in both periodic and non-periodic conditions, using the corresponding MB-nrg PEFs.
+The current version of MBX provides interfaces to LAMMPS (https://www.lammps.org) and i-PI (http://ipi-code.org) which allow for performing classical and path-integral molecular dynamics simulations using MB-nrg PEFs.
 For details on the MB-pol and MB-nrg PEFs, please visit: https://paesanigroup.ucsd.edu/software/mbx.html.
 
 MBX is periodically updated with performance improvements and the addition of other MB-nrg PEFs. For any questions about MBX, installation issues, or general usage inquiries, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
 ## Compilation and Installation
 The following requirements need to be fulfilled in order to successfully install the software:
-- g++/gcc v4.9 or higher
-- icpc/icc v2018 or higher [optional but recommended]
-- MPI compilers [optional, needed only for LAMMPS]
+- g++/gcc v9.3 or higher
+- icpx/icx v2020 or higher [optional]
 - FFTW libraries
-- GSL libraries [optional, needed only for normal_modes executable]
-- Read the entire README before doing anything!
+- **Read the entire README before doing anything!**
 
-### Setup
-The home directory of MBX will be referred to as `$MBX_HOME`. You must set this environment variable, which can be exported either manually or by sourcing `sourceme.sh`:
-```console
-git clone https://github.com/paesanilab/MBX.git
-cd MBX/
-export MBX_HOME=$PWD
-```
+The following requirements are optional, depending on how you plan to use MBX:
+- MPI compilers [sometimes used for MBX+LAMMPS]
+- GSL libraries [needed only for normal_modes executable]
 
 ### Compilation
 MBX has different compilation instructions depending on how you plan to use it:
@@ -39,13 +33,18 @@ MBX has different compilation instructions depending on how you plan to use it:
 
 #### Basic installation of MBX (for use with i-PI, Python, Fortran, or standalone. **NOT LAMMPS**)
 ```console
+git clone https://github.com/paesanilab/MBX.git
+cd MBX/
+
 autoreconf -fi
 ./configure
 make && make install
+
+export MBX_HOME=$(pwd) # optional
 ```
 
 `./configure` has additional flags and options if you want to customize your installation:
-- `CXX=` if you want to use a different compiler than the system default. Popular options include `CXX=icpc` or `CXX=g++`
+- `CXX=` if you want to use a different compiler than the system default. Popular options include `CXX=icpx` or `CXX=g++`
 - `--enable-shared` if you want to also compile MBX as a shared library. This is **required for using MBX with Python**.
 - `--enable-debug` for debugging using GDB.
 - `--enable-verbose` will turn on additional logging to the console.
@@ -127,20 +126,20 @@ Please cite the corresponding manuscript whenever using MBX:
 - [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
 Please cite the following manuscripts if any of the following PEFs is used:
-- MB-pol for water
+- MB-pol for water: **\"h2o\"** (O H H)
   * [J. Chem. Theory Comput. 9, 5395 (2013)](https://doi.org/10.1021/ct400863t)
   * [J. Chem. Theory Comput. 10, 1599 (2014)](https://doi.org/10.1021/ct500079y)
   * [J. Chem. Theory Comput. 10, 2906 (2014)](https://doi.org/10.1021/ct5004115)
   * [J. Chem. Phys. 145, 194504 (2016)](https://doi.org/10.1063/1.4967719)
   * [Acc. Chem. Res. 49, 1844 (2016)](https://doi.org/10.1021/acs.accounts.6b00285)
-- MB-nrg PEFs for alkali-metal ions in water
+- MB-nrg PEFs for alkali-metal ions in water: **\"li+**, **\"na+**, **\"k+**, **\"rb+**, **\"cs+\"**
   * [J. Chem. Phys. 147, 161715 (2017)](https://doi.org/10.1063/1.4993213)
   * [J. Phys. Chem. A 122, 5811 (2018)](https://doi.org/10.1021/acs.jpca.8b04106)
   * [J. Phys. Chem. Lett. 10, 406 (2019)](https://doi.org/10.1021/acs.jpclett.8b03829)
   * [J. Chem. Phys. 153, 044306 (2020)](https://doi.org/10.1063/5.0013101)
   * [J. Chem. Theory Comput. 16, 3055 (2020)](https://doi.org/10.1021/acs.jctc.0c00082)
   * [J. Phys. Chem. B. 126, 9349 (2022)](https://doi.org/10.1021/acs.jpcb.2c05674)
-- MB-nrg PEFs for halide ions in water
+- MB-nrg PEFs for halide ions in water: **\"f-**, **\"cl-**, **\"br-**, **\"i-\"**
   * [J. Chem. Theory Comput. 12, 2698 (2016)](https://doi.org/10.1063/5.0059445)
   * [J. Chem. Phys. 148, 102321 (2018)](https://doi.org/10.1063/1.5005540)
   * [J. Comp. Theory. Comput. 15, 2983 (2019)](https://doi.org/10.1021/acs.jctc.9b00064)
@@ -150,13 +149,13 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * [Adv. Phys. X 4, 1631212 (2019)](https://doi.org/10.1080/23746149.2019.1631212)
   * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445)
   * [J. Phys. Chem. B 126, 8266 (2022)](https://doi.org/10.1021/acs.jpcb.2c04698)
-- MB-nrg PEFs for CO<sub>2</sub> and CO<sub>2</sub>/H<sub>2</sub>O mixtures
+- MB-nrg PEFs for CO<sub>2</sub> and CO<sub>2</sub>/H<sub>2</sub>O mixtures: **\"co2\"** (C O O)
   * [J. Chem. Theory Comput. 16, 2246 (2020)](https://doi.org/10.1021/acs.jctc.9b01175)
   * [J. Chem. Phys. 156, 104503 (2022)](https://doi.org/10.1063/5.0080061)
-- MB-nrg PEFs for CH<sub>4</sub> and CH<sub>4</sub>/H<sub>2</sub>O mixtures
+- MB-nrg PEFs for CH<sub>4</sub> and CH<sub>4</sub>/H<sub>2</sub>O mixtures: **\"ch4\"** (C H H H H)
   * [J. Phys. Chem. B 124, 11207 (2020)](https://doi.org/10.1021/acs.jpcb.0c08728)
   * [J. Chem. Phys. 156, 194504 (2022)](https://doi.org/10.1063/5.0089773)
-- MB-nrg PEF for N<sub>2</sub>O<sub>5</sub> in water
+- MB-nrg PEF for N<sub>2</sub>O<sub>5</sub> in water: **\"n2o5\"** (O N N O O O O)
   * [J. Chem. Theory Comput. 17, 3931 (2021)](https://doi.org/10.1021/acs.jctc.1c00069)
 
 ## Interfaces
@@ -169,29 +168,23 @@ export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 
 
 ### LAMMPS
-MBX can interface with [LAMMPS](https://lammps.sandia.gov/) using a plugin for LAMMPS. In order to use MBX with LAMMPS, you must first install MBX with MPI compilers. You must use `mpicxx` or `mpiicpc` instead of `g++` or `icpc`. This can be done by running the following commands:
+MBX is an official LAMMPS package (https://docs.lammps.org/pair_mbx.html),
+and needs to be installed using the [LAMMPS CMake build-chain](https://docs.lammps.org/Build_cmake.html):
+
 ```console
-# install MBX with MPI
-autoreconf -fi
-./configure --enable-mpi CXX=mpiicpc
-make && make install
+git clone -b develop https://github.com/lammps/lammps.git
+cd lammps
+
+cmake -S cmake -B build -C ./cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes
+cmake --build build --parallel 4                   # compilation (can use higher --parallel on powerful computers)
 ```
-This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
+This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other MBX plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
 
+Additional LAMMPS build options are available, such as using a different compiler or enabling additional packages. Please refer to the [LAMMPS CMake build documentation](https://docs.lammps.org/Build_basics.html) for more information.
 
- After installing MBX, you can then download the stable branch of LAMMPS and then compile it with the MBX plugin:
-```console
-git clone -b stable https://github.com/lammps/lammps.git LAMMPS-stable
-export LAMMPS_HOME=$PWD/LAMMPS-stable
+Examples for MBX+LAMMPS simulations are located in `$MBX_HOME/plugins/lammps/examples/`. Also see the LAMMPS documentation for more information about how to use MBX with LAMMPS: https://docs.lammps.org/pair_mbx.html.
 
-cp -rf $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
-cd $LAMMPS_HOME/src/
-make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
-make mpi_mbx -j 4 CXX=mpiicpc
-```
-After this, a new executable `lmp_mpi_mbx` in `$LAMMPS_HOME/src` should appear, and that is the executable you have to use for LAMMPS.
-
-Additional documentation will follow up. For now, please look at the examples in `MBX_HOME/plugins/lammps` to see how it is run. For any questions, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
+For any questions, please use the MBX Google Group: https://groups.google.com/g/mbx-users.
 
 
 ### i-PI
@@ -225,7 +218,7 @@ There are more tests for other types of simulations, including condensed phase s
 ## Coverage
 The unit tests implemented should cover a big part of the code. This sunburst graph gives an idea of the coverage from top (center) to bottom (periphery). Our goal is to keep it as green as possible, being green good coverage, and red bad coverage.
 <p align="center">
-  <img src="https://codecov.io/gh/paesanilab/MBX-dev/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
+  <img src="https://codecov.io/gh/paesanilab/MBX/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>
 
 
