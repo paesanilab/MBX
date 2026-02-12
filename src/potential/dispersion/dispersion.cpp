@@ -232,27 +232,35 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz,
     use_disp_all_ = std::vector<bool>(nmt * nmt);
     c6_all_ = std::vector<std::vector<double> >(nmt * nmt);
     d6_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    c8_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    c10_all_ = std::vector<std::vector<double> >(nmt * nmt);
     for (size_t mt1 = 0; mt1 < nmt; mt1++) {
         size_t ns1 = num_atoms_[fi1];
         fi2 = 0;
         for (size_t mt2 = 0; mt2 < nmt; mt2++) {
             size_t ns2 = num_atoms_[fi2];
-            std::vector<double> c6v(ns1 * ns2), d6v(ns1 * ns2);
+            std::vector<double> c6v(ns1 * ns2), d6v(ns1 * ns2), c8v(ns1 * ns2), c10v(ns1 * ns2);
 
             for (size_t i = 0; i < ns1; i++) {
                 for (size_t j = 0; j < ns2; j++) {
                     double c6 = 0.0;
                     double d6 = 0.0;
-                    bool do_disp = GetC6(mon_id_[fi1], mon_id_[fi2], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                    double c8 = 0.0;
+                    double c10 = 0.0;
+                    bool do_disp = GetC6(mon_id_[fi1], mon_id_[fi2], i, j, c6, d6, c8, c10, ignore_disp_, repdisp_j_);
                     if (i == 0 && j == 0) {
                         use_disp_all_[nmt * mt1 + mt2] = do_disp;
                     }
                     c6v[ns2 * i + j] = c6;
                     d6v[ns2 * i + j] = d6;
+                    c8v[ns2 * i + j] = c8;
+                    c10v[ns2 * i + j] = c10;
                 }
             }
             c6_all_[nmt * mt1 + mt2] = c6v;
             d6_all_[nmt * mt1 + mt2] = d6v;
+            c8_all_[nmt * mt1 + mt2] = c8v;
+            c10_all_[nmt * mt1 + mt2] = c10v;
             fi2 += mon_type_count_[mt2].second;
         }
         fi1 += mon_type_count_[mt1].second;
@@ -535,6 +543,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     excluded_set_type exc13;
     excluded_set_type exc14;
 
+    // Bool to store whether Koide dispersion damping was used
+    bool use_koide = false;
+
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = num_atoms_[fi_mon];
@@ -546,6 +557,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+
+        // Obtain whether Koide dispersion damping was used for this monomer
+        use_koide = systools::GetUseKoideMonomer(mon_id_[fi_mon]);
 
         // For parallel region
         std::vector<std::vector<double> > phi_pool(nthreads);
@@ -577,12 +591,14 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                     bool is13 = systools::IsExcluded(exc13, i, j);
                     bool is14 = systools::IsExcluded(exc14, i, j);
                     double disp_scale_factor = (is12 || is13 || is14 || !do_disp) ? 0 : 1;
-                    double c6, d6;
+                    double c6, d6, c8, c10;
                     double c6i = c6_long_range_[fi_sites + i * nmon];
                     double c6j = c6_long_range_[fi_sites + j * nmon];
                     // GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
                     c6 = c6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
                     d6 = d6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                    c8 = c8_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                    c10 = c10_all_[mt * mon_type_count_.size() + mt][i * ns + j];
 
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
@@ -596,7 +612,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
                         p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                         energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
+                            disp6(c6, d6, c8, c10, use_koide, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
                                 m, m + 1, i, j, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                                 box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank], fi_crd);
                         grad_pool[rank][inmon3 + m] += g1[0];
@@ -821,6 +837,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
             double disp_scale_factor = do_disp ? 1.0 : 0.0;
 
+            // Obtain whether Koide dispersion damping was used for this dimer        
+            use_koide = systools::GetUseKoideDimer(mon_id_[fi_mon1], mon_id_[fi_mon2]);
+
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
             // previous loop.
@@ -868,10 +887,12 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
                         double c6j = c6_long_range_[fi_sites2 + j * nmon2];
-                        double c6, d6;
+                        double c6, d6, c8, c10;
                         // GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, ignore_disp_, repdisp_j_);
                         c6 = c6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                         d6 = d6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                        c8 = c8_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                        c10 = c10_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
 
                         std::vector<size_t> good_mon2_indices;
                         
@@ -902,7 +923,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         }
 
                         energy_pool[rank] += disp6(
-                            c6, d6, c6i, c6j, xyz_sitei, reordered_xyz2, g1, reordered_grad2, phi_i, reordered_phi2, nmon1,
+                            c6, d6, c8, c10, use_koide, c6i, c6j, xyz_sitei, reordered_xyz2, g1, reordered_grad2, phi_i, reordered_phi2, nmon1,
                             reordered_mon2_size, 0, reordered_mon2_size, i, 0, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                             box_inverse_, use_ghost, reordered_islocal, 0, 1, &virial_pool[rank], 0);
 

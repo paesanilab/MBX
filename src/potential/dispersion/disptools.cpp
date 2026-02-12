@@ -34,6 +34,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/dispersion/disptools.h"
 
+#include <array>
+
 namespace disp {
 
 double tang_toennies(int n, const double& x) {
@@ -107,9 +109,361 @@ double tang_toennies(const double& x) {
     return tt;
 }
 
+double koideC6(const double& x) {
+    // x is in Bohr
+
+    std::array<double, 10> xp;
+    xp[0] = 1.0;
+    for (size_t i = 1; i < xp.size(); ++i) xp[i] = xp[i - 1] * x;
+
+    const double e2 = std::exp(-2.0 * x);
+    const double e4 = e2 * e2; // exp(-4x)
+
+    // ---- A(x) ----
+    const double polyA =
+        (89.0/1728.0) * xp[3] +
+        (89.0/864.0) * xp[4] +
+        (119.0/1296.0) * xp[5] +
+        (5.0/108.0) * xp[6] +
+        (11.0/810.0) * xp[7] +
+        (1.0/486.0) * xp[8] +
+        (1.0/8505.0) * xp[9];
+
+    // ---- B(x) ----
+    const double polyB =
+        1.0 +
+        2.0 * x +
+        2.0 * xp[2] +
+        (4.0/3.0) * xp[3] +
+        (2.0/3.0) * xp[4] +
+        (1699.0/6480.0) * xp[5] +
+        (259.0/3240.0) * xp[6] +
+        (197.0/11340.0) * xp[7] +
+        (19.0/8505.0) * xp[8] +
+        (1.0/8505.0) * xp[9];
+
+    return (e4 / 2.0) * (polyA * polyA) + (1.0 - e2 * polyB) * (1.0 - e2 * polyB);
+}
+
+double koideC8(const double& x) {
+    // x is in Bohr
+
+    std::array<double, 12> xp;
+    xp[0] = 1.0;
+    for (size_t i = 1; i < xp.size(); ++i) xp[i] = xp[i - 1] * x;
+
+    const double e2 = std::exp(-2.0 * x);
+    const double e4 = e2 * e2; // exp(-4x)
+
+    // ---- A(x) ----
+    const double polyA =
+        (47.0/8640.0) * xp[5] +
+        (47.0/4320.0) * xp[6] +
+        (7.0/720.0) * xp[7] +
+        (2.0/405.0) * xp[8] +
+        (209.0/141750.0) * xp[9] +
+        (11.0/47250.0) * xp[10] +
+        (1.0/70875.0) * xp[11];
+
+    // ---- B(x) ----
+    const double polyB =
+        1.0 +
+        2.0 * x +
+        2.0 * xp[2] +
+        (4.0/3.0) * xp[3] +
+        (2.0/3.0) * xp[4] +
+        (4.0/15.0) * xp[5] +
+        (4.0/45.0) * xp[6] +
+        (109.0/4320.0) * xp[7] +
+        (13.0/2160.0) * xp[8] +
+        (211.0/189000.0) * xp[9] +
+        (19.0/141750.0) * xp[10] +
+        (1.0/141750.0) * xp[11];
+
+    return (e4 / 6.0) * (polyA * polyA) + (1.0 - e2 * polyB) * (1.0 - e2 * polyB);
+}
+
+// default for C10 is chi13
+double koideC10(const double& x) {
+    // x is in Bohr
+
+    std::array<double, 14> xp;
+    xp[0] = 1.0;
+    for (size_t i = 1; i < xp.size(); ++i) xp[i] = xp[i - 1] * x;
+
+    const double e2 = std::exp(-2.0 * x);
+    const double e4 = e2 * e2; // exp(-4x)
+
+    // ---- A(x) ----
+    const double polyA =
+        (11.0/80640.0) * xp[7] +
+        (11.0/40320.0) * xp[8] +
+        (241.0/987840.0) * xp[9] +
+        (23.0/185220.0) * xp[10] +
+        (23.0/617400.0) * xp[11] +
+        (11.0/1852200.0) * xp[12] +
+        (1.0/2778300.0) * xp[13];
+
+    // ---- B(x) ----
+    const double polyB =
+        1.0 +
+        2.0 * x +
+        2.0 * xp[2] +
+        (4.0/3.0) * xp[3] +
+        (2.0/3.0) * xp[4] +
+        (4.0/15.0) * xp[5] +
+        (4.0/45.0) * xp[6] +
+        (8.0/315.0) * xp[7] +
+        (2.0/315.0) * xp[8] +
+        (6253.0/4445280.0) * xp[9] +
+        (3041.0/11113200.0) * xp[10] +
+        (3.0/68600.0) * xp[11] +
+        (2.0/416745.0) * xp[12] +
+        (1.0/4167450.0) * xp[13];
+
+    return (e4 / 3.0) * (polyA * polyA) + (1.0 - e2 * polyB) * (1.0 - e2 * polyB);
+}
+
+// Also implement chi22 just in case
+double koideC10chi22(const double& x) {
+    // x is in Bohr
+
+    std::array<double, 14> xp;
+    xp[0] = 1.0;
+    for (size_t i = 1; i < xp.size(); ++i) xp[i] = xp[i - 1] * x;
+
+    const double e2 = std::exp(-2.0 * x);
+    const double e4 = e2 * e2; // exp(-4x)
+
+    // ---- A1(x) ----
+    const double polyA1 =
+        (-13.0/7200.0) * xp[5] +
+        (-13.0/3600.0) * xp[6] +
+        (-67.0/21600.0) * xp[7] +
+        (-1.0/720.0) * xp[8] +
+        (-7.0/27000.0) * xp[9] +
+        (1.0/20250.0) * xp[10] +
+        (2.0/50625.0) * xp[11] +
+        (1.0/118125.0) * xp[12] +
+        (2.0/3189375.0) * xp[13];
+
+    // ---- A2(x) ----
+    const double polyA2 =
+        (11.0/75600.0) * xp[7] +
+        (11.0/37800.0) * xp[8] +
+        (23.0/88200.0) * xp[9] +
+        (53.0/396900.0) * xp[10] +
+        (121.0/2976750.0) * xp[11] +
+        (2.0/297675.0) * xp[12] +
+        (2.0/4465125.0) * xp[13];
+
+    // ---- B(x) ----
+    const double polyB =
+        1.0 +
+        2.0 * x +
+        2.0 * xp[2] +
+        (4.0/3.0) * xp[3] +
+        (2.0/3.0) * xp[4] +
+        (4.0/15.0) * xp[5] +
+        (4.0/45.0) * xp[6] +
+        (8.0/315.0) * xp[7] +
+        (2.0/315.0) * xp[8] +
+        (698.0/496125.0) * xp[9] +
+        (136.0/496125.0) * xp[10] +
+        (73.0/1653750.0) * xp[11] +
+        (37.0/7441875.0) * xp[12] +
+        (2.0/7441875.0) * xp[13];
+
+    return (e4 / 14.0) * (polyA1 * polyA1) + (e4 / 5.0) * (polyA2 * polyA2) + (1.0 - e2 * polyB) * (1.0 - e2 * polyB);
+}
+
+double koideC6grad(const double& x) {
+    // x is in Bohr
+
+    std::array<double, 19> xp;
+    xp[0] = 1.0;
+    for (size_t i = 1; i < xp.size(); ++i) xp[i] = xp[i - 1] * x;
+
+    const double e2 = std::exp(-2.0 * x);
+    const double e4 = e2 * e2; // exp(-4x)
+
+    // ---- A(x) ----  (multiplies exp(-2x))
+    const double polyA =
+        (-29.0/648.0) * xp[4] +
+        (-29.0/324.0) * xp[5] +
+        (-31.0/405.0) * xp[6] +
+        (-41.0/1215.0) * xp[7] +
+        (-58.0/8505.0) * xp[8] +
+        (-4.0/8505.0) * xp[9];
+
+    // ---- B(x) ----  (multiplies exp(-4x))
+    const double polyB =
+        (29.0/648.0) * xp[4] +
+        (170255.0/995328.0) * xp[5] +
+        (389707.0/1244160.0) * xp[6] +
+        (2051701.0/5598720.0) * xp[7] +
+        (3038533.0/9797760.0) * xp[8] +
+        (4028711.0/19595520.0) * xp[9] +
+        (332345.0/2939328.0) * xp[10] +
+        (1951531.0/36741600.0) * xp[11] +
+        (194311.0/9185400.0) * xp[12] +
+        (23689.0/3444525.0) * xp[13] +
+        (4763.0/2755620.0) * xp[14] +
+        (1517.0/4822335.0) * xp[15] +
+        (919.0/24111675.0) * xp[16] +
+        (13.0/4822335.0) * xp[17] +
+        (2.0/24111675.0) * xp[18];
+
+    // ---- d chi(r) / d x ---- 
+    // Chain rule: d/dx = (dr/dx) d/dr = bohr_per_ang * d/dr  (r: Ang / x: Bohr)
+    const double dchi_dr = -(e2 * polyA) - (e4 * polyB);
+    return disp::bohr_per_ang * dchi_dr;
+}
+
+double koideC8grad(const double& x) {
+    // x is in Bohr
+
+    std::array<double, 23> xp;
+    xp[0] = 1.0;
+    for (size_t i = 1; i < xp.size(); ++i) xp[i] = xp[i - 1] * x;
+
+    const double e2 = std::exp(-2.0 * x);
+    const double e4 = e2 * e2; // exp(-4x)
+
+    // ---- A(x) ----  (multiplies exp(-2x))
+    const double polyA =
+        (-1.0/432.0) * xp[6] +
+        (-1.0/216.0) * xp[7] +
+        (-94.0/23625.0) * xp[8] +
+        (-253.0/141750.0) * xp[9] +
+        (-1.0/2625.0) * xp[10] +
+        (-2.0/70875.0) * xp[11];
+
+    // ---- B(x) ----  (multiplies exp(-4x))
+    const double polyB =
+        (1.0/432.0) * xp[6] +
+        (1.0/108.0) * xp[7] +
+        (3377.0/189000.0) * xp[8] +
+        (172745201.0/7838208000.0) * xp[9] +
+        (38068337.0/1959552000.0) * xp[10] +
+        (636817.0/48988800.0) * xp[11] +
+        (2522557.0/367416000.0) * xp[12] +
+        (43404469.0/14696640000.0) * xp[13] +
+        (3933989.0/3674160000.0) * xp[14] +
+        (1882543.0/5511240000.0) * xp[15] +
+        (5497.0/55112400.0) * xp[16] +
+        (366899.0/13778100000.0) * xp[17] +
+        (7019.0/1148175000.0) * xp[18] +
+        (293.0/267907500.0) * xp[19] +
+        (82.0/602791875.0) * xp[20] +
+        (61.0/6027918750.0) * xp[21] +
+        (1.0/3013959375.0) * xp[22];
+
+    // ---- d chi(r) / d x ---- 
+    // Chain rule: d/dx = (dr/dx) d/dr = bohr_per_ang * d/dr  (r: Ang / x: Bohr)
+    const double dchi_dr = -(e2 * polyA) - (e4 * polyB);
+    return disp::bohr_per_ang * dchi_dr;
+}
+
+// default for C10 is chi13
+double koideC10grad(const double& x) {
+    // x is in Bohr
+
+    std::array<double, 27> xp;
+    xp[0] = 1.0;
+    for (size_t i = 1; i < xp.size(); ++i) xp[i] = xp[i - 1] * x;
+
+    const double e2 = std::exp(-2.0 * x);
+    const double e4 = e2 * e2; // exp(-4x)
+
+    // ---- A(x) ----  (multiplies exp(-2x))
+    const double polyA =
+        (-19.0/246960.0) * xp[8] +
+        (-19.0/123480.0) * xp[9] +
+        (-92.0/694575.0) * xp[10] +
+        (-83.0/1389150.0) * xp[11] +
+        (-1.0/77175.0) * xp[12] +
+        (-2.0/2083725.0) * xp[13];
+
+    // ---- B(x) ----  (multiplies exp(-4x))
+    const double polyB =
+        (19.0/246960.0) * xp[8] +
+        (19.0/61740.0) * xp[9] +
+        (3301.0/5556600.0) * xp[10] +
+        (1021.0/1389150.0) * xp[11] +
+        (173.0/264600.0) * xp[12] +
+        (30451927.0/68279500800.0) * xp[13] +
+        (4153559.0/17069875200.0) * xp[14] +
+        (10886347.0/99574272000.0) * xp[15] +
+        (9244633.0/224042112000.0) * xp[16] +
+        (13856807.0/1045529856000.0) * xp[17] +
+        (574649.0/156829478400.0) * xp[18] +
+        (3138241.0/3528663264000.0) * xp[19] +
+        (868319.0/4410829080000.0) * xp[20] +
+        (26087.0/630118440000.0) * xp[21] +
+        (26977.0/3308121810000.0) * xp[22] +
+        (1.0/735138180.0) * xp[23] +
+        (137.0/827030452500.0) * xp[24] +
+        (61.0/4962182715000.0) * xp[25] +
+        (1.0/2481091357500.0) * xp[26];
+
+    // ---- d chi(r) / d x ---- 
+    // Chain rule: d/dx = (dr/dx) d/dr = bohr_per_ang * d/dr  (r: Ang / x: Bohr)
+    const double dchi_dr = -(e2 * polyA) - (e4 * polyB);
+    return disp::bohr_per_ang * dchi_dr;
+}
+
+// Also implement chi22 just in case
+double koideC10chi22grad(const double& x) {
+    // x is in Bohr
+
+    std::array<double, 27> xp;
+    xp[0] = 1.0;
+    for (size_t i = 1; i < xp.size(); ++i) xp[i] = xp[i - 1] * x;
+
+    const double e2 = std::exp(-2.0 * x);
+    const double e4 = e2 * e2; // exp(-4x)
+
+    // ---- A(x) ----  (multiplies exp(-2x))
+    const double polyA =
+        (-4.0/55125.0) * xp[8] +
+        (-8.0/55125.0) * xp[9] +
+        (-311.0/2480625.0) * xp[10] +
+        (-142.0/2480625.0) * xp[11] +
+        (-32.0/2480625.0) * xp[12] +
+        (-8.0/7441875.0) * xp[13];
+
+    // ---- B(x) ----  (multiplies exp(-4x))
+    const double polyB =
+        (4.0/55125.0) * xp[8] +
+        (146273.0/508032000.0) * xp[9] +
+        (38909.0/70560000.0) * xp[10] +
+        (1063.0/1568000.0) * xp[11] +
+        (286469.0/476280000.0) * xp[12] +
+        (47072843.0/114307200000.0) * xp[13] +
+        (6504203.0/28576800000.0) * xp[14] +
+        (52367501.0/500094000000.0) * xp[15] +
+        (15309733.0/375070500000.0) * xp[16] +
+        (406649.0/30005640000.0) * xp[17] +
+        (2151547.0/562605750000.0) * xp[18] +
+        (776291.0/843908625000.0) * xp[19] +
+        (204949.0/1054885781250.0) * xp[20] +
+        (24401.0/632931468750.0) * xp[21] +
+        (11884.0/1582328671875.0) * xp[22] +
+        (2096.0/1582328671875.0) * xp[23] +
+        (844.0/4746986015625.0) * xp[24] +
+        (212.0/14240958046875.0) * xp[25] +
+        (8.0/14240958046875.0) * xp[26];
+
+    // ---- d chi(r) / d x ---- 
+    // Chain rule: d/dx = (dr/dx) d/dr = bohr_per_ang * d/dr  (r: Ang / x: Bohr)
+    const double dchi_dr = -(e2 * polyA) - (e4 * polyB);
+    return disp::bohr_per_ang * dchi_dr;
+}
+
 //----------------------------------------------------------------------------//
 
-double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,
+double disp6(const double C6, const double d6, const double C8, const double C10, const bool use_koide, const double c6i, const double c6j, const std::vector<double>& p1,
              const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
              std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
              const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads, bool do_field,
@@ -245,179 +599,387 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
         }
     }
 
-    double rsq[end2];
-    double r[end2];
-    double inv_rsq[end2];
-    double inv_r6[end2];
 
-    double vscale[end2];
 
-    #pragma omp simd simdlen(8)
-    for (size_t nv = start2; nv < end2; nv++) {
-        dx[nv] = p1[0] - x[nv];
-        dy[nv] = p1[1] - y[nv];
-        dz[nv] = p1[2] - z[nv];
+    // If use_koide = false, use Tang-Toennies damping function                                                       
+    if (!use_koide) {
 
-        rsq[nv] = dx[nv] * dx[nv] + dy[nv] * dy[nv] + dz[nv] * dz[nv];
-        r[nv] = std::sqrt(rsq[nv]);
+        double rsq[end2];
+        double r[end2];
+        double inv_rsq[end2];
+        double inv_r6[end2];
 
-        inv_rsq[nv] = 1.0 / rsq[nv];
-        inv_r6[nv] = inv_rsq[nv] * inv_rsq[nv] * inv_rsq[nv];
+        double vscale[end2];
 
-        size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
-        vscale[nv] = (isls == 0) ? 0.0 : ((isls == 1) ? 0.5 : 1.0);
-        vscale[nv] = r[nv] > cutoff ? 0.0 : vscale[nv];
-    }
-
-    if (do_field) {
-        #pragma omp simd simdlen(8) reduction(+: phi1)
-        for (size_t nv = start2; nv < end2; nv++) {
-            phi2[shift_phi + start2 + nv] -= c6i * inv_r6[nv];
-            phi1 -= c6j * inv_r6[nv];
-        }
-    }
-
-    double tt6[end2];
-    double ttsw_grad[end2];
-    double ttsw[end2];
-    double ipair_energy[end2];
-    double d6r[end2];
-
-    #pragma omp simd simdlen(8)
-    for (size_t nv = start2; nv < end2; nv++) {
-        d6r[nv] = d6 * r[nv];
-    }
-    
-    // Loop not vectorized because this functions are not yet vectorizable.
-    for (size_t nv = start2; nv < end2; nv++) {
-        tt6[nv] = disp::tang_toennies(d6r[nv]);
-    }
-
-    if (ewald_alpha > 0.0) {
-        // Loop not vectorized because this functions are not yet vectorizable.
-        for (size_t nv = start2; nv < end2; nv++) {
-            ttsw[nv] = switch_function(r[nv], cutoff - 1.0, cutoff, ttsw_grad[nv]);
-        }
-    } else {
         #pragma omp simd simdlen(8)
         for (size_t nv = start2; nv < end2; nv++) {
-            ttsw[nv] = 1.0;
-            ttsw_grad[nv] = 0.0;
+            dx[nv] = p1[0] - x[nv];
+            dy[nv] = p1[1] - y[nv];
+            dz[nv] = p1[2] - z[nv];
+
+            rsq[nv] = dx[nv] * dx[nv] + dy[nv] * dy[nv] + dz[nv] * dz[nv];
+            r[nv] = std::sqrt(rsq[nv]);
+
+            inv_rsq[nv] = 1.0 / rsq[nv];
+            inv_r6[nv] = inv_rsq[nv] * inv_rsq[nv] * inv_rsq[nv];
+
+            size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
+            vscale[nv] = (isls == 0) ? 0.0 : ((isls == 1) ? 0.5 : 1.0);
+            vscale[nv] = r[nv] > cutoff ? 0.0 : vscale[nv];
         }
-    }
-    
 
-    // The idea here is quite simple.  At short range we want the TT term (e6) to model dispersion.  At long
-    // range this becomes C6i C6j / Rij^6, which is handled by PME.  The reciprocal space part of PME always
-    // includes extra terms that contribute below the cutoff, even if that pair shouldn't contribute.  For
-    // intermonomer pairs, this means there is the TT contribution that we want, but we have to remove the
-    // part of the reciprocal space from C6i C6j / Rij^6 that was added in the reciprocal space term.  Similarly
-    // for intramonomer terms, there should be no TT contribution or C6i C6j / Rij^6 term, so we use the scale
-    // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
-    // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
+        if (do_field) {
+            #pragma omp simd simdlen(8) reduction(+: phi1)
+            for (size_t nv = start2; nv < end2; nv++) {
+                phi2[shift_phi + start2 + nv] -= c6i * inv_r6[nv];
+                phi1 -= c6j * inv_r6[nv];
+            }
+        }
 
-    double e6[end2];
-    double expterm[end2];
-    double ar2[end2];
-    double ar4[end2];
-    double c6term[end2];
+        double tt6[end2];
+        double ttsw_grad[end2];
+        double ttsw[end2];
+        double ipair_energy[end2];
+        double d6r[end2];
 
-    #pragma omp simd simdlen(8) reduction(+ : dispersion_energy)
-    for (size_t nv = start2; nv < end2; nv++) {
-        e6[nv] = C6 * tt6[nv] * inv_r6[nv];
-        dispersion_energy -= disp_scale_factor * ttsw[nv] * e6[nv] * vscale[nv];
-    }
-    
-    if (ewald_alpha > 0.0) {
-        #pragma omp simd simdlen(8) reduction(+ : dispersion_energy)
+        #pragma omp simd simdlen(8)
         for (size_t nv = start2; nv < end2; nv++) {
-            c6term[nv] = c6i * c6j * inv_r6[nv];
-            
-            // Intermediates used in the dispersion PME terms
-            ar2[nv] = ewald_alpha * ewald_alpha * rsq[nv];
-            ar4[nv] = ar2[nv] * ar2[nv];
-            expterm[nv] = ewald_alpha ? std::exp(-ar2[nv]) : 1;
-
-            double pmeterm = c6i * c6j * (1 - (1 + ar2[nv] + ar4[nv] / 2) * expterm[nv]) * inv_r6[nv];
-
-            dispersion_energy -= disp_scale_factor * (1 - ttsw[nv]) * c6term[nv] * vscale[nv] - pmeterm * vscale[nv];
+            d6r[nv] = d6 * r[nv];
         }
-    }
-
-    if (do_grads) {
-        double grad[end2];
-        std::fill(grad, grad + end2, 0.0);
         
+        // Loop not vectorized because this functions are not yet vectorizable.
+        for (size_t nv = start2; nv < end2; nv++) {
+            tt6[nv] = disp::tang_toennies(d6r[nv]);
+        }
+
         if (ewald_alpha > 0.0) {
+            // Loop not vectorized because this functions are not yet vectorizable.
+            for (size_t nv = start2; nv < end2; nv++) {
+                ttsw[nv] = switch_function(r[nv], cutoff - 1.0, cutoff, ttsw_grad[nv]);
+            }
+        } else {
             #pragma omp simd simdlen(8)
             for (size_t nv = start2; nv < end2; nv++) {
-                const double c6sw = 1 - ttsw[nv];
-                const double c6sw_grad = -ttsw_grad[nv];
-                const double c6term_grad = 6 * c6term[nv] * inv_rsq[nv];
-                double ar6 = ar4[nv] * ar2[nv];
-                double pmeterm2 = c6i * c6j * (1 - (1 + ar2[nv] + ar4[nv] / 2 + ar6 / 6) * expterm[nv]) * inv_r6[nv];
-                const double pmeterm_grad = 6 * pmeterm2 * inv_rsq[nv];
-                const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[nv] / r[nv];
-                grad[nv] += disp_scale_factor * c6grad - pmeterm_grad;
+                ttsw[nv] = 1.0;
+                ttsw_grad[nv] = 0.0;
             }
         }
+        
 
-        double gradx = 0.0;
-        double grady = 0.0;
-        double gradz = 0.0;
+        // The idea here is quite simple.  At short range we want the TT term (e6) to model dispersion.  At long
+        // range this becomes C6i C6j / Rij^6, which is handled by PME.  The reciprocal space part of PME always
+        // includes extra terms that contribute below the cutoff, even if that pair shouldn't contribute.  For
+        // intermonomer pairs, this means there is the TT contribution that we want, but we have to remove the
+        // part of the reciprocal space from C6i C6j / Rij^6 that was added in the reciprocal space term.  Similarly
+        // for intramonomer terms, there should be no TT contribution or C6i C6j / Rij^6 term, so we use the scale
+        // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
+        // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
 
-        double C6_d6_7 = C6 * std::pow(d6, 7);
+        double e6[end2];
+        double expterm[end2];
+        double ar2[end2];
+        double ar4[end2];
+        double c6term[end2];
 
-        #pragma omp simd simdlen(8) reduction(+ : gradx, grady, gradz)
+        #pragma omp simd simdlen(8) reduction(+ : dispersion_energy)
         for (size_t nv = start2; nv < end2; nv++) {
+            e6[nv] = C6 * tt6[nv] * inv_r6[nv];
+            dispersion_energy -= disp_scale_factor * ttsw[nv] * e6[nv] * vscale[nv];
+        }
+        
+        if (ewald_alpha > 0.0) {
+            #pragma omp simd simdlen(8) reduction(+ : dispersion_energy)
+            for (size_t nv = start2; nv < end2; nv++) {
+                c6term[nv] = c6i * c6j * inv_r6[nv];
+                
+                // Intermediates used in the dispersion PME terms
+                ar2[nv] = ewald_alpha * ewald_alpha * rsq[nv];
+                ar4[nv] = ar2[nv] * ar2[nv];
+                expterm[nv] = ewald_alpha ? std::exp(-ar2[nv]) : 1;
 
-            const double e6term_grad = 6 * e6[nv] * inv_rsq[nv] - C6_d6_7 * if6 * std::exp(-d6r[nv]) / r[nv];
-            const double ttgrad = ttsw[nv] * e6term_grad - ttsw_grad[nv] * e6[nv] / r[nv];
-            
-            grad[nv] += disp_scale_factor * ttgrad;
+                double pmeterm = c6i * c6j * (1 - (1 + ar2[nv] + ar4[nv] / 2) * expterm[nv]) * inv_r6[nv];
 
-            gradx += dx[nv] * grad[nv] * vscale[nv];
-
-            grady += dy[nv] * grad[nv] * vscale[nv];
-
-            gradz += dz[nv] * grad[nv] * vscale[nv];
-
-            grad2[shift2 + nv] -= dx[nv] * grad[nv] * vscale[nv];
-            grad2[shift2 + nmon2 + nv] -= dy[nv] * grad[nv] * vscale[nv];
-            grad2[shift2 + nmon22 + nv] -= dz[nv] * grad[nv] * vscale[nv];
+                dispersion_energy -= disp_scale_factor * (1 - ttsw[nv]) * c6term[nv] * vscale[nv] - pmeterm * vscale[nv];
+            }
         }
 
-        if (virial != 0) {
-
-            double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-            #pragma omp simd simdlen(8) reduction(+ : v[0:6])
-            for (size_t nv = start2; nv < end2; nv++) {
-                v[0] -= dx[nv] * dx[nv] * grad[nv] * vscale[nv];  //  update the virial for the atom pair
-                v[1] -= dx[nv] * dy[nv] * grad[nv] * vscale[nv];
-                v[2] -= dx[nv] * dz[nv] * grad[nv] * vscale[nv];
-
-                v[3] -= dy[nv] * dy[nv] * grad[nv] * vscale[nv];
-                v[4] -= dy[nv] * dz[nv] * grad[nv] * vscale[nv];
-
-                v[5] -= dz[nv] * dz[nv] * grad[nv] * vscale[nv];
+        if (do_grads) {
+            double grad[end2];
+            std::fill(grad, grad + end2, 0.0);
+            
+            if (ewald_alpha > 0.0) {
+                #pragma omp simd simdlen(8)
+                for (size_t nv = start2; nv < end2; nv++) {
+                    const double c6sw = 1 - ttsw[nv];
+                    const double c6sw_grad = -ttsw_grad[nv];
+                    const double c6term_grad = 6 * c6term[nv] * inv_rsq[nv];
+                    double ar6 = ar4[nv] * ar2[nv];
+                    double pmeterm2 = c6i * c6j * (1 - (1 + ar2[nv] + ar4[nv] / 2 + ar6 / 6) * expterm[nv]) * inv_r6[nv];
+                    const double pmeterm_grad = 6 * pmeterm2 * inv_rsq[nv];
+                    const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[nv] / r[nv];
+                    grad[nv] += disp_scale_factor * c6grad - pmeterm_grad;
+                }
             }
 
-            (*virial)[0] += v[0];
-            (*virial)[1] += v[1];
-            (*virial)[2] += v[2];
-            (*virial)[4] += v[3];
-            (*virial)[5] += v[4];
-            (*virial)[8] += v[5];
+            double gradx = 0.0;
+            double grady = 0.0;
+            double gradz = 0.0;
 
-            (*virial)[3] += v[1];
-            (*virial)[6] += v[2];
-            (*virial)[7] += v[4];
+            double C6_d6_7 = C6 * std::pow(d6, 7);
+
+            #pragma omp simd simdlen(8) reduction(+ : gradx, grady, gradz)
+            for (size_t nv = start2; nv < end2; nv++) {
+
+                // Note: e6term_grad = - d(e6)/dr * (1/r) , where e6 = tt6*C6/r^6. The extra factor of (1/r) is there because (dx,dy,dz) will soon be 
+                // multiplied to yield the x,y,z components of the gradient. See calculations for getting grad1 and grad2, right below.
+                const double e6term_grad = 6 * e6[nv] * inv_rsq[nv] - C6_d6_7 * if6 * std::exp(-d6r[nv]) / r[nv];
+                const double ttgrad = ttsw[nv] * e6term_grad - ttsw_grad[nv] * e6[nv] / r[nv];
+                
+                grad[nv] += disp_scale_factor * ttgrad;
+
+                gradx += dx[nv] * grad[nv] * vscale[nv];
+
+                grady += dy[nv] * grad[nv] * vscale[nv];
+
+                gradz += dz[nv] * grad[nv] * vscale[nv];
+
+                grad2[shift2 + nv] -= dx[nv] * grad[nv] * vscale[nv];
+                grad2[shift2 + nmon2 + nv] -= dy[nv] * grad[nv] * vscale[nv];
+                grad2[shift2 + nmon22 + nv] -= dz[nv] * grad[nv] * vscale[nv];
+            }
+
+            if (virial != 0) {
+
+                double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+                #pragma omp simd simdlen(8) reduction(+ : v[0:6])
+                for (size_t nv = start2; nv < end2; nv++) {
+                    v[0] -= dx[nv] * dx[nv] * grad[nv] * vscale[nv];  //  update the virial for the atom pair
+                    v[1] -= dx[nv] * dy[nv] * grad[nv] * vscale[nv];
+                    v[2] -= dx[nv] * dz[nv] * grad[nv] * vscale[nv];
+
+                    v[3] -= dy[nv] * dy[nv] * grad[nv] * vscale[nv];
+                    v[4] -= dy[nv] * dz[nv] * grad[nv] * vscale[nv];
+
+                    v[5] -= dz[nv] * dz[nv] * grad[nv] * vscale[nv];
+                }
+
+                (*virial)[0] += v[0];
+                (*virial)[1] += v[1];
+                (*virial)[2] += v[2];
+                (*virial)[4] += v[3];
+                (*virial)[5] += v[4];
+                (*virial)[8] += v[5];
+
+                (*virial)[3] += v[1];
+                (*virial)[6] += v[2];
+                (*virial)[7] += v[4];
+            }
+
+            grad1[0] += gradx;
+            grad1[1] += grady;
+            grad1[2] += gradz;
+        }
+    }
+
+    // If use_koide = true, use Koide damping function // inv_r10 terms are all commented out for now
+    else if (use_koide) {
+
+        double rsq[end2];
+        double r[end2];
+        double inv_rsq[end2];
+        double inv_r6[end2];
+        double inv_r8[end2];
+        //double inv_r10[end2];
+
+        double vscale[end2];
+
+        #pragma omp simd simdlen(8)
+        for (size_t nv = start2; nv < end2; nv++) {
+            dx[nv] = p1[0] - x[nv];
+            dy[nv] = p1[1] - y[nv];
+            dz[nv] = p1[2] - z[nv];
+
+            rsq[nv] = dx[nv] * dx[nv] + dy[nv] * dy[nv] + dz[nv] * dz[nv];
+            r[nv] = std::sqrt(rsq[nv]);
+
+            inv_rsq[nv] = 1.0 / rsq[nv];
+            inv_r6[nv] = inv_rsq[nv] * inv_rsq[nv] * inv_rsq[nv];
+            inv_r8[nv] = inv_r6[nv] * inv_rsq[nv];
+            //inv_r10[nv] = inv_r8[nv] * inv_rsq[nv];
+
+            size_t isls = islocal[isl1_offset] + islocal[isl2_offset + nv];
+            vscale[nv] = (isls == 0) ? 0.0 : ((isls == 1) ? 0.5 : 1.0);
+            vscale[nv] = r[nv] > cutoff ? 0.0 : vscale[nv];
         }
 
-        grad1[0] += gradx;
-        grad1[1] += grady;
-        grad1[2] += gradz;
+        if (do_field) {
+            #pragma omp simd simdlen(8) reduction(+: phi1)
+            for (size_t nv = start2; nv < end2; nv++) {
+                phi2[shift_phi + start2 + nv] -= c6i * inv_r6[nv];
+                phi1 -= c6j * inv_r6[nv];
+            }
+        }
+
+        double k6[end2], k8[end2]; //, k10[end2];
+        double k6g[end2], k8g[end2]; //, k10g[end2];
+        double ttsw_grad[end2];
+        double ttsw[end2];
+        double ipair_energy[end2];
+        double r_bohr[end2];
+
+        #pragma omp simd simdlen(8)
+        for (size_t nv = start2; nv < end2; nv++) {
+            r_bohr[nv] = disp::bohr_per_ang * r[nv];
+        }
+
+        // Loop not vectorized because this functions are not yet vectorizable.
+        for (size_t nv = start2; nv < end2; nv++) {
+            k6[nv] = disp::koideC6(r_bohr[nv]);
+            k8[nv] = disp::koideC8(r_bohr[nv]);
+            // k10[nv] = disp::koideC10(r_bohr[nv]);
+            k6g[nv] = disp::koideC6grad(r_bohr[nv]);
+            k8g[nv] = disp::koideC8grad(r_bohr[nv]);
+            // k10g[nv] = disp::koideC10grad(r_bohr[nv]);
+        }
+
+        if (ewald_alpha > 0.0) {
+            // Loop not vectorized because this functions are not yet vectorizable.
+            for (size_t nv = start2; nv < end2; nv++) {
+                ttsw[nv] = switch_function(r[nv], cutoff - 1.0, cutoff, ttsw_grad[nv]);
+            }
+        } else {
+            #pragma omp simd simdlen(8)
+            for (size_t nv = start2; nv < end2; nv++) {
+                ttsw[nv] = 1.0;
+                ttsw_grad[nv] = 0.0;
+            }
+        }
+        
+
+        // The idea here is quite simple.  At short range we want the TT term (e6) to model dispersion.  At long
+        // range this becomes C6i C6j / Rij^6, which is handled by PME.  The reciprocal space part of PME always
+        // includes extra terms that contribute below the cutoff, even if that pair shouldn't contribute.  For
+        // intermonomer pairs, this means there is the TT contribution that we want, but we have to remove the
+        // part of the reciprocal space from C6i C6j / Rij^6 that was added in the reciprocal space term.  Similarly
+        // for intramonomer terms, there should be no TT contribution or C6i C6j / Rij^6 term, so we use the scale
+        // factor to prevent TT contributing, and then back out the reciprocal space C6i C6j / Rij^6 contribution.
+        // See http://dx.doi.org/10.1021/acs.jctc.5b00726 for more details of this trick.
+
+        double e6[end2];
+        double expterm[end2];
+        double ar2[end2];
+        double ar4[end2];
+        double c6term[end2];
+        // e6 holds all C_N contributions
+        // ekN (N=6,8,10) holds Koide damped C_N contributions
+        double ek6[end2], ek8[end2]; // , ek10[end2];
+
+        #pragma omp simd simdlen(8) reduction(+ : dispersion_energy)
+        for (size_t nv = start2; nv < end2; nv++) {
+            ek6[nv] = C6 * k6[nv] * inv_r6[nv];
+            ek8[nv] = C8 * k8[nv] * inv_r8[nv];
+            //ek10[nv] = C10 * k10[nv] * inv_r10[nv];
+            e6[nv] = ek6[nv] + ek8[nv] ; // + ek10[nv] ;
+            dispersion_energy -= disp_scale_factor * ttsw[nv] * e6[nv] * vscale[nv];
+        }
+        
+        if (ewald_alpha > 0.0) {
+            #pragma omp simd simdlen(8) reduction(+ : dispersion_energy)
+            for (size_t nv = start2; nv < end2; nv++) {
+                c6term[nv] = c6i * c6j * inv_r6[nv];
+                
+                // Intermediates used in the dispersion PME terms
+                ar2[nv] = ewald_alpha * ewald_alpha * rsq[nv];
+                ar4[nv] = ar2[nv] * ar2[nv];
+                expterm[nv] = ewald_alpha ? std::exp(-ar2[nv]) : 1;
+
+                double pmeterm = c6i * c6j * (1 - (1 + ar2[nv] + ar4[nv] / 2) * expterm[nv]) * inv_r6[nv];
+
+                dispersion_energy -= disp_scale_factor * (1 - ttsw[nv]) * c6term[nv] * vscale[nv] - pmeterm * vscale[nv];
+            }
+        }
+
+        if (do_grads) {
+            double grad[end2];
+            std::fill(grad, grad + end2, 0.0);
+            
+            if (ewald_alpha > 0.0) {
+                #pragma omp simd simdlen(8)
+                for (size_t nv = start2; nv < end2; nv++) {
+                    const double c6sw = 1 - ttsw[nv];
+                    const double c6sw_grad = -ttsw_grad[nv];
+                    const double c6term_grad = 6 * c6term[nv] * inv_rsq[nv];
+                    double ar6 = ar4[nv] * ar2[nv];
+                    double pmeterm2 = c6i * c6j * (1 - (1 + ar2[nv] + ar4[nv] / 2 + ar6 / 6) * expterm[nv]) * inv_r6[nv];
+                    const double pmeterm_grad = 6 * pmeterm2 * inv_rsq[nv];
+                    const double c6grad = c6sw * c6term_grad - c6sw_grad * c6term[nv] / r[nv];
+                    grad[nv] += disp_scale_factor * c6grad - pmeterm_grad;
+                }
+            }
+
+            double gradx = 0.0;
+            double grady = 0.0;
+            double gradz = 0.0;
+
+            double C6_d6_7 = C6 * std::pow(d6, 7);
+
+            #pragma omp simd simdlen(8) reduction(+ : gradx, grady, gradz)
+            for (size_t nv = start2; nv < end2; nv++) {
+
+                // Note: e6term_grad = - d(e6)/dr * (1/r) , where e6 = k6*C6/r^6 (+ k8*C8/r^8 + k10*C10/r^10). 
+                // The extra factor of (1/r) is there because (dx,dy,dz) will soon be multiplied to yield the x,y,z components of the gradient. 
+                // See calculations for getting grad1 and grad2, right below.
+                const double e6term_grad = (6 * ek6[nv] + 8 * ek8[nv]) * inv_rsq[nv] - (C6 * k6g[nv] * inv_r6[nv] + C8 * k8g[nv] * inv_r8[nv]) / r[nv];
+                //const double e6term_grad = (6 * ek6[nv] + 8 * ek8[nv] + 10 * ek10[nv]) * inv_rsq[nv] - (C6 * k6g[nv] * inv_r6[nv] + C8 * k8g[nv] * inv_r8[nv] + C10 * k10g[nv] * inv_r10[nv])/r[nv];
+
+                const double ttgrad = ttsw[nv] * e6term_grad - ttsw_grad[nv] * e6[nv] / r[nv];
+                
+                grad[nv] += disp_scale_factor * ttgrad;
+
+                gradx += dx[nv] * grad[nv] * vscale[nv];
+
+                grady += dy[nv] * grad[nv] * vscale[nv];
+
+                gradz += dz[nv] * grad[nv] * vscale[nv];
+
+                grad2[shift2 + nv] -= dx[nv] * grad[nv] * vscale[nv];
+                grad2[shift2 + nmon2 + nv] -= dy[nv] * grad[nv] * vscale[nv];
+                grad2[shift2 + nmon22 + nv] -= dz[nv] * grad[nv] * vscale[nv];
+            }
+
+            if (virial != 0) {
+
+                double v[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+                #pragma omp simd simdlen(8) reduction(+ : v[0:6])
+                for (size_t nv = start2; nv < end2; nv++) {
+                    v[0] -= dx[nv] * dx[nv] * grad[nv] * vscale[nv];  //  update the virial for the atom pair
+                    v[1] -= dx[nv] * dy[nv] * grad[nv] * vscale[nv];
+                    v[2] -= dx[nv] * dz[nv] * grad[nv] * vscale[nv];
+
+                    v[3] -= dy[nv] * dy[nv] * grad[nv] * vscale[nv];
+                    v[4] -= dy[nv] * dz[nv] * grad[nv] * vscale[nv];
+
+                    v[5] -= dz[nv] * dz[nv] * grad[nv] * vscale[nv];
+                }
+
+                (*virial)[0] += v[0];
+                (*virial)[1] += v[1];
+                (*virial)[2] += v[2];
+                (*virial)[4] += v[3];
+                (*virial)[5] += v[4];
+                (*virial)[8] += v[5];
+
+                (*virial)[3] += v[1];
+                (*virial)[6] += v[2];
+                (*virial)[7] += v[4];
+            }
+
+            grad1[0] += gradx;
+            grad1[1] += grady;
+            grad1[2] += gradz;
+        }
     }
 
 #ifdef DEBUG
@@ -458,7 +1020,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
     return dispersion_energy;
 }
 
-bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6,
+bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_C6, double& out_d6, double& out_C8, double& out_C10,
            std::vector<std::pair<std::string, std::string>>& ignore_disp, const nlohmann::json& repdisp_j) {
     // Order the two monomer names and corresponding xyz
     bool swaped = false;
@@ -472,16 +1034,24 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
         swaped = true;
     }
 
-    std::vector<double> C6, d6;
+    std::vector<double> C6, d6, C8, C10;
     size_t nt2, i, j;
 
     out_C6 = 0.0;
     out_d6 = 0.0;
+    out_C8 = 0.0;
+    out_C10 = 0.0;
+
+    bool use_koide = false;
+    bool use_C8 = false;
+    bool use_C10 = false;
 
     if (std::find(ignore_disp.begin(), ignore_disp.end(), std::make_pair(mon_id1, mon_id2)) != ignore_disp.end() ||
         std::find(ignore_disp.begin(), ignore_disp.end(), std::make_pair(mon_id2, mon_id1)) != ignore_disp.end()) {
         out_C6 = 0.0;
         out_d6 = 0.0;
+        out_C8 = 0.0;
+        out_C10 = 0.0;
         return false;
     }
 
@@ -1221,19 +1791,192 @@ bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index
 
         // =====>> BEGIN SECTION DISPERSION <<=====
         // ======>> PASTE CODE BELOW <<======
+    } else if (mon_id1 == "nma" and mon_id2 == "nma") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(2);
+        types1.push_back(3);
+        types1.push_back(3);
+        types1.push_back(3);
+        types1.push_back(4);
+        types1.push_back(5);
+        types1.push_back(6);
+        types1.push_back(7);
+        types1.push_back(7);
+        types1.push_back(7);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(2);
+        types2.push_back(3);
+        types2.push_back(3);
+        types2.push_back(3);
+        types2.push_back(4);
+        types2.push_back(5);
+        types2.push_back(6);
+        types2.push_back(7);
+        types2.push_back(7);
+        types2.push_back(7);
+
+        nt2 = 8;
+
+        use_koide = true;
+        use_C8 = true;
+        use_C10 = false;
+
+        // Fill in (in order) dispersion parameters (Koide: C6, C8, C10; Tang-Toennies: C6, d6)
+        C6.push_back(285.259);  // kcal/mol * A^(-6)  A--A
+        C6.push_back(217.0515);  // kcal/mol * A^(-6)  A--B
+        C6.push_back(282.765);  // kcal/mol * A^(-6)  A--C
+        C6.push_back(96.8133);  // kcal/mol * A^(-6)  A--D
+        C6.push_back(213.7169);  // kcal/mol * A^(-6)  A--E
+        C6.push_back(93.1343);  // kcal/mol * A^(-6)  A--F
+        C6.push_back(282.1311);  // kcal/mol * A^(-6)  A--G
+        C6.push_back(97.4931);  // kcal/mol * A^(-6)  A--H
+        C6.push_back(217.0515);  // kcal/mol * A^(-6)  A--B
+        C6.push_back(201.2604);  // kcal/mol * A^(-6)  B--B
+        C6.push_back(222.4943);  // kcal/mol * A^(-6)  B--C
+        C6.push_back(83.3556);  // kcal/mol * A^(-6)  B--D
+        C6.push_back(178.8002);  // kcal/mol * A^(-6)  B--E
+        C6.push_back(79.0243);  // kcal/mol * A^(-6)  B--F
+        C6.push_back(221.8054);  // kcal/mol * A^(-6)  B--G
+        C6.push_back(83.9664);  // kcal/mol * A^(-6)  B--H
+        C6.push_back(282.765);  // kcal/mol * A^(-6)  A--C
+        C6.push_back(222.4943);  // kcal/mol * A^(-6)  B--C
+        C6.push_back(282.0071);  // kcal/mol * A^(-6)  C--C
+        C6.push_back(98.0627);  // kcal/mol * A^(-6)  C--D
+        C6.push_back(215.4393);  // kcal/mol * A^(-6)  C--E
+        C6.push_back(94.0988);  // kcal/mol * A^(-6)  C--F
+        C6.push_back(281.3319);  // kcal/mol * A^(-6)  C--G
+        C6.push_back(98.7608);  // kcal/mol * A^(-6)  C--H
+        C6.push_back(96.8133);  // kcal/mol * A^(-6)  A--D
+        C6.push_back(83.3556);  // kcal/mol * A^(-6)  B--D
+        C6.push_back(98.0627);  // kcal/mol * A^(-6)  C--D
+        C6.push_back(35.5292);  // kcal/mol * A^(-6)  D--D
+        C6.push_back(77.0538);  // kcal/mol * A^(-6)  D--E
+        C6.push_back(33.8787);  // kcal/mol * A^(-6)  D--F
+        C6.push_back(97.7871);  // kcal/mol * A^(-6)  D--G
+        C6.push_back(35.791);  // kcal/mol * A^(-6)  D--H
+        C6.push_back(213.7169);  // kcal/mol * A^(-6)  A--E
+        C6.push_back(178.8002);  // kcal/mol * A^(-6)  B--E
+        C6.push_back(215.4393);  // kcal/mol * A^(-6)  C--E
+        C6.push_back(77.0538);  // kcal/mol * A^(-6)  D--E
+        C6.push_back(167.7905);  // kcal/mol * A^(-6)  E--E
+        C6.push_back(73.609);  // kcal/mol * A^(-6)  E--F
+        C6.push_back(214.8606);  // kcal/mol * A^(-6)  E--G
+        C6.push_back(77.605);  // kcal/mol * A^(-6)  E--H
+        C6.push_back(93.1343);  // kcal/mol * A^(-6)  A--F
+        C6.push_back(79.0243);  // kcal/mol * A^(-6)  B--F
+        C6.push_back(94.0988);  // kcal/mol * A^(-6)  C--F
+        C6.push_back(33.8787);  // kcal/mol * A^(-6)  D--F
+        C6.push_back(73.609);  // kcal/mol * A^(-6)  E--F
+        C6.push_back(32.3262);  // kcal/mol * A^(-6)  F--F
+        C6.push_back(93.8508);  // kcal/mol * A^(-6)  F--G
+        C6.push_back(34.1129);  // kcal/mol * A^(-6)  F--H
+        C6.push_back(282.1311);  // kcal/mol * A^(-6)  A--G
+        C6.push_back(221.8054);  // kcal/mol * A^(-6)  B--G
+        C6.push_back(281.3319);  // kcal/mol * A^(-6)  C--G
+        C6.push_back(97.7871);  // kcal/mol * A^(-6)  D--G
+        C6.push_back(214.8606);  // kcal/mol * A^(-6)  E--G
+        C6.push_back(93.8508);  // kcal/mol * A^(-6)  F--G
+        C6.push_back(280.6705);  // kcal/mol * A^(-6)  G--G
+        C6.push_back(98.4829);  // kcal/mol * A^(-6)  G--H
+        C6.push_back(97.4931);  // kcal/mol * A^(-6)  A--H
+        C6.push_back(83.9664);  // kcal/mol * A^(-6)  B--H
+        C6.push_back(98.7608);  // kcal/mol * A^(-6)  C--H
+        C6.push_back(35.791);  // kcal/mol * A^(-6)  D--H
+        C6.push_back(77.605);  // kcal/mol * A^(-6)  E--H
+        C6.push_back(34.1129);  // kcal/mol * A^(-6)  F--H
+        C6.push_back(98.4829);  // kcal/mol * A^(-6)  G--H
+        C6.push_back(36.0451);  // kcal/mol * A^(-6)  H--H
+        C8.push_back(3056.355584838995);  // kcal/mol * A^(-8)  A--A
+        C8.push_back(1886.2613218245347);  // kcal/mol * A^(-8)  A--B
+        C8.push_back(2908.799001723657);  // kcal/mol * A^(-8)  A--C
+        C8.push_back(754.6070387729116);  // kcal/mol * A^(-8)  A--D
+        C8.push_back(1934.3394323764846);  // kcal/mol * A^(-8)  A--E
+        C8.push_back(732.029748415136);  // kcal/mol * A^(-8)  A--F
+        C8.push_back(2903.2831382377813);  // kcal/mol * A^(-8)  A--G
+        C8.push_back(759.1125931138287);  // kcal/mol * A^(-8)  A--H
+        C8.push_back(1886.2613218245347);  // kcal/mol * A^(-8)  A--B
+        C8.push_back(1341.7226994747691);  // kcal/mol * A^(-8)  B--B
+        C8.push_back(1838.5941517841247);  // kcal/mol * A^(-8)  B--C
+        C8.push_back(481.04349007146646);  // kcal/mol * A^(-8)  B--D
+        C8.push_back(1256.3551137724146);  // kcal/mol * A^(-8)  B--E
+        C8.push_back(461.29905253580614);  // kcal/mol * A^(-8)  B--F
+        C8.push_back(1833.4988753006696);  // kcal/mol * A^(-8)  B--G
+        C8.push_back(483.8120329543737);  // kcal/mol * A^(-8)  B--H
+        C8.push_back(2908.799001723657);  // kcal/mol * A^(-8)  A--C
+        C8.push_back(1838.5941517841247);  // kcal/mol * A^(-8)  B--C
+        C8.push_back(2780.5161073889763);  // kcal/mol * A^(-8)  C--C
+        C8.push_back(722.5427461831623);  // kcal/mol * A^(-8)  C--D
+        C8.push_back(1857.902567931954);  // kcal/mol * A^(-8)  C--E
+        C8.push_back(699.569306599865);  // kcal/mol * A^(-8)  C--F
+        C8.push_back(2774.8073140854767);  // kcal/mol * A^(-8)  C--G
+        C8.push_back(726.8309329295561);  // kcal/mol * A^(-8)  C--H
+        C8.push_back(754.6070387729116);  // kcal/mol * A^(-8)  A--D
+        C8.push_back(481.04349007146646);  // kcal/mol * A^(-8)  B--D
+        C8.push_back(722.5427461831623);  // kcal/mol * A^(-8)  C--D
+        C8.push_back(173.271984140003);  // kcal/mol * A^(-8)  D--D
+        C8.push_back(472.4220996212332);  // kcal/mol * A^(-8)  D--E
+        C8.push_back(167.42063713792518);  // kcal/mol * A^(-8)  D--F
+        C8.push_back(720.7935158367028);  // kcal/mol * A^(-8)  D--G
+        C8.push_back(174.2004052957035);  // kcal/mol * A^(-8)  D--H
+        C8.push_back(1934.3394323764846);  // kcal/mol * A^(-8)  A--E
+        C8.push_back(1256.3551137724146);  // kcal/mol * A^(-8)  B--E
+        C8.push_back(1857.902567931954);  // kcal/mol * A^(-8)  C--E
+        C8.push_back(472.4220996212332);  // kcal/mol * A^(-8)  D--E
+        C8.push_back(1239.3965828032478);  // kcal/mol * A^(-8)  E--E
+        C8.push_back(456.18255377241246);  // kcal/mol * A^(-8)  E--F
+        C8.push_back(1853.5944451044058);  // kcal/mol * A^(-8)  E--G
+        C8.push_back(475.1314773600689);  // kcal/mol * A^(-8)  E--H
+        C8.push_back(732.029748415136);  // kcal/mol * A^(-8)  A--F
+        C8.push_back(461.29905253580614);  // kcal/mol * A^(-8)  B--F
+        C8.push_back(699.569306599865);  // kcal/mol * A^(-8)  C--F
+        C8.push_back(167.42063713792518);  // kcal/mol * A^(-8)  D--F
+        C8.push_back(456.18255377241246);  // kcal/mol * A^(-8)  E--F
+        C8.push_back(161.91056154657812);  // kcal/mol * A^(-8)  F--F
+        C8.push_back(697.9216859573544);  // kcal/mol * A^(-8)  F--G
+        C8.push_back(168.31904698866185);  // kcal/mol * A^(-8)  F--H
+        C8.push_back(2903.2831382377813);  // kcal/mol * A^(-8)  A--G
+        C8.push_back(1833.4988753006696);  // kcal/mol * A^(-8)  B--G
+        C8.push_back(2774.8073140854767);  // kcal/mol * A^(-8)  C--G
+        C8.push_back(720.7935158367028);  // kcal/mol * A^(-8)  D--G
+        C8.push_back(1853.5944451044058);  // kcal/mol * A^(-8)  E--G
+        C8.push_back(697.9216859573544);  // kcal/mol * A^(-8)  F--G
+        C8.push_back(2769.1216723600915);  // kcal/mol * A^(-8)  G--G
+        C8.push_back(725.0714129928233);  // kcal/mol * A^(-8)  G--H
+        C8.push_back(759.1125931138287);  // kcal/mol * A^(-8)  A--H
+        C8.push_back(483.8120329543737);  // kcal/mol * A^(-8)  B--H
+        C8.push_back(726.8309329295561);  // kcal/mol * A^(-8)  C--H
+        C8.push_back(174.2004052957035);  // kcal/mol * A^(-8)  D--H
+        C8.push_back(475.1314773600689);  // kcal/mol * A^(-8)  E--H
+        C8.push_back(168.31904698866185);  // kcal/mol * A^(-8)  F--H
+        C8.push_back(725.0714129928233);  // kcal/mol * A^(-8)  G--H
+        C8.push_back(175.1318275819003);  // kcal/mol * A^(-8)  H--H
 
         // =====>> END SECTION DISPERSION <<=====
     } else {
         out_C6 = 0.0;
         out_d6 = 0.0;
+        out_C8 = 0.0;
+        out_C10 = 0.0;
         return false;
     }
 
     i = types1[index1];
     j = types2[index2];
 
-    out_C6 = C6[i * nt2 + j];
-    out_d6 = d6[i * nt2 + j];
+    if (!use_koide) {
+        out_C6 = C6[i * nt2 + j];
+        out_d6 = d6[i * nt2 + j];
+        out_C8 = 0.0;
+        out_C10 = 0.0;
+    } else {
+        out_C6 = C6[i * nt2 + j];
+        out_d6 = 0.0;
+        if (use_C8) { out_C8 = C8[i * nt2 + j]; } else { out_C8 = 0.0; }
+        if (use_C10) { out_C10 = C10[i * nt2 + j]; } else { out_C10 = 0.0; }
+    }
 
     return true;
 }

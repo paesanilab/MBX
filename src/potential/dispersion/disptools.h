@@ -101,12 +101,95 @@ double tang_toennies(int n, const double& x);
 double tang_toennies(const double& x);
 
 /**
+ * @brief Unit conversion: r_bohr = bohr_per_ang * r_ang
+ * 
+ * ang_per_bohr = 0.52917721067  : CODATA 2014 for consistency with MB-Fit
+ * bohr_per_ang = 1.0 / ang_per_bohr
+ */
+constexpr double bohr_per_ang = 1.0 / 0.52917721067;
+
+/**
+ * @brief Calculates the koide damping function for C6
+ *
+ * Given x=r_bohr, calculates the koide damping function for C6
+ * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
+ * @return The value of the damping function
+ */
+double koideC6(const double& x);
+
+/**
+ * @brief Calculates the koide damping function for C8
+ *
+ * Given x=r_bohr, calculates the koide damping function for C8
+ * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
+ * @return The value of the damping function
+ */
+double koideC8(const double& x);
+
+/**
+ * @brief Calculates the koide damping function for C10
+ *
+ * Given x=r_bohr, calculates the koide damping function for C10 (chi13) [default]
+ * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
+ * @return The value of the damping function
+ */
+double koideC10(const double& x);
+
+/**
+ * @brief Calculates the koide damping function for C10
+ *
+ * Given x=r_bohr, calculates the koide damping function for C10 (chi22) (implemented just in case)
+ * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
+ * @return The value of the damping function
+ */
+double koideC10chi22(const double& x);
+
+/**
+ * @brief Calculates the derivative of the koide damping function for C6
+ *
+ * Given x=r_bohr, calculates the derivative of the koide damping function for C6
+ * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
+ * @return The value of the derivative of the damping function
+ */
+double koideC6grad(const double& x);
+
+/**
+ * @brief Calculates the derivative of the koide damping function for C8
+ *
+ * Given x=r_bohr, calculates the derivative of the koide damping function for C8
+ * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
+ * @return The value of the derivative of the damping function
+ */
+double koideC8grad(const double& x);
+
+/**
+ * @brief Calculates the derivative of the koide damping function for C10
+ *
+ * Given x=r_bohr, calculates the derivative of the koide damping function for C10 (chi13) [default]
+ * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
+ * @return The value of the derivative of the damping function
+ */
+double koideC10grad(const double& x);
+
+/**
+ * @brief Calculates the derivative of the koide damping function for C10
+ *
+ * Given x=r_bohr, calculates the derivative of the koide damping function for C10 (chi22) (implemented just in case)
+ * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
+ * @return The value of the derivative of the damping function
+ */
+double koideC10chi22grad(const double& x);
+
+/**
  * @brief Calculates the dispersion contribution for a given pair of atoms for all apirs in the system.
  *
- * Given a pair of atoms, and the idispersion constants, it calculates the dispersion contribution for all pairs
+ * Given a pair of atoms, and the dispersion constants, it calculates the dispersion contribution for all pairs
  * involving atom 1 and all the atoms of type 2. The coordinates of the second atom are in vectorized form.
- * @param[in] C6 C6 coefficient for the expression f(Dr)*C6 / r^6, where f is the tang-toennies damping function
+ * @param[in] C6 C6 coefficient for dispersion
  * @param[in] d6 D coefficient for the expression f(Dr)*C6 / r^6, where f is the tang-toennies damping function
+ * @param[in] C8 C8 coefficient for dispersion
+ * @param[in] C10 C10 coefficient for dispersion
+ * @param[in] use_koide If true, dispersion will be calculated with the Koide damping function. If false, the Tang-Toennies damping function will be used.
  * @param[in] c6i This is the "c6 charge" of atom i, which corresponds to aqrt(C6_ii)
  * @param[in] c6j This is the "c6 charge" of atom j, which corresponds to aqrt(C6_jj)
  * @param[in] p1 Pointer to double array with the coordinates of atom1. Length is 3.
@@ -141,7 +224,7 @@ double tang_toennies(const double& x);
  * @param[in,out] virial Virial tensor of the system
  * @return Sum of all the dispersion energies for all the atoms involved in the pair i,j
  */
-double disp6(const double C6, const double d6, const double c6i, const double c6j, const std::vector<double>& p1,
+double disp6(const double C6, const double d6, const double C8, const double C10, const bool use_koide, const double c6i, const double c6j, const std::vector<double>& p1,
              const std::vector<double>& xyz2, std::vector<double>& grad1, std::vector<double>& grad2, double& phi1,
              std::vector<double>& phi2, const size_t nmon1, const size_t nmon2, const size_t start2, const size_t end2,
              const size_t atom_index1, const size_t atom_index2, const double disp_scale_factor, bool do_grads, bool do_field,
@@ -152,7 +235,7 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
 /**
  * @brief Retrieves the parameters for dispersion energy
  *
- * Obtains the parameters C6 and d6 and b for the idispersion, for atom i of monomer 1 and atom j of monomer 2
+ * Obtains the parameters C6 and d6 and b for the dispersion, for atom i of monomer 1 and atom j of monomer 2
  * @param[in] mon_id1 Monomer id (h2o,co2...) of monomer 1
  * @param[in] mon_id2 Monomer id (h2o,co2...) of monomer 2
  * @param[in] index1 Atom index of the atom i of monomer 1. In case of water, O -> 0 and H -> 1 or 2
@@ -161,9 +244,11 @@ double disp6(const double C6, const double d6, const double c6i, const double c6
  * is not there, a and b will be set to 0.
  * @param[out] out_c6 Contains the parameter C6 corresponding to the atoms i,j of monomers 1 and 2.
  * @param[out] out_d6 Contains the parameter d6 corresponding to the atoms i,j of monomers 1 and 2.
+ * @param[out] out_c8 Contains the parameter C8 corresponding to the atoms i,j of monomers 1 and 2.
+ * @param[out] out_c10 Contains the parameter C10 corresponding to the atoms i,j of monomers 1 and 2.
  * @param[in] repdisp_j JSON object witht the extra nonbonded pair information
  */
-bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6,
+bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6, double& out_c8, double& out_c10,
            std::vector<std::pair<std::string, std::string>>& ignore_disp, const nlohmann::json& repdisp_j = {});
 
 }  // namespace disp
