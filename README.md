@@ -172,7 +172,7 @@ MBX is an official LAMMPS package (https://docs.lammps.org/pair_mbx.html),
 and needs to be installed using the [LAMMPS CMake build-chain](https://docs.lammps.org/Build_cmake.html):
 
 ```console
-git clone -b stable https://github.com/lammps/lammps.git
+git clone -b develop https://github.com/lammps/lammps.git
 cd lammps
 
 cmake -S cmake -B build -C ./cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes
