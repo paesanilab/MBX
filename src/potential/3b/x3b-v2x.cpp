@@ -1465,15 +1465,16 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
     double dab[3 * nt], dac[3 * nt], dbc[3 * nt];
     double e = 0.0;
 
-    
+    size_t memory_reserved = 1580*8;
+    size_t memory_required = 1457*8;
 
-    double bigmem[1660*8];
+    double bigmem[memory_reserved];
 
     void* pool = reinterpret_cast<void *>(bigmem);
 
-    size_t space = 1660*8*8;
+    size_t space = memory_reserved*8;
 
-    double* t = reinterpret_cast<double *>(std::align(128, 1635*8*8, pool, space));
+    double* t = reinterpret_cast<double *>(std::align(128, memory_required*8, pool, space));
 
     double x[36*8];
     double gg[36*8];
