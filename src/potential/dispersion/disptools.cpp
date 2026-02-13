@@ -34,7 +34,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/dispersion/disptools.h"
 
-#include <array>
 
 namespace disp {
 
@@ -317,7 +316,7 @@ double koideC6grad(const double& x) {
     // ---- d chi(r) / d x ---- 
     // Chain rule: d/dx = (dr/dx) d/dr = bohr_per_ang * d/dr  (r: Ang / x: Bohr)
     const double dchi_dr = -(e2 * polyA) - (e4 * polyB);
-    return disp::bohr_per_ang * dchi_dr;
+    return constants::bohr_per_ang * dchi_dr;
 }
 
 double koideC8grad(const double& x) {
@@ -362,7 +361,7 @@ double koideC8grad(const double& x) {
     // ---- d chi(r) / d x ---- 
     // Chain rule: d/dx = (dr/dx) d/dr = bohr_per_ang * d/dr  (r: Ang / x: Bohr)
     const double dchi_dr = -(e2 * polyA) - (e4 * polyB);
-    return disp::bohr_per_ang * dchi_dr;
+    return constants::bohr_per_ang * dchi_dr;
 }
 
 // default for C10 is chi13
@@ -410,7 +409,7 @@ double koideC10grad(const double& x) {
     // ---- d chi(r) / d x ---- 
     // Chain rule: d/dx = (dr/dx) d/dr = bohr_per_ang * d/dr  (r: Ang / x: Bohr)
     const double dchi_dr = -(e2 * polyA) - (e4 * polyB);
-    return disp::bohr_per_ang * dchi_dr;
+    return constants::bohr_per_ang * dchi_dr;
 }
 
 // Also implement chi22 just in case
@@ -458,7 +457,7 @@ double koideC10chi22grad(const double& x) {
     // ---- d chi(r) / d x ---- 
     // Chain rule: d/dx = (dr/dx) d/dr = bohr_per_ang * d/dr  (r: Ang / x: Bohr)
     const double dchi_dr = -(e2 * polyA) - (e4 * polyB);
-    return disp::bohr_per_ang * dchi_dr;
+    return constants::bohr_per_ang * dchi_dr;
 }
 
 //----------------------------------------------------------------------------//
@@ -783,7 +782,7 @@ double disp6(const double C6, const double d6, const double C8, const double C10
     }
 
     // If use_koide = true, use Koide damping function // inv_r10 terms are all commented out for now
-    else if (use_koide) {
+    else {
 
         double rsq[end2];
         double r[end2];
@@ -830,7 +829,7 @@ double disp6(const double C6, const double d6, const double C8, const double C10
 
         #pragma omp simd simdlen(8)
         for (size_t nv = start2; nv < end2; nv++) {
-            r_bohr[nv] = disp::bohr_per_ang * r[nv];
+            r_bohr[nv] = constants::bohr_per_ang * r[nv];
         }
 
         // Loop not vectorized because this functions are not yet vectorizable.
@@ -921,8 +920,6 @@ double disp6(const double C6, const double d6, const double C8, const double C10
             double gradx = 0.0;
             double grady = 0.0;
             double gradz = 0.0;
-
-            double C6_d6_7 = C6 * std::pow(d6, 7);
 
             #pragma omp simd simdlen(8) reduction(+ : gradx, grady, gradz)
             for (size_t nv = start2; nv < end2; nv++) {

@@ -41,8 +41,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <cstddef>
 #include <iostream>
 #include <iomanip>
+#include <array>
 
 #include "tools/math_tools.h"
+#include "tools/constants.h"
 #include "json/json.hpp"
 
 /**
@@ -101,14 +103,6 @@ double tang_toennies(int n, const double& x);
 double tang_toennies(const double& x);
 
 /**
- * @brief Unit conversion: r_bohr = bohr_per_ang * r_ang
- * 
- * ang_per_bohr = 0.52917721067  : CODATA 2014 for consistency with MB-Fit
- * bohr_per_ang = 1.0 / ang_per_bohr
- */
-constexpr double bohr_per_ang = 1.0 / 0.52917721067;
-
-/**
  * @brief Calculates the koide damping function for C6
  *
  * Given x=r_bohr, calculates the koide damping function for C6
@@ -147,7 +141,10 @@ double koideC10chi22(const double& x);
 /**
  * @brief Calculates the derivative of the koide damping function for C6
  *
- * Given x=r_bohr, calculates the derivative of the koide damping function for C6
+ * Given x=r_bohr, calculates the derivative of the koide damping function for C6.
+ * It will return the gradient in Angstrom units. 
+ * That is, a conversion factor of (bohr per angstroms) will be multiplied to the gradient value in Bohr (chain rule), 
+ * to yield the gradient expected in Angstroms.
  * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
  * @return The value of the derivative of the damping function
  */
@@ -156,7 +153,10 @@ double koideC6grad(const double& x);
 /**
  * @brief Calculates the derivative of the koide damping function for C8
  *
- * Given x=r_bohr, calculates the derivative of the koide damping function for C8
+ * Given x=r_bohr, calculates the derivative of the koide damping function for C8.
+ * It will return the gradient in Angstrom units. 
+ * That is, a conversion factor of (bohr per angstroms) will be multiplied to the gradient value in Bohr (chain rule), 
+ * to yield the gradient expected in Angstroms.
  * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
  * @return The value of the derivative of the damping function
  */
@@ -166,6 +166,9 @@ double koideC8grad(const double& x);
  * @brief Calculates the derivative of the koide damping function for C10
  *
  * Given x=r_bohr, calculates the derivative of the koide damping function for C10 (chi13) [default]
+ * It will return the gradient in Angstrom units. 
+ * That is, a conversion factor of (bohr per angstroms) will be multiplied to the gradient value in Bohr (chain rule), 
+ * to yield the gradient expected in Angstroms.
  * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
  * @return The value of the derivative of the damping function
  */
@@ -175,6 +178,9 @@ double koideC10grad(const double& x);
  * @brief Calculates the derivative of the koide damping function for C10
  *
  * Given x=r_bohr, calculates the derivative of the koide damping function for C10 (chi22) (implemented just in case)
+ * It will return the gradient in Angstrom units. 
+ * That is, a conversion factor of (bohr per angstroms) will be multiplied to the gradient value in Bohr (chain rule), 
+ * to yield the gradient expected in Angstroms.
  * @param[in] x Value of the variable. It is defined as x=r_bohr, where r_bohr is the distance between the two atoms in Bohr
  * @return The value of the derivative of the damping function
  */
@@ -190,8 +196,8 @@ double koideC10chi22grad(const double& x);
  * @param[in] C8 C8 coefficient for dispersion
  * @param[in] C10 C10 coefficient for dispersion
  * @param[in] use_koide If true, dispersion will be calculated with the Koide damping function. If false, the Tang-Toennies damping function will be used.
- * @param[in] c6i This is the "c6 charge" of atom i, which corresponds to aqrt(C6_ii)
- * @param[in] c6j This is the "c6 charge" of atom j, which corresponds to aqrt(C6_jj)
+ * @param[in] c6i This is the "c6 charge" of atom i, which corresponds to sqrt(C6_ii)
+ * @param[in] c6j This is the "c6 charge" of atom j, which corresponds to sqrt(C6_jj)
  * @param[in] p1 Pointer to double array with the coordinates of atom1. Length is 3.
  * @param[in] xyz2 Pointer to double array with the coordinates of atom2. The origin of the pointer is the first
  * coordinate of the monomer type 2, and will be in xxxxx[at1]yyyyy[at1]zzzzzz[at1]xxxx[at2]... and so on. See the
@@ -246,7 +252,7 @@ double disp6(const double C6, const double d6, const double C8, const double C10
  * @param[out] out_d6 Contains the parameter d6 corresponding to the atoms i,j of monomers 1 and 2.
  * @param[out] out_c8 Contains the parameter C8 corresponding to the atoms i,j of monomers 1 and 2.
  * @param[out] out_c10 Contains the parameter C10 corresponding to the atoms i,j of monomers 1 and 2.
- * @param[in] repdisp_j JSON object witht the extra nonbonded pair information
+ * @param[in] repdisp_j JSON object with the extra nonbonded pair information
  */
 bool GetC6(std::string mon_id1, std::string mon_id2, size_t index1, size_t index2, double& out_c6, double& out_d6, double& out_c8, double& out_c10,
            std::vector<std::pair<std::string, std::string>>& ignore_disp, const nlohmann::json& repdisp_j = {});
