@@ -151,6 +151,10 @@ def do_md_simulation(
     pressure_bar,
     t_damp_fs,
     p_damp_fs,
+    tchain,
+    pchain,
+    tloop,
+    ploop,
     npt_coupling,
     restart_file,
     realspace_cutoff,
@@ -233,6 +237,10 @@ def do_md_simulation(
                 pressure_au=pressure_au,
                 tdamp=t_damp_fs * units.fs,
                 pdamp=p_damp_fs * units.fs,
+                tchain=tchain,
+                pchain=pchain,
+                tloop=tloop,
+                ploop=ploop,
             )
         else:
             dyn = MTKNPT(
@@ -242,6 +250,10 @@ def do_md_simulation(
                 pressure_au=pressure_au,
                 tdamp=t_damp_fs * units.fs,
                 pdamp=p_damp_fs * units.fs,
+                tchain=tchain,
+                pchain=pchain,
+                tloop=tloop,
+                ploop=ploop,
             )
     elif ensemble == "nvt":
         dyn = NoseHooverChainNVT(
@@ -249,6 +261,8 @@ def do_md_simulation(
             timestep_fs * units.fs,
             temperature_K=temperature_K,
             tdamp=t_damp_fs * units.fs,
+            tchain=tchain,
+            tloop=tloop,
         )
     elif ensemble == "nve":
         dyn = VelocityVerlet(atoms, timestep_fs * units.fs)
@@ -360,6 +374,10 @@ def parse_arguments():
     parser.add_argument(
         "-p_damp", dest="p_damp_fs", type=float, default=500.0, help="Barostat time constant (fs)"
     )
+    parser.add_argument("-tchain", dest="tchain", type=int, default=3, help="Thermostat NHC length (default: 3)")
+    parser.add_argument("-pchain", dest="pchain", type=int, default=3, help="Barostat NHC length (default: 3)")
+    parser.add_argument("-tloop", dest="tloop", type=int, default=1, help="Thermostat subcycles (default: 1)")
+    parser.add_argument("-ploop", dest="ploop", type=int, default=1, help="Barostat subcycles (default: 1)")
     parser.add_argument("-restart", dest="restart_file", default=None, help="Optional restart .pkl path")
     parser.add_argument("-monomer_name", default="h2o", help="Monomer name (default: h2o)")
     parser.add_argument("-nat_per_monomer", type=int, default=3, help="Atoms per monomer (default: 3)")
@@ -409,6 +427,10 @@ if __name__ == "__main__":
         pressure_bar=args.pressure_bar,
         t_damp_fs=args.t_damp_fs,
         p_damp_fs=args.p_damp_fs,
+        tchain=args.tchain,
+        pchain=args.pchain,
+        tloop=args.tloop,
+        ploop=args.ploop,
         npt_coupling=args.npt_coupling,
         restart_file=args.restart_file,
         realspace_cutoff=args.realspace_cutoff,
