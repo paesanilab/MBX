@@ -8,7 +8,7 @@ script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 work_path="${script_dir}"
 input_file="${work_path}/initial.extxyz"
 
-MBX_HOME=/home/s7saha/software/MBX_ase/MBX
+MBX_HOME=/path/to/MBX
 
 sim_time=100       # ps
 t_step=0.5         # fs
@@ -36,7 +36,7 @@ fi
 
 export MBX_HOME
 
-conda run -n ase_mbx python mbx_md.py \
+python3 mbx_md.py \
   -work_path "${work_path}" \
   -init_file "${input_file}" \
   -sim_time "${sim_time}" \
