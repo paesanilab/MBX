@@ -1,7 +1,6 @@
 import ctypes
 import os
 import ctypes.util
-from pathlib import Path
 from ctypes import c_double, c_int, c_char_p, POINTER
 
 import numpy as np
@@ -17,6 +16,8 @@ class MBXLibrary:
         self.initialized = False
 
     def _load_library(self):
+        dlopen_mode = getattr(os, "RTLD_LAZY", None)
+
         if self.mbx_home:
             lib_dir = os.path.join(self.mbx_home, "lib")
             candidates = [
@@ -26,7 +27,15 @@ class MBXLibrary:
             ]
             for path in candidates:
                 if os.path.exists(path):
-                    return ctypes.CDLL(path, mode=os.RTLD_LAZY)
+                    if dlopen_mode is None:
+                        return ctypes.CDLL(path)
+                    return ctypes.CDLL(path, mode=dlopen_mode)
+
+        lib_name = ctypes.util.find_library("mbx")
+        if lib_name:
+            if dlopen_mode is None:
+                return ctypes.CDLL(lib_name)
+            return ctypes.CDLL(lib_name, mode=dlopen_mode)
 
         raise FileNotFoundError(
             "Could not find libmbx. Set MBX_HOME before running, "

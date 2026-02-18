@@ -36,7 +36,7 @@ python ../ase_mbx_energy.py
 You should see non-zero energy and forces printed to the console.
 
 More examples (bulk water and ion + water) are under `plugins/ase/examples/water` and `plugins/ase/examples/ion_water`.
-The helper script `plugins/ase/examples/convert_lammps_to_extxyz_simple.py` converts LAMMPS data files to a minimal `extxyz` for ASE.
+The helper script `plugins/ase/examples/convert_lammps_to_extxyz.py` converts LAMMPS data files to a minimal `extxyz` for ASE.
 
 ## MBXCalculator usage
 The ASE `MBXCalculator` requires an `mbx.json` file (see `plugins/ase/examples/water/mbx.json` for a template). The MD example scripts (`mbx_md.py`) do not require `mbx.json` because they generate it automatically from the run settings.

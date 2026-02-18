@@ -14,9 +14,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", required=True, help="Path to output extxyz file.")
     parser.add_argument(
         "--pbc",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
         default=True,
-        help="Set periodic boundary conditions (default: true).",
+        help="Enable/disable periodic boundary conditions (default: enabled).",
     )
     parser.add_argument(
         "--reorder-water",

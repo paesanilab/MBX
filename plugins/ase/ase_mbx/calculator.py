@@ -8,6 +8,20 @@ from .mbx_binding import MBXLibrary, KCAL_PER_MOL_TO_EV
 class MBXCalculator(Calculator):
     implemented_properties = ["energy", "forces", "stress"]
 
+    @staticmethod
+    def _stress_tensor_to_voigt(stress_tensor):
+        return np.array(
+            [
+                stress_tensor[0, 0],
+                stress_tensor[1, 1],
+                stress_tensor[2, 2],
+                stress_tensor[1, 2],
+                stress_tensor[0, 2],
+                stress_tensor[0, 1],
+            ],
+            dtype=float,
+        )
+
     def __init__(
         self,
         json_file,
@@ -71,12 +85,17 @@ class MBXCalculator(Calculator):
         self.results["energy"] = energy
         self.results["forces"] = forces
 
+        stress_voigt = np.zeros(6, dtype=float)
         if virial is not None:
             # Convert virial (kcal/mol) to stress (eV/Å^3) using ASE convention: stress = -virial / V
-            volume = self.atoms.get_volume()
+            try:
+                volume = self.atoms.get_volume()
+            except ValueError:
+                volume = 0.0
             if volume > 0.0:
-                stress = -virial * KCAL_PER_MOL_TO_EV / volume
-                self.results["stress"] = stress
+                stress_tensor = -virial * KCAL_PER_MOL_TO_EV / volume
+                stress_voigt = self._stress_tensor_to_voigt(stress_tensor)
+        self.results["stress"] = stress_voigt
 
     def __del__(self):
         try:
