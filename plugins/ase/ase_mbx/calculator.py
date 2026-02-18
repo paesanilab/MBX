@@ -69,7 +69,17 @@ class MBXCalculator(Calculator):
         self._ensure_initialized(self.atoms)
 
         coords = self.atoms.get_positions()
-        pbc = bool(np.any(self.atoms.get_pbc())) and self.use_pbc_from_atoms
+        pbc_flags = np.array(self.atoms.get_pbc(), dtype=bool)
+        if (
+            self.use_pbc_from_atoms
+            and np.any(pbc_flags)
+            and not np.all(pbc_flags)
+        ):
+            raise ValueError(
+                "MBXCalculator does not support partial PBC; use either full 3D PBC "
+                "(True, True, True) or non-periodic boundaries."
+            )
+        pbc = bool(np.all(pbc_flags)) and self.use_pbc_from_atoms
 
         if pbc:
             cell = self.atoms.get_cell().array

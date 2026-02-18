@@ -36,7 +36,7 @@ fi
 
 export MBX_HOME
 
-python3 mbx_md.py \
+python3 "${script_dir}/mbx_md.py" \
   -work_path "${work_path}" \
   -init_file "${input_file}" \
   -sim_time "${sim_time}" \
