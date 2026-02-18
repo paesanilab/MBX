@@ -25,16 +25,6 @@ cd plugins/ase
 pip install -e .
 ```
 
-## Run an example
-From the MBX repo root:
-```
-export MBX_HOME="$PWD"
-cd plugins/ase/examples/water
-python ../ase_mbx_energy.py
-```
-
-You should see non-zero energy and forces printed to the console.
-
 More examples (bulk water and ion + water) are under `plugins/ase/examples/water` and `plugins/ase/examples/ion_water`.
 The helper script `plugins/ase/examples/convert_lammps_to_extxyz.py` converts LAMMPS data files to a minimal `extxyz` for ASE.
 
@@ -57,6 +47,15 @@ calc = MBXCalculator(
 atoms.calc = calc
 energy = atoms.get_potential_energy()
 forces = atoms.get_forces()
+```
+
+Expected output (verified in conda env `ase_mbx`):
+```text
+Energy (eV): 0.236574415163
+Forces (eV/A):
+2.507545266757 -0.000000000000 2.507545266757
+-1.060576441254 -0.000000000000 -1.446968825502
+-1.446968825502 -0.000000000000 -1.060576441254
 ```
 
 ## Notes
