@@ -22,7 +22,7 @@ struct mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 {
 
     ~mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(){};
 
-    typedef poly_A1_B1C2X2_B1C2X2_deg4_v1 polynomial;
+    typedef mbnrg_A1_B1C2X2_B1C2X2_deg4::poly_A1_B1C2X2_B1C2X2_deg4_v1 polynomial;
 
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n, const double three_b_lambda);
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3,
@@ -63,7 +63,7 @@ struct mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 {
 
     ~mbnrg_A1_B1C2X2_B1C2X2_deg4_v1(){};
 
-    typedef poly_A1_B1C2X2_B1C2X2_deg4_v1 polynomial;
+    typedef mbnrg_A1_B1C2X2_B1C2X2_deg4::poly_A1_B1C2X2_B1C2X2_deg4_v1 polynomial;
 
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n, const double three_b_lambda);
     double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3,
