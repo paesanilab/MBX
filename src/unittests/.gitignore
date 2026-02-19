@@ -1,0 +1,9 @@
+# Ignore files without extensions
+* 
+!*.*
+
+*.log
+unittest-*.trs
+*.o
+*.Po
+Makefile.in

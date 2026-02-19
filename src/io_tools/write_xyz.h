@@ -39,8 +39,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <string>
 #include <stdexcept>
 #include <cassert>
-#include <sstream>
-#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <algorithm>
@@ -64,14 +62,14 @@ namespace tools {
  *
  * Given the filename and vectors to put the coordinates and atom names,
  * reads all the frames
- * @param[in,out] off output file stream where we will dump the info
+ * @param[in,out] oss output stream where we will dump the info
  * @param[in] atom_names Vector of the atom names
  * @param[in] coords Vector of the coordinates
  * @param[in] boxes Vector with box (9 element vector)
  * @param[in] write_box Bool that states if the box will be written
  * @param[in] to_angstrom Conversion factor to convert from the units to angstrom
  */
-void WriteXYZ(std::ofstream &off, std::vector<std::string> &atom_names, std::vector<double> &coords,
+void WriteXYZ(std::ostream &oss, std::vector<std::string> &atom_names, std::vector<double> &coords,
               std::vector<double> &boxes, std::string comment, bool write_box = false, double to_angstrom = 1.0);
 
 }  // namespace tools

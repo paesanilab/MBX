@@ -36,6 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define DISPERSION_NEW_H
 
 #include <vector>
+#include <set>
 
 #if HAVE_MPI
 #include <mpi.h>
@@ -50,6 +51,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
+#include "kdtree/kdtree_utils.h"
 
 enum {
     DISP_PME_SETUP = 0,
@@ -58,7 +60,7 @@ enum {
     DISP_NUM_TIMERS
 };
 
-#ifndef MPI_VERSION
+#if !defined(MPI_VERSION) && !defined(MPI_Comm)
 // typedef struct ompi_communicator_t *MPI_Comm;
 typedef int MPI_Comm;
 #endif
@@ -350,6 +352,9 @@ class Dispersion {
     // Bool that if true will perform the gradients calculation.
     bool do_grads_;
 
+    // If true, then calculate the dispersion field, otherwise, do not. In that case, the functions that get the field may return 0.0 or nonsense.
+    bool do_field_;
+
     // Gradients in the original order (same as xyz). This is the vector in
     // which the electrostatics gradients will be added.
     std::vector<double> sys_grad_;
@@ -365,8 +370,6 @@ class Dispersion {
     bool calc_virial_;
     // Total number of atoms
     size_t natoms_;
-    // Max number of monomers
-    size_t maxnmon_;
     // Dispersion energy
     double disp_energy_;
     // box of the system
@@ -417,6 +420,12 @@ class Dispersion {
 
     // Vector with d6 coefficients
     std::vector<std::vector<double> > d6_all_;
+
+    // Vector with c8 coefficients
+    std::vector<std::vector<double> > c8_all_;
+
+    // Vector with c10 coefficients
+    std::vector<std::vector<double> > c10_all_;
 
     // Vector with the bool use ttm
     std::vector<bool> use_disp_all_;

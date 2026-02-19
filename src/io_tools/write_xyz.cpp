@@ -40,24 +40,24 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
  */
 
 namespace tools {
-void WriteXYZ(std::ofstream &off, std::vector<std::string> &atom_names, std::vector<double> &coords,
+void WriteXYZ(std::ostream &oss, std::vector<std::string> &atom_names, std::vector<double> &coords,
               std::vector<double> &boxes, std::string comment, bool write_box, double to_angstrom) {
-    off << atom_names.size() << std::endl;
+    oss << atom_names.size() << std::endl;
     if (write_box) {
         if (boxes.size() != 9) {
-            off << "100.0 0.0 0.0 0.0 100.0 0.0 0.0 0.0 100.0\n";
+            oss << "100.0 0.0 0.0 0.0 100.0 0.0 0.0 0.0 100.0\n";
         } else {
             for (size_t i = 0; i < 9; i++) {
-                off << std::scientific << std::setprecision(12) << std::setw(20) << boxes[i];
+                oss << std::scientific << std::setprecision(12) << std::setw(20) << boxes[i];
             }
-            off << std::endl;
+            oss << std::endl;
         }
     } else {
-        off << comment << "\n";
+        oss << comment << "\n";
     }
 
     for (size_t i = 0; i < atom_names.size(); i++) {
-        off << std::scientific << std::setprecision(8) << std::left << std::setw(5) << atom_names[i] << std::setw(20)
+        oss << std::scientific << std::setprecision(8) << std::left << std::setw(5) << atom_names[i] << std::setw(20)
             << coords[3 * i + 0] << std::setw(20) << coords[3 * i + 1] << std::setw(20) << coords[3 * i + 2]
             << std::endl;
     }

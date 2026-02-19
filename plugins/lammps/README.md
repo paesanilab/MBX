@@ -1,30 +1,33 @@
-# The MBX fix for LAMMPS
-MBX is interfaced with LAMMPS via a pair/fix combination. The source files are in `USER-MBX`.
+# The MBX pair style for LAMMPS
+MBX is interfaced with LAMMPS via pair_style MBX. For more information about MBX+LAMMPS, please refer to the [LAMMPS+MBX documentation](https://docs.lammps.org/pair_mbx.html).
 
-## Variables that can be printed
-LAMMPS can access some energy contributions from MBX, and one can print them in the output. To enable the variable calculation, one must add to the LAMMPS input the following lines:
-```
-compute         mbx all pair mbx
-variable        e1    equal c_mbx[1]
-variable        e2    equal c_mbx[2]
-variable        e3    equal c_mbx[3]
-variable        e4    equal c_mbx[4]
-variable        ebuck equal c_mbx[5]
-variable        edisp equal c_mbx[6]
-variable        eele  equal c_mbx[7]
-variable        etot  equal c_mbx[8]
-```
-This will store the one- (e1), two- (e2), three- (e3), and foru-body (e4) energies, along with the deprecated classical repultion (ebuck), the dispersion energy (edisp), the electrostatic energu, both permanent and induced added together (eele), and the total energy.
+Please see `plugins/lammps/examples` for example LAMMPS input files using MBX.
 
-One can define a thermo style such as:
-```
-thermo_style    custom step time temp cella cellb cellc evdwl ecoul epair ebond eangle edihed eimp emol elong etail v_e1 v_e2 v_e3 v_ebuck v_edisp v_eele v_etot pe etotal
-```
-to print each of the contributions.
+## pair_style format
+To invoque the MBX pair_style, one must use the `pair_style mbx cutoff` keyword. The pair_style arguments are as follows:
 
-## Fix format
-To invoque the MBX fix, one must use the `fix ID mbx` keyword. The fix arguments are as follows:
-`fix   ID  all mbx <number_of_monomer_types> <monomer_id_1> <lower_atom_type_index_of_mon1> <higher_atom_type_index_of_mon1> <number_of_atoms_of_mon1> <atom type of atom 1> <atom type of atom 2> ... <atom type of atom n1> <monomer_id_2> ... <monomer_id_N> ...  json <name_of_json_file>`
+* cutoff = real-space cutoff for MBX in Angstroms
 
+
+Additionally, the `pair_coeff` command must be used to specify the monomer types and their corresponding atom mappings, as well as the MBX json configuration file. The format of the `pair_coeff` command is as follows:
+```
+pair_coeff * * num_mon_types mon_name atom_mapping <mon_name2> <atom_mapping2> ... json mbx.json print/settings
+```
+
+* num_mon_types = number of monomer types in the system
+* mon_name = name of the monomer type (e.g. h2o, ch4, etc)
+* atom mapping = list of LAMMPS atom IDs that correspond to the atoms in the monomer
+* *json* arg = specifies the name of the MBX json configuration file, such as mbx.json
+* print/settings = optionally print MBX settings to logfile
+
+## CH4 and H2O example
 For example, for a simulation of water and methane, where methane has types 1 and 2, and water has types 3 and 4 (C:1, Hc:2, O:3, Ho:4), the fix would look like this:
-`fix    1  all mbx 2 ch4 1 2 5 1 2 2 2 2 h2o 3 4 3 3 4 4 json mbx.json`
+```
+# For a system involving ch4 (atom types C=1, H=2) and
+# water (atom types O=3, H=4)
+pair_style      mbx 9.0
+pair_coeff      * * 2 ch4 1 2 2 2 2 h2o 3 4 4 json mbx.json
+compute         mbx all pair mbx
+```
+
+For more information about MBX+LAMMPS, please refer to the [LAMMPS+MBX documentation](https://docs.lammps.org/pair_mbx.html).

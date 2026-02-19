@@ -1,4 +1,6 @@
 dump.lammpstrj
+dump.dipoles
+traj.lammpstrj
 final.data
 log.lammps
 restart.*

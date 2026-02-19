@@ -39,7 +39,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "setup_co2_2_h2o_2.h"
 #include "setup_monomer_mix.h"
 #include "setup_monomer_custom_json.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 #include <vector>
 #include <iostream>
@@ -78,7 +78,7 @@ TEST_CASE("systools::SetupMonomers") {
     }
 
     SECTION("General behavior monomer mix") {
-        SETUP_MONMIX
+        SETUP_MONMIX // use values from setup_monomer_mix.h
 
         // Prepare variables for SetUpMonomers
         std::vector<size_t> sites_out;

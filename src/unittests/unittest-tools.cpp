@@ -360,7 +360,7 @@ TEST_CASE("mathtools::DotProduct") {
 }
 
 TEST_CASE("properties::GetMass") {
-    SETUP_MONMIX
+    SETUP_MONMIX // use values from setup_monomer_mix.h
     // Add atoms not in monomer mix
     atom_names.push_back("D");
     atom_masses.push_back(2.01410178);

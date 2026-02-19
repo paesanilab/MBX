@@ -35,6 +35,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_MONMIX_H
 #define UNITTESTS_SETUP_MONMIX_H
 
+// TODO: Refactor this file to be more object oriented, as the current implementation is difficult to read and maintain
+
+// This file contains the macro definition SETUP_MONMIX, which is used in some of the unittests
+// to defines variables for the monomer and atom parameters.
+// These vectors should be extended as additional monomers are implemented into MBX.
 #define SETUP_MONMIX                                                                                                 \
     std::vector<std::string> atom_names = {                                                                          \
         "C", "H",  "H",  "H", "H",  "O",  "H", "H",  "C",  "O", "O", "X", "He", "Ar",                                \
@@ -123,10 +128,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                0.0000000000e+00,                                                                     \
                                2.0493754000e-01,                                                                     \
                                1.6450000000e+00,                                                                     \
-                               8.0790000000e-01,                                                                     \
+                               2.4669000000e+00,                                                                     \
                                5.3602000000e+00,                                                                     \
-                               3.7819000000e+00,                                                                     \
-                               5.9563000000e+00,                                                                     \
+                               7.1668000000e+00,                                                                     \
+                               1.0118400000e+01,                                                                     \
                                2.8500000000e-02,                                                                     \
                                1.4760000000e-01,                                                                     \
                                8.1840000000e-01,                                                                     \
@@ -166,10 +171,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                             0.0000000000e+00,                                                                        \
                             2.0493754000e-01,                                                                        \
                             1.6450000000e+00,                                                                        \
-                            8.0790000000e-01,                                                                        \
+                            2.4669000000e+00,                                                                        \
                             5.3602000000e+00,                                                                        \
-                            3.7819000000e+00,                                                                        \
-                            5.9563000000e+00,                                                                        \
+                            7.1668000000e+00,                                                                        \
+                            1.0118400000e+01,                                                                        \
                             2.8500000000e-02,                                                                        \
                             1.4760000000e-01,                                                                        \
                             8.1840000000e-01,                                                                        \
@@ -251,10 +256,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                     0.0000000000e+00,                                                                \
                                     2.0493754000e-01,                                                                \
                                     1.6450000000e+00,                                                                \
-                                    8.0790000000e-01,                                                                \
+                                    2.4669000000e+00,                                                                \
                                     5.3602000000e+00,                                                                \
-                                    3.7819000000e+00,                                                                \
-                                    5.9563000000e+00,                                                                \
+                                    7.1668000000e+00,                                                                \
+                                    1.0118400000e+01,                                                                \
                                     2.8500000000e-02,                                                                \
                                     1.4760000000e-01,                                                                \
                                     8.1840000000e-01,                                                                \
@@ -293,10 +298,10 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                  0.0000000000e+00,                                                                   \
                                  2.0493754000e-01,                                                                   \
                                  1.6450000000e+00,                                                                   \
-                                 8.0790000000e-01,                                                                   \
+                                 2.4669000000e+00,                                                                   \
                                  5.3602000000e+00,                                                                   \
-                                 3.7819000000e+00,                                                                   \
-                                 5.9563000000e+00,                                                                   \
+                                 7.1668000000e+00,                                                                   \
+                                 1.0118400000e+01,                                                                   \
                                  2.8500000000e-02,                                                                   \
                                  1.4760000000e-01,                                                                   \
                                  8.1840000000e-01,                                                                   \

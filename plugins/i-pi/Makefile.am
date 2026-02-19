@@ -10,6 +10,8 @@ ipi_driver_SOURCES = src/main/driver.cpp
 # Binary Include path
 ipi_driver_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) $(EXTRA_CXXFLAGS_AM) -I$(top_srcdir)/src -static
 
+nobase_include_HEADERS = src/external/mbx_sockets.h
+
 # Binary dependencies
 LDADD = ${top_builddir}/src/libmbx.la 
 AM_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) -I${top_builddir}/src/ $(EXTRA_CXXFLAGS_AM) -static
