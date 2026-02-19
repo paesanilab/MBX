@@ -46,7 +46,8 @@ const double Na = 6.02214129e+23;    // CODATA 2010
 const double kcal_J = 4184.0;
 const double Eh_kcalmol = Eh_J * Na / kcal_J;
 
-const double Bohr_A = 0.52917721092;  // CODATA 2010
+const double Bohr_A = 0.52917721067;  // CODATA 2014 for consistency with MB-Fit
+const double bohr_per_ang = 1.0 / Bohr_A;
 
 const double c0 = 299792458.0;      // m/s CODATA 2010
 const double ea0 = 8.47835326e-30;  // C*m CODATA 2010

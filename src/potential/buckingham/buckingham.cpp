@@ -390,7 +390,7 @@ void Buckingham::CalculateRepulsion(bool use_ghost) {
         bool do_buck = use_buck_all_[mt * mon_type_count_.size() + mt];
         if (do_buck) {
             // Obtain excluded pairs for monomer type mt
-            systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+            systools::GetBuckExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
 
             std::vector<std::vector<double> > grad_pool(nthreads, std::vector<double>(nmon * ns * 3, 0.0));
             std::vector<double> energy_pool(nthreads, 0.0);
