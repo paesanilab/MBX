@@ -1577,8 +1577,9 @@ void System::SetUpFromJson(nlohmann::json j) {
     }
     mbx_j_["MBX"]["monomers_file"] = monomers_json_file;
 
-    // Try to get elec_lambda
+    // Try to get electrostatics lambda (MBX key: elec_lambda)
     // Default: 1.0
+    // Scope: electrostatics module contributions.
     try {
         elec_lambda_ = j["MBX"]["elec_lambda"];
     } catch (...) {
@@ -1587,8 +1588,9 @@ void System::SetUpFromJson(nlohmann::json j) {
     }
     mbx_j_["MBX"]["elec_lambda"] = elec_lambda_;
 
-    // Try to get two_b_lambda
+    // Try to get 2B lambda (MBX key: two_b_lambda)
     // Default: 1.0
+    // Scope: lambda-enabled 2B ion-water models via energy2b.
     try {
         two_b_lambda_ = j["MBX"]["two_b_lambda"];
     } catch (...) {
@@ -1597,8 +1599,9 @@ void System::SetUpFromJson(nlohmann::json j) {
     }
     mbx_j_["MBX"]["two_b_lambda"] = two_b_lambda_;
 
-    // Try to get three_b_lambda
+    // Try to get 3B lambda (MBX key: three_b_lambda)
     // Default: 1.0
+    // Scope: lambda-enabled 3B ion-water-water models via energy3b.
     try {
         three_b_lambda_ = j["MBX"]["three_b_lambda"];
     } catch (...) {

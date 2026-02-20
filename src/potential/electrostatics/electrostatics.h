@@ -766,6 +766,7 @@ class Electrostatics {
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
 
+    // Electrostatics lambda scaling factor (applied to electrostatics terms).
     double elec_lambda_; // elec_lambda scaling factor
 
     size_t nncomm_nswap;
