@@ -5248,15 +5248,3 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double* xyz1, const double* xy
 
 //----------------------------------------------------------------------------//
 }  // namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
-
-    
-
-
-
-
-        
-
-
-
-
-

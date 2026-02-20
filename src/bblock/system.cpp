@@ -3944,9 +3944,3 @@ void System::Set3BLambda(double three_b_lambda) {
 }  // namespace bblock
 
 ////////////////////////////////////////////////////////////////////////////////
-        // if (mpi_rank_ == 0)
-        //     std::cerr << "**WARNING** \"twobody_cutoff\" is not defined in json file. Using " << cutoff2b_ << "\n";
-
-        // if cutoff realspace is not given, use 2-body PIP cutoff:
-    // double start_overhead = MPI_Wtime();
-

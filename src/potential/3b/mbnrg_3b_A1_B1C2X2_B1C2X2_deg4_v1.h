@@ -97,4 +97,3 @@ struct mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 {
 ////////////////////////////////////////////////////////////////////////////////
 
 #endif
-    // Vector with the coefficients of the polynomials

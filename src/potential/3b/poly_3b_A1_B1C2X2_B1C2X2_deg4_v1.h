@@ -108,14 +108,3 @@ struct poly_A1_B1C2X2_B1C2X2_deg4_v1 {
 //  add_filter['degree', 'x-inter-*+X-*', '2+', '3']
 //  add_filter['degree', 'x-inter-*+X-*', '1+', '4+']
 //
-/**
- * @file poly_3b_A1_B1C2X2_B1C2X2_deg4_v1.h
- * @brief Contains the structure of the polynomial for symmetry A1_B1C2X2_B1C2X2
- */
-
-/**
- * @namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
- * @brief Encloses the structure of the polynomial for symmetry A1_B1C2X2_B1C2X2
- */
-
-    // Degree of the polynomial

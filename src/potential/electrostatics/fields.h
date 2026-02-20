@@ -390,4 +390,3 @@ class ElectricFieldHolder {
 
 }  // namespace elec
 #endif
-

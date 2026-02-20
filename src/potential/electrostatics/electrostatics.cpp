@@ -10240,15 +10240,3 @@ void Electrostatics::setup_comm() {
 }
 
 }  // namespace elec
-        
-
-            // making mini trees for each site in mon2 (one tree per site)
-
-
-                //for each site in the monomer m1...
-
-
-            //freeing trees
-            
-
-
