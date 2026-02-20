@@ -1204,13 +1204,6 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
-<<<<<<< HEAD
-||||||| 2053f38a
-    // Max number of monomers
-    //    size_t maxnmon = mon_type_count_.back().second;
-=======
-
->>>>>>> v1.3_kdtree_fix
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP
