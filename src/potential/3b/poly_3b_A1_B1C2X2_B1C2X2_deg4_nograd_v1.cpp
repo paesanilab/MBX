@@ -6890,3 +6890,13 @@ double poly_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double x[41], const double a[15
 }
 
 }  // namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
+/**
+ * @file poly_3b_A1_B1C2X2_B1C2X2_deg4_nograd_v1.cpp
+ * @brief Contains the implementation of the polynomials without gradients for symmetry A1_B1C2X2_B1C2X2
+ */
+
+/**
+ * @namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
+ * @brief Encloses the structure of the polynomial for symmetry A1_B1C2X2_B1C2X2
+ */
+

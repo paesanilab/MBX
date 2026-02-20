@@ -1753,3 +1753,12 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
 }  // namespace elec
 
 ////////////////////////////////////////////////////////////////////////////////
+    // update virial
+
+
+
+    // Compress vectors to double
+    *grdx = gradx;
+    *grdy = grady;
+    *grdz = gradz;
+    *phi1 = phi_temp;
