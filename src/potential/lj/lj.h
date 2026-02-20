@@ -37,6 +37,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <vector>
 #include <set>
+#include <unordered_set>
 
 #if HAVE_MPI
 #include <mpi.h>
@@ -49,6 +50,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/lj/lj.h"
 #include "potential/lj/ljtools.h"
 #include "potential/electrostatics/helpme.h"
+#include "potential/electrostatics/fields.h"
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
