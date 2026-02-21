@@ -42,6 +42,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace e2b {
 
 double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2) {
+    return get_2b_energy(std::move(mon1), std::move(mon2), nm, std::move(xyz1), std::move(xyz2), 1.0);
+}
+
+double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, double two_b_lambda) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
@@ -395,6 +400,11 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 #endif
 
     return energy;
+}
+
+double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
+                     std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial) {
+    return get_2b_energy(std::move(mon1), std::move(mon2), nm, std::move(xyz1), std::move(xyz2), grad1, grad2, 1.0, virial);
 }
 
 }  // namespace e2b

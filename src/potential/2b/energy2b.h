@@ -92,6 +92,9 @@ namespace e2b {
  */
 double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2, double two_b_lambda);
 
+// Backward-compatible overload: defaults to no scaling.
+double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2);
+
 /**
  * @brief Gets the two body energy for a given set of dimers
  *
@@ -111,6 +114,10 @@ double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<doub
  */
 double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
                      std::vector<double> &grad1, std::vector<double> &grad2, double two_b_lambda, std::vector<double> *virial = 0);
+
+// Backward-compatible overload: defaults to no scaling.
+double get_2b_energy(std::string m1, std::string m2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
+                     std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial = 0);
 
 }  // namespace e2b
 #endif

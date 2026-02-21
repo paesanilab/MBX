@@ -38,6 +38,12 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 namespace e3b {
 
 double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2, std::vector<double> xyz3) {
+    return get_3b_energy(std::move(mon1), std::move(mon2), std::move(mon3), nm, std::move(xyz1), std::move(xyz2),
+                         std::move(xyz3), 1.0);
+}
+
+double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3, double three_b_lambda) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
@@ -301,6 +307,13 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
 #endif
 
     return energy;
+}
+
+double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grad1,
+                     std::vector<double> &grad2, std::vector<double> &grad3, std::vector<double> *virial) {
+    return get_3b_energy(std::move(mon1), std::move(mon2), std::move(mon3), nm, std::move(xyz1), std::move(xyz2),
+                         std::move(xyz3), grad1, grad2, grad3, 1.0, virial);
 }
 
 }  // namespace e3b

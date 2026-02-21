@@ -35,12 +35,19 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "fields.h"
 #include <iomanip>
 
-// Constants for the soft core electrostatic potential
-const double n = 1.0;
-const double alpha_c = 10.0;
-const double tolerance = 1e-5; 
-
 namespace elec {
+
+namespace {
+// Constants for the soft core electrostatic potential.
+constexpr double kSoftcoreExponent = 1.0;
+constexpr double kSoftcoreAlphaC = 10.0;
+constexpr double kSoftcoreChargeTolerance = 1e-5;
+
+// Backward-compatible aliases for existing expressions in this translation unit.
+constexpr double n = kSoftcoreExponent;
+constexpr double alpha_c = kSoftcoreAlphaC;
+constexpr double tolerance = kSoftcoreChargeTolerance;
+}  // namespace
 
 ElectricFieldHolder::ElectricFieldHolder(size_t n) {
     maxnmon = n;

@@ -82,6 +82,10 @@ namespace e3b {
 double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3, double three_b_lambda);
 
+// Backward-compatible overload: defaults to no scaling.
+double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2, std::vector<double> xyz3);
+
 /**
  * @brief Gets the three body energy for a given set of trimers
  *
@@ -104,6 +108,11 @@ double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, 
 double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grd1,
                      std::vector<double> &grd2, std::vector<double> &grd3, double three_b_lambda, std::vector<double> *virial = 0);
+
+// Backward-compatible overload: defaults to no scaling.
+double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grd1,
+                     std::vector<double> &grd2, std::vector<double> &grd3, std::vector<double> *virial = 0);
 
 }  // namespace e3b
 #endif
