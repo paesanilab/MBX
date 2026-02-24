@@ -73,7 +73,7 @@ const double BIGNUM = 1e50;
 
 namespace elec {
 
-const double PIQSRT = sqrt(M_PI);
+const double PIQSRT = sqrt(constants::MY_PI);
 
 std::vector<double> Electrostatics::GetSysXyz() { return sys_xyz_; }
 

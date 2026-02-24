@@ -1409,12 +1409,6 @@ class FFTWWrapper {
 
 namespace helpme {
 
-#define SQRTTWO std::sqrt(static_cast<Real>(2))
-#define SQRTPI static_cast<Real>(1.77245385090551602729816748334114518279754945612238712821381L)
-#ifndef M_PI
-#define M_PI static_cast<Real>(3.14159265358979323846264338327950288419716939937510582097494L)
-#endif
-
 /*!
  * Compute upper incomplete gamma functions for positive half-integral s values using the recursion
  * \f$ \Gamma[\frac{\mathrm{twoS}}{2},x] = \Gamma[\frac{\mathrm{twoS}-2}{2},x] + x^{\frac{\mathrm{twoS}-2}{2}}e^{-x}\f$
@@ -1449,13 +1443,13 @@ struct incompleteGammaRecursion<Real, 2, true> {
 /// Specific value of incomplete gamma function.
 template <typename Real>
 struct incompleteGammaRecursion<Real, 1, false> {
-    static Real compute(Real x) { return SQRTPI * erfc(std::sqrt(x)); }
+    static Real compute(Real x) { return constants::MY_PIS * erfc(std::sqrt(x)); }
 };
 
 /// Specific value of incomplete gamma function.
 template <typename Real>
 struct incompleteGammaRecursion<Real, 1, true> {
-    static Real compute(Real x) { return SQRTPI * erfc(std::sqrt(x)); }
+    static Real compute(Real x) { return constants::MY_PIS * erfc(std::sqrt(x)); }
 };
 
 /// Specific value of incomplete gamma function.
@@ -1661,13 +1655,13 @@ struct gammaRecursion<Real, 0, false> {
 /// Specific value of the Gamma function.
 template <typename Real>
 struct gammaRecursion<Real, 1, true> {
-    static constexpr Real value = SQRTPI;
+    static constexpr Real value = constants::MY_PIS;
 };
 
 /// Specific value of the Gamma function.
 template <typename Real>
 struct gammaRecursion<Real, 1, false> {
-    static constexpr Real value = SQRTPI;
+    static constexpr Real value = constants::MY_PIS;
 };
 
 /// Specific value of the Gamma function.
@@ -1771,7 +1765,7 @@ struct gammaComputer {
 template <typename Real>
 Real nonTemplateGammaComputer(int twoS) {
     if (twoS == 1) {
-        return SQRTPI;
+        return constants::MY_PIS;
     } else if (twoS == 2) {
         return 1;
     } else if (twoS <= 0 && twoS % 2 == 0) {
@@ -3268,7 +3262,7 @@ class PMEInstance {
         if (rPower > 3 && nodeZero) {
             // Kernels with rPower>3 are absolutely convergent and should have the m=0 term present.
             // To compute it we need sum_ij c(i)c(j), which can be obtained from the structure factor norm.
-            Real prefac = 2 * scaleFactor * M_PI * SQRTPI * pow(kappa, rPower - 3) /
+            Real prefac = 2 * scaleFactor * M_PI * constants::MY_PIS * pow(kappa, rPower - 3) /
                           ((rPower - 3) * gammaComputer<Real, rPower>::value * volume);
             energy += prefac * (gridPtr[0].real() * gridPtr[0].real() + gridPtr[0].imag() * gridPtr[0].imag());
         }
@@ -3276,7 +3270,7 @@ class PMEInstance {
         if (nodeZero) gridPtr[0] = Complex(0, 0);
 
         Real bPrefac = M_PI * M_PI / (kappa * kappa);
-        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
+        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (constants::MY_PIS * gammaComputer<Real, rPower>::value * volume);
         size_t nxz = (size_t)myNx * myNz;
         Real Vxx = 0, Vxy = 0, Vyy = 0, Vxz = 0, Vyz = 0, Vzz = 0;
         const Real *boxPtr = boxInv[0];
@@ -3374,7 +3368,7 @@ class PMEInstance {
         if (rPower > 3 && nodeZero) {
             // Kernels with rPower>3 are absolutely convergent and should have the m=0 term present.
             // To compute it we need sum_ij c(i)c(j), which can be obtained from the structure factor norm.
-            Real prefac = 2 * scaleFactor * M_PI * SQRTPI * pow(kappa, rPower - 3) /
+            Real prefac = 2 * scaleFactor * M_PI * constants::MY_PIS * pow(kappa, rPower - 3) /
                           ((rPower - 3) * gammaComputer<Real, rPower>::value * volume);
             energy += prefac * gridPtrIn[0] * gridPtrIn[0];
         }
@@ -3382,7 +3376,7 @@ class PMEInstance {
         if (nodeZero) gridPtrOut[0] = 0;
 
         Real bPrefac = M_PI * M_PI / (kappa * kappa);
-        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
+        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (constants::MY_PIS * gammaComputer<Real, rPower>::value * volume);
         size_t nxz = (size_t)myNx * myNz;
         size_t nyxz = myNy * nxz;
         Real Vxx = 0, Vxy = 0, Vyy = 0, Vxz = 0, Vyz = 0, Vzz = 0;
@@ -3512,7 +3506,7 @@ class PMEInstance {
         if (nodeZero) gridPtr[0] = 0;
 
         Real bPrefac = M_PI * M_PI / (kappa * kappa);
-        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (SQRTPI * gammaComputer<Real, rPower>::value * volume);
+        Real volPrefac = scaleFactor * pow(M_PI, rPower - 1) / (constants::MY_PIS * gammaComputer<Real, rPower>::value * volume);
         const Real *boxPtr = boxInv[0];
         // Exclude m=0 cell.
         int start = (nodeZero ? 1 : 0);
@@ -4718,7 +4712,7 @@ class PMEInstance {
         if (rPower_ > 3 && iAmNodeZero) {
             // Kernels with rPower>3 are absolutely convergent and should have the m=0 term present.
             // To compute it we need sum_ij c(i)c(j), which can be obtained from the structure factor norm.
-            Real prefac = 2 * scaleFactor_ * M_PI * SQRTPI * pow(kappa_, rPower_ - 3) /
+            Real prefac = 2 * scaleFactor_ * M_PI * constants::MY_PIS * pow(kappa_, rPower_ - 3) /
                           ((rPower_ - 3) * nonTemplateGammaComputer<Real>(rPower_) * cellVolume());
             energy += prefac * transformedGrid[0] * transformedGrid[0];
         }
@@ -4749,7 +4743,7 @@ class PMEInstance {
         if (rPower_ > 3 && iAmNodeZero) {
             // Kernels with rPower>3 are absolutely convergent and should have the m=0 term present.
             // To compute it we need sum_ij c(i)c(j), which can be obtained from the structure factor norm.
-            Real prefac = 2 * scaleFactor_ * M_PI * SQRTPI * pow(kappa_, rPower_ - 3) /
+            Real prefac = 2 * scaleFactor_ * M_PI * constants::MY_PIS * pow(kappa_, rPower_ - 3) /
                           ((rPower_ - 3) * nonTemplateGammaComputer<Real>(rPower_) * cellVolume());
             energy += prefac * std::norm(transformedGrid[0]);
         }

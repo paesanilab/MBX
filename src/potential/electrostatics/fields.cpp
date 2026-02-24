@@ -83,7 +83,7 @@ void ElectricFieldHolder::CalcPermanentElecField(
     // temporary virial holder
     // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
 
-    const double PIQSRT = std::sqrt(M_PI);
+    const double PIQSRT = std::sqrt(constants::MY_PI);
 
     double v7 = 0.0;
     double v8 = 0.0;
@@ -269,7 +269,7 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     // temporary virial holder
     // std::fill(v11_.begin(), v11_.begin() + mon2_index_end*6, 0.0);
 
-    const double PIQSRT = std::sqrt(M_PI);
+    const double PIQSRT = std::sqrt(constants::MY_PI);
 
     double v7 = 0.0;
     double v8 = 0.0;
@@ -564,7 +564,7 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
     double v1 = 0.0;
     double v2 = 0.0;
 
-    double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+    double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(constants::MY_PI) * ewald_alpha);
     double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
     alpha_pi_term *= two_alpha_squared;
 
@@ -704,7 +704,7 @@ void ElectricFieldHolder::CalcDipoleElecField_WithinCutoff(double *xyz1, double 
     double v1 = 0.0;
     double v2 = 0.0;
 
-    double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+    double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(constants::MY_PI) * ewald_alpha);
     double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
     alpha_pi_term *= two_alpha_squared;
 
@@ -1014,7 +1014,7 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
     const double xyzmon1_y = xyz1[site_inmon13 + nmon1 + mon1_index];
     const double xyzmon1_z = xyz1[site_inmon13 + nmon12 + mon1_index];
 
-    double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+    double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(constants::MY_PI) * ewald_alpha);
     double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
     alpha_pi_term *= two_alpha_squared;
 
@@ -1250,7 +1250,7 @@ void ElectricFieldHolder::CalcElecFieldGrads(
             // particularly equations 2.8 and 2.9.  When alpha is zero these fall out to just be
             // r^-1, r^-3, r^-5
             double r_alpha = ewald_alpha * r;
-            double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(M_PI) * ewald_alpha);
+            double alpha_pi_term = ewald_alpha == 0 ? 0 : 1 / (std::sqrt(constants::MY_PI) * ewald_alpha);
             double exp_alpha2_r2 = exp(-r_alpha * r_alpha);
             double two_alpha_squared = 2.0 * ewald_alpha * ewald_alpha;
             double erfterm = erf(r_alpha);

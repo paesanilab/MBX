@@ -2,6 +2,7 @@
 #define X2B_A1_A1_DEG23_V1X_H
  
 #include "poly_2b_A1_A1_deg23_v1x.h" 
+#include "tools/constants.h"
 
 #include <iostream>
 #include <cmath>

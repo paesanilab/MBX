@@ -179,7 +179,7 @@ int main(int argc, char** argv) {
 
     gsl_eigen_symmv_sort(eval, evec, GSL_EIGEN_SORT_VAL_ASC);
 
-    const double radps_to_cm1 = 1.0e10 / (2 * M_PI * constants::c0);
+    const double radps_to_cm1 = 1.0e10 / (2 * constants::MY_PI * constants::c0);
 
     // Print the vibrational frequencies
 

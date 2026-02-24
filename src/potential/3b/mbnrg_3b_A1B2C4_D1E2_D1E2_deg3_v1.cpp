@@ -2078,7 +2078,7 @@ double mbnrg_A1B2C4_D1E2_D1E2_deg3_v1::f_switch(const double r, double& g) {
         g = 0.0;
         return 0.0;
     } else if (r > m_ri) {
-        const double t1 = M_PI / (m_ro - m_ri);
+        const double t1 = constants::MY_PI / (m_ro - m_ri);
         const double x = (r - m_ri) * t1;
         g = -std::sin(x) * t1 / 2.0;
         return (1.0 + std::cos(x)) / 2.0;
@@ -2256,7 +2256,7 @@ double mbnrg_A1B2C4_D1E2_D1E2_deg3_v1::eval(const double* xyz1, const double* xy
         } else if ((sw12 + sw13 + sw23) > 2.0) {
             sw = 1.0;
         } else {
-            sw = std::cos((sw12 + sw13 + sw23 - 1.0) * M_PI / 2.0);
+            sw = std::cos((sw12 + sw13 + sw23 - 1.0) * constants::MY_PI / 2.0);
             sw = 1.0 - sw * sw;
         }
 
@@ -2467,7 +2467,7 @@ double mbnrg_A1B2C4_D1E2_D1E2_deg3_v1::eval(const double* xyz1, const double* xy
         } else if ((sw12 + sw13 + sw23) > 2.0) {
             sw = 1.0;
         } else {
-            sw = std::cos((sw12 + sw13 + sw23 - 1.0) * M_PI / 2.0);
+            sw = std::cos((sw12 + sw13 + sw23 - 1.0) * constants::MY_PI / 2.0);
             sw = 1.0 - sw * sw;
         }
 
@@ -2561,9 +2561,9 @@ double mbnrg_A1B2C4_D1E2_D1E2_deg3_v1::eval(const double* xyz1, const double* xy
         // gsw13 *= (sw12*1.0 + 1.0*sw23)*energies[j]/d13r;
         // gsw23 *= (sw12*1.0 + sw13*1.0)*energies[j]/d23r;
         if ((sw12 + sw13 + sw23) > 1.0 && (sw12 + sw13 + sw23) < 2.0) {
-            gsw12 *= -(M_PI / 2.0) * sin(M_PI * (sw12 + sw13 + sw23)) * energies[j] / d12r;
-            gsw13 *= -(M_PI / 2.0) * sin(M_PI * (sw12 + sw13 + sw23)) * energies[j] / d13r;
-            gsw23 *= -(M_PI / 2.0) * sin(M_PI * (sw12 + sw13 + sw23)) * energies[j] / d23r;
+            gsw12 *= -(constants::MY_PI / 2.0) * sin(constants::MY_PI * (sw12 + sw13 + sw23)) * energies[j] / d12r;
+            gsw13 *= -(constants::MY_PI / 2.0) * sin(constants::MY_PI * (sw12 + sw13 + sw23)) * energies[j] / d13r;
+            gsw23 *= -(constants::MY_PI / 2.0) * sin(constants::MY_PI * (sw12 + sw13 + sw23)) * energies[j] / d23r;
         } else {
             gsw12 = 0.0;
             gsw13 = 0.0;
