@@ -70,6 +70,10 @@ class x3b_h2o_ion_v1x_deg4_filtered {
      * @return Double with the sum of the energies of each trimer.
      */
     double operator()(const double* xyz1, const double* xyz2, const double* xyz3, size_t nt, double three_b_lambda) const;
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double operator()(const double* xyz1, const double* xyz2, const double* xyz3, size_t nt) const {
+        return operator()(xyz1, xyz2, xyz3, nt, 1.0);
+    }
 
     /**
      * @brief Computes the two body polynomials for the trimers
@@ -89,6 +93,11 @@ class x3b_h2o_ion_v1x_deg4_filtered {
      */
     double operator()(const double* xyz1, const double* xyz2, const double* xyz3, double* grad1, double* grad2,
                       double* grad3, size_t nt, double three_b_lambda, std::vector<double>* virial = 0) const;
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double operator()(const double* xyz1, const double* xyz2, const double* xyz3, double* grad1, double* grad2,
+                             double* grad3, size_t nt, std::vector<double>* virial = 0) const {
+        return operator()(xyz1, xyz2, xyz3, grad1, grad2, grad3, nt, 1.0, virial);
+    }
 
     // Inner cutoff
     double m_r3i;
