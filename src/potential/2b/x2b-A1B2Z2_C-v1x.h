@@ -83,6 +83,12 @@ class x2b_h2o_ion_v2x {
     double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd,
                 double two_b_lambda,std::vector<double>* virial = 0);
 
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd,
+                       std::vector<double>* virial = 0) {
+        return eval(w1, x, g1, g2, nd, 1.0, virial);
+    }
+
     /**
      * @brief Computes the two body polynomials for the dimers
      *
@@ -95,6 +101,11 @@ class x2b_h2o_ion_v2x {
      * @return Double with the sum of the energies of each dimer.
      */
     double eval(const double* w1, const double* x, const size_t nd, double two_b_lambda);
+
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double eval(const double* w1, const double* x, const size_t nd) {
+        return eval(w1, x, nd, 1.0);
+    }
 
    private:
     // Values of the non-linear parameters of the polynomials
