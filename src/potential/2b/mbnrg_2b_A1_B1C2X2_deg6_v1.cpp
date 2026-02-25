@@ -3700,7 +3700,8 @@ double mbnrg_A1_B1C2X2_deg6_v1::f_switch(const double r, double& g)
 
 //----------------------------------------------------------------------------//
 
- double mbnrg_A1_B1C2X2_deg6_v1::eval(const double *xyz1, const double *xyz2, const size_t n) {
+ double mbnrg_A1_B1C2X2_deg6_v1::eval(const double *xyz1, const double *xyz2, const size_t n,
+                                     double two_b_lambda) {
     std::vector<double> energies(n,0.0);
     std::vector<double> energies_sw(n,0.0);
 
@@ -3780,13 +3781,14 @@ double mbnrg_A1_B1C2X2_deg6_v1::f_switch(const double r, double& g)
     for (size_t i = 0; i < n; i++)
         energy += energies_sw[i];
 
-    return energy;
+    return energy*two_b_lambda;
 
 }
 
 //----------------------------------------------------------------------------//
 
-double mbnrg_A1_B1C2X2_deg6_v1::eval(const double *xyz1, const double *xyz2, double *grad1, double *grad2 , const size_t n, std::vector<double> *virial) {
+double mbnrg_A1_B1C2X2_deg6_v1::eval(const double *xyz1, const double *xyz2, double *grad1, double *grad2,
+                                     const size_t n, double two_b_lambda, std::vector<double> *virial) {
     std::vector<double> energies(n,0.0);
     std::vector<double> energies_sw(n,0.0);
 
@@ -3877,10 +3879,10 @@ double mbnrg_A1_B1C2X2_deg6_v1::eval(const double *xyz1, const double *xyz2, dou
         sw = sw12;
 
         energies[j] = my_poly.eval(xs,coefficients.data(),gxs);
-        energies_sw[j] = energies[j]*sw;
+        energies_sw[j] = energies[j]*sw*two_b_lambda;
 
         for (size_t i = 0; i < 8; i++) {
-            gxs[i] *= sw;
+            gxs[i] *= sw*two_b_lambda;
         }
 
         vs[0].grads(gxs[0], coords_A_1_a_g, coords_B_1_b_g, coords_A_1_a, coords_B_1_b);
@@ -3893,7 +3895,7 @@ double mbnrg_A1_B1C2X2_deg6_v1::eval(const double *xyz1, const double *xyz2, dou
         vs[7].grads(gxs[7], coords_C_1_b_g, coords_C_2_b_g, coords_C_1_b, coords_C_2_b);
 
         m2.grads(coords_X_1_b_g, coords_X_2_b_g, w12, wcross, coords_B_1_b_g);
-        gsw12 *= (1.0)*energies[j]/d12r;
+        gsw12 *= (1.0)*energies[j]*two_b_lambda/d12r;
 
 
         for (size_t i = 0; i < 3; i++) {
