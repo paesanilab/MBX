@@ -91,7 +91,13 @@ urns a vector with them.
      * @param[in] n Number of monomers passed in the xyz array.
      * @return Double with the energy.
      */
-    double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n);
+    double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n,
+                double three_b_lambda);
+
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n) {
+        return eval(xyz1, xyz2, xyz3, n, 1.0);
+    }
 
     /**
      * @brief Computes the one body energy for the monomers
@@ -108,7 +114,14 @@ urns a vector with them.
      * @param[in] n Number of monomers passed in the xyz array.
      * @return Double with the energy.
      */
-    double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3 , const size_t n, std::vector<double> *virial=0);
+    double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2,
+                double *grad3, const size_t n, double three_b_lambda, std::vector<double> *virial=0);
+
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2,
+                       double *grad3, const size_t n, std::vector<double> *virial=0) {
+        return eval(xyz1, xyz2, xyz3, grad1, grad2, grad3, n, 1.0, virial);
+    }
 
   private:
     // Non-linear constants

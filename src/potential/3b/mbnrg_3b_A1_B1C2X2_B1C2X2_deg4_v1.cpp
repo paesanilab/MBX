@@ -12796,7 +12796,8 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::f_switch(const double r, double& g)
 
 //----------------------------------------------------------------------------//
 
- double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double *xyz1, const double *xyz2, const double *xyz3, const size_t n) {
+ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double *xyz1, const double *xyz2, const double *xyz3,
+                                            const size_t n, double three_b_lambda) {
     std::vector<double> energies(n,0.0);
     std::vector<double> energies_sw(n,0.0);
 
@@ -12947,13 +12948,15 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::f_switch(const double r, double& g)
     for (size_t i = 0; i < n; i++)
         energy += energies_sw[i];
 
-    return energy;
+    return energy*three_b_lambda;
 
 }
 
 //----------------------------------------------------------------------------//
 
-double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double *xyz1, const double *xyz2, const double *xyz3, double *grad1, double *grad2, double *grad3 , const size_t n, std::vector<double> *virial) {
+double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double *xyz1, const double *xyz2, const double *xyz3,
+                                            double *grad1, double *grad2, double *grad3, const size_t n,
+                                            double three_b_lambda, std::vector<double> *virial) {
     std::vector<double> energies(n,0.0);
     std::vector<double> energies_sw(n,0.0);
 
@@ -13127,10 +13130,10 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double *xyz1, const double *xy
         sw = sw12*sw13 + sw12*sw23 + sw13*sw23 - 2*sw12*sw23*sw13;
 
         energies[j] = my_poly.eval(xs,coefficients.data(),gxs);
-        energies_sw[j] = energies[j]*sw;
+        energies_sw[j] = energies[j]*sw*three_b_lambda;
 
         for (size_t i = 0; i < 41; i++) {
-            gxs[i] *= sw;
+            gxs[i] *= sw*three_b_lambda;
         }
 
         vs[0].grads(gxs[0], coords_A_1_a_g, coords_B_1_b_g, coords_A_1_a, coords_B_1_b);
@@ -13178,9 +13181,9 @@ double mbnrg_A1_B1C2X2_B1C2X2_deg4_v1::eval(const double *xyz1, const double *xy
         m2.grads(coords_X_1_b_g, coords_X_2_b_g, w12, wcross, coords_B_1_b_g);
 
         m3.grads(coords_X_3_c_g, coords_X_4_c_g, w12, wcross, coords_B_2_c_g);
-        gsw12 *= (1.0*sw13 + 1.0*sw23 - 2.0*sw13*sw23)*energies[j]/d12r;
-        gsw13 *= (sw12*1.0 + 1.0*sw23 - 2.0*sw12*sw23)*energies[j]/d13r;
-        gsw23 *= (sw12*1.0 + sw13*1.0 - 2.0*sw12*sw13)*energies[j]/d23r;
+        gsw12 *= (1.0*sw13 + 1.0*sw23 - 2.0*sw13*sw23)*energies[j]*three_b_lambda/d12r;
+        gsw13 *= (sw12*1.0 + 1.0*sw23 - 2.0*sw12*sw23)*energies[j]*three_b_lambda/d13r;
+        gsw23 *= (sw12*1.0 + sw13*1.0 - 2.0*sw12*sw13)*energies[j]*three_b_lambda/d23r;
 
 
         for (size_t i = 0; i < 3; i++) {
