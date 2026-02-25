@@ -39,12 +39,6 @@ namespace e3b {
 
 double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3) {
-    return get_3b_energy(std::move(mon1), std::move(mon2), std::move(mon3), nm, std::move(xyz1), std::move(xyz2),
-                         std::move(xyz3), 1.0);
-}
-
-double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
-                     std::vector<double> xyz2, std::vector<double> xyz3, double three_b_lambda) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -94,20 +88,23 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         x2o::x3b_v2x pot;
         energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
     } else if (mon1 == "h2o" and mon2 == "h2o" and (mon3 == "li+" or mon3 == "na+" or mon3 == "k+" or mon3 == "rb+")) {
-        x3b_h2o_ion_v1x_deg4_filtered pot(mon3); // edit here Suman
-        energy = pot(xyz1.data(), xyz2.data(), xyz3.data(), nm, three_b_lambda);
+        x3b_h2o_ion_v1x_deg4_filtered pot(mon3);
+        energy = pot(xyz1.data(), xyz2.data(), xyz3.data(), nm);
     } else if (mon1 == "cs+" and mon2 == "h2o" and mon3 == "h2o") {
         x3b_h2o_ion_v1x_deg4_filtered pot(mon1);
-        energy = pot(xyz2.data(), xyz3.data(), xyz1.data(), nm, three_b_lambda);
-    } else if ((mon1 == "cl-") and mon2 == "h2o" and mon3 == "h2o") {
-        mbnrg_A1_B1C2X2_B1C2X2_deg4_oldswitch::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
-        return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm, three_b_lambda);
-    } else if ((mon1 == "f-" or mon1 == "br-") and mon2 == "h2o" and mon3 == "h2o") {
+        energy = pot(xyz2.data(), xyz3.data(), xyz1.data(), nm);
+    } else if (mon1 == "f-" and mon2 == "h2o" and mon3 == "h2o") {
         mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
-        return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm, three_b_lambda);
+        return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
+    } else if (mon1 == "cl-" and mon2 == "h2o" and mon3 == "h2o") {
+        mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
+        return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
+    } else if (mon1 == "br-" and mon2 == "h2o" and mon3 == "h2o") {
+        mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
+        return pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), nm);
     } else if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "i-") {
         mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon3, mon1, mon2);
-        return pot.eval(xyz3.data(), xyz1.data(), xyz2.data(), nm, three_b_lambda);
+        return pot.eval(xyz3.data(), xyz1.data(), xyz2.data(), nm);
         // =====>> BEGIN SECTION 3B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon1 == "ch4" and mon2 == "h2o" and mon3 == "h2o") {
@@ -141,7 +138,7 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
 
 double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grad1,
-                     std::vector<double> &grad2, std::vector<double> &grad3, double three_b_lambda, std::vector<double> *virial) {
+                     std::vector<double> &grad2, std::vector<double> &grad3, std::vector<double> *virial) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -224,20 +221,23 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
         x2o::x3b_v2x pot;
         energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
     } else if (mon1 == "h2o" and mon2 == "h2o" and (mon3 == "li+" or mon3 == "na+" or mon3 == "k+" or mon3 == "rb+")) {
-        x3b_h2o_ion_v1x_deg4_filtered pot(mon3); // edit here Suman
-        energy = pot(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, three_b_lambda,virial);
+        x3b_h2o_ion_v1x_deg4_filtered pot(mon3);
+        energy = pot(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
     } else if (mon1 == "cs+" and mon2 == "h2o" and mon3 == "h2o") {
         x3b_h2o_ion_v1x_deg4_filtered pot(mon1);
-        energy = pot(xyz2.data(), xyz3.data(), xyz1.data(), grad2.data(), grad3.data(), grad1.data(), nm, three_b_lambda,virial);
-    } else if ((mon1 == "cl-") and mon2 == "h2o" and mon3 == "h2o") {
-        mbnrg_A1_B1C2X2_B1C2X2_deg4_oldswitch::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
-        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, three_b_lambda, virial);
-    } else if ((mon1 == "f-" or mon1 == "br-") and mon2 == "h2o" and mon3 == "h2o") {
+        energy = pot(xyz2.data(), xyz3.data(), xyz1.data(), grad2.data(), grad3.data(), grad1.data(), nm, virial);
+    } else if (mon1 == "f-" and mon2 == "h2o" and mon3 == "h2o") {
         mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
-        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, three_b_lambda, virial);
+        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
+    } else if (mon1 == "cl-" and mon2 == "h2o" and mon3 == "h2o") {
+        mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
+        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
+    } else if (mon1 == "br-" and mon2 == "h2o" and mon3 == "h2o") {
+        mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon1, mon2, mon3);
+        energy = pot.eval(xyz1.data(), xyz2.data(), xyz3.data(), grad1.data(), grad2.data(), grad3.data(), nm, virial);
     } else if (mon1 == "h2o" and mon2 == "h2o" and mon3 == "i-") {
         mbnrg_A1_B1C2X2_B1C2X2_deg4::mbnrg_A1_B1C2X2_B1C2X2_deg4_v1 pot(mon3, mon1, mon2);
-        energy = pot.eval(xyz3.data(), xyz1.data(), xyz2.data(), grad3.data(), grad1.data(), grad2.data(), nm, three_b_lambda, virial);
+        energy = pot.eval(xyz3.data(), xyz1.data(), xyz2.data(), grad3.data(), grad1.data(), grad2.data(), nm, virial);
         // =====>> BEGIN SECTION 3B_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon1 == "ch4" and mon2 == "h2o" and mon3 == "h2o") {
@@ -307,13 +307,6 @@ double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_
 #endif
 
     return energy;
-}
-
-double get_3b_energy(std::string mon1, std::string mon2, std::string mon3, size_t nm, std::vector<double> xyz1,
-                     std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grad1,
-                     std::vector<double> &grad2, std::vector<double> &grad3, std::vector<double> *virial) {
-    return get_3b_energy(std::move(mon1), std::move(mon2), std::move(mon3), nm, std::move(xyz1), std::move(xyz2),
-                         std::move(xyz3), grad1, grad2, grad3, 1.0, virial);
 }
 
 }  // namespace e3b
