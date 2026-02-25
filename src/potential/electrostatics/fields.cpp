@@ -341,8 +341,8 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
         // std::cout << "opt: chr1: " << chg1[site_inmon1 + mon1_index] << ", chr2: " << chg2[site_jnmon2 + m] << std::endl;
 
         // --- Check for Soft Core and apply modifications ---
-        if ((std::abs(chg1[site_inmon1 + mon1_index] - elec_lambda) < tolerance ||
-            std::abs(chg2[site_jnmon2 + m] - elec_lambda) < tolerance) && r_sq < cutoff * cutoff)
+        if ((std::abs(std::abs(chg1[site_inmon1 + mon1_index]) - elec_lambda) < tolerance ||
+            std::abs(std::abs(chg2[site_jnmon2 + m]) - elec_lambda) < tolerance) && r_sq < cutoff * cutoff)
         {
             // --- SOFT-CORE Case ---
 
