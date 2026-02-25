@@ -4,7 +4,7 @@
 
 
 
-# MBX v1.3.5
+# MBX v1.3.6 FDTI
 MBX: A many-body energy and force calculator for data-driven many-body simulations.
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
@@ -220,5 +220,4 @@ The unit tests implemented should cover a big part of the code. This sunburst gr
 <p align="center">
   <img src="https://codecov.io/gh/paesanilab/MBX/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>
-
 

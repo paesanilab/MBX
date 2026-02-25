@@ -76,11 +76,18 @@ class x2b_h2o_ion_v2x {
      * @param[in,out] g1 Pointer to a double array with the gradients of the monomers of waer.
      * @param[in,out] g2 Pointer to a double array with the gradients of the monomers of monoatomic atom.
      * @param[in] nd Number of dimers passed in the xyz arrays.
-     * @param[in.out] virial Vector of doubles with the energies of each monomer, in the same order as the input.
+     * @param[in,out] virial Vector of doubles with the energies of each monomer, in the same order as the input.
+     * @param[in] two_b_lambda Parameter to scale the 2-body energy of ion-water
      * @return Double with the sum of the energies of each dimer.
      */
     double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd,
-                std::vector<double>* virial = 0);
+                double two_b_lambda,std::vector<double>* virial = 0);
+
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double eval(const double* w1, const double* x, double* g1, double* g2, const size_t nd,
+                       std::vector<double>* virial = 0) {
+        return eval(w1, x, g1, g2, nd, 1.0, virial);
+    }
 
     /**
      * @brief Computes the two body polynomials for the dimers
@@ -90,9 +97,15 @@ class x2b_h2o_ion_v2x {
      * @param[in] w1 Pointer to a double array with the coordinates of the monomers of water.
      * @param[in] x Pointer to a double array with the coordinates of the monomers of the monoatomic atom.
      * @param[in] nd Number of dimers passed in the xyz arrays.
+     * @param[in] two_b_lambda Parameter to scale the 2-body energy of ion-water
      * @return Double with the sum of the energies of each dimer.
      */
-    double eval(const double* w1, const double* x, const size_t nd);
+    double eval(const double* w1, const double* x, const size_t nd, double two_b_lambda);
+
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double eval(const double* w1, const double* x, const size_t nd) {
+        return eval(w1, x, nd, 1.0);
+    }
 
    private:
     // Values of the non-linear parameters of the polynomials
@@ -126,6 +139,8 @@ class x2b_h2o_ion_v2x {
 
     // Values of the linear parameters of the polynomials
     std::vector<double> twobodyfit;
+    
+    double two_b_lambda; // Parameter to scale the 2-body energy of ion-water
 };
 
 //----------------------------------------------------------------------------//

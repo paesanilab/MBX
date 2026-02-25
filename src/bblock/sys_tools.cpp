@@ -229,9 +229,12 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
             } else if (mon[i] == "mbpbe") {
                 sites.push_back(4);
                 nat.push_back(3);
-                // =====>> BEGIN SECTION SITES <<=====
-                // ==> PASTE YOUR CODE BELOW <==
-                // END SECTION SITES
+            // =====>> BEGIN SECTION SITES <<=====
+            // ==> PASTE YOUR CODE BELOW <==
+            } else if (mon[i] == "nma") {
+                sites.push_back(12);
+                nat.push_back(12);
+            // END SECTION SITES
             } else {
                 // If monomer not found, throw exception
                 std::string text = "No data in the dataset for monomer: " + mon[i];
@@ -640,6 +643,33 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
     }
 }
 
+bool GetUseKoideMonomer(std::string mon) {
+
+    if (mon == "nma") {
+        return true;
+    // =====>> BEGIN SECTION KOIDE_MONOMER <<=====
+    // =====>> PASTE CODE BELOW <<=====
+
+    // =====>> END SECTION KOIDE_MONOMER <<=====
+    } else { return false; }
+}
+
+bool GetUseKoideDimer(std::string mon1, std::string mon2) {
+
+    // Make function agnostic to mon1, mon2 order
+    std::string m1 = mon1;
+    std::string m2 = mon2;
+    if (m1 > m2) std::swap(m1, m2);
+
+    if (m1 == "nma" and m2 == "nma") {
+        return true;
+    // =====>> BEGIN SECTION KOIDE_DIMER <<=====
+    // =====>> PASTE CODE BELOW <<=====
+    
+    // =====>> END SECTION KOIDE_DIMER <<=====
+    } else { return false; }
+}
+
 void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,
                  excluded_set_type &exc14) {
     // Clearing excluded pairs just in case
@@ -794,8 +824,237 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
 
     // =====>> BEGIN SECTION EXCLUDED <<=====
     // =====>> PASTE CODE BELOW <<=====
+    if (mon == "nma") {
+        // 12 distances
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(6, 7));
+        exc12.insert(std::make_pair(6, 8));
+        exc12.insert(std::make_pair(8, 11));
+        exc12.insert(std::make_pair(8, 10));
+        exc12.insert(std::make_pair(8, 9));
+        exc12.insert(std::make_pair(0, 6));
+        exc12.insert(std::make_pair(2, 3));
+        exc12.insert(std::make_pair(2, 4));
+        exc12.insert(std::make_pair(2, 5));
+        exc12.insert(std::make_pair(0, 2));
+        // 13 distances
+        exc13.insert(std::make_pair(1, 2));
+        exc13.insert(std::make_pair(7, 8));
+        exc13.insert(std::make_pair(6, 9));
+        exc13.insert(std::make_pair(2, 6));
+        exc13.insert(std::make_pair(10, 11));
+        exc13.insert(std::make_pair(4, 5));
+        exc13.insert(std::make_pair(6, 11));
+        exc13.insert(std::make_pair(6, 10));
+        exc13.insert(std::make_pair(0, 7));
+        exc13.insert(std::make_pair(9, 10));
+        exc13.insert(std::make_pair(9, 11));
+        exc13.insert(std::make_pair(0, 5));
+        exc13.insert(std::make_pair(1, 6));
+        exc13.insert(std::make_pair(0, 4));
+        exc13.insert(std::make_pair(0, 3));
+        exc13.insert(std::make_pair(0, 8));
+        exc13.insert(std::make_pair(3, 4));
+        exc13.insert(std::make_pair(3, 5));
+        // 14 distances
+        exc14.insert(std::make_pair(1, 3));
+        exc14.insert(std::make_pair(5, 6));
+        exc14.insert(std::make_pair(2, 8));
+        exc14.insert(std::make_pair(0, 10));
+        exc14.insert(std::make_pair(7, 11));
+        exc14.insert(std::make_pair(1, 5));
+        exc14.insert(std::make_pair(0, 11));
+        exc14.insert(std::make_pair(3, 6));
+        exc14.insert(std::make_pair(7, 10));
+        exc14.insert(std::make_pair(1, 4));
+        exc14.insert(std::make_pair(7, 9));
+        exc14.insert(std::make_pair(2, 7));
+        exc14.insert(std::make_pair(4, 6));
+        exc14.insert(std::make_pair(1, 8));
+        exc14.insert(std::make_pair(1, 7));
+        exc14.insert(std::make_pair(0, 9));
+    }
+
     // =====>> END SECTION EXCLUDED <<=====
 }
+
+// Created to deal with large monomers with bonded 1-5+ pairs, to prevent monomer ebuck being erroneously calculated when ttm_pair [mon1,mon2] is included in mbx.json.
+// MB-Fit will generate all possible intramolecular atom pairs in "excluded pairs (exc12)" so that no ebuck is calculated for intramolecular pairs at all.
+void GetBuckExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,
+                 excluded_set_type &exc14) {
+    // Clearing excluded pairs just in case
+    exc12.clear();
+    exc13.clear();
+    exc14.clear();
+
+    bool is_in_json = false;
+    if(mon_j.contains(mon)) {
+        try {
+            excluded_set_type e12 = mon_j[mon]["buck_exc"];
+            exc12 = e12;
+            is_in_json = true;
+        } catch (...) {
+            exc12.clear();
+        }
+    }
+
+    if (is_in_json) return;
+
+    // =====>> BEGIN SECTION BUCK_EXCLUDED <<=====
+    // =====>> PASTE CODE BELOW <<=====
+    if (mon == "nma") {
+        // 12 distances - all pairs are written here
+        exc12.insert(std::make_pair(0, 0));
+        exc12.insert(std::make_pair(0, 1));
+        exc12.insert(std::make_pair(0, 2));
+        exc12.insert(std::make_pair(0, 3));
+        exc12.insert(std::make_pair(0, 4));
+        exc12.insert(std::make_pair(0, 5));
+        exc12.insert(std::make_pair(0, 6));
+        exc12.insert(std::make_pair(0, 7));
+        exc12.insert(std::make_pair(0, 8));
+        exc12.insert(std::make_pair(0, 9));
+        exc12.insert(std::make_pair(0, 10));
+        exc12.insert(std::make_pair(0, 11));
+        exc12.insert(std::make_pair(1, 0));
+        exc12.insert(std::make_pair(1, 1));
+        exc12.insert(std::make_pair(1, 2));
+        exc12.insert(std::make_pair(1, 3));
+        exc12.insert(std::make_pair(1, 4));
+        exc12.insert(std::make_pair(1, 5));
+        exc12.insert(std::make_pair(1, 6));
+        exc12.insert(std::make_pair(1, 7));
+        exc12.insert(std::make_pair(1, 8));
+        exc12.insert(std::make_pair(1, 9));
+        exc12.insert(std::make_pair(1, 10));
+        exc12.insert(std::make_pair(1, 11));
+        exc12.insert(std::make_pair(2, 0));
+        exc12.insert(std::make_pair(2, 1));
+        exc12.insert(std::make_pair(2, 2));
+        exc12.insert(std::make_pair(2, 3));
+        exc12.insert(std::make_pair(2, 4));
+        exc12.insert(std::make_pair(2, 5));
+        exc12.insert(std::make_pair(2, 6));
+        exc12.insert(std::make_pair(2, 7));
+        exc12.insert(std::make_pair(2, 8));
+        exc12.insert(std::make_pair(2, 9));
+        exc12.insert(std::make_pair(2, 10));
+        exc12.insert(std::make_pair(2, 11));
+        exc12.insert(std::make_pair(3, 0));
+        exc12.insert(std::make_pair(3, 1));
+        exc12.insert(std::make_pair(3, 2));
+        exc12.insert(std::make_pair(3, 3));
+        exc12.insert(std::make_pair(3, 4));
+        exc12.insert(std::make_pair(3, 5));
+        exc12.insert(std::make_pair(3, 6));
+        exc12.insert(std::make_pair(3, 7));
+        exc12.insert(std::make_pair(3, 8));
+        exc12.insert(std::make_pair(3, 9));
+        exc12.insert(std::make_pair(3, 10));
+        exc12.insert(std::make_pair(3, 11));
+        exc12.insert(std::make_pair(4, 0));
+        exc12.insert(std::make_pair(4, 1));
+        exc12.insert(std::make_pair(4, 2));
+        exc12.insert(std::make_pair(4, 3));
+        exc12.insert(std::make_pair(4, 4));
+        exc12.insert(std::make_pair(4, 5));
+        exc12.insert(std::make_pair(4, 6));
+        exc12.insert(std::make_pair(4, 7));
+        exc12.insert(std::make_pair(4, 8));
+        exc12.insert(std::make_pair(4, 9));
+        exc12.insert(std::make_pair(4, 10));
+        exc12.insert(std::make_pair(4, 11));
+        exc12.insert(std::make_pair(5, 0));
+        exc12.insert(std::make_pair(5, 1));
+        exc12.insert(std::make_pair(5, 2));
+        exc12.insert(std::make_pair(5, 3));
+        exc12.insert(std::make_pair(5, 4));
+        exc12.insert(std::make_pair(5, 5));
+        exc12.insert(std::make_pair(5, 6));
+        exc12.insert(std::make_pair(5, 7));
+        exc12.insert(std::make_pair(5, 8));
+        exc12.insert(std::make_pair(5, 9));
+        exc12.insert(std::make_pair(5, 10));
+        exc12.insert(std::make_pair(5, 11));
+        exc12.insert(std::make_pair(6, 0));
+        exc12.insert(std::make_pair(6, 1));
+        exc12.insert(std::make_pair(6, 2));
+        exc12.insert(std::make_pair(6, 3));
+        exc12.insert(std::make_pair(6, 4));
+        exc12.insert(std::make_pair(6, 5));
+        exc12.insert(std::make_pair(6, 6));
+        exc12.insert(std::make_pair(6, 7));
+        exc12.insert(std::make_pair(6, 8));
+        exc12.insert(std::make_pair(6, 9));
+        exc12.insert(std::make_pair(6, 10));
+        exc12.insert(std::make_pair(6, 11));
+        exc12.insert(std::make_pair(7, 0));
+        exc12.insert(std::make_pair(7, 1));
+        exc12.insert(std::make_pair(7, 2));
+        exc12.insert(std::make_pair(7, 3));
+        exc12.insert(std::make_pair(7, 4));
+        exc12.insert(std::make_pair(7, 5));
+        exc12.insert(std::make_pair(7, 6));
+        exc12.insert(std::make_pair(7, 7));
+        exc12.insert(std::make_pair(7, 8));
+        exc12.insert(std::make_pair(7, 9));
+        exc12.insert(std::make_pair(7, 10));
+        exc12.insert(std::make_pair(7, 11));
+        exc12.insert(std::make_pair(8, 0));
+        exc12.insert(std::make_pair(8, 1));
+        exc12.insert(std::make_pair(8, 2));
+        exc12.insert(std::make_pair(8, 3));
+        exc12.insert(std::make_pair(8, 4));
+        exc12.insert(std::make_pair(8, 5));
+        exc12.insert(std::make_pair(8, 6));
+        exc12.insert(std::make_pair(8, 7));
+        exc12.insert(std::make_pair(8, 8));
+        exc12.insert(std::make_pair(8, 9));
+        exc12.insert(std::make_pair(8, 10));
+        exc12.insert(std::make_pair(8, 11));
+        exc12.insert(std::make_pair(9, 0));
+        exc12.insert(std::make_pair(9, 1));
+        exc12.insert(std::make_pair(9, 2));
+        exc12.insert(std::make_pair(9, 3));
+        exc12.insert(std::make_pair(9, 4));
+        exc12.insert(std::make_pair(9, 5));
+        exc12.insert(std::make_pair(9, 6));
+        exc12.insert(std::make_pair(9, 7));
+        exc12.insert(std::make_pair(9, 8));
+        exc12.insert(std::make_pair(9, 9));
+        exc12.insert(std::make_pair(9, 10));
+        exc12.insert(std::make_pair(9, 11));
+        exc12.insert(std::make_pair(10, 0));
+        exc12.insert(std::make_pair(10, 1));
+        exc12.insert(std::make_pair(10, 2));
+        exc12.insert(std::make_pair(10, 3));
+        exc12.insert(std::make_pair(10, 4));
+        exc12.insert(std::make_pair(10, 5));
+        exc12.insert(std::make_pair(10, 6));
+        exc12.insert(std::make_pair(10, 7));
+        exc12.insert(std::make_pair(10, 8));
+        exc12.insert(std::make_pair(10, 9));
+        exc12.insert(std::make_pair(10, 10));
+        exc12.insert(std::make_pair(10, 11));
+        exc12.insert(std::make_pair(11, 0));
+        exc12.insert(std::make_pair(11, 1));
+        exc12.insert(std::make_pair(11, 2));
+        exc12.insert(std::make_pair(11, 3));
+        exc12.insert(std::make_pair(11, 4));
+        exc12.insert(std::make_pair(11, 5));
+        exc12.insert(std::make_pair(11, 6));
+        exc12.insert(std::make_pair(11, 7));
+        exc12.insert(std::make_pair(11, 8));
+        exc12.insert(std::make_pair(11, 9));
+        exc12.insert(std::make_pair(11, 10));
+        exc12.insert(std::make_pair(11, 11));
+        return;
+    }
+    // =====>> END SECTION BUCK_EXCLUDED <<=====
+
+    GetExcluded(mon, mon_j, exc12, exc13, exc14);
+}
+
 
 bool IsExcluded(excluded_set_type exc, size_t a, size_t b) {
     return ((exc.find(std::make_pair(a, b)) != exc.end()) || (exc.find(std::make_pair(b, a)) != exc.end()));
@@ -1030,10 +1289,25 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv * nsites + 0] = 0.0 * CHARGECON;
             charges[fst_ind + nv * nsites + 1] = 0.0 * CHARGECON;
         }
-        // =====>> BEGIN SECTION CHARGES <<=====
-        // =======>> PASTE BELOW <<=======
+    // =====>> BEGIN SECTION CHARGES <<=====
+    // =======>> PASTE BELOW <<=======
+    } else if (mon_id == "nma") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            charges[fst_ind + nv*nsites + 0] = 0.7654563825 * CHARGECON;
+            charges[fst_ind + nv*nsites + 1] = -0.5905887971 * CHARGECON;
+            charges[fst_ind + nv*nsites + 2] = -0.7382409702 * CHARGECON;
+            charges[fst_ind + nv*nsites + 3] = 0.1998287799 * CHARGECON;
+            charges[fst_ind + nv*nsites + 4] = 0.1998287799 * CHARGECON;
+            charges[fst_ind + nv*nsites + 5] = 0.1998287799 * CHARGECON;
+            charges[fst_ind + nv*nsites + 6] = -0.4358769768 * CHARGECON;
+            charges[fst_ind + nv*nsites + 7] = 0.2610093914 * CHARGECON;
+            charges[fst_ind + nv*nsites + 8] = -0.1403172022 * CHARGECON;
+            charges[fst_ind + nv*nsites + 9] = 0.0930239442 * CHARGECON;
+            charges[fst_ind + nv*nsites + 10] = 0.0930239442 * CHARGECON;
+            charges[fst_ind + nv*nsites + 11] = 0.0930239442 * CHARGECON;
+        }
 
-        // END SECTION CHARGES
+    // END SECTION CHARGES
 
     } else if (mon_id == "mbpbe") {
         // chgtmp = M, H1, H2 according to ttm4.cpp
@@ -1197,8 +1471,24 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
     } else if (mon_id == "cs+") {  // Cesium
         for (size_t nv = 0; nv < n_mon; nv++) polfac[fst_ind + nv] = 2.3660;
 
-        // =====>> BEGIN SECTION POLFACS <<=====
-        // =======>> PASTE BELOW <<=======
+    // =====>> BEGIN SECTION POLFACS <<=====
+    // =======>> PASTE BELOW <<=======
+    } else if (mon_id == "nma") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            polfac[fst_ind + nv*nsites + 0] = 1.3258;
+            polfac[fst_ind + nv*nsites + 1] = 0.7694;
+            polfac[fst_ind + nv*nsites + 2] = 1.1856;
+            polfac[fst_ind + nv*nsites + 3] = 0.3306;
+            polfac[fst_ind + nv*nsites + 4] = 0.3306;
+            polfac[fst_ind + nv*nsites + 5] = 0.3306;
+            polfac[fst_ind + nv*nsites + 6] = 0.8537;
+            polfac[fst_ind + nv*nsites + 7] = 0.3238;
+            polfac[fst_ind + nv*nsites + 8] = 1.185;
+            polfac[fst_ind + nv*nsites + 9] = 0.3339;
+            polfac[fst_ind + nv*nsites + 10] = 0.3339;
+            polfac[fst_ind + nv*nsites + 11] = 0.3339;
+    }
+
     } else if (mon_id == "ch4") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites + 0] = 1.3932677;
@@ -1282,7 +1572,7 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 0] = 0.3198;
             polfac[fst_ind + nv * nsites + 1] = 0.3198;
         }
-        // =====>> END SECTION POLFACS <<=====
+    // =====>> END SECTION POLFACS <<=====
     } else if (mon_id == "mbpbe") {
         // Creating vector with contiguous data
         std::vector<double> polfac2(n_mon * nsites, 0.0);
@@ -1453,10 +1743,25 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv * nsites + 1] = 0.3198;
         }
 
-        // =====>> BEGIN SECTION POLS <<=====
-        // =====>> PASTE  BELOW <<=====
+    // =====>> BEGIN SECTION POLS <<=====
+    // =====>> PASTE  BELOW <<=====
+    } else if (mon_id == "nma") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            pol[fst_ind + nv*nsites + 0] = 1.3258;
+            pol[fst_ind + nv*nsites + 1] = 0.7694;
+            pol[fst_ind + nv*nsites + 2] = 1.1856;
+            pol[fst_ind + nv*nsites + 3] = 0.3306;
+            pol[fst_ind + nv*nsites + 4] = 0.3306;
+            pol[fst_ind + nv*nsites + 5] = 0.3306;
+            pol[fst_ind + nv*nsites + 6] = 0.8537;
+            pol[fst_ind + nv*nsites + 7] = 0.3238;
+            pol[fst_ind + nv*nsites + 8] = 1.185;
+            pol[fst_ind + nv*nsites + 9] = 0.3339;
+            pol[fst_ind + nv*nsites + 10] = 0.3339;
+            pol[fst_ind + nv*nsites + 11] = 0.3339;
+        }
 
-        // =====>> END SECTION POLS <<=====
+    // =====>> END SECTION POLS <<=====
 
     } else if (mon_id == "mbpbe") {
         // Creating vector with contiguous data
@@ -1572,8 +1877,23 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
         // It will be calculated as:
         // (C6(Cs--O)/C6_lr(O) + C6(Cs--H)/C6_lr(H)) / 2
         for (size_t nv = 0; nv < n_mon; nv++) c6_lr[fst_ind + nv] = 65.76255818916154320248;
-        // BEGIN SECTION C6_LONG_RANGE
-        // ==> PASTE YOUR CODE BELOW <==
+    // BEGIN SECTION C6_LONG_RANGE
+    // ==> PASTE YOUR CODE BELOW <==
+    } else if (mon_id == "nma") {
+        for (size_t nv = 0; nv < n_mon; nv++) {
+            c6_lr[nv * natoms + fst_ind + 0] = 16.889612192113827; // A
+            c6_lr[nv * natoms + fst_ind + 1] = 14.186627506211616; // B
+            c6_lr[nv * natoms + fst_ind + 2] = 16.793067021839697; // C
+            c6_lr[nv * natoms + fst_ind + 3] = 5.960637549792807; // D
+            c6_lr[nv * natoms + fst_ind + 4] = 5.960637549792807; // D
+            c6_lr[nv * natoms + fst_ind + 5] = 5.960637549792807; // D
+            c6_lr[nv * natoms + fst_ind + 6] = 12.953397237790556; // E
+            c6_lr[nv * natoms + fst_ind + 7] = 5.685613423369549; // F
+            c6_lr[nv * natoms + fst_ind + 8] = 16.753223570405787; // G
+            c6_lr[nv * natoms + fst_ind + 9] = 6.003757156980951; // H
+            c6_lr[nv * natoms + fst_ind + 10] = 6.003757156980951; // H
+            c6_lr[nv * natoms + fst_ind + 11] = 6.003757156980951; // H
+        }
     } else if (mon_id == "nh3" || mon_id == "nh3pbe0d3bj") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 15.618415412582673;     // A
@@ -1656,7 +1976,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 5] = 13.402239942963767;  // O
             c6_lr[nv * natoms + fst_ind + 6] = 13.402239942963767;  // O
         }
-        // END SECTION C6_LONG_RANGE
+    // END SECTION C6_LONG_RANGE
     } else if (mon_id == "mbpbe") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 13.637419110667532;  // A
