@@ -66,9 +66,14 @@ class x3b_h2o_ion_v1x_deg4_filtered {
      * @param[in] xyz2 Pointer to a double array with the coordinates of the monomers of type mon2.
      * @param[in] xyz3 Pointer to a double array with the coordinates of the monomers of type mon3.
      * @param[in] nt Number of trimers passed in the xyz arrays.
+     * @param[in] three_b_lambda Parameter to scale the 3-body energy of ion-water-water
      * @return Double with the sum of the energies of each trimer.
      */
-    double operator()(const double* xyz1, const double* xyz2, const double* xyz3, size_t nt) const;
+    double operator()(const double* xyz1, const double* xyz2, const double* xyz3, size_t nt, double three_b_lambda) const;
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double operator()(const double* xyz1, const double* xyz2, const double* xyz3, size_t nt) const {
+        return operator()(xyz1, xyz2, xyz3, nt, 1.0);
+    }
 
     /**
      * @brief Computes the two body polynomials for the trimers
@@ -82,11 +87,17 @@ class x3b_h2o_ion_v1x_deg4_filtered {
      * @param[in,out] grad2 Pointer to a double array with the gradients of the monomers of type mon2.
      * @param[in,out] grad3 Pointer to a double array with the gradients of the monomers of type mon3.
      * @param[in] nt Number of trimers passed in the xyz arrays.
+     * @param[in] three_b_lambda Parameter to scale the 3-body energy of ion-water-water
      * @param[in,out] virial Vector of 9 elements with the virial tensor.
      * @return Double with the sum of the energies of each trimer.
      */
     double operator()(const double* xyz1, const double* xyz2, const double* xyz3, double* grad1, double* grad2,
-                      double* grad3, size_t nt, std::vector<double>* virial = 0) const;
+                      double* grad3, size_t nt, double three_b_lambda, std::vector<double>* virial = 0) const;
+    // Backward-compatible no-lambda overload (legacy API).
+    inline double operator()(const double* xyz1, const double* xyz2, const double* xyz3, double* grad1, double* grad2,
+                             double* grad3, size_t nt, std::vector<double>* virial = 0) const {
+        return operator()(xyz1, xyz2, xyz3, grad1, grad2, grad3, nt, 1.0, virial);
+    }
 
     // Inner cutoff
     double m_r3i;
@@ -118,6 +129,8 @@ class x3b_h2o_ion_v1x_deg4_filtered {
 
     // Values of the linear parameters of the polynomials
     double m_coeffs[ncoeffs];
+
+    double three_b_lambda; // Parameter to scale the 3-body energy of ion-water-water
 
     // Switch function
     double f_switch(const double& r, double& g) const;

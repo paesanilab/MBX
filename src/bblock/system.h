@@ -1171,6 +1171,51 @@ class System {
     std::vector<size_t> GetInfoDispersionCounts();
     std::vector<double> GetInfoDispersionTimings();
 
+    /**
+     * @brief Sets electrostatics lambda.
+     *
+     * This scales electrostatics contributions (energy/gradients/virial)
+     * computed by the electrostatics module.
+     * @param elec_lambda Electrostatics scaling factor (default 1.0).
+     */
+    void SetElecLambda(double elec_lambda);
+
+    /**
+     * @brief Gets electrostatics lambda.
+     * @return Electrostatics scaling factor.
+     */
+    double GetElecLambda() const;
+
+    /**
+     * @brief Sets 2B lambda.
+     *
+     * This scales lambda-enabled 2B terms handled in energy2b.
+     * In practice this is used for selected ion-water 2B models.
+     * @param two_b_lambda 2B scaling factor (default 1.0).
+     */
+  void Set2BLambda(double two_b_lambda);
+
+    /**
+     * @brief Gets 2B lambda.
+     * @return 2B scaling factor.
+     */
+  double Get2BLambda() const;
+
+    /**
+     * @brief Sets 3B lambda.
+     *
+     * This scales lambda-enabled 3B terms handled in energy3b.
+     * In practice this is used for selected ion-water-water 3B models.
+     * @param three_b_lambda 3B scaling factor (default 1.0).
+     */
+  void Set3BLambda(double three_b_lambda);
+
+    /**
+     * @brief Gets 3B lambda.
+     * @return 3B scaling factor.
+     */
+  double Get3BLambda() const;
+
    private:
     static constexpr const char* mbx_version = MBX_VERSION;
     /**
@@ -1829,6 +1874,30 @@ class System {
      * States if the initialization is PME only or not"
      */
     // bool isPME_;
+
+    /**
+     * @brief Electrostatics lambda scaling factor.
+     *
+     * Loaded from MBX JSON key "elec_lambda". Default is 1.0.
+     * Applied inside electrostatics routines.
+     */
+    double elec_lambda_;
+
+    /**
+     * @brief 2B lambda scaling factor for lambda-enabled 2B terms.
+     *
+     * Loaded from MBX JSON key "two_b_lambda". Default is 1.0.
+     * Applied inside energy2b calls for supported ion-water models.
+     */
+   double two_b_lambda_;
+
+    /**
+     * @brief 3B lambda scaling factor for lambda-enabled 3B terms.
+     *
+     * Loaded from MBX JSON key "three_b_lambda". Default is 1.0.
+     * Applied inside energy3b calls for supported ion-water-water models.
+     */
+   double three_b_lambda_;
 };
 
 }  // namespace bblock
