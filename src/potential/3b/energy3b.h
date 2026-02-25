@@ -76,8 +76,13 @@ namespace e3b {
  * @param[in] xyz1 coordinates of the monomer 1
  * @param[in] xyz2 coordinates of the monomer 2
  * @param[in] xyz3 coordinates of the monomer 3
+ * @param[in] three_b_lambda multiplicative scaling applied to lambda-enabled 3B terms
  * @return Sum of the three-body energies of all the trimers passed as arguments
  */
+double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2, std::vector<double> xyz3, double three_b_lambda);
+
+// Backward-compatible overload: defaults to no scaling.
 double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3);
 
@@ -97,8 +102,15 @@ double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, 
  * @param[in,out] grad1 gradients of the monomer 1. Gradients will be updated
  * @param[in,out] grad2 gradients of the monomer 2. Gradients will be updated
  * @param[in,out] grad3 gradients of the monomer 3. Gradients will be updated
+ * @param[in] three_b_lambda multiplicative scaling applied to lambda-enabled 3B terms
  * @return Sum of the three-body energies of all the trimers passed as arguments
  */
+double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grd1,
+                     std::vector<double> &grd2, std::vector<double> &grd3, double three_b_lambda,
+                     std::vector<double> *virial = 0);
+
+// Backward-compatible overload: defaults to no scaling.
 double get_3b_energy(std::string m1, std::string m2, std::string m3, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2, std::vector<double> xyz3, std::vector<double> &grd1,
                      std::vector<double> &grd2, std::vector<double> &grd3, std::vector<double> *virial = 0);

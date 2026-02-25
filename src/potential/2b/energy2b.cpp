@@ -43,6 +43,11 @@ namespace e2b {
 
 double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1,
                      std::vector<double> xyz2) {
+    return get_2b_energy(std::move(mon1), std::move(mon2), nm, std::move(xyz1), std::move(xyz2), 1.0);
+}
+
+double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1,
+                     std::vector<double> xyz2, double two_b_lambda) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -80,7 +85,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // The order is bc the poly were generated this way
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
-        energy = pot.eval(xyz2.data(), xyz1.data(), nm);
+        energy = pot.eval(xyz2.data(), xyz1.data(), nm, two_b_lambda);
     } else if (mon1 == "f-" and mon2 == "h2o") {
         mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -96,7 +101,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "h2o" and (mon2 == "li+" or mon2 == "na+" or mon2 == "k+" or mon2 == "rb+")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm, two_b_lambda);
     } else if (mon1 == "mbpbe" and mon2 == "mbpbe") {
         mbnrg_A1B2Z2_A1B2Z2_deg4::mbnrg_A1B2Z2_A1B2Z2_deg4_vmbpbe pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -207,7 +212,8 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 }
 
 double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
-                     std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial) {
+                     std::vector<double> &grad1, std::vector<double> &grad2, double two_b_lambda,
+                     std::vector<double> *virial) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -265,7 +271,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // The order is bc the poly were generated this way
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
-        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
+        energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, two_b_lambda, virial);
     } else if (mon1 == "f-" and mon2 == "h2o") {
         mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
@@ -280,7 +286,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
     } else if (mon1 == "h2o" and (mon2 == "li+" or mon2 == "na+" or mon2 == "k+" or mon2 == "rb+")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, two_b_lambda, virial);
 
     } else if (mon1 == "ch4" && mon2 == "ch4") {
         x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(mon1, mon2);
@@ -414,6 +420,12 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 #endif
 
     return energy;
+}
+
+double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
+                     std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial) {
+    return get_2b_energy(std::move(mon1), std::move(mon2), nm, std::move(xyz1), std::move(xyz2), grad1, grad2, 1.0,
+                         virial);
 }
 
 }  // namespace e2b
