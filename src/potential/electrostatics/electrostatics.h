@@ -223,7 +223,8 @@ class Electrostatics {
     void SetNewParameters(const std::vector<double> &xyz, const std::vector<double> &chg,
                           const std::vector<double> &chg_grad, const std::vector<double> &pol,
                           const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
-                          const std::vector<double> &box = {}, const double cutoff = 100.0, const double elec_lambda = 1.0);
+                          const std::vector<double> &box = {}, const double cutoff = 100.0,
+                          const double elec_lambda = 1.0);
 
     /**
      * @brief Sets the cutoff for electrostatic interactions
@@ -509,7 +510,6 @@ class Electrostatics {
      */
     void SetBoxPMElocal(std::vector<double> box);
     void SetPeriodicity(bool periodic);
-    
 
    private:
     /*
@@ -601,7 +601,6 @@ class Electrostatics {
     void forward_comm(std::vector<double> &in_v);
 
     void setup_comm();
-    
 
     // PME solver
     // helpme::PMEInstance<double> pme_solver_;
@@ -765,9 +764,8 @@ class Electrostatics {
     std::vector<double> mbxt_ele_time_;
     // User-specified FFT grid
     std::vector<int> user_fft_grid_;
-
-    // Electrostatics lambda scaling factor (applied to electrostatics terms).
-    double elec_lambda_; // elec_lambda scaling factor
+    // Electrostatics lambda scaling factor for softcore interactions.
+    double elec_lambda_ = 1.0;
 
     size_t nncomm_nswap;
     std::vector<int> nncomm_sendproc;
