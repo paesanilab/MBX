@@ -6535,8 +6535,8 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                 point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
                 point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
 
-                std::vector<std::pair<size_t, double>> site2_indices;
-                nanoflann::SearchParams params(32, 0, false);
+                std::vector<nanoflann::ResultItem<unsigned int, double>> site2_indices;
+                nanoflann::SearchParameters params(0, false);
 
                 const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
                 
