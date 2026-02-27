@@ -546,8 +546,8 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
         point[2] = ptc.pts[i].z;
 
         // Perform the search
-        std::vector<nanoflann::ResultItem<unsigned int, double>> ret_matches;
-        nanoflann::SearchParameters params;
+        std::vector<std::pair<size_t, double>> ret_matches;
+        nanoflann::SearchParams params;
         const size_t nMatches = index.radiusSearch(point, cutoff * cutoff, ret_matches, params);
 
         // can sort but is uneccessary
