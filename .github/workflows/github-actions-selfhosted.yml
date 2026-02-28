@@ -30,20 +30,21 @@ jobs:
           
           autoreconf -fi
           ./configure CXX=g++
-          make -j 8
+          make -j 4
           make install
           
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
           
       - name: LAMMPS-Install
         run: |
+          module unload intel
           export MBX_HOME=${{ env.MBX_HOME }}
           export PKG_CONFIG_PATH=${{ env.MBX_HOME }}
           git clone https://github.com/lammps/lammps.git -b release
           cd lammps
           
           cmake -S cmake -B build -C ./cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D BUILD_MPI=no
-          cmake --build build --parallel 8
+          cmake --build build --parallel 4
 
       - name: Upload MBX+LAMMPS executable
         uses: actions/upload-artifact@v4
