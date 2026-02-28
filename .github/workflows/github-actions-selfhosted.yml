@@ -3,24 +3,11 @@ name: Self-Hosted Integration test
 on:
   workflow_dispatch:
     inputs:
-      mpi:
-        description: 'MPI ranks'
-        required: true
-        default: "8"
-        type: number
       omp:
         description: 'OpenMP threads'
         required: true
-        default: "2"
+        default: "1"
         type: number
-  # workflow_run:
-  #   workflows: [MBX+LAMMPS integration test]
-  #   branches: [master]
-  #   types:
-  #     - completed
-    
-  # push: 
-  #   branches: Actions-Test
 
 jobs:
   compile-mbxlammps:
@@ -35,36 +22,34 @@ jobs:
         uses: actions/checkout@v4
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
-      - name: activate gnu compiler
-        run: |
-          module load gcc/12.2.0
-          echo "MPI_COMPILER=mpicxx" >> "$GITHUB_ENV"
           
       - name: MBX-install
         run: |
+          module unload intel
           ls ${{ github.workspace }}
+          
           autoreconf -fi
-          ./configure --enable-mpi CXX=${{ env.MPI_COMPILER }}
+          ./configure CXX=g++
           make -j 8
           make install
+          
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
           
       - name: LAMMPS-Install
         run: |
           export MBX_HOME=${{ env.MBX_HOME }}
-          git clone https://github.com/lammps/lammps.git -b stable
-          export LAMMPS_HOME=$PWD/lammps
-          export GITHUB_ACTIONS_MBX_LAMMPS_FLAGS=""
-          cp -r $MBX_HOME/plugins/lammps/USER-MBX $LAMMPS_HOME/src
-          cd $LAMMPS_HOME/src
-          make yes-USER-MBX yes-MOLECULE yes-KSPACE yes-RIGID yes-EXTRA-PAIR
-          make mpi_mbx CXX=${{ env.MPI_COMPILER }} -j 8
+          export PKG_CONFIG_PATH=${{ env.MBX_HOME }}
+          git clone https://github.com/lammps/lammps.git -b release
+          cd lammps
+          
+          cmake -S cmake -B build -C ./cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D BUILD_MPI=no
+          cmake --build build --parallel 8
 
       - name: Upload MBX+LAMMPS executable
         uses: actions/upload-artifact@v4
         with:
           name: executable
-          path: ${{ github.workspace }}/lammps/src/lmp_mpi_mbx
+          path: ${{ github.workspace }}/lammps/build/lmp
           retention-days: 1
           
   test_mbxlammps:
@@ -86,15 +71,11 @@ jobs:
       
       - name: testing example ${{ matrix.example }}
         run: |
-          chmod u+x lmp_mpi_mbx
-          ls ${{ github.workspace }}/lmp_mpi_mbx
+          chmod u+x lmp
+          ls -lth ${{ github.workspace }}/lmp
           cd ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/
           export OMP_NUM_THREADS=${{ github.event.inputs.omp }}
-          mpirun -np ${{ github.event.inputs.mpi }} ${{ github.workspace }}/lmp_mpi_mbx -in lammps.in
-      - run: ls ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/ -lth
+          ${{ github.workspace }}/lmp -in in.*
+      - run: ls -lth ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/
       - name: log output
         run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/log.lammps
-      - name: thermo output
-        run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/thermo.out
-      - name: performance output
-        run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/performance.txt
