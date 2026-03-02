@@ -474,6 +474,22 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
 
         const double chg_i = chg1[site_inmon1 + mon1_index];
         const double chg_j = chg2[site_jnmon2 + m];
+        // Current soft-core selector:
+        // apply soft-core when abs(charge) matches elec_lambda within tolerance,
+        // i.e., abs(abs(charge) - elec_lambda) < kSoftcoreChargeTolerance.
+        // This is how the code currently finds which particles receive soft-core
+        // electrostatics in FDTI.
+        //
+        // IMPORTANT (current limitation):
+        // do not choose elec_lambda too close to existing charge magnitudes in
+        // the system, or soft-core can be applied to unintended atoms.
+        // Example: for ion in water, |q_H| is around 0.6, so elec_lambda = 0.6
+        // can soft-core all water H sites and lead to wrong energies/FDTI steps.
+        // Values like elec_lambda = 0.55 or 0.65 avoid this overlap.
+        //
+        // TODO: replace charge-magnitude matching with a robust selector, e.g.
+        // a dedicated monomer tag/name such as "dp1soft", or an explicit
+        // "elec_soft_index" read from mbx.json.
         const bool use_softcore =
             std::abs(std::abs(chg_i) - elec_lambda) < kSoftcoreChargeTolerance ||
             std::abs(std::abs(chg_j) - elec_lambda) < kSoftcoreChargeTolerance;
