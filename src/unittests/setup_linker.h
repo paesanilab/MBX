@@ -35,6 +35,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_LINKER_H
 #define UNITTESTS_SETUP_LINKER_H
 
+#include "tools/constants.h"
+
 #define SETUP_LINKER                                                                                                   \
     std::vector<std::string> atom_names = {"N", "N", "C", "C", "C", "H", "H", "O", "C", "H", "H"};                     \
     const size_t n_atoms = 11;                                                                                         \

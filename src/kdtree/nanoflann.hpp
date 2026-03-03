@@ -54,7 +54,6 @@
 #include <cmath>           // for abs()
 #include <cstdlib>         // for abs()
 #include <limits>
-#include "tools/constants.h"
 
 static constexpr double MY_PI = 3.14159265358979323846;           // pi
 
