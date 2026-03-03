@@ -9,7 +9,7 @@ def extract_thermo_section(filename):
         lines = f.readlines()
     start, end = None, None
     for i, line in enumerate(lines):
-        if line.strip().startswith("Step") and "Time" in line:
+        if line.strip().startswith("Step"):
             start = i
         if line.strip().startswith("Loop time"):
             end = i
@@ -30,12 +30,17 @@ def compare_sections(section1, section2):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print(f"Usage: python3 {sys.argv[0]} example_name")
+        print(f"Usage: python3 {sys.argv[0]} example_dir")
+        sys.exit(1)
+    
+    example_dir = sys.argv[1]
+    if not os.path.isdir(example_dir):
+        print(f"Example directory not found: {example_dir}")
         sys.exit(1)
         
-    expected_log = f"{sys.argv[1]}/log.*.g++.1"
-    run_log = f"{sys.argv[1]}/log.lammps"
-
+    expected_log = f"{example_dir}/log.*.g++.1"
+    run_log = f"{example_dir}/log.lammps"
+    
     expected_log = glob.glob(expected_log)
     if not expected_log or len(expected_log) > 1:
         print(f"Expected log file not found or multiple found: {expected_log}")

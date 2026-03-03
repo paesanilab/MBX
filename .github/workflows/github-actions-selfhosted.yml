@@ -88,6 +88,5 @@ jobs:
           path: ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/log.lammps
           retention-days: 7
       - name: run validate_example.py
-        working-directory: ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}
-        run: python3 ${{ github.workspace }}/plugins/lammps/examples/validate_example.py ${{ matrix.example }}
+        run: python3 ${{ github.workspace }}/plugins/lammps/examples/validate_example.py ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}
 
