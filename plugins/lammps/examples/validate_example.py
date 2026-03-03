@@ -24,7 +24,7 @@ def compare_sections(section1, section2):
         return True
     else:
         print("Differences:")
-        for line in difflib.unified_diff(section1, section2, fromfile='log.lammps', tofile='expected.log'):
+        for line in difflib.unified_diff(section1, section2, fromfile='log.lammps', tofile='expected.log', n=0):
             print(line)
         return False
 
