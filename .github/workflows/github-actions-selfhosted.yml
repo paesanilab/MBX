@@ -25,7 +25,7 @@ jobs:
           
       - name: MBX-install
         run: |
-          module unload intel
+          module unload intel || true
           ls ${{ github.workspace }}
           
           autoreconf -fi
@@ -37,9 +37,9 @@ jobs:
           
       - name: LAMMPS-Install
         run: |
-          module unload intel
+          module unload intel || true
           export MBX_HOME=${{ env.MBX_HOME }}
-          export PKG_CONFIG_PATH=${{ env.MBX_HOME }}
+          export PKG_CONFIG_PATH=${{ env.MBX_HOME }}/lib/pkgconfig
           git clone https://github.com/lammps/lammps.git -b release
           cd lammps
           
@@ -55,6 +55,7 @@ jobs:
           
   test_mbxlammps:
     strategy:
+      fail-fast: false
       matrix:
         example: [256h2o, 512h2o, 1024h2o, 2048h2o, na+_bulk, ch4, ch4_h2o]
     runs-on: [self-hosted, epyc]
@@ -80,12 +81,13 @@ jobs:
       - run: ls -lth ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/
       - name: log output
         run: cat ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/log.lammps
-      - name: Upload MBX+LAMMPS executable
+      - name: Upload logfile
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.example }}/log.lammps
+          name: ${{ matrix.example }}_log.lammps
           path: ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}/log.lammps
           retention-days: 7
       - name: run validate_example.py
+        working-directory: ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}
         run: python3 ${{ github.workspace }}/plugins/lammps/examples/validate_example.py ${{ matrix.example }}
 
