@@ -1288,7 +1288,8 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
                                       const bool do_grads, const std::vector<double> &box, const double cutoff,
-                                      const double elec_lambda) {
+                                      const double elec_lambda, const std::string &elec_lambda_monomer,
+                                      const int elec_lambda_atom_index) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -1345,6 +1346,8 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     use_pbc_ = box.size();
     cutoff_ = cutoff;
     elec_lambda_ = elec_lambda;
+    elec_lambda_monomer_ = elec_lambda_monomer;
+    elec_lambda_atom_index_ = elec_lambda_atom_index;
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     if (use_pbc_) box_inverse_ = InvertUnitCell(box_);
 
@@ -1741,6 +1744,8 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
+        const bool mon_type1_is_softcore_target = !elec_lambda_monomer_.empty() && fi_mon1 < mon_id_all_.size() &&
+                                                  mon_id_all_[fi_mon1] == elec_lambda_monomer_;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
@@ -1752,6 +1757,8 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
+            const bool mon_type2_is_softcore_target = !elec_lambda_monomer_.empty() && fi_mon2 < mon_id_all_.size() &&
+                                                      mon_id_all_[fi_mon2] == elec_lambda_monomer_;
 
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
@@ -1793,6 +1800,9 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
+                    const bool site_i_is_softcore =
+                        mon_type1_is_softcore_target && elec_lambda_atom_index_ >= 0 &&
+                        static_cast<size_t>(elec_lambda_atom_index_) == i;
 
                     std::vector<double> xyz_sitei(3);
                     xyz_sitei[0] = xyz_all_[fi_crd1 + inmon13 + m1];
@@ -1800,6 +1810,9 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                     xyz_sitei[2] = xyz_all_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
 
                     for (size_t j = 0; j < ns2; j++) {
+                        const bool site_j_is_softcore =
+                            mon_type2_is_softcore_target && elec_lambda_atom_index_ >= 0 &&
+                            static_cast<size_t>(elec_lambda_atom_index_) == j;
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
                         // If PBC is activated, get the xyz in vectorized form for
@@ -1851,13 +1864,13 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                             reordered_chg[new_mon2_index] = chg[old_mon2_index - m2init];
                         }
 
-                       // populates reordered_phi2 (potential on Mon 2) and reordered_Efq2 (electric field on Mon 2)
+                        // populates reordered_phi2 (potential on Mon 2) and reordered_Efq2 (electric field on Mon 2)
                         local_field->CalcPermanentElecField_Optimized(
                             xyz_all_.data() + fi_crd1, reordered_xyz2.data(), chg_all_.data() + fi_sites1, reordered_chg.data(),
                             m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
                             ewald_alpha_, simcell_periodic_, box_PMElocal_, box_inverse_PMElocal_, cutoff_, use_ghost, reordered_islocal, 0,
-                            1, 0, precomp_info, elec_lambda_, &virial_thread);
+                            1, 0, precomp_info, elec_lambda_, site_i_is_softcore, site_j_is_softcore, &virial_thread);
                         
                         double *Efq2 = Efq_2_pool[rank].data() + jnmon23;
                         double *phi2 = phi_2_pool[rank].data() + jnmon2;
@@ -2307,6 +2320,8 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
+        const bool mon_type1_is_softcore_target = !elec_lambda_monomer_.empty() && fi_mon1 < mon_id_all_.size() &&
+                                                  mon_id_all_[fi_mon1] == elec_lambda_monomer_;
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
@@ -2318,6 +2333,8 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
+            const bool mon_type2_is_softcore_target = !elec_lambda_monomer_.empty() && fi_mon2 < mon_id_all_.size() &&
+                                                      mon_id_all_[fi_mon2] == elec_lambda_monomer_;
 
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
@@ -2361,6 +2378,9 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
+                    const bool site_i_is_softcore =
+                        mon_type1_is_softcore_target && elec_lambda_atom_index_ >= 0 &&
+                        static_cast<size_t>(elec_lambda_atom_index_) == i;
 
                     std::vector<double> xyz_sitei(3);
                     xyz_sitei[0] = xyz_all_[fi_crd1 + inmon13 + m1];
@@ -2368,6 +2388,9 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                     xyz_sitei[2] = xyz_all_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
 
                     for (size_t j = 0; j < ns2; j++) {
+                        const bool site_j_is_softcore =
+                            mon_type2_is_softcore_target && elec_lambda_atom_index_ >= 0 &&
+                            static_cast<size_t>(elec_lambda_atom_index_) == j;
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
                         // If PBC is activated, get the xyz in vectorized form for
@@ -2423,7 +2446,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                             m1, 0, reordered_mon2_size, nmon1, reordered_mon2_size, i, 0, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex_thread, &ey_thread,
                             &ez_thread, &phi1_thread, reordered_phi2.data(), reordered_Efq2.data(), elec_scale_factor,
                             ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, reordered_islocal, 0,
-                            1, 0, precomp_info, elec_lambda_, &virial_thread);
+                            1, 0, precomp_info, elec_lambda_, site_i_is_softcore, site_j_is_softcore, &virial_thread);
                         
                         double *Efq2 = Efq_2_pool[rank].data() + jnmon23;
                         double *phi2 = phi_2_pool[rank].data() + jnmon2;

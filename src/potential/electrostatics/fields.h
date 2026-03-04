@@ -220,6 +220,8 @@ class ElectricFieldHolder {
                                 const size_t m2_offset,
                                 PrecomputedInfo& precomputedInformation, // Contains precomputed coordinate-dependant calculations
                                 double elec_lambda,             // softcore electrostatic coupling parameter
+                                bool site_i_is_softcore,        // apply softcore on this monomer-1 site
+                                bool site_j_is_softcore,        // apply softcore on this monomer-2 site
                                 std::vector<double> *virial = 0);  // The virial);
 
     ////////////////////////////////////////////////////////////////////////////////

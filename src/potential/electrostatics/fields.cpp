@@ -40,7 +40,6 @@ namespace elec {
 namespace {
 constexpr double kSoftcoreExponent = 1.0;
 constexpr double kSoftcoreAlphaC = 10.0;
-constexpr double kSoftcoreChargeTolerance = 1e-5;
 }  // namespace
 
 ElectricFieldHolder::ElectricFieldHolder(size_t n) {
@@ -249,7 +248,7 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     double *phi2, double *Efq2, double elec_scale_factor, double ewald_alpha, bool use_pbc,
     const std::vector<double> &box, const std::vector<double> &box_inverse, double cutoff, bool use_ghost,
     const vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset, size_t m2_offset,
-    PrecomputedInfo& precomputedInformation, double elec_lambda,
+    PrecomputedInfo& precomputedInformation, double elec_lambda, bool site_i_is_softcore, bool site_j_is_softcore,
     std::vector<double> *virial) {
 
     double *rijx = precomputedInformation.rijx.data();
@@ -474,25 +473,9 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
 
         const double chg_i = chg1[site_inmon1 + mon1_index];
         const double chg_j = chg2[site_jnmon2 + m];
-        // Current soft-core selector:
-        // apply soft-core when abs(charge) matches elec_lambda within tolerance,
-        // i.e., abs(abs(charge) - elec_lambda) < kSoftcoreChargeTolerance.
-        // This is how the code currently finds which particles receive soft-core
-        // electrostatics in FDTI.
-        //
-        // IMPORTANT (current limitation):
-        // do not choose elec_lambda too close to existing charge magnitudes in
-        // the system, or soft-core can be applied to unintended atoms.
-        // Example: for ion in water, |q_H| is around 0.6, so elec_lambda = 0.6
-        // can soft-core all water H sites and lead to wrong energies/FDTI steps.
-        // Values like elec_lambda = 0.55 or 0.65 avoid this overlap.
-        //
-        // TODO: replace charge-magnitude matching with a robust selector, e.g.
-        // a dedicated monomer tag/name such as "dp1soft", or an explicit
-        // "elec_soft_index" read from mbx.json.
-        const bool use_softcore =
-            std::abs(std::abs(chg_i) - elec_lambda) < kSoftcoreChargeTolerance ||
-            std::abs(std::abs(chg_j) - elec_lambda) < kSoftcoreChargeTolerance;
+        // Apply soft-core electrostatics only when either interacting site is
+        // explicitly selected from mbx.json via monomer name + atom index.
+        const bool use_softcore = site_i_is_softcore || site_j_is_softcore;
 
         if (use_softcore) {
             const double r_sq = r_sq_raw[m_shifted];
