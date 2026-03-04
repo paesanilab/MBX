@@ -75,6 +75,18 @@ namespace elec {
 
 const double PIQSRT = sqrt(M_PI);
 
+namespace {
+inline bool IsDp1LikeSelector(const std::string &selector) { return selector == "dp1" || selector == "dp1soft"; }
+
+// External charged particles from LAMMPS are represented as monomer type "ext" in electrostatics.
+// Treat dp1/dp1soft selectors as aliases for "ext" so monomer+index softcore can target them.
+inline bool MonomerMatchesSoftcoreSelector(const std::string &monomer_name, const std::string &selector) {
+    if (selector.empty()) return false;
+    if (monomer_name == selector) return true;
+    return monomer_name == "ext" && IsDp1LikeSelector(selector);
+}
+}  // namespace
+
 std::vector<double> Electrostatics::GetSysXyz() { return sys_xyz_; }
 
 std::vector<double> Electrostatics::GetSysChg() { return sys_chg_; }
@@ -1744,8 +1756,9 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
-        const bool mon_type1_is_softcore_target = !elec_lambda_monomer_.empty() && fi_mon1 < mon_id_all_.size() &&
-                                                  mon_id_all_[fi_mon1] == elec_lambda_monomer_;
+        const bool mon_type1_is_softcore_target =
+            fi_mon1 < mon_id_all_.size() &&
+            MonomerMatchesSoftcoreSelector(mon_id_all_[fi_mon1], elec_lambda_monomer_);
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
@@ -1757,8 +1770,9 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
-            const bool mon_type2_is_softcore_target = !elec_lambda_monomer_.empty() && fi_mon2 < mon_id_all_.size() &&
-                                                      mon_id_all_[fi_mon2] == elec_lambda_monomer_;
+            const bool mon_type2_is_softcore_target =
+                fi_mon2 < mon_id_all_.size() &&
+                MonomerMatchesSoftcoreSelector(mon_id_all_[fi_mon2], elec_lambda_monomer_);
 
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
@@ -2320,8 +2334,9 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
         size_t ns1 = sites_all_[fi_mon1];
         size_t nmon1 = mon_type_count_[mt1].second;
         size_t nmon12 = nmon1 * 2;
-        const bool mon_type1_is_softcore_target = !elec_lambda_monomer_.empty() && fi_mon1 < mon_id_all_.size() &&
-                                                  mon_id_all_[fi_mon1] == elec_lambda_monomer_;
+        const bool mon_type1_is_softcore_target =
+            fi_mon1 < mon_id_all_.size() &&
+            MonomerMatchesSoftcoreSelector(mon_id_all_[fi_mon1], elec_lambda_monomer_);
         fi_mon2 = fi_mon1;
         fi_sites2 = fi_sites1;
         fi_crd2 = fi_crd1;
@@ -2333,8 +2348,9 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
         for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
             size_t ns2 = sites_all_[fi_mon2];
             size_t nmon2 = mon_type_count_[mt2].second;
-            const bool mon_type2_is_softcore_target = !elec_lambda_monomer_.empty() && fi_mon2 < mon_id_all_.size() &&
-                                                      mon_id_all_[fi_mon2] == elec_lambda_monomer_;
+            const bool mon_type2_is_softcore_target =
+                fi_mon2 < mon_id_all_.size() &&
+                MonomerMatchesSoftcoreSelector(mon_id_all_[fi_mon2], elec_lambda_monomer_);
 
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
