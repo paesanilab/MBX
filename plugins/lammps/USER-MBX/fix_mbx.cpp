@@ -60,6 +60,18 @@ struct MBXImpl {
 using namespace LAMMPS_NS;
 using namespace FixConst;
 
+namespace {
+inline bool is_dp1_like(const char *name)
+{
+  return (strcmp("dp1", name) == 0 || strcmp("dp1soft", name) == 0);
+}
+
+inline bool is_dp1_like(const std::string &name)
+{
+  return (name == "dp1" || name == "dp1soft");
+}
+}    // namespace
+
 
 std::string FixMBX::cite_pair_mbx = std::string(
     "pair mbx command:\n\n" \
@@ -172,7 +184,7 @@ bool FixMBX::validateMBXFixParameters(int narg, char **arg)
     std::vector<std::string> expected_monomer_atom_ids;
 
     // special handling for dp1-like monomer
-    if (current_monomer_name == "dp1" || current_monomer_name == "dp1soft")
+    if (is_dp1_like(current_monomer_name))
       return check_external_dp1(n_atoms, &current_monomer[1]);
 
     try {
@@ -362,7 +374,7 @@ FixMBX::FixMBX(LAMMPS *lmp, int narg, char **arg) : Fix(lmp, narg, arg)
                  "[MBX] num_atoms_per_mol > _MAX_ATOMS_PER_MONOMER : did developer correctly add "
                  "support for monomer?");
 
-    if (current_monomer_name == "dp1" || current_monomer_name == "dp1soft") {
+    if (is_dp1_like(current_monomer_name)) {
       // dp1-like monomers can be a single atom ID or a range of IDs in the form "1*11"
       int start, end;
       try {
@@ -1130,7 +1142,7 @@ void FixMBX::mbx_init()
       }
 
       // test if external charged particle
-      if (strcmp("dp1", mol_names[mtype]) == 0 || strcmp("dp1soft", mol_names[mtype]) == 0) {
+      if (is_dp1_like(mol_names[mtype])) {
         add_monomer = false;
 
         xyz_ext.push_back(x[i][0] - xlo);
@@ -1351,7 +1363,7 @@ void FixMBX::mbx_init_local()
       }
 
       // test if external charged particle
-      if (strcmp("dp1", mol_names[mtype]) == 0 || strcmp("dp1soft", mol_names[mtype]) == 0) {
+      if (is_dp1_like(mol_names[mtype])) {
         add_monomer = false;
 
         xyz_ext.push_back(x[i][0] - xlo);
@@ -1566,7 +1578,7 @@ void FixMBX::mbx_update_xyz()
       }
 
       // test if external charged particle
-      if (strcmp("dp1", mol_names[mtype]) == 0 || strcmp("dp1soft", mol_names[mtype]) == 0) {
+      if (is_dp1_like(mol_names[mtype])) {
         add_monomer = false;
 
         xyz_ext[indx_ext * 3] = x[i][0] - xlo;
@@ -1705,7 +1717,7 @@ void FixMBX::mbx_update_xyz_local()
       }
 
       // test if external charged particle
-      if (strcmp("dp1", mol_names[mtype]) == 0 || strcmp("dp1soft", mol_names[mtype]) == 0) {
+      if (is_dp1_like(mol_names[mtype])) {
         add_monomer = false;
 
         xyz_ext[indx_ext * 3] = x[i][0] - xlo;
@@ -1989,7 +2001,7 @@ int FixMBX::get_num_atoms_per_monomer(char *name, bool &inc_e)
     na = 1;
   else if (strcmp("cs+", name) == 0)
     na = 1;
-  else if (strcmp("dp1", name) == 0 || strcmp("dp1soft", name) == 0) {
+  else if (is_dp1_like(name)) {
     na = 1;
     inc_e = true;
   } else if (strcmp("f-", name) == 0)
@@ -2044,7 +2056,7 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e)
     }
   }
 
-  if (strcmp("dp1", name) == 0 || strcmp("dp1soft", name) == 0) {
+  if (is_dp1_like(name)) {
     inc = false;
     inc_e = true;
   }
