@@ -177,7 +177,7 @@ size_t SetUpMonomers(std::vector<std::string> mon, std::vector<size_t> &sites, s
                 sites.push_back(2);
                 nat.push_back(2);
 
-            } else if (mon[i] == "dp1") {
+            } else if (mon[i] == "dp1" || mon[i] == "dp1soft") {
                 sites.push_back(1);
                 nat.push_back(1);
 
@@ -1071,7 +1071,7 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
             aDD = 0.055;
         }
         // Any other molecule (as for 01/10/2018)
-    } else if (mon == "dp1") {
+    } else if (mon == "dp1" || mon == "dp1soft") {
         aDD = 1.0E24;
     } else if (mon == "dp2") {
         aDD = 1.0E24;
@@ -1089,7 +1089,7 @@ double GetAdd(bool is12, bool is13, bool is14, std::string mon) {
 double GetAcc(std::string mon) {
     double aCC = 0.4;
     // For water
-    if (mon == "dp1") {
+    if (mon == "dp1" || mon == "dp1soft") {
         aCC = 1.0E24;
     }
 
@@ -1231,7 +1231,7 @@ void SetCharges(std::vector<double> xyz, std::vector<double> &charges, std::stri
             charges[fst_ind + nv * nsites + 0] = 1.0 * CHARGECON;
             charges[fst_ind + nv * nsites + 1] = 1.0 * CHARGECON;
         }
-    } else if (mon_id == "dp1") {
+    } else if (mon_id == "dp1" || mon_id == "dp1soft") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             charges[fst_ind + nv * nsites] = 1.0 * CHARGECON;
         }
@@ -1506,7 +1506,7 @@ void SetPolfac(std::vector<double> &polfac, std::string mon_id, size_t n_mon, si
             polfac[fst_ind + nv * nsites + 0] = 0.0;
             polfac[fst_ind + nv * nsites + 1] = 0.0;
         }
-    } else if (mon_id == "dp1") {
+    } else if (mon_id == "dp1" || mon_id == "dp1soft") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             polfac[fst_ind + nv * nsites] = 0.0;
         }
@@ -1677,7 +1677,7 @@ void SetPol(std::vector<double> &pol, std::string mon_id, size_t n_mon, size_t n
             pol[fst_ind + nv * nsites + 0] = 0.0;
             pol[fst_ind + nv * nsites + 1] = 0.0;
         }
-    } else if (mon_id == "dp1") {
+    } else if (mon_id == "dp1" || mon_id == "dp1soft") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             pol[fst_ind + nv * nsites] = 0.0;
         }
@@ -1925,7 +1925,7 @@ void SetC6LongRange(std::vector<double> &c6_lr, std::string mon_id, size_t n_mon
             c6_lr[nv * natoms + fst_ind + 0] = 0.0;
             c6_lr[nv * natoms + fst_ind + 1] = 0.0;
         }
-    } else if (mon_id == "dp1") {
+    } else if (mon_id == "dp1" || mon_id == "dp1soft") {
         for (size_t nv = 0; nv < n_mon; nv++) {
             c6_lr[nv * natoms + fst_ind] = 0.0;
         }
