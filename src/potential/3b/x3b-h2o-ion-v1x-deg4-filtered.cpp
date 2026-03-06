@@ -202,12 +202,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
 
     // --- Uniform 3B scaling (energy-only path) ---
     // Keep gradients unchanged here (this overload returns energy only).
-    double e_unscaled = energy;
     energy *= three_b_lambda;
-    // std::cout << "[3B scaling] Unscaled E = " << e_unscaled
-    //       << ", 3b_lambda = " << three_b_lambda
-    //       << ", Scaled E = " << energy
-    //       << std::endl;
 
     return energy;
 }
@@ -493,12 +488,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
 
     // --- Uniform 3B scaling ---
     // Keep gradients unchanged here (this overload returns energy only).
-    double e_unscaled = energy;
     energy *= three_b_lambda;
-    // std::cout << "[3B scaling] Unscaled E = " << e_unscaled
-    //       << ", 3b_lambda = " << three_b_lambda
-    //       << ", Scaled E = " << energy
-    //       << std::endl;
 
     return energy;
 }
