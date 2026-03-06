@@ -2540,12 +2540,7 @@ double x2b_h2o_ion_v2x::eval(const double* w1, const double* x, const size_t nd,
 #endif
     // --- Uniform 2B scaling (energy-only path) ---
     // Keep gradients unchanged here (this overload returns energy only).
-    double e_unscaled = e;
     e *= two_b_lambda;
-    // std::cout << "[2B scaling] Unscaled E = " << e_unscaled
-    //       << ", 2b_lambda = " << two_b_lambda
-    //       << ", Scaled E = " << e
-    //       << std::endl;
     return e;
 }
 
@@ -2717,7 +2712,6 @@ double x2b_h2o_ion_v2x::eval(const double* w1, const double* x, double* g1, doub
         }
 
         // --- Scale this dimer's gradients by lambda BEFORE virial ---
-        // std::cout << "[2B scaling] scaling the gradient 2B lambda = " << two_b_lambda << std::endl;
         for (size_t j = 0; j < 9; ++j)  g1[j + sh9] *= two_b_lambda;  // water (O,H1,H2)
         for (size_t j = 0; j < 3; ++j)  g2[j + sh3] *= two_b_lambda;  // ion
 
@@ -2772,12 +2766,6 @@ double x2b_h2o_ion_v2x::eval(const double* w1, const double* x, double* g1, doub
     }
     std::cerr << std::endl;
 #endif
-
-    double e_unscaled = e;
-    // std::cout << "[2B scaling] Unscaled E = " << e_unscaled
-    // << ", 2b_lambda = " << two_b_lambda
-    // << ", Scaled E = " << two_b_lambda * e
-    // << std::endl;
 
     return two_b_lambda * e;  // --- Uniform 2B scaling ---
 }
