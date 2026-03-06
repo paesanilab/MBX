@@ -1300,8 +1300,7 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
                                       const std::vector<double> &chg_grad, const std::vector<double> &pol,
                                       const std::vector<double> &polfac, const std::string dip_method,
                                       const bool do_grads, const std::vector<double> &box, const double cutoff,
-                                      const double elec_lambda, const std::string &elec_lambda_monomer,
-                                      const int elec_lambda_atom_index) {
+                                      const double elec_lambda, const std::string &elec_lambda_monomer) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -1359,7 +1358,6 @@ void Electrostatics::SetNewParameters(const std::vector<double> &xyz, const std:
     cutoff_ = cutoff;
     elec_lambda_ = elec_lambda;
     elec_lambda_monomer_ = elec_lambda_monomer;
-    elec_lambda_atom_index_ = elec_lambda_atom_index;
     box_ABCabc_ = box.size() ? BoxVecToBoxABCabc(box) : std::vector<double>{};
     if (use_pbc_) box_inverse_ = InvertUnitCell(box_);
 
@@ -1814,9 +1812,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
-                    const bool site_i_is_softcore =
-                        mon_type1_is_softcore_target && elec_lambda_atom_index_ >= 0 &&
-                        static_cast<size_t>(elec_lambda_atom_index_) == i;
+                    const bool site_i_is_softcore = mon_type1_is_softcore_target;
 
                     std::vector<double> xyz_sitei(3);
                     xyz_sitei[0] = xyz_all_[fi_crd1 + inmon13 + m1];
@@ -1824,9 +1820,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                     xyz_sitei[2] = xyz_all_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
 
                     for (size_t j = 0; j < ns2; j++) {
-                        const bool site_j_is_softcore =
-                            mon_type2_is_softcore_target && elec_lambda_atom_index_ >= 0 &&
-                            static_cast<size_t>(elec_lambda_atom_index_) == j;
+                        const bool site_j_is_softcore = mon_type2_is_softcore_target;
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
                         // If PBC is activated, get the xyz in vectorized form for
@@ -2394,9 +2388,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                 for (size_t i = 0; i < ns1; i++) {
                     size_t inmon1 = i * nmon1;
                     size_t inmon13 = inmon1 * 3;
-                    const bool site_i_is_softcore =
-                        mon_type1_is_softcore_target && elec_lambda_atom_index_ >= 0 &&
-                        static_cast<size_t>(elec_lambda_atom_index_) == i;
+                    const bool site_i_is_softcore = mon_type1_is_softcore_target;
 
                     std::vector<double> xyz_sitei(3);
                     xyz_sitei[0] = xyz_all_[fi_crd1 + inmon13 + m1];
@@ -2404,9 +2396,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                     xyz_sitei[2] = xyz_all_[fi_crd1 + inmon13 + 2 * nmon1 + m1];
 
                     for (size_t j = 0; j < ns2; j++) {
-                        const bool site_j_is_softcore =
-                            mon_type2_is_softcore_target && elec_lambda_atom_index_ >= 0 &&
-                            static_cast<size_t>(elec_lambda_atom_index_) == j;
+                        const bool site_j_is_softcore = mon_type2_is_softcore_target;
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
                         // If PBC is activated, get the xyz in vectorized form for

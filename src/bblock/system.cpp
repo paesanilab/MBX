@@ -133,7 +133,6 @@ System::System() {
 
     elec_lambda_ = 1.0; // initialize elec_lambda - default is 1.0
     elec_lambda_monomer_ = "";
-    elec_lambda_atom_index_ = -1;
     two_b_lambda_ = 1.0; // initialize two_b_lambda - default is 1.0
     three_b_lambda_ = 1.0; // initialize three_b_lambda - default is 1.0
 }
@@ -1604,18 +1603,6 @@ void System::SetUpFromJson(nlohmann::json j) {
     }
     mbx_j_["MBX"]["elec_lambda_monomer"] = elec_lambda_monomer_;
 
-    // Try to get electrostatics softcore atom index (MBX key: elec_lambda_atom_index)
-    // Default: 0 when monomer is set, otherwise -1 (disabled).
-    elec_lambda_atom_index_ = elec_lambda_monomer_.empty() ? -1 : 0;
-    try {
-        elec_lambda_atom_index_ = j["MBX"]["elec_lambda_atom_index"];
-    } catch (...) {
-    }
-    if (!elec_lambda_monomer_.empty() && elec_lambda_atom_index_ < 0) {
-        elec_lambda_atom_index_ = 0;
-    }
-    mbx_j_["MBX"]["elec_lambda_atom_index"] = elec_lambda_atom_index_;
-
     // Try to get 2B lambda (MBX key: two_b_lambda)
     // Default: 1.0
     // Scope: lambda-enabled 2B ion-water models via energy2b.
@@ -1684,7 +1671,6 @@ void System::SetUpFromJson(char *json_file) {
        "dipole_method"     : "cg",
        "elec_lambda" : 1.0,
        "elec_lambda_monomer" : "dp1soft",
-       "elec_lambda_atom_index" : 0,
        "alpha_ewald_elec" : 0.6,
        "grid_density_elec" : 2.5,
        "grid_fftdim_elec" : [],
@@ -3730,7 +3716,7 @@ void System::SetPeriodicity(bool periodic) {
 
 double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_,
-                                     cutoff_realspace_, elec_lambda_, elec_lambda_monomer_, elec_lambda_atom_index_);
+                                     cutoff_realspace_, elec_lambda_, elec_lambda_monomer_);
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
     electrostaticE_.SetEwaldAlpha(elec_alpha_);
@@ -3743,7 +3729,7 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
 
 double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     electrostaticE_.SetNewParameters(xyz_, chg_, chggrad_, pol_, polfac_, dipole_method_, do_grads, box_,
-                                     cutoff_realspace_, elec_lambda_, elec_lambda_monomer_, elec_lambda_atom_index_);
+                                     cutoff_realspace_, elec_lambda_, elec_lambda_monomer_);
     electrostaticE_.SetDipoleTolerance(diptol_);
     electrostaticE_.SetDipoleMaxIt(maxItDip_);
     electrostaticE_.SetEwaldAlpha(elec_alpha_);

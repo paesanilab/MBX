@@ -224,8 +224,7 @@ class Electrostatics {
                           const std::vector<double> &chg_grad, const std::vector<double> &pol,
                           const std::vector<double> &polfac, const std::string dip_method, const bool do_grads,
                           const std::vector<double> &box = {}, const double cutoff = 100.0,
-                          const double elec_lambda = 1.0,
-                          const std::string &elec_lambda_monomer = "", const int elec_lambda_atom_index = -1);
+                          const double elec_lambda = 1.0, const std::string &elec_lambda_monomer = "");
 
     /**
      * @brief Sets the cutoff for electrostatic interactions
@@ -767,10 +766,8 @@ class Electrostatics {
     std::vector<int> user_fft_grid_;
     // Electrostatics lambda scaling factor for softcore interactions.
     double elec_lambda_ = 1.0;
-    // Monomer name whose atom index receives softcore electrostatics.
+    // Monomer name whose sites receive softcore electrostatics.
     std::string elec_lambda_monomer_ = "";
-    // Atom index within elec_lambda_monomer_ used to activate softcore.
-    int elec_lambda_atom_index_ = -1;
 
     size_t nncomm_nswap;
     std::vector<int> nncomm_sendproc;

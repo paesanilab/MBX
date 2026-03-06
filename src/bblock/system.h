@@ -1891,14 +1891,6 @@ class System {
     std::string elec_lambda_monomer_;
 
     /**
-     * @brief Atom index within elec_lambda_monomer_ that receives softcore scaling.
-     *
-     * Loaded from MBX JSON key "elec_lambda_atom_index". Defaults to -1 when
-     * no monomer is selected.
-     */
-    int elec_lambda_atom_index_;
-
-    /**
      * @brief 2B lambda scaling factor for lambda-enabled 2B terms.
      *
      * Loaded from MBX JSON key "two_b_lambda". Default is 1.0.
