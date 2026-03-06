@@ -181,10 +181,7 @@ export LAMMPS_HOME=/path/to/lammps
 MBX_PLUGIN_DIR="${MBX_HOME}/plugins/lammps/USER-MBX"
 LAMMPS_MBX_DIR="${LAMMPS_HOME}/src/MBX"
 echo "[sync] copying MBX LAMMPS plugin sources from ${MBX_PLUGIN_DIR} to ${LAMMPS_MBX_DIR}"
-cp -f "${MBX_PLUGIN_DIR}/fix_mbx.cpp" "${LAMMPS_MBX_DIR}/fix_mbx.cpp"
-cp -f "${MBX_PLUGIN_DIR}/fix_mbx.h" "${LAMMPS_MBX_DIR}/fix_mbx.h"
-cp -f "${MBX_PLUGIN_DIR}/pair_mbx.cpp" "${LAMMPS_MBX_DIR}/pair_mbx.cpp"
-cp -f "${MBX_PLUGIN_DIR}/pair_mbx.h" "${LAMMPS_MBX_DIR}/pair_mbx.h"
+cp -f "${MBX_PLUGIN_DIR}/"* "${LAMMPS_MBX_DIR}/"
 
 cmake -S cmake -B build -C ./cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes
 cmake --build build --parallel 4                   # compilation (can use higher --parallel on powerful computers)
