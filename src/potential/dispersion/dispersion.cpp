@@ -1214,97 +1214,97 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     // if calling this function, then shouldn't need to check this
     //    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
 
-    //    if (compute_pme) {
-    helpme::PMEInstance<double> pme_solver_;
-    if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
-    // Compute the reciprocal space terms, using PME
-    double A = box_ABCabc_PMElocal_[0];
-    double B = box_ABCabc_PMElocal_[1];
-    double C = box_ABCabc_PMElocal_[2];
-    double alpha = box_ABCabc_PMElocal_[3];
-    double beta = box_ABCabc_PMElocal_[4];
-    double gamma = box_ABCabc_PMElocal_[5];
+       if (compute_pme) {
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        // Compute the reciprocal space terms, using PME
+        double A = box_ABCabc_PMElocal_[0];
+        double B = box_ABCabc_PMElocal_[1];
+        double C = box_ABCabc_PMElocal_[2];
+        double alpha = box_ABCabc_PMElocal_[3];
+        double beta = box_ABCabc_PMElocal_[4];
+        double gamma = box_ABCabc_PMElocal_[5];
 
-    int grid_A = pme_grid_density_ * A;
-    int grid_B = pme_grid_density_ * B;
-    int grid_C = pme_grid_density_ * C;
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
 
-    if (mpi_initialized_) {
-        pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0, world_,
-                                  PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    } else {
-        pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
-    }
-
-    pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
-
-    mbxt_disp_count_[DISP_PME_SETUP]++;
-#if HAVE_MPI == 1
-    mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
-#endif
-
-    // N.B. these do not make copies; they just wrap the memory with some metadata
-    auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-    auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
-    auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
-    std::vector<double> dummy_6vec(6, 0.0);
-    auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
-    std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
-
-#if HAVE_MPI == 1
-    _time0 = MPI_Wtime();
-#endif
-    double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
-    mbxt_disp_count_[DISP_PME_PRE]++;
-#if HAVE_MPI == 1
-    mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
-#endif
-
-    // get virial
-    if (calc_virial_) {
-        virial_[0] += *rec_virial[0];
-        virial_[1] += *rec_virial[1];
-        virial_[2] += *rec_virial[3];
-        virial_[4] += *rec_virial[2];
-        virial_[5] += *rec_virial[4];
-        virial_[8] += *rec_virial[5];
-
-        virial_[3] = virial_[1];
-        virial_[6] = virial_[2];
-        virial_[7] = virial_[5];
-    }
-
-    // Resort forces from system order
-    fi_mon = 0;
-    fi_sites = 0;
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = num_atoms_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        for (size_t m = 0; m < nmon; m++) {
-            size_t mns = m * ns;
-            for (size_t i = 0; i < ns; i++) {
-                size_t inmon = i * nmon;
-                const double *result_ptr = forces[fi_sites + mns + i];
-                grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
-                grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
-                grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
-            }
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0, world_,
+                                    PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
         }
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-    }
 
-    // The Ewald self energy
-    double prefac = std::pow(ewald_alpha_, 6) / 12.0;
-    double self_energy = 0;
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
-    for (int i = 0; i < natoms_; ++i) self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
+        mbxt_disp_count_[DISP_PME_SETUP]++;
+    #if HAVE_MPI == 1
+        mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
+    #endif
 
-    self_energy *= prefac;
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
+        auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+        auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
+        std::vector<double> dummy_6vec(6, 0.0);
+        auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
+        std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
 
-    disp_energy_ += rec_energy + self_energy;
+    #if HAVE_MPI == 1
+        _time0 = MPI_Wtime();
+    #endif
+        double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
+        mbxt_disp_count_[DISP_PME_PRE]++;
+    #if HAVE_MPI == 1
+        mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
+    #endif
 
-    //} // if(compute_pme)
+        // get virial
+        if (calc_virial_) {
+            virial_[0] += *rec_virial[0];
+            virial_[1] += *rec_virial[1];
+            virial_[2] += *rec_virial[3];
+            virial_[4] += *rec_virial[2];
+            virial_[5] += *rec_virial[4];
+            virial_[8] += *rec_virial[5];
+
+            virial_[3] = virial_[1];
+            virial_[6] = virial_[2];
+            virial_[7] = virial_[5];
+        }
+
+        // Resort forces from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = num_atoms_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    const double *result_ptr = forces[fi_sites + mns + i];
+                    grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                    grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                    grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
+
+        // The Ewald self energy
+        double prefac = std::pow(ewald_alpha_, 6) / 12.0;
+        double self_energy = 0;
+
+        for (int i = 0; i < natoms_; ++i) self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
+
+        self_energy *= prefac;
+
+        disp_energy_ += rec_energy + self_energy;
+
+    } // if(compute_pme)
 }
 
 std::vector<size_t> Dispersion::GetInfoCounts() { return mbxt_disp_count_; }
