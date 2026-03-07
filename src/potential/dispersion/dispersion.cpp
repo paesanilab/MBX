@@ -1214,7 +1214,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
     // if calling this function, then shouldn't need to check this
     //    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
 
-       if (compute_pme) {
+    if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
         // Compute the reciprocal space terms, using PME
