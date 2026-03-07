@@ -2,9 +2,9 @@ if ISMPI
 TESTS = 
 check_PROGRAMS = 
 else
-TESTS = unittest-angle unittest-bond unittest-buckingham unittest-bucktools unittest-connectivity unittest-dihedral unittest-dispersion unittest-disptools unittest-electrostatics unittest-energy1b unittest-energy2b unittest-energy3b unittest-energy4b unittest-energyff unittest-ffcalculators unittest-gamma unittest-inversion unittest-lj unittest-ljtools unittest-pme-nopolarization unittest-pme-nopolarization-findif unittest-pme-withpolarization unittest-pme-withpolarization-findif unittest-poly-1b unittest-poly-2b unittest-poly-3b unittest-poly-holder-1b unittest-poly-holder-2b unittest-poly-holder-3b unittest-ps unittest-system unittest-systools unittest-tools unittest-topology
+TESTS = unittest-angle unittest-bond unittest-buckingham unittest-bucktools unittest-connectivity unittest-dihedral unittest-dispersion unittest-disptools unittest-electrostatics unittest-energy1b unittest-energy2b unittest-energy3b unittest-energy4b unittest-energyff unittest-ffcalculators unittest-gamma unittest-inversion unittest-lj unittest-ljtools unittest-pme-nopolarization unittest-pme-nopolarization-findif unittest-pme-withpolarization unittest-pme-withpolarization-findif unittest-poly-1b unittest-poly-2b unittest-poly-3b unittest-poly-holder-1b unittest-poly-holder-2b unittest-poly-holder-3b unittest-ps unittest-softcore unittest-system unittest-systools unittest-tools unittest-topology
 
-check_PROGRAMS = unittest-angle unittest-bond unittest-buckingham unittest-bucktools unittest-connectivity unittest-dihedral unittest-dispersion unittest-disptools unittest-electrostatics unittest-energy1b unittest-energy2b unittest-energy3b unittest-energy4b unittest-energyff unittest-ffcalculators unittest-gamma unittest-inversion unittest-lj unittest-ljtools unittest-pme-nopolarization unittest-pme-nopolarization-findif unittest-pme-withpolarization unittest-pme-withpolarization-findif unittest-poly-1b unittest-poly-2b unittest-poly-3b unittest-poly-holder-1b unittest-poly-holder-2b unittest-poly-holder-3b unittest-ps unittest-system unittest-systools unittest-tools unittest-topology
+check_PROGRAMS = unittest-angle unittest-bond unittest-buckingham unittest-bucktools unittest-connectivity unittest-dihedral unittest-dispersion unittest-disptools unittest-electrostatics unittest-energy1b unittest-energy2b unittest-energy3b unittest-energy4b unittest-energyff unittest-ffcalculators unittest-gamma unittest-inversion unittest-lj unittest-ljtools unittest-pme-nopolarization unittest-pme-nopolarization-findif unittest-pme-withpolarization unittest-pme-withpolarization-findif unittest-poly-1b unittest-poly-2b unittest-poly-3b unittest-poly-holder-1b unittest-poly-holder-2b unittest-poly-holder-3b unittest-ps unittest-softcore unittest-system unittest-systools unittest-tools unittest-topology
 
 LDADD = ${top_builddir}/src/libmbx.la 
 AM_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) -I${top_builddir}/src/ $(EXTRA_CXXFLAGS_AM) -static
@@ -39,9 +39,9 @@ unittest_poly_holder_1b_SOURCES = unittest-main.cpp unittest-poly-holder-1b.cpp
 unittest_poly_holder_2b_SOURCES = unittest-main.cpp unittest-poly-holder-2b.cpp
 unittest_poly_holder_3b_SOURCES = unittest-main.cpp unittest-poly-holder-3b.cpp
 unittest_ps_SOURCES = unittest-main.cpp unittest-ps.cpp
+unittest_softcore_SOURCES = unittest-main.cpp unittest-softcore.cpp
 unittest_system_SOURCES = unittest-main.cpp unittest-system.cpp
 unittest_systools_SOURCES = unittest-main.cpp unittest-systools.cpp
 unittest_tools_SOURCES = unittest-main.cpp unittest-tools.cpp
 unittest_topology_SOURCES = unittest-main.cpp unittest-topology.cpp
 endif
-
