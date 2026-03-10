@@ -26,7 +26,8 @@ pip install -e .
 ```
 
 More examples (bulk water and ion + water) are under `plugins/ase/examples/water` and `plugins/ase/examples/ion_water`.
-The helper script `plugins/ase/examples/convert_lammps_to_extxyz.py` converts LAMMPS data files to a minimal `extxyz` for ASE.
+The helper script `plugins/ase/scripts/format_conversion/convert_lammps_to_extxyz.py` converts LAMMPS data files to a minimal `extxyz` for ASE.
+A compatibility symlink remains at `plugins/ase/examples/convert_lammps_to_extxyz.py`.
 
 ## MBXCalculator usage
 The ASE `MBXCalculator` requires an `mbx.json` file (see `plugins/ase/examples/mbx.json` for a template). The MD example scripts (`mbx_md.py`) do not require `mbx.json` because they generate it automatically from the run settings.
@@ -42,6 +43,7 @@ calc = MBXCalculator(
     nat_monomers=[3],
     monomer_names=["h2o"],
     atom_names=["O", "H", "H"],
+    use_pbc_from_atoms=True,
 )
 
 atoms.calc = calc
@@ -60,4 +62,6 @@ Forces (eV/A):
 
 ## Notes
 - MBX uses kcal/mol and Angstrom; energies and forces are converted to ASE units (eV, eV/A).
+- `use_pbc_from_atoms=True` makes the calculator follow `atoms.pbc`. Set it to `False` to force a non-periodic MBX evaluation even if the ASE `Atoms` object carries PBC flags.
+- Periodic runs should use nonzero `alpha_ewald_elec` and `alpha_ewald_disp` values in `mbx.json`. Non-periodic runs should leave both at `0.0`.
 - MBX needs the O/H/H ordering per water. If the input file isn't ordered as O H H for each monomer (e.g., all O's first, then H's), the grouping will be wrong and MBX results will be incorrect. In that case you must reorder the atoms or explicitly provide nat_monomers/monomer_names/atom_names that match the correct per-monomer ordering.

@@ -31,6 +31,7 @@ class MBXLibrary:
                         return ctypes.CDLL(path)
                     return ctypes.CDLL(path, mode=dlopen_mode)
 
+        # Fallback to the system library search path when MBX_HOME/lib is not usable.
         lib_name = ctypes.util.find_library("mbx")
         if lib_name:
             if dlopen_mode is None:
@@ -44,40 +45,29 @@ class MBXLibrary:
 
     def _configure_signatures(self):
         self.lib.initialize_system_py_.argtypes = [
-            POINTER(c_double),
-            POINTER(c_int),
-            POINTER(c_char_p),
-            POINTER(c_char_p),
-            POINTER(c_int),
-            c_char_p,
+            POINTER(c_double),  # coords
+            POINTER(c_int),     # nat_monomers
+            POINTER(c_char_p),  # atom_names
+            POINTER(c_char_p),  # monomer_names
+            POINTER(c_int),     # nmon
+            c_char_p,           # json_file
         ]
         self.lib.initialize_system_py_.restype = None
 
-        self.lib.get_energy_.argtypes = [POINTER(c_double), POINTER(c_int), POINTER(c_double)]
-        self.lib.get_energy_.restype = None
-
         self.lib.get_energy_g_.argtypes = [
-            POINTER(c_double),
-            POINTER(c_int),
-            POINTER(c_double),
-            POINTER(c_double),
+            POINTER(c_double),  # coords
+            POINTER(c_int),     # nat
+            POINTER(c_double),  # energy
+            POINTER(c_double),  # gradients
         ]
         self.lib.get_energy_g_.restype = None
 
-        self.lib.get_energy_pbc_.argtypes = [
-            POINTER(c_double),
-            POINTER(c_int),
-            POINTER(c_double),
-            POINTER(c_double),
-        ]
-        self.lib.get_energy_pbc_.restype = None
-
         self.lib.get_energy_pbc_g_.argtypes = [
-            POINTER(c_double),
-            POINTER(c_int),
-            POINTER(c_double),
-            POINTER(c_double),
-            POINTER(c_double),
+            POINTER(c_double),  # coords
+            POINTER(c_int),     # nat
+            POINTER(c_double),  # box
+            POINTER(c_double),  # energy
+            POINTER(c_double),  # gradients
         ]
         self.lib.get_energy_pbc_g_.restype = None
 

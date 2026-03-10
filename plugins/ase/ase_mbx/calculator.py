@@ -1,4 +1,6 @@
+import json
 import os
+import warnings
 import numpy as np
 from ase.calculators.calculator import Calculator, all_changes
 
@@ -6,6 +8,14 @@ from .mbx_binding import MBXLibrary, KCAL_PER_MOL_TO_EV
 
 
 class MBXCalculator(Calculator):
+    """ASE calculator wrapper around MBX.
+
+    When ``use_pbc_from_atoms`` is ``True``, the calculator follows ``atoms.pbc``
+    and requires either full 3D periodicity or a fully non-periodic system.
+    When it is ``False``, MBX is always evaluated as non-periodic even if the
+    ASE ``Atoms`` object has PBC flags set.
+    """
+
     implemented_properties = ["energy", "forces", "stress"]
 
     @staticmethod
@@ -39,9 +49,51 @@ class MBXCalculator(Calculator):
         self.nat_monomers = list(nat_monomers)
         self.monomer_names = list(monomer_names)
         self.atom_names = list(atom_names) if atom_names is not None else None
+        # Ignore atoms.pbc when requested and force MBX to run as non-periodic.
         self.use_pbc_from_atoms = use_pbc_from_atoms
+        self._ewald_params = self._load_ewald_params(json_file)
+        self._warned_periodic_zero_alpha = False
         self.mbx = MBXLibrary(mbx_home=mbx_home)
         self._initialized = False
+
+    @staticmethod
+    def _load_ewald_params(json_file):
+        with open(json_file, encoding="utf-8") as handle:
+            config = json.load(handle)
+        mbx_config = config.get("MBX", {})
+        return {
+            "alpha_ewald_elec": float(mbx_config.get("alpha_ewald_elec", 0.0)),
+            "alpha_ewald_disp": float(mbx_config.get("alpha_ewald_disp", 0.0)),
+        }
+
+    def _validate_periodicity_settings(self, periodic, cell):
+        elec_alpha = self._ewald_params["alpha_ewald_elec"]
+        disp_alpha = self._ewald_params["alpha_ewald_disp"]
+
+        if elec_alpha < 0.0 or disp_alpha < 0.0:
+            raise ValueError("alpha_ewald_elec and alpha_ewald_disp must be non-negative.")
+
+        if periodic:
+            if abs(np.linalg.det(cell)) <= 1e-12:
+                raise ValueError("Periodic MBX calculations require a valid simulation cell.")
+            if (elec_alpha == 0.0 or disp_alpha == 0.0) and not self._warned_periodic_zero_alpha:
+                warnings.warn(
+                    "System is periodic, but alpha_ewald_elec or alpha_ewald_disp is zero in "
+                    f"{self.json_file}.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+                self._warned_periodic_zero_alpha = True
+            return
+
+        if elec_alpha > 0.0:
+            raise ValueError(
+                f"alpha_ewald_elec = {elec_alpha} requires periodic boundary conditions."
+            )
+        if disp_alpha > 0.0:
+            raise ValueError(
+                f"alpha_ewald_disp = {disp_alpha} requires periodic boundary conditions."
+            )
 
     def _ensure_initialized(self, atoms):
         if self._initialized:
@@ -80,9 +132,10 @@ class MBXCalculator(Calculator):
                 "(True, True, True) or non-periodic boundaries."
             )
         pbc = bool(np.all(pbc_flags)) and self.use_pbc_from_atoms
+        cell = self.atoms.get_cell().array
+        self._validate_periodicity_settings(pbc, cell)
 
         if pbc:
-            cell = self.atoms.get_cell().array
             energy_mbx, grads = self.mbx.get_energy_forces_pbc(coords, cell)
             virial = self.mbx.get_virial()
         else:
