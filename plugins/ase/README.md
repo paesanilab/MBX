@@ -25,9 +25,7 @@ cd plugins/ase
 pip install -e .
 ```
 
-More examples (bulk water and ion + water) are under `plugins/ase/examples/water` and `plugins/ase/examples/ion_water`.
-The helper script `plugins/ase/scripts/format_conversion/convert_lammps_to_extxyz.py` converts LAMMPS data files to a minimal `extxyz` for ASE.
-A compatibility symlink remains at `plugins/ase/examples/convert_lammps_to_extxyz.py`.
+More examples (bulk water and ion + water) are under `plugins/ase/examples/water` and `plugins/ase/examples/ion_water`. Use `plugins/ase/examples/convert_lammps_to_extxyz.py` to convert LAMMPS data files to a minimal `extxyz` for ASE.
 
 ## MBXCalculator usage
 The ASE `MBXCalculator` requires an `mbx.json` file (see `plugins/ase/examples/mbx.json` for a template). The MD example scripts (`mbx_md.py`) do not require `mbx.json` because they generate it automatically from the run settings.
