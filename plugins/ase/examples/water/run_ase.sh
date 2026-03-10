@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OMP_THREADS=10
+# Update this number based on your machine.
+OMP_THREADS=1
 export OMP_NUM_THREADS=${OMP_THREADS}
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
