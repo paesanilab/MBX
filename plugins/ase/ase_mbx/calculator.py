@@ -10,10 +10,8 @@ from .mbx_binding import MBXLibrary, KCAL_PER_MOL_TO_EV
 class MBXCalculator(Calculator):
     """ASE calculator wrapper around MBX.
 
-    When ``use_pbc_from_atoms`` is ``True``, the calculator follows ``atoms.pbc``
-    and requires either full 3D periodicity or a fully non-periodic system.
-    When it is ``False``, MBX is always evaluated as non-periodic even if the
-    ASE ``Atoms`` object has PBC flags set.
+    The calculator follows ``atoms.pbc`` directly and requires either full 3D
+    periodicity or a fully non-periodic system.
     """
 
     implemented_properties = ["energy", "forces", "stress"]
@@ -39,7 +37,6 @@ class MBXCalculator(Calculator):
         monomer_names,
         atom_names=None,
         mbx_home=None,
-        use_pbc_from_atoms=True,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -49,8 +46,6 @@ class MBXCalculator(Calculator):
         self.nat_monomers = list(nat_monomers)
         self.monomer_names = list(monomer_names)
         self.atom_names = list(atom_names) if atom_names is not None else None
-        # Ignore atoms.pbc when requested and force MBX to run as non-periodic.
-        self.use_pbc_from_atoms = use_pbc_from_atoms
         self._ewald_params = self._load_ewald_params(json_file)
         self._warned_periodic_zero_alpha = False
         self.mbx = MBXLibrary(mbx_home=mbx_home)
@@ -122,16 +117,12 @@ class MBXCalculator(Calculator):
 
         coords = self.atoms.get_positions()
         pbc_flags = np.array(self.atoms.get_pbc(), dtype=bool)
-        if (
-            self.use_pbc_from_atoms
-            and np.any(pbc_flags)
-            and not np.all(pbc_flags)
-        ):
+        if np.any(pbc_flags) and not np.all(pbc_flags):
             raise ValueError(
                 "MBXCalculator does not support partial PBC; use either full 3D PBC "
                 "(True, True, True) or non-periodic boundaries."
             )
-        pbc = bool(np.all(pbc_flags)) and self.use_pbc_from_atoms
+        pbc = bool(np.all(pbc_flags))
         cell = self.atoms.get_cell().array
         self._validate_periodicity_settings(pbc, cell)
 
