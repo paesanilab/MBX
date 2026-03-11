@@ -71,6 +71,7 @@ def attach_mbx_calculator(atoms, json_file, mbx_home):
     monomer_names = []
     nat_monomers = []
     i = 0
+    # TODO: Move this monomer selection logic into the MBX side.
     while i < len(symbols):
         sym = symbols[i]
         if sym == "O":
