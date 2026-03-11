@@ -66,47 +66,27 @@ def str_to_bool(value):
         return False
     raise argparse.ArgumentTypeError(f"Invalid boolean value: {value}")
 
-def attach_mbx_calculator(atoms, json_file, monomer_name, nat_per_monomer, mbx_home, infer_monomers):
+def attach_mbx_calculator(atoms, json_file, mbx_home):
     symbols = atoms.get_chemical_symbols()
-    inferred_spec = None
-    candidate_names = []
-    candidate_sizes = []
+    monomer_names = []
+    nat_monomers = []
     i = 0
-    try:
-        while i < len(symbols):
-            sym = symbols[i]
-            if sym == "O":
-                if i + 2 >= len(symbols) or symbols[i + 1] != "H" or symbols[i + 2] != "H":
-                    raise ValueError("Expected O-H-H ordering for each water monomer.")
-                candidate_names.append("h2o")
-                candidate_sizes.append(3)
-                i += 3
-                continue
-            if sym in ION_MONOMER_MAP:
-                candidate_names.append(ION_MONOMER_MAP[sym])
-                candidate_sizes.append(1)
-                i += 1
-                continue
-            raise ValueError(f"Unsupported atom '{sym}' for monomer inference.")
-    except ValueError:
-        candidate_names, candidate_sizes = None, None
-        if infer_monomers:
-            raise
-    else:
-        if infer_monomers:
-            inferred_spec = (candidate_names, candidate_sizes)
-        elif any(name != "h2o" or nat != 3 for name, nat in zip(candidate_names, candidate_sizes)):
-            # Auto-infer ion-containing systems, but keep the explicit monomer path for water-only inputs.
-            inferred_spec = (candidate_names, candidate_sizes)
-
-    if inferred_spec is not None:
-        monomer_names, nat_monomers = inferred_spec
-    else:
-        if len(symbols) % nat_per_monomer != 0:
-            raise ValueError("Atom count not divisible by nat_per_monomer.")
-        nmon = len(symbols) // nat_per_monomer
-        nat_monomers = [nat_per_monomer] * nmon
-        monomer_names = [monomer_name] * nmon
+    while i < len(symbols):
+        sym = symbols[i]
+        if sym == "O":
+            if i + 2 >= len(symbols) or symbols[i + 1] != "H" or symbols[i + 2] != "H":
+                raise ValueError("Expected O-H-H ordering for each water monomer.")
+            monomer_names.append("h2o")
+            nat_monomers.append(3)
+            i += 3
+            continue
+        if sym in ION_MONOMER_MAP:
+            monomer_names.append(ION_MONOMER_MAP[sym])
+            nat_monomers.append(1)
+            i += 1
+            continue
+        # TODO: Add support for more monomer types here.
+        raise ValueError(f"Monomer for atom '{sym}' is not available.")
 
     atoms.calc = MBXCalculator(
         json_file=str(json_file),
@@ -167,9 +147,6 @@ def do_md_simulation(
     realspace_cutoff,
     twobody_cutoff,
     threebody_cutoff,
-    monomer_name,
-    nat_per_monomer,
-    infer_monomers,
     mbx_home,
 ):
     ensemble = ensemble.lower().strip()
@@ -223,9 +200,6 @@ def do_md_simulation(
     attach_mbx_calculator(
         atoms=atoms,
         json_file=json_path,
-        monomer_name=monomer_name,
-        nat_per_monomer=nat_per_monomer,
-        infer_monomers=infer_monomers,
         mbx_home=mbx_home,
     )
 
@@ -400,14 +374,6 @@ def parse_arguments():
         default=None,
         help="Optional restart .pkl path. If omitted, the run starts from -init_file.",
     )
-    parser.add_argument("-monomer_name", default="h2o", help="Monomer name (default: h2o)")
-    parser.add_argument("-nat_per_monomer", type=int, default=3, help="Atoms per monomer (default: 3)")
-    parser.add_argument(
-        "-infer_monomers",
-        type=str_to_bool,
-        default=True,
-        help="Infer monomers from atom ordering (default: true).",
-    )
     parser.add_argument(
         "-realspace_cutoff",
         type=float,
@@ -457,8 +423,5 @@ if __name__ == "__main__":
         realspace_cutoff=args.realspace_cutoff,
         twobody_cutoff=args.twobody_cutoff,
         threebody_cutoff=args.threebody_cutoff,
-        monomer_name=args.monomer_name,
-        nat_per_monomer=args.nat_per_monomer,
-        infer_monomers=args.infer_monomers,
         mbx_home=mbx_home,
     )
