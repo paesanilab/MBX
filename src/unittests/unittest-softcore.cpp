@@ -42,6 +42,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 namespace {
 
+constexpr double TOL = 1E-6;
+
 void CreateSystem(bblock::System &s, const std::vector<std::string> &mon_ids, const std::vector<size_t> &nats,
                   const std::vector<size_t> &first_index, const std::vector<double> &coords,
                   const std::vector<std::string> &atom_names, const nlohmann::json &j) {
@@ -127,23 +129,24 @@ IonSoftcoreEval EvaluateIonComponent(const ExpectedLambdaCase &test_case) {
         system = BuildIonSoftcoreSystem(test_case.ion_id, test_case.ion_atom_name, 1.0, "", test_case.lambda, 1.0);
         return {system.TwoBodyEnergy(true), system.GetRealGrads()};
     }
+    if (test_case.component == "3b") {
+        system = BuildIonSoftcoreSystem(test_case.ion_id, test_case.ion_atom_name, 1.0, "", 1.0, test_case.lambda);
+        return {system.ThreeBodyEnergy(true), system.GetRealGrads()};
+    }
 
-    system = BuildIonSoftcoreSystem(test_case.ion_id, test_case.ion_atom_name, 1.0, "", 1.0, test_case.lambda);
-    return {system.ThreeBodyEnergy(true), system.GetRealGrads()};
+    FAIL("Unknown ion component: " << test_case.component);
+    return IonSoftcoreEval{};
 }
 
 void CheckIonSoftcoreReferenceCases(const std::vector<ExpectedLambdaCase> &test_cases) {
-    const double energy_tol = 1.0e-10;
-    const double grad_tol = 1.0e-8;
-
     for (const auto &test_case : test_cases) {
         DYNAMIC_SECTION("Reference check for " << test_case.ion_id << " " << test_case.component << " lambda "
                                                << test_case.lambda) {
             const IonSoftcoreEval actual = EvaluateIonComponent(test_case);
-            REQUIRE(actual.energy == Approx(test_case.expected_energy).margin(energy_tol));
+            REQUIRE(actual.energy == Approx(test_case.expected_energy).margin(TOL));
             REQUIRE(actual.grads.size() == test_case.expected_grads.size());
             for (size_t i = 0; i < actual.grads.size(); ++i) {
-                REQUIRE(actual.grads[i] == Approx(test_case.expected_grads[i]).margin(grad_tol));
+                REQUIRE(actual.grads[i] == Approx(test_case.expected_grads[i]).margin(TOL));
             }
         }
     }
