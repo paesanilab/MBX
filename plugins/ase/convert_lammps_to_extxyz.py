@@ -1,0 +1,1 @@
+../../scripts/format_conversion/convert_lammps_to_extxyz.py
