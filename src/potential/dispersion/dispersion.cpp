@@ -1208,11 +1208,7 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 #if HAVE_MPI == 1
     double _time0 = MPI_Wtime();
 #endif
-    bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
-
-    // override settings if ghost particles (big assumption?)
-    // if calling this function, then shouldn't need to check this
-    //    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
+    bool compute_pme = (ewald_alpha_ > 0);
 
     if (compute_pme) {
         helpme::PMEInstance<double> pme_solver_;
