@@ -5,13 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-<<<<<<< HEAD
-AC_INIT([MBX], [1.3.7], [mbx-users@googlegroups.com])
-||||||| f0db88db
-AC_INIT([MBX], [1.3.6], [mbx-users@googlegroups.com])
-=======
 AC_INIT([MBX], [1.3.9], [mbx-users@googlegroups.com])
->>>>>>> update-selfhosted
 
 # Define MBX_PACKAGE_VERSION as a macro in config.h
 AC_SUBST([MBX_VERSION], ["$PACKAGE_VERSION"])
