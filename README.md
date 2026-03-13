@@ -4,7 +4,7 @@
 
 
 
-# MBX v1.3.10
+# MBX v1.3.9
 MBX: A many-body energy and force calculator for data-driven many-body simulations.
 [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 
@@ -31,7 +31,7 @@ MBX has different compilation instructions depending on how you plan to use it:
 - For use with **i-PI**, **Python**, **Fortran**, or **standalone**, perform a [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps)
 - For use with **LAMMPS**, perform an [alternative MBX_MPI installation](#lammps)
 
-#### Basic installation of MBX (for use with i-PI, Python, Fortran, or standalone. **NOT LAMMPS**)
+#### Basic installation of MBX (for use with i-PI, Python, ASE, Fortran, or standalone. **NOT LAMMPS**)
 ```console
 git clone https://github.com/paesanilab/MBX.git
 cd MBX/
@@ -166,6 +166,9 @@ export LD_LIBRARY_PATH=$MBX_HOME/lib/:$LD_LIBRARY_PATH
 export PYTHONPATH=${PYTHONPATH}:${MBX_HOME}/plugins/python/mbx
 ```
 
+### ASE
+An ASE calculator plugin is available in `plugins/ase`. See `plugins/ase/README.md` for install and usage.
+
 
 ### LAMMPS
 MBX is an official LAMMPS package (https://docs.lammps.org/pair_mbx.html),
@@ -220,5 +223,3 @@ The unit tests implemented should cover a big part of the code. This sunburst gr
 <p align="center">
   <img src="https://codecov.io/gh/paesanilab/MBX/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>
-
-
