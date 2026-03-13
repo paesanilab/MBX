@@ -1,4 +1,4 @@
-LAMMPS (10 Dec 2025 - Development - patch_10Dec2025-670-gf52584f29b-modified)
+LAMMPS (11 Feb 2026 - Development - patch_11Feb2026-156-g48a5c9ef8e)
   using 1 OpenMP thread(s) per MPI task
 # Depositing TIP3P water into MOF with QeQ charges obtained with Ongari scheme
 # Variable defiition
@@ -51,7 +51,7 @@ Finding 1-2 1-3 1-4 neighbors ...
     24 = max # of 1-4 neighbors
     26 = max # of special neighbors
   special bonds CPU = 0.000 seconds
-  read_data CPU = 0.011 seconds
+  read_data CPU = 0.042 seconds
 
 group mof type 1 2 3 4 5 6
 176 atoms in group mof
@@ -253,7 +253,7 @@ Your simulation uses code contributions which should be cited:
  pages = {054802},
  year = {2023},
  doi = {10.1063/5.0156036},
- version = {1.3.5}
+ version = {1.3.7}
 }
 
 CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
@@ -388,21 +388,21 @@ Per MPI rank memory allocation (min/avg/max) = 22.88 | 22.88 | 22.88 Mbytes
         99   19.8           771.82188      8.9213299      19.403376      17.088879     -2521.0912      1863.7623     -657.32888      152.98195      715.74107      842.33442      21.938185      1732.9956      0             -13.368216      9.6118935      8.2703318      0              0             -5.0838296      0             -2400.0896     -2387.2912      1075.6668      1519.6931    
        100   20             780.94947      8.9211461      19.402976      17.088527     -2522.1859      1863.7407     -658.4452       151.04352      715.27228      841.4625       22.024912      1729.8032      0             -13.369042      8.7953124      8.1607786      0              0             -5.0487857      0             -2400.0486     -2388.1413      1071.358       1520.6354    
 WARNING: Bond/angle/dihedral extent > half of periodic box length (src/domain.cpp:1174)
-Loop time of 5.09542 on 1 procs for 100 steps with 194 atoms
+Loop time of 5.66211 on 1 procs for 100 steps with 194 atoms
 
-Performance: 0.339 ns/day, 70.770 hours/ns, 19.625 timesteps/s, 3.807 katom-step/s
-98.6% CPU use with 1 MPI tasks x 1 OpenMP threads
+Performance: 0.305 ns/day, 78.640 hours/ns, 17.661 timesteps/s, 3.426 katom-step/s
+98.7% CPU use with 1 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 4.7161     | 4.7161     | 4.7161     |   0.0 | 92.56
-Bond    | 0.0097306  | 0.0097306  | 0.0097306  |   0.0 |  0.19
-Neigh   | 0.063597   | 0.063597   | 0.063597   |   0.0 |  1.25
-Comm    | 0.0023408  | 0.0023408  | 0.0023408  |   0.0 |  0.05
-Output  | 0.087427   | 0.087427   | 0.087427   |   0.0 |  1.72
-Modify  | 0.21563    | 0.21563    | 0.21563    |   0.0 |  4.23
-Other   |            | 0.0005745  |            |       |  0.01
+Pair    | 5.2623     | 5.2623     | 5.2623     |   0.0 | 92.94
+Bond    | 0.010264   | 0.010264   | 0.010264   |   0.0 |  0.18
+Neigh   | 0.067679   | 0.067679   | 0.067679   |   0.0 |  1.20
+Comm    | 0.0029986  | 0.0029986  | 0.0029986  |   0.0 |  0.05
+Output  | 0.078153   | 0.078153   | 0.078153   |   0.0 |  1.38
+Modify  | 0.23966    | 0.23966    | 0.23966    |   0.0 |  4.23
+Other   |            | 0.00101    |            |       |  0.02
 
 Nlocal:            194 ave         194 max         194 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
