@@ -68,7 +68,7 @@ double switch_function(const double &r, const double &ri, const double &ro, doub
         g = 0.0;
         return 0.0;
     } else if (r > ri) {
-        const double t1 = M_PI / (ro - ri);
+        const double t1 = constants::MY_PI / (ro - ri);
         const double x = (r - ri) * t1;
         g = -std::sin(x) * t1 / 2.0;
         return (1.0 + std::cos(x)) / 2.0;
@@ -126,7 +126,7 @@ std::vector<double> BoxVecToBoxABCabc(std::vector<double> box) {
     beta = acos(AdotC / A / C);
     alpha = acos(BdotC / B / C);
 
-    std::vector<double> box_out = {A, B, C, alpha / M_PI * 180.0, beta / M_PI * 180.0, gamma / M_PI * 180.0};
+    std::vector<double> box_out = {A, B, C, alpha / constants::MY_PI * 180.0, beta / constants::MY_PI * 180.0, gamma / constants::MY_PI * 180.0};
     return box_out;
 }
 
@@ -135,9 +135,9 @@ std::vector<double> BoxABCabcToBoxVec(std::vector<double> box) {
     A = box[0];
     B = box[1];
     C = box[2];
-    alpha = box[3] / 180.0 * M_PI;
-    beta = box[4] / 180.0 * M_PI;
-    gamma = box[5] / 180.0 * M_PI;
+    alpha = box[3] / 180.0 * constants::MY_PI;
+    beta = box[4] / 180.0 * constants::MY_PI;
+    gamma = box[5] / 180.0 * constants::MY_PI;
 
     std::vector<double> box_out(9, 0.0);
     box_out[0] = A;
