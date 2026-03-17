@@ -24,7 +24,6 @@ MONOMER_PATTERNS = {
     "so4a": ("S", "O", "O", "O", "O"),
     "co3a": ("C", "O", "O", "O"),
     "no3a": ("N", "O", "O", "O"),
-    "dp2": ("X", "X"),
     "nma": ("C", "O", "C", "H", "H", "H", "N", "H", "C", "H", "H", "H"),
 }
 

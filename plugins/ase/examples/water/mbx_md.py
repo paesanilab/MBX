@@ -310,7 +310,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Run MBX molecular dynamics simulation (ASE; NVE/NVT/MTK-NPT)."
     )
-    supported = ", ".join(name for name in MONOMER_PATTERNS if name != "dp2")
+    supported = ", ".join(MONOMER_PATTERNS)
     parser.add_argument("-work_path", default="./", help="Working directory (default: ./)")
     parser.add_argument("-init_file", dest="input_file", default="initial.xyz", help="Initial structure file")
     parser.add_argument("-sim_time", dest="sim_time", type=float, required=True, help="Simulation time (ps)")
@@ -367,7 +367,7 @@ def parse_arguments():
     parser.epilog = (
         "Supported automatically inferred monomers: "
         + supported
-        + " (plus dp2 when the input contains X X; dp1 is not supported here)."
+        + " (dp1 and dp2 are not supported here)."
     )
     args = parser.parse_args()
     return args
