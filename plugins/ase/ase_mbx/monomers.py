@@ -35,6 +35,17 @@ _NO_PARSE = object()
 _AMBIGUOUS = object()
 
 
+def _format_pattern(pattern):
+    return "-".join(pattern)
+
+
+def _format_candidate_patterns(symbol):
+    candidates = _PATTERNS_BY_FIRST_SYMBOL.get(symbol, ())
+    return ", ".join(
+        f"{name} ({_format_pattern(pattern)})" for name, pattern in candidates
+    )
+
+
 def infer_mbx_monomers(symbols):
     symbols = tuple(symbols)
 
@@ -65,20 +76,58 @@ def infer_mbx_monomers(symbols):
 
         return first_solution if first_solution is not None else _NO_PARSE
 
+    @lru_cache(maxsize=None)
+    def first_failure_index(index):
+        if index == len(symbols):
+            return None
+
+        candidates = _PATTERNS_BY_FIRST_SYMBOL.get(symbols[index], ())
+        if not candidates:
+            return index
+
+        matched_pattern = False
+        failure_indices = []
+        for _, pattern in candidates:
+            end = index + len(pattern)
+            if symbols[index:end] != pattern:
+                continue
+            matched_pattern = True
+            failure_index = first_failure_index(end)
+            if failure_index is None:
+                return None
+            failure_indices.append(failure_index)
+
+        if not matched_pattern:
+            return index
+
+        return min(failure_indices) if failure_indices else index
+
     parsed = parse_from(0)
     if parsed is _AMBIGUOUS:
         raise ValueError(
-            "Atom ordering matches multiple supported MBX monomer decompositions. "
-            "Reorder the input so monomer grouping is unambiguous."
+            "Monomer inference is ambiguous for the current atom ordering. "
+            "Reorder the atoms so each supported MBX monomer is grouped contiguously."
         )
     if parsed is _NO_PARSE:
-        unsupported = next((sym for sym in symbols if sym not in _PATTERNS_BY_FIRST_SYMBOL), None)
-        if unsupported is not None:
+        unsupported_index = next(
+            (i for i, sym in enumerate(symbols) if sym not in _PATTERNS_BY_FIRST_SYMBOL),
+            None,
+        )
+        if unsupported_index is not None:
+            unsupported = symbols[unsupported_index]
             # TODO: Add support for more monomer types here.
-            raise ValueError(f"Monomer for atom '{unsupported}' is not available.")
+            raise ValueError(
+                f"Unsupported monomer atom '{unsupported}' at atom index {unsupported_index}. "
+                "This atom does not map to any monomer currently available in the ASE MBX interface."
+            )
+        failure_index = first_failure_index(0)
+        failure_symbol = symbols[failure_index]
+        expected = _format_candidate_patterns(failure_symbol)
         raise ValueError(
             "Could not infer supported MBX monomers from the input atom ordering. "
-            "Ensure atoms are grouped in the expected MBX monomer order."
+            f"First unmatched atom is index {failure_index} ('{failure_symbol}'). "
+            f"Monomers starting with '{failure_symbol}' expect one of: {expected}. "
+            "Make sure each monomer is grouped contiguously in the MBX atom order."
         )
 
     monomer_names = [name for name, _ in parsed]

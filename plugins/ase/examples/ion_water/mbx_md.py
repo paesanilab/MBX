@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import pickle
+import sys
 import time
 from pathlib import Path
 
@@ -378,27 +379,31 @@ if __name__ == "__main__":
     if not mbx_home:
         raise RuntimeError("MBX_HOME is not set. Example: export MBX_HOME=/path/to/MBX")
     args = parse_arguments()
-    do_md_simulation(
-        work_path=args.work_path,
-        input_file=args.input_file,
-        total_time_ps=args.sim_time,
-        timestep_fs=args.t_step,
-        temperature_K=args.temp,
-        output_interval=args.interv,
-        pbc=args.pbc,
-        box_size=args.box_size,
-        ensemble=args.ensemble,
-        pressure_bar=args.pressure_bar,
-        t_damp_fs=args.t_damp_fs,
-        p_damp_fs=args.p_damp_fs,
-        tchain=args.tchain,
-        pchain=args.pchain,
-        tloop=args.tloop,
-        ploop=args.ploop,
-        npt_coupling=args.npt_coupling,
-        restart_file=args.restart_file,
-        realspace_cutoff=args.realspace_cutoff,
-        twobody_cutoff=args.twobody_cutoff,
-        threebody_cutoff=args.threebody_cutoff,
-        mbx_home=mbx_home,
-    )
+    try:
+        do_md_simulation(
+            work_path=args.work_path,
+            input_file=args.input_file,
+            total_time_ps=args.sim_time,
+            timestep_fs=args.t_step,
+            temperature_K=args.temp,
+            output_interval=args.interv,
+            pbc=args.pbc,
+            box_size=args.box_size,
+            ensemble=args.ensemble,
+            pressure_bar=args.pressure_bar,
+            t_damp_fs=args.t_damp_fs,
+            p_damp_fs=args.p_damp_fs,
+            tchain=args.tchain,
+            pchain=args.pchain,
+            tloop=args.tloop,
+            ploop=args.ploop,
+            npt_coupling=args.npt_coupling,
+            restart_file=args.restart_file,
+            realspace_cutoff=args.realspace_cutoff,
+            twobody_cutoff=args.twobody_cutoff,
+            threebody_cutoff=args.threebody_cutoff,
+            mbx_home=mbx_home,
+        )
+    except (FileNotFoundError, ImportError, RuntimeError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from None
