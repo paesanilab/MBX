@@ -365,12 +365,6 @@ fi
 
 AC_PREFIX_DEFAULT([`pwd`])
 
-# hack for mingw64 Linux-to-Windows cross-compiler
-if echo ${CXX} | grep "w64-mingw" > /dev/null
-then
-    CPPFLAGS="${CPPFLAGS} -DM_PI=3.14159265358979323846"
-fi
-
 # disable I-Pi plugin, if requested
 AM_CONDITIONAL([IPIPLUGIN], [test $i_pi_plugin == true])
 
