@@ -61,4 +61,5 @@ Forces (eV/A):
 - MBX uses kcal/mol and Angstrom; energies and forces are converted to ASE units (eV, eV/A).
 - `MBXCalculator` follows `atoms.pbc` directly and supports either full 3D periodicity or a fully non-periodic system.
 - Periodic runs should use nonzero `alpha_ewald_elec` and `alpha_ewald_disp` values in `mbx.json`. Non-periodic runs should leave both at `0.0`.
-- MBX needs the O/H/H ordering per water. If the input file isn't ordered as O H H for each monomer (e.g., all O's first, then H's), the grouping will be wrong and MBX results will be incorrect. In that case you must reorder the atoms or explicitly provide nat_monomers/monomer_names/atom_names that match the correct per-monomer ordering.
+- The ASE `mbx_md.py` example scripts infer monomers directly from the input atom order using the supported MBX monomer definitions (`h2o`, alkali ions, halide ions, `co2`, `ch4`, `he`, `ar`, `h2`, `n2o5`, `so4a`, `co3a`, `no3a`, `dp2`, and `nma`). `dp1` is intentionally not supported here.
+- Input atoms must be grouped in the expected MBX monomer order. If the ordering is unsupported or ambiguous, the ASE examples will raise an error instead of guessing.

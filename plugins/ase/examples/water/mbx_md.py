@@ -23,18 +23,7 @@ except Exception:
     IsotropicMTKNPT = None
 
 from ase_mbx import MBXCalculator
-
-ION_MONOMER_MAP = {
-    "Li": "li+",
-    "Na": "na+",
-    "K": "k+",
-    "Rb": "rb+",
-    "Cs": "cs+",
-    "F": "f-",
-    "Cl": "cl-",
-    "Br": "br-",
-    "I": "i-",
-}
+from ase_mbx.monomers import MONOMER_PATTERNS, infer_mbx_monomers
 
 
 def calculate_performance(elapsed_time, nsteps, timestep_fs, natoms):
@@ -68,26 +57,7 @@ def str_to_bool(value):
 
 def attach_mbx_calculator(atoms, json_file, mbx_home):
     symbols = atoms.get_chemical_symbols()
-    monomer_names = []
-    nat_monomers = []
-    i = 0
-    # TODO: Move this monomer selection logic into the MBX side.
-    while i < len(symbols):
-        sym = symbols[i]
-        if sym == "O":
-            if i + 2 >= len(symbols) or symbols[i + 1] != "H" or symbols[i + 2] != "H":
-                raise ValueError("Expected O-H-H ordering for each water monomer.")
-            monomer_names.append("h2o")
-            nat_monomers.append(3)
-            i += 3
-            continue
-        if sym in ION_MONOMER_MAP:
-            monomer_names.append(ION_MONOMER_MAP[sym])
-            nat_monomers.append(1)
-            i += 1
-            continue
-        # TODO: Add support for more monomer types here.
-        raise ValueError(f"Monomer for atom '{sym}' is not available.")
+    monomer_names, nat_monomers = infer_mbx_monomers(symbols)
 
     atoms.calc = MBXCalculator(
         json_file=str(json_file),
@@ -340,6 +310,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Run MBX molecular dynamics simulation (ASE; NVE/NVT/MTK-NPT)."
     )
+    supported = ", ".join(name for name in MONOMER_PATTERNS if name != "dp2")
     parser.add_argument("-work_path", default="./", help="Working directory (default: ./)")
     parser.add_argument("-init_file", dest="input_file", default="initial.xyz", help="Initial structure file")
     parser.add_argument("-sim_time", dest="sim_time", type=float, required=True, help="Simulation time (ps)")
@@ -392,6 +363,11 @@ def parse_arguments():
         type=float,
         default=4.5,
         help="MBX 3-body cutoff (A).",
+    )
+    parser.epilog = (
+        "Supported automatically inferred monomers: "
+        + supported
+        + " (plus dp2 when the input contains X X; dp1 is not supported here)."
     )
     args = parser.parse_args()
     return args
