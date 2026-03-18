@@ -375,11 +375,11 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
-    mbx_home = os.environ.get("MBX_HOME")
-    if not mbx_home:
-        raise RuntimeError("MBX_HOME is not set. Example: export MBX_HOME=/path/to/MBX")
     args = parse_arguments()
     try:
+        mbx_home = os.environ.get("MBX_HOME")
+        if not mbx_home:
+            raise RuntimeError("MBX_HOME is not set. Example: export MBX_HOME=/path/to/MBX")
         do_md_simulation(
             work_path=args.work_path,
             input_file=args.input_file,
