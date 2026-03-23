@@ -873,7 +873,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 grad2_pool[i] = std::vector<double>(nmon2 * ns2 * 3, 0.0);
                 virial_pool[i] = std::vector<double>(9, 0.0);
                 bool_mon2_indices_pool[i] = std::make_shared<std::vector<size_t>>(nmon2);
-                field_pool[i] = std::make_shared<elec::ElectricFieldHolder>(maxnmon);
+                field_pool[i] = std::make_shared<elec::ElectricFieldHolder>(nmon2);
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
