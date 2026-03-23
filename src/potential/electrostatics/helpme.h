@@ -3704,7 +3704,11 @@ class PMEInstance {
             rPower_ = rPower;
             algorithmType_ = algorithm;
             splineOrder_ = splineOrder;
+#if defined(__MINGW64__)
+            cacheLineSizeInReals_ = static_cast<Real>(4096 / sizeof(Real));
+#else
             cacheLineSizeInReals_ = static_cast<Real>(sysconf(_SC_PAGESIZE) / sizeof(Real));
+#endif
             requestedNumberOfThreads_ = nThreads;
 #ifdef _OPENMP
             nThreads_ = nThreads ? nThreads : omp_get_max_threads();
