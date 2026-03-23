@@ -1,7 +1,8 @@
 #ifndef X2B_A1B2Z2_C1_DEG5_V1X_H
 #define X2B_A1B2Z2_C1_DEG5_V1X_H
  
-#include "poly_2b_A1B2Z2_C1_deg5_v1x.h" 
+#include "poly_2b_A1B2Z2_C1_deg5_v1x.h"
+#include "tools/constants.h"
 
 #include <iostream>
 #include <cmath>

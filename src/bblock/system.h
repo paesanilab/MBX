@@ -47,13 +47,15 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 // Tools
 #include "kdtree/nanoflann.hpp"
 #include "kdtree/kdtree_utils.h"
-#include "json/json.h"
+#include "json/json.hpp"
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
+#include "tools/constants.h"
 #include "tools/custom_exceptions.h"
 #include "tools/math_tools.h"
 #include "potential/force_field/connectivity.h"
 #include "io_tools/read_connectivity.h"
+#include "mbx_version.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -108,6 +110,9 @@ class System {
      * Default Destructor. Destroys the System class.
      */
     ~System();
+
+    // static const variable that contains the version
+    static constexpr const char* get_mbx_version() { return mbx_version; }
 
     /////////////////////////////////////////////////////////////////////////////
     // Getters //////////////////////////////////////////////////////////////////
@@ -1168,6 +1173,7 @@ class System {
     std::vector<double> GetInfoDispersionTimings();
 
    private:
+    static constexpr const char* mbx_version = MBX_VERSION;
     /**
      * Fills the dimers_(i,j) and/or trimers_(i,j,k) vectors, with
      * i < j < k. These i,j,k are the index of the corresponding monomer

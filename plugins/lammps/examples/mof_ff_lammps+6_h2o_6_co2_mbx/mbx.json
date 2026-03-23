@@ -1,5 +1,5 @@
 {
-    "Note" : "This is an MBX v1.0 configuration file",
+    "Note" : "This is an MBX v1.3 configuration file",
     "MBX" : { 
         "box" : [],
         "realspace_cutoff": 9.0,

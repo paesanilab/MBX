@@ -100,7 +100,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::f_switch(const double& r, double& g) const
         g = 0.0;
         return 0.0;
     } else if (r > m_r3i) {
-        const double t1 = M_PI / (m_r3f - m_r3i);
+        const double t1 = constants::MY_PI / (m_r3f - m_r3i);
         const double x = (r - m_r3i) * t1;
         g = -std::sin(x) * t1 / 2.0;
         return (1.0 + std::cos(x)) / 2.0;

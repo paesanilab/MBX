@@ -46,7 +46,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "kdtree/kdtree_utils.h"
 #include "tools/definitions.h"
 #include "potential/lj/ljtools.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 #include "potential/1b/ps.h"
 #include "tools/constants.h"
@@ -331,12 +331,34 @@ void AddClusters(size_t n_max, double cutoff, std::vector<size_t> idxs, size_t n
                  std::vector<size_t> &nmers, bool use_ghost = false);
 
 /**
- * @brief Sets the excluded pairs for a given monomer
+ * @brief Returns a bool that indicates which type of dispersion damping function was used in a potential. To be used in dispersion calculations.
+ *
+ * Given the id of a monomer, it will return a bool that indicates 
+ * whether Koide dispersion damping was used for that monomer potential.
+ * @param[in] mon Monomer id
+ */
+bool GetUseKoideMonomer(std::string mon);
+
+/**
+ * @brief Returns a bool that indicates which type of dispersion damping function was used in a potential. To be used in dispersion calculations.
+ *
+ * Given the ids of two monomers, it will return a bool that indicates 
+ * whether Koide dispersion damping was used for that dimer potential.
+ * The names passed in will be sorted before the search within the function.
+ * @param[in] mon1 Monomer1 id
+ * @param[in] mon2 Monomer2 id
+ */
+bool GetUseKoideDimer(std::string mon1, std::string mon2);
+
+/**
+ * @brief Sets the excluded pairs for a given monomer, to be used in electrostatics and dispersion calculations.
+ * Will also be used in buckingham calculations if the monomer is not specified in GetBuckExcluded.
  *
  * Given the id of a monomer, it will return the excluded pairs at
  * distances 1-2, 1-3 and 1-4. The excluded pairs are given by a set
  * of pairs, in which each pair specifies the two atoms that are
  * excluded.
+ * Alternatively, it can also read in pairs from a json file, when pairs are given under "exc12", "exc13", "exc14", respectively.
  * @param[in] mon Monomer id
  * @param[in] mon_j Json object with monomer information
  * @param[out] exc12 Set of pairs with the 1-2 excluded atoms
@@ -347,10 +369,28 @@ void GetExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12
                  excluded_set_type &exc14);
 
 /**
+ * @brief Sets the excluded pairs for a given monomer, to be used in Buckingham calculations.
+ *
+ * This function was separated from GetExcluded, so that all intramolecular pairs can be  
+ * excluded for large monomers with 1-5+ intramolecular pairs.
+ * Given the id of a monomer, it will return the excluded pairs to be excluded in Buckingham calculations.
+ * If a monomer is not defined in this function, it will default to the 1-2, 1-3, 1-4 pairs given by GetExcluded.
+ * If a monomer is defined in this function, it will use those pairs. In this case, all pairs will be passed to exc12.
+ * Alternatively, it can also read in pairs from a json file, when given under "buck_exc".
+ * @param[in] mon Monomer id
+ * @param[in] mon_j Json object with monomer information
+ * @param[out] exc12 Set of pairs with the 1-2 excluded atoms
+ * @param[out] exc13 Set of pairs with the 1-3 excluded atoms
+ * @param[out] exc14 Set of pairs with the 1-4 excluded atoms
+ */
+void GetBuckExcluded(std::string mon, nlohmann::json mon_j, excluded_set_type &exc12, excluded_set_type &exc13,
+                 excluded_set_type &exc14);
+
+/**
  * @brief Helper function to compare a pair of an unsigned integer and a
  * double.
  *
- * Function that compares the pairs used in AddCLusters
+ * Function that compares the pairs used in AddClusters
  * @param[in] a First pair
  * @param[in] b Second pair
  * @return True if a.first < b.first, False otherwise

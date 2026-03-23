@@ -62,7 +62,7 @@ enum {
     DISP_NUM_TIMERS
 };
 
-#ifndef MPI_VERSION
+#if !defined(MPI_VERSION) && !defined(MPI_Comm)
 // typedef struct ompi_communicator_t *MPI_Comm;
 typedef int MPI_Comm;
 #endif
@@ -372,8 +372,6 @@ class Dispersion {
     bool calc_virial_;
     // Total number of atoms
     size_t natoms_;
-    // Max number of monomers
-    size_t maxnmon_;
     // Dispersion energy
     double disp_energy_;
     // box of the system
@@ -424,6 +422,12 @@ class Dispersion {
 
     // Vector with d6 coefficients
     std::vector<std::vector<double> > d6_all_;
+
+    // Vector with c8 coefficients
+    std::vector<std::vector<double> > c8_all_;
+
+    // Vector with c10 coefficients
+    std::vector<std::vector<double> > c10_all_;
 
     // Vector with the bool use ttm
     std::vector<bool> use_disp_all_;

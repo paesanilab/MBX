@@ -1,9 +1,9 @@
 {
-   "Note" : "json file for MB-nrg Na+ in MB-pol water",
+   "Note" : "MBX v1.3 json file for MB-nrg Na+ in MB-pol water",
    "MBX" : { 
        "box" : [],
        "realspace_cutoff": 9.0,
-       "twobody_cutoff"   : 7.0,
+       "twobody_cutoff"   : 9.0,
        "threebody_cutoff" : 4.5,
        "dipole_tolerance" : 1E-8,
        "dipole_max_it"    : 100,

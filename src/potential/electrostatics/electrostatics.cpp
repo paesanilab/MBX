@@ -73,8 +73,6 @@ const double BIGNUM = 1e50;
 
 namespace elec {
 
-const double PIQSRT = sqrt(M_PI);
-
 std::vector<double> Electrostatics::GetSysXyz() { return sys_xyz_; }
 
 std::vector<double> Electrostatics::GetSysChg() { return sys_chg_; }
@@ -983,7 +981,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
             ef_x_ind_[3 * i + 2] -= result_ptr[2];
         }
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
         double *e_ptr = ef_x_ind_.data();
         for (const auto &mu : mu_) {
             *e_ptr += slf_prefactor * mu;
@@ -2039,12 +2037,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
         // The Ewald self potential
         // double *phi_ptr = phi_.data();
         // for (const auto &q : chg_) {
-        //     *phi_ptr -= 2 * ewald_alpha_ / PIQSRT * q;
+        //     *phi_ptr -= 2 * ewald_alpha_ / constants::MY_PIS * q;
         //     ++phi_ptr;
         // }
 
         for (int i = 0; i < nsites_all_; ++i)
-            phi_all_[i] -= 2 * ewald_alpha_ / PIQSRT * chg_all_[i] * islocal_atom_all_[i];
+            phi_all_[i] -= 2 * ewald_alpha_ / constants::MY_PIS * chg_all_[i] * islocal_atom_all_[i];
     }
 
 #ifdef _DEBUG_PERM
@@ -2213,7 +2211,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                         chg_all_.data() + fi_sites, m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex,
                         &ey, &ez, &phi1, phi_all_.data() + fi_sites, Efq_all_.data() + fi_crd, elec_scale_factor,
                         ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon,
-                        fi_mon, &thread_virials[rank]);
+                        0, &thread_virials[rank]);
 
                     phi_all_[fi_sites + inmon + m] += phi1;
                     Efq_all_[fi_crd + inmon3 + m] += ex;
@@ -2604,7 +2602,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
         // The Ewald self potential
         double *phi_ptr = phi_all_.data();
         for (const auto &q : chg_all_) {
-            *phi_ptr -= 2 * ewald_alpha_ / PIQSRT * q;
+            *phi_ptr -= 2 * ewald_alpha_ / constants::MY_PIS * q;
             ++phi_ptr;
         }
     }
@@ -5697,7 +5695,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 #endif
 
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
 
         // Resort field from system order
         fi_mon = 0;
@@ -6279,7 +6277,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
 #endif
 
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
 
         // Resort field from system order
         fi_mon = 0;
@@ -7248,7 +7246,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             fi_sites += nmon * ns;
         }
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
         double *e_ptr = out_v.data();
         for (const auto &mu : in_v) {
             *e_ptr += slf_prefactor * mu;
@@ -7834,7 +7832,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
             fi_sites += nmon * ns;
         }
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
         double *e_ptr = out_v.data();
         for (const auto &mu : in_v) {
             *e_ptr += slf_prefactor * mu;

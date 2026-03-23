@@ -33,6 +33,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "Catch2/single_include/catch.hpp"
+#include "tools/constants.h"
 
 #include <algorithm>
 #include <vector>

@@ -105,14 +105,14 @@ TEST_CASE("calculators::CalculateAngle") {
         std::vector<double> p1 = {1.0, 0.0, 0.0};
         std::vector<double> p2 = {0.0, 0.0, 0.0};
         std::vector<double> p3 = {1.0, 1.0, 0.0};
-        double expected_angle = pi / 4;
+        double expected_angle = constants::MY_PI / 4;
 
         double angle = eff::CalculateAngle(p1, p2, p3);
 
         REQUIRE(angle == Approx(expected_angle).margin(TOL));
 
         std::vector<double> p3b = {-1.0, -1.0, 0.0};
-        expected_angle = 3 * pi / 4;
+        expected_angle = 3 * constants::MY_PI / 4;
 
         angle = eff::CalculateAngle(p1, p2, p3b);
 
@@ -124,7 +124,7 @@ TEST_CASE("calculators::CalculateAngle") {
             std::vector<double> p1 = {1.0, 0.0, 0.0};
             std::vector<double> p2 = {0.0, 0.0, 0.0};
             std::vector<double> p3 = {-1.0, 0.0, 0.0};
-            double expected_angle = pi;
+            double expected_angle = constants::MY_PI;
 
             double angle = eff::CalculateAngle(p1, p2, p3);
 
@@ -135,7 +135,7 @@ TEST_CASE("calculators::CalculateAngle") {
             std::vector<double> p1 = {0.0, 1.0, 0.0};
             std::vector<double> p2 = {0.0, 0.0, 0.0};
             std::vector<double> p3 = {0.0, 0.0, 1.0};
-            double expected_angle = pi / 2;
+            double expected_angle = constants::MY_PI / 2;
 
             double angle = eff::CalculateAngle(p1, p2, p3);
 
@@ -212,7 +212,7 @@ TEST_CASE("calculators::CalculateDihedralAngle") {
             std::vector<double> p3 = {0.0, 1.0, 0.0};
             std::vector<double> p4 = {-1.0, 1.0, 0.0};
 
-            double expected_angle = pi;
+            double expected_angle = constants::MY_PI;
 
             double angle = eff::CalculateDihedralAngle(p1, p2, p3, p4);
 
@@ -225,7 +225,7 @@ TEST_CASE("calculators::CalculateDihedralAngle") {
             std::vector<double> p3 = {0.0, 1.0, 0.0};
             std::vector<double> p4 = {-1.0, 1.0, 1E-52};
 
-            double expected_angle = -pi;
+            double expected_angle = -constants::MY_PI;
 
             double angle = eff::CalculateDihedralAngle(p1, p2, p3, p4);
 
@@ -238,7 +238,7 @@ TEST_CASE("calculators::CalculateDihedralAngle") {
             std::vector<double> p3 = {0.0, 1.0, 0.0};
             std::vector<double> p4 = {-1.0, 1.0, -1E-52};
 
-            double expected_angle = pi;
+            double expected_angle = constants::MY_PI;
 
             double angle = eff::CalculateDihedralAngle(p1, p2, p3, p4);
 
@@ -306,7 +306,7 @@ TEST_CASE("calculators::CalculateGradB") {
         std::vector<size_t> idxs = {1, 2, 3, 4};
         std::vector<std::string> funcform = {"NONE", "cos", "haRm", "HCoS", "coS3"};
         std::vector<std::vector<double> > linear_params = {{}, {2.0}, {2.1}, {1.6}, {10.0, 1.0, 0.1}};
-        std::vector<std::vector<double> > nonlinear_params = {{}, {3.0, pi / 6.0}, {2.5}, {5.1}, {}};
+        std::vector<std::vector<double> > nonlinear_params = {{}, {3.0, constants::MY_PI / 6.0}, {2.5}, {5.1}, {}};
 
         std::vector<std::vector<double> > points = {p1, p2, p3, p4};
 
@@ -461,7 +461,7 @@ TEST_CASE("calculators::CalculateInversionGrad") {
         std::vector<size_t> idxs = {1, 2, 3, 4};
         std::vector<std::string> funcform = {"NONE", "haRm"};
         std::vector<std::vector<double> > linear_params = {{}, {2.0}};
-        std::vector<std::vector<double> > nonlinear_params = {{}, {pi / 3}};
+        std::vector<std::vector<double> > nonlinear_params = {{}, {constants::MY_PI / 3}};
 
         std::vector<std::vector<double> > points = {p1, p2, p3, p4};
 
