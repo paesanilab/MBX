@@ -35,6 +35,8 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #ifndef UNITTESTS_SETUP_LINKER_H
 #define UNITTESTS_SETUP_LINKER_H
 
+#include "tools/constants.h"
+
 #define SETUP_LINKER                                                                                                   \
     std::vector<std::string> atom_names = {"N", "N", "C", "C", "C", "H", "H", "O", "C", "H", "H"};                     \
     const size_t n_atoms = 11;                                                                                         \
@@ -76,7 +78,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
                                                    {105.500000}, {116.100000}, {114.800000}, {123.900000},             \
                                                    {128.000000}, {128.000000}, {121.900000}, {116.100000}};            \
     for (size_t i = 0; i < nl_angles.size(); i++) {                                                                    \
-        nl_angles[i][0] = nl_angles[i][0] / 180.0 * pi;                                                                \
+        nl_angles[i][0] = nl_angles[i][0] / 180.0 * constants::MY_PI;                                                                \
     }                                                                                                                  \
     std::vector<std::vector<double> > l_dhs = {                                                                        \
         {2.875000}, {2.875000}, {2.875000}, {2.875000}, {4.000000}, {4.000000},  {4.000000}, {4.750000},               \

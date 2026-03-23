@@ -232,27 +232,35 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz,
     use_disp_all_ = std::vector<bool>(nmt * nmt);
     c6_all_ = std::vector<std::vector<double> >(nmt * nmt);
     d6_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    c8_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    c10_all_ = std::vector<std::vector<double> >(nmt * nmt);
     for (size_t mt1 = 0; mt1 < nmt; mt1++) {
         size_t ns1 = num_atoms_[fi1];
         fi2 = 0;
         for (size_t mt2 = 0; mt2 < nmt; mt2++) {
             size_t ns2 = num_atoms_[fi2];
-            std::vector<double> c6v(ns1 * ns2), d6v(ns1 * ns2);
+            std::vector<double> c6v(ns1 * ns2), d6v(ns1 * ns2), c8v(ns1 * ns2), c10v(ns1 * ns2);
 
             for (size_t i = 0; i < ns1; i++) {
                 for (size_t j = 0; j < ns2; j++) {
                     double c6 = 0.0;
                     double d6 = 0.0;
-                    bool do_disp = GetC6(mon_id_[fi1], mon_id_[fi2], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                    double c8 = 0.0;
+                    double c10 = 0.0;
+                    bool do_disp = GetC6(mon_id_[fi1], mon_id_[fi2], i, j, c6, d6, c8, c10, ignore_disp_, repdisp_j_);
                     if (i == 0 && j == 0) {
                         use_disp_all_[nmt * mt1 + mt2] = do_disp;
                     }
                     c6v[ns2 * i + j] = c6;
                     d6v[ns2 * i + j] = d6;
+                    c8v[ns2 * i + j] = c8;
+                    c10v[ns2 * i + j] = c10;
                 }
             }
             c6_all_[nmt * mt1 + mt2] = c6v;
             d6_all_[nmt * mt1 + mt2] = d6v;
+            c8_all_[nmt * mt1 + mt2] = c8v;
+            c10_all_[nmt * mt1 + mt2] = c10v;
             fi2 += mon_type_count_[mt2].second;
         }
         fi1 += mon_type_count_[mt1].second;
@@ -535,6 +543,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     excluded_set_type exc13;
     excluded_set_type exc14;
 
+    // Bool to store whether Koide dispersion damping was used
+    bool use_koide = false;
+
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = num_atoms_[fi_mon];
@@ -546,6 +557,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+
+        // Obtain whether Koide dispersion damping was used for this monomer
+        use_koide = systools::GetUseKoideMonomer(mon_id_[fi_mon]);
 
         // For parallel region
         std::vector<std::vector<double> > phi_pool(nthreads);
@@ -577,12 +591,14 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                     bool is13 = systools::IsExcluded(exc13, i, j);
                     bool is14 = systools::IsExcluded(exc14, i, j);
                     double disp_scale_factor = (is12 || is13 || is14 || !do_disp) ? 0 : 1;
-                    double c6, d6;
+                    double c6, d6, c8, c10;
                     double c6i = c6_long_range_[fi_sites + i * nmon];
                     double c6j = c6_long_range_[fi_sites + j * nmon];
                     // GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
                     c6 = c6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
                     d6 = d6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                    c8 = c8_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                    c10 = c10_all_[mt * mon_type_count_.size() + mt][i * ns + j];
 
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
@@ -596,7 +612,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
                         p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                         energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
+                            disp6(c6, d6, c8, c10, use_koide, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
                                 m, m + 1, i, j, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                                 box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank], fi_crd);
                         grad_pool[rank][inmon3 + m] += g1[0];
@@ -821,6 +837,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
             double disp_scale_factor = do_disp ? 1.0 : 0.0;
 
+            // Obtain whether Koide dispersion damping was used for this dimer        
+            use_koide = systools::GetUseKoideDimer(mon_id_[fi_mon1], mon_id_[fi_mon2]);
+
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
             // previous loop.
@@ -868,10 +887,12 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
                         double c6j = c6_long_range_[fi_sites2 + j * nmon2];
-                        double c6, d6;
+                        double c6, d6, c8, c10;
                         // GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, ignore_disp_, repdisp_j_);
                         c6 = c6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                         d6 = d6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                        c8 = c8_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                        c10 = c10_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
 
                         std::vector<size_t> good_mon2_indices;
                         
@@ -902,7 +923,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         }
 
                         energy_pool[rank] += disp6(
-                            c6, d6, c6i, c6j, xyz_sitei, reordered_xyz2, g1, reordered_grad2, phi_i, reordered_phi2, nmon1,
+                            c6, d6, c8, c10, use_koide, c6i, c6j, xyz_sitei, reordered_xyz2, g1, reordered_grad2, phi_i, reordered_phi2, nmon1,
                             reordered_mon2_size, 0, reordered_mon2_size, i, 0, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                             box_inverse_, use_ghost, reordered_islocal, 0, 1, &virial_pool[rank], 0);
 
@@ -1187,103 +1208,99 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 #if HAVE_MPI == 1
     double _time0 = MPI_Wtime();
 #endif
-    bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
+    bool compute_pme = (ewald_alpha_ > 0);
 
-    // override settings if ghost particles (big assumption?)
-    // if calling this function, then shouldn't need to check this
-    //    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
+    if (compute_pme) {
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        // Compute the reciprocal space terms, using PME
+        double A = box_ABCabc_PMElocal_[0];
+        double B = box_ABCabc_PMElocal_[1];
+        double C = box_ABCabc_PMElocal_[2];
+        double alpha = box_ABCabc_PMElocal_[3];
+        double beta = box_ABCabc_PMElocal_[4];
+        double gamma = box_ABCabc_PMElocal_[5];
 
-    //    if (compute_pme) {
-    helpme::PMEInstance<double> pme_solver_;
-    if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
-    // Compute the reciprocal space terms, using PME
-    double A = box_ABCabc_PMElocal_[0];
-    double B = box_ABCabc_PMElocal_[1];
-    double C = box_ABCabc_PMElocal_[2];
-    double alpha = box_ABCabc_PMElocal_[3];
-    double beta = box_ABCabc_PMElocal_[4];
-    double gamma = box_ABCabc_PMElocal_[5];
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
 
-    int grid_A = pme_grid_density_ * A;
-    int grid_B = pme_grid_density_ * B;
-    int grid_C = pme_grid_density_ * C;
-
-    if (mpi_initialized_) {
-        pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0, world_,
-                                  PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    } else {
-        pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
-    }
-
-    pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
-
-    mbxt_disp_count_[DISP_PME_SETUP]++;
-#if HAVE_MPI == 1
-    mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
-#endif
-
-    // N.B. these do not make copies; they just wrap the memory with some metadata
-    auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-    auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
-    auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
-    std::vector<double> dummy_6vec(6, 0.0);
-    auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
-    std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
-
-#if HAVE_MPI == 1
-    _time0 = MPI_Wtime();
-#endif
-    double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
-    mbxt_disp_count_[DISP_PME_PRE]++;
-#if HAVE_MPI == 1
-    mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
-#endif
-
-    // get virial
-    if (calc_virial_) {
-        virial_[0] += *rec_virial[0];
-        virial_[1] += *rec_virial[1];
-        virial_[2] += *rec_virial[3];
-        virial_[4] += *rec_virial[2];
-        virial_[5] += *rec_virial[4];
-        virial_[8] += *rec_virial[5];
-
-        virial_[3] = virial_[1];
-        virial_[6] = virial_[2];
-        virial_[7] = virial_[5];
-    }
-
-    // Resort forces from system order
-    fi_mon = 0;
-    fi_sites = 0;
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = num_atoms_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        for (size_t m = 0; m < nmon; m++) {
-            size_t mns = m * ns;
-            for (size_t i = 0; i < ns; i++) {
-                size_t inmon = i * nmon;
-                const double *result_ptr = forces[fi_sites + mns + i];
-                grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
-                grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
-                grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
-            }
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0, world_,
+                                    PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
         }
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-    }
 
-    // The Ewald self energy
-    double prefac = std::pow(ewald_alpha_, 6) / 12.0;
-    double self_energy = 0;
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
-    for (int i = 0; i < natoms_; ++i) self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
+        mbxt_disp_count_[DISP_PME_SETUP]++;
+    #if HAVE_MPI == 1
+        mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
+    #endif
 
-    self_energy *= prefac;
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
+        auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+        auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
+        std::vector<double> dummy_6vec(6, 0.0);
+        auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
+        std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
 
-    disp_energy_ += rec_energy + self_energy;
+    #if HAVE_MPI == 1
+        _time0 = MPI_Wtime();
+    #endif
+        double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
+        mbxt_disp_count_[DISP_PME_PRE]++;
+    #if HAVE_MPI == 1
+        mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
+    #endif
 
-    //} // if(compute_pme)
+        // get virial
+        if (calc_virial_) {
+            virial_[0] += *rec_virial[0];
+            virial_[1] += *rec_virial[1];
+            virial_[2] += *rec_virial[3];
+            virial_[4] += *rec_virial[2];
+            virial_[5] += *rec_virial[4];
+            virial_[8] += *rec_virial[5];
+
+            virial_[3] = virial_[1];
+            virial_[6] = virial_[2];
+            virial_[7] = virial_[5];
+        }
+
+        // Resort forces from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = num_atoms_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    const double *result_ptr = forces[fi_sites + mns + i];
+                    grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                    grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                    grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
+
+        // The Ewald self energy
+        double prefac = std::pow(ewald_alpha_, 6) / 12.0;
+        double self_energy = 0;
+
+        for (int i = 0; i < natoms_; ++i) self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
+
+        self_energy *= prefac;
+
+        disp_energy_ += rec_energy + self_energy;
+
+    } // if(compute_pme)
 }
 
 std::vector<size_t> Dispersion::GetInfoCounts() { return mbxt_disp_count_; }

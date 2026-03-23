@@ -44,7 +44,6 @@ typedef std::set<std::pair<size_t, size_t> > excluded_set_type;
 
 static const double EMAX1B = 100000.0;
 static const double EPSILON = 1E-50;
-static const double pi = M_PI;
 
 // Ignore mutual terms in the dipoles, for debugging
 #define DIRECT_ONLY 0

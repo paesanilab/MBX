@@ -51,10 +51,11 @@
 #include <algorithm>
 #include <stdexcept>
 #include <cstdio>          // for fwrite()
-#define _USE_MATH_DEFINES  // Required by MSVC to define M_PI,etc. in <cmath>
 #include <cmath>           // for abs()
 #include <cstdlib>         // for abs()
 #include <limits>
+
+static constexpr double MY_PI = 3.14159265358979323846;           // pi
 
 // Avoid conflicting declaration of min/max macros in windows headers
 #if !defined(NOMINMAX) && (defined(_WIN32) || defined(_WIN32_) || defined(WIN32) || defined(_WIN64))
@@ -394,10 +395,10 @@ struct SO2_Adaptor {
     inline DistanceType accum_dist(const U a, const V b, int) const {
         DistanceType result = DistanceType();
         result = b - a;
-        if (result > M_PI)
-            result -= 2. * M_PI;
-        else if (result < -M_PI)
-            result += 2. * M_PI;
+        if (result > MY_PI)
+            result -= 2. * MY_PI;
+        else if (result < -MY_PI)
+            result += 2. * MY_PI;
         return result;
     }
 };
