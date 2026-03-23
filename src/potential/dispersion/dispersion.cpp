@@ -522,8 +522,6 @@ double Dispersion::GetDispersionPMElocal(std::vector<double> &grad, std::vector<
 void Dispersion::CalculateDispersion(bool use_ghost) {
     disp_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
-    // Max number of monomers
-    size_t maxnmon = mon_type_count_.size() == 0 ? 0 : mon_type_count_.back().second;
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP
@@ -875,7 +873,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 grad2_pool[i] = std::vector<double>(nmon2 * ns2 * 3, 0.0);
                 virial_pool[i] = std::vector<double>(9, 0.0);
                 bool_mon2_indices_pool[i] = std::make_shared<std::vector<size_t>>(nmon2);
-                field_pool[i] = std::make_shared<elec::ElectricFieldHolder>(maxnmon);
+                field_pool[i] = std::make_shared<elec::ElectricFieldHolder>(nmon2);
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
