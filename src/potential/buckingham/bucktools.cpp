@@ -837,6 +837,164 @@ bool GetBuckParams(std::string mon_id1, std::string mon_id2, size_t index1, size
 
         // =====>> BEGIN SECTION BUCKINGHAM <<=====
         // ======>> PASTE CODE BELOW <<======
+    } else if (mon_id1 == "nma" and mon_id2 == "nma") {
+        types1.push_back(0);
+        types1.push_back(1);
+        types1.push_back(2);
+        types1.push_back(3);
+        types1.push_back(3);
+        types1.push_back(3);
+        types1.push_back(4);
+        types1.push_back(5);
+        types1.push_back(6);
+        types1.push_back(7);
+        types1.push_back(7);
+        types1.push_back(7);
+
+        types2.push_back(0);
+        types2.push_back(1);
+        types2.push_back(2);
+        types2.push_back(3);
+        types2.push_back(3);
+        types2.push_back(3);
+        types2.push_back(4);
+        types2.push_back(5);
+        types2.push_back(6);
+        types2.push_back(7);
+        types2.push_back(7);
+        types2.push_back(7);
+
+        nt2 = 8;
+
+        // Fill in (in order) the a and d6 coefficients
+        a.push_back(0.0);  // kcal/mol A--A
+        a.push_back(58999.7);  // kcal/mol A--B
+        a.push_back(0.0);  // kcal/mol A--C
+        a.push_back(780.329);  // kcal/mol A--D
+        a.push_back(31640.7);  // kcal/mol A--E
+        a.push_back(628.251);  // kcal/mol A--F
+        a.push_back(1599.89);  // kcal/mol A--G
+        a.push_back(1958.6);  // kcal/mol A--H
+        a.push_back(58999.7);  // kcal/mol A--B
+        a.push_back(131.683);  // kcal/mol B--B
+        a.push_back(2992.84);  // kcal/mol B--C
+        a.push_back(1024.86);  // kcal/mol B--D
+        a.push_back(56786.5);  // kcal/mol B--E
+        a.push_back(3415.81);  // kcal/mol B--F
+        a.push_back(1042.79);  // kcal/mol B--G
+        a.push_back(1178.58);  // kcal/mol B--H
+        a.push_back(0.0);  // kcal/mol A--C
+        a.push_back(2992.84);  // kcal/mol B--C
+        a.push_back(41572.7);  // kcal/mol C--C
+        a.push_back(1132.57);  // kcal/mol C--D
+        a.push_back(2632.59);  // kcal/mol C--E
+        a.push_back(3739.64);  // kcal/mol C--F
+        a.push_back(78246.5);  // kcal/mol C--G
+        a.push_back(2733.65);  // kcal/mol C--H
+        a.push_back(780.329);  // kcal/mol A--D
+        a.push_back(1024.86);  // kcal/mol B--D
+        a.push_back(1132.57);  // kcal/mol C--D
+        a.push_back(218.507);  // kcal/mol D--D
+        a.push_back(1186.91);  // kcal/mol D--E
+        a.push_back(0.0);  // kcal/mol D--F
+        a.push_back(752.052);  // kcal/mol D--G
+        a.push_back(503.331);  // kcal/mol D--H
+        a.push_back(31640.7);  // kcal/mol A--E
+        a.push_back(56786.5);  // kcal/mol B--E
+        a.push_back(2632.59);  // kcal/mol C--E
+        a.push_back(1186.91);  // kcal/mol D--E
+        a.push_back(62076.6);  // kcal/mol E--E
+        a.push_back(131.62);  // kcal/mol E--F
+        a.push_back(0.0);  // kcal/mol E--G
+        a.push_back(2401.1);  // kcal/mol E--H
+        a.push_back(628.251);  // kcal/mol A--F
+        a.push_back(3415.81);  // kcal/mol B--F
+        a.push_back(3739.64);  // kcal/mol C--F
+        a.push_back(0.0);  // kcal/mol D--F
+        a.push_back(131.62);  // kcal/mol E--F
+        a.push_back(164.403);  // kcal/mol F--F
+        a.push_back(1408.27);  // kcal/mol F--G
+        a.push_back(125.823);  // kcal/mol F--H
+        a.push_back(1599.89);  // kcal/mol A--G
+        a.push_back(1042.79);  // kcal/mol B--G
+        a.push_back(78246.5);  // kcal/mol C--G
+        a.push_back(752.052);  // kcal/mol D--G
+        a.push_back(0.0);  // kcal/mol E--G
+        a.push_back(1408.27);  // kcal/mol F--G
+        a.push_back(15006.2);  // kcal/mol G--G
+        a.push_back(6474.08);  // kcal/mol G--H
+        a.push_back(1958.6);  // kcal/mol A--H
+        a.push_back(1178.58);  // kcal/mol B--H
+        a.push_back(2733.65);  // kcal/mol C--H
+        a.push_back(503.331);  // kcal/mol D--H
+        a.push_back(2401.1);  // kcal/mol E--H
+        a.push_back(125.823);  // kcal/mol F--H
+        a.push_back(6474.08);  // kcal/mol G--H
+        a.push_back(129.502);  // kcal/mol H--H
+        b.push_back(1.51787);  // A^(-1) A--A
+        b.push_back(3.95925);  // A^(-1) A--B
+        b.push_back(1.15891);  // A^(-1) A--C
+        b.push_back(2.27983);  // A^(-1) A--D
+        b.push_back(3.55647);  // A^(-1) A--E
+        b.push_back(3.03236);  // A^(-1) A--F
+        b.push_back(2.59963);  // A^(-1) A--G
+        b.push_back(3.2155);  // A^(-1) A--H
+        b.push_back(3.95925);  // A^(-1) A--B
+        b.push_back(1.20089);  // A^(-1) B--B
+        b.push_back(2.18769);  // A^(-1) B--C
+        b.push_back(2.71612);  // A^(-1) B--D
+        b.push_back(3.89171);  // A^(-1) B--E
+        b.push_back(3.74618);  // A^(-1) B--F
+        b.push_back(2.07464);  // A^(-1) B--G
+        b.push_back(2.74881);  // A^(-1) B--H
+        b.push_back(1.15891);  // A^(-1) A--C
+        b.push_back(2.18769);  // A^(-1) B--C
+        b.push_back(3.32153);  // A^(-1) C--C
+        b.push_back(2.6151);  // A^(-1) C--D
+        b.push_back(2.14916);  // A^(-1) C--E
+        b.push_back(3.33266);  // A^(-1) C--F
+        b.push_back(3.65058);  // A^(-1) C--G
+        b.push_back(3.32679);  // A^(-1) C--H
+        b.push_back(2.27983);  // A^(-1) A--D
+        b.push_back(2.71612);  // A^(-1) B--D
+        b.push_back(2.6151);  // A^(-1) C--D
+        b.push_back(2.4615);  // A^(-1) D--D
+        b.push_back(2.52106);  // A^(-1) D--E
+        b.push_back(0.948293);  // A^(-1) D--F
+        b.push_back(2.73419);  // A^(-1) D--G
+        b.push_back(3.10013);  // A^(-1) D--H
+        b.push_back(3.55647);  // A^(-1) A--E
+        b.push_back(3.89171);  // A^(-1) B--E
+        b.push_back(2.14916);  // A^(-1) C--E
+        b.push_back(2.52106);  // A^(-1) D--E
+        b.push_back(3.54215);  // A^(-1) E--E
+        b.push_back(2.25659);  // A^(-1) E--F
+        b.push_back(2.19111);  // A^(-1) E--G
+        b.push_back(2.95502);  // A^(-1) E--H
+        b.push_back(3.03236);  // A^(-1) A--F
+        b.push_back(3.74618);  // A^(-1) B--F
+        b.push_back(3.33266);  // A^(-1) C--F
+        b.push_back(0.948293);  // A^(-1) D--F
+        b.push_back(2.25659);  // A^(-1) E--F
+        b.push_back(2.3614);  // A^(-1) F--F
+        b.push_back(2.65378);  // A^(-1) F--G
+        b.push_back(2.7364);  // A^(-1) F--H
+        b.push_back(2.59963);  // A^(-1) A--G
+        b.push_back(2.07464);  // A^(-1) B--G
+        b.push_back(3.65058);  // A^(-1) C--G
+        b.push_back(2.73419);  // A^(-1) D--G
+        b.push_back(2.19111);  // A^(-1) E--G
+        b.push_back(2.65378);  // A^(-1) F--G
+        b.push_back(2.86918);  // A^(-1) G--G
+        b.push_back(3.84539);  // A^(-1) G--H
+        b.push_back(3.2155);  // A^(-1) A--H
+        b.push_back(2.74881);  // A^(-1) B--H
+        b.push_back(3.32679);  // A^(-1) C--H
+        b.push_back(3.10013);  // A^(-1) D--H
+        b.push_back(2.95502);  // A^(-1) E--H
+        b.push_back(2.7364);  // A^(-1) F--H
+        b.push_back(3.84539);  // A^(-1) G--H
+        b.push_back(2.34039);  // A^(-1) H--H
 
         // =====>> END SECTION BUCKINGHAM <<=====
     } else {

@@ -39,6 +39,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <iostream>
 #include <cmath>
 #include "tools/custom_exceptions.h"
+#include "tools/constants.h"
 
 #ifdef _OPENMP
 #include <omp.h>

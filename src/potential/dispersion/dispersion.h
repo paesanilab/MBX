@@ -423,6 +423,12 @@ class Dispersion {
     // Vector with d6 coefficients
     std::vector<std::vector<double> > d6_all_;
 
+    // Vector with c8 coefficients
+    std::vector<std::vector<double> > c8_all_;
+
+    // Vector with c10 coefficients
+    std::vector<std::vector<double> > c10_all_;
+
     // Vector with the bool use ttm
     std::vector<bool> use_disp_all_;
 };

@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.3.5], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.3.12], [mbx-users@googlegroups.com])
 
 # Define MBX_PACKAGE_VERSION as a macro in config.h
 AC_SUBST([MBX_VERSION], ["$PACKAGE_VERSION"])
@@ -208,6 +208,8 @@ MBX_CONFIG_ENABLE([march-x86-64-v4],[compilation for x86-64-v4 processors (inclu
 
 MBX_CONFIG_ENABLE([aligned-new],[compilation with aligned new, use this only if you get an error about calls to new when using --enable-intel-intrinsics],[no])
 
+MBX_CONFIG_ENABLE([i-pi-plugin],[compiling I-Pi plugin],[yes])
+
 # Act on enable flags
 
 if test $debug == true; then
@@ -361,5 +363,8 @@ fi
 # Checks for library functions.
 
 AC_PREFIX_DEFAULT([`pwd`])
+
+# disable I-Pi plugin, if requested
+AM_CONDITIONAL([IPIPLUGIN], [test $i_pi_plugin == true])
 
 AC_OUTPUT

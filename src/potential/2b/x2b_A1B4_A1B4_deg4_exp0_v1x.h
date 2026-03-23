@@ -36,6 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #define X2B_A1B4_A1B4_DEG4_EXP0_V1X_H
 
 #include "poly_2b_A1B4_A1B4_deg4_exp0_v1x.h"
+#include "tools/constants.h"
 
 #include <iostream>
 #include <cmath>

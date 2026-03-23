@@ -35,7 +35,7 @@
 
 #define _MAX_SIZE_MOL_NAME 16
 // Subject to further increase _MAX_SIZE_MOL_NAME
-#define _MAX_ATOMS_PER_MONOMER 8
+#define _MAX_ATOMS_PER_MONOMER 12
 #define SMALL 1.0e-4
 
 //#define _DEBUG
@@ -2460,51 +2460,53 @@ int FixMBX::get_num_atoms_per_monomer(char *name, bool &inc_e) {
     int na;
     inc_e = false;
 
-    if (strcmp("h2o", name) == 0)
-        na = 3;
-    else if (strcmp("li+", name) == 0)
-        na = 1;
-    else if (strcmp("na+", name) == 0)
-        na = 1;
-    else if (strcmp("k+", name) == 0)
-        na = 1;
-    else if (strcmp("rb+", name) == 0)
-        na = 1;
-    else if (strcmp("cs+", name) == 0)
-        na = 1;
-    else if (strcmp("dp1", name) == 0) {
-        na = 1;
-        inc_e = true;
-    } else if (strcmp("f-", name) == 0)
-        na = 1;
-    else if (strcmp("cl-", name) == 0)
-        na = 1;
-    else if (strcmp("br-", name) == 0)
-        na = 1;
-    else if (strcmp("i-", name) == 0)
-        na = 1;
-    else if (strcmp("co2", name) == 0)
-        na = 3;
-    else if (strcmp("ch4", name) == 0)
-        na = 5;
-    else if (strcmp("he", name) == 0)
-        na = 1;
-    else if (strcmp("ar", name) == 0)
-        na = 1;
-    else if (strcmp("h2", name) == 0)
-        na = 2;
-    else if (strcmp("n2o5", name) == 0)
-        na = 7;
-    else if (strcmp("so4a", name) == 0)
-        na = 5;
-    else if (strcmp("co3a", name) == 0)
-        na = 4;
-    else if (strcmp("no3a", name) == 0)
-        na = 4;
-    else if (strcmp("dp2", name) == 0)
-        na = 2;
-    else
-        error->one(FLERR, "Unsupported molecule type in MBX");
+  if (strcmp("h2o", name) == 0)
+    na = 3;
+  else if (strcmp("li+", name) == 0)
+    na = 1;
+  else if (strcmp("na+", name) == 0)
+    na = 1;
+  else if (strcmp("k+", name) == 0)
+    na = 1;
+  else if (strcmp("rb+", name) == 0)
+    na = 1;
+  else if (strcmp("cs+", name) == 0)
+    na = 1;
+  else if (strcmp("dp1", name) == 0) {
+    na = 1;
+    inc_e = true;
+  } else if (strcmp("f-", name) == 0)
+    na = 1;
+  else if (strcmp("cl-", name) == 0)
+    na = 1;
+  else if (strcmp("br-", name) == 0)
+    na = 1;
+  else if (strcmp("i-", name) == 0)
+    na = 1;
+  else if (strcmp("co2", name) == 0)
+    na = 3;
+  else if (strcmp("ch4", name) == 0)
+    na = 5;
+  else if (strcmp("he", name) == 0)
+    na = 1;
+  else if (strcmp("ar", name) == 0)
+    na = 1;
+  else if (strcmp("h2", name) == 0)
+    na = 2;
+  else if (strcmp("n2o5", name) == 0)
+    na = 7;
+  else if (strcmp("so4a", name) == 0)
+    na = 5;
+  else if (strcmp("co3a", name) == 0)
+    na = 4;
+  else if (strcmp("no3a", name) == 0)
+    na = 4;
+  else if (strcmp("dp2", name) == 0)
+    na = 2;
+  else if (strcmp("nma", name) == 0)
+    na = 12;
+  else
+    error->one(FLERR, "Unsupported molecule type in MBX");
 
     return na;
 }
@@ -2537,76 +2539,88 @@ int FixMBX::get_include_monomer(char *name, int anchor, bool &inc, bool &inc_e) 
 /* ----------------------------------------------------------------------
 ------------------------------------------------------------------------- */
 
-void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n) {
-    if (strcmp("h2o", name) == 0) {
-        n.push_back("O");
-        n.push_back("H");
-        n.push_back("H");
-    } else if (strcmp("li+", name) == 0) {
-        n.push_back("Li");
-    } else if (strcmp("na+", name) == 0) {
-        n.push_back("Na");
-    } else if (strcmp("k+", name) == 0) {
-        n.push_back("K");
-    } else if (strcmp("rb+", name) == 0) {
-        n.push_back("Rb");
-    } else if (strcmp("cs+", name) == 0) {
-        n.push_back("Cs");
-#ifdef _DEBUG_EFIELD
-    } else if (strcmp("dp1", name) == 0) {
-        n.push_back("X");
-#endif
-    } else if (strcmp("f-", name) == 0) {
-        n.push_back("F");
-    } else if (strcmp("cl-", name) == 0) {
-        n.push_back("Cl");
-    } else if (strcmp("br-", name) == 0) {
-        n.push_back("Br");
-    } else if (strcmp("i-", name) == 0) {
-        n.push_back("I");
-    } else if (strcmp("he", name) == 0) {
-        n.push_back("He");
-    } else if (strcmp("co2", name) == 0) {
-        n.push_back("C");
-        n.push_back("O");
-        n.push_back("O");
-    } else if (strcmp("ch4", name) == 0) {
-        n.push_back("C");
-        n.push_back("H");
-        n.push_back("H");
-        n.push_back("H");
-        n.push_back("H");
-    } else if (strcmp("ar", name) == 0) {
-        n.push_back("Ar");
-    } else if (strcmp("h2", name) == 0) {
-        n.push_back("H");
-        n.push_back("H");
-    } else if (strcmp("n2o5", name) == 0) {
-        n.push_back("O");
-        n.push_back("N");
-        n.push_back("N");
-        n.push_back("O");
-        n.push_back("O");
-        n.push_back("O");
-        n.push_back("O");
-    } else if (strcmp("so4a", name) == 0) {
-        n.push_back("S");
-        n.push_back("O");
-        n.push_back("O");
-        n.push_back("O");
-        n.push_back("O");
-    } else if (strcmp("co3a", name) == 0) {
-        n.push_back("C");
-        n.push_back("O");
-        n.push_back("O");
-        n.push_back("O");
-    } else if (strcmp("no3a", name) == 0) {
-        n.push_back("N");
-        n.push_back("O");
-        n.push_back("O");
-        n.push_back("O");
-    } else if (strcmp("dp2", name) == 0) {
-        n.push_back("X");
-        n.push_back("X");
-    }
+void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n)
+{
+  if (strcmp("h2o", name) == 0) {
+    n.push_back("O");
+    n.push_back("H");
+    n.push_back("H");
+  } else if (strcmp("li+", name) == 0) {
+    n.push_back("Li");
+  } else if (strcmp("na+", name) == 0) {
+    n.push_back("Na");
+  } else if (strcmp("k+", name) == 0) {
+    n.push_back("K");
+  } else if (strcmp("rb+", name) == 0) {
+    n.push_back("Rb");
+  } else if (strcmp("cs+", name) == 0) {
+    n.push_back("Cs");
+  } else if (strcmp("f-", name) == 0) {
+    n.push_back("F");
+  } else if (strcmp("cl-", name) == 0) {
+    n.push_back("Cl");
+  } else if (strcmp("br-", name) == 0) {
+    n.push_back("Br");
+  } else if (strcmp("i-", name) == 0) {
+    n.push_back("I");
+  } else if (strcmp("he", name) == 0) {
+    n.push_back("He");
+  } else if (strcmp("co2", name) == 0) {
+    n.push_back("C");
+    n.push_back("O");
+    n.push_back("O");
+  } else if (strcmp("ch4", name) == 0) {
+    n.push_back("C");
+    n.push_back("H");
+    n.push_back("H");
+    n.push_back("H");
+    n.push_back("H");
+  } else if (strcmp("ar", name) == 0) {
+    n.push_back("Ar");
+  } else if (strcmp("h2", name) == 0) {
+    n.push_back("H");
+    n.push_back("H");
+  } else if (strcmp("n2o5", name) == 0) {
+    n.push_back("O");
+    n.push_back("N");
+    n.push_back("N");
+    n.push_back("O");
+    n.push_back("O");
+    n.push_back("O");
+    n.push_back("O");
+  } else if (strcmp("so4a", name) == 0) {
+    n.push_back("S");
+    n.push_back("O");
+    n.push_back("O");
+    n.push_back("O");
+    n.push_back("O");
+  } else if (strcmp("co3a", name) == 0) {
+    n.push_back("C");
+    n.push_back("O");
+    n.push_back("O");
+    n.push_back("O");
+  } else if (strcmp("no3a", name) == 0) {
+    n.push_back("N");
+    n.push_back("O");
+    n.push_back("O");
+    n.push_back("O");
+  } else if (strcmp("dp2", name) == 0) {
+    n.push_back("X");
+    n.push_back("X");
+  } else if (strcmp("nma", name) == 0) {
+      n.push_back("C");
+      n.push_back("O");
+      n.push_back("C");
+      n.push_back("H");
+      n.push_back("H");
+      n.push_back("H");
+      n.push_back("N");
+      n.push_back("H");
+      n.push_back("C");
+      n.push_back("H");
+      n.push_back("H");
+      n.push_back("H");
+  }
+  else
+    error->one(FLERR, "Unsupported molecule type in MBX");
 }

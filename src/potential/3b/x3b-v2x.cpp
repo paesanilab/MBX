@@ -1277,7 +1277,7 @@ double x3b_v2x::f_switch(const double& r, double& g) {
         g = 0.0;
         return 0.0;
     } else if (r > r3i) {
-        const double t1 = M_PI / (r3f - r3i);
+        const double t1 = constants::MY_PI / (r3f - r3i);
         const double x = (r - r3i) * t1;
         g = -std::sin(x) * t1 / 2.0;
         return (1.0 + std::cos(x)) / 2.0;

@@ -50,6 +50,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "json/json.hpp"
 #include "bblock/sys_tools.h"
 #include "tools/definitions.h"
+#include "tools/constants.h"
 #include "tools/custom_exceptions.h"
 #include "tools/math_tools.h"
 #include "potential/force_field/connectivity.h"

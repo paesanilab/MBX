@@ -1,5 +1,6 @@
 #include <cmath>
 #include "random-rotation.h"
+#include "tools/constants.h"
 
 /*=========================================================================*
  *  R A N D _ R O T A T I O N      Author: Jim Arvo, 1991                  *
@@ -23,10 +24,8 @@
 void random_rotation(const double* x, double* result) {
     using namespace std;
 
-    const double PITIMES2 = 2 * M_PI;
-
-    double theta = x[0] * PITIMES2; /* Rotation about the pole (Z).      */
-    double phi = x[1] * PITIMES2;   /* For direction of pole deflection. */
+    double theta = x[0] * constants::MY_2PI; /* Rotation about the pole (Z).      */
+    double phi = x[1] * constants::MY_2PI;   /* For direction of pole deflection. */
     double z = x[2] * 2.0;          /* For magnitude of pole deflection. */
 
     /* Compute a vector V used for distributing points over the sphere  */
