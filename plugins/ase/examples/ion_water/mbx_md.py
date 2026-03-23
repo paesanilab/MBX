@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import pickle
+import sys
 import time
 from pathlib import Path
 
@@ -23,18 +24,7 @@ except Exception:
     IsotropicMTKNPT = None
 
 from ase_mbx import MBXCalculator
-
-ION_MONOMER_MAP = {
-    "Li": "li+",
-    "Na": "na+",
-    "K": "k+",
-    "Rb": "rb+",
-    "Cs": "cs+",
-    "F": "f-",
-    "Cl": "cl-",
-    "Br": "br-",
-    "I": "i-",
-}
+from ase_mbx.monomers import MONOMER_PATTERNS, infer_mbx_monomers
 
 
 def calculate_performance(elapsed_time, nsteps, timestep_fs, natoms):
@@ -68,26 +58,7 @@ def str_to_bool(value):
 
 def attach_mbx_calculator(atoms, json_file, mbx_home):
     symbols = atoms.get_chemical_symbols()
-    monomer_names = []
-    nat_monomers = []
-    i = 0
-    # TODO: Move this monomer selection logic into the MBX side.
-    while i < len(symbols):
-        sym = symbols[i]
-        if sym == "O":
-            if i + 2 >= len(symbols) or symbols[i + 1] != "H" or symbols[i + 2] != "H":
-                raise ValueError("Expected O-H-H ordering for each water monomer.")
-            monomer_names.append("h2o")
-            nat_monomers.append(3)
-            i += 3
-            continue
-        if sym in ION_MONOMER_MAP:
-            monomer_names.append(ION_MONOMER_MAP[sym])
-            nat_monomers.append(1)
-            i += 1
-            continue
-        # TODO: Add support for more monomer types here.
-        raise ValueError(f"Monomer for atom '{sym}' is not available.")
+    monomer_names, nat_monomers = infer_mbx_monomers(symbols)
 
     atoms.calc = MBXCalculator(
         json_file=str(json_file),
@@ -340,6 +311,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Run MBX molecular dynamics simulation (ASE; NVE/NVT/MTK-NPT)."
     )
+    supported = ", ".join(MONOMER_PATTERNS)
     parser.add_argument("-work_path", default="./", help="Working directory (default: ./)")
     parser.add_argument("-init_file", dest="input_file", default="initial.xyz", help="Initial structure file")
     parser.add_argument("-sim_time", dest="sim_time", type=float, required=True, help="Simulation time (ps)")
@@ -393,36 +365,45 @@ def parse_arguments():
         default=4.5,
         help="MBX 3-body cutoff (A).",
     )
+    parser.epilog = (
+        "Supported automatically inferred monomers: "
+        + supported
+        + " (dp1 and dp2 are not supported here)."
+    )
     args = parser.parse_args()
     return args
 
 
 if __name__ == "__main__":
-    mbx_home = os.environ.get("MBX_HOME")
-    if not mbx_home:
-        raise RuntimeError("MBX_HOME is not set. Example: export MBX_HOME=/path/to/MBX")
     args = parse_arguments()
-    do_md_simulation(
-        work_path=args.work_path,
-        input_file=args.input_file,
-        total_time_ps=args.sim_time,
-        timestep_fs=args.t_step,
-        temperature_K=args.temp,
-        output_interval=args.interv,
-        pbc=args.pbc,
-        box_size=args.box_size,
-        ensemble=args.ensemble,
-        pressure_bar=args.pressure_bar,
-        t_damp_fs=args.t_damp_fs,
-        p_damp_fs=args.p_damp_fs,
-        tchain=args.tchain,
-        pchain=args.pchain,
-        tloop=args.tloop,
-        ploop=args.ploop,
-        npt_coupling=args.npt_coupling,
-        restart_file=args.restart_file,
-        realspace_cutoff=args.realspace_cutoff,
-        twobody_cutoff=args.twobody_cutoff,
-        threebody_cutoff=args.threebody_cutoff,
-        mbx_home=mbx_home,
-    )
+    try:
+        mbx_home = os.environ.get("MBX_HOME")
+        if not mbx_home:
+            raise RuntimeError("MBX_HOME is not set. Example: export MBX_HOME=/path/to/MBX")
+        do_md_simulation(
+            work_path=args.work_path,
+            input_file=args.input_file,
+            total_time_ps=args.sim_time,
+            timestep_fs=args.t_step,
+            temperature_K=args.temp,
+            output_interval=args.interv,
+            pbc=args.pbc,
+            box_size=args.box_size,
+            ensemble=args.ensemble,
+            pressure_bar=args.pressure_bar,
+            t_damp_fs=args.t_damp_fs,
+            p_damp_fs=args.p_damp_fs,
+            tchain=args.tchain,
+            pchain=args.pchain,
+            tloop=args.tloop,
+            ploop=args.ploop,
+            npt_coupling=args.npt_coupling,
+            restart_file=args.restart_file,
+            realspace_cutoff=args.realspace_cutoff,
+            twobody_cutoff=args.twobody_cutoff,
+            threebody_cutoff=args.threebody_cutoff,
+            mbx_home=mbx_home,
+        )
+    except (FileNotFoundError, ImportError, RuntimeError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from None
