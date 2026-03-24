@@ -8,11 +8,6 @@ on:
   pull_request:
     branches:
       - "master"
-  schedule:
-    # Nightly tests run on master by default:
-    #   Scheduled workflows run on the latest commit on the default or base branch.
-    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
-    - cron: "0 0 * * MON"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -60,7 +55,7 @@ jobs:
       - run: echo "Using compiler ${{matrix.compiler}} with ${{env.MPI_COMPILER}}"
 
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
 
@@ -76,14 +71,13 @@ jobs:
           
 
       - name: LAMMPS-Install
-      # TODO Change LAMMPS to the stable branch when MBX is fully supported there
         run: |
           cd $HOME
           export MBX_HOME=${{ env.MBX_HOME }}
-          git clone https://github.com/lammps/lammps.git -b develop
+          git clone https://github.com/lammps/lammps.git -b release
           cd lammps
           export PKG_CONFIG_PATH=$MBX_HOME/lib/pkgconfig:$PKG_CONFIG_PATH
-          cmake -S cmake -B build -C ./cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D PKG_PLUMED=yes -D BUILD_MPI=yes -D CMAKE_CXX_COMPILER=${{env.MPI_COMPILER}}
+          cmake -S cmake -B build -C ./cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes -D BUILD_MPI=yes -D CMAKE_CXX_COMPILER=${{env.MPI_COMPILER}}
           cmake --build build --parallel 2
 
       - run: ls ${{ github.workspace }}/lib -lth

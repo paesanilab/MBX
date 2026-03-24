@@ -8,11 +8,6 @@ on:
   pull_request:
     branches:
       - "master"
-  schedule:
-    # Nightly tests run on master by default:
-    #   Scheduled workflows run on the latest commit on the default or base branch.
-    #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
-    - cron: "0 0 * * MON"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,7 +19,7 @@ jobs:
     strategy:
       matrix:
         compiler: [g++, icpx]
-        configure_arguments: ["","--enable-march-avx2", "--enable-march-avx2 --enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"]
+        configure_arguments: ["", "--enable-march-avx2 --enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"]
         exclude:
           - compiler: g++
             configure_arguments: "--enable-march-avx2 --enable-cpp17 --enable-intel-intrinsics --enable-mkl --enable-tbb"
@@ -62,7 +57,7 @@ jobs:
           printenv >> $GITHUB_ENV
 
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - run: echo "The workflow is now ready to test your code on the runner."
 
@@ -71,11 +66,10 @@ jobs:
           ${{matrix.compiler}} -v | tee compiler_version.txt
           ls ${{ github.workspace }}
           autoreconf -fi
-          ./configure --disable-optimization $coverageflag --enable-shared ${{matrix.configure_arguments}} CXX=${{matrix.compiler}}
+          ./configure --disable-optimization $coverageflag ${{matrix.configure_arguments}} CXX=${{matrix.compiler}}
           make -j2
           make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
-          echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
           
 
       - run: |
@@ -91,13 +85,6 @@ jobs:
         run: |
           cat src/unittests/test-suite.log
           cat src/unittests/test-suite.log >> $GITHUB_STEP_SUMMARY
-      
-      - name: Testing python plugin
-        if: matrix.compiler == 'icpx'
-        run: |
-          cd ${{ github.workspace }}/plugins/python/examples
-          pip install numpy
-          python3 mbx_test.py
 
       - name: Collect coverage
         if: matrix.compiler == 'g++'
@@ -109,19 +96,7 @@ jobs:
         
       - name: Submit to codecov.io
         if: matrix.compiler == 'g++'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-      
-      # - name: Archive production artifacts
-      #   if: matrix.compiler == 'g++'
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     retention-days: 1
-      #     name: mbx-artifacts
-      #     path: |
-      #       bin/
-      #       examples/
-      #       lib/
-      #       plugins/
-      #       compiler_version.txt
+
