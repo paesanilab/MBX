@@ -57,6 +57,67 @@ Forces (eV/A):
 -1.458484688502 -0.000000000000 -1.058504812470
 ```
 
+## Additional observables
+The ASE wrapper now exposes the MBX observables that were previously only
+available through the legacy `plugins/python/mbx/mbx.py` interface. These are
+implemented as explicit calculator methods rather than raw positional tuples so
+the meaning of each quantity stays clear at the call site.
+
+```python
+from ase import io
+from ase_mbx import MBXCalculator
+
+atoms = io.read("initial.extxyz")
+calc = MBXCalculator(
+    json_file="mbx.json",
+    nat_monomers=[3, 3, 3],
+    monomer_names=["h2o", "h2o", "h2o"],
+)
+atoms.calc = calc
+
+components = calc.get_energy_component_breakdown(atoms)
+elec = calc.get_electrostatic_energy_breakdown(atoms)
+site_xyz = calc.get_electrostatic_site_coordinates(atoms)
+site_charges = calc.get_electrostatic_site_charges(atoms)
+site_pols = calc.get_electrostatic_site_polarizabilities(atoms)
+site_mu_ind = calc.get_induced_site_dipoles(atoms)
+probe = calc.get_potential_and_electric_field_at_points([[0.0, 0.0, 0.0]], atoms)
+```
+
+Available getters:
+- `get_energy_component_breakdown(atoms=None)` returns an `EnergyComponentBreakdown`
+  object with named energy terms in eV: `one_body`, `two_body`, `three_body`,
+  `four_body`, `dispersion`, `buckingham`, and `electrostatics`. The helper
+  property `sum_components` returns their sum.
+- `get_electrostatic_energy_breakdown(atoms=None)` returns an
+  `ElectrostaticEnergyBreakdown` object with `permanent` and `induced` terms in
+  eV.
+- `get_electrostatic_site_coordinates(atoms=None)` returns an `(n_sites, 3)`
+  array of electrostatic-site coordinates in Angstrom. The ordering matches the
+  MBX electrostatic site order and includes virtual sites such as the water
+  M-site.
+- `get_electrostatic_site_charges(atoms=None)` returns an `(n_sites,)` array of
+  site charges in MBX's native charge units.
+- `get_electrostatic_site_polarizabilities(atoms=None)` returns an `(n_sites,)`
+  array of site polarizabilities in MBX's native units.
+- `get_induced_site_dipoles(atoms=None)` returns an `(n_sites, 3)` array of
+  induced site dipoles in MBX's native dipole units.
+- `get_potential_and_electric_field_at_points(points, atoms=None)` returns a
+  `PotentialAndElectricField` object. `points` must be an `(n_points, 3)` array
+  in Angstrom, `potential` has shape `(n_points,)`, and `electric_field` has
+  shape `(n_points, 3)`. MBX native electrostatic units are preserved because
+  ASE does not define canonical units for either quantity.
+- `redistribute_site_gradients_to_real_atoms(site_gradients, atoms=None)` takes
+  an `(n_sites, 3)` array and folds virtual-site gradient contributions back
+  onto the real atoms using MBX's internal redistribution rules.
+- `get_external_field_energy_contribution(atoms=None)` returns the external
+  field electrostatic energy contribution in eV.
+
+Helper methods:
+- `get_electrostatic_site_counts()` returns the per-monomer electrostatic site
+  counts used by the ASE wrapper.
+- `get_electrostatic_site_count()` returns the total electrostatic site count.
+
 ## Notes
 - MBX uses kcal/mol and Angstrom; energies and forces are converted to ASE units (eV, eV/A).
 - `MBXCalculator` follows `atoms.pbc` directly and supports either full 3D periodicity or a fully non-periodic system.
