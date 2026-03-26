@@ -97,11 +97,12 @@ Available getters:
   MBX electrostatic site order and includes virtual sites such as the water
   M-site.
 - `get_electrostatic_site_charges(atoms=None)` returns an `(n_sites,)` array of
-  site charges in MBX's native charge units.
+  electrostatic-site charges in units of `e`.
 - `get_electrostatic_site_polarizabilities(atoms=None)` returns an `(n_sites,)`
-  array of site polarizabilities in MBX's native units.
+  array of electrostatic-site polarizabilities in units of `Angstrom^3`. These
+  are site quantities in MBX input order, not whole-molecule polarizabilities.
 - `get_induced_site_dipoles(atoms=None)` returns an `(n_sites, 3)` array of
-  induced site dipoles in MBX's native dipole units.
+  induced electrostatic-site dipoles in units of `e * Angstrom`.
 - `get_potential_and_electric_field_at_points(points, atoms=None)` returns a
   `PotentialAndElectricField` object. `points` must be an `(n_points, 3)` array
   in Angstrom, `potential` has shape `(n_points,)`, and `electric_field` has
