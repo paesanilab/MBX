@@ -107,9 +107,6 @@ Available getters:
   in Angstrom, `potential` has shape `(n_points,)`, and `electric_field` has
   shape `(n_points, 3)`. MBX native electrostatic units are preserved because
   ASE does not define canonical units for either quantity.
-- `redistribute_site_gradients_to_real_atoms(site_gradients, atoms=None)` takes
-  an `(n_sites, 3)` array and folds virtual-site gradient contributions back
-  onto the real atoms using MBX's internal redistribution rules.
 - `get_external_field_energy_contribution(atoms=None)` returns the external
   field electrostatic energy contribution in eV.
 

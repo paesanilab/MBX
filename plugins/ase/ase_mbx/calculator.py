@@ -284,21 +284,6 @@ class MBXCalculator(Calculator):
         potential, electric_field = self.mbx.get_potential_and_electric_field_at_points(points)
         return PotentialAndElectricField(potential=potential, electric_field=electric_field)
 
-    def redistribute_site_gradients_to_real_atoms(self, site_gradients, atoms=None):
-        """Fold virtual-site gradient contributions back onto real atoms.
-
-        MBX stores some electrostatic quantities on all sites, including
-        virtual sites. This helper mirrors the legacy Python API and applies the
-        same redistribution logic that MBX uses internally when converting site
-        gradients into real-atom gradients.
-        """
-
-        self._get_configuration_context(atoms)
-        return self.mbx.redistribute_site_gradients_to_real_atoms(
-            site_gradients,
-            self.get_electrostatic_site_count(),
-        )
-
     def get_external_field_energy_contribution(self, atoms=None):
         """Return the external-field electrostatic energy contribution in eV."""
 

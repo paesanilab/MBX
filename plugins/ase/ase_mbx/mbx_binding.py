@@ -124,12 +124,6 @@ class MBXLibrary:
         self.lib.get_induced_dipoles_.argtypes = [POINTER(c_double)]
         self.lib.get_induced_dipoles_.restype = None
 
-        self.lib.redistribute_gradients_.argtypes = [
-            POINTER(c_double),  # gradients
-            POINTER(c_int),     # nsites
-        ]
-        self.lib.redistribute_gradients_.restype = None
-
         self.lib.get_polarizabilities_.argtypes = [POINTER(c_double)]
         self.lib.get_polarizabilities_.restype = None
 
@@ -269,15 +263,6 @@ class MBXLibrary:
         dipoles = np.zeros(3 * int(site_count), dtype=np.float64)
         self.lib.get_induced_dipoles_(dipoles.ctypes.data_as(POINTER(c_double)))
         return dipoles.reshape((-1, 3))
-
-    def redistribute_site_gradients_to_real_atoms(self, site_gradients, site_count):
-        gradients = np.ascontiguousarray(site_gradients, dtype=np.float64).reshape((-1, 3)).ravel()
-        nsites = c_int(int(site_count))
-        self.lib.redistribute_gradients_(
-            gradients.ctypes.data_as(POINTER(c_double)),
-            ctypes.byref(nsites),
-        )
-        return gradients.reshape((-1, 3))
 
     def get_electrostatic_site_polarizabilities(self, site_count):
         polarizabilities = np.zeros(int(site_count), dtype=np.float64)
