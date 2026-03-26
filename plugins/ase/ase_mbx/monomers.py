@@ -27,6 +27,11 @@ MONOMER_PATTERNS = {
     "nma": ("C", "O", "C", "H", "H", "H", "N", "H", "C", "H", "H", "H"),
 }
 
+# Most supported monomers use one electrostatic site per real atom. Water is
+# the only ASE-supported monomer here that introduces an extra virtual M-site.
+MONOMER_SITE_COUNTS = {name: len(pattern) for name, pattern in MONOMER_PATTERNS.items()}
+MONOMER_SITE_COUNTS["h2o"] = 4
+
 _PATTERNS_BY_FIRST_SYMBOL: dict[str, list[tuple[str, tuple[str, ...]]]] = {}
 for _name, _pattern in MONOMER_PATTERNS.items():
     _PATTERNS_BY_FIRST_SYMBOL.setdefault(_pattern[0], []).append((_name, _pattern))
@@ -133,3 +138,23 @@ def infer_mbx_monomers(symbols):
     monomer_names = [name for name, _ in parsed]
     nat_monomers = [nat for _, nat in parsed]
     return monomer_names, nat_monomers
+
+
+def get_electrostatic_site_counts(monomer_names):
+    """Return the MBX electrostatic site count for each monomer in order.
+
+    The ASE interface only supports monomers listed in ``MONOMER_PATTERNS``.
+    For those monomers, the site counts are fixed and can therefore be
+    determined on the Python side without another query into libmbx.
+    """
+
+    site_counts = []
+    for monomer_name in monomer_names:
+        try:
+            site_counts.append(MONOMER_SITE_COUNTS[monomer_name])
+        except KeyError as exc:
+            raise ValueError(
+                f"Electrostatic site count for monomer '{monomer_name}' is not defined "
+                "in the ASE MBX wrapper."
+            ) from exc
+    return site_counts

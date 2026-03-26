@@ -71,6 +71,79 @@ class MBXLibrary:
         ]
         self.lib.get_energy_pbc_g_.restype = None
 
+        self.lib.get_energy_decomp_.argtypes = [
+            POINTER(c_double),  # coords
+            POINTER(c_int),     # nat
+            POINTER(c_double),  # E1b
+            POINTER(c_double),  # E2b
+            POINTER(c_double),  # E3b
+            POINTER(c_double),  # E4b
+            POINTER(c_double),  # Edisp
+            POINTER(c_double),  # Ebuck
+            POINTER(c_double),  # Eelec
+        ]
+        self.lib.get_energy_decomp_.restype = None
+
+        self.lib.get_energy_decomp_pbc_.argtypes = [
+            POINTER(c_double),  # coords
+            POINTER(c_int),     # nat
+            POINTER(c_double),  # box
+            POINTER(c_double),  # E1b
+            POINTER(c_double),  # E2b
+            POINTER(c_double),  # E3b
+            POINTER(c_double),  # E4b
+            POINTER(c_double),  # Edisp
+            POINTER(c_double),  # Ebuck
+            POINTER(c_double),  # Eelec
+        ]
+        self.lib.get_energy_decomp_pbc_.restype = None
+
+        self.lib.get_electrostatic_energy_decomp_.argtypes = [
+            POINTER(c_double),  # coords
+            POINTER(c_int),     # nat
+            POINTER(c_double),  # Eperm
+            POINTER(c_double),  # Eind
+        ]
+        self.lib.get_electrostatic_energy_decomp_.restype = None
+
+        self.lib.get_electrostatic_energy_decomp_pbc_.argtypes = [
+            POINTER(c_double),  # coords
+            POINTER(c_int),     # nat
+            POINTER(c_double),  # box
+            POINTER(c_double),  # Eperm
+            POINTER(c_double),  # Eind
+        ]
+        self.lib.get_electrostatic_energy_decomp_pbc_.restype = None
+
+        self.lib.get_xyz_.argtypes = [POINTER(c_double)]
+        self.lib.get_xyz_.restype = None
+
+        self.lib.get_charges_.argtypes = [POINTER(c_double)]
+        self.lib.get_charges_.restype = None
+
+        self.lib.get_induced_dipoles_.argtypes = [POINTER(c_double)]
+        self.lib.get_induced_dipoles_.restype = None
+
+        self.lib.redistribute_gradients_.argtypes = [
+            POINTER(c_double),  # gradients
+            POINTER(c_int),     # nsites
+        ]
+        self.lib.redistribute_gradients_.restype = None
+
+        self.lib.get_polarizabilities_.argtypes = [POINTER(c_double)]
+        self.lib.get_polarizabilities_.restype = None
+
+        self.lib.get_potential_and_electric_field_on_points_.argtypes = [
+            POINTER(c_double),  # coords
+            POINTER(c_double),  # phi
+            POINTER(c_double),  # ef
+            POINTER(c_int),     # npoints
+        ]
+        self.lib.get_potential_and_electric_field_on_points_.restype = None
+
+        self.lib.get_external_field_contribution_to_energy_.argtypes = [POINTER(c_double)]
+        self.lib.get_external_field_contribution_to_energy_.restype = None
+
         self.lib.get_virial_.argtypes = [POINTER(c_double)]
         self.lib.get_virial_.restype = None
 
@@ -107,6 +180,19 @@ class MBXLibrary:
         self.lib.get_energy_g_(crd, ctypes.byref(nat), ctypes.byref(energy), grad_ptr)
         return energy.value, grads.reshape((-1, 3))
 
+    def get_energy_component_breakdown(self, coords):
+        coords_flat = np.ascontiguousarray(coords, dtype=np.float64).ravel()
+        crd = coords_flat.ctypes.data_as(POINTER(c_double))
+        nat = c_int(len(coords_flat) // 3)
+        components = [c_double(0.0) for _ in range(7)]
+
+        self.lib.get_energy_decomp_(
+            crd,
+            ctypes.byref(nat),
+            *(ctypes.byref(component) for component in components),
+        )
+        return tuple(component.value for component in components)
+
     def get_energy_forces_pbc(self, coords, cell_vectors):
         coords_flat = np.ascontiguousarray(coords, dtype=np.float64).ravel()
         box_flat = np.ascontiguousarray(cell_vectors, dtype=np.float64).ravel()
@@ -119,6 +205,104 @@ class MBXLibrary:
 
         self.lib.get_energy_pbc_g_(crd, ctypes.byref(nat), box, ctypes.byref(energy), grad_ptr)
         return energy.value, grads.reshape((-1, 3))
+
+    def get_energy_component_breakdown_pbc(self, coords, cell_vectors):
+        coords_flat = np.ascontiguousarray(coords, dtype=np.float64).ravel()
+        box_flat = np.ascontiguousarray(cell_vectors, dtype=np.float64).ravel()
+        crd = coords_flat.ctypes.data_as(POINTER(c_double))
+        box = box_flat.ctypes.data_as(POINTER(c_double))
+        nat = c_int(len(coords_flat) // 3)
+        components = [c_double(0.0) for _ in range(7)]
+
+        self.lib.get_energy_decomp_pbc_(
+            crd,
+            ctypes.byref(nat),
+            box,
+            *(ctypes.byref(component) for component in components),
+        )
+        return tuple(component.value for component in components)
+
+    def get_electrostatic_energy_breakdown(self, coords):
+        coords_flat = np.ascontiguousarray(coords, dtype=np.float64).ravel()
+        crd = coords_flat.ctypes.data_as(POINTER(c_double))
+        nat = c_int(len(coords_flat) // 3)
+        permanent = c_double(0.0)
+        induced = c_double(0.0)
+
+        self.lib.get_electrostatic_energy_decomp_(
+            crd,
+            ctypes.byref(nat),
+            ctypes.byref(permanent),
+            ctypes.byref(induced),
+        )
+        return permanent.value, induced.value
+
+    def get_electrostatic_energy_breakdown_pbc(self, coords, cell_vectors):
+        coords_flat = np.ascontiguousarray(coords, dtype=np.float64).ravel()
+        box_flat = np.ascontiguousarray(cell_vectors, dtype=np.float64).ravel()
+        crd = coords_flat.ctypes.data_as(POINTER(c_double))
+        box = box_flat.ctypes.data_as(POINTER(c_double))
+        nat = c_int(len(coords_flat) // 3)
+        permanent = c_double(0.0)
+        induced = c_double(0.0)
+
+        self.lib.get_electrostatic_energy_decomp_pbc_(
+            crd,
+            ctypes.byref(nat),
+            box,
+            ctypes.byref(permanent),
+            ctypes.byref(induced),
+        )
+        return permanent.value, induced.value
+
+    def get_electrostatic_site_coordinates(self, site_count):
+        xyz = np.zeros(3 * int(site_count), dtype=np.float64)
+        self.lib.get_xyz_(xyz.ctypes.data_as(POINTER(c_double)))
+        return xyz.reshape((-1, 3))
+
+    def get_electrostatic_site_charges(self, site_count):
+        charges = np.zeros(int(site_count), dtype=np.float64)
+        self.lib.get_charges_(charges.ctypes.data_as(POINTER(c_double)))
+        return charges
+
+    def get_induced_site_dipoles(self, site_count):
+        dipoles = np.zeros(3 * int(site_count), dtype=np.float64)
+        self.lib.get_induced_dipoles_(dipoles.ctypes.data_as(POINTER(c_double)))
+        return dipoles.reshape((-1, 3))
+
+    def redistribute_site_gradients_to_real_atoms(self, site_gradients, site_count):
+        gradients = np.ascontiguousarray(site_gradients, dtype=np.float64).reshape((-1, 3)).ravel()
+        nsites = c_int(int(site_count))
+        self.lib.redistribute_gradients_(
+            gradients.ctypes.data_as(POINTER(c_double)),
+            ctypes.byref(nsites),
+        )
+        return gradients.reshape((-1, 3))
+
+    def get_electrostatic_site_polarizabilities(self, site_count):
+        polarizabilities = np.zeros(int(site_count), dtype=np.float64)
+        self.lib.get_polarizabilities_(polarizabilities.ctypes.data_as(POINTER(c_double)))
+        return polarizabilities
+
+    def get_potential_and_electric_field_at_points(self, points):
+        points_array = np.ascontiguousarray(points, dtype=np.float64).reshape((-1, 3))
+        coords = points_array.ravel()
+        npoints = c_int(len(points_array))
+        phi = np.zeros(len(points_array), dtype=np.float64)
+        electric_field = np.zeros(3 * len(points_array), dtype=np.float64)
+
+        self.lib.get_potential_and_electric_field_on_points_(
+            coords.ctypes.data_as(POINTER(c_double)),
+            phi.ctypes.data_as(POINTER(c_double)),
+            electric_field.ctypes.data_as(POINTER(c_double)),
+            ctypes.byref(npoints),
+        )
+        return phi, electric_field.reshape((-1, 3))
+
+    def get_external_field_energy_contribution(self):
+        energy = c_double(0.0)
+        self.lib.get_external_field_contribution_to_energy_(ctypes.byref(energy))
+        return energy.value
 
     def get_virial(self):
         virial = np.zeros(9, dtype=np.float64)
