@@ -6,7 +6,7 @@ import numpy as np
 from ase.calculators.calculator import Calculator, all_changes
 
 from .mbx_binding import MBXLibrary, KCAL_PER_MOL_TO_EV
-from .monomers import get_electrostatic_site_counts
+from .monomers import resolve_electrostatic_site_counts
 
 
 @dataclass(frozen=True)
@@ -111,7 +111,7 @@ class MBXCalculator(Calculator):
         self._warned_periodic_zero_alpha = False
         self.mbx = MBXLibrary(mbx_home=mbx_home)
         self._initialized = False
-        self._site_counts = get_electrostatic_site_counts(self.monomer_names)
+        self._site_counts = None
 
     @staticmethod
     def _load_ewald_params(json_file):
@@ -173,6 +173,30 @@ class MBXCalculator(Calculator):
         )
         self._initialized = True
 
+    def _ensure_site_counts(self, atoms=None):
+        """Resolve and cache the MBX electrostatic-site counts lazily.
+
+        The counts are only needed for site-level observables, so the standard
+        ASE properties do not pay the cost of resolving them. When a JSON file
+        provides top-level monomer overrides with explicit ``sites`` values, we
+        honor those overrides here so the Python-side allocation matches MBX's
+        own ``SetUpMonomers`` logic.
+        """
+
+        if self._site_counts is not None:
+            return self._site_counts
+
+        current_atoms = atoms if atoms is not None else self.atoms
+        if current_atoms is None:
+            raise ValueError(
+                "No Atoms object is attached to this calculator. Pass atoms=... or "
+                "attach the calculator to an ASE Atoms object first."
+            )
+
+        self._ensure_initialized(current_atoms)
+        self._site_counts = tuple(resolve_electrostatic_site_counts(self.monomer_names, self.json_file))
+        return self._site_counts
+
     def _get_configuration_context(self, atoms=None):
         """Synchronize MBX with the requested geometry and return its state.
 
@@ -197,15 +221,20 @@ class MBXCalculator(Calculator):
         cell = self.atoms.get_cell().array
         return coords, pbc, cell
 
-    def get_electrostatic_site_counts(self):
-        """Return the per-monomer electrostatic site counts used by MBX."""
+    def get_electrostatic_site_counts(self, atoms=None):
+        """Return the per-monomer electrostatic site counts used by MBX.
 
-        return list(self._site_counts)
+        The counts are resolved lazily so that normal energy/force calculations
+        do not depend on them. If the MBX JSON file defines top-level monomer
+        overrides with explicit ``sites`` values, those values are used.
+        """
 
-    def get_electrostatic_site_count(self):
+        return list(self._ensure_site_counts(atoms))
+
+    def get_electrostatic_site_count(self, atoms=None):
         """Return the total number of electrostatic sites in the MBX system."""
 
-        return int(sum(self._site_counts))
+        return int(sum(self._ensure_site_counts(atoms)))
 
     def get_energy_component_breakdown(self, atoms=None):
         """Return MBX's named energy components for the current geometry.
@@ -245,19 +274,19 @@ class MBXCalculator(Calculator):
         """
 
         self._get_configuration_context(atoms)
-        return self.mbx.get_electrostatic_site_coordinates(self.get_electrostatic_site_count())
+        return self.mbx.get_electrostatic_site_coordinates(self.get_electrostatic_site_count(atoms))
 
     def get_electrostatic_site_charges(self, atoms=None):
         """Return the electrostatic-site charges in MBX input order."""
 
         self._get_configuration_context(atoms)
-        return self.mbx.get_electrostatic_site_charges(self.get_electrostatic_site_count())
+        return self.mbx.get_electrostatic_site_charges(self.get_electrostatic_site_count(atoms))
 
     def get_electrostatic_site_polarizabilities(self, atoms=None):
         """Return the electrostatic-site polarizabilities in MBX input order."""
 
         self._get_configuration_context(atoms)
-        return self.mbx.get_electrostatic_site_polarizabilities(self.get_electrostatic_site_count())
+        return self.mbx.get_electrostatic_site_polarizabilities(self.get_electrostatic_site_count(atoms))
 
     def get_induced_site_dipoles(self, atoms=None):
         """Return induced site dipoles as an ``(n_sites, 3)`` array.
@@ -269,7 +298,7 @@ class MBXCalculator(Calculator):
         """
 
         self._get_configuration_context(atoms)
-        return self.mbx.get_induced_site_dipoles(self.get_electrostatic_site_count())
+        return self.mbx.get_induced_site_dipoles(self.get_electrostatic_site_count(atoms))
 
     def get_potential_and_electric_field_at_points(self, points, atoms=None):
         """Sample the total electrostatic potential and field at probe points.

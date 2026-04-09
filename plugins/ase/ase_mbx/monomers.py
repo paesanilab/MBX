@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 
 
@@ -29,8 +30,8 @@ MONOMER_PATTERNS = {
 
 # Most supported monomers use one electrostatic site per real atom. Water is
 # the only ASE-supported monomer here that introduces an extra virtual M-site.
-MONOMER_SITE_COUNTS = {name: len(pattern) for name, pattern in MONOMER_PATTERNS.items()}
-MONOMER_SITE_COUNTS["h2o"] = 4
+DEFAULT_MONOMER_SITE_COUNTS = {name: len(pattern) for name, pattern in MONOMER_PATTERNS.items()}
+DEFAULT_MONOMER_SITE_COUNTS["h2o"] = 4
 
 _PATTERNS_BY_FIRST_SYMBOL: dict[str, list[tuple[str, tuple[str, ...]]]] = {}
 for _name, _pattern in MONOMER_PATTERNS.items():
@@ -140,21 +141,48 @@ def infer_mbx_monomers(symbols):
     return monomer_names, nat_monomers
 
 
-def get_electrostatic_site_counts(monomer_names):
-    """Return the MBX electrostatic site count for each monomer in order.
+def _load_json_config(json_file):
+    if json_file is None:
+        return {}
 
-    The ASE interface only supports monomers listed in ``MONOMER_PATTERNS``.
-    For those monomers, the site counts are fixed and can therefore be
-    determined on the Python side without another query into libmbx.
+    try:
+        with open(json_file, encoding="utf-8") as handle:
+            config = json.load(handle)
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
+        return {}
+
+    return config if isinstance(config, dict) else {}
+
+
+def resolve_electrostatic_site_counts(monomer_names, json_file=None):
+    """Return the electrostatic-site count for each monomer in order.
+
+    The ASE wrapper still only infers monomer names listed in
+    ``MONOMER_PATTERNS``. For those supported monomers, the default site counts
+    are derived from the built-in MBX definitions. If ``json_file`` contains a
+    top-level monomer override with a ``"sites"`` field, that override wins and
+    matches MBX's own ``SetUpMonomers`` path.
     """
 
+    config = _load_json_config(json_file)
     site_counts = []
     for monomer_name in monomer_names:
+        monomer_config = config.get(monomer_name, {})
+        if isinstance(monomer_config, dict) and "sites" in monomer_config:
+            try:
+                site_counts.append(int(monomer_config["sites"]))
+                continue
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Invalid electrostatic site count override for monomer '{monomer_name}'."
+                ) from exc
+
         try:
-            site_counts.append(MONOMER_SITE_COUNTS[monomer_name])
+            site_counts.append(DEFAULT_MONOMER_SITE_COUNTS[monomer_name])
         except KeyError as exc:
             raise ValueError(
                 f"Electrostatic site count for monomer '{monomer_name}' is not defined "
                 "in the ASE MBX wrapper."
             ) from exc
+
     return site_counts

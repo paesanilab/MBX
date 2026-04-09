@@ -112,13 +112,17 @@ Available getters:
   field electrostatic energy contribution in eV.
 
 Helper methods:
-- `get_electrostatic_site_counts()` returns the per-monomer electrostatic site
-  counts used by the ASE wrapper.
-- `get_electrostatic_site_count()` returns the total electrostatic site count.
+- `get_electrostatic_site_counts(atoms=None)` returns the per-monomer
+  electrostatic site counts used by the ASE wrapper. The values are resolved
+  lazily from the same `mbx.json` file used to initialize MBX, so top-level
+  monomer `sites` overrides are honored.
+- `get_electrostatic_site_count(atoms=None)` returns the total electrostatic
+  site count.
 
 ## Notes
 - MBX uses kcal/mol and Angstrom; energies and forces are converted to ASE units (eV, eV/A).
 - `MBXCalculator` follows `atoms.pbc` directly and supports either full 3D periodicity or a fully non-periodic system.
 - Periodic runs should use nonzero `alpha_ewald_elec` and `alpha_ewald_disp` values in `mbx.json`. Non-periodic runs should leave both at `0.0`.
 - The ASE `mbx_md.py` example scripts infer monomers directly from the input atom order using the supported MBX monomer definitions (`h2o`, alkali ions, halide ions, `co2`, `ch4`, `he`, `ar`, `h2`, `n2o5`, `so4a`, `co3a`, `no3a`, and `nma`). `dp1` and `dp2` are intentionally not supported here.
+- Electrostatic-site observables resolve their site counts lazily after MBX initialization and follow any monomer-specific `sites` overrides found in `mbx.json`.
 - Input atoms must be grouped in the expected MBX monomer order. If the ordering is unsupported or ambiguous, the ASE examples will raise an error instead of guessing.
