@@ -1884,6 +1884,13 @@ class System {
     double elec_lambda_;
 
     /**
+     * @brief Monomer id used to select sites for electrostatic softcore scaling.
+     *
+     * Loaded from MBX JSON key "elec_lambda_monomer". Empty means disabled.
+     */
+    std::string elec_lambda_monomer_;
+
+    /**
      * @brief 2B lambda scaling factor for lambda-enabled 2B terms.
      *
      * Loaded from MBX JSON key "two_b_lambda". Default is 1.0.

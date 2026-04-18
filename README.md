@@ -175,9 +175,18 @@ and needs to be installed using the [LAMMPS CMake build-chain](https://docs.lamm
 git clone -b develop https://github.com/lammps/lammps.git
 cd lammps
 
+export MBX_HOME=/path/to/mbx
+export LAMMPS_HOME=/path/to/lammps
+
+MBX_PLUGIN_DIR="${MBX_HOME}/plugins/lammps/USER-MBX"
+LAMMPS_MBX_DIR="${LAMMPS_HOME}/src/MBX"
+echo "[sync] copying MBX LAMMPS plugin sources from ${MBX_PLUGIN_DIR} to ${LAMMPS_MBX_DIR}"
+cp -f "${MBX_PLUGIN_DIR}/"* "${LAMMPS_MBX_DIR}/"
+
 cmake -S cmake -B build -C ./cmake/presets/basic.cmake -D PKG_MBX=yes -D PKG_EXTRA-PAIR=yes
 cmake --build build --parallel 4                   # compilation (can use higher --parallel on powerful computers)
 ```
+
 This special installation using MPI is **only compatible with LAMMPS** and is incompatible with i-PI, Python, Fortran or standalone usage. If you need to use any of these other MBX plugins, perform a separate [basic installation](#basic-installation-of-mbx-for-use-with-i-pi-python-fortran-or-standalone-not-lammps) in a different directory.
 
 Additional LAMMPS build options are available, such as using a different compiler or enabling additional packages. Please refer to the [LAMMPS CMake build documentation](https://docs.lammps.org/Build_basics.html) for more information.
@@ -220,4 +229,3 @@ The unit tests implemented should cover a big part of the code. This sunburst gr
 <p align="center">
   <img src="https://codecov.io/gh/paesanilab/MBX/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>
-

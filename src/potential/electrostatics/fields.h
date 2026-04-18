@@ -72,10 +72,12 @@ derived.
 
 #include <vector>
 #include <cstddef>
-
+// #include <cmath>
+#include <algorithm>
+#include <new>
 
 #ifdef __INTEL_COMPILER
-#include <mathimf.h>
+// #include <mathimf.h>
 #endif
 
 #include <functional>
@@ -85,21 +87,54 @@ derived.
 #include "tools/constants.h"
 #include "tools/definitions.h"
 
+#ifdef TBB
+#include "tbb/scalable_allocator.h"
+#endif
+
+#ifdef INTEL_INTRINSICS
+#include <immintrin.h>
+#endif
 
 namespace elec {
+
+    #ifdef TBB
+    template<typename T>
+    using vector = std::vector<T, tbb::scalable_allocator<T>>;
+    #else
+    template<typename T>
+    using vector = std::vector<T>;
+    #endif
+
     struct PrecomputedInfo {
-        std::vector<size_t> good_mon2;
-        std::vector<double> reordered_xyz2;
-        std::vector<size_t> reordered_islocal;
-        std::vector<double> reordered_mu2;
-        std::vector<double> reordered_Efd2;
-        std::vector<double> rijx;
-        std::vector<double> rijy;
-        std::vector<double> rijz;
-        std::vector<double> ts2x;
-        std::vector<double> ts2y;
-        std::vector<double> ts2z;
-        std::vector<double> s1r3;
+        size_t good_mon2_size;
+        vector<size_t> good_mon2;
+        vector<double> reordered_xyz2;
+        vector<size_t> reordered_islocal;
+        vector<double> reordered_mu2;
+        vector<double> reordered_Efd2;
+        vector<double> rijx;
+        vector<double> rijy;
+        vector<double> rijz;
+        vector<double> ts2x;
+        vector<double> ts2y;
+        vector<double> ts2z;
+        vector<double> s1r3;
+
+        void * operator new(size_t size) {
+            #ifdef TBB
+            return scalable_malloc(size);
+            #else
+            return ::operator new(size);
+            #endif
+        }
+
+        void operator delete(void * p) {
+            #ifdef TBB
+            scalable_free(p);
+            #else
+            return ::operator delete(p);
+            #endif
+        }
     };
 
     typedef std::tuple<size_t, size_t, size_t, size_t, size_t> key_precomputed_info;
@@ -109,6 +144,7 @@ namespace elec {
             // return std::hash<key_precomputed_info>{}(k);
         }
     };
+
 ////////////////////////////////////////////////////////////////////////////////
 
 class ElectricFieldHolder {
@@ -150,7 +186,7 @@ class ElectricFieldHolder {
                                 bool use_ghost,                          // use ghost monomers
                                 const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
                                 const size_t m2_offset,
-                                std::vector<double> *virial = 0);        // The virial, now at the end 
+                                vector<double> *virial = 0);  // The virial);
 
     // Computes the electric field for a pair of sites for a number of monomers
     // # = mon2_index_end - mon2_index_start when A=polfac[i] * polfac[j] > 0
@@ -180,11 +216,13 @@ class ElectricFieldHolder {
                                 const std::vector<double> &box_inverse,  // The inverse lattice vectors
                                 double cutoff,                           // The real space cutoff for pairs
                                 bool use_ghost,                          // use ghost monomers
-                                const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
+                                const vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
                                 const size_t m2_offset,
                                 PrecomputedInfo& precomputedInformation, // Contains precomputed coordinate-dependant calculations
-                                double elec_lambda,                           // Moved elec_lambda before virial
-                                std::vector<double> *virial = 0);        // The virial, now at the end 
+                                double elec_lambda,             // softcore electrostatic coupling parameter
+                                bool site_i_is_softcore,        // apply softcore on this monomer-1 site
+                                bool site_j_is_softcore,        // apply softcore on this monomer-2 site
+                                std::vector<double> *virial = 0);  // The virial);
 
     ////////////////////////////////////////////////////////////////////////////////
     // DIPOLE ELECTRIC FIELD ///////////////////////////////////////////////////////
@@ -294,7 +332,7 @@ class ElectricFieldHolder {
                                     const std::vector<double> &box_inverse,  // The inverse lattice vectors
                                     double cutoff,                           // The real space cutoff for pairs
                                     bool use_ghost,                          // use ghost monomers
-                                    const std::vector<size_t> &islocal, 
+                                    const vector<size_t> &islocal, 
                                     const size_t isl1_offset,
                                     const size_t isl2_offset,
                                     PrecomputedInfo& precomputedInformation, // Contains precomputed coordinate-dependant calculations
@@ -332,7 +370,7 @@ class ElectricFieldHolder {
                             double cutoff,                           // The real space cutoff for pairs
                             bool use_ghost,                          // use ghost monomers
                             const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
-                            std::vector<double> *virial = 0  // the virial
+                            vector<double> *virial = 0  // the virial
     );
 
     // Optimized version
@@ -360,7 +398,7 @@ class ElectricFieldHolder {
                             const std::vector<double> &box_inverse,  // The inverse lattice vectors
                             double cutoff,                           // The real space cutoff for pairs
                             bool use_ghost,                          // use ghost monomers
-                            const std::vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
+                            const vector<size_t> &islocal, const size_t isl1_offset, const size_t isl2_offset,
                             PrecomputedInfo& precomputedInformation,
                             std::vector<double> *virial = 0  // the virial
     );

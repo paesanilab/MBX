@@ -33,53 +33,100 @@ MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, OR THAT THE USE OF THE
 SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
+
+
 #ifndef POLY_3B_MBNRG_A1_B1C2X2_B1C2X2_DEG4_H
 #define POLY_3B_MBNRG_A1_B1C2X2_B1C2X2_DEG4_H
+
+/**
+ * @file poly_3b_A1_B1C2X2_B1C2X2_deg4_v1.h
+ * @brief Contains the structure of the polynomial for symmetry A1_B1C2X2_B1C2X2
+ */
+
+/**
+ * @namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
+ * @brief Encloses the structure of the polynomial for symmetry A1_B1C2X2_B1C2X2
+ */
 
 namespace mbnrg_A1_B1C2X2_B1C2X2_deg4 {
 
 struct poly_A1_B1C2X2_B1C2X2_deg4_v1 {
+    // Degree of the polynomial
     static const unsigned degree = 4;
+
+    // Number of variables
     static const unsigned n_vars = 41;
 
-    static const unsigned size = 1575;
+    // Number of terms
+    static const unsigned size = 3173;
 
-    double eval(const double x[41], const double a[1575]);
-    double eval_direct(const double x[41], const double a[1575]);
-    double eval(const double x[41], const double a[1575], double g[41]);
-    double eval_direct(const double x[41], const double a[1575], double g[41]);
-    unsigned report_nvars() { return n_vars; };
-    unsigned report_size() { return size; };
+    /**
+     * @brief Evaluates the polynomial of degree 4 for A1_B1C2X2_B1C2X2 symmetry.
+     *
+     * Given the linear parameters and the value of the polynomial variables, 
+     * evaluates the polynomial for the A1_B1C2X2_B1C2X2 symmetry.
+     * @param[in] x Double array of length 41 with the variable values
+     * @param[in] a Double array of 3173 elements with the linear parameters of the polynomial
+     * @return Value of the polynomial
+     */
+    double eval(const double x[41],
+              const double a[3173]);
+
+    /**
+     * @brief Evaluates the polynomial of degree 4 for A1_B1C2X2_B1C2X2 symmetry.
+     *
+     * Given the linear parameters and the value of the polynomial variables, 
+     * evaluates the polynomial for the A1_B1C2X2_B1C2X2 symmetry.
+     * It uses the direct, non optimized polynomial
+     * @param[in] x Double array of length 41 with the variable values
+     * @param[in] a Double array of 3173 elements with the linear parameters of the polynomial
+     * @return Value of the polynomial
+     */
+    double eval_direct(const double x[41],
+                     const double a[3173]);
+
+    /**
+     * @brief Evaluates the polynomial of degree 4 for A1_B1C2X2_B1C2X2 symmetry.
+     *
+     * Given the linear parameters and the value of the polynomial variables, 
+     * evaluates the polynomial for the A1_B1C2X2_B1C2X2 symmetry.
+     * @param[in] x Double array of length 41 with the variable values
+     * @param[in] a Double array of 3173 elements with the linear parameters of the polynomial
+     * @param[out] g Double array of length 41 that will store the gradients dP/dxi
+     * @return Value of the polynomial
+     */
+    double eval(const double x[41],
+              const double a[3173],
+                    double g[41]);
+    
+    /**
+     * @brief Evaluates the polynomial of degree 4 for A1_B1C2X2_B1C2X2 symmetry.
+     *
+     * Given the linear parameters and the value of the polynomial variables, 
+     * evaluates the polynomial for the A1_B1C2X2_B1C2X2 symmetry.
+     * It uses the direct, non optimized polynomial
+     * @param[in] x Double array of length 41 with the variable values
+     * @param[in] a Double array of 3173 elements with the linear parameters of the polynomial
+     * @param[out] g Double array of length 41 that will store the gradients dP/dxi
+     * @return Value of the polynomial
+     */
+    double eval_direct(const double x[41],
+                     const double a[3173],
+                           double g[41]);
 };
 
-}  // namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
+} // namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
 
-namespace mbnrg_A1_B1C2X2_B1C2X2_deg4_oldswitch {
+#endif // POLY_3B_MBNRG_A1_B1C2X2_B1C2X2_DEG4_H
 
-struct poly_A1_B1C2X2_B1C2X2_deg4_v1 {
-    static const unsigned degree = 4;
-    static const unsigned n_vars = 41;
 
-    static const unsigned size = 1575;
 
-    double eval(const double x[41], const double a[1575]);
-    double eval_direct(const double x[41], const double a[1575]);
-    double eval(const double x[41], const double a[1575], double g[41]);
-    double eval_direct(const double x[41], const double a[1575], double g[41]);
-    unsigned report_nvars() { return n_vars; };
-    unsigned report_size() { return size; };
-};
-
-}  // namespace mbnrg_A1_B1C2X2_B1C2X2_deg4
-
-#endif  // POLY_3B_MBNRG_A1_B1C2X2_B1C2X2_DEG4_H
-
-// Polynomial input used to generate these files:
+//Polynomial input used to generate these files:
 
 //  add_molecule['A1']
 //  add_molecule['B1C2X2']
 //  add_molecule['B1C2X2']
-//
+//  
 //  add_variable['A', '1', 'a', 'B', '1', 'b', 'x-inter-A+B-0']
 //  add_variable['A', '1', 'a', 'B', '2', 'c', 'x-inter-A+B-0']
 //  add_variable['A', '1', 'a', 'C', '1', 'b', 'x-inter-A+C-0']
@@ -121,24 +168,8 @@ struct poly_A1_B1C2X2_B1C2X2_deg4_v1 {
 //  add_variable['X', '1', 'b', 'X', '4', 'c', 'x-inter-X+X-0']
 //  add_variable['X', '2', 'b', 'X', '3', 'c', 'x-inter-X+X-0']
 //  add_variable['X', '2', 'b', 'X', '4', 'c', 'x-inter-X+X-0']
-//
+//  
 //  add_filter['sum-degree', 'x-inter-*+*-*', '0']
-//
-//  add_filter['degree', 'x-intra-*+*-*', '2+','2+']
-//  add_filter['num-fragments', 'x-inter-*+*-*', '2-']
-//
-//  add_filter['degree', 'x-inter-B+B-*', '2', '4']
-//  add_filter['degree', 'x-inter-B+B-*', '3+', '2+']
-//  add_filter['degree', 'x-inter-C+C-*', '2', '4']
-//  add_filter['degree', 'x-inter-C+C-*', '3+', '3+']
-//
-//  add_filter['degree', 'x-inter-A+B-*', '4+', '4']
-//
-//  add_filter['degree', 'x-inter-A+A-*', '3+', '2+']
-//  add_filter['degree', 'x-inter-A+C-*', '4+', '2+']
-//  add_filter['degree', 'x-inter-B+C-*', '4+', '2+']
-//
-//  add_filter['degree', 'x-inter-X+X-*', '2+', '2+']
-//  add_filter['degree', 'x-inter-*+X-*', '2+', '3']
-//  add_filter['degree', 'x-inter-*+X-*', '1+', '4+']
-//
+//  
+//  add_filter['poorly-behaved']
+//  
