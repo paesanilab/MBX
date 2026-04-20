@@ -60,9 +60,9 @@ class PotentialAndElectricField:
     """Electrostatic potential and field sampled at arbitrary probe points.
 
     ``potential`` has shape ``(n_points,)`` and ``electric_field`` has shape
-    ``(n_points, 3)``. These values stay in MBX's native electrostatic units
-    and are returned exactly as MBX reports them, matching the ASE plugin
-    documentation. ASE does not define canonical units for either quantity.
+    ``(n_points, 3)``. MBX reports the potential in units of ``e / Angstrom``
+    and the electric field in units of ``e / Angstrom^2``. ASE does not define
+    canonical units for either quantity, so the raw MBX values are preserved.
     """
 
     potential: np.ndarray
@@ -306,8 +306,9 @@ class MBXCalculator(Calculator):
 
         ``points`` must be convertible to an ``(n_points, 3)`` array of
         Cartesian coordinates in Angstrom. The return value keeps the potential
-        and field in MBX's native electrostatic units because ASE does not
-        define standard units for these observables.
+        in units of ``e / Angstrom`` and the electric field in units of
+        ``e / Angstrom^2`` because ASE does not define standard units for these
+        observables.
         """
 
         self._get_configuration_context(atoms)

@@ -106,8 +106,9 @@ Available getters:
 - `get_potential_and_electric_field_at_points(points, atoms=None)` returns a
   `PotentialAndElectricField` object. `points` must be an `(n_points, 3)` array
   in Angstrom, `potential` has shape `(n_points,)`, and `electric_field` has
-  shape `(n_points, 3)`. MBX native electrostatic units are preserved because
-  ASE does not define canonical units for either quantity.
+  shape `(n_points, 3)`. The potential is returned in units of `e / Angstrom`
+  and the electric field in units of `e / Angstrom^2`. ASE does not define
+  canonical units for either quantity, so the raw MBX values are preserved.
 - `get_external_field_energy_contribution(atoms=None)` returns the external
   field electrostatic energy contribution in eV.
 
