@@ -60,8 +60,9 @@ class PotentialAndElectricField:
     """Electrostatic potential and field sampled at arbitrary probe points.
 
     ``potential`` has shape ``(n_points,)`` and ``electric_field`` has shape
-    ``(n_points, 3)``. These values stay in MBX's native electrostatic units,
-    because ASE does not define canonical units for either quantity.
+    ``(n_points, 3)``. These values stay in MBX's native electrostatic units
+    and are returned exactly as MBX reports them, because ASE does not define
+    canonical units for either quantity.
     """
 
     potential: np.ndarray
@@ -178,9 +179,9 @@ class MBXCalculator(Calculator):
 
         The counts are only needed for site-level observables, so the standard
         ASE properties do not pay the cost of resolving them. When a JSON file
-        provides top-level monomer overrides with explicit ``sites`` values, we
-        honor those overrides here so the Python-side allocation matches MBX's
-        own ``SetUpMonomers`` logic.
+        provides top-level monomer overrides with explicit positive integer
+        ``sites`` values, we honor those overrides here so the Python-side
+        allocation matches MBX's own ``SetUpMonomers`` logic.
         """
 
         if self._site_counts is not None:

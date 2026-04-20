@@ -145,11 +145,8 @@ def _load_json_config(json_file):
     if json_file is None:
         return {}
 
-    try:
-        with open(json_file, encoding="utf-8") as handle:
-            config = json.load(handle)
-    except (FileNotFoundError, OSError, json.JSONDecodeError):
-        return {}
+    with open(json_file, encoding="utf-8") as handle:
+        config = json.load(handle)
 
     return config if isinstance(config, dict) else {}
 
@@ -170,12 +167,17 @@ def resolve_electrostatic_site_counts(monomer_names, json_file=None):
         monomer_config = config.get(monomer_name, {})
         if isinstance(monomer_config, dict) and "sites" in monomer_config:
             try:
-                site_counts.append(int(monomer_config["sites"]))
-                continue
+                site_count = int(monomer_config["sites"])
             except (TypeError, ValueError) as exc:
                 raise ValueError(
                     f"Invalid electrostatic site count override for monomer '{monomer_name}'."
                 ) from exc
+            if site_count < 1:
+                raise ValueError(
+                    f"Electrostatic site count override for monomer '{monomer_name}' must be at least 1."
+                )
+            site_counts.append(site_count)
+            continue
 
         try:
             site_counts.append(DEFAULT_MONOMER_SITE_COUNTS[monomer_name])
