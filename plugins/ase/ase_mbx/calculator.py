@@ -61,8 +61,8 @@ class PotentialAndElectricField:
 
     ``potential`` has shape ``(n_points,)`` and ``electric_field`` has shape
     ``(n_points, 3)``. These values stay in MBX's native electrostatic units
-    and are returned exactly as MBX reports them, because ASE does not define
-    canonical units for either quantity.
+    and are returned exactly as MBX reports them, matching the ASE plugin
+    documentation. ASE does not define canonical units for either quantity.
     """
 
     potential: np.ndarray
