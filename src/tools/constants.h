@@ -123,3 +123,7 @@ const double hbar = 6.350780668;   // in internal units (not 2010 value)
 
 }  // namespace h2o
 #endif  // CONSTANTS_H
+
+namespace algorithm_configuration_parameters {
+    constexpr unsigned int KDTREE_CUTOFF = 3000;
+}
