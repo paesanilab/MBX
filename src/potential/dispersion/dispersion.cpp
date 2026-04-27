@@ -676,7 +676,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     
     helpme::vector<helpme::vector<size_t>> neighbor_list(natoms_  * nsite_types);
 
-    if (total_atoms > 3000) {
+    if (total_atoms > algorithm_configuration_parameters::KDTREE_CUTOFF) {
     
         //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
         std::vector<double> xyz_rearranged(xyz_.size());
@@ -914,7 +914,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                             for(size_t idx = m2init; idx < nmon2; ++idx){
                                 good_mon2_indices.push_back(idx);
                             }
-                        } else if (total_atoms > 3000) {
+                        } else if (total_atoms > algorithm_configuration_parameters::KDTREE_CUTOFF) {
                             good_mon2_indices = neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j];
                         } else {
                             std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];

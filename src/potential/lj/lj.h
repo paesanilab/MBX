@@ -54,6 +54,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
+#include "tools/constants.h"
 #include "kdtree/kdtree_utils.h"
 
 #if !defined(MPI_VERSION) && !defined(MPI_Comm)
