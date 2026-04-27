@@ -1,3 +1,13 @@
-from .calculator import MBXCalculator
+from .calculator import (
+    ElectrostaticEnergyBreakdown,
+    EnergyComponentBreakdown,
+    MBXCalculator,
+    PotentialAndElectricField,
+)
 
-__all__ = ["MBXCalculator"]
+__all__ = [
+    "ElectrostaticEnergyBreakdown",
+    "EnergyComponentBreakdown",
+    "MBXCalculator",
+    "PotentialAndElectricField",
+]
