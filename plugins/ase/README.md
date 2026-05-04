@@ -57,9 +57,73 @@ Forces (eV/A):
 -1.458484688502 -0.000000000000 -1.058504812470
 ```
 
+## Additional observables
+The ASE wrapper now exposes the MBX observables that were previously only
+available through the legacy `plugins/python/mbx/mbx.py` interface. These are
+implemented as explicit calculator methods rather than raw positional tuples so
+the meaning of each quantity stays clear at the call site.
+
+```python
+from ase import io
+from ase_mbx import MBXCalculator
+
+atoms = io.read("initial.extxyz")
+calc = MBXCalculator(
+    json_file="mbx.json",
+    nat_monomers=[3, 3, 3],
+    monomer_names=["h2o", "h2o", "h2o"],
+)
+atoms.calc = calc
+
+components = calc.get_energy_component_breakdown(atoms)
+elec = calc.get_electrostatic_energy_breakdown(atoms)
+site_xyz = calc.get_electrostatic_site_coordinates(atoms)
+site_charges = calc.get_electrostatic_site_charges(atoms)
+site_pols = calc.get_electrostatic_site_polarizabilities(atoms)
+site_mu_ind = calc.get_induced_site_dipoles(atoms)
+probe = calc.get_potential_and_electric_field_at_points([[0.0, 0.0, 0.0]], atoms)
+```
+
+Available getters:
+- `get_energy_component_breakdown(atoms=None)` returns an `EnergyComponentBreakdown`
+  object with named energy terms in eV: `one_body`, `two_body`, `three_body`,
+  `four_body`, `dispersion`, `buckingham`, and `electrostatics`. The helper
+  property `sum_components` returns their sum.
+- `get_electrostatic_energy_breakdown(atoms=None)` returns an
+  `ElectrostaticEnergyBreakdown` object with `permanent` and `induced` terms in
+  eV.
+- `get_electrostatic_site_coordinates(atoms=None)` returns an `(n_sites, 3)`
+  array of electrostatic-site coordinates in Angstrom. The ordering matches the
+  MBX electrostatic site order and includes virtual sites such as the water
+  M-site.
+- `get_electrostatic_site_charges(atoms=None)` returns an `(n_sites,)` array of
+  electrostatic-site charges in units of `e`.
+- `get_electrostatic_site_polarizabilities(atoms=None)` returns an `(n_sites,)`
+  array of electrostatic-site polarizabilities in units of `Angstrom^3`. These
+  are site quantities in MBX input order, not whole-molecule polarizabilities.
+- `get_induced_site_dipoles(atoms=None)` returns an `(n_sites, 3)` array of
+  induced electrostatic-site dipoles in units of `e * Angstrom`.
+- `get_potential_and_electric_field_at_points(points, atoms=None)` returns a
+  `PotentialAndElectricField` object. `points` must be an `(n_points, 3)` array
+  in Angstrom, `potential` has shape `(n_points,)`, and `electric_field` has
+  shape `(n_points, 3)`. The potential is returned in units of `e / Angstrom`
+  and the electric field in units of `e / Angstrom^2`. ASE does not define
+  canonical units for either quantity, so the raw MBX values are preserved.
+- `get_external_field_energy_contribution(atoms=None)` returns the external
+  field electrostatic energy contribution in eV.
+
+Helper methods:
+- `get_electrostatic_site_counts(atoms=None)` returns the per-monomer
+  electrostatic site counts used by the ASE wrapper. The values are resolved
+  lazily from the same `mbx.json` file used to initialize MBX, so top-level
+  monomer `sites` overrides are honored.
+- `get_electrostatic_site_count(atoms=None)` returns the total electrostatic
+  site count.
+
 ## Notes
 - MBX uses kcal/mol and Angstrom; energies and forces are converted to ASE units (eV, eV/A).
 - `MBXCalculator` follows `atoms.pbc` directly and supports either full 3D periodicity or a fully non-periodic system.
 - Periodic runs should use nonzero `alpha_ewald_elec` and `alpha_ewald_disp` values in `mbx.json`. Non-periodic runs should leave both at `0.0`.
 - The ASE `mbx_md.py` example scripts infer monomers directly from the input atom order using the supported MBX monomer definitions (`h2o`, alkali ions, halide ions, `co2`, `ch4`, `he`, `ar`, `h2`, `n2o5`, `so4a`, `co3a`, `no3a`, and `nma`). `dp1` and `dp2` are intentionally not supported here.
+- Electrostatic-site observables resolve their site counts lazily after MBX initialization and follow any monomer-specific `sites` overrides found in `mbx.json`.
 - Input atoms must be grouped in the expected MBX monomer order. If the ordering is unsupported or ambiguous, the ASE examples will raise an error instead of guessing.
