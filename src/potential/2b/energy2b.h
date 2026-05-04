@@ -60,7 +60,9 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/2b/x2b_A1B2C4_D1E2_deg3_v1x.h"
 #include "potential/2b/mbnrg_2b_A1B3_A1B3_deg4_v1.h"
 #include "potential/2b/mbnrg_2b_A1B2Z2_A1B2Z2_deg4_vmbpbe.h"
+#ifdef HAVE_POTENTIAL_NMA
 #include "potential/2b/mbnrg_2b_A1B1C1D3E1F1G1H3_A1B1C1D3E1F1G1H3_deg2_v1.h"
+#endif
 
 #include "potential/2b/mbnrg_2b_A1_B1C2X2_deg6_v1.h"
 // =====>> END SECTION INCLUDE2B <<=====
