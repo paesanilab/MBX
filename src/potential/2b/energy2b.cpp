@@ -375,12 +375,14 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // =====>> BEGIN SECTION 2B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
     }
-#ifdef HAVE_POTENTIAL_NMA
     else if (mon1 == "nma" and mon2 == "nma") {
+#ifdef HAVE_POTENTIAL_NMA
         mbnrg_A1B1C1D3E1F1G1H3_A1B1C1D3E1F1G1H3_deg2::mbnrg_A1B1C1D3E1F1G1H3_A1B1C1D3E1F1G1H3_deg2_v1 pot(mon1, mon2);
         energy =  pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
-    }
+#else
+        throw std::runtime_error("Monomer nma is not compiled in this version of the code. Please reconfigure with --enable-potential-nma to use it.");
 #endif
+    }
     else {
         // =====>> END SECTION 2B_GRADIENT <<=====
         energy = 0.0;

@@ -38,6 +38,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <string>
 #include <vector>
 #include <iostream>
+#include <stdexcept>
 
 // 2B
 #include "potential/2b/x2b-v9x.h"
