@@ -82,12 +82,10 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         energies = pot.eval(xyz1.data(), nm);
         // =====>> BEGIN SECTION 1B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
-    }
-    else if (mon1 == "nma") {
+    } else if (mon1 == "nma") {
 #ifdef HAVE_POTENTIAL_NMA
         mbnrg_A1B1C1D3E1F1G1H3_deg3::mbnrg_A1B1C1D3E1F1G1H3_deg3_v1 pot(mon1);
         energies = pot.eval(xyz1.data(), nm);
-        
 #else
         throw std::runtime_error("Monomer nma is not compiled in this version of the code. Please reconfigure with --enable-potential-nma to use it.");
 #endif
@@ -153,8 +151,7 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
 
         // =====>> BEGIN SECTION 1B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
-    }
-    else if (mon1 == "nma") {
+    } else if (mon1 == "nma") {
 #ifdef HAVE_POTENTIAL_NMA
         mbnrg_A1B1C1D3E1F1G1H3_deg3::mbnrg_A1B1C1D3E1F1G1H3_deg3_v1 pot(mon1);
         energies =  pot.eval(xyz1.data(), grad1.data(), nm, virial);
