@@ -37,6 +37,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <vector>
 #include <set>
+#include <unordered_set>
 
 #if HAVE_MPI
 #include <mpi.h>
@@ -48,9 +49,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/dispersion/disptools.h"
 #include "potential/electrostatics/helpme.h"
+#include "potential/electrostatics/fields.h"
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
+#include "tools/constants.h"
 #include "kdtree/kdtree_utils.h"
 
 enum {
@@ -420,6 +423,12 @@ class Dispersion {
 
     // Vector with d6 coefficients
     std::vector<std::vector<double> > d6_all_;
+
+    // Vector with c8 coefficients
+    std::vector<std::vector<double> > c8_all_;
+
+    // Vector with c10 coefficients
+    std::vector<std::vector<double> > c10_all_;
 
     // Vector with the bool use ttm
     std::vector<bool> use_disp_all_;

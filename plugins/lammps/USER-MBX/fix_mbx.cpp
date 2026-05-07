@@ -39,7 +39,7 @@
 
 #define _MAX_SIZE_MOL_NAME 16
 // Subject to further increase _MAX_SIZE_MOL_NAME
-#define _MAX_ATOMS_PER_MONOMER 8
+#define _MAX_ATOMS_PER_MONOMER 12
 #define SMALL 1.0e-4
 
 
@@ -2019,6 +2019,8 @@ int FixMBX::get_num_atoms_per_monomer(char *name, bool &inc_e)
     na = 4;
   else if (strcmp("dp2", name) == 0)
     na = 2;
+  else if (strcmp("nma", name) == 0)
+    na = 12;
   else
     error->one(FLERR, "Unsupported molecule type in MBX");
 
@@ -2120,6 +2122,19 @@ void FixMBX::add_monomer_atom_types(char *name, std::vector<std::string> &n)
   } else if (strcmp("dp2", name) == 0) {
     n.push_back("X");
     n.push_back("X");
+  } else if (strcmp("nma", name) == 0) {
+      n.push_back("C");
+      n.push_back("O");
+      n.push_back("C");
+      n.push_back("H");
+      n.push_back("H");
+      n.push_back("H");
+      n.push_back("N");
+      n.push_back("H");
+      n.push_back("C");
+      n.push_back("H");
+      n.push_back("H");
+      n.push_back("H");
   }
   else
     error->one(FLERR, "Unsupported molecule type in MBX");

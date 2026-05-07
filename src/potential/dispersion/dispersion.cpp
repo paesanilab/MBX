@@ -232,27 +232,35 @@ void Dispersion::SetNewParameters(const std::vector<double> &xyz,
     use_disp_all_ = std::vector<bool>(nmt * nmt);
     c6_all_ = std::vector<std::vector<double> >(nmt * nmt);
     d6_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    c8_all_ = std::vector<std::vector<double> >(nmt * nmt);
+    c10_all_ = std::vector<std::vector<double> >(nmt * nmt);
     for (size_t mt1 = 0; mt1 < nmt; mt1++) {
         size_t ns1 = num_atoms_[fi1];
         fi2 = 0;
         for (size_t mt2 = 0; mt2 < nmt; mt2++) {
             size_t ns2 = num_atoms_[fi2];
-            std::vector<double> c6v(ns1 * ns2), d6v(ns1 * ns2);
+            std::vector<double> c6v(ns1 * ns2), d6v(ns1 * ns2), c8v(ns1 * ns2), c10v(ns1 * ns2);
 
             for (size_t i = 0; i < ns1; i++) {
                 for (size_t j = 0; j < ns2; j++) {
                     double c6 = 0.0;
                     double d6 = 0.0;
-                    bool do_disp = GetC6(mon_id_[fi1], mon_id_[fi2], i, j, c6, d6, ignore_disp_, repdisp_j_);
+                    double c8 = 0.0;
+                    double c10 = 0.0;
+                    bool do_disp = GetC6(mon_id_[fi1], mon_id_[fi2], i, j, c6, d6, c8, c10, ignore_disp_, repdisp_j_);
                     if (i == 0 && j == 0) {
                         use_disp_all_[nmt * mt1 + mt2] = do_disp;
                     }
                     c6v[ns2 * i + j] = c6;
                     d6v[ns2 * i + j] = d6;
+                    c8v[ns2 * i + j] = c8;
+                    c10v[ns2 * i + j] = c10;
                 }
             }
             c6_all_[nmt * mt1 + mt2] = c6v;
             d6_all_[nmt * mt1 + mt2] = d6v;
+            c8_all_[nmt * mt1 + mt2] = c8v;
+            c10_all_[nmt * mt1 + mt2] = c10v;
             fi2 += mon_type_count_[mt2].second;
         }
         fi1 += mon_type_count_[mt1].second;
@@ -535,6 +543,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     excluded_set_type exc13;
     excluded_set_type exc14;
 
+    // Bool to store whether Koide dispersion damping was used
+    bool use_koide = false;
+
     // Loop over each monomer type
     for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
         size_t ns = num_atoms_[fi_mon];
@@ -546,6 +557,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
         // Obtain excluded pairs for monomer type mt
         systools::GetExcluded(mon_id_[fi_mon], mon_j_, exc12, exc13, exc14);
+
+        // Obtain whether Koide dispersion damping was used for this monomer
+        use_koide = systools::GetUseKoideMonomer(mon_id_[fi_mon]);
 
         // For parallel region
         std::vector<std::vector<double> > phi_pool(nthreads);
@@ -577,12 +591,14 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                     bool is13 = systools::IsExcluded(exc13, i, j);
                     bool is14 = systools::IsExcluded(exc14, i, j);
                     double disp_scale_factor = (is12 || is13 || is14 || !do_disp) ? 0 : 1;
-                    double c6, d6;
+                    double c6, d6, c8, c10;
                     double c6i = c6_long_range_[fi_sites + i * nmon];
                     double c6j = c6_long_range_[fi_sites + j * nmon];
                     // GetC6(mon_id_[fi_mon], mon_id_[fi_mon], i, j, c6, d6, ignore_disp_, repdisp_j_);
                     c6 = c6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
                     d6 = d6_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                    c8 = c8_all_[mt * mon_type_count_.size() + mt][i * ns + j];
+                    c10 = c10_all_[mt * mon_type_count_.size() + mt][i * ns + j];
 
                     bool include_monomer = false;
                     if (!use_ghost) include_monomer = true;
@@ -596,7 +612,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         p1[1] = xyz_[fi_crd + inmon3 + nmon + m];
                         p1[2] = xyz_[fi_crd + inmon3 + nmon2 + m];
                         energy_pool[rank] +=
-                            disp6(c6, d6, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
+                            disp6(c6, d6, c8, c10, use_koide, c6i, c6j, p1, xyz_, g1, grad_pool[rank], phi_i, phi_pool[rank], nmon, nmon,
                                 m, m + 1, i, j, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                                 box_inverse_, use_ghost, islocal_, fi_mon + m, fi_mon, &virial_pool[rank], fi_crd);
                         grad_pool[rank][inmon3 + m] += g1[0];
@@ -639,64 +655,15 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     
     bool use_pbc = box_.size();
 
-    
-    //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
-    std::vector<double> xyz_rearranged(xyz_.size());
-    std::vector<size_t> point_monomer_type_indices(xyz_.size()/3);
-    std::vector<size_t> point_site_indices(xyz_.size()/3);
-    std::vector<size_t> point_monomer_indices(xyz_.size()/3);
-    std::vector<size_t> point_fi_mon2(xyz_.size()/3);
-
-    fi_mon = 0;
-    fi_crd = 0;
-    size_t fi_sitetypes = 0;
-    size_t site_count = xyz_rearranged.size()/3;
-    //fi_mon has the index of the first monomer of this monomer type
-    //for each monomer type
-    for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
-        //for each site of that monomer type
-        //nmon = number of monomers of that type
-        size_t nmon = mon_type_count_[mt].second;
-        size_t ns = num_atoms_[fi_mon];
-        for(size_t s = 0; s < ns; s++){
-            for(size_t i = 0; i<nmon; ++i){
-                if(use_pbc){
-                    double x = box_inverse_[0]*xyz_[fi_crd+i] + box_inverse_[3]*xyz_[fi_crd+i+nmon] + box_inverse_[6]*xyz_[fi_crd+i+2*nmon],
-                        y = box_inverse_[1]*xyz_[fi_crd+i] + box_inverse_[4]*xyz_[fi_crd+i+nmon] + box_inverse_[7]*xyz_[fi_crd+i+2*nmon],
-                        z = box_inverse_[2]*xyz_[fi_crd+i] + box_inverse_[5]*xyz_[fi_crd+i+nmon] + box_inverse_[8]*xyz_[fi_crd+i+2*nmon];
-                    
-                    x -= std::floor(x + 0.5);
-                    y -= std::floor(y + 0.5);
-                    z -= std::floor(z + 0.5);
-
-                    xyz_rearranged[fi_crd+3*i] = box_[0]*x + box_[3]*y + box_[6]*z;
-                    xyz_rearranged[fi_crd+3*i+1] = box_[1]*x + box_[4]*y + box_[7]*z;
-                    xyz_rearranged[fi_crd+3*i+2] = box_[2]*x + box_[5]*y + box_[8]*z;
-                }
-                else{
-                    xyz_rearranged[fi_crd+3*i] = xyz_[fi_crd+i];
-                    xyz_rearranged[fi_crd+3*i+1] = xyz_[fi_crd+i+nmon];
-                    xyz_rearranged[fi_crd+3*i+2] = xyz_[fi_crd+i+nmon*2];
-                }
-                point_monomer_type_indices[fi_crd/3+i] = mt;
-                point_site_indices[fi_crd/3+i] = s;
-                point_monomer_indices[fi_crd/3+i] = i;
-                point_fi_mon2[fi_crd/3+i] = fi_mon;
-            }
-            fi_crd += nmon*3;
-        }
-        fi_mon += nmon;
-    }
-
-    
     int nsite_types = 0;
     size_t fi_mon1 = 0;
+    size_t total_atoms = 0;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         nsite_types += num_atoms_[fi_mon1];
+        total_atoms += mon_type_count_[mt1].second * num_atoms_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
-
-    
+        
     // Sites corresponding to different monomers
     // Declaring first indexes
     size_t fi_sites1 = 0;
@@ -704,91 +671,150 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                    kdtutils::PointCloud<double>, 3 /* dim */>
-        my_kd_tree_t;
-
-    //trees and associated point clouds need to be allocated on the heap
-    std::vector<size_t> tree_indices(0);
-    kdtutils::PointCloud<double>* cloud = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices));
-    my_kd_tree_t* tree = new my_kd_tree_t(3 /*dim*/, *cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
-    tree->buildIndex();
-
-    fi_mon1 = 0;
-    fi_crd1 = 0;
-    fi_sites1 = 0;
-    fi_mon2 = 0;
+    size_t fi_sitetypes = 0;
     size_t fi_sitetypes2 = 0;
+    
+    helpme::vector<helpme::vector<size_t>> neighbor_list(natoms_  * nsite_types);
 
-    std::vector<std::vector<size_t>> neighbor_list(natoms_  * nsite_types);
-    std::vector<std::set<size_t>> neighbor_list_lookup(natoms_  * nsite_types);
+    if (total_atoms > algorithm_configuration_parameters::KDTREE_CUTOFF) {
+    
+        //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
+        std::vector<double> xyz_rearranged(xyz_.size());
+        std::vector<size_t> point_monomer_type_indices(xyz_.size()/3);
+        std::vector<size_t> point_site_indices(xyz_.size()/3);
+        std::vector<size_t> point_monomer_indices(xyz_.size()/3);
+        std::vector<size_t> point_fi_mon2(xyz_.size()/3);
 
-    for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
-
-        size_t ns1 = num_atoms_[fi_mon1];
-        size_t nmon1 = mon_type_count_[mt1].second;
-
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t m1 = 0; m1 < nmon1; m1++) {
-            for (size_t i = 0; i < ns1; i++) {
-
-                std::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
-
-
-                size_t fi_mon2_iter = fi_mon1;
-                size_t fi_sitetypes_iter = 0;
-                for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-                    size_t ns2 = num_atoms_[fi_mon2_iter];
-                    size_t nmon2 = mon_type_count_[mt2].second;
-                    point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes_iter;
-                    fi_sitetypes_iter += ns2;
-                    fi_mon2_iter += nmon2;
-                }
-
-                size_t inmon13 = 3 * nmon1 * i;
-                
-                bool point1_local = islocal_[fi_mon1+m1]==1;
-
-                double point[3];
-                point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
-                point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
-                point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
-
-                std::vector<std::pair<size_t, double>> site2_indices;
-                nanoflann::SearchParams params(32, 0, false);
-
-                const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
-                
-                for(size_t s = 0; s<nMatches; ++s){
-                    //getting the actual index (not periodic index) of the monomer
-                    // size_t idx = site2_indices[s].first % natoms_;
-                    size_t idx = tree_indices[site2_indices[s].first];
-                    size_t mt2 = point_monomer_type_indices[idx];
-                    size_t j = point_site_indices[idx];
-                    size_t m2 = point_monomer_indices[idx];
-
-                    if (mt2 >= mt1) { 
-                        size_t fi_selected_mon2 = point_fi_mon2[idx];
-                        size_t fi_selected_sitetypes2 = point_fi_sitetypes2[mt2 - mt1];
+        fi_mon = 0;
+        fi_crd = 0;
+        fi_sitetypes = 0;
+        size_t site_count = xyz_rearranged.size()/3;
+        //fi_mon has the index of the first monomer of this monomer type
+        //for each monomer type
+        for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
+            //for each site of that monomer type
+            //nmon = number of monomers of that type
+            size_t nmon = mon_type_count_[mt].second;
+            size_t ns = num_atoms_[fi_mon];
+            for(size_t s = 0; s < ns; s++){
+                #pragma omp parallel for schedule(dynamic)
+                for(size_t i = 0; i<nmon; ++i){
+                    if(use_pbc){
+                        double x = box_inverse_[0]*xyz_[fi_crd+i] + box_inverse_[3]*xyz_[fi_crd+i+nmon] + box_inverse_[6]*xyz_[fi_crd+i+2*nmon],
+                            y = box_inverse_[1]*xyz_[fi_crd+i] + box_inverse_[4]*xyz_[fi_crd+i+nmon] + box_inverse_[7]*xyz_[fi_crd+i+2*nmon],
+                            z = box_inverse_[2]*xyz_[fi_crd+i] + box_inverse_[5]*xyz_[fi_crd+i+nmon] + box_inverse_[8]*xyz_[fi_crd+i+2*nmon];
                         
-                        size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
+                        x -= std::floor(x + 0.5);
+                        y -= std::floor(y + 0.5);
+                        z -= std::floor(z + 0.5);
 
-                        if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_selected_mon2+m2]))) && m2 >= m2init) {
-                            if(neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].find(m2) == neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].end()) {
-                                neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].push_back(m2);
-                                neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].insert(m2);
+                        xyz_rearranged[fi_crd+3*i] = box_[0]*x + box_[3]*y + box_[6]*z;
+                        xyz_rearranged[fi_crd+3*i+1] = box_[1]*x + box_[4]*y + box_[7]*z;
+                        xyz_rearranged[fi_crd+3*i+2] = box_[2]*x + box_[5]*y + box_[8]*z;
+                    }
+                    else{
+                        xyz_rearranged[fi_crd+3*i] = xyz_[fi_crd+i];
+                        xyz_rearranged[fi_crd+3*i+1] = xyz_[fi_crd+i+nmon];
+                        xyz_rearranged[fi_crd+3*i+2] = xyz_[fi_crd+i+nmon*2];
+                    }
+                    point_monomer_type_indices[fi_crd/3+i] = mt;
+                    point_site_indices[fi_crd/3+i] = s;
+                    point_monomer_indices[fi_crd/3+i] = i;
+                    point_fi_mon2[fi_crd/3+i] = fi_mon;
+                }
+                fi_crd += nmon*3;
+            }
+            fi_mon += nmon;
+        }
+
+        typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                        kdtutils::PointCloud<double>, 3 /* dim */>
+            my_kd_tree_t;
+
+        //trees and associated point clouds need to be allocated on the heap
+        std::vector<size_t> tree_indices(0);
+        kdtutils::PointCloud<double>* cloud = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices));
+        my_kd_tree_t* tree = new my_kd_tree_t(3 /*dim*/, *cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+        tree->buildIndex();
+
+        fi_mon1 = 0;
+        fi_crd1 = 0;
+        fi_sites1 = 0;
+        fi_mon2 = 0;
+        fi_sitetypes2 = 0;
+
+        helpme::vector<std::unordered_set<size_t, std::hash<size_t>, std::equal_to<size_t>, helpme::FFTWAllocator<size_t>>> neighbor_list_lookup(natoms_  * nsite_types);
+
+        for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
+
+            size_t ns1 = num_atoms_[fi_mon1];
+            size_t nmon1 = mon_type_count_[mt1].second;
+
+            #pragma omp parallel for schedule(dynamic)
+            for (size_t m1 = 0; m1 < nmon1; m1++) {
+                for (size_t i = 0; i < ns1; i++) {
+
+                    helpme::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
+
+
+                    size_t fi_mon2_iter = fi_mon1;
+                    size_t fi_sitetypes_iter = 0;
+                    for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+                        size_t ns2 = num_atoms_[fi_mon2_iter];
+                        size_t nmon2 = mon_type_count_[mt2].second;
+                        point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes_iter;
+                        fi_sitetypes_iter += ns2;
+                        fi_mon2_iter += nmon2;
+                    }
+
+                    size_t inmon13 = 3 * nmon1 * i;
+                    
+                    bool point1_local = islocal_[fi_mon1+m1]==1;
+
+                    double point[3];
+                    point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
+                    point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
+                    point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
+
+                    std::vector<std::pair<size_t, double>> site2_indices;
+                    nanoflann::SearchParams params(32, 0, false);
+
+                    const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                    
+                    for(size_t s = 0; s<nMatches; ++s){
+                        //getting the actual index (not periodic index) of the monomer
+                        // size_t idx = site2_indices[s].first % natoms_;
+                        size_t idx = tree_indices[site2_indices[s].first];
+                        size_t mt2 = point_monomer_type_indices[idx];
+                        size_t j = point_site_indices[idx];
+                        size_t m2 = point_monomer_indices[idx];
+
+                        if (mt2 >= mt1) { 
+                            size_t fi_selected_mon2 = point_fi_mon2[idx];
+                            size_t fi_selected_sitetypes2 = point_fi_sitetypes2[mt2 - mt1];
+                            
+                            size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
+
+                            if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_selected_mon2+m2]))) && m2 >= m2init) {
+                                if(neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].find(m2) == neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].end()) {
+                                    neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].push_back(m2);
+                                    neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].insert(m2);
+                                }
                             }
                         }
                     }
+                            
                 }
-                        
-            }
 
+            }
+            fi_mon1 += nmon1;
+            fi_crd1 += nmon1 * ns1 * 3;
+            fi_sites1 += nmon1 * ns1;
         }
-        fi_mon1 += nmon1;
-        fi_crd1 += nmon1 * ns1 * 3;
-        fi_sites1 += nmon1 * ns1;
+
+        delete tree;
+        delete cloud;
+
     }
 
     fi_mon1 = 0;
@@ -821,6 +847,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
 
             double disp_scale_factor = do_disp ? 1.0 : 0.0;
 
+            // Obtain whether Koide dispersion damping was used for this dimer        
+            use_koide = systools::GetUseKoideDimer(mon_id_[fi_mon1], mon_id_[fi_mon2]);
+
             // Check if monomer types 1 and 2 are the same
             // If so, same monomer won't be done, since it has been done in
             // previous loop.
@@ -833,6 +862,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             std::vector<std::vector<double>> grad2_pool(nthreads);
             std::vector<double> energy_pool(nthreads, 0.0);
             std::vector<std::vector<double>> virial_pool(nthreads);
+            std::vector<std::shared_ptr<std::vector<size_t>>> bool_mon2_indices_pool(nthreads);
+            std::vector<std::shared_ptr<elec::ElectricFieldHolder>> field_pool(nthreads);
             
             #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
@@ -841,6 +872,8 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                 grad1_pool[i] = std::vector<double>(nmon1 * ns1 * 3, 0.0);
                 grad2_pool[i] = std::vector<double>(nmon2 * ns2 * 3, 0.0);
                 virial_pool[i] = std::vector<double>(9, 0.0);
+                bool_mon2_indices_pool[i] = std::make_shared<std::vector<size_t>>(nmon2);
+                field_pool[i] = std::make_shared<elec::ElectricFieldHolder>(nmon2);
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -868,19 +901,44 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         size_t jnmon2 = j * nmon2;
                         size_t jnmon23 = jnmon2 * 3;
                         double c6j = c6_long_range_[fi_sites2 + j * nmon2];
-                        double c6, d6;
+                        double c6, d6, c8, c10;
                         // GetC6(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, c6, d6, ignore_disp_, repdisp_j_);
                         c6 = c6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                         d6 = d6_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                        c8 = c8_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
+                        c10 = c10_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
 
-                        std::vector<size_t> good_mon2_indices;
+                        helpme::vector<size_t> good_mon2_indices;
                         
                         if (do_field_) {
                             for(size_t idx = m2init; idx < nmon2; ++idx){
                                 good_mon2_indices.push_back(idx);
                             }
-                        } else {
+                        } else if (total_atoms > algorithm_configuration_parameters::KDTREE_CUTOFF) {
                             good_mon2_indices = neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j];
+                        } else {
+                            std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];
+                            std::fill(bool_mon2_indices.begin(), bool_mon2_indices.end(), 0.0);
+                            field_pool[rank]->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
+                                                                        nmon1, nmon2, use_pbc, box_, box_inverse_, cutoff_, i, j,
+                                                                        m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+
+                            int num_good_mon2 = 0;
+                            for (int ind = 0; ind < nmon2; ind++) {
+                                if (bool_mon2_indices[ind] == 1) {
+                                    num_good_mon2++;
+                                }
+                            }
+
+                            good_mon2_indices.resize(num_good_mon2);
+                            int current_good_mon2_index = 0;
+                            // monomer 2s within the cutoff are stored in good_mon2_indices
+                            for (int ind = 0; ind < nmon2; ind++) {
+                                if (bool_mon2_indices[ind] == 1) {
+                                    good_mon2_indices[current_good_mon2_index] = ind;
+                                    current_good_mon2_index++;
+                                }
+                            }
                         }
                         
 
@@ -902,7 +960,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         }
 
                         energy_pool[rank] += disp6(
-                            c6, d6, c6i, c6j, xyz_sitei, reordered_xyz2, g1, reordered_grad2, phi_i, reordered_phi2, nmon1,
+                            c6, d6, c8, c10, use_koide, c6i, c6j, xyz_sitei, reordered_xyz2, g1, reordered_grad2, phi_i, reordered_phi2, nmon1,
                             reordered_mon2_size, 0, reordered_mon2_size, i, 0, disp_scale_factor, do_grads_, do_field_, cutoff_, ewald_alpha_, box_,
                             box_inverse_, use_ghost, reordered_islocal, 0, 1, &virial_pool[rank], 0);
 
@@ -979,9 +1037,6 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         fi_sites1 += nmon1 * ns1;
         fi_crd1 += nmon1 * ns1 * 3;
     }
-
-    delete tree;
-    delete cloud;
 
     if (ewald_alpha_ > 0 && use_pbc_ && !use_ghost) {
         helpme::PMEInstance<double> pme_solver_;
@@ -1187,103 +1242,99 @@ void Dispersion::CalculateDispersionPMElocal(bool use_ghost) {
 #if HAVE_MPI == 1
     double _time0 = MPI_Wtime();
 #endif
-    bool compute_pme = (ewald_alpha_ > 0 && use_pbc_);
+    bool compute_pme = (ewald_alpha_ > 0);
 
-    // override settings if ghost particles (big assumption?)
-    // if calling this function, then shouldn't need to check this
-    //    if(!compute_pme && use_ghost && ewald_alpha_ > 0) compute_pme = true;
+    if (compute_pme) {
+        helpme::PMEInstance<double> pme_solver_;
+        if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
+        // Compute the reciprocal space terms, using PME
+        double A = box_ABCabc_PMElocal_[0];
+        double B = box_ABCabc_PMElocal_[1];
+        double C = box_ABCabc_PMElocal_[2];
+        double alpha = box_ABCabc_PMElocal_[3];
+        double beta = box_ABCabc_PMElocal_[4];
+        double gamma = box_ABCabc_PMElocal_[5];
 
-    //    if (compute_pme) {
-    helpme::PMEInstance<double> pme_solver_;
-    if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
-    // Compute the reciprocal space terms, using PME
-    double A = box_ABCabc_PMElocal_[0];
-    double B = box_ABCabc_PMElocal_[1];
-    double C = box_ABCabc_PMElocal_[2];
-    double alpha = box_ABCabc_PMElocal_[3];
-    double beta = box_ABCabc_PMElocal_[4];
-    double gamma = box_ABCabc_PMElocal_[5];
+        int grid_A = pme_grid_density_ * A;
+        int grid_B = pme_grid_density_ * B;
+        int grid_C = pme_grid_density_ * C;
 
-    int grid_A = pme_grid_density_ * A;
-    int grid_B = pme_grid_density_ * B;
-    int grid_C = pme_grid_density_ * C;
-
-    if (mpi_initialized_) {
-        pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0, world_,
-                                  PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
-    } else {
-        pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
-    }
-
-    pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
-
-    mbxt_disp_count_[DISP_PME_SETUP]++;
-#if HAVE_MPI == 1
-    mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
-#endif
-
-    // N.B. these do not make copies; they just wrap the memory with some metadata
-    auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
-    auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
-    auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
-    std::vector<double> dummy_6vec(6, 0.0);
-    auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
-    std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
-
-#if HAVE_MPI == 1
-    _time0 = MPI_Wtime();
-#endif
-    double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
-    mbxt_disp_count_[DISP_PME_PRE]++;
-#if HAVE_MPI == 1
-    mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
-#endif
-
-    // get virial
-    if (calc_virial_) {
-        virial_[0] += *rec_virial[0];
-        virial_[1] += *rec_virial[1];
-        virial_[2] += *rec_virial[3];
-        virial_[4] += *rec_virial[2];
-        virial_[5] += *rec_virial[4];
-        virial_[8] += *rec_virial[5];
-
-        virial_[3] = virial_[1];
-        virial_[6] = virial_[2];
-        virial_[7] = virial_[5];
-    }
-
-    // Resort forces from system order
-    fi_mon = 0;
-    fi_sites = 0;
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = num_atoms_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        for (size_t m = 0; m < nmon; m++) {
-            size_t mns = m * ns;
-            for (size_t i = 0; i < ns; i++) {
-                size_t inmon = i * nmon;
-                const double *result_ptr = forces[fi_sites + mns + i];
-                grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
-                grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
-                grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
-            }
+        if (mpi_initialized_) {
+            pme_solver_.setupParallel(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0, world_,
+                                    PMEInstanceD::NodeOrder::ZYX, proc_grid_x_, proc_grid_y_, proc_grid_z_);
+        } else {
+            pme_solver_.setup(6, ewald_alpha_, pme_spline_order_, grid_A, grid_B, grid_C, -1, 0);
         }
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-    }
 
-    // The Ewald self energy
-    double prefac = std::pow(ewald_alpha_, 6) / 12.0;
-    double self_energy = 0;
+        pme_solver_.setLatticeVectors(A, B, C, alpha, beta, gamma, PMEInstanceD::LatticeType::XAligned);
 
-    for (int i = 0; i < natoms_; ++i) self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
+        mbxt_disp_count_[DISP_PME_SETUP]++;
+    #if HAVE_MPI == 1
+        mbxt_disp_time_[DISP_PME_SETUP] += MPI_Wtime() - _time0;
+    #endif
 
-    self_energy *= prefac;
+        // N.B. these do not make copies; they just wrap the memory with some metadata
+        auto coords = helpme::Matrix<double>(sys_xyz_.data(), natoms_, 3);
+        auto params = helpme::Matrix<double>(sys_c6_long_range_.data(), natoms_, 1);
+        auto forces = helpme::Matrix<double>(sys_grad_.data(), natoms_, 3);
+        std::vector<double> dummy_6vec(6, 0.0);
+        auto rec_virial = helpme::Matrix<double>(dummy_6vec.data(), 6, 1);
+        std::fill(sys_grad_.begin(), sys_grad_.end(), 0);
 
-    disp_energy_ += rec_energy + self_energy;
+    #if HAVE_MPI == 1
+        _time0 = MPI_Wtime();
+    #endif
+        double rec_energy = pme_solver_.computeEFVRec(0, params, coords, forces, rec_virial);
+        mbxt_disp_count_[DISP_PME_PRE]++;
+    #if HAVE_MPI == 1
+        mbxt_disp_time_[DISP_PME_PRE] += MPI_Wtime() - _time0;
+    #endif
 
-    //} // if(compute_pme)
+        // get virial
+        if (calc_virial_) {
+            virial_[0] += *rec_virial[0];
+            virial_[1] += *rec_virial[1];
+            virial_[2] += *rec_virial[3];
+            virial_[4] += *rec_virial[2];
+            virial_[5] += *rec_virial[4];
+            virial_[8] += *rec_virial[5];
+
+            virial_[3] = virial_[1];
+            virial_[6] = virial_[2];
+            virial_[7] = virial_[5];
+        }
+
+        // Resort forces from system order
+        fi_mon = 0;
+        fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = num_atoms_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t mns = m * ns;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    const double *result_ptr = forces[fi_sites + mns + i];
+                    grad_[3 * fi_sites + 3 * inmon + 0 * nmon + m] -= result_ptr[0];
+                    grad_[3 * fi_sites + 3 * inmon + 1 * nmon + m] -= result_ptr[1];
+                    grad_[3 * fi_sites + 3 * inmon + 2 * nmon + m] -= result_ptr[2];
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+        }
+
+        // The Ewald self energy
+        double prefac = std::pow(ewald_alpha_, 6) / 12.0;
+        double self_energy = 0;
+
+        for (int i = 0; i < natoms_; ++i) self_energy += c6_long_range_[i] * c6_long_range_[i] * islocal_atom_[i];
+
+        self_energy *= prefac;
+
+        disp_energy_ += rec_energy + self_energy;
+
+    } // if(compute_pme)
 }
 
 std::vector<size_t> Dispersion::GetInfoCounts() { return mbxt_disp_count_; }

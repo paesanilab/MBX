@@ -1859,7 +1859,7 @@ double mbnrg_A1B4_C1D2_deg4_v1::f_switch(const double r, double& g) {
         g = 0.0;
         return 0.0;
     } else if (r > m_ri) {
-        const double t1 = M_PI / (m_ro - m_ri);
+        const double t1 = constants::MY_PI / (m_ro - m_ri);
         const double x = (r - m_ri) * t1;
         g = -std::sin(x) * t1 / 2.0;
         return (1.0 + std::cos(x)) / 2.0;
