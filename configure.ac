@@ -208,8 +208,6 @@ MBX_CONFIG_ENABLE([march-x86-64-v4],[compilation for x86-64-v4 processors (inclu
 
 MBX_CONFIG_ENABLE([aligned-new],[compilation with aligned new, use this only if you get an error about calls to new when using --enable-intel-intrinsics],[no])
 
-MBX_CONFIG_ENABLE([fpic],[enable -fPIC when compiling mbx library, required for RASPA3 interface.],[no])
-
 # Act on enable flags
 
 if test $debug == true; then
@@ -299,10 +297,6 @@ fi
 
 if test $core_avx512 == true; then
     MBX_CHECK_REQ_CXXFLAG([-xCORE-AVX512])
-fi
-
-if test $fpic == true; then
-    MBX_CHECK_REQ_CXXFLAG([-fPIC])
 fi
 
 if test $march_avx2 == true; then
