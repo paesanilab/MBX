@@ -83,11 +83,15 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         // =====>> BEGIN SECTION 1B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
     } else if (mon1 == "nma") {
+#ifdef HAVE_POTENTIAL_NMA
         mbnrg_A1B1C1D3E1F1G1H3_deg3::mbnrg_A1B1C1D3E1F1G1H3_deg3_v1 pot(mon1);
         energies = pot.eval(xyz1.data(), nm);
-
+#else
+        throw std::runtime_error("Monomer nma is not compiled in this version of the code. Please reconfigure with --enable-potential-nma to use it.");
+#endif
+    }
+    else {
         // =====>> END SECTION 1B_NO_GRADIENT <<=====
-    } else {
         return 0.0;
     }
 
@@ -148,9 +152,14 @@ double get_1b_energy(std::string mon1, size_t nm, std::vector<double> xyz1, std:
         // =====>> BEGIN SECTION 1B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
     } else if (mon1 == "nma") {
+#ifdef HAVE_POTENTIAL_NMA
         mbnrg_A1B1C1D3E1F1G1H3_deg3::mbnrg_A1B1C1D3E1F1G1H3_deg3_v1 pot(mon1);
         energies =  pot.eval(xyz1.data(), grad1.data(), nm, virial);
-    } else if (mon1 == "ch4") {
+#else
+        throw std::runtime_error("Monomer nma is not compiled in this version of the code. Please reconfigure with --enable-potential-nma to use it.");
+#endif
+    }
+    else if (mon1 == "ch4") {
         x1b_A1B4_deg5_exp0::x1b_A1B4_v1x pot(mon1);
         energies = pot.eval(xyz1.data(), grad1.data(), nm, virial);
     } else if (mon1 == "co2_archive") {
