@@ -582,7 +582,7 @@ void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double>
     efd = ef_x_ind_;
 }
 
-void Electrostatics::UpdatePhiAndEf() {
+void Electrostatics::UpdatePhiAndEf(bool use_ghost) {
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
@@ -591,15 +591,16 @@ void Electrostatics::UpdatePhiAndEf() {
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
+            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : true;
             size_t mns = m * ns;
             size_t mns3 = mns * 3;
             for (size_t i = 0; i < ns; i++) {
                 size_t inmon = i * nmon;
                 size_t inmon3 = 3 * inmon;
-                Efq_all_[inmon3 + m + fi_crd] += external_ef_[fi_crd + mns3 + 3 * i];
-                Efq_all_[inmon3 + m + fi_crd + nmon] += external_ef_[fi_crd + mns3 + 3 * i + 1];
-                Efq_all_[inmon3 + m + fi_crd + nmon2] += external_ef_[fi_crd + mns3 + 3 * i + 2];
-                phi_all_[fi_sites + m + inmon] += external_phi_[fi_sites + mns + i];
+                Efq_all_[inmon3 + m + fi_crd] += external_ef_[fi_crd + mns3 + 3 * i] * monomer_is_local;
+                Efq_all_[inmon3 + m + fi_crd + nmon] += external_ef_[fi_crd + mns3 + 3 * i + 1] * monomer_is_local;
+                Efq_all_[inmon3 + m + fi_crd + nmon2] += external_ef_[fi_crd + mns3 + 3 * i + 2] * monomer_is_local;
+                phi_all_[fi_sites + m + inmon] += external_phi_[fi_sites + mns + i] * monomer_is_local;
             }
         }
         fi_mon += nmon;
@@ -1210,7 +1211,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     }
 }
 
-void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad) {
+void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad, bool use_ghost) {
     size_t nsites3 = nsites_ * 3;
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -1221,6 +1222,7 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
+            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : true;
             for (size_t i = 0; i < ns; i++) {
                 for (size_t j = 0; j < 3; j++) {
                     //// Contribution from dE*mu
@@ -1250,7 +1252,7 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
                     //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
 
                     // dL/dmu dmu/dE dE/dr , where dmu/dE = alpha (pol)
-                    grad[fi_crd + m * ns * 3 + 3 * i + j] -= constants::COULOMB * pol_[fi_crd / 3 + ns * m + i] *
+                    grad[fi_crd + m * ns * 3 + 3 * i + j] -= monomer_is_local * constants::COULOMB * pol_[fi_crd / 3 + ns * m + i] *
                                                              (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] *
                                                                   sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i] +
                                                               external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
@@ -2107,7 +2109,7 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
     mon_type_count_ = mon_type_count_cp;
     
     if (external_phi_.size() and external_ef_.size()) {
-        UpdatePhiAndEf();
+        UpdatePhiAndEf(use_ghost);
     }
 
     for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
@@ -2682,7 +2684,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
     mon_type_count_ = mon_type_count_cp;
 
     if (external_phi_.size() and external_ef_.size()) {
-        UpdatePhiAndEf();
+        UpdatePhiAndEf(use_ghost);
     }
     for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
     for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
@@ -10027,7 +10029,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
         delete precomputedInformation[i];
     }
 
-    if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad);
+    if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad, use_ghost);
     // update viral
     if (virial != 0) {
         for (size_t k = 0; k < 9; k++) {
@@ -10138,7 +10140,7 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
         delete precomputedInformation[i];
     }
 
-    if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad);
+    if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad, use_ghost);
     
     // update viral
     if (virial != 0) {
