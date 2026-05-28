@@ -39,6 +39,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include <memory>
 #include <string>
 #include "poly-2b-A1B2Z2_C-v1x.h"
+#include "tools/constants.h"
 
 /**
  * @file x2b-A1B2Z2_C-v1x.h

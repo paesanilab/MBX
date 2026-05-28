@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ase-mbx"
+version = "0.1.0"
+description = "ASE calculator for MBX (MB-nrg) via MBX C API"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["ase", "numpy"]
+
+[tool.setuptools.packages.find]
+where = ["."]

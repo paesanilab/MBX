@@ -36,7 +36,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include "potential/buckingham/buckingham.h"
 #include "tools/math_tools.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 #include <vector>
 #include <iostream>

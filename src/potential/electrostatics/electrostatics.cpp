@@ -73,8 +73,6 @@ const double BIGNUM = 1e50;
 
 namespace elec {
 
-const double PIQSRT = sqrt(M_PI);
-
 std::vector<double> Electrostatics::GetSysXyz() { return sys_xyz_; }
 
 std::vector<double> Electrostatics::GetSysChg() { return sys_chg_; }
@@ -984,7 +982,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
             ef_x_ind_[3 * i + 2] -= result_ptr[2];
         }
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
         double *e_ptr = ef_x_ind_.data();
         for (const auto &mu : mu_) {
             *e_ptr += slf_prefactor * mu;
@@ -2050,12 +2048,12 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
         // The Ewald self potential
         // double *phi_ptr = phi_.data();
         // for (const auto &q : chg_) {
-        //     *phi_ptr -= 2 * ewald_alpha_ / PIQSRT * q;
+        //     *phi_ptr -= 2 * ewald_alpha_ / constants::MY_PIS * q;
         //     ++phi_ptr;
         // }
 
         for (int i = 0; i < nsites_all_; ++i)
-            phi_all_[i] -= 2 * ewald_alpha_ / PIQSRT * chg_all_[i] * islocal_atom_all_[i];
+            phi_all_[i] -= 2 * ewald_alpha_ / constants::MY_PIS * chg_all_[i] * islocal_atom_all_[i];
     }
 
 #ifdef _DEBUG_PERM
@@ -2229,7 +2227,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                         chg_all_.data() + fi_sites, m, m, m + 1, nmon, nmon, i, j, Ai, Asqsqi, aCC_, aCC1_4_, g34_, &ex,
                         &ey, &ez, &phi1, phi_all_.data() + fi_sites, Efq_all_.data() + fi_crd, elec_scale_factor,
                         ewald_alpha_, use_pbc_, box_, box_inverse_, cutoff_, use_ghost, islocal_, fi_mon + m, fi_mon,
-                        fi_mon, &thread_virials[rank]);
+                        0, &thread_virials[rank]);
 
                     phi_all_[fi_sites + inmon + m] += phi1;
                     Efq_all_[fi_crd + inmon3 + m] += ex;
@@ -2620,7 +2618,7 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
         // The Ewald self potential
         double *phi_ptr = phi_all_.data();
         for (const auto &q : chg_all_) {
-            *phi_ptr -= 2 * ewald_alpha_ / PIQSRT * q;
+            *phi_ptr -= 2 * ewald_alpha_ / constants::MY_PIS * q;
             ++phi_ptr;
         }
     }
@@ -5714,7 +5712,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocal(std::vector<double> &in_v, std::
 #endif
 
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
 
         // Resort field from system order
         fi_mon = 0;
@@ -6296,7 +6294,7 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
 #endif
 
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
 
         // Resort field from system order
         fi_mon = 0;
@@ -6440,9 +6438,11 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
     size_t fi_crd2 = 0;
 
     int nsite_types = 0;
+    size_t total_sites = 0;
 
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         nsite_types += sites_all_[fi_mon1];
+        total_sites += mon_type_count_[mt1].second * sites_all_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
     
@@ -6450,142 +6450,147 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
     double aDD = 0.055; // Thole damping aDD intermolecular is always 0.055
 
-    //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
-    std::vector<double> xyz_rearranged(xyz_all_.size());
-    std::vector<size_t> point_monomer_type_indices(xyz_all_.size()/3);
-    std::vector<size_t> point_site_indices(xyz_all_.size()/3);
-    std::vector<size_t> point_monomer_indices(xyz_all_.size()/3);
-    std::vector<size_t> point_fi_mon2(xyz_all_.size()/3);
     size_t fi_mon = 0;
     size_t fi_crd = 0;
-    size_t fi_sitetypes = 0;
-    size_t site_count = xyz_rearranged.size()/3;
-    //fi_mon has the index of the first monomer of this monomer type
-    //for each monomer type
-    for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
-        //for each site of that monomer type
-        //nmon = number of monomers of that type
-        size_t nmon = mon_type_count_[mt].second;
-        size_t ns = sites_all_[fi_mon];
-        fi_sitetypes = 0;
-        for(size_t s = 0; s < ns; s++){
-            #pragma omp parallel for schedule(dynamic)
-            for(size_t i = 0; i<nmon; ++i){
-                if(use_pbc){
-                    double x = box_inverse[0]*xyz_all_[fi_crd+i] + box_inverse[3]*xyz_all_[fi_crd+i+nmon] + box_inverse[6]*xyz_all_[fi_crd+i+2*nmon];
-                    double y = box_inverse[1]*xyz_all_[fi_crd+i] + box_inverse[4]*xyz_all_[fi_crd+i+nmon] + box_inverse[7]*xyz_all_[fi_crd+i+2*nmon];
-                    double z = box_inverse[2]*xyz_all_[fi_crd+i] + box_inverse[5]*xyz_all_[fi_crd+i+nmon] + box_inverse[8]*xyz_all_[fi_crd+i+2*nmon];
-                    
-                    x -= std::floor(x + 0.5);
-                    y -= std::floor(y + 0.5);
-                    z -= std::floor(z + 0.5);
-
-                    xyz_rearranged[fi_crd+3*i] = box[0]*x + box[3]*y + box[6]*z;
-                    xyz_rearranged[fi_crd+3*i+1] = box[1]*x + box[4]*y + box[7]*z;
-                    xyz_rearranged[fi_crd+3*i+2] = box[2]*x + box[5]*y + box[8]*z;
-                }
-                else{
-                    xyz_rearranged[fi_crd+3*i] = xyz_all_[fi_crd+i];
-                    xyz_rearranged[fi_crd+3*i+1] = xyz_all_[fi_crd+i+nmon];
-                    xyz_rearranged[fi_crd+3*i+2] = xyz_all_[fi_crd+i+nmon*2];
-                }
-                point_monomer_type_indices[fi_crd/3+i] = mt;
-                point_site_indices[fi_crd/3+i] = s;
-                point_monomer_indices[fi_crd/3+i] = i;
-                point_fi_mon2[fi_crd/3+i] = fi_mon;
-            }
-            fi_crd += nmon*3;
-            fi_sitetypes += ns;
-        }
-        fi_mon += nmon;
-    }
-
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                    kdtutils::PointCloud<double>, 3 /* dim */>
-        my_kd_tree_t;
-    
-    //trees and associated point clouds need to be allocated on the heap
-    std::vector<size_t> tree_indices(0);
-    kdtutils::PointCloud<double>* cloud = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box, box_inverse, tree_indices));
-    my_kd_tree_t* tree = new my_kd_tree_t(3 /*dim*/, *cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
-    tree->buildIndex();
-
-    fi_mon1 = 0;
-    fi_crd1 = 0;
-    fi_sites1 = 0;
-    fi_mon2 = 0;
     size_t fi_sitetypes2 = 0;
 
-    std::vector<std::set<size_t>> neighbor_list_lookup(nsites_all_  * nsite_types);
+    if (total_sites > algorithm_configuration_parameters::KDTREE_CUTOFF) {
 
-    for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
-
-        size_t ns1 = sites_all_[fi_mon1];
-        size_t nmon1 = mon_type_count_[mt1].second;
-
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t m1 = 0; m1 < nmon1; m1++) {
-            for (size_t i = 0; i < ns1; i++) {
-
-                std::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
-
-
-                size_t fi_mon2_iter = fi_mon1;
-                size_t fi_sitetypes_iter = 0;
-                for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-                    size_t ns2 = sites_all_[fi_mon2_iter];
-                    size_t nmon2 = mon_type_count_[mt2].second;
-                    for (size_t j = 0; j < ns2; j++) {
-                        precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes_iter + j] = new PrecomputedInfo();
-                    }
-                    point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes_iter;
-                    fi_sitetypes_iter += ns2;
-                    fi_mon2_iter += nmon2;
-                }
-
-                size_t inmon13 = 3 * nmon1 * i;
-                
-                bool point1_local = islocal_all_[fi_mon1+m1]==1;
-
-                double point[3];
-                point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
-                point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
-                point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
-
-                std::vector<std::pair<size_t, double>> site2_indices;
-                nanoflann::SearchParams params(32, 0, false);
-
-                const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
-                
-                for(size_t s = 0; s<nMatches; ++s){
-                    //getting the actual index (not periodic index) of the monomer
-                    // size_t idx = site2_indices[s].first % nsites_all_;
-                    size_t idx = tree_indices[site2_indices[s].first];
-                    size_t mt2 = point_monomer_type_indices[idx];
-                    size_t j = point_site_indices[idx];
-                    size_t m2 = point_monomer_indices[idx];
-
-                    if (mt2 >= mt1) { 
-                        size_t fi_selected_mon2 = point_fi_mon2[idx];
-                        size_t fi_selected_sitetypes2 = point_fi_sitetypes2[mt2 - mt1];
+        //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
+        std::vector<double> xyz_rearranged(xyz_all_.size());
+        std::vector<size_t> point_monomer_type_indices(xyz_all_.size()/3);
+        std::vector<size_t> point_site_indices(xyz_all_.size()/3);
+        std::vector<size_t> point_monomer_indices(xyz_all_.size()/3);
+        std::vector<size_t> point_fi_mon2(xyz_all_.size()/3);
+        size_t site_count = xyz_rearranged.size()/3;
+        //fi_mon has the index of the first monomer of this monomer type
+        //for each monomer type
+        for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
+            //for each site of that monomer type
+            //nmon = number of monomers of that type
+            size_t nmon = mon_type_count_[mt].second;
+            size_t ns = sites_all_[fi_mon];
+            for(size_t s = 0; s < ns; s++){
+                #pragma omp parallel for schedule(dynamic)
+                for(size_t i = 0; i<nmon; ++i){
+                    if(use_pbc){
+                        double x = box_inverse[0]*xyz_all_[fi_crd+i] + box_inverse[3]*xyz_all_[fi_crd+i+nmon] + box_inverse[6]*xyz_all_[fi_crd+i+2*nmon];
+                        double y = box_inverse[1]*xyz_all_[fi_crd+i] + box_inverse[4]*xyz_all_[fi_crd+i+nmon] + box_inverse[7]*xyz_all_[fi_crd+i+2*nmon];
+                        double z = box_inverse[2]*xyz_all_[fi_crd+i] + box_inverse[5]*xyz_all_[fi_crd+i+nmon] + box_inverse[8]*xyz_all_[fi_crd+i+2*nmon];
                         
-                        size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
+                        x -= std::floor(x + 0.5);
+                        y -= std::floor(y + 0.5);
+                        z -= std::floor(z + 0.5);
 
-                        if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_selected_mon2+m2]))) && m2 >= m2init) {
-                            if(neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].find(m2) == neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].end()) {
-                                precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j]->good_mon2.push_back(m2);
-                                neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].insert(m2);
+                        xyz_rearranged[fi_crd+3*i] = box[0]*x + box[3]*y + box[6]*z;
+                        xyz_rearranged[fi_crd+3*i+1] = box[1]*x + box[4]*y + box[7]*z;
+                        xyz_rearranged[fi_crd+3*i+2] = box[2]*x + box[5]*y + box[8]*z;
+                    }
+                    else{
+                        xyz_rearranged[fi_crd+3*i] = xyz_all_[fi_crd+i];
+                        xyz_rearranged[fi_crd+3*i+1] = xyz_all_[fi_crd+i+nmon];
+                        xyz_rearranged[fi_crd+3*i+2] = xyz_all_[fi_crd+i+nmon*2];
+                    }
+                    point_monomer_type_indices[fi_crd/3+i] = mt;
+                    point_site_indices[fi_crd/3+i] = s;
+                    point_monomer_indices[fi_crd/3+i] = i;
+                    point_fi_mon2[fi_crd/3+i] = fi_mon;
+                }
+                fi_crd += nmon*3;
+            }
+            fi_mon += nmon;
+        }
+
+        typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                        kdtutils::PointCloud<double>, 3 /* dim */>
+            my_kd_tree_t;
+        
+        //trees and associated point clouds need to be allocated on the heap
+        std::vector<size_t> tree_indices(0);
+        kdtutils::PointCloud<double>* cloud = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box, box_inverse, tree_indices));
+        my_kd_tree_t* tree = new my_kd_tree_t(3 /*dim*/, *cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+        tree->buildIndex();
+
+        fi_mon1 = 0;
+        fi_crd1 = 0;
+        fi_sites1 = 0;
+        fi_mon2 = 0;
+        fi_sitetypes2 = 0;
+
+        std::vector<std::set<size_t>> neighbor_list_lookup(nsites_all_  * nsite_types);
+
+        for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
+
+            size_t ns1 = sites_all_[fi_mon1];
+            size_t nmon1 = mon_type_count_[mt1].second;
+
+            #pragma omp parallel for schedule(dynamic)
+            for (size_t m1 = 0; m1 < nmon1; m1++) {
+                for (size_t i = 0; i < ns1; i++) {
+
+                    std::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
+
+
+                    size_t fi_mon2_iter = fi_mon1;
+                    size_t fi_sitetypes_iter = 0;
+                    for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+                        size_t ns2 = sites_all_[fi_mon2_iter];
+                        size_t nmon2 = mon_type_count_[mt2].second;
+                        for (size_t j = 0; j < ns2; j++) {
+                            precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes_iter + j] = new PrecomputedInfo();
+                        }
+                        point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes_iter;
+                        fi_sitetypes_iter += ns2;
+                        fi_mon2_iter += nmon2;
+                    }
+
+                    size_t inmon13 = 3 * nmon1 * i;
+                    
+                    bool point1_local = islocal_all_[fi_mon1+m1]==1;
+
+                    double point[3];
+                    point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
+                    point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
+                    point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
+
+                    std::vector<std::pair<size_t, double>> site2_indices;
+                    nanoflann::SearchParams params(32, 0, false);
+
+                    const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                    
+                    for(size_t s = 0; s<nMatches; ++s){
+                        //getting the actual index (not periodic index) of the monomer
+                        // size_t idx = site2_indices[s].first % nsites_all_;
+                        size_t idx = tree_indices[site2_indices[s].first];
+                        size_t mt2 = point_monomer_type_indices[idx];
+                        size_t j = point_site_indices[idx];
+                        size_t m2 = point_monomer_indices[idx];
+
+                        if (mt2 >= mt1) { 
+                            size_t fi_selected_mon2 = point_fi_mon2[idx];
+                            size_t fi_selected_sitetypes2 = point_fi_sitetypes2[mt2 - mt1];
+                            
+                            size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
+
+                            if((!use_ghost || (use_ghost && (point1_local || islocal_all_[fi_selected_mon2+m2]))) && m2 >= m2init) {
+                                if(neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].find(m2) == neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].end()) {
+                                    precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j]->good_mon2.push_back(m2);
+                                    neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].insert(m2);
+                                }
                             }
                         }
                     }
+                            
                 }
-                        
-            }
 
+            }
+            fi_mon1 += nmon1;
+            fi_crd1 += nmon1 * ns1 * 3;
+            fi_sites1 += nmon1 * ns1;
         }
-        fi_mon1 += nmon1;
-        fi_crd1 += nmon1 * ns1 * 3;
-        fi_sites1 += nmon1 * ns1;
+
+        delete tree;
+        delete cloud;
     }
 
     fi_mon1 = 0;
@@ -6613,10 +6618,12 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
 
             // Prepare for parallelization
             std::vector<std::shared_ptr<ElectricFieldHolder>> field_pool(nthreads);
+            std::vector<std::shared_ptr<std::vector<size_t>>> bool_mon2_indices_pool(nthreads);
 
             #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
                 field_pool[i] = std::make_shared<ElectricFieldHolder>(maxnmon);
+                bool_mon2_indices_pool[i] = std::make_shared<std::vector<size_t>>(nmon2);
             }
             
             // Parallel loop
@@ -6665,7 +6672,34 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                         // Determine which monomers are within a a twobody_cutoffngstrom cutoff of monomer 1
                         // goes over all mt2 site j
                         
+                        if (total_sites <= algorithm_configuration_parameters::KDTREE_CUTOFF) {
+                            precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j] = new PrecomputedInfo();
+                            std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];
+                            std::fill(bool_mon2_indices.begin(), bool_mon2_indices.end(), 0.0);
+                            local_field->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_all_.data() + fi_crd1, xyz_all_.data() + fi_crd2, m2init, 
+                                                                        nmon1, nmon2, use_pbc, box, box_inverse, cutoff_, i, j,
+                                                                        m1, use_ghost, islocal_all_, fi_mon1 + m1, fi_mon2);
+
+                            int num_good_mon2 = 0;
+                            for (int ind = 0; ind < nmon2; ind++) {
+                                if (bool_mon2_indices[ind] == 1) {
+                                    num_good_mon2++;
+                                }
+                            }
+
+                            precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]->good_mon2.resize(num_good_mon2);
+                            int current_good_mon2_index = 0;
+                            // monomer 2s within the cutoff are stored in good_mon2_indices
+                            for (int ind = 0; ind < nmon2; ind++) {
+                                if (bool_mon2_indices[ind] == 1) {
+                                    precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]->good_mon2[current_good_mon2_index] = ind;
+                                    current_good_mon2_index++;
+                                }
+                            }
+                        }
+
                         PrecomputedInfo& precomp_info = *(precomputedInformation[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j]);
+
 
                         vector<size_t>& good_mon2_indices = precomp_info.good_mon2;
                         int reordered_mon2_size = good_mon2_indices.size();
@@ -6720,9 +6754,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         fi_crd1 += nmon1 * ns1 * 3;
     }
     mon_type_count_ = mon_type_count_cp;
-
-    delete tree;
-    delete cloud;
 
     #if HAVE_MPI == 1
         double time2 = MPI_Wtime();
@@ -7232,7 +7263,7 @@ void Electrostatics::ComputeDipoleField(std::vector<double> &in_v, std::vector<d
             fi_sites += nmon * ns;
         }
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
         double *e_ptr = out_v.data();
         for (const auto &mu : in_v) {
             *e_ptr += slf_prefactor * mu;
@@ -7818,7 +7849,7 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
             fi_sites += nmon * ns;
         }
         // The Ewald self field due to induced dipoles
-        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / PIQSRT;
+        double slf_prefactor = (4.0 / 3.0) * ewald_alpha_ * ewald_alpha_ * ewald_alpha_ / constants::MY_PIS;
         double *e_ptr = out_v.data();
         for (const auto &mu : in_v) {
             *e_ptr += slf_prefactor * mu;

@@ -45,7 +45,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
-#include "json/json.h"
+#include "json/json.hpp"
 
 /**
  * @file buckingham.h

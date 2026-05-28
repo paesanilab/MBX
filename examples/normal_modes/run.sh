@@ -2,5 +2,5 @@
 
 module load gcc
 
-../../bin/normal-modes input.nrg mbx.json 1 > frequencies.dat
+../../bin/normal_modes input.nrg mbx.json 1 > frequencies.dat
 
