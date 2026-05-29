@@ -589,7 +589,7 @@ void Electrostatics::UpdatePhiAndEf(bool use_ghost) {
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
-            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : true;
+            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
             size_t mns = m * ns;
             size_t mns3 = mns * 3;
             for (size_t i = 0; i < ns; i++) {
@@ -1220,7 +1220,7 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
-            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : true;
+            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
             for (size_t i = 0; i < ns; i++) {
                 for (size_t j = 0; j < 3; j++) {
                     //// Contribution from dE*mu
@@ -7988,15 +7988,36 @@ void Electrostatics::CalculateDipolesIterative(std::vector<PrecomputedInfo*>& pr
     }
 }
 
-void Electrostatics::CalculateElecEnergyMPIlocal() {
+void Electrostatics::CalculateElecEnergyMPIlocal(bool use_ghost) {
     Eperm_ = 0.0;
     for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
-    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ += external_phi_[i] * sys_chg_all_[i]; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
-    Eperm_ *= 0.5 * constants::COULOMB;
 
     Eperm_ext_ = 0.0;
-    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ext_ += external_phi_[i] * sys_chg_all_[i];
-    Eperm_ext_ *= 0.5 * constants::COULOMB;
+
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                Eperm_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
+                Eperm_ext_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local;
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+    Eperm_ *= 0.5 * constants::COULOMB;
+    Eperm_ext_ *= 0.5 * constants::COULOMB; // probably shouldn't have 0.5 factor here, at least if we want this to be whole external elec energy. But for now I will leave it for backwards compatibility.
 
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;
@@ -8033,16 +8054,37 @@ void Electrostatics::CalculateElecEnergyMPIlocal() {
 #endif
 }
 
-void Electrostatics::CalculateElecEnergy() {
+void Electrostatics::CalculateElecEnergy(bool use_ghost) {
     Eperm_ = 0.0;
     for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
-    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ += external_phi_[i] * sys_chg_all_[i]; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
-    Eperm_ *= 0.5 * constants::COULOMB;
 
     Eperm_ext_ = 0.0;
-    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ext_ += external_phi_[i] * sys_chg_all_[i];
-    Eperm_ext_ *= 0.5 * constants::COULOMB;
 
+    size_t fi_mon = 0;
+    size_t fi_crd = 0;
+    size_t fi_sites = 0;
+    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+        size_t ns = sites_[fi_mon];
+        size_t nmon = mon_type_count_[mt].second;
+        size_t nmon2 = nmon * 2;
+        for (size_t m = 0; m < nmon; m++) {
+            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
+            size_t mns = m * ns;
+            size_t mns3 = mns * 3;
+            for (size_t i = 0; i < ns; i++) {
+                size_t inmon = i * nmon;
+                size_t inmon3 = 3 * inmon;
+                Eperm_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
+                Eperm_ext_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local;
+            }
+        }
+        fi_mon += nmon;
+        fi_sites += nmon * ns;
+        fi_crd += nmon * ns * 3;
+    }
+    Eperm_ *= 0.5 * constants::COULOMB;
+    Eperm_ext_ *= 0.5 * constants::COULOMB; // probably shouldn't have 0.5 factor here, at least if we want this to be whole external elec energy. But for now I will leave it for backwards compatibility.
+    
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;
     for (size_t i = 0; i < 3 * nsites_; i++) Eind_ -= mu_[i] * Efq_[i];
@@ -10053,7 +10095,7 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField(precomputedInformation, pme_solver_, use_ghost);
     CalculateDipoles(precomputedInformation, pme_solver_);
-    CalculateElecEnergy();
+    CalculateElecEnergy(use_ghost);
     if (do_grads_) CalculateGradients(precomputedInformation, grad, pme_solver_);
 
     for(size_t i = 0; i < precomputedInformation.size(); i++) {
@@ -10164,7 +10206,7 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
 
     CalculatePermanentElecFieldMPIlocal(precomputedInformation, pme_solver_, use_ghost);
     CalculateDipolesMPIlocal(precomputedInformation, pme_solver_, use_ghost);
-    CalculateElecEnergyMPIlocal();
+    CalculateElecEnergyMPIlocal(use_ghost);
     if (do_grads_) CalculateGradientsMPIlocal(precomputedInformation, grad, pme_solver_, use_ghost);
 
     for(size_t i = 0; i < precomputedInformation.size(); i++) {

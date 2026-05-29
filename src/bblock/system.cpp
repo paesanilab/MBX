@@ -3679,7 +3679,7 @@ void System::init_external_field() {
 
     for (size_t i = 0; i < numsites_; i++) {
         for (size_t j = 0; j < 9; j++) {
-            dmui[i*9 + j] = 0.0; // not entirely sure what this is, but its 0.0 (probably, check this!).
+            dmui[i*9 + j] = 0.0; // this is derivative of efield with respect to dipoles. For now, always 0.0. In future can implement for responsive external field.
         }
     }
 

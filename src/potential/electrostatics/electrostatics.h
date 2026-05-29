@@ -580,8 +580,8 @@ class Electrostatics {
     void CalculateDipoles(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_);
     void CalculateDipolesMPIlocal(std::vector<PrecomputedInfo*>& precomputedInformation, helpme::PMEInstance<double>& pme_solver_, bool use_ghost = 0);
     
-    void CalculateElecEnergy();
-    void CalculateElecEnergyMPIlocal();
+    void CalculateElecEnergy(bool use_ghost);
+    void CalculateElecEnergyMPIlocal(bool use_ghost);
 
 
     /*
