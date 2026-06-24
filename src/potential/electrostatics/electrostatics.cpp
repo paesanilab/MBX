@@ -6490,9 +6490,9 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
         
         //trees and associated point clouds need to be allocated on the heap
         std::vector<size_t> tree_indices(0);
-        kdtutils::PointCloud<double>* cloud = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box, box_inverse, tree_indices));
-        my_kd_tree_t* tree = new my_kd_tree_t(3 /*dim*/, *cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
-        tree->buildIndex();
+        kdtutils::PointCloud<double> cloud = kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box, box_inverse, tree_indices);
+        my_kd_tree_t tree(3 /*dim*/, cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+        tree.buildIndex();
 
         fi_mon1 = 0;
         fi_crd1 = 0;
@@ -6539,7 +6539,7 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
                     std::vector<std::pair<size_t, double>> site2_indices;
                     nanoflann::SearchParams params(32, 0, false);
 
-                    const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                    const size_t nMatches = tree.radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
                     
                     for(size_t s = 0; s<nMatches; ++s){
                         //getting the actual index (not periodic index) of the monomer
@@ -6571,9 +6571,6 @@ void Electrostatics::PrecomputeDipoleIterationsInformation(std::vector<double> &
             fi_crd1 += nmon1 * ns1 * 3;
             fi_sites1 += nmon1 * ns1;
         }
-
-        delete tree;
-        delete cloud;
     }
 
     fi_mon1 = 0;
