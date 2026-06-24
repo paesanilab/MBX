@@ -730,10 +730,9 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
                                                         kdtutils::PointCloud<double>, 3 /* dim */>
             my_kd_tree_t;
-
-        //trees and associated point clouds need to be allocated on the heap
+        
         std::vector<size_t> tree_indices(0);
-        kdtutils::PointCloud<double> cloud = kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices));
+        kdtutils::PointCloud<double> cloud = kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices);
         my_kd_tree_t tree(3 /*dim*/, cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
         tree.buildIndex();
 
