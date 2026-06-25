@@ -1668,7 +1668,28 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
 
     // double t[20000];
     // std::vector<double> e2b = poly_2b_v6x::eval(ndtd, thefit, vv, gg);
-    std::vector<double> e2b = poly_2b_v6x::eval(ndtd, thefit, vv, t, gg);
+    std::vector<double> e2b(ndtd, 0.0);
+    for (size_t batch_index = 0; batch_index < (ndtd + 7) / 8; batch_index++) {
+        std::vector<double> batch_vv(31*8, 0.0);
+        std::vector<double> batch_gg(31*8, 0.0);
+
+        size_t batch_length = (8*(batch_index + 1) > ndtd) ? (ndtd - 8*batch_index) : 8;
+
+        for (size_t i = 0; i < batch_length; i++) {
+            for (size_t j = 0; j < 31; j++) {
+                batch_vv[j*8 + i] = vv[j * ndtd + batch_index*8 + i];
+            }
+        }
+
+        std::vector<double> e2b_batch = poly_2b_v6x::eval(thefit, batch_vv.data(), t, batch_gg.data());
+
+        for (size_t i = 0; i < batch_length; i++) {
+            for (size_t j = 0; j < 31; j++) {
+                gg[j * ndtd + batch_index*8 + i] = batch_gg[j*8 + i];
+            }
+            e2b[batch_index*8 + i] = e2b_batch[i];
+        }
+    }
 
     for (size_t i = 0; i < ndtd; i++) {
         // offsets

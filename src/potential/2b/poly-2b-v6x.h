@@ -92,7 +92,7 @@ struct poly_2b_v6x {
      * @return Vector of nd elements with the polynomial evaluation of each system
      */
     // static std::vector<double> eval(const size_t nd, const double* a, const double* x, double* g);
-    static std::vector<double> eval(const size_t nd, const double* a, const double* x, double* t, double* g);
+    static std::vector<double> eval(const double *a, const double *x, double *t, double *g);
 };
 
 }  // namespace x2o
