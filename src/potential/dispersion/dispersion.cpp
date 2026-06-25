@@ -674,7 +674,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
     size_t fi_sitetypes = 0;
     size_t fi_sitetypes2 = 0;
     
-    helpme::vector<helpme::vector<size_t>> neighbor_list(natoms_  * nsite_types);
+    vector<vector<size_t>> neighbor_list(natoms_  * nsite_types);
 
     if (total_atoms > algorithm_configuration_parameters::KDTREE_CUTOFF) {
     
@@ -730,12 +730,11 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
                                                         kdtutils::PointCloud<double>, 3 /* dim */>
             my_kd_tree_t;
-
-        //trees and associated point clouds need to be allocated on the heap
+        
         std::vector<size_t> tree_indices(0);
-        kdtutils::PointCloud<double>* cloud = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices));
-        my_kd_tree_t* tree = new my_kd_tree_t(3 /*dim*/, *cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
-        tree->buildIndex();
+        kdtutils::PointCloud<double> cloud = kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices);
+        my_kd_tree_t tree(3 /*dim*/, cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+        tree.buildIndex();
 
         fi_mon1 = 0;
         fi_crd1 = 0;
@@ -743,7 +742,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
         fi_mon2 = 0;
         fi_sitetypes2 = 0;
 
-        helpme::vector<std::unordered_set<size_t, std::hash<size_t>, std::equal_to<size_t>, helpme::FFTWAllocator<size_t>>> neighbor_list_lookup(natoms_  * nsite_types);
+        vector<std::unordered_set<size_t, std::hash<size_t>, std::equal_to<size_t>, allocator<size_t>>> neighbor_list_lookup(natoms_  * nsite_types);
 
         for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
 
@@ -754,7 +753,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             for (size_t m1 = 0; m1 < nmon1; m1++) {
                 for (size_t i = 0; i < ns1; i++) {
 
-                    helpme::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
+                    vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
 
 
                     size_t fi_mon2_iter = fi_mon1;
@@ -779,7 +778,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                     std::vector<std::pair<size_t, double>> site2_indices;
                     nanoflann::SearchParams params(32, 0, false);
 
-                    const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                    const size_t nMatches = tree.radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
                     
                     for(size_t s = 0; s<nMatches; ++s){
                         //getting the actual index (not periodic index) of the monomer
@@ -811,9 +810,6 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
             fi_crd1 += nmon1 * ns1 * 3;
             fi_sites1 += nmon1 * ns1;
         }
-
-        delete tree;
-        delete cloud;
 
     }
 
@@ -908,7 +904,7 @@ void Dispersion::CalculateDispersion(bool use_ghost) {
                         c8 = c8_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
                         c10 = c10_all_[mt1 * mon_type_count_.size() + mt2][i * ns2 + j];
 
-                        helpme::vector<size_t> good_mon2_indices;
+                        vector<size_t> good_mon2_indices;
                         
                         if (do_field_) {
                             for(size_t idx = m2init; idx < nmon2; ++idx){
