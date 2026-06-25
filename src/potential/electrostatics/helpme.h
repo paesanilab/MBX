@@ -469,7 +469,9 @@ class FFTWAllocator {
     }
 
     // destroy elements of initialized storage p
-    void destroy(pointer p) {}
+    void destroy(pointer p) {
+        p->~T();
+    }
 
     // deallocate storage p of deleted elements
     void deallocate(pointer p, size_type num) {
