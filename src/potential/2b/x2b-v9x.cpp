@@ -1658,16 +1658,17 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
 
     double e = 0.0;
 
-    double bigmem[3150*8];
+    constexpr size_t memory_reserved = 1230*8;
+    constexpr size_t memory_required = 1208*8;
+
+    double bigmem[memory_reserved];
 
     void* pool = reinterpret_cast<void *>(bigmem);
 
-    size_t space = 3150*8*8;
+    size_t space = memory_reserved*sizeof(double);
 
-    double* t = reinterpret_cast<double *>(std::align(128, 3133*8*8, pool, space));
+    double* t = reinterpret_cast<double *>(std::align(128, memory_required*sizeof(double), pool, space));
 
-    // double t[20000];
-    // std::vector<double> e2b = poly_2b_v6x::eval(ndtd, thefit, vv, gg);
     std::vector<double> e2b(ndtd, 0.0);
     for (size_t batch_index = 0; batch_index < (ndtd + 7) / 8; batch_index++) {
         std::vector<double> batch_vv(31*8, 0.0);
