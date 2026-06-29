@@ -1591,9 +1591,8 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
 
         if(!skip || (skip && i >= nt - 1 && idx > 0)) {
             int numEvals = (idx == 0) ? 8 : idx;
-            double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
-            std::copy(e3b, e3b + numEvals, energy.begin() + copyIdx);
-            delete[] e3b;
+            std::vector<double> e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
+            std::copy(e3b.begin(), e3b.begin() + numEvals, energy.begin() + copyIdx);
 
             for(size_t j = 0; j < numEvals; j++) {
                 sh = eval_sh[j];

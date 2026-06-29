@@ -83,7 +83,7 @@ class poly_3b_v2x {
      * @param[out] g Double array of length 36*8 that will store the gradients dP/dxi
      * @return Double array of length 8 of polynomial values
      */
-    static double* eval(const double* a, const double* x, double* t, double* g);
+    static std::vector<double> eval(const double* a, const double* x, double* t, double* g);
 };
 
 }  // namespace x2o
