@@ -1658,7 +1658,10 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
 
     double e = 0.0;
 
+    // Allocate a bit more memory than required, so it can be aligned to 128 byte boundary
     constexpr size_t memory_reserved = 1230*8;
+
+    // Amount of temporary memory actually required for vectorized PIP evaluation
     constexpr size_t memory_required = 1208*8;
 
     double bigmem[memory_reserved];
