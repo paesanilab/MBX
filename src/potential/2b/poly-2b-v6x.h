@@ -91,7 +91,18 @@ struct poly_2b_v6x {
      * means that the order is var1_sys1 var1_sys2 ... var1_sysnd var2_sys1 ...
      * @return Vector of nd elements with the polynomial evaluation of each system
      */
-    // static std::vector<double> eval(const size_t nd, const double* a, const double* x, double* g);
+
+    /**
+     * @brief Evaluates the polynomial of degree 4 for MB-pol 2b.
+     *
+     * Given the linear parameters and the value of the polynomial variables, evaluates the polynomial for MB-pol
+     * and calculates the gradients.
+     * @param[in] a Double array of 1153*8 elements with the linear parameters of the polynomial
+     * @param[in] x Double array of length 31*8 with the variable values
+     * @param[in] t Double array of length 1208*8 used as intermediate values for the polynomial evaluation
+     * @param[out] g Double array of length 31*8 that will store the gradients dP/dxi
+     * @return Double vector of length 8 of polynomial values
+     */
     static std::vector<double> eval(const double *a, const double *x, double *t, double *g);
 };
 

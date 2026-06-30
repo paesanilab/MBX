@@ -2146,7 +2146,7 @@ TEST_CASE("poly-3b-v2x::class") {
     x2o::poly_3b_v2x p;
 
     double e_nograd = p.eval(a.data(), x.data());
-    double* es = p.eval(a.data(), vectorized_x.data(), t.data(), vectorized_g.data());
+    std::vector<double> es = p.eval(a.data(), vectorized_x.data(), t.data(), vectorized_g.data());
 
     for (size_t i = 0; i < g.size(); ++i) {
         g[i] = vectorized_g[i*8 + 0];

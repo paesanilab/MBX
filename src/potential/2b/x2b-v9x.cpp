@@ -1673,9 +1673,10 @@ double x2b_v9x::eval(const double* w1, const double* w2, double* g1, double* g2,
     double* t = reinterpret_cast<double *>(std::align(128, memory_required*sizeof(double), pool, space));
 
     std::vector<double> e2b(ndtd, 0.0);
+    std::vector<double> batch_vv(31*8, 0.0);
+    std::vector<double> batch_gg(31*8, 0.0);
+    
     for (size_t batch_index = 0; batch_index < (ndtd + 7) / 8; batch_index++) {
-        std::vector<double> batch_vv(31*8, 0.0);
-        std::vector<double> batch_gg(31*8, 0.0);
 
         size_t batch_length = (8*(batch_index + 1) > ndtd) ? (ndtd - 8*batch_index) : 8;
 
