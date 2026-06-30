@@ -2946,18 +2946,27 @@ TEST_CASE(":poly_2b_v6x:struct") {
         3.63788157941373810900e+01,  2.89509672775493527297e+01,  4.45672482007694270578e+01,
         -2.17312521379669760790e+01, -7.24122986766406029346e+00, -1.87978713375505321892e+01,
         -2.74389572670201005167e+01};
-    std::vector<double> e_expected = {-2.35607295155091378547e-02};
+    std::vector<double> e_expected = -2.35607295155091378547e-02;
+    std::vector<double> t(1208*8, 0.0);
+    
+    std::vector<double> vectorized_x(x.size()*8, 0.0);
+    for (size_t i = 0; i < x.size(); ++i) {
+            vectorized_x[i*8 + 0] = x[i];
+    }
+    std::vector<double> vectorized_g(g.size()*8, 0.0);
 
     x2o::poly_2b_v6x p;
 
-    double t[3133*8];
-
     std::vector<double> e_nograd = p.eval(1, a.data(), x.data());
-    std::vector<double> e = p.eval(1, a.data(), x.data(), t, g.data());
+    std::vector<double> es = p.eval(a.data(), vectorized_x.data(), t.data(), vectorized_g.data());
+    
+    for (size_t i = 0; i < g.size(); ++i) {
+        g[i] = vectorized_g[i*8 + 0];
+    }
 
     REQUIRE(VectorsAreEqual(g, g_expected, TOL));
-    REQUIRE(VectorsAreEqual(e_nograd, e_expected, TOL));
-    REQUIRE(VectorsAreEqual(e, e_expected, TOL));
+    REQUIRE(e_nograd[0] == Approx(e_expected).margin(TOL));
+    REQUIRE(es[0] == Approx(e_expected).margin(TOL));
 
     std::vector<double> x_2 = {
         1.42891455417036694620e+00, 1.42891455417036694620e+00, 1.43733924599107409925e+00, 1.42394577058100679778e+00,
