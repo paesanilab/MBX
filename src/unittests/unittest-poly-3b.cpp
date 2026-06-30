@@ -2155,6 +2155,4 @@ TEST_CASE("poly-3b-v2x::class") {
     REQUIRE(VectorsAreEqual(g, g_expected, TOL));
     REQUIRE(e_nograd == Approx(e_expected).margin(TOL));
     REQUIRE(es[0] == Approx(e_expected).margin(TOL));
-
-    delete[] es;
 }
