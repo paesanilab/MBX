@@ -7,6 +7,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <cstdlib>
+#include <string>
 
 #include "io_tools/read_nrg.h"
 #include "io_tools/write_nrg.h"
@@ -15,6 +16,7 @@
 
 #include "bblock/system.h"
 
+#include "main/parse_args.h"
 #include "tools/xmin.h"
 
 namespace {
@@ -103,12 +105,18 @@ int main(int argc, char **argv) {
 
         // Get number of maximum iterations
         if (argc > 3) {
-            maxit = atoi(argv[3]);
+            int maxit_in = ParseIntArg(argv[3], "<max iterations>");
+            if (maxit_in < 0) {
+                std::cerr << "Invalid value for <max iterations>: '" << argv[3] << "' (must be non-negative)"
+                          << std::endl;
+                return EXIT_FAILURE;
+            }
+            maxit = maxit_in;
         }
 
         // Get the tolerance for optimization
         if (argc > 4) {
-            tol = atof(argv[4]);
+            tol = ParseDoubleArg(argv[4], "<tolerance>");
         }
 
         // Read trajectory of inputed
@@ -118,7 +126,12 @@ int main(int argc, char **argv) {
 
         // read the step
         if (argc > 6) {
-            step = atoi(argv[6]);
+            int step_in = ParseIntArg(argv[6], "<step>");
+            if (step_in < 1) {
+                std::cerr << "Invalid value for <step>: '" << argv[6] << "' (must be at least 1)" << std::endl;
+                return EXIT_FAILURE;
+            }
+            step = step_in;
         }
 
     } catch (const std::exception &e) {

@@ -8,12 +8,15 @@
 #include <cstring>
 #include <stdexcept>
 #include <cstdlib>
+#include <string>
 
 #include "io_tools/read_nrg.h"
 #include "io_tools/write_nrg.h"
 #include "io_tools/write_xyz.h"
 
 #include "bblock/system.h"
+
+#include "main/parse_args.h"
 
 namespace {
 
@@ -271,7 +274,7 @@ void parse_command_line(int argc, char** argv)
                 do_decomp = false;
                 break;
             case 'o':
-                max_order = atoi(optarg);
+                max_order = ParseIntArg(optarg, "-o");
                 break;
             case 'p':
                 print_xyz = true;
