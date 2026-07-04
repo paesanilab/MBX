@@ -2903,10 +2903,10 @@ class PMEInstance {
         #pragma omp parallel for
         for (size_t point = 0; point < nPoints; ++point) {
             Real *phiPtr = fracPotential[point];
-            auto bSplines = makeBSplines(gridPoints[point], derivativeLevel);
-            auto splineA = std::get<0>(bSplines);
-            auto splineB = std::get<1>(bSplines);
-            auto splineC = std::get<2>(bSplines);
+            const auto bSplines = makeBSplines(gridPoints[point], derivativeLevel);
+            const auto &splineA = std::get<0>(bSplines);
+            const auto &splineB = std::get<1>(bSplines);
+            const auto &splineC = std::get<2>(bSplines);
             const auto &aGridIterator = gridIteratorA_[splineA.startingGridPoint()];
             const auto &bGridIterator = gridIteratorB_[splineB.startingGridPoint()];
             const auto &cGridIterator = gridIteratorC_[splineC.startingGridPoint()];
