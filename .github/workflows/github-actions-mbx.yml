@@ -66,10 +66,11 @@ jobs:
           ${{matrix.compiler}} -v | tee compiler_version.txt
           ls ${{ github.workspace }}
           autoreconf -fi
-          ./configure --disable-optimization $coverageflag ${{matrix.configure_arguments}} CXX=${{matrix.compiler}}
+          ./configure --disable-optimization $coverageflag --enable-shared ${{matrix.configure_arguments}} CXX=${{matrix.compiler}}
           make -j2
           make install
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
+          echo "PYTHONPATH=$PYTHONPATH:${{ github.workspace }}/plugins/python/mbx" >> "$GITHUB_ENV"
           
 
       - run: |
@@ -85,7 +86,14 @@ jobs:
         run: |
           cat src/unittests/test-suite.log
           cat src/unittests/test-suite.log >> $GITHUB_STEP_SUMMARY
-
+      
+      - name: Testing python plugin
+        if: matrix.compiler == 'icpx'
+        run: |
+          cd ${{ github.workspace }}/plugins/python/examples
+          pip install numpy
+          python3 mbx_test.py
+          
       - name: Collect coverage
         if: matrix.compiler == 'g++'
         run: |
