@@ -8,6 +8,11 @@ on:
         required: true
         default: "1"
         type: number
+      valgrind_check:
+        description: 'Run optional Valgrind memory leak check'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   compile-mbxlammps:
@@ -89,3 +94,68 @@ jobs:
       - name: run validate_example.py
         run: python3 ${{ github.workspace }}/plugins/lammps/examples/validate_example.py ${{ github.workspace }}/plugins/lammps/examples/${{ matrix.example }}
 
+  valgrind_mbxlammps:
+    if: ${{ inputs.valgrind_check }}
+    runs-on: [self-hosted]
+    needs: test_mbxlammps
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - name: Download executable from compilation
+        uses: actions/download-artifact@v8
+        with:
+          name: executable
+      - run: ls ${{ github.workspace }} -lth
+
+      - name: Valgrind leak check 1024h2o
+        run: |
+          set -o pipefail
+          chmod u+x lmp
+          cd ${{ github.workspace }}/plugins/lammps/examples/1024h2o/
+          export OMP_NUM_THREADS=${{ github.event.inputs.omp }}
+          valgrind --leak-check=full --show-leak-kinds=all ${{ github.workspace }}/lmp -in in.* 2>&1 | tee valgrind.log
+
+          definitely_lost=$(awk '/definitely lost:/ { gsub(/,/, "", $4); print $4 }' valgrind.log | tail -n 1)
+          indirectly_lost=$(awk '/indirectly lost:/ { gsub(/,/, "", $4); print $4 }' valgrind.log | tail -n 1)
+          possibly_lost=$(awk '/possibly lost:/ { gsub(/,/, "", $4); print $4 }' valgrind.log | tail -n 1)
+
+          definitely_lost=${definitely_lost:-0}
+          indirectly_lost=${indirectly_lost:-0}
+          possibly_lost=${possibly_lost:-0}
+
+          echo "Valgrind definitely lost: ${definitely_lost} bytes"
+          echo "Valgrind indirectly lost: ${indirectly_lost} bytes"
+          echo "Valgrind possibly lost: ${possibly_lost} bytes"
+
+          {
+            echo "### Valgrind leak summary"
+            echo ""
+            echo "| Leak kind | Bytes |"
+            echo "| --- | ---: |"
+            echo "| Definitely lost | ${definitely_lost} |"
+            echo "| Indirectly lost | ${indirectly_lost} |"
+            echo "| Possibly lost | ${possibly_lost} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          detected_leaks=""
+          if [ "${definitely_lost}" -gt 0 ]; then
+            detected_leaks="${detected_leaks} definitely lost (${definitely_lost} bytes)"
+          fi
+          if [ "${indirectly_lost}" -gt 0 ]; then
+            detected_leaks="${detected_leaks} indirectly lost (${indirectly_lost} bytes)"
+          fi
+          if [ "${possibly_lost}" -gt 0 ]; then
+            detected_leaks="${detected_leaks} possibly lost (${possibly_lost} bytes)"
+          fi
+
+          if [ -n "${detected_leaks}" ]; then
+            echo "Valgrind detected nonzero leak bytes:${detected_leaks}"
+            exit 1
+          fi
+      - name: Upload Valgrind logfile
+        uses: actions/upload-artifact@v7
+        with:
+          name: 1024h2o_valgrind.log
+          path: ${{ github.workspace }}/plugins/lammps/examples/1024h2o/valgrind.log
+          retention-days: 7
