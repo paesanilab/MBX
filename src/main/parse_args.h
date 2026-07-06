@@ -17,7 +17,7 @@ inline int ParseIntArg(const std::string &arg, const std::string &name) {
         if (pos != arg.size()) throw std::invalid_argument(arg);
         return value;
     } catch (const std::exception &) {
-        std::cerr << "Invalid value for " << name << ": '" << arg << "'" << std::endl;
+        std::cerr << "Invalid value for " << name << ": '" << arg << "' (expected integer value)" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 }
@@ -29,7 +29,7 @@ inline double ParseDoubleArg(const std::string &arg, const std::string &name) {
         if (pos != arg.size()) throw std::invalid_argument(arg);
         return value;
     } catch (const std::exception &) {
-        std::cerr << "Invalid value for " << name << ": '" << arg << "'" << std::endl;
+        std::cerr << "Invalid value for " << name << ": '" << arg << "' (expected floating-point value)" << std::endl;
         std::exit(EXIT_FAILURE);
     }
 }
