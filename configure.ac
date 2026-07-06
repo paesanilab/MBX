@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.3.16], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.3.19], [mbx-users@googlegroups.com])
 
 # Define MBX_PACKAGE_VERSION as a macro in config.h
 AC_SUBST([MBX_VERSION], ["$PACKAGE_VERSION"])
@@ -108,8 +108,8 @@ AC_ARG_ENABLE([$1],
 AC_LANG(C++)
 
 # Checks for programs.
+: ${CXXFLAGS=""}
 AC_PROG_CXX
-CXXFLAGS=''
 EXTRA_CXXFLAGS=''
 AC_OPENMP
 
