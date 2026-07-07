@@ -208,6 +208,8 @@ MBX_CONFIG_ENABLE([march-x86-64-v4],[compilation for x86-64-v4 processors (inclu
 
 MBX_CONFIG_ENABLE([aligned-new],[compilation with aligned new, use this only if you get an error about calls to new when using --enable-intel-intrinsics],[no])
 
+MBX_CONFIG_ENABLE([potential-nma],[compiling NMA potential],[no])
+
 # Act on enable flags
 
 if test $debug == true; then
@@ -359,6 +361,11 @@ if test $mpi == true; then
 fi
 
 # Checks for library functions.
+
+AM_CONDITIONAL([POTENTIAL_NMA], [test $potential_nma == true])
+if test $potential_nma == true; then
+    CPPFLAGS="$CPPFLAGS -DHAVE_POTENTIAL_NMA=1"
+fi
 
 AC_PREFIX_DEFAULT([`pwd`])
 

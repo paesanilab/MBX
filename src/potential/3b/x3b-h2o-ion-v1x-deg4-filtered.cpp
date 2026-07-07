@@ -202,12 +202,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
 
     // --- Uniform 3B scaling (energy-only path) ---
     // Keep gradients unchanged here (this overload returns energy only).
-    double e_unscaled = energy;
     energy *= three_b_lambda;
-    // std::cout << "[3B scaling] Unscaled E = " << e_unscaled
-    //       << ", 3b_lambda = " << three_b_lambda
-    //       << ", Scaled E = " << energy
-    //       << std::endl;
 
     return energy;
 }
@@ -413,24 +408,18 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
         }
 
         energy += retval;
+        // Scale per-trimer gradients first so both accumulated gradients and virial
+        // are consistent with lambda.
         for (size_t k = 0; k < 9; k++) {
+            g1[k] *= three_b_lambda;
+            g2[k] *= three_b_lambda;
             grad1[9 * i + k] += g1[k];
             grad2[9 * i + k] += g2[k];
         }
 
         for (size_t k = 0; k < 3; k++) {
+            g3[k] *= three_b_lambda;
             grad3[3 * i + k] += g3[k];
-        }
-
-        // --- Scale this dimer's gradients by lambda BEFORE virial ---
-        // std::cout << "[3B scaling] scaling the gradient 3B lambda = " << three_b_lambda << std::endl;
-        // --- Scale gradients by three_b_lambda ---
-        for (size_t k = 0; k < 9; k++) {
-            grad1[9 * i + k] *= three_b_lambda;
-            grad2[9 * i + k] *= three_b_lambda;
-        }
-        for (size_t k = 0; k < 3; k++) {
-            grad3[3 * i + k] *= three_b_lambda;
         }
 
 
@@ -499,12 +488,7 @@ double x3b_h2o_ion_v1x_deg4_filtered::operator()(const double* xyz1, const doubl
 
     // --- Uniform 3B scaling ---
     // Keep gradients unchanged here (this overload returns energy only).
-    double e_unscaled = energy;
     energy *= three_b_lambda;
-    // std::cout << "[3B scaling] Unscaled E = " << e_unscaled
-    //       << ", 3b_lambda = " << three_b_lambda
-    //       << ", Scaled E = " << energy
-    //       << std::endl;
 
     return energy;
 }

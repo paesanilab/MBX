@@ -86,12 +86,18 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm, two_b_lambda);
-    } else if ((mon1 == "f-" or mon1 == "cl-" or mon1 == "br-") and mon2 == "h2o") {
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
+    } else if (mon1 == "f-" and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm, two_b_lambda);
+    } else if (mon1 == "cl-" and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm, two_b_lambda);
+    } else if (mon1 == "br-" and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm, two_b_lambda);
         // More ion water
     } else if (mon1 == "h2o" and mon2 == "i-") {
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon2, mon1);
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), nm, two_b_lambda);
     } else if (mon1 == "h2o" and (mon2 == "li+" or mon2 == "na+" or mon2 == "k+" or mon2 == "rb+")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
@@ -155,7 +161,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz2.data(), xyz1.data(), nm);
     } else if (mon1 == "ar" and mon2 == "h2o") {
         mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), nm, two_b_lambda);
+        energy = pot.eval(xyz1.data(), xyz2.data(), nm);
     } else if (mon1 == "cs+" and mon2 == "h2") {
         mbnrg_A1_B2_deg7::mbnrg_A1_B2_deg7_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), nm);
@@ -185,6 +191,13 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         return pot.eval(xyz1.data(), xyz2.data(), nm);
         // =====>> BEGIN SECTION 2B_NO_GRADIENT <<=====
         // =====>> PASTE YOUR CODE BELOW <<=====
+    } else if (mon1 == "nma" and mon2 == "nma") {
+#ifdef HAVE_POTENTIAL_NMA
+        mbnrg_A1B1C1D3E1F1G1H3_A1B1C1D3E1F1G1H3_deg2::mbnrg_A1B1C1D3E1F1G1H3_A1B1C1D3E1F1G1H3_deg2_v1 pot(mon1, mon2);
+        return pot.eval(xyz1.data(), xyz2.data(), nm);
+#else
+        throw std::runtime_error("Monomer nma is not compiled in this version of the code. Please reconfigure with --enable-potential-nma to use it.");
+#endif
 
         // =====>> END SECTION 2B_NO_GRADIENT <<=====
 
@@ -192,7 +205,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = 0.0;
     }
 
-    #ifdef DEBUG
+#ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nExiting " << __func__ << " in " << __FILE__ << std::endl;
     std::cerr << "Dimer " << mon1 << " -- " << mon2 << ":\n";
@@ -203,7 +216,8 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 }
 
 double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
-                     std::vector<double> &grad1, std::vector<double> &grad2, double two_b_lambda, std::vector<double> *virial) {
+                     std::vector<double> &grad1, std::vector<double> &grad2, double two_b_lambda,
+                     std::vector<double> *virial) {
 #ifdef DEBUG
     std::cerr << std::scientific << std::setprecision(10);
     std::cerr << "\nEntering " << __func__ << " in " << __FILE__ << std::endl;
@@ -262,15 +276,22 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         // First water and then ion
         h2o_ion::x2b_h2o_ion_v2x pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, two_b_lambda, virial);
-    } else if ((mon1 == "f-" or mon1 == "cl-" or mon1 == "br-") and mon2 == "h2o") {
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
+    } else if (mon1 == "f-" and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, two_b_lambda, virial);
+    } else if (mon1 == "cl-" and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, two_b_lambda, virial);
+    } else if (mon1 == "br-" and mon2 == "h2o") {
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, two_b_lambda, virial);
     } else if (mon1 == "h2o" and mon2 == "i-") {
-        mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon2, mon1);
+        mbnrg_A1_B1C2X2_deg6::mbnrg_A1_B1C2X2_deg6_v1 pot(mon2, mon1);
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, two_b_lambda, virial);
     } else if (mon1 == "h2o" and (mon2 == "li+" or mon2 == "na+" or mon2 == "k+" or mon2 == "rb+")) {
         h2o_ion::x2b_h2o_ion_v2x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, two_b_lambda, virial);
+
     } else if (mon1 == "ch4" && mon2 == "ch4") {
         x2b_A1B4_A1B4_deg4_exp0::x2b_A1B4_A1B4_v1x pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
@@ -326,7 +347,7 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz2.data(), xyz1.data(), grad2.data(), grad1.data(), nm, virial);
     } else if (mon1 == "ar" and mon2 == "h2o") {
         mbnrg_A1_B1C2X2_deg5::mbnrg_A1_B1C2X2_deg5_v1 pot(mon1, mon2);
-        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, two_b_lambda, virial);
+        energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
     } else if (mon1 == "ar" and mon2 == "ar") {
         mbnrg_A1_A1_deg9::mbnrg_A1_A1_deg9_v1 pot(mon1, mon2);
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
@@ -359,6 +380,13 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
         energy = pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
         // =====>> BEGIN SECTION 2B_GRADIENT <<=====
         // ====>> PASTE YOUR CODE BELOW <<====
+    } else if (mon1 == "nma" and mon2 == "nma") {
+#ifdef HAVE_POTENTIAL_NMA
+        mbnrg_A1B1C1D3E1F1G1H3_A1B1C1D3E1F1G1H3_deg2::mbnrg_A1B1C1D3E1F1G1H3_A1B1C1D3E1F1G1H3_deg2_v1 pot(mon1, mon2);
+        energy =  pot.eval(xyz1.data(), xyz2.data(), grad1.data(), grad2.data(), nm, virial);
+#else
+        throw std::runtime_error("Monomer nma is not compiled in this version of the code. Please reconfigure with --enable-potential-nma to use it.");
+#endif
 
         // =====>> END SECTION 2B_GRADIENT <<=====
     } else {
@@ -404,7 +432,8 @@ double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<
 
 double get_2b_energy(std::string mon1, std::string mon2, size_t nm, std::vector<double> xyz1, std::vector<double> xyz2,
                      std::vector<double> &grad1, std::vector<double> &grad2, std::vector<double> *virial) {
-    return get_2b_energy(std::move(mon1), std::move(mon2), nm, std::move(xyz1), std::move(xyz2), grad1, grad2, 1.0, virial);
+    return get_2b_energy(std::move(mon1), std::move(mon2), nm, std::move(xyz1), std::move(xyz2), grad1, grad2, 1.0,
+                         virial);
 }
 
 }  // namespace e2b
