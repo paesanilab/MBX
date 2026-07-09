@@ -1,5 +1,5 @@
-#ifndef MAIN_PARSE_ARGS_H
-#define MAIN_PARSE_ARGS_H
+#ifndef TOOLS_PARSE_ARGS_H
+#define TOOLS_PARSE_ARGS_H
 
 #include <cstdlib>
 #include <iostream>
@@ -34,4 +34,4 @@ inline double ParseDoubleArg(const std::string &arg, const std::string &name) {
     }
 }
 
-#endif  // MAIN_PARSE_ARGS_H
+#endif  // TOOLS_PARSE_ARGS_H
