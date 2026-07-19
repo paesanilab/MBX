@@ -34,7 +34,7 @@ jobs:
           
           autoreconf -fi
           ./configure CXX=g++
-          make -j 4
+          make -j 8
           make install
           
           echo "MBX_HOME=${{ github.workspace }}" >> "$GITHUB_ENV"
