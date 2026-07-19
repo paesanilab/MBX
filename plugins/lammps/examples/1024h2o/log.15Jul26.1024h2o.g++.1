@@ -1,4 +1,4 @@
-LAMMPS (11 Feb 2026 - Development - patch_11Feb2026-156-g48a5c9ef8e)
+LAMMPS (4 Jul 2026)
   using 1 OpenMP thread(s) per MPI task
 variable        T   equal  298
 variable        dt  equal  0.5
@@ -40,7 +40,7 @@ Finding 1-2 1-3 1-4 neighbors ...
      1 = max # of 1-4 neighbors
      2 = max # of special neighbors
   special bonds CPU = 0.001 seconds
-  read_data CPU = 0.031 seconds
+  read_data CPU = 0.024 seconds
 #read_restart    restart.old
 
 pair_style      mbx 9.0
@@ -115,7 +115,7 @@ Your simulation uses code contributions which should be cited:
  pages = {054802},
  year = {2023},
  doi = {10.1063/5.0156036},
- version = {1.3.7}
+ version = {1.4.0}
 }
 
 CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
@@ -137,7 +137,7 @@ Neighbor list info ...
       pair build: half/bin/newton
       stencil: half/bin/3d
       bin: standard
-Per MPI rank memory allocation (min/avg/max) = 11.58 | 11.58 | 11.58 Mbytes
+Per MPI rank memory allocation (min/avg/max) = 12.89 | 12.89 | 12.89 Mbytes
    Step          Time           Temp          TotEng         KinEng         PotEng        Enthalpy       Density           Lx             Ly             Lz           Volume          Pxx            Pyy            Pzz           Press     
          0   0              298           -6846.0043      2727.9122     -9573.9165     -6974.2205      1.0003153      31.286142      31.286142      31.286142      30623.584      608.88792     -860.72201     -609.42137     -287.08515    
          1   0.5            301.69491     -6847.6218      2761.7356     -9609.3573     -6793.6885      1.0003153      31.286141      31.286141      31.286141      30623.583      447.3737      -704.17578      619.0837       120.76054    
@@ -240,21 +240,21 @@ Per MPI rank memory allocation (min/avg/max) = 11.58 | 11.58 | 11.58 Mbytes
         98   49             297.14771     -6801.7719      2720.1103     -9521.8822     -6993.255       0.99960902     31.293508      31.293508      31.293508      30645.221     -583.92776     -765.92838      64.531254     -428.44163    
         99   49.5           303.94633     -6802.3661      2782.3452     -9584.7114     -7484.1116      0.99959481     31.293656      31.293656      31.293656      30645.657     -1102.9741     -1691.6262     -1781.5335     -1525.3779    
        100   50             304.82094     -6801.3728      2790.3515     -9591.7243     -7852.7137      0.99958088     31.293802      31.293802      31.293802      30646.084     -1317.8104     -2398.6672     -3340.4223     -2352.3       
-Loop time of 328.18 on 1 procs for 100 steps with 3072 atoms
+Loop time of 192.584 on 1 procs for 100 steps with 3072 atoms
 
-Performance: 0.013 ns/day, 1823.223 hours/ns, 0.305 timesteps/s, 936.071 atom-step/s
-99.5% CPU use with 1 MPI tasks x 1 OpenMP threads
+Performance: 0.022 ns/day, 1069.911 hours/ns, 0.519 timesteps/s, 1.595 katom-step/s
+99.6% CPU use with 1 MPI tasks x 1 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 326.41     | 326.41     | 326.41     |   0.0 | 99.46
-Bond    | 3.4019e-05 | 3.4019e-05 | 3.4019e-05 |   0.0 |  0.00
-Neigh   | 0.20597    | 0.20597    | 0.20597    |   0.0 |  0.06
-Comm    | 0.013931   | 0.013931   | 0.013931   |   0.0 |  0.00
-Output  | 0.67305    | 0.67305    | 0.67305    |   0.0 |  0.21
-Modify  | 0.86983    | 0.86983    | 0.86983    |   0.0 |  0.27
-Other   |            | 0.00386    |            |       |  0.00
+Pair    | 191.49     | 191.49     | 191.49     |   0.0 | 99.43
+Bond    | 2.8072e-05 | 2.8072e-05 | 2.8072e-05 |   0.0 |  0.00
+Neigh   | 0.18695    | 0.18695    | 0.18695    |   0.0 |  0.10
+Comm    | 0.0073093  | 0.0073093  | 0.0073093  |   0.0 |  0.00
+Output  | 0.38852    | 0.38852    | 0.38852    |   0.0 |  0.20
+Modify  | 0.512      | 0.512      | 0.512      |   0.0 |  0.27
+Other   |            | 0.001594   |            |       |  0.00
 
 Nlocal:           3072 ave        3072 max        3072 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
@@ -283,4 +283,4 @@ WARNING: Bonds are defined but no bond style is set (src/force.cpp:198)
 WARNING: Likewise 1-2 special neighbor interactions != 1.0 (src/force.cpp:200)
 WARNING: Angles are defined but no angle style is set (src/force.cpp:203)
 WARNING: Likewise 1-3 special neighbor interactions != 1.0 (src/force.cpp:205)
-Total wall time: 0:05:31
+Total wall time: 0:03:14
