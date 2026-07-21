@@ -488,7 +488,7 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
     lj_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
     // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
+    size_t maxnmon = mon_type_count_.size() == 0 ? 0 : mon_type_count_.back().second;
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP
@@ -612,63 +612,17 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
         fi_crd += nmon * ns * 3;
     }
 
-    //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
-    std::vector<double> xyz_rearranged(xyz_.size());
-    std::vector<size_t> point_monomer_type_indices(xyz_.size()/3);
-    std::vector<size_t> point_site_indices(xyz_.size()/3);
-    std::vector<size_t> point_monomer_indices(xyz_.size()/3);
-    std::vector<size_t> point_fi_mon2(xyz_.size()/3);
-    fi_mon = 0;
-    fi_crd = 0;
-    size_t fi_sitetypes = 0;
-    size_t site_count = xyz_rearranged.size()/3;
     bool use_pbc = box_.size();
-    //fi_mon has the index of the first monomer of this monomer type
-    //for each monomer type
-    for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
-        //for each site of that monomer type
-        //nmon = number of monomers of that type
-        size_t nmon = mon_type_count_[mt].second;
-        size_t ns = num_atoms_[fi_mon];
-        for(size_t s = 0; s < ns; s++){
-            for(size_t i = 0; i<nmon; ++i){
-                if(use_pbc){
-                    double x = box_inverse_[0]*xyz_[fi_crd+i] + box_inverse_[3]*xyz_[fi_crd+i+nmon] + box_inverse_[6]*xyz_[fi_crd+i+2*nmon],
-                        y = box_inverse_[1]*xyz_[fi_crd+i] + box_inverse_[4]*xyz_[fi_crd+i+nmon] + box_inverse_[7]*xyz_[fi_crd+i+2*nmon],
-                        z = box_inverse_[2]*xyz_[fi_crd+i] + box_inverse_[5]*xyz_[fi_crd+i+nmon] + box_inverse_[8]*xyz_[fi_crd+i+2*nmon];
-                    
-                    x -= std::floor(x + 0.5);
-                    y -= std::floor(y + 0.5);
-                    z -= std::floor(z + 0.5);
-
-                    xyz_rearranged[fi_crd+3*i] = box_[0]*x + box_[3]*y + box_[6]*z;
-                    xyz_rearranged[fi_crd+3*i+1] = box_[1]*x + box_[4]*y + box_[7]*z;
-                    xyz_rearranged[fi_crd+3*i+2] = box_[2]*x + box_[5]*y + box_[8]*z;
-                }
-                else{
-                    xyz_rearranged[fi_crd+3*i] = xyz_[fi_crd+i];
-                    xyz_rearranged[fi_crd+3*i+1] = xyz_[fi_crd+i+nmon];
-                    xyz_rearranged[fi_crd+3*i+2] = xyz_[fi_crd+i+nmon*2];
-                }
-                point_monomer_type_indices[fi_crd/3+i] = mt;
-                point_site_indices[fi_crd/3+i] = s;
-                point_monomer_indices[fi_crd/3+i] = i;
-                point_fi_mon2[fi_crd/3+i] = fi_mon;
-            }
-            fi_crd += nmon*3;
-        }
-        fi_mon += nmon;
-    }
-
-    
+        
     int nsite_types = 0;
     size_t fi_mon1 = 0;
+    size_t total_atoms = 0;
     for (size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++) {
         nsite_types += num_atoms_[fi_mon1];
+        total_atoms += mon_type_count_[mt1].second * num_atoms_[fi_mon1];
         fi_mon1 += mon_type_count_[mt1].second;
     }
-
-    
+        
     // Sites corresponding to different monomers
     // Declaring first indexes
     size_t fi_sites1 = 0;
@@ -676,91 +630,145 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
     size_t fi_sites2 = 0;
     size_t fi_crd1 = 0;
     size_t fi_crd2 = 0;
-
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
-                                                    kdtutils::PointCloud<double>, 3 /* dim */>
-        my_kd_tree_t;
-
-    //trees and associated point clouds need to be allocated on the heap
-    std::vector<size_t> tree_indices(0);
-    kdtutils::PointCloud<double>* cloud = new kdtutils::PointCloud<double>(kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices));
-    my_kd_tree_t* tree = new my_kd_tree_t(3 /*dim*/, *cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
-    tree->buildIndex();
-
-    fi_mon1 = 0;
-    fi_crd1 = 0;
-    fi_sites1 = 0;
-    fi_mon2 = 0;
+    size_t fi_sitetypes = 0;
     size_t fi_sitetypes2 = 0;
+    
+    vector<vector<size_t>> neighbor_list(natoms_  * nsite_types);
 
-    std::vector<std::vector<size_t>> neighbor_list(natoms_  * nsite_types);
-    std::vector<std::set<size_t>> neighbor_list_lookup(natoms_  * nsite_types);
+    if (total_atoms > algorithm_configuration_parameters::KDTREE_CUTOFF) {
 
-    for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
-
-        size_t ns1 = num_atoms_[fi_mon1];
-        size_t nmon1 = mon_type_count_[mt1].second;
-
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t m1 = 0; m1 < nmon1; m1++) {
-            for (size_t i = 0; i < ns1; i++) {
-
-                std::vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
-
-
-                size_t fi_mon2_iter = fi_mon1;
-                size_t fi_sitetypes_iter = 0;
-                for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
-                    size_t ns2 = num_atoms_[fi_mon2_iter];
-                    size_t nmon2 = mon_type_count_[mt2].second;
-                    point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes_iter;
-                    fi_sitetypes_iter += ns2;
-                    fi_mon2_iter += nmon2;
-                }
-
-                size_t inmon13 = 3 * nmon1 * i;
-                
-                bool point1_local = islocal_[fi_mon1+m1]==1;
-
-                double point[3];
-                point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
-                point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
-                point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
-
-                std::vector<std::pair<size_t, double>> site2_indices;
-                nanoflann::SearchParams params(32, 0, false);
-
-                const size_t nMatches = tree->radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
-                
-                for(size_t s = 0; s<nMatches; ++s){
-                    //getting the actual index (not periodic index) of the monomer
-                    // size_t idx = site2_indices[s].first % nmon2;
-                    size_t idx = tree_indices[site2_indices[s].first];
-                    size_t mt2 = point_monomer_type_indices[idx];
-                    size_t j = point_site_indices[idx];
-                    size_t m2 = point_monomer_indices[idx];
-
-                    if (mt2 >= mt1) { 
-                        size_t fi_selected_mon2 = point_fi_mon2[idx];
-                        size_t fi_selected_sitetypes2 = point_fi_sitetypes2[mt2 - mt1];
+        //Rearranging the coordinates (into xyzxyz order) and moving the points into the box (if pbc)
+        std::vector<double> xyz_rearranged(xyz_.size());
+        std::vector<size_t> point_monomer_type_indices(xyz_.size()/3);
+        std::vector<size_t> point_site_indices(xyz_.size()/3);
+        std::vector<size_t> point_monomer_indices(xyz_.size()/3);
+        std::vector<size_t> point_fi_mon2(xyz_.size()/3);
+        fi_mon = 0;
+        fi_crd = 0;
+        fi_sitetypes = 0;
+        size_t site_count = xyz_rearranged.size()/3;
+        //fi_mon has the index of the first monomer of this monomer type
+        //for each monomer type
+        for(size_t mt = 0; mt<mon_type_count_.size(); mt++){
+            //for each site of that monomer type
+            //nmon = number of monomers of that type
+            size_t nmon = mon_type_count_[mt].second;
+            size_t ns = num_atoms_[fi_mon];
+            for(size_t s = 0; s < ns; s++){
+                #pragma omp parallel for schedule(dynamic)
+                for(size_t i = 0; i<nmon; ++i){
+                    if(use_pbc){
+                        double x = box_inverse_[0]*xyz_[fi_crd+i] + box_inverse_[3]*xyz_[fi_crd+i+nmon] + box_inverse_[6]*xyz_[fi_crd+i+2*nmon],
+                            y = box_inverse_[1]*xyz_[fi_crd+i] + box_inverse_[4]*xyz_[fi_crd+i+nmon] + box_inverse_[7]*xyz_[fi_crd+i+2*nmon],
+                            z = box_inverse_[2]*xyz_[fi_crd+i] + box_inverse_[5]*xyz_[fi_crd+i+nmon] + box_inverse_[8]*xyz_[fi_crd+i+2*nmon];
                         
-                        size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
+                        x -= std::floor(x + 0.5);
+                        y -= std::floor(y + 0.5);
+                        z -= std::floor(z + 0.5);
 
-                        if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_selected_mon2+m2]))) && m2 >= m2init){
-                            if(neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].find(m2) == neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].end()) {
-                                neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].push_back(m2);
-                                neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].insert(m2);
+                        xyz_rearranged[fi_crd+3*i] = box_[0]*x + box_[3]*y + box_[6]*z;
+                        xyz_rearranged[fi_crd+3*i+1] = box_[1]*x + box_[4]*y + box_[7]*z;
+                        xyz_rearranged[fi_crd+3*i+2] = box_[2]*x + box_[5]*y + box_[8]*z;
+                    }
+                    else{
+                        xyz_rearranged[fi_crd+3*i] = xyz_[fi_crd+i];
+                        xyz_rearranged[fi_crd+3*i+1] = xyz_[fi_crd+i+nmon];
+                        xyz_rearranged[fi_crd+3*i+2] = xyz_[fi_crd+i+nmon*2];
+                    }
+                    point_monomer_type_indices[fi_crd/3+i] = mt;
+                    point_site_indices[fi_crd/3+i] = s;
+                    point_monomer_indices[fi_crd/3+i] = i;
+                    point_fi_mon2[fi_crd/3+i] = fi_mon;
+                }
+                fi_crd += nmon*3;
+            }
+            fi_mon += nmon;
+        }
+
+        typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, kdtutils::PointCloud<double>>,
+                                                        kdtutils::PointCloud<double>, 3 /* dim */>
+            my_kd_tree_t;
+
+        std::vector<size_t> tree_indices(0);
+        kdtutils::PointCloud<double> cloud = kdtutils::XyzToCloudCutoff(xyz_rearranged, cutoff_, use_pbc, box_, box_inverse_, tree_indices);
+        my_kd_tree_t tree(3 /*dim*/, cloud, nanoflann::KDTreeSingleIndexAdaptorParams(20 /* max leaf */));
+        tree.buildIndex();
+
+        fi_mon1 = 0;
+        fi_crd1 = 0;
+        fi_sites1 = 0;
+        fi_mon2 = 0;
+        fi_sitetypes2 = 0;
+
+        vector<std::unordered_set<size_t, std::hash<size_t>, std::equal_to<size_t>, allocator<size_t>>> neighbor_list_lookup(natoms_  * nsite_types);
+
+        for(size_t mt1 = 0; mt1 < mon_type_count_.size(); mt1++){
+
+            size_t ns1 = num_atoms_[fi_mon1];
+            size_t nmon1 = mon_type_count_[mt1].second;
+
+            #pragma omp parallel for schedule(dynamic)
+            for (size_t m1 = 0; m1 < nmon1; m1++) {
+                for (size_t i = 0; i < ns1; i++) {
+
+                    vector<size_t> point_fi_sitetypes2(mon_type_count_.size() - mt1);
+
+
+                    size_t fi_mon2_iter = fi_mon1;
+                    size_t fi_sitetypes_iter = 0;
+                    for (size_t mt2 = mt1; mt2 < mon_type_count_.size(); mt2++) {
+                        size_t ns2 = num_atoms_[fi_mon2_iter];
+                        size_t nmon2 = mon_type_count_[mt2].second;
+                        point_fi_sitetypes2[mt2 - mt1] = fi_sitetypes_iter;
+                        fi_sitetypes_iter += ns2;
+                        fi_mon2_iter += nmon2;
+                    }
+
+                    size_t inmon13 = 3 * nmon1 * i;
+                    
+                    bool point1_local = islocal_[fi_mon1+m1]==1;
+
+                    double point[3];
+                    point[0] = xyz_rearranged[fi_crd1+inmon13+m1*3];
+                    point[1] = xyz_rearranged[fi_crd1+inmon13+m1*3+1];
+                    point[2] = xyz_rearranged[fi_crd1+inmon13+m1*3+2];
+
+                    std::vector<std::pair<size_t, double>> site2_indices;
+                    nanoflann::SearchParams params(32, 0, false);
+
+                    const size_t nMatches = tree.radiusSearch(point, cutoff_*cutoff_, site2_indices, params);
+                    
+                    for(size_t s = 0; s<nMatches; ++s){
+                        //getting the actual index (not periodic index) of the monomer
+                        // size_t idx = site2_indices[s].first % nmon2;
+                        size_t idx = tree_indices[site2_indices[s].first];
+                        size_t mt2 = point_monomer_type_indices[idx];
+                        size_t j = point_site_indices[idx];
+                        size_t m2 = point_monomer_indices[idx];
+
+                        if (mt2 >= mt1) { 
+                            size_t fi_selected_mon2 = point_fi_mon2[idx];
+                            size_t fi_selected_sitetypes2 = point_fi_sitetypes2[mt2 - mt1];
+                            
+                            size_t m2init = mt1 == mt2 ? m1 + 1 : 0;
+
+                            if((!use_ghost || (use_ghost && (point1_local || islocal_[fi_selected_mon2+m2]))) && m2 >= m2init){
+                                if(neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].find(m2) == neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].end()) {
+                                    neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].push_back(m2);
+                                    neighbor_list_lookup[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_selected_sitetypes2 + j].insert(m2);
+                                }
                             }
                         }
                     }
+                            
                 }
-                        
-            }
 
+            }
+            fi_mon1 += nmon1;
+            fi_crd1 += nmon1 * ns1 * 3;
+            fi_sites1 += nmon1 * ns1;
         }
-        fi_mon1 += nmon1;
-        fi_crd1 += nmon1 * ns1 * 3;
-        fi_sites1 += nmon1 * ns1;
+        
     }
 
     fi_mon1 = 0;
@@ -797,18 +805,24 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
             bool same = (mt1 == mt2);
 
             // For parallel region
-            std::vector<std::vector<double> > phi1_pool;
-            std::vector<std::vector<double> > phi2_pool;
-            std::vector<std::vector<double> > grad1_pool;
-            std::vector<std::vector<double> > grad2_pool;
+            std::vector<std::vector<double>> phi1_pool(nthreads);
+            std::vector<std::vector<double>> phi2_pool(nthreads);
+            std::vector<std::vector<double>> grad1_pool(nthreads);
+            std::vector<std::vector<double>> grad2_pool(nthreads);
             std::vector<double> energy_pool(nthreads, 0.0);
-            std::vector<std::vector<double> > virial_pool;
+            std::vector<std::vector<double>> virial_pool(nthreads);
+            std::vector<std::shared_ptr<std::vector<size_t>>> bool_mon2_indices_pool(nthreads);
+            std::vector<std::shared_ptr<elec::ElectricFieldHolder>> field_pool(nthreads);
+
+            #pragma omp parallel for schedule(static, 1)
             for (size_t i = 0; i < nthreads; i++) {
-                phi1_pool.push_back(std::vector<double>(nmon1 * ns1, 0.0));
-                phi2_pool.push_back(std::vector<double>(nmon2 * ns2, 0.0));
-                grad1_pool.push_back(std::vector<double>(nmon1 * ns1 * 3, 0.0));
-                grad2_pool.push_back(std::vector<double>(nmon2 * ns2 * 3, 0.0));
-                virial_pool.push_back(std::vector<double>(9, 0.0));
+                phi1_pool[i] = std::vector<double>(nmon1 * ns1, 0.0);
+                phi2_pool[i] = std::vector<double>(nmon2 * ns2, 0.0);
+                grad1_pool[i] = std::vector<double>(nmon1 * ns1 * 3, 0.0);
+                grad2_pool[i] = std::vector<double>(nmon2 * ns2 * 3, 0.0);
+                virial_pool[i] = std::vector<double>(9, 0.0);
+                bool_mon2_indices_pool[i] = std::make_shared<std::vector<size_t>>(nmon2);
+                field_pool[i] = std::make_shared<elec::ElectricFieldHolder>(maxnmon);
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
@@ -839,14 +853,37 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
                         double eps, sigma;
                         GetLjParams(mon_id_[fi_mon1], mon_id_[fi_mon2], i, j, eps, sigma, use_lj_, repdisp_j_);
 
-                        std::vector<size_t> good_mon2_indices;
+                        vector<size_t> good_mon2_indices;
                         
                         if (do_field_) {
                             for(size_t idx = m2init; idx < nmon2; ++idx){
                                 good_mon2_indices.push_back(idx);
                             }
-                        } else {
+                        } else if (total_atoms > algorithm_configuration_parameters::KDTREE_CUTOFF) {
                             good_mon2_indices = neighbor_list[(fi_sites1 + m1*ns1 + i)*nsite_types + fi_sitetypes2 + j];
+                        } else {
+                            std::vector<size_t>& bool_mon2_indices = *bool_mon2_indices_pool[rank];
+                            std::fill(bool_mon2_indices.begin(), bool_mon2_indices.end(), 0.0);
+                            field_pool[rank]->FindMonomersWithinCutoff(bool_mon2_indices.data(), xyz_.data() + fi_crd1, xyz_.data() + fi_crd2, m2init, 
+                                                                        nmon1, nmon2, use_pbc, box_, box_inverse_, cutoff_, i, j,
+                                                                        m1, use_ghost, islocal_, fi_mon1 + m1, fi_mon2);
+
+                            int num_good_mon2 = 0;
+                            for (int ind = 0; ind < nmon2; ind++) {
+                                if (bool_mon2_indices[ind] == 1) {
+                                    num_good_mon2++;
+                                }
+                            }
+
+                            good_mon2_indices.resize(num_good_mon2);
+                            int current_good_mon2_index = 0;
+                            // monomer 2s within the cutoff are stored in good_mon2_indices
+                            for (int ind = 0; ind < nmon2; ind++) {
+                                if (bool_mon2_indices[ind] == 1) {
+                                    good_mon2_indices[current_good_mon2_index] = ind;
+                                    current_good_mon2_index++;
+                                }
+                            }
                         }
                         
 
@@ -930,9 +967,6 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
         fi_crd1 += nmon1 * ns1 * 3;
     }
 
-    delete tree;
-    delete cloud;
-
     if (ewald_alpha_ > 0 && use_pbc_) {
         helpme::PMEInstance<double> pme_solver_;
         if (user_fft_grid_.size()) pme_solver_.SetFFTDimension(user_fft_grid_);
@@ -1004,8 +1038,6 @@ void LennardJones::CalculateLennardJones(bool use_ghost) {
 void LennardJones::CalculateLennardJonesPME(bool use_ghost) {
     lj_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
-    // Max number of monomers
-    size_t maxnmon = mon_type_count_.back().second;
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP
@@ -1120,8 +1152,6 @@ void LennardJones::CalculateLennardJonesPMElocal(bool use_ghost) {
 
     lj_energy_ = 0.0;
     std::fill(phi_.begin(), phi_.end(), 0.0);
-    // Max number of monomers
-    //    size_t maxnmon = mon_type_count_.back().second;
     // Parallelization
     size_t nthreads = 1;
 #ifdef _OPENMP

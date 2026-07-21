@@ -122,4 +122,8 @@ const double kB = 8.31451115e-01;  // Boltzmann constant in internal units
 const double hbar = 6.350780668;   // in internal units (not 2010 value)
 
 }  // namespace h2o
+
+namespace algorithm_configuration_parameters {
+    constexpr unsigned int KDTREE_CUTOFF = 10000;
+}
 #endif  // CONSTANTS_H

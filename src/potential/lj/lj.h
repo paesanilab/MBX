@@ -37,6 +37,7 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #include <vector>
 #include <set>
+#include <unordered_set>
 
 #if HAVE_MPI
 #include <mpi.h>
@@ -49,9 +50,11 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "potential/lj/lj.h"
 #include "potential/lj/ljtools.h"
 #include "potential/electrostatics/helpme.h"
+#include "potential/electrostatics/fields.h"
 #include "tools/definitions.h"
 #include "bblock/sys_tools.h"
 #include "tools/math_tools.h"
+#include "tools/constants.h"
 #include "kdtree/kdtree_utils.h"
 
 #if !defined(MPI_VERSION) && !defined(MPI_Comm)
@@ -70,6 +73,22 @@ typedef int MPI_Comm;
  * @brief Encloses the functions related to classical lennard-jones.
  */
 namespace lj {
+    
+    #ifdef TBB
+    template<typename T>
+    using allocator = tbb::scalable_allocator<T>;
+    #else
+    template<typename T>
+    using allocator = std::allocator<T>;
+    #endif
+
+    #ifdef TBB
+    template<typename T>
+    using vector = std::vector<T, tbb::scalable_allocator<T>>;
+    #else
+    template<typename T>
+    using vector = std::vector<T>;
+    #endif
 
 /**
  * @class LennardJones
