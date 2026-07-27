@@ -108,8 +108,8 @@ AC_ARG_ENABLE([$1],
 AC_LANG(C++)
 
 # Checks for programs.
+: ${CXXFLAGS=""}
 AC_PROG_CXX
-CXXFLAGS=''
 EXTRA_CXXFLAGS=''
 AC_OPENMP
 
