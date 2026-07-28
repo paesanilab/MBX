@@ -126,16 +126,13 @@ Example calls with C++, Fortran, and Python can be found in the various sub-fold
 
 ## Associated Publications and How to Cite
 
-The following publication describes the original MBX v1.0 release. Please cite this paper in all work using MBX:
+The following papers describe the features in various MBX releases. Please cite the following papers when using MBX:
 - MBX v1.0:
   * [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
-
-The following publications describe improvements released with more recent MBX versions. Please cite these papers if performance is a focus of your work or whenever those specific MBX versions are mentioned:
 - MBX v1.1 and v1.2:
   * [J. Chem. Theory Comput. 21, 1838 (2025)](https://doi.org/10.1021/acs.jctc.4c01333)
 - MBX v1.3 and v1.4:
   * [ChemRxiv. 02 July 2026.](https://doi.org/10.26434/chemrxiv.15005580/v1)
-
 
 Each PEF implemented in MBX is associated with one or more publications detailing their development and applications. Please cite the following manuscripts where you use the associated PEFs:
 - MB-pol for water: **\"h2o\"**
@@ -211,7 +208,7 @@ The potentials associated with the following publications are not distributed wi
   * this PEF is available by request.
 
 
-The following publications apply, validate, or otherwise use various MB-nrg PEFs through MBX:
+Below is a (non-exhaustive) list of publications which apply, validate, or otherwise use various MB-nrg PEFs through MBX:
 - Realistic phase diagram of water from “first principles” data-driven quantum simulations
   * [Nat. Commun. 14, 3349 (2023)](https://doi.org/10.1038/s41467-023-38855-1)
 - Hydration Free Energies of Alkali Metal and Halide Ions from Data-Driven Many-Body Potentials
