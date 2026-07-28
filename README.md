@@ -119,14 +119,26 @@ After installation, there will be the main executables in `$MBX_HOME/bin/`.
 - `order_frames` will compute the energies for a given list of configurations from the XYZ file, and rearranges the configuration frames in the order of increasing energy.
 - `normal_modes` will compute the normal modes for an optimized nrg file. Requires the GSL library.
 
-## PEFs implemented
-All the PEFs implemented, along with examples of input files and scripts to run various types of simulations, are provided in `$MBX_HOME/examples/PEFs`. If a surface is not there, its usage is not recommended because it is either not tested or not finalized. Example calls with C++, Fortran and Python are located inside each of the corresponding folders.
+## Examples
 
-Please cite the corresponding manuscript whenever using MBX:
-- [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
+Examples for most implemented PEFs can be found in `examples/PEFs`.
+Example calls with C++, Fortran, and Python can be found in the various sub-folders in that directory.
 
-Please cite the following manuscripts if any of the following PEFs is used:
-- MB-pol for water: **\"h2o\"** (O H H)
+## Associated Publications and How to Cite
+
+The following publication describes the original MBX v1.0 release. Please cite this paper in all work using MBX:
+- MBX v1.0:
+  * [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
+
+The following publications describe improvements released with more recent MBX versions. Please cite these papers if performance is a focus of your work or whenever those specific MBX versions are mentioned:
+- MBX v1.1 and v1.2:
+  * [J. Chem. Theory Comput. 21, 1838 (2025)](https://doi.org/10.1021/acs.jctc.4c01333)
+- MBX v1.3 and v1.4:
+  * [ChemRxiv. 02 July 2026.](https://doi.org/10.26434/chemrxiv.15005580/v1)
+
+
+Each PEF implemented in MBX is associated with one or more publications detailing their development and applications. Please cite the following manuscripts where you use the associated PEFs:
+- MB-pol for water: **\"h2o\"**
   * [J. Chem. Theory Comput. 9, 5395 (2013)](https://doi.org/10.1021/ct400863t)
   * [J. Chem. Theory Comput. 10, 1599 (2014)](https://doi.org/10.1021/ct500079y)
   * [J. Chem. Theory Comput. 10, 2906 (2014)](https://doi.org/10.1021/ct5004115)
@@ -149,14 +161,69 @@ Please cite the following manuscripts if any of the following PEFs is used:
   * [Adv. Phys. X 4, 1631212 (2019)](https://doi.org/10.1080/23746149.2019.1631212)
   * [J. Chem. Phys. 155, 064502 (2021)](https://doi.org/10.1063/5.0059445)
   * [J. Phys. Chem. B 126, 8266 (2022)](https://doi.org/10.1021/acs.jpcb.2c04698)
-- MB-nrg PEFs for CO<sub>2</sub> and CO<sub>2</sub>/H<sub>2</sub>O mixtures: **\"co2\"** (C O O)
+- MB-nrg PEFs for CO<sub>2</sub> and CO<sub>2</sub>/H<sub>2</sub>O mixtures: **\"co2\"**
   * [J. Chem. Theory Comput. 16, 2246 (2020)](https://doi.org/10.1021/acs.jctc.9b01175)
   * [J. Chem. Phys. 156, 104503 (2022)](https://doi.org/10.1063/5.0080061)
-- MB-nrg PEFs for CH<sub>4</sub> and CH<sub>4</sub>/H<sub>2</sub>O mixtures: **\"ch4\"** (C H H H H)
+- MB-nrg PEFs for CH<sub>4</sub> and CH<sub>4</sub>/H<sub>2</sub>O mixtures: **\"ch4\"**
   * [J. Phys. Chem. B 124, 11207 (2020)](https://doi.org/10.1021/acs.jpcb.0c08728)
   * [J. Chem. Phys. 156, 194504 (2022)](https://doi.org/10.1063/5.0089773)
-- MB-nrg PEF for N<sub>2</sub>O<sub>5</sub> in water: **\"n2o5\"** (O N N O O O O)
+- MB-nrg PEF for N<sub>2</sub>O<sub>5</sub> solvated in water: **\"n2o5\"**
   * [J. Chem. Theory Comput. 17, 3931 (2021)](https://doi.org/10.1021/acs.jctc.1c00069)
+- MB-nrg PEF for NH<sub>3</sub>: **\"nh3\"**
+  * [J. Chem. Phys. 155, 124801 (2021)](https://doi.org/10.1063/5.0063198)
+- MB-nrg PEF for water based on the PBE-D3 functional: **\"mbpbe\"**
+  * [J. Chem. Theory Comput. 17, 5635 (2021)](https://doi.org/10.1021/acs.jctc.1c00541)
+
+The potentials associated with the following publications are not distributed with MBX by default, but are available on other branches or by request:
+
+- MB-nrg PEFs for water using the scan functional as the reference: **\"h2o-scan\"**, **\"h2o-dcscan\"**
+  * [Nat. Commum. 12, 6359 (2021)](https://doi.org/10.1038/s41467-021-26618-9)
+  * [J. Chem. Theory Comput. 18, 3410 (2022)](https://doi.org/10.1021/acs.jctc.2c00050)
+  * [J. Chem. Theory Comput. 18, 4745 (2022)](https://doi.org/10.1021/acs.jctc.2c00313)
+  * these PEFs are available on the [MB-DFT](https://github.com/paesanilab/MBX/tree/mbx_with_mb-dft_1.2) branch of MBX.
+
+- MB-nrg PEFs for solvated ions using the scan functional as the reference: **\"cl-scan\"**, **\"cl-dcscan\"**, **\"na+scan\"**, **\"na+dcscan\"**
+  * [J. Chem. Phys. 159, 181101 (2023)](https://doi.org/10.1063/5.0174577)
+  * these PEF are available on the [MB-DFT](https://github.com/paesanilab/MBX/tree/mbx_with_mb-dft_1.2) branch of MBX.
+- MB-nrg PEFs for water using the DM21 functional as the reference: 
+  * [J. Chem. Phys. 156, 161103 (2022)](https://doi.org/10.1063/5.0090862)
+  * this PEF is available by request.
+- MB-nrg PEFs for water using the various other DFT functionals as the reference: 
+  * [J. Chem. Theory Comput. 18, 3410 (2022)](https://doi.org/10.1021/acs.jctc.2c00050)
+  * [Chem. Phys. Rev. 4, 011301 (2023)](https://doi.org/10.1063/5.0129613)
+  * these PEFs are available by request.
+- MB-pol(2023), a family of PEFs which improve on the original MB-pol PEF:
+  * [J. Chem. Theory Comput. 19, 3551 (2023)](https://doi.org/10.1021/acs.jctc.3c00326)
+  * these PEFs are available on the [MB-pol(2023)](https://github.com/PhilipZhu/MBX/tree/mbpol23/src) branch of MBX.
+- MB-nrg PEF for water using a permutationally invariant fourier series: **\"h2o_pifs\"**
+  * [J. Chem. Theory Comput. 21, 6950 (2025)](https://doi.org/10.1021/acs.jctc.5c00407)
+  * this PEF is available on the [PIFs](https://github.com/PhilipZhu/MBX/tree/PIFS) branch of MBX.
+- MB-nrg PEF for solvated NMA: **\"nma\"**
+  * [J. Chem. Theory Comput. 19, 4308 (2023)](https://doi.org/10.1021/acs.jctc.3c00271)
+  * this PEF is available by request.
+  * Note: the nma potential on the master branch does *not* correspond to this publication, and will be the subject of a future work.
+- MB-nrg PEF for linear alkanes:
+  * [J. Chem. Theory Comput. 19, 4494 (2023)](https://doi.org/10.1021/acs.jctc.2c00645)
+  * this PEF is available by request.
+- MB-nrg PEF for polyalanine:
+  * [J. Chem. Theory Comput. 21, 6194 (2025)](https://doi.org/10.1021/acs.jctc.5c00474)
+  * [J. Chem. Theory Comput. 21, 10574 (2025)](https://doi.org/10.1021/acs.jctc.5c01335)
+  * this PEF is available by request.
+
+
+The following publications apply, validate, or otherwise use various MB-nrg PEFs through MBX:
+- Hydration Free Energies of Alkali Metal and Halide Ions from Data-Driven Many-Body Potentials
+  * [J. Chem. Theory Comput. 22, 4688 (2026)](https://doi.org/10.1021/acs.jctc.6c00391)
+- Density-Functionalized QM/MM Delivers Chemical Accuracy For Solvated Systems
+  * [J. Chem. Theory Comput. 21, 10340 (2026)](https://doi.org/10.1021/acs.jctc.5c01440)
+- Density-Functionalized QM/MM Delivers Chemical Accuracy For Solvated Systems
+  * [J. Chem. Theory Comput. 21, 10340 (2026)](https://doi.org/10.1021/acs.jctc.5c01440)
+- Sub-nanometer Confinement Suppresses Autoionization of Water
+  * [J. Am. Chem. Soc. 147, 25167 (2025)](https://doi.org/10.1021/jacs.5c08273)
+
+The following review papers present an overview of MB-pol and MB-nrg style PEFs:
+- From Potentials to Properties: Data-Driven Many-Body Simulations of Water and Aqueous Systems.
+  * [Annu. Rev. Phys. Chem. 77, 321 (2026)](https://doi.org/10.1146/annurev-physchem-082423-115133)
 
 ## Interfaces
 ### Fortran90 and Python
@@ -223,3 +290,10 @@ The unit tests implemented should cover a big part of the code. This sunburst gr
 <p align="center">
   <img src="https://codecov.io/gh/paesanilab/MBX/branch/master/graphs/sunburst.svg?token=4OE0CPMHGR" />
 </p>
+
+
+## Acknowledgements
+
+The development of MBX is supported by the U.S. National Science Foundation through award no. 2311260, “Frameworks: Data-Driven Software Infrastructure for Next-Generation Molecular Simulations.”
+
+Information about this award can be found at the following link: https://www.nsf.gov/awardsearch/show-award/?AWD_ID=2311260 .
