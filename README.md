@@ -126,7 +126,7 @@ Example calls with C++, Fortran, and Python can be found in the various sub-fold
 
 ## Associated Publications and How to Cite
 
-The following papers describe the features in various MBX releases. Please cite the following papers when using MBX:
+The following papers describe the features in various MBX releases. Please cite them when using MBX:
 - MBX v1.0:
   * [J. Chem. Phys. 159, 054802 (2023)](https://doi.org/10.1063/5.0156036)
 - MBX v1.1 and v1.2:
