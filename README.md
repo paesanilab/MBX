@@ -212,6 +212,8 @@ The potentials associated with the following publications are not distributed wi
 
 
 The following publications apply, validate, or otherwise use various MB-nrg PEFs through MBX:
+- Realistic phase diagram of water from “first principles” data-driven quantum simulations
+  * [Nat. Commun. 14, 3349 (2023)](https://doi.org/10.1038/s41467-023-38855-1)
 - Hydration Free Energies of Alkali Metal and Halide Ions from Data-Driven Many-Body Potentials
   * [J. Chem. Theory Comput. 22, 4688 (2026)](https://doi.org/10.1021/acs.jctc.6c00391)
 - Density-Functionalized QM/MM Delivers Chemical Accuracy For Solvated Systems
@@ -224,6 +226,8 @@ The following publications apply, validate, or otherwise use various MB-nrg PEFs
 The following review papers present an overview of MB-pol and MB-nrg style PEFs:
 - From Potentials to Properties: Data-Driven Many-Body Simulations of Water and Aqueous Systems.
   * [Annu. Rev. Phys. Chem. 77, 321 (2026)](https://doi.org/10.1146/annurev-physchem-082423-115133)
+- Current Status of the MB-pol Data-Driven Many-Body Potential for Predictive Simulations of Water Across Different Phases.
+  * [J. Chem. Theory Comput. 20, 9269 (2024)](https://doi.org/10.1021/acs.jctc.4c01005)
 
 ## Interfaces
 ### Fortran90 and Python
