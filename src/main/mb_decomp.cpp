@@ -275,6 +275,11 @@ void parse_command_line(int argc, char** argv)
                 break;
             case 'o':
                 max_order = ParseIntArg(optarg, "-o");
+                if (max_order != -1 && max_order < 1) {
+                    std::cerr << "Invalid value for -o: '" << optarg
+                              << "' (expected a positive integer or -1 for all subsystems)" << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
                 break;
             case 'p':
                 print_xyz = true;

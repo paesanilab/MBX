@@ -114,9 +114,13 @@ int main(int argc, char **argv) {
             maxit = maxit_in;
         }
 
-        // Get the tolerance for optimization
+        // Get the tolerance for optimization; must be > 0 
         if (argc > 4) {
             tol = ParseDoubleArg(argv[4], "<tolerance>");
+            if (tol <= 0) {
+                std::cerr << "Invalid value for <tolerance>: '" << argv[4] << "' (expected value > 0)" << std::endl;
+                return EXIT_FAILURE;
+            }
         }
 
         // Read trajectory of inputed
