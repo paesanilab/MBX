@@ -4535,6 +4535,8 @@ class PMEInstance {
                 }
             }
         }
+ 
+	const size_t scratchRowDim = complexGridDimensionA_ + numNodesA_ - 1;
 
 #if HAVE_MPI == 1
         // Communicate B back to blocks
@@ -4551,14 +4553,14 @@ class PMEInstance {
                                         subsetOfCAlongA_ * myComplexGridDimensionA_ * myGridDimensionB_);
             // Resort the data to end up with the buffer holding a full row of A data, for B pencil and C subset.
             for (int c = 0; c < subsetOfCAlongA_; ++c) {
-                Complex *cPtr = buffer1 + c * myGridDimensionB_ * complexGridDimensionA_;
+                Complex *cPtr = buffer1 + c * myGridDimensionB_ * scratchRowDim;
                 for (int b = 0; b < myGridDimensionB_; ++b) {
                     for (int chunk = 0; chunk < numNodesA_; ++chunk) {
                         Complex *inPtr = buffer2 +
                                          (chunk * subsetOfCAlongA_ + c) * myComplexGridDimensionA_ * myGridDimensionB_ +
                                          b * myComplexGridDimensionA_;
                         std::copy(inPtr, inPtr + myComplexGridDimensionA_,
-                                  cPtr + b * complexGridDimensionA_ + chunk * myComplexGridDimensionA_);
+                                  cPtr + b * scratchRowDim + chunk * myComplexGridDimensionA_);
                     }
                 }
             }
@@ -4571,7 +4573,7 @@ class PMEInstance {
         Real *realGrid = reinterpret_cast<Real *>(buffer2);
 #pragma omp parallel for num_threads(nThreads_)
         for (int cb = 0; cb < subsetOfCAlongA_ * myGridDimensionB_; ++cb) {
-            fftHelperA_.transform(buffer1 + cb * complexGridDimensionA_, realGrid + cb * gridDimensionA_);
+            fftHelperA_.transform(buffer1 + cb * scratchRowDim, realGrid + cb * gridDimensionA_);
         }
 
 #if HAVE_MPI == 1
