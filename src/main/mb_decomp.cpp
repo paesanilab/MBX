@@ -8,12 +8,15 @@
 #include <cstring>
 #include <stdexcept>
 #include <cstdlib>
+#include <string>
 
 #include "io_tools/read_nrg.h"
 #include "io_tools/write_nrg.h"
 #include "io_tools/write_xyz.h"
 
 #include "bblock/system.h"
+
+#include "tools/parse_args.h"
 
 namespace {
 
@@ -271,7 +274,12 @@ void parse_command_line(int argc, char** argv)
                 do_decomp = false;
                 break;
             case 'o':
-                max_order = atoi(optarg);
+                max_order = ParseIntArg(optarg, "-o");
+                if (max_order != -1 && max_order < 1) {
+                    std::cerr << "Invalid value for -o: '" << optarg
+                              << "' (expected a positive integer or -1 for all subsystems)" << std::endl;
+                    std::exit(EXIT_FAILURE);
+                }
                 break;
             case 'p':
                 print_xyz = true;

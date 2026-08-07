@@ -73,6 +73,22 @@ typedef int MPI_Comm;
  * @brief Encloses the functions related to classical lennard-jones.
  */
 namespace lj {
+    
+    #ifdef TBB
+    template<typename T>
+    using allocator = tbb::scalable_allocator<T>;
+    #else
+    template<typename T>
+    using allocator = std::allocator<T>;
+    #endif
+
+    #ifdef TBB
+    template<typename T>
+    using vector = std::vector<T, tbb::scalable_allocator<T>>;
+    #else
+    template<typename T>
+    using vector = std::vector<T>;
+    #endif
 
 /**
  * @class LennardJones

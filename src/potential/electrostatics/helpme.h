@@ -469,7 +469,9 @@ class FFTWAllocator {
     }
 
     // destroy elements of initialized storage p
-    void destroy(pointer p) {}
+    void destroy(pointer p) {
+        p->~T();
+    }
 
     // deallocate storage p of deleted elements
     void deallocate(pointer p, size_type num) {
@@ -2898,84 +2900,38 @@ class PMEInstance {
         int nPotentialComponents = nCartesian(derivativeLevel) - cartesianOffset;
         size_t nPoints = gridPoints.nRows();
 
-        std::vector<RealMat> threadFracPotentials(nThreads_);
-        #pragma omp parallel for schedule(static, 1)
-        for (size_t rank = 0; rank < nThreads_; ++rank) {
-            threadFracPotentials[rank] = RealMat(nPoints, nPotentialComponents);
-        }
-        std::vector<std::tuple<Spline, Spline, Spline>> bSplines2(nPoints);
-
         #pragma omp parallel for
         for (size_t point = 0; point < nPoints; ++point) {
-            bSplines2[point] = makeBSplines(gridPoints[point], derivativeLevel);
-        }
-
-
-#pragma omp parallel num_threads(nThreads_)
-        {
-#ifdef _OPENMP
-            int threadID = omp_get_thread_num();
-#else
-            int threadID = 0;
-#endif
-
-            for (size_t point = 0; point < nPoints; ++point) {
-
-                size_t rank = omp_get_thread_num();
-
-                RealMat& threadFracPotential = threadFracPotentials[threadID];
-
-                auto& bSplines = bSplines2[point];
-                auto& splineA = std::get<0>(bSplines);
-                auto& splineB = std::get<1>(bSplines);
-                auto& splineC = std::get<2>(bSplines);
-                const auto &aGridIterator = gridIteratorA_[splineA.startingGridPoint()];
-                const auto &bGridIterator = gridIteratorB_[splineB.startingGridPoint()];
-                // const auto &cGridIterator = gridIteratorC_[splineC.startingGridPoint()];
-                const auto &cGridIterator = threadedGridIteratorC_[threadID][splineC.startingGridPoint()];
-                const Real *splineStartA = splineA[0];
-                const Real *splineStartB = splineB[0];
-                const Real *splineStartC = splineC[0];
-
-                for (int component = 0; component < nPotentialComponents; ++component) {
-                    const auto &quanta = angMomIterator_[component + cartesianOffset];
-                    const Real *splineValsA = splineStartA + quanta[0] * splineOrder_;
-                    const Real *splineValsB = splineStartB + quanta[1] * splineOrder_;
-                    const Real *splineValsC = splineStartC + quanta[2] * splineOrder_;
-                    Real phiAccumulator = 0;
-                    for (const auto &cPoint : cGridIterator) {
-                        const Real cVal = splineValsC[cPoint.second];
-                        for (const auto &bPoint : bGridIterator) {
-                            const Real cbVal = splineValsB[bPoint.second] * cVal;
-                            const Real *cbRow = potentialGrid + cPoint.first * myGridDimensionA_ * myGridDimensionB_ +
-                                                bPoint.first * myGridDimensionA_;
-                            for (const auto &aPoint : aGridIterator) {
-                                const Real gridVal = cbRow[aPoint.first];
-                                const Real test = splineValsA[aPoint.second];
-                                const Real temp1 = gridVal * test * cbVal;
-                                phiAccumulator += temp1;
-                            }
+            Real *phiPtr = fracPotential[point];
+            const auto bSplines = makeBSplines(gridPoints[point], derivativeLevel);
+            const auto &splineA = std::get<0>(bSplines);
+            const auto &splineB = std::get<1>(bSplines);
+            const auto &splineC = std::get<2>(bSplines);
+            const auto &aGridIterator = gridIteratorA_[splineA.startingGridPoint()];
+            const auto &bGridIterator = gridIteratorB_[splineB.startingGridPoint()];
+            const auto &cGridIterator = gridIteratorC_[splineC.startingGridPoint()];
+            const Real *splineStartA = splineA[0];
+            const Real *splineStartB = splineB[0];
+            const Real *splineStartC = splineC[0];
+            for (const auto &cPoint : cGridIterator) {
+                for (const auto &bPoint : bGridIterator) {
+                    const Real *cbRow = potentialGrid + cPoint.first * myGridDimensionA_ * myGridDimensionB_ +
+                                        bPoint.first * myGridDimensionA_;
+                    for (const auto &aPoint : aGridIterator) {
+                        Real gridVal = cbRow[aPoint.first];
+                        for (int component = 0; component < nPotentialComponents; ++component) {
+                            const auto &quanta = angMomIterator_[component + cartesianOffset];
+                            const Real *splineValsA = splineStartA + quanta[0] * splineOrder_;
+                            const Real *splineValsB = splineStartB + quanta[1] * splineOrder_;
+                            const Real *splineValsC = splineStartC + quanta[2] * splineOrder_;
+                            phiPtr[component] += gridVal * splineValsA[aPoint.second] * splineValsB[bPoint.second] *
+                                                 splineValsC[cPoint.second];
                         }
                     }
-                    threadFracPotential[point][component] = phiAccumulator;
                 }
             }
         }
-
-        for (size_t rank = 0; rank < nThreads_; ++rank) {
-            RealMat& threadFracPotential = threadFracPotentials[rank];
-            for (size_t point = 0; point < nPoints; ++point) {
-                for (int component = 0; component < nPotentialComponents; ++component) {
-                    fracPotential[point][component] += threadFracPotential[point][component];
-                }
-            }
-        }
-
-        #pragma omp parallel for
-        for (size_t point = 0; point < nPoints; ++point) {
-            bSplines2[point] = std::make_tuple<Spline, Spline, Spline>(Spline(), Spline(), Spline());
-        }
-
+        
         potential += cartesianTransform(derivativeLevel, onlyOneShellForOutput, scaledRecVecs_, fracPotential);
     }
 

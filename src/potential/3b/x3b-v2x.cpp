@@ -1465,15 +1465,18 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
     double dab[3 * nt], dac[3 * nt], dbc[3 * nt];
     double e = 0.0;
 
-    
+    // Allocate a bit more memory than required, so it can be aligned to 128 byte boundary
+    constexpr size_t memory_reserved = 1580*8;
+    // Amount of temporary memory actually required for vectorized PIP evaluation
+    constexpr size_t memory_required = 1457*8;
 
-    double bigmem[3460*8];
+    double bigmem[memory_reserved];
 
     void* pool = reinterpret_cast<void *>(bigmem);
 
-    size_t space = 3460*8*8;
+    size_t space = memory_reserved*sizeof(double);
 
-    double* t = reinterpret_cast<double *>(std::align(128, 3449*8*8, pool, space));
+    double* t = reinterpret_cast<double *>(std::align(128, memory_required*sizeof(double), pool, space));
 
     double x[36*8];
     double gg[36*8];
@@ -1590,9 +1593,8 @@ double x3b_v2x::eval(const double* w1, const double* w2, const double* w3, doubl
 
         if(!skip || (skip && i >= nt - 1 && idx > 0)) {
             int numEvals = (idx == 0) ? 8 : idx;
-            double* e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
-            std::copy(e3b, e3b + numEvals, energy.begin() + copyIdx);
-            delete[] e3b;
+            std::vector<double> e3b = poly_3b_v2x::eval(thefit, x, t, gg);  // Now returns size 8 array
+            std::copy(e3b.begin(), e3b.begin() + numEvals, energy.begin() + copyIdx);
 
             for(size_t j = 0; j < numEvals; j++) {
                 sh = eval_sh[j];

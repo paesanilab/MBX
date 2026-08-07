@@ -79,6 +79,22 @@ typedef int MPI_Comm;
  * @brief Contains all the dispersion related functions
  */
 namespace disp {
+    
+    #ifdef TBB
+    template<typename T>
+    using allocator = tbb::scalable_allocator<T>;
+    #else
+    template<typename T>
+    using allocator = std::allocator<T>;
+    #endif
+
+    #ifdef TBB
+    template<typename T>
+    using vector = std::vector<T, tbb::scalable_allocator<T>>;
+    #else
+    template<typename T>
+    using vector = std::vector<T>;
+    #endif
 
 /**
  * @class Dispersion
