@@ -7990,27 +7990,29 @@ void Electrostatics::CalculateElecEnergyMPIlocal(bool use_ghost) {
 
     Eperm_ext_ = 0.0;
 
-    size_t fi_mon = 0;
-    size_t fi_crd = 0;
-    size_t fi_sites = 0;
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = nmon * 2;
-        for (size_t m = 0; m < nmon; m++) {
-            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
-            size_t mns = m * ns;
-            size_t mns3 = mns * 3;
-            for (size_t i = 0; i < ns; i++) {
-                size_t inmon = i * nmon;
-                size_t inmon3 = 3 * inmon;
-                Eperm_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
-                Eperm_ext_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local;
+    if (external_phi_.size()) {
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    Eperm_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
+                    Eperm_ext_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local;
+                }
             }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
         }
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
     }
     Eperm_ *= 0.5 * constants::COULOMB;
     Eperm_ext_ *= 0.5 * constants::COULOMB; // probably shouldn't have 0.5 factor here, at least if we want this to be whole external elec energy. But for now I will leave it for backwards compatibility.
@@ -8056,27 +8058,29 @@ void Electrostatics::CalculateElecEnergy(bool use_ghost) {
 
     Eperm_ext_ = 0.0;
 
-    size_t fi_mon = 0;
-    size_t fi_crd = 0;
-    size_t fi_sites = 0;
-    for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
-        size_t ns = sites_[fi_mon];
-        size_t nmon = mon_type_count_[mt].second;
-        size_t nmon2 = nmon * 2;
-        for (size_t m = 0; m < nmon; m++) {
-            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
-            size_t mns = m * ns;
-            size_t mns3 = mns * 3;
-            for (size_t i = 0; i < ns; i++) {
-                size_t inmon = i * nmon;
-                size_t inmon3 = 3 * inmon;
-                Eperm_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
-                Eperm_ext_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local;
+    if (external_phi_.size()) {
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    Eperm_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
+                    Eperm_ext_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local;
+                }
             }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
         }
-        fi_mon += nmon;
-        fi_sites += nmon * ns;
-        fi_crd += nmon * ns * 3;
     }
     Eperm_ *= 0.5 * constants::COULOMB;
     Eperm_ext_ *= 0.5 * constants::COULOMB; // probably shouldn't have 0.5 factor here, at least if we want this to be whole external elec energy. But for now I will leave it for backwards compatibility.
