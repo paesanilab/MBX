@@ -132,7 +132,7 @@ The following papers describe the features in various MBX releases. Please cite 
 - MBX v1.1 and v1.2:
   * [J. Chem. Theory Comput. 21, 1838 (2025)](https://doi.org/10.1021/acs.jctc.4c01333)
 - MBX v1.3 and v1.4:
-  * [ChemRxiv. 02 July 2026.](https://doi.org/10.26434/chemrxiv.15005580/v1)
+  * [APL Computational Physics 2, 036101 (2026)](https://pubs.aip.org/aip/aco/article/2/3/036101/3401472/Memory-aware-SIMD-enabled-permutationally)
 
 Each PEF implemented in MBX is associated with one or more publications detailing their development and applications. Please cite the following manuscripts where you use the associated PEFs:
 - MB-pol for water: **\"h2o\"**
