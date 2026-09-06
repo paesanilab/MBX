@@ -5,7 +5,7 @@
 AC_PREREQ([2.69])
 
 # Initialize AC
-AC_INIT([MBX], [1.4.2], [mbx-users@googlegroups.com])
+AC_INIT([MBX], [1.4.3], [mbx-users@googlegroups.com])
 
 # Define MBX_PACKAGE_VERSION as a macro in config.h
 AC_SUBST([MBX_VERSION], ["$PACKAGE_VERSION"])
@@ -122,7 +122,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
 # Checks for libraries.
 
 AC_CHECK_LIB([m],[cos])
-AC_SEARCH_LIBS([omp_get_thread_num],[iomp5 gomp])
+AS_IF([test "x$enable_openmp" != "xno"], [
+    AC_SEARCH_LIBS([omp_get_thread_num],[iomp5 gomp])
+])
 
 
 # FFTW
