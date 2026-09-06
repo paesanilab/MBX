@@ -122,7 +122,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([])],
 # Checks for libraries.
 
 AC_CHECK_LIB([m],[cos])
-AC_SEARCH_LIBS([omp_get_thread_num],[iomp5 gomp])
+AS_IF([test "x$enable_openmp" != "xno"], [
+    AC_SEARCH_LIBS([omp_get_thread_num],[iomp5 gomp])
+])
 
 
 # FFTW

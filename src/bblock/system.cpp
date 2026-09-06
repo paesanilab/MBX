@@ -2303,8 +2303,11 @@ double System::Get1B(bool do_grads) {
 #ifdef _OPENMP
 #pragma omp parallel shared(monomers_pool_index) reduction(+: e1b)
         {
-            size_t rank = omp_get_thread_num();
-#endif  // _OPENMP
+#endif
+            size_t rank = 0;
+#ifdef _OPENMP
+            rank = omp_get_thread_num();
+#endif
 
             // while (istart < mon_type_count_[k].second) {
             while (true) {
