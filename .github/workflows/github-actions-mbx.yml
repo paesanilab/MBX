@@ -14,6 +14,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  compile-and-test-without-openmp:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y autoconf g++ libfftw3-dev libgsl-dev
+
+      - name: Check out repository code
+        uses: actions/checkout@v7
+
+      - name: Configure without OpenMP
+        run: |
+          autoreconf -fi
+          CPPFLAGS="-D_GLIBCXX_ASSERTIONS" ./configure --disable-openmp --disable-optimization --enable-shared CXX=g++
+
+      - name: Build and test
+        run: |
+          make -j2
+          make -j2 check
+
   compile-and-test-mbx:
     runs-on: ubuntu-latest
     strategy:

@@ -1645,7 +1645,10 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_all_[fi_mon + m]) include_monomer = true;
 
-                    int rank = omp_get_thread_num();
+                    int rank = 0;
+#ifdef _OPENMP
+                    rank = omp_get_thread_num();
+#endif
 
                     if (include_monomer) {
                         field_pool[rank]->CalcPermanentElecField(
@@ -2220,7 +2223,10 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
                     double ez = 0.0;
                     double phi1 = 0.0;
 
-                    int rank = omp_get_thread_num();
+                    int rank = 0;
+#ifdef _OPENMP
+                    rank = omp_get_thread_num();
+#endif
                     
                     field_pool[rank]->CalcPermanentElecField(
                         xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,
@@ -5923,7 +5929,10 @@ void Electrostatics::ComputeDipoleFieldMPIlocalOptimized(std::vector<double> &in
                         double ey = 0.0;
                         double ez = 0.0;
 
-                        int rank = omp_get_thread_num();
+                        int rank = 0;
+#ifdef _OPENMP
+                        rank = omp_get_thread_num();
+#endif
 
                         field_pool[rank]->CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                     in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, thread_aDD,
@@ -7450,7 +7459,10 @@ void Electrostatics::ComputeDipoleFieldOptimized(std::vector<double> &in_v, std:
                     double ey = 0.0;
                     double ez = 0.0;
 
-                    int rank = omp_get_thread_num();
+                    int rank = 0;
+#ifdef _OPENMP
+                    rank = omp_get_thread_num();
+#endif
                     
                     field_pool[rank]->CalcDipoleElecField(xyz_.data() + fi_crd, xyz_.data() + fi_crd, in_ptr + fi_crd,
                                                 in_ptr + fi_crd, m, m, m + 1, nmon, nmon, i, j, Asqsqi, thread_aDD,
@@ -8299,7 +8311,10 @@ void Electrostatics::CalculateGradientsMPIlocal(std::vector<PrecomputedInfo*>& p
                     if (!use_ghost) include_monomer = true;
                     if (use_ghost && islocal_all_[fi_mon + m]) include_monomer = true;
 
-                    int rank = omp_get_thread_num();
+                    int rank = 0;
+#ifdef _OPENMP
+                    rank = omp_get_thread_num();
+#endif
 
                     if (include_monomer) {
                         field_pool[rank]->CalcElecFieldGrads(
@@ -9205,7 +9220,10 @@ void Electrostatics::CalculateGradients(std::vector<PrecomputedInfo*>& precomput
                     double ez = 0.0;
                     double phi1 = 0.0;
 
-                    int rank = omp_get_thread_num();
+                    int rank = 0;
+#ifdef _OPENMP
+                    rank = omp_get_thread_num();
+#endif
 
                     field_pool[rank]->CalcElecFieldGrads(
                         xyz_all_.data() + fi_crd, xyz_all_.data() + fi_crd, chg_all_.data() + fi_sites,

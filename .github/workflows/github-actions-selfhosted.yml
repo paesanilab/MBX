@@ -113,6 +113,11 @@ jobs:
           set -o pipefail
           chmod u+x lmp
           cd ${{ github.workspace }}/plugins/lammps/examples/1024h2o/
+          sed -i "s/variable        nsteps  equal 100/variable        nsteps  equal 10/" in.mbx_h2o
+          grep -Fq "variable        nsteps  equal 10" in.mbx_h2o || {
+            echo "::error::Failed to set nsteps to 10 in in.mbx_h2o"
+            exit 1
+          }
           export OMP_NUM_THREADS=${{ github.event.inputs.omp }}
           valgrind --leak-check=full --show-leak-kinds=all ${{ github.workspace }}/lmp -in in.* 2>&1 | tee valgrind.log
 

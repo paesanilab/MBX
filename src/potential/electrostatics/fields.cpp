@@ -96,7 +96,8 @@ void ElectricFieldHolder::CalcPermanentElecField(
         if (!use_ghost) accum2 = true;
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
         // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset + m2_offset];
+        size_t isls = 0;
+        if (use_ghost) isls = islocal[isl1_offset] + islocal[m + isl2_offset + m2_offset];
         if (use_ghost && isls) accum2 = true;
 
         if (accum2) {
@@ -283,7 +284,8 @@ void ElectricFieldHolder::CalcPermanentElecField_Optimized(
     #pragma omp simd simdlen(8)
     for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
 
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset + m2_offset];
+        size_t isls = 0;
+        if (use_ghost) isls = islocal[isl1_offset] + islocal[m + isl2_offset + m2_offset];
 
         scale[m - mon2_index_start] = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
 
@@ -571,7 +573,8 @@ void ElectricFieldHolder::CalcDipoleElecField(double *xyz1, double *xyz2, double
         bool accum2 = !use_ghost;
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
         // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        size_t isls = 0;
+        if (use_ghost) isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         if (use_ghost && isls) accum2 = true;
 
         if (accum2) {
@@ -711,7 +714,8 @@ void ElectricFieldHolder::CalcDipoleElecField_WithinCutoff(double *xyz1, double 
         bool accum2 = !use_ghost;
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
         // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        size_t isls = 0;
+        if (use_ghost) isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         
         double scale = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
 
@@ -940,7 +944,8 @@ void ElectricFieldHolder::FindMonomersWithinCutoff(size_t *bool_indices, double 
     for (size_t m = m2init; m < nmon2; m++) {
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
         // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        size_t isls = 0;
+        if (use_ghost) isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         const double cutoffsq = cutoff * cutoff;
         bool accum2 = !use_ghost;
 
@@ -1073,7 +1078,8 @@ void ElectricFieldHolder::CalcPrecomputedDipoleElec(double *xyz1, double *xyz2, 
 
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
         // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        size_t isls = 0;
+        if (use_ghost) isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         
         vscale[m - mon2_index_start] = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
 
@@ -1187,7 +1193,8 @@ void ElectricFieldHolder::CalcElecFieldGrads(
         if (!use_ghost) accum2 = true;
         // isls tracks if the site pair is local (in the current domain and is not a periodic image) 
         // isls = 0 if both sites are nonlocal, 1 if one site is local, and 2 if both sites are local.
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        size_t isls = 0;
+        if (use_ghost) isls = islocal[isl1_offset] + islocal[m + isl2_offset];
         if (use_ghost && isls) accum2 = true;
 
         if (accum2) {
@@ -1495,7 +1502,8 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         rijy[m] = rijy_vec[m - mon2_index_start];
         rijz[m] = rijz_vec[m - mon2_index_start];
 
-        size_t isls = islocal[isl1_offset] + islocal[m + isl2_offset];
+        size_t isls = 0;
+        if (use_ghost) isls = islocal[isl1_offset] + islocal[m + isl2_offset];
 
         vscale[m] = (use_ghost && (isls == 1)) ? 0.5 : 1.0;
 
