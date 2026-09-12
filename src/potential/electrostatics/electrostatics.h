@@ -328,6 +328,8 @@ class Electrostatics {
     void GetPhiXAndEfX(std::vector<double> &phi, std::vector<double> &ef, std::vector<double> &phid,
                        std::vector<double> &efd);
     void UpdatePhiAndEf(bool use_ghost);
+
+    // Note: currently, dmui is *not used*
     void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
                                                           std::vector<double> def, std::vector<double> dmui);
 

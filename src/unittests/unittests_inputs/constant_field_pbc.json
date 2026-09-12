@@ -1,7 +1,8 @@
 {
-   "Note" : "This is a cofiguration file",
+   "Note" : "This is a configuration file",
    "MBX" : { 
        "box" : [50.0, 0.0, 0.0, 0.0, 50.0, 0.0, 0.0, 0.0, 50.0],
+       "realspace_cutoff"   : 9.0,
        "twobody_cutoff"   : 9.0,
        "threebody_cutoff" : 6.0, 
        "dipole_tolerance" : 1E-16,

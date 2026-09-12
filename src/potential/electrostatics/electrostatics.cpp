@@ -1223,22 +1223,8 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
             size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
             for (size_t i = 0; i < ns; i++) {
                 for (size_t j = 0; j < 3; j++) {
-                    //// Contribution from dE*mu
-                    // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5* constants::COULOMB * (
-                    //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i]
-                    //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 1]
-                    //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 2]);
 
-                    //// Contribution from dmu*E
-                    // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5*constants::COULOMB * (
-                    //    external_dmui_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i] *
-                    //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j]
-                    //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 1] *
-                    //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j]
-                    //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 2] *
-                    //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j]) ;
-
-                    // L[mu,E] ; dL/dR = dL/dmu dmu/dr + dl/dmu dmu/dE dE/dr
+                    // L[mu,E] ; dL/dR = dL/dmu dmu/dr + dL/dmu dmu/dE dE/dr
                     // dL/dmu dmu/dr
                     // grad[fi_crd + m * ns * 3 + 3 * i + j] -=
                     //    constants::COULOMB *
@@ -1249,6 +1235,11 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
                     //     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
                     //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
 
+                    // Note: contribution from external_dmui_ currently missing. Should be added if we want to support that parameter.
+                    // external_dmui_ is the gradient of the external field with respect to the system dipoles, and its purpose
+                    // is to capture the response of the external field to the dipoles.
+                    // Currently, we have no use-case for this, but could be useful for QM-MM, etc.
+
                     // dL/dmu dmu/dE dE/dr , where dmu/dE = alpha (pol)
                     grad[fi_crd + m * ns * 3 + 3 * i + j] -= monomer_is_local * constants::COULOMB * pol_[fi_crd / 3 + ns * m + i] *
                                                              (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] *
@@ -1257,30 +1248,6 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
                                                                   sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
                                                               external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
                                                                   sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
-
-                    // this should just be the same as above?
-                    // grad[fi_crd + m * ns * 3 + 3 * i + j] -= constants::COULOMB *
-                    //                                          (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] *
-                    //                                               sys_mu_all_[fi_crd + m * ns * 3 + 3 * i] +
-                    //                                           external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
-                    //                                               sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
-                    //                                           external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
-                    //                                               sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
-
-                    // grad[fi_crd + m * ns * 3 + 3 * i + j] += constants::COULOMB *
-                    //    (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j]* sys_mu_all_[fi_crd + m * ns * 3 + 3 * i]
-                    //    +
-                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3
-                    //     * i + 1] + external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] * sys_mu_all_[fi_crd + m *
-                    //     ns * 3 + 3 * i + 2]);
-
-                    // grad[fi_crd + m * ns * 3 + 3 * i + j] -=  constants::COULOMB * (
-                    //    external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i]
-                    //    +
-                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
-                    //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
-                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
-                    //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
                 }
             }
         }
