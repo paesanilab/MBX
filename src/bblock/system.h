@@ -616,6 +616,8 @@ class System {
     void Hack1EfqPhi();
     void Hack2CgIter();
     void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+
+    // Note: currently, dmui is *not used*
     void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
                                                           std::vector<double> def = {}, std::vector<double> dmui = {});
     void GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd);
