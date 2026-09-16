@@ -580,7 +580,7 @@ void Electrostatics::GetPhiXAndEfX(std::vector<double> &phi, std::vector<double>
     efd = ef_x_ind_;
 }
 
-void Electrostatics::UpdatePhiAndEf() {
+void Electrostatics::UpdatePhiAndEf(bool use_ghost) {
     size_t fi_mon = 0;
     size_t fi_crd = 0;
     size_t fi_sites = 0;
@@ -589,15 +589,16 @@ void Electrostatics::UpdatePhiAndEf() {
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
+            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
             size_t mns = m * ns;
             size_t mns3 = mns * 3;
             for (size_t i = 0; i < ns; i++) {
                 size_t inmon = i * nmon;
                 size_t inmon3 = 3 * inmon;
-                Efq_all_[inmon3 + m + fi_crd] += external_ef_[fi_crd + mns3 + 3 * i];
-                Efq_all_[inmon3 + m + fi_crd + nmon] += external_ef_[fi_crd + mns3 + 3 * i + 1];
-                Efq_all_[inmon3 + m + fi_crd + nmon2] += external_ef_[fi_crd + mns3 + 3 * i + 2];
-                phi_all_[fi_sites + m + inmon] += external_phi_[fi_sites + mns + i];
+                Efq_all_[inmon3 + m + fi_crd] += external_ef_[fi_crd + mns3 + 3 * i] * monomer_is_local;
+                Efq_all_[inmon3 + m + fi_crd + nmon] += external_ef_[fi_crd + mns3 + 3 * i + 1] * monomer_is_local;
+                Efq_all_[inmon3 + m + fi_crd + nmon2] += external_ef_[fi_crd + mns3 + 3 * i + 2] * monomer_is_local;
+                phi_all_[fi_sites + m + inmon] += external_phi_[fi_sites + mns + i] * monomer_is_local;
             }
         }
         fi_mon += nmon;
@@ -1208,7 +1209,7 @@ void Electrostatics::Hack3GetPotentialAtPoints(std::vector<double> coordinates) 
     }
 }
 
-void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad) {
+void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad, bool use_ghost) {
     size_t nsites3 = nsites_ * 3;
     size_t fi_mon = 0;
     size_t fi_crd = 0;
@@ -1219,24 +1220,11 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
         size_t nmon = mon_type_count_[mt].second;
         size_t nmon2 = nmon * 2;
         for (size_t m = 0; m < nmon; m++) {
+            size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
             for (size_t i = 0; i < ns; i++) {
                 for (size_t j = 0; j < 3; j++) {
-                    //// Contribution from dE*mu
-                    // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5* constants::COULOMB * (
-                    //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i]
-                    //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 1]
-                    //  + external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_mu_all_[fi_crd + mt*ns*3 + 3*i + 2]);
 
-                    //// Contribution from dmu*E
-                    // grad[fi_crd + mt*ns*3 + 3*i + j] -= 0.5*constants::COULOMB * (
-                    //    external_dmui_[3*fi_crd + 9*ns*mt + 9*i + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i] *
-                    //    external_def_[3*fi_crd + 9*ns*mt + 9*i + j]
-                    //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 3 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 1] *
-                    //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 3 + j]
-                    //  + external_dmui_[3*fi_crd + 9*ns*mt + 9*i + 6 + j] * sys_Efq_all_[fi_crd + mt*ns*3 + 3*i + 2] *
-                    //  external_def_[3*fi_crd + 9*ns*mt + 9*i + 6 + j]) ;
-
-                    // L[mu,E] ; dL/dR = dL/dmu dmu/dr + dl/dmu dmu/dE dE/dr
+                    // L[mu,E] ; dL/dR = dL/dmu dmu/dr + dL/dmu dmu/dE dE/dr
                     // dL/dmu dmu/dr
                     // grad[fi_crd + m * ns * 3 + 3 * i + j] -=
                     //    constants::COULOMB *
@@ -1247,29 +1235,19 @@ void Electrostatics::CalculateInducedGradientsExternal(std::vector<double> &grad
                     //     external_dmui_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
                     //         sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
 
+                    // Note: contribution from external_dmui_ currently missing. Should be added if we want to support that parameter.
+                    // external_dmui_ is the gradient of the external field with respect to the system dipoles, and its purpose
+                    // is to capture the response of the external field to the dipoles.
+                    // Currently, we have no use-case for this, but could be useful for QM-MM, etc.
+
                     // dL/dmu dmu/dE dE/dr , where dmu/dE = alpha (pol)
-                    grad[fi_crd + m * ns * 3 + 3 * i + j] -= constants::COULOMB * pol_[fi_crd / 3 + ns * m + i] *
+                    grad[fi_crd + m * ns * 3 + 3 * i + j] -= monomer_is_local * constants::COULOMB * pol_[fi_crd / 3 + ns * m + i] *
                                                              (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] *
                                                                   sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i] +
                                                               external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
                                                                   sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
                                                               external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
                                                                   sys_Efq_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
-
-                    // grad[fi_crd + m * ns * 3 + 3 * i + j] += constants::COULOMB *
-                    //    (external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j]* sys_mu_all_[fi_crd + m * ns * 3 + 3 * i]
-                    //    +
-                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3
-                    //     * i + 1] + external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] * sys_mu_all_[fi_crd + m *
-                    //     ns * 3 + 3 * i + 2]);
-
-                    // grad[fi_crd + m * ns * 3 + 3 * i + j] -=  constants::COULOMB * (
-                    //    external_def_[3 * fi_crd + 9 * ns * m + 9 * i + j] * sys_mu_all_[fi_crd + m * ns * 3 + 3 * i]
-                    //    +
-                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 3 + j] *
-                    //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 1] +
-                    //     external_def_[3 * fi_crd + 9 * ns * m + 9 * i + 6 + j] *
-                    //         sys_mu_all_[fi_crd + m * ns * 3 + 3 * i + 2]);
                 }
             }
         }
@@ -2097,6 +2075,11 @@ void Electrostatics::CalculatePermanentElecFieldMPIlocal(std::vector<Precomputed
 
     // Copy back improtant imformation
     mon_type_count_ = mon_type_count_cp;
+    
+    if (external_phi_.size() and external_ef_.size()) {
+        UpdatePhiAndEf(use_ghost);
+    }
+
     for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
     for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
 
@@ -2669,10 +2652,11 @@ void Electrostatics::CalculatePermanentElecField(std::vector<PrecomputedInfo*>& 
 #endif
 
     // Copy back improtant imformation
-    if (external_phi_.size() and external_ef_.size()) {
-        UpdatePhiAndEf();
-    }
     mon_type_count_ = mon_type_count_cp;
+
+    if (external_phi_.size() and external_ef_.size()) {
+        UpdatePhiAndEf(use_ghost);
+    }
     for (size_t i = 0; i < nsites_; i++) phi_[i] = phi_all_[i];
     for (size_t i = 0; i < 3 * nsites_; i++) Efq_[i] = Efq_all_[i];
 }
@@ -7979,10 +7963,38 @@ void Electrostatics::CalculateDipolesIterative(std::vector<PrecomputedInfo*>& pr
     }
 }
 
-void Electrostatics::CalculateElecEnergyMPIlocal() {
+void Electrostatics::CalculateElecEnergyMPIlocal(bool use_ghost) {
     Eperm_ = 0.0;
     for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
+
+    Eperm_ext_ = 0.0;
+
+    if (external_phi_.size()) {
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    Eperm_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
+                    Eperm_ext_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local;
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
+    }
     Eperm_ *= 0.5 * constants::COULOMB;
+    Eperm_ext_ *= 0.5 * constants::COULOMB; // probably shouldn't have 0.5 factor here, at least if we want this to be whole external elec energy. But for now I will leave it for backwards compatibility.
 
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;
@@ -8019,15 +8031,39 @@ void Electrostatics::CalculateElecEnergyMPIlocal() {
 #endif
 }
 
-void Electrostatics::CalculateElecEnergy() {
+void Electrostatics::CalculateElecEnergy(bool use_ghost) {
     Eperm_ = 0.0;
     for (size_t i = 0; i < nsites_all_; i++) Eperm_ += phi_all_[i] * chg_all_[i];
-    Eperm_ *= 0.5 * constants::COULOMB;
 
     Eperm_ext_ = 0.0;
-    for (size_t i = 0; i < external_phi_.size(); i++) Eperm_ext_ += external_phi_[i] * sys_chg_all_[i];
-    Eperm_ext_ *= 0.5 * constants::COULOMB;
 
+    if (external_phi_.size()) {
+        size_t fi_mon = 0;
+        size_t fi_crd = 0;
+        size_t fi_sites = 0;
+        for (size_t mt = 0; mt < mon_type_count_.size(); mt++) {
+            size_t ns = sites_[fi_mon];
+            size_t nmon = mon_type_count_[mt].second;
+            size_t nmon2 = nmon * 2;
+            for (size_t m = 0; m < nmon; m++) {
+                size_t monomer_is_local = use_ghost ? islocal_all_[fi_mon + m] : 1;
+                size_t mns = m * ns;
+                size_t mns3 = mns * 3;
+                for (size_t i = 0; i < ns; i++) {
+                    size_t inmon = i * nmon;
+                    size_t inmon3 = 3 * inmon;
+                    Eperm_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local; // only half the q-external energy is calculated in the above term, so the other half is calculated here!
+                    Eperm_ext_ += external_phi_[fi_sites + mns + i] * sys_chg_all_[fi_sites + mns + i] * monomer_is_local;
+                }
+            }
+            fi_mon += nmon;
+            fi_sites += nmon * ns;
+            fi_crd += nmon * ns * 3;
+        }
+    }
+    Eperm_ *= 0.5 * constants::COULOMB;
+    Eperm_ext_ *= 0.5 * constants::COULOMB; // probably shouldn't have 0.5 factor here, at least if we want this to be whole external elec energy. But for now I will leave it for backwards compatibility.
+    
     // Induced Electrostatic energy (chg-dip, dip-dip, pol)
     Eind_ = 0.0;
     for (size_t i = 0; i < 3 * nsites_; i++) Eind_ -= mu_[i] * Efq_[i];
@@ -10044,14 +10080,14 @@ double Electrostatics::GetElectrostatics(std::vector<double> &grad, std::vector<
     std::fill(virial_.begin(), virial_.end(), 0.0);
     CalculatePermanentElecField(precomputedInformation, pme_solver_, use_ghost);
     CalculateDipoles(precomputedInformation, pme_solver_);
-    CalculateElecEnergy();
+    CalculateElecEnergy(use_ghost);
     if (do_grads_) CalculateGradients(precomputedInformation, grad, pme_solver_);
 
     for(size_t i = 0; i < precomputedInformation.size(); i++) {
         delete precomputedInformation[i];
     }
 
-    if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad);
+    if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad, use_ghost);
     // update viral
     if (virial != 0) {
         for (size_t k = 0; k < 9; k++) {
@@ -10155,12 +10191,14 @@ double Electrostatics::GetElectrostaticsMPIlocal(std::vector<double> &grad, std:
 
     CalculatePermanentElecFieldMPIlocal(precomputedInformation, pme_solver_, use_ghost);
     CalculateDipolesMPIlocal(precomputedInformation, pme_solver_, use_ghost);
-    CalculateElecEnergyMPIlocal();
+    CalculateElecEnergyMPIlocal(use_ghost);
     if (do_grads_) CalculateGradientsMPIlocal(precomputedInformation, grad, pme_solver_, use_ghost);
 
     for(size_t i = 0; i < precomputedInformation.size(); i++) {
         delete precomputedInformation[i];
     }
+
+    if (do_grads_ and external_def_.size()) CalculateInducedGradientsExternal(grad, use_ghost);
     
     // update viral
     if (virial != 0) {

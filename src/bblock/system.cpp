@@ -128,6 +128,12 @@ System::System() {
     proc_grid_x_ = 1;
     proc_grid_y_ = 1;
     proc_grid_z_ = 1;
+
+    field_x_ = 0.0;
+    field_y_ = 0.0;
+    field_z_ = 0.0;
+
+    external_field_set_ = false;
 }
 System::~System() {}
 
@@ -229,6 +235,8 @@ void System::SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double
     }
 
     electrostaticE_.SetExternalElectrostaticPotentialAndFieldInSites(phi_ord, ef_ord, def_ord, dmui_ord);
+
+    external_field_set_ = true;
 }
 
 void System::SetExternalChargesAndPositions(std::vector<double> chg, std::vector<double> xyz) {
@@ -844,7 +852,7 @@ void System::SetRealXyz(std::vector<double> xyz) {
 }
 
 void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal,
-                        int tag) {
+                        int tag, std::vector<int> image_flags) {
     // If the system has been initialized, adding a monomer is not possible
     if (initialized_) {
         std::string text = std::string("The system has already been initialized. ") +
@@ -865,6 +873,14 @@ void System::AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms,
         atom_tag_.push_back(tag == 0 ? tag_counter_ + i : tag + i);
     }
     tag_counter_ += atoms.size();
+
+    if(image_flags.size() != 3) {
+        std::string text = std::string("image flags must be len-3 vector. ");
+        throw CUException(__func__, __FILE__, __LINE__, text);
+    }
+    monomer_image_flags_.push_back(image_flags[0]);
+    monomer_image_flags_.push_back(image_flags[1]);
+    monomer_image_flags_.push_back(image_flags[2]);
 }
 
 void System::AddMolecule(std::vector<size_t> molec) { molecules_.push_back(molec); }
@@ -1574,6 +1590,25 @@ void System::SetUpFromJson(nlohmann::json j) {
         // if (mpi_rank_ == 0) std::cerr << "**WARNING** \"monomers_file\" is not defined in json file.\n";
     }
     mbx_j_["MBX"]["monomers_file"] = monomers_json_file;
+
+
+    try {
+        field_x_ = j["MBX"]["field_x"];
+    } catch (...) {
+    }
+    mbx_j_["MBX"]["field_x"] = field_x_;
+
+    try {
+        field_y_ = j["MBX"]["field_y"];
+    } catch (...) {
+    }
+    mbx_j_["MBX"]["field_y"] = field_y_;
+
+    try {
+        field_z_ = j["MBX"]["field_z"];
+    } catch (...) {
+    }
+    mbx_j_["MBX"]["field_z"] = field_z_;
 
     SetPBC(box_);
 }
@@ -3587,6 +3622,71 @@ double System::ElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     return energy_;
 }
 
+void System::init_external_field() {
+    std::vector<double> phi(numsites_, 0.0), ef(3 * numsites_, 0.0), def(9 * numsites_, 0.0), dmui(9 * numsites_, 0.0);
+
+    const double X_FIELD = field_x_;
+    const double Y_FIELD = field_y_;
+    const double Z_FIELD = field_z_;
+
+    int monomer_index = 0;
+
+    for (size_t i = 0; i < numsites_; i++) {
+
+        if(first_index_[monomer_index] + sites_[monomer_index] == i) monomer_index += 1;
+
+        size_t j = initial_order_[monomer_index].first;
+
+        double x, y, z;
+
+        if (use_pbc_) {
+
+            int image_x = monomer_image_flags_[3 * j + 0];
+            int image_y = monomer_image_flags_[3 * j + 1];
+            int image_z = monomer_image_flags_[3 * j + 2];
+    
+            double x_rec = box_inverse_[0] * xyz_[i*3 + 0] + box_inverse_[3] * xyz_[i*3 + 1] + box_inverse_[6] * xyz_[i*3 + 2];
+            double y_rec = box_inverse_[1] * xyz_[i*3 + 0] + box_inverse_[4] * xyz_[i*3 + 1] + box_inverse_[7] * xyz_[i*3 + 2];
+            double z_rec = box_inverse_[2] * xyz_[i*3 + 0] + box_inverse_[5] * xyz_[i*3 + 1] + box_inverse_[8] * xyz_[i*3 + 2];
+    
+            x_rec += image_x;
+            y_rec += image_y;
+            z_rec += image_z;
+    
+            x = box_[0] * x_rec + box_[3] * y_rec + box_[6] * z_rec;
+            y = box_[1] * x_rec + box_[4] * y_rec + box_[7] * z_rec;
+            z = box_[2] * x_rec + box_[5] * y_rec + box_[8] * z_rec;
+        } else {
+            x = xyz_[i*3 + 0];
+            y = xyz_[i*3 + 1];
+            z = xyz_[i*3 + 2];
+        }
+
+        phi[i] = - x * X_FIELD - y * Y_FIELD - z * Z_FIELD; // integrate the field
+    }
+
+    for (size_t i = 0; i < numsites_; i++) {
+
+        ef[i*3 + 0] = X_FIELD; // constant value for potential along x axis
+        ef[i*3 + 1] = Y_FIELD; // constant value for potential along x axis
+        ef[i*3 + 2] = Z_FIELD; // constant value for potential along x axis
+    }
+
+    for (size_t i = 0; i < numsites_; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            def[i*9 + j] = 0.0; // field is constant, so no derivative.
+        }
+    }
+
+    for (size_t i = 0; i < numsites_; i++) {
+        for (size_t j = 0; j < 9; j++) {
+            dmui[i*9 + j] = 0.0; // this is derivative of efield with respect to dipoles. For now, always 0.0. In future can implement for responsive external field.
+        }
+    }
+
+    electrostaticE_.SetExternalElectrostaticPotentialAndFieldInSites(phi, ef, def, dmui);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 void System::SetEwaldElectrostatics(double alpha, double grid_density, int spline_order) {
@@ -3672,6 +3772,8 @@ double System::GetElectrostatics(bool do_grads, bool use_ghost) {
     electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
     electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
 
+    if (!external_field_set_) init_external_field();
+
     return electrostaticE_.GetElectrostatics(grad_, &virial_, use_ghost);
 }
 
@@ -3683,6 +3785,8 @@ double System::GetElectrostaticsMPIlocal(bool do_grads, bool use_ghost) {
     electrostaticE_.SetEwaldGridDensity(elec_grid_density_);
     electrostaticE_.SetEwaldSplineOrder(elec_spline_order_);
     electrostaticE_.SetFFTDimension(grid_fftdim_elec_);
+
+    if (!external_field_set_) init_external_field();
 
     return electrostaticE_.GetElectrostaticsMPIlocal(grad_, &virial_, use_ghost);
 }

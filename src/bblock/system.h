@@ -563,7 +563,7 @@ class System {
      * Please read the documentation carefully.
      */
     void AddMonomer(std::vector<double> xyz, std::vector<std::string> atoms, std::string id, size_t islocal = 1,
-                    int tag = 0);
+                    int tag = 0, std::vector<int> image_flags = std::vector<int>({0, 0, 0}));
 
     std::string GetCurrentSystemConfig();
 
@@ -616,6 +616,8 @@ class System {
     void Hack1EfqPhi();
     void Hack2CgIter();
     void Hack3GetPotentialAtPoints(std::vector<double> coordinates);
+
+    // Note: currently, dmui is *not used*
     void SetExternalElectrostaticPotentialAndFieldInSites(std::vector<double> phi, std::vector<double> ef,
                                                           std::vector<double> def = {}, std::vector<double> dmui = {});
     void GetElectrostaticFields(std::vector<double> &phi, std::vector<double> &efq, std::vector<double> &efd);
@@ -1125,6 +1127,7 @@ class System {
     double ElectrostaticsTest(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPI(bool do_grads, bool use_ghost = 0);
     double ElectrostaticsMPIlocal(bool do_grads, bool use_ghost = 0);
+    void init_external_field();
 
     /**
      * Obtains the dispersion energy for the whole system.
@@ -1830,6 +1833,13 @@ class System {
      * States if the initialization is PME only or not"
      */
     // bool isPME_;
+
+    // constant elec field along each cartesian axis.
+    double field_x_, field_y_, field_z_;
+
+    std::vector<int> monomer_image_flags_;
+
+    bool external_field_set_;
 };
 
 }  // namespace bblock
