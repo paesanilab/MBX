@@ -33,7 +33,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 ******************************************************************************/
 
 #include "system.h"
-#include "../potential/3b/x3b-v2x.h"
 
 //#define DEBUG
 //#define TIMING
@@ -41,7 +40,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 
 #ifdef TIMING
 #include <chrono>
-#include <iostream>
 #include <iostream>
 #endif
 
