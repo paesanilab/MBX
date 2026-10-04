@@ -573,6 +573,31 @@ TEST_CASE("constant external field gas phase") {
 
     REQUIRE(eperm == Approx(expected_e_perm).margin(TOL));
     REQUIRE(eind == Approx(expected_e_ind).margin(TOL));
+
+    std::vector<double> coordinates = systems[0].GetXyz();
+    std::vector<double> analytical_gradients = systems[0].GetGrads();
+
+    double s = 0.0001;
+    for (size_t i = 0; i < 3; i++) {
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double ep = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double epp = systems[0].Energy(false);
+        coordinates[i] -= 4 * s;
+        systems[0].SetXyz(coordinates);
+        double emm = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double em = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+        REQUIRE(numgrad == Approx(analytical_gradients[i]).margin(TOL));
+    }
+
+    // check gradients via comparison with numerical:
 }
 
 TEST_CASE("constant external field in pbc") {
@@ -601,7 +626,179 @@ TEST_CASE("constant external field in pbc") {
 
     REQUIRE(eperm == Approx(expected_e_perm).margin(TOL));
     REQUIRE(eind == Approx(expected_e_ind).margin(TOL));
+
+    std::vector<double> coordinates = systems[0].GetXyz();
+    std::vector<double> analytical_gradients = systems[0].GetGrads();
+
+    double s = 0.0001;
+    for (size_t i = 0; i < 3; i++) {
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double ep = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double epp = systems[0].Energy(false);
+        coordinates[i] -= 4 * s;
+        systems[0].SetXyz(coordinates);
+        double emm = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double em = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+        REQUIRE(numgrad == Approx(analytical_gradients[i]).margin(TOL));
+    }
 }
+
+TEST_CASE("constant external field trimer") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/water_trimer.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/water_trimer.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/constant_field.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+    double eperm = systems[0].GetPermanentElectrostaticEnergy();
+    double eind = systems[0].GetInducedElectrostaticEnergy();
+    
+    std::vector<double> mu_perm, mu_ind;
+    systems[0].GetDipoles(mu_perm, mu_ind);
+
+    // reference dipoles computed in other software via matrix inversion:
+    const std::vector<double> expected_dipoles = {
+        1.4420812267123453,
+        2.3909230345581935,
+        3.4382919733319057,
+        0.04113547731307171,
+        0.111240956798714,
+        0.1548532158891326,
+        0.29310187233167817,
+        -0.031726294254918685,
+        0.5248048414872868,
+        1.1483245628154749e-10,
+        1.329296375551504e-10,
+        1.0874371668171871e-10,
+        1.1687145142990492,
+        2.433558613728902,
+        3.5592336144249326,
+        -0.0637969054354679,
+        0.03800110069829332,
+        0.16798996126874766,
+        -0.035598163170027355,
+        0.5085508180793681,
+        0.524313114159853,
+        8.559949735551577e-12,
+        4.6787348367347364e-11,
+        1.6087939202716921e-10,
+        1.0528990490161885,
+        2.77746263579698,
+        3.746977363478253,
+        -0.03905489210053076,
+        0.0029211147878195343,
+        0.6630555267208639,
+        0.4363213719445475,
+        0.2528172293134257,
+        0.33283404495588065,
+        3.0621030611761824e-11,
+        1.4991379057355187e-10,
+        1.9974405261781878e-10
+    };
+
+    for (size_t dipoleIndex = 0; dipoleIndex < 3*3*4; dipoleIndex++) {
+        REQUIRE(mu_ind[dipoleIndex] == Approx(expected_dipoles[dipoleIndex]).margin(TOL));
+    }
+
+    // also computed in other software by matrix inversion:
+    double expected_e_perm = 0.08686800396078158 * constants::COULOMB;
+    double expected_e_ind = -30.318766994540933 * constants::COULOMB;
+
+    REQUIRE(eperm == Approx(expected_e_perm).margin(TOL));
+    REQUIRE(eind == Approx(expected_e_ind).margin(TOL));
+
+    std::vector<double> coordinates = systems[0].GetXyz();
+    std::vector<double> analytical_gradients = systems[0].GetGrads();
+
+    double s = 0.0001;
+    for (size_t i = 0; i < 3*3*4; i++) {
+        // std::cerr << "i: " << coordinates[i] << std::endl;
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double ep = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double epp = systems[0].Energy(false);
+        coordinates[i] -= 4 * s;
+        systems[0].SetXyz(coordinates);
+        double emm = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double em = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+        REQUIRE(numgrad == Approx(analytical_gradients[i]).margin(TOL));
+    }
+
+    // check gradients via comparison with numerical:
+}
+
+
+TEST_CASE("bulk external field gradients") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/2048_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/2048_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/2048_water_external_field.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+    double eperm = systems[0].GetPermanentElectrostaticEnergy();
+    double eind = systems[0].GetInducedElectrostaticEnergy();
+
+    std::vector<double> coordinates = systems[0].GetXyz();
+    std::vector<double> analytical_gradients = systems[0].GetGrads();
+
+    double s = 0.0001;
+    for (size_t i = 0; i < 3*2048; i+=3*100) {
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double ep = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double epp = systems[0].Energy(false);
+        coordinates[i] -= 4 * s;
+        systems[0].SetXyz(coordinates);
+        double emm = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double em = systems[0].Energy(false);
+        coordinates[i] += s;
+        systems[0].SetXyz(coordinates);
+        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+        REQUIRE(numgrad == Approx(analytical_gradients[i]).margin(TOL));
+    }
+}
+
 
 TEST_CASE("External charges") {
     // Read systems from input
