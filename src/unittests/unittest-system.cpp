@@ -731,7 +731,6 @@ TEST_CASE("constant external field trimer") {
 
     double s = 0.0001;
     for (size_t i = 0; i < 3*3*4; i++) {
-        // std::cerr << "i: " << coordinates[i] << std::endl;
         coordinates[i] += s;
         systems[0].SetXyz(coordinates);
         double ep = systems[0].Energy(false);
