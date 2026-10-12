@@ -778,7 +778,7 @@ TEST_CASE("bulk external field gradients") {
     std::vector<double> analytical_gradients = systems[0].GetGrads();
 
     double s = 0.0001;
-    for (size_t i = 0; i < 3*2048; i+=3*4*25) {
+    for (size_t i = 0; i < coordinates.size(); i+=3*4*25) {
         coordinates[i] += s;
         systems[0].SetXyz(coordinates);
         double ep = systems[0].Energy(false);
