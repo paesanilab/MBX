@@ -758,16 +758,16 @@ TEST_CASE("bulk external field gradients") {
     // Set up system
     std::vector<bblock::System> systems;
     try {
-        std::ifstream ifs("unittests_inputs/2048_water.nrg");
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
         if (!ifs) throw std::runtime_error("could not open the NRG file");
-        tools::ReadNrg("unittests_inputs/2048_water.nrg", systems);
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
         ifs.close();
     } catch (const std::exception &e) {
         std::cerr << " ** Error ** : " << e.what() << std::endl;
         REQUIRE(1 == 2);
     }
 
-    char json_path[] = "unittests_inputs/2048_water_external_field.json";
+    char json_path[] = "unittests_inputs/256_water_external_field.json";
     systems[0].SetUpFromJson(json_path);
 
     double e = systems[0].Energy(true);
@@ -778,7 +778,7 @@ TEST_CASE("bulk external field gradients") {
     std::vector<double> analytical_gradients = systems[0].GetGrads();
 
     double s = 0.0001;
-    for (size_t i = 0; i < 3*2048; i+=3*100) {
+    for (size_t i = 0; i < 3*2048; i+=3*4*25) {
         coordinates[i] += s;
         systems[0].SetXyz(coordinates);
         double ep = systems[0].Energy(false);

@@ -1,6 +1,7 @@
 # Ignore files without extensions
 * 
 !*.*
+!unittests_inputs/
 
 *.log
 unittest-*.trs
