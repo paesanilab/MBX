@@ -779,7 +779,7 @@ TEST_CASE("bulk external field gradients") {
 
     double s = 0.0001;
     // 199 chosen so that not every coordinate needs to be tested,
-    // but interval should not be divisible by 3 or 4 so that all sites and site components get checked.
+    // but interval should not be divisible by 3 or 4 so that all sites types (O, H, H, M) and site components (x, y, z) get tested.
     for (size_t i = 0; i < coordinates.size(); i+=199) {
         coordinates[i] += s;
         systems[0].SetXyz(coordinates);
