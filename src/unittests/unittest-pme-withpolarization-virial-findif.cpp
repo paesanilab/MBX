@@ -70,9 +70,6 @@ TEST_CASE("216-water PME with polarization: forces and virial match finite diffe
         }
         system.Initialize();
 
-        // The original 16.5 A cutoff gives an energy jump under tiny strains
-        // for this geometry. At 8.5 A and a 1e-6 strain step, alpha=0 is smooth.
-        // Dispersion PME stays enabled with a fixed mesh in both cases so
         // varying alpha isolates electrostatic PME.
         nlohmann::json settings = {{"MBX", {{"box", cell},
                                              {"twobody_cutoff", 9.0},
@@ -107,7 +104,6 @@ TEST_CASE("216-water PME with polarization: forces and virial match finite diffe
             REQUIRE(gradients.size() == 3 * 3 * n_monomers);
 
             // Sample two water oxygens.
-            // The fixture has four sites per water; System exposes three real sites.
             for (int dof : {0, 1, 2, 12, 13, 14}) {
                 std::vector<double> plus = coords;
                 std::vector<double> minus = coords;
