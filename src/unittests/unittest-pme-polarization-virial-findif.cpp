@@ -7,9 +7,8 @@
 #include <cmath>
 #include <vector>
 
-TEST_CASE("216-water full-system off-diagonal virial follows cell shear") {
-    // Use the same coordinates as the direct Electrostatics test, but let System
-    // construct the MB-pol water sites and evaluate the complete force field.
+TEST_CASE("216-water PME forces and virial match finite differences") {
+    // Let System construct the MB-pol water sites and evaluate the complete force field.
     double qO = -0.834;
     double qH = 0.417;
     double qM = 0;
@@ -19,8 +18,10 @@ TEST_CASE("216-water full-system off-diagonal virial follows cell shear") {
     SETUP_H2O_216
 
     const std::vector<double> box{34, 0, 0, 0, 34, 0, 0, 0, 34};
-    const double step = 1e-5;
-    const std::array<std::array<int, 2>, 3> shears{{{{0, 1}}, {{0, 2}}, {{1, 2}}}};
+    const double force_step = 1e-5;
+    const double strain_step = 1e-6;
+    const std::array<std::array<int, 2>, 6> strains{{{{0, 0}}, {{1, 1}}, {{2, 2}},
+                                                     {{0, 1}}, {{0, 2}}, {{1, 2}}}};
 
     auto energy_at = [&](const std::vector<double>& positions, const std::vector<double>& cell, double alpha,
                          bool calculate_gradients, std::vector<double>* virial = nullptr,
@@ -33,8 +34,8 @@ TEST_CASE("216-water full-system off-diagonal virial follows cell shear") {
         }
         system.Initialize();
 
-        // The original 16.5 A cutoff gives an energy jump under tiny shears
-        // for this geometry. At 8.5 A the alpha=0 finite differences are smooth.
+        // The original 16.5 A cutoff gives an energy jump under tiny strains
+        // for this geometry. At 8.5 A and a 1e-6 strain step, alpha=0 is smooth.
         // Dispersion PME stays off so alpha isolates electrostatic PME.
         nlohmann::json settings = {{"MBX", {{"box", cell},
                                              {"twobody_cutoff", 9.0},
@@ -62,15 +63,15 @@ TEST_CASE("216-water full-system off-diagonal virial follows cell shear") {
             REQUIRE(virial.size() == 9);
             REQUIRE(gradients.size() == 3 * 3 * n_monomers);
 
-            // Sample two water oxygens, as in the direct Electrostatics test.
+            // Sample two water oxygens.
             // The fixture has four sites per water; System exposes three real sites.
             for (int dof : {0, 1, 2, 12, 13, 14}) {
                 std::vector<double> plus = coords;
                 std::vector<double> minus = coords;
-                plus[dof] += step;
-                minus[dof] -= step;
+                plus[dof] += force_step;
+                minus[dof] -= force_step;
                 const double finite_difference =
-                    -(energy_at(plus, box, alpha, false) - energy_at(minus, box, alpha, false)) / (2 * step);
+                    -(energy_at(plus, box, alpha, false) - energy_at(minus, box, alpha, false)) / (2 * force_step);
                 const int real_dof = 9 * (dof / 12) + dof % 3;
                 const double analytic = -gradients[real_dof];
                 INFO("alpha " << alpha << ", coordinate " << dof << ": analytic force " << analytic
@@ -78,9 +79,9 @@ TEST_CASE("216-water full-system off-diagonal virial follows cell shear") {
                 CHECK(analytic == Approx(finite_difference).margin(1e-4));
             }
 
-            for (const auto& shear : shears) {
-                const int a = shear[0];
-                const int b = shear[1];
+            for (const auto& strain_component : strains) {
+                const int a = strain_component[0];
+                const int b = strain_component[1];
                 auto strained_energy = [&](double strain) {
                     std::vector<double> strained_positions = coords;
                     std::vector<double> strained_box = box;
@@ -92,9 +93,10 @@ TEST_CASE("216-water full-system off-diagonal virial follows cell shear") {
                     }
                     return energy_at(strained_positions, strained_box, alpha, false);
                 };
-                const double finite_difference = -(strained_energy(step) - strained_energy(-step)) / (2 * step);
+                const double finite_difference =
+                    -(strained_energy(strain_step) - strained_energy(-strain_step)) / (2 * strain_step);
                 const double analytic = virial[3 * b + a];
-                INFO("alpha " << alpha << ", shear " << a << b << ": analytic " << analytic
+                INFO("alpha " << alpha << ", strain " << a << b << ": analytic " << analytic
                                << ", finite difference " << finite_difference);
                 CHECK(analytic == Approx(finite_difference).margin(1e-3));
             }
