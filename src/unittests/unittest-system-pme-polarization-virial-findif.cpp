@@ -23,7 +23,8 @@ TEST_CASE("216-water full-system off-diagonal virial follows cell shear") {
     const std::array<std::array<int, 2>, 3> shears{{{{0, 1}}, {{0, 2}}, {{1, 2}}}};
 
     auto energy_at = [&](const std::vector<double>& positions, const std::vector<double>& cell, double alpha,
-                         bool calculate_gradients, std::vector<double>* virial = nullptr) {
+                         bool calculate_gradients, std::vector<double>* virial = nullptr,
+                         std::vector<double>* gradients = nullptr) {
         bblock::System system;
         for (int monomer = 0; monomer < n_monomers; ++monomer) {
             const auto first = positions.begin() + 12 * monomer;
@@ -49,14 +50,33 @@ TEST_CASE("216-water full-system off-diagonal virial follows cell shear") {
         system.SetUpFromJson(settings);
         const double energy = system.Energy(calculate_gradients);
         if (virial != nullptr) *virial = system.GetVirial();
+        if (gradients != nullptr) *gradients = system.GetRealGrads();
         return energy;
     };
 
     for (double alpha : {0.0, 0.25}) {
         DYNAMIC_SECTION("electrostatic Ewald alpha = " << alpha) {
             std::vector<double> virial;
-            REQUIRE(std::isfinite(energy_at(coords, box, alpha, true, &virial)));
+            std::vector<double> gradients;
+            REQUIRE(std::isfinite(energy_at(coords, box, alpha, true, &virial, &gradients)));
             REQUIRE(virial.size() == 9);
+            REQUIRE(gradients.size() == 3 * 3 * n_monomers);
+
+            // Sample two water oxygens, as in the direct Electrostatics test.
+            // The fixture has four sites per water; System exposes three real sites.
+            for (int dof : {0, 1, 2, 12, 13, 14}) {
+                std::vector<double> plus = coords;
+                std::vector<double> minus = coords;
+                plus[dof] += step;
+                minus[dof] -= step;
+                const double finite_difference =
+                    -(energy_at(plus, box, alpha, false) - energy_at(minus, box, alpha, false)) / (2 * step);
+                const int real_dof = 9 * (dof / 12) + dof % 3;
+                const double analytic = -gradients[real_dof];
+                INFO("alpha " << alpha << ", coordinate " << dof << ": analytic force " << analytic
+                               << ", finite difference " << finite_difference);
+                CHECK(analytic == Approx(finite_difference).margin(1e-4));
+            }
 
             for (const auto& shear : shears) {
                 const int a = shear[0];
