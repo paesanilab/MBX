@@ -1362,8 +1362,6 @@ std::vector<int> Dispersion::GetFFTDimension(int box_id) {
             compute_pme = false;
     }
 
-    if (ewald_alpha_ == 0) compute_pme = false;
-
     std::vector<int> fft_grid(3, -1);
 
     if (compute_pme) {
