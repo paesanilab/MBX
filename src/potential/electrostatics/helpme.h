@@ -3264,7 +3264,6 @@ class PMEInstance {
             gridVal *= influenceFunction;
             Real eTerm = permPrefac * influenceFunction * structFacNorm;
             Real vTerm = permPrefac * vGamma * totalPrefac / mNormSq * structFacNorm;
-            // Real vTerm = eTerm * 2 * (1 + MY_PI * MY_PI * mNormSq / (kappa * kappa)) / mNormSq;
             energy += eTerm;
             Vxx += vTerm * mVecX * mVecX;
             Vxy += vTerm * mVecX * mVecY;
@@ -5430,7 +5429,6 @@ class PMEInstance {
         Real &Vxz = virialPtr[3];
         Real &Vyz = virialPtr[4];
         Real &Vzz = virialPtr[5];
-
         for (int atom = 0; atom < numAtoms; ++atom) {
             const Real *dPhi = potential[atom];
             double charge = parameters[atom][0];
@@ -5463,7 +5461,6 @@ class PMEInstance {
             Vyz += 0.5 * (phiY * mu[2] + phiZ * mu[1]);
             Vzz += phiZ * mu[2];
         }
-
         return energy;
     }
 
