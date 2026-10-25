@@ -5464,13 +5464,13 @@ class PMEInstance {
             force[2] += charge * phiZ;
 
             Vxx2 += phiX * mu[0];
-            // Vxy2 += 0.5 * (phiX * mu[1] + phiY * mu[0]);
-            Vxy2 += phiY * mu[0];
+            Vxy2 += 0.5 * (phiX * mu[1] + phiY * mu[0]);
+            // Vxy2 += phiY * mu[0];
             Vyy2 += phiY * mu[1];
-            // Vxz2 += 0.5 * (phiX * mu[2] + phiZ * mu[0]);
-            // Vyz2 += 0.5 * (phiY * mu[2] + phiZ * mu[1]);
-            Vxz2 += phiZ * mu[0];
-            Vyz2 += phiZ * mu[1];
+            Vxz2 += 0.5 * (phiX * mu[2] + phiZ * mu[0]);
+            Vyz2 += 0.5 * (phiY * mu[2] + phiZ * mu[1]);
+            // Vxz2 += phiZ * mu[0];
+            // Vyz2 += phiZ * mu[1];
             Vzz2 += phiZ * mu[2];
         }
 
