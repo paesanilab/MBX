@@ -5431,13 +5431,6 @@ class PMEInstance {
         Real &Vyz = virialPtr[4];
         Real &Vzz = virialPtr[5];
 
-        Real Vxx2 = 0.0;
-        Real Vxy2 = 0.0;
-        Real Vyy2 = 0.0;
-        Real Vxz2 = 0.0;
-        Real Vyz2 = 0.0;
-        Real Vzz2 = 0.0;
-
         for (int atom = 0; atom < numAtoms; ++atom) {
             const Real *dPhi = potential[atom];
             double charge = parameters[atom][0];
@@ -5463,37 +5456,13 @@ class PMEInstance {
             force[1] += charge * phiY;
             force[2] += charge * phiZ;
 
-            Vxx2 += phiX * mu[0];
-            Vxy2 += 0.5 * (phiX * mu[1] + phiY * mu[0]);
-            // Vxy2 += phiY * mu[0];
-            Vyy2 += phiY * mu[1];
-            Vxz2 += 0.5 * (phiX * mu[2] + phiZ * mu[0]);
-            Vyz2 += 0.5 * (phiY * mu[2] + phiZ * mu[1]);
-            // Vxz2 += phiZ * mu[0];
-            // Vyz2 += phiZ * mu[1];
-            Vzz2 += phiZ * mu[2];
+            Vxx += phiX * mu[0];
+            Vxy += 0.5 * (phiX * mu[1] + phiY * mu[0]);
+            Vyy += phiY * mu[1];
+            Vxz += 0.5 * (phiX * mu[2] + phiZ * mu[0]);
+            Vyz += 0.5 * (phiY * mu[2] + phiZ * mu[1]);
+            Vzz += phiZ * mu[2];
         }
-
-        std::cerr << "Vxx:" << Vxx << std::endl;
-        std::cerr << "Vxy:" << Vxy << std::endl;
-        std::cerr << "Vyy:" << Vyy << std::endl;
-        std::cerr << "Vxz:" << Vxz << std::endl;
-        std::cerr << "Vyz:" << Vyz << std::endl;
-        std::cerr << "Vzz:" << Vzz << std::endl;
-
-        std::cerr << "Vxx2:" << Vxx2 << std::endl;
-        std::cerr << "Vxy2:" << Vxy2 << std::endl;
-        std::cerr << "Vyy2:" << Vyy2 << std::endl;
-        std::cerr << "Vxz2:" << Vxz2 << std::endl;
-        std::cerr << "Vyz2:" << Vyz2 << std::endl;
-        std::cerr << "Vzz2:" << Vzz2 << std::endl;
-
-        Vxx += Vxx2;
-        Vxy += Vxy2;
-        Vyy += Vyy2;
-        Vxz += Vxz2;
-        Vyz += Vyz2;
-        Vzz += Vzz2;
 
         return energy;
     }

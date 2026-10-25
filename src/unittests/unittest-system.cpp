@@ -274,80 +274,114 @@ TEST_CASE("large system system::energy") {
 
 }
 
-using Vec3 = std::array<double, 3>;
+TEST_CASE("numerical forces no pme") {
 
-double dot(const Vec3& a, const Vec3& b) {
-    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
-}
-
-Vec3 sub(const Vec3& a, const Vec3& b) {
-    return {a[0]-b[0], a[1]-b[1], a[2]-b[2]};
-}
-
-Vec3 scale(double s, const Vec3& a) {
-    return {s*a[0], s*a[1], s*a[2]};
-}
-
-double norm(const Vec3& a) {
-    return std::sqrt(dot(a, a));
-}
-
-Vec3 normalize(const Vec3& a) {
-    double n = norm(a);
-    if (n < 1e-14)
-        throw std::runtime_error("Degenerate cell");
-    return scale(1.0/n, a);
-}
-
-void rotateToLowerTriangular(
-    std::vector<double>& xyz,
-    std::vector<double>& box)
-{
-    Vec3 a = {box[0], box[1], box[2]};
-    Vec3 b = {box[3], box[4], box[5]};
-    Vec3 c = {box[6], box[7], box[8]};
-
-    Vec3 e1 = normalize(a);
-
-    double b1 = dot(b, e1);
-    Vec3 v2 = sub(b, scale(b1, e1));
-    Vec3 e2 = normalize(v2);
-
-    double c1 = dot(c, e1);
-    double c2 = dot(c, e2);
-    Vec3 v3 = sub(sub(c, scale(c1, e1)), scale(c2, e2));
-    Vec3 e3 = normalize(v3);
-
-    // Ensure a right-handed coordinate frame.
-    // For a valid right-handed cell, Gram-Schmidt should
-    // already produce the appropriate orientation.
-    double det_sign = dot(
-        Vec3{
-            e1[1]*e2[2] - e1[2]*e2[1],
-            e1[2]*e2[0] - e1[0]*e2[2],
-            e1[0]*e2[1] - e1[1]*e2[0]
-        }, e3);
-
-    if (det_sign < 0.0)
-        e3 = scale(-1.0, e3);
-
-    double ax = norm(a);
-    double by = norm(v2);
-    double cz = norm(v3);
-
-    // Rotate all particle coordinates into the new frame.
-    for (size_t i = 0; i < xyz.size(); i += 3) {
-        Vec3 r = {xyz[i], xyz[i+1], xyz[i+2]};
-        xyz[i]   = dot(e1, r);
-        xyz[i+1] = dot(e2, r);
-        xyz[i+2] = dot(e3, r);
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
     }
 
-    box = {
-        ax, 0.0, 0.0,
-        b1, by,  0.0,
-        c1, c2,  cz
-    };
+    char json_path[] = "unittests_inputs/256_water_no_pme.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_gradient = systems[0].GetRealGrads();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+
+    double s = 0.0001;
+    for (size_t coordinateIndex = 0; coordinateIndex < 256*3*3; coordinateIndex+=199) {
+
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double ep = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double epp = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] -= 4 * s;
+        systems[0].SetRealXyz(newCoordinates);
+        double emm = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double em = systems[0].Energy(false);
+        
+        newCoordinates[coordinateIndex] += s;
+
+        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+
+        REQUIRE(numgrad == Approx(analytical_gradient[coordinateIndex]).margin(TOL));
+    }
+}
+
+TEST_CASE("numerical forces pme") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/256_water.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_gradient = systems[0].GetRealGrads();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+
+    double s = 0.0001;
+    for (size_t coordinateIndex = 0; coordinateIndex < 256*3*3; coordinateIndex+=199) {
+
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double ep = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double epp = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] -= 4 * s;
+        systems[0].SetRealXyz(newCoordinates);
+        double emm = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double em = systems[0].Energy(false);
+        
+        newCoordinates[coordinateIndex] += s;
+
+        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+
+        REQUIRE(numgrad == Approx(analytical_gradient[coordinateIndex]).margin(TOL));
+    }
 }
 
 void displaceCoordsAndBox(
@@ -371,20 +405,88 @@ void displaceCoordsAndBox(
 
     // offset
     for(size_t i = 0; i < numAtoms; i++) {
-        newCoordinates[3*i + virialRow] += s * (coordinates[3*i + virialCol]) / 2;
-        newCoordinates[3*i + virialCol] += s * (coordinates[3*i + virialRow]) / 2;
+        newCoordinates[3*i + virialRow] += s * (coordinates[3*i + virialCol]);
     }
     for(size_t i = 0; i < 3; i++) {
-        newBox[3*i + virialRow] += s * (box[3*i + virialCol]) / 2;
-        newBox[3*i + virialCol] += s * (box[3*i + virialRow]) / 2;
+        newBox[3*i + virialRow] += s * (box[3*i + virialCol]);
     }
-
-    // rotate box to correct convention.
-    rotateToLowerTriangular(newCoordinates, newBox);
 
 }
 
-TEST_CASE("numerical virial") {
+TEST_CASE("numerical virial no pme") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/256_water_no_pme.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_virial = systems[0].GetVirial();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    size_t numAtoms = 256*3;
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+    
+    const std::array<std::array<int, 2>, 6> strains{{{{0, 0}}, {{1, 1}}, {{2, 2}},
+                                                     {{0, 1}}, {{0, 2}}, {{1, 2}}}};
+
+    double s = 1e-6;
+    for (const std::array<int, 2>& strain_component : strains) {
+        const int virialRow = strain_component[0];
+        const int virialCol = strain_component[1];
+
+        displaceCoordsAndBox(
+            s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double ep = systems[0].Energy(false);
+
+        displaceCoordsAndBox(
+            -s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double em = systems[0].Energy(false);
+        
+        double numvirial = (em - ep) / 2.0 / s;
+
+        REQUIRE(numvirial == Approx(analytical_virial[3 * virialCol + virialRow]).margin(TOL));
+    }
+}
+
+TEST_CASE("numerical virial pme") {
 
     // Set up system
     std::vector<bblock::System> systems;
@@ -412,12 +514,14 @@ TEST_CASE("numerical virial") {
 
     std::vector<double> newCoordinates = coordinates;
     std::vector<double> newBox = box;
+    
+    const std::array<std::array<int, 2>, 6> strains{{{{0, 0}}, {{1, 1}}, {{2, 2}},
+                                                     {{0, 1}}, {{0, 2}}, {{1, 2}}}};
 
-    // double s = 0.0000001;
-    double s = 0.00001;
-    for (size_t virialIndex = 0; virialIndex < 9; virialIndex++) {
-        size_t virialRow = virialIndex / 3;
-        size_t virialCol = virialIndex % 3;
+    double s = 1e-6;
+    for (const std::array<int, 2>& strain_component : strains) {
+        const int virialRow = strain_component[0];
+        const int virialCol = strain_component[1];
 
         displaceCoordsAndBox(
             s,
@@ -435,36 +539,6 @@ TEST_CASE("numerical virial") {
         double ep = systems[0].Energy(false);
 
         displaceCoordsAndBox(
-            2*s,
-            numAtoms,
-            virialRow,
-            virialCol,
-            coordinates,
-            box,
-            newCoordinates,
-            newBox
-        );
-
-        systems[0].SetRealXyz(newCoordinates);
-        systems[0].SetPBC(newBox);
-        double epp = systems[0].Energy(false);
-
-        displaceCoordsAndBox(
-            -2*s,
-            numAtoms,
-            virialRow,
-            virialCol,
-            coordinates,
-            box,
-            newCoordinates,
-            newBox
-        );
-
-        systems[0].SetRealXyz(newCoordinates);
-        systems[0].SetPBC(newBox);
-        double emm = systems[0].Energy(false);
-
-        displaceCoordsAndBox(
             -s,
             numAtoms,
             virialRow,
@@ -479,170 +553,9 @@ TEST_CASE("numerical virial") {
         systems[0].SetPBC(newBox);
         double em = systems[0].Energy(false);
         
-        double numvirial = - (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+        double numvirial = (em - ep) / 2.0 / s;
 
-        std::cerr << virialIndex << ", " << virialRow << ", " << virialCol << ", " << numvirial << ", " << analytical_virial[virialIndex] << std::endl;
-        // REQUIRE(numvirial == Approx(analytical_virial[virialIndex]).margin(TOL));
-    }
-
-}
-
-TEST_CASE("216-water numerical virial") {
-    // Let System construct the MB-pol water sites and evaluate the complete force field.
-    double qO = -0.834;
-    double qH = 0.417;
-    double qM = 0;
-    double polfacO = 1.310;
-    double polfacH = 0.294;
-    double polfacM = 0;
-    SETUP_H2O_216
-
-    const double VIRIAL_TOL = 1e-4;
-
-    const std::vector<double> box{34, 0, 0, 0, 34, 0, 0, 0, 34};
-    const double step = 1e-6;
-    const std::array<std::array<int, 2>, 6> strains{{{{0, 0}}, {{1, 1}}, {{2, 2}},
-                                                     {{0, 1}}, {{0, 2}}, {{1, 2}}}};
-
-    auto energy_at = [&](const std::vector<double>& positions, const std::vector<double>& cell, double alpha,
-                         bool calculate_gradients, std::vector<double>* virial = nullptr,
-                         std::vector<double>* gradients = nullptr) {
-        bblock::System system;
-        for (int monomer = 0; monomer < n_monomers; ++monomer) {
-            const auto first = positions.begin() + 12 * monomer;
-            std::vector<double> real_sites(first, first + 9);
-            system.AddMonomer(real_sites, {"O", "H", "H"}, "h2o");
-        }
-        system.Initialize();
-
-        // varying alpha isolates electrostatic PME.
-        nlohmann::json settings = {{"MBX", {{"box", cell},
-                                             {"twobody_cutoff", 9.0},
-                                             {"threebody_cutoff", 7.0},
-                                             {"realspace_cutoff", 8.5},
-                                             {"dipole_tolerance", 1e-20},
-                                             {"dipole_method", "cg"},
-                                             {"alpha_ewald_elec", alpha},
-                                             {"alpha_ewald_disp", 0.6},
-                                             {"grid_density_elec", 2.5},
-                                             {"spline_order_elec", 6},
-                                             {"grid_fftdim_elec", {88, 88, 88}},
-                                             {"grid_density_disp", 2.5},
-                                             {"spline_order_disp", 6},
-                                             {"grid_fftdim_disp", {88, 88, 88}}}}};
-        system.SetUpFromJson(settings);
-        const double energy = system.Energy(calculate_gradients);
-        if (virial != nullptr) *virial = system.GetVirial();
-        if (gradients != nullptr) *gradients = system.GetRealGrads();
-        return energy;
-    };
-
-    // for (double alpha : {0.0, 0.25}) {
-    for (double alpha : {0.25}) {
-        DYNAMIC_SECTION("electrostatic Ewald alpha = " << alpha) {
-            std::cout << "\nElectrostatic Ewald alpha = " << alpha
-                      << (alpha == 0.0 ? " (electrostatic PME off)" : " (electrostatic PME on)")
-                      << "; dispersion PME on" << std::endl;
-            std::vector<double> virial;
-            std::vector<double> gradients;
-            REQUIRE(std::isfinite(energy_at(coords, box, alpha, true, &virial, &gradients)));
-            REQUIRE(virial.size() == 9);
-            REQUIRE(gradients.size() == 3 * 3 * n_monomers);
-
-            // Sample two water oxygens.
-            for (int dof : {0, 1, 2, 12, 13, 14}) {
-                std::vector<double> plus = coords;
-                std::vector<double> minus = coords;
-                plus[dof] += step;
-                minus[dof] -= step;
-                const double finite_difference =
-                    -(energy_at(plus, box, alpha, false) - energy_at(minus, box, alpha, false)) / (2 * step);
-                const int real_dof = 9 * (dof / 12) + dof % 3;
-                const double analytic = -gradients[real_dof];
-                INFO("alpha " << alpha << ", coordinate " << dof << ": analytic force " << analytic
-                               << ", finite difference " << finite_difference);
-                CHECK(analytic == Approx(finite_difference).epsilon(VIRIAL_TOL));
-            }
-
-            for (const auto& strain_component : strains) {
-                const int a = strain_component[0];
-                const int b = strain_component[1];
-                auto strained_energy = [&](double strain) {
-                    std::vector<double> strained_positions = coords;
-                    std::vector<double> strained_box = box;
-                    for (int atom = 0; atom < n_atoms; ++atom) {
-                        strained_positions[3 * atom + a] += strain * coords[3 * atom + b];
-                    }
-                    for (int vector = 0; vector < 3; ++vector) {
-                        strained_box[3 * vector + a] += strain * box[3 * vector + b];
-                    }
-                    return energy_at(strained_positions, strained_box, alpha, false);
-                };
-                const double finite_difference =
-                    -(strained_energy(step) - strained_energy(-step)) / (2 * step);
-                const double analytic = virial[3 * b + a];
-                INFO("alpha " << alpha << ", strain " << a << b << ": analytic " << analytic
-                               << ", finite difference " << finite_difference);
-                CHECK(analytic == Approx(finite_difference).epsilon(VIRIAL_TOL));
-            }
-        }
-    }
-
-    for (size_t atomIndex = 0; atomIndex < coords.size() / 3; atomIndex++) {
-        double temp = coords[3*atomIndex + 0];
-        coords[3*atomIndex + 0] = coords[3*atomIndex + 2];
-        coords[3*atomIndex + 2] = temp;
-    }
-
-    // for (double alpha : {0.0, 0.25}) {
-    for (double alpha : {0.25}) {
-        DYNAMIC_SECTION("electrostatic (reflected) Ewald alpha = " << alpha) {
-            std::cout << "\nElectrostatic (reflected) Ewald alpha = " << alpha
-                      << (alpha == 0.0 ? " (electrostatic PME off)" : " (electrostatic PME on)")
-                      << "; dispersion PME on" << std::endl;
-            std::vector<double> virial;
-            std::vector<double> gradients;
-            REQUIRE(std::isfinite(energy_at(coords, box, alpha, true, &virial, &gradients)));
-            REQUIRE(virial.size() == 9);
-            REQUIRE(gradients.size() == 3 * 3 * n_monomers);
-
-            // Sample two water oxygens.
-            for (int dof : {0, 1, 2, 12, 13, 14}) {
-                std::vector<double> plus = coords;
-                std::vector<double> minus = coords;
-                plus[dof] += step;
-                minus[dof] -= step;
-                const double finite_difference =
-                    -(energy_at(plus, box, alpha, false) - energy_at(minus, box, alpha, false)) / (2 * step);
-                const int real_dof = 9 * (dof / 12) + dof % 3;
-                const double analytic = -gradients[real_dof];
-                INFO("alpha " << alpha << ", coordinate " << dof << ": analytic force " << analytic
-                               << ", finite difference " << finite_difference);
-                CHECK(analytic == Approx(finite_difference).epsilon(VIRIAL_TOL));
-            }
-
-            for (const auto& strain_component : strains) {
-                const int a = strain_component[0];
-                const int b = strain_component[1];
-                auto strained_energy = [&](double strain) {
-                    std::vector<double> strained_positions = coords;
-                    std::vector<double> strained_box = box;
-                    for (int atom = 0; atom < n_atoms; ++atom) {
-                        strained_positions[3 * atom + a] += strain * coords[3 * atom + b];
-                    }
-                    for (int vector = 0; vector < 3; ++vector) {
-                        strained_box[3 * vector + a] += strain * box[3 * vector + b];
-                    }
-                    return energy_at(strained_positions, strained_box, alpha, false);
-                };
-                const double finite_difference =
-                    -(strained_energy(step) - strained_energy(-step)) / (2 * step);
-                const double analytic = virial[3 * b + a];
-                INFO("alpha " << alpha << ", strain " << a << b << ": analytic " << analytic
-                               << ", finite difference " << finite_difference);
-                CHECK(analytic == Approx(finite_difference).epsilon(VIRIAL_TOL));
-            }
-        }
+        REQUIRE(numvirial == Approx(analytical_virial[3 * virialCol + virialRow]).margin(TOL));
     }
 }
 
