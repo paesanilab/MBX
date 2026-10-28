@@ -40,7 +40,6 @@ SOFTWARE WILL NOT INFRINGE ANY PATENT, TRADEMARK OR OTHER RIGHTS.
 #include "json/json.hpp"
 #include "setup_h2o_2_ch4_1.h"
 #include "setup_co2_2_h2o_2.h"
-#include "setup_h2o_216.h"
 
 #include <vector>
 #include <iostream>
@@ -501,6 +500,79 @@ TEST_CASE("numerical virial pme") {
     }
 
     char json_path[] = "unittests_inputs/256_water.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_virial = systems[0].GetVirial();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    size_t numAtoms = 256*3;
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+    
+    const std::array<std::array<int, 2>, 6> strains{{{{0, 0}}, {{1, 1}}, {{2, 2}},
+                                                     {{0, 1}}, {{0, 2}}, {{1, 2}}}};
+
+    double s = 1e-6;
+    for (const std::array<int, 2>& strain_component : strains) {
+        const int virialRow = strain_component[0];
+        const int virialCol = strain_component[1];
+
+        displaceCoordsAndBox(
+            s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double ep = systems[0].Energy(false);
+
+        displaceCoordsAndBox(
+            -s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double em = systems[0].Energy(false);
+        
+        double numvirial = (em - ep) / 2.0 / s;
+
+        REQUIRE(numvirial == Approx(analytical_virial[3 * virialCol + virialRow]).margin(TOL));
+    }
+}
+
+TEST_CASE("numerical virial pme triclinic") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/256_water_triclinic.json";
     systems[0].SetUpFromJson(json_path);
 
     double e = systems[0].Energy(true);
