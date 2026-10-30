@@ -1,0 +1,30 @@
+{
+    "Note": "256 waters on a 4x4x4 FCC lattice; molecular geometries from 2048_water.nrg, at the original number density.",
+    "MBX": {
+        "box": [
+            19.73071,
+            0.0,
+            0.0,
+            0.0,
+            19.73071,
+            0.0,
+            0.0,
+            0.0,
+            19.73071
+        ],
+        "realspace_cutoff": 9.0,
+        "twobody_cutoff": 9.0,
+        "threebody_cutoff": 6.0,
+        "dipole_tolerance": 1e-16,
+        "dipole_max_it": 100,
+        "dipole_method": "cg",
+        "alpha_ewald_elec": 0.6,
+        "grid_density_elec": 2.5,
+        "spline_order_elec": 6,
+        "alpha_ewald_disp": 0.6,
+        "grid_density_disp": 2.5,
+        "spline_order_disp": 6,
+        "ignore_2b_poly": [],
+        "ignore_3b_poly": []
+    }
+}
