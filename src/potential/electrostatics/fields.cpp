@@ -1402,12 +1402,10 @@ void ElectricFieldHolder::CalcElecFieldGrads(
             // update virial
             if (virial != 0) {
                 v11_[0 * mon2_index_end + m] = -rijx * v0_[m] * constants::COULOMB;
-                v11_[1 * mon2_index_end + m] = -rijx * v1_[m] * constants::COULOMB;
-                v11_[2 * mon2_index_end + m] = -rijx * v2_[m] * constants::COULOMB;
-
+                v11_[1 * mon2_index_end + m] = -0.5 * (rijx * v1_[m] + rijy * v0_[m]) * constants::COULOMB;
+                v11_[2 * mon2_index_end + m] = -0.5 * (rijx * v2_[m] + rijz * v0_[m]) * constants::COULOMB;
                 v11_[3 * mon2_index_end + m] = -rijy * v1_[m] * constants::COULOMB;
-                v11_[4 * mon2_index_end + m] = -rijy * v2_[m] * constants::COULOMB;
-
+                v11_[4 * mon2_index_end + m] = -0.5 * (rijy * v2_[m] + rijz * v1_[m]) * constants::COULOMB;
                 v11_[5 * mon2_index_end + m] = -rijz * v2_[m] * constants::COULOMB;
             }
         }  // if(accum2)
@@ -1750,12 +1748,10 @@ void ElectricFieldHolder::CalcElecFieldGrads_Optimized(
         #pragma omp simd simdlen(8) reduction(+ : v[0:6])
         for (size_t m = mon2_index_start; m < mon2_index_end; m++) {
             v[0] += -rijx[m] * individual_gradx[m] * constants::COULOMB;
-            v[1] += -rijx[m] * individual_grady[m] * constants::COULOMB;
-            v[2] += -rijx[m] * individual_gradz[m] * constants::COULOMB;
-
+            v[1] += -0.5 * (rijx[m] * individual_grady[m] + rijy[m] * individual_gradx[m]) * constants::COULOMB;
+            v[2] += -0.5 * (rijx[m] * individual_gradz[m] + rijz[m] * individual_gradx[m]) * constants::COULOMB;
             v[3] += -rijy[m] * individual_grady[m] * constants::COULOMB;
-            v[4] += -rijy[m] * individual_gradz[m] * constants::COULOMB;
-
+            v[4] += -0.5 * (rijy[m] * individual_gradz[m] + rijz[m] * individual_grady[m]) * constants::COULOMB;
             v[5] += -rijz[m] * individual_gradz[m] * constants::COULOMB;
         }
 

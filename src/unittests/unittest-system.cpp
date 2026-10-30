@@ -273,6 +273,364 @@ TEST_CASE("large system system::energy") {
 
 }
 
+TEST_CASE("numerical forces no pme") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/256_water_no_pme.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_gradient = systems[0].GetRealGrads();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+
+    double s = 0.0001;
+    for (size_t coordinateIndex = 0; coordinateIndex < 256*3*3; coordinateIndex+=199) {
+
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double ep = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double epp = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] -= 4 * s;
+        systems[0].SetRealXyz(newCoordinates);
+        double emm = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double em = systems[0].Energy(false);
+        
+        newCoordinates[coordinateIndex] += s;
+
+        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+
+        REQUIRE(numgrad == Approx(analytical_gradient[coordinateIndex]).margin(TOL));
+    }
+}
+
+TEST_CASE("numerical forces pme") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/256_water.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_gradient = systems[0].GetRealGrads();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+
+    double s = 0.0001;
+    for (size_t coordinateIndex = 0; coordinateIndex < 256*3*3; coordinateIndex+=199) {
+
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double ep = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double epp = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] -= 4 * s;
+        systems[0].SetRealXyz(newCoordinates);
+        double emm = systems[0].Energy(false);
+
+        newCoordinates[coordinateIndex] += s;
+        systems[0].SetRealXyz(newCoordinates);
+        double em = systems[0].Energy(false);
+        
+        newCoordinates[coordinateIndex] += s;
+
+        double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
+
+        REQUIRE(numgrad == Approx(analytical_gradient[coordinateIndex]).margin(TOL));
+    }
+}
+
+void displaceCoordsAndBox(
+        double s,
+        size_t numAtoms,
+        size_t virialRow,
+        size_t virialCol,
+        const std::vector<double>& coordinates,
+        const std::vector<double>& box,
+        std::vector<double>& newCoordinates,
+        std::vector<double>& newBox
+) {
+    // intialize data
+    for (size_t i = 0; i < 3*numAtoms; i++) {
+        newCoordinates[i] = coordinates[i];
+    }
+
+    for (size_t i = 0; i < 9; i++) {
+        newBox[i] = box[i];
+    }
+
+    // offset
+    for(size_t i = 0; i < numAtoms; i++) {
+        newCoordinates[3*i + virialRow] += s * (coordinates[3*i + virialCol]);
+    }
+    for(size_t i = 0; i < 3; i++) {
+        newBox[3*i + virialRow] += s * (box[3*i + virialCol]);
+    }
+
+}
+
+TEST_CASE("numerical virial no pme") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/256_water_no_pme.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_virial = systems[0].GetVirial();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    size_t numAtoms = 256*3;
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+    
+    const std::array<std::array<int, 2>, 6> strains{{{{0, 0}}, {{1, 1}}, {{2, 2}},
+                                                     {{0, 1}}, {{0, 2}}, {{1, 2}}}};
+
+    double s = 1e-6;
+    for (const std::array<int, 2>& strain_component : strains) {
+        const int virialRow = strain_component[0];
+        const int virialCol = strain_component[1];
+
+        displaceCoordsAndBox(
+            s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double ep = systems[0].Energy(false);
+
+        displaceCoordsAndBox(
+            -s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double em = systems[0].Energy(false);
+        
+        double numvirial = (em - ep) / 2.0 / s;
+
+        REQUIRE(numvirial == Approx(analytical_virial[3 * virialCol + virialRow]).margin(TOL));
+    }
+}
+
+TEST_CASE("numerical virial pme") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/256_water.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_virial = systems[0].GetVirial();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    size_t numAtoms = 256*3;
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+    
+    const std::array<std::array<int, 2>, 6> strains{{{{0, 0}}, {{1, 1}}, {{2, 2}},
+                                                     {{0, 1}}, {{0, 2}}, {{1, 2}}}};
+
+    double s = 1e-6;
+    for (const std::array<int, 2>& strain_component : strains) {
+        const int virialRow = strain_component[0];
+        const int virialCol = strain_component[1];
+
+        displaceCoordsAndBox(
+            s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double ep = systems[0].Energy(false);
+
+        displaceCoordsAndBox(
+            -s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double em = systems[0].Energy(false);
+        
+        double numvirial = (em - ep) / 2.0 / s;
+
+        REQUIRE(numvirial == Approx(analytical_virial[3 * virialCol + virialRow]).margin(TOL));
+    }
+}
+
+TEST_CASE("numerical virial pme triclinic") {
+
+    // Set up system
+    std::vector<bblock::System> systems;
+    try {
+        std::ifstream ifs("unittests_inputs/256_water.nrg");
+        if (!ifs) throw std::runtime_error("could not open the NRG file");
+        tools::ReadNrg("unittests_inputs/256_water.nrg", systems);
+        ifs.close();
+    } catch (const std::exception &e) {
+        std::cerr << " ** Error ** : " << e.what() << std::endl;
+        REQUIRE(1 == 2);
+    }
+
+    char json_path[] = "unittests_inputs/256_water_triclinic.json";
+    systems[0].SetUpFromJson(json_path);
+
+    double e = systems[0].Energy(true);
+
+    std::vector<double> analytical_virial = systems[0].GetVirial();
+
+    std::vector<double> coordinates = systems[0].GetRealXyz();
+    std::vector<double> box = systems[0].GetBox();
+
+    size_t numAtoms = 256*3;
+
+    std::vector<double> newCoordinates = coordinates;
+    std::vector<double> newBox = box;
+    
+    const std::array<std::array<int, 2>, 6> strains{{{{0, 0}}, {{1, 1}}, {{2, 2}},
+                                                     {{0, 1}}, {{0, 2}}, {{1, 2}}}};
+
+    double s = 1e-6;
+    for (const std::array<int, 2>& strain_component : strains) {
+        const int virialRow = strain_component[0];
+        const int virialCol = strain_component[1];
+
+        displaceCoordsAndBox(
+            s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double ep = systems[0].Energy(false);
+
+        displaceCoordsAndBox(
+            -s,
+            numAtoms,
+            virialRow,
+            virialCol,
+            coordinates,
+            box,
+            newCoordinates,
+            newBox
+        );
+
+        systems[0].SetRealXyz(newCoordinates);
+        systems[0].SetPBC(newBox);
+        double em = systems[0].Energy(false);
+        
+        double numvirial = (em - ep) / 2.0 / s;
+
+        REQUIRE(numvirial == Approx(analytical_virial[3 * virialCol + virialRow]).margin(TOL));
+    }
+}
+
 TEST_CASE("system::getters") {
     SECTION("System Information") {
         // Set up system
@@ -577,6 +935,8 @@ TEST_CASE("constant external field gas phase") {
     std::vector<double> coordinates = systems[0].GetXyz();
     std::vector<double> analytical_gradients = systems[0].GetGrads();
 
+
+    // check gradients via comparison with numerical:
     double s = 0.0001;
     for (size_t i = 0; i < 3; i++) {
         coordinates[i] += s;
@@ -596,8 +956,6 @@ TEST_CASE("constant external field gas phase") {
         double numgrad = (emm - 8 * em + 8 * ep - epp) / 12.0 / s;
         REQUIRE(numgrad == Approx(analytical_gradients[i]).margin(TOL));
     }
-
-    // check gradients via comparison with numerical:
 }
 
 TEST_CASE("constant external field in pbc") {
