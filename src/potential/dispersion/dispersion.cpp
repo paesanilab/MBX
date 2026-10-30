@@ -1340,7 +1340,7 @@ std::vector<int> Dispersion::GetFFTDimension(int box_id) {
     double A, B, C, alpha, beta, gamma;
     bool compute_pme = true;
     if (box_id == 0) {
-        if (box_ABCabc_.size()) {
+        if (box_ABCabc_.size() && ewald_alpha_ > 0) {
             A = box_ABCabc_[0];
             B = box_ABCabc_[1];
             C = box_ABCabc_[2];
@@ -1351,7 +1351,7 @@ std::vector<int> Dispersion::GetFFTDimension(int box_id) {
             compute_pme = false;
 
     } else if (box_id == 1) {
-        if (box_ABCabc_PMElocal_.size()) {
+        if (box_ABCabc_PMElocal_.size() && ewald_alpha_ > 0) {
             A = box_ABCabc_PMElocal_[0];
             B = box_ABCabc_PMElocal_[1];
             C = box_ABCabc_PMElocal_[2];
