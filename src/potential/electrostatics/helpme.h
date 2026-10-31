@@ -1195,7 +1195,7 @@ struct FFTWTypes {
     struct EmptyPlan {
         int unused;
     };
-    using Plan = int;
+    using Plan = void *;
     using Complex = std::complex<int>;
     static Plan makePlan4(size_t, void *, void *, int) { return 0; };
     static Plan makePlan5(size_t, void *, void *, int, int) { return 0; };
