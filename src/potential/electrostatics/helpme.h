@@ -4349,13 +4349,14 @@ class PMEInstance {
             }
         }
 #endif
-        // Each parallel node allocates buffers of length dimA/(2 numNodesA)+1 for A, leading to a total of
-        // dimA/2 + numNodesA = complexDimA+numNodesA-1 if dimA is even
-        // and
-        // numNodesA (dimA-1)/2 + numNodesA = complexDimA + numNodesA/2-1 if dimA is odd
-        // We just allocate the larger size here, remembering that the final padding values on the last node
-        // will all be allocated to zero and will not contribute to the final answer.
-        const size_t scratchRowDim = complexGridDimensionA_ + numNodesA_ - 1;
+        // Each parallel node contributes myComplexGridDimensionA_ complex values per row of the A pencil, so each
+        // row needs exactly numNodesA_ * myComplexGridDimensionA_ slots.  This is >= complexGridDimensionA_ (the
+        // number read by the r2c/c2r transforms) and equals complexGridDimensionA_ + numNodesA_ - 1 only when
+        // myGridDimensionA_ is even; the "complexGridDimensionA_ + numNodesA_ - 1" and "complexGridDimensionA_"
+        // substitutions both produce the wrong stride (respectively overrunning the A workspace and misaligning
+        // rows) when myGridDimensionA_ is odd.  The final padding values on the last node are allocated to zero
+        // and do not contribute to the final answer.
+        const size_t scratchRowDim = numNodesA_ * myComplexGridDimensionA_;
         helpme::vector<Complex> buffer(nThreads_ * scratchRowDim);
 
 // A transform, with instant sort to CAB ordering for each local block
@@ -4556,6 +4557,13 @@ class PMEInstance {
                 }
             }
         }
+ 
+	// Each A-pencil row is packed with numNodesA_ chunks of myComplexGridDimensionA_ complex values; the row
+        // stride must match (see the comment in forwardTransform).  complexGridDimensionA_ is too small when
+        // myGridDimensionA_ is even (rows need complexGridDimensionA_ + numNodesA_ - 1), and
+        // complexGridDimensionA_ + numNodesA_ - 1 is too large when myGridDimensionA_ is odd, overflowing the
+        // A workspace (e.g. grid 50x49x50 with numNodesA_ = 2 needs 2*13 = 26, not 27).
+        const size_t scratchRowDim = numNodesA_ * myComplexGridDimensionA_;
 
 #if HAVE_MPI == 1
         // Communicate B back to blocks
@@ -4572,14 +4580,14 @@ class PMEInstance {
                                         subsetOfCAlongA_ * myComplexGridDimensionA_ * myGridDimensionB_);
             // Resort the data to end up with the buffer holding a full row of A data, for B pencil and C subset.
             for (int c = 0; c < subsetOfCAlongA_; ++c) {
-                Complex *cPtr = buffer1 + c * myGridDimensionB_ * complexGridDimensionA_;
+                Complex *cPtr = buffer1 + c * myGridDimensionB_ * scratchRowDim;
                 for (int b = 0; b < myGridDimensionB_; ++b) {
                     for (int chunk = 0; chunk < numNodesA_; ++chunk) {
                         Complex *inPtr = buffer2 +
                                          (chunk * subsetOfCAlongA_ + c) * myComplexGridDimensionA_ * myGridDimensionB_ +
                                          b * myComplexGridDimensionA_;
                         std::copy(inPtr, inPtr + myComplexGridDimensionA_,
-                                  cPtr + b * complexGridDimensionA_ + chunk * myComplexGridDimensionA_);
+                                  cPtr + b * scratchRowDim + chunk * myComplexGridDimensionA_);
                     }
                 }
             }
@@ -4592,7 +4600,7 @@ class PMEInstance {
         Real *realGrid = reinterpret_cast<Real *>(buffer2);
 #pragma omp parallel for num_threads(nThreads_)
         for (int cb = 0; cb < subsetOfCAlongA_ * myGridDimensionB_; ++cb) {
-            fftHelperA_.transform(buffer1 + cb * complexGridDimensionA_, realGrid + cb * gridDimensionA_);
+            fftHelperA_.transform(buffer1 + cb * scratchRowDim, realGrid + cb * gridDimensionA_);
         }
 
 #if HAVE_MPI == 1
