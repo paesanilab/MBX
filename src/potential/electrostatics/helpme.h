@@ -1275,24 +1275,45 @@ class FFTWWrapper {
 
    protected:
     /// An FFTW plan object, describing out of place complex to complex forward transforms.
-    typename typeinfo::Plan forwardPlan_;
+    typename typeinfo::Plan forwardPlan_ = nullptr;
     /// An FFTW plan object, describing out of place complex to complex inverse transforms.
-    typename typeinfo::Plan inversePlan_;
+    typename typeinfo::Plan inversePlan_ = nullptr;
     /// An FFTW plan object, describing in place complex to complex forward transforms.
-    typename typeinfo::Plan forwardInPlacePlan_;
+    typename typeinfo::Plan forwardInPlacePlan_ = nullptr;
     /// An FFTW plan object, describing in place complex to complex inverse transforms.
-    typename typeinfo::Plan inverseInPlacePlan_;
+    typename typeinfo::Plan inverseInPlacePlan_ = nullptr;
     /// An FFTW plan object, describing out of place real to complex forward transforms.
-    typename typeinfo::Plan realToComplexPlan_;
+    typename typeinfo::Plan realToComplexPlan_ = nullptr;
     /// An FFTW plan object, describing out of place complex to real inverse transforms.
-    typename typeinfo::Plan complexToRealPlan_;
+    typename typeinfo::Plan complexToRealPlan_ = nullptr;
     /// The size of the real data.
-    size_t fftDimension_;
+    size_t fftDimension_ = 0;
     /// The flags to be passed to the FFTW plan creator, to determine startup cost.
-    unsigned transformFlags_;
+    unsigned transformFlags_ = FFTW_ESTIMATE;
 
    public:
-    FFTWWrapper() {}
+    FFTWWrapper() = default;
+    FFTWWrapper(const FFTWWrapper&) = delete;
+    FFTWWrapper& operator=(const FFTWWrapper&) = delete;
+    FFTWWrapper(FFTWWrapper&& other) noexcept { swap(other); }
+    FFTWWrapper& operator=(FFTWWrapper&& other) noexcept {
+        if (this != &other) {
+            destroy();
+            swap(other);
+        }
+        return *this;
+    }
+    ~FFTWWrapper() { destroy(); }
+    void swap(FFTWWrapper& other) noexcept {
+        std::swap(forwardPlan_, other.forwardPlan_);
+        std::swap(inversePlan_, other.inversePlan_);
+        std::swap(forwardInPlacePlan_, other.forwardInPlacePlan_);
+        std::swap(inverseInPlacePlan_, other.inverseInPlacePlan_);
+        std::swap(realToComplexPlan_, other.realToComplexPlan_);
+        std::swap(complexToRealPlan_, other.complexToRealPlan_);
+        std::swap(fftDimension_, other.fftDimension_);
+        std::swap(transformFlags_, other.transformFlags_);
+    }
     FFTWWrapper(size_t fftDimension) : fftDimension_(fftDimension), transformFlags_(FFTW_ESTIMATE) {
         if (!typeinfo::isImplemented) {
             throw std::runtime_error(
@@ -1316,14 +1337,19 @@ class FFTWWrapper {
             typeinfo::MakeComplexToComplexPlan(fftDimension_, complexPtr1, complexPtr1, FFTW_BACKWARD, transformFlags_);
         realToComplexPlan_ = typeinfo::MakeRealToComplexPlan(fftDimension_, realPtr, complexPtr1, transformFlags_);
         complexToRealPlan_ = typeinfo::MakeComplexToRealPlan(fftDimension_, complexPtr1, realPtr, transformFlags_);
+        if (!forwardPlan_ || !inversePlan_ || !forwardInPlacePlan_ || !inverseInPlacePlan_ ||
+            !realToComplexPlan_ || !complexToRealPlan_) {
+            destroy();
+            throw std::runtime_error("FFTW could not create all transform plans.");
+        }
     }
     void destroy() {
-        typeinfo::DestroyPlan(forwardPlan_);
-        typeinfo::DestroyPlan(inversePlan_);
-        typeinfo::DestroyPlan(forwardInPlacePlan_);
-        typeinfo::DestroyPlan(inverseInPlacePlan_);
-        typeinfo::DestroyPlan(realToComplexPlan_);
-        typeinfo::DestroyPlan(complexToRealPlan_);
+        for (Plan* plan : {&forwardPlan_, &inversePlan_, &forwardInPlacePlan_, &inverseInPlacePlan_,
+                           &realToComplexPlan_, &complexToRealPlan_}) {
+            if (*plan) typeinfo::DestroyPlan(*plan);
+            *plan = nullptr;
+        }
+        // FFTW cleanup is process-global and invalidates plans owned by other wrappers.
     }
 
     /*!
@@ -3925,12 +3951,7 @@ class PMEInstance {
     }
 
    public:
-    ~PMEInstance() {
-        fftHelperA_.destroy();
-        fftHelperB_.destroy();
-        fftHelperC_.destroy();
-        (*FFTWTypes<Real>::CleanupFFTW)();
-    }
+    ~PMEInstance() = default;
 
     /*!
      * \brief Spread the parameters onto the charge grid.  Generally this shouldn't be called;
@@ -4328,14 +4349,13 @@ class PMEInstance {
             }
         }
 #endif
-        // Each parallel node contributes myComplexGridDimensionA_ complex values per row of the A pencil, so each
-        // row needs exactly numNodesA_ * myComplexGridDimensionA_ slots.  This is >= complexGridDimensionA_ (the
-        // number read by the r2c/c2r transforms) and equals complexGridDimensionA_ + numNodesA_ - 1 only when
-        // myGridDimensionA_ is even; the "complexGridDimensionA_ + numNodesA_ - 1" and "complexGridDimensionA_"
-        // substitutions both produce the wrong stride (respectively overrunning the A workspace and misaligning
-        // rows) when myGridDimensionA_ is odd.  The final padding values on the last node are allocated to zero
-        // and do not contribute to the final answer.
-        const size_t scratchRowDim = numNodesA_ * myComplexGridDimensionA_;
+        // Each parallel node allocates buffers of length dimA/(2 numNodesA)+1 for A, leading to a total of
+        // dimA/2 + numNodesA = complexDimA+numNodesA-1 if dimA is even
+        // and
+        // numNodesA (dimA-1)/2 + numNodesA = complexDimA + numNodesA/2-1 if dimA is odd
+        // We just allocate the larger size here, remembering that the final padding values on the last node
+        // will all be allocated to zero and will not contribute to the final answer.
+        const size_t scratchRowDim = complexGridDimensionA_ + numNodesA_ - 1;
         helpme::vector<Complex> buffer(nThreads_ * scratchRowDim);
 
 // A transform, with instant sort to CAB ordering for each local block
@@ -4536,13 +4556,6 @@ class PMEInstance {
                 }
             }
         }
- 
-	// Each A-pencil row is packed with numNodesA_ chunks of myComplexGridDimensionA_ complex values; the row
-        // stride must match (see the comment in forwardTransform).  complexGridDimensionA_ is too small when
-        // myGridDimensionA_ is even (rows need complexGridDimensionA_ + numNodesA_ - 1), and
-        // complexGridDimensionA_ + numNodesA_ - 1 is too large when myGridDimensionA_ is odd, overflowing the
-        // A workspace (e.g. grid 50x49x50 with numNodesA_ = 2 needs 2*13 = 26, not 27).
-        const size_t scratchRowDim = numNodesA_ * myComplexGridDimensionA_;
 
 #if HAVE_MPI == 1
         // Communicate B back to blocks
@@ -4559,14 +4572,14 @@ class PMEInstance {
                                         subsetOfCAlongA_ * myComplexGridDimensionA_ * myGridDimensionB_);
             // Resort the data to end up with the buffer holding a full row of A data, for B pencil and C subset.
             for (int c = 0; c < subsetOfCAlongA_; ++c) {
-                Complex *cPtr = buffer1 + c * myGridDimensionB_ * scratchRowDim;
+                Complex *cPtr = buffer1 + c * myGridDimensionB_ * complexGridDimensionA_;
                 for (int b = 0; b < myGridDimensionB_; ++b) {
                     for (int chunk = 0; chunk < numNodesA_; ++chunk) {
                         Complex *inPtr = buffer2 +
                                          (chunk * subsetOfCAlongA_ + c) * myComplexGridDimensionA_ * myGridDimensionB_ +
                                          b * myComplexGridDimensionA_;
                         std::copy(inPtr, inPtr + myComplexGridDimensionA_,
-                                  cPtr + b * scratchRowDim + chunk * myComplexGridDimensionA_);
+                                  cPtr + b * complexGridDimensionA_ + chunk * myComplexGridDimensionA_);
                     }
                 }
             }
@@ -4579,7 +4592,7 @@ class PMEInstance {
         Real *realGrid = reinterpret_cast<Real *>(buffer2);
 #pragma omp parallel for num_threads(nThreads_)
         for (int cb = 0; cb < subsetOfCAlongA_ * myGridDimensionB_; ++cb) {
-            fftHelperA_.transform(buffer1 + cb * scratchRowDim, realGrid + cb * gridDimensionA_);
+            fftHelperA_.transform(buffer1 + cb * complexGridDimensionA_, realGrid + cb * gridDimensionA_);
         }
 
 #if HAVE_MPI == 1
