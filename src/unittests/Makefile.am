@@ -9,6 +9,11 @@ check_PROGRAMS = unittest-angle unittest-bond unittest-buckingham unittest-buckt
 LDADD = ${top_builddir}/src/libmbx.la 
 AM_CXXFLAGS = $(CPPFLAGS) $(OPENMP_CXXFLAGS) -I${top_builddir}/src/ $(EXTRA_CXXFLAGS_AM) -static
 
+TESTS += unittest-fftw-wrapper
+check_PROGRAMS += unittest-fftw-wrapper
+unittest_fftw_wrapper_SOURCES = unittest-main.cpp unittest-fftw-wrapper.cpp
+unittest_fftw_wrapper_LDADD =
+
 unittest_angle_SOURCES = unittest-main.cpp unittest-angle.cpp
 unittest_bond_SOURCES = unittest-main.cpp unittest-bond.cpp
 unittest_buckingham_SOURCES = unittest-main.cpp unittest-buckingham.cpp
